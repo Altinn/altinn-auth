@@ -27,8 +27,6 @@ $BODY$;
 -- Procedure: create_resource
 CREATE OR REPLACE FUNCTION resourceregistry.create_resource(
 	_identifier text,
-	_created timestamp with time zone,
-	_modified timestamp with time zone,
 	_serviceresourcejson jsonb)
     RETURNS resourceregistry.resources
     LANGUAGE 'sql'
@@ -43,8 +41,8 @@ INSERT INTO resourceregistry.resources(
 )
 VALUES (
 	_identifier,
-	_created,
-	_modified,
+	Now(),
+	Now(),
 	_serviceresourcejson
 )
 RETURNING *;
@@ -62,4 +60,22 @@ AS $BODY$
 SELECT identifier, created, modified, serviceresourcejson
 	FROM resourceregistry.resources
 	WHERE serviceresourcejson ->> 'title' iLike concat('%', _searchterm, '%');
+$BODY$;
+
+-- Procedure: update_resource
+CREATE OR REPLACE FUNCTION resourceregistry.update_resource(
+	_identifier text,
+	_serviceresourcejson jsonb)
+    RETURNS resourceregistry.resources
+    LANGUAGE 'sql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+UPDATE resourceregistry.resources
+SET
+	modified = Now(),
+	serviceresourcejson = _serviceresourcejson
+WHERE 
+identifier = _identifier
+RETURNING *;
 $BODY$;
