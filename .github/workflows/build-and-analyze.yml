@@ -24,8 +24,8 @@ jobs:
             6.0.x
       - name: Build & Test
         run: |
-           dotnet build Altinn.Platform.Authorization.sln -v m
-           dotnet test Altinn.Platform.Authorization.sln -v m
+           dotnet build ResourceRegistry.sln -v m
+           dotnet test ResourceRegistry.sln -v m
   analyze:
     name: Analyze
     if: ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.event_name == 'push') && github.repository_owner == 'Altinn' && github.actor != 'dependabot[bot]' 
@@ -68,10 +68,10 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         shell: powershell
         run: |
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"Altinn_altinn-authorization" /o:"altinn" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vstest.reportsPaths="**/*.trx" /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" /d:sonar.cpd.exclusions="**/Swagger/*Filter.cs"
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"Altinn_altinn-resource-registry" /o:"altinn" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vstest.reportsPaths="**/*.trx" /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" /d:sonar.cpd.exclusions="**/Swagger/*Filter.cs"
 
-          dotnet build Altinn.Platform.Authorization.sln
-          dotnet test Altinn.Platform.Authorization.sln `
+          dotnet build ResourceRegistry.sln
+          dotnet test ResourceRegistry.sln `
           --no-build `
           --results-directory TestResults/ `
           --collect:"XPlat Code Coverage" `
