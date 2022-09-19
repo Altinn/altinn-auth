@@ -7,7 +7,7 @@ WORKDIR ResourceRegistry/
 RUN dotnet build Altinn.ResourceRegistry.csproj -c Release -o /app_output
 RUN dotnet publish Altinn.ResourceRegistry.csproj -c Release -o /app_output
 
-FROM mcr.microsoft.com/dotnet/aspnet:6.0.8-alpine3.16 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:6.0.9-alpine3.16 AS final
 EXPOSE 5100
 WORKDIR /app
 COPY --from=build /app_output .
