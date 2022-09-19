@@ -18,7 +18,8 @@ namespace Altinn.ResourceRegistry.Persistence
         private readonly ILogger _logger;
         private readonly string getResource = "SELECT * FROM resourceregistry.get_resource(@_identifier)";
         private readonly string searchForResource = "SELECT * FROM resourceregistry.search_for_resource(@_searchterm)";
-        private readonly string createResource = "SELECT * FROM resourceregistry.create_resource(@_identifier, @_created, @_modified, @_serviceresourcejson)";
+        private readonly string createResource = "SELECT * FROM resourceregistry.create_resource(@_identifier, @_serviceresourcejson)";
+        private readonly string updateResource = "SELECT * FROM resourceregistry.update_resource(@_identifier, @_serviceresourcejson)";
         private readonly string deleteResource = "SELECT * FROM resourceregistry.delete_resource(@_identifier)";
 
         public ResourceRepository(
@@ -68,8 +69,6 @@ namespace Altinn.ResourceRegistry.Persistence
 
                 NpgsqlCommand pgcom = new NpgsqlCommand(createResource, conn);
                 pgcom.Parameters.AddWithValue("_identifier", resource.Identifier);
-                pgcom.Parameters.AddWithValue("_created", NpgsqlTypes.NpgsqlDbType.TimestampTz ,DateTime.UtcNow);
-                pgcom.Parameters.AddWithValue("_modified", NpgsqlTypes.NpgsqlDbType.TimestampTz, DateTime.UtcNow);
                 pgcom.Parameters.AddWithValue("_serviceresourcejson", NpgsqlTypes.NpgsqlDbType.Jsonb, json);
 
 
@@ -142,9 +141,36 @@ namespace Altinn.ResourceRegistry.Persistence
             }
         }
 
-        public Task<ServiceResource> UpdateResource(ServiceResource resource)
+        public async Task<ServiceResource> UpdateResource(ServiceResource resource)
         {
-            throw new NotImplementedException();
+            var json = System.Text.Json.JsonSerializer.Serialize(resource, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+            try
+            {
+                await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
+                await conn.OpenAsync();
+
+                NpgsqlCommand pgcom = new NpgsqlCommand(updateResource, conn);
+                pgcom.Parameters.AddWithValue("_identifier", resource.Identifier);
+                pgcom.Parameters.AddWithValue("_serviceresourcejson", NpgsqlTypes.NpgsqlDbType.Jsonb, json);
+
+
+                using NpgsqlDataReader reader = pgcom.ExecuteReader();
+                if (reader.Read())
+                {
+                    return getServiceResource(reader);
+                }
+
+                return null;
+            }
+            catch (Exception e)
+            {
+                if (e.Message.Contains("duplicate key value violates unique constraint"))
+                {
+                    return new ServiceResource();
+                }
+                _logger.LogError(e, "Authorization // ResourceRegistryRepository // GetResource // Exception");
+                throw;
+            }
         }
 
         private static ServiceResource getServiceResource(NpgsqlDataReader reader)
