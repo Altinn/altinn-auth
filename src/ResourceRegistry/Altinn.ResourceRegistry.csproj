@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Migration\" />
+    <Folder Include="Migration\v0.00\" />
   </ItemGroup>
 
 </Project>
