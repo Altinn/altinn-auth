@@ -1,0 +1,81 @@
+version: 2
+updates:
+  ## Authorization
+  - directory: "src/Authorization"
+    package-ecosystem: "nuget"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "07:00"
+      timezone: "Europe/Oslo"
+
+  - directory: "src/Altinn.Authorization.ABAC"
+    package-ecosystem: "nuget"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "07:00"
+      timezone: "Europe/Oslo"
+
+  - directory: "src/Functions"
+    package-ecosystem: "nuget"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "07:00"
+      timezone: "Europe/Oslo"      
+
+## Test
+  - directory: "test/Functions"
+    package-ecosystem: "nuget"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "07:00"
+      timezone: "Europe/Oslo"
+
+  - directory: "test/IntegrationTests"
+    package-ecosystem: "nuget"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "07:00"
+      timezone: "Europe/Oslo"
+
+  - directory: "test/UnitTest"
+    package-ecosystem: "nuget"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "07:00"
+      timezone: "Europe/Oslo"
+
+
+  
+## Dockerfile
+  - directory: "/"
+    package-ecosystem: "docker"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "07:00"
+      timezone: "Europe/Oslo"
+
+## Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "07:00"
+      timezone: "Europe/Oslo"
+    open-pull-requests-limit: 10
