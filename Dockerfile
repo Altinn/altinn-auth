@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY src/ResourceRegistry/*.csproj ./src/ResourceRegistry/
 COPY src/Altinn.ResourceRegistry.Core/*.csproj ./src/Altinn.Notifications.Core/
-COPY src/Altinn.ResourceRegistry.Integrations/*.csproj ./src/Altinn.Notifications.Integrations/
+COPY src/Altinn.ResourceRegistry.Integration/*.csproj ./src/Altinn.Notifications.Integration/
 COPY src/Altinn.ResourceRegistry.Persistence/*.csproj ./src/Altinn.Notifications.Persistence/
 RUN dotnet restore ./src/Altinn.ResourceRegistry/Altinn.ResourceRegistry.csproj
 
