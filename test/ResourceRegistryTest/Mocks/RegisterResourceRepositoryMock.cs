@@ -72,7 +72,7 @@ namespace ResourceRegistryTest.Mocks
         private static string GetResourcePath()
         {
             string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(RegisterResourceRepositoryMock).Assembly.Location).LocalPath);
-            return Path.Combine(unitTestFolder, @"..\..\..\Data\Resources");
+            return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "Resources");
         }
     }
 }
