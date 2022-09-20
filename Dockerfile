@@ -17,7 +17,7 @@ RUN dotnet publish -c Release -o out ./src/ResourceRegistry/Altinn.ResourceRegis
 FROM mcr.microsoft.com/dotnet/aspnet:6.0.8-alpine3.16 AS final
 EXPOSE 5100
 WORKDIR /app
-COPY --from=build /app_output .
+COPY --from=build /app/out .
 
 COPY src/ResourceRegistry/Migration ./Migration
 
