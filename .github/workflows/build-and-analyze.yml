@@ -6,17 +6,13 @@ on:
     branches: [ main ]
     types: [opened, synchronize, reopened]
   workflow_dispatch:
-jobs:   
+jobs:
   build-and-test:
     name: Build and Test
     if: ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.event_name == 'push') && github.repository_owner == 'Altinn' && github.actor != 'dependabot[bot]' 
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set inotify watchers
-        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-      - name: Set inotify instances
-        run: echo fs.inotify.max_user_instances=8192 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
       - name: Setup .NET
         uses: actions/setup-dotnet@v2
         with:
@@ -24,11 +20,11 @@ jobs:
             6.0.x
       - name: Build & Test
         run: |
-           dotnet build ResourceRegistry.sln -v m
-           dotnet test ResourceRegistry.sln -v m
+           dotnet build Altinn.Platform.Profile.sln -v m
+           dotnet test Altinn.Platform.Profile.sln -v m
   analyze:
-    name: Analyze
     if: ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.event_name == 'push') && github.repository_owner == 'Altinn' && github.actor != 'dependabot[bot]' 
+    name: Analyze
     runs-on: windows-latest
     steps:
       - name: Setup .NET
@@ -36,10 +32,11 @@ jobs:
         with:
           dotnet-version: |
             6.0.x
-      - name: Set up JDK 11
-        uses: actions/setup-java@v1
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
         with:
-          java-version: 1.11
+          distribution: 'microsoft'
+          java-version: 17
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
@@ -68,7 +65,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         shell: powershell
         run: |
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"Altinn_altinn-resource-registry" /o:"altinn" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vstest.reportsPaths="**/*.trx" /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" /d:sonar.cpd.exclusions="**/Swagger/*Filter.cs"
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"Altinn_altinn-resource-registry" /o:"altinn" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vstest.reportsPaths="**/*.trx" /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
 
           dotnet build ResourceRegistry.sln
           dotnet test ResourceRegistry.sln `
