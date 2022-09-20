@@ -1,14 +1,11 @@
-﻿using Altinn.Platform.Authorization.Configuration;
+﻿using Altinn.AccessGroups.Persistance;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
-using Npgsql.PostgresTypes;
 using System.Data;
-using System.Runtime.Serialization;
-using System.Text.Encodings.Web;
 
 namespace Altinn.ResourceRegistry.Persistence
 {

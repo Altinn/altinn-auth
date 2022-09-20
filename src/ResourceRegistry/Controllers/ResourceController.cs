@@ -1,13 +1,13 @@
-﻿using Altinn.ResourceRegistry.Core;
+﻿using Altinn.Platform.Authorization.Helpers.Extensions;
+using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Models;
-using Microsoft.AspNetCore.Http;
+using Azure;
+using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System.Net;
 using System.Text;
 
 namespace ResourceRegistry.Controllers
@@ -17,14 +17,16 @@ namespace ResourceRegistry.Controllers
     public class ResourceController : ControllerBase
     {
         private IResourceRegistry _resourceRegistry;
+        private IPolicyRepository _policyRepository;
         private readonly IObjectModelValidator _objectModelValidator;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private IPRP _prp;
         private readonly ILogger<ResourceController> _logger;
 
-        public ResourceController(IResourceRegistry resourceRegistry, IObjectModelValidator objectModelValidator, IHttpContextAccessor httpContextAccessor, IPRP prp, ILogger<ResourceController> logger)
+        public ResourceController(IResourceRegistry resourceRegistry, IPolicyRepository policyRepository, IObjectModelValidator objectModelValidator, IHttpContextAccessor httpContextAccessor, IPRP prp, ILogger<ResourceController> logger)
         {
             _resourceRegistry = resourceRegistry;
+            _policyRepository = policyRepository;
             _objectModelValidator = objectModelValidator;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
@@ -71,36 +73,32 @@ namespace ResourceRegistry.Controllers
             return Ok();
         }
 
-
-
         [HttpPost("{id}/policy")]
-        public async Task<ActionResult> WritePolicy(string id)
+        public async Task<ActionResult> WritePolicy(string id, IFormFile policyFile)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
-                return BadRequest("Unknown resource");
+                return BadRequest("Unknown resource"); // ToDo: Need actual verification against existing resources
             }
 
-         
-            // Use Request.Body to capture raw data from body to support other format than JSON
-            Stream content = Request.Body;
-
-            // Request.Body returns Stream of type FrameRequestStream which can only be read once
-            // Copy Request.Body to another stream that supports seeking so the content can be read multiple times
-            string contentString = await new StreamReader(content, Encoding.UTF8).ReadToEndAsync();
-
-            if (string.IsNullOrWhiteSpace(contentString))
+            if (policyFile == null)
             {
-                return BadRequest("Policy file cannot be empty");
+                throw new ArgumentException("The policy file can not be null");
             }
 
-            byte[] byteArray = Encoding.UTF8.GetBytes(contentString);
-            Stream dataStream = new MemoryStream(byteArray);
+            Stream fileStream = policyFile.OpenReadStream();
+            if (fileStream == null)
+            {
+                throw new ArgumentException("The file stream can not be null");
+            }
+
+            string filePath = $"{id.AsFileName()}/policy.xml";
 
             try
             {
-                bool successfullyStored = await _prp.WriteResourcePolicyAsync(id, dataStream);
+                Response<BlobContentInfo> response = await _policyRepository.WritePolicyAsync(filePath, fileStream);
 
+                bool successfullyStored = response?.GetRawResponse()?.Status == (int)HttpStatusCode.Created;
                 if (successfullyStored)
                 {
                     return Created(id+"/policy", null);
@@ -122,36 +120,34 @@ namespace ResourceRegistry.Controllers
 
 
         [HttpPut("{id}/policy")]
-        public async Task<ActionResult> UpdatePolicy(string id)
+        public async Task<ActionResult> UpdatePolicy(string id, IFormFile policyFile)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
-                return BadRequest("Policy file cannot be empty");
+                return BadRequest("Unknown resource"); // ToDo: Need actual verification against existing resources
             }
 
-
-            // Use Request.Body to capture raw data from body to support other format than JSON
-            Stream content = Request.Body;
-
-            // Request.Body returns Stream of type FrameRequestStream which can only be read once
-            // Copy Request.Body to another stream that supports seeking so the content can be read multiple times
-            string contentString = await new StreamReader(content, Encoding.UTF8).ReadToEndAsync();
-
-            if (string.IsNullOrWhiteSpace(contentString))
+            if (policyFile == null)
             {
-                return BadRequest("Policy file cannot be empty");
+                throw new ArgumentException("The policy file can not be null");
             }
 
-            byte[] byteArray = Encoding.UTF8.GetBytes(contentString);
-            Stream dataStream = new MemoryStream(byteArray);
+            Stream fileStream = policyFile.OpenReadStream();
+            if (fileStream == null)
+            {
+                throw new ArgumentException("The file stream can not be null");
+            }
+
+            string filePath = $"{id.AsFileName()}/policy.xml";
 
             try
             {
-                bool successfullyStored = await _prp.WriteResourcePolicyAsync(id, dataStream);
+                Response<BlobContentInfo> response = await _policyRepository.WritePolicyAsync(filePath, fileStream);
 
+                bool successfullyStored = response?.GetRawResponse()?.Status == (int)HttpStatusCode.Created;
                 if (successfullyStored)
                 {
-                    return Ok();
+                    return Created(id + "/policy", null);
                 }
             }
             catch (ArgumentException ex)

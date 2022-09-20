@@ -1,9 +1,8 @@
-using Altinn.Platform.Authorization.Configuration;
+using Altinn.AccessGroups.Persistance;
+using Altinn.ResourceRegistry.Configuration;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Integration.Clients;
-using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Persistence;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Npgsql.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -14,7 +13,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 ConfigureServices(builder.Services, builder.Configuration);
-
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -38,8 +36,6 @@ app.MapControllers();
 
 app.Run();
 
-
-
 void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
     services.AddControllers().AddJsonOptions(options =>
@@ -55,9 +51,10 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IResourceRegistry, ResourceRegistryService>();
     services.AddSingleton<IResourceRegistryRepository, ResourceRepository>();
     services.AddSingleton<IPRP, PRPClient>();
+    services.AddSingleton<IPolicyRepository, PolicyRepository>();
     services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
     services.Configure<PostgreSQLSettings>(config.GetSection("PostgreSQLSettings"));
-
+    services.Configure<AzureStorageConfiguration>(config.GetSection("AzureStorageConfiguration"));
 }
 
 void ConfigurePostgreSql()

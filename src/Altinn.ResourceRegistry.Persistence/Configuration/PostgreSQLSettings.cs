@@ -1,4 +1,4 @@
-﻿namespace Altinn.Platform.Authorization.Configuration
+﻿namespace Altinn.AccessGroups.Persistance
 {
     /// <summary>
     /// Settings for Postgres database

@@ -2,7 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Yuniql.Extensibility;
 
-namespace Altinn.Platform.Authorization.Configuration
+namespace Altinn.ResourceRegistry.Configuration
 {
     /// <summary>
     /// Copied from sample project.
