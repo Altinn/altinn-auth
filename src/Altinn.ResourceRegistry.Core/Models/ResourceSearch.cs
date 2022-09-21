@@ -28,5 +28,10 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// ResourceType
         /// </summary>
         public ResourceType? resourceType { get; set; }
+
+        /// <summary>
+        /// Keywords
+        /// </summary>
+        public string? keyword { get; set; }
     }
 }

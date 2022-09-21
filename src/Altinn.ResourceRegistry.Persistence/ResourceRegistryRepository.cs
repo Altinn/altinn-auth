@@ -17,7 +17,7 @@ namespace Altinn.ResourceRegistry.Persistence
         private readonly string _connectionString;
         private readonly ILogger _logger;
         private readonly string getResource = "SELECT * FROM resourceregistry.get_resource(@_identifier)";
-        private readonly string searchForResource = "SELECT * FROM resourceregistry.search_for_resource(@_id, @_title, @_description, @_resourcetype)";
+        private readonly string searchForResource = "SELECT * FROM resourceregistry.search_for_resource(@_id, @_title, @_description, @_resourcetype, @_keyword)";
         private readonly string createResource = "SELECT * FROM resourceregistry.create_resource(@_identifier, @_serviceresourcejson)";
         private readonly string updateResource = "SELECT * FROM resourceregistry.update_resource(@_identifier, @_serviceresourcejson)";
         private readonly string deleteResource = "SELECT * FROM resourceregistry.delete_resource(@_identifier)";
@@ -45,6 +45,7 @@ namespace Altinn.ResourceRegistry.Persistence
                 pgcom.Parameters.AddWithValue("_title", resourceSearch.title != null ? resourceSearch.title : DBNull.Value);
                 pgcom.Parameters.AddWithValue("_description", resourceSearch.description != null ? resourceSearch.description : DBNull.Value );
                 pgcom.Parameters.AddWithValue("_resourcetype", resourceSearch.resourceType != null ? resourceSearch.resourceType : DBNull.Value);
+                pgcom.Parameters.AddWithValue("_keyword", resourceSearch.keyword != null ? resourceSearch.keyword : DBNull.Value);
 
                 List<ServiceResource> serviceResources = new List<ServiceResource>();
 
