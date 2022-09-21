@@ -1,4 +1,6 @@
-﻿using Altinn.ResourceRegistry.Core.Models;
+﻿using Altinn.ResourceRegistry.Core.Enums;
+using Altinn.ResourceRegistry.Core.Models;
+using System.Text.Json.Serialization;
 
 namespace Altinn.ResourceRegistry.Models
 {
@@ -60,5 +62,8 @@ namespace Altinn.ResourceRegistry.Models
         public List<Keyword> Keywords { get; set; }
 
         public List<string> Sector { get; set; }
+
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public ResourceType ResourceType { get; set; }
     }
 }

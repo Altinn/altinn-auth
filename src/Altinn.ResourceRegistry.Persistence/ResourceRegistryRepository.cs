@@ -1,10 +1,13 @@
 ﻿using Altinn.AccessGroups.Persistance;
 using Altinn.ResourceRegistry.Core;
+using Altinn.ResourceRegistry.Core.Enums;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
+using Npgsql.PostgresTypes;
+using NpgsqlTypes;
 using System.Data;
 
 namespace Altinn.ResourceRegistry.Persistence
@@ -14,7 +17,7 @@ namespace Altinn.ResourceRegistry.Persistence
         private readonly string _connectionString;
         private readonly ILogger _logger;
         private readonly string getResource = "SELECT * FROM resourceregistry.get_resource(@_identifier)";
-        private readonly string searchForResource = "SELECT * FROM resourceregistry.search_for_resource(@_searchterm)";
+        private readonly string searchForResource = "SELECT * FROM resourceregistry.search_for_resource(@_id, @_title, @_description, @_resourcetype)";
         private readonly string createResource = "SELECT * FROM resourceregistry.create_resource(@_identifier, @_serviceresourcejson)";
         private readonly string updateResource = "SELECT * FROM resourceregistry.update_resource(@_identifier, @_serviceresourcejson)";
         private readonly string deleteResource = "SELECT * FROM resourceregistry.delete_resource(@_identifier)";
@@ -27,6 +30,7 @@ namespace Altinn.ResourceRegistry.Persistence
             _connectionString = string.Format(
                 postgresSettings.Value.ConnectionString,
                 postgresSettings.Value.AuthorizationDbPwd);
+            NpgsqlConnection.GlobalTypeMapper.MapEnum<ResourceType>("resourceregistry.resourcetype");
         }
 
         public async Task<List<ServiceResource>> Search(ResourceSearch resourceSearch)
@@ -37,7 +41,10 @@ namespace Altinn.ResourceRegistry.Persistence
                 await conn.OpenAsync();
 
                 NpgsqlCommand pgcom = new NpgsqlCommand(searchForResource, conn);
-                pgcom.Parameters.AddWithValue("_searchterm", resourceSearch.SearchTerm);
+                pgcom.Parameters.AddWithValue("_id", resourceSearch.id != null ? resourceSearch.id : DBNull.Value);
+                pgcom.Parameters.AddWithValue("_title", resourceSearch.title != null ? resourceSearch.title : DBNull.Value);
+                pgcom.Parameters.AddWithValue("_description", resourceSearch.description != null ? resourceSearch.description : DBNull.Value );
+                pgcom.Parameters.AddWithValue("_resourcetype", resourceSearch.resourceType != null ? resourceSearch.resourceType : DBNull.Value);
 
                 List<ServiceResource> serviceResources = new List<ServiceResource>();
 
