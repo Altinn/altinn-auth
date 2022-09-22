@@ -20,8 +20,8 @@ jobs:
             6.0.x
       - name: Build & Test
         run: |
-           dotnet build Altinn.Platform.Profile.sln -v m
-           dotnet test Altinn.Platform.Profile.sln -v m
+           dotnet build Altinn.ResourceRegistry.sln -v m
+           dotnet test Altinn.ResourceRegistry.sln -v m
   analyze:
     if: ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.event_name == 'push') && github.repository_owner == 'Altinn' && github.actor != 'dependabot[bot]' 
     name: Analyze
