@@ -2,6 +2,9 @@
 
 namespace Altinn.ResourceRegistry.Core.Enums
 {
+    /// <summary>
+    /// Enum for reference types of resources in the resource registry
+    /// </summary>
     public enum ReferenceType : int
     {
         [EnumMember(Value = "Default")]
@@ -14,7 +17,6 @@ namespace Altinn.ResourceRegistry.Core.Enums
         OrgApp = 2,
 
         [EnumMember(Value = "Uri")]
-        Uri = 3,
-
+        Uri = 3
     }
 }

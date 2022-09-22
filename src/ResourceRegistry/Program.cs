@@ -1,11 +1,11 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Altinn.AccessGroups.Persistance;
 using Altinn.ResourceRegistry.Configuration;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Integration.Clients;
 using Altinn.ResourceRegistry.Persistence;
 using Npgsql.Logging;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Yuniql.AspNetCore;
 using Yuniql.PostgreSql;
 
@@ -15,6 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 ConfigureServices(builder.Services, builder.Configuration);
 
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -49,7 +50,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton(config);
 
     services.AddSingleton<IResourceRegistry, ResourceRegistryService>();
-    services.AddSingleton<IResourceRegistryRepository, ResourceRepository>();
+    services.AddSingleton<IResourceRegistryRepository, ResourceRegistryRepository>();
     services.AddSingleton<IPRP, PRPClient>();
     services.AddSingleton<IPolicyRepository, PolicyRepository>();
     services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();

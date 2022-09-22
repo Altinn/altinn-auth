@@ -1,4 +1,5 @@
-﻿using Altinn.AccessGroups.Persistance;
+﻿using System.Data;
+using Altinn.AccessGroups.Persistance;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.Enums;
 using Altinn.ResourceRegistry.Core.Models;
@@ -6,13 +7,13 @@ using Altinn.ResourceRegistry.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
-using Npgsql.PostgresTypes;
-using NpgsqlTypes;
-using System.Data;
 
 namespace Altinn.ResourceRegistry.Persistence
 {
-    public class ResourceRepository : IResourceRegistryRepository
+    /// <summary>
+    /// The repository implementation for postgre database operations on resource registry
+    /// </summary>
+    public class ResourceRegistryRepository : IResourceRegistryRepository
     {
         private readonly string _connectionString;
         private readonly ILogger _logger;
@@ -22,9 +23,12 @@ namespace Altinn.ResourceRegistry.Persistence
         private readonly string updateResource = "SELECT * FROM resourceregistry.update_resource(@_identifier, @_serviceresourcejson)";
         private readonly string deleteResource = "SELECT * FROM resourceregistry.delete_resource(@_identifier)";
 
-        public ResourceRepository(
-    IOptions<PostgreSQLSettings> postgresSettings,
-    ILogger<ResourceRepository> logger)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ResourceRegistryRepository"/> class
+        /// </summary>
+        /// <param name="postgresSettings">The configuration settings for the postgresql server connection</param>
+        /// <param name="logger">Logger</param>
+        public ResourceRegistryRepository(IOptions<PostgreSQLSettings> postgresSettings, ILogger<ResourceRegistryRepository> logger)
         {
             _logger = logger;
             _connectionString = string.Format(
@@ -33,6 +37,7 @@ namespace Altinn.ResourceRegistry.Persistence
             NpgsqlConnection.GlobalTypeMapper.MapEnum<ResourceType>("resourceregistry.resourcetype");
         }
 
+        /// <inheritdoc/>
         public async Task<List<ServiceResource>> Search(ResourceSearch resourceSearch)
         {
             try
@@ -41,18 +46,18 @@ namespace Altinn.ResourceRegistry.Persistence
                 await conn.OpenAsync();
 
                 NpgsqlCommand pgcom = new NpgsqlCommand(searchForResource, conn);
-                pgcom.Parameters.AddWithValue("_id", resourceSearch.id != null ? resourceSearch.id : DBNull.Value);
-                pgcom.Parameters.AddWithValue("_title", resourceSearch.title != null ? resourceSearch.title : DBNull.Value);
-                pgcom.Parameters.AddWithValue("_description", resourceSearch.description != null ? resourceSearch.description : DBNull.Value );
-                pgcom.Parameters.AddWithValue("_resourcetype", resourceSearch.resourceType != null ? resourceSearch.resourceType : DBNull.Value);
-                pgcom.Parameters.AddWithValue("_keyword", resourceSearch.keyword != null ? resourceSearch.keyword : DBNull.Value);
+                pgcom.Parameters.AddWithValue("_id", resourceSearch.Id != null ? resourceSearch.Id : DBNull.Value);
+                pgcom.Parameters.AddWithValue("_title", resourceSearch.Title != null ? resourceSearch.Title : DBNull.Value);
+                pgcom.Parameters.AddWithValue("_description", resourceSearch.Description != null ? resourceSearch.Description : DBNull.Value);
+                pgcom.Parameters.AddWithValue("_resourcetype", resourceSearch.ResourceType != null ? resourceSearch.ResourceType : DBNull.Value);
+                pgcom.Parameters.AddWithValue("_keyword", resourceSearch.Keyword != null ? resourceSearch.Keyword : DBNull.Value);
 
                 List<ServiceResource> serviceResources = new List<ServiceResource>();
 
                 using NpgsqlDataReader reader = pgcom.ExecuteReader();
                 while (reader.Read())
                 {
-                    serviceResources.Add(getServiceResource(reader));
+                    serviceResources.Add(GetServiceResource(reader));
                 }
 
                 return serviceResources;
@@ -64,6 +69,7 @@ namespace Altinn.ResourceRegistry.Persistence
             }
         }
 
+        /// <inheritdoc/>
         public async Task<ServiceResource> CreateResource(ServiceResource resource)
         {
             var json = System.Text.Json.JsonSerializer.Serialize(resource, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
@@ -76,11 +82,10 @@ namespace Altinn.ResourceRegistry.Persistence
                 pgcom.Parameters.AddWithValue("_identifier", resource.Identifier);
                 pgcom.Parameters.AddWithValue("_serviceresourcejson", NpgsqlTypes.NpgsqlDbType.Jsonb, json);
 
-
                 using NpgsqlDataReader reader = pgcom.ExecuteReader();
                 if (reader.Read())
                 {
-                    return getServiceResource(reader);
+                    return GetServiceResource(reader);
                 }
 
                 return null;
@@ -91,11 +96,13 @@ namespace Altinn.ResourceRegistry.Persistence
                 {
                     return new ServiceResource();
                 }
+
                 _logger.LogError(e, "Authorization // ResourceRegistryRepository // GetResource // Exception");
                 throw;
             }
         }
 
+        /// <inheritdoc/>
         public async Task<ServiceResource> DeleteResource(string id)
         {
             try
@@ -109,7 +116,7 @@ namespace Altinn.ResourceRegistry.Persistence
                 using NpgsqlDataReader reader = pgcom.ExecuteReader();
                 if (reader.Read())
                 {
-                    return getServiceResource(reader);
+                    return GetServiceResource(reader);
                 }
 
                 return null;
@@ -121,6 +128,7 @@ namespace Altinn.ResourceRegistry.Persistence
             }
         }
 
+        /// <inheritdoc/>
         public async Task<ServiceResource> GetResource(string id)
         {
             try
@@ -134,7 +142,7 @@ namespace Altinn.ResourceRegistry.Persistence
                 using NpgsqlDataReader reader = pgcom.ExecuteReader();
                 if (reader.Read())
                 {
-                    return getServiceResource(reader);
+                    return GetServiceResource(reader);
                 }
 
                 return null;
@@ -146,6 +154,7 @@ namespace Altinn.ResourceRegistry.Persistence
             }
         }
 
+        /// <inheritdoc/>
         public async Task<ServiceResource> UpdateResource(ServiceResource resource)
         {
             var json = System.Text.Json.JsonSerializer.Serialize(resource, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
@@ -158,11 +167,10 @@ namespace Altinn.ResourceRegistry.Persistence
                 pgcom.Parameters.AddWithValue("_identifier", resource.Identifier);
                 pgcom.Parameters.AddWithValue("_serviceresourcejson", NpgsqlTypes.NpgsqlDbType.Jsonb, json);
 
-
                 using NpgsqlDataReader reader = pgcom.ExecuteReader();
                 if (reader.Read())
                 {
-                    return getServiceResource(reader);
+                    return GetServiceResource(reader);
                 }
 
                 return null;
@@ -173,12 +181,13 @@ namespace Altinn.ResourceRegistry.Persistence
                 {
                     return new ServiceResource();
                 }
+
                 _logger.LogError(e, "Authorization // ResourceRegistryRepository // GetResource // Exception");
                 throw;
             }
         }
 
-        private static ServiceResource getServiceResource(NpgsqlDataReader reader)
+        private static ServiceResource GetServiceResource(NpgsqlDataReader reader)
         {
             if (reader["serviceresourcejson"] != DBNull.Value)
             {
@@ -187,6 +196,7 @@ namespace Altinn.ResourceRegistry.Persistence
                 ServiceResource? resource = System.Text.Json.JsonSerializer.Deserialize<ServiceResource>(jsonb, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }) as ServiceResource;
                 return resource;
             }
+
             return null;
         }
     }

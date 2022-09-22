@@ -1,37 +1,40 @@
-﻿using Altinn.ResourceRegistry.Core.Enums;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Altinn.ResourceRegistry.Core.Enums;
 
 namespace Altinn.ResourceRegistry.Core.Models
 {
+    /// <summary>
+    /// Model for performing search for resources in the resource registry
+    /// </summary>
     public class ResourceSearch
     {
         /// <summary>
         /// ID
         /// </summary>
-        public string? id { get; set; }
+        public string? Id { get; set; }
 
         /// <summary>
         /// Title
         /// </summary>
-        public string? title { get; set; }
+        public string? Title { get; set; }
 
         /// <summary>
         /// Description
         /// </summary>
-        public string? description { get; set; }
+        public string? Description { get; set; }
 
         /// <summary>
         /// ResourceType
         /// </summary>
-        public ResourceType? resourceType { get; set; }
+        public ResourceType? ResourceType { get; set; }
 
         /// <summary>
         /// Keywords
         /// </summary>
-        public string? keyword { get; set; }
+        public string? Keyword { get; set; }
     }
 }

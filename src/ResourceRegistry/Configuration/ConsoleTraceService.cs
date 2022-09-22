@@ -15,15 +15,21 @@ namespace Altinn.ResourceRegistry.Configuration
         /// </summary>
         public bool IsDebugEnabled { get; set; } = false;
 
-        /// <inheritdoc/>>
+        /// <inheritdoc/>
         public bool IsTraceSensitiveData { get; set; } = false;
 
-        /// <inheritdoc/>>
+        /// <summary>
+        /// TraceToDirectory
+        /// </summary>
         public string TraceToDirectory { get; set; }
 
-        /// <inheritdoc/>>
+        /// <inheritdoc/>
         public bool IsTraceToFile { get; set; } = false;
+
+        /// <inheritdoc/>
         public bool IsTraceToDirectory { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        /// <inheritdoc/>
         public string TraceDirectory { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         /// <summary>
