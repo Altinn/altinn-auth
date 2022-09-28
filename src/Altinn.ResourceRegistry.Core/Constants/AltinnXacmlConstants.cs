@@ -75,6 +75,11 @@ namespace Altinn.ResourceRegistry.Core.Constants
             /// Role Code attribute match indentifier 
             /// </summary>
             public const string RoleAttribute = "urn:altinn:rolecode";
+
+            /// <summary>
+            /// Resource registry attribute match indentifier 
+            /// </summary>
+            public const string ResourceRegistryAttribute = "urn:altinn:resourceregistry";
         }
 
         /// <summary>

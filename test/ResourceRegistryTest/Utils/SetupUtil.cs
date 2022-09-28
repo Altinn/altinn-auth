@@ -25,6 +25,7 @@ namespace ResourceRegistryTest.Utils
                 builder.ConfigureTestServices(services =>
                 {
                     services.AddSingleton<IResourceRegistryRepository, RegisterResourceRepositoryMock>();
+                    services.AddSingleton<IPolicyRepository, PolicyRepositoryMock>();
                     services.AddSingleton<IPRP, PRPMock>();
                 });
             });
@@ -41,6 +42,7 @@ namespace ResourceRegistryTest.Utils
                 builder.ConfigureTestServices(services =>
                 {
                     services.AddSingleton<IResourceRegistryRepository, RegisterResourceRepositoryMock>();
+                    services.AddSingleton<IPolicyRepository, PolicyRepositoryMock>();
                     services.AddSingleton <IPRP, PRPMock>();
                 });
             });

@@ -46,5 +46,13 @@ namespace Altinn.ResourceRegistry.Core
         /// <param name="resourceSearch">The search model defining the search filter criterias</param>
         /// <returns>A list of service resources found to match the search criterias</returns>
         Task<List<ServiceResource>> Search(ResourceSearch resourceSearch);
+
+        /// <summary>
+        /// Allows for storing a policy xacml policy for the resource
+        /// </summary>
+        /// <param name="serviceResource">The resource</param>
+        /// <param name="fileStream">The file stream to the policy file</param>
+        /// <returns>Bool if storing the policy was successfull</returns>
+        Task<bool> StorePolicy(ServiceResource serviceResource, Stream fileStream);
     }
 }

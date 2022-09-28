@@ -1,5 +1,11 @@
-﻿using Altinn.ResourceRegistry.Core.Models;
+﻿using System.Net;
+using Altinn.ResourceRegistry.Core.Extensions;
+using Altinn.ResourceRegistry.Core.Helpers;
+using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Models;
+using Azure;
+using Azure.Storage.Blobs.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Altinn.ResourceRegistry.Core
 {
@@ -9,21 +15,33 @@ namespace Altinn.ResourceRegistry.Core
     public class ResourceRegistryService : IResourceRegistry
     {
         private IResourceRegistryRepository _repository;
+        private IPolicyRepository _policyRepository;
+        private readonly ILogger<ResourceRegistryService> _logger;
 
         /// <summary>
         /// Creates a new instance of the <see cref="ResourceRegistryService"/> service.
         /// The ResourceRegistryService is responcible for business logic and implementations for working with the resource registry
         /// </summary>
         /// <param name="repository">Resource registry repository implementation for dependencies to its operations</param>
-        public ResourceRegistryService(IResourceRegistryRepository repository)
+        /// <param name="policyRepository">Repository implementation for operations on policies</param>
+        /// <param name="logger">Logger</param>
+        public ResourceRegistryService(IResourceRegistryRepository repository, IPolicyRepository policyRepository, ILogger<ResourceRegistryService> logger)
         {
             _repository = repository;
+            _policyRepository = policyRepository;
+            _logger = logger;
         }
 
         /// <inheritdoc/>
         public async Task CreateResource(ServiceResource serviceResource)
         {
             await _repository.CreateResource(serviceResource);
+        }
+
+        /// <inheritdoc/>
+        public async Task UpdateResource(ServiceResource serviceResource)
+        {
+            await _repository.UpdateResource(serviceResource);
         }
 
         /// <inheritdoc/>
@@ -45,9 +63,14 @@ namespace Altinn.ResourceRegistry.Core
         }
 
         /// <inheritdoc/>
-        public async Task UpdateResource(ServiceResource serviceResource)
+        public async Task<bool> StorePolicy(ServiceResource serviceResources, Stream fileStream)
         {
-            await _repository.UpdateResource(serviceResource);
+            PolicyHelper.IsValidResourcePolicy(serviceResources, fileStream);
+
+            string filePath = $"{serviceResources.Identifier.AsFilePath()}/resourcepolicy.xml";
+            Response<BlobContentInfo> response = await _policyRepository.WritePolicyAsync(filePath, fileStream);
+
+            return response?.GetRawResponse()?.Status == (int)HttpStatusCode.Created;
         }
     }
 }
