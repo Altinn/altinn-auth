@@ -18,7 +18,7 @@ namespace Altinn.ResourceRegistry.Persistence
         private readonly string _connectionString;
         private readonly ILogger _logger;
         private readonly string getResource = "SELECT * FROM resourceregistry.get_resource(@_identifier)";
-        private readonly string searchForResource = "SELECT * FROM resourceregistry.search_for_resource(@_id, @_title, @_description, @_resourcetype, @_keyword)";
+        private readonly string searchForResource = "SELECT * FROM resourceregistry.search_for_resource(@_id, @_title, @_description, @_resourcetype, @_keyword, @_includeexpired)";
         private readonly string createResource = "SELECT * FROM resourceregistry.create_resource(@_identifier, @_serviceresourcejson)";
         private readonly string updateResource = "SELECT * FROM resourceregistry.update_resource(@_identifier, @_serviceresourcejson)";
         private readonly string deleteResource = "SELECT * FROM resourceregistry.delete_resource(@_identifier)";
@@ -51,6 +51,7 @@ namespace Altinn.ResourceRegistry.Persistence
                 pgcom.Parameters.AddWithValue("_description", resourceSearch.Description != null ? resourceSearch.Description : DBNull.Value);
                 pgcom.Parameters.AddWithValue("_resourcetype", resourceSearch.ResourceType != null ? resourceSearch.ResourceType : DBNull.Value);
                 pgcom.Parameters.AddWithValue("_keyword", resourceSearch.Keyword != null ? resourceSearch.Keyword : DBNull.Value);
+                pgcom.Parameters.AddWithValue("_includeexpired", resourceSearch.IncludeExpired);
 
                 List<ServiceResource> serviceResources = new List<ServiceResource>();
 
