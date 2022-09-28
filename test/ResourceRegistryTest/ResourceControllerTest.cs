@@ -135,6 +135,34 @@ namespace ResourceRegistryTest
         }
 
         [Fact]
+        public async Task SetResourcePolicy_Invalid_UnknownResource()
+        {
+            ServiceResource resource = new ServiceResource() { Identifier = "altinn_access_management" };
+            string fileName = $"{resource.Identifier}.xml";
+            string filePath = $"Data/ResourcePolicies/{fileName}";
+
+            // unknown_resource as id in uri
+            Uri requestUri = new Uri($"ResourceRegistry/api/Resource/unknown_resource/policy", UriKind.Relative);
+
+            ByteArrayContent fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
+            fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("text/xml");
+
+            MultipartFormDataContent content = new();
+            content.Add(fileContent, "policyFile", fileName);
+
+            HttpRequestMessage httpRequestMessage = new() { Method = HttpMethod.Post, RequestUri = requestUri, Content = content };
+            httpRequestMessage.Headers.Add("ContentType", "multipart/form-data");
+
+            HttpClient client = SetupUtil.GetTestClient(_factory);
+            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Equal("Unknown resource", responseContent);
+        }
+
+        [Fact]
         public async Task UpdateResourcePolicy_OK()
         {
             ServiceResource resource = new ServiceResource() { Identifier = "altinn_access_management" };
