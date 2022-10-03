@@ -11,7 +11,7 @@ namespace ResourceRegistry.Controllers
     /// <summary>
     /// Controller responsible for all operations for managing resources in the resource registry
     /// </summary>
-    [Route("ResourceRegistry/api/v1/[controller]")]
+    [Route("resourceregistry/api/v1/resource")]
     [ApiController]
     public class ResourceController : ControllerBase
     {
@@ -41,6 +41,7 @@ namespace ResourceRegistry.Controllers
         /// <param name="id">The resource identifier to retrieve</param>
         /// <returns>ServiceResource</returns>
         [HttpGet("{id}")]
+        [Produces("application/json")]
         public async Task<ServiceResource> Get(string id)
         {
             return await _resourceRegistry.GetResource(id);
@@ -53,6 +54,7 @@ namespace ResourceRegistry.Controllers
         /// <returns>ActionResult describing the result of the operation</returns>
         [SuppressModelStateInvalidFilter]
         [HttpPost]
+        [Produces("application/json")]
         public async Task<ActionResult> Post([ValidateNever] ServiceResource serviceResource)
         {
             if (serviceResource.IsComplete.HasValue && serviceResource.IsComplete.Value)
@@ -84,6 +86,7 @@ namespace ResourceRegistry.Controllers
         /// <returns>ActionResult describing the result of the operation</returns>
         [SuppressModelStateInvalidFilter]
         [HttpPut]
+        [Produces("application/json")]
         public async Task<ActionResult> Put(ServiceResource serviceResource)
         {
             if (serviceResource.IsComplete.HasValue && serviceResource.IsComplete.Value)
@@ -171,6 +174,7 @@ namespace ResourceRegistry.Controllers
         /// <param name="search">The search model defining the search filter criterias</param>
         /// <returns>A list of service resources found to match the search criterias</returns>
         [HttpGet("Search")]
+        [Produces("application/json")]
         public async Task<List<ServiceResource>> Search([FromQuery] ResourceSearch search)
         {
             return await _resourceRegistry.Search(search);

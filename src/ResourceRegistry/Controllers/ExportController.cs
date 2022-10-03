@@ -8,7 +8,7 @@ namespace Altinn.ResourceRegistry.Controllers
     /// <summary>
     /// Controller responsible export of resources from the resource registry
     /// </summary>
-    [Route("ResourceRegistry/api/v1/[controller]")]
+    [Route("resourceregistry/api/v1/export")]
     public class ExportController : Controller
     {
         private IResourceRegistry _resourceRegistry;
