@@ -28,7 +28,7 @@ namespace ResourceRegistryTest
         public async Task GetResource_altinn_access_management_OK()
         {
             HttpClient client = SetupUtil.GetTestClient(_factory);
-            string requestUri = "ResourceRegistry/api/Resource/altinn_access_management";
+            string requestUri = "ResourceRegistry/api/v1/Resource/altinn_access_management";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
             {
@@ -47,7 +47,7 @@ namespace ResourceRegistryTest
         public async Task Test_Nav_Get()
         {
             HttpClient client = SetupUtil.GetTestClient(_factory);
-            string requestUri = "ResourceRegistry/api/Resource/nav_tiltakAvtaleOmArbeidstrening";
+            string requestUri = "ResourceRegistry/api/v1/Resource/nav_tiltakAvtaleOmArbeidstrening";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
             {
@@ -67,7 +67,7 @@ namespace ResourceRegistryTest
         public async Task Search_Get()
         {
             HttpClient client = SetupUtil.GetTestClient(_factory);
-            string requestUri = "ResourceRegistry/api/Resource/Search?SearchTerm=test";
+            string requestUri = "ResourceRegistry/api/v1/Resource/Search?SearchTerm=test";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
             {
@@ -89,7 +89,7 @@ namespace ResourceRegistryTest
             resource.IsComplete = true;
 
             HttpClient client = SetupUtil.GetTestClient(_factory);
-            string requestUri = "ResourceRegistry/api/Resource/";
+            string requestUri = "ResourceRegistry/api/v1/Resource/";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
             {
@@ -117,7 +117,7 @@ namespace ResourceRegistryTest
             string fileName = $"{resource.Identifier}.xml";
             string filePath = $"Data/ResourcePolicies/{fileName}";
 
-            Uri requestUri = new Uri($"ResourceRegistry/api/Resource/{resource.Identifier}/policy", UriKind.Relative);
+            Uri requestUri = new Uri($"ResourceRegistry/api/v1/Resource/{resource.Identifier}/policy", UriKind.Relative);
 
             ByteArrayContent fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
             fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("text/xml");
@@ -142,7 +142,7 @@ namespace ResourceRegistryTest
             string filePath = $"Data/ResourcePolicies/{fileName}";
 
             // unknown_resource as id in uri
-            Uri requestUri = new Uri($"ResourceRegistry/api/Resource/unknown_resource/policy", UriKind.Relative);
+            Uri requestUri = new Uri($"ResourceRegistry/api/v1/Resource/unknown_resource/policy", UriKind.Relative);
 
             ByteArrayContent fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
             fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("text/xml");
@@ -169,7 +169,7 @@ namespace ResourceRegistryTest
             string fileName = $"{resource.Identifier}.xml";
             string filePath = $"Data/ResourcePolicies/{fileName}";
 
-            Uri requestUri = new Uri($"ResourceRegistry/api/Resource/{resource.Identifier}/policy", UriKind.Relative);
+            Uri requestUri = new Uri($"ResourceRegistry/api/v1/Resource/{resource.Identifier}/policy", UriKind.Relative);
 
             ByteArrayContent fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
             fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("text/xml");
@@ -193,7 +193,7 @@ namespace ResourceRegistryTest
             string fileName = $"{resource.Identifier}_invalid_resourceid.xml";
             string filePath = $"Data/ResourcePolicies/{fileName}";
 
-            Uri requestUri = new Uri($"ResourceRegistry/api/Resource/{resource.Identifier}/policy", UriKind.Relative);
+            Uri requestUri = new Uri($"ResourceRegistry/api/v1/Resource/{resource.Identifier}/policy", UriKind.Relative);
 
             ByteArrayContent fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
             fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("text/xml");
@@ -220,7 +220,7 @@ namespace ResourceRegistryTest
             string fileName = $"{resource.Identifier}_invalid_missing_resourceid.xml";
             string filePath = $"Data/ResourcePolicies/{fileName}";
 
-            Uri requestUri = new Uri($"ResourceRegistry/api/Resource/{resource.Identifier}/policy", UriKind.Relative);
+            Uri requestUri = new Uri($"ResourceRegistry/api/v1/Resource/{resource.Identifier}/policy", UriKind.Relative);
 
             ByteArrayContent fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
             fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("text/xml");
@@ -247,7 +247,7 @@ namespace ResourceRegistryTest
             resource.IsComplete = false;
 
             HttpClient client = SetupUtil.GetTestClient(_factory);
-            string requestUri = "ResourceRegistry/api/Resource/";
+            string requestUri = "ResourceRegistry/api/v1/Resource/";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
             {

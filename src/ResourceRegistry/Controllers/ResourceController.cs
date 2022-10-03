@@ -11,7 +11,7 @@ namespace ResourceRegistry.Controllers
     /// <summary>
     /// Controller responsible for all operations for managing resources in the resource registry
     /// </summary>
-    [Route("ResourceRegistry/api/[controller]")]
+    [Route("ResourceRegistry/api/v1/[controller]")]
     [ApiController]
     public class ResourceController : ControllerBase
     {
