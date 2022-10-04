@@ -1,4 +1,5 @@
-﻿using Altinn.ResourceRegistry.Controllers;
+﻿using Altinn.ResourceRegistry;
+using Altinn.ResourceRegistry.Controllers;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Persistence;
 using Microsoft.AspNetCore.Mvc.Testing;

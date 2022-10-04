@@ -39,6 +39,5 @@ namespace ResourceRegistryTest
             // System.IO.File.WriteAllText("rdf.ttl", responseContent);
             Assert.NotNull(responseContent);
         }
-
     }
 }

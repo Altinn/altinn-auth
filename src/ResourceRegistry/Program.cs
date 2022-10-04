@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Altinn.AccessGroups.Persistance;
 using Altinn.ResourceRegistry.Configuration;
 using Altinn.ResourceRegistry.Core;
+using Altinn.ResourceRegistry.Health;
 using Altinn.ResourceRegistry.Integration.Clients;
 using Altinn.ResourceRegistry.Persistence;
 using Npgsql.Logging;
@@ -22,18 +23,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-ConfigurePostgreSql();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseAuthorization();
-
-app.MapControllers();
+Configure(builder.Configuration);
 
 app.Run();
 
@@ -48,6 +38,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     });
 
     services.AddSingleton(config);
+    services.AddHealthChecks().AddCheck<HealthCheck>("resourceregistry_health_check");
 
     services.AddSingleton<IResourceRegistry, ResourceRegistryService>();
     services.AddSingleton<IResourceRegistryRepository, ResourceRegistryRepository>();
@@ -56,6 +47,29 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
     services.Configure<PostgreSQLSettings>(config.GetSection("PostgreSQLSettings"));
     services.Configure<AzureStorageConfiguration>(config.GetSection("AzureStorageConfiguration"));
+}
+
+void Configure(IConfiguration config)
+{
+    ConfigurePostgreSql();
+
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    app.UseRouting();
+    app.UseAuthentication();
+    app.UseAuthorization();
+    app.UseEndpoints(endpoints =>
+    {
+        endpoints.MapControllers();
+        endpoints.MapHealthChecks("/health");
+    });
+
+    app.MapControllers();
 }
 
 void ConfigurePostgreSql()
