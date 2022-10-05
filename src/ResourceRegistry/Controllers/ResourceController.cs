@@ -55,6 +55,7 @@ namespace ResourceRegistry.Controllers
         [SuppressModelStateInvalidFilter]
         [HttpPost]
         [Produces("application/json")]
+        [Consumes("application/json")]
         public async Task<ActionResult> Post([ValidateNever] ServiceResource serviceResource)
         {
             if (serviceResource.IsComplete.HasValue && serviceResource.IsComplete.Value)
@@ -87,6 +88,7 @@ namespace ResourceRegistry.Controllers
         [SuppressModelStateInvalidFilter]
         [HttpPut]
         [Produces("application/json")]
+        [Consumes("application/json")]
         public async Task<ActionResult> Put(ServiceResource serviceResource)
         {
             if (serviceResource.IsComplete.HasValue && serviceResource.IsComplete.Value)
@@ -163,6 +165,7 @@ namespace ResourceRegistry.Controllers
         /// </summary>
         /// <param name="id">The resource identifier to delete</param>
         [HttpDelete("{id}")]
+        [Produces("application/json")]
         public async void Delete(string id)
         {
             await _resourceRegistry.Delete(id);
