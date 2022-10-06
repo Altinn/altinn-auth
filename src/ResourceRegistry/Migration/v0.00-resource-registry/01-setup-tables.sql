@@ -11,3 +11,10 @@ CREATE TABLE IF NOT EXISTS resourceregistry.resources
     CONSTRAINT resourceregistry_pkey PRIMARY KEY (identifier)
 )
 TABLESPACE pg_default;
+
+-- Enum: resourceregistry.resourcetype
+DO $$ BEGIN
+    CREATE TYPE resourceregistry.resourcetype AS ENUM ('default', 'systemresource', 'altinn2', 'altinn3', 'apischema', 'api');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
