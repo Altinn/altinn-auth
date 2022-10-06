@@ -9,6 +9,7 @@ using Altinn.ResourceRegistry.Integration.Clients;
 using Altinn.ResourceRegistry.Persistence;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using Microsoft.IdentityModel.Logging;
 using Npgsql.Logging;
 using Yuniql.AspNetCore;
 using Yuniql.PostgreSql;
@@ -65,6 +66,22 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 
 void Configure(IConfiguration config)
 {
+    logger.LogInformation("Startup // Configure");
+
+    if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
+    {
+        logger.LogInformation("IsDevelopment || IsStaging");
+
+        app.UseDeveloperExceptionPage();
+
+        // Enable higher level of detail in exceptions related to JWT validation
+        IdentityModelEventSource.ShowPII = true;
+    }
+    else
+    {
+        app.UseExceptionHandler("/resourceregistry/api/v1/error");
+    }
+
     ConfigurePostgreSql();
 
     // Configure the HTTP request pipeline.

@@ -1,6 +1,5 @@
 -- Schema: resourceregistry
-CREATE SCHEMA IF NOT EXISTS resourceregistry
-    AUTHORIZATION postgres;
+CREATE SCHEMA IF NOT EXISTS resourceregistry;
 
 -- Table: resourceregistry.resources
 CREATE TABLE IF NOT EXISTS resourceregistry.resources
