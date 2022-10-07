@@ -185,8 +185,8 @@ async Task ConnectToKeyVaultAndSetApplicationInsights(ConfigurationManager confi
 
         try
         {
-            config.AddAzureKeyVault(
-                 keyVaultSettings.SecretUri, keyVaultSettings.ClientId, keyVaultSettings.ClientSecret);
+            var azureCredentials = new DefaultAzureCredential();
+            config.AddAzureKeyVault(new Uri(keyVaultSettings.SecretUri), azureCredentials);
         }
         catch (Exception vaultException)
         {
