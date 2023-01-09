@@ -48,6 +48,9 @@
     <None Update="Data\ResourcePolicies\altinn_access_management\resourcepolicy.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Data\ResourcePolicies\altinn_access_management_skd.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Data\ResourcePolicies\altinn_access_management_invalid_missing_resourceid.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -61,6 +64,15 @@
 
   <ItemGroup>
     <Folder Include="Data\Policies\" />
+  </ItemGroup>
+	
+  <ItemGroup>
+    <None Update="selfSignedTestCertificate.pfx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="selfSignedTestCertificatePublic.cer">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

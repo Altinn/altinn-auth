@@ -2,9 +2,12 @@
 using Altinn.ResourceRegistry.Controllers;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Persistence;
+using Altinn.ResourceRgistryTest.Tests.Mocks.Authentication;
+using AltinnCore.Authentication.JwtCookie;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using ResourceRegistry.Controllers;
 using ResourceRegistryTest.Mocks;
 using System;
@@ -25,6 +28,7 @@ namespace ResourceRegistryTest.Utils
             {
                 builder.ConfigureTestServices(services =>
                 {
+                    services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
                     services.AddSingleton<IResourceRegistryRepository, RegisterResourceRepositoryMock>();
                     services.AddSingleton<IPolicyRepository, PolicyRepositoryMock>();
                     services.AddSingleton<IPRP, PRPMock>();

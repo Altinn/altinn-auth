@@ -1,7 +1,11 @@
 ﻿using Altinn.ResourceRegistry.Core;
+using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Extensions;
 using Altinn.ResourceRegistry.Core.Models;
+using Altinn.ResourceRegistry.Extensions;
 using Altinn.ResourceRegistry.Models;
+using Altinn.ResourceRegistry.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
@@ -54,6 +58,7 @@ namespace ResourceRegistry.Controllers
         /// <returns>ActionResult describing the result of the operation</returns>
         [SuppressModelStateInvalidFilter]
         [HttpPost]
+        [Authorize(Policy = AuthzConstants.POLICY_SCOPE_RESOURCEREGISTRY_WRITE)]
         [Produces("application/json")]
         [Consumes("application/json")]
         public async Task<ActionResult> Post([ValidateNever] ServiceResource serviceResource)
@@ -75,6 +80,11 @@ namespace ResourceRegistry.Controllers
                 return BadRequest($"Invalid resource identifier. Cannot be empty or contain any of the characters: {string.Join(", ", Path.GetInvalidFileNameChars())}");
             }
 
+            if (!AuthorizationUtil.HasWriteAccess(serviceResource.HasCompetentAuthority?.Organization, User))
+            {
+                return Forbid();
+            }
+
             await _resourceRegistry.CreateResource(serviceResource);
 
             return Created("/ResourceRegistry/api/" + serviceResource.Identifier, null);
@@ -88,6 +98,7 @@ namespace ResourceRegistry.Controllers
         /// <returns>ActionResult describing the result of the operation</returns>
         [SuppressModelStateInvalidFilter]
         [HttpPut("{id}")]
+        [Authorize(Policy = AuthzConstants.POLICY_SCOPE_RESOURCEREGISTRY_WRITE)]
         [Produces("application/json")]
         [Consumes("application/json")]
         public async Task<ActionResult> Put(string id, ServiceResource serviceResource)
@@ -110,6 +121,11 @@ namespace ResourceRegistry.Controllers
                 {
                     return ValidationProblem(ModelState);
                 }
+            }
+
+            if (!AuthorizationUtil.HasWriteAccess(serviceResource.HasCompetentAuthority?.Organization, User))
+            {
+                return Forbid();
             }
 
             await _resourceRegistry.UpdateResource(serviceResource);
@@ -150,6 +166,7 @@ namespace ResourceRegistry.Controllers
         /// <returns>ActionResult describing the result of the operation</returns>
         [HttpPost("{id}/policy")]
         [HttpPut("{id}/policy")]
+        [Authorize(Policy = AuthzConstants.POLICY_SCOPE_RESOURCEREGISTRY_WRITE)]
         public async Task<ActionResult> WritePolicy(string id, IFormFile policyFile)
         {
             if (policyFile == null)
@@ -172,6 +189,11 @@ namespace ResourceRegistry.Controllers
             if (resource == null)
             {
                 return BadRequest("Unknown resource");
+            }
+
+            if (!AuthorizationUtil.HasWriteAccess(resource.HasCompetentAuthority?.Organization, User))
+            {
+                return Forbid();
             }
 
             try
@@ -202,10 +224,21 @@ namespace ResourceRegistry.Controllers
         /// </summary>
         /// <param name="id">The resource identifier to delete</param>
         [HttpDelete("{id}")]
-        [Produces("application/json")]
-        public async void Delete(string id)
+        [Authorize(Policy = AuthzConstants.POLICY_SCOPE_RESOURCEREGISTRY_WRITE)]
+        public async Task<ActionResult> Delete(string id)
         {
+            ServiceResource serviceResource = await _resourceRegistry.GetResource(id);
+            string orgClaim = User.GetOrgNumber();
+            if (orgClaim != null)
+            {
+                if (!AuthorizationUtil.HasWriteAccess(serviceResource.HasCompetentAuthority?.Organization, User))
+                {
+                    return Forbid();
+                }
+            }
+
             await _resourceRegistry.Delete(id);
+            return NoContent();
         }
 
         /// <summary>

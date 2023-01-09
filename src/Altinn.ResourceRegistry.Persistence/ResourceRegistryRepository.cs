@@ -49,7 +49,7 @@ namespace Altinn.ResourceRegistry.Persistence
                 pgcom.Parameters.AddWithValue("_id", resourceSearch.Id != null ? resourceSearch.Id : DBNull.Value);
                 pgcom.Parameters.AddWithValue("_title", resourceSearch.Title != null ? resourceSearch.Title : DBNull.Value);
                 pgcom.Parameters.AddWithValue("_description", resourceSearch.Description != null ? resourceSearch.Description : DBNull.Value);
-                pgcom.Parameters.AddWithValue("_resourcetype", resourceSearch.ResourceType != null ? resourceSearch.ResourceType : DBNull.Value);
+                pgcom.Parameters.AddWithValue("_resourcetype", resourceSearch.ResourceType != null ? resourceSearch.ResourceType.Value.ToString().ToLower() : DBNull.Value);
                 pgcom.Parameters.AddWithValue("_keyword", resourceSearch.Keyword != null ? resourceSearch.Keyword : DBNull.Value);
                 pgcom.Parameters.AddWithValue("_includeexpired", resourceSearch.IncludeExpired);
 
