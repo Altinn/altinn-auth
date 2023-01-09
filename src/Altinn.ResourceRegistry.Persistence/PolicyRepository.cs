@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Altinn.AccessGroups.Persistance;
 using Altinn.ResourceRegistry.Core;
+using Altinn.ResourceRegistry.Core.Extensions;
 using Azure;
 using Azure.Storage;
 using Azure.Storage.Blobs;
@@ -40,33 +41,37 @@ namespace Altinn.ResourceRegistry.Persistence
         }
 
         /// <inheritdoc/>
-        public async Task<Stream> GetPolicyAsync(string filepath)
+        public async Task<Stream> GetPolicyAsync(string resourceId)
         {
-            BlobClient blobClient = CreateBlobClient(filepath);
+            string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
+            BlobClient blobClient = CreateBlobClient(filePath);
 
             return await GetBlobStreamInternal(blobClient);
         }
 
         /// <inheritdoc/>
-        public async Task<Stream> GetPolicyVersionAsync(string filepath, string version)
+        public async Task<Stream> GetPolicyVersionAsync(string resourceId, string version)
         {
-            BlobClient blobClient = CreateBlobClient(filepath).WithVersion(version);
+            string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
+            BlobClient blobClient = CreateBlobClient(filePath).WithVersion(version);
 
             return await GetBlobStreamInternal(blobClient);
         }
 
         /// <inheritdoc/>
-        public async Task<Response<BlobContentInfo>> WritePolicyAsync(string filepath, Stream fileStream)
+        public async Task<Response<BlobContentInfo>> WritePolicyAsync(string resourceId, Stream fileStream)
         {
-            BlobClient blobClient = CreateBlobClient(filepath);
+            string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
+            BlobClient blobClient = CreateBlobClient(filePath);
 
             return await WriteBlobStreamInternal(blobClient, fileStream);
         }
 
         /// <inheritdoc/>
-        public async Task<Response<BlobContentInfo>> WritePolicyConditionallyAsync(string filepath, Stream fileStream, string blobLeaseId)
+        public async Task<Response<BlobContentInfo>> WritePolicyConditionallyAsync(string resourceId, Stream fileStream, string blobLeaseId)
         {
-            BlobClient blobClient = CreateBlobClient(filepath);
+            string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
+            BlobClient blobClient = CreateBlobClient(filePath);
 
             BlobUploadOptions blobUploadOptions = new BlobUploadOptions()
             {
@@ -80,9 +85,10 @@ namespace Altinn.ResourceRegistry.Persistence
         }
 
         /// <inheritdoc/>
-        public async Task<string> TryAcquireBlobLease(string filepath)
+        public async Task<string> TryAcquireBlobLease(string resourceId)
         {
-            BlobClient blobClient = CreateBlobClient(filepath);
+            string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
+            BlobClient blobClient = CreateBlobClient(filePath);
             BlobLeaseClient blobLeaseClient = blobClient.GetBlobLeaseClient();
 
             try
@@ -92,46 +98,49 @@ namespace Altinn.ResourceRegistry.Persistence
             }
             catch (RequestFailedException ex)
             {
-                _logger.LogError(ex, "Failed to acquire blob lease for policy file at {filepath}. RequestFailedException", filepath);
+                _logger.LogError(ex, "Failed to acquire blob lease for policy file at {filepath}. RequestFailedException", filePath);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to acquire blob lease for policy file at {filepath}. Unexpected error", filepath);
+                _logger.LogError(ex, "Failed to acquire blob lease for policy file at {filepath}. Unexpected error", filePath);
             }
 
             return null;
         }
 
         /// <inheritdoc/>
-        public async void ReleaseBlobLease(string filepath, string leaseId)
+        public async void ReleaseBlobLease(string resourceId, string leaseId)
         {
-            BlobClient blobClient = CreateBlobClient(filepath);
+            string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
+            BlobClient blobClient = CreateBlobClient(filePath);
             BlobLeaseClient blobLeaseClient = blobClient.GetBlobLeaseClient(leaseId);
             await blobLeaseClient.ReleaseAsync();
         }
 
         /// <inheritdoc/>
-        public async Task<bool> PolicyExistsAsync(string filepath)
+        public async Task<bool> PolicyExistsAsync(string resourceId)
         {
+            string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
             try
             {
-                BlobClient blobClient = CreateBlobClient(filepath);
+                BlobClient blobClient = CreateBlobClient(filePath);
                 return await blobClient.ExistsAsync();
             }
             catch (RequestFailedException ex)
             {
-                _logger.LogError(ex, "Failed to check if blob exists for policy file at {filepath}. RequestFailedException", filepath);
+                _logger.LogError(ex, "Failed to check if blob exists for policy file at {filepath}. RequestFailedException", filePath);
             }
 
             return false;
         }
 
         /// <inheritdoc/>
-        public async Task<Response> DeletePolicyVersionAsync(string filepath, string version)
+        public async Task<Response> DeletePolicyVersionAsync(string resourceId, string version)
         {
+            string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
             try
             {
-                BlobClient blockBlob = CreateBlobClient(filepath);
+                BlobClient blockBlob = CreateBlobClient(filePath);
 
                 return await blockBlob.WithVersion(version).DeleteAsync();
             }
@@ -139,16 +148,16 @@ namespace Altinn.ResourceRegistry.Persistence
             {
                 if (ex.Status == (int)HttpStatusCode.Forbidden && ex.ErrorCode == "OperationNotAllowedOnRootBlob")
                 {
-                    _logger.LogError(ex, "Failed to delete version {version} of policy file at {filepath}. Not allowed to delete current version.", version, filepath);
+                    _logger.LogError(ex, "Failed to delete version {version} of policy file at {filepath}. Not allowed to delete current version.", version, filePath);
                     throw;
                 }
 
-                _logger.LogError(ex, "Failed to delete version {version} of policy file at {filepath}. RequestFailedException", version, filepath);
+                _logger.LogError(ex, "Failed to delete version {version} of policy file at {filepath}. RequestFailedException", version, filePath);
                 throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to delete version {version} of policy file at {filepath}. Unexpected error", version, filepath);
+                _logger.LogError(ex, "Failed to delete version {version} of policy file at {filepath}. Unexpected error", version, filePath);
                 throw;
             }
         }

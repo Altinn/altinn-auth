@@ -45,6 +45,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Data\ResourcePolicies\altinn_access_management\resourcepolicy.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Data\ResourcePolicies\altinn_access_management_invalid_missing_resourceid.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

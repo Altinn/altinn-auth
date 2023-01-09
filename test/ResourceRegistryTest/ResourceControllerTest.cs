@@ -163,6 +163,24 @@ namespace ResourceRegistryTest
         }
 
         [Fact]
+        public async Task GetResourcePolicy_OK()
+        {
+            ServiceResource resource = new ServiceResource() { Identifier = "altinn_access_management" };
+            string fileName = $"{resource.Identifier}.xml";
+            string filePath = $"Data/ResourcePolicies/{fileName}";
+
+            Uri requestUri = new Uri($"resourceregistry/api/v1/Resource/{resource.Identifier}/policy", UriKind.Relative);
+
+            HttpRequestMessage httpRequestMessage = new() { Method = HttpMethod.Get, RequestUri = requestUri };
+            httpRequestMessage.Headers.Add("ContentType", "multipart/form-data");
+
+            HttpClient client = SetupUtil.GetTestClient(_factory);
+            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        [Fact]
         public async Task UpdateResourcePolicy_OK()
         {
             ServiceResource resource = new ServiceResource() { Identifier = "altinn_access_management" };
@@ -238,6 +256,50 @@ namespace ResourceRegistryTest
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             Assert.Equal("Policy not accepted: Contains rule without reference to registry resource id", responseContent);
+        }
+
+        [Fact]
+        public async Task UpdateResource_Ok()
+        {
+            ServiceResource resource = new ServiceResource() { Identifier = "altinn_access_management" };
+            resource.IsComplete = false;
+
+            HttpClient client = SetupUtil.GetTestClient(_factory);
+            string requestUri = "resourceregistry/api/v1/Resource/altinn_access_management";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Put, requestUri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task UpdateResource_BadRequest()
+        {
+            ServiceResource resource = new ServiceResource() { Identifier = "wrong_non_matcing_id" };
+            resource.IsComplete = false;
+
+            HttpClient client = SetupUtil.GetTestClient(_factory);
+            string requestUri = "resourceregistry/api/v1/Resource/altinn_access_management";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Put, requestUri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
 
         [Fact]

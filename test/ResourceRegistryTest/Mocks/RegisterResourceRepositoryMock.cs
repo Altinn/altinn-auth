@@ -66,7 +66,7 @@ namespace ResourceRegistryTest.Mocks
 
         Task<ServiceResource> IResourceRegistryRepository.UpdateResource(ServiceResource resource)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(resource);
         }
 
         private static string GetResourcePath()

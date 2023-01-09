@@ -19,9 +19,15 @@ namespace ResourceRegistryTest.Mocks
             throw new NotImplementedException();
         }
 
-        public Task<Stream> GetPolicyAsync(string filepath)
+        public async Task<Stream> GetPolicyAsync(string resourceId)
         {
-            throw new NotImplementedException();
+            resourceId = Path.Combine(GetPolicyContainerPath(), resourceId, "resourcepolicy.xml");
+            if (File.Exists(resourceId))
+            {
+                return new FileStream(resourceId, FileMode.Open, FileAccess.Read, FileShare.Read); 
+            }
+
+            return null;
         }
 
         public Task<Stream> GetPolicyVersionAsync(string filepath, string version)
@@ -61,5 +67,12 @@ namespace ResourceRegistryTest.Mocks
         {
             throw new NotImplementedException();
         }
+
+        private static string GetPolicyContainerPath()
+        {
+            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(PolicyRepositoryMock).Assembly.Location).LocalPath);
+            return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "ResourcePolicies");
+        }
+
     }
 }

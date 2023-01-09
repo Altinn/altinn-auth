@@ -83,14 +83,27 @@ namespace ResourceRegistry.Controllers
         /// <summary>
         /// Updates a service resource in the resource registry if it pass all validation checks
         /// </summary>
+        /// <param name="id">Resource ID</param>
         /// <param name="serviceResource">Service resource model for update in the resource registry</param>
         /// <returns>ActionResult describing the result of the operation</returns>
         [SuppressModelStateInvalidFilter]
-        [HttpPut]
+        [HttpPut("{id}")]
         [Produces("application/json")]
         [Consumes("application/json")]
-        public async Task<ActionResult> Put(ServiceResource serviceResource)
+        public async Task<ActionResult> Put(string id, ServiceResource serviceResource)
         {
+            ServiceResource currentResource = await _resourceRegistry.GetResource(id);
+
+            if (currentResource == null)
+            {
+                return NotFound();
+            }
+
+            if (id != serviceResource.Identifier)
+            {
+                return BadRequest("Id in path does not match ID in resource");
+            }
+
             if (serviceResource.IsComplete.HasValue && serviceResource.IsComplete.Value)
             {
                 if (!ModelState.IsValid)
@@ -102,6 +115,30 @@ namespace ResourceRegistry.Controllers
             await _resourceRegistry.UpdateResource(serviceResource);
 
             return Ok();
+        }
+
+        /// <summary>
+        /// Returns the XACML policy for a resource in resource registry.
+        /// </summary>
+        /// <param name="id">Resource Id</param>
+        /// <returns></returns>
+        [HttpGet("{id}/policy")]
+        public async Task<ActionResult> GetPolicy(string id)
+        {
+            ServiceResource resource = await _resourceRegistry.GetResource(id);
+            if (resource == null)
+            {
+                return NotFound("Unable to find resource");
+            }
+
+            Stream dataStream = await _resourceRegistry.GetPolicy(resource.Identifier);
+
+            if (dataStream == null)
+            {
+                return NotFound("Unable to find requested policy");
+            }
+
+            return File(dataStream, "text/xml", "policy.xml");
         }
 
         /// <summary>
