@@ -23,6 +23,10 @@
       <Link>stylecop.json</Link>
     </AdditionalFiles>
   </ItemGroup>
+  
+  <ItemGroup>
+    <Folder Include="Configuration\" />
+  </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <CodeAnalysisRuleSet>..\..\Altinn3.ruleset</CodeAnalysisRuleSet>

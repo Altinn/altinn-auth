@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using AltinnCore.Authentication.Constants;
 using ResourceRegistryTest.Utils;
 
-namespace Altinn.ResourceRgistryTest.Util
+namespace Altinn.ResourceRegistry.Tests.Util
 {
     /// <summary>
     /// Utility class for usefull common operations for setup of authentication tokens for integration tests

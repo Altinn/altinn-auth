@@ -1,13 +1,11 @@
-﻿using System;
+using System;
+
 using AltinnCore.Authentication.JwtCookie;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Protocols;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using ResourceRegistryTest.Mocks.Authentication;
 
-namespace Altinn.ResourceRgistryTest.Tests.Mocks.Authentication
+namespace Altinn.ResourceRegistry.Tests.Mocks
 {
     /// <summary>
     /// Represents a stub for the <see cref="JwtCookiePostConfigureOptions"/> class to be used in integration tests.
@@ -27,15 +25,19 @@ namespace Altinn.ResourceRgistryTest.Tests.Mocks.Authentication
                 options.CookieManager = new ChunkingCookieManager();
             }
 
-            if (!string.IsNullOrEmpty(options.MetadataAddress))
+            options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
             {
-                if (!options.MetadataAddress.EndsWith("/", StringComparison.Ordinal))
-                {
-                    options.MetadataAddress += "/";
-                }
-            }
+                ValidateIssuerSigningKey = false,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                RequireExpirationTime= false,
+                ValidateLifetime= false,
+                ClockSkew = TimeSpan.Zero,
+                RequireSignedTokens = false,
+                TryAllIssuerSigningKeys= false,
+                IssuerSigningKeys = null,
+            };
 
-            options.MetadataAddress += ".well-known/openid-configuration";
             options.ConfigurationManager = new ConfigurationManagerStub();
         }
     }

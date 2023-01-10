@@ -1,15 +1,7 @@
-using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Models;
-using Altinn.ResourceRgistryTest.Tests.Mocks.Authentication;
-using Altinn.ResourceRgistryTest.Util;
-using AltinnCore.Authentication.JwtCookie;
+using Altinn.ResourceRegistry.Tests.Util;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using ResourceRegistry.Controllers;
-using ResourceRegistryTest.Mocks;
 using ResourceRegistryTest.Utils;
 using System;
 using System.Collections.Generic;
@@ -32,7 +24,7 @@ namespace ResourceRegistryTest
         public ResourceControllerTest(CustomWebApplicationFactory<ResourceController> factory)
         {
             _factory = factory;
-            _client = SetupUtil.GetTestClient(_factory); ;
+            _client = SetupUtil.GetTestClient(factory);
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
@@ -76,7 +68,6 @@ namespace ResourceRegistryTest
         [Fact]
         public async Task Search_Get()
         {
-            HttpClient client = SetupUtil.GetTestClient(_factory);
             string requestUri = "resourceregistry/api/v1/Resource/Search?SearchTerm=test";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
@@ -258,7 +249,7 @@ namespace ResourceRegistryTest
             string responseContent = await response.Content.ReadAsStringAsync();
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            Assert.Equal("Policy not accepted: Contains rules for a different registry resource", responseContent.Replace('"', ' ').Trim());
+            Assert.Equal("\"Policy not accepted: Contains rules for a different registry resource\"", responseContent);
         }
 
         [Fact]
@@ -426,7 +417,6 @@ namespace ResourceRegistryTest
             };
             resource.IsComplete = false;
 
-            //HttpClient client = SetupUtil.GetTestClient(_factory);
             string requestUri = "resourceregistry/api/v1/Resource/";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
@@ -526,9 +516,6 @@ namespace ResourceRegistryTest
         [Fact]
         public async Task UpdateResourcePolicy_UnAuthorized()
         {
-            string token = "Unauthorizedtoken";
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
             ServiceResource resource = new ServiceResource() { Identifier = "altinn_access_management" };
             string fileName = $"{resource.Identifier}.xml";
             string filePath = $"Data/ResourcePolicies/{fileName}";
@@ -603,10 +590,7 @@ namespace ResourceRegistryTest
         [Fact]
         public async Task Delete_UnAuthorized_ValidResource_ReturnsUnauthorized()
         {
-            // Arrange            
-            string token = "Unauthorizedtoken";
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
+            // Arrange
             string resourceId = "altinn_access_management_skd";
             string requestUri = $"resourceregistry/api/v1/Resource/{resourceId}";
 

@@ -1,6 +1,7 @@
 ﻿using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Altinn.ResourceRegistry.Controllers
@@ -12,7 +13,6 @@ namespace Altinn.ResourceRegistry.Controllers
     public class ExportController : Controller
     {
         private IResourceRegistry _resourceRegistry;
-        private readonly IHttpContextAccessor _httpContextAccessor;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExportController"/> controller.
