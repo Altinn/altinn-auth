@@ -2,7 +2,7 @@
 using Altinn.Common.Authentication.Models;
 using Microsoft.Extensions.Options;
 
-namespace ResourceRegistryTest.Mocks
+namespace Altinn.ResourceRegistry.Tests.Mocks
 {
     public class OidcProviderPostConfigureSettingsStub : IPostConfigureOptions<OidcProviderSettings>
     {

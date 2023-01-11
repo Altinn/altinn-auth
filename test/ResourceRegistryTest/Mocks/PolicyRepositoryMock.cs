@@ -1,16 +1,13 @@
-﻿using Altinn.ResourceRegistry.Core;
+﻿using System;
+using System.IO;
+using System.Net;
+using System.Threading.Tasks;
+using Altinn.ResourceRegistry.Core;
 using Azure;
 using Azure.Storage.Blobs.Models;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ResourceRegistryTest.Mocks
+namespace Altinn.ResourceRegistry.Tests.Mocks
 {
     public class PolicyRepositoryMock : IPolicyRepository
     {

@@ -1,14 +1,11 @@
-﻿using Altinn.ResourceRegistry.Core;
-using Altinn.ResourceRegistry.Core.Models;
-using Altinn.ResourceRegistry.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Altinn.ResourceRegistry.Core;
+using Altinn.ResourceRegistry.Core.Models;
 
-namespace ResourceRegistryTest.Mocks
+namespace Altinn.ResourceRegistry.Tests.Mocks
 {
     public class RegisterResourceRepositoryMock : IResourceRegistryRepository
     {
@@ -17,9 +14,14 @@ namespace ResourceRegistryTest.Mocks
             return await Task.FromResult<ServiceResource>(null);
         }
 
-        public Task<ServiceResource> DeleteResource(string id)
+        public async Task<ServiceResource> UpdateResource(ServiceResource resource)
         {
-            return GetResource(id);
+            return await Task.FromResult<ServiceResource>(resource);
+        }
+
+        public async Task<ServiceResource> DeleteResource(string id)
+        {
+            return await GetResource(id);
         }
 
         public async Task<ServiceResource> GetResource(string id)
@@ -62,11 +64,6 @@ namespace ResourceRegistryTest.Mocks
         private static string GetResourcePath(string id)
         {
             return Path.Combine(GetResourcePath(), id + ".json");
-        }
-
-        Task<ServiceResource> IResourceRegistryRepository.UpdateResource(ServiceResource resource)
-        {
-            return Task.FromResult(resource);
         }
 
         private static string GetResourcePath()

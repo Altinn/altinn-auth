@@ -1,9 +1,9 @@
 ﻿using System.Data;
+using System.Data.SqlTypes;
 using Altinn.AccessGroups.Persistance;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.Enums;
 using Altinn.ResourceRegistry.Core.Models;
-using Altinn.ResourceRegistry.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
@@ -89,16 +89,15 @@ namespace Altinn.ResourceRegistry.Persistence
                     return GetServiceResource(reader);
                 }
 
-                return null;
+                throw new SqlNullValueException("No result from database");
             }
             catch (Exception e)
             {
-                if (e.Message.Contains("duplicate key value violates unique constraint"))
+                if (!e.Message.Contains("duplicate key value violates unique constraint"))
                 {
-                    return new ServiceResource();
+                    _logger.LogError(e, "Authorization // ResourceRegistryRepository // GetResource // Exception");
                 }
-
-                _logger.LogError(e, "Authorization // ResourceRegistryRepository // GetResource // Exception");
+                
                 throw;
             }
         }
@@ -174,16 +173,15 @@ namespace Altinn.ResourceRegistry.Persistence
                     return GetServiceResource(reader);
                 }
 
-                return null;
+                throw new SqlNullValueException("No result from database");
             }
             catch (Exception e)
             {
-                if (e.Message.Contains("duplicate key value violates unique constraint"))
+                if (!e.Message.Contains("duplicate key value violates unique constraint"))
                 {
-                    return new ServiceResource();
+                    _logger.LogError(e, "Authorization // ResourceRegistryRepository // GetResource // Exception");
                 }
 
-                _logger.LogError(e, "Authorization // ResourceRegistryRepository // GetResource // Exception");
                 throw;
             }
         }

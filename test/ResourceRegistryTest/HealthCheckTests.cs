@@ -3,11 +3,10 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Altinn.ResourceRegistry.Controllers;
 using Microsoft.AspNetCore.TestHost;
-using ResourceRegistryTest;
-using ResourceRegistryTest.Utils;
+using Altinn.ResourceRegistry.Tests.Utils;
 using Xunit;
 
-namespace Altinn.ResourceRegistry
+namespace Altinn.ResourceRegistry.Tests
 {
     public class HealthCheckTests : IClassFixture<CustomWebApplicationFactory<ExportController>>
     {

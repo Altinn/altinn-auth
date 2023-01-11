@@ -1,8 +1,8 @@
-﻿using System.Text.Json.Serialization;
+﻿#nullable enable
+using System.Text.Json.Serialization;
 using Altinn.ResourceRegistry.Core.Enums;
-using Altinn.ResourceRegistry.Core.Models;
 
-namespace Altinn.ResourceRegistry.Models
+namespace Altinn.ResourceRegistry.Core.Models
 {
     /// <summary>
     /// Model describing a complete resource from the resrouce registry
@@ -75,6 +75,16 @@ namespace Altinn.ResourceRegistry.Models
         public bool? IsComplete { get; set; }
 
         /// <summary>
+        /// Is this resource possible to delegate to others or not
+        /// </summary>
+        public bool Delegable { get; set; } = true;
+        
+        /// <summary>
+        /// The visibility of the resource
+        /// </summary>
+        public bool Visible { get; set; } = true; 
+
+        /// <summary>
         /// HasCompetentAuthority
         /// </summary>
         public CompetentAuthority HasCompetentAuthority { get; set; }
@@ -94,5 +104,19 @@ namespace Altinn.ResourceRegistry.Models
         /// </summary>
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public ResourceType ResourceType { get; set; }
+
+        /// <summary>
+        /// The fallback language of the resource
+        /// </summary>
+        public string MainLanguage { get; set; } = "nb";
+
+        /// <summary>
+        /// Writes key information when this object is written to Log.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return $"Identifier: {Identifier}, ResourceType: {ResourceType}";
+        }
     }
 }

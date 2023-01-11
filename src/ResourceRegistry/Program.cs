@@ -1,22 +1,25 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Altinn.AccessGroups.Persistance;
-using Altinn.Common.AccessToken.Configuration;
+using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Common.Authentication.Configuration;
 using Altinn.Common.PEP.Authorization;
 using Altinn.ResourceRegistry.Configuration;
 using Altinn.ResourceRegistry.Core;
+using Altinn.ResourceRegistry.Core.Clients;
+using Altinn.ResourceRegistry.Core.Clients.Interfaces;
+using Altinn.ResourceRegistry.Core.Configuration;
 using Altinn.ResourceRegistry.Core.Constants;
+using Altinn.ResourceRegistry.Core.Services;
+using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Health;
 using Altinn.ResourceRegistry.Integration.Clients;
 using Altinn.ResourceRegistry.Persistence;
-using AltinnCore.Authentication.Constants;
 using AltinnCore.Authentication.JwtCookie;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Logging;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Npgsql.Logging;
 using Swashbuckle.AspNetCore.Filters;
@@ -54,6 +57,7 @@ app.Run();
 
 void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
+    services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
     services.AddControllers().AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.WriteIndented = true;
@@ -70,6 +74,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IPolicyRepository, PolicyRepository>();
     services.AddSingleton<IAuthorizationHandler, ScopeAccessHandler>();
     services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+    services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
 
     services.Configure<OidcProviderSettings>(config.GetSection("OidcProviders"));
     services.Configure<PostgreSQLSettings>(config.GetSection("PostgreSQLSettings"));
@@ -97,6 +102,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         });
         options.OperationFilter<SecurityRequirementsOperationFilter>();
     });
+    services.AddHttpClient<IAccessManagementClient, AccessManagementClient>();
 
     services.AddAuthorization(options =>
     {
@@ -243,7 +249,7 @@ void ConfigureSetupLogging()
         builder
             .AddFilter("Microsoft", LogLevel.Warning)
             .AddFilter("System", LogLevel.Warning)
-            .AddFilter("Altinn.ResourceRegistry.Program", LogLevel.Debug)
+            .AddFilter("Altinn.ResourceRegistryService.Program", LogLevel.Debug)
             .AddConsole();
     });
 

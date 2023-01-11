@@ -1,16 +1,15 @@
-﻿using Altinn.ResourceRegistry.Core;
-using Altinn.ResourceRegistry.Core.Constants;
+﻿using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Extensions;
 using Altinn.ResourceRegistry.Core.Models;
+using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Extensions;
-using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
-namespace ResourceRegistry.Controllers
+namespace Altinn.ResourceRegistry.Controllers
 {
     /// <summary>
     /// Controller responsible for all operations for managing resources in the resource registry
@@ -20,8 +19,6 @@ namespace ResourceRegistry.Controllers
     public class ResourceController : ControllerBase
     {
         private IResourceRegistry _resourceRegistry;
-        private readonly IObjectModelValidator _objectModelValidator;
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<ResourceController> _logger;
 
         /// <summary>
@@ -34,8 +31,6 @@ namespace ResourceRegistry.Controllers
         public ResourceController(IResourceRegistry resourceRegistry, IObjectModelValidator objectModelValidator, IHttpContextAccessor httpContextAccessor, ILogger<ResourceController> logger)
         {
             _resourceRegistry = resourceRegistry;
-            _objectModelValidator = objectModelValidator;
-            _httpContextAccessor = httpContextAccessor;
             _logger = logger;
         }
 
@@ -77,7 +72,8 @@ namespace ResourceRegistry.Controllers
             }
             catch
             {
-                return BadRequest($"Invalid resource identifier. Cannot be empty or contain any of the characters: {string.Join(", ", Path.GetInvalidFileNameChars())}");
+                return BadRequest(
+                    $"Invalid resource identifier. Cannot be empty or contain any of the characters: {string.Join(", ", Path.GetInvalidFileNameChars())}");
             }
 
             if (!AuthorizationUtil.HasWriteAccess(serviceResource.HasCompetentAuthority?.Organization, User))
@@ -85,9 +81,17 @@ namespace ResourceRegistry.Controllers
                 return Forbid();
             }
 
-            await _resourceRegistry.CreateResource(serviceResource);
-
-            return Created("/ResourceRegistry/api/" + serviceResource.Identifier, null);
+            try
+            {
+                await _resourceRegistry.CreateResource(serviceResource);
+                return Created("/resourceregistry/api/v1/resource/" + serviceResource.Identifier, null);
+            }
+            catch (Exception e)
+            {
+                return e.Message.Contains("duplicate key value violates unique constraint")
+                    ? BadRequest($"The Resource already exist: {serviceResource.Identifier}")
+                    : StatusCode(500, e.Message);
+            }
         }
 
         /// <summary>
@@ -128,9 +132,15 @@ namespace ResourceRegistry.Controllers
                 return Forbid();
             }
 
-            await _resourceRegistry.UpdateResource(serviceResource);
-
-            return Ok();
+            try
+            {
+                await _resourceRegistry.UpdateResource(serviceResource);
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return e.Message.Contains("duplicate key value violates unique constraint") ? BadRequest($"The Resource already exist: {serviceResource.Identifier}") : StatusCode(500, e.Message);
+            }
         }
 
         /// <summary>

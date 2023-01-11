@@ -1,5 +1,4 @@
 ﻿using Altinn.ResourceRegistry.Core.Models;
-using Altinn.ResourceRegistry.Models;
 
 namespace Altinn.ResourceRegistry.Core
 {

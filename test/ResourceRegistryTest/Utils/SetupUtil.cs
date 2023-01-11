@@ -1,17 +1,17 @@
-﻿using Altinn.Common.Authentication.Configuration;
+﻿using System.Net.Http;
+
+using Altinn.Common.Authentication.Configuration;
 using Altinn.ResourceRegistry.Controllers;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Tests.Mocks;
+using Altinn.ResourceRegistry.Core.Clients.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using ResourceRegistry.Controllers;
-using ResourceRegistryTest.Mocks;
-using System.Net.Http;
 
-namespace ResourceRegistryTest.Utils
+namespace Altinn.ResourceRegistry.Tests.Utils
 {
     public static class SetupUtil
     {
@@ -27,6 +27,8 @@ namespace ResourceRegistryTest.Utils
                     services.AddSingleton<IPolicyRepository, PolicyRepositoryMock>();
                     services.AddSingleton<IPRP, PRPMock>();
                     services.AddSingleton<IPostConfigureOptions<OidcProviderSettings>, OidcProviderPostConfigureSettingsStub>();
+                    services.AddSingleton<IAccessManagementClient, AccessManagementMock>();
+
                 });
             });
             factory.Server.AllowSynchronousIO = true;

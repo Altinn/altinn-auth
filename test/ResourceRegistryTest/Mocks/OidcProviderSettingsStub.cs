@@ -1,10 +1,10 @@
-﻿using Altinn.Common.Authentication.Configuration;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using Altinn.Common.Authentication.Configuration;
 using Altinn.Common.Authentication.Models;
 using Microsoft.IdentityModel.Protocols;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace ResourceRegistryTest.Mocks
+namespace Altinn.ResourceRegistry.Tests.Mocks
 {
     public class OidcProviderSettingsStub : IConfigurationManager<OidcProviderSettings>
     {

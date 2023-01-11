@@ -1,15 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Altinn.ResourceRegistry.Core;
-using Altinn.ResourceRegistry.Persistence;
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
 
-namespace ResourceRegistryTest
+namespace Altinn.ResourceRegistry.Tests
 {
    
     public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup>

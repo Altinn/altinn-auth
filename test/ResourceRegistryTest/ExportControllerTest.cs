@@ -1,17 +1,10 @@
 using Altinn.ResourceRegistry.Controllers;
-using Altinn.ResourceRegistry.Models;
-using Microsoft.AspNetCore.Mvc;
-using ResourceRegistry.Controllers;
-using ResourceRegistryTest.Utils;
-using System.Collections.Generic;
-using System.Net;
+using Altinn.ResourceRegistry.Tests.Utils;
 using System.Net.Http;
-using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace ResourceRegistryTest
+namespace Altinn.ResourceRegistry.Tests
 {
     public class ExportControllerTest : IClassFixture<CustomWebApplicationFactory<ExportController>>
     {

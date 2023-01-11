@@ -1,12 +1,8 @@
-﻿using Altinn.ResourceRegistry.Core;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.IO;
 using System.Threading.Tasks;
+using Altinn.ResourceRegistry.Core;
 
-namespace ResourceRegistryTest.Mocks
+namespace Altinn.ResourceRegistry.Tests.Mocks
 {
     public class PRPMock : IPRP
     {

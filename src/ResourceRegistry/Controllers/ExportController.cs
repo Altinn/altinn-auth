@@ -1,5 +1,5 @@
-﻿using Altinn.ResourceRegistry.Core;
-using Altinn.ResourceRegistry.Models;
+﻿using Altinn.ResourceRegistry.Core.Models;
+using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

@@ -1,6 +1,8 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
+using NpgsqlTypes;
+
 namespace Altinn.ResourceRegistry.Core.Enums
 {
     /// <summary>
@@ -8,16 +10,13 @@ namespace Altinn.ResourceRegistry.Core.Enums
     /// </summary>
     public enum ResourceType
     {
+        [PgName("default")]
         Default = 0,
-        
-        Systemresource = 1, 
-        
-        Altinn2 = 2,
-        
-        Altinn3 = 3,
-        
-        MaskinportenSchema = 4,
 
-        Api = 5
+        [PgName("systemresource")]
+        Systemresource = 1,
+
+        [PgName("maskinportenschema")]
+        MaskinportenSchema = 2,
     }
 }

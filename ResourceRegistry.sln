@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.ResourceRegistry", "src\ResourceRegistry\Altinn.ResourceRegistry.csproj", "{1CEF3493-0F24-46E8-9BC0-63A213FE6C55}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResourceRegistryTest", "test\ResourceRegistryTest\ResourceRegistryTest.csproj", "{720B753A-28B3-46E1-8C69-7A1EED0C94E5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.ResourceRegistry.Tests", "test\ResourceRegistryTest\Altinn.ResourceRegistry.Tests.csproj", "{720B753A-28B3-46E1-8C69-7A1EED0C94E5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.ResourceRegistry.Core", "src\Altinn.ResourceRegistry.Core\Altinn.ResourceRegistry.Core.csproj", "{2445DE2C-CBD4-4E30-8E35-711CA93362E8}"
 EndProject
