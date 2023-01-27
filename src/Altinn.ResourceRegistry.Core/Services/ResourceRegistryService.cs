@@ -81,9 +81,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         public async Task<bool> StorePolicy(ServiceResource serviceResource, Stream fileStream)
         {
             PolicyHelper.IsValidResourcePolicy(serviceResource, fileStream);
-
-            string filePath = $"{serviceResource.Identifier.AsFilePath()}/resourcepolicy.xml";
-            Response<BlobContentInfo> response = await _policyRepository.WritePolicyAsync(filePath, fileStream);
+            Response<BlobContentInfo> response = await _policyRepository.WritePolicyAsync(serviceResource.Identifier, fileStream);
 
             return response?.GetRawResponse()?.Status == (int)HttpStatusCode.Created;
         }
