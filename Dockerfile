@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:7.0.102-alpine3.16 AS build
+FROM mcr.microsoft.com/dotnet/sdk:7.0.103-alpine3.16 AS build
 WORKDIR /app
 
 
@@ -14,7 +14,7 @@ COPY src ./src
 RUN dotnet publish -c Release -o out ./src/ResourceRegistry/Altinn.ResourceRegistry.csproj
 
 # Build runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:7.0.2-alpine3.16 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:7.0.3-alpine3.16 AS final
 EXPOSE 5100
 WORKDIR /app
 COPY --from=build /app/out .
