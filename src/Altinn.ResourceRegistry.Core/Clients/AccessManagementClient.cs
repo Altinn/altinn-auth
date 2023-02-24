@@ -19,7 +19,7 @@ namespace Altinn.ResourceRegistry.Core.Clients
         private readonly IAccessTokenGenerator _accessTokenGenerator;
         private readonly ILogger<IAccessManagementClient> _logger;
         private readonly PlatformSettings _settings;
-        private const string AccessManagementEndpoint = "resources";
+        private const string AccessManagementEndpoint = "internal/resources";
 
         /// <summary>
         /// Gets an instance of http client from http client factory
@@ -39,7 +39,7 @@ namespace Altinn.ResourceRegistry.Core.Clients
             _logger = logger;
             _settings = platformSettings.Value;
             Client = client;
-            Client.BaseAddress = new Uri(_settings.AccessManagementEndpoint);
+            Client.BaseAddress = new Uri(_settings.ApiAccessManagementEndpoint);
             Client.Timeout = new TimeSpan(0, 0, 30);
             Client.DefaultRequestHeaders.Clear();
             Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));

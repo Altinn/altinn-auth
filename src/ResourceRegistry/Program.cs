@@ -62,7 +62,6 @@ app.Run();
 
 void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
-    services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
     services.AddControllers().AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.WriteIndented = true;
@@ -82,6 +81,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
     services.AddTransient<ISigningCredentialsResolver, SigningCredentialsResolver>();
 
+    services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
     services.Configure<OidcProviderSettings>(config.GetSection("OidcProviders"));
     services.Configure<PostgreSQLSettings>(config.GetSection("PostgreSQLSettings"));
     services.Configure<AzureStorageConfiguration>(config.GetSection("AzureStorageConfiguration"));

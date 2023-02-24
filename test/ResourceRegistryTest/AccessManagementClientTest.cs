@@ -38,7 +38,7 @@ namespace Altinn.ResourceRegistry.Tests
                 List<AccessManagementResource> requestData = new AccessManagementResource
                     {ResourceRegistryId = "test", ResourceType = "testType"}.ElementToList();
 
-                _platformSettings.Value.AccessManagementEndpoint = "http://localhost:5117/accessmanagement/api/v1/internal/";
+                _platformSettings.Value.ApiAccessManagementEndpoint = "http://localhost:5117/accessmanagement/api/v1/internal/";
                 _platformSettings.Value.AccessTokenIssuer = "UnitTest";
 
                 HttpRequestMessage? requestMessage = null;
