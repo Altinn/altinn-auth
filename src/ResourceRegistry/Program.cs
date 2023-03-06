@@ -150,7 +150,7 @@ void Configure(IConfiguration config)
     }
 
     ConfigurePostgreSql();
-
+    
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())
     {
@@ -178,18 +178,9 @@ async Task SetConfigurationProviders(ConfigurationManager config)
 
     config.SetBasePath(basePath);
     string configJsonFile1 = $"{basePath}/altinn-appsettings/altinn-dbsettings-secret.json";
-    string configJsonFile2 = $"{Directory.GetCurrentDirectory()}/appsettings.json";
-
-    if (basePath == "/")
-    {
-        configJsonFile2 = "/app/appsettings.json";
-    }
 
     logger.LogInformation($"Loading configuration file: '{configJsonFile1}'");
     config.AddJsonFile(configJsonFile1, optional: true, reloadOnChange: true);
-
-    logger.LogInformation($"Loading configuration file2: '{configJsonFile2}'");
-    config.AddJsonFile(configJsonFile2, optional: false, reloadOnChange: true);
 
     config.AddEnvironmentVariables();
     config.AddCommandLine(args);
@@ -201,21 +192,25 @@ void ConfigurePostgreSql()
 {
     if (builder.Configuration.GetValue<bool>("PostgreSQLSettings:EnableDBConnection"))
     {
-        NpgsqlLogManager.Provider = new ConsoleLoggingProvider(NpgsqlLogLevel.Trace, true, true);
-
         ConsoleTraceService traceService = new ConsoleTraceService { IsDebugEnabled = true };
 
         string connectionString = string.Format(
             builder.Configuration.GetValue<string>("PostgreSQLSettings:AdminConnectionString"),
             builder.Configuration.GetValue<string>("PostgreSQLSettings:authorizationDbAdminPwd"));
 
+        string workspacePath = Path.Combine(Environment.CurrentDirectory, builder.Configuration.GetValue<string>("PostgreSQLSettings:WorkspacePath"));
+        if (builder.Environment.IsDevelopment())
+        {
+            workspacePath = Path.Combine(Directory.GetParent(Environment.CurrentDirectory).FullName, builder.Configuration.GetValue<string>("PostgreSQLSettings:WorkspacePath"));
+        }
+
         app.UseYuniql(
             new PostgreSqlDataService(traceService),
             new PostgreSqlBulkImportService(traceService),
             traceService,
-            new Yuniql.AspNetCore.Configuration
+            new Configuration
             {
-                Workspace = Path.Combine(Environment.CurrentDirectory, builder.Configuration.GetValue<string>("PostgreSQLSettings:WorkspacePath")),
+                Workspace = workspacePath,
                 ConnectionString = connectionString,
                 IsAutoCreateDatabase = false,
                 IsDebug = true
@@ -275,6 +270,8 @@ void ConfigureSetupLogging()
     });
 
     logger = logFactory.CreateLogger<Program>();
+
+    NpgsqlLogManager.Provider = new ConsoleLoggingProvider(NpgsqlLogLevel.Trace, true, true);
 }
 
 void ConfigureLogging(ILoggingBuilder logging)

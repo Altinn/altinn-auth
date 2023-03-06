@@ -28,10 +28,6 @@
     <ProjectReference Include="..\Altinn.ResourceRegistry.Integration\Altinn.ResourceRegistry.Integration.csproj" />
     <ProjectReference Include="..\Altinn.ResourceRegistry.Persistence\Altinn.ResourceRegistry.Persistence.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Migration\v0.00\" />
-  </ItemGroup>
   
   <ItemGroup Condition="'$(Configuration)'=='Debug'">
      <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.435">
