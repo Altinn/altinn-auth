@@ -81,6 +81,13 @@ namespace Altinn.ResourceRegistry.Controllers
                 return Forbid();
             }
 
+            List<string> scopes = MaskinportenSchemaAuthorizer.GetMaskinportenScopesFromServiceResource(serviceResource);
+
+            if (scopes is { Count: > 0 } && !MaskinportenSchemaAuthorizer.IsAuthorizedForChangeResourceWithScopes(scopes, HttpContext.User, out List<string> forbiddenScopes))
+            {
+                return Unauthorized(MaskinportenSchemaAuthorizer.CreateErrorResponseMissingPrefix(forbiddenScopes));
+            }
+
             try
             {
                 await _resourceRegistry.CreateResource(serviceResource);
@@ -130,6 +137,13 @@ namespace Altinn.ResourceRegistry.Controllers
             if (!AuthorizationUtil.HasWriteAccess(serviceResource.HasCompetentAuthority?.Organization, User))
             {
                 return Forbid();
+            }
+
+            List<string> scopes = MaskinportenSchemaAuthorizer.GetMaskinportenScopesFromServiceResource(serviceResource);
+
+            if (scopes is { Count: > 0 } && !MaskinportenSchemaAuthorizer.IsAuthorizedForChangeResourceWithScopes(scopes, HttpContext.User, out List<string> forbiddenScopes))
+            {
+                return Unauthorized(MaskinportenSchemaAuthorizer.CreateErrorResponseMissingPrefix(forbiddenScopes));
             }
 
             try

@@ -35,5 +35,15 @@ namespace Altinn.ResourceRegistry.Core.Constants
         /// Scope for resource registry admin access
         /// </summary>
         public const string SCOPE_RESOURCEREGISTRY_ADMIN = "altinn:resourceregistry/resource.admin";
+
+        /// <summary>
+        /// Claim for scopes from maskinporten token
+        /// </summary>
+        public const string CLAIM_MASKINPORTEN_SCOPE = "scope";
+
+        /// <summary>
+        /// Claim for consumer prefixes from maskinporten token
+        /// </summary>
+        public const string CLAIM_MASKINPORTEN_CONSUMER_PREFIX = "consumer_prefix";
     }
 }

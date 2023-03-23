@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Altinn.ResourceRegistry.Tests.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Altinn.ResourceRegistry.Controllers;
+using Altinn.ResourceRegistry.Core.Enums;
 using Altinn.ResourceRegistry.Core.Models;
 using Xunit;
 
@@ -121,6 +122,470 @@ namespace Altinn.ResourceRegistry.Tests
             Assert.Equal(8, errordetails.Errors.Count);
         }
 
+        [Fact]
+        public async Task CreateResource_WithAdminScope()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.admin");
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            ServiceResource resource = new ServiceResource()
+            {
+                Identifier = "superdupertjenestene",
+                Title = new Dictionary<string, string>(),
+                Sector = new List<string>(),
+                Status = "Active",
+                Homepage = "www.altinn.no",
+                IsPartOf = "Altinn",
+                Keywords = new List<Keyword>(),
+                Description = new Dictionary<string, string>(),
+                RightDescription = new Dictionary<string, string>(),
+                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+                {
+                    Organization = "974761076",
+                    Orgcode = "skd",
+                },
+                ResourceReferences = new List<ResourceReference>
+                {
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "altinn:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "digdir:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "difi:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "krr:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "test:TestScope"
+                    },
+                }
+
+            };
+            resource.IsComplete = true;
+
+            string requestUri = "resourceregistry/api/v1/Resource/";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await _client.SendAsync(httpRequestMessage);
+
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task CreateResource_WithValidPrefix()
+        {
+            string[] prefixes = { "altinn", "digdir", "difi", "krr", "test", "digdirintern", "idporten", "digitalpostinnbygger", "minid", "move", "difitest"};
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write", prefixes);
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            ServiceResource resource = new ServiceResource()
+            {
+                Identifier = "superdupertjenestene",
+                Title = new Dictionary<string, string>(),
+                Sector = new List<string>(),
+                Status = "Active",
+                Homepage = "www.altinn.no",
+                IsPartOf = "Altinn",
+                Keywords = new List<Keyword>(),
+                Description = new Dictionary<string, string>(),
+                RightDescription = new Dictionary<string, string>(),
+                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+                {
+                    Organization = "974761076",
+                    Orgcode = "skd",
+                },
+                ResourceReferences = new List<ResourceReference>
+                {
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "altinn:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "digdir:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "difi:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "krr:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "test:TestScope"
+                    },
+                }
+
+            };
+            resource.IsComplete = true;
+
+            string requestUri = "resourceregistry/api/v1/Resource/";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await _client.SendAsync(httpRequestMessage);
+
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task CreateResource_WithInvalidPrefix()
+        {
+            string[] prefixes = {"altinn", "digdir"};
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write", prefixes);
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            ServiceResource resource = new ServiceResource()
+            {
+                Identifier = "superdupertjenestene",
+                Title = new Dictionary<string, string>(),
+                Sector = new List<string>(),
+                Status = "Active",
+                Homepage = "www.altinn.no",
+                IsPartOf  = "Altinn",
+                Keywords = new List<Keyword>(),
+                Description = new Dictionary<string, string>(),
+                RightDescription = new Dictionary<string, string>(),
+                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+                {
+                    Organization = "974761076",
+                    Orgcode = "skd",
+                },
+                ResourceReferences = new List<ResourceReference>
+                {
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "altinn:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "digdir:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "difi:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "krr:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "test:TestScope"
+                    },
+                }
+
+            };
+            resource.IsComplete = true;
+
+            string requestUri = "resourceregistry/api/v1/Resource/";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await _client.SendAsync(httpRequestMessage);
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+
+            ValidationProblemDetails? errordetails = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+            Assert.NotNull(errordetails);
+
+            Assert.Equal(1, errordetails.Errors.Count);
+            Assert.Equal(3, errordetails.Errors["InvalidPrefix"].Length);
+        }
+
+        [Fact]
+        public async Task UpdateResource_WithAdminScope()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.admin");
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            ServiceResource resource = new ServiceResource()
+            {
+                Identifier = "altinn_access_management",
+                Title = new Dictionary<string, string>(),
+                Sector = new List<string>(),
+                Status = "Active",
+                Homepage = "www.altinn.no",
+                IsPartOf = "Altinn",
+                Keywords = new List<Keyword>(),
+                Description = new Dictionary<string, string>(),
+                RightDescription = new Dictionary<string, string>(),
+                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+                {
+                    Organization = "974761076",
+                    Orgcode = "skd",
+                },
+                ResourceReferences = new List<ResourceReference>
+                {
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "altinn:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "digdir:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "difi:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "krr:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "test:TestScope"
+                    },
+                }
+
+            };
+            resource.IsComplete = true;
+
+            string requestUri = $"resourceregistry/api/v1/Resource/{resource.Identifier}";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Put, requestUri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await _client.SendAsync(httpRequestMessage);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task UpdateResource_WithValidPrefix()
+        {
+            string[] prefixes = { "altinn", "digdir", "difi", "krr", "test", "digdirintern", "idporten", "digitalpostinnbygger", "minid", "move", "difitest" };
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write", prefixes);
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            ServiceResource resource = new ServiceResource()
+            {
+                Identifier = "altinn_access_management",
+                Title = new Dictionary<string, string>(),
+                Sector = new List<string>(),
+                Status = "Active",
+                Homepage = "www.altinn.no",
+                IsPartOf = "Altinn",
+                Keywords = new List<Keyword>(),
+                Description = new Dictionary<string, string>(),
+                RightDescription = new Dictionary<string, string>(),
+                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+                {
+                    Organization = "974761076",
+                    Orgcode = "skd",
+                },
+                ResourceReferences = new List<ResourceReference>
+                {
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "altinn:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "digdir:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "difi:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "krr:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "test:TestScope"
+                    },
+                }
+
+            };
+            resource.IsComplete = true;
+
+            string requestUri = $"resourceregistry/api/v1/Resource/{resource.Identifier}";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Put, requestUri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await _client.SendAsync(httpRequestMessage);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task UpdateResource_WithInvalidPrefix()
+        {
+            string[] prefixes = { "altinn", "digdir" };
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write", prefixes);
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            ServiceResource resource = new ServiceResource()
+            {
+                Identifier = "altinn_access_management",
+                Title = new Dictionary<string, string>(),
+                Sector = new List<string>(),
+                Status = "Active",
+                Homepage = "www.altinn.no",
+                IsPartOf = "Altinn",
+                Keywords = new List<Keyword>(),
+                Description = new Dictionary<string, string>(),
+                RightDescription = new Dictionary<string, string>(),
+                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+                {
+                    Organization = "974761076",
+                    Orgcode = "skd",
+                },
+                ResourceReferences = new List<ResourceReference>
+                {
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "altinn:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "digdir:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "difi:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "krr:TestScope"
+                    },
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceType = ReferenceType.MaskinportenScope,
+                        Reference = "test:TestScope"
+                    },
+                }
+
+            };
+            resource.IsComplete = true;
+
+            string requestUri = $"resourceregistry/api/v1/Resource/{resource.Identifier}";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Put, requestUri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await _client.SendAsync(httpRequestMessage);
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+
+            ValidationProblemDetails? errordetails = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+            Assert.NotNull(errordetails);
+
+            Assert.Equal(1, errordetails.Errors.Count);
+            Assert.Equal(3, errordetails.Errors["InvalidPrefix"].Length);
+        }
+        
         [Fact]
         public async Task SetResourcePolicy_OK()
         {
