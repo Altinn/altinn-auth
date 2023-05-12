@@ -26,7 +26,7 @@ using Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.OpenApi.Models;
-using Npgsql.Logging;
+using Npgsql;
 using Swashbuckle.AspNetCore.Filters;
 using Yuniql.AspNetCore;
 using Yuniql.PostgreSql;
@@ -271,7 +271,7 @@ void ConfigureSetupLogging()
 
     logger = logFactory.CreateLogger<Program>();
 
-    NpgsqlLogManager.Provider = new ConsoleLoggingProvider(NpgsqlLogLevel.Trace, true, true);
+    NpgsqlLoggingConfiguration.InitializeLogging(logFactory);
 }
 
 void ConfigureLogging(ILoggingBuilder logging)
