@@ -51,5 +51,17 @@ namespace Altinn.ResourceRegistry.Tests.Utils
             factory.Server.AllowSynchronousIO = true;
             return factory.CreateClient();
         }
+
+        public static HttpClient GetTestClient(CustomWebApplicationFactory<ResourceOwnerController> customFactory)
+        {
+            WebApplicationFactory<ResourceOwnerController> factory = customFactory.WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureTestServices(services =>
+                {
+                });
+            });
+            factory.Server.AllowSynchronousIO = true;
+            return factory.CreateClient();
+        }
     }
 }

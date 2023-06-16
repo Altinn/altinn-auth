@@ -82,6 +82,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddTransient<ISigningCredentialsResolver, SigningCredentialsResolver>();
 
     services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
+    services.Configure<ResourceRegistrySettings>(config.GetSection("ResourceRegistrySettings"));
     services.Configure<OidcProviderSettings>(config.GetSection("OidcProviders"));
     services.Configure<PostgreSQLSettings>(config.GetSection("PostgreSQLSettings"));
     services.Configure<AzureStorageConfiguration>(config.GetSection("AzureStorageConfiguration"));
@@ -124,6 +125,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         options.OperationFilter<SecurityRequirementsOperationFilter>();
     });
     services.AddHttpClient<IAccessManagementClient, AccessManagementClient>();
+    services.AddHttpClient<IOrgListClient, OrgListClient>();
 
     services.AddAuthorization(options =>
     {
