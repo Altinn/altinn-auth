@@ -27,5 +27,15 @@ namespace Altinn.ResourceRegistry.Core.Configuration
         /// The headder value to use for AccessToken
         /// </summary>
         public string AccessTokenHeaderId { get; set; } = "PlatformAccessToken";
+
+        /// <summary>
+        /// Uri to Bridge API
+        /// </summary>
+        public string BridgeApiEndpoint { get; set; }
+
+        /// <summary>
+        /// Storage Api
+        /// </summary>
+        public string StorageApiEndpoint { get; set; }
     }
 }

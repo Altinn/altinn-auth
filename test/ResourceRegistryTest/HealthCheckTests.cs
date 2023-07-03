@@ -8,11 +8,11 @@ using Xunit;
 
 namespace Altinn.ResourceRegistry.Tests
 {
-    public class HealthCheckTests : IClassFixture<CustomWebApplicationFactory<ExportController>>
+    public class HealthCheckTests : IClassFixture<CustomWebApplicationFactory<ResourceController>>
     {
-        private readonly CustomWebApplicationFactory<ExportController> _factory;
+        private readonly CustomWebApplicationFactory<ResourceController> _factory;
 
-        public HealthCheckTests(CustomWebApplicationFactory<ExportController> factory)
+        public HealthCheckTests(CustomWebApplicationFactory<ResourceController> factory)
         {
             _factory = factory;
         }

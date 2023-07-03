@@ -6,12 +6,12 @@ using Xunit;
 
 namespace Altinn.ResourceRegistry.Tests
 {
-    public class ExportControllerTest : IClassFixture<CustomWebApplicationFactory<ExportController>>
+    public class ExportControllerTest : IClassFixture<CustomWebApplicationFactory<ResourceController>>
     {
 
-        private readonly CustomWebApplicationFactory<ExportController> _factory;
+        private readonly CustomWebApplicationFactory<ResourceController> _factory;
 
-        public ExportControllerTest(CustomWebApplicationFactory<ExportController> factory)
+        public ExportControllerTest(CustomWebApplicationFactory<ResourceController> factory)
         {
             _factory = factory;
         }
@@ -20,7 +20,7 @@ namespace Altinn.ResourceRegistry.Tests
         public async Task Export_OK()
         {
             HttpClient client = SetupUtil.GetTestClient(_factory);
-            string requestUri = "resourceregistry/api/v1/export";
+            string requestUri = "resourceregistry/api/v1/resource/export";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
             {

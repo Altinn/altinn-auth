@@ -14,6 +14,7 @@ using Altinn.ResourceRegistry.Controllers;
 using Altinn.ResourceRegistry.Core.Enums;
 using Altinn.ResourceRegistry.Core.Models;
 using Xunit;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.ResourceRegistry.Tests
 {
@@ -82,6 +83,24 @@ namespace Altinn.ResourceRegistry.Tests
 
             Assert.NotNull(resource);
             Assert.Equal(3, resource.Count);
+        }
+
+        [Fact]
+        public async Task ResourceList()
+        {
+            string requestUri = "resourceregistry/api/v1/Resource/resourcelist";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
+            {
+            };
+
+            HttpResponseMessage response = await _client.SendAsync(httpRequestMessage);
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+            List<ServiceResource>? resource = JsonSerializer.Deserialize<List<ServiceResource>>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
+
+            Assert.NotNull(resource);
+            Assert.Equal(439, resource.Count);
         }
 
         [Fact]
@@ -1089,6 +1108,25 @@ namespace Altinn.ResourceRegistry.Tests
 
             // Assert
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task Export_OK()
+        {
+            HttpClient client = SetupUtil.GetTestClient(_factory);
+            string requestUri = "resourceregistry/api/v1/Resource/export";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
+            {
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/text");
+
+            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+            Assert.True(response.IsSuccessStatusCode);
+            string responseContent = await response.Content.ReadAsStringAsync();
+            Assert.NotNull(responseContent);
         }
 
     }

@@ -15,6 +15,12 @@ namespace Altinn.ResourceRegistry.Core.Services.Interfaces
         Task<ServiceResource> GetResource(string id);
 
         /// <summary>
+        /// Returns the full list of 
+        /// </summary>
+        /// <returns></returns>
+        Task<List<ServiceResource>> GetResourceList(bool includeApps, bool includeAltinn2);
+
+        /// <summary>
         /// Creates a service resource in the resource registry if it pass all validation checks
         /// </summary>
         /// <param name="serviceResource">Service resource model to create in the resource registry</param>

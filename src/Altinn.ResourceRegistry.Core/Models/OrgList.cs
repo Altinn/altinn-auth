@@ -10,7 +10,6 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// <summary>
         /// Dictionary of orgs
         /// </summary>
-        [JsonProperty("orgs")]
         public Dictionary<string, Org> Orgs { get; set; }
     }
 }

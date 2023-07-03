@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Altinn.ResourceRegistry.Core.Services;
+using Altinn.ResourceRegistry.Core.Services.Interfaces;
 
 namespace Altinn.ResourceRegistry.Tests.Utils
 {
@@ -26,26 +28,11 @@ namespace Altinn.ResourceRegistry.Tests.Utils
                     services.AddSingleton<IResourceRegistryRepository, RegisterResourceRepositoryMock>();
                     services.AddSingleton<IPolicyRepository, PolicyRepositoryMock>();
                     services.AddSingleton<IPRP, PRPMock>();
+                    services.AddSingleton<IAltinn2Services, Altinn2ServicesClientMock>();
+                    services.AddSingleton<IApplications, ApplicationsClientMock>();
                     services.AddSingleton<IPostConfigureOptions<OidcProviderSettings>, OidcProviderPostConfigureSettingsStub>();
                     services.AddSingleton<IAccessManagementClient, AccessManagementMock>();
 
-                });
-            });
-            factory.Server.AllowSynchronousIO = true;
-            return factory.CreateClient();
-        }
-
-
-        public static HttpClient GetTestClient(
-        CustomWebApplicationFactory<ExportController> customFactory)
-        {
-            WebApplicationFactory<ExportController> factory = customFactory.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.AddSingleton<IResourceRegistryRepository, RegisterResourceRepositoryMock>();
-                    services.AddSingleton<IPolicyRepository, PolicyRepositoryMock>();
-                    services.AddSingleton <IPRP, PRPMock>();
                 });
             });
             factory.Server.AllowSynchronousIO = true;

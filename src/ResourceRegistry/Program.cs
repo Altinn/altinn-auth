@@ -4,6 +4,7 @@ using Altinn.AccessGroups.Persistance;
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Common.Authentication.Configuration;
 using Altinn.Common.PEP.Authorization;
+using Altinn.Platform.Events.Formatters;
 using Altinn.ResourceRegistry.Configuration;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.Clients;
@@ -48,7 +49,10 @@ ConfigureLogging(builder.Logging);
 // Add services to the container.
 ConfigureServices(builder.Services, builder.Configuration);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(opts =>
+{
+    opts.OutputFormatters.Insert(0, new RdfOutputFormatter());
+});
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -126,6 +130,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     });
     services.AddHttpClient<IAccessManagementClient, AccessManagementClient>();
     services.AddHttpClient<IOrgListClient, OrgListClient>();
+    services.AddHttpClient<IAltinn2Services, Altinn2ServicesClient>();
+    services.AddHttpClient<IApplications, ApplicationsClient>();
 
     services.AddAuthorization(options =>
     {

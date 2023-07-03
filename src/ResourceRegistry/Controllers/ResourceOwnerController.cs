@@ -1,4 +1,5 @@
-﻿using Altinn.ResourceRegistry.Core.Services;
+﻿using Altinn.ResourceRegistry.Core.Models;
+using Altinn.ResourceRegistry.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Altinn.ResourceRegistry.Controllers
@@ -24,10 +25,11 @@ namespace Altinn.ResourceRegistry.Controllers
         /// Endpoint to get the org list from CDN
         /// </summary>
         /// <returns></returns>
-        [HttpGet]   
-        public async Task<ActionResult> GetAltinnResourceOwners()
+        [HttpGet]
+        [Produces("application/json")]
+        public async Task<OrgList> GetAltinnResourceOwners()
         {
-           return Ok(await _orgListClient.GetOrgList());
+            return await _orgListClient.GetOrgList();
         }
     }
 }
