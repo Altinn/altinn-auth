@@ -53,7 +53,8 @@ namespace Altinn.ResourceRegistry.Controllers
         [Produces("application/xml+rdf")]
         public async Task<string> Export()
         {
-            List<ServiceResource> serviceResources = await _resourceRegistry.Search(null);
+            ResourceSearch search = new ResourceSearch();
+            List<ServiceResource> serviceResources = await _resourceRegistry.Search(search);
             string rdfString = RdfUtil.CreateRdf(serviceResources);
             return rdfString;
         }

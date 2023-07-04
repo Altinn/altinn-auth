@@ -164,6 +164,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         private static ServiceResource MapAltinn2ServiceToServiceResource(AvailableService availableService, string entext, string nntext)
         {
             ServiceResource serviceResource = new ServiceResource();
+            serviceResource.ResourceType = Enums.ResourceType.Altinn2Service;
             serviceResource.Title = new Dictionary<string, string>();
             serviceResource.Title.Add("nb", availableService.ServiceEditionVersionName);
             serviceResource.Title.Add("en", entext);
@@ -177,6 +178,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         private static ServiceResource MapApplicationToApplicationResource(Application application)
         {
             ServiceResource service = new ServiceResource();
+            service.ResourceType = Enums.ResourceType.AltinnApp;
             service.Title = application.Title;
             service.ResourceType = Enums.ResourceType.Default;
             service.ResourceReferences = new List<ResourceReference>();
