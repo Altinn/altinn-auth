@@ -60,9 +60,9 @@ namespace Altinn.ResourceRegistry.Core.Models
         public bool IsPublicService { get; set; }
 
         /// <summary>
-        /// ThematicArea
+        /// ThematicAreas
         /// </summary>
-        public string? ThematicArea { get; set; }
+        public List<string>? ThematicAreas { get; set; }
 
         /// <summary>
         /// ResourceReference

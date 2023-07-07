@@ -73,6 +73,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
 
+    services.AddMemoryCache();
     services.AddSingleton(config);
     services.AddHealthChecks().AddCheck<HealthCheck>("resourceregistry_health_check");
 

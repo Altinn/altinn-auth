@@ -1,5 +1,4 @@
 ﻿using Altinn.ResourceRegistry.Core.Configuration;
-using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Altinn2;
 using Altinn.ResourceRegistry.Core.Services;
 using Microsoft.Extensions.Options;
@@ -13,7 +12,7 @@ namespace Altinn.ResourceRegistry.Integration.Clients
     {
         private readonly HttpClient _client;
         private readonly PlatformSettings _settings;
-        
+
         /// <summary>
         /// Client implemenation
         /// </summary>
@@ -30,7 +29,7 @@ namespace Altinn.ResourceRegistry.Integration.Clients
         public async Task<List<AvailableService>> AvailableServices(int languageId)
         {
             List<AvailableService>? availableServices = null;
-            string availabbleServicePath = _settings.BridgeApiEndpoint + $"metadata/api/availableServices?languageID={languageId}&appTypesToInclude=1&includeExpired=false";
+            string availabbleServicePath = _settings.BridgeApiEndpoint + $"metadata/api/availableServices?languageID={languageId}&appTypesToInclude=0&includeExpired=false";
 
             try
             {

@@ -20,9 +20,9 @@ namespace Altinn.ResourceRegistry.Core.Enums
         MaskinportenSchema = 2,
 
         [PgName("altinn2service")]
-        Altinn2Service = 3,
+        Altinn2Service = 4,
 
         [PgName("altinnapp")]
-        AltinnApp = 4,
+        AltinnApp = 8,
     }
 }
