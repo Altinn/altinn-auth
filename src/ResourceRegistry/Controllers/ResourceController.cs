@@ -121,7 +121,7 @@ namespace Altinn.ResourceRegistry.Controllers
             catch (Exception e)
             {
                 return e.Message.Contains("duplicate key value violates unique constraint")
-                    ? BadRequest($"The Resource already exist: {serviceResource.Identifier}")
+                    ? Conflict($"The Resource already exist: {serviceResource.Identifier}")
                     : StatusCode(500, e.Message);
             }
         }
