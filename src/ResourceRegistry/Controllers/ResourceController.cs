@@ -216,6 +216,7 @@ namespace Altinn.ResourceRegistry.Controllers
         [HttpPost("{id}/policy")]
         [HttpPut("{id}/policy")]
         [Authorize(Policy = AuthzConstants.POLICY_SCOPE_RESOURCEREGISTRY_WRITE)]
+        [Produces("application/json")]
         public async Task<ActionResult> WritePolicy(string id, IFormFile policyFile)
         {
             if (policyFile == null)
