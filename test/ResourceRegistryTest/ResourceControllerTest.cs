@@ -118,7 +118,6 @@ namespace Altinn.ResourceRegistry.Tests
                     Orgcode = "skd",
                 }
             };
-            resource.IsComplete = true;
 
             string requestUri = "resourceregistry/api/v1/Resource/";
 
@@ -138,7 +137,7 @@ namespace Altinn.ResourceRegistry.Tests
 
             Assert.NotNull(errordetails);
 
-            Assert.Equal(8, errordetails.Errors.Count);
+            Assert.Equal(5, errordetails.Errors.Count);
         }
 
         [Fact]
@@ -151,13 +150,13 @@ namespace Altinn.ResourceRegistry.Tests
             {
                 Identifier = "superdupertjenestene",
                 Title = new Dictionary<string, string>(),
-                Sector = new List<string>(),
                 Status = "Active",
                 Homepage = "www.altinn.no",
                 IsPartOf = "Altinn",
                 Keywords = new List<Keyword>(),
                 Description = new Dictionary<string, string>(),
                 RightDescription = new Dictionary<string, string>(),
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
                 HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
                 {
                     Organization = "974761076",
@@ -198,7 +197,6 @@ namespace Altinn.ResourceRegistry.Tests
                 }
 
             };
-            resource.IsComplete = true;
 
             string requestUri = "resourceregistry/api/v1/Resource/";
 
@@ -226,13 +224,13 @@ namespace Altinn.ResourceRegistry.Tests
             {
                 Identifier = "superdupertjenestene",
                 Title = new Dictionary<string, string>(),
-                Sector = new List<string>(),
                 Status = "Active",
                 Homepage = "www.altinn.no",
                 IsPartOf = "Altinn",
                 Keywords = new List<Keyword>(),
                 Description = new Dictionary<string, string>(),
                 RightDescription = new Dictionary<string, string>(),
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
                 HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
                 {
                     Organization = "974761076",
@@ -273,7 +271,6 @@ namespace Altinn.ResourceRegistry.Tests
                 }
 
             };
-            resource.IsComplete = true;
 
             string requestUri = "resourceregistry/api/v1/Resource/";
 
@@ -301,13 +298,13 @@ namespace Altinn.ResourceRegistry.Tests
             {
                 Identifier = "superdupertjenestene",
                 Title = new Dictionary<string, string>(),
-                Sector = new List<string>(),
                 Status = "Active",
                 Homepage = "www.altinn.no",
                 IsPartOf  = "Altinn",
                 Keywords = new List<Keyword>(),
                 Description = new Dictionary<string, string>(),
                 RightDescription = new Dictionary<string, string>(),
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
                 HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
                 {
                     Organization = "974761076",
@@ -348,7 +345,6 @@ namespace Altinn.ResourceRegistry.Tests
                 }
 
             };
-            resource.IsComplete = true;
 
             string requestUri = "resourceregistry/api/v1/Resource/";
 
@@ -383,13 +379,13 @@ namespace Altinn.ResourceRegistry.Tests
             {
                 Identifier = "altinn_access_management",
                 Title = new Dictionary<string, string>(),
-                Sector = new List<string>(),
                 Status = "Active",
                 Homepage = "www.altinn.no",
                 IsPartOf = "Altinn",
                 Keywords = new List<Keyword>(),
                 Description = new Dictionary<string, string>(),
                 RightDescription = new Dictionary<string, string>(),
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
                 HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
                 {
                     Organization = "974761076",
@@ -430,7 +426,6 @@ namespace Altinn.ResourceRegistry.Tests
                 }
 
             };
-            resource.IsComplete = true;
 
             string requestUri = $"resourceregistry/api/v1/Resource/{resource.Identifier}";
 
@@ -458,13 +453,13 @@ namespace Altinn.ResourceRegistry.Tests
             {
                 Identifier = "altinn_access_management",
                 Title = new Dictionary<string, string>(),
-                Sector = new List<string>(),
                 Status = "Active",
                 Homepage = "www.altinn.no",
                 IsPartOf = "Altinn",
                 Keywords = new List<Keyword>(),
                 Description = new Dictionary<string, string>(),
                 RightDescription = new Dictionary<string, string>(),
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
                 HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
                 {
                     Organization = "974761076",
@@ -505,7 +500,6 @@ namespace Altinn.ResourceRegistry.Tests
                 }
 
             };
-            resource.IsComplete = true;
 
             string requestUri = $"resourceregistry/api/v1/Resource/{resource.Identifier}";
 
@@ -533,13 +527,13 @@ namespace Altinn.ResourceRegistry.Tests
             {
                 Identifier = "altinn_access_management",
                 Title = new Dictionary<string, string>(),
-                Sector = new List<string>(),
                 Status = "Active",
                 Homepage = "www.altinn.no",
                 IsPartOf = "Altinn",
                 Keywords = new List<Keyword>(),
                 Description = new Dictionary<string, string>(),
                 RightDescription = new Dictionary<string, string>(),
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
                 HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
                 {
                     Organization = "974761076",
@@ -580,7 +574,6 @@ namespace Altinn.ResourceRegistry.Tests
                 }
 
             };
-            resource.IsComplete = true;
 
             string requestUri = $"resourceregistry/api/v1/Resource/{resource.Identifier}";
 
@@ -771,13 +764,17 @@ namespace Altinn.ResourceRegistry.Tests
             ServiceResource resource = new ServiceResource()
             {
                 Identifier = "altinn_access_management",
+                Title = new Dictionary<string, string>() { { "en", "Maskinporten Scope Delegation" } },
+                Description = new Dictionary<string, string>() { { "nb", "Maskinporten Scope Delegation" } },
+                RightDescription = new Dictionary<string, string> { { "nb", "Access to Maskinporten Scope Delegation" } },
+                Status = "Completed",
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
                 HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
                 {
                     Organization = "974761076",
                     Orgcode = "skd",
                 }
             };
-            resource.IsComplete = false;
 
             HttpClient client = SetupUtil.GetTestClient(_factory);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -801,7 +798,6 @@ namespace Altinn.ResourceRegistry.Tests
         {
             string token = PrincipalUtil.GetOrgToken("digdir", "991825827", "altinn:resourceregistry/resource.write");
             ServiceResource resource = new ServiceResource() { Identifier = "wrong_non_matcing_id" };
-            resource.IsComplete = false;
 
             HttpClient client = SetupUtil.GetTestClient(_factory);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -827,15 +823,19 @@ namespace Altinn.ResourceRegistry.Tests
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             ServiceResource resource = new ServiceResource() 
-            { 
-              Identifier = "superdupertjenestene", 
-              HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+            {
+                Identifier = "superdupertjenestene",
+                Title = new Dictionary<string, string>() { { "en", "Super Duper Tjenestene" } },
+                Description = new Dictionary<string, string>() { { "nb", "Dette er en super duper tjeneste" } },
+                RightDescription = new Dictionary<string, string> { { "nb", "Dette gir mottakere rett til super duper tjeenste" } },
+                Status = "Completed",
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
               {
                   Organization = "974761076",
                   Orgcode = "skd",
               }
             };
-            resource.IsComplete = false;
 
             string requestUri = "resourceregistry/api/v1/Resource/";
 
@@ -861,13 +861,17 @@ namespace Altinn.ResourceRegistry.Tests
             ServiceResource resource = new ServiceResource()
             {
                 Identifier = "superdupertjenestene",
+                Title = new Dictionary<string, string>() { { "en", "Super Duper Tjenestene" } },
+                Description = new Dictionary<string, string>() { { "nb", "Dette er en super duper tjeneste" } },
+                RightDescription = new Dictionary<string, string> { { "nb", "Dette gir mottakere rett til super duper tjeenste" } },
+                Status = "Completed",
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
                 HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
                 {
                     Organization = "991825827",
                     Orgcode = "digdir",
                 }
             };
-            resource.IsComplete = false;
 
             string requestUri = "resourceregistry/api/v1/Resource/";
 
@@ -893,13 +897,17 @@ namespace Altinn.ResourceRegistry.Tests
             ServiceResource resource = new ServiceResource()
             {
                 Identifier = "superdupertjenestene",
+                Title = new Dictionary<string, string>() { { "en", "Super Duper Tjenestene" } },
+                Description = new Dictionary<string, string>() { { "nb", "Dette er en super duper tjeneste"} },
+                RightDescription = new Dictionary<string, string> { { "nb", "Dette gir mottakere rett til super duper tjeenste"} },
+                Status = "Completed",
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
                 HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
                 {
                     Organization = "974761076",
                     Orgcode = "skd",
                 }
             };
-            resource.IsComplete = false;
 
             string requestUri = "resourceregistry/api/v1/Resource/";
 
@@ -922,13 +930,16 @@ namespace Altinn.ResourceRegistry.Tests
             ServiceResource resource = new ServiceResource()
             {
                 Identifier = "superdupertjenestene",
+                Title = new Dictionary<string, string>() { { "en", "Super Duper Tjenestene" } },
+                Description = new Dictionary<string, string>() { { "nb", "Dette er en super duper tjeneste" } },
+                RightDescription = new Dictionary<string, string> { { "nb", "Dette gir mottakere rett til super duper tjeenste" } },
+                Status = "Completed",
                 HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
                 {
                     Organization = "974761076",
                     Orgcode = "skd",
                 }
             };
-            resource.IsComplete = false;
 
             string requestUri = "resourceregistry/api/v1/Resource/";
 

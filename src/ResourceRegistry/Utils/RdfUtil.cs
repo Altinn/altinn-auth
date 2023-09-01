@@ -80,19 +80,6 @@ namespace Altinn.ResourceRegistry.Utils
                             g.Assert(new Triple(serviceNode, keywordPredicate, keywordObject));
                         }
                     }
-
-                    if (serviceResource.Sector != null && serviceResource.Sector.Count > 0)
-                    {
-                        IUriNode sectorPredicate = g.CreateUriNode("cv:sector");
-                        foreach (string sector in serviceResource.Sector)
-                        {
-                            if (!string.IsNullOrEmpty(sector) && Uri.IsWellFormedUriString(sector, UriKind.Absolute))
-                            {
-                                IUriNode sectorObject = g.CreateUriNode(UriFactory.Create(sector));
-                                g.Assert(new Triple(serviceNode, sectorPredicate, sectorObject));
-                            }
-                        }
-                    }
                 }
                 catch (Exception ex)
                 {

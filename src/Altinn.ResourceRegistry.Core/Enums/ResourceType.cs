@@ -24,5 +24,8 @@ namespace Altinn.ResourceRegistry.Core.Enums
 
         [PgName("altinnapp")]
         AltinnApp = 8,
+
+        [PgName("genericaccessresource")]
+        GenericAccessResource = 16,
     }
 }

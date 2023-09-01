@@ -83,14 +83,11 @@ namespace Altinn.ResourceRegistry.Controllers
         [Consumes("application/json")]
         public async Task<ActionResult> Post([ValidateNever] ServiceResource serviceResource)
         {
-            if (serviceResource.IsComplete.HasValue && serviceResource.IsComplete.Value)
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    return ValidationProblem(ModelState);
-                }
+                return ValidationProblem(ModelState);
             }
-
+         
             try
             {
                 serviceResource.Identifier.AsFilePath();
@@ -150,13 +147,10 @@ namespace Altinn.ResourceRegistry.Controllers
             {
                 return BadRequest("Id in path does not match ID in resource");
             }
-
-            if (serviceResource.IsComplete.HasValue && serviceResource.IsComplete.Value)
+           
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    return ValidationProblem(ModelState);
-                }
+                return ValidationProblem(ModelState);
             }
 
             if (!AuthorizationUtil.HasWriteAccess(serviceResource.HasCompetentAuthority?.Organization, User))

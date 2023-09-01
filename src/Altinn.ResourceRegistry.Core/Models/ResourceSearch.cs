@@ -36,10 +36,5 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// Keywords
         /// </summary>
         public string? Keyword { get; set; }
-        
-        /// <summary>
-        /// Include Expired
-        /// </summary>
-        public bool IncludeExpired { get; set; }
     }
 }
