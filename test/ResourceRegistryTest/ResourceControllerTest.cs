@@ -288,6 +288,99 @@ namespace Altinn.ResourceRegistry.Tests
         }
 
         [Fact]
+        public async Task CreateResource_With_APPrefixWithoutRequiredResourceReference()
+        {
+            string[] prefixes = { "altinn", "digdir", "difi", "krr", "test", "digdirintern", "idporten", "digitalpostinnbygger", "minid", "move", "difitest" };
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write", prefixes);
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            ServiceResource resource = new ServiceResource()
+            {
+                Identifier = "app_superdupertjenestene",
+                Title = new Dictionary<string, string>(),
+                Status = "Active",
+                Homepage = "www.altinn.no",
+                IsPartOf = "Altinn",
+                Keywords = new List<Keyword>(),
+                Description = new Dictionary<string, string>(),
+                RightDescription = new Dictionary<string, string>(),
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+                {
+                    Organization = "974761076",
+                    Orgcode = "skd",
+                },
+            };
+
+            string requestUri = "resourceregistry/api/v1/Resource/";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await _client.SendAsync(httpRequestMessage);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task CreateResource_With_APPrefixWithRequiredResourceReference()
+        {
+            string[] prefixes = { "altinn", "digdir", "difi", "krr", "test", "digdirintern", "idporten", "digitalpostinnbygger", "minid", "move", "difitest" };
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write", prefixes);
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            ServiceResource resource = new ServiceResource()
+            {
+                Identifier = "app_superdupertjenestene",
+                Title = new Dictionary<string, string>(),
+                Status = "Active",
+                Homepage = "www.altinn.no",
+                IsPartOf = "Altinn",
+                Keywords = new List<Keyword>(),
+                Description = new Dictionary<string, string>(),
+                RightDescription = new Dictionary<string, string>(),
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+                {
+                    Organization = "974761076",
+                    Orgcode = "skd",
+                },
+                ResourceReferences = new List<ResourceReference>
+                {
+                    new()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn3,
+                        ReferenceType = ReferenceType.ApplicationId,
+                        Reference = "skd/asd"
+                    },
+                   
+                }
+
+            };
+
+            string requestUri = "resourceregistry/api/v1/Resource/";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await _client.SendAsync(httpRequestMessage);
+
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        }
+
+
+
+        [Fact]
         public async Task CreateResource_WithInvalidPrefix()
         {
             string[] prefixes = {"altinn", "digdir"};

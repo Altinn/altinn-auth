@@ -117,6 +117,11 @@ namespace Altinn.ResourceRegistry.Core.Models
         public List<ResourcePartyType>? AvailableForType { get; set; }
 
         /// <summary>
+        /// List of autorizationReference attributes to reference this resource in authorization API
+        /// </summary>
+        public List<AuthorizationReferenceAttribute>? AuthorizationReference { get; set; }
+
+        /// <summary>
         /// Writes key information when this object is written to Log.
         /// </summary>
         /// <returns></returns>
