@@ -15,6 +15,11 @@ namespace Altinn.ResourceRegistry.Core.Models
         public string Identifier { get; set; }
 
         /// <summary>
+        /// The version of the resource
+        /// </summary>
+        public string? Version { get; set; }
+
+        /// <summary>
         /// The title of service
         /// </summary>
         public Dictionary<string, string> Title { get; set; }
