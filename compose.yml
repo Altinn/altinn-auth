@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  db:
+    image: docker.io/postgres:15.4-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=platform_authorization
+      - POSTGRES_PASSWORD=Password
+      - POSTGRES_DB=authorizationdb
+    ports:
+      - "11059:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+
+volumes:
+  db:
+    driver: local
