@@ -12,16 +12,16 @@ namespace Altinn.ResourceRegistry.Core.Services
         /// <summary>
         /// Return a list of Available services from Altinn 2
         /// </summary>
-        public Task<List<AvailableService>> AvailableServices(int languageId);
+        public Task<List<AvailableService>> AvailableServices(int languageId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Create a service resources based on a Altinn 2 service
         /// </summary>
-        Task<ServiceResource> GetServiceResourceFromService(string serviceCode, int serviceEditionCode);
+        Task<ServiceResource> GetServiceResourceFromService(string serviceCode, int serviceEditionCode, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// GEts the xacml policy for a service
         /// </summary>
-        Task<XacmlPolicy> GetXacmlPolicy(string serviceCode, int serviceEditionCode, string identifier);
+        Task<XacmlPolicy> GetXacmlPolicy(string serviceCode, int serviceEditionCode, string identifier, CancellationToken cancellationToken = default);
     }
 }

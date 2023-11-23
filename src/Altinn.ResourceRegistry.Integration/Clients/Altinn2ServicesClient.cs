@@ -1,4 +1,5 @@
-﻿using System.Xml;
+﻿using System.Text.Json;
+using System.Xml;
 using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.ResourceRegistry.Core.Configuration;
@@ -14,6 +15,10 @@ namespace Altinn.ResourceRegistry.Integration.Clients
     /// </summary>
     public class Altinn2ServicesClient : IAltinn2Services
     {
+        private static readonly JsonSerializerOptions SerializerOptions = new()
+        {
+        };
+
         private readonly HttpClient _client;
         private readonly PlatformSettings _settings;
 
@@ -27,19 +32,19 @@ namespace Altinn.ResourceRegistry.Integration.Clients
         }
 
         /// <inheritdoc/>
-        public async Task<List<AvailableService>?> AvailableServices(int languageId)
+        public async Task<List<AvailableService>?> AvailableServices(int languageId, CancellationToken cancellationToken = default)
         {
             List<AvailableService>? availableServices = null;
             string availabbleServicePath = _settings.BridgeApiEndpoint + $"metadata/api/availableServices?languageID={languageId}&appTypesToInclude=0&includeExpired=false";
 
             try
             {
-                HttpResponseMessage response = await _client.GetAsync(availabbleServicePath);
+                HttpResponseMessage response = await _client.GetAsync(availabbleServicePath, cancellationToken);
                 
-                string availableServiceString = await response.Content.ReadAsStringAsync();
+                string availableServiceString = await response.Content.ReadAsStringAsync(cancellationToken);
                 if (!string.IsNullOrEmpty(availableServiceString))
                 {
-                    availableServices = System.Text.Json.JsonSerializer.Deserialize<List<AvailableService>>(availableServiceString, new System.Text.Json.JsonSerializerOptions());
+                    availableServices = JsonSerializer.Deserialize<List<AvailableService>>(availableServiceString, SerializerOptions);
                 }
 
                 return availableServices;
@@ -51,34 +56,34 @@ namespace Altinn.ResourceRegistry.Integration.Clients
         }
 
         /// <inheritdoc/>
-        public async Task<ServiceResource?> GetServiceResourceFromService(string serviceCode, int serviceEditionCode)
+        public async Task<ServiceResource?> GetServiceResourceFromService(string serviceCode, int serviceEditionCode, CancellationToken cancellationToken = default)
         {
             string bridgeBaseUrl = _settings.BridgeApiEndpoint;
             string url = $"{bridgeBaseUrl}metadata/api/resourceregisterresource?serviceCode={serviceCode}&serviceEditionCode={serviceEditionCode}";
 
-            HttpResponseMessage response = await _client.GetAsync(url);
+            HttpResponseMessage response = await _client.GetAsync(url, cancellationToken);
             response.EnsureSuccessStatusCode();
 
-            string contentString = await response.Content.ReadAsStringAsync();
+            string contentString = await response.Content.ReadAsStringAsync(cancellationToken);
             if (string.IsNullOrEmpty(contentString))
             {
                 return null;
             }
 
-            ServiceResource? serviceResource = System.Text.Json.JsonSerializer.Deserialize<ServiceResource>(contentString);
+            ServiceResource? serviceResource = JsonSerializer.Deserialize<ServiceResource>(contentString, SerializerOptions);
             return serviceResource;
         }
 
         /// <inheritdoc/>
-        public async Task<XacmlPolicy?> GetXacmlPolicy(string serviceCode, int serviceEditionCode, string identifier)
+        public async Task<XacmlPolicy?> GetXacmlPolicy(string serviceCode, int serviceEditionCode, string identifier, CancellationToken cancellationToken = default)
         {
             string bridgeBaseUrl = _settings.BridgeApiEndpoint;
             string url = $"{bridgeBaseUrl}authorization/api/resourcepolicyfile?serviceCode={serviceCode}&serviceEditionCode={serviceEditionCode}&identifier={identifier}";
 
-            HttpResponseMessage response = await _client.GetAsync(url);
+            HttpResponseMessage response = await _client.GetAsync(url, cancellationToken);
             response.EnsureSuccessStatusCode();
 
-            string contentString = await response.Content.ReadAsStringAsync();
+            string contentString = await response.Content.ReadAsStringAsync(cancellationToken);
             if (string.IsNullOrEmpty(contentString))
             {
                 return null;

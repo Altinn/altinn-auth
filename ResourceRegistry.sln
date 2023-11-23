@@ -3,6 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F8341BDC-AFD6-4940-BBCF-3479AB059851}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1C641B54-56A0-476C-A207-23E4C326BC17}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{BE70AAFA-E0AB-4EEC-897E-4B311939CA9A}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.ResourceRegistry", "src\ResourceRegistry\Altinn.ResourceRegistry.csproj", "{1CEF3493-0F24-46E8-9BC0-63A213FE6C55}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.ResourceRegistry.Tests", "test\ResourceRegistryTest\Altinn.ResourceRegistry.Tests.csproj", "{720B753A-28B3-46E1-8C69-7A1EED0C94E5}"
@@ -11,7 +20,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.ResourceRegistry.Cor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.ResourceRegistry.Persistence", "src\Altinn.ResourceRegistry.Persistence\Altinn.ResourceRegistry.Persistence.csproj", "{1AE36D08-7DE9-41A7-8306-0696F3BF2AC6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.ResourceRegistry.Integration", "src\Altinn.ResourceRegistry.Integration\Altinn.ResourceRegistry.Integration.csproj", "{28B0545F-050F-41C2-AA02-214C96A01AD0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.ResourceRegistry.Integration", "src\Altinn.ResourceRegistry.Integration\Altinn.ResourceRegistry.Integration.csproj", "{28B0545F-050F-41C2-AA02-214C96A01AD0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -42,6 +51,13 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1CEF3493-0F24-46E8-9BC0-63A213FE6C55} = {1C641B54-56A0-476C-A207-23E4C326BC17}
+		{720B753A-28B3-46E1-8C69-7A1EED0C94E5} = {BE70AAFA-E0AB-4EEC-897E-4B311939CA9A}
+		{2445DE2C-CBD4-4E30-8E35-711CA93362E8} = {1C641B54-56A0-476C-A207-23E4C326BC17}
+		{1AE36D08-7DE9-41A7-8306-0696F3BF2AC6} = {1C641B54-56A0-476C-A207-23E4C326BC17}
+		{28B0545F-050F-41C2-AA02-214C96A01AD0} = {1C641B54-56A0-476C-A207-23E4C326BC17}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9933806A-F446-4097-BA19-B947F2240FF2}

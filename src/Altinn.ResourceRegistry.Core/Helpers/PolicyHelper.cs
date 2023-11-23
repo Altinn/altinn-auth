@@ -1,9 +1,11 @@
+using System.Buffers;
 using System.Xml;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Models;
+using Nerdbank.Streams;
 using static Altinn.ResourceRegistry.Core.Constants.AltinnXacmlConstants;
 
 namespace Altinn.ResourceRegistry.Core.Helpers
@@ -17,11 +19,10 @@ namespace Altinn.ResourceRegistry.Core.Helpers
         /// Validates the content of Xacml policy file stream, for any rules not for the given resource
         /// </summary>
         /// <param name="serviceResources">The resource from the registry</param>
-        /// <param name="policyFileStream">The xacml policy file stream</param>
-        public static void IsValidResourcePolicy(ServiceResource serviceResources, Stream policyFileStream)
+        /// <param name="policyFileData">The xacml policy file stream</param>
+        public static void IsValidResourcePolicy(ServiceResource serviceResources, ReadOnlySequence<byte> policyFileData)
         {
-            XacmlPolicy policy = ParsePolicy(policyFileStream);
-            policyFileStream.Position = 0;
+            XacmlPolicy policy = ParsePolicy(policyFileData);
 
             foreach (XacmlRule policyRule in policy.Rules)
             {
@@ -74,18 +75,14 @@ namespace Altinn.ResourceRegistry.Core.Helpers
         /// <summary>
         /// Takes the file IO stream and parses the policy file to a XacmlPolicy <see cref="XacmlPolicy"/>
         /// </summary>
-        /// <param name="stream">The file IO stream</param>
+        /// <param name="buffer">The buffer containing the xacml policy in xml format</param>
         /// <returns>XacmlPolicy</returns>
-        public static XacmlPolicy ParsePolicy(Stream stream)
+        public static XacmlPolicy ParsePolicy(ReadOnlySequence<byte> buffer)
         {
-            stream.Position = 0;
-            XacmlPolicy policy;
-            using (XmlReader reader = XmlReader.Create(stream))
-            {
-                policy = XacmlParser.ParseXacmlPolicy(reader);
-            }
+            using var stream = buffer.AsStream();
+            using XmlReader reader = XmlReader.Create(stream);
 
-            return policy;
+            return XacmlParser.ParseXacmlPolicy(reader);
         }
 
         /// <summary>

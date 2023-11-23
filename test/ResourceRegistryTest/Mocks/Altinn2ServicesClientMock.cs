@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 
@@ -18,7 +19,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
 {
     public class Altinn2ServicesClientMock : IAltinn2Services
     {
-        public async Task<List<AvailableService>> AvailableServices(int languageId)
+        public async Task<List<AvailableService>> AvailableServices(int languageId, CancellationToken cancellationToken)
         {
             string availableServiceFilePath = Path.Combine(GetAltinn2TestDatafolder(), $"availableServices{languageId}.json");
 
@@ -26,7 +27,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
 
             if (File.Exists(availableServiceFilePath))
             {
-                string content = await File.ReadAllTextAsync(availableServiceFilePath);
+                string content = await File.ReadAllTextAsync(availableServiceFilePath, cancellationToken);
                 if (!string.IsNullOrEmpty(content))
                 {
                     availableServices = System.Text.Json.JsonSerializer.Deserialize<List<AvailableService>>(content, new System.Text.Json.JsonSerializerOptions());
@@ -43,9 +44,9 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             throw new FileNotFoundException("Could not find " + availableServiceFilePath);
         }
 
-        public async Task<ServiceResource> GetServiceResourceFromService(string serviceCode, int serviceEditionCode)
+        public async Task<ServiceResource> GetServiceResourceFromService(string serviceCode, int serviceEditionCode, CancellationToken cancellationToken)
         {
-            List<AvailableService> services = await AvailableServices(1044);
+            List<AvailableService> services = await AvailableServices(1044, cancellationToken);
             AvailableService? service = services.FirstOrDefault(r=> r.ExternalServiceCode == serviceCode);
 
             if(service == null) 
@@ -59,7 +60,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             return res;
         }
 
-        public Task<XacmlPolicy> GetXacmlPolicy(string serviceCode, int serviceEditionCode, string identifier)
+        public Task<XacmlPolicy> GetXacmlPolicy(string serviceCode, int serviceEditionCode, string identifier, CancellationToken cancellationToken)
         {
             string resourceId = Path.Combine(GetPolicyContainerPath(), "altinn_access_management", "resourcepolicy.xml");
             if (File.Exists(resourceId))

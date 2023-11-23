@@ -10,7 +10,8 @@ namespace Altinn.ResourceRegistry.Core.Services
         /// <summary>
         /// Returns a list of orga
         /// </summary>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns></returns>
-        public Task<OrgList> GetOrgList();
+        public Task<OrgList> GetOrgList(CancellationToken cancellationToken = default);
     }
 }

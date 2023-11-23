@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Nerdbank.Streams;
 
 namespace Altinn.ResourceRegistry.Controllers
 {
@@ -26,10 +27,10 @@ namespace Altinn.ResourceRegistry.Controllers
         /// Initializes a new instance of the <see cref="ResourceController"/> controller.
         /// </summary>
         /// <param name="resourceRegistry">Service implementation for operations on resources in the resource registry</param>
-        /// <param name="objectModelValidator">Object model validator</param>
-        /// <param name="httpContextAccessor">Http context accessor</param>
         /// <param name="logger">Logger</param>
-        public ResourceController(IResourceRegistry resourceRegistry, IObjectModelValidator objectModelValidator, IHttpContextAccessor httpContextAccessor, ILogger<ResourceController> logger)
+        public ResourceController(
+            IResourceRegistry resourceRegistry,
+            ILogger<ResourceController> logger)
         {
             _resourceRegistry = resourceRegistry;
             _logger = logger;
@@ -38,24 +39,26 @@ namespace Altinn.ResourceRegistry.Controllers
         /// <summary>
         /// List of all resources
         /// </summary>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns></returns>
         [HttpGet("resourcelist")]
         [Produces("application/json")]
-        public async Task<List<ServiceResource>> ResourceList()
+        public async Task<List<ServiceResource>> ResourceList(CancellationToken cancellationToken)
         {
-            return await _resourceRegistry.GetResourceList(true, true);
+            return await _resourceRegistry.GetResourceList(includeApps: true, includeAltinn2: true, cancellationToken);
         }
 
         /// <summary>
         /// List of all resources
         /// </summary>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns></returns>
         [HttpGet("export")]
         [Produces("application/xml+rdf")]
-        public async Task<string> Export()
+        public async Task<string> Export(CancellationToken cancellationToken)
         {
             ResourceSearch search = new ResourceSearch();
-            List<ServiceResource> serviceResources = await _resourceRegistry.Search(search);
+            List<ServiceResource> serviceResources = await _resourceRegistry.Search(search, cancellationToken);
             string rdfString = RdfUtil.CreateRdf(serviceResources);
             return rdfString;
         }
@@ -64,25 +67,27 @@ namespace Altinn.ResourceRegistry.Controllers
         /// Gets a single resource by its resource identifier if it exists in the resource registry
         /// </summary>
         /// <param name="id">The resource identifier to retrieve</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns>ServiceResource</returns>
         [HttpGet("{id}")]
         [Produces("application/json")]
-        public async Task<ServiceResource> Get(string id)
+        public async Task<ServiceResource> Get(string id, CancellationToken cancellationToken)
         {
-            return await _resourceRegistry.GetResource(id);
+            return await _resourceRegistry.GetResource(id, cancellationToken);
         }
 
         /// <summary>
         /// Creates a service resource in the resource registry if it pass all validation checks
         /// </summary>
         /// <param name="serviceResource">Service resource model to create in the resource registry</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns>ActionResult describing the result of the operation</returns>
         [SuppressModelStateInvalidFilter]
         [HttpPost]
         [Authorize(Policy = AuthzConstants.POLICY_SCOPE_RESOURCEREGISTRY_WRITE)]
         [Produces("application/json")]
         [Consumes("application/json")]
-        public async Task<ActionResult> Post([ValidateNever] ServiceResource serviceResource)
+        public async Task<ActionResult> Post([ValidateNever] ServiceResource serviceResource, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -132,7 +137,7 @@ namespace Altinn.ResourceRegistry.Controllers
 
             try
             {
-                await _resourceRegistry.CreateResource(serviceResource);
+                await _resourceRegistry.CreateResource(serviceResource, cancellationToken);
                 return Created("/resourceregistry/api/v1/resource/" + serviceResource.Identifier, null);
             }
             catch (Exception e)
@@ -148,15 +153,16 @@ namespace Altinn.ResourceRegistry.Controllers
         /// </summary>
         /// <param name="id">Resource ID</param>
         /// <param name="serviceResource">Service resource model for update in the resource registry</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns>ActionResult describing the result of the operation</returns>
         [SuppressModelStateInvalidFilter]
         [HttpPut("{id}")]
         [Authorize(Policy = AuthzConstants.POLICY_SCOPE_RESOURCEREGISTRY_WRITE)]
         [Produces("application/json")]
         [Consumes("application/json")]
-        public async Task<ActionResult> Put(string id, ServiceResource serviceResource)
+        public async Task<ActionResult> Put(string id, ServiceResource serviceResource, CancellationToken cancellationToken)
         {
-            ServiceResource currentResource = await _resourceRegistry.GetResource(id);
+            ServiceResource currentResource = await _resourceRegistry.GetResource(id, cancellationToken);
 
             if (currentResource == null)
             {
@@ -206,7 +212,7 @@ namespace Altinn.ResourceRegistry.Controllers
 
             try
             {
-                await _resourceRegistry.UpdateResource(serviceResource);
+                await _resourceRegistry.UpdateResource(serviceResource, cancellationToken);
                 return Ok();
             }
             catch (Exception e)
@@ -219,17 +225,18 @@ namespace Altinn.ResourceRegistry.Controllers
         /// Returns the XACML policy for a resource in resource registry.
         /// </summary>
         /// <param name="id">Resource Id</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns></returns>
         [HttpGet("{id}/policy")]
-        public async Task<ActionResult> GetPolicy(string id)
+        public async Task<ActionResult> GetPolicy(string id, CancellationToken cancellationToken)
         {
-            ServiceResource resource = await _resourceRegistry.GetResource(id);
+            ServiceResource resource = await _resourceRegistry.GetResource(id, cancellationToken);
             if (resource == null)
             {
                 return NotFound("Unable to find resource");
             }
 
-            Stream dataStream = await _resourceRegistry.GetPolicy(resource.Identifier);
+            Stream dataStream = await _resourceRegistry.GetPolicy(resource.Identifier, cancellationToken);
 
             if (dataStream == null)
             {
@@ -245,12 +252,13 @@ namespace Altinn.ResourceRegistry.Controllers
         /// </summary>
         /// <param name="id">The resource identifier to store the policy for</param>
         /// <param name="policyFile">The XACML policy file</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns>ActionResult describing the result of the operation</returns>
         [HttpPost("{id}/policy")]
         [HttpPut("{id}/policy")]
         [Authorize(Policy = AuthzConstants.POLICY_SCOPE_RESOURCEREGISTRY_WRITE)]
         [Produces("application/json")]
-        public async Task<ActionResult> WritePolicy(string id, IFormFile policyFile)
+        public async Task<ActionResult> WritePolicy(string id, IFormFile policyFile, CancellationToken cancellationToken)
         {
             if (policyFile == null)
             {
@@ -268,7 +276,7 @@ namespace Altinn.ResourceRegistry.Controllers
                 return BadRequest("Unknown resource");
             }
 
-            ServiceResource resource = await _resourceRegistry.GetResource(id);
+            ServiceResource resource = await _resourceRegistry.GetResource(id, cancellationToken);
             if (resource == null)
             {
                 return BadRequest("Unknown resource");
@@ -281,7 +289,8 @@ namespace Altinn.ResourceRegistry.Controllers
 
             try
             {
-                bool successfullyStored = await _resourceRegistry.StorePolicy(resource, fileStream);
+                using var policyFileContent = await fileStream.ReadToSequenceAsync(cancellationToken);
+                bool successfullyStored = await _resourceRegistry.StorePolicy(resource, policyFileContent.AsReadOnlySequence, cancellationToken);
                
                 if (successfullyStored)
                 {
@@ -306,11 +315,12 @@ namespace Altinn.ResourceRegistry.Controllers
         /// Deletes a resource from the resource registry
         /// </summary>
         /// <param name="id">The resource identifier to delete</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         [HttpDelete("{id}")]
         [Authorize(Policy = AuthzConstants.POLICY_SCOPE_RESOURCEREGISTRY_WRITE)]
-        public async Task<ActionResult> Delete(string id)
+        public async Task<ActionResult> Delete(string id, CancellationToken cancellationToken)
         {
-            ServiceResource serviceResource = await _resourceRegistry.GetResource(id);
+            ServiceResource serviceResource = await _resourceRegistry.GetResource(id, cancellationToken);
             string orgClaim = User.GetOrgNumber();
             if (orgClaim != null)
             {
@@ -320,7 +330,7 @@ namespace Altinn.ResourceRegistry.Controllers
                 }
             }
 
-            await _resourceRegistry.Delete(id);
+            await _resourceRegistry.Delete(id, cancellationToken);
             return NoContent();
         }
 
@@ -328,12 +338,13 @@ namespace Altinn.ResourceRegistry.Controllers
         /// Allows for searching for resources in the resource registry
         /// </summary>
         /// <param name="search">The search model defining the search filter criterias</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns>A list of service resources found to match the search criterias</returns>
         [HttpGet("Search")]
         [Produces("application/json")]
-        public async Task<List<ServiceResource>> Search([FromQuery] ResourceSearch search)
+        public async Task<List<ServiceResource>> Search([FromQuery] ResourceSearch search, CancellationToken cancellationToken)
         {
-            return await _resourceRegistry.Search(search);
+            return await _resourceRegistry.Search(search, cancellationToken);
         }
      }
 

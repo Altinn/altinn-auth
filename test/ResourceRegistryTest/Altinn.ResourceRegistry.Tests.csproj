@@ -58,6 +58,10 @@
     <Folder Include="Data\Altinn3Storage\" />
     <Folder Include="Data\Policies\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
 	
   <ItemGroup>
     <None Update="selfSignedTestCertificate.pfx">

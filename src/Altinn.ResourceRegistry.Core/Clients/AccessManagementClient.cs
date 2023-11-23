@@ -46,11 +46,12 @@ namespace Altinn.ResourceRegistry.Core.Clients
         }
 
         /// <summary>
-        /// Posts a list of delegation events to the Altinn Bridge API endpoint
+        /// Posts a list of delegation events to the Altinn Access Management API endpoint
         /// </summary>
         /// <param name="resources">A list of resources to add to Access Management</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns>A HTTP response message</returns>
-        public async Task<HttpResponseMessage> AddResourceToAccessManagement(List<AccessManagementResource> resources)
+        public async Task<HttpResponseMessage> AddResourceToAccessManagement(List<AccessManagementResource> resources, CancellationToken cancellationToken = default)
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, AccessManagementEndpoint)
             {
@@ -59,16 +60,7 @@ namespace Altinn.ResourceRegistry.Core.Clients
             
             request.Headers.Add(_settings.AccessTokenHeaderId, _accessTokenGenerator.GenerateAccessToken(_settings.AccessTokenIssuer, _settings.AccessTokenApp));
 
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug(
-                    "AccessManagementClient posting resource list to {url} with token {token} and body {body}",
-                    request.RequestUri,
-                    request.Headers.GetValues(_settings.AccessTokenHeaderId).FirstOrDefault(),
-                    await request.Content.ReadAsStringAsync());
-            }
-
-            return await Client.SendAsync(request);
+            return await Client.SendAsync(request, cancellationToken);
         }
     }
 }

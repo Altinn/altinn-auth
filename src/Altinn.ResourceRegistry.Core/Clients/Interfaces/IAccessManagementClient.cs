@@ -11,7 +11,8 @@ namespace Altinn.ResourceRegistry.Core.Clients.Interfaces
         /// Adds a resource to Access Management
         /// </summary>
         /// <param name="resources">input to store in Accerss Management</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns>The http response</returns>
-        Task<HttpResponseMessage> AddResourceToAccessManagement(List<AccessManagementResource> resources);
+        Task<HttpResponseMessage> AddResourceToAccessManagement(List<AccessManagementResource> resources, CancellationToken cancellationToken = default);
     }
 }

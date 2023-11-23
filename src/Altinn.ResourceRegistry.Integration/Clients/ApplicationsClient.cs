@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Net.Http.Json;
+using System.Text.Json;
 using Altinn.Platform.Storage.Interface.Models;
 using Altinn.ResourceRegistry.Core.Configuration;
-using Altinn.ResourceRegistry.Core.Models.Altinn2;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Microsoft.Extensions.Options;
 
@@ -17,6 +12,11 @@ namespace Altinn.ResourceRegistry.Integration.Clients
     /// </summary>
     public class ApplicationsClient: IApplications
     {
+        private static readonly JsonSerializerOptions SerializerOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
+
         private readonly HttpClient _client;
         private readonly PlatformSettings _settings;
 
@@ -30,18 +30,15 @@ namespace Altinn.ResourceRegistry.Integration.Clients
         }
 
         /// <inheritdoc/>
-        public async Task<ApplicationList> GetApplicationList()
+        public async Task<ApplicationList> GetApplicationList(CancellationToken cancellationToken = default)
         {
-            ApplicationList applicationList;
             string availabbleServicePath = _settings.StorageApiEndpoint + $"applications";
 
             try
             {
-                HttpResponseMessage response = await _client.GetAsync(availabbleServicePath);
+                HttpResponseMessage response = await _client.GetAsync(availabbleServicePath, cancellationToken);
 
-                string responseContent = await response.Content.ReadAsStringAsync();
-                applicationList = System.Text.Json.JsonSerializer.Deserialize<ApplicationList>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
-                return applicationList;
+                return await response.Content.ReadFromJsonAsync<ApplicationList>(SerializerOptions, cancellationToken);
             }
             catch (Exception ex)
             {

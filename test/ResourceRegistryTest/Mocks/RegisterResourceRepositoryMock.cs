@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.Models;
@@ -9,22 +10,22 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
 {
     public class RegisterResourceRepositoryMock : IResourceRegistryRepository
     {
-        public async Task<ServiceResource> CreateResource(ServiceResource resource)
+        public async Task<ServiceResource> CreateResource(ServiceResource resource, CancellationToken cancellationToken = default)
         {
             return await Task.FromResult<ServiceResource>(null);
         }
 
-        public async Task<ServiceResource> UpdateResource(ServiceResource resource)
+        public async Task<ServiceResource> UpdateResource(ServiceResource resource, CancellationToken cancellationToken = default)
         {
             return await Task.FromResult<ServiceResource>(resource);
         }
 
-        public async Task<ServiceResource> DeleteResource(string id)
+        public async Task<ServiceResource> DeleteResource(string id, CancellationToken cancellationToken = default)
         {
             return await GetResource(id);
         }
 
-        public async Task<ServiceResource> GetResource(string id)
+        public async Task<ServiceResource> GetResource(string id, CancellationToken cancellationToken = default)
         {
             string resourcePath = GetResourcePath(id);
             if (File.Exists(resourcePath))
@@ -44,7 +45,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             return null;
         }
 
-        public async Task<List<ServiceResource>> Search(ResourceSearch resourceSearch)
+        public async Task<List<ServiceResource>> Search(ResourceSearch resourceSearch, CancellationToken cancellationToken = default)
         {
             List<ServiceResource> resources = new List<ServiceResource>();
             string[] files =  Directory.GetFiles(GetResourcePath());

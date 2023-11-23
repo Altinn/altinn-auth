@@ -10,7 +10,8 @@ namespace Altinn.ResourceRegistry.Core.Services.Interfaces
         /// <summary>
         /// Get a full list of Altinn 3 applications
         /// </summary>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns></returns>
-        Task<ApplicationList> GetApplicationList();
+        Task<ApplicationList> GetApplicationList(CancellationToken cancellationToken = default);
     }
 }

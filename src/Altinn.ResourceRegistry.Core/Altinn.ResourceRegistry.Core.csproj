@@ -20,6 +20,7 @@
     <PackageReference Include="Azure.Storage.Blobs" Version="12.19.1" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.10.72" />
     <PackageReference Include="Npgsql" Version="7.0.6" />
     
     

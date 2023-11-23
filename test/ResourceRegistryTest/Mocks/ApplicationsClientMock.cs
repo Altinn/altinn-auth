@@ -6,13 +6,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Altinn.ResourceRegistry.Tests.Mocks
 {
     public class ApplicationsClientMock : IApplications
     {
-        public async Task<ApplicationList> GetApplicationList()
+        public async Task<ApplicationList> GetApplicationList(CancellationToken cancellationToken)
         {
             string applicationsFilePath = Path.Combine(GetAltinn2TestDatafolder(), $"applications.json");
 
