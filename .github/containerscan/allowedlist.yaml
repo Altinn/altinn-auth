@@ -1,0 +1,3 @@
+general:
+  vulnerabilities:
+    - CVE-2019-0820
