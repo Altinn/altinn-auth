@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -55,14 +56,145 @@ internal static class NpgsqlExtensions
         string parameterName,
         NpgsqlDbType parameterType,
         object? value)
+        => parameters.Add(parameterName, parameterType).SetNullableValue(value);
+
+    /// <summary>
+    /// Sets the value of the <see cref="NpgsqlParameter"/> to the given value.
+    /// </summary>
+    /// <param name="parameter">The <see cref="NpgsqlParameter"/></param>
+    /// <param name="value">The new value</param>
+    /// <returns><paramref name="parameter"/></returns>
+    public static NpgsqlParameter SetValue(
+        this NpgsqlParameter parameter,
+        object value)
     {
-        var param = parameters.Add(parameterName, parameterType);
-        param.Value = value;
-        if (value is null)
+        parameter.Value = value;
+
+        return parameter;
+    }
+
+    /// <summary>
+    /// Sets the value of the <see cref="NpgsqlParameter"/> to the given value, converting <see langword="null"/>
+    /// to <see cref="DBNull.Value"/>.
+    /// </summary>
+    /// <param name="parameter">The <see cref="NpgsqlParameter"/></param>
+    /// <param name="value">The new value</param>
+    /// <returns><paramref name="parameter"/></returns>
+    public static NpgsqlParameter SetNullableValue(
+        this NpgsqlParameter parameter,
+        object? value)
+    {
+        if (value is not null)
         {
-            param.Value = DBNull.Value;
+            parameter.Value = value;
+        }
+        else
+        {
+            parameter.Value = DBNull.Value;
         }
 
-        return param;
+        return parameter;
     }
+
+    /// <summary>
+    /// Sets the value of the <see cref="NpgsqlParameter"/> to the given value, converting <see langword="default"/>
+    /// to <see cref="DBNull.Value"/>.
+    /// </summary>
+    /// <typeparam name="T">The array item type</typeparam>
+    /// <param name="parameter">The <see cref="NpgsqlParameter"/></param>
+    /// <param name="value">The new value</param>
+    /// <returns><paramref name="parameter"/></returns>
+    public static NpgsqlParameter SetOptionalImmutableArrayValue<T>(
+        this NpgsqlParameter<IList<T>> parameter,
+        ImmutableArray<T> value)
+    {
+        if (!value.IsDefault)
+        {
+            parameter.TypedValue = value;
+        }
+        else
+        {
+            parameter.TypedValue = null;
+        }
+
+        return parameter;
+    }
+
+    /// <summary>
+    /// Gets the value of the specified column as an instance of <see langword="string"/> or <see langword="null"/>
+    /// if the value is <see cref="DBNull.Value"/>.
+    /// </summary>
+    /// <param name="reader">The <see cref="NpgsqlDataReader"/></param>
+    /// <param name="ordinal">The column ordinal</param>
+    /// <returns></returns>
+    public static string? GetStringOrNull(
+        this NpgsqlDataReader reader,
+        int ordinal)
+        => reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+
+    /// <summary>
+    /// Gets the value of the specified column as an instance of <see langword="string"/> or <see langword="null"/>
+    /// if the value is <see cref="DBNull.Value"/>.
+    /// </summary>
+    /// <param name="reader">The <see cref="NpgsqlDataReader"/></param>
+    /// <param name="name">The column name</param>
+    /// <returns>The value of the specified column.</returns>
+    public static string? GetStringOrNull(
+        this NpgsqlDataReader reader,
+        string name)
+        => reader.GetStringOrNull(reader.GetOrdinal(name));
+
+    /// <summary>
+    /// Adds a <see cref="NpgsqlParameter"/> to the <see cref="NpgsqlParameterCollection"/> given the specified parameter name and
+    /// data type.
+    /// </summary>
+    /// <param name="parameters">The <see cref="NpgsqlParameterCollection"/> to add the parameter to.</param>
+    /// <param name="parameterName">The name of the <see cref="NpgsqlParameter"/>.</param>
+    /// <param name="parameterType">One of the NpgsqlDbType values.</param>
+    /// <returns>The parameter that was added.</returns>
+    public static NpgsqlParameter<T> Add<T>(
+        this NpgsqlParameterCollection parameters,
+        string parameterName,
+        NpgsqlDbType parameterType)
+    {
+        var parameter = new NpgsqlParameter<T>(parameterName, parameterType);
+        parameters.Add(parameter);
+        return parameter;
+    }
+
+    /// <summary>
+    /// Reads a column as a immutable array of values.
+    /// </summary>
+    /// <typeparam name="T">The element type.</typeparam>
+    /// <param name="reader">The reader.</param>
+    /// <param name="ordinal">The column index.</param>
+    /// <param name="cancellationToken">The async cancellation token.</param>
+    /// <returns>The column data</returns>
+    public static async ValueTask<ImmutableArray<T>> GetFieldValueArrayAsync<T>(
+        this NpgsqlDataReader reader,
+        int ordinal,
+        CancellationToken cancellationToken)
+    {
+        if (await reader.IsDBNullAsync(ordinal, cancellationToken))
+        {
+            return default;
+        }
+
+        var list = await reader.GetFieldValueAsync<IList<T>>(ordinal, cancellationToken);
+        return list.ToImmutableArray();
+    }
+
+    /// <summary>
+    /// Reads a column as a immutable array of values.
+    /// </summary>
+    /// <typeparam name="T">The element type.</typeparam>
+    /// <param name="reader">The reader.</param>
+    /// <param name="name">The column name.</param>
+    /// <param name="cancellationToken">The async cancellation token.</param>
+    /// <returns>The column data</returns>
+    public static async ValueTask<ImmutableArray<T>> GetFieldValueArrayAsync<T>(
+        this NpgsqlDataReader reader,
+        string name,
+        CancellationToken cancellationToken)
+        => await reader.GetFieldValueArrayAsync<T>(reader.GetOrdinal(name), cancellationToken);
 }
