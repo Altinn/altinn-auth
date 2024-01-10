@@ -2,93 +2,89 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using Altinn.ResourceRegistry.Core.PartyRegistry;
-using Microsoft.Extensions.Logging;
+using Altinn.ResourceRegistry.Core.AccessLists;
 
 namespace Altinn.ResourceRegistry.Persistence.Aggregates;
 
 /// <summary>
-/// Represents a party registry aggregate.
+/// Represents an access list aggregate.
 /// </summary>
-internal class PartyRegistryAggregate
-    : Aggregate<PartyRegistryAggregate, PartyRegistryEvent>
-    , IAggregateFactory<PartyRegistryAggregate, PartyRegistryEvent>
-    , IAggregateEventHandler<PartyRegistryCreatedEvent>
-    , IAggregateEventHandler<PartyRegistryUpdatedEvent>
-    , IAggregateEventHandler<PartyRegistryDeletedEvent>
-    , IAggregateEventHandler<PartyRegistryResourceConnectionCreatedEvent>
-    , IAggregateEventHandler<PartyRegistryResourceConnectionActionsAddedEvent>
-    , IAggregateEventHandler<PartyRegistryResourceConnectionActionsRemovedEvent>
-    , IAggregateEventHandler<PartyRegistryResourceConnectionDeletedEvent>
-    , IAggregateEventHandler<PartyRegistryMembersAddedEvent>
-    , IAggregateEventHandler<PartyRegistryMembersRemovedEvent>
+internal class AccessListAggregate
+    : Aggregate<AccessListAggregate, AccessListEvent>
+    , IAggregateFactory<AccessListAggregate, AccessListEvent>
+    , IAggregateEventHandler<AccessListCreatedEvent>
+    , IAggregateEventHandler<AccessListUpdatedEvent>
+    , IAggregateEventHandler<AccessListDeletedEvent>
+    , IAggregateEventHandler<AccessListResourceConnectionCreatedEvent>
+    , IAggregateEventHandler<AccessListResourceConnectionActionsAddedEvent>
+    , IAggregateEventHandler<AccessListResourceConnectionActionsRemovedEvent>
+    , IAggregateEventHandler<AccessListResourceConnectionDeletedEvent>
+    , IAggregateEventHandler<AccessListMembersAddedEvent>
+    , IAggregateEventHandler<AccessListMembersRemovedEvent>
 {
     private bool _isDeleted;
-    private string? _registryOwner;
+    private string? _resourceOwner;
     private string? _identifier;
     private string? _name;
     private string? _description;
-    private Dictionary<string, PartyRegistryResourceConnection> _resourceConnections = new();
-    private HashSet<Guid> _members = new();
+
+    private readonly Dictionary<string, AccessListResourceConnection> _resourceConnections = new();
+    private readonly HashSet<Guid> _members = new();
 
     /// <inheritdoc/>
-    [SuppressMessage(
-        "StyleCop.CSharp.DocumentationRules", 
-        "SA1648:inheritdoc should be used with inheriting class", 
-        Justification = "https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/3717")]
-    public static PartyRegistryAggregate New(TimeProvider timeProvider, Guid id)
+    public static AccessListAggregate New(TimeProvider timeProvider, Guid id)
         => new(timeProvider, id);
 
-    private PartyRegistryAggregate(TimeProvider timeProvider, Guid id)
+    private AccessListAggregate(TimeProvider timeProvider, Guid id)
         : base(timeProvider, id)
     {
     }
 
     /// <inheritdoc />
-    public override bool IsInitialized => _registryOwner is not null;
+    public override bool IsInitialized => _resourceOwner is not null;
 
     /// <inheritdoc />
     public override bool IsDeleted => _isDeleted;
 
     /// <summary>
-    /// Gets the registry owner.
+    /// Gets the resource owner.
     /// </summary>
-    public string RegistryOwner => InitializedThis._registryOwner!;
+    public string ResourceOwner => InitializedThis._resourceOwner!;
 
     /// <summary>
-    /// Gets the registry identifier.
+    /// Gets the access list identifier.
     /// </summary>
     public string Identifier => InitializedThis._identifier!;
 
     /// <summary>
-    /// Gets the registry (display) name.
+    /// Gets the access list (display) name.
     /// </summary>
     public string Name => InitializedThis._name!;
 
     /// <summary>
-    /// Gets the registry (optional) description.
+    /// Gets the access list (optional) description.
     /// </summary>
-    public string? Description => InitializedThis._description;
+    public string Description => InitializedThis._description!;
 
     /// <summary>
-    /// Create a new party registry.
+    /// Create a new access list.
     /// </summary>
-    /// <param name="registryOwner">The registry owner</param>
-    /// <param name="identifier">The registry identifier</param>
-    /// <param name="name">The registry (display) name</param>
-    /// <param name="description">The registry (optional) description</param>
-    public void Initialize(string registryOwner, string identifier, string name, string? description)
+    /// <param name="resourceOwner">The resource owner</param>
+    /// <param name="identifier">The access list identifier</param>
+    /// <param name="name">The access list (display) name</param>
+    /// <param name="description">The access list (optional) description</param>
+    public void Initialize(string resourceOwner, string identifier, string name, string? description)
     {
         if (IsInitialized)
         {
             throw new InvalidOperationException("Aggregate already initialized");
         }
 
-        AddEvent(new PartyRegistryCreatedEvent(EventId.Unset, Id, registryOwner, identifier, name, description ?? string.Empty, GetUtcNow()));
+        AddEvent(new AccessListCreatedEvent(EventId.Unset, Id, resourceOwner, identifier, name, description ?? string.Empty, GetUtcNow()));
     }
 
     /// <summary>
-    /// Update the party registry.
+    /// Update the access list.
     /// </summary>
     /// <param name="identifier">The new identifier, or <see langword="null"/> to keep the old value</param>
     /// <param name="name">The new <see cref="Name"/>, or <see langword="null"/> to keep the old value</param>
@@ -107,25 +103,25 @@ internal class PartyRegistryAggregate
             throw new ArgumentException("At least one of the parameters must be specified");
         }
 
-        AddEvent(new PartyRegistryUpdatedEvent(EventId.Unset, Id, identifier, name, description, GetUtcNow()));
+        AddEvent(new AccessListUpdatedEvent(EventId.Unset, Id, identifier, name, description, GetUtcNow()));
     }
 
     /// <summary>
-    /// Delete the party registry.
+    /// Delete the access list.
     /// </summary>
     public void Delete()
     {
         AssertInitialized();
 
-        AddEvent(new PartyRegistryDeletedEvent(EventId.Unset, Id, GetUtcNow()));
+        AddEvent(new AccessListDeletedEvent(EventId.Unset, Id, GetUtcNow()));
     }
 
     /// <summary>
-    /// Add a resource connection to the party registry.
+    /// Add a resource connection to the access list.
     /// </summary>
     /// <param name="resourceIdentifier">The resource identifier</param>
     /// <param name="actions">The actions allow-list</param>
-    public PartyRegistryResourceConnection AddResourceConnection(string resourceIdentifier, IEnumerable<string> actions)
+    public AccessListResourceConnection AddResourceConnection(string resourceIdentifier, IEnumerable<string> actions)
     {
         AssertInitialized();
 
@@ -140,7 +136,7 @@ internal class PartyRegistryAggregate
             throw new ArgumentException("Actions must be specified");
         }
 
-        AddEvent(new PartyRegistryResourceConnectionCreatedEvent(EventId.Unset, Id, resourceIdentifier, actionsImmutable, GetUtcNow()));
+        AddEvent(new AccessListResourceConnectionCreatedEvent(EventId.Unset, Id, resourceIdentifier, actionsImmutable, GetUtcNow()));
         return _resourceConnections[resourceIdentifier];
     }
 
@@ -149,7 +145,7 @@ internal class PartyRegistryAggregate
     /// </summary>
     /// <param name="resourceIdentifier">The resource identifier</param>
     /// <param name="actions">The actions to add</param>
-    public PartyRegistryResourceConnection AddResourceConnectionActions(string resourceIdentifier, IEnumerable<string> actions)
+    public AccessListResourceConnection AddResourceConnectionActions(string resourceIdentifier, IEnumerable<string> actions)
     {
         AssertInitialized();
 
@@ -169,7 +165,7 @@ internal class PartyRegistryAggregate
             throw new ArgumentException("One or more actions already exist in the resource connection", nameof(actions));
         }
 
-        AddEvent(new PartyRegistryResourceConnectionActionsAddedEvent(EventId.Unset, Id, resourceIdentifier, actionsImmutable, GetUtcNow()));
+        AddEvent(new AccessListResourceConnectionActionsAddedEvent(EventId.Unset, Id, resourceIdentifier, actionsImmutable, GetUtcNow()));
         return _resourceConnections[resourceIdentifier];
     }
 
@@ -178,7 +174,7 @@ internal class PartyRegistryAggregate
     /// </summary>
     /// <param name="resourceIdentifier">The resource identifier</param>
     /// <param name="actions">The actions to remove</param>
-    public PartyRegistryResourceConnection RemoveResourceConnectionActions(string resourceIdentifier, IEnumerable<string> actions)
+    public AccessListResourceConnection RemoveResourceConnectionActions(string resourceIdentifier, IEnumerable<string> actions)
     {
         AssertInitialized();
 
@@ -198,15 +194,15 @@ internal class PartyRegistryAggregate
             throw new ArgumentException("One or more actions already exist in the resource connection", nameof(actions));
         }
 
-        AddEvent(new PartyRegistryResourceConnectionActionsRemovedEvent(EventId.Unset, Id, resourceIdentifier, actionsImmutable, GetUtcNow()));
+        AddEvent(new AccessListResourceConnectionActionsRemovedEvent(EventId.Unset, Id, resourceIdentifier, actionsImmutable, GetUtcNow()));
         return _resourceConnections[resourceIdentifier];
     }
 
     /// <summary>
-    /// Remove a resource connection from the party registry.
+    /// Remove a resource connection from the access list.
     /// </summary>
     /// <param name="resourceIdentifier">The resource identifier</param>
-    public PartyRegistryResourceConnection RemoveResourceConnection(string resourceIdentifier)
+    public AccessListResourceConnection RemoveResourceConnection(string resourceIdentifier)
     {
         AssertInitialized();
 
@@ -215,12 +211,12 @@ internal class PartyRegistryAggregate
             throw new ArgumentException($"Resource connection for resource '{resourceIdentifier}' does not exist");
         }
 
-        AddEvent(new PartyRegistryResourceConnectionDeletedEvent(EventId.Unset, Id, resourceIdentifier, GetUtcNow()));
+        AddEvent(new AccessListResourceConnectionDeletedEvent(EventId.Unset, Id, resourceIdentifier, GetUtcNow()));
         return connection;
     }
 
     /// <summary>
-    /// Add members to the party registry.
+    /// Add members to the access list.
     /// </summary>
     /// <param name="partyIds">The members</param>
     public void AddMembers(IEnumerable<Guid> partyIds)
@@ -238,11 +234,11 @@ internal class PartyRegistryAggregate
             throw new ArgumentException("One or more party IDs already exist in the registry", nameof(partyIds));
         }
 
-        AddEvent(new PartyRegistryMembersAddedEvent(EventId.Unset, Id, partyIdsImmutable, GetUtcNow()));
+        AddEvent(new AccessListMembersAddedEvent(EventId.Unset, Id, partyIdsImmutable, GetUtcNow()));
     }
 
     /// <summary>
-    /// Remove members from the party registry.
+    /// Remove members from the access list.
     /// </summary>
     /// <param name="partyIds">The members</param>
     public void RemoveMembers(IEnumerable<Guid> partyIds)
@@ -260,20 +256,20 @@ internal class PartyRegistryAggregate
             throw new ArgumentException("One or more party IDs do not exist in the registry", nameof(partyIds));
         }
 
-        AddEvent(new PartyRegistryMembersRemovedEvent(EventId.Unset, Id, partyIdsImmutable, GetUtcNow()));
+        AddEvent(new AccessListMembersRemovedEvent(EventId.Unset, Id, partyIdsImmutable, GetUtcNow()));
     }
 
     /// <inheritdoc />
-    void IAggregateEventHandler<PartyRegistryCreatedEvent>.ApplyEvent(PartyRegistryCreatedEvent @event)
+    void IAggregateEventHandler<AccessListCreatedEvent>.ApplyEvent(AccessListCreatedEvent @event)
     {
-        _registryOwner = @event.RegistryOwner;
+        _resourceOwner = @event.ResourceOwner;
         _identifier = @event.Identifier;
         _name = @event.Name;
         _description = @event.Description;
     }
 
     /// <inheritdoc />
-    void IAggregateEventHandler<PartyRegistryUpdatedEvent>.ApplyEvent(PartyRegistryUpdatedEvent @event)
+    void IAggregateEventHandler<AccessListUpdatedEvent>.ApplyEvent(AccessListUpdatedEvent @event)
     {
         if (@event.Identifier is { } identifier)
         {
@@ -292,20 +288,20 @@ internal class PartyRegistryAggregate
     }
 
     /// <inheritdoc />
-    void IAggregateEventHandler<PartyRegistryDeletedEvent>.ApplyEvent(PartyRegistryDeletedEvent @event)
+    void IAggregateEventHandler<AccessListDeletedEvent>.ApplyEvent(AccessListDeletedEvent @event)
     {
         _isDeleted = true;
     }
 
     /// <inheritdoc />
     [SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1010:Opening square brackets should be spaced correctly", Justification = "Collection initializer")]
-    void IAggregateEventHandler<PartyRegistryResourceConnectionCreatedEvent>.ApplyEvent(PartyRegistryResourceConnectionCreatedEvent @event)
+    void IAggregateEventHandler<AccessListResourceConnectionCreatedEvent>.ApplyEvent(AccessListResourceConnectionCreatedEvent @event)
     {
-        _resourceConnections[@event.ResourceIdentifier] = new PartyRegistryResourceConnection(@event.ResourceIdentifier, [.. @event.Actions], @event.EventTime, @event.EventTime);
+        _resourceConnections[@event.ResourceIdentifier] = new AccessListResourceConnection(@event.ResourceIdentifier, [.. @event.Actions], @event.EventTime, @event.EventTime);
     }
 
     /// <inheritdoc />
-    void IAggregateEventHandler<PartyRegistryResourceConnectionActionsAddedEvent>.ApplyEvent(PartyRegistryResourceConnectionActionsAddedEvent @event)
+    void IAggregateEventHandler<AccessListResourceConnectionActionsAddedEvent>.ApplyEvent(AccessListResourceConnectionActionsAddedEvent @event)
     {
         if (_resourceConnections.TryGetValue(@event.ResourceIdentifier, out var connection))
         {
@@ -315,7 +311,7 @@ internal class PartyRegistryAggregate
     }
 
     /// <inheritdoc />
-    void IAggregateEventHandler<PartyRegistryResourceConnectionActionsRemovedEvent>.ApplyEvent(PartyRegistryResourceConnectionActionsRemovedEvent @event)
+    void IAggregateEventHandler<AccessListResourceConnectionActionsRemovedEvent>.ApplyEvent(AccessListResourceConnectionActionsRemovedEvent @event)
     {
         if (_resourceConnections.TryGetValue(@event.ResourceIdentifier, out var connection))
         {
@@ -325,29 +321,29 @@ internal class PartyRegistryAggregate
     }
 
     /// <inheritdoc />
-    void IAggregateEventHandler<PartyRegistryResourceConnectionDeletedEvent>.ApplyEvent(PartyRegistryResourceConnectionDeletedEvent @event)
+    void IAggregateEventHandler<AccessListResourceConnectionDeletedEvent>.ApplyEvent(AccessListResourceConnectionDeletedEvent @event)
     {
         _resourceConnections.Remove(@event.ResourceIdentifier);
     }
 
     /// <inheritdoc />
-    void IAggregateEventHandler<PartyRegistryMembersAddedEvent>.ApplyEvent(PartyRegistryMembersAddedEvent @event)
+    void IAggregateEventHandler<AccessListMembersAddedEvent>.ApplyEvent(AccessListMembersAddedEvent @event)
     {
         _members.UnionWith(@event.PartyIds);
     }
 
     /// <inheritdoc />
-    void IAggregateEventHandler<PartyRegistryMembersRemovedEvent>.ApplyEvent(PartyRegistryMembersRemovedEvent @event)
+    void IAggregateEventHandler<AccessListMembersRemovedEvent>.ApplyEvent(AccessListMembersRemovedEvent @event)
     {
         _members.ExceptWith(@event.PartyIds);
     }
 
     /// <summary>
-    /// Gets the aggregate as a <see cref="PartyRegistryInfo"/>.
+    /// Gets the aggregate as a <see cref="AccessListInfo"/>.
     /// </summary>
-    /// <returns><see cref="PartyRegistryInfo"/></returns>
-    public PartyRegistryInfo AsRegistryInfo()
-        => new PartyRegistryInfo(Id, RegistryOwner, Identifier, Name, Description, CreatedAt, UpdatedAt);
+    /// <returns><see cref="AccessListInfo"/></returns>
+    public AccessListInfo AsAccessListInfo()
+        => new AccessListInfo(Id, ResourceOwner, Identifier, Name, Description, CreatedAt, UpdatedAt);
 }
 
 /// <summary>
@@ -384,8 +380,14 @@ internal readonly struct EventId(ulong id)
         => IsSet ? id.ToString(CultureInfo.InvariantCulture) : "unset";
 }
 
-internal abstract record PartyRegistryEvent(EventId EventId, Guid RegistryId, DateTimeOffset EventTime)
-    : IAggregateEvent<PartyRegistryAggregate, PartyRegistryEvent>
+/// <summary>
+/// Base class for <see cref="AccessListAggregate"/> events.
+/// </summary>
+/// <param name="EventId">The event id.</param>
+/// <param name="AccessListId">The access list id.</param>
+/// <param name="EventTime">The event time.</param>
+internal abstract record AccessListEvent(EventId EventId, Guid AccessListId, DateTimeOffset EventTime)
+    : IAggregateEvent<AccessListAggregate, AccessListEvent>
 {
     private EventId _eventId = EventId;
 
@@ -413,10 +415,10 @@ internal abstract record PartyRegistryEvent(EventId EventId, Guid RegistryId, Da
     /// </summary>
     /// <param name="aggregate">The aggregate</param>
     /// <remarks>This implements the visitor pattern.</remarks>
-    protected abstract void ApplyTo(PartyRegistryAggregate aggregate);
+    protected abstract void ApplyTo(AccessListAggregate aggregate);
 
     /// <inheritdoc />
-    void IAggregateEvent<PartyRegistryAggregate, PartyRegistryEvent>.ApplyTo(PartyRegistryAggregate aggregate)
+    void IAggregateEvent<AccessListAggregate, AccessListEvent>.ApplyTo(AccessListAggregate aggregate)
         => ApplyTo(aggregate);
 
     /// <summary>
@@ -425,6 +427,18 @@ internal abstract record PartyRegistryEvent(EventId EventId, Guid RegistryId, Da
     /// <returns><see cref="Values"/></returns>
     internal abstract Values AsValues();
 
+    /// <summary>
+    /// Database representation of events.
+    /// </summary>
+    /// <param name="Kind">The event kind.</param>
+    /// <param name="EventTime">The event time.</param>
+    /// <param name="AggregateId">The aggregate id.</param>
+    /// <param name="Identifier">Optional identifier.</param>
+    /// <param name="Name">Optional name.</param>
+    /// <param name="Description">Optional description.</param>
+    /// <param name="ResourceOwner">Optional resource owner.</param>
+    /// <param name="Actions">Optional set of actions.</param>
+    /// <param name="PartyIds">Optional set of party ids.</param>
     internal readonly record struct Values(
         string Kind,
         DateTimeOffset EventTime,
@@ -432,239 +446,309 @@ internal abstract record PartyRegistryEvent(EventId EventId, Guid RegistryId, Da
         string? Identifier,
         string? Name,
         string? Description,
-        string? RegistryOwner,
+        string? ResourceOwner,
         ImmutableArray<string> Actions,
         ImmutableArray<Guid> PartyIds);
 }
 
-internal record PartyRegistryCreatedEvent(
+/// <summary>
+/// Event for when an access list is created.
+/// </summary>
+/// <param name="EventId">The event id.</param>
+/// <param name="AggregateId">The aggregate id.</param>
+/// <param name="ResourceOwner">The resource owner.</param>
+/// <param name="Identifier">The owner-unique identifier.</param>
+/// <param name="Name">The access list display-name.</param>
+/// <param name="Description">The access list description.</param>
+/// <param name="EventTime">The event time.</param>
+internal record AccessListCreatedEvent(
     EventId EventId,
-    Guid RegistryId,
-    string RegistryOwner,
+    Guid AggregateId,
+    string ResourceOwner,
     string Identifier,
     string Name,
     string Description,
     DateTimeOffset EventTime)
-    : PartyRegistryEvent(EventId, RegistryId, EventTime)
+    : AccessListEvent(EventId, AggregateId, EventTime)
 {
     /// <inheritdoc />
-    protected override void ApplyTo(PartyRegistryAggregate aggregate)
-        => ((IAggregateEventHandler<PartyRegistryCreatedEvent>)aggregate).ApplyEvent(this);
+    protected override void ApplyTo(AccessListAggregate aggregate)
+        => ((IAggregateEventHandler<AccessListCreatedEvent>)aggregate).ApplyEvent(this);
 
     /// <inheritdoc />
     internal override Values AsValues()
         => new Values(
-            Kind: "registry_created",
+            Kind: "created",
             EventTime: EventTime,
-            AggregateId: RegistryId,
+            AggregateId: AggregateId,
             Identifier: Identifier,
             Name: Name,
             Description: Description,
-            RegistryOwner: RegistryOwner,
+            ResourceOwner: ResourceOwner,
             Actions: default,
             PartyIds: default);
 }
 
-internal record PartyRegistryUpdatedEvent(
+/// <summary>
+/// Event for when an access list is updated.
+/// </summary>
+/// <param name="EventId">The event id.</param>
+/// <param name="AggregateId">The aggregate id.</param>
+/// <param name="Identifier">The owner-unique identifier (if updated).</param>
+/// <param name="Name">The access list display-name (if updated).</param>
+/// <param name="Description">The access list description (if updated).</param>
+/// <param name="EventTime">The event time.</param>
+internal record AccessListUpdatedEvent(
     EventId EventId,
-    Guid RegistryId,
+    Guid AggregateId,
     string? Identifier,
     string? Name,
     string? Description,
     DateTimeOffset EventTime)
-    : PartyRegistryEvent(EventId, RegistryId, EventTime)
+    : AccessListEvent(EventId, AggregateId, EventTime)
 {
     /// <inheritdoc />
-    protected override void ApplyTo(PartyRegistryAggregate aggregate)
-        => ((IAggregateEventHandler<PartyRegistryUpdatedEvent>)aggregate).ApplyEvent(this);
+    protected override void ApplyTo(AccessListAggregate aggregate)
+        => ((IAggregateEventHandler<AccessListUpdatedEvent>)aggregate).ApplyEvent(this);
 
     /// <inheritdoc />
     internal override Values AsValues()
         => new Values(
-            Kind: "registry_updated",
+            Kind: "updated",
             EventTime: EventTime,
-            AggregateId: RegistryId,
+            AggregateId: AggregateId,
             Identifier: Identifier,
             Name: Name,
             Description: Description,
-            RegistryOwner: null,
+            ResourceOwner: null,
             Actions: default,
             PartyIds: default);
 }
 
-internal record PartyRegistryDeletedEvent(
+/// <summary>
+/// Event for when an access list is deleted.
+/// </summary>
+/// <param name="EventId">The event id.</param>
+/// <param name="AggregateId">The aggregate id.</param>
+/// <param name="EventTime">The event time.</param>
+internal record AccessListDeletedEvent(
     EventId EventId,
-    Guid RegistryId,
+    Guid AggregateId,
     DateTimeOffset EventTime)
-    : PartyRegistryEvent(EventId, RegistryId, EventTime)
+    : AccessListEvent(EventId, AggregateId, EventTime)
 {
     /// <inheritdoc />
-    protected override void ApplyTo(PartyRegistryAggregate aggregate)
-        => ((IAggregateEventHandler<PartyRegistryDeletedEvent>)aggregate).ApplyEvent(this);
+    protected override void ApplyTo(AccessListAggregate aggregate)
+        => ((IAggregateEventHandler<AccessListDeletedEvent>)aggregate).ApplyEvent(this);
 
     /// <inheritdoc />
     internal override Values AsValues()
         => new Values(
-            Kind: "registry_deleted",
+            Kind: "deleted",
             EventTime: EventTime,
-            AggregateId: RegistryId,
+            AggregateId: AggregateId,
             Identifier: null,
             Name: null,
             Description: null,
-            RegistryOwner: null,
+            ResourceOwner: null,
             Actions: default,
             PartyIds: default);
 }
 
-internal record PartyRegistryResourceConnectionCreatedEvent(
+/// <summary>
+/// Event for when a resource connection is created.
+/// </summary>
+/// <param name="EventId">The event id.</param>
+/// <param name="AggregateId">The aggregate id.</param>
+/// <param name="ResourceIdentifier">The resource identifier.</param>
+/// <param name="Actions">The allowed actions.</param>
+/// <param name="EventTime">The event time.</param>
+internal record AccessListResourceConnectionCreatedEvent(
     EventId EventId,
-    Guid RegistryId,
+    Guid AggregateId,
     string ResourceIdentifier,
     ImmutableArray<string> Actions,
     DateTimeOffset EventTime)
-    : PartyRegistryEvent(EventId, RegistryId, EventTime)
+    : AccessListEvent(EventId, AggregateId, EventTime)
 {
     /// <inheritdoc />
-    protected override void ApplyTo(PartyRegistryAggregate aggregate)
-        => ((IAggregateEventHandler<PartyRegistryResourceConnectionCreatedEvent>)aggregate).ApplyEvent(this);
+    protected override void ApplyTo(AccessListAggregate aggregate)
+        => ((IAggregateEventHandler<AccessListResourceConnectionCreatedEvent>)aggregate).ApplyEvent(this);
 
     /// <inheritdoc />
     internal override Values AsValues()
         => new Values(
             Kind: "resource_connection_created",
             EventTime: EventTime,
-            AggregateId: RegistryId,
+            AggregateId: AggregateId,
             Identifier: ResourceIdentifier,
             Name: null,
             Description: null,
-            RegistryOwner: null,
+            ResourceOwner: null,
             Actions: Actions,
             PartyIds: default);
 }
 
-internal record PartyRegistryResourceConnectionActionsAddedEvent(
+/// <summary>
+/// Event for when actions are added to a resource connection.
+/// </summary>
+/// <param name="EventId">The event id.</param>
+/// <param name="AggregateId">The aggregate id.</param>
+/// <param name="ResourceIdentifier">The resource identifier.</param>
+/// <param name="Actions">The newly added actions.</param>
+/// <param name="EventTime">The event time.</param>
+internal record AccessListResourceConnectionActionsAddedEvent(
     EventId EventId,
-    Guid RegistryId,
+    Guid AggregateId,
     string ResourceIdentifier,
     ImmutableArray<string> Actions,
     DateTimeOffset EventTime)
-    : PartyRegistryEvent(EventId, RegistryId, EventTime)
+    : AccessListEvent(EventId, AggregateId, EventTime)
 {
     /// <inheritdoc />
-    protected override void ApplyTo(PartyRegistryAggregate aggregate)
-        => ((IAggregateEventHandler<PartyRegistryResourceConnectionActionsAddedEvent>)aggregate).ApplyEvent(this);
+    protected override void ApplyTo(AccessListAggregate aggregate)
+        => ((IAggregateEventHandler<AccessListResourceConnectionActionsAddedEvent>)aggregate).ApplyEvent(this);
 
     /// <inheritdoc />
     internal override Values AsValues()
         => new Values(
             Kind: "resource_connection_actions_added",
             EventTime: EventTime,
-            AggregateId: RegistryId,
+            AggregateId: AggregateId,
             Identifier: ResourceIdentifier,
             Name: null,
             Description: null,
-            RegistryOwner: null,
+            ResourceOwner: null,
             Actions: Actions,
             PartyIds: default);
 }
 
-internal record PartyRegistryResourceConnectionActionsRemovedEvent(
+/// <summary>
+/// Event for when actions are removed from a resource connection.
+/// </summary>
+/// <param name="EventId">The event id.</param>
+/// <param name="AggregateId">The aggregate id.</param>
+/// <param name="ResourceIdentifier">The resource identifier.</param>
+/// <param name="Actions">The removed actions.</param>
+/// <param name="EventTime">The event time.</param>
+internal record AccessListResourceConnectionActionsRemovedEvent(
     EventId EventId,
-    Guid RegistryId,
+    Guid AggregateId,
     string ResourceIdentifier,
     ImmutableArray<string> Actions,
     DateTimeOffset EventTime)
-    : PartyRegistryEvent(EventId, RegistryId, EventTime)
+    : AccessListEvent(EventId, AggregateId, EventTime)
 {
     /// <inheritdoc />
-    protected override void ApplyTo(PartyRegistryAggregate aggregate)
-        => ((IAggregateEventHandler<PartyRegistryResourceConnectionActionsRemovedEvent>)aggregate).ApplyEvent(this);
+    protected override void ApplyTo(AccessListAggregate aggregate)
+        => ((IAggregateEventHandler<AccessListResourceConnectionActionsRemovedEvent>)aggregate).ApplyEvent(this);
 
     /// <inheritdoc />
     internal override Values AsValues()
         => new Values(
             Kind: "resource_connection_actions_removed",
             EventTime: EventTime,
-            AggregateId: RegistryId,
+            AggregateId: AggregateId,
             Identifier: ResourceIdentifier,
             Name: null,
             Description: null,
-            RegistryOwner: null,
+            ResourceOwner: null,
             Actions: Actions,
             PartyIds: default);
 }
 
-internal record PartyRegistryResourceConnectionDeletedEvent(
+/// <summary>
+/// Event for when a resource connection is deleted.
+/// </summary>
+/// <param name="EventId">The event id.</param>
+/// <param name="AggregateId">The aggregate id.</param>
+/// <param name="ResourceIdentifier">The resource identifier.</param>
+/// <param name="EventTime">The event time.</param>
+internal record AccessListResourceConnectionDeletedEvent(
     EventId EventId,
-    Guid RegistryId,
+    Guid AggregateId,
     string ResourceIdentifier,
     DateTimeOffset EventTime)
-    : PartyRegistryEvent(EventId, RegistryId, EventTime)
+    : AccessListEvent(EventId, AggregateId, EventTime)
 {
     /// <inheritdoc />
-    protected override void ApplyTo(PartyRegistryAggregate aggregate)
-        => ((IAggregateEventHandler<PartyRegistryResourceConnectionDeletedEvent>)aggregate).ApplyEvent(this);
+    protected override void ApplyTo(AccessListAggregate aggregate)
+        => ((IAggregateEventHandler<AccessListResourceConnectionDeletedEvent>)aggregate).ApplyEvent(this);
 
     /// <inheritdoc />
     internal override Values AsValues()
         => new Values(
             Kind: "resource_connection_deleted",
             EventTime: EventTime,
-            AggregateId: RegistryId,
+            AggregateId: AggregateId,
             Identifier: ResourceIdentifier,
             Name: null,
             Description: null,
-            RegistryOwner: null,
+            ResourceOwner: null,
             Actions: default,
             PartyIds: default);
 }
 
-internal record PartyRegistryMembersAddedEvent(
+/// <summary>
+/// Event for when members are added to the access list.
+/// </summary>
+/// <param name="EventId">The event id.</param>
+/// <param name="AggregateId">The aggregate id.</param>
+/// <param name="PartyIds">The parties added.</param>
+/// <param name="EventTime">The event time.</param>
+internal record AccessListMembersAddedEvent(
     EventId EventId,
-    Guid RegistryId,
+    Guid AggregateId,
     ImmutableArray<Guid> PartyIds,
     DateTimeOffset EventTime)
-    : PartyRegistryEvent(EventId, RegistryId, EventTime)
+    : AccessListEvent(EventId, AggregateId, EventTime)
 {
     /// <inheritdoc />
-    protected override void ApplyTo(PartyRegistryAggregate aggregate)
-        => ((IAggregateEventHandler<PartyRegistryMembersAddedEvent>)aggregate).ApplyEvent(this);
+    protected override void ApplyTo(AccessListAggregate aggregate)
+        => ((IAggregateEventHandler<AccessListMembersAddedEvent>)aggregate).ApplyEvent(this);
 
     /// <inheritdoc />
     internal override Values AsValues()
         => new Values(
             Kind: "members_added",
             EventTime: EventTime,
-            AggregateId: RegistryId,
+            AggregateId: AggregateId,
             Identifier: null,
             Name: null,
             Description: null,
-            RegistryOwner: null,
+            ResourceOwner: null,
             Actions: default,
             PartyIds: PartyIds);
 }
 
-internal record PartyRegistryMembersRemovedEvent(
+/// <summary>
+/// Event for when members are removed from the access list.
+/// </summary>
+/// <param name="EventId">The event id.</param>
+/// <param name="AggregateId">The aggregate id.</param>
+/// <param name="PartyIds">The parties removed.</param>
+/// <param name="EventTime">The event time.</param>
+internal record AccessListMembersRemovedEvent(
     EventId EventId,
-    Guid RegistryId,
+    Guid AggregateId,
     ImmutableArray<Guid> PartyIds,
     DateTimeOffset EventTime)
-    : PartyRegistryEvent(EventId, RegistryId, EventTime)
+    : AccessListEvent(EventId, AggregateId, EventTime)
 {
     /// <inheritdoc />
-    protected override void ApplyTo(PartyRegistryAggregate aggregate)
-        => ((IAggregateEventHandler<PartyRegistryMembersRemovedEvent>)aggregate).ApplyEvent(this);
+    protected override void ApplyTo(AccessListAggregate aggregate)
+        => ((IAggregateEventHandler<AccessListMembersRemovedEvent>)aggregate).ApplyEvent(this);
 
     /// <inheritdoc />
     internal override Values AsValues()
         => new Values(
             Kind: "members_removed",
             EventTime: EventTime,
-            AggregateId: RegistryId,
+            AggregateId: AggregateId,
             Identifier: null,
             Name: null,
             Description: null,
-            RegistryOwner: null,
+            ResourceOwner: null,
             Actions: default,
             PartyIds: PartyIds);
 }

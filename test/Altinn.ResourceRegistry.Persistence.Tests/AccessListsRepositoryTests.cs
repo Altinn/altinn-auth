@@ -1,5 +1,5 @@
 
-using Altinn.ResourceRegistry.Core.PartyRegistry;
+using Altinn.ResourceRegistry.Core.AccessLists;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
@@ -7,14 +7,14 @@ using System.Collections.Immutable;
 
 namespace Altinn.ResourceRegistry.Persistence.Tests;
 
-public class PartyRegistryRepositoryTests : DbTests
+public class AccessListsRepositoryTests : DbTests
 {
-    public PartyRegistryRepositoryTests(DbFixture dbFixture) 
+    public AccessListsRepositoryTests(DbFixture dbFixture) 
         : base(dbFixture)
     {
     }
 
-    protected IPartyRegistryRepository Repository => Services.GetRequiredService<IPartyRegistryRepository>();
+    protected IAccessListsRepository Repository => Services.GetRequiredService<IAccessListsRepository>();
     protected NpgsqlDataSource DataSource => Services.GetRequiredService<NpgsqlDataSource>();
 
     protected override void ConfigureServices(IServiceCollection services)
@@ -26,7 +26,7 @@ public class PartyRegistryRepositoryTests : DbTests
     [Fact]
     public async Task CreatePartyRegistry()
     {
-        var info1 = await Repository.CreatePartyRegistry("owner", "identifier", "name", "description");
+        var info1 = await Repository.CreateAccessList("owner", "identifier", "name", "description");
 
         info1.RegistryOwner.Should().Be("owner");
         info1.Identifier.Should().Be("identifier");
@@ -35,7 +35,7 @@ public class PartyRegistryRepositoryTests : DbTests
         await CheckRegistryLookup(info1);
 
         // same owner, different identifier
-        var info2 = await Repository.CreatePartyRegistry("owner", "identifier2", "name", "description");
+        var info2 = await Repository.CreateAccessList("owner", "identifier2", "name", "description");
 
         info2.RegistryOwner.Should().Be("owner");
         info2.Identifier.Should().Be("identifier2");
@@ -44,7 +44,7 @@ public class PartyRegistryRepositoryTests : DbTests
         await CheckRegistryLookup(info2);
 
         // different owner, same identifier
-        var info3 = await Repository.CreatePartyRegistry("owner2", "identifier", "name", "description");
+        var info3 = await Repository.CreateAccessList("owner2", "identifier", "name", "description");
 
         info3.RegistryOwner.Should().Be("owner2");
         info3.Identifier.Should().Be("identifier");
@@ -53,7 +53,7 @@ public class PartyRegistryRepositoryTests : DbTests
         await CheckRegistryLookup(info3);
 
         // same owner, same identifier
-        await Assert.ThrowsAsync<InvalidOperationException>(() => Repository.CreatePartyRegistry("owner", "identifier", "name", "description"));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => Repository.CreateAccessList("owner", "identifier", "name", "description"));
     }
 
     [Fact]
@@ -69,10 +69,10 @@ public class PartyRegistryRepositoryTests : DbTests
     [Fact]
     public async Task UpdateRegistry()
     {
-        var info = await Repository.CreatePartyRegistry("owner", "identifier", "name", "description");
+        var info = await Repository.CreateAccessList("owner", "identifier", "name", "description");
 
         // update identifier
-        info = await Repository.UpdatePartyRegistry(info.Id, newIdentifier: "identifier2", newName: null, newDescription: null);
+        info = await Repository.UpdateAccessList(info.Id, newIdentifier: "identifier2", newName: null, newDescription: null);
 
         info.Identifier.Should().Be("identifier2");
         info.Name.Should().Be("name");
@@ -81,7 +81,7 @@ public class PartyRegistryRepositoryTests : DbTests
         (await Repository.Lookup("owner", "identifier")).Should().BeNull();
 
         // update identifier back
-        info = await Repository.UpdatePartyRegistry(info.Id, newIdentifier: "identifier", newName: null, newDescription: null);
+        info = await Repository.UpdateAccessList(info.Id, newIdentifier: "identifier", newName: null, newDescription: null);
 
         info.Identifier.Should().Be("identifier");
         info.Name.Should().Be("name");
@@ -90,7 +90,7 @@ public class PartyRegistryRepositoryTests : DbTests
         (await Repository.Lookup("owner", "identifier2")).Should().BeNull();
 
         // update name and description
-        info = await Repository.UpdatePartyRegistry(info.Id, newIdentifier: null, newName: "name2", newDescription: "description2");
+        info = await Repository.UpdateAccessList(info.Id, newIdentifier: null, newName: "name2", newDescription: "description2");
 
         info.Identifier.Should().Be("identifier");
         info.Name.Should().Be("name2");
@@ -101,10 +101,10 @@ public class PartyRegistryRepositoryTests : DbTests
     [Fact]
     public async Task DeleteRegistry()
     {
-        var info = await Repository.CreatePartyRegistry("owner", "identifier", "name", "description");
+        var info = await Repository.CreateAccessList("owner", "identifier", "name", "description");
 
         // delete registry
-        await Repository.DeletePartyRegistry(info.Id);
+        await Repository.DeleteAccessList(info.Id);
         (await Repository.Lookup("owner", "identifier")).Should().BeNull();
 
         // TODO: chech that the aggregate is still loadable
@@ -131,29 +131,29 @@ public class PartyRegistryRepositoryTests : DbTests
         await resourceCmd.ExecuteNonQueryAsync();
 
         // Create a couple registries
-        var info1 = await Repository.CreatePartyRegistry("owner", "identifier1", "name", "description");
-        var info2 = await Repository.CreatePartyRegistry("owner", "identifier2", "name", "description");
+        var info1 = await Repository.CreateAccessList("owner", "identifier1", "name", "description");
+        var info2 = await Repository.CreateAccessList("owner", "identifier2", "name", "description");
 
         // Check that we have no connections
-        (await Repository.GetResourceConnections(info1.Id)).Should().BeEmpty();
-        (await Repository.GetResourceConnections(info2.Id)).Should().BeEmpty();
+        (await Repository.GetAccessListResourceConnections(info1.Id)).Should().BeEmpty();
+        (await Repository.GetAccessListResourceConnections(info2.Id)).Should().BeEmpty();
 
         // Check that we can add a connection with empty actions list
-        var connection = await Repository.AddPartyResourceConnection(info1.Id, RESOURCE1_NAME, ImmutableArray<string>.Empty);
+        var connection = await Repository.AddAccessListResourceConnection(info1.Id, RESOURCE1_NAME, ImmutableArray<string>.Empty);
         connection.ResourceIdentifier.Should().Be(RESOURCE1_NAME);
         connection.Actions.Should().BeEmpty();
 
-        var connections = await Repository.GetResourceConnections(info1.Id);
+        var connections = await Repository.GetAccessListResourceConnections(info1.Id);
         connections.Should().ContainSingle();
         connections[0].ResourceIdentifier.Should().Be(RESOURCE1_NAME);
         connections[0].Actions.Should().BeEmpty();
 
         // check that we can add actions to the resource connection
-        connection = await Repository.AddPartyResourceConnectionActions(info1.RegistryOwner, info1.Identifier, RESOURCE1_NAME, ImmutableArray.Create(ACTION_READ, ACTION_WRITE));
+        connection = await Repository.AddAccessListResourceConnectionActions(info1.RegistryOwner, info1.Identifier, RESOURCE1_NAME, ImmutableArray.Create(ACTION_READ, ACTION_WRITE));
         connection.ResourceIdentifier.Should().Be(RESOURCE1_NAME);
         connection.Actions.Should().HaveCount(2);
 
-        connections = await Repository.GetResourceConnections(info1.RegistryOwner, info1.Identifier);
+        connections = await Repository.GetAccessListResourceConnections(info1.RegistryOwner, info1.Identifier);
         connections.Should().ContainSingle();
         connections[0].ResourceIdentifier.Should().Be(RESOURCE1_NAME);
         connections[0].Actions.Should().HaveCount(2)
@@ -161,12 +161,12 @@ public class PartyRegistryRepositoryTests : DbTests
             .And.Contain(ACTION_WRITE);
 
         // check that we can add another connection
-        connection = await Repository.AddPartyResourceConnection(info1.RegistryOwner, info1.Identifier, RESOURCE2_NAME, ImmutableArray.Create(ACTION_READ));
+        connection = await Repository.AddAccessListResourceConnection(info1.RegistryOwner, info1.Identifier, RESOURCE2_NAME, ImmutableArray.Create(ACTION_READ));
         connection.ResourceIdentifier.Should().Be(RESOURCE2_NAME);
         connection.Actions.Should().HaveCount(1)
             .And.Contain(ACTION_READ);
 
-        connections = await Repository.GetResourceConnections(info1.RegistryOwner, info1.Identifier);
+        connections = await Repository.GetAccessListResourceConnections(info1.RegistryOwner, info1.Identifier);
         connections.Should().HaveCount(2);
         connections.Should().ContainSingle(c => c.ResourceIdentifier == RESOURCE1_NAME)
             .Which.Actions.Should().HaveCount(2)
@@ -177,10 +177,10 @@ public class PartyRegistryRepositoryTests : DbTests
             .And.Contain(ACTION_READ);
 
         // check that we can remove an action from one of the connections
-        connection = await Repository.RemovePartyResourceConnectionActions(info1.RegistryOwner, info1.Identifier, RESOURCE1_NAME, ImmutableArray.Create(ACTION_READ));
+        connection = await Repository.RemoveAccessListResourceConnectionActions(info1.RegistryOwner, info1.Identifier, RESOURCE1_NAME, ImmutableArray.Create(ACTION_READ));
         connection.ResourceIdentifier.Should().Be(RESOURCE1_NAME);
 
-        connections = await Repository.GetResourceConnections(info1.RegistryOwner, info1.Identifier);
+        connections = await Repository.GetAccessListResourceConnections(info1.RegistryOwner, info1.Identifier);
         connections.Should().HaveCount(2);
         connections.Should().ContainSingle(c => c.ResourceIdentifier == RESOURCE1_NAME)
             .Which.Actions.Should().HaveCount(1)
@@ -190,12 +190,12 @@ public class PartyRegistryRepositoryTests : DbTests
             .And.Contain(ACTION_READ);
 
         // check that we can remote a connection
-        connection = await Repository.DeletePartyResourceConnection(info1.RegistryOwner, info1.Identifier, RESOURCE1_NAME);
+        connection = await Repository.DeleteAccessListResourceConnection(info1.RegistryOwner, info1.Identifier, RESOURCE1_NAME);
         connection.ResourceIdentifier.Should().Be(RESOURCE1_NAME);
         connection.Actions.Should().HaveCount(1)
             .And.Contain(ACTION_WRITE);
 
-        connections = await Repository.GetResourceConnections(info1.RegistryOwner, info1.Identifier);
+        connections = await Repository.GetAccessListResourceConnections(info1.RegistryOwner, info1.Identifier);
         connections.Should().HaveCount(1);
         connections.Should().ContainSingle(c => c.ResourceIdentifier == RESOURCE2_NAME)
             .Which.Actions.Should().HaveCount(1)
@@ -210,22 +210,22 @@ public class PartyRegistryRepositoryTests : DbTests
         var member3 = Guid.NewGuid();
         var member4 = Guid.NewGuid();
 
-        var info = await Repository.CreatePartyRegistry("owner", "identifier", "name", "description");
+        var info = await Repository.CreateAccessList("owner", "identifier", "name", "description");
 
         // Check that we have no members
-        var memberships = await Repository.GetPartyRegistryMemberships(info.Id);
+        var memberships = await Repository.GetAccessListMemberships(info.Id);
         memberships.Should().BeEmpty();
 
         // Add members
-        await Repository.AddPartyRegistryMembers(info.Id, ImmutableArray.Create(member1, member2));
-        memberships = await Repository.GetPartyRegistryMemberships(info.Id);
+        await Repository.AddAccessListMembers(info.Id, ImmutableArray.Create(member1, member2));
+        memberships = await Repository.GetAccessListMemberships(info.Id);
         memberships.Should().HaveCount(2)
             .And.Contain(m => m.PartyId == member1)
             .And.Contain(m => m.PartyId == member2);
 
         // Add more members
-        await Repository.AddPartyRegistryMembers(info.RegistryOwner, info.Identifier, ImmutableArray.Create(member3, member4));
-        memberships = await Repository.GetPartyRegistryMemberships(info.Id);
+        await Repository.AddAccessListMembers(info.RegistryOwner, info.Identifier, ImmutableArray.Create(member3, member4));
+        memberships = await Repository.GetAccessListMemberships(info.Id);
         memberships.Should().HaveCount(4)
             .And.Contain(m => m.PartyId == member1)
             .And.Contain(m => m.PartyId == member2)
@@ -233,19 +233,19 @@ public class PartyRegistryRepositoryTests : DbTests
             .And.Contain(m => m.PartyId == member4);
 
         // Remove members
-        await Repository.RemovePartyRegistryMembers(info.Id, ImmutableArray.Create(member2, member3));
-        memberships = await Repository.GetPartyRegistryMemberships(info.Id);
+        await Repository.RemoveAccessListMembers(info.Id, ImmutableArray.Create(member2, member3));
+        memberships = await Repository.GetAccessListMemberships(info.Id);
         memberships.Should().HaveCount(2)
             .And.Contain(m => m.PartyId == member1)
             .And.Contain(m => m.PartyId == member4);
 
         // Remove remaining members
-        await Repository.RemovePartyRegistryMembers(info.RegistryOwner, info.Identifier, ImmutableArray.Create(member1, member4));
-        memberships = await Repository.GetPartyRegistryMemberships(info.Id);
+        await Repository.RemoveAccessListMembers(info.RegistryOwner, info.Identifier, ImmutableArray.Create(member1, member4));
+        memberships = await Repository.GetAccessListMemberships(info.Id);
         memberships.Should().BeEmpty();
     }
 
-    private async Task CheckRegistryLookup(PartyRegistryInfo info)
+    private async Task CheckRegistryLookup(AccessListInfo info)
     {
         var lookup = await Repository.Lookup(info.RegistryOwner, info.Identifier);
         Assert.NotNull(lookup);

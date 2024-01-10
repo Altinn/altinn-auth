@@ -1,6 +1,6 @@
 ﻿using Altinn.ResourceRegistry.Core;
+using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Enums;
-using Altinn.ResourceRegistry.Core.PartyRegistry;
 using Altinn.ResourceRegistry.Persistence;
 using Altinn.ResourceRegistry.Persistence.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -46,7 +46,7 @@ public static class ResourceRegistryDependencyInjectionExtensions
     }
 
     /// <summary>
-    /// Registers a <see cref="IPartyRegistryRepository"/> with the dependency injection container.
+    /// Registers a <see cref="IAccessListsRepository"/> with the dependency injection container.
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection"/>.</param>
     /// <returns><paramref name="services"/> for further chaining.</returns>
@@ -56,7 +56,7 @@ public static class ResourceRegistryDependencyInjectionExtensions
         services.AddDatabase();
         services.TryAddSingleton(TimeProvider.System);
 
-        services.TryAddTransient<IPartyRegistryRepository, PartyRegistryRepository>();
+        services.TryAddTransient<IAccessListsRepository, AccessListsRepository>();
 
         return services;
     }

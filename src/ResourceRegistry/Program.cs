@@ -56,7 +56,18 @@ builder.Services.AddControllers(opts =>
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    var assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+    var xmlFile = Path.ChangeExtension(assemblyPath, ".xml");
+    if (File.Exists(xmlFile))
+    {
+        c.IncludeXmlComments(xmlFile);
+    }
+
+    c.EnableAnnotations();
+    c.SupportNonNullableReferenceTypes();
+});
 
 var app = builder.Build();
 
