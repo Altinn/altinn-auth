@@ -57,6 +57,14 @@ namespace Altinn.ResourceRegistry.Core.Services.Interfaces
         Task<List<ServiceResource>> Search(ResourceSearch resourceSearch, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Allows for searching for resources in the resource registry
+        /// </summary>
+        /// <param name="resourceSearch">The search model defining the search filter criterias</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>A list of service resources found to match the search criterias</returns>
+        Task<List<ServiceResource>> GetSearchResults(ResourceSearch resourceSearch, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Allows for storing a policy xacml policy for the resource
         /// </summary>
         /// <param name="serviceResource">The resource</param>

@@ -1,5 +1,4 @@
 ﻿using System.Buffers;
-using System.Diagnostics;
 using System.Net;
 using Altinn.Platform.Storage.Interface.Models;
 using Altinn.ResourceRegistry.Core.Clients.Interfaces;
@@ -13,7 +12,6 @@ using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Azure;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using Nerdbank.Streams;
 
 namespace Altinn.ResourceRegistry.Core.Services
@@ -103,6 +101,13 @@ namespace Altinn.ResourceRegistry.Core.Services
         }
 
         /// <inheritdoc/>
+        public async Task<List<ServiceResource>> GetSearchResults(ResourceSearch resourceSearch, CancellationToken cancellationToken = default)
+        {
+            List<ServiceResource> resourceList = await GetResourceList(false, false, cancellationToken);
+            return ServiceResourceHelper.GetSearchResultsFromResourceList(resourceList, resourceSearch);
+        }
+
+        /// <inheritdoc/>
         public async Task<bool> StorePolicy(ServiceResource serviceResource, ReadOnlySequence<byte> policyContent, CancellationToken cancellationToken = default)
         {
             PolicyHelper.IsValidResourcePolicy(serviceResource, policyContent);
@@ -163,7 +168,7 @@ namespace Altinn.ResourceRegistry.Core.Services
             async Task<List<ServiceResource>> GetResourceListInner(CancellationToken cancellationToken)
             {
                 ResourceSearch resourceSearch = new ResourceSearch();
-            
+
                 List<ServiceResource> resources = await Search(resourceSearch, cancellationToken);
 
                 foreach (ServiceResource resource in resources)
@@ -208,7 +213,7 @@ namespace Altinn.ResourceRegistry.Core.Services
                     {
                         nntext = service2068.ServiceEditionVersionName;
                     }
-                    
+
                     AvailableService service1033 = altinn2List1033.Find(r => r.ExternalServiceCode == service.ExternalServiceCode && r.ExternalServiceEditionCode == service.ExternalServiceEditionCode);
                     if (service1033 != null)
                     {

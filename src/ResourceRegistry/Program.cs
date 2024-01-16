@@ -229,6 +229,7 @@ void ConfigurePostgreSql()
             traceService,
             new Configuration
             {
+                Environment = "prod",
                 Workspace = workspacePath,
                 ConnectionString = connectionString,
                 IsAutoCreateDatabase = false,

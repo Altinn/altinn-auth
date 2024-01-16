@@ -344,8 +344,8 @@ namespace Altinn.ResourceRegistry.Controllers
         [Produces("application/json")]
         public async Task<List<ServiceResource>> Search([FromQuery] ResourceSearch search, CancellationToken cancellationToken)
         {
-            return await _resourceRegistry.Search(search, cancellationToken);
-        }
+            return await _resourceRegistry.GetSearchResults(search, cancellationToken);
+        } 
      }
 
     /// <summary>
