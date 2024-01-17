@@ -1,15 +1,16 @@
 ﻿using Altinn.ResourceRegistry.Persistence.Configuration;
+using FluentAssertions.Common;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Testcontainers.PostgreSql;
 using Yuniql.Core;
 
-namespace Altinn.ResourceRegistry.Persistence.Tests;
+namespace Altinn.ResourceRegistry.TestUtils;
 
 public class DbFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder()
-        .WithImage("docker.io/postgres:15.4-alpine")
+        .WithImage("docker.io/postgres:16.1-alpine")
         .WithCleanUp(true)
         .Build();
 
@@ -23,7 +24,7 @@ public class DbFixture : IAsyncLifetime
         _db = NpgsqlDataSource.Create(_connectionString);
     }
 
-    public async Task<IAsyncDisposable> ConfigureServices(IServiceCollection services)
+    public async Task<OwnedDb> CreateDbAsync()
     {
         var dbName = $"test_{Guid.NewGuid():N}";
 
@@ -49,13 +50,15 @@ public class DbFixture : IAsyncLifetime
         ConfigurationHelper.Initialize(configuration);
         migrationService.Run();
 
-        services.Configure<PostgreSQLSettings>(settings =>
-        {
-            settings.ConnectionString = connectionString;
-            settings.AuthorizationDbPwd = "unused";
-        });
+        return new OwnedDb(connectionString, dbName, _db);
+    }
 
-        return new DbDeleteToken(dbName, _db);
+    public async Task<IAsyncDisposable> ConfigureServicesAsync(IServiceCollection services)
+    {
+        var db = await CreateDbAsync();
+        db.ConfigureServices(services);
+
+        return db;
     }
 
     public async Task DisposeAsync()
@@ -84,15 +87,28 @@ public class DbFixture : IAsyncLifetime
         throw new InvalidOperationException("Workspace directory not found");
     }
 
-    class DbDeleteToken : IAsyncDisposable
+    public sealed class OwnedDb : IAsyncDisposable
     {
+        readonly string _connectionString;
         readonly string _dbName;
         readonly NpgsqlDataSource _db;
 
-        public DbDeleteToken(string dbName, NpgsqlDataSource db)
+        public OwnedDb(string connectionString, string dbName, NpgsqlDataSource db)
         {
+            _connectionString = connectionString;
             _dbName = dbName;
             _db = db;
+        }
+
+        public string ConnectionString => _connectionString;
+
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.Configure<PostgreSQLSettings>(settings =>
+            {
+                settings.ConnectionString = ConnectionString;
+                settings.AuthorizationDbPwd = "unused";
+            });
         }
 
         public async ValueTask DisposeAsync()

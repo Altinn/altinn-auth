@@ -15,7 +15,6 @@ using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Filters;
 using Altinn.ResourceRegistry.Health;
 using Altinn.ResourceRegistry.Integration.Clients;
-using Altinn.ResourceRegistry.Persistence;
 using Altinn.ResourceRegistry.Persistence.Configuration;
 using AltinnCore.Authentication.JwtCookie;
 using Azure.Identity;
@@ -103,15 +102,13 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.Configure<AzureStorageConfiguration>(config.GetSection("AzureStorageConfiguration"));
 
     services.AddAuthentication(JwtCookieDefaults.AuthenticationScheme)
-    .AddJwtCookie(JwtCookieDefaults.AuthenticationScheme, options =>
-    {
-        if (builder.Environment.IsDevelopment())
+        .AddJwtCookie(JwtCookieDefaults.AuthenticationScheme, options =>
         {
-            options.RequireHttpsMetadata = false;
-        }
-    });
-
-    string[] resourceWriteScope = new string[] { AuthzConstants.SCOPE_RESOURCEREGISTRY_ADMIN, AuthzConstants.SCOPE_RESOURCEREGISTRY_WRITE };
+            if (builder.Environment.IsDevelopment())
+            {
+                options.RequireHttpsMetadata = false;
+            }
+        });
 
     if (!string.IsNullOrEmpty(applicationInsightsConnectionString))
     {
@@ -146,8 +143,16 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 
     services.AddAuthorization(options =>
     {
-        options.AddPolicy(AuthzConstants.POLICY_SCOPE_RESOURCEREGISTRY_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement(resourceWriteScope)));
+        options.AddPolicy(AuthzConstants.POLICY_SCOPE_RESOURCEREGISTRY_WRITE, policy => policy
+            .RequireScopeAnyOf(AuthzConstants.SCOPE_RESOURCE_ADMIN, AuthzConstants.SCOPE_RESOURCE_WRITE));
+        options.AddPolicy(AuthzConstants.POLICY_ACCESS_LIST_READ, policy => policy
+            .RequireScopeAnyOf(AuthzConstants.SCOPE_RESOURCE_ADMIN, AuthzConstants.SCOPE_ACCESS_LIST_READ, AuthzConstants.SCOPE_ACCESS_LIST_WRITE)
+            .RequireUserOwnsResource());
+        options.AddPolicy(AuthzConstants.POLICY_ACCESS_LIST_WRITE, policy => policy
+            .RequireScopeAnyOf(AuthzConstants.SCOPE_RESOURCE_ADMIN, AuthzConstants.SCOPE_ACCESS_LIST_WRITE)
+            .RequireUserOwnsResource());
     });
+    services.AddResourceRegistryAuthorizationHandlers();
 }
 
 void Configure(IConfiguration config)
@@ -323,4 +328,11 @@ void ConfigureLogging(ILoggingBuilder logging)
         logging.AddFilter("System", LogLevel.Warning);
         logging.AddConsole();
     }
+}
+
+/// <summary>
+/// Startup class.
+/// </summary>
+public partial class Program 
+{
 }

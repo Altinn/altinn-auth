@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Altinn.ResourceRegistry.TestUtils;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Altinn.ResourceRegistry.Persistence.Tests;
@@ -39,7 +40,7 @@ public abstract class DbTests
     {
         var container = new ServiceCollection();
         container.AddLogging(l => l.AddConsole());
-        await _dbFixture.ConfigureServices(container);
+        await _dbFixture.ConfigureServicesAsync(container);
         ConfigureServices(container);
 
         _services = container.BuildServiceProvider(new ServiceProviderOptions

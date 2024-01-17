@@ -1,5 +1,6 @@
 
 using Altinn.ResourceRegistry.Core.AccessLists;
+using Altinn.ResourceRegistry.TestUtils;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;

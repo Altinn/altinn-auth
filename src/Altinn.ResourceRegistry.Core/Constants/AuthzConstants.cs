@@ -22,19 +22,39 @@ namespace Altinn.ResourceRegistry.Core.Constants
         public const string POLICY_SCOPE_RESOURCEREGISTRY_READ = "ScopeResourceRegistryRead";
 
         /// <summary>
+        /// Policname for authorizing write access to access lists.
+        /// </summary>
+        public const string POLICY_ACCESS_LIST_WRITE = "AccessListWrite";
+
+        /// <summary>
+        /// Policy name for authorizing read access to access lists.
+        /// </summary>
+        public const string POLICY_ACCESS_LIST_READ = "AccessListRead";
+
+        /// <summary>
         /// Scope for resourceregistry read access
         /// </summary>
-        public const string SCOPE_RESOURCEREGISTRY_READ = "altinn:resourceregistry/resource.read";
+        public const string SCOPE_RESOURCE_READ = "altinn:resourceregistry/resource.read";
 
         /// <summary>
         /// Scope for resource registry write access
         /// </summary>
-        public const string SCOPE_RESOURCEREGISTRY_WRITE = "altinn:resourceregistry/resource.write";
+        public const string SCOPE_RESOURCE_WRITE = "altinn:resourceregistry/resource.write";
 
         /// <summary>
         /// Scope for resource registry admin access
         /// </summary>
-        public const string SCOPE_RESOURCEREGISTRY_ADMIN = "altinn:resourceregistry/resource.admin";
+        public const string SCOPE_RESOURCE_ADMIN = "altinn:resourceregistry/resource.admin";
+
+        /// <summary>
+        /// Scope for access list read access
+        /// </summary>
+        public const string SCOPE_ACCESS_LIST_READ = "altinn:resourceregistry/access-list.read";
+
+        /// <summary>
+        /// Scope for access list write access
+        /// </summary>
+        public const string SCOPE_ACCESS_LIST_WRITE = "altinn:resourceregistry/access-list.write";
 
         /// <summary>
         /// Claim for scopes from maskinporten token

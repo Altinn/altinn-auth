@@ -9,10 +9,10 @@
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="6.12.0" />
     <PackageReference Include="JWTCookieAuthentication" Version="3.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="Moq" Version="4.20.70" />
-    <PackageReference Include="xunit" Version="2.6.4" />
+    <PackageReference Include="xunit" Version="2.6.5" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.6">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ResourceRegistry\Altinn.ResourceRegistry.csproj" />
+    <ProjectReference Include="..\Altinn.ResourceRegistry.TestUtils\Altinn.ResourceRegistry.TestUtils.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -46,7 +46,7 @@ namespace Altinn.ResourceRegistry.Utils
         public static bool HasAdminAccess(ClaimsPrincipal user)
         {
             List<string> requiredScopes = new List<string>();
-            requiredScopes.Add(AuthzConstants.SCOPE_RESOURCEREGISTRY_ADMIN);
+            requiredScopes.Add(AuthzConstants.SCOPE_RESOURCE_ADMIN);
             if (ContainsRequiredScope(requiredScopes, user))
             {
                 return true;

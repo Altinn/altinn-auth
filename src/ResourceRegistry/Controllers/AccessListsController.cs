@@ -1,8 +1,13 @@
 ﻿#nullable enable
 
+using System.Net;
+using Altinn.ResourceRegistry.Auth;
+using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.JsonPatch;
 using Altinn.ResourceRegistry.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Altinn.ResourceRegistry.Controllers;
@@ -13,7 +18,10 @@ namespace Altinn.ResourceRegistry.Controllers;
 [ApiController]
 [Consumes("application/json")]
 [Produces("application/json")]
-[Route("resourceregistry/api/v1/access-lists")]
+[Route("resourceregistry/api/v1/access-lists/{owner:required}")]
+[NotImplementedFilter]
+[ResourceOwnerFromRouteValue("owner")]
+[Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_READ)]
 public class AccessListsController 
     : Controller
 {
@@ -23,10 +31,12 @@ public class AccessListsController
     /// <param name="owner">The resource owner</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A paginated set of <see cref="AccessListInfoDto"/></returns>
-    [HttpGet("{owner:required}")]
+    [HttpGet("")]
     [SwaggerOperation(Tags = ["Access List"])]
-    public Task<ActionResult<Paginated<AccessListInfoDto>>> GetAccessListsByOwner(string owner, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<Paginated<AccessListInfoDto>>> GetAccessListsByOwner(string owner, CancellationToken cancellationToken = default)
     {
+        await Task.Yield();
+
         throw new NotImplementedException();
     }
 
@@ -37,10 +47,12 @@ public class AccessListsController
     /// <param name="identifier">The resource owner-unique identifier</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A <see cref="AccessListInfoDto"/></returns>
-    [HttpGet("{owner:required}/{identifier:required}")]
+    [HttpGet("{identifier:required}")]
     [SwaggerOperation(Tags = ["Access List"])]
-    public Task<ActionResult<AccessListInfoDto>> GetAccessList(string owner, string identifier, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<AccessListInfoDto>> GetAccessList(string owner, string identifier, CancellationToken cancellationToken = default)
     {
+        await Task.Yield();
+
         throw new NotImplementedException();
     }
 
@@ -52,10 +64,13 @@ public class AccessListsController
     /// <param name="model">Information about the access list</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A <see cref="AccessListInfoDto"/></returns>
-    [HttpPut("{owner:required}/{identifier:required}")]
+    [HttpPut("{identifier:required}")]
     [SwaggerOperation(Tags = ["Access List"])]
-    public Task<ActionResult<AccessListInfoDto>> UpsertAccessList(string owner, string identifier, [FromBody] CreateAccessListModel model, CancellationToken cancellationToken = default)
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
+    public async Task<ActionResult<AccessListInfoDto>> UpsertAccessList(string owner, string identifier, [FromBody] CreateAccessListModel model, CancellationToken cancellationToken = default)
     {
+        await Task.Yield();
+
         throw new NotImplementedException();
     }
 
@@ -67,11 +82,14 @@ public class AccessListsController
     /// <param name="patch">The patch document containing what to update</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A <see cref="AccessListInfoDto"/></returns>
-    [HttpPatch("{owner:required}/{identifier:required}")]
+    [HttpPatch("{identifier:required}")]
     [SwaggerOperation(Tags = ["Access List"])]
     [Consumes("application/json-patch+json")]
-    public Task<ActionResult<AccessListInfoDto>> UpdateAccessList(string owner, string identifier, [FromBody] JsonPatchDocument patch, CancellationToken cancellationToken = default)
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
+    public async Task<ActionResult<AccessListInfoDto>> UpdateAccessList(string owner, string identifier, [FromBody] JsonPatchDocument patch, CancellationToken cancellationToken = default)
     {
+        await Task.Yield();
+
         throw new NotImplementedException();
     }
 
@@ -82,10 +100,12 @@ public class AccessListsController
     /// <param name="identifier">The resource owner-unique identifier</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A paginated list of <see cref="AccessListMembershipDto"/></returns>
-    [HttpGet("{owner:required}/{identifier:required}/members")]
+    [HttpGet("{identifier:required}/members")]
     [SwaggerOperation(Tags = ["Access List Members"])]
-    public Task<ActionResult<Paginated<AccessListMembershipDto>>> GetAccessListMembers(string owner, string identifier, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<Paginated<AccessListMembershipDto>>> GetAccessListMembers(string owner, string identifier, CancellationToken cancellationToken = default)
     {
+        await Task.Yield();
+
         throw new NotImplementedException();
     }
 
@@ -100,15 +120,17 @@ public class AccessListsController
     /// <param name="members">The new members-list</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A paginated list of <see cref="AccessListMembershipDto"/></returns>
-    [HttpPut("{owner:required}/{identifier:required}/members")]
+    [HttpPut("{identifier:required}/members")]
     [SwaggerOperation(Tags = ["Access List Members"])]
-    public Task<ActionResult<Paginated<AccessListMembershipDto>>> ReplaceAccessListMembers(string owner, string identifier, [FromBody] UpsertAccessListPartyMembersListDto members, CancellationToken cancellationToken = default)
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
+    public async Task<ActionResult<Paginated<AccessListMembershipDto>>> ReplaceAccessListMembers(string owner, string identifier, [FromBody] UpsertAccessListPartyMembersListDto members, CancellationToken cancellationToken = default)
     {
         if (members.Count > 100)
         {
-            ActionResult<Paginated<AccessListMembershipDto>> result = BadRequest("Cannot replace more than 100 members at a time. Use POST and DELETE methods instead.");
-            return Task.FromResult(result);
+            return BadRequest("Cannot replace more than 100 members at a time. Use POST and DELETE methods instead.");
         }
+
+        await Task.Yield();
 
         throw new NotImplementedException();
     }
@@ -124,10 +146,13 @@ public class AccessListsController
     /// <param name="members">The new members-list</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A paginated list of <see cref="AccessListMembershipDto"/></returns>
-    [HttpPost("{owner:required}/{identifier:required}/members")]
+    [HttpPost("{identifier:required}/members")]
     [SwaggerOperation(Tags = ["Access List Members"])]
-    public Task<ActionResult<Paginated<AccessListMembershipDto>>> AddAccessListMembers(string owner, string identifier, [FromBody] UpsertAccessListPartyMembersListDto members, CancellationToken cancellationToken = default)
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
+    public async Task<ActionResult<Paginated<AccessListMembershipDto>>> AddAccessListMembers(string owner, string identifier, [FromBody] UpsertAccessListPartyMembersListDto members, CancellationToken cancellationToken = default)
     {
+        await Task.Yield();
+
         throw new NotImplementedException();
     }
 
@@ -142,10 +167,13 @@ public class AccessListsController
     /// <param name="members">The new members-list</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A paginated list of <see cref="AccessListMembershipDto"/></returns>
-    [HttpDelete("{owner:required}/{identifier:required}/members")]
+    [HttpDelete("{identifier:required}/members")]
     [SwaggerOperation(Tags = ["Access List Members"])]
-    public Task<ActionResult<Paginated<AccessListMembershipDto>>> RemoveAccessListMembers(string owner, string identifier, [FromBody] UpsertAccessListPartyMembersListDto members, CancellationToken cancellationToken = default)
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
+    public async Task<ActionResult<Paginated<AccessListMembershipDto>>> RemoveAccessListMembers(string owner, string identifier, [FromBody] UpsertAccessListPartyMembersListDto members, CancellationToken cancellationToken = default)
     {
+        await Task.Yield();
+
         throw new NotImplementedException();
     }
 
@@ -156,10 +184,12 @@ public class AccessListsController
     /// <param name="identifier">The resource owner-unique identifier</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A parinated list of <see cref="AccessListResourceConnectionDto"/></returns>
-    [HttpGet("{owner:required}/{identifier:required}/resource-connections")]
+    [HttpGet("{identifier:required}/resource-connections")]
     [SwaggerOperation(Tags = ["Access List Resource Connections"])]
-    public Task<ActionResult<Paginated<AccessListResourceConnectionDto>>> GetAccessListResourceConnections(string owner, string identifier, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<Paginated<AccessListResourceConnectionDto>>> GetAccessListResourceConnections(string owner, string identifier, CancellationToken cancellationToken = default)
     {
+        await Task.Yield();
+
         throw new NotImplementedException();
     }
 
@@ -175,10 +205,13 @@ public class AccessListsController
     /// <param name="model">The resource connection info</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The newly created/updated <see cref="AccessListResourceConnectionDto"/></returns>
-    [HttpPut("{owner:required}/{identifier:required}/resource-connections/{resourceIdentifier:required}")]
+    [HttpPut("{identifier:required}/resource-connections/{resourceIdentifier:required}")]
     [SwaggerOperation(Tags = ["Access List Resource Connections"])]
-    public Task<ActionResult<AccessListResourceConnectionDto>> UpsertAccessListResourceConnection(string owner, string identifier, string resourceIdentifier, [FromBody] UpsertAccessListResourceConnectionDto model, CancellationToken cancellationToken = default)
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
+    public async Task<ActionResult<AccessListResourceConnectionDto>> UpsertAccessListResourceConnection(string owner, string identifier, string resourceIdentifier, [FromBody] UpsertAccessListResourceConnectionDto model, CancellationToken cancellationToken = default)
     {
+        await Task.Yield();
+
         throw new NotImplementedException();
     }
 
@@ -193,12 +226,27 @@ public class AccessListsController
     /// <param name="resourceIdentifier">The resource identifier</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The newly removed <see cref="AccessListResourceConnectionDto"/>, if it existed, otherwize returns no content</returns>
-    [HttpDelete("{owner:required}/{identifier:required}/resource-connections/{resourceIdentifier:required}")]
+    [HttpDelete("{identifier:required}/resource-connections/{resourceIdentifier:required}")]
     [SwaggerOperation(Tags = ["Access List Resource Connections"])]
     [SwaggerResponse(StatusCodes.Status200OK, description: "The resource connection was removed", type: typeof(AccessListResourceConnectionDto))]
     [SwaggerResponse(StatusCodes.Status204NoContent, description: "The resource connection did not exist")]
-    public Task<ActionResult<AccessListResourceConnectionDto?>> DeleteAccessListResourceConnection(string owner, string identifier, string resourceIdentifier, CancellationToken cancellationToken = default)
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
+    public async Task<ActionResult<AccessListResourceConnectionDto?>> DeleteAccessListResourceConnection(string owner, string identifier, string resourceIdentifier, CancellationToken cancellationToken = default)
     {
+        await Task.Yield();
+
         throw new NotImplementedException();
+    }
+
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
+    private sealed class NotImplementedFilterAttribute : Attribute, IExceptionFilter
+    {
+        public void OnException(ExceptionContext context)
+        {
+            if (context.Exception is NotImplementedException)
+            {
+                context.Result = new StatusCodeResult((int)HttpStatusCode.NotImplemented);
+            }
+        }
     }
 }

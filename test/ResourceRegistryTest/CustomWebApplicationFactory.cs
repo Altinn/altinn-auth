@@ -1,10 +1,16 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using Altinn.Common.Authentication.Configuration;
+using Altinn.ResourceRegistry.Tests.Mocks;
+using AltinnCore.Authentication.JwtCookie;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Altinn.ResourceRegistry.Tests
 {
-   
+
     public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup>
         where TStartup : class
     {
@@ -16,7 +22,12 @@ namespace Altinn.ResourceRegistry.Tests
                     .AddJsonFile("appsettings.test.json")
                     .Build());
             });
+
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
+                services.AddSingleton<IPostConfigureOptions<OidcProviderSettings>, OidcProviderPostConfigureSettingsStub>();
+            });
         }
     }
-    
 }

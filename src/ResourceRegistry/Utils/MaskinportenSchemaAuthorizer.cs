@@ -59,7 +59,7 @@ namespace Altinn.ResourceRegistry.Utils
 
         private static bool HasDelegationsAdminScope(ClaimsPrincipal claims)
         {
-            return HasScope(claims, AuthzConstants.SCOPE_RESOURCEREGISTRY_ADMIN);
+            return HasScope(claims, AuthzConstants.SCOPE_RESOURCE_ADMIN);
         }
 
         private static bool HasScope(ClaimsPrincipal claims, string scope)
