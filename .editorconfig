@@ -1,4 +1,11 @@
-﻿[*.cs]
+﻿# top-most EditorConfig file
+root = true
+
+# For all files
+[*]
+insert_final_newline = true
+
+[*.cs]
 
 # VSTHRD200: Use "Async" suffix for async methods
 dotnet_diagnostic.VSTHRD200.severity = none
