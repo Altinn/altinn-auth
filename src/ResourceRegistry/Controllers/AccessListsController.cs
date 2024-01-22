@@ -2,7 +2,9 @@
 
 using System.Net;
 using Altinn.ResourceRegistry.Auth;
+using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Constants;
+using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.JsonPatch;
 using Altinn.ResourceRegistry.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -25,19 +27,44 @@ namespace Altinn.ResourceRegistry.Controllers;
 public class AccessListsController 
     : Controller
 {
+    private const string ROUTE_GET_BY_OWNER = "access-lists/get-by-owner";
+
+    private readonly IAccessListService _service;
+
+    /// <summary>
+    /// Constructs a new <see cref="AccessListsController"/>.
+    /// </summary>
+    /// <param name="service">A <see cref="IAccessListService"/></param>
+    public AccessListsController(IAccessListService service)
+    {
+        _service = service;
+    }
+
     /// <summary>
     /// Get all access lists for a given resource owner.
     /// </summary>
     /// <param name="owner">The resource owner</param>
+    /// <param name="token">Optional continuation token</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A paginated set of <see cref="AccessListInfoDto"/></returns>
-    [HttpGet("")]
+    [HttpGet("", Name = ROUTE_GET_BY_OWNER)]
     [SwaggerOperation(Tags = ["Access List"])]
-    public async Task<ActionResult<Paginated<AccessListInfoDto>>> GetAccessListsByOwner(string owner, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<Paginated<AccessListInfoDto>>> GetAccessListsByOwner(
+        string owner,
+        [FromQuery(Name = "token")] Opaque<string>? token = null,
+        CancellationToken cancellationToken = default)
     {
-        await Task.Yield();
+        var page = await _service.GetAccessListsByOwner(owner, Page.ContinueFrom(token?.Value), cancellationToken);
+        if (page == null)
+        {
+            return NotFound();
+        }
 
-        throw new NotImplementedException();
+        var nextLink = page.ContinuationToken != null
+            ? Url.Link(ROUTE_GET_BY_OWNER, new { owner, token = Opaque.Create(page.ContinuationToken) })
+            : null;
+
+        return Paginated.Create(page.Items.Select(AccessListInfoDto.From), nextLink);
     }
 
     /// <summary>

@@ -10,12 +10,30 @@ namespace Altinn.ResourceRegistry.Models;
 /// <summary>
 /// A paginated <see cref="ListObject{T}"/>.
 /// </summary>
+public static class Paginated
+{
+    /// <summary>
+    /// Create a new <see cref="Paginated{T}"/>.
+    /// </summary>
+    /// <typeparam name="T">The type of items</typeparam>
+    /// <param name="items">The items</param>
+    /// <param name="next">The optional next-link</param>
+    /// <returns>A new <see cref="Paginated{T}"/>.</returns>
+    public static Paginated<T> Create<T>(
+        IEnumerable<T> items,
+        string? next)
+        => new(new(next), items);
+}
+
+/// <summary>
+/// A paginated <see cref="ListObject{T}"/>.
+/// </summary>
 /// <typeparam name="T">The item type.</typeparam>
 /// <param name="Links">Pagination links.</param>
 /// <param name="Items">The items.</param>
 public record Paginated<T>(
     PaginatedLinks Links,
-    IReadOnlyList<T> Items)
+    IEnumerable<T> Items)
     : ListObject<T>(Items);
 
 /// <summary>

@@ -1,4 +1,6 @@
-﻿namespace Altinn.ResourceRegistry.Persistence.Aggregates;
+﻿using Altinn.ResourceRegistry.Core.Aggregates;
+
+namespace Altinn.ResourceRegistry.Persistence.Aggregates;
 
 /// <summary>
 /// An event that can be applied to an aggregate.

@@ -87,8 +87,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton(config);
     services.AddHealthChecks().AddCheck<HealthCheck>("resourceregistry_health_check");
 
-    services.AddSingleton<IResourceRegistry, ResourceRegistryService>();
+    services.AddResourceRegistryCoreServices();
     services.AddResourceRegistryPersistence();
+    services.AddSingleton<IResourceRegistry, ResourceRegistryService>();
     services.AddSingleton<IPRP, PRPClient>();
     services.AddSingleton<IAuthorizationHandler, ScopeAccessHandler>();
     services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using Altinn.ResourceRegistry.Core.Aggregates;
+using CommunityToolkit.Diagnostics;
 
 namespace Altinn.ResourceRegistry.Persistence.Aggregates;
 
@@ -8,32 +9,26 @@ namespace Altinn.ResourceRegistry.Persistence.Aggregates;
 /// <typeparam name="TAggregate">The concrete aggregate type</typeparam>
 /// <typeparam name="TEvent">The concrete event type</typeparam>
 internal abstract class Aggregate<TAggregate, TEvent>
-    : IAggregateEventHandler<TAggregate, TEvent>
+    : IAggregate, IAggregateEventHandler<TAggregate, TEvent>
     where TAggregate : Aggregate<TAggregate, TEvent>, IAggregateEventHandler<TAggregate, TEvent>, IAggregateFactory<TAggregate, TEvent>
     where TEvent : IAggregateEvent<TAggregate, TEvent>
 {
     private readonly TimeProvider _timeProvider;
+    private readonly IAggregateRepository<TAggregate, TEvent> _repository;
 
-    [SuppressMessage(
-        "StyleCop.CSharp.SpacingRules",
-        "SA1010:Opening square brackets should be spaced correctly",
-        Justification = "https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/3687")]
     private readonly List<TEvent> _events = [];
     private int _committed = 0;
 
-    /// <summary>
-    /// Gets a value indicating wheather the aggregate is initialized.
-    /// </summary>
+    /// <inheritdoc/>
+    public Guid Id { get; }
+
+    /// <inheritdoc/>
     public abstract bool IsInitialized { get; }
 
-    /// <summary>
-    /// Gets a value indicating wheather the aggregate is deleted.
-    /// </summary>
+    /// <inheritdoc/>
     public abstract bool IsDeleted { get; }
 
-    /// <summary>
-    /// Gets when this aggregate was created.
-    /// </summary>
+    /// <inheritdoc/>
     public DateTimeOffset CreatedAt
         => _events.Count switch
         {
@@ -41,9 +36,7 @@ internal abstract class Aggregate<TAggregate, TEvent>
             _ => _events[0].EventTime,
         };
 
-    /// <summary>
-    /// Gets when this aggregate was last updated.
-    /// </summary>
+    /// <inheritdoc/>
     public DateTimeOffset UpdatedAt 
         => _events.Count switch
         {
@@ -51,14 +44,12 @@ internal abstract class Aggregate<TAggregate, TEvent>
             _ => _events[^1].EventTime,
         };
 
-    /// <summary>
-    /// Gets the current aggregate version (for use with optimistic concurency).
-    /// </summary>
-    public ulong CommittedVersion
+    /// <inheritdoc/>
+    public EventId CommittedVersion
         => _committed switch
         {
-            0 => 0,
-            _ => _events[_committed - 1].EventId.UnsafeValue,
+            0 => EventId.Unset,
+            _ => _events[_committed - 1].EventId,
         };
 
     /// <summary>
@@ -105,18 +96,19 @@ internal abstract class Aggregate<TAggregate, TEvent>
     }
 
     /// <summary>
-    /// Gets the aggregate id.
-    /// </summary>
-    public Guid Id { get; }
-
-    /// <summary>
     /// Constructs a new <see cref="Aggregate{TAggregate,TEvent}"/> with the specified <paramref name="id"/>.
     /// </summary>
     /// <param name="timeProvider">The time provider</param>
     /// <param name="id">The aggregate id</param>
-    protected Aggregate(TimeProvider timeProvider, Guid id)
+    /// <param name="repository">A <see cref="IAggregateRepository{TAggregate, TEvent}"/> for saving changes to the aggregate</param>
+    protected Aggregate(TimeProvider timeProvider, Guid id, IAggregateRepository<TAggregate, TEvent> repository)
     {
+        Guard.IsNotNull(timeProvider);
+        Guard.IsNotNull(repository);
+        Guard.IsNotDefault(id);
+
         _timeProvider = timeProvider;
+        _repository = repository;
         Id = id;
     }
 
@@ -155,4 +147,8 @@ internal abstract class Aggregate<TAggregate, TEvent>
     /// <inheritdoc />
     void IAggregateEventHandler<TEvent>.ApplyEvent(TEvent @event)
         => AddEvent(@event);
+
+    /// <inheritdoc />
+    public Task SaveChanged(CancellationToken cancellationToken = default)
+        => _repository.ApplyChanges((TAggregate)this, cancellationToken);
 }

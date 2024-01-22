@@ -39,5 +39,5 @@ public abstract record ListObject
 /// <param name="Items">The items.</param>
 public record ListObject<T>(
     [property: JsonPropertyName("data")]
-    IReadOnlyList<T> Items)
+    IEnumerable<T> Items)
     : ListObject;

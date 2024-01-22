@@ -1,8 +1,6 @@
 ﻿using System.Collections.Immutable;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using Altinn.ResourceRegistry.Core.AccessLists;
+using Altinn.ResourceRegistry.Core.Aggregates;
 
 namespace Altinn.ResourceRegistry.Persistence.Aggregates;
 
@@ -11,6 +9,7 @@ namespace Altinn.ResourceRegistry.Persistence.Aggregates;
 /// </summary>
 internal class AccessListAggregate
     : Aggregate<AccessListAggregate, AccessListEvent>
+    , IAccessListAggregate
     , IAggregateFactory<AccessListAggregate, AccessListEvent>
     , IAggregateEventHandler<AccessListCreatedEvent>
     , IAggregateEventHandler<AccessListUpdatedEvent>
@@ -28,15 +27,25 @@ internal class AccessListAggregate
     private string? _name;
     private string? _description;
 
-    private readonly Dictionary<string, AccessListResourceConnection> _resourceConnections = new();
-    private readonly HashSet<Guid> _members = new();
+    private readonly Dictionary<string, AccessListResourceConnection> _resourceConnections = [];
+    private readonly HashSet<Guid> _members = [];
 
     /// <inheritdoc/>
-    public static AccessListAggregate New(TimeProvider timeProvider, Guid id)
-        => new(timeProvider, id);
+    static AccessListAggregate IAggregateFactory<AccessListAggregate, AccessListEvent>.New(TimeProvider timeProvider, Guid id, IAggregateRepository<AccessListAggregate, AccessListEvent> repository)
+        => New(timeProvider, id, repository);
 
-    private AccessListAggregate(TimeProvider timeProvider, Guid id)
-        : base(timeProvider, id)
+    /// <summary>
+    /// Creates a new <see cref="AccessListAggregate"/>.
+    /// </summary>
+    /// <param name="timeProvider">The <see cref="TimeProvider"/></param>
+    /// <param name="id">The id</param>
+    /// <param name="repository">The <see cref="IAggregateRepository{TAggregate, TEvent}"/></param>
+    /// <returns>A new <see cref="AccessListAggregate"/></returns>
+    internal static AccessListAggregate New(TimeProvider timeProvider, Guid id, IAggregateRepository<AccessListAggregate, AccessListEvent> repository)
+        => new(timeProvider, id, repository);
+
+    private AccessListAggregate(TimeProvider timeProvider, Guid id, IAggregateRepository<AccessListAggregate, AccessListEvent> repository)
+        : base(timeProvider, id, repository)
     {
     }
 
@@ -46,33 +55,19 @@ internal class AccessListAggregate
     /// <inheritdoc />
     public override bool IsDeleted => _isDeleted;
 
-    /// <summary>
-    /// Gets the resource owner.
-    /// </summary>
+    /// <inheritdoc />
     public string ResourceOwner => InitializedThis._resourceOwner!;
 
-    /// <summary>
-    /// Gets the access list identifier.
-    /// </summary>
+    /// <inheritdoc />
     public string Identifier => InitializedThis._identifier!;
 
-    /// <summary>
-    /// Gets the access list (display) name.
-    /// </summary>
+    /// <inheritdoc />
     public string Name => InitializedThis._name!;
 
-    /// <summary>
-    /// Gets the access list (optional) description.
-    /// </summary>
+    /// <inheritdoc />
     public string Description => InitializedThis._description!;
 
-    /// <summary>
-    /// Create a new access list.
-    /// </summary>
-    /// <param name="resourceOwner">The resource owner</param>
-    /// <param name="identifier">The access list identifier</param>
-    /// <param name="name">The access list (display) name</param>
-    /// <param name="description">The access list (optional) description</param>
+    /// <inheritdoc />
     public void Initialize(string resourceOwner, string identifier, string name, string? description)
     {
         if (IsInitialized)
@@ -83,12 +78,7 @@ internal class AccessListAggregate
         AddEvent(new AccessListCreatedEvent(EventId.Unset, Id, resourceOwner, identifier, name, description ?? string.Empty, GetUtcNow()));
     }
 
-    /// <summary>
-    /// Update the access list.
-    /// </summary>
-    /// <param name="identifier">The new identifier, or <see langword="null"/> to keep the old value</param>
-    /// <param name="name">The new <see cref="Name"/>, or <see langword="null"/> to keep the old value</param>
-    /// <param name="description">The new <see cref="Description"/>, or <see langword="null"/> to keep the old value</param>
+    /// <inheritdoc />
     public void Update(
         string? identifier = null,
         string? name = null,
@@ -106,9 +96,7 @@ internal class AccessListAggregate
         AddEvent(new AccessListUpdatedEvent(EventId.Unset, Id, identifier, name, description, GetUtcNow()));
     }
 
-    /// <summary>
-    /// Delete the access list.
-    /// </summary>
+    /// <inheritdoc />
     public void Delete()
     {
         AssertInitialized();
@@ -116,11 +104,7 @@ internal class AccessListAggregate
         AddEvent(new AccessListDeletedEvent(EventId.Unset, Id, GetUtcNow()));
     }
 
-    /// <summary>
-    /// Add a resource connection to the access list.
-    /// </summary>
-    /// <param name="resourceIdentifier">The resource identifier</param>
-    /// <param name="actions">The actions allow-list</param>
+    /// <inheritdoc />
     public AccessListResourceConnection AddResourceConnection(string resourceIdentifier, IEnumerable<string> actions)
     {
         AssertInitialized();
@@ -140,11 +124,7 @@ internal class AccessListAggregate
         return _resourceConnections[resourceIdentifier];
     }
 
-    /// <summary>
-    /// Add actions to a resource connection.
-    /// </summary>
-    /// <param name="resourceIdentifier">The resource identifier</param>
-    /// <param name="actions">The actions to add</param>
+    /// <inheritdoc />
     public AccessListResourceConnection AddResourceConnectionActions(string resourceIdentifier, IEnumerable<string> actions)
     {
         AssertInitialized();
@@ -169,11 +149,7 @@ internal class AccessListAggregate
         return _resourceConnections[resourceIdentifier];
     }
 
-    /// <summary>
-    /// Remove actions from a resource connection.
-    /// </summary>
-    /// <param name="resourceIdentifier">The resource identifier</param>
-    /// <param name="actions">The actions to remove</param>
+    /// <inheritdoc />
     public AccessListResourceConnection RemoveResourceConnectionActions(string resourceIdentifier, IEnumerable<string> actions)
     {
         AssertInitialized();
@@ -198,10 +174,7 @@ internal class AccessListAggregate
         return _resourceConnections[resourceIdentifier];
     }
 
-    /// <summary>
-    /// Remove a resource connection from the access list.
-    /// </summary>
-    /// <param name="resourceIdentifier">The resource identifier</param>
+    /// <inheritdoc />
     public AccessListResourceConnection RemoveResourceConnection(string resourceIdentifier)
     {
         AssertInitialized();
@@ -215,10 +188,7 @@ internal class AccessListAggregate
         return connection;
     }
 
-    /// <summary>
-    /// Add members to the access list.
-    /// </summary>
-    /// <param name="partyIds">The members</param>
+    /// <inheritdoc />
     public void AddMembers(IEnumerable<Guid> partyIds)
     {
         AssertInitialized();
@@ -237,10 +207,7 @@ internal class AccessListAggregate
         AddEvent(new AccessListMembersAddedEvent(EventId.Unset, Id, partyIdsImmutable, GetUtcNow()));
     }
 
-    /// <summary>
-    /// Remove members from the access list.
-    /// </summary>
-    /// <param name="partyIds">The members</param>
+    /// <inheritdoc />
     public void RemoveMembers(IEnumerable<Guid> partyIds)
     {
         AssertInitialized();
@@ -294,10 +261,9 @@ internal class AccessListAggregate
     }
 
     /// <inheritdoc />
-    [SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1010:Opening square brackets should be spaced correctly", Justification = "Collection initializer")]
     void IAggregateEventHandler<AccessListResourceConnectionCreatedEvent>.ApplyEvent(AccessListResourceConnectionCreatedEvent @event)
     {
-        _resourceConnections[@event.ResourceIdentifier] = new AccessListResourceConnection(@event.ResourceIdentifier, [.. @event.Actions], @event.EventTime, @event.EventTime);
+        _resourceConnections[@event.ResourceIdentifier] = new AccessListResourceConnection(@event.ResourceIdentifier, [..@event.Actions], @event.EventTime, @event.EventTime);
     }
 
     /// <inheritdoc />
@@ -344,40 +310,6 @@ internal class AccessListAggregate
     /// <returns><see cref="AccessListInfo"/></returns>
     public AccessListInfo AsAccessListInfo()
         => new AccessListInfo(Id, ResourceOwner, Identifier, Name, Description, CreatedAt, UpdatedAt);
-}
-
-/// <summary>
-/// A event id that is either a db-defined id, or the special value unset.
-/// </summary>
-/// <param name="id">The db id</param>
-[DebuggerDisplay("{DebuggerDisplay,nq}")]
-internal readonly struct EventId(ulong id)
-{
-    /// <summary>
-    /// Get's the nullable value for the event id.
-    /// </summary>
-    public readonly ulong? Value 
-        => id == 0 ? null : id;
-
-    /// <summary>
-    /// Get's a value for the event id, assuming it is not unset.
-    /// </summary>
-    internal readonly ulong UnsafeValue
-        => id;
-
-    /// <summary>
-    /// Gets whether the value is set.
-    /// </summary>
-    public bool IsSet => id != 0;
-
-    /// <summary>
-    /// Gets the special unset event id.
-    /// </summary>
-    public static EventId Unset => default;
-
-    [DebuggerHidden]
-    private string DebuggerDisplay
-        => IsSet ? id.ToString(CultureInfo.InvariantCulture) : "unset";
 }
 
 /// <summary>

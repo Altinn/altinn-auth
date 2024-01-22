@@ -5,7 +5,7 @@
 /// </summary>
 /// <typeparam name="TAggregate">The concrete aggregate type</typeparam>
 /// <typeparam name="TEvent">The concrete event type</typeparam>
-internal interface IAggregateFactory<TAggregate, in TEvent>
+internal interface IAggregateFactory<TAggregate, TEvent>
     where TAggregate : Aggregate<TAggregate, TEvent>, IAggregateFactory<TAggregate, TEvent>, IAggregateEventHandler<TAggregate, TEvent>
     where TEvent : IAggregateEvent<TAggregate, TEvent>
 {
@@ -14,19 +14,21 @@ internal interface IAggregateFactory<TAggregate, in TEvent>
     /// </summary>
     /// <param name="timeProvider">The time provider</param>
     /// <param name="id">The aggregate id</param>
+    /// <param name="repository">A <see cref="IAggregateRepository{TAggregate, TEvent}"/> for saving changes to the aggregate</param>
     /// <returns><typeparamref name="TAggregate"/></returns>
-    static abstract TAggregate New(TimeProvider timeProvider, Guid id);
+    static abstract TAggregate New(TimeProvider timeProvider, Guid id, IAggregateRepository<TAggregate, TEvent> repository);
 
     /// <summary>
     /// Creates a new aggregate with the specified <paramref name="id"/> from the specified <paramref name="events"/>.
     /// </summary>
     /// <param name="timeProvider">The time provider</param>
     /// <param name="id">The aggregate id</param>
+    /// <param name="repository">A <see cref="IAggregateRepository{TAggregate, TEvent}"/> for saving changes to the aggregate</param>
     /// <param name="events">The events that are loaded into the aggregate and marked as committed</param>
     /// <returns><typeparamref name="TAggregate"/></returns>
-    static TAggregate LoadFrom(TimeProvider timeProvider, Guid id, IEnumerable<TEvent> events)
+    static TAggregate LoadFrom(TimeProvider timeProvider, Guid id, IAggregateRepository<TAggregate, TEvent> repository, IEnumerable<TEvent> events)
     {
-        var aggregate = TAggregate.New(timeProvider, id);
+        var aggregate = TAggregate.New(timeProvider, id, repository);
         
         foreach (var e in events)
         {
@@ -42,11 +44,12 @@ internal interface IAggregateFactory<TAggregate, in TEvent>
     /// </summary>
     /// <param name="timeProvider">The time provider</param>
     /// <param name="id">The aggregate id</param>
+    /// <param name="repository">A <see cref="IAggregateRepository{TAggregate, TEvent}"/> for saving changes to the aggregate</param>
     /// <param name="events">The events that are loaded into the aggregate and marked as committed</param>
     /// <returns><typeparamref name="TAggregate"/></returns>
-    static async Task<TAggregate> LoadFrom(TimeProvider timeProvider, Guid id, IAsyncEnumerable<TEvent> events)
+    static async Task<TAggregate> LoadFrom(TimeProvider timeProvider, Guid id, IAggregateRepository<TAggregate, TEvent> repository, IAsyncEnumerable<TEvent> events)
     {
-        var aggregate = TAggregate.New(timeProvider, id);
+        var aggregate = TAggregate.New(timeProvider, id, repository);
         
         await foreach (var e in events)
         {
