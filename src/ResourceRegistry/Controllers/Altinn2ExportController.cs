@@ -1,9 +1,11 @@
-﻿using System.Text;
+﻿using System.Net;
+using System.Text;
 using System.Xml;
 using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Services;
+using Azure.Core;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Altinn.ResourceRegistry.Controllers
@@ -31,18 +33,25 @@ namespace Altinn.ResourceRegistry.Controllers
         /// </summary>
         [HttpGet("resource")]
         [Produces("application/json")]
-        public async Task<ServiceResource> GetServiceResourceForAltinn2Service([FromQueryAttribute] string serviceCode, [FromQueryAttribute] int serviceEditionCode)
+        public async Task<ActionResult<ServiceResource>> GetServiceResourceForAltinn2Service([FromQueryAttribute] string serviceCode, [FromQueryAttribute] int serviceEditionCode)
         {
-            return await _altinn2ServicesClient.GetServiceResourceFromService(serviceCode, serviceEditionCode);
+            try
+            {
+                return await _altinn2ServicesClient.GetServiceResourceFromService(serviceCode, serviceEditionCode);
+            }
+            catch
+            {
+                return new StatusCodeResult((int)HttpStatusCode.BadRequest);
+            }
         }
 
         /// <summary>
         /// Returns a Service Resources based on Altinn 2 ServiceMetadata for a service
         /// </summary>
         [HttpGet("policy")]
-        public async Task<ActionResult> GetPolicyFromAltinn2Service([FromQueryAttribute] string serviceCode, [FromQueryAttribute] int serviceEditionCode)
+        public async Task<ActionResult> GetPolicyFromAltinn2Service([FromQueryAttribute] string serviceCode, [FromQueryAttribute] int serviceEditionCode, [FromQueryAttribute] string resourceIdentifer)
         {
-            XacmlPolicy xacmlPolicy = await _altinn2ServicesClient.GetXacmlPolicy(serviceCode, serviceEditionCode, string.Empty);
+            XacmlPolicy xacmlPolicy = await _altinn2ServicesClient.GetXacmlPolicy(serviceCode, serviceEditionCode, resourceIdentifer);
 
             string xsd;
             await using (MemoryStream stream = new MemoryStream())
