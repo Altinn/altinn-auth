@@ -49,9 +49,9 @@ namespace Altinn.ResourceRegistry.Controllers
         /// Returns a Service Resources based on Altinn 2 ServiceMetadata for a service
         /// </summary>
         [HttpGet("policy")]
-        public async Task<ActionResult> GetPolicyFromAltinn2Service([FromQueryAttribute] string serviceCode, [FromQueryAttribute] int serviceEditionCode, [FromQueryAttribute] string resourceIdentifer)
+        public async Task<ActionResult> GetPolicyFromAltinn2Service([FromQueryAttribute] string serviceCode, [FromQueryAttribute] int serviceEditionCode, [FromQueryAttribute] string resourceIdentifier)
         {
-            XacmlPolicy xacmlPolicy = await _altinn2ServicesClient.GetXacmlPolicy(serviceCode, serviceEditionCode, resourceIdentifer);
+            XacmlPolicy xacmlPolicy = await _altinn2ServicesClient.GetXacmlPolicy(serviceCode, serviceEditionCode, resourceIdentifier);
 
             string xsd;
             await using (MemoryStream stream = new MemoryStream())
