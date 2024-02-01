@@ -24,20 +24,22 @@ public interface IAccessListService
 /// Information about an access list.
 /// </summary>
 /// <param name="Id">The database id for the access list.</param>
-/// <param name="RegistryOwner">The resource owner (a org.nr.).</param>
+/// <param name="ResourceOwner">The resource owner (a org.nr.).</param>
 /// <param name="Identifier">The resource owner-unique identifier. Limited to 'a'-'z' and '-' characters.</param>
-/// <param name="Name">The registry name. Does not have to be unique, and can contain any characters.</param>
-/// <param name="Description">A registry description.</param>
-/// <param name="CreatedAt">When this registry was created.</param>
-/// <param name="UpdatedAt">When this registry was last updated.</param>
+/// <param name="Name">The access list name. Does not have to be unique, and can contain any characters.</param>
+/// <param name="Description">A access list description.</param>
+/// <param name="CreatedAt">When this access list was created.</param>
+/// <param name="UpdatedAt">When this access list was last updated.</param>
+/// <param name="Version">The version of this access list.</param>
 public record AccessListInfo(
     Guid Id,
-    string RegistryOwner,
+    string ResourceOwner,
     string Identifier,
     string Name,
     string Description,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    ulong Version);
 
 /// <summary>
 /// Information about an access list resource connection.
@@ -56,7 +58,7 @@ public record AccessListResourceConnection(
 /// Information about an access list membership.
 /// </summary>
 /// <param name="PartyId">The party id.</param>
-/// <param name="Since">When the party was added to the registry.</param>
+/// <param name="Since">When the party was added to the access list.</param>
 public record AccessListMembership(
     Guid PartyId,
     DateTimeOffset Since);

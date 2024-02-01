@@ -1,4 +1,5 @@
-﻿using Altinn.ResourceRegistry.Core.AccessLists;
+﻿using System.Diagnostics;
+using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Persistence.Aggregates;
 using Microsoft.Extensions.Logging;
 using Npgsql;
@@ -73,6 +74,26 @@ internal partial class AccessListsRepository
     /// <inheritdoc/>
     public async Task<IAccessListAggregate> CreateAccessList(string resourceOwner, string identifier, string name, string description, CancellationToken cancellationToken = default)
         => await InTransaction(repo => repo.CreateAccessList(resourceOwner, identifier, name, description, cancellationToken), cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task<AccessListLoadOrCreateResult> LoadOrCreateAccessList(
+        string resourceOwner,
+        string identifier,
+        string name,
+        string description,
+        CancellationToken cancellationToken = default)
+    {
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            var result = await InTransaction(repo => repo.LoadOrCreateAccessList(resourceOwner, identifier, name, description, cancellationToken), cancellationToken);
+            if (result is not null)
+            {
+                return result;
+            }
+        }
+
+        throw new UnreachableException("This should not happen. Failed to load/create an access list");
+    }
 
     /// <inheritdoc/>
     public async Task<IAccessListAggregate?> LoadAccessList(Guid id, CancellationToken cancellationToken = default)

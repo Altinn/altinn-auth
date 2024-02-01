@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Aggregates;
+using CommunityToolkit.Diagnostics;
 
 namespace Altinn.ResourceRegistry.Persistence.Aggregates;
 
@@ -84,7 +85,7 @@ internal class AccessListAggregate
         string? name = null,
         string? description = null)
     {
-        AssertInitialized();
+        AssertLive();
 
         if (identifier is null
             && name is null
@@ -99,7 +100,7 @@ internal class AccessListAggregate
     /// <inheritdoc />
     public void Delete()
     {
-        AssertInitialized();
+        AssertLive();
 
         AddEvent(new AccessListDeletedEvent(EventId.Unset, Id, GetUtcNow()));
     }
@@ -107,7 +108,7 @@ internal class AccessListAggregate
     /// <inheritdoc />
     public AccessListResourceConnection AddResourceConnection(string resourceIdentifier, IEnumerable<string> actions)
     {
-        AssertInitialized();
+        AssertLive();
 
         if (_resourceConnections.ContainsKey(resourceIdentifier))
         {
@@ -127,7 +128,7 @@ internal class AccessListAggregate
     /// <inheritdoc />
     public AccessListResourceConnection AddResourceConnectionActions(string resourceIdentifier, IEnumerable<string> actions)
     {
-        AssertInitialized();
+        AssertLive();
 
         if (!_resourceConnections.TryGetValue(resourceIdentifier, out var connection))
         {
@@ -152,7 +153,7 @@ internal class AccessListAggregate
     /// <inheritdoc />
     public AccessListResourceConnection RemoveResourceConnectionActions(string resourceIdentifier, IEnumerable<string> actions)
     {
-        AssertInitialized();
+        AssertLive();
 
         if (!_resourceConnections.TryGetValue(resourceIdentifier, out var connection))
         {
@@ -177,7 +178,7 @@ internal class AccessListAggregate
     /// <inheritdoc />
     public AccessListResourceConnection RemoveResourceConnection(string resourceIdentifier)
     {
-        AssertInitialized();
+        AssertLive();
 
         if (!_resourceConnections.TryGetValue(resourceIdentifier, out var connection))
         {
@@ -191,7 +192,7 @@ internal class AccessListAggregate
     /// <inheritdoc />
     public void AddMembers(IEnumerable<Guid> partyIds)
     {
-        AssertInitialized();
+        AssertLive();
 
         var partyIdsImmutable = partyIds.ToImmutableArray();
         if (partyIdsImmutable.IsDefault)
@@ -210,7 +211,7 @@ internal class AccessListAggregate
     /// <inheritdoc />
     public void RemoveMembers(IEnumerable<Guid> partyIds)
     {
-        AssertInitialized();
+        AssertLive();
 
         var partyIdsImmutable = partyIds.ToImmutableArray();
         if (partyIdsImmutable.IsDefault)
@@ -308,8 +309,16 @@ internal class AccessListAggregate
     /// Gets the aggregate as a <see cref="AccessListInfo"/>.
     /// </summary>
     /// <returns><see cref="AccessListInfo"/></returns>
+    /// <exception cref="InvalidOperationException">Thrown if aggregate is not commited.</exception>
     public AccessListInfo AsAccessListInfo()
-        => new AccessListInfo(Id, ResourceOwner, Identifier, Name, Description, CreatedAt, UpdatedAt);
+    {
+        if (HasUncommittedEvents)
+        {
+            ThrowHelper.ThrowInvalidOperationException("Cannot get access list info for uncommitted aggregate");
+        }
+
+        return new AccessListInfo(Id, ResourceOwner, Identifier, Name, Description, CreatedAt, UpdatedAt, CommittedVersion.UnsafeValue);
+    }
 }
 
 /// <summary>

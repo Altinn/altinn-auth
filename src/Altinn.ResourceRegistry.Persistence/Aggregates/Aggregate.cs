@@ -60,18 +60,35 @@ internal abstract class Aggregate<TAggregate, TEvent>
     /// <summary>
     /// Asserts that the aggregate is initialized.
     /// </summary>
-    /// <exception cref="InvalidOperationException">If the aggregate is not initialized</exception>
+    /// <exception cref="InvalidOperationException">If the aggregate is not initialized.</exception>
     protected void AssertInitialized()
     {
         if (!IsInitialized)
         {
-            throw new InvalidOperationException("Aggregate not initialized");
+            ThrowHelper.ThrowInvalidOperationException("Aggregate not initialized");
         }
+    }
 
-        if (IsDeleted)
+    /// <summary>
+    /// Asserts thta the aggregate is not deleted.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">If the aggregate is deleted.</exception>
+    protected void AssertNotDeleted()
+    {
+        if (!IsInitialized)
         {
-            throw new InvalidOperationException("Aggregate is deleted");
+            ThrowHelper.ThrowInvalidOperationException("Aggregate deleted");
         }
+    }
+
+    /// <summary>
+    /// Asserts that the aggregate is both initialized and not deleted.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">If the aggregate is not initialized or is deleted.</exception>
+    protected void AssertLive()
+    {
+        AssertInitialized();
+        AssertNotDeleted();
     }
 
     /// <summary>

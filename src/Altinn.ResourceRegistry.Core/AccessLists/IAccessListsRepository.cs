@@ -110,4 +110,23 @@ public interface IAccessListsRepository
     /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
     /// <returns>The <see cref="IAccessListAggregate"/>, if found, else <see langword="null"/></returns>
     Task<IAccessListAggregate?> LoadAccessList(string resourceOwner, string identifier, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Load or create an access list aggregate.
+    /// </summary>
+    /// <param name="resourceOwner">The resource owner</param>
+    /// <param name="identifier">The access list identifier (unique per owner).</param>
+    /// <param name="name">The registry name. Only used if a new list is created.</param>
+    /// <param name="description">The registry description. Only used if a new list is created.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
+    /// <returns>
+    /// A <see cref="AccessListLoadOrCreateResult"/> containing the created or loaded <see cref="IAccessListAggregate"/>,
+    /// along with whether it was created or not.
+    /// </returns>
+    Task<AccessListLoadOrCreateResult> LoadOrCreateAccessList(
+        string resourceOwner,
+        string identifier,
+        string name,
+        string description,
+        CancellationToken cancellationToken = default);
 }
