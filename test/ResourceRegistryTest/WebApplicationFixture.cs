@@ -1,5 +1,6 @@
 ﻿using Altinn.Common.Authentication.Configuration;
 using Altinn.ResourceRegistry.Tests.Mocks;
+using Altinn.ResourceRegistry.TestUtils;
 using AltinnCore.Authentication.JwtCookie;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -52,8 +53,11 @@ public class WebApplicationFixture
 
             builder.ConfigureTestServices(services =>
             {
+                var timeProvider = new AdvanceableTimeProvider();
                 services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
                 services.AddSingleton<IPostConfigureOptions<OidcProviderSettings>, OidcProviderPostConfigureSettingsStub>();
+                services.AddSingleton<TimeProvider>(timeProvider);
+                services.AddSingleton<AdvanceableTimeProvider>(timeProvider);
             });
 
             base.ConfigureWebHost(builder);
