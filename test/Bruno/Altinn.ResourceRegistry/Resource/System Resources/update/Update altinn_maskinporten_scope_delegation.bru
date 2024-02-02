@@ -1,0 +1,65 @@
+meta {
+  name: Update altinn_maskinporten_scope_delegation
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource/{{id}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "identifier": "altinn_maskinporten_scope_delegation",
+    "title": {
+      "en": "Maskinporten Scope Delegation",
+      "nb": "Maskinporten Scope Delegation",
+      "nn": "Maskinporten Scope Delegation"
+    },
+    "description": {
+      "en": "Maskinporten Scope Delegation",
+      "nb": "Maskinporten Scope Delegation",
+      "nn": "Maskinporten Scope Delegation"
+    },
+    "rightDescription": {
+      "en": "Access to Maskinporten Scope Delegation",
+      "nb": "Access to Maskinporten Scope Delegation",
+      "nn": "Access to Maskinporten Scope Delegation"
+    },
+    "homepage": "https://altinn.no",
+    "status": "Active",
+    "contactPoints": [],
+    "isPartOf": "",
+    "resourceReferences": [],
+    "delegable": false,
+    "visible": false,
+    "hasCompetentAuthority": {
+      "organization": "991825827",
+      "orgcode": "DIGDIR",
+      "name": {
+        "en": "DIGITALISERINGSDIREKTORATET",
+        "nb": "DIGITALISERINGSDIREKTORATET",
+        "nn": "DIGITALISERINGSDIREKTORATET"
+      }
+    },
+    "keywords": [],
+    "limitedByRRR": false,
+    "selfIdentifiedUserEnabled": false,
+    "enterpriseUserEnabled": true,
+    "resourceType": "SystemResource"
+  }
+}
+
+vars:pre-request {
+  auth_tokenType: Enterprise
+  auth_scopes: altinn:resourceregistry/resource.write
+  auth_org: digdir
+  auth_orgNo: 991825827
+  id: altinn_maskinporten_scope_delegation
+}
+
+script:pre-request {
+  await tokenGenerator.getToken();
+}

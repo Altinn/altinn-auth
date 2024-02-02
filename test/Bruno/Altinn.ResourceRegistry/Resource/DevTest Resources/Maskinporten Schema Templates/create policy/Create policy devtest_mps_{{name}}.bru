@@ -1,0 +1,31 @@
+meta {
+  name: Create policy devtest_mps_{{name}}
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource/devtest_mps_{{name}}/policy
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Content-Type: multipart/form-data
+}
+
+body:multipart-form {
+  policyFile: 
+}
+
+vars:pre-request {
+  auth_tokenType: Enterprise
+  auth_scopes: altinn:resourceregistry/resource.write
+  auth_org: ttd
+  auth_orgNo: 991825827
+  name: 
+}
+
+script:pre-request {
+  await tokenGenerator.getToken();
+}

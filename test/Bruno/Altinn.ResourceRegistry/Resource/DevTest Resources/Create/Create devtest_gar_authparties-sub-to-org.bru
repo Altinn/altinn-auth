@@ -1,0 +1,66 @@
+meta {
+  name: Create devtest_gar_authparties-sub-to-org
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "identifier": "devtest_gar_{{name}}",
+    "title": {
+      "en": "{{title}} Generic Access Resource for Development Tests",
+      "nb": "{{title}} Generisk Tilgangsressurs for Utviklingstester",
+      "nn": "{{title}} Generisk Tilgongsressurs for Utviklingstestar"
+    },
+    "description": {
+      "en": "{{title}} is a very nice generic access resource for development tests",
+      "nb": "{{title}} er en veldig fin generisk tilgangsressurs for utviklingstester",
+      "nn": "{{title}} er ein steikje fine generisk tilgongsressurs for utviklingstestar"
+    },
+    "rightDescription": {
+      "en": "You'll give access to {{title}}, a generic access resource for development tests",
+      "nb": "Du gir tilgang til {{title}}, en generisk tilgangsressurs for utviklingstester",
+      "nn": "Du gir tilgong til {{title}}, ein generisk tilgongsressurs for utviklingstestar"
+    },
+    "homepage": "",
+    "status": "Active",
+    "contactPoints": [],
+    "isPartOf": "",
+    "resourceReferences": [],
+    "delegable": true,
+    "visible": true,
+    "hasCompetentAuthority": {
+      "organization": "991825827",
+      "orgcode": "ttd",
+      "name": {
+        "en": "Test departement",
+        "nb": "Testdepartement",
+        "nn": "Testdepartement"
+      }
+    },
+    "keywords": [],
+    "limitedByRRR": false,
+    "selfIdentifiedUserEnabled": false,
+    "enterpriseUserEnabled": true,
+    "resourceType": "GenericAccessResource"
+  }
+}
+
+vars:pre-request {
+  auth_tokenType: Enterprise
+  auth_scopes: altinn:resourceregistry/resource.write
+  auth_org: ttd
+  auth_orgNo: 991825827
+  name: authparties-sub-to-org
+  title: AuthorizedParties: Subunit to Organization
+}
+
+script:pre-request {
+  await tokenGenerator.getToken();
+}

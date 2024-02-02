@@ -1,0 +1,77 @@
+meta {
+  name: Create devtest_mps_authparties-sub-to-org
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "identifier": "devtest_mps_{{name}}",
+      "title": {
+        "en": "{{title}} Maskinporten Schema for development testing",
+        "nb": "{{title}} Maskinporten Schema for utviklingstester",
+        "nn": "{{title}} Maskinporten Schema for utviklingstestar"
+      },
+      "description": {
+        "en": "{{title}} Maskinporten Schema test resource for development testing",
+        "nb": "{{title}} Maskinporten Schema test resource for utviklingstester",
+        "nn": "{{title}} Maskinporten Schema test resource for utviklingstestar"
+      },
+      "rightDescription": {
+        "en": "Access to the referenced maskinporten scopes",
+        "nb": "Tilgang til de refererte maskinporten scopene",
+        "nn": "Tilgong til dei refererte maskinporten scopa"
+      },
+    "homepage": "",
+    "status": "Active",
+    "contactPoints": [],
+    "isPartOf": "",
+    "resourceReferences": [
+        {
+          "referenceSource": "ExternalPlatform",
+          "reference": "ttd:mps/{{name}}.read",
+          "referenceType": "MaskinportenScope"
+        },
+        {
+          "referenceSource": "ExternalPlatform",
+          "reference": "ttd:mps/{{name}}.write",
+          "referenceType": "MaskinportenScope"
+        }
+      ],
+    "delegable": true,
+    "visible": true,
+    "hasCompetentAuthority": {
+      "organization": "991825827",
+      "orgcode": "ttd",
+      "name": {
+        "en": "Test departement",
+        "nb": "Testdepartement",
+        "nn": "Testdepartement"
+      }
+    },
+    "keywords": [],
+    "limitedByRRR": false,
+    "selfIdentifiedUserEnabled": false,
+    "enterpriseUserEnabled": true,
+    "resourceType": "MaskinportenSchema"    
+  }
+}
+
+vars:pre-request {
+  auth_tokenType: Enterprise
+  auth_scopes: altinn:resourceregistry/resource.admin
+  auth_org: ttd
+  auth_orgNo: 991825827
+  name: authparties-sub-to-org
+  title: AuthorizedParties: Subunit to Organization
+}
+
+script:pre-request {
+  await tokenGenerator.getToken();
+}
