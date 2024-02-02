@@ -3,7 +3,7 @@ using FluentAssertions;
 using System;
 using Xunit;
 
-namespace Altinn.ResourceRegistry.Tests;
+namespace Altinn.ResourceRegistry.Tests.Models;
 
 public class HttpDateTimeHeaderValueTests
 {

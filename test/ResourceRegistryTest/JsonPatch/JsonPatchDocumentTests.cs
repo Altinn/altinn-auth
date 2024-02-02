@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using Xunit;
 
-namespace Altinn.ResourceRegistry.Tests;
+namespace Altinn.ResourceRegistry.Tests.JsonPatch;
 
 public class JsonPatchDocumentTests
 {
