@@ -68,6 +68,8 @@ public static class VersionedEntityConditionExtensions
             : IVersionEquatable<TOuter>
             where TEntity : IVersionEquatable<TInner>
         {
+            public bool Exists => entity.Exists;
+
             public bool ModifiedSince(HttpDateTimeHeaderValue other)
             {
                 return entity.ModifiedSince(other);

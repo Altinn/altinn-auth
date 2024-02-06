@@ -81,6 +81,8 @@ public class VersionedEntityTests
     private sealed record VersionedString(string Value, byte Version, DateTimeOffset ModifiedAt)
         : IVersionEquatable<byte>
     {
+        public bool Exists => true;
+
         public bool ModifiedSince(HttpDateTimeHeaderValue other)
             => ModifiedAt > other;
 
