@@ -40,7 +40,7 @@ public class VersionedTaggedObjectResult : ObjectResult
         var headers = context.HttpContext.Response.Headers;
         if (VersionTag is { } tag)
         {
-            headers.ETag = tag.ToString();
+            headers.ETag = tag;
         }
 
         if (LastModified is { } modifiedAt)

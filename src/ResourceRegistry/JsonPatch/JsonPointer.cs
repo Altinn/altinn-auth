@@ -111,7 +111,7 @@ public sealed class JsonPointer
             segments.Add(segment);
         }
 
-        parsed = new JsonPointer(value, segments.ToImmutable());
+        parsed = new JsonPointer(value, segments.DrainToImmutable());
         return true;
 
         static bool TryParseSegment(ref ReadOnlyMemory<char> remaining, out Segment result)

@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 
 using System.Collections;
 using System.Collections.Immutable;
@@ -71,6 +71,7 @@ public static partial class RequestConditionCollection
 /// A set of <see cref="RequestCondition{T}"/>.
 /// </summary>
 /// <typeparam name="T">The etag type</typeparam>
+[RequestConditionCollection.BindingSource]
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public sealed class RequestConditionCollection<T>
     : IReadOnlyCollection<IVersionedEntityCondition<T>>
@@ -118,7 +119,7 @@ public sealed class RequestConditionCollection<T>
     /// <param name="conditions">The conditions</param>
     public static RequestConditionCollection<T> Create(IEnumerable<IVersionedEntityCondition<T>> conditions)
     {
-        if (conditions is ImmutableArray<RequestCondition<T>> immutableArray)
+        if (conditions is ImmutableArray<IVersionedEntityCondition<T>> immutableArray)
         {
             return Create(immutableArray);
         }

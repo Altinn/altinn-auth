@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Versioned;
 using CommunityToolkit.Diagnostics;
+using Microsoft.Net.Http.Headers;
 
 namespace Altinn.ResourceRegistry.Models;
 
@@ -64,6 +65,34 @@ public static class RequestCondition
     public static RequestCondition<T> IsUnmodifiedSince<T>(HttpDateTimeHeaderValue date)
         where T : notnull
         => RequestCondition<T>.IsUnmodifiedSince(date);
+
+    /// <summary>
+    /// Serialize an entity tag to an <c>ETag</c> header value.
+    /// </summary>
+    /// <typeparam name="T">The tag type</typeparam>
+    /// <param name="etag">The tag value</param>
+    /// <returns>The entity tag header value</returns>
+    public static string SerializeETag<T>(T etag)
+        where T : notnull
+    {
+        return FormatETagValue(Opaque.Create(etag).ToString());
+
+        static string FormatETagValue(string value)
+        {
+            var result = string.Create(value.Length + 4, value, static (buffer, state) =>
+            {
+                buffer[0] = 'W';
+                buffer[1] = '/';
+                buffer[2] = '"';
+                buffer[^1] = '"';
+
+                state.AsSpan().CopyTo(buffer[3..^1]);
+            });
+
+            Debug.Assert(EntityTagHeaderValue.TryParse(result, out _));
+            return result;
+        }
+    }
 }
 
 /// <summary>

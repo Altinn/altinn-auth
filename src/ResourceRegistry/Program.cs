@@ -15,6 +15,7 @@ using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Filters;
 using Altinn.ResourceRegistry.Health;
 using Altinn.ResourceRegistry.Integration.Clients;
+using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Persistence.Configuration;
 using AltinnCore.Authentication.JwtCookie;
 using Azure.Identity;
@@ -76,7 +77,11 @@ app.Run();
 
 void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
-    services.AddControllers().AddJsonOptions(options =>
+    services.AddControllers(options =>
+    {
+        options.ModelBinderProviders.Insert(0, RequestConditionCollection.ModelBinderProvider.Instance);
+    })
+        .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.WriteIndented = true;
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
