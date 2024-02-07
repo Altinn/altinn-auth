@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using System.Diagnostics;
 using CommunityToolkit.Diagnostics;
 
 namespace Altinn.ResourceRegistry.Core.Models.Versioned;
@@ -40,6 +41,50 @@ public static class VersionedEntityConditionExtensions
         where TOuter : notnull
         where TInner : notnull
         => new MappedVersionEntityCondition<TInner, TOuter>(self, converter);
+
+    /// <summary>
+    /// Validate the condition against a null/non-existing entity.
+    /// </summary>
+    /// <typeparam name="T">The version tag type</typeparam>
+    /// <param name="self">The entity condition</param>
+    /// <returns>The validation result</returns>
+    public static VersionedEntityConditionResult ValidateNullEntity<T>(this IVersionedEntityCondition<T> self)
+        where T : notnull
+    {
+        Guard.IsNotNull(self);
+
+        return self.Validate(default(NullEntity<T>));
+    }
+
+    /// <summary>
+    /// Check if the condition allows creating a new entity.
+    /// </summary>
+    /// <typeparam name="T">The version tag type</typeparam>
+    /// <param name="self">The entity condition</param>
+    /// <returns><see langword="true"/> if the condition allows for creating a new entity, otherwise <see langword="false"/>.</returns>
+    public static bool AllowsCreatingNewEntity<T>(this IVersionedEntityCondition<T> self)
+        where T : notnull
+    {
+        Guard.IsNotNull(self);
+
+        var result = self.ValidateNullEntity();
+        Debug.Assert(result != VersionedEntityConditionResult.Unmodified, "Unmodified result is not expected for a allows-creating-new-entity check");
+
+        return result == VersionedEntityConditionResult.Succeeded;
+    }
+
+    private readonly struct NullEntity<T>
+        : IVersionEquatable<T>
+        where T : notnull
+    {
+        public bool Exists => false;
+
+        public bool ModifiedSince(HttpDateTimeHeaderValue other)
+            => false;
+
+        public bool VersionEquals(T other)
+            => false;
+    }
 
     private sealed class MappedVersionEntityCondition<TInner, TOuter>
         : IVersionedEntityCondition<TInner>

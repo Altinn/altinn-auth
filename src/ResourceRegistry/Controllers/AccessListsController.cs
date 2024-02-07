@@ -1,12 +1,14 @@
-﻿#nullable enable
+#nullable enable
 
 using System.Net;
 using Altinn.ResourceRegistry.Auth;
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Models;
+using Altinn.ResourceRegistry.Core.Models.Versioned;
 using Altinn.ResourceRegistry.JsonPatch;
 using Altinn.ResourceRegistry.Models;
+using Altinn.ResourceRegistry.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -72,15 +74,49 @@ public class AccessListsController
     /// </summary>
     /// <param name="owner">The resource owner</param>
     /// <param name="identifier">The resource owner-unique identifier</param>
+    /// <param name="conditions">Request conditions</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-    /// <returns>A <see cref="AccessListInfoDto"/></returns>
+    /// <returns>An <see cref="AccessListInfoDto"/></returns>
     [HttpGet("{identifier:required}")]
     [SwaggerOperation(Tags = ["Access List"])]
-    public async Task<ActionResult<AccessListInfoDto>> GetAccessList(string owner, string identifier, CancellationToken cancellationToken = default)
+    public async Task<ConditionalResult<AccessListInfoDto, AggregateVersion>> GetAccessList(
+        string owner, 
+        string identifier, 
+        RequestConditionCollection<AggregateVersion> conditions,
+        CancellationToken cancellationToken = default)
     {
-        await Task.Yield();
+        var result = await _service.GetAccessList(owner, identifier, conditions.Select(v => v.Version), cancellationToken);
 
-        throw new NotImplementedException();
+        return result.Select(AccessListInfoDto.From, AggregateVersion.From);
+    }
+
+    /// <summary>
+    /// Deletes an access list by owner and identifier.
+    /// </summary>
+    /// <param name="owner">The resource owner</param>
+    /// <param name="identifier">The resource owner-unique identifier</param>
+    /// <param name="conditions">Request conditions</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns>An <see cref="AccessListInfoDto"/></returns>
+    [HttpDelete("{identifier:required}")]
+    [SwaggerOperation(Tags = ["Access List"])]
+    [SwaggerResponse(StatusCodes.Status200OK, description: "The list was deleted", type: typeof(ConditionalResult<AccessListInfoDto, AggregateVersion>))]
+    [SwaggerResponse(StatusCodes.Status204NoContent, description: "The access list did not exist or was already deleted")]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
+    public async Task<ConditionalResult<AccessListInfoDto, AggregateVersion>> DeleteAccessList(
+        string owner,
+        string identifier,
+        RequestConditionCollection<AggregateVersion> conditions,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _service.DeleteAccessList(owner, identifier, conditions.Select(v => v.Version), cancellationToken);
+
+        if (result.IsNotFound)
+        {
+            return NoContent();
+        }
+
+        return result.Select(AccessListInfoDto.From, AggregateVersion.From);
     }
 
     /// <summary>
@@ -89,16 +125,28 @@ public class AccessListsController
     /// <param name="owner">The resource owner</param>
     /// <param name="identifier">The resource owner-unique identifier</param>
     /// <param name="model">Information about the access list</param>
+    /// <param name="conditions">Request conditions</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A <see cref="AccessListInfoDto"/></returns>
     [HttpPut("{identifier:required}")]
     [SwaggerOperation(Tags = ["Access List"])]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
-    public async Task<ActionResult<AccessListInfoDto>> UpsertAccessList(string owner, string identifier, [FromBody] CreateAccessListModel model, CancellationToken cancellationToken = default)
+    public async Task<ConditionalResult<AccessListInfoDto, AggregateVersion>> UpsertAccessList(
+        string owner, 
+        string identifier, 
+        [FromBody] CreateAccessListModel model,
+        RequestConditionCollection<AggregateVersion> conditions,
+        CancellationToken cancellationToken = default)
     {
-        await Task.Yield();
+        var result = await _service.CreateOrUpdateAccessList(
+            owner,
+            identifier,
+            model.Name,
+            model.Description ?? string.Empty,
+            conditions.Select(v => v.Version),
+            cancellationToken);
 
-        throw new NotImplementedException();
+        return result.Select(AccessListInfoDto.From, AggregateVersion.From);
     }
 
     /// <summary>

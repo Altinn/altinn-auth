@@ -12,7 +12,7 @@ public interface IVersionEquatable<in T>
     /// <summary>
     /// Gets a value indicating whether the current object represents an existing entity.
     /// </summary>
-    bool Exists { get; }
+    bool Exists { get => true; }
 
     /// <summary>
     /// Indicates whether the current object's version is equal to the provided version value.

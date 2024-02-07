@@ -1,6 +1,9 @@
 ﻿#nullable enable
 
+using System.Text.Json.Serialization;
 using Altinn.ResourceRegistry.Core.AccessLists;
+using Altinn.ResourceRegistry.Core.Models;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Annotations;
@@ -16,13 +19,17 @@ namespace Altinn.ResourceRegistry.Models;
 /// <param name="Description">The access list description</param>
 /// <param name="CreatedAt">When the access list was created</param>
 /// <param name="UpdatedAt">When the access list was updated</param>
+/// <param name="Version">The aggregate version</param>
 [SwaggerSchemaFilter(typeof(SchemaFilter))]
 public record AccessListInfoDto(
     string Identifier,
     string Name,
     string Description,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt)
+    DateTimeOffset UpdatedAt,
+    [property: JsonIgnore]
+    AggregateVersion Version)
+    : ITaggedEntity<AggregateVersion>
 {
     /// <summary>
     /// Create a <see cref="AccessListInfoDto"/> from a <see cref="AccessListInfo"/>.
@@ -35,7 +42,15 @@ public record AccessListInfoDto(
             info.Name,
             info.Description,
             info.CreatedAt,
-            info.UpdatedAt);
+            info.UpdatedAt,
+            new(info.Version));
+
+    /// <inheritdoc/>
+    void ITaggedEntity<AggregateVersion>.GetHeaderValues(out AggregateVersion version, out HttpDateTimeHeaderValue modifiedAt)
+    {
+        version = Version;
+        modifiedAt = new(UpdatedAt);
+    }
 
     private sealed class SchemaFilter : ISchemaFilter
     {
