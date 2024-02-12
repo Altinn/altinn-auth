@@ -91,6 +91,7 @@ public interface IAccessListAggregate : IAggregate
     /// <summary>
     /// Gets the aggregate as a <see cref="AccessListInfo"/>.
     /// </summary>
+    /// <param name="includes">What to include with the <see cref="AccessListInfo"/>.</param>
     /// <returns><see cref="AccessListInfo"/></returns>
-    AccessListInfo AsAccessListInfo();
+    AccessListInfo AsAccessListInfo(AccessListIncludes includes = default);
 }

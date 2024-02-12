@@ -27,16 +27,11 @@ internal class AccessListService
         _repository = repository;
     }
 
-    /// <summary>
-    /// Gets access lists by owner, limited by <see cref="LISTS_PAGE_SIZE"/> and optionally starting from <paramref name="request"/>.ContinuationToken.
-    /// </summary>
-    /// <param name="owner">The resource owner.</param>
-    /// <param name="request">The page request metadata.</param>
-    /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
-    /// <returns>A <see cref="Page{TItem, TToken}"/> of <see cref="AccessListInfo"/></returns>
+    /// <inheritdoc/>
     public async Task<Page<AccessListInfo, string>> GetAccessListsByOwner(
         string owner,
         Page<string>.Request request,
+        AccessListIncludes includes = default,
         CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(owner);
@@ -47,18 +42,24 @@ internal class AccessListService
             owner,
             continueFrom: request.ContinuationToken,
             count: LISTS_PAGE_SIZE + 1,
+            includes,
             cancellationToken);
 
         return Page.Create(accessLists, LISTS_PAGE_SIZE, static list => list.Identifier);
     }
 
     /// <inheritdoc/>
-    public async Task<Conditional<AccessListInfo, ulong>> GetAccessList(string owner, string identifier, IVersionedEntityCondition<ulong>? condition = null, CancellationToken cancellationToken = default)
+    public async Task<Conditional<AccessListInfo, ulong>> GetAccessList(
+        string owner,
+        string identifier,
+        AccessListIncludes includes = default,
+        IVersionedEntityCondition<ulong>? condition = null,
+        CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(owner);
         Guard.IsNotNull(identifier);
 
-        var accessList = await _repository.LookupInfo(owner, identifier, cancellationToken);
+        var accessList = await _repository.LookupInfo(owner, identifier, includes, cancellationToken);
         if (accessList is null)
         {
             return Conditional.NotFound();

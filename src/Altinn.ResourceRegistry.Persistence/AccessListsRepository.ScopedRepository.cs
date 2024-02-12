@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.Collections.Immutable;
+using System.Data;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Altinn.ResourceRegistry.Core.AccessLists;
@@ -116,15 +117,63 @@ internal partial class AccessListsRepository
             return new AccessListLoadOrCreateResult(mode, aggregate);
         }
 
-        public Task<AccessListInfo?> LookupInfo(AccessListIdentifier identifier, CancellationToken cancellationToken)
-            => identifier switch
+        public async Task<AccessListInfo?> LookupInfo(AccessListIdentifier identifier, AccessListIncludes includes, CancellationToken cancellationToken)
+        {
+            const string BY_ID_QUERY = /*strpsql*/@"
+                SELECT aggregate_id, identifier, resource_owner, name, description, created, modified, version
+                FROM resourceregistry.access_list_state
+                WHERE aggregate_id = @aggregate_id;";
+
+            const string BY_OWNER_AND_IDENT_QUERY = /*strpsql*/@"
+                SELECT aggregate_id, identifier, resource_owner, name, description, created, modified, version
+                FROM resourceregistry.access_list_state
+                WHERE resource_owner = @owner AND identifier = @identifier;";
+
+            await using var cmd = identifier switch
             {
-                { IsAccessListId: true } => LookupInfo(identifier.AccessListId, cancellationToken),
-                { IsOwnerAndIdentifier: true } => LookupInfo(identifier.Owner!, identifier.Identifier!, cancellationToken),
+                { IsAccessListId: true } => ByIdQuery(_conn, identifier.AccessListId),
+                { IsOwnerAndIdentifier: true } => ByOwnerAndIdentQuery(_conn, identifier.Owner, identifier.Identifier),
                 _ => throw new InvalidOperationException("Invalid identifier")
             };
 
-        public async Task<IReadOnlyList<AccessListInfo>> GetAccessListsByOwner(string resourceOwner, string? continueFrom, int count, CancellationToken cancellationToken)
+            var accessList = await cmd.ExecuteEnumerableAsync(cancellationToken)
+                .Select(CreateAccessListInfo)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (accessList is null)
+            {
+                return null;
+            }
+
+            if (includes.HasFlag(AccessListIncludes.ResourceConnections))
+            {
+                var connections = await GetAccessListResourceConnections(
+                    new(accessList.Id),
+                    includeActions: includes.HasFlag(AccessListIncludes.ResourceConnectionsActions),
+                    cancellationToken);
+
+                accessList = accessList with { ResourceConnections = connections };
+            }
+
+            return accessList;
+
+            static NpgsqlCommand ByIdQuery(NpgsqlConnection conn, Guid accessListId)
+            {
+                var cmd = conn.CreateCommand(BY_ID_QUERY);
+                cmd.Parameters.AddWithValue("aggregate_id", NpgsqlDbType.Uuid, accessListId);
+                return cmd;
+            }
+
+            static NpgsqlCommand ByOwnerAndIdentQuery(NpgsqlConnection conn, string owner, string identifier)
+            {
+                var cmd = conn.CreateCommand(BY_OWNER_AND_IDENT_QUERY);
+                cmd.Parameters.AddWithValue("owner", NpgsqlDbType.Text, owner);
+                cmd.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, identifier);
+                return cmd;
+            }
+        }
+
+        public async Task<IReadOnlyList<AccessListInfo>> GetAccessListsByOwner(string resourceOwner, string? continueFrom, int count, AccessListIncludes includes, CancellationToken cancellationToken)
         {
             Guard.IsNotNullOrEmpty(resourceOwner);
             Guard.IsGreaterThan(count, 0);
@@ -142,12 +191,25 @@ internal partial class AccessListsRepository
             cmd.Parameters.AddWithNullableValue("continue_from", NpgsqlDbType.Text, continueFrom);
             cmd.Parameters.AddWithValue("count", NpgsqlDbType.Integer, count);
 
-            return await cmd.ExecuteEnumerableAsync(cancellationToken)
+            var accessLists = await cmd.ExecuteEnumerableAsync(cancellationToken)
                 .Select(CreateAccessListInfo)
                 .ToListAsync(cancellationToken);
+
+            List<Guid>? idSet = null;
+            if (includes.HasFlag(AccessListIncludes.ResourceConnections))
+            {
+                idSet ??= accessLists.Select(info => info.Id).ToList();
+                await LoadResourceConnections(
+                    accessLists,
+                    idSet,
+                    includeActions: includes.HasFlag(AccessListIncludes.ResourceConnectionsActions),
+                    cancellationToken);
+            }
+
+            return accessLists;
         }
 
-        public async Task<IReadOnlyList<AccessListResourceConnection>?> GetAccessListResourceConnections(AccessListIdentifier identifier, CancellationToken cancellationToken)
+        public async Task<IReadOnlyList<AccessListResourceConnection>?> GetAccessListResourceConnections(AccessListIdentifier identifier, bool includeActions, CancellationToken cancellationToken)
         {
             const string QUERY = /*strpsql*/@"
                 SELECT resource_identifier, actions, created, modified
@@ -168,12 +230,7 @@ internal partial class AccessListsRepository
             var connections = new List<AccessListResourceConnection>();
             while (await reader.ReadAsync(cancellationToken))
             {
-                var resourceIdentifier = reader.GetString("resource_identifier");
-                var actions = await reader.GetFieldValueAsync<IList<string>>("actions", cancellationToken);
-                var created = reader.GetFieldValue<DateTimeOffset>("created");
-                var modified = reader.GetFieldValue<DateTimeOffset>("modified");
-
-                var connection = new AccessListResourceConnection(resourceIdentifier, [..actions], created, modified);
+                var connection = CreateResourceConnection(reader, includeActions);
                 connections.Add(connection);
             }
 
@@ -255,7 +312,7 @@ internal partial class AccessListsRepository
             => identifier switch
             {
                 { IsAccessListId: true } => ValueTask.FromResult<Guid?>(identifier.AccessListId),
-                { IsOwnerAndIdentifier: true } => new ValueTask<Guid?>(GetRegistryId(identifier.Owner!, identifier.Identifier!, cancellationToken)),
+                { IsOwnerAndIdentifier: true } => new ValueTask<Guid?>(GetRegistryId(identifier.Owner, identifier.Identifier, cancellationToken)),
                 _ => throw new InvalidOperationException("Invalid identifier")
             };
 
@@ -279,35 +336,50 @@ internal partial class AccessListsRepository
             return reader.GetGuid(0);
         }
 
-        private async Task<AccessListInfo?> LookupInfo(Guid accessListId, CancellationToken cancellationToken)
+        private async Task LoadResourceConnections(List<AccessListInfo> accessLists, List<Guid> idSet, bool includeActions, CancellationToken cancellationToken)
         {
             const string QUERY = /*strpsql*/@"
-                SELECT aggregate_id, identifier, resource_owner, name, description, created, modified, version
-                FROM resourceregistry.access_list_state
-                WHERE aggregate_id = @aggregate_id;";
+                SELECT aggregate_id, resource_identifier, actions, created, modified
+                FROM resourceregistry.access_list_resource_connections_state
+                WHERE aggregate_id = ANY(@aggregate_ids)
+                ORDER BY aggregate_id, resource_identifier;";
 
             await using var cmd = _conn.CreateCommand(QUERY);
-            cmd.Parameters.AddWithValue("aggregate_id", NpgsqlDbType.Uuid, accessListId);
+            cmd.Parameters.Add<IList<Guid>>("aggregate_ids", NpgsqlDbType.Array | NpgsqlDbType.Uuid).TypedValue = idSet;
 
-            return await cmd.ExecuteEnumerableAsync(cancellationToken)
-                .Select(CreateAccessListInfo)
-                .FirstOrDefaultAsync(cancellationToken);
-        }
+            AccessListInfo? current = null;
+            List<AccessListResourceConnection>? connections = null;
 
-        private async Task<AccessListInfo?> LookupInfo(string registryOwner, string identifier, CancellationToken cancellationToken)
-        {
-            const string QUERY = /*strpsql*/@"
-                SELECT aggregate_id, identifier, resource_owner, name, description, created, modified, version
-                FROM resourceregistry.access_list_state
-                WHERE resource_owner = @owner AND identifier = @identifier;";
+            // Note: We've sorted the result set by aggregate_id, so we can assume that the rows are ordered by aggregate_id.
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var aggregateId = reader.GetGuid("aggregate_id");
 
-            await using var cmd = _conn.CreateCommand(QUERY);
-            cmd.Parameters.AddWithValue("owner", NpgsqlDbType.Text, registryOwner);
-            cmd.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, identifier);
+                if (current is null || current.Id != aggregateId)
+                {
+                    var index = accessLists.FindIndex(info => info.Id == aggregateId);
+                    if (index < 0)
+                    {
+                        Debug.Fail("Access list not found");
+                        continue;
+                    }
 
-            return await cmd.ExecuteEnumerableAsync(cancellationToken)
-                .Select(CreateAccessListInfo)
-                .FirstOrDefaultAsync(cancellationToken);
+                    connections = new List<AccessListResourceConnection>();
+                    current = accessLists[index] = accessLists[index] with { ResourceConnections = connections };
+                }
+
+                var resourceConnection = CreateResourceConnection(reader, includeActions);
+                connections!.Add(resourceConnection);
+            }
+
+            for (var i = 0; i < accessLists.Count; i++)
+            {
+                if (accessLists[i].ResourceConnections is null)
+                {
+                    accessLists[i] = accessLists[i] with { ResourceConnections = Array.Empty<AccessListResourceConnection>() };
+                }
+            }
         }
 
         public async Task<int> ApplyChanges(AccessListAggregate aggregate, CancellationToken cancellationToken)
@@ -625,7 +697,39 @@ internal partial class AccessListsRepository
             var modified = reader.GetFieldValue<DateTimeOffset>("modified");
             var version = reader.GetFieldValue<long>("version");
 
-            return new AccessListInfo(aggregate_id, owner, identifier, name, description, created, modified, checked((ulong)version));
+            return new AccessListInfo(
+                aggregate_id,
+                owner,
+                identifier,
+                name,
+                description,
+                created,
+                modified,
+                ResourceConnections: null,
+                checked((ulong)version));
+        }
+
+        private static AccessListResourceConnection CreateResourceConnection(
+            NpgsqlDataReader reader,
+            bool includeActions)
+        {
+            var resourceIdentifier = reader.GetString("resource_identifier");
+            var actionsList = includeActions ? reader.GetFieldValue<IList<string>>("actions") : null;
+            var created = reader.GetFieldValue<DateTimeOffset>("created");
+            var modified = reader.GetFieldValue<DateTimeOffset>("modified");
+
+            var actions = actionsList switch
+            {
+                null => null,
+                [] => [],
+                _ => ImmutableHashSet.CreateRange(actionsList),
+            };
+
+            return new AccessListResourceConnection(
+                resourceIdentifier,
+                actions,
+                created, 
+                modified);
         }
 
         private static async ValueTask<AccessListEvent> CreateAccessListEvent(

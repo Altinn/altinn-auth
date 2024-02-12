@@ -8,6 +8,7 @@ using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Versioned;
 using Altinn.ResourceRegistry.JsonPatch;
 using Altinn.ResourceRegistry.Models;
+using Altinn.ResourceRegistry.Models.ModelBinding;
 using Altinn.ResourceRegistry.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -47,6 +48,7 @@ public class AccessListsController
     /// </summary>
     /// <param name="owner">The resource owner</param>
     /// <param name="token">Optional continuation token</param>
+    /// <param name="include">What additional information to include in the response</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A paginated set of <see cref="AccessListInfoDto"/></returns>
     [HttpGet("", Name = ROUTE_GET_BY_OWNER)]
@@ -54,16 +56,22 @@ public class AccessListsController
     public async Task<ActionResult<Paginated<AccessListInfoDto>>> GetAccessListsByOwner(
         string owner,
         [FromQuery(Name = "token")] Opaque<string>? token = null,
+        [FromQuery(Name = "include")] AccessListIncludes include = AccessListIncludes.None,
         CancellationToken cancellationToken = default)
     {
-        var page = await _service.GetAccessListsByOwner(owner, Page.ContinueFrom(token?.Value), cancellationToken);
+        var page = await _service.GetAccessListsByOwner(owner, Page.ContinueFrom(token?.Value), include, cancellationToken);
         if (page == null)
         {
             return NotFound();
         }
 
         var nextLink = page.ContinuationToken != null
-            ? Url.Link(ROUTE_GET_BY_OWNER, new { owner, token = Opaque.Create(page.ContinuationToken) })
+            ? Url.Link(ROUTE_GET_BY_OWNER, new
+            {
+                owner,
+                token = Opaque.Create(page.ContinuationToken),
+                includes = AccessListIncludesModelBinder.Stringify(include),
+            })
             : null;
 
         return Paginated.Create(page.Items.Select(AccessListInfoDto.From), nextLink);
@@ -75,6 +83,7 @@ public class AccessListsController
     /// <param name="owner">The resource owner</param>
     /// <param name="identifier">The resource owner-unique identifier</param>
     /// <param name="conditions">Request conditions</param>
+    /// <param name="includes">What additional information to include in the response</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>An <see cref="AccessListInfoDto"/></returns>
     [HttpGet("{identifier:required}")]
@@ -83,9 +92,10 @@ public class AccessListsController
         string owner, 
         string identifier, 
         RequestConditionCollection<AggregateVersion> conditions,
+        [FromQuery(Name = "include")] AccessListIncludes includes = AccessListIncludes.None,
         CancellationToken cancellationToken = default)
     {
-        var result = await _service.GetAccessList(owner, identifier, conditions.Select(v => v.Version), cancellationToken);
+        var result = await _service.GetAccessList(owner, identifier, includes, conditions.Select(v => v.Version), cancellationToken);
 
         return result.Select(AccessListInfoDto.From, AggregateVersion.From);
     }

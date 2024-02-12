@@ -17,6 +17,7 @@ using Altinn.ResourceRegistry.Health;
 using Altinn.ResourceRegistry.Integration.Clients;
 using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Models.ApiDescriptions;
+using Altinn.ResourceRegistry.Models.ModelBinding;
 using Altinn.ResourceRegistry.Persistence.Configuration;
 using AltinnCore.Authentication.JwtCookie;
 using Azure.Identity;
@@ -73,6 +74,7 @@ builder.Services.AddSwaggerGen(c =>
     c.EnableAnnotations();
     c.SupportNonNullableReferenceTypes();
     c.OperationFilter<ConditionalOperationFilter>();
+    c.SchemaFilter<AccessListIncludesSchemaFilter>();
 });
 
 var app = builder.Build();
@@ -85,7 +87,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
     services.AddControllers(options =>
     {
-        options.ModelBinderProviders.Insert(0, RequestConditionCollection.ModelBinderProvider.Instance);
+        options.ModelBinderProviders.InsertSingleton<RequestConditionCollection.ModelBinderProvider>(0);
+        options.ModelBinderProviders.InsertSingleton<AccessListIncludesModelBinder>(0);
     })
         .AddJsonOptions(options =>
         {
@@ -197,13 +200,9 @@ void Configure(IConfiguration config)
     app.UseRouting();
     app.UseAuthentication();
     app.UseAuthorization();
-    app.UseEndpoints(endpoints =>
-    {
-        endpoints.MapControllers();
-        endpoints.MapHealthChecks("/health");
-    });
 
     app.MapControllers();
+    app.MapHealthChecks("/health");
 }
 
 async Task SetConfigurationProviders(ConfigurationManager config)

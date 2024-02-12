@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Persistence.Aggregates;
 using Microsoft.Extensions.Logging;
@@ -34,29 +35,31 @@ internal partial class AccessListsRepository
     }
 
     /// <inheritdoc/>
-    public Task<IReadOnlyList<AccessListInfo>> GetAccessListsByOwner(string resourceOwner, string? continueFrom, int count, CancellationToken cancellationToken = default)
-        => InTransaction(repo => repo.GetAccessListsByOwner(resourceOwner, continueFrom, count, cancellationToken), cancellationToken);
+    public Task<IReadOnlyList<AccessListInfo>> GetAccessListsByOwner(string resourceOwner, string? continueFrom, int count, AccessListIncludes includes = default, CancellationToken cancellationToken = default)
+        => InTransaction(repo => repo.GetAccessListsByOwner(resourceOwner, continueFrom, count, includes, cancellationToken), cancellationToken);
 
     /// <inheritdoc/>
-    public Task<AccessListInfo?> LookupInfo(Guid id, CancellationToken cancellationToken = default)
-        => InTransaction(repo => repo.LookupInfo(new(id), cancellationToken), cancellationToken);
+    public Task<AccessListInfo?> LookupInfo(Guid id, AccessListIncludes includes = default, CancellationToken cancellationToken = default)
+        => InTransaction(repo => repo.LookupInfo(new(id), includes, cancellationToken), cancellationToken);
 
     /// <inheritdoc/>
-    public Task<AccessListInfo?> LookupInfo(string resourceOwner, string identifier, CancellationToken cancellationToken = default)
-        => InTransaction(repo => repo.LookupInfo(new(resourceOwner, identifier), cancellationToken), cancellationToken);
+    public Task<AccessListInfo?> LookupInfo(string resourceOwner, string identifier, AccessListIncludes includes = default, CancellationToken cancellationToken = default)
+        => InTransaction(repo => repo.LookupInfo(new(resourceOwner, identifier), includes, cancellationToken), cancellationToken);
 
     /// <inheritdoc/>
     public Task<IReadOnlyList<AccessListResourceConnection>?> GetAccessListResourceConnections(
         Guid id,
+        bool includeActions,
         CancellationToken cancellationToken = default)
-        => InTransaction(repo => repo.GetAccessListResourceConnections(new(id), cancellationToken), cancellationToken);
+        => InTransaction(repo => repo.GetAccessListResourceConnections(new(id), includeActions, cancellationToken), cancellationToken);
 
     /// <inheritdoc/>
     public Task<IReadOnlyList<AccessListResourceConnection>?> GetAccessListResourceConnections(
         string registryOwner,
         string identifier,
+        bool includeActions,
         CancellationToken cancellationToken = default)
-        => InTransaction(repo => repo.GetAccessListResourceConnections(new(registryOwner, identifier), cancellationToken), cancellationToken);
+        => InTransaction(repo => repo.GetAccessListResourceConnections(new(registryOwner, identifier), includeActions, cancellationToken), cancellationToken);
 
     /// <inheritdoc/>
     public Task<IReadOnlyList<AccessListMembership>?> GetAccessListMemberships(
@@ -133,6 +136,7 @@ internal partial class AccessListsRepository
 
         public bool IsAccessListId => AccessListId != Guid.Empty;
 
+        [MemberNotNullWhen(true, nameof(Owner), nameof(Identifier))]
         public bool IsOwnerAndIdentifier => Owner is not null && Identifier is not null;
     }
 

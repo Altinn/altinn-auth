@@ -141,7 +141,7 @@ internal class AccessListAggregate
             throw new ArgumentException("Actions must be specified");
         }
 
-        if (actionsImmutable.Any(connection.Actions.Contains))
+        if (actionsImmutable.Any(connection.Actions!.Contains))
         {
             throw new ArgumentException("One or more actions already exist in the resource connection", nameof(actions));
         }
@@ -166,7 +166,7 @@ internal class AccessListAggregate
             throw new ArgumentException("Actions must be specified");
         }
 
-        if (!actionsImmutable.All(connection.Actions.Contains))
+        if (!actionsImmutable.All(connection.Actions!.Contains))
         {
             throw new ArgumentException("One or more actions already exist in the resource connection", nameof(actions));
         }
@@ -272,7 +272,7 @@ internal class AccessListAggregate
     {
         if (_resourceConnections.TryGetValue(@event.ResourceIdentifier, out var connection))
         {
-            connection = connection with { Actions = connection.Actions.Union(@event.Actions), Modified = @event.EventTime };
+            connection = connection with { Actions = connection.Actions!.Union(@event.Actions), Modified = @event.EventTime };
             _resourceConnections[connection.ResourceIdentifier] = connection;
         }
     }
@@ -282,7 +282,7 @@ internal class AccessListAggregate
     {
         if (_resourceConnections.TryGetValue(@event.ResourceIdentifier, out var connection))
         {
-            connection = connection with { Actions = connection.Actions.Except(@event.Actions), Modified = @event.EventTime };
+            connection = connection with { Actions = connection.Actions!.Except(@event.Actions), Modified = @event.EventTime };
             _resourceConnections[connection.ResourceIdentifier] = connection;
         }
     }
@@ -308,16 +308,19 @@ internal class AccessListAggregate
     /// <summary>
     /// Gets the aggregate as a <see cref="AccessListInfo"/>.
     /// </summary>
+    /// <param name="includes">Additional information to include in the <see cref="AccessListInfo"/>.</param>
     /// <returns><see cref="AccessListInfo"/></returns>
     /// <exception cref="InvalidOperationException">Thrown if aggregate is not commited.</exception>
-    public AccessListInfo AsAccessListInfo()
+    public AccessListInfo AsAccessListInfo(AccessListIncludes includes = default)
     {
         if (HasUncommittedEvents)
         {
             ThrowHelper.ThrowInvalidOperationException("Cannot get access list info for uncommitted aggregate");
         }
 
-        return new AccessListInfo(Id, ResourceOwner, Identifier, Name, Description, CreatedAt, UpdatedAt, CommittedVersion.UnsafeValue);
+        var resourceConnections = includes.HasFlag(AccessListIncludes.ResourceConnections) ? _resourceConnections.Values.ToList() : null;
+
+        return new AccessListInfo(Id, ResourceOwner, Identifier, Name, Description, CreatedAt, UpdatedAt, resourceConnections, CommittedVersion.UnsafeValue);
     }
 }
 

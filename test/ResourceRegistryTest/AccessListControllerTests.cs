@@ -5,7 +5,9 @@ using Altinn.ResourceRegistry.Tests.Utils;
 using Altinn.ResourceRegistry.TestUtils;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using System;
+using System.Data.Common;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -23,6 +25,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
     protected IAccessListsRepository Repository => Services.GetRequiredService<IAccessListsRepository>();
     protected AdvanceableTimeProvider TimeProvider => Services.GetRequiredService<AdvanceableTimeProvider>();
+    protected NpgsqlDataSource DataSource => Services.GetRequiredService<NpgsqlDataSource>();
 
 
     private HttpClient CreateAuthenticatedClient()
@@ -77,6 +80,73 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             var identifiers = content.Items.Select(al => al.Identifier).ToList();
             identifiers.Should().BeInAscendingOrder();
+        }
+
+        [Fact]
+        public async Task Can_Include_Additional_Data()
+        {
+            const string ACTION_READ = "read";
+
+            const string RESOURCE1_NAME = "test1";
+            const string RESOURCE2_NAME = "test2";
+
+            // Insert a fake resource (we have a foreign constraint on the party registry table)
+            await using var resourceCmd = DataSource.CreateCommand(/*strpsql*/"INSERT INTO resourceregistry.resources (identifier, created, serviceresourcejson) VALUES (@name, NOW(), @json);");
+            var nameParam = resourceCmd.Parameters.Add("name", NpgsqlTypes.NpgsqlDbType.Text);
+            var jsonParam = resourceCmd.Parameters.Add("json", NpgsqlTypes.NpgsqlDbType.Jsonb);
+            jsonParam.Value = "{}";
+
+            nameParam.Value = RESOURCE1_NAME;
+            await resourceCmd.ExecuteNonQueryAsync();
+            nameParam.Value = RESOURCE2_NAME;
+            await resourceCmd.ExecuteNonQueryAsync();
+
+            var def1 = await Repository.CreateAccessList(ORG_NR, "test1", "Test 1", "test 1 description");
+            def1.AddResourceConnection(RESOURCE1_NAME, []);
+            def1.AddResourceConnection(RESOURCE2_NAME, [ACTION_READ]);
+            await def1.SaveChanged();
+
+            using var client = CreateAuthenticatedClient();
+
+            {
+                using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}");
+
+                var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListInfoDto>>();
+                Assert.NotNull(content);
+
+                content.Items.Should().HaveCount(1);
+                content.Items.Should().Contain(al => al.Identifier == "test1")
+                    .Which.ResourceConnections.Should().BeNull();
+            }
+
+            {
+                using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}?include=resources");
+
+                var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListInfoDto>>();
+                Assert.NotNull(content);
+
+                content.Items.Should().HaveCount(1);
+                content.Items.Should().Contain(al => al.Identifier == "test1")
+                    .Which.ResourceConnections.Should().HaveCount(2)
+                    .And.AllSatisfy(rc => rc.Actions.Should().BeNull())
+                    .And.Contain(rc => rc.ResourceIdentifier == RESOURCE1_NAME)
+                    .And.Contain(rc => rc.ResourceIdentifier == RESOURCE2_NAME);
+            }
+
+            {
+                using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}?include=resource-actions");
+
+                var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListInfoDto>>();
+                Assert.NotNull(content);
+
+                content.Items.Should().HaveCount(1);
+                content.Items.Should().Contain(al => al.Identifier == "test1")
+                    .Which.ResourceConnections.Should().HaveCount(2)
+                    .And.AllSatisfy(rc => rc.Actions.Should().NotBeNull())
+                    .And.Contain(rc => rc.ResourceIdentifier == RESOURCE1_NAME)
+                    .And.Contain(rc => rc.ResourceIdentifier == RESOURCE2_NAME)
+                    .Which.Actions.Should().BeEquivalentTo([ACTION_READ]);
+            }
         }
 
         [Fact]

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Versioned;
+using Altinn.ResourceRegistry.Models.ModelBinding;
 using CommunityToolkit.Diagnostics;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
@@ -198,12 +199,14 @@ public static partial class RequestConditionCollection
     /// <summary>
     /// <see cref="IModelBinderProvider"/> for <see cref="RequestConditionCollection{T}"/>.
     /// </summary>
-    internal sealed class ModelBinderProvider : IModelBinderProvider
+    internal sealed class ModelBinderProvider 
+        : IModelBinderProvider
+        , ISingleton<ModelBinderProvider>
     {
         /// <summary>
         /// Gets a singleton instance of <see cref="ModelBinderProvider"/>.
         /// </summary>
-        public static IModelBinderProvider Instance { get; } = new ModelBinderProvider();
+        public static ModelBinderProvider Instance { get; } = new ModelBinderProvider();
 
         private ModelBinderProvider()
         {
