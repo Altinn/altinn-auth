@@ -148,7 +148,8 @@ internal partial class AccessListsRepository
             if (includes.HasFlag(AccessListIncludes.ResourceConnections))
             {
                 var connections = await GetAccessListResourceConnections(
-                    new(accessList.Id),
+                    accessList.Id,
+                    limit: null,
                     includeActions: includes.HasFlag(AccessListIncludes.ResourceConnectionsActions),
                     cancellationToken);
 
@@ -209,63 +210,33 @@ internal partial class AccessListsRepository
             return accessLists;
         }
 
-        public async Task<IReadOnlyList<AccessListResourceConnection>?> GetAccessListResourceConnections(AccessListIdentifier identifier, bool includeActions, CancellationToken cancellationToken)
+        public async Task<AccessListData<IReadOnlyList<AccessListResourceConnection>>?> GetAccessListResourceConnections(
+            AccessListIdentifier identifier,
+            string? continueFrom,
+            int count,
+            bool includeActions, 
+            CancellationToken cancellationToken)
         {
-            const string QUERY = /*strpsql*/@"
-                SELECT resource_identifier, actions, created, modified
-                FROM resourceregistry.access_list_resource_connections_state
-                WHERE aggregate_id = @aggregate_id;";
-
-            var id = await GetRegistryId(identifier, cancellationToken);
-            if (id is null)
+            var metadata = await LookupInfo(identifier, AccessListIncludes.None, cancellationToken);
+            if (metadata is null)
             {
                 return null;
             }
 
-            await using var cmd = _conn.CreateCommand(QUERY);
-            cmd.Parameters.AddWithValue("aggregate_id", NpgsqlDbType.Uuid, id.Value);
-
-            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-            
-            var connections = new List<AccessListResourceConnection>();
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var connection = CreateResourceConnection(reader, includeActions);
-                connections.Add(connection);
-            }
-
-            return connections;
+            var connections = await GetAccessListResourceConnections(metadata.Id, (continueFrom, count), includeActions, cancellationToken);
+            return AccessListData.Create(metadata, connections);
         }
 
-        public async Task<IReadOnlyList<AccessListMembership>?> GetAccessListMemberships(AccessListIdentifier identifier, CancellationToken cancellationToken)
+        public async Task<AccessListData<IReadOnlyList<AccessListMembership>>?> GetAccessListMemberships(AccessListIdentifier identifier, CancellationToken cancellationToken)
         {
-            const string QUERY = /*strpsql*/@"
-                SELECT party_id, since
-                FROM resourceregistry.access_list_members_state
-                WHERE aggregate_id = @aggregate_id;";
-
-            var id = await GetRegistryId(identifier, cancellationToken);
-            if (id is null)
+            var metadata = await LookupInfo(identifier, AccessListIncludes.None, cancellationToken);
+            if (metadata is null)
             {
                 return null;
             }
 
-            await using var cmd = _conn.CreateCommand(QUERY);
-            cmd.Parameters.AddWithValue("aggregate_id", NpgsqlDbType.Uuid, id);
-
-            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-
-            var memberships = new List<AccessListMembership>();
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var partyId = reader.GetGuid("party_id");
-                var since = reader.GetFieldValue<DateTimeOffset>("since");
-
-                var membership = new AccessListMembership(partyId, since);
-                memberships.Add(membership);
-            }
-
-            return memberships;
+            var memberships = await GetAccessListMemberships(metadata.Id, cancellationToken);
+            return AccessListData.Create(metadata, memberships);
         }
 
         public async Task<AccessListAggregate?> Load(
@@ -286,6 +257,171 @@ internal partial class AccessListsRepository
             }
 
             return aggregate;
+        }
+
+        public async Task<int> ApplyChanges(AccessListAggregate aggregate, CancellationToken cancellationToken)
+        {
+            const string QUERY = /*strpsql*/@"
+                INSERT INTO resourceregistry.access_list_events (etime, kind, aggregate_id, identifier, name, description, resource_owner, actions, party_ids)
+                VALUES (@etime, @kind, @aggregate_id, @identifier, @name, @description, @resource_owner, @actions, @party_ids)
+                RETURNING eid;";
+
+            // If there are no uncommitted events, return early
+            if (!aggregate.HasUncommittedEvents)
+            {
+                return 0;
+            }
+
+            // Step 1. Insert all events into the database.
+            var newIds = new List<(AccessListEvent Evt, EventId Id)>();
+            var version = aggregate.CommittedVersion;
+            {
+                await using var cmd = _conn.CreateCommand(QUERY);
+                var etime = cmd.Parameters.Add("etime", NpgsqlDbType.TimestampTz);
+                var kind = cmd.Parameters.Add("kind", NpgsqlDbType.Unknown);
+                var aggregate_id = cmd.Parameters.Add("aggregate_id", NpgsqlDbType.Uuid);
+                var identifier = cmd.Parameters.Add("identifier", NpgsqlDbType.Text);
+                var name = cmd.Parameters.Add("name", NpgsqlDbType.Text);
+                var description = cmd.Parameters.Add("description", NpgsqlDbType.Text);
+                var resource_owner = cmd.Parameters.Add("resource_owner", NpgsqlDbType.Text);
+                var actions = cmd.Parameters.Add<IList<string>>("actions", NpgsqlDbType.Array | NpgsqlDbType.Text);
+                var party_ids = cmd.Parameters.Add<IList<Guid>>("party_ids", NpgsqlDbType.Array | NpgsqlDbType.Uuid);
+
+                foreach (var evt in aggregate.GetUncommittedEvents())
+                {
+                    var values = evt.AsValues();
+                    etime.SetValue(values.EventTime);
+                    kind.SetValue(values.Kind);
+                    aggregate_id.SetValue(values.AggregateId);
+                    identifier.SetNullableValue(values.Identifier);
+                    name.SetNullableValue(values.Name);
+                    description.SetNullableValue(values.Description);
+                    resource_owner.SetNullableValue(values.ResourceOwner);
+                    actions.SetOptionalImmutableArrayValue(values.Actions);
+                    party_ids.SetOptionalImmutableArrayValue(values.PartyIds);
+
+                    await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+                    if (!await reader.ReadAsync(cancellationToken))
+                    {
+                        throw new InvalidOperationException("No event id returned from database.");
+                    }
+
+                    version = new EventId((ulong)reader.GetFieldValue<long>("eid"));
+                    newIds.Add((evt, version));
+                }
+            }
+
+            // Step 2. Update state tables in the database.
+            foreach (var evt in aggregate.GetUncommittedEvents())
+            {
+                var applyTask = evt switch
+                {
+                    AccessListCreatedEvent create => ApplyCreateStateChecked(create, aggregate, cancellationToken),
+                    AccessListUpdatedEvent update => ApplyUpdateState(update, cancellationToken),
+                    AccessListDeletedEvent delete => ApplyDeleteStateChecked(delete, aggregate, cancellationToken),
+                    AccessListResourceConnectionCreatedEvent connectionSet => ApplyResourceConnectionState(connectionSet, cancellationToken),
+                    AccessListResourceConnectionActionsAddedEvent connectionActionsAdded => ApplyResourceConnectionState(connectionActionsAdded, cancellationToken),
+                    AccessListResourceConnectionActionsRemovedEvent connectionActionsRemoved => ApplyResourceConnectionState(connectionActionsRemoved, cancellationToken),
+                    AccessListResourceConnectionDeletedEvent connectionDeleted => ApplyResourceConnectionState(connectionDeleted, cancellationToken),
+                    AccessListMembersAddedEvent membersAdded => ApplyMembersAddedState(membersAdded, cancellationToken),
+                    AccessListMembersRemovedEvent membersRemoved => ApplyMembersRemovedState(membersRemoved, cancellationToken),
+                    _ => throw new InvalidOperationException($"Unknown event type '{evt.GetType().Name}'")
+                };
+
+                await applyTask;
+            }
+
+            // Step 3. Update modified timestamp on the access list state table.
+            if (!aggregate.IsDeleted)
+            {
+                await UpdateModifiedAtAndVersionChecked(aggregate, version, cancellationToken);
+            }
+
+            // Step 4. Mark all events as commited.
+            foreach (var (evt, id) in newIds)
+            {
+                evt.EventId = id;
+            }
+
+            aggregate.Commit();
+            return newIds.Count;
+        }
+
+        private async Task<IReadOnlyList<AccessListResourceConnection>> GetAccessListResourceConnections(
+            Guid id, 
+            (string? ContinueFrom, int Count)? limit,
+            bool includeActions, 
+            CancellationToken cancellationToken)
+        {
+            const string ALL_QUERY = /*strpsql*/@"
+                SELECT resource_identifier, actions, created, modified
+                FROM resourceregistry.access_list_resource_connections_state
+                WHERE aggregate_id = @aggregate_id;";
+
+            const string LIMIT_QUERY = /*strpsql*/@"
+                SELECT resource_identifier, actions, created, modified
+                FROM resourceregistry.access_list_resource_connections_state
+                WHERE aggregate_id = @aggregate_id
+                AND (@continue_from IS NULL OR resource_identifier >= @continue_from)
+                ORDER BY resource_identifier ASC
+                LIMIT @count;";
+
+            await using var cmd = limit switch {
+                null => GetAll(_conn, id),
+                var (continueFrom, count) => GetLimited(_conn, id, continueFrom, count),
+            };
+
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+            var connections = new List<AccessListResourceConnection>();
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var connection = CreateResourceConnection(reader, includeActions);
+                connections.Add(connection);
+            }
+
+            return connections;
+
+            static NpgsqlCommand GetAll(NpgsqlConnection conn, Guid accessListId)
+            {
+                var cmd = conn.CreateCommand(ALL_QUERY);
+                cmd.Parameters.AddWithValue("aggregate_id", NpgsqlDbType.Uuid, accessListId);
+                return cmd;
+            }
+
+            static NpgsqlCommand GetLimited(NpgsqlConnection conn, Guid accessListId, string? continueFrom, int count)
+            {
+                var cmd = conn.CreateCommand(LIMIT_QUERY);
+                cmd.Parameters.AddWithValue("aggregate_id", NpgsqlDbType.Uuid, accessListId);
+                cmd.Parameters.AddWithNullableValue("continue_from", NpgsqlDbType.Text, continueFrom);
+                cmd.Parameters.AddWithValue("count", NpgsqlDbType.Integer, count);
+                return cmd;
+            }
+        }
+
+        private async Task<IReadOnlyList<AccessListMembership>> GetAccessListMemberships(Guid id, CancellationToken cancellationToken)
+        {
+            const string QUERY = /*strpsql*/@"
+                SELECT party_id, since
+                FROM resourceregistry.access_list_members_state
+                WHERE aggregate_id = @aggregate_id;";
+
+            await using var cmd = _conn.CreateCommand(QUERY);
+            cmd.Parameters.AddWithValue("aggregate_id", NpgsqlDbType.Uuid, id);
+
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+            var memberships = new List<AccessListMembership>();
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var partyId = reader.GetGuid("party_id");
+                var since = reader.GetFieldValue<DateTimeOffset>("since");
+
+                var membership = new AccessListMembership(partyId, since);
+                memberships.Add(membership);
+            }
+
+            return memberships;
         }
 
         private async IAsyncEnumerable<AccessListEvent> LoadEvents(
@@ -380,94 +516,6 @@ internal partial class AccessListsRepository
                     accessLists[i] = accessLists[i] with { ResourceConnections = Array.Empty<AccessListResourceConnection>() };
                 }
             }
-        }
-
-        public async Task<int> ApplyChanges(AccessListAggregate aggregate, CancellationToken cancellationToken)
-        {
-            const string QUERY = /*strpsql*/@"
-                INSERT INTO resourceregistry.access_list_events (etime, kind, aggregate_id, identifier, name, description, resource_owner, actions, party_ids)
-                VALUES (@etime, @kind, @aggregate_id, @identifier, @name, @description, @resource_owner, @actions, @party_ids)
-                RETURNING eid;";
-
-            // If there are no uncommitted events, return early
-            if (!aggregate.HasUncommittedEvents)
-            {
-                return 0;
-            }
-
-            // Step 1. Insert all events into the database.
-            var newIds = new List<(AccessListEvent Evt, EventId Id)>();
-            var version = aggregate.CommittedVersion;
-            {
-                await using var cmd = _conn.CreateCommand(QUERY);
-                var etime = cmd.Parameters.Add("etime", NpgsqlDbType.TimestampTz);
-                var kind = cmd.Parameters.Add("kind", NpgsqlDbType.Unknown);
-                var aggregate_id = cmd.Parameters.Add("aggregate_id", NpgsqlDbType.Uuid);
-                var identifier = cmd.Parameters.Add("identifier", NpgsqlDbType.Text);
-                var name = cmd.Parameters.Add("name", NpgsqlDbType.Text);
-                var description = cmd.Parameters.Add("description", NpgsqlDbType.Text);
-                var resource_owner = cmd.Parameters.Add("resource_owner", NpgsqlDbType.Text);
-                var actions = cmd.Parameters.Add<IList<string>>("actions", NpgsqlDbType.Array | NpgsqlDbType.Text);
-                var party_ids = cmd.Parameters.Add<IList<Guid>>("party_ids", NpgsqlDbType.Array | NpgsqlDbType.Uuid);
-
-                foreach (var evt in aggregate.GetUncommittedEvents())
-                {
-                    var values = evt.AsValues();
-                    etime.SetValue(values.EventTime);
-                    kind.SetValue(values.Kind);
-                    aggregate_id.SetValue(values.AggregateId);
-                    identifier.SetNullableValue(values.Identifier);
-                    name.SetNullableValue(values.Name);
-                    description.SetNullableValue(values.Description);
-                    resource_owner.SetNullableValue(values.ResourceOwner);
-                    actions.SetOptionalImmutableArrayValue(values.Actions);
-                    party_ids.SetOptionalImmutableArrayValue(values.PartyIds);
-
-                    await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-                    if (!await reader.ReadAsync(cancellationToken))
-                    {
-                        throw new InvalidOperationException("No event id returned from database.");
-                    }
-
-                    version = new EventId((ulong)reader.GetFieldValue<long>("eid"));
-                    newIds.Add((evt, version));
-                }
-            }
-
-            // Step 2. Update state tables in the database.
-            foreach (var evt in aggregate.GetUncommittedEvents())
-            {
-                var applyTask = evt switch
-                {
-                    AccessListCreatedEvent create => ApplyCreateStateChecked(create, aggregate, cancellationToken),
-                    AccessListUpdatedEvent update => ApplyUpdateState(update, cancellationToken),
-                    AccessListDeletedEvent delete => ApplyDeleteStateChecked(delete, aggregate, cancellationToken),
-                    AccessListResourceConnectionCreatedEvent connectionSet => ApplyResourceConnectionState(connectionSet, cancellationToken),
-                    AccessListResourceConnectionActionsAddedEvent connectionActionsAdded => ApplyResourceConnectionState(connectionActionsAdded, cancellationToken),
-                    AccessListResourceConnectionActionsRemovedEvent connectionActionsRemoved => ApplyResourceConnectionState(connectionActionsRemoved, cancellationToken),
-                    AccessListResourceConnectionDeletedEvent connectionDeleted => ApplyResourceConnectionState(connectionDeleted, cancellationToken),
-                    AccessListMembersAddedEvent membersAdded => ApplyMembersAddedState(membersAdded, cancellationToken),
-                    AccessListMembersRemovedEvent membersRemoved => ApplyMembersRemovedState(membersRemoved, cancellationToken),
-                    _ => throw new InvalidOperationException($"Unknown event type '{evt.GetType().Name}'")
-                };
-
-                await applyTask;
-            }
-
-            // Step 3. Update modified timestamp on the access list state table.
-            if (!aggregate.IsDeleted)
-            {
-                await UpdateModifiedAtAndVersionChecked(aggregate, version, cancellationToken);
-            }
-
-            // Step 4. Mark all events as commited.
-            foreach (var (evt, id) in newIds)
-            {
-                evt.EventId = id;
-            }
-
-            aggregate.Commit();
-            return newIds.Count;
         }
 
         private async Task ApplyCreateStateChecked(AccessListCreatedEvent evt, AccessListAggregate aggregate, CancellationToken cancellationToken)

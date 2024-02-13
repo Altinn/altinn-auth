@@ -190,8 +190,8 @@ public class AccessListsRepositoryTests : DbTests
         var original2 = await Repository.CreateAccessList("owner", "identifier2", "name", "description");
 
         // Check that we have no connections
-        (await Repository.GetAccessListResourceConnections(original1.Id, includeActions: true)).Should().BeEmpty();
-        (await Repository.GetAccessListResourceConnections(original2.Id, includeActions: true)).Should().BeEmpty();
+        (await Repository.GetAccessListResourceConnections(original1.Id, continueFrom: null, count: 20, includeActions: true))!.Value.Should().BeEmpty();
+        (await Repository.GetAccessListResourceConnections(original2.Id, continueFrom: null, count: 20, includeActions: true))!.Value.Should().BeEmpty();
 
         // Check that we can add a connection with empty actions list
         {
@@ -203,11 +203,11 @@ public class AccessListsRepositoryTests : DbTests
             connection.ResourceIdentifier.Should().Be(RESOURCE1_NAME);
             connection.Actions.Should().BeEmpty();
 
-            var connections = await Repository.GetAccessListResourceConnections(original1.Id, includeActions: true);
+            var connections = await Repository.GetAccessListResourceConnections(original1.Id, continueFrom: null, count: 20, includeActions: true);
             Assert.NotNull(connections);
-            connections.Should().ContainSingle();
-            connections[0].ResourceIdentifier.Should().Be(RESOURCE1_NAME);
-            connections[0].Actions.Should().BeEmpty();
+            connections.Value.Should().ContainSingle();
+            connections.Value[0].ResourceIdentifier.Should().Be(RESOURCE1_NAME);
+            connections.Value[0].Actions.Should().BeEmpty();
 
             var info = await Repository.LookupInfo(original1.Id, AccessListIncludes.ResourceConnectionsActions);
             Assert.NotNull(info);
@@ -229,11 +229,11 @@ public class AccessListsRepositoryTests : DbTests
                 .And.Contain(ACTION_READ)
                 .And.Contain(ACTION_WRITE);
 
-            var connections = await Repository.GetAccessListResourceConnections(original1.ResourceOwner, original1.Identifier, includeActions: true);
+            var connections = await Repository.GetAccessListResourceConnections(original1.ResourceOwner, original1.Identifier, continueFrom: null, count: 20, includeActions: true);
             Assert.NotNull(connections);
-            connections.Should().ContainSingle();
-            connections[0].ResourceIdentifier.Should().Be(RESOURCE1_NAME);
-            connections[0].Actions.Should().HaveCount(2)
+            connections.Value.Should().ContainSingle();
+            connections.Value[0].ResourceIdentifier.Should().Be(RESOURCE1_NAME);
+            connections.Value[0].Actions.Should().HaveCount(2)
                 .And.Contain(ACTION_READ)
                 .And.Contain(ACTION_WRITE);
         }
@@ -249,14 +249,14 @@ public class AccessListsRepositoryTests : DbTests
             connection.Actions.Should().HaveCount(1)
                 .And.Contain(ACTION_READ);
 
-            var connections = await Repository.GetAccessListResourceConnections(original1.ResourceOwner, original1.Identifier, includeActions: true);
+            var connections = await Repository.GetAccessListResourceConnections(original1.ResourceOwner, original1.Identifier, continueFrom: null, count: 20, includeActions: true);
             Assert.NotNull(connections);
-            connections.Should().HaveCount(2);
-            connections.Should().ContainSingle(c => c.ResourceIdentifier == RESOURCE1_NAME)
+            connections.Value.Should().HaveCount(2);
+            connections.Value.Should().ContainSingle(c => c.ResourceIdentifier == RESOURCE1_NAME)
                 .Which.Actions.Should().HaveCount(2)
                 .And.Contain(ACTION_READ)
                 .And.Contain(ACTION_WRITE);
-            connections.Should().ContainSingle(c => c.ResourceIdentifier == RESOURCE2_NAME)
+            connections.Value.Should().ContainSingle(c => c.ResourceIdentifier == RESOURCE2_NAME)
                 .Which.Actions.Should().HaveCount(1)
                 .And.Contain(ACTION_READ);
         }
@@ -272,13 +272,13 @@ public class AccessListsRepositoryTests : DbTests
             connection.Actions.Should().HaveCount(1)
                 .And.Contain(ACTION_WRITE);
 
-            var connections = await Repository.GetAccessListResourceConnections(original1.ResourceOwner, original1.Identifier, includeActions: true);
+            var connections = await Repository.GetAccessListResourceConnections(original1.ResourceOwner, original1.Identifier, continueFrom: null, count: 20, includeActions: true);
             Assert.NotNull(connections);
-            connections.Should().HaveCount(2);
-            connections.Should().ContainSingle(c => c.ResourceIdentifier == RESOURCE1_NAME)
+            connections.Value.Should().HaveCount(2);
+            connections.Value.Should().ContainSingle(c => c.ResourceIdentifier == RESOURCE1_NAME)
                 .Which.Actions.Should().HaveCount(1)
                 .And.Contain(ACTION_WRITE);
-            connections.Should().ContainSingle(c => c.ResourceIdentifier == RESOURCE2_NAME)
+            connections.Value.Should().ContainSingle(c => c.ResourceIdentifier == RESOURCE2_NAME)
                 .Which.Actions.Should().HaveCount(1)
                 .And.Contain(ACTION_READ);
         }
@@ -294,10 +294,10 @@ public class AccessListsRepositoryTests : DbTests
             connection.Actions.Should().HaveCount(1)
                 .And.Contain(ACTION_WRITE);
 
-            var connections = await Repository.GetAccessListResourceConnections(original1.ResourceOwner, original1.Identifier, includeActions: true);
+            var connections = await Repository.GetAccessListResourceConnections(original1.ResourceOwner, original1.Identifier, continueFrom: null, count: 20, includeActions: true);
             Assert.NotNull(connections);
-            connections.Should().HaveCount(1);
-            connections.Should().ContainSingle(c => c.ResourceIdentifier == RESOURCE2_NAME)
+            connections.Value.Should().HaveCount(1);
+            connections.Value.Should().ContainSingle(c => c.ResourceIdentifier == RESOURCE2_NAME)
                 .Which.Actions.Should().HaveCount(1)
                 .And.Contain(ACTION_READ);
         }
@@ -335,7 +335,8 @@ public class AccessListsRepositoryTests : DbTests
         // Check that we have no members
         {
             var memberships = await Repository.GetAccessListMemberships(info.Id);
-            memberships.Should().BeEmpty();
+            Assert.NotNull(memberships);
+            memberships.Value.Should().BeEmpty();
         }
 
         // Add members
@@ -346,7 +347,8 @@ public class AccessListsRepositoryTests : DbTests
             await aggregate.SaveChanged();
 
             var memberships = await Repository.GetAccessListMemberships(info.Id);
-            memberships.Should().HaveCount(2)
+            Assert.NotNull(memberships);
+            memberships.Value.Should().HaveCount(2)
                 .And.Contain(m => m.PartyId == member1)
                 .And.Contain(m => m.PartyId == member2);
         }
@@ -359,7 +361,8 @@ public class AccessListsRepositoryTests : DbTests
             await aggregate.SaveChanged();
 
             var memberships = await Repository.GetAccessListMemberships(info.Id);
-            memberships.Should().HaveCount(4)
+            Assert.NotNull(memberships);
+            memberships.Value.Should().HaveCount(4)
                 .And.Contain(m => m.PartyId == member1)
                 .And.Contain(m => m.PartyId == member2)
                 .And.Contain(m => m.PartyId == member3)
@@ -374,7 +377,8 @@ public class AccessListsRepositoryTests : DbTests
             await aggregate.SaveChanged();
 
             var memberships = await Repository.GetAccessListMemberships(info.Id);
-            memberships.Should().HaveCount(2)
+            Assert.NotNull(memberships);
+            memberships.Value.Should().HaveCount(2)
                 .And.Contain(m => m.PartyId == member1)
                 .And.Contain(m => m.PartyId == member4);
         }
@@ -387,7 +391,8 @@ public class AccessListsRepositoryTests : DbTests
             await aggregate.SaveChanged();
 
             var memberships = await Repository.GetAccessListMemberships(info.Id);
-            memberships.Should().BeEmpty();
+            Assert.NotNull(memberships);
+            memberships.Value.Should().BeEmpty();
         }
     }
 
@@ -453,8 +458,9 @@ public class AccessListsRepositoryTests : DbTests
         newVersion.Value.Should().BeGreaterThan(originalVersion.Value!.Value);
 
         await CheckRegistryLookup(original.AsAccessListInfo());
-        var members = await Repository.GetAccessListMemberships(original.Id);
-        members.Should().HaveCount(2)
+        var memberships = await Repository.GetAccessListMemberships(original.Id);
+        Assert.NotNull(memberships);
+        memberships.Value.Should().HaveCount(2)
             .And.Contain(m => m.PartyId == party1)
             .And.Contain(m => m.PartyId == party3);
     }

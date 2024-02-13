@@ -2,6 +2,7 @@
 
 using System.ComponentModel;
 using System.Diagnostics;
+using Altinn.ResourceRegistry.Core.Models.Versioned;
 using CommunityToolkit.Diagnostics;
 
 namespace Altinn.ResourceRegistry.Core.Models;

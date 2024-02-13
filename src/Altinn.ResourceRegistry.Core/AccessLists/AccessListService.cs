@@ -14,7 +14,8 @@ namespace Altinn.ResourceRegistry.Core.AccessLists;
 internal class AccessListService
     : IAccessListService
 {
-    private const int LISTS_PAGE_SIZE = 20;
+    private const int SMALL_PAGE_SIZE = 20;
+    private const int LARGE_PAGE_SIZE = 100;
 
     private readonly IAccessListsRepository _repository;
 
@@ -41,11 +42,11 @@ internal class AccessListService
         var accessLists = await _repository.GetAccessListsByOwner(
             owner,
             continueFrom: request.ContinuationToken,
-            count: LISTS_PAGE_SIZE + 1,
+            count: SMALL_PAGE_SIZE + 1,
             includes,
             cancellationToken);
 
-        return Page.Create(accessLists, LISTS_PAGE_SIZE, static list => list.Identifier);
+        return Page.Create(accessLists, SMALL_PAGE_SIZE, static list => list.Identifier);
     }
 
     /// <inheritdoc/>
@@ -190,5 +191,49 @@ internal class AccessListService
 
         // Return the maybe updated list.
         return aggregate.AsAccessListInfo();
+    }
+
+    /// <inheritdoc/>
+    public async Task<Conditional<VersionedPage<AccessListResourceConnection, string, ulong>, ulong>> GetAccessListResourceConnections(
+        string owner,
+        string identifier,
+        Page<string>.Request request,
+        IVersionedEntityCondition<ulong>? condition = null,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(owner);
+        Guard.IsNotNull(identifier);
+        Guard.IsNotNull(request);
+
+        var data = await _repository.GetAccessListResourceConnections(
+            owner,
+            identifier,
+            continueFrom: request.ContinuationToken,
+            count: LARGE_PAGE_SIZE + 1,
+            includeActions: true,
+            cancellationToken);
+
+        if (data is null)
+        {
+            return Conditional.NotFound();
+        }
+
+        if (condition is not null)
+        {
+            var result = condition.Validate(data);
+
+            if (result == VersionedEntityConditionResult.Failed)
+            {
+                return Conditional.ConditionFailed();
+            }
+
+            if (result == VersionedEntityConditionResult.Unmodified)
+            {
+                return Conditional.Unmodified(data.Version, data.UpdatedAt);
+            }
+        }
+
+        return Page.Create(data.Value, LARGE_PAGE_SIZE, static resource => resource.ResourceIdentifier)
+            .WithVersion(data.UpdatedAt, data.Version);
     }
 }

@@ -46,13 +46,13 @@ public abstract class Page()
 /// </summary>
 /// <typeparam name="TToken">The token type used to request the next page</typeparam>
 public abstract class Page<TToken>(
-    TToken? continuationToken)
+    Optional<TToken> continuationToken)
     : Page()
 {
     /// <summary>
     /// Gets the continuation token, if any.
     /// </summary>
-    public TToken? ContinuationToken => continuationToken;
+    public Optional<TToken> ContinuationToken => continuationToken;
 
     /// <summary>
     /// A request for the next page of items.
@@ -71,9 +71,9 @@ public abstract class Page<TToken>(
 /// </summary>
 /// <typeparam name="TItem">The item type</typeparam>
 /// <typeparam name="TToken">The token type used to request the next page</typeparam>
-public sealed class Page<TItem, TToken>(
+public class Page<TItem, TToken>(
     IReadOnlyList<TItem> items,
-    TToken? continuationToken)
+    Optional<TToken> continuationToken)
     : Page<TToken>(continuationToken)
 {
     /// <summary>

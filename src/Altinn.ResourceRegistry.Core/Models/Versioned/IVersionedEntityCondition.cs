@@ -43,6 +43,32 @@ public static class VersionedEntityConditionExtensions
         => new MappedVersionEntityCondition<TInner, TOuter>(self, converter);
 
     /// <summary>
+    /// Concatenate two entity conditions.
+    /// </summary>
+    /// <typeparam name="T">The entity type.</typeparam>
+    /// <param name="self">The first condition.</param>
+    /// <param name="other">The second condition.</param>
+    /// <returns>A concatinated <see cref="IVersionedEntityCondition{T}"/>.</returns>
+    public static IVersionedEntityCondition<T> Concat<T>(this IVersionedEntityCondition<T> self, IVersionedEntityCondition<T> other)
+        where T : notnull
+    {
+        Guard.IsNotNull(self);
+        Guard.IsNotNull(other);
+
+        if (self is IReadOnlyCollection<IVersionedEntityCondition<T>> { Count: 0 })
+        {
+            return other;
+        }
+
+        if (other is IReadOnlyCollection<IVersionedEntityCondition<T>> { Count: 0 })
+        {
+            return self;
+        }
+
+        return new ConcatenatedVersionedEntityCondition<T>(self, other);
+    }
+
+    /// <summary>
     /// Validate the condition against a null/non-existing entity.
     /// </summary>
     /// <typeparam name="T">The version tag type</typeparam>
@@ -124,6 +150,35 @@ public static class VersionedEntityConditionExtensions
             {
                 return entity.VersionEquals(converter(other));
             }
+        }
+    }
+
+    private sealed class ConcatenatedVersionedEntityCondition<T>
+        : IVersionedEntityCondition<T>
+        where T : notnull
+    {
+        private readonly IVersionedEntityCondition<T> _first;
+        private readonly IVersionedEntityCondition<T> _second;
+
+        public ConcatenatedVersionedEntityCondition(IVersionedEntityCondition<T> first, IVersionedEntityCondition<T> second)
+        {
+            Guard.IsNotNull(first);
+            Guard.IsNotNull(second);
+
+            _first = first;
+            _second = second;
+        }
+
+        public VersionedEntityConditionResult Validate<TEntity>(TEntity entity)
+            where TEntity : IVersionEquatable<T>
+        {
+            var result = _first.Validate(entity);
+            if (result == VersionedEntityConditionResult.Failed)
+            {
+                return result;
+            }
+
+            return VersionedEntityConditionResult.Max(result, _second.Validate(entity));
         }
     }
 }

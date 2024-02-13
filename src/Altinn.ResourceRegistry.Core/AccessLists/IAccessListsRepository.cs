@@ -46,11 +46,15 @@ public interface IAccessListsRepository
     /// Lookup resource connections for an access list by it's id.
     /// </summary>
     /// <param name="id">The id</param>
+    /// <param name="continueFrom">An optional value to continue iterating from. This value is an <see cref="AccessListResourceConnection.ResourceIdentifier"/> to start from, using greater than or equals comparison.</param>
+    /// <param name="count">The total number of entries to return.</param>
     /// <param name="includeActions">Whether to include actions in the response.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
     /// <returns>A list of <see cref="AccessListResourceConnection"/> for the given resource.</returns>
-    Task<IReadOnlyList<AccessListResourceConnection>?> GetAccessListResourceConnections(
+    Task<AccessListData<IReadOnlyList<AccessListResourceConnection>>?> GetAccessListResourceConnections(
         Guid id,
+        string? continueFrom,
+        int count,
         bool includeActions,
         CancellationToken cancellationToken = default);
 
@@ -59,12 +63,16 @@ public interface IAccessListsRepository
     /// </summary>
     /// <param name="resourceOwner">The resource owner</param>
     /// <param name="identifier">The access list identifier (unique per owner).</param>
+    /// <param name="continueFrom">An optional value to continue iterating from. This value is an <see cref="AccessListResourceConnection.ResourceIdentifier"/> to start from, using greater than or equals comparison.</param>
+    /// <param name="count">The total number of entries to return.</param>
     /// <param name="includeActions">Whether to include actions in the response.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
     /// <returns>A list of <see cref="AccessListResourceConnection"/> for the given resource.</returns>
-    Task<IReadOnlyList<AccessListResourceConnection>?> GetAccessListResourceConnections(
+    Task<AccessListData<IReadOnlyList<AccessListResourceConnection>>?> GetAccessListResourceConnections(
         string resourceOwner,
         string identifier,
+        string? continueFrom,
+        int count,
         bool includeActions,
         CancellationToken cancellationToken = default);
 
@@ -74,7 +82,7 @@ public interface IAccessListsRepository
     /// <param name="id">The access list id</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
     /// <returns>A list of <see cref="AccessListMembership"/></returns>
-    Task<IReadOnlyList<AccessListMembership>?> GetAccessListMemberships(
+    Task<AccessListData<IReadOnlyList<AccessListMembership>>?> GetAccessListMemberships(
         Guid id,
         CancellationToken cancellationToken = default);
 
@@ -85,7 +93,7 @@ public interface IAccessListsRepository
     /// <param name="identifier">The access list identifier (unique per owner).</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
     /// <returns>A list of <see cref="AccessListMembership"/></returns>
-    Task<IReadOnlyList<AccessListMembership>?> GetAccessListMemberships(
+    Task<AccessListData<IReadOnlyList<AccessListMembership>>?> GetAccessListMemberships(
         string resourceOwner,
         string identifier,
         CancellationToken cancellationToken = default);

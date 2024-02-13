@@ -47,28 +47,32 @@ internal partial class AccessListsRepository
         => InTransaction(repo => repo.LookupInfo(new(resourceOwner, identifier), includes, cancellationToken), cancellationToken);
 
     /// <inheritdoc/>
-    public Task<IReadOnlyList<AccessListResourceConnection>?> GetAccessListResourceConnections(
+    public Task<AccessListData<IReadOnlyList<AccessListResourceConnection>>?> GetAccessListResourceConnections(
         Guid id,
+        string? continueFrom,
+        int count,
         bool includeActions,
         CancellationToken cancellationToken = default)
-        => InTransaction(repo => repo.GetAccessListResourceConnections(new(id), includeActions, cancellationToken), cancellationToken);
+        => InTransaction(repo => repo.GetAccessListResourceConnections(new(id), continueFrom, count, includeActions, cancellationToken), cancellationToken);
 
     /// <inheritdoc/>
-    public Task<IReadOnlyList<AccessListResourceConnection>?> GetAccessListResourceConnections(
+    public Task<AccessListData<IReadOnlyList<AccessListResourceConnection>>?> GetAccessListResourceConnections(
         string registryOwner,
         string identifier,
+        string? continueFrom,
+        int count,
         bool includeActions,
         CancellationToken cancellationToken = default)
-        => InTransaction(repo => repo.GetAccessListResourceConnections(new(registryOwner, identifier), includeActions, cancellationToken), cancellationToken);
+        => InTransaction(repo => repo.GetAccessListResourceConnections(new(registryOwner, identifier), continueFrom, count, includeActions, cancellationToken), cancellationToken);
 
     /// <inheritdoc/>
-    public Task<IReadOnlyList<AccessListMembership>?> GetAccessListMemberships(
+    public Task<AccessListData<IReadOnlyList<AccessListMembership>>?> GetAccessListMemberships(
         Guid id,
         CancellationToken cancellationToken = default)
         => InTransaction(repo => repo.GetAccessListMemberships(new(id), cancellationToken), cancellationToken);
 
     /// <inheritdoc/>
-    public Task<IReadOnlyList<AccessListMembership>?> GetAccessListMemberships(
+    public Task<AccessListData<IReadOnlyList<AccessListMembership>>?> GetAccessListMemberships(
         string registryOwner,
         string identifier,
         CancellationToken cancellationToken = default)

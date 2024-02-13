@@ -68,4 +68,20 @@ public interface IAccessListService
         string description,
         IVersionedEntityCondition<ulong>? condition = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets a page of access list resource-connections by owner and identifier.
+    /// </summary>
+    /// <param name="owner">The resource owner (org.nr.).</param>
+    /// <param name="identifier">The access list identifier (unique per owner).</param>
+    /// <param name="request">The page request.</param>
+    /// <param name="condition">Optional condition on the access list</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
+    /// <returns></returns>
+    Task<Conditional<VersionedPage<AccessListResourceConnection, string, ulong>, ulong>> GetAccessListResourceConnections(
+        string owner,
+        string identifier,
+        Page<string>.Request request,
+        IVersionedEntityCondition<ulong>? condition = null,
+        CancellationToken cancellationToken = default);
 }

@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Altinn.ResourceRegistry.Core.Models;
 using CommunityToolkit.Diagnostics;
 
 namespace Altinn.ResourceRegistry.JsonPatch;
@@ -28,8 +29,8 @@ public sealed partial record class JsonPatchOperation
             }
 
             Optional<JsonPatchOperationType> type = default;
-            Optional<JsonPointer> source = default;
-            Optional<JsonPointer> target = default;
+            Optional<JsonPointer?> source = default;
+            Optional<JsonPointer?> target = default;
             Optional<JsonElement> value = default;
 
             if (!reader.Read())
@@ -76,6 +77,7 @@ public sealed partial record class JsonPatchOperation
                     }
 
                     target = JsonSerializer.Deserialize<JsonPointer>(ref reader, options);
+
                     if (!reader.Read())
                     {
                         throw new JsonException("Expected a JSON patch operation object.");
@@ -211,37 +213,6 @@ public sealed partial record class JsonPatchOperation
             }
 
             writer.WriteEndObject();
-        }
-
-        private readonly record struct Optional<T>
-        {
-            private readonly T? _value;
-
-            public bool HasValue { get; }
-
-            public T Value
-            {
-                get
-                {
-                    if (!HasValue)
-                    {
-                        ThrowHelper.ThrowInvalidOperationException();
-                    }
-
-                    return _value!;
-                }
-            }
-
-            public Optional(T? value)
-            {
-                _value = value;
-                HasValue = true;
-            }
-
-            public static implicit operator Optional<T>(T? value)
-            {
-                return new(value);
-            }
         }
     }
 }
