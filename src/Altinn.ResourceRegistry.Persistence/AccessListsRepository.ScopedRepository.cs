@@ -174,7 +174,7 @@ internal partial class AccessListsRepository
             }
         }
 
-        public async Task<IReadOnlyList<AccessListInfo>> GetAccessListsByOwner(string resourceOwner, string? continueFrom, int count, AccessListIncludes includes, CancellationToken cancellationToken)
+        public async Task<IReadOnlyList<AccessListInfo>> GetAccessListsByOwner(string resourceOwner, string? continueFrom, int count, AccessListIncludes includes, string? resourceIdentifier, CancellationToken cancellationToken)
         {
             Guard.IsNotNullOrEmpty(resourceOwner);
             Guard.IsGreaterThan(count, 0);
@@ -203,6 +203,7 @@ internal partial class AccessListsRepository
                 await LoadResourceConnections(
                     accessLists,
                     idSet,
+                    resourceIdentifier,
                     includeActions: includes.HasFlag(AccessListIncludes.ResourceConnectionsActions),
                     cancellationToken);
             }
@@ -472,16 +473,18 @@ internal partial class AccessListsRepository
             return reader.GetGuid(0);
         }
 
-        private async Task LoadResourceConnections(List<AccessListInfo> accessLists, List<Guid> idSet, bool includeActions, CancellationToken cancellationToken)
+        private async Task LoadResourceConnections(List<AccessListInfo> accessLists, List<Guid> idSet, string? resourceIdentifier, bool includeActions, CancellationToken cancellationToken)
         {
             const string QUERY = /*strpsql*/@"
                 SELECT aggregate_id, resource_identifier, actions, created, modified
                 FROM resourceregistry.access_list_resource_connections_state
                 WHERE aggregate_id = ANY(@aggregate_ids)
+                AND (@resource_identifier IS NULL OR resource_identifier = @resource_identifier)
                 ORDER BY aggregate_id, resource_identifier;";
 
             await using var cmd = _conn.CreateCommand(QUERY);
             cmd.Parameters.Add<IList<Guid>>("aggregate_ids", NpgsqlDbType.Array | NpgsqlDbType.Uuid).TypedValue = idSet;
+            cmd.Parameters.AddWithNullableValue("resource_identifier", NpgsqlDbType.Text, resourceIdentifier);
 
             AccessListInfo? current = null;
             List<AccessListResourceConnection>? connections = null;

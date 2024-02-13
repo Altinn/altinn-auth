@@ -4,6 +4,7 @@ using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Tests.Utils;
 using Altinn.ResourceRegistry.TestUtils;
 using FluentAssertions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using System;
@@ -121,32 +122,67 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             }
 
             {
-                using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}?include=resources");
+                using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}?include=resources&resource=test1");
 
                 var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListInfoDto>>();
                 Assert.NotNull(content);
 
                 content.Items.Should().HaveCount(1);
                 content.Items.Should().Contain(al => al.Identifier == "test1")
-                    .Which.ResourceConnections.Should().HaveCount(2)
+                    .Which.ResourceConnections.Should().HaveCount(1)
                     .And.AllSatisfy(rc => rc.Actions.Should().BeNull())
-                    .And.Contain(rc => rc.ResourceIdentifier == RESOURCE1_NAME)
+                    .And.Contain(rc => rc.ResourceIdentifier == RESOURCE1_NAME);
+            }
+
+            {
+                using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}?include=resources&resource=test2");
+
+                var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListInfoDto>>();
+                Assert.NotNull(content);
+
+                content.Items.Should().HaveCount(1);
+                content.Items.Should().Contain(al => al.Identifier == "test1")
+                    .Which.ResourceConnections.Should().HaveCount(1)
+                    .And.AllSatisfy(rc => rc.Actions.Should().BeNull())
                     .And.Contain(rc => rc.ResourceIdentifier == RESOURCE2_NAME);
             }
 
             {
-                using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}?include=resource-actions");
+                using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}?include=resource-actions&resource=test1");
 
                 var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListInfoDto>>();
                 Assert.NotNull(content);
 
                 content.Items.Should().HaveCount(1);
                 content.Items.Should().Contain(al => al.Identifier == "test1")
-                    .Which.ResourceConnections.Should().HaveCount(2)
+                    .Which.ResourceConnections.Should().HaveCount(1)
                     .And.AllSatisfy(rc => rc.Actions.Should().NotBeNull())
                     .And.Contain(rc => rc.ResourceIdentifier == RESOURCE1_NAME)
+                    .Which.Actions.Should().BeEmpty();
+            }
+
+            {
+                using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}?include=resource-actions&resource=test2");
+
+                var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListInfoDto>>();
+                Assert.NotNull(content);
+
+                content.Items.Should().HaveCount(1);
+                content.Items.Should().Contain(al => al.Identifier == "test1")
+                    .Which.ResourceConnections.Should().HaveCount(1)
+                    .And.AllSatisfy(rc => rc.Actions.Should().NotBeNull())
                     .And.Contain(rc => rc.ResourceIdentifier == RESOURCE2_NAME)
                     .Which.Actions.Should().BeEquivalentTo([ACTION_READ]);
+            }
+
+            {
+                using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}?include=resources");
+                response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            }
+
+            {
+                using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}?include=resource-actions");
+                response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
             }
         }
 

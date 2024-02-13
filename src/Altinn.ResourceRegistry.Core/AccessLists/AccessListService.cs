@@ -33,6 +33,7 @@ internal class AccessListService
         string owner,
         Page<string>.Request request,
         AccessListIncludes includes = default,
+        string? resourceIdentifier = null,
         CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(owner);
@@ -44,6 +45,7 @@ internal class AccessListService
             continueFrom: request.ContinuationToken,
             count: SMALL_PAGE_SIZE + 1,
             includes,
+            resourceIdentifier,
             cancellationToken);
 
         return Page.Create(accessLists, SMALL_PAGE_SIZE, static list => list.Identifier);

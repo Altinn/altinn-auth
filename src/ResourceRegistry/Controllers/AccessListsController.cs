@@ -57,6 +57,10 @@ public class AccessListsController
     /// <param name="owner">The resource owner</param>
     /// <param name="token">Optional continuation token</param>
     /// <param name="include">What additional information to include in the response</param>
+    /// <param name="resourceIdentifier">
+    /// Optional resource identifier. Required if <paramref name="include"/> has flag <see cref="AccessListIncludes.ResourceConnections"/>
+    /// set. This is used to filter the resource connections included in the access lists to only the provided resource.
+    /// </param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A paginated set of <see cref="AccessListInfoDto"/></returns>
     [HttpGet("", Name = ROUTE_GET_BY_OWNER)]
@@ -65,9 +69,16 @@ public class AccessListsController
         string owner,
         [FromQuery(Name = "token")] Opaque<string>? token = null,
         [FromQuery(Name = "include")] AccessListIncludes include = AccessListIncludes.None,
+        [FromQuery(Name = "resource")] string? resourceIdentifier = null,
         CancellationToken cancellationToken = default)
     {
-        var page = await _service.GetAccessListsByOwner(owner, Page.ContinueFrom(token?.Value), include, cancellationToken);
+        if (include.HasFlag(AccessListIncludes.ResourceConnections) && string.IsNullOrWhiteSpace(resourceIdentifier))
+        {
+            ModelState.AddModelError("resource", "Resource identifier is required when including resource connections");
+            return BadRequest(ModelState);
+        }
+
+        var page = await _service.GetAccessListsByOwner(owner, Page.ContinueFrom(token?.Value), include, resourceIdentifier, cancellationToken);
         if (page == null)
         {
             return NotFound();

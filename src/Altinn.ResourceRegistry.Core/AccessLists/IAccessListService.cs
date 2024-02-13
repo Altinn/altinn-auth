@@ -16,9 +16,18 @@ public interface IAccessListService
     /// <param name="owner">The resource owner (org.nr.).</param>
     /// <param name="request">The page request.</param>
     /// <param name="includes">What additional to include in the response.</param>
+    /// <param name="resourceIdentifier">
+    /// Optional resource identifier. Used if <paramref name="includes"/> contains flag <see cref="AccessListIncludes.ResourceConnections"/>
+    /// to filter the resource connections included.
+    /// </param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
     /// <returns>A <see cref="Page{TItem, TToken}"/> of <see cref="AccessListInfo"/>.</returns>
-    Task<Page<AccessListInfo, string>> GetAccessListsByOwner(string owner, Page<string>.Request request, AccessListIncludes includes = default, CancellationToken cancellationToken = default);
+    Task<Page<AccessListInfo, string>> GetAccessListsByOwner(
+        string owner,
+        Page<string>.Request request,
+        AccessListIncludes includes = default,
+        string? resourceIdentifier = null,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets an access list by owner and identifier.

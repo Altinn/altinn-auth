@@ -14,6 +14,10 @@ public interface IAccessListsRepository
     /// <param name="continueFrom">An optional value to continue iterating from. This value is an <see cref="AccessListInfo.Identifier"/> to start from, using greater than or equals comparison.</param>
     /// <param name="count">The total number of entries to return.</param>
     /// <param name="includes">What additional to include in the response.</param>
+    /// <param name="resourceIdentifier">
+    /// Optional resource identifier. Used if <paramref name="includes"/> contains flag <see cref="AccessListIncludes.ResourceConnections"/>
+    /// to filter the resource connections included.
+    /// </param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
     /// <returns>A list of <see cref="AccessListInfo"/>, sorted by <see cref="AccessListInfo.Identifier"/> and limited by <paramref name="count"/>.</returns>
     Task<IReadOnlyList<AccessListInfo>> GetAccessListsByOwner(
@@ -21,6 +25,7 @@ public interface IAccessListsRepository
         string? continueFrom,
         int count,
         AccessListIncludes includes = default,
+        string? resourceIdentifier = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
