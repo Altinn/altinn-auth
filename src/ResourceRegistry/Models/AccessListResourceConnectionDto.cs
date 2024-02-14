@@ -2,6 +2,7 @@
 
 using System.Text.Json.Serialization;
 using Altinn.ResourceRegistry.Core.AccessLists;
+using Altinn.ResourceRegistry.Core.Utils;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -22,12 +23,9 @@ public record AccessListResourceConnectionDto(
     IReadOnlyCollection<string>? Actions,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt)
+    : IConvertibleFrom<AccessListResourceConnectionDto, AccessListResourceConnection>
 {
-    /// <summary>
-    /// Create a <see cref="AccessListResourceConnectionDto"/> from a <see cref="AccessListResourceConnection"/>.
-    /// </summary>
-    /// <param name="connection">The <see cref="AccessListResourceConnection"/>.</param>
-    /// <returns>The created <see cref="AccessListResourceConnectionDto"/></returns>
+    /// <inheritdoc/>
     public static AccessListResourceConnectionDto From(AccessListResourceConnection connection)
         => new(
             connection.ResourceIdentifier,

@@ -1,6 +1,7 @@
 ﻿using Altinn.ResourceRegistry.TestUtils;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -25,6 +26,7 @@ public abstract class WebApplicationTests
     private WebApplicationFactory<Program>? _webApp;
     private IServiceProvider? _services;
     private AsyncServiceScope _scope;
+    private DbFixture.OwnedDb? _db;
 
     protected IServiceProvider Services => _scope!.ServiceProvider;
 
@@ -44,14 +46,20 @@ public abstract class WebApplicationTests
     {
         await DisposeAsync();
         if (_scope is { } scope) await scope.DisposeAsync();
+        if (_services is IAsyncDisposable iad) await iad.DisposeAsync();
+        else if (_services is IDisposable id) id.Dispose();
+        if (_webApp is { } webApp) await webApp.DisposeAsync();
+         
+        if (_db is { } db) await db.DisposeAsync();
+
     }
 
     async Task IAsyncLifetime.InitializeAsync()
     {
-        var db = await _dbFixture.CreateDbAsync();
+        _db = await _dbFixture.CreateDbAsync();
         _webApp = _webApplicationFixture.CreateServer(services =>
         {
-            db.ConfigureServices(services);
+            _db.ConfigureServices(services);
             ConfigureServices(services);
         });
 

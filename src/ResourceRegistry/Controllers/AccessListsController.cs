@@ -339,17 +339,30 @@ public class AccessListsController
     /// <param name="owner">The resource owner</param>
     /// <param name="identifier">The resource owner-unique identifier</param>
     /// <param name="resourceIdentifier">The resource identifier</param>
+    /// <param name="requestConditions">Request conditions</param>
     /// <param name="model">The resource connection info</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The newly created/updated <see cref="AccessListResourceConnectionDto"/></returns>
     [HttpPut("{identifier:required}/resource-connections/{resourceIdentifier:required}")]
     [SwaggerOperation(Tags = ["Access List Resource Connections"])]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
-    public async Task<ActionResult<AccessListResourceConnectionDto>> UpsertAccessListResourceConnection(string owner, string identifier, string resourceIdentifier, [FromBody] UpsertAccessListResourceConnectionDto model, CancellationToken cancellationToken = default)
+    public async Task<ConditionalResult<AccessListResourceConnectionWithVersionDto, AggregateVersion>> UpsertAccessListResourceConnection(
+        string owner,
+        string identifier,
+        string resourceIdentifier,
+        RequestConditionCollection<AggregateVersion> requestConditions,
+        [FromBody] UpsertAccessListResourceConnectionDto model,
+        CancellationToken cancellationToken = default)
     {
-        await Task.Yield();
+        var result = await _service.UpsertAccessListResourceConnection(
+            owner,
+            identifier,
+            resourceIdentifier,
+            model.Actions,
+            requestConditions.Select(v => v.Version),
+            cancellationToken);
 
-        throw new NotImplementedException();
+        return result.Select(AccessListResourceConnectionWithVersionDto.From, AggregateVersion.From);
     }
 
     /// <summary>

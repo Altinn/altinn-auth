@@ -9,6 +9,7 @@ public abstract class DbTests
     , IClassFixture<DbFixture>
 {
     private readonly DbFixture _dbFixture;
+    private DbFixture.OwnedDb? _db;
 
     protected DbTests(DbFixture dbFixture)
     {
@@ -34,13 +35,15 @@ public abstract class DbTests
         await DisposeAsync();
         if (_scope is { } scope) await scope.DisposeAsync();
         if (_services is { } services) await services.DisposeAsync();
+        if (_db is { } db) await db.DisposeAsync();
     }
 
     async Task IAsyncLifetime.InitializeAsync()
     {
         var container = new ServiceCollection();
         container.AddLogging(l => l.AddConsole());
-        await _dbFixture.ConfigureServicesAsync(container);
+        _db = await _dbFixture.CreateDbAsync();
+        _db.ConfigureServices(container);
         ConfigureServices(container);
 
         _services = container.BuildServiceProvider(new ServiceProviderOptions

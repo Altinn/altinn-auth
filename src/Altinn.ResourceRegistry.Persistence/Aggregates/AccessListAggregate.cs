@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Aggregates;
 using CommunityToolkit.Diagnostics;
@@ -67,6 +68,10 @@ internal class AccessListAggregate
 
     /// <inheritdoc />
     public string Description => InitializedThis._description!;
+
+    /// <inheritdoc />
+    bool IAccessListAggregate.TryGetResourceConnections(string resourceIdentifier, [NotNullWhen(true)] out AccessListResourceConnection? resourceConnection)
+        => _resourceConnections.TryGetValue(resourceIdentifier, out resourceConnection);
 
     /// <inheritdoc />
     public void Initialize(string resourceOwner, string identifier, string name, string? description)

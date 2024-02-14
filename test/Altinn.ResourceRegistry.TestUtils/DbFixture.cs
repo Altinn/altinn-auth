@@ -9,6 +9,8 @@ namespace Altinn.ResourceRegistry.TestUtils;
 public class DbFixture 
     : IAsyncLifetime
 {
+    private const int MAX_CONCURRENCY = 20;
+
     Singleton.Ref<Inner>? _inner;
 
     public async Task InitializeAsync()
@@ -17,15 +19,10 @@ public class DbFixture
     }
 
     public Task<OwnedDb> CreateDbAsync()
-        => _inner!.Value.CreateDbAsync();
+        => _inner!.Value.CreateDbAsync(this);
 
-    public async Task<IAsyncDisposable> ConfigureServicesAsync(IServiceCollection services)
-    {
-        var db = await CreateDbAsync();
-        db.ConfigureServices(services);
-
-        return db;
-    }
+    private Task DropDbAsync(OwnedDb ownedDb)
+        => _inner!.Value.DropDatabaseAsync(ownedDb);
 
     public async Task DisposeAsync()
     {
@@ -44,57 +41,76 @@ public class DbFixture
             .WithCleanUp(true)
             .Build();
 
+        private readonly AsyncConcurrencyLimiter _throtler = new(MAX_CONCURRENCY);
+
         string? _connectionString;
         NpgsqlDataSource? _db;
 
         public async Task InitializeAsync()
         {
             await _dbContainer.StartAsync();
-            _connectionString = _dbContainer.GetConnectionString();
+            _connectionString = _dbContainer.GetConnectionString() + "; Include Error Detail=true; Pooling=false;";
             _db = NpgsqlDataSource.Create(_connectionString);
         }
 
-        public async Task<OwnedDb> CreateDbAsync()
+        public async Task<OwnedDb> CreateDbAsync(DbFixture fixture)
         {
             var dbName = $"test_{Interlocked.Increment(ref _dbCounter)}";
 
-            // only create 1 db at once
-            using var guard = await _dbLock.Acquire();
+            var ticket = await _throtler.Acquire();
 
-            await using var cmd = _db!.CreateCommand(/*strpsql*/$"CREATE DATABASE {dbName};");
+            try
+            {
+                // only create 1 db at once
+                using var guard = await _dbLock.Acquire();
+
+                await using var cmd = _db!.CreateCommand(/*strpsql*/$"CREATE DATABASE {dbName};");
+                await cmd.ExecuteNonQueryAsync();
+
+                var connectionStringBuilder = new NpgsqlConnectionStringBuilder(_connectionString) { Database = dbName, IncludeErrorDetail = true };
+                var connectionString = connectionStringBuilder.ToString();
+
+                var configuration = new Yuniql.AspNetCore.Configuration();
+                configuration.Platform = SUPPORTED_DATABASES.POSTGRESQL;
+                configuration.Workspace = Path.Combine(FindWorkspace(), "src", "Altinn.ResourceRegistry.Persistence", "Migration");
+                configuration.ConnectionString = connectionString;
+                configuration.IsAutoCreateDatabase = false;
+                configuration.Environment = "integrationtest";
+
+                var traceService = TraceService.Instance;
+                var dataService = new Yuniql.PostgreSql.PostgreSqlDataService(traceService);
+                var bulkImportService = new Yuniql.PostgreSql.PostgreSqlBulkImportService(traceService);
+                var migrationServiceFactory = new MigrationServiceFactory(traceService);
+                var migrationService = migrationServiceFactory.Create(dataService, bulkImportService);
+                ConfigurationHelper.Initialize(configuration);
+                migrationService.Run();
+
+                var ownedDb = new OwnedDb(connectionString, dbName, fixture, ticket);
+                ticket = null;
+                return ownedDb;
+            }
+            finally
+            {
+                ticket?.Dispose();
+            }
+        }
+
+        public async Task DropDatabaseAsync(OwnedDb ownedDb)
+        {
+            await using var cmd = _db!.CreateCommand(/*strpsql*/$"DROP DATABASE IF EXISTS {ownedDb.DbName};");
 
             await cmd.ExecuteNonQueryAsync();
-
-            var connectionStringBuilder = new NpgsqlConnectionStringBuilder(_connectionString) { Database = dbName, IncludeErrorDetail = true };
-            var connectionString = connectionStringBuilder.ToString();
-
-            var configuration = new Yuniql.AspNetCore.Configuration();
-            configuration.Platform = SUPPORTED_DATABASES.POSTGRESQL;
-            configuration.Workspace = Path.Combine(FindWorkspace(), "src", "Altinn.ResourceRegistry.Persistence", "Migration");
-            configuration.ConnectionString = connectionString;
-            configuration.IsAutoCreateDatabase = false;
-            configuration.Environment = "integrationtest";
-
-            var traceService = TraceService.Instance;
-            var dataService = new Yuniql.PostgreSql.PostgreSqlDataService(traceService);
-            var bulkImportService = new Yuniql.PostgreSql.PostgreSqlBulkImportService(traceService);
-            var migrationServiceFactory = new MigrationServiceFactory(traceService);
-            var migrationService = migrationServiceFactory.Create(dataService, bulkImportService);
-            ConfigurationHelper.Initialize(configuration);
-            migrationService.Run();
-
-            return new OwnedDb(connectionString, dbName, _db);
         }
 
         public async Task DisposeAsync()
         {
-            if (_db is { } db)
+            if (_db is { })
             {
-                await db.DisposeAsync();
+                await _db.DisposeAsync();
             }
 
             await _dbContainer.DisposeAsync();
-
+            _throtler.Dispose();
             _dbLock.Dispose();
         }
 
@@ -119,31 +135,35 @@ public class DbFixture
     {
         readonly string _connectionString;
         readonly string _dbName;
-        readonly NpgsqlDataSource _db;
+        readonly DbFixture _db;
+        readonly IDisposable _ticket;
 
-        public OwnedDb(string connectionString, string dbName, NpgsqlDataSource db)
+        public OwnedDb(string connectionString, string dbName, DbFixture db, IDisposable ticket)
         {
             _connectionString = connectionString;
             _dbName = dbName;
             _db = db;
+            _ticket = ticket;
         }
 
         public string ConnectionString => _connectionString;
 
+        internal string DbName => _dbName;
+
         public void ConfigureServices(IServiceCollection services)
         {
-            services.Configure<PostgreSQLSettings>(settings =>
-            {
-                settings.ConnectionString = ConnectionString;
-                settings.AuthorizationDbPwd = "unused";
-            });
+            services.AddOptions<PostgreSQLSettings>()
+                .Configure((PostgreSQLSettings settings) =>
+                {
+                    settings.ConnectionString = ConnectionString;
+                    settings.AuthorizationDbPwd = "unused";
+                });
         }
 
         public async ValueTask DisposeAsync()
         {
-            await using var cmd = _db!.CreateCommand(/*strpsql*/$"DROP DATABASE IF EXISTS {_dbName};");
-
-            await cmd.ExecuteNonQueryAsync();
+            await _db.DropDbAsync(this);
+            _ticket.Dispose();
         }
     }
 

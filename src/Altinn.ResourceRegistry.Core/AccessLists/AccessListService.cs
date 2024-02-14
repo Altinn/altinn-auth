@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-using System.Data;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Versioned;
@@ -237,5 +237,71 @@ internal class AccessListService
 
         return Page.Create(data.Value, LARGE_PAGE_SIZE, static resource => resource.ResourceIdentifier)
             .WithVersion(data.UpdatedAt, data.Version);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Conditional<AccessListData<AccessListResourceConnection>, ulong>> UpsertAccessListResourceConnection(
+        string owner,
+        string identifier,
+        string resourceIdentifier,
+        IReadOnlyList<string> actions,
+        IVersionedEntityCondition<ulong>? condition = null,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(owner);
+        Guard.IsNotNull(identifier);
+        Guard.IsNotNull(resourceIdentifier);
+        Guard.IsNotNull(actions);
+
+        var aggregate = await _repository.LoadAccessList(owner, identifier, cancellationToken);
+
+        if (aggregate is null)
+        {
+            return Conditional.NotFound();
+        }
+
+        if (condition is not null)
+        {
+            var result = condition.Validate(aggregate.AsAccessListInfo());
+
+            Debug.Assert(result != VersionedEntityConditionResult.Unmodified, "Unmodified should not be possible when upserting");
+
+            if (result == VersionedEntityConditionResult.Failed)
+            {
+                return Conditional.ConditionFailed();
+            }
+        }
+
+        switch (aggregate.TryGetResourceConnections(resourceIdentifier, out var connection))
+        {
+            case true when !connection.Actions!.SetEquals(actions):
+                var toRemove = connection.Actions.Except(actions).ToImmutableArray();
+                var toAdd = actions.Except(connection.Actions).ToImmutableArray();
+            
+                if (toRemove.Length > 0)
+                {
+                    aggregate.RemoveResourceConnectionActions(resourceIdentifier, toRemove);
+                }
+            
+                if (toAdd.Length > 0)
+                {
+                    aggregate.AddResourceConnectionActions(resourceIdentifier, toAdd);
+                }
+
+                break;
+
+            case false:
+                aggregate.AddResourceConnection(resourceIdentifier, actions);
+                break;
+        }
+
+        await aggregate.SaveChanged(cancellationToken);
+        
+        if (!aggregate.TryGetResourceConnections(resourceIdentifier, out connection))
+        {
+            throw new UnreachableException("The resource connection should exist at this point");
+        }
+
+        return AccessListData.Create(aggregate.AsAccessListInfo(), connection);
     }
 }

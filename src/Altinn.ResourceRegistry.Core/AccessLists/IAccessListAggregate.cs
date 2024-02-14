@@ -1,4 +1,7 @@
-﻿using Altinn.ResourceRegistry.Core.Aggregates;
+﻿#nullable enable
+
+using System.Diagnostics.CodeAnalysis;
+using Altinn.ResourceRegistry.Core.Aggregates;
 
 namespace Altinn.ResourceRegistry.Core.AccessLists;
 
@@ -28,6 +31,14 @@ public interface IAccessListAggregate : IAggregate
     string ResourceOwner { get; }
 
     /// <summary>
+    /// Get a resource connection by resource identifier, if it exists.
+    /// </summary>
+    /// <param name="resourceIdentifier">The resource identifier.</param>
+    /// <param name="resourceConnection">The resulting <see cref="AccessListResourceConnection"/>, or <see langword="null"/> if it did not exists.</param>
+    /// <returns>Wheather or not the resource connection was found.</returns>
+    bool TryGetResourceConnections(string resourceIdentifier, [NotNullWhen(true)] out AccessListResourceConnection? resourceConnection);
+
+    /// <summary>
     /// Initialize a new access list.
     /// </summary>
     /// <param name="resourceOwner">The resource owner</param>
@@ -42,7 +53,7 @@ public interface IAccessListAggregate : IAggregate
     /// <param name="identifier">The new identifier, or <see langword="null"/> to keep the old value</param>
     /// <param name="name">The new <see cref="Name"/>, or <see langword="null"/> to keep the old value</param>
     /// <param name="description">The new <see cref="Description"/>, or <see langword="null"/> to keep the old value</param>
-    void Update(string identifier = null, string name = null, string description = null);
+    void Update(string? identifier = null, string? name = null, string? description = null);
 
     /// <summary>
     /// Delete the access list.

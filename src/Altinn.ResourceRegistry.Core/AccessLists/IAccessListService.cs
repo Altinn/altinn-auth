@@ -86,11 +86,29 @@ public interface IAccessListService
     /// <param name="request">The page request.</param>
     /// <param name="condition">Optional condition on the access list</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
-    /// <returns></returns>
+    /// <returns>A conditional page of <see cref="AccessListResourceConnection"/>.</returns>
     Task<Conditional<VersionedPage<AccessListResourceConnection, string, ulong>, ulong>> GetAccessListResourceConnections(
         string owner,
         string identifier,
         Page<string>.Request request,
+        IVersionedEntityCondition<ulong>? condition = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Creates or updates an access list resource-connection.
+    /// </summary>
+    /// <param name="owner">The resource owner (org.nr.).</param>
+    /// <param name="identifier">The access list identifier (unique per owner).</param>
+    /// <param name="resourceIdentifier">The resource identifier.</param>
+    /// <param name="actions">What actions to allow on the resource.</param>
+    /// <param name="condition">Optional condition on the access list</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
+    /// <returns>A conditional page of <see cref="AccessListResourceConnection"/>.</returns>
+    Task<Conditional<AccessListData<AccessListResourceConnection>, ulong>> UpsertAccessListResourceConnection(
+        string owner,
+        string identifier,
+        string resourceIdentifier,
+        IReadOnlyList<string> actions,
         IVersionedEntityCondition<ulong>? condition = null,
         CancellationToken cancellationToken = default);
 }

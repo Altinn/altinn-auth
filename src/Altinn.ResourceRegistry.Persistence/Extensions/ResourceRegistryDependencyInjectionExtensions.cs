@@ -97,7 +97,14 @@ public static class ResourceRegistryDependencyInjectionExtensions
             builder.UseLoggerFactory(sp.GetRequiredService<ILoggerFactory>());
             builder.MapEnum<ResourceType>("resourceregistry.resourcetype");
 
-            return builder.Build();
+            return builder.BuildMultiHost();
+        });
+
+        services.TryAddSingleton((IServiceProvider sp) =>
+        {
+            var multiHost = sp.GetRequiredService<NpgsqlMultiHostDataSource>();
+
+            return (NpgsqlDataSource)multiHost;
         });
 
         return services;

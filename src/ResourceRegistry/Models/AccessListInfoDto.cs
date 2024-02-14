@@ -3,6 +3,7 @@
 using System.Text.Json.Serialization;
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Models;
+using Altinn.ResourceRegistry.Core.Utils;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Annotations;
@@ -32,12 +33,9 @@ public record AccessListInfoDto(
     [property: JsonIgnore]
     AggregateVersion Version)
     : ITaggedEntity<AggregateVersion>
+    , IConvertibleFrom<AccessListInfoDto, AccessListInfo>
 {
-    /// <summary>
-    /// Create a <see cref="AccessListInfoDto"/> from a <see cref="AccessListInfo"/>.
-    /// </summary>
-    /// <param name="info">The <see cref="AccessListInfo"/></param>
-    /// <returns>A <see cref="AccessListInfoDto"/> matching the <see cref="AccessListInfo"/></returns>
+    /// <inheritdoc/>
     public static AccessListInfoDto From(AccessListInfo info)
         => new(
             info.Identifier,

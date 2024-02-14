@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System.Text.Json.Serialization;
+using Altinn.ResourceRegistry.Core.Utils;
 
 namespace Altinn.ResourceRegistry.Models;
 
@@ -12,12 +13,9 @@ public record AggregateVersion(
     [property: JsonPropertyName("version")]
     [property: JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
     ulong Version)
+    : IConvertibleFrom<AggregateVersion, ulong>
 {
-    /// <summary>
-    /// Create a new <see cref="AggregateVersion"/> from a <see langword="ulong"/>.
-    /// </summary>
-    /// <param name="version">The version.</param>
-    /// <returns>The new <see cref="AggregateVersion"/>.</returns>
+    /// <inheritdoc/>
     public static AggregateVersion From(ulong version)
         => new(version);
 }
