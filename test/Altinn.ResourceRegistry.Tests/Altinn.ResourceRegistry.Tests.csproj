@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ResourceRegistry\Altinn.ResourceRegistry.csproj" />
+    <ProjectReference Include="..\..\src\Altinn.ResourceRegistry\Altinn.ResourceRegistry.csproj" />
     <ProjectReference Include="..\Altinn.ResourceRegistry.TestUtils\Altinn.ResourceRegistry.TestUtils.csproj" />
   </ItemGroup>
 

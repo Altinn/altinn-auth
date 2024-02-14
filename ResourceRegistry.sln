@@ -12,9 +12,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1C641B54-56A
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{BE70AAFA-E0AB-4EEC-897E-4B311939CA9A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.ResourceRegistry", "src\ResourceRegistry\Altinn.ResourceRegistry.csproj", "{1CEF3493-0F24-46E8-9BC0-63A213FE6C55}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.ResourceRegistry", "src\Altinn.ResourceRegistry\Altinn.ResourceRegistry.csproj", "{1CEF3493-0F24-46E8-9BC0-63A213FE6C55}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.ResourceRegistry.Tests", "test\ResourceRegistryTest\Altinn.ResourceRegistry.Tests.csproj", "{720B753A-28B3-46E1-8C69-7A1EED0C94E5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.ResourceRegistry.Tests", "test\Altinn.ResourceRegistry.Tests\Altinn.ResourceRegistry.Tests.csproj", "{720B753A-28B3-46E1-8C69-7A1EED0C94E5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.ResourceRegistry.Core", "src\Altinn.ResourceRegistry.Core\Altinn.ResourceRegistry.Core.csproj", "{2445DE2C-CBD4-4E30-8E35-711CA93362E8}"
 EndProject

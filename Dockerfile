@@ -2,16 +2,16 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
 WORKDIR /app
 
 
-COPY src/ResourceRegistry/*.csproj ./src/ResourceRegistry/
+COPY src/Altinn.ResourceRegistry/*.csproj ./src/Altinn.ResourceRegistry/
 COPY src/Altinn.ResourceRegistry.Core/*.csproj ./src/Altinn.Notifications.Core/
 COPY src/Altinn.ResourceRegistry.Integration/*.csproj ./src/Altinn.Notifications.Integration/
 COPY src/Altinn.ResourceRegistry.Persistence/*.csproj ./src/Altinn.Notifications.Persistence/
-RUN dotnet restore ./src/ResourceRegistry/Altinn.ResourceRegistry.csproj
+RUN dotnet restore ./src/Altinn.ResourceRegistry/Altinn.ResourceRegistry.csproj
 
 
 # Copy everything else and build
 COPY src ./src
-RUN dotnet publish -c Release -o out ./src/ResourceRegistry/Altinn.ResourceRegistry.csproj
+RUN dotnet publish -c Release -o out ./src/Altinn.ResourceRegistry/Altinn.ResourceRegistry.csproj
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS final
