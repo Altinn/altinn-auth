@@ -65,7 +65,7 @@ internal class AccessListService
         var accessList = await _repository.LookupInfo(owner, identifier, includes, cancellationToken);
         if (accessList is null)
         {
-            return Conditional.NotFound();
+            return Conditional.NotFound(nameof(AccessListInfo));
         }
 
         if (condition is not null)
@@ -98,7 +98,7 @@ internal class AccessListService
         var aggregate = await _repository.LoadAccessList(owner, identifier, cancellationToken);
         if (aggregate is null)
         {
-            return Conditional.NotFound();
+            return Conditional.NotFound(nameof(AccessListInfo));
         }
 
         if (condition is not null)
@@ -217,7 +217,7 @@ internal class AccessListService
 
         if (data is null)
         {
-            return Conditional.NotFound();
+            return Conditional.NotFound(nameof(AccessListInfo));
         }
 
         if (condition is not null)
@@ -257,7 +257,7 @@ internal class AccessListService
 
         if (aggregate is null)
         {
-            return Conditional.NotFound();
+            return Conditional.NotFound(nameof(AccessListInfo));
         }
 
         if (condition is not null)
@@ -301,6 +301,48 @@ internal class AccessListService
         {
             throw new UnreachableException("The resource connection should exist at this point");
         }
+
+        return AccessListData.Create(aggregate.AsAccessListInfo(), connection);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Conditional<AccessListData<AccessListResourceConnection>, ulong>> DeleteAccessListResourceConnection(
+        string owner,
+        string identifier,
+        string resourceIdentifier,
+        IVersionedEntityCondition<ulong>? condition = null,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(owner);
+        Guard.IsNotNull(identifier);
+        Guard.IsNotNull(resourceIdentifier);
+
+        var aggregate = await _repository.LoadAccessList(owner, identifier, cancellationToken);
+
+        if (aggregate is null)
+        {
+            return Conditional.NotFound(nameof(AccessListInfo));
+        }
+
+        if (condition is not null)
+        {
+            var result = condition.Validate(aggregate.AsAccessListInfo());
+
+            Debug.Assert(result != VersionedEntityConditionResult.Unmodified, "Unmodified should not be possible when upserting");
+
+            if (result == VersionedEntityConditionResult.Failed)
+            {
+                return Conditional.ConditionFailed();
+            }
+        }
+
+        if (!aggregate.TryGetResourceConnections(resourceIdentifier, out var connection))
+        {
+            return Conditional.NotFound(nameof(AccessListResourceConnection));
+        }
+
+        aggregate.RemoveResourceConnection(resourceIdentifier);
+        await aggregate.SaveChanged(cancellationToken);
 
         return AccessListData.Create(aggregate.AsAccessListInfo(), connection);
     }

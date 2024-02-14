@@ -103,12 +103,28 @@ public interface IAccessListService
     /// <param name="actions">What actions to allow on the resource.</param>
     /// <param name="condition">Optional condition on the access list</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
-    /// <returns>A conditional page of <see cref="AccessListResourceConnection"/>.</returns>
+    /// <returns>A conditional <see cref="AccessListResourceConnection"/>.</returns>
     Task<Conditional<AccessListData<AccessListResourceConnection>, ulong>> UpsertAccessListResourceConnection(
         string owner,
         string identifier,
         string resourceIdentifier,
         IReadOnlyList<string> actions,
+        IVersionedEntityCondition<ulong>? condition = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes an access list resource-connection.
+    /// </summary>
+    /// <param name="owner">The resource owner (org.nr.).</param>
+    /// <param name="identifier">The access list identifier (unique per owner).</param>
+    /// <param name="resourceIdentifier">The resource identifier.</param>
+    /// <param name="condition">Optional condition on the access list</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
+    /// <returns>A conditional <see cref="AccessListResourceConnection"/>.</returns>
+    Task<Conditional<AccessListData<AccessListResourceConnection>, ulong>> DeleteAccessListResourceConnection(
+        string owner,
+        string identifier,
+        string resourceIdentifier,
         IVersionedEntityCondition<ulong>? condition = null,
         CancellationToken cancellationToken = default);
 }

@@ -138,7 +138,7 @@ public class  ConditionalResultTests
         [HttpGet("/not-found")]
         public ConditionalResult<TestEntity, string> NotFound()
         {
-            return Conditional.NotFound();
+            return Conditional.NotFound("dummy");
         }
 
         [HttpGet("/not-found-action-result")]

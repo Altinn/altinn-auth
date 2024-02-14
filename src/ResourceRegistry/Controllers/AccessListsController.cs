@@ -339,7 +339,7 @@ public class AccessListsController
     /// <param name="owner">The resource owner</param>
     /// <param name="identifier">The resource owner-unique identifier</param>
     /// <param name="resourceIdentifier">The resource identifier</param>
-    /// <param name="requestConditions">Request conditions</param>
+    /// <param name="conditions">Request conditions</param>
     /// <param name="model">The resource connection info</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The newly created/updated <see cref="AccessListResourceConnectionDto"/></returns>
@@ -350,7 +350,7 @@ public class AccessListsController
         string owner,
         string identifier,
         string resourceIdentifier,
-        RequestConditionCollection<AggregateVersion> requestConditions,
+        RequestConditionCollection<AggregateVersion> conditions,
         [FromBody] UpsertAccessListResourceConnectionDto model,
         CancellationToken cancellationToken = default)
     {
@@ -359,7 +359,7 @@ public class AccessListsController
             identifier,
             resourceIdentifier,
             model.Actions,
-            requestConditions.Select(v => v.Version),
+            conditions.Select(v => v.Version),
             cancellationToken);
 
         return result.Select(AccessListResourceConnectionWithVersionDto.From, AggregateVersion.From);
@@ -374,18 +374,29 @@ public class AccessListsController
     /// <param name="owner">The resource owner</param>
     /// <param name="identifier">The resource owner-unique identifier</param>
     /// <param name="resourceIdentifier">The resource identifier</param>
+    /// <param name="conditions">Request conditions</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The newly removed <see cref="AccessListResourceConnectionDto"/>, if it existed, otherwize returns no content</returns>
     [HttpDelete("{identifier:required}/resource-connections/{resourceIdentifier:required}")]
     [SwaggerOperation(Tags = ["Access List Resource Connections"])]
-    [SwaggerResponse(StatusCodes.Status200OK, description: "The resource connection was removed", type: typeof(AccessListResourceConnectionDto))]
+    [SwaggerResponse(StatusCodes.Status200OK, description: "The resource connection was removed", type: typeof(ConditionalResult<AccessListResourceConnectionWithVersionDto, AggregateVersion>))]
     [SwaggerResponse(StatusCodes.Status204NoContent, description: "The resource connection did not exist")]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
-    public async Task<ActionResult<AccessListResourceConnectionDto?>> DeleteAccessListResourceConnection(string owner, string identifier, string resourceIdentifier, CancellationToken cancellationToken = default)
+    public async Task<ConditionalResult<AccessListResourceConnectionWithVersionDto, AggregateVersion>> DeleteAccessListResourceConnection(
+        string owner, 
+        string identifier, 
+        string resourceIdentifier,
+        RequestConditionCollection<AggregateVersion> conditions,
+        CancellationToken cancellationToken = default)
     {
-        await Task.Yield();
+        var result = await _service.DeleteAccessListResourceConnection(owner, identifier, resourceIdentifier, conditions.Select(v => v.Version), cancellationToken);
 
-        throw new NotImplementedException();
+        if (result.IsNotFound && result.NotFoundType == nameof(AccessListResourceConnection))
+        {
+            return NoContent();
+        }
+
+        return result.Select(AccessListResourceConnectionWithVersionDto.From, AggregateVersion.From);
     }
 
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]

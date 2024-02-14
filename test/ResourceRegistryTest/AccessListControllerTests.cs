@@ -909,6 +909,88 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
     }
     #endregion
 
+    #region DeleteAccessListResourceConnection
+    public class DeleteAccessListResourceConnection(DbFixture dbFixture, WebApplicationFixture webApplicationFixture)
+        : AccessListControllerTests(dbFixture, webApplicationFixture)
+    {
+        [Fact]
+        public async Task Returns_NotFound_ForMissingAccessList()
+        {
+            using var client = CreateAuthenticatedClient();
+
+            var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/resource-connections/test1");
+            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        }
+
+        [Fact]
+        public async Task Returns_NoContent_ForMissingConnection()
+        {
+            var def = await Repository.CreateAccessList(ORG_NR, "test1", "Test 1", "test 1 description");
+
+            using var client = CreateAuthenticatedClient();
+
+            var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{def.Identifier}/resource-connections/test1");
+            response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        [Fact]
+        public async Task Deletes_Existing_Connection()
+        {
+            await AddResource("test1");
+
+            var def = await Repository.CreateAccessList(ORG_NR, "test1", "Test 1", "test 1 description");
+            def.AddResourceConnection("test1", ["read", "write"]);
+            await def.SaveChanged();
+
+            using var client = CreateAuthenticatedClient();
+
+            var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{def.Identifier}/resource-connections/test1");
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            var data = await response.Content.ReadFromJsonAsync<AccessListResourceConnectionDto>();
+            Assert.NotNull(data);
+            data.ResourceIdentifier.Should().Be("test1");
+            data.Actions.Should().BeEquivalentTo(["read", "write"]);
+
+            var aggregate = await Repository.LoadAccessList(ORG_NR, def.Identifier);
+            Assert.NotNull(aggregate);
+            aggregate.TryGetResourceConnections("test1", out _).Should().BeFalse();
+        }
+
+        public class ETagHeaders(DbFixture dbFixture, WebApplicationFixture webApplicationFixture)
+            : EtagHeadersTests(dbFixture, webApplicationFixture)
+        {
+            protected override async Task<AccessListInfo> Setup()
+            {
+                await AddResource("test1");
+
+                var aggregate = await Repository.CreateAccessList(ORG_NR, "test1", "Test 1", "test 1 description");
+                aggregate.AddResourceConnection("test1", ["read", "write"]);
+                await aggregate.SaveChanged();
+
+                return aggregate.AsAccessListInfo();
+            }
+
+            protected override HttpRequestMessage CreateRequest(AccessListInfo info)
+                => new(HttpMethod.Delete, $"/resourceregistry/api/v1/access-lists/{info.ResourceOwner}/{info.Identifier}/resource-connections/test1");
+
+            protected override async Task ValidateResponse(HttpResponseMessage response, AccessListInfo info)
+            {
+                response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+                var data = await response.Content.ReadFromJsonAsync<AccessListResourceConnectionDto>();
+                Assert.NotNull(data);
+                data.ResourceIdentifier.Should().Be("test1");
+                data.Actions.Should().BeEquivalentTo(["read", "write"]);
+
+                var aggregate = await Repository.LoadAccessList(info.Id);
+                Assert.NotNull(aggregate);
+                aggregate.TryGetResourceConnections("test1", out _).Should().BeFalse();
+            }
+        }
+    }
+    #endregion
+
     #region Authorization
     public class Authorization(DbFixture dbFixture, WebApplicationFixture webApplicationFixture)
         : AccessListControllerTests(dbFixture, webApplicationFixture)

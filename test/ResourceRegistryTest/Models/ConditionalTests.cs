@@ -22,6 +22,7 @@ public class ConditionalTests
         test.Value.Should().Be("foo");
         test.Invoking(t => t.VersionTag).Should().Throw<InvalidOperationException>();
         test.Invoking(t => t.VersionModifiedAt).Should().Throw<InvalidOperationException>();
+        test.Invoking(test => test.NotFoundType).Should().Throw<InvalidOperationException>();
     }
 
     [Fact]
@@ -37,12 +38,13 @@ public class ConditionalTests
         test.Invoking(t => t.Value).Should().Throw<InvalidOperationException>();
         test.Invoking(t => t.VersionTag).Should().Throw<InvalidOperationException>();
         test.Invoking(t => t.VersionModifiedAt).Should().Throw<InvalidOperationException>();
+        test.Invoking(test => test.NotFoundType).Should().Throw<InvalidOperationException>();
     }
 
     [Fact]
     public void CanConstruct_NotFound()
     {
-        Conditional<string, byte> test = Conditional.NotFound();
+        Conditional<string, byte> test = Conditional.NotFound("test");
 
         test.IsSucceeded.Should().BeFalse();
         test.IsNotFound.Should().BeTrue();
@@ -52,6 +54,7 @@ public class ConditionalTests
         test.Invoking(t => t.Value).Should().Throw<InvalidOperationException>();
         test.Invoking(t => t.VersionTag).Should().Throw<InvalidOperationException>();
         test.Invoking(t => t.VersionModifiedAt).Should().Throw<InvalidOperationException>();
+        test.NotFoundType.Should().Be("test");
     }
 
     [Fact]
@@ -69,6 +72,7 @@ public class ConditionalTests
         test.Invoking(t => t.Value).Should().Throw<InvalidOperationException>();
         test.VersionTag.Should().Be(version);
         test.VersionModifiedAt.Should().Be(modifiedAt);
+        test.Invoking(test => test.NotFoundType).Should().Throw<InvalidOperationException>();
     }
 
     [Theory]
@@ -92,6 +96,10 @@ public class ConditionalTests
         {
             converted.VersionTag.Should().Be(conditional.VersionTag * 4);
             converted.VersionModifiedAt.Should().Be(conditional.VersionModifiedAt);
+        } 
+        else if (conditional.IsNotFound)
+        {
+            converted.NotFoundType.Should().Be(conditional.NotFoundType);
         }
     }
 
@@ -99,7 +107,7 @@ public class ConditionalTests
     {
         Conditional.Succeeded("foo"),
         Conditional.ConditionFailed(),
-        Conditional.NotFound(),
+        Conditional.NotFound("bar"),
         Conditional.Unmodified((byte)2, new DateTimeOffset(2021, 01, 01, 01, 01, 01, TimeSpan.Zero)),
     };
 

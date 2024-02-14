@@ -25,8 +25,8 @@ public static class Conditional
     /// Creates a new <see cref="Conditional{T, TTag}"/> in the not found state.
     /// </summary>
     /// <returns>A <see cref="Conditional{T, TTag}"/></returns>
-    public static EntityNotFound NotFound()
-        => default;
+    public static EntityNotFound NotFound(string? type)
+        => new(type);
 
     /// <summary>
     /// Gets a <see cref="Conditional{T, TTag}"/> in the failed state.
@@ -92,12 +92,16 @@ public static class Conditional
     /// Entity not found sentinel. Implicitly converts to any <see cref="Conditional{T, TTag}"/> type.
     /// </summary>
     /// <remarks>
-    /// This type exists so that it's possible to call <see cref="NotFound()"/> without having to specify a type argument,
+    /// This type exists so that it's possible to call <see cref="NotFound(string)"/> without having to specify a type argument,
     /// and allow the compiler to infer the type arguments.
     /// </remarks>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public readonly struct EntityNotFound
-    {   
+    public readonly struct EntityNotFound(string? type)
+    {
+        /// <summary>
+        /// The type of entity not found. Can be used to disambiguate when there are more than one entity type in play.
+        /// </summary>
+        public string? Type { get; } = type;
     }
 
     /// <summary>
@@ -163,7 +167,7 @@ public static class Conditional
         {
             { IsSucceeded: true } => Conditional<TTo, TTagTo>.CreateSucceeded(valueConverter(conditional.Value)),
             { IsUnmodified: true } => Conditional<TTo, TTagTo>.CreateUnmodified(tagConverter(conditional.VersionTag), conditional.VersionModifiedAt),
-            { IsNotFound: true } => Conditional<TTo, TTagTo>.NotFoundInstance,
+            { IsNotFound: true } => Conditional<TTo, TTagTo>.CreateNotFound(conditional.NotFoundType),
             { IsConditionFailed: true } => Conditional<TTo, TTagTo>.FailedInstance,
             _ => throw new UnreachableException("Unhandled conditional case"),
         };
@@ -180,7 +184,7 @@ public static class Conditional
 public sealed class Conditional<T, TTag>
     where TTag : notnull
 {
-    private readonly T? _value;
+    private readonly object? _value;
     private readonly VersionInfo _version;
     private readonly Result _result;
 
@@ -199,16 +203,18 @@ public sealed class Conditional<T, TTag>
         => new(default, new(tag, modifiedAt), Result.Unmodified);
 
     /// <summary>
+    /// Gets a <see cref="Conditional{T, TTag}"/> representing a not found entity.
+    /// </summary>
+    /// <param name="type">The type of entity not found.</param>
+    internal static Conditional<T, TTag> CreateNotFound(string? type) 
+        => new(type, default, Result.NotFound);
+
+    /// <summary>
     /// Gets a <see cref="Conditional{T, TTag}"/> representing a failed condition.
     /// </summary>
     internal static Conditional<T, TTag> FailedInstance { get; } = new(default, default, Result.ConditionFailed);
 
-    /// <summary>
-    /// Gets a <see cref="Conditional{T, TTag}"/> representing a not found entity.
-    /// </summary>
-    internal static Conditional<T, TTag> NotFoundInstance { get; } = new(default, default, Result.NotFound);
-
-    private Conditional(T? value, VersionInfo version, Result result)
+    private Conditional(object? value, VersionInfo version, Result result)
     {
         _value = value;
         _version = version;
@@ -273,7 +279,24 @@ public sealed class Conditional<T, TTag>
                 ThrowHelper.ThrowInvalidOperationException("Conditional value is not available");
             }
 
-            return _value!;
+            return (T)_value!;
+        }
+    }
+
+    /// <summary>
+    /// Gets the type of entity not found.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown if <see cref="IsNotFound"/> is not true.</exception>
+    public string? NotFoundType
+    {
+        get
+        {
+            if (_result != Result.NotFound)
+            {
+                ThrowHelper.ThrowInvalidOperationException("Conditional not found value is not available");
+            }
+
+            return (string?)_value;
         }
     }
 
@@ -283,8 +306,8 @@ public sealed class Conditional<T, TTag>
     public static implicit operator Conditional<T, TTag>(Conditional.EntityFound<T> entity)
         => Conditional<T, TTag>.CreateSucceeded(entity.Value);
 
-    public static implicit operator Conditional<T, TTag>(Conditional.EntityNotFound _)
-        => Conditional<T, TTag>.NotFoundInstance;
+    public static implicit operator Conditional<T, TTag>(Conditional.EntityNotFound notFound)
+        => Conditional<T, TTag>.CreateNotFound(notFound.Type);
 
     public static implicit operator Conditional<T, TTag>(Conditional.EntityConditionFailed _)
         => Conditional<T, TTag>.FailedInstance;
