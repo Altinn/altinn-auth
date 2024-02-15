@@ -60,6 +60,7 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             pgcom.Parameters.AddWithNullableValue("resourcetype", NpgsqlDbType.Text, resourceSearch.ResourceType?.ToString());
             pgcom.Parameters.AddWithNullableValue("keyword", NpgsqlDbType.Text, resourceSearch.Keyword);
 
+            await pgcom.PrepareAsync(cancellationToken);
             return await pgcom.ExecuteEnumerableAsync(cancellationToken)
                 .SelectAwait(GetServiceResource)
                 .ToListAsync(cancellationToken);
@@ -97,6 +98,7 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resource.Identifier);
             pgcom.Parameters.AddWithValue("serviceresourcejson", NpgsqlDbType.Jsonb, json);
 
+            await pgcom.PrepareAsync(cancellationToken);
             var serviceResource = await pgcom.ExecuteEnumerableAsync(cancellationToken)
                 .SelectAwait(GetServiceResource)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -128,6 +130,7 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             await using var pgcom = _conn.CreateCommand(QUERY);
             pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, id);
 
+            await pgcom.PrepareAsync(cancellationToken);
             var serviceResource = await pgcom.ExecuteEnumerableAsync(cancellationToken)
                 .SelectAwait(GetServiceResource)
                 .SingleOrDefaultAsync(cancellationToken);
@@ -155,6 +158,7 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             await using var pgcom = _conn.CreateCommand(QUERY);
             pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, id);
 
+            await pgcom.PrepareAsync(cancellationToken);
             var serviceResource = await pgcom.ExecuteEnumerableAsync(cancellationToken)
                 .SelectAwait(GetServiceResource)
                 .SingleOrDefaultAsync(cancellationToken);
@@ -186,6 +190,7 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resource.Identifier);
             pgcom.Parameters.AddWithValue("serviceresourcejson", NpgsqlDbType.Jsonb, json);
 
+            await pgcom.PrepareAsync(cancellationToken);
             var serviceResource = await pgcom.ExecuteEnumerableAsync(cancellationToken)
                 .SelectAwait(GetServiceResource)
                 .FirstOrDefaultAsync(cancellationToken);

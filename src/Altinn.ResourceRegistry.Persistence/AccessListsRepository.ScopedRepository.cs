@@ -136,6 +136,7 @@ internal partial class AccessListsRepository
                 _ => throw new InvalidOperationException("Invalid identifier")
             };
 
+            await cmd.PrepareAsync(cancellationToken);
             var accessList = await cmd.ExecuteEnumerableAsync(cancellationToken)
                 .Select(CreateAccessListInfo)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -192,6 +193,7 @@ internal partial class AccessListsRepository
             cmd.Parameters.AddWithNullableValue("continue_from", NpgsqlDbType.Text, continueFrom);
             cmd.Parameters.AddWithValue("count", NpgsqlDbType.Integer, count);
 
+            await cmd.PrepareAsync(cancellationToken);
             var accessLists = await cmd.ExecuteEnumerableAsync(cancellationToken)
                 .Select(CreateAccessListInfo)
                 .ToListAsync(cancellationToken);
@@ -301,6 +303,7 @@ internal partial class AccessListsRepository
                     actions.SetOptionalImmutableArrayValue(values.Actions);
                     party_ids.SetOptionalImmutableArrayValue(values.PartyIds);
 
+                    await cmd.PrepareAsync(cancellationToken);
                     await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
                     if (!await reader.ReadAsync(cancellationToken))
                     {
@@ -372,6 +375,7 @@ internal partial class AccessListsRepository
                 var (continueFrom, count) => GetLimited(_conn, id, continueFrom, count),
             };
 
+            await cmd.PrepareAsync(cancellationToken);
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
 
             var connections = new List<AccessListResourceConnection>();
@@ -410,6 +414,7 @@ internal partial class AccessListsRepository
             await using var cmd = _conn.CreateCommand(QUERY);
             cmd.Parameters.AddWithValue("aggregate_id", NpgsqlDbType.Uuid, id);
 
+            await cmd.PrepareAsync(cancellationToken);
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
 
             var memberships = new List<AccessListMembership>();
@@ -438,6 +443,7 @@ internal partial class AccessListsRepository
             await using var cmd = _conn.CreateCommand(QUERY);
             cmd.Parameters.AddWithValue("aggregate_id", NpgsqlDbType.Uuid, accessListId);
 
+            await cmd.PrepareAsync(cancellationToken);
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {
@@ -464,6 +470,7 @@ internal partial class AccessListsRepository
             cmd.Parameters.AddWithValue("owner", NpgsqlDbType.Text, owner);
             cmd.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, identifier);
 
+            await cmd.PrepareAsync(cancellationToken);
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
             if (!await reader.ReadAsync(cancellationToken))
             {
@@ -490,6 +497,7 @@ internal partial class AccessListsRepository
             List<AccessListResourceConnection>? connections = null;
 
             // Note: We've sorted the result set by aggregate_id, so we can assume that the rows are ordered by aggregate_id.
+            await cmd.PrepareAsync(cancellationToken);
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {
@@ -540,6 +548,7 @@ internal partial class AccessListsRepository
             cmd.Parameters.AddWithValue("modified", NpgsqlDbType.TimestampTz, evt.EventTime);
             cmd.Parameters.AddWithValue("version", NpgsqlDbType.Bigint, 0L);
 
+            await cmd.PrepareAsync(cancellationToken);
             await cmd.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -558,6 +567,7 @@ internal partial class AccessListsRepository
             cmd.Parameters.AddWithNullableValue("name", NpgsqlDbType.Text, evt.Name);
             cmd.Parameters.AddWithNullableValue("description", NpgsqlDbType.Text, evt.Description);
 
+            await cmd.PrepareAsync(cancellationToken);
             await cmd.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -572,6 +582,7 @@ internal partial class AccessListsRepository
             cmd.Parameters.AddWithValue("aggregate_id", NpgsqlDbType.Uuid, evt.AggregateId);
             cmd.Parameters.AddWithValue("version", NpgsqlDbType.Bigint, aggregate.CommittedVersion.DbValue);
 
+            await cmd.PrepareAsync(cancellationToken);
             var updatedRows = await cmd.ExecuteNonQueryAsync(cancellationToken);
             if (updatedRows == 0)
             {
@@ -594,6 +605,7 @@ internal partial class AccessListsRepository
             cmd.Parameters.Add<IList<string>>("actions", NpgsqlDbType.Array | NpgsqlDbType.Text).TypedValue = evt.Actions;
             cmd.Parameters.AddWithValue("time", NpgsqlDbType.TimestampTz, evt.EventTime);
 
+            await cmd.PrepareAsync(cancellationToken);
             await cmd.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -614,6 +626,7 @@ internal partial class AccessListsRepository
             cmd.Parameters.Add<IList<string>>("actions", NpgsqlDbType.Array | NpgsqlDbType.Text).TypedValue = evt.Actions;
             cmd.Parameters.AddWithValue("time", NpgsqlDbType.TimestampTz, evt.EventTime);
 
+            await cmd.PrepareAsync(cancellationToken);
             await cmd.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -642,6 +655,7 @@ internal partial class AccessListsRepository
                 cmd.Parameters.AddWithValue("aggregate_id", NpgsqlDbType.Uuid, evt.AggregateId);
                 cmd.Parameters.AddWithValue("resource_identifier", NpgsqlDbType.Text, evt.ResourceIdentifier);
 
+                await cmd.PrepareAsync(cancellationToken);
                 await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
                 if (!await reader.ReadAsync(cancellationToken))
                 {
@@ -663,6 +677,7 @@ internal partial class AccessListsRepository
                 cmd.Parameters.Add<IList<string>>("actions", NpgsqlDbType.Array | NpgsqlDbType.Text).TypedValue = actions.ToList();
                 cmd.Parameters.AddWithValue("time", NpgsqlDbType.TimestampTz, evt.EventTime);
 
+                await cmd.PrepareAsync(cancellationToken);
                 await cmd.ExecuteNonQueryAsync(cancellationToken);
             }
         }
@@ -679,6 +694,7 @@ internal partial class AccessListsRepository
             cmd.Parameters.AddWithValue("aggregate_id", NpgsqlDbType.Uuid, evt.AggregateId);
             cmd.Parameters.AddWithValue("resource_identifier", NpgsqlDbType.Text, evt.ResourceIdentifier);
 
+            await cmd.PrepareAsync(cancellationToken);
             await cmd.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -696,6 +712,7 @@ internal partial class AccessListsRepository
             cmd.Parameters.Add<IList<Guid>>("party_ids", NpgsqlDbType.Array | NpgsqlDbType.Uuid).TypedValue = evt.PartyIds;
             cmd.Parameters.AddWithValue("since", NpgsqlDbType.TimestampTz, evt.EventTime);
 
+            await cmd.PrepareAsync(cancellationToken);
             await cmd.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -711,6 +728,7 @@ internal partial class AccessListsRepository
             cmd.Parameters.AddWithValue("aggregate_id", NpgsqlDbType.Uuid, evt.AggregateId);
             cmd.Parameters.Add<IList<Guid>>("party_ids", NpgsqlDbType.Array | NpgsqlDbType.Uuid).TypedValue = evt.PartyIds;
 
+            await cmd.PrepareAsync(cancellationToken);
             await cmd.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -729,6 +747,7 @@ internal partial class AccessListsRepository
             cmd.Parameters.AddWithValue("version", NpgsqlDbType.Bigint, newVersion.DbValue);
             cmd.Parameters.AddWithValue("old_version", NpgsqlDbType.Bigint, aggregate.CommittedVersion.IsSet ? aggregate.CommittedVersion.DbValue : 0L);
 
+            await cmd.PrepareAsync(cancellationToken);
             var updatedRows = await cmd.ExecuteNonQueryAsync(cancellationToken);
             if (updatedRows == 0)
             {
