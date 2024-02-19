@@ -239,6 +239,9 @@ void ConfigurePostgreSql()
             workspacePath = Path.Combine(Directory.GetParent(Environment.CurrentDirectory).FullName, builder.Configuration.GetValue<string>("PostgreSQLSettings:WorkspacePath"));
         }
 
+        var connectionStringBuilder = new NpgsqlConnectionStringBuilder(connectionString);
+        var user = connectionStringBuilder.Username;
+
         app.UseYuniql(
             new PostgreSqlDataService(traceService),
             new PostgreSqlBulkImportService(traceService),
@@ -249,7 +252,10 @@ void ConfigurePostgreSql()
                 Workspace = workspacePath,
                 ConnectionString = connectionString,
                 IsAutoCreateDatabase = false,
-                IsDebug = true
+                IsDebug = true,
+                Tokens = [
+                    KeyValuePair.Create("YUNIQL-USER", user)
+                ]
             });
     }
 }

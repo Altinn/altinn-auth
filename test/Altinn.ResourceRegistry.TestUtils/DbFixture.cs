@@ -70,12 +70,17 @@ public class DbFixture
                 var connectionStringBuilder = new NpgsqlConnectionStringBuilder(_connectionString) { Database = dbName, IncludeErrorDetail = true };
                 var connectionString = connectionStringBuilder.ToString();
 
-                var configuration = new Yuniql.AspNetCore.Configuration();
-                configuration.Platform = SUPPORTED_DATABASES.POSTGRESQL;
-                configuration.Workspace = Path.Combine(FindWorkspace(), "src", "Altinn.ResourceRegistry.Persistence", "Migration");
-                configuration.ConnectionString = connectionString;
-                configuration.IsAutoCreateDatabase = false;
-                configuration.Environment = "integrationtest";
+                var configuration = new Yuniql.AspNetCore.Configuration
+                {
+                    Platform = SUPPORTED_DATABASES.POSTGRESQL,
+                    Workspace = Path.Combine(FindWorkspace(), "src", "Altinn.ResourceRegistry.Persistence", "Migration"),
+                    ConnectionString = connectionString,
+                    IsAutoCreateDatabase = false,
+                    Environment = "integrationtest",
+                    Tokens = [
+                        KeyValuePair.Create("YUNIQL-USER", connectionStringBuilder.Username),
+                    ],
+                };
 
                 var traceService = TraceService.Instance;
                 var dataService = new Yuniql.PostgreSql.PostgreSqlDataService(traceService);
