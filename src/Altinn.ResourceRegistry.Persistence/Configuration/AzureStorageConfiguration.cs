@@ -8,22 +8,42 @@ public class AzureStorageConfiguration
     /// <summary>
     /// The storage account name for the resource registry
     /// </summary>
-    public string ResourceRegistryAccountName { get; set; }
+    public required string ResourceRegistryAccountName { get; set; }
 
     /// <summary>
     /// The storage account key for the resource registry
     /// </summary>
-    public string ResourceRegistryAccountKey { get; set; }
+    public required string ResourceRegistryAccountKey { get; set; }
 
     /// <summary>
     /// The name of the storage container in the resource registry storage account
     /// </summary>
-    public string ResourceRegistryContainer { get; set; }
+    public required string ResourceRegistryContainer { get; set; }
 
     /// <summary>
     /// The url for the blob end point for the resource registry
     /// </summary>
-    public string ResourceRegistryBlobEndpoint { get; set; }
+    public required string ResourceRegistryBlobEndpoint { get; set; }
+
+    /// <summary>
+    /// The storage account name for Metadata
+    /// </summary>
+    public required string MetadataAccountName { get; set; }
+
+    /// <summary>
+    /// The storage account key for Metadata
+    /// </summary>
+    public required string MetadataAccountKey { get; set; }
+
+    /// <summary>
+    /// The name of the storage container in the Metadata storage account
+    /// </summary>
+    public required string MetadataContainer { get; set; }
+
+    /// <summary>
+    /// The url for the blob end point for Metadata
+    /// </summary>
+    public required string MetadataBlobEndpoint { get; set; }
 
     /// <summary>
     /// The blob lease timeout value in seconds

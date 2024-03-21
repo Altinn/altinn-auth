@@ -15,14 +15,5 @@ namespace Altinn.ResourceRegistry.Core.Exceptions
         public AccessManagementUpdateException(string message) : base(message)
         {
         }
-
-        /// <summary>
-        /// Serializable constructor
-        /// </summary>
-        /// <param name="info">the SerializationInfo object</param>
-        /// <param name="context">the StreamingContext object</param>
-        protected AccessManagementUpdateException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
     }
 } 

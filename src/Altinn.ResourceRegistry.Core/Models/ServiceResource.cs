@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Altinn.ResourceRegistry.Core.Enums;
 
@@ -12,7 +13,8 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// <summary>
         /// The identifier of the resource
         /// </summary>
-        public string Identifier { get; set; }
+        [Required]
+        public string? Identifier { get; set; }
 
         /// <summary>
         /// The version of the resource
@@ -22,17 +24,20 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// <summary>
         /// The title of service
         /// </summary>
-        public Dictionary<string, string> Title { get; set; }
+        [Required]
+        public Dictionary<string, string>? Title { get; set; }
 
         /// <summary>
         /// Description
         /// </summary>
-        public Dictionary<string, string> Description { get; set; }
+        [Required]
+        public Dictionary<string, string>? Description { get; set; }
 
         /// <summary>
         /// Description explaining the rights a recipient will receive if given access to the resource
         /// </summary>
-        public Dictionary<string, string> RightDescription { get; set;  }
+        [Required]
+        public Dictionary<string, string>? RightDescription { get; set;  }
 
         /// <summary>
         /// The homepage
@@ -42,7 +47,7 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// <summary>
         /// The status
         /// </summary>
-        public string Status { get; set; }
+        public string? Status { get; set; }
 
         /// <summary>
         /// spatial coverage
@@ -53,7 +58,8 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// <summary>
         /// List of possible contact points
         /// </summary>
-        public List<ContactPoint> ContactPoints { get; set; }
+        [Required]
+        public List<ContactPoint>? ContactPoints { get; set; }
 
         /// <summary>
         /// Linkes to the outcome of a public service
@@ -88,7 +94,8 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// <summary>
         /// HasCompetentAuthority
         /// </summary>
-        public CompetentAuthority HasCompetentAuthority { get; set; }
+        [Required]
+        public CompetentAuthority? HasCompetentAuthority { get; set; }
 
         /// <summary>
         /// Keywords

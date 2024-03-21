@@ -31,7 +31,7 @@ namespace Altinn.ResourceRegistry.Tests
 
             string responseContent = await response.Content.ReadAsStringAsync();
 
-            OrgList orgList = System.Text.Json.JsonSerializer.Deserialize<OrgList>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+            OrgList? orgList = System.Text.Json.JsonSerializer.Deserialize<OrgList>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
             
             Assert.NotNull(orgList);
             Assert.True(orgList.Orgs.Keys.Count > 10);

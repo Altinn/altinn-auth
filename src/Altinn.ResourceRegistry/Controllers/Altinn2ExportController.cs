@@ -58,7 +58,7 @@ namespace Altinn.ResourceRegistry.Controllers
             await using (var xw = XmlWriter.Create(stream, new XmlWriterSettings { Indent = true, Async = true }))
             {
                 XacmlSerializer.WritePolicy(xw, xacmlPolicy);
-                xw.Flush();
+                await xw.FlushAsync();
                 stream.Position = 0;
                 xsd = Encoding.UTF8.GetString(stream.ToArray());
             }

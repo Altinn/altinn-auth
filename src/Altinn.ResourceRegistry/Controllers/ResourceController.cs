@@ -4,7 +4,9 @@ using Altinn.ResourceRegistry.Core.Extensions;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Extensions;
+using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Utils;
+using HtmlAgilityPack;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -244,6 +246,62 @@ namespace Altinn.ResourceRegistry.Controllers
             }
 
             return File(dataStream, "text/xml", "policy.xml");
+        }
+
+        /// <summary>
+        /// Returns the XACML policy for a resource in resource registry.
+        /// </summary>
+        /// <param name="id">Resource Id</param>
+        /// <param name="reloadFromXacml">Defines if subjects should be reloaded from Xacml</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>Subjects in policy</returns>
+        [HttpGet("{id}/policy/subjects")]
+        [Produces("application/json")]
+        [Consumes("application/json")]
+        public async Task<ActionResult<Paginated<AttributeMatchV2>>> FindSubjectsInPolicy(string id, bool? reloadFromXacml = null, CancellationToken cancellationToken = default)
+        {
+            if (reloadFromXacml.HasValue && reloadFromXacml.Value)
+            {
+                ServiceResource serviceResource = await _resourceRegistry.GetResource(id, cancellationToken);
+                if (serviceResource != null)
+                {
+                    await _resourceRegistry.UpdateResourceSubjectsFromResourcePolicy(serviceResource, cancellationToken);
+                }
+                else if (id.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX))
+                {
+                    // Scenario for app not loaded in to resource registry. Need to match pattern app_{org}_{app}
+                    string[] idValues = id.Split('_');
+                    if (idValues.Length == 3)
+                    {
+                        string org = idValues[1];
+                        string app = idValues[2];
+                        await _resourceRegistry.UpdateResourceSubjectsFromAppPolicy(org, app, cancellationToken);
+                    }
+                }
+            }
+
+            List<ResourceSubjects> resourceSubjects = await _resourceRegistry.FindSubjectsForResources([$"{AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute}:{id}"], cancellationToken);
+            if (resourceSubjects == null || resourceSubjects.Count == 0)
+            {
+                return new NotFoundResult();
+            }
+
+            return Paginated.Create(resourceSubjects[0].Subjects, null);
+        }
+
+        /// <summary>
+        /// Returns a list of Subject resources. For each which subject and then a list of all resources that are connected.
+        /// </summary>
+        /// <param name="subjects">List of subjects for resource information is needed</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>Resources where subjects have rights</returns>
+        [HttpPost("bysubjects/")]
+        [Produces("application/json")]
+        [Consumes("application/json")]
+        public async Task<Paginated<SubjectResources>> FindResourcesForSubjects(List<string> subjects, CancellationToken cancellationToken)
+        {
+            List<SubjectResources> resources = await _resourceRegistry.FindResourcesForSubjects(subjects, cancellationToken);
+            return Paginated.Create(resources, null);
         }
 
         /// <summary>

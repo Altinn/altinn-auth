@@ -15,6 +15,9 @@ using Altinn.ResourceRegistry.Core.Enums;
 using Altinn.ResourceRegistry.Core.Models;
 using Xunit;
 using Microsoft.Extensions.DependencyInjection;
+using Altinn.ResourceRegistry.Models;
+using System.Net.Http.Json;
+using System.Linq;
 
 namespace Altinn.ResourceRegistry.Tests
 {
@@ -137,7 +140,7 @@ namespace Altinn.ResourceRegistry.Tests
 
             Assert.NotNull(errordetails);
 
-            Assert.Equal(5, errordetails.Errors.Count);
+            Assert.Equal(4, errordetails.Errors.Count);
         }
 
         [Fact]
@@ -458,7 +461,7 @@ namespace Altinn.ResourceRegistry.Tests
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
             Assert.NotNull(errordetails);
 
-            Assert.Equal(1, errordetails.Errors.Count);
+            Assert.Single(errordetails.Errors);
             Assert.Equal(3, errordetails.Errors["InvalidPrefix"].Length);
         }
 
@@ -687,7 +690,7 @@ namespace Altinn.ResourceRegistry.Tests
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
             Assert.NotNull(errordetails);
 
-            Assert.Equal(1, errordetails.Errors.Count);
+            Assert.Single(errordetails.Errors);
             Assert.Equal(3, errordetails.Errors["InvalidPrefix"].Length);
         }
         
@@ -1231,6 +1234,53 @@ namespace Altinn.ResourceRegistry.Tests
             Assert.True(response.IsSuccessStatusCode);
             string responseContent = await response.Content.ReadAsStringAsync();
             Assert.NotNull(responseContent);
+        }
+
+        [Fact]
+        public async Task GetSubjectsForResource()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            string requestUri = "resourceregistry/api/v1/resource/skd_mva/policy/subjects";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
+            {
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await _client.SendAsync(httpRequestMessage);
+            Paginated<AttributeMatchV2>? subjectResources = await response.Content.ReadFromJsonAsync<Paginated<AttributeMatchV2>>();
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task GetResourceForSubjects()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            List<string> subjects = new List<string>();
+            subjects.Add("urn:altinn:rolecode:utinn");
+
+            string requestUri = "resourceregistry/api/v1/resource/bysubjects/";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(subjects), Encoding.UTF8, "application/json")
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await _client.SendAsync(httpRequestMessage);
+            Paginated<SubjectResources>? subjectResources = await response.Content.ReadFromJsonAsync<Paginated<SubjectResources>>();
+           
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.NotNull(subjectResources);
+            Assert.NotNull(subjectResources.Items.FirstOrDefault(r => r.Subject.Urn.Contains("utinn")));
         }
 
     }

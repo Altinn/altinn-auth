@@ -78,7 +78,7 @@ namespace Altinn.ResourceRegistry.Core.Services.Interfaces
         /// </summary>
         /// <param name="resourceId">The resource id</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-        /// <returns></returns>
+        /// <returns>The policy as stream</returns>
         Task<Stream> GetPolicy(string resourceId, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -86,7 +86,39 @@ namespace Altinn.ResourceRegistry.Core.Services.Interfaces
         /// </summary>
         /// <param name="serviceResource">The resource to add to access management</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-        /// <returns></returns>
+        /// <returns><see langword="true"/> if the update succeeded, otherwise <see langword="false"/></returns>
         Task<bool> UpdateResourceInAccessManagement(ServiceResource serviceResource, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Returns a list over resources for what each subject has access to
+        /// </summary>
+        /// <param name="subjects">List of subjects</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>Resources for given subjects</returns>
+        Task<List<SubjectResources>> FindResourcesForSubjects(List<string> subjects, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Returns a list of subjects in a policy for a resource
+        /// </summary>
+        /// <param name="resources">List of resource attributes</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>List of subjects for a given resource</returns>
+        Task<List<ResourceSubjects>> FindSubjectsForResources(List<string> resources, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Based on a service resource the resource subjects will be reloaded on to database. 
+        /// Created to support migrated apps and resource that was migrated before ResourceSubjecst whent in to production
+        /// </summary>
+        /// <param name="serviceResource">The service resource</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        Task UpdateResourceSubjectsFromResourcePolicy(ServiceResource serviceResource, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Based on org and app loads app policy from policy storage and updates resource subjects for it.
+        /// </summary>
+        /// <param name="org">The organization</param>
+        /// <param name="app">The app</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        Task UpdateResourceSubjectsFromAppPolicy(string org, string app, CancellationToken cancellationToken = default);
     }
 }

@@ -21,30 +21,31 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
     {
         public async Task<List<AvailableService>> AvailableServices(int languageId, CancellationToken cancellationToken)
         {
-            string availableServiceFilePath = Path.Combine(GetAltinn2TestDatafolder(), $"availableServices{languageId}.json");
-
-            List<AvailableService>? availableServices = null;
-
-            if (File.Exists(availableServiceFilePath))
+            string? testDataFolder = GetAltinn2TestDatafolder();
+            if (testDataFolder != null)
             {
-                string content = await File.ReadAllTextAsync(availableServiceFilePath, cancellationToken);
-                if (!string.IsNullOrEmpty(content))
+                string availableServiceFilePath = Path.Combine(testDataFolder, $"availableServices{languageId}.json");
+
+                List<AvailableService>? availableServices = null;
+
+                if (File.Exists(availableServiceFilePath))
                 {
-                    availableServices = System.Text.Json.JsonSerializer.Deserialize<List<AvailableService>>(content, new System.Text.Json.JsonSerializerOptions());
+                    string content = await File.ReadAllTextAsync(availableServiceFilePath, cancellationToken);
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        availableServices = System.Text.Json.JsonSerializer.Deserialize<List<AvailableService>>(content, new System.Text.Json.JsonSerializerOptions());
+                    }
+                     
+                    return availableServices ?? [];
                 }
 
-                if(availableServices == null)
-                {
-                    availableServices = new List<AvailableService>();
-                }
-
-                return availableServices;
+                throw new FileNotFoundException("Could not find " + availableServiceFilePath);
             }
 
-            throw new FileNotFoundException("Could not find " + availableServiceFilePath);
+            throw new FileNotFoundException($"Could not find tesdata folder for langauge {languageId}" );
         }
 
-        public async Task<ServiceResource> GetServiceResourceFromService(string serviceCode, int serviceEditionCode, CancellationToken cancellationToken)
+        public async Task<ServiceResource?> GetServiceResourceFromService(string serviceCode, int serviceEditionCode, CancellationToken cancellationToken)
         {
             List<AvailableService> services = await AvailableServices(1044, cancellationToken);
             AvailableService? service = services.FirstOrDefault(r=> r.ExternalServiceCode == serviceCode);
@@ -60,35 +61,50 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             return res;
         }
 
-        public Task<XacmlPolicy> GetXacmlPolicy(string serviceCode, int serviceEditionCode, string identifier, CancellationToken cancellationToken)
+        public Task<XacmlPolicy?> GetXacmlPolicy(string serviceCode, int serviceEditionCode, string identifier, CancellationToken cancellationToken)
         {
-            string resourceId = Path.Combine(GetPolicyContainerPath(), "altinn_access_management", "resourcepolicy.xml");
-            if (File.Exists(resourceId))
+            string? policyContainerPath = GetPolicyContainerPath();
+            if (policyContainerPath != null)
             {
-                Stream stream =  new FileStream(resourceId, FileMode.Open, FileAccess.Read, FileShare.Read);
-                stream.Position = 0;
-                XacmlPolicy policy;
-                using (XmlReader reader = XmlReader.Create(stream))
+                string resourceId = Path.Combine(policyContainerPath, "altinn_access_management", "resourcepolicy.xml");
+                if (File.Exists(resourceId))
                 {
-                    policy = XacmlParser.ParseXacmlPolicy(reader);
+                    Stream stream = new FileStream(resourceId, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    stream.Position = 0;
+                    XacmlPolicy policy;
+                    using (XmlReader reader = XmlReader.Create(stream))
+                    {
+                        policy = XacmlParser.ParseXacmlPolicy(reader);
+                    }
+
+                    return Task.FromResult<XacmlPolicy?>(policy);
                 }
-                
-                return Task.FromResult(policy);
+            }
+
+            return Task.FromResult<XacmlPolicy?>(null);
+        }
+
+        private static string? GetAltinn2TestDatafolder()
+        {
+            string? unitTestFolder = Path.GetDirectoryName(new Uri(typeof(PolicyRepositoryMock).Assembly.Location).LocalPath);
+
+            if (unitTestFolder != null)
+            {
+                return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "Altinn2");
             }
 
             return null;
         }
 
-        private static string GetAltinn2TestDatafolder()
+        private static string? GetPolicyContainerPath()
         {
             string? unitTestFolder = Path.GetDirectoryName(new Uri(typeof(PolicyRepositoryMock).Assembly.Location).LocalPath);
-            return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "Altinn2");
-        }
+            if (unitTestFolder != null)
+            {
+                return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "ResourcePolicies");
+            }
 
-        private static string GetPolicyContainerPath()
-        {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(PolicyRepositoryMock).Assembly.Location).LocalPath);
-            return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "ResourcePolicies");
+            return null;
         }
     }
 }

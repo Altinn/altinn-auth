@@ -57,6 +57,7 @@
 
   <ItemGroup>
     <Folder Include="Data\Altinn3Storage\" />
+    <Folder Include="Data\AppPolicies\brg\" />
     <Folder Include="Data\Policies\" />
   </ItemGroup>
 

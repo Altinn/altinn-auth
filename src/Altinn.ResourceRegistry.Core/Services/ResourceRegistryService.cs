@@ -1,5 +1,8 @@
 ﻿using System.Buffers;
+using System.Collections.Generic;
 using System.Net;
+using Altinn.Authorization.ABAC.Constants;
+using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Platform.Storage.Interface.Models;
 using Altinn.ResourceRegistry.Core.Clients.Interfaces;
 using Altinn.ResourceRegistry.Core.Constants;
@@ -28,18 +31,12 @@ namespace Altinn.ResourceRegistry.Core.Services
         private readonly IApplications _applicationsClient;
         private readonly IOrgListClient _orgList;
         private readonly IMemoryCache _memoryCache;
+        private readonly IResourceRegistryRepository _resourceRegistryRepository;
 
         /// <summary>
         /// Creates a new instance of the <see cref="ResourceRegistryService"/> service.
         /// The ResourceRegistryService is responcible for business logic and implementations for working with the resource registry
         /// </summary>
-        /// <param name="repository">Resource registry repository implementation for dependencies to its operations</param>
-        /// <param name="policyRepository">Repository implementation for operations on policies</param>
-        /// <param name="accessManagementClient">client to send data to AccessManagement</param>
-        /// <param name="altinn2ServicesClient">Used to retrieve information from Altinn 2</param>
-        /// <param name="applicationsClient">Used to retrieve information from Altinn Storage about Altinn 3 apps</param>
-        /// <param name="orgList">Client to retrive orglist</param>
-        /// <param name="memoryCache">Memorycache</param>
         public ResourceRegistryService(
             IResourceRegistryRepository repository, 
             IPolicyRepository policyRepository, 
@@ -47,7 +44,8 @@ namespace Altinn.ResourceRegistry.Core.Services
             IAltinn2Services altinn2ServicesClient, 
             IApplications applicationsClient, 
             IOrgListClient orgList, 
-            IMemoryCache memoryCache)
+            IMemoryCache memoryCache,
+            IResourceRegistryRepository resourceRegistryRepostory)
         {
             _repository = repository;
             _policyRepository = policyRepository;
@@ -56,6 +54,7 @@ namespace Altinn.ResourceRegistry.Core.Services
             _applicationsClient = applicationsClient;
             _orgList = orgList;
             _memoryCache = memoryCache;
+            _resourceRegistryRepository = resourceRegistryRepostory;
         }
 
         /// <inheritdoc/>
@@ -110,10 +109,61 @@ namespace Altinn.ResourceRegistry.Core.Services
         /// <inheritdoc/>
         public async Task<bool> StorePolicy(ServiceResource serviceResource, ReadOnlySequence<byte> policyContent, CancellationToken cancellationToken = default)
         {
-            PolicyHelper.IsValidResourcePolicy(serviceResource, policyContent);
+            XacmlPolicy policy = PolicyHelper.ParsePolicy(policyContent);
+            PolicyHelper.EnsureValidPolicy(serviceResource, policy);
             Response<BlobContentInfo> response = await _policyRepository.WritePolicyAsync(serviceResource.Identifier, policyContent.AsStream(), cancellationToken);
-
+            IDictionary<string, ICollection<string>> subjectAttributes = policy.GetAttributeDictionaryByCategory(XacmlConstants.MatchAttributeCategory.Subject);
+            ResourceSubjects resourceSubjects = GetResourceSubjects(serviceResource, subjectAttributes);
+            await _resourceRegistryRepository.SetResourceSubjects(resourceSubjects, CancellationToken.None);
             return response?.GetRawResponse()?.Status == (int)HttpStatusCode.Created;
+        }
+
+        /// <inheritdoc/>
+        public async Task UpdateResourceSubjectsFromResourcePolicy(ServiceResource serviceResource, CancellationToken cancellationToken = default)
+        {
+            Stream policyContent = null;
+            if (serviceResource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX))
+            {
+                string[] idParts = serviceResource.Identifier.Split('_');
+
+                // Scenario for app imported in to resource registry
+                if (idParts.Length == 3)
+                {
+                    string org = idParts[1];
+                    string app = idParts[2];
+                    policyContent = await _policyRepository.GetAppPolicyAsync(org, app, cancellationToken);
+                    policyContent.Position = 0;
+                }
+            }
+            else
+            {
+                policyContent = await _policyRepository.GetPolicyAsync(serviceResource.Identifier, cancellationToken);
+                policyContent.Position = 0;
+            }
+
+            XacmlPolicy policy = await PolicyHelper.ParsePolicy(policyContent);
+            IDictionary<string, ICollection<string>> subjectAttributes = policy.GetAttributeDictionaryByCategory(XacmlConstants.MatchAttributeCategory.Subject);
+            ResourceSubjects resourceSubjects = GetResourceSubjects(serviceResource, subjectAttributes);
+            await _resourceRegistryRepository.SetResourceSubjects(resourceSubjects, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task UpdateResourceSubjectsFromAppPolicy(string org, string app, CancellationToken cancellationToken = default)
+        {
+            Stream policyContent = await _policyRepository.GetAppPolicyAsync(org, app, cancellationToken);
+            policyContent.Position = 0;
+            XacmlPolicy policy = await PolicyHelper.ParsePolicy(policyContent);
+            IDictionary<string, ICollection<string>> subjectAttributes = policy.GetAttributeDictionaryByCategory(XacmlConstants.MatchAttributeCategory.Subject);
+            ServiceResource virtualAppResource = new ServiceResource() 
+            { 
+                Identifier = $"app_{org.ToLower()}_{app.ToLower()}".ToLower(), 
+                HasCompetentAuthority = new CompetentAuthority() 
+                { 
+                    Orgcode = org.ToLower() 
+                } 
+            };
+            ResourceSubjects resourceSubjects = GetResourceSubjects(virtualAppResource, subjectAttributes);
+            await _resourceRegistryRepository.SetResourceSubjects(resourceSubjects, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -301,6 +351,60 @@ namespace Altinn.ResourceRegistry.Core.Services
 
                 return orgList;
             }
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<SubjectResources>> FindResourcesForSubjects(List<string> subjects, CancellationToken cancellationToken = default)
+        {
+            return await _repository.FindResourcesForSubjects(subjects, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<ResourceSubjects>> FindSubjectsForResources(List<string> resources, CancellationToken cancellationToken = default)
+        {
+            return await _repository.FindSubjectsForResources(resources, cancellationToken);
+        }
+
+        private static ResourceSubjects GetResourceSubjects(ServiceResource resource,  IDictionary<string, ICollection<string>> subjectAttributes)
+        {
+            AttributeMatchV2 resourceAttribute = new AttributeMatchV2 
+            {
+                    Type = AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute,
+                    Value = resource.Identifier,
+                    Urn = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute}:{resource.Identifier}"
+            };
+           
+            string resourceOwner = string.Empty;
+            if (resource.HasCompetentAuthority?.Orgcode != null)
+            {
+                resourceOwner = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute}:{resource.HasCompetentAuthority.Orgcode}";
+            }
+
+            List<AttributeMatchV2> subjectAttributeMatches = new List<AttributeMatchV2>();
+            foreach (KeyValuePair<string, ICollection<string>> kvp in subjectAttributes)
+            {
+                foreach (string subjectAttributeValue in kvp.Value) 
+                {
+                    AttributeMatchV2 subjectMatch = new AttributeMatchV2 
+                    {
+                        Type = kvp.Key,
+                        Value = subjectAttributeValue.ToLower(),
+                        Urn = $"{kvp.Key}:{subjectAttributeValue.ToLower()}"
+                    };
+
+                    if (!subjectAttributeMatches.Exists(r => r.Urn.Equals(subjectMatch.Urn)))
+                    {
+                        subjectAttributeMatches.Add(subjectMatch);
+                    }
+                }
+            }
+
+            return new ResourceSubjects
+            { 
+                Resource = resourceAttribute, 
+                Subjects = subjectAttributeMatches, 
+                ResourceOwner = resourceOwner
+            };
         }
     }
 }

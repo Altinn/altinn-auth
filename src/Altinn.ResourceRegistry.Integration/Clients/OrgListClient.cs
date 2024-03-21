@@ -32,7 +32,7 @@ namespace Altinn.ResourceRegistry.Integration.Clients
         /// <summary>
         /// Returns configured org list
         /// </summary>
-        public async Task<OrgList> GetOrgList(CancellationToken cancellationToken = default)
+        public async Task<OrgList?> GetOrgList(CancellationToken cancellationToken = default)
         {
             HttpResponseMessage? response = null;
             try

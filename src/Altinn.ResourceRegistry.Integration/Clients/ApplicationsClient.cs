@@ -30,7 +30,7 @@ namespace Altinn.ResourceRegistry.Integration.Clients
         }
 
         /// <inheritdoc/>
-        public async Task<ApplicationList> GetApplicationList(CancellationToken cancellationToken = default)
+        public async Task<ApplicationList?> GetApplicationList(CancellationToken cancellationToken = default)
         {
             string availabbleServicePath = _settings.StorageApiEndpoint + $"applications";
 

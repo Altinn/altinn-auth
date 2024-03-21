@@ -1,4 +1,5 @@
 ﻿using Altinn.Common.Authentication.Configuration;
+using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Tests.Mocks;
 using Altinn.ResourceRegistry.TestUtils;
 using AltinnCore.Authentication.JwtCookie;
@@ -58,6 +59,7 @@ public class WebApplicationFixture
                 services.AddSingleton<IPostConfigureOptions<OidcProviderSettings>, OidcProviderPostConfigureSettingsStub>();
                 services.AddSingleton<TimeProvider>(timeProvider);
                 services.AddSingleton<AdvanceableTimeProvider>(timeProvider);
+                services.AddSingleton<IPolicyRepository, PolicyRepositoryMock>();
             });
 
             base.ConfigureWebHost(builder);

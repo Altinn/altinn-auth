@@ -6,7 +6,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
 {
     public class OidcProviderPostConfigureSettingsStub : IPostConfigureOptions<OidcProviderSettings>
     {
-        public void PostConfigure(string name, OidcProviderSettings options)
+        public void PostConfigure(string? name, OidcProviderSettings options)
         {
             OidcProvider provider = new OidcProvider();
             provider.Issuer = "www.altinn.no";

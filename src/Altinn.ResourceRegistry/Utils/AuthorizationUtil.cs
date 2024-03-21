@@ -2,6 +2,7 @@
 using System.Security.Claims;
 using Altinn.Common.PEP.Constants;
 using Altinn.ResourceRegistry.Core.Constants;
+using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Models;
 using AltinnCore.Authentication.Constants;
 using Newtonsoft.Json;

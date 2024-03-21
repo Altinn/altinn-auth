@@ -8,10 +8,10 @@ public class PostgreSQLSettings
     /// <summary>
     /// Connection string for the postgres db
     /// </summary>
-    public string ConnectionString { get; set; }
+    public string? ConnectionString { get; set; }
 
     /// <summary>
     /// Password for app user for the postgres db
     /// </summary>
-    public string AuthorizationDbPwd { get; set; }
+    public string? AuthorizationDbPwd { get; set; }
 }

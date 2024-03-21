@@ -4,6 +4,7 @@ using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.ResourceRegistry.Core.Constants;
+using Altinn.ResourceRegistry.Core.Extensions;
 using Altinn.ResourceRegistry.Core.Models;
 using Nerdbank.Streams;
 using static Altinn.ResourceRegistry.Core.Constants.AltinnXacmlConstants;
@@ -16,14 +17,12 @@ namespace Altinn.ResourceRegistry.Core.Helpers
     public static class PolicyHelper
     {
         /// <summary>
-        /// Validates the content of Xacml policy file stream, for any rules not for the given resource
+        /// Validate XACML Policy for resource information
         /// </summary>
         /// <param name="serviceResources">The resource from the registry</param>
-        /// <param name="policyFileData">The xacml policy file stream</param>
-        public static void IsValidResourcePolicy(ServiceResource serviceResources, ReadOnlySequence<byte> policyFileData)
+        /// <param name="policy">The xacml policy</param>
+        public static void EnsureValidPolicy(ServiceResource serviceResources, XacmlPolicy policy) 
         {
-            XacmlPolicy policy = ParsePolicy(policyFileData);
-
             foreach (XacmlRule policyRule in policy.Rules)
             {
                 List<AttributeMatch> xacmlResources = GetResourceFromXacmlRule(policyRule);
@@ -86,6 +85,31 @@ namespace Altinn.ResourceRegistry.Core.Helpers
         }
 
         /// <summary>
+        /// Takes the file IO stream and parses the policy file to a XacmlPolicy <see cref="XacmlPolicy"/>
+        /// </summary>
+        /// <param name="stream">The file IO stream</param>
+        /// <returns>XacmlPolicy</returns>
+        public static async Task<XacmlPolicy> ParsePolicy(Stream stream)
+        {
+            MemoryStream memoryStreamPolicy = new MemoryStream();
+            await stream.CopyToAsync(memoryStreamPolicy);
+            memoryStreamPolicy.Position = 0;
+            return ParsePolicy(memoryStreamPolicy);
+        }
+
+        /// <summary>
+        /// Takes the memorystream and parses the policy file to a XacmlPolicy <see cref="XacmlPolicy"/>
+        /// </summary>
+        /// <param name="stream">The file IO stream</param>
+        /// <returns>XacmlPolicy</returns>
+        public static XacmlPolicy ParsePolicy(MemoryStream stream)
+        {
+            using XmlReader reader = XmlReader.Create(stream);
+            XacmlPolicy policy = XacmlParser.ParseXacmlPolicy(reader);
+            return policy;
+        }
+
+        /// <summary>
         /// Gets the authentication level requirement from the obligation expression of the XacmlPolicy if specified 
         /// </summary>
         /// <param name="policy">The policy</param>
@@ -106,6 +130,27 @@ namespace Altinn.ResourceRegistry.Core.Helpers
             }
 
             return 0;
+        }
+
+        /// <summary>
+        /// Builds the policy path based on org and app names
+        /// </summary>
+        /// <param name="org">The organization name/identifier</param>
+        /// <param name="app">The altinn app name</param>
+        /// <returns></returns>
+        public static string GetAltinnAppsPolicyPath(string org, string app)
+        {
+            if (string.IsNullOrWhiteSpace(org))
+            {
+                throw new ArgumentException("Org was not defined");
+            }
+
+            if (string.IsNullOrWhiteSpace(app))
+            {
+                throw new ArgumentException("App was not defined");
+            }
+
+            return $"{org.AsFileName()}/{app.AsFileName()}/policy.xml";
         }
 
         private static AttributeMatch GetActionValueFromRule(XacmlRule rule)

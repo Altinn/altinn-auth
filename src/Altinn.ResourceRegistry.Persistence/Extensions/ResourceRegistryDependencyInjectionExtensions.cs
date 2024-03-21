@@ -90,7 +90,7 @@ public static class ResourceRegistryDependencyInjectionExtensions
         {
             var settings = sp.GetRequiredService<IOptions<PostgreSQLSettings>>().Value;
             var connectionString = string.Format(
-                settings.ConnectionString,
+                settings.ConnectionString!,
                 settings.AuthorizationDbPwd);
 
             var builder = new NpgsqlDataSourceBuilder(connectionString);
