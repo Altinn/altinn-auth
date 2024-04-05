@@ -1,6 +1,7 @@
 ﻿using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Enums;
 using Altinn.ResourceRegistry.Core.Extensions;
+using Altinn.ResourceRegistry.Core.Helpers;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Extensions;
@@ -12,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Nerdbank.Streams;
+using VDS.RDF.Parsing.Events.RdfXml;
 
 namespace Altinn.ResourceRegistry.Controllers
 {
@@ -96,23 +98,15 @@ namespace Altinn.ResourceRegistry.Controllers
                 return ValidationProblem(ModelState);
             }
 
-            if (serviceResource.Identifier.StartsWith(ResourceConstants.SERVICE_ENGINE_RESOURCE_PREFIX)
-                && (serviceResource.ResourceReferences == null
-                || !serviceResource.ResourceReferences.Any()
-                || !serviceResource.ResourceReferences.Exists(rf => rf.ReferenceType.HasValue && rf.ReferenceType.Equals(ReferenceType.ServiceCode))
-                || !serviceResource.ResourceReferences.Exists(rf => rf.ReferenceType.HasValue && rf.ReferenceType.Equals(ReferenceType.ServiceEditionCode))))
+            // Validate Resource
+            if (!ServiceResourceHelper.ValidateResource(serviceResource, out Dictionary<string,string> message))
             {
-                // Uses Service engine prefix without it beeing a service engine resource
-                return BadRequest("Invalid Prefix");
-            }
+                foreach (KeyValuePair<string,string> kvp in message)
+                {
+                    ModelState.AddModelError(kvp.Key, kvp.Value);
+                }
 
-            if (serviceResource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX)
-                && (serviceResource.ResourceReferences == null 
-                || !serviceResource.ResourceReferences.Any()
-                || !serviceResource.ResourceReferences.Exists(rf => rf.ReferenceType.HasValue && rf.ReferenceType.Equals(ReferenceType.ApplicationId))))
-            {
-                // Uses app prefix without it beeing a app resource
-                return BadRequest("Invalid Prefix");
+                return ValidationProblem(ModelState);
             }
 
             try
@@ -181,23 +175,16 @@ namespace Altinn.ResourceRegistry.Controllers
                 return ValidationProblem(ModelState);
             }
 
-            if (serviceResource.Identifier.StartsWith(ResourceConstants.SERVICE_ENGINE_RESOURCE_PREFIX)
-                && (serviceResource.ResourceReferences == null
-                || !serviceResource.ResourceReferences.Any()
-                || !serviceResource.ResourceReferences.Exists(rf => rf.ReferenceType.HasValue && rf.ReferenceType.Equals(ReferenceType.ServiceCode))
-                || !serviceResource.ResourceReferences.Exists(rf => rf.ReferenceType.HasValue && rf.ReferenceType.Equals(ReferenceType.ServiceEditionCode))))
+            // Validate Resource
+            // Validate Resource
+            if (!ServiceResourceHelper.ValidateResource(serviceResource, out Dictionary<string, string> message))
             {
-                // Uses Service engine prefix without it beeing a service engine resource
-                return BadRequest("Invalid Prefix");
-            }
+                foreach (KeyValuePair<string, string> kvp in message)
+                {
+                    ModelState.AddModelError(kvp.Key, kvp.Value);
+                }
 
-            if (serviceResource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX)
-                && (serviceResource.ResourceReferences == null
-                || !serviceResource.ResourceReferences.Any()
-                || !serviceResource.ResourceReferences.Exists(rf => rf.ReferenceType.HasValue && rf.ReferenceType.Equals(ReferenceType.ApplicationId))))
-            {
-                // Uses app prefix without it beeing a app resource
-                return BadRequest("Invalid Prefix");
+                return ValidationProblem(ModelState);
             }
 
             if (!AuthorizationUtil.HasWriteAccess(serviceResource.HasCompetentAuthority?.Organization, User))

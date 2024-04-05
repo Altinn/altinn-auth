@@ -36,7 +36,6 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// <summary>
         /// Description explaining the rights a recipient will receive if given access to the resource
         /// </summary>
-        [Required]
         public Dictionary<string, string>? RightDescription { get; set;  }
 
         /// <summary>
