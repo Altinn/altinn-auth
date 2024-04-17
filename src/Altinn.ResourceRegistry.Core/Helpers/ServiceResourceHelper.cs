@@ -35,81 +35,81 @@ namespace Altinn.ResourceRegistry.Core.Helpers
         /// <summary>
         /// Method to validate service resource
         /// </summary>
-        public static bool ValidateResource(ServiceResource serviceResource, out Dictionary<string, string> validationMessages)
+        public static bool ValidateResource(ServiceResource serviceResource, out Dictionary<string, List<string>> validationMessages)
         {
             bool isValid = true;
-            validationMessages = new Dictionary<string, string>();
+            validationMessages = new Dictionary<string, List<string>>();
             if (IsInvalidServiceEngineResource(serviceResource))
             {
                 // Uses Service engine prefix without it beeing a service engine resource
-                validationMessages.Add("Identifier", "Invalid prefix. Only to be used for Altinn 2 services");
+                AddValidationMessage(validationMessages, "Identifier", "Invalid prefix. Only to be used for Altinn 2 services");
                 isValid = false;
             }
 
             if (IsInvalidAppResource(serviceResource))
             {
                 // Uses app prefix without it beeing a app resource
-                validationMessages.Add("Identifier", "Invalid Prefix. app_ is only for Altinn Studio apps");
+                AddValidationMessage(validationMessages, "Identifier", "Invalid Prefix. app_ is only for Altinn Studio apps");
                 isValid = false;
             }
 
             if (!ResourceIdentifierRegex.IsMatch(serviceResource.Identifier))
             {
-                validationMessages.Add("Identifier", "Invalid id. Only a-z and 0-9 is allowed together with _ and -");
+                AddValidationMessage(validationMessages, "Identifier", "Invalid id. Only a-z and 0-9 is allowed together with _ and -");
                 isValid = false;
             }
 
             if (serviceResource.Title == null || !serviceResource.Title.ContainsKey(ResourceConstants.LANGUAGE_EN))
             {
-                validationMessages.Add("Title", $"Missing title in english {ResourceConstants.LANGUAGE_EN}");
+                AddValidationMessage(validationMessages, "Title", $"Missing title in english {ResourceConstants.LANGUAGE_EN}");
                 isValid = false;
             }
 
             if (serviceResource.Title == null || !serviceResource.Title.ContainsKey(ResourceConstants.LANGUAGE_NB))
             {
-                validationMessages.Add("Title", $"Missing title in bokmal {ResourceConstants.LANGUAGE_NB}");
+                AddValidationMessage(validationMessages, "Title", $"Missing title in bokmal {ResourceConstants.LANGUAGE_NB}");
                 isValid = false;
             }
 
             if (serviceResource.Title == null || !serviceResource.Title.ContainsKey(ResourceConstants.LANGUAGE_NN))
             {
-                validationMessages.Add("Title", $"Missing title in nynorsk {ResourceConstants.LANGUAGE_NN}");
+                AddValidationMessage(validationMessages, "Title", $"Missing title in nynorsk {ResourceConstants.LANGUAGE_NN}");
                 isValid = false;
             }
        
             if (serviceResource.Delegable && (serviceResource.RightDescription == null || !serviceResource.RightDescription.ContainsKey(ResourceConstants.LANGUAGE_EN)))
             {
-                validationMessages.Add("RightDescription", $"Missing RightDescription in english {ResourceConstants.LANGUAGE_EN}");
+                AddValidationMessage(validationMessages, "RightDescription", $"Missing RightDescription in english {ResourceConstants.LANGUAGE_EN}");
                 isValid = false;
             }
 
             if (serviceResource.Delegable && (serviceResource.RightDescription == null || !serviceResource.RightDescription.ContainsKey(ResourceConstants.LANGUAGE_NB)))
             {
-                validationMessages.Add("RightDescription", $"Missing RightDescription in bokmal {ResourceConstants.LANGUAGE_NB}");
+                AddValidationMessage(validationMessages, "RightDescription", $"Missing RightDescription in bokmal {ResourceConstants.LANGUAGE_NB}");
                 isValid = false;
             }
 
             if (serviceResource.Delegable && (serviceResource.RightDescription == null || !serviceResource.RightDescription.ContainsKey(ResourceConstants.LANGUAGE_NN)))
             {
-                validationMessages.Add("RightDescription", $"Missing RightDescription in nynorsk {ResourceConstants.LANGUAGE_NN}");
+                AddValidationMessage(validationMessages, "RightDescription", $"Missing RightDescription in nynorsk {ResourceConstants.LANGUAGE_NN}");
                 isValid = false;
             }
 
             if (serviceResource.Description == null || !serviceResource.Description.ContainsKey(ResourceConstants.LANGUAGE_EN))
             {
-                validationMessages.Add("Description", $"Missing Description in english {ResourceConstants.LANGUAGE_EN}");
+                AddValidationMessage(validationMessages, "Description", $"Missing Description in english {ResourceConstants.LANGUAGE_EN}");
                 isValid = false;
             }
 
             if (serviceResource.Description == null || !serviceResource.Description.ContainsKey(ResourceConstants.LANGUAGE_NB))
             {
-                validationMessages.Add("Description", $"Missing Description in bokmal {ResourceConstants.LANGUAGE_NB}");
+                AddValidationMessage(validationMessages, "Description", $"Missing Description in bokmal {ResourceConstants.LANGUAGE_NB}");
                 isValid = false;
             }
 
             if (serviceResource.Description == null || !serviceResource.Description.ContainsKey(ResourceConstants.LANGUAGE_NN))
             {
-                validationMessages.Add("Description", $"Missing Description in nynorsk {ResourceConstants.LANGUAGE_NN}");
+                AddValidationMessage(validationMessages, "Description", $"Missing Description in nynorsk {ResourceConstants.LANGUAGE_NN}");
                 isValid = false;
             }
 
@@ -142,6 +142,18 @@ namespace Altinn.ResourceRegistry.Core.Helpers
                 }
 
                 return false;
+            }
+        }
+
+        private static void AddValidationMessage(Dictionary<string, List<string>> validationMessages, string key, string message)
+        {
+            if (validationMessages.ContainsKey(key))
+            {
+                validationMessages[key].Add(message);
+            }
+            else
+            {
+                validationMessages.Add(key, [message]);
             }
         }
 

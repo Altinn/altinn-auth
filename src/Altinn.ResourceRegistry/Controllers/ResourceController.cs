@@ -99,11 +99,14 @@ namespace Altinn.ResourceRegistry.Controllers
             }
 
             // Validate Resource
-            if (!ServiceResourceHelper.ValidateResource(serviceResource, out Dictionary<string,string> message))
+            if (!ServiceResourceHelper.ValidateResource(serviceResource, out Dictionary<string,List<string>> message))
             {
-                foreach (KeyValuePair<string,string> kvp in message)
+                foreach (KeyValuePair<string,List<string>> kvp in message)
                 {
-                    ModelState.AddModelError(kvp.Key, kvp.Value);
+                    foreach (string validationMessage in kvp.Value)
+                    {
+                        ModelState.AddModelError(kvp.Key, validationMessage);
+                    }
                 }
 
                 return ValidationProblem(ModelState);
@@ -177,11 +180,14 @@ namespace Altinn.ResourceRegistry.Controllers
 
             // Validate Resource
             // Validate Resource
-            if (!ServiceResourceHelper.ValidateResource(serviceResource, out Dictionary<string, string> message))
+            if (!ServiceResourceHelper.ValidateResource(serviceResource, out Dictionary<string, List<string>> message))
             {
-                foreach (KeyValuePair<string, string> kvp in message)
+                foreach (KeyValuePair<string, List<string>> kvp in message)
                 {
-                    ModelState.AddModelError(kvp.Key, kvp.Value);
+                    foreach (string validationMessage in kvp.Value)
+                    {
+                        ModelState.AddModelError(kvp.Key, validationMessage);
+                    }
                 }
 
                 return ValidationProblem(ModelState);

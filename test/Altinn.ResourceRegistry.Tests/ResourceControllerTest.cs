@@ -896,7 +896,7 @@ namespace Altinn.ResourceRegistry.Tests
             ServiceResource resource = new ServiceResource()
             {
                 Identifier = "altinn_access_management",
-                Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }},
+                Title = new Dictionary<string, string> { { "en", "English" }},
                 Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
                 RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
                 Status = "Completed",
