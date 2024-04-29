@@ -14,6 +14,7 @@ using Altinn.ResourceRegistry.Core.Services;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Filters;
 using Altinn.ResourceRegistry.Health;
+using Altinn.ResourceRegistry.Integration;
 using Altinn.ResourceRegistry.Integration.Clients;
 using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Models.ApiDescriptions;
@@ -29,6 +30,7 @@ using Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.OpenApi.Models;
 using Npgsql;
@@ -115,6 +117,14 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.Configure<OidcProviderSettings>(config.GetSection("OidcProviders"));
     services.Configure<PostgreSQLSettings>(config.GetSection("PostgreSQLSettings"));
     services.Configure<AzureStorageConfiguration>(config.GetSection("AzureStorageConfiguration"));
+    services.AddOptions<RegisterClientOptions>()
+        .Configure((RegisterClientOptions options, IOptions<PlatformSettings> platformSettings) =>
+        {
+            if (platformSettings.Value is { ApiRegisterEndpoint: { } registerUri })
+            {
+                options.Uri = new(registerUri);
+            }
+        });
 
     services.AddAuthentication(JwtCookieDefaults.AuthenticationScheme)
         .AddJwtCookie(JwtCookieDefaults.AuthenticationScheme, options =>
@@ -151,10 +161,12 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         });
         options.OperationFilter<SecurityRequirementsOperationFilter>();
     });
+    services.AddUrnSwaggerSupport();
     services.AddHttpClient<IAccessManagementClient, AccessManagementClient>();
     services.AddHttpClient<IOrgListClient, OrgListClient>();
     services.AddHttpClient<IAltinn2Services, Altinn2ServicesClient>();
     services.AddHttpClient<IApplications, ApplicationsClient>();
+    services.AddAltinnRegisterClient();
 
     services.AddAuthorization(options =>
     {

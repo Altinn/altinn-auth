@@ -37,5 +37,10 @@ namespace Altinn.ResourceRegistry.Core.Configuration
         /// Storage Api
         /// </summary>
         public string StorageApiEndpoint { get; set; }
+
+        /// <summary>
+        /// Register Api
+        /// </summary>
+        public string ApiRegisterEndpoint { get; set; }
     }
 }

@@ -30,7 +30,7 @@ internal class AccessListAggregate
     private string? _description;
 
     private readonly Dictionary<string, AccessListResourceConnection> _resourceConnections = [];
-    private readonly HashSet<Guid> _members = [];
+    private ImmutableHashSet<Guid> _members = [];
 
     /// <inheritdoc/>
     static AccessListAggregate IAggregateFactory<AccessListAggregate, AccessListEvent>.New(TimeProvider timeProvider, Guid id, IAggregateRepository<AccessListAggregate, AccessListEvent> repository)
@@ -68,6 +68,9 @@ internal class AccessListAggregate
 
     /// <inheritdoc />
     public string Description => InitializedThis._description!;
+
+    /// <inheritdoc />
+    public ImmutableHashSet<Guid> Members => InitializedThis._members;
 
     /// <inheritdoc />
     bool IAccessListAggregate.TryGetResourceConnections(string resourceIdentifier, [NotNullWhen(true)] out AccessListResourceConnection? resourceConnection)
@@ -301,13 +304,13 @@ internal class AccessListAggregate
     /// <inheritdoc />
     void IAggregateEventHandler<AccessListMembersAddedEvent>.ApplyEvent(AccessListMembersAddedEvent @event)
     {
-        _members.UnionWith(@event.PartyIds);
+        _members = _members.Union(@event.PartyIds);
     }
 
     /// <inheritdoc />
     void IAggregateEventHandler<AccessListMembersRemovedEvent>.ApplyEvent(AccessListMembersRemovedEvent @event)
     {
-        _members.ExceptWith(@event.PartyIds);
+        _members = _members.Except(@event.PartyIds);
     }
 
     /// <summary>

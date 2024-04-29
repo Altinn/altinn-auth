@@ -2,6 +2,7 @@
 
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Versioned;
+using Altinn.ResourceRegistry.Core.Register;
 
 namespace Altinn.ResourceRegistry.Core.AccessLists;
 
@@ -125,6 +126,79 @@ public interface IAccessListService
         string owner,
         string identifier,
         string resourceIdentifier,
+        IVersionedEntityCondition<ulong>? condition = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets a page of access list members by owner and identifier.
+    /// </summary>
+    /// <param name="owner">The resource owner (org.nr.).</param>
+    /// <param name="identifier">The access list identifier (unique per owner).</param>
+    /// <param name="request">The page request.</param>
+    /// <param name="condition">Optional condition on the access list</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
+    /// <returns></returns>
+    Task<Conditional<VersionedPage<EnrichedAccessListMembership, Guid, ulong>, ulong>> GetAccessListMembers(
+        string owner,
+        string identifier,
+        Page<Guid?>.Request request,
+        IVersionedEntityCondition<ulong>? condition = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates the access list members.
+    /// </summary>
+    /// <param name="owner">The resource owner (org.nr.).</param>
+    /// <param name="identifier">The access list identifier (unique per owner).</param>
+    /// <param name="parties">The new parties.</param>
+    /// <param name="condition">Optional condition on the access list</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
+    /// <returns>
+    /// The result of calling <see cref="GetAccessListMembers(string, string, Page{Guid?}.Request, IVersionedEntityCondition{ulong}?, CancellationToken)"/>
+    /// after modifying the access list.
+    /// </returns>
+    Task<Conditional<VersionedPage<EnrichedAccessListMembership, Guid, ulong>, ulong>> ReplaceAccessListMembers(
+        string owner,
+        string identifier,
+        IReadOnlyList<PartyReference> parties,
+        IVersionedEntityCondition<ulong>? condition = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Add new members to the access list.
+    /// </summary>
+    /// <param name="owner">The resource owner (org.nr.).</param>
+    /// <param name="identifier">The access list identifier (unique per owner).</param>
+    /// <param name="parties">The new parties.</param>
+    /// <param name="condition">Optional condition on the access list</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
+    /// <returns>
+    /// The result of calling <see cref="GetAccessListMembers(string, string, Page{Guid?}.Request, IVersionedEntityCondition{ulong}?, CancellationToken)"/>
+    /// after modifying the access list.
+    /// </returns>
+    Task<Conditional<VersionedPage<EnrichedAccessListMembership, Guid, ulong>, ulong>> AddAccessListMembers(
+        string owner,
+        string identifier,
+        IReadOnlyList<PartyReference> parties,
+        IVersionedEntityCondition<ulong>? condition = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Remove members to the access list.
+    /// </summary>
+    /// <param name="owner">The resource owner (org.nr.).</param>
+    /// <param name="identifier">The access list identifier (unique per owner).</param>
+    /// <param name="parties">The new parties.</param>
+    /// <param name="condition">Optional condition on the access list</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
+    /// <returns>
+    /// The result of calling <see cref="GetAccessListMembers(string, string, Page{Guid?}.Request, IVersionedEntityCondition{ulong}?, CancellationToken)"/>
+    /// after modifying the access list.
+    /// </returns>
+    Task<Conditional<VersionedPage<EnrichedAccessListMembership, Guid, ulong>, ulong>> RemoveAccessListMembers(
+        string owner,
+        string identifier,
+        IReadOnlyList<PartyReference> parties,
         IVersionedEntityCondition<ulong>? condition = null,
         CancellationToken cancellationToken = default);
 }

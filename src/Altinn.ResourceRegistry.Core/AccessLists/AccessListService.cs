@@ -2,8 +2,10 @@
 
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Versioned;
+using Altinn.ResourceRegistry.Core.Register;
 using CommunityToolkit.Diagnostics;
 
 namespace Altinn.ResourceRegistry.Core.AccessLists;
@@ -18,14 +20,15 @@ internal class AccessListService
     private const int LARGE_PAGE_SIZE = 100;
 
     private readonly IAccessListsRepository _repository;
+    private readonly IRegisterClient _register;
 
     /// <summary>
     /// Constructs a new instance of <see cref="AccessListService"/>.
     /// </summary>
-    /// <param name="repository">A <see cref="IAccessListsRepository"/></param>
-    public AccessListService(IAccessListsRepository repository)
+    public AccessListService(IAccessListsRepository repository, IRegisterClient register)
     {
         _repository = repository;
+        _register = register;
     }
 
     /// <inheritdoc/>
@@ -114,7 +117,7 @@ internal class AccessListService
         }
 
         aggregate.Delete();
-        await aggregate.SaveChanged(cancellationToken);
+        await aggregate.SaveChanges(cancellationToken);
 
         return aggregate.AsAccessListInfo();
     }
@@ -188,7 +191,7 @@ internal class AccessListService
         if (newName is not null || newDescription is not null)
         {
             aggregate.Update(name: newName, description: newDescription);
-            await aggregate.SaveChanged(cancellationToken);
+            await aggregate.SaveChanges(cancellationToken);
         }
 
         // Return the maybe updated list.
@@ -295,7 +298,7 @@ internal class AccessListService
                 break;
         }
 
-        await aggregate.SaveChanged(cancellationToken);
+        await aggregate.SaveChanges(cancellationToken);
         
         if (!aggregate.TryGetResourceConnections(resourceIdentifier, out connection))
         {
@@ -342,8 +345,254 @@ internal class AccessListService
         }
 
         aggregate.RemoveResourceConnection(resourceIdentifier);
-        await aggregate.SaveChanged(cancellationToken);
+        await aggregate.SaveChanges(cancellationToken);
 
         return AccessListData.Create(aggregate.AsAccessListInfo(), connection);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Conditional<VersionedPage<EnrichedAccessListMembership, Guid, ulong>, ulong>> GetAccessListMembers(
+        string owner,
+        string identifier,
+        Page<Guid?>.Request request,
+        IVersionedEntityCondition<ulong>? condition = null,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(owner);
+        Guard.IsNotNull(identifier);
+
+        var data = await _repository.GetAccessListMemberships(
+            owner,
+            identifier,
+            continueFrom: request.ContinuationToken,
+            count: LARGE_PAGE_SIZE + 1,
+            cancellationToken);
+
+        if (data is null)
+        {
+            return Conditional.NotFound(nameof(AccessListInfo));
+        }
+
+        if (condition is not null)
+        {
+            var result = condition.Validate(data);
+
+            if (result == VersionedEntityConditionResult.Failed)
+            {
+                return Conditional.ConditionFailed();
+            }
+
+            if (result == VersionedEntityConditionResult.Unmodified)
+            {
+                return Conditional.Unmodified(data.Version, data.UpdatedAt);
+            }
+        }
+
+        var identifiers = await _register
+            .GetPartyIdentifiers(data.Value.Select(m => m.PartyUuid), cancellationToken)
+            .ToDictionaryAsync(m => m.PartyUuid, cancellationToken);
+
+        var enrichedBuilder = ImmutableArray.CreateBuilder<EnrichedAccessListMembership>(data.Value.Count);
+        enrichedBuilder.AddRange(data.Value.Select(m => new EnrichedAccessListMembership(m, identifiers[m.PartyUuid])));
+        var enriched = enrichedBuilder.MoveToImmutable();
+
+        return Page.Create(enriched, LARGE_PAGE_SIZE, static membership => membership.PartyUuid)
+            .WithVersion(data.UpdatedAt, data.Version);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Conditional<VersionedPage<EnrichedAccessListMembership, Guid, ulong>, ulong>> ReplaceAccessListMembers(
+        string owner,
+        string identifier,
+        IReadOnlyList<PartyReference> parties,
+        IVersionedEntityCondition<ulong>? condition = null,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(owner);
+        Guard.IsNotNull(identifier);
+        Guard.IsNotNull(parties);
+
+        var aggregate = await _repository.LoadAccessList(owner, identifier, cancellationToken);
+
+        if (aggregate is null)
+        {
+            return Conditional.NotFound(nameof(AccessListInfo));
+        }
+
+        if (condition is not null)
+        {
+            var result = condition.Validate(aggregate.AsAccessListInfo());
+
+            Debug.Assert(result != VersionedEntityConditionResult.Unmodified, "Unmodified should not be possible when updating");
+
+            if (result == VersionedEntityConditionResult.Failed)
+            {
+                return Conditional.ConditionFailed();
+            }
+        }
+
+        var membersBuilder = ImmutableHashSet.CreateBuilder<Guid>();
+        await foreach (var partyIds in ResolvePartyIdentifiers(parties, cancellationToken))
+        {
+            if (partyIds is null)
+            {
+                return Conditional.NotFound(nameof(PartyReference));
+            }
+
+            membersBuilder.Add(partyIds.PartyUuid);
+        }
+
+        var newMembers = membersBuilder.ToImmutable();
+        var toRemove = aggregate.Members.Except(newMembers);
+        var toAdd = newMembers.Except(aggregate.Members);
+
+        if (toRemove.Count > 0)
+        {
+            aggregate.RemoveMembers(toRemove);
+        }
+
+        if (toAdd.Count > 0)
+        {
+            aggregate.AddMembers(toAdd);
+        }
+
+        await aggregate.SaveChanges(cancellationToken);
+
+        return await GetAccessListMembers(owner, identifier, Page.DefaultRequest(), null, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Conditional<VersionedPage<EnrichedAccessListMembership, Guid, ulong>, ulong>> AddAccessListMembers(
+        string owner,
+        string identifier,
+        IReadOnlyList<PartyReference> parties,
+        IVersionedEntityCondition<ulong>? condition = null,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(owner);
+        Guard.IsNotNull(identifier);
+        Guard.IsNotNull(parties);
+
+        var aggregate = await _repository.LoadAccessList(owner, identifier, cancellationToken);
+
+        if (aggregate is null)
+        {
+            return Conditional.NotFound(nameof(AccessListInfo));
+        }
+
+        if (condition is not null)
+        {
+            var result = condition.Validate(aggregate.AsAccessListInfo());
+
+            Debug.Assert(result != VersionedEntityConditionResult.Unmodified, "Unmodified should not be possible when updating");
+
+            if (result == VersionedEntityConditionResult.Failed)
+            {
+                return Conditional.ConditionFailed();
+            }
+        }
+
+        var toAdd = new HashSet<Guid>();
+        await foreach (var partyIds in ResolvePartyIdentifiers(parties, cancellationToken))
+        {
+            if (partyIds is null)
+            {
+                return Conditional.NotFound(nameof(PartyReference));
+            }
+
+            if (!aggregate.Members.Contains(partyIds.PartyUuid))
+            {
+                toAdd.Add(partyIds.PartyUuid);
+            }
+        }
+
+        if (toAdd.Count > 0)
+        {
+            aggregate.AddMembers(toAdd);
+        }
+
+        await aggregate.SaveChanges(cancellationToken);
+
+        return await GetAccessListMembers(owner, identifier, Page.DefaultRequest(), null, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Conditional<VersionedPage<EnrichedAccessListMembership, Guid, ulong>, ulong>> RemoveAccessListMembers(
+        string owner,
+        string identifier,
+        IReadOnlyList<PartyReference> parties,
+        IVersionedEntityCondition<ulong>? condition = null,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(owner);
+        Guard.IsNotNull(identifier);
+        Guard.IsNotNull(parties);
+
+        var aggregate = await _repository.LoadAccessList(owner, identifier, cancellationToken);
+
+        if (aggregate is null)
+        {
+            return Conditional.NotFound(nameof(AccessListInfo));
+        }
+
+        if (condition is not null)
+        {
+            var result = condition.Validate(aggregate.AsAccessListInfo());
+
+            Debug.Assert(result != VersionedEntityConditionResult.Unmodified, "Unmodified should not be possible when updating");
+
+            if (result == VersionedEntityConditionResult.Failed)
+            {
+                return Conditional.ConditionFailed();
+            }
+        }
+
+        var toRemove = new HashSet<Guid>();
+        await foreach (var partyIds in ResolvePartyIdentifiers(parties, cancellationToken))
+        {
+            if (partyIds is null)
+            {
+                return Conditional.NotFound(nameof(PartyReference));
+            }
+
+            if (aggregate.Members.Contains(partyIds.PartyUuid))
+            {
+                toRemove.Add(partyIds.PartyUuid);
+            }
+        }
+
+        if (toRemove.Count > 0)
+        {
+            aggregate.RemoveMembers(toRemove);
+        }
+
+        await aggregate.SaveChanges(cancellationToken);
+
+        return await GetAccessListMembers(owner, identifier, Page.DefaultRequest(), null, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<PartyIdentifiers?> ResolvePartyIdentifiers(
+        IReadOnlyList<PartyReference> parties, 
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        if (parties.Count == 0)
+        {
+            yield break;
+        }
+
+        var identifiers = await _register.GetPartyIdentifiers(parties, cancellationToken).ToListAsync(cancellationToken);
+
+        foreach (var partyRef in parties)
+        {
+            var match = partyRef switch
+            {
+                PartyReference.PartyId partyId => identifiers.Find(v => v.PartyId == partyId.Value),
+                PartyReference.PartyUuid partyUuid => identifiers.Find(v => v.PartyUuid == partyUuid.Value),
+                PartyReference.OrganizationIdentifier orgNo => identifiers.Find(v => v.OrgNumber == orgNo.Value.ToString()),
+                _ => null
+            };
+
+            yield return match;
+        }
     }
 }

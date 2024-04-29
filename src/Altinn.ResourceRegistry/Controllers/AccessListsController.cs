@@ -6,6 +6,7 @@ using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Versioned;
+using Altinn.ResourceRegistry.Core.Register;
 using Altinn.ResourceRegistry.JsonPatch;
 using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Models.ModelBinding;
@@ -39,6 +40,11 @@ public class AccessListsController
     /// Route name for <see cref="GetAccessListResourceConnections"/>.
     /// </summary>
     public const string ROUTE_GET_RESOURCE_CONNECTIONS = "access-lists/get-resource-connections";
+
+    /// <summary>
+    /// Route name for <see cref="GetAccessListMembers"/>.
+    /// </summary>
+    public const string ROUTE_GET_MEMBERS = "access-lists/get-members";
 
     private readonly IAccessListService _service;
 
@@ -202,15 +208,48 @@ public class AccessListsController
     /// </summary>
     /// <param name="owner">The resource owner</param>
     /// <param name="identifier">The resource owner-unique identifier</param>
+    /// <param name="requestConditions">Request conditions</param>
+    /// <param name="token">Optional continuation token</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A paginated list of <see cref="AccessListMembershipDto"/></returns>
-    [HttpGet("{identifier:required}/members")]
+    [HttpGet("{identifier:required}/members", Name = ROUTE_GET_MEMBERS)]
     [SwaggerOperation(Tags = ["Access List Members"])]
-    public async Task<ActionResult<Paginated<AccessListMembershipDto>>> GetAccessListMembers(string owner, string identifier, CancellationToken cancellationToken = default)
+    public async Task<ConditionalResult<VersionedPaginated<AccessListMembershipDto, AggregateVersion>, AggregateVersion>> GetAccessListMembers(
+        string owner,
+        string identifier,
+        RequestConditionCollection<AggregateVersion> requestConditions,
+        [FromQuery(Name = "token")] Opaque<AccessListMembersContinuationToken>? token = null,
+        CancellationToken cancellationToken = default)
     {
-        await Task.Yield();
+        IVersionedEntityCondition<AggregateVersion> conditions = requestConditions;
+        if (token?.Value.Version is { } version)
+        {
+            conditions = conditions.Concat(RequestCondition.IsMatch(AggregateVersion.From(version)));
+        }
 
-        throw new NotImplementedException();
+        var result = await _service.GetAccessListMembers(
+            owner,
+            identifier,
+            Page.ContinueFrom(token?.Value.ContinueFrom),
+            conditions.Select(v => v.Version),
+            cancellationToken);
+
+        return result.Select(
+            page =>
+            {
+                var nextLink = page.ContinuationToken.HasValue
+                    ? Url.Link(ROUTE_GET_MEMBERS, new
+                    {
+                        owner,
+                        identifier,
+                        token = Opaque.Create(new AccessListMembersContinuationToken(page.Version, page.ContinuationToken.Value)),
+                    })
+                    : null;
+
+                return Paginated.Create(page.Items.Select(AccessListMembershipDto.From), nextLink)
+                    .WithVersion(page.ModifiedAt, AggregateVersion.From(page.Version));
+            },
+            AggregateVersion.From);
     }
 
     /// <summary>
@@ -222,21 +261,52 @@ public class AccessListsController
     /// <param name="owner">The resource owner</param>
     /// <param name="identifier">The resource owner-unique identifier</param>
     /// <param name="members">The new members-list</param>
+    /// <param name="conditions">Request conditions</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A paginated list of <see cref="AccessListMembershipDto"/></returns>
     [HttpPut("{identifier:required}/members")]
     [SwaggerOperation(Tags = ["Access List Members"])]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
-    public async Task<ActionResult<Paginated<AccessListMembershipDto>>> ReplaceAccessListMembers(string owner, string identifier, [FromBody] UpsertAccessListPartyMembersListDto members, CancellationToken cancellationToken = default)
+    public async Task<ConditionalResult<VersionedPaginated<AccessListMembershipDto, AggregateVersion>, AggregateVersion>> ReplaceAccessListMembers(
+        string owner, 
+        string identifier, 
+        [FromBody] UpsertAccessListPartyMembersListDto members,
+        RequestConditionCollection<AggregateVersion> conditions,
+        CancellationToken cancellationToken = default)
     {
         if (members.Count > 100)
         {
             return BadRequest("Cannot replace more than 100 members at a time. Use POST and DELETE methods instead.");
         }
 
-        await Task.Yield();
+        var result = await _service.ReplaceAccessListMembers(
+            owner,
+            identifier,
+            members,
+            conditions.Select(v => v.Version),
+            cancellationToken);
 
-        throw new NotImplementedException();
+        if (result.IsNotFound && result.NotFoundType == nameof(PartyReference))
+        {
+            return BadRequest("Party reference not found");
+        }
+
+        return result.Select(
+            page =>
+            {
+                var nextLink = page.ContinuationToken.HasValue
+                    ? Url.Link(ROUTE_GET_MEMBERS, new
+                    {
+                        owner,
+                        identifier,
+                        token = Opaque.Create(new AccessListMembersContinuationToken(page.Version, page.ContinuationToken.Value)),
+                    })
+                    : null;
+
+                return Paginated.Create(page.Items.Select(AccessListMembershipDto.From), nextLink)
+                    .WithVersion(page.ModifiedAt, AggregateVersion.From(page.Version));
+            },
+            AggregateVersion.From);
     }
 
     /// <summary>
@@ -248,16 +318,52 @@ public class AccessListsController
     /// <param name="owner">The resource owner</param>
     /// <param name="identifier">The resource owner-unique identifier</param>
     /// <param name="members">The new members-list</param>
+    /// <param name="conditions">Request conditions</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A paginated list of <see cref="AccessListMembershipDto"/></returns>
     [HttpPost("{identifier:required}/members")]
     [SwaggerOperation(Tags = ["Access List Members"])]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
-    public async Task<ActionResult<Paginated<AccessListMembershipDto>>> AddAccessListMembers(string owner, string identifier, [FromBody] UpsertAccessListPartyMembersListDto members, CancellationToken cancellationToken = default)
+    public async Task<ConditionalResult<VersionedPaginated<AccessListMembershipDto, AggregateVersion>, AggregateVersion>> AddAccessListMembers(
+        string owner,
+        string identifier,
+        [FromBody] UpsertAccessListPartyMembersListDto members,
+        RequestConditionCollection<AggregateVersion> conditions,
+        CancellationToken cancellationToken = default)
     {
-        await Task.Yield();
+        if (members.Count > 100)
+        {
+            return BadRequest("Cannot add more than 100 members at a time.");
+        }
 
-        throw new NotImplementedException();
+        var result = await _service.AddAccessListMembers(
+            owner,
+            identifier,
+            members,
+            conditions.Select(v => v.Version),
+            cancellationToken);
+
+        if (result.IsNotFound && result.NotFoundType == nameof(PartyReference))
+        {
+            return BadRequest("Party reference not found");
+        }
+
+        return result.Select(
+            page =>
+            {
+                var nextLink = page.ContinuationToken.HasValue
+                    ? Url.Link(ROUTE_GET_MEMBERS, new
+                    {
+                        owner,
+                        identifier,
+                        token = Opaque.Create(new AccessListMembersContinuationToken(page.Version, page.ContinuationToken.Value)),
+                    })
+                    : null;
+
+                return Paginated.Create(page.Items.Select(AccessListMembershipDto.From), nextLink)
+                    .WithVersion(page.ModifiedAt, AggregateVersion.From(page.Version));
+            },
+            AggregateVersion.From);
     }
 
     /// <summary>
@@ -269,16 +375,52 @@ public class AccessListsController
     /// <param name="owner">The resource owner</param>
     /// <param name="identifier">The resource owner-unique identifier</param>
     /// <param name="members">The new members-list</param>
+    /// <param name="conditions">Request conditions</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A paginated list of <see cref="AccessListMembershipDto"/></returns>
     [HttpDelete("{identifier:required}/members")]
     [SwaggerOperation(Tags = ["Access List Members"])]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
-    public async Task<ActionResult<Paginated<AccessListMembershipDto>>> RemoveAccessListMembers(string owner, string identifier, [FromBody] UpsertAccessListPartyMembersListDto members, CancellationToken cancellationToken = default)
+    public async Task<ConditionalResult<VersionedPaginated<AccessListMembershipDto, AggregateVersion>, AggregateVersion>> RemoveAccessListMembers(
+        string owner,
+        string identifier,
+        [FromBody] UpsertAccessListPartyMembersListDto members,
+        RequestConditionCollection<AggregateVersion> conditions,
+        CancellationToken cancellationToken = default)
     {
-        await Task.Yield();
+        if (members.Count > 100)
+        {
+            return BadRequest("Cannot remove more than 100 members at a time.");
+        }
 
-        throw new NotImplementedException();
+        var result = await _service.RemoveAccessListMembers(
+            owner,
+            identifier,
+            members,
+            conditions.Select(v => v.Version),
+            cancellationToken);
+
+        if (result.IsNotFound && result.NotFoundType == nameof(PartyReference))
+        {
+            return BadRequest("Party reference not found");
+        }
+
+        return result.Select(
+            page =>
+            {
+                var nextLink = page.ContinuationToken.HasValue
+                    ? Url.Link(ROUTE_GET_MEMBERS, new
+                    {
+                        owner,
+                        identifier,
+                        token = Opaque.Create(new AccessListMembersContinuationToken(page.Version, page.ContinuationToken.Value)),
+                    })
+                    : null;
+
+                return Paginated.Create(page.Items.Select(AccessListMembershipDto.From), nextLink)
+                    .WithVersion(page.ModifiedAt, AggregateVersion.From(page.Version));
+            },
+            AggregateVersion.From);
     }
 
     /// <summary>
@@ -417,4 +559,11 @@ public class AccessListsController
     /// <param name="Version">The access list version.</param>
     /// <param name="ContinueFrom">What resource identifier to continue from.</param>
     public record AccessListResourceConnectionContinuationToken(ulong Version, string ContinueFrom);
+
+    /// <summary>
+    /// Continuation token for access list members.
+    /// </summary>
+    /// <param name="Version">The access list version.</param>
+    /// <param name="ContinueFrom">What member to continue from.</param>
+    public record AccessListMembersContinuationToken(ulong Version, Guid ContinueFrom);
 }

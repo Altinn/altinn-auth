@@ -1,5 +1,7 @@
 ﻿#nullable enable
 
+using System.ComponentModel;
+
 namespace Altinn.ResourceRegistry.Core.Models;
 
 /// <summary>
@@ -14,6 +16,12 @@ public abstract class Page()
     /// <param name="token">The optional continuation token</param>
     /// <returns>A <see cref="Page{TToken}.Request"/></returns>
     public static Page<TToken>.Request ContinueFrom<TToken>(TToken? token) => new(token);
+
+    /// <summary>
+    /// Creates a request for the first page of items.
+    /// </summary>
+    /// <returns>A <see cref="DefaultRequestSentinel"/> that implicitly converts to a <see cref="Page{TToken}.Request"/>.</returns>
+    public static DefaultRequestSentinel DefaultRequest() => default;
 
     /// <summary>
     /// Creates a page of items.
@@ -37,6 +45,14 @@ public abstract class Page()
         var items = allItems.Take(pageSize).ToList();
         var nextToken = tokenFactory(allItems[pageSize]);
         return new(items, nextToken);
+    }
+
+    /// <summary>
+    /// A sentinel type to indicate that the default request should be used.
+    /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public readonly struct DefaultRequestSentinel
+    {
     }
 }
 
@@ -63,6 +79,8 @@ public abstract class Page<TToken>(
         /// Gets a continuation token from a previous page, or <see langword="null"/> if requesting the first page.
         /// </summary>
         public TToken? ContinuationToken => continuationToken;
+
+        public static implicit operator Request(DefaultRequestSentinel _) => new(default);
     }
 }
 

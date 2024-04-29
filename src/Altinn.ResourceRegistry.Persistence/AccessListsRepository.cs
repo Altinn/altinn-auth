@@ -74,15 +74,19 @@ internal partial class AccessListsRepository
     /// <inheritdoc/>
     public Task<AccessListData<IReadOnlyList<AccessListMembership>>?> GetAccessListMemberships(
         Guid id,
+        Guid? continueFrom,
+        int count,
         CancellationToken cancellationToken = default)
-        => InTransaction(repo => repo.GetAccessListMemberships(new(id), cancellationToken), cancellationToken);
+        => InTransaction(repo => repo.GetAccessListMemberships(new(id), continueFrom, count, cancellationToken), cancellationToken);
 
     /// <inheritdoc/>
     public Task<AccessListData<IReadOnlyList<AccessListMembership>>?> GetAccessListMemberships(
         string registryOwner,
         string identifier,
+        Guid? continueFrom,
+        int count,
         CancellationToken cancellationToken = default)
-        => InTransaction(repo => repo.GetAccessListMemberships(new(registryOwner, identifier), cancellationToken), cancellationToken);
+        => InTransaction(repo => repo.GetAccessListMemberships(new(registryOwner, identifier), continueFrom, count, cancellationToken), cancellationToken);
 
     /// <inheritdoc/>
     public async Task<IAccessListAggregate> CreateAccessList(string resourceOwner, string identifier, string name, string description, CancellationToken cancellationToken = default)

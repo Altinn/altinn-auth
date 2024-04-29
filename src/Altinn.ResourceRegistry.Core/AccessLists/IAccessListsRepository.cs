@@ -85,10 +85,14 @@ public interface IAccessListsRepository
     /// Get members of an access list.
     /// </summary>
     /// <param name="id">The access list id</param>
+    /// <param name="continueFrom">An optional value to continue iterating from. This value is an <see cref="AccessListMembership.PartyUuid"/> to start from, using greater than or equals comparison.</param>
+    /// <param name="count">The total number of entries to return.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
     /// <returns>A list of <see cref="AccessListMembership"/></returns>
     Task<AccessListData<IReadOnlyList<AccessListMembership>>?> GetAccessListMemberships(
         Guid id,
+        Guid? continueFrom,
+        int count,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -96,11 +100,15 @@ public interface IAccessListsRepository
     /// </summary>
     /// <param name="resourceOwner">The resource owner</param>
     /// <param name="identifier">The access list identifier (unique per owner).</param>
+    /// <param name="continueFrom">An optional value to continue iterating from. This value is an <see cref="AccessListMembership.PartyUuid"/> to start from, using greater than or equals comparison.</param>
+    /// <param name="count">The total number of entries to return.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
     /// <returns>A list of <see cref="AccessListMembership"/></returns>
     Task<AccessListData<IReadOnlyList<AccessListMembership>>?> GetAccessListMemberships(
         string resourceOwner,
         string identifier,
+        Guid? continueFrom,
+        int count,
         CancellationToken cancellationToken = default);
 
     /// <summary>

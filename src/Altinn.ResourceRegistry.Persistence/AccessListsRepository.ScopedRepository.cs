@@ -230,7 +230,11 @@ internal partial class AccessListsRepository
             return AccessListData.Create(metadata, connections);
         }
 
-        public async Task<AccessListData<IReadOnlyList<AccessListMembership>>?> GetAccessListMemberships(AccessListIdentifier identifier, CancellationToken cancellationToken)
+        public async Task<AccessListData<IReadOnlyList<AccessListMembership>>?> GetAccessListMemberships(
+            AccessListIdentifier identifier,
+            Guid? continueFrom,
+            int count,
+            CancellationToken cancellationToken)
         {
             var metadata = await LookupInfo(identifier, AccessListIncludes.None, cancellationToken);
             if (metadata is null)
@@ -238,7 +242,7 @@ internal partial class AccessListsRepository
                 return null;
             }
 
-            var memberships = await GetAccessListMemberships(metadata.Id, cancellationToken);
+            var memberships = await GetAccessListMemberships(metadata.Id, continueFrom, count, cancellationToken);
             return AccessListData.Create(metadata, memberships);
         }
 
@@ -404,15 +408,20 @@ internal partial class AccessListsRepository
             }
         }
 
-        private async Task<IReadOnlyList<AccessListMembership>> GetAccessListMemberships(Guid id, CancellationToken cancellationToken)
+        private async Task<IReadOnlyList<AccessListMembership>> GetAccessListMemberships(Guid id, Guid? continueFrom, int count, CancellationToken cancellationToken)
         {
             const string QUERY = /*strpsql*/@"
                 SELECT party_id, since
                 FROM resourceregistry.access_list_members_state
-                WHERE aggregate_id = @aggregate_id;";
+                WHERE aggregate_id = @aggregate_id
+                AND (@continue_from IS NULL OR party_id >= @continue_from)
+                ORDER BY party_id ASC
+                LIMIT @count;";
 
             await using var cmd = _conn.CreateCommand(QUERY);
             cmd.Parameters.AddWithValue("aggregate_id", NpgsqlDbType.Uuid, id);
+            cmd.Parameters.AddWithNullableValue("continue_from", NpgsqlDbType.Uuid, continueFrom);
+            cmd.Parameters.AddWithValue("count", NpgsqlDbType.Integer, count);
 
             await cmd.PrepareAsync(cancellationToken);
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);

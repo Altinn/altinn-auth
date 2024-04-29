@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using Altinn.ResourceRegistry.Core.Aggregates;
 
@@ -29,6 +30,11 @@ public interface IAccessListAggregate : IAggregate
     /// Gets the resource owner.
     /// </summary>
     string ResourceOwner { get; }
+
+    /// <summary>
+    /// Gets the members of the access list.
+    /// </summary>
+    ImmutableHashSet<Guid> Members { get; }
 
     /// <summary>
     /// Get a resource connection by resource identifier, if it exists.

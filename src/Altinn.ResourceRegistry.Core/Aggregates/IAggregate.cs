@@ -39,5 +39,5 @@ public interface IAggregate
     /// Save changes to the aggregate.
     /// </summary>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-    public Task SaveChanged(CancellationToken cancellationToken = default);
+    public Task SaveChanges(CancellationToken cancellationToken = default);
 }

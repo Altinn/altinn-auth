@@ -136,10 +136,10 @@ namespace Altinn.ResourceRegistry.Core.Helpers
             static bool IsInvalidServiceEngineResource(ServiceResource serviceResource)
             {
                 if (serviceResource.Identifier.StartsWith(ResourceConstants.SERVICE_ENGINE_RESOURCE_PREFIX)
-                && (serviceResource.ResourceReferences == null
-                || !serviceResource.ResourceReferences.Any()
-                || !serviceResource.ResourceReferences.Exists(rf => rf.ReferenceType.HasValue && rf.ReferenceType.Equals(ReferenceType.ServiceCode))
-                || !serviceResource.ResourceReferences.Exists(rf => rf.ReferenceType.HasValue && rf.ReferenceType.Equals(ReferenceType.ServiceEditionCode))))
+                    && (serviceResource.ResourceReferences == null
+                    || !serviceResource.ResourceReferences.Any()
+                    || !serviceResource.ResourceReferences.Exists(rf => rf.ReferenceType.HasValue && rf.ReferenceType.Equals(ReferenceType.ServiceCode))
+                    || !serviceResource.ResourceReferences.Exists(rf => rf.ReferenceType.HasValue && rf.ReferenceType.Equals(ReferenceType.ServiceEditionCode))))
                 {
                     // Uses Service engine prefix without it beeing a service engine resource
                     return true;
@@ -151,9 +151,9 @@ namespace Altinn.ResourceRegistry.Core.Helpers
             static bool IsInvalidAppResource(ServiceResource serviceResource)
             {
                 if (serviceResource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX)
-              && (serviceResource.ResourceReferences == null
-              || !serviceResource.ResourceReferences.Any()
-              || !serviceResource.ResourceReferences.Exists(rf => rf.ReferenceType.HasValue && rf.ReferenceType.Equals(ReferenceType.ApplicationId))))
+                    && (serviceResource.ResourceReferences == null
+                    || !serviceResource.ResourceReferences.Any()
+                    || !serviceResource.ResourceReferences.Exists(rf => rf.ReferenceType.HasValue && rf.ReferenceType.Equals(ReferenceType.ApplicationId))))
                 {
                     // Uses app prefix without it beeing a app resource
                     return true;
@@ -162,9 +162,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
                 return false;
             }
 
-            /// <summary>
-            /// Validates that orgs that is not TTD needs to have orgnumber set.
-            /// </summary>
+            // Validates that orgs that is not TTD needs to have orgnumber set.
             static bool ValidateResourceOwner(ServiceResource serviceResource)
             {
                 if (serviceResource.HasCompetentAuthority == null)

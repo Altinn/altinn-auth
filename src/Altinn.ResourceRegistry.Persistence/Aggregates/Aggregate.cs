@@ -166,6 +166,6 @@ internal abstract class Aggregate<TAggregate, TEvent>
         => AddEvent(@event);
 
     /// <inheritdoc />
-    public Task SaveChanged(CancellationToken cancellationToken = default)
+    public Task SaveChanges(CancellationToken cancellationToken = default)
         => _repository.ApplyChanges((TAggregate)this, cancellationToken);
 }
