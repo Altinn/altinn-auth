@@ -5,6 +5,7 @@ using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Tests.Utils;
 using Altinn.ResourceRegistry.TestUtils;
 using FluentAssertions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using System;
@@ -135,6 +136,12 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 content.Items.Should().HaveCount(1);
                 content.Items.Should().Contain(al => al.Identifier == "test1")
                     .Which.ResourceConnections.Should().BeNull();
+            }
+
+            {
+                using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}?include=members");
+
+                response.StatusCode.Should().Be(HttpStatusCode.NotImplemented);
             }
 
             {
@@ -1235,6 +1242,35 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             content.Items.Should().Contain(m => m.Id.Value == user4);
         }
 
+        [Fact]
+        public async Task DisallowsUpdatingTooManyMembers()
+        {
+            const int COUNT = 120;
+
+            var users = new List<Guid>(COUNT);
+            for (var i = 0; i < COUNT; i++)
+            {
+                users.Add(GenerateUserId());
+            }
+
+            var def = await Repository.CreateAccessList(ORG_NR, "test1", "Test 1", "test 1 description");
+
+            using var client = CreateAuthenticatedClient();
+
+            using var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto(
+                users.Select(PartyReference.PartyUuid.Create).ToList()));
+
+            var response = await client.PutAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
+            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+            var error = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+            Assert.NotNull(error);
+
+            error.Extensions.Should().ContainKey("code")
+                .WhoseValue.Should().BeOfType<JsonElement>()
+                .Which.GetString().Should().Be("RR-001");
+        }
+
         public class ETagHeaders
             : EtagHeadersTests
         {
@@ -1391,6 +1427,35 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             content.Items.Should().Contain(m => m.Id.Value == user4);
         }
 
+        [Fact]
+        public async Task DisallowsUpdatingTooManyMembers()
+        {
+            const int COUNT = 120;
+
+            var users = new List<Guid>(COUNT);
+            for (var i = 0; i < COUNT; i++)
+            {
+                users.Add(GenerateUserId());
+            }
+
+            var def = await Repository.CreateAccessList(ORG_NR, "test1", "Test 1", "test 1 description");
+
+            using var client = CreateAuthenticatedClient();
+
+            using var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto(
+                users.Select(PartyReference.PartyUuid.Create).ToList()));
+
+            var response = await client.PostAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
+            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+            var error = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+            Assert.NotNull(error);
+
+            error.Extensions.Should().ContainKey("code")
+                .WhoseValue.Should().BeOfType<JsonElement>()
+                .Which.GetString().Should().Be("RR-002");
+        }
+
         public class ETagHeaders
             : EtagHeadersTests
         {
@@ -1541,6 +1606,35 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             content.Items.Should().Contain(m => m.Id.Value == user1);
             content.Items.Should().Contain(m => m.Id.Value == user2);
+        }
+
+        [Fact]
+        public async Task DisallowsUpdatingTooManyMembers()
+        {
+            const int COUNT = 120;
+
+            var users = new List<Guid>(COUNT);
+            for (var i = 0; i < COUNT; i++)
+            {
+                users.Add(GenerateUserId());
+            }
+
+            var def = await Repository.CreateAccessList(ORG_NR, "test1", "Test 1", "test 1 description");
+
+            using var client = CreateAuthenticatedClient();
+
+            using var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto(
+                users.Select(PartyReference.PartyUuid.Create).ToList()));
+
+            var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
+            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+            var error = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+            Assert.NotNull(error);
+
+            error.Extensions.Should().ContainKey("code")
+                .WhoseValue.Should().BeOfType<JsonElement>()
+                .Which.GetString().Should().Be("RR-002");
         }
 
         public class ETagHeaders
