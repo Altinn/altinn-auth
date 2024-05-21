@@ -258,25 +258,30 @@ namespace Altinn.ResourceRegistry.Core.Services
                     string nntext = string.Empty;
                     string entext = string.Empty;
 
+                    string nndelegationDescription = string.Empty;
+                    string endelegationDescription = string.Empty;
+
                     AvailableService service2068 = altinn2List2068.Find(r => r.ExternalServiceCode == service.ExternalServiceCode && r.ExternalServiceEditionCode == service.ExternalServiceEditionCode);
                     if (service2068 != null)
                     {
                         nntext = service2068.ServiceEditionVersionName;
+                        nndelegationDescription = service2068.DelegationDescription;
                     }
 
                     AvailableService service1033 = altinn2List1033.Find(r => r.ExternalServiceCode == service.ExternalServiceCode && r.ExternalServiceEditionCode == service.ExternalServiceEditionCode);
                     if (service1033 != null)
                     {
                         entext = service1033.ServiceEditionVersionName;
+                        endelegationDescription = service1033.DelegationDescription;
                     }
 
-                    serviceResources.Add(MapAltinn2ServiceToServiceResource(service, orgList, entext, nntext));
+                    serviceResources.Add(MapAltinn2ServiceToServiceResource(service, orgList, entext, nntext, endelegationDescription, nndelegationDescription));
                 }
 
                 return serviceResources;
             }
 
-            ServiceResource MapAltinn2ServiceToServiceResource(AvailableService availableService, OrgList orgList, string entext, string nntext)
+            ServiceResource MapAltinn2ServiceToServiceResource(AvailableService availableService, OrgList orgList, string entext, string nntext, string endelegationDescription, string nndelegationDescription)
             {
                 ServiceResource serviceResource = new ServiceResource();
                 serviceResource.ResourceType = Enums.ResourceType.Altinn2Service;
@@ -286,6 +291,29 @@ namespace Altinn.ResourceRegistry.Core.Services
                     { "en", entext },
                     { "nn", nntext }
                 };
+
+                if (!string.IsNullOrEmpty(availableService.DelegationDescription)
+                    || !string.IsNullOrEmpty(endelegationDescription)
+                    || !string.IsNullOrEmpty(nndelegationDescription))
+                {
+                    serviceResource.RightDescription = new Dictionary<string, string>();
+                }
+
+                if (!string.IsNullOrEmpty(availableService.DelegationDescription))
+                {
+                    serviceResource.RightDescription.Add("nb", availableService.DelegationDescription);
+                }
+
+                if (!string.IsNullOrEmpty(endelegationDescription))
+                {
+                    serviceResource.RightDescription.Add("en", endelegationDescription);
+                }
+
+                if (!string.IsNullOrEmpty(endelegationDescription))
+                {
+                    serviceResource.RightDescription.Add("nn", nndelegationDescription);
+                }
+
                 serviceResource.ResourceReferences = new List<ResourceReference>();
                 serviceResource.Identifier = $"{ResourceConstants.SERVICE_ENGINE_RESOURCE_PREFIX}{availableService.ExternalServiceCode}_{availableService.ExternalServiceEditionCode.ToString()}";
                 serviceResource.ResourceReferences.Add(new ResourceReference() { ReferenceType = Enums.ReferenceType.ServiceCode, Reference = availableService.ExternalServiceCode, ReferenceSource = Enums.ReferenceSource.Altinn2 });

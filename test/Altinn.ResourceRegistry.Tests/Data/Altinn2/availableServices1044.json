@@ -166,7 +166,7 @@
     "ValidFrom": "2021-02-11T12:41:53.733",
     "ValidTo": "2050-05-08T14:16:00",
     "ServiceType": 2,
-    "DelegationDescription": "Denne tjenesten er EKTJ tjeneste og betyr at man kan bare delegere rettigheter via enkeltrettigheter.\r\nKan ikke delegeres rettigheter via roller"
+    "DelegationDescription": "NB:Denne tjenesten er EKTJ tjeneste og betyr at man kan bare delegere rettigheter via enkeltrettigheter.\r\nKan ikke delegeres rettigheter via roller"
   },
   {
     "ServiceOwnerCode": "ACN",

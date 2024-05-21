@@ -104,6 +104,13 @@ namespace Altinn.ResourceRegistry.Tests
 
             Assert.NotNull(resource);
             Assert.Equal(439, resource.Count);
+
+            ServiceResource? altinn2resourcewithdescription = resource.FirstOrDefault(r => r.ResourceReferences != null && r.ResourceReferences.Any(r => r.Reference != null && r.Reference.Contains("5563")));
+            Assert.NotNull(altinn2resourcewithdescription);
+            Assert.NotNull(altinn2resourcewithdescription.RightDescription);
+            Assert.Equal("NB:Denne tjenesten er EKTJ tjeneste og betyr at man kan bare delegere rettigheter via enkeltrettigheter.\r\nKan ikke delegeres rettigheter via roller", altinn2resourcewithdescription.RightDescription["nb"]);
+            Assert.Equal("EN:Denne tjenesten er EKTJ tjeneste og betyr at man kan bare delegere rettigheter via enkeltrettigheter.\r\nKan ikke delegeres rettigheter via roller", altinn2resourcewithdescription.RightDescription["en"]);
+            Assert.Equal("NN:Denne tjenesten er EKTJ tjeneste og betyr at man kan bare delegere rettigheter via enkeltrettigheter.\r\nKan ikke delegeres rettigheter via roller", altinn2resourcewithdescription.RightDescription["nn"]);
         }
 
         [Fact]
