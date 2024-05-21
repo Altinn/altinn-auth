@@ -30,5 +30,8 @@ namespace Altinn.ResourceRegistry.Core.Enums
 
         [PgName("brokerservice")]
         BrokerService = 1 << 5,
+
+        [PgName("correspondenceservice")]
+        CorrespondenceService = 1 << 6,
     }
 }
