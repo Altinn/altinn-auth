@@ -1,6 +1,7 @@
 #nullable enable
 
 using System.Net;
+using Altinn.Authorization.ProblemDetails;
 using Altinn.ResourceRegistry.Auth;
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Constants;
@@ -8,7 +9,6 @@ using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Versioned;
 using Altinn.ResourceRegistry.Core.Register;
 using Altinn.ResourceRegistry.Errors;
-using Altinn.ResourceRegistry.Extensions;
 using Altinn.ResourceRegistry.JsonPatch;
 using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Models.ModelBinding;
@@ -80,14 +80,25 @@ public class AccessListsController
         [FromQuery(Name = "resource")] string? resourceIdentifier = null,
         CancellationToken cancellationToken = default)
     {
+        List<AltinnValidationError>? validationErrors = null;
+
         if (include.HasFlag(AccessListIncludes.Members))
         {
-            return AltinnProblemDetails.AccessList_IncludeMembers_NotImplemented().ToActionResult();
+            return Problems.AccessList_IncludeMembers_NotImplemented.ToActionResult();
         }
 
         if (include.HasFlag(AccessListIncludes.ResourceConnections) && string.IsNullOrWhiteSpace(resourceIdentifier))
         {
-            return AltinnProblemDetails.AccessList_IncludeResourceConnections_MissingResourceIdentifier().ToActionResult();
+            validationErrors ??= new();
+            validationErrors.Add(ValidationErrors.AccessList_IncludeResourceConnections_MissingResourceIdentifier.ToValidationError([
+                "/$QUERY/include",
+                "/$QUERY/resource",
+            ]));
+        }
+
+        if (validationErrors is { Count: > 0 })
+        {
+            return new AltinnValidationProblemDetails(validationErrors).ToActionResult();
         }
 
         var page = await _service.GetAccessListsByOwner(owner, Page.ContinueFrom(token?.Value), include, resourceIdentifier, cancellationToken);
@@ -283,7 +294,9 @@ public class AccessListsController
     {
         if (members.Count > 100)
         {
-            return AltinnProblemDetails.AccessList_UpdateMembers_TooMany().ToActionResult();
+            return new AltinnValidationProblemDetails([
+                ValidationErrors.AccessList_ReplaceMembers_TooMany.ToValidationError("/data"),
+            ]).ToActionResult();
         }
 
         var result = await _service.ReplaceAccessListMembers(
@@ -295,7 +308,7 @@ public class AccessListsController
 
         if (result.IsNotFound && result.NotFoundType == nameof(PartyReference))
         {
-            return AltinnProblemDetails.PartyReference_NotFound().ToActionResult();
+            return Problems.PartyReference_NotFound.ToActionResult();
         }
 
         return result.Select(
@@ -340,7 +353,9 @@ public class AccessListsController
     {
         if (members.Count > 100)
         {
-            return AltinnProblemDetails.AccessList_AddRemoveMembers_TooMany().ToActionResult();
+            return new AltinnValidationProblemDetails([
+                ValidationErrors.AccessList_AddRemoveMembers_TooMany.ToValidationError("/data"),
+            ]).ToActionResult();
         }
 
         var result = await _service.AddAccessListMembers(
@@ -352,7 +367,7 @@ public class AccessListsController
 
         if (result.IsNotFound && result.NotFoundType == nameof(PartyReference))
         {
-            return AltinnProblemDetails.PartyReference_NotFound().ToActionResult();
+            return Problems.PartyReference_NotFound.ToActionResult();
         }
 
         return result.Select(
@@ -397,7 +412,9 @@ public class AccessListsController
     {
         if (members.Count > 100)
         {
-            return AltinnProblemDetails.AccessList_AddRemoveMembers_TooMany().ToActionResult();
+            return new AltinnValidationProblemDetails([
+                ValidationErrors.AccessList_AddRemoveMembers_TooMany.ToValidationError("/data"),
+            ]).ToActionResult();
         }
 
         var result = await _service.RemoveAccessListMembers(
@@ -409,7 +426,7 @@ public class AccessListsController
 
         if (result.IsNotFound && result.NotFoundType == nameof(PartyReference))
         {
-            return AltinnProblemDetails.PartyReference_NotFound().ToActionResult();
+            return Problems.PartyReference_NotFound.ToActionResult();
         }
 
         return result.Select(

@@ -1268,7 +1268,18 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             error.Extensions.Should().ContainKey("code")
                 .WhoseValue.Should().BeOfType<JsonElement>()
-                .Which.GetString().Should().Be("RR-001");
+                .Which.GetString().Should().Be("STD-00000");
+
+            var validationErrors = error.Extensions.Should().ContainKey("validationErrors")
+                .WhoseValue.Should().BeOfType<JsonElement>().Which;
+
+            validationErrors.ValueKind.Should().Be(JsonValueKind.Array);
+            var validationError = validationErrors.EnumerateArray().Should().ContainSingle().Which;
+
+            validationError.ValueKind.Should().Be(JsonValueKind.Object);
+            validationError.TryGetProperty("code", out var code).Should().BeTrue();
+
+            code.GetString().Should().Be("RR.VLD-00000");
         }
 
         public class ETagHeaders
@@ -1453,7 +1464,18 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             error.Extensions.Should().ContainKey("code")
                 .WhoseValue.Should().BeOfType<JsonElement>()
-                .Which.GetString().Should().Be("RR-002");
+                .Which.GetString().Should().Be("STD-00000");
+
+            var validationErrors = error.Extensions.Should().ContainKey("validationErrors")
+                .WhoseValue.Should().BeOfType<JsonElement>().Which;
+
+            validationErrors.ValueKind.Should().Be(JsonValueKind.Array);
+            var validationError = validationErrors.EnumerateArray().Should().ContainSingle().Which;
+
+            validationError.ValueKind.Should().Be(JsonValueKind.Object);
+            validationError.TryGetProperty("code", out var code).Should().BeTrue();
+
+            code.GetString().Should().Be("RR.VLD-00001");
         }
 
         public class ETagHeaders
@@ -1634,7 +1656,18 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             error.Extensions.Should().ContainKey("code")
                 .WhoseValue.Should().BeOfType<JsonElement>()
-                .Which.GetString().Should().Be("RR-002");
+                .Which.GetString().Should().Be("STD-00000");
+
+            var validationErrors = error.Extensions.Should().ContainKey("validationErrors")
+                .WhoseValue.Should().BeOfType<JsonElement>().Which;
+
+            validationErrors.ValueKind.Should().Be(JsonValueKind.Array);
+            var validationError = validationErrors.EnumerateArray().Should().ContainSingle().Which;
+
+            validationError.ValueKind.Should().Be(JsonValueKind.Object);
+            validationError.TryGetProperty("code", out var code).Should().BeTrue();
+
+            code.GetString().Should().Be("RR.VLD-00001");
         }
 
         public class ETagHeaders
