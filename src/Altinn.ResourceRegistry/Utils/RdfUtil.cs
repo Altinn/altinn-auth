@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Altinn.ResourceRegistry.Core.Enums;
 using Altinn.ResourceRegistry.Core.Models;
 using VDS.RDF;
 using VDS.RDF.Writing;
@@ -31,6 +32,12 @@ namespace Altinn.ResourceRegistry.Utils
 
             foreach (ServiceResource serviceResource in serviceResources)
             {
+                if (!IncludeInExport(serviceResource))
+                {
+                    // Skip this element
+                    continue;
+                }
+
                 try
                 {
                     IUriNode serviceNode = g.CreateUriNode(UriFactory.Create("https://platform.altinn.no/resourceRegistry/" + serviceResource.Identifier));
@@ -106,6 +113,24 @@ namespace Altinn.ResourceRegistry.Utils
 
             // We can now retrieve the written RDF by using the ToString() method of the StringWriter
             return sw.ToString();
+        }
+
+        private static bool IncludeInExport(ServiceResource resource)
+        {
+            if (resource.ResourceType.Equals(ResourceType.MaskinportenSchema) || resource.ResourceType.Equals(ResourceType.Systemresource))
+            {
+                return false;
+            }
+             
+            if (resource.HasCompetentAuthority == null 
+                || string.IsNullOrWhiteSpace(resource.HasCompetentAuthority.Orgcode)
+                || resource.HasCompetentAuthority.Orgcode.Equals("ttd", StringComparison.OrdinalIgnoreCase)
+                || string.IsNullOrWhiteSpace(resource.HasCompetentAuthority.Organization))
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }
