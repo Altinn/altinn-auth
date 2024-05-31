@@ -1,5 +1,7 @@
 ﻿using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
+using Altinn.ResourceRegistry.Core.Extensions;
 using Altinn.ResourceRegistry.Core.Register;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -74,47 +76,133 @@ internal partial class RegisterClient
             return AsyncEnumerable.Empty<PartyIdentifiers>();
         }
 
-        var hasData = false;
-        var query = QueryString.Empty;
-        if (partyIds is not null)
+        var queryEnumerator = EnumerateRequests(partyIds, partyUuids, orgNos);
+        if (!queryEnumerator.MoveNext())
         {
-            var str = string.Join(',', partyIds);
-            if (str.Length > 0)
-            {
-                hasData = true;
-                query = query.Add("ids", str);
-            }
-        }
-
-        if (partyUuids is not null)
-        {
-            var str = string.Join(',', partyUuids);
-            if (str.Length > 0)
-            {
-                hasData = true;
-                query = query.Add("uuids", str);
-            }
-        }
-
-        if (orgNos is not null)
-        {
-            var str = string.Join(',', orgNos);
-            if (str.Length > 0)
-            {
-                hasData = true;
-                query = query.Add("orgs", str);
-            }
-        }
-
-        if (!hasData)
-        {
+            // No data to query for.
             return AsyncEnumerable.Empty<PartyIdentifiers>();
         }
 
-        Log.GettingPartyIdentifiers(_logger, query);
+        var result = MakeSingleRequest(queryEnumerator.Current, cancellationToken);
+        
+        while (queryEnumerator.MoveNext())
+        {
+            result = result.Merge(MakeSingleRequest(queryEnumerator.Current, cancellationToken));
+        }
 
-        return _client.GetFromJsonAsAsyncEnumerable<PartyIdentifiers>($"parties/identifiers{query}", JsonOptions, cancellationToken)
-            .Where(party => party is not null)!;
+        return result;
+
+        IAsyncEnumerable<PartyIdentifiers> MakeSingleRequest(QueryString query, CancellationToken token)
+        {
+            Log.GettingPartyIdentifiers(_logger, query);
+
+            return _client.GetFromJsonAsAsyncEnumerable<PartyIdentifiers>($"parties/identifiers{query}", JsonOptions, token)
+                .Where(party => party is not null)!;
+        }
+
+        static IEnumerator<QueryString> EnumerateRequests(
+            IEnumerable<int>? partyIds,
+            IEnumerable<Guid>? partyUuids,
+            IEnumerable<string>? orgNos)
+        {
+            const int MAX_PER_REQUEST = 50;
+
+            var query = QueryString.Empty;
+            var count = 0;
+            var builder = new StringBuilder((36 /* length of a guid */ + 1 /* comma */) * MAX_PER_REQUEST);
+
+            if (partyIds is not null)
+            {
+                builder.Clear();
+                foreach (var partyId in partyIds)
+                {
+                    if (builder.Length > 0)
+                    {
+                        builder.Append(',');
+                    }
+
+                    builder.Append(partyId);
+                    count++;
+
+                    if (count >= MAX_PER_REQUEST)
+                    {
+                        query = query.Add("ids", builder.ToString());
+                        yield return query;
+                        query = QueryString.Empty;
+                        count = 0;
+                        builder.Clear();
+                    }
+                }
+
+                if (builder.Length > 0)
+                {
+                    query = query.Add("ids", builder.ToString());
+                }
+            }
+
+            if (partyUuids is not null)
+            {
+                builder.Clear();
+                foreach (var partyUuid in partyUuids)
+                {
+                    if (builder.Length > 0)
+                    {
+                        builder.Append(',');
+                    }
+
+                    builder.Append(partyUuid);
+                    count++;
+
+                    if (count >= MAX_PER_REQUEST)
+                    {
+                        query = query.Add("uuids", builder.ToString());
+                        yield return query;
+                        query = QueryString.Empty;
+                        count = 0;
+                        builder.Clear();
+                    }
+                }
+
+                if (builder.Length > 0)
+                {
+                    query = query.Add("uuids", builder.ToString());
+                }
+            }
+
+            if (orgNos is not null)
+            {
+                builder.Clear();
+                foreach (var orgNo in orgNos)
+                {
+                    if (builder.Length > 0)
+                    {
+                        builder.Append(',');
+                    }
+
+                    builder.Append(orgNo);
+                    count++;
+
+                    if (count >= MAX_PER_REQUEST)
+                    {
+                        query = query.Add("orgs", builder.ToString());
+                        yield return query;
+                        query = QueryString.Empty;
+                        count = 0;
+                        builder.Clear();
+                    }
+                }
+
+                if (builder.Length > 0)
+                {
+                    query = query.Add("orgs", builder.ToString());
+                }
+            }
+
+            if (query.HasValue)
+            {
+                yield return query;
+            }
+        }
     }
 
     private static partial class Log

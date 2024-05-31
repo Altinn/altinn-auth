@@ -23,6 +23,8 @@ public static class ResourceRegistryIntegrationDependencyInjectionExtensions
             .ValidateOnStart();
 
         services.TryAddTransient<PlatformAccessTokenHandler>();
+
+        // TODO: Add a concurrency limiter to the client.
         services.AddHttpClient<IRegisterClient, RegisterClient>()
             .ConfigureHttpClient(static (s, client) =>
             {

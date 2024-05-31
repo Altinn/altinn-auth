@@ -19,6 +19,10 @@
   <ItemGroup>
     <ProjectReference Include="..\Altinn.ResourceRegistry.Core\Altinn.ResourceRegistry.Core.csproj" />
   </ItemGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="Altinn.ResourceRegistry.Tests"/>
+	</ItemGroup>
   
   <ItemGroup Condition="'$(Configuration)'=='Debug'">
      <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
@@ -44,3 +48,4 @@
   </PropertyGroup>
 
 </Project>
+ 
