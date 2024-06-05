@@ -58,7 +58,7 @@ ConfigureServices(builder.Services, builder.Configuration);
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardedHeaders = ForwardedHeaders.All;
 });
 
 builder.Services.AddControllers(opts =>
@@ -207,6 +207,22 @@ void Configure(IConfiguration config)
     }
 
     app.UseForwardedHeaders();
+
+    // TODO: Remove (or move to proper middleware) once URL generation is fixed
+    app.Use((ctx, next) =>
+    {
+        var loggerFactory = ctx.RequestServices.GetRequiredService<ILoggerFactory>();
+        var logger = loggerFactory.CreateLogger("RequestInfo");
+        logger.LogInformation(
+            "Request received: {method} {protocol} {host} {pathBase} {path}", 
+            ctx.Request.Method, 
+            ctx.Request.Protocol,
+            ctx.Request.Host,
+            ctx.Request.PathBase, 
+            ctx.Request.Path);
+
+        return next();
+    });
 
     ConfigurePostgreSql();
     
