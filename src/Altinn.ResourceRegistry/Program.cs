@@ -28,6 +28,7 @@ using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -54,6 +55,11 @@ ConfigureLogging(builder.Logging);
 
 // Add services to the container.
 ConfigureServices(builder.Services, builder.Configuration);
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+});
 
 builder.Services.AddControllers(opts =>
 {
@@ -199,6 +205,8 @@ void Configure(IConfiguration config)
     {
         app.UseExceptionHandler("/resourceregistry/api/v1/error");
     }
+
+    app.UseForwardedHeaders();
 
     ConfigurePostgreSql();
     
