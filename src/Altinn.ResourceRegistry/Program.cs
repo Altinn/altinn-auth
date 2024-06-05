@@ -214,6 +214,13 @@ void Configure(IConfiguration config)
     // TODO: Remove (or move to proper middleware) once URL generation is fixed
     app.Use((ctx, next) =>
     {
+        var path = ctx.Request.Path;
+        if (path.StartsWithSegments("/health", StringComparison.OrdinalIgnoreCase) 
+            || path.StartsWithSegments("/swagger", StringComparison.OrdinalIgnoreCase))
+        {
+            return next();
+        }
+
         var loggerFactory = ctx.RequestServices.GetRequiredService<ILoggerFactory>();
         var logger = loggerFactory.CreateLogger(REQUESTINFO_LOGGER_NAME);
         var options = ctx.RequestServices.GetRequiredService<IOptions<ForwardedHeadersOptions>>().Value;
