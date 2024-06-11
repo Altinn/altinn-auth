@@ -13,7 +13,7 @@ public interface IRegisterClient
     /// <param name="parties">The party references.</param>
     /// <param name="cancellationToken">Optional <see cref="CancellationToken"/>.</param>
     /// <returns>An async enumerable of <see cref="PartyIdentifiers"/>.</returns>
-    IAsyncEnumerable<PartyIdentifiers> GetPartyIdentifiers(IEnumerable<PartyReference> parties, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<PartyIdentifiers> GetPartyIdentifiers(IEnumerable<PartyUrn> parties, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get party identifiers for the given party uuids.

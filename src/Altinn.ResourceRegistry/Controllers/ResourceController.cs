@@ -1,5 +1,4 @@
 ﻿using Altinn.ResourceRegistry.Core.Constants;
-using Altinn.ResourceRegistry.Core.Enums;
 using Altinn.ResourceRegistry.Core.Extensions;
 using Altinn.ResourceRegistry.Core.Helpers;
 using Altinn.ResourceRegistry.Core.Models;
@@ -7,13 +6,10 @@ using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Extensions;
 using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Utils;
-using HtmlAgilityPack;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using Nerdbank.Streams;
-using VDS.RDF.Parsing.Events.RdfXml;
 
 namespace Altinn.ResourceRegistry.Controllers
 {
@@ -104,9 +100,9 @@ namespace Altinn.ResourceRegistry.Controllers
             }
 
             // Validate Resource
-            if (!ServiceResourceHelper.ValidateResource(serviceResource, out Dictionary<string,List<string>> message))
+            if (!ServiceResourceHelper.ValidateResource(serviceResource, out Dictionary<string, List<string>> message))
             {
-                foreach (KeyValuePair<string,List<string>> kvp in message)
+                foreach (KeyValuePair<string, List<string>> kvp in message)
                 {
                     foreach (string validationMessage in kvp.Value)
                     {
@@ -177,7 +173,7 @@ namespace Altinn.ResourceRegistry.Controllers
             {
                 return BadRequest("Id in path does not match ID in resource");
             }
-           
+
             if (!ModelState.IsValid)
             {
                 return ValidationProblem(ModelState);
@@ -347,7 +343,7 @@ namespace Altinn.ResourceRegistry.Controllers
             {
                 using var policyFileContent = await fileStream.ReadToSequenceAsync(cancellationToken);
                 bool successfullyStored = await _resourceRegistry.StorePolicy(resource, policyFileContent.AsReadOnlySequence, cancellationToken);
-               
+
                 if (successfullyStored)
                 {
                     return Created(id + "/policy", null);
@@ -401,8 +397,8 @@ namespace Altinn.ResourceRegistry.Controllers
         public async Task<List<ServiceResource>> Search([FromQuery] ResourceSearch search, CancellationToken cancellationToken)
         {
             return await _resourceRegistry.GetSearchResults(search, cancellationToken);
-        } 
-     }
+        }
+    }
 
     /// <summary>
     /// ToDo: move to a separate class

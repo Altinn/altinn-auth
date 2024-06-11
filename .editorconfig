@@ -12,3 +12,6 @@ dotnet_diagnostic.VSTHRD200.severity = none
 
 # SA1001: Commas should be spaced correctly
 dotnet_diagnostic.SA1001.severity = none
+
+# VSTHRD003: Avoid awaiting foreign Tasks
+dotnet_diagnostic.VSTHRD003.severity = none

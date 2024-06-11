@@ -1,5 +1,6 @@
 #nullable enable
 
+using Altinn.ResourceRegistry.Core.Errors;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Versioned;
 using Altinn.ResourceRegistry.Core.Register;
@@ -160,7 +161,7 @@ public interface IAccessListService
     Task<Conditional<VersionedPage<EnrichedAccessListMembership, Guid, ulong>, ulong>> ReplaceAccessListMembers(
         string owner,
         string identifier,
-        IReadOnlyList<PartyReference> parties,
+        IReadOnlyList<PartyUrn> parties,
         IVersionedEntityCondition<ulong>? condition = null,
         CancellationToken cancellationToken = default);
 
@@ -179,7 +180,7 @@ public interface IAccessListService
     Task<Conditional<VersionedPage<EnrichedAccessListMembership, Guid, ulong>, ulong>> AddAccessListMembers(
         string owner,
         string identifier,
-        IReadOnlyList<PartyReference> parties,
+        IReadOnlyList<PartyUrn> parties,
         IVersionedEntityCondition<ulong>? condition = null,
         CancellationToken cancellationToken = default);
 
@@ -198,7 +199,19 @@ public interface IAccessListService
     Task<Conditional<VersionedPage<EnrichedAccessListMembership, Guid, ulong>, ulong>> RemoveAccessListMembers(
         string owner,
         string identifier,
-        IReadOnlyList<PartyReference> parties,
+        IReadOnlyList<PartyUrn> parties,
         IVersionedEntityCondition<ulong>? condition = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the access list memberships for a party.
+    /// </summary>
+    /// <param name="partyUrns">The party urns.</param>
+    /// <param name="resourceUrns">The resource urns.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
+    /// <returns>All resource connections to access-lists for the given resource which the provided party is a member off.</returns>
+    Task<Result<IReadOnlyCollection<KeyValuePair<AccessListResourceConnection, AccessListMembership>>>> GetMembershipsForPartiesAndResources(
+        IEnumerable<PartyUrn>? partyUrns,
+        IEnumerable<ResourceUrn>? resourceUrns,
+        CancellationToken cancellationToken);
 }

@@ -113,6 +113,13 @@ internal partial class AccessListsRepository
     }
 
     /// <inheritdoc/>
+    public async Task<IReadOnlyCollection<KeyValuePair<AccessListResourceConnection, AccessListMembership>>> GetMembershipsForPartiesAndResources(
+        IReadOnlyCollection<Guid>? partyUuids,
+        IReadOnlyCollection<string>? resourceIdentifiers,
+        CancellationToken cancellationToken)
+        => await InTransaction(repo => repo.GetMembershipsForPartiesAndResources(partyUuids, resourceIdentifiers, cancellationToken), cancellationToken);
+
+    /// <inheritdoc/>
     public async Task<IAccessListAggregate?> LoadAccessList(Guid id, CancellationToken cancellationToken = default)
         => await Load(new AccessListIdentifier(id), cancellationToken);
 

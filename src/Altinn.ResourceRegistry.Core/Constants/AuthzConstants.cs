@@ -32,6 +32,11 @@ namespace Altinn.ResourceRegistry.Core.Constants
         public const string POLICY_ACCESS_LIST_READ = "AccessListRead";
 
         /// <summary>
+        /// Policy name for authorizing endpoints that require admin privileges.
+        /// </summary>
+        public const string POLICY_ADMIN = "Admin";
+
+        /// <summary>
         /// Scope for resourceregistry read access
         /// </summary>
         public const string SCOPE_RESOURCE_READ = "altinn:resourceregistry/resource.read";

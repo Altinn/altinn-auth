@@ -1,9 +1,12 @@
-﻿using Altinn.ResourceRegistry.TestUtils;
+﻿using Altinn.ResourceRegistry.Core.Register;
+using Altinn.ResourceRegistry.Tests.Mocks;
+using Altinn.ResourceRegistry.TestUtils;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using System;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -28,7 +31,10 @@ public abstract class WebApplicationTests
     private AsyncServiceScope _scope;
     private DbFixture.OwnedDb? _db;
 
+    private int _nextUserId = 1;
+
     protected IServiceProvider Services => _scope!.ServiceProvider;
+    protected NpgsqlDataSource DataSource => Services.GetRequiredService<NpgsqlDataSource>();
 
     protected HttpClient CreateClient()
         => _webApp!.CreateClient();
@@ -60,10 +66,34 @@ public abstract class WebApplicationTests
         _webApp = _webApplicationFixture.CreateServer(services =>
         {
             _db.ConfigureServices(services);
+            services.AddSingleton<MockRegisterClient>();
+            services.AddSingleton<IRegisterClient>(s => s.GetRequiredService<MockRegisterClient>());
             ConfigureServices(services);
         });
 
         _services = _webApp.Services;
         _scope = _services.CreateAsyncScope();
     }
+
+    #region Utils
+    protected async Task AddResource(string name)
+    {
+        await using var resourceCmd = DataSource.CreateCommand(/*strpsql*/"INSERT INTO resourceregistry.resources (identifier, created, serviceresourcejson) VALUES (@name, NOW(), @json);");
+        var nameParam = resourceCmd.Parameters.Add("name", NpgsqlTypes.NpgsqlDbType.Text);
+        var jsonParam = resourceCmd.Parameters.Add("json", NpgsqlTypes.NpgsqlDbType.Jsonb);
+        jsonParam.Value = "{}";
+
+        nameParam.Value = name;
+        await resourceCmd.ExecuteNonQueryAsync();
+    }
+
+    protected Guid GenerateUserId()
+    {
+        var id = Interlocked.Increment(ref _nextUserId) - 1;
+        var lastGuidPart = id.ToString("D12");
+        var guidString = $"00000000-0000-0000-0000-{lastGuidPart}";
+
+        return Guid.Parse(guidString);
+    }
+    #endregion
 }

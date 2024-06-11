@@ -7,7 +7,6 @@ using Altinn.ResourceRegistry.TestUtils;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -17,13 +16,9 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics.X86;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
-using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace Altinn.ResourceRegistry.Tests;
 
@@ -34,9 +29,6 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
     protected IAccessListsRepository Repository => Services.GetRequiredService<IAccessListsRepository>();
     protected AdvanceableTimeProvider TimeProvider => Services.GetRequiredService<AdvanceableTimeProvider>();
-    protected NpgsqlDataSource DataSource => Services.GetRequiredService<NpgsqlDataSource>();
-
-    private int _nextUserId = 1;
 
 
     private HttpClient CreateAuthenticatedClient()
@@ -47,14 +39,6 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         return client;
-    }
-
-    protected override void ConfigureServices(IServiceCollection services)
-    {
-
-        services.AddSingleton<IRegisterClient, MockRegisterClient>();
-
-        base.ConfigureServices(services);
     }
 
     #region GetAccessListsByOwner
@@ -1158,8 +1142,8 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             using var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto([
-                PartyReference.PartyUuid.Create(GenerateUserId()),
-                PartyReference.PartyUuid.Create(GenerateUserId()),
+                PartyUrn.PartyUuid.Create(GenerateUserId()),
+                PartyUrn.PartyUuid.Create(GenerateUserId()),
             ]));
             var response = await client.PutAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
             response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -1180,8 +1164,8 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             using var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto([
-                PartyReference.PartyUuid.Create(user3),
-                PartyReference.PartyUuid.Create(user4),
+                PartyUrn.PartyUuid.Create(user3),
+                PartyUrn.PartyUuid.Create(user4),
             ]));
             var response = await client.PutAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -1211,8 +1195,8 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             using var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto([
-                PartyReference.PartyUuid.Create(user3),
-                PartyReference.PartyUuid.Create(user4),
+                PartyUrn.PartyUuid.Create(user3),
+                PartyUrn.PartyUuid.Create(user4),
             ]));
             var response = await client.PutAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -1258,7 +1242,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             using var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto(
-                users.Select(PartyReference.PartyUuid.Create).ToList()));
+                users.Select(PartyUrn.PartyUuid.Create).ToList()));
 
             var response = await client.PutAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
             response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -1311,8 +1295,8 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             protected override HttpRequestMessage CreateRequest(AccessListInfo info)
             {
                 var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto([
-                    PartyReference.PartyUuid.Create(_user3),
-                    PartyReference.PartyUuid.Create(_user4),
+                    PartyUrn.PartyUuid.Create(_user3),
+                    PartyUrn.PartyUuid.Create(_user4),
                 ]));
 
                 return new(HttpMethod.Put, $"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members")
@@ -1348,8 +1332,8 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             using var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto([
-                PartyReference.PartyUuid.Create(GenerateUserId()),
-                PartyReference.PartyUuid.Create(GenerateUserId()),
+                PartyUrn.PartyUuid.Create(GenerateUserId()),
+                PartyUrn.PartyUuid.Create(GenerateUserId()),
             ]));
             var response = await client.PostAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
             response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -1370,8 +1354,8 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             using var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto([
-                PartyReference.PartyUuid.Create(user3),
-                PartyReference.PartyUuid.Create(user4),
+                PartyUrn.PartyUuid.Create(user3),
+                PartyUrn.PartyUuid.Create(user4),
             ]));
             var response = await client.PostAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -1403,8 +1387,8 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             using var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto([
-                PartyReference.PartyUuid.Create(user3),
-                PartyReference.PartyUuid.Create(user4),
+                PartyUrn.PartyUuid.Create(user3),
+                PartyUrn.PartyUuid.Create(user4),
             ]));
             var response = await client.PostAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -1454,7 +1438,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             using var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto(
-                users.Select(PartyReference.PartyUuid.Create).ToList()));
+                users.Select(PartyUrn.PartyUuid.Create).ToList()));
 
             var response = await client.PostAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
             response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -1507,8 +1491,8 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             protected override HttpRequestMessage CreateRequest(AccessListInfo info)
             {
                 var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto([
-                    PartyReference.PartyUuid.Create(_user3),
-                    PartyReference.PartyUuid.Create(_user4),
+                    PartyUrn.PartyUuid.Create(_user3),
+                    PartyUrn.PartyUuid.Create(_user4),
                 ]));
 
                 return new(HttpMethod.Post, $"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members")
@@ -1546,8 +1530,8 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             using var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto([
-                PartyReference.PartyUuid.Create(GenerateUserId()),
-                PartyReference.PartyUuid.Create(GenerateUserId()),
+                PartyUrn.PartyUuid.Create(GenerateUserId()),
+                PartyUrn.PartyUuid.Create(GenerateUserId()),
             ]));
             var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
             response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -1568,8 +1552,8 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             using var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto([
-                PartyReference.PartyUuid.Create(user3),
-                PartyReference.PartyUuid.Create(user4),
+                PartyUrn.PartyUuid.Create(user3),
+                PartyUrn.PartyUuid.Create(user4),
             ]));
             var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -1599,8 +1583,8 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             using var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto([
-                PartyReference.PartyUuid.Create(user3),
-                PartyReference.PartyUuid.Create(user4),
+                PartyUrn.PartyUuid.Create(user3),
+                PartyUrn.PartyUuid.Create(user4),
             ]));
             var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -1646,7 +1630,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             using var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto(
-                users.Select(PartyReference.PartyUuid.Create).ToList()));
+                users.Select(PartyUrn.PartyUuid.Create).ToList()));
 
             var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
             response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -1699,8 +1683,8 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             protected override HttpRequestMessage CreateRequest(AccessListInfo info)
             {
                 var body = JsonContent.Create(new UpsertAccessListPartyMembersListDto([
-                    PartyReference.PartyUuid.Create(_user3),
-                    PartyReference.PartyUuid.Create(_user4),
+                    PartyUrn.PartyUuid.Create(_user3),
+                    PartyUrn.PartyUuid.Create(_user4),
                 ]));
 
                 return new(HttpMethod.Delete, $"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members")
@@ -1764,7 +1748,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
         }
 
         [Fact]
-        public async Task CorrectScopeAndOwner_Returns_NotImplemented()
+        public async Task CorrectScopeAndOwner_Returns_Ok()
         {
             using var client = CreateClient();
 
@@ -1776,7 +1760,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
         }
 
         [Fact]
-        public async Task CorrectScopeAndAdmin_Returns_NotImplemented()
+        public async Task CorrectScopeAndAdmin_Returns_Ok()
         {
             using var client = CreateClient();
 
@@ -2012,136 +1996,6 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             var latest = await Repository.LookupInfo(info.ResourceOwner, info.Identifier);
             Assert.NotNull(latest);
             latest.Version.Should().Be(info.Version);
-        }
-    }
-    #endregion
-
-    #region Utils
-    private async Task AddResource(string name)
-    {
-        await using var resourceCmd = DataSource.CreateCommand(/*strpsql*/"INSERT INTO resourceregistry.resources (identifier, created, serviceresourcejson) VALUES (@name, NOW(), @json);");
-        var nameParam = resourceCmd.Parameters.Add("name", NpgsqlTypes.NpgsqlDbType.Text);
-        var jsonParam = resourceCmd.Parameters.Add("json", NpgsqlTypes.NpgsqlDbType.Jsonb);
-        jsonParam.Value = "{}";
-
-        nameParam.Value = name;
-        await resourceCmd.ExecuteNonQueryAsync();
-    }
-
-    protected Guid GenerateUserId()
-    {
-        var id = Interlocked.Increment(ref _nextUserId) - 1;
-        var lastGuidPart = id.ToString("D12");
-        var guidString = $"00000000-0000-0000-0000-{lastGuidPart}";
-
-        return Guid.Parse(guidString);
-    }
-
-    private class MockRegisterClient
-        : IRegisterClient
-    {
-        public IAsyncEnumerable<PartyIdentifiers> GetPartyIdentifiers(IEnumerable<PartyReference> parties, CancellationToken cancellationToken = default)
-        {
-            List<int>? partyIds = null;
-            List<Guid>? partyUuids = null;
-            List<string>? orgNos = null;
-
-            foreach (var party in parties)
-            {
-                switch (party)
-                {
-                    case PartyReference.PartyId partyId:
-                        partyIds ??= new List<int>();
-                        partyIds.Add(partyId.Value);
-                        break;
-
-                    case PartyReference.PartyUuid partyUuid:
-                        partyUuids ??= new List<Guid>();
-                        partyUuids.Add(partyUuid.Value);
-                        break;
-
-                    case PartyReference.OrganizationIdentifier orgNo:
-                        orgNos ??= new List<string>();
-                        orgNos.Add(orgNo.Value.ToString());
-                        break;
-                }
-            }
-
-            return GetPartyIdentifiers(partyIds, partyUuids, orgNos, cancellationToken);
-        }
-
-        public IAsyncEnumerable<PartyIdentifiers> GetPartyIdentifiers(IEnumerable<Guid> partyUuids, CancellationToken cancellationToken = default)
-        {
-            return GetPartyIdentifiers(partyIds: null, partyUuids, orgNos: null, cancellationToken);
-        }
-
-        private static async IAsyncEnumerable<PartyIdentifiers> GetPartyIdentifiers(
-            IEnumerable<int>? partyIds,
-            IEnumerable<Guid>? partyUuids,
-            IEnumerable<string>? orgNos,
-            [EnumeratorCancellation] CancellationToken cancellationToken = default)
-        {
-            await Task.Yield();
-
-            if (partyIds is { } ids)
-            {
-                foreach (var id in ids)
-                {
-                    yield return MakePartyIdentifiers(id);
-                }
-            }
-
-            if (partyUuids is { } uuids)
-            {
-                foreach (var uuid in uuids)
-                {
-                    yield return MakePartyIdentifiers(uuid);
-                }
-            }
-
-            if (orgNos is { } orgs)
-            {
-                foreach (var org in orgs)
-                {
-                    yield return MakePartyIdentifiers(org);
-                }
-            }
-        }
-
-        private static PartyIdentifiers MakePartyIdentifiers(int id)
-        {
-            var orgNo = id.ToString("D9");
-            var lastGuidPart = id.ToString("D12");
-            var guidString = $"00000000-0000-0000-0000-{lastGuidPart}";
-            var guid = Guid.Parse(guidString);
-
-            return new PartyIdentifiers
-            {
-                PartyId = id,
-                PartyUuid = guid,
-                OrgNumber = orgNo,
-            };
-        }
-
-        private static PartyIdentifiers MakePartyIdentifiers(Guid guid)
-        {
-            var lastGuidPart = guid.ToString().AsSpan()[^12..];
-            var id = int.Parse(lastGuidPart);
-            var orgNo = id.ToString("D9");
-
-            return new PartyIdentifiers
-            {
-                PartyId = id,
-                PartyUuid = guid,
-                OrgNumber = orgNo,
-            };
-        }
-
-        private static PartyIdentifiers MakePartyIdentifiers(string orgNo)
-        {
-            var id = int.Parse(orgNo);
-
-            return MakePartyIdentifiers(id);
         }
     }
     #endregion

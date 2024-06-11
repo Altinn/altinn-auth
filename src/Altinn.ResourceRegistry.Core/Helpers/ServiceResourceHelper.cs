@@ -8,9 +8,13 @@ namespace Altinn.ResourceRegistry.Core.Helpers
     /// <summary>
     /// ServiceResource helper methods
     /// </summary>
-    public static class ServiceResourceHelper
+    public static partial class ServiceResourceHelper
     {
-        private static readonly Regex ResourceIdentifierRegex = new Regex("^[a-z0-9_-]{4,}$", RegexOptions.Compiled);
+        /// <summary>
+        /// Resource identifier regex.
+        /// </summary>
+        [GeneratedRegex("^[a-z0-9_-]{4,}$")]
+        internal static partial Regex ResourceIdentifierRegex();
 
         /// <summary>
         /// Gets resources from the resourcelist that fits the search criteria
@@ -65,7 +69,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
                 isValid = false;
             }
 
-            if (!ResourceIdentifierRegex.IsMatch(serviceResource.Identifier))
+            if (!ResourceIdentifierRegex().IsMatch(serviceResource.Identifier))
             {
                 AddValidationMessage(validationMessages, "Identifier", "Invalid id. Only a-z and 0-9 is allowed together with _ and -.  Minimum 4 characters");
                 isValid = false;

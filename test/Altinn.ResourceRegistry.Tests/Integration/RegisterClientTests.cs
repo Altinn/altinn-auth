@@ -41,7 +41,7 @@ public class RegisterClientTests
     [Fact]
     public async Task RequestingNoParties_DoesNotSendRequest()
     {
-        var result = await _client.GetPartyIdentifiers(Array.Empty<PartyReference>()).ToListAsync();
+        var result = await _client.GetPartyIdentifiers(Array.Empty<PartyUrn>()).ToListAsync();
 
         Assert.NotNull(result);
         result.Should().BeEmpty();
@@ -52,7 +52,7 @@ public class RegisterClientTests
     public async Task RequestingLessThan50_SendsOneRequest()
     {
         var parties = Enumerable.Range(1, 10)
-            .Select(i => PartyReference.PartyId.Create(GetNextPartyId()))
+            .Select(i => PartyUrn.PartyId.Create(GetNextPartyId()))
             .ToArray();
 
         var result = await _client.GetPartyIdentifiers(parties).ToListAsync();
@@ -66,7 +66,7 @@ public class RegisterClientTests
     public async Task RequestingMoreThan50_SendsMultipleRequests()
     {
         var parties = Enumerable.Range(1, 120)
-            .Select(i => PartyReference.PartyId.Create(GetNextPartyId()))
+            .Select(i => PartyUrn.PartyId.Create(GetNextPartyId()))
             .ToArray();
 
         var result = await _client.GetPartyIdentifiers(parties).ToListAsync();
@@ -79,21 +79,21 @@ public class RegisterClientTests
     [Fact]
     public async Task QueryParametersAreSplitCorrectly()
     {
-        var parties = new List<PartyReference>(60 * 3);
+        var parties = new List<PartyUrn>(60 * 3);
 
         for (var i = 0; i < 60; i++)
         {
-            parties.Add(PartyReference.PartyId.Create(GetNextPartyId()));
+            parties.Add(PartyUrn.PartyId.Create(GetNextPartyId()));
         }
 
         for (var i = 0; i < 60; i++)
         {
-            parties.Add(PartyReference.PartyUuid.Create(GetNextPartyUuid()));
+            parties.Add(PartyUrn.PartyUuid.Create(GetNextPartyUuid()));
         }
 
         for (var i = 0; i < 60; i++)
         {
-            parties.Add(PartyReference.OrganizationIdentifier.Create(GetNextOrganizationNumber()));
+            parties.Add(PartyUrn.OrganizationIdentifier.Create(GetNextOrganizationNumber()));
         }
 
         var result = await _client.GetPartyIdentifiers(parties).ToListAsync();
@@ -127,8 +127,8 @@ public class RegisterClientTests
         private ImmutableList<RequestStats> _requests
             = ImmutableList<RequestStats>.Empty;
         //private int _numRequests = 0;
-        private ImmutableList<PartyReference> _requestedParties
-            = ImmutableList<PartyReference>.Empty;
+        private ImmutableList<PartyUrn> _requestedParties
+            = ImmutableList<PartyUrn>.Empty;
 
         public int NumRequests => Requests.Count;
 
@@ -143,7 +143,7 @@ public class RegisterClientTests
             query.Count.Should().NotBe(0);
 
             var parties = new List<PartyIdentifiers>();
-            var requested = new List<PartyReference>();
+            var requested = new List<PartyUrn>();
 
             var idCount = 0;
             var uuidCount = 0;
@@ -155,7 +155,7 @@ public class RegisterClientTests
                 {
                     var id = int.Parse(idString, NumberStyles.None);
                     parties.Add(FromId(id));
-                    requested.Add(PartyReference.PartyId.Create(id));
+                    requested.Add(PartyUrn.PartyId.Create(id));
                     idCount++;
                 }
             }
@@ -166,7 +166,7 @@ public class RegisterClientTests
                 {
                     var uuid = Guid.Parse(uuidString);
                     parties.Add(FromUuid(uuid));
-                    requested.Add(PartyReference.PartyUuid.Create(uuid));
+                    requested.Add(PartyUrn.PartyUuid.Create(uuid));
                     uuidCount++;
                 }
             }
@@ -177,7 +177,7 @@ public class RegisterClientTests
                 {
                     var orgNo = orgNoString;
                     parties.Add(FromOrgNo(orgNo));
-                    requested.Add(PartyReference.OrganizationIdentifier.Create(OrganizationNumber.Parse(orgNo)));
+                    requested.Add(PartyUrn.OrganizationIdentifier.Create(OrganizationNumber.Parse(orgNo)));
                     orgNoCount++;
                 }
             }

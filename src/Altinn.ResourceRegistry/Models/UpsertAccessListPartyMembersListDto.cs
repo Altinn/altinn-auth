@@ -17,19 +17,19 @@ namespace Altinn.ResourceRegistry.Models;
 [JsonConverter(typeof(Converter))]
 [SwaggerSchemaFilter(typeof(SchemaFilter))]
 public class UpsertAccessListPartyMembersListDto(
-    IReadOnlyList<PartyReference> items)
-    : IReadOnlyList<PartyReference>
+    IReadOnlyList<PartyUrn> items)
+    : IReadOnlyList<PartyUrn>
 {
-    private readonly IReadOnlyList<PartyReference> _items = items;
+    private readonly IReadOnlyList<PartyUrn> _items = items;
 
     /// <inheritdoc/>
-    public PartyReference this[int index] => _items[index];
+    public PartyUrn this[int index] => _items[index];
 
     /// <inheritdoc/>
     public int Count => _items.Count;
 
     /// <inheritdoc/>
-    public IEnumerator<PartyReference> GetEnumerator()
+    public IEnumerator<PartyUrn> GetEnumerator()
     {
         return _items.GetEnumerator();
     }
@@ -60,7 +60,7 @@ public class UpsertAccessListPartyMembersListDto(
                 throw new JsonException("Expected array");
             }
 
-            var items = JsonSerializer.Deserialize<List<PartyReference>>(ref reader, options);
+            var items = JsonSerializer.Deserialize<List<PartyUrn>>(ref reader, options);
             if (items is null)
             {
                 throw new JsonException("Expected array");
@@ -90,7 +90,7 @@ public class UpsertAccessListPartyMembersListDto(
         {
             schema.Type = "object";
             schema.Properties.Clear();
-            schema.Properties.Add("data", context.SchemaGenerator.GenerateSchema(typeof(List<PartyReference>), context.SchemaRepository));
+            schema.Properties.Add("data", context.SchemaGenerator.GenerateSchema(typeof(List<PartyUrn>), context.SchemaRepository));
             schema.Required.Clear();
             schema.Required.Add("data");
         }

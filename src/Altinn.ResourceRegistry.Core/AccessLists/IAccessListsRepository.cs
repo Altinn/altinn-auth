@@ -162,4 +162,16 @@ public interface IAccessListsRepository
         string name,
         string description,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the access list memberships for a party.
+    /// </summary>
+    /// <param name="partyUuids">The party uuids.</param>
+    /// <param name="resourceIdentifiers">The resource identifiers.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
+    /// <returns>All resource connections to access-lists for the given resource which the provided party is a member off.</returns>
+    Task<IReadOnlyCollection<KeyValuePair<AccessListResourceConnection, AccessListMembership>>> GetMembershipsForPartiesAndResources(
+        IReadOnlyCollection<Guid>? partyUuids,
+        IReadOnlyCollection<string>? resourceIdentifiers,
+        CancellationToken cancellationToken);
 }

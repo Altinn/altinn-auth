@@ -86,6 +86,26 @@ builder.Services.AddSwaggerGen(c =>
     c.SupportNonNullableReferenceTypes();
     c.OperationFilter<ConditionalOperationFilter>();
     c.SchemaFilter<AccessListIncludesSchemaFilter>();
+
+    var originalIdSelector = c.SchemaGeneratorOptions.SchemaIdSelector;
+    c.SchemaGeneratorOptions.SchemaIdSelector = (Type t) => 
+    {
+        if (!t.IsNested)
+        {
+            return originalIdSelector(t);
+        }
+
+        var chain = new List<string>();
+        do
+        {
+            chain.Add(originalIdSelector(t));
+            t = t.DeclaringType;
+        }
+        while (t != null);
+
+        chain.Reverse();
+        return string.Join(".", chain);
+    };
 });
 
 var app = builder.Build();
@@ -187,6 +207,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         options.AddPolicy(AuthzConstants.POLICY_ACCESS_LIST_WRITE, policy => policy
             .RequireScopeAnyOf(AuthzConstants.SCOPE_RESOURCE_ADMIN, AuthzConstants.SCOPE_ACCESS_LIST_WRITE)
             .RequireUserOwnsResource());
+        options.AddPolicy(AuthzConstants.POLICY_ADMIN, policy => policy
+            .RequireScopeAnyOf(AuthzConstants.SCOPE_RESOURCE_ADMIN));
     });
     services.AddResourceRegistryAuthorizationHandlers();
 }

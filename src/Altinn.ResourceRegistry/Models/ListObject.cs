@@ -15,6 +15,15 @@ namespace Altinn.ResourceRegistry.Models;
 public abstract record ListObject
 {
     /// <summary>
+    /// Creates a new <see cref="ListObject{T}"/> from a list of items.
+    /// </summary>
+    /// <typeparam name="T">The list type.</typeparam>
+    /// <param name="items">The list of items.</param>
+    /// <returns>A <see cref="ListObject{T}"/>.</returns>
+    public static ListObject<T> Create<T>(IEnumerable<T> items)
+        => new(items);
+
+    /// <summary>
     /// Default schema filter for <see cref="ListObject"/>.
     /// </summary>
     protected class SchemaFilter : ISchemaFilter

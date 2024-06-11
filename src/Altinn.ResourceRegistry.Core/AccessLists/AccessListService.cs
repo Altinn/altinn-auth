@@ -3,6 +3,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Altinn.ResourceRegistry.Core.Errors;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Versioned;
 using Altinn.ResourceRegistry.Core.Register;
@@ -170,7 +171,7 @@ internal class AccessListService
                 return aggregate!.AsAccessListInfo();
             }
         }
-        
+
         // If we had an existing list - we need to validate it against the condition.
         if (condition is not null)
         {
@@ -280,12 +281,12 @@ internal class AccessListService
             case true when !connection.Actions!.SetEquals(actions):
                 var toRemove = connection.Actions.Except(actions).ToImmutableArray();
                 var toAdd = actions.Except(connection.Actions).ToImmutableArray();
-            
+
                 if (toRemove.Length > 0)
                 {
                     aggregate.RemoveResourceConnectionActions(resourceIdentifier, toRemove);
                 }
-            
+
                 if (toAdd.Length > 0)
                 {
                     aggregate.AddResourceConnectionActions(resourceIdentifier, toAdd);
@@ -299,7 +300,7 @@ internal class AccessListService
         }
 
         await aggregate.SaveChanges(cancellationToken);
-        
+
         if (!aggregate.TryGetResourceConnections(resourceIdentifier, out connection))
         {
             throw new UnreachableException("The resource connection should exist at this point");
@@ -404,7 +405,7 @@ internal class AccessListService
     public async Task<Conditional<VersionedPage<EnrichedAccessListMembership, Guid, ulong>, ulong>> ReplaceAccessListMembers(
         string owner,
         string identifier,
-        IReadOnlyList<PartyReference> parties,
+        IReadOnlyList<PartyUrn> parties,
         IVersionedEntityCondition<ulong>? condition = null,
         CancellationToken cancellationToken = default)
     {
@@ -436,7 +437,7 @@ internal class AccessListService
         {
             if (partyIds is null)
             {
-                return Conditional.NotFound(nameof(PartyReference));
+                return Conditional.NotFound(nameof(PartyUrn));
             }
 
             membersBuilder.Add(partyIds.PartyUuid);
@@ -465,7 +466,7 @@ internal class AccessListService
     public async Task<Conditional<VersionedPage<EnrichedAccessListMembership, Guid, ulong>, ulong>> AddAccessListMembers(
         string owner,
         string identifier,
-        IReadOnlyList<PartyReference> parties,
+        IReadOnlyList<PartyUrn> parties,
         IVersionedEntityCondition<ulong>? condition = null,
         CancellationToken cancellationToken = default)
     {
@@ -497,7 +498,7 @@ internal class AccessListService
         {
             if (partyIds is null)
             {
-                return Conditional.NotFound(nameof(PartyReference));
+                return Conditional.NotFound(nameof(PartyUrn));
             }
 
             if (!aggregate.Members.Contains(partyIds.PartyUuid))
@@ -520,7 +521,7 @@ internal class AccessListService
     public async Task<Conditional<VersionedPage<EnrichedAccessListMembership, Guid, ulong>, ulong>> RemoveAccessListMembers(
         string owner,
         string identifier,
-        IReadOnlyList<PartyReference> parties,
+        IReadOnlyList<PartyUrn> parties,
         IVersionedEntityCondition<ulong>? condition = null,
         CancellationToken cancellationToken = default)
     {
@@ -552,7 +553,7 @@ internal class AccessListService
         {
             if (partyIds is null)
             {
-                return Conditional.NotFound(nameof(PartyReference));
+                return Conditional.NotFound(nameof(PartyUrn));
             }
 
             if (aggregate.Members.Contains(partyIds.PartyUuid))
@@ -571,8 +572,100 @@ internal class AccessListService
         return await GetAccessListMembers(owner, identifier, Page.DefaultRequest(), null, cancellationToken);
     }
 
+    /// <inheritdoc/>
+    public async Task<Result<IReadOnlyCollection<KeyValuePair<AccessListResourceConnection, AccessListMembership>>>> GetMembershipsForPartiesAndResources(
+        IEnumerable<PartyUrn>? partyUrns,
+        IEnumerable<ResourceUrn>? resourceUrns,
+        CancellationToken cancellationToken)
+    {
+        var partyUuids = partyUrns is null ? null : await ResolvePartyUuids(partyUrns, cancellationToken);
+        var resourceIdentifiers = resourceUrns is null ? null : ResolveResourceIdentifiers(resourceUrns);
+
+        if (partyUuids is not null && partyUuids.Contains(Guid.Empty))
+        {
+            return Problems.PartyReference_NotFound;
+        }
+
+        if (resourceIdentifiers is not null && resourceIdentifiers.Contains(null))
+        {
+            return Problems.ResourceReference_NotFound;
+        }
+
+        var memberships = await _repository.GetMembershipsForPartiesAndResources(partyUuids, resourceIdentifiers!, cancellationToken);
+        return new(memberships);
+    }
+
+    /// <remarks>
+    /// <list type="bullet">
+    ///   <item>Does not preserve order.</item>
+    ///   <item>Includes <see langword="null"/> if a resource could not be resolved.</item>
+    /// </list>
+    /// </remarks>
+    private static HashSet<string?> ResolveResourceIdentifiers(IEnumerable<ResourceUrn> resourceUrns)
+    {
+        HashSet<string?> ids = resourceUrns is IReadOnlyCollection<PartyUrn> c
+            ? new(c.Count)
+            : new();
+
+        foreach (var urn in resourceUrns)
+        {
+            ids.Add(urn switch
+            {
+                ResourceUrn.ResourceId resourceId => resourceId.Value.ToString(),
+                _ => null,
+            });
+        }
+
+        return ids;
+    }
+
+    /// <remarks>
+    /// <list type="bullet">
+    ///   <item>Does not preserve order.</item>
+    ///   <item>Includes <see cref="Guid.Empty"/> if a party could not be resolved.</item>
+    /// </list>
+    /// </remarks>
+    private ValueTask<IReadOnlySet<Guid>> ResolvePartyUuids(IEnumerable<PartyUrn> partyUrns, CancellationToken cancellationToken)
+    {
+        HashSet<Guid> uuids = partyUrns is IReadOnlyCollection<PartyUrn> c
+            ? new(c.Count)
+            : new();
+
+        List<PartyUrn>? needsLookup = null;
+
+        foreach (var urn in partyUrns)
+        {
+            if (urn is PartyUrn.PartyUuid partyUuid)
+            {
+                uuids.Add(partyUuid.Value);
+            }
+            else
+            {
+                needsLookup ??= [];
+                needsLookup.Add(urn);
+            }
+        }
+
+        if (needsLookup is null)
+        {
+            return new(uuids);
+        }
+
+        return new(LookupRemaining(uuids, needsLookup, cancellationToken));
+
+        async Task<IReadOnlySet<Guid>> LookupRemaining(HashSet<Guid> uuids, List<PartyUrn> needsLookup, CancellationToken cancellationToken)
+        {
+            await foreach (var identifiers in ResolvePartyIdentifiers(needsLookup, cancellationToken))
+            {
+                uuids.Add(identifiers?.PartyUuid ?? Guid.Empty);
+            }
+
+            return uuids;
+        }
+    }
+
     private async IAsyncEnumerable<PartyIdentifiers?> ResolvePartyIdentifiers(
-        IReadOnlyList<PartyReference> parties, 
+        IReadOnlyList<PartyUrn> parties,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         if (parties.Count == 0)
@@ -586,9 +679,9 @@ internal class AccessListService
         {
             var match = partyRef switch
             {
-                PartyReference.PartyId partyId => identifiers.Find(v => v.PartyId == partyId.Value),
-                PartyReference.PartyUuid partyUuid => identifiers.Find(v => v.PartyUuid == partyUuid.Value),
-                PartyReference.OrganizationIdentifier orgNo => identifiers.Find(v => v.OrgNumber == orgNo.Value.ToString()),
+                PartyUrn.PartyId partyId => identifiers.Find(v => v.PartyId == partyId.Value),
+                PartyUrn.PartyUuid partyUuid => identifiers.Find(v => v.PartyUuid == partyUuid.Value),
+                PartyUrn.OrganizationIdentifier orgNo => identifiers.Find(v => v.OrgNumber == orgNo.Value.ToString()),
                 _ => null
             };
 

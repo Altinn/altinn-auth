@@ -9,7 +9,7 @@ namespace Altinn.ResourceRegistry.Core.Register;
 /// A unique reference to a party in the form of an URN.
 /// </summary>
 [KeyValueUrn]
-public abstract partial record PartyReference
+public abstract partial record PartyUrn
 {
     /// <summary>
     /// Try to get the urn as a party id.

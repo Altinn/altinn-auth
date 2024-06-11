@@ -5,17 +5,17 @@ using Altinn.Authorization.ProblemDetails;
 using Altinn.ResourceRegistry.Auth;
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Constants;
+using Altinn.ResourceRegistry.Core.Errors;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Versioned;
 using Altinn.ResourceRegistry.Core.Register;
-using Altinn.ResourceRegistry.Errors;
+using Altinn.ResourceRegistry.Filters;
 using Altinn.ResourceRegistry.JsonPatch;
 using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Models.ModelBinding;
 using Altinn.ResourceRegistry.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Altinn.ResourceRegistry.Controllers;
@@ -53,7 +53,6 @@ public class AccessListsController
     /// <summary>
     /// Constructs a new <see cref="AccessListsController"/>.
     /// </summary>
-    /// <param name="service">A <see cref="IAccessListService"/></param>
     public AccessListsController(IAccessListService service)
     {
         _service = service;
@@ -306,7 +305,7 @@ public class AccessListsController
             conditions.Select(v => v.Version),
             cancellationToken);
 
-        if (result.IsNotFound && result.NotFoundType == nameof(PartyReference))
+        if (result.IsNotFound && result.NotFoundType == nameof(PartyUrn))
         {
             return Problems.PartyReference_NotFound.ToActionResult();
         }
@@ -365,7 +364,7 @@ public class AccessListsController
             conditions.Select(v => v.Version),
             cancellationToken);
 
-        if (result.IsNotFound && result.NotFoundType == nameof(PartyReference))
+        if (result.IsNotFound && result.NotFoundType == nameof(PartyUrn))
         {
             return Problems.PartyReference_NotFound.ToActionResult();
         }
@@ -424,7 +423,7 @@ public class AccessListsController
             conditions.Select(v => v.Version),
             cancellationToken);
 
-        if (result.IsNotFound && result.NotFoundType == nameof(PartyReference))
+        if (result.IsNotFound && result.NotFoundType == nameof(PartyUrn))
         {
             return Problems.PartyReference_NotFound.ToActionResult();
         }
@@ -563,18 +562,6 @@ public class AccessListsController
         }
 
         return result.Select(AccessListResourceConnectionWithVersionDto.From, AggregateVersion.From);
-    }
-
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
-    private sealed class NotImplementedFilterAttribute : Attribute, IExceptionFilter
-    {
-        public void OnException(ExceptionContext context)
-        {
-            if (context.Exception is NotImplementedException)
-            {
-                context.Result = new StatusCodeResult((int)HttpStatusCode.NotImplemented);
-            }
-        }
     }
 
     /// <summary>

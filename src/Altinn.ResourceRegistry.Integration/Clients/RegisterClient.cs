@@ -29,7 +29,7 @@ internal partial class RegisterClient
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<PartyIdentifiers> GetPartyIdentifiers(IEnumerable<PartyReference> parties, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<PartyIdentifiers> GetPartyIdentifiers(IEnumerable<PartyUrn> parties, CancellationToken cancellationToken = default)
     {
         List<int>? partyIds = null;
         List<Guid>? partyUuids = null;
@@ -39,17 +39,17 @@ internal partial class RegisterClient
         {
             switch (party)
             {
-                case PartyReference.PartyId partyId:
+                case PartyUrn.PartyId partyId:
                     partyIds ??= new List<int>();
                     partyIds.Add(partyId.Value);
                     break;
 
-                case PartyReference.PartyUuid partyUuid:
+                case PartyUrn.PartyUuid partyUuid:
                     partyUuids ??= new List<Guid>();
                     partyUuids.Add(partyUuid.Value);
                     break;
 
-                case PartyReference.OrganizationIdentifier orgNo:
+                case PartyUrn.OrganizationIdentifier orgNo:
                     orgNos ??= new List<string>();
                     orgNos.Add(orgNo.Value.ToString());
                     break;
