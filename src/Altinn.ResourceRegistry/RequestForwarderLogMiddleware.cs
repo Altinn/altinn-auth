@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Diagnostics;
+﻿using System.Net;
+using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 
@@ -61,6 +62,8 @@ internal partial class RequestForwarderLogMiddleware
         var forwardedHost = context.Request.Headers[options.ForwardedHostHeaderName];
         var forwardedProto = context.Request.Headers[options.ForwardedProtoHeaderName];
         var forwardedPrefix = context.Request.Headers[options.ForwardedPrefixHeaderName];
+        var knownNetworks = options.KnownNetworks.Select(n => $"{n.Prefix}/{n.PrefixLength}");
+        var knownProxies = options.KnownProxies;
 
         Log.RequestReceived(
             _logger,
@@ -69,6 +72,8 @@ internal partial class RequestForwarderLogMiddleware
             context.Request.Host,
             context.Request.PathBase,
             context.Request.Path,
+            knownNetworks,
+            knownProxies,
             forwardedFor,
             forwardedHost,
             forwardedProto,
@@ -82,6 +87,8 @@ internal partial class RequestForwarderLogMiddleware
             LogLevel.Information,
             """
             {name} request info: {proto}://{host} {pathBase} {path}
+            Known networks: {knownNetworks}
+            Known proxies: {knownProxies}
             Forwarded-For: {forwardedForHeader}
             Forwarded-Host: {forwardedHostHeader}
             Forwarded-Proto: {forwardedProtoHeader}
@@ -94,6 +101,8 @@ internal partial class RequestForwarderLogMiddleware
             HostString host,
             string pathBase,
             string path,
+            IEnumerable<string> knownNetworks,
+            IEnumerable<IPAddress> knownProxies,
             StringValues forwardedForHeader,
             StringValues forwardedHostHeader,
             StringValues forwardedProtoHeader,
