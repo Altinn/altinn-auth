@@ -15,7 +15,7 @@ namespace Altinn.ResourceRegistry.Core.Errors;
 public class Result<T>
 {
     private readonly T? _value;
-    private readonly ProblemDescriptor? _problem;
+    private readonly ProblemInstance? _problem;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Result{T}"/> class.
@@ -31,7 +31,7 @@ public class Result<T>
     /// Initializes a new instance of the <see cref="Result{T}"/> class.
     /// </summary>
     /// <param name="problem">The problem descriptor.</param>
-    public Result(ProblemDescriptor problem)
+    public Result(ProblemInstance problem)
     {
         Guard.IsNotNull(problem);
 
@@ -44,7 +44,7 @@ public class Result<T>
     /// </summary>
     /// <param name="problem"><see cref="ProblemDescriptor"/> if the current result is a problem, otherwise <see langword="null"/>.</param>
     /// <returns><see langword="true"/> if the current result is a problem, otherwise <see langword="false"/>.</returns>
-    public bool IsProblem([NotNullWhen(true)] out ProblemDescriptor? problem)
+    public bool IsProblem([NotNullWhen(true)] out ProblemInstance? problem)
     {
         problem = _problem;
         return problem is not null;
@@ -83,6 +83,13 @@ public class Result<T>
     /// <param name="value">The successful value.</param>
     public static implicit operator Result<T>(T value) 
         => new Result<T>(value);
+
+    /// <summary>
+    /// Implicitly converts a problem to a result.
+    /// </summary>
+    /// <param name="problem">The problem descriptor.</param>
+    public static implicit operator Result<T>(ProblemInstance problem)
+        => new Result<T>(problem);
 
     /// <summary>
     /// Implicitly converts a problem to a result.

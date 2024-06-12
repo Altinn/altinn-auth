@@ -1,6 +1,5 @@
 #nullable enable
 
-using System.Net;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.ResourceRegistry.Auth;
 using Altinn.ResourceRegistry.Core.AccessLists;
@@ -79,7 +78,7 @@ public class AccessListsController
         [FromQuery(Name = "resource")] string? resourceIdentifier = null,
         CancellationToken cancellationToken = default)
     {
-        List<AltinnValidationError>? validationErrors = null;
+        ValidationErrorBuilder errors = default;
 
         if (include.HasFlag(AccessListIncludes.Members))
         {
@@ -88,16 +87,15 @@ public class AccessListsController
 
         if (include.HasFlag(AccessListIncludes.ResourceConnections) && string.IsNullOrWhiteSpace(resourceIdentifier))
         {
-            validationErrors ??= new();
-            validationErrors.Add(ValidationErrors.AccessList_IncludeResourceConnections_MissingResourceIdentifier.ToValidationError([
+            errors.Add(ValidationErrors.AccessList_IncludeResourceConnections_MissingResourceIdentifier, [
                 "/$QUERY/include",
                 "/$QUERY/resource",
-            ]));
+            ]);
         }
 
-        if (validationErrors is { Count: > 0 })
+        if (errors.TryToActionResult(out var errorResult))
         {
-            return new AltinnValidationProblemDetails(validationErrors).ToActionResult();
+            return errorResult;
         }
 
         var page = await _service.GetAccessListsByOwner(owner, Page.ContinueFrom(token?.Value), include, resourceIdentifier, cancellationToken);

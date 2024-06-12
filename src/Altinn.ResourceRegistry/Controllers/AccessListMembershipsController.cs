@@ -59,7 +59,7 @@ public class AccessListMembershipsController
     {
         List<PartyUrn>? parties = null;
         List<ResourceUrn>? resources = null;
-        List<AltinnValidationError>? errors = null;
+        ValidationErrorBuilder errors = default;
 
         if (partiesQuery is { Count: > 0 } pq)
         {
@@ -67,8 +67,7 @@ public class AccessListMembershipsController
             {
                 if (!PartyUrn.TryParse(p, out var party))
                 {
-                    errors ??= [];
-                    errors.Add(ValidationErrors.InvalidPartyUrn.ToValidationError("/$QUERY/party", [KeyValuePair.Create("value", (object?)p)]));
+                    errors.Add(ValidationErrors.InvalidPartyUrn, "/$QUERY/party", [KeyValuePair.Create("value", p)]);
                     continue;
                 }
 
@@ -83,8 +82,7 @@ public class AccessListMembershipsController
             {
                 if (!ResourceUrn.TryParse(r, out var resource))
                 {
-                    errors ??= [];
-                    errors.Add(ValidationErrors.InvalidResourceUrn.ToValidationError("/$QUERY/resource", [KeyValuePair.Create("value", (object?)r)]));
+                    errors.Add(ValidationErrors.InvalidResourceUrn, "/$QUERY/resource", [KeyValuePair.Create("value", r)]);
                     continue;
                 }
 
@@ -95,25 +93,21 @@ public class AccessListMembershipsController
 
         if (parties is not { Count: > 0 })
         {
-            errors ??= [];
-            errors.Add(ValidationErrors.AccessListMemberships_Requires_Party.ToValidationError("/$QUERY/party"));
+            errors.Add(ValidationErrors.AccessListMemberships_Requires_Party, "/$QUERY/party");
         }
         else if (parties.Count > 1)
         {
-            errors ??= [];
-            errors.Add(ValidationErrors.AccessListMemberships_TooManyParties.ToValidationError("/$QUERY/party"));
+            errors.Add(ValidationErrors.AccessListMemberships_TooManyParties, "/$QUERY/party");
         }
 
         if (resources is { Count: > 1 })
         {
-            errors ??= [];
-            errors.Add(ValidationErrors.AccessListMemberships_TooManyResources.ToValidationError("/$QUERY/resource"));
+            errors.Add(ValidationErrors.AccessListMemberships_TooManyResources, "/$QUERY/resource");
         }
 
-        if (errors is { Count: > 0 })
+        if (errors.TryToActionResult(out var errorResult))
         {
-            var problem = new AltinnValidationProblemDetails(errors);
-            return problem.ToActionResult();
+            return errorResult;
         }
 
         var result = await _service.GetMembershipsForPartiesAndResources(
