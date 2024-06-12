@@ -386,6 +386,7 @@ void ConfigureLogging(ILoggingBuilder logging)
 
         // Include request info logs in Application Insights
         logging.AddFilter<Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider>(typeof(RequestForwarderLogMiddleware).FullName, LogLevel.Information);
+        logging.AddFilter<Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider>(typeof(ForwardedHeadersMiddleware).FullName, LogLevel.Trace);
     }
     else
     {
