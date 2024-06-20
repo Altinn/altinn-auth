@@ -17,7 +17,7 @@
     <PackageReference Include="Altinn.Platform.Storage.Interface" Version="3.25.0" />
     <PackageReference Include="Altinn.Swashbuckle.Abstractions" Version="1.1.0" />
     <PackageReference Include="Altinn.Urn" Version="2.3.1" />
-    <PackageReference Include="Azure.Identity" Version="1.11.3" />
+    <PackageReference Include="Azure.Identity" Version="1.11.4" />
     <PackageReference Include="Azure.Security.KeyVault.Certificates" Version="4.6.0" />
     <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.6.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.20.0" />
