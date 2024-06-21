@@ -1,23 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Net;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 using Altinn.ResourceRegistry.Tests.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Altinn.ResourceRegistry.Controllers;
 using Altinn.ResourceRegistry.Core.Enums;
 using Altinn.ResourceRegistry.Core.Models;
-using Xunit;
-using Microsoft.Extensions.DependencyInjection;
 using Altinn.ResourceRegistry.Models;
 using System.Net.Http.Json;
-using System.Linq;
 
 namespace Altinn.ResourceRegistry.Tests
 {

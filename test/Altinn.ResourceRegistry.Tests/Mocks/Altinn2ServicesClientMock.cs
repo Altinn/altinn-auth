@@ -3,16 +3,6 @@ using Altinn.Authorization.ABAC.Xacml;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Altinn2;
 using Altinn.ResourceRegistry.Core.Services;
-using Castle.Components.DictionaryAdapter.Xml;
-using FluentAssertions.Common;
-using Microsoft.VisualStudio.TestPlatform.PlatformAbstractions.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace Altinn.ResourceRegistry.Tests.Mocks

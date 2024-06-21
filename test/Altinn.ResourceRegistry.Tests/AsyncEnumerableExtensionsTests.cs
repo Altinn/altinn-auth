@@ -1,12 +1,6 @@
 ﻿#nullable enable
 
 using Altinn.ResourceRegistry.Core.Extensions;
-using System.Collections.Generic;
-using System.Linq;
-using System;
-using System.Threading.Tasks;
-using System.Threading;
-using Xunit;
 using Altinn.ResourceRegistry.TestUtils;
 
 namespace Altinn.ResourceRegistry.Tests;

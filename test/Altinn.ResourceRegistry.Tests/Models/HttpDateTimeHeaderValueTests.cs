@@ -1,7 +1,4 @@
 ﻿using Altinn.ResourceRegistry.Core.Models;
-using FluentAssertions;
-using System;
-using Xunit;
 
 namespace Altinn.ResourceRegistry.Tests.Models;
 

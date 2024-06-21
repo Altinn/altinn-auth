@@ -1,8 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Net;
 using Altinn.ResourceRegistry.Core;
 using Azure;
 using Azure.Storage.Blobs.Models;

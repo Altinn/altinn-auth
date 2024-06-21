@@ -1,5 +1,3 @@
-using System;
-
 using AltinnCore.Authentication.JwtCookie;
 
 using Microsoft.AspNetCore.Authentication.Cookies;

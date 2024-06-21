@@ -1,6 +1,4 @@
-﻿using System.Net.Http;
-
-using Altinn.Common.Authentication.Configuration;
+﻿using Altinn.Common.Authentication.Configuration;
 using Altinn.ResourceRegistry.Controllers;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Tests.Mocks;

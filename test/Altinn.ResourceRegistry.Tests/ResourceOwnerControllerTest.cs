@@ -1,9 +1,6 @@
 using Altinn.ResourceRegistry.Controllers;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Tests.Utils;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace Altinn.ResourceRegistry.Tests
 {

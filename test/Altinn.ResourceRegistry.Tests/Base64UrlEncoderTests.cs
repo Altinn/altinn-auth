@@ -1,10 +1,7 @@
 ﻿#nullable enable
 
 using Altinn.ResourceRegistry.Utils;
-using FluentAssertions;
-using System;
 using System.Buffers;
-using Xunit;
 
 namespace Altinn.ResourceRegistry.Tests;
 

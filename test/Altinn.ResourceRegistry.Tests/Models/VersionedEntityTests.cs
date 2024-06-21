@@ -2,9 +2,6 @@
 
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Versioned;
-using FluentAssertions;
-using System;
-using Xunit;
 
 namespace Altinn.ResourceRegistry.Tests.Models;
 

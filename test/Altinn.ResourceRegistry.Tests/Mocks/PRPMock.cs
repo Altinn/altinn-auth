@@ -1,6 +1,4 @@
-﻿using System.IO;
-using System.Threading.Tasks;
-using Altinn.ResourceRegistry.Core;
+﻿using Altinn.ResourceRegistry.Core;
 
 namespace Altinn.ResourceRegistry.Tests.Mocks
 {

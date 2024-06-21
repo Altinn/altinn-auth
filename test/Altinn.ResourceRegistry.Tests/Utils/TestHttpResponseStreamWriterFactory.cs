@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.WebUtilities;
-using System.IO;
 using System.Text;
 
 namespace Altinn.ResourceRegistry.Tests.Utils;

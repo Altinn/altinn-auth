@@ -4,10 +4,7 @@ using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Versioned;
 using Altinn.ResourceRegistry.Models;
 using CommunityToolkit.Diagnostics;
-using FluentAssertions;
-using System;
 using System.Collections.Immutable;
-using Xunit;
 
 namespace Altinn.ResourceRegistry.Tests.Models;
 

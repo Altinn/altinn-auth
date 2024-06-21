@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Security.Claims;
 using Altinn.ResourceRegistry.Tests.Mocks;
 using AltinnCore.Authentication.Constants;

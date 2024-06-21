@@ -5,19 +5,11 @@ using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Tests.Utils;
 using Altinn.ResourceRegistry.TestUtils;
 using Microsoft.Extensions.DependencyInjection;
-using Npgsql;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace Altinn.ResourceRegistry.Tests;
 
@@ -28,7 +20,6 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
 
     protected IResourceRegistryRepository Repository => Services.GetRequiredService<IResourceRegistryRepository>();
     protected AdvanceableTimeProvider TimeProvider => Services.GetRequiredService<AdvanceableTimeProvider>();
-    protected NpgsqlDataSource DataSource => Services.GetRequiredService<NpgsqlDataSource>();
 
 
     private HttpClient CreateAuthenticatedClient()

@@ -2,7 +2,6 @@
 
 using Altinn.ResourceRegistry.JsonPatch;
 using System.Text.Json;
-using Xunit;
 
 namespace Altinn.ResourceRegistry.Tests.JsonPatch;
 

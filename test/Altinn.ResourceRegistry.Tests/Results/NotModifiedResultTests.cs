@@ -4,12 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
-using Xunit;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Mvc.Abstractions;
-using FluentAssertions;
-using System;
 using Altinn.ResourceRegistry.Core.Models;
 
 namespace Altinn.ResourceRegistry.Tests.Results;

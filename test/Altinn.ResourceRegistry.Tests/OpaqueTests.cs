@@ -1,9 +1,7 @@
 ﻿#nullable enable
 
 using Altinn.ResourceRegistry.Models;
-using FluentAssertions;
 using System.Text.Json;
-using Xunit;
 
 namespace Altinn.ResourceRegistry.Tests;
 

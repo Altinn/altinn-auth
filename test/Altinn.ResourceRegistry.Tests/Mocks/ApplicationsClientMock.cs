@@ -1,13 +1,5 @@
 ﻿using Altinn.Platform.Storage.Interface.Models;
-using Altinn.ResourceRegistry.Core.Models.Altinn2;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Altinn.ResourceRegistry.Tests.Mocks
 {

@@ -1,10 +1,6 @@
 ﻿#nullable enable
 
 using Altinn.ResourceRegistry.Extensions;
-using FluentAssertions;
-using System;
-using System.Collections.Generic;
-using Xunit;
 
 namespace Altinn.ResourceRegistry.Tests;
 

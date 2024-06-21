@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Runtime.CompilerServices;
 using Altinn.ResourceRegistry.Core.Register;
 
 namespace Altinn.ResourceRegistry.Tests.Mocks;

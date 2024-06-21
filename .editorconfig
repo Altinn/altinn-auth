@@ -4,8 +4,10 @@ root = true
 # For all files
 [*]
 insert_final_newline = true
+tab_width = 2
 
 [*.cs]
+tab_width = 4
 
 # VSTHRD200: Use "Async" suffix for async methods
 dotnet_diagnostic.VSTHRD200.severity = none
@@ -15,3 +17,9 @@ dotnet_diagnostic.SA1001.severity = none
 
 # VSTHRD003: Avoid awaiting foreign Tasks
 dotnet_diagnostic.VSTHRD003.severity = none
+
+# FAA0002: Replace Xunit assertion with Fluent Assertions equivalent
+dotnet_diagnostic.FAA0002.severity = none
+
+# FAA0001: Simplify Assertion
+dotnet_diagnostic.FAA0001.severity = none

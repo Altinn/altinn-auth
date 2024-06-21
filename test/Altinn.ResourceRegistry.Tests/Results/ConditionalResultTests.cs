@@ -2,13 +2,9 @@
 using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Results;
 using Altinn.ResourceRegistry.Tests.Utils;
-using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Net;
 using System.Net.Http.Json;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace Altinn.ResourceRegistry.Tests.Results;
 

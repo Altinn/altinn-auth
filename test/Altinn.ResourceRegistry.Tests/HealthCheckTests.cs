@@ -1,10 +1,6 @@
 using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Altinn.ResourceRegistry.Controllers;
-using Microsoft.AspNetCore.TestHost;
 using Altinn.ResourceRegistry.Tests.Utils;
-using Xunit;
 
 namespace Altinn.ResourceRegistry.Tests
 {

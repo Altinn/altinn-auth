@@ -3,12 +3,9 @@
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Models.ModelBinding;
 using Altinn.ResourceRegistry.Tests.Utils;
-using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace Altinn.ResourceRegistry.Tests.ModelBinding;
 

@@ -8,13 +8,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Options;
 using Altinn.ResourceRegistry.Tests.Utils;
-using System.Threading.Tasks;
 using Altinn.ResourceRegistry.Results;
 using Microsoft.AspNetCore.Mvc.Formatters;
-using FluentAssertions;
-using Xunit;
 using Altinn.ResourceRegistry.Core.Models;
-using System;
 
 namespace Altinn.ResourceRegistry.Tests.Results;
 
