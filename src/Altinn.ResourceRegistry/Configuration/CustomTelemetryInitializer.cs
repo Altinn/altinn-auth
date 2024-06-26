@@ -17,6 +17,8 @@ namespace Altinn.ResourceRegistry.Configuration
             {
                 telemetry.Context.Cloud.RoleName = "resource-registry";
             }
+
+            Console.WriteLine($"Cloud.RoleName: {telemetry.Context.Cloud.RoleName}");
         }
     }
 }
