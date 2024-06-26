@@ -49,9 +49,27 @@ string applicationInsightsConnectionString = string.Empty;
 
 var builder = WebApplication.CreateBuilder(args);
 ConfigureSetupLogging();
-builder.AddAltinnServiceDefaults("resource-registry");
 
 await SetConfigurationProviders(builder.Configuration);
+
+if (!string.IsNullOrEmpty(applicationInsightsConnectionString))
+{
+    // NOTE: due to a bug in application insights, this must be registered before anything else
+    // See https://github.com/microsoft/ApplicationInsights-dotnet/issues/2879
+    builder.Services.AddSingleton(typeof(ITelemetryChannel), new ServerTelemetryChannel() { StorageFolder = "/tmp/logtelemetry" });
+    builder.Services.AddApplicationInsightsTelemetry(new ApplicationInsightsServiceOptions
+    {
+        ConnectionString = applicationInsightsConnectionString
+    });
+
+    builder.Services.AddApplicationInsightsTelemetryProcessor<HealthTelemetryFilter>();
+    builder.Services.AddApplicationInsightsTelemetryProcessor<IdentityTelemetryFilter>();
+    builder.Services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>();
+
+    logger.LogInformation("Startup // ApplicationInsightsConnectionString = {applicationInsightsConnectionString}", applicationInsightsConnectionString);
+}
+
+builder.AddAltinnServiceDefaults("resource-registry");
 
 ConfigureLogging(builder.Logging);
 
@@ -162,21 +180,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
                 options.RequireHttpsMetadata = false;
             }
         });
-
-    if (!string.IsNullOrEmpty(applicationInsightsConnectionString))
-    {
-        services.AddSingleton(typeof(ITelemetryChannel), new ServerTelemetryChannel() { StorageFolder = "/tmp/logtelemetry" });
-        services.AddApplicationInsightsTelemetry(new ApplicationInsightsServiceOptions
-        {
-            ConnectionString = applicationInsightsConnectionString
-        });
-
-        services.AddApplicationInsightsTelemetryProcessor<HealthTelemetryFilter>();
-        services.AddApplicationInsightsTelemetryProcessor<IdentityTelemetryFilter>();
-        services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>();
-
-        logger.LogInformation("Startup // ApplicationInsightsConnectionString = {applicationInsightsConnectionString}", applicationInsightsConnectionString);
-    }
 
     services.AddSwaggerGen(options =>
     {
