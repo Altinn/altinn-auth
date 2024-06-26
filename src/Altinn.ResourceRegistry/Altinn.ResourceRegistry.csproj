@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <PackageReference Include="Altinn.Authorization.ProblemDetails" />
+    <PackageReference Include="Altinn.Authorization.ServiceDefaults" />
     <PackageReference Include="Altinn.Common.AccessToken" />
     <PackageReference Include="Altinn.Common.PEP" />
     <PackageReference Include="Altinn.Urn.Swashbuckle" />
@@ -25,10 +26,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Altinn.ResourceRegistry.Core\Altinn.ResourceRegistry.Core.csproj" />
-    <ProjectReference
-      Include="..\Altinn.ResourceRegistry.Integration\Altinn.ResourceRegistry.Integration.csproj" />
-    <ProjectReference
-      Include="..\Altinn.ResourceRegistry.Persistence\Altinn.ResourceRegistry.Persistence.csproj" />
+    <ProjectReference Include="..\Altinn.ResourceRegistry.Integration\Altinn.ResourceRegistry.Integration.csproj" />
+    <ProjectReference Include="..\Altinn.ResourceRegistry.Persistence\Altinn.ResourceRegistry.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup>
