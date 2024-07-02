@@ -52,7 +52,7 @@ public class AccessListMembershipsController
     /// <returns>A list-object of access-list memberships that include <paramref name="partiesQuery"/> and <paramref name="resourcesQuery"/>.</returns>
     [HttpGet("")]
     [Authorize(Policy = AuthzConstants.POLICY_ADMIN)]
-    public async Task<ActionResult<ListObject<AccessListResourceMembershipDto>>> GetMembershipsForResourceForParty(
+    public async Task<ActionResult<ListObject<AccessListResourceMembershipWithActionFilterDto>>> GetMembershipsForResourceForParty(
         [FromQuery(Name = "party")] List<string?>? partiesQuery = null,
         [FromQuery(Name = "resource")] List<string?>? resourcesQuery = null,
         CancellationToken cancellationToken = default)
@@ -120,6 +120,6 @@ public class AccessListMembershipsController
             return problemResult.ToActionResult();
         }
 
-        return ListObject.Create(result.Value.Select(AccessListResourceMembershipDto.From));
+        return ListObject.Create(result.Value.Select(AccessListResourceMembershipWithActionFilterDto.From));
     }
 }

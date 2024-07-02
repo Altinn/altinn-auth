@@ -12,14 +12,14 @@ namespace Altinn.ResourceRegistry.Models;
 /// </summary>
 public record AccessListResourceConnectionWithVersionDto(
     string ResourceIdentifier,
-    IReadOnlyCollection<string>? Actions,
+    IReadOnlyCollection<string>? ActionFilters,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     [property: JsonIgnore]
     HttpDateTimeHeaderValue VersionModifiedAt,
     [property: JsonIgnore]
     AggregateVersion VersionTag)
-    : AccessListResourceConnectionDto(ResourceIdentifier, Actions, CreatedAt, UpdatedAt)
+    : AccessListResourceConnectionDto(ResourceIdentifier, ActionFilters, CreatedAt, UpdatedAt)
     , IConvertibleFrom<AccessListResourceConnectionWithVersionDto, AccessListData<AccessListResourceConnection>>
     , ITaggedEntity<AggregateVersion>
 {

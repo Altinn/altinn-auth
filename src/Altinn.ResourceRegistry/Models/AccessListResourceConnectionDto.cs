@@ -13,18 +13,24 @@ namespace Altinn.ResourceRegistry.Models;
 /// Model for creating an access list resource connection.
 /// </summary>
 /// <param name="ResourceIdentifier">The resource identifier.</param>
-/// <param name="Actions">The allowed actions.</param>
+/// <param name="ActionFilters">The allowed actions.</param>
 /// <param name="CreatedAt">When the connection was created.</param>
 /// <param name="UpdatedAt">When the connection was last updated.</param>
 [SwaggerSchemaFilter(typeof(SchemaFilter))]
 public record AccessListResourceConnectionDto(
     string ResourceIdentifier,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    IReadOnlyCollection<string>? Actions,
+    IReadOnlyCollection<string>? ActionFilters,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt)
     : IConvertibleFrom<AccessListResourceConnectionDto, AccessListResourceConnection>
 {
+    /// <summary>
+    /// Gets the allowed actions or <see langword="null"/> if all actions are allowed.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyCollection<string>? ActionFilters { get; } 
+        = ActionFilters is null or { Count: 0 } ? null : ActionFilters;
+
     /// <inheritdoc/>
     public static AccessListResourceConnectionDto From(AccessListResourceConnection connection)
         => new(

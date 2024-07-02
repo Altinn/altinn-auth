@@ -521,7 +521,7 @@ public class AccessListsController
             owner,
             identifier,
             resourceIdentifier,
-            model.Actions,
+            model.ActionFilters ?? [],
             conditions.Select(v => v.Version),
             cancellationToken);
 
@@ -539,7 +539,7 @@ public class AccessListsController
     /// <param name="resourceIdentifier">The resource identifier</param>
     /// <param name="conditions">Request conditions</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-    /// <returns>The newly removed <see cref="AccessListResourceConnectionDto"/>, if it existed, otherwize returns no content</returns>
+    /// <returns>The newly removed <see cref="AccessListResourceConnectionDto"/>, if it existed, otherwise returns no content</returns>
     [HttpDelete("{identifier:required}/resource-connections/{resourceIdentifier:required}")]
     [SwaggerOperation(Tags = ["Access List Resource Connections"])]
     [SwaggerResponse(StatusCodes.Status200OK, description: "The resource connection was removed", type: typeof(ConditionalResult<AccessListResourceConnectionWithVersionDto, AggregateVersion>))]

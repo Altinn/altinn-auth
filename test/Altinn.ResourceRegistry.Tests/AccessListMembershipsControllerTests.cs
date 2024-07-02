@@ -151,6 +151,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
     public async Task By_Party_Returns_Multiple_Memberships_To_Same_Resource()
     {
         const string RESOURCE1 = "resource1";
+        const string ACTION_READ = "read";
 
         await AddResource(RESOURCE1);
         var resource = ResourceUrn.ResourceId.Create(ResourceIdentifier.CreateUnchecked(RESOURCE1));
@@ -173,7 +174,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
             name: "Access List 2",
             description: "description2");
 
-        list2.AddResourceConnection(RESOURCE1, []);
+        list2.AddResourceConnection(RESOURCE1, [ACTION_READ]);
         list2.AddMembers([user1.Value]);
         await list2.SaveChanges();
 
@@ -182,7 +183,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
         var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/memberships?party={user1}");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var memberships = await response.Content.ReadFromJsonAsync<ListObject<AccessListResourceMembershipDto>>();
+        var memberships = await response.Content.ReadFromJsonAsync<ListObject<AccessListResourceMembershipWithActionFilterDto>>();
         Assert.NotNull(memberships);
 
         memberships.Items.Should().HaveCount(2);
@@ -191,6 +192,9 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
             m.Party.Should().Be(user1);
             m.Resource.Should().Be(resource);
         });
+        memberships.Items.Should().ContainSingle(m => m.ActionFilters == null);
+        memberships.Items.Should().ContainSingle(m => m.ActionFilters != null)
+            .Which.ActionFilters.Should().BeEquivalentTo([ACTION_READ]);
     }
 
     [Fact]

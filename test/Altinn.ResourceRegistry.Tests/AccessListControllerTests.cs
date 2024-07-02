@@ -130,7 +130,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 content.Items.Should().HaveCount(1);
                 content.Items.Should().Contain(al => al.Identifier == "test1")
                     .Which.ResourceConnections.Should().HaveCount(1)
-                    .And.AllSatisfy(rc => rc.Actions.Should().BeNull())
+                    .And.AllSatisfy(rc => rc.ActionFilters.Should().BeNull())
                     .And.Contain(rc => rc.ResourceIdentifier == RESOURCE1_NAME);
             }
 
@@ -143,7 +143,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 content.Items.Should().HaveCount(1);
                 content.Items.Should().Contain(al => al.Identifier == "test1")
                     .Which.ResourceConnections.Should().HaveCount(1)
-                    .And.AllSatisfy(rc => rc.Actions.Should().BeNull())
+                    .And.AllSatisfy(rc => rc.ActionFilters.Should().BeNull())
                     .And.Contain(rc => rc.ResourceIdentifier == RESOURCE2_NAME);
             }
 
@@ -156,9 +156,8 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 content.Items.Should().HaveCount(1);
                 content.Items.Should().Contain(al => al.Identifier == "test1")
                     .Which.ResourceConnections.Should().HaveCount(1)
-                    .And.AllSatisfy(rc => rc.Actions.Should().NotBeNull())
                     .And.Contain(rc => rc.ResourceIdentifier == RESOURCE1_NAME)
-                    .Which.Actions.Should().BeEmpty();
+                    .Which.ActionFilters.Should().BeNull();
             }
 
             {
@@ -170,9 +169,8 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 content.Items.Should().HaveCount(1);
                 content.Items.Should().Contain(al => al.Identifier == "test1")
                     .Which.ResourceConnections.Should().HaveCount(1)
-                    .And.AllSatisfy(rc => rc.Actions.Should().NotBeNull())
                     .And.Contain(rc => rc.ResourceIdentifier == RESOURCE2_NAME)
-                    .Which.Actions.Should().BeEquivalentTo([ACTION_READ]);
+                    .Which.ActionFilters.Should().BeEquivalentTo([ACTION_READ]);
             }
 
             {
@@ -646,7 +644,14 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             foreach (var item in content.Items)
             {
                 var resource = resources[item.ResourceIdentifier];
-                item.Actions.Should().BeEquivalentTo(resource.Actions);
+                if (resource.Actions.Length == 0)
+                {
+                    item.ActionFilters.Should().BeNull();
+                }
+                else
+                {
+                    item.ActionFilters.Should().BeEquivalentTo(resource.Actions);
+                }
             }
 
             using var nextPageResponse = await client.GetAsync(content.Links.Next);
@@ -661,7 +666,14 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             foreach (var item in nextPageContent.Items)
             {
                 var resource = resources[item.ResourceIdentifier];
-                item.Actions.Should().BeEquivalentTo(resource.Actions);
+                if (resource.Actions.Length == 0)
+                {
+                    item.ActionFilters.Should().BeNull();
+                }
+                else
+                {
+                    item.ActionFilters.Should().BeEquivalentTo(resource.Actions);
+                }
             }
 
             using var lastPageResponse = await client.GetAsync(nextPageContent.Links.Next);
@@ -676,7 +688,14 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             foreach (var item in lastPageContent.Items)
             {
                 var resource = resources[item.ResourceIdentifier];
-                item.Actions.Should().BeEquivalentTo(resource.Actions);
+                if (resource.Actions.Length == 0)
+                {
+                    item.ActionFilters.Should().BeNull();
+                }
+                else
+                {
+                    item.ActionFilters.Should().BeEquivalentTo(resource.Actions);
+                }
             }
         }
 
@@ -764,16 +783,16 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 content.Items.Should().HaveCount(4);
 
                 content.Items.Should().Contain(rc => rc.ResourceIdentifier == "empty")
-                    .Which.Actions.Should().BeEmpty();
+                    .Which.ActionFilters.Should().BeNull();
 
                 content.Items.Should().Contain(rc => rc.ResourceIdentifier == "read")
-                    .Which.Actions.Should().BeEquivalentTo(["read"]);
+                    .Which.ActionFilters.Should().BeEquivalentTo(["read"]);
 
                 content.Items.Should().Contain(rc => rc.ResourceIdentifier == "write")
-                    .Which.Actions.Should().BeEquivalentTo(["write"]);
+                    .Which.ActionFilters.Should().BeEquivalentTo(["write"]);
 
                 content.Items.Should().Contain(rc => rc.ResourceIdentifier == "readwrite")
-                    .Which.Actions.Should().BeEquivalentTo(["read", "write"]);
+                    .Which.ActionFilters.Should().BeEquivalentTo(["read", "write"]);
             }
         }
     }
@@ -792,7 +811,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             using var client = CreateAuthenticatedClient();
 
-            var dto = new UpsertAccessListResourceConnectionDto(Actions: ["read", "write"]);
+            var dto = new UpsertAccessListResourceConnectionDto(ActionFilters: ["read", "write"]);
             var response = await client.PutAsJsonAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{def.Identifier}/resource-connections/test1", dto);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -800,7 +819,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             Assert.NotNull(body);
 
             body.ResourceIdentifier.Should().Be("test1");
-            body.Actions.Should().BeEquivalentTo(["read", "write"]);
+            body.ActionFilters.Should().BeEquivalentTo(["read", "write"]);
 
             response.Headers.ETag.Should().NotBeNull();
             response.Content.Headers.LastModified.Should().NotBeNull();
@@ -822,7 +841,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             using var client = CreateAuthenticatedClient();
 
-            var dto = new UpsertAccessListResourceConnectionDto(Actions: ["write"]);
+            var dto = new UpsertAccessListResourceConnectionDto(ActionFilters: ["write"]);
             var response = await client.PutAsJsonAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{def.Identifier}/resource-connections/test1", dto);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -830,7 +849,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             Assert.NotNull(body);
 
             body.ResourceIdentifier.Should().Be("test1");
-            body.Actions.Should().BeEquivalentTo(["write"]);
+            body.ActionFilters.Should().BeEquivalentTo(["write"]);
 
             response.Headers.ETag.Should().NotBeNull();
             response.Content.Headers.LastModified.Should().NotBeNull();
@@ -853,7 +872,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             using var client = CreateAuthenticatedClient();
 
-            var dto = new UpsertAccessListResourceConnectionDto(Actions: ["read", "write"]);
+            var dto = new UpsertAccessListResourceConnectionDto(ActionFilters: ["read", "write"]);
             var response = await client.PutAsJsonAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{def.Identifier}/resource-connections/test1", dto);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -861,7 +880,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             Assert.NotNull(body);
 
             body.ResourceIdentifier.Should().Be("test1");
-            body.Actions.Should().BeEquivalentTo(["read", "write"]);
+            body.ActionFilters.Should().BeEquivalentTo(["read", "write"]);
 
             response.Headers.ETag.Should().NotBeNull();
             response.Content.Headers.LastModified.Should().NotBeNull();
@@ -889,7 +908,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             protected override HttpRequestMessage CreateRequest(AccessListInfo info)
             {
-                var dto = new UpsertAccessListResourceConnectionDto(Actions: ["write"]);
+                var dto = new UpsertAccessListResourceConnectionDto(ActionFilters: ["write"]);
                 return new(HttpMethod.Put, $"/resourceregistry/api/v1/access-lists/{info.ResourceOwner}/{info.Identifier}/resource-connections/test1")
                 {
                     Content = JsonContent.Create(dto)
@@ -904,7 +923,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 Assert.NotNull(content);
 
                 content.ResourceIdentifier.Should().Be("test1");
-                content.Actions.Should().BeEquivalentTo(["write"]);
+                content.ActionFilters.Should().BeEquivalentTo(["write"]);
             }
         }
     }
@@ -951,7 +970,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             var data = await response.Content.ReadFromJsonAsync<AccessListResourceConnectionDto>();
             Assert.NotNull(data);
             data.ResourceIdentifier.Should().Be("test1");
-            data.Actions.Should().BeEquivalentTo(["read", "write"]);
+            data.ActionFilters.Should().BeEquivalentTo(["read", "write"]);
 
             var aggregate = await Repository.LoadAccessList(ORG_NR, def.Identifier);
             Assert.NotNull(aggregate);
@@ -982,7 +1001,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 var data = await response.Content.ReadFromJsonAsync<AccessListResourceConnectionDto>();
                 Assert.NotNull(data);
                 data.ResourceIdentifier.Should().Be("test1");
-                data.Actions.Should().BeEquivalentTo(["read", "write"]);
+                data.ActionFilters.Should().BeEquivalentTo(["read", "write"]);
 
                 var aggregate = await Repository.LoadAccessList(info.Id);
                 Assert.NotNull(aggregate);

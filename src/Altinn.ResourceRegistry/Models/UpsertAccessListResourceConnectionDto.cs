@@ -1,10 +1,13 @@
 ﻿#nullable enable
 
+using System.Text.Json.Serialization;
+
 namespace Altinn.ResourceRegistry.Models;
 
 /// <summary>
-/// Model for creating or updateing an access list resource connection.
+/// Model for creating or updating an access list resource connection.
 /// </summary>
-/// <param name="Actions">The allowed actions.</param>
+/// <param name="ActionFilters">The allowed actions - if <see langword="null"/> or empty, all actions will be allowed.</param>
 public record UpsertAccessListResourceConnectionDto(
-    IReadOnlyList<string> Actions);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    IReadOnlyList<string>? ActionFilters);
