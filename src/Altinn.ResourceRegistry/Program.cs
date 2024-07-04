@@ -255,9 +255,6 @@ void ConfigurePostgreSql()
 
 void ConfigureLogging(ILoggingBuilder logging)
 {
-    // Clear log providers
-    logging.ClearProviders();
-
     var applicationInsightsConnectionString = builder.Configuration.GetConnectionString("ApplicationInsights");
 
     // Setup up application insight if ApplicationInsightsConnectionString is available
@@ -266,22 +263,21 @@ void ConfigureLogging(ILoggingBuilder logging)
         // Optional: Apply filters to control what logs are sent to Application Insights.
         // The following configures LogLevel Information or above to be sent to
         // Application Insights for all categories.
-        logging.AddFilter<Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider>(string.Empty, LogLevel.Warning);
+        logging.AddFilter(string.Empty, LogLevel.Warning);
 
         // Adding the filter below to ensure logs of all severity from Program.cs
         // is sent to ApplicationInsights.
-        logging.AddFilter<Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider>(typeof(Program).FullName, LogLevel.Trace);
+        logging.AddFilter(typeof(Program).FullName, LogLevel.Trace);
 
         // Include request info logs in Application Insights
-        logging.AddFilter<Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider>(typeof(RequestForwarderLogMiddleware).FullName, LogLevel.Information);
-        logging.AddFilter<Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider>(typeof(ForwardedHeadersMiddleware).FullName, LogLevel.Trace);
+        logging.AddFilter(typeof(RequestForwarderLogMiddleware).FullName, LogLevel.Information);
+        logging.AddFilter(typeof(ForwardedHeadersMiddleware).FullName, LogLevel.Trace);
     }
     else
     {
         // If not application insight is available log to console
         logging.AddFilter("Microsoft", LogLevel.Warning);
         logging.AddFilter("System", LogLevel.Warning);
-        logging.AddConsole();
     }
 }
 
