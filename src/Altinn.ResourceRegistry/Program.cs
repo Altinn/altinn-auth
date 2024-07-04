@@ -13,8 +13,6 @@ using Altinn.ResourceRegistry.Core.Configuration;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Services;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
-using Altinn.ResourceRegistry.Filters;
-using Altinn.ResourceRegistry.Health;
 using Altinn.ResourceRegistry.Integration;
 using Altinn.ResourceRegistry.Integration.Clients;
 using Altinn.ResourceRegistry.Models;
@@ -22,12 +20,6 @@ using Altinn.ResourceRegistry.Models.ApiDescriptions;
 using Altinn.ResourceRegistry.Models.ModelBinding;
 using Altinn.ResourceRegistry.Persistence.Configuration;
 using AltinnCore.Authentication.JwtCookie;
-using Azure.Identity;
-using Azure.Security.KeyVault.Secrets;
-using Microsoft.ApplicationInsights.AspNetCore.Extensions;
-using Microsoft.ApplicationInsights.Channel;
-using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
@@ -39,35 +31,9 @@ using Npgsql;
 using Swashbuckle.AspNetCore.Filters;
 using Yuniql.AspNetCore;
 using Yuniql.PostgreSql;
-using KeyVaultSettings = Altinn.Common.AccessToken.Configuration.KeyVaultSettings;
-
-ILogger logger;
-
-string applicationInsightsKeySecretName = "ApplicationInsights--InstrumentationKey";
-
-string applicationInsightsConnectionString = string.Empty;
 
 var builder = WebApplication.CreateBuilder(args);
-ConfigureSetupLogging();
-
-await SetConfigurationProviders(builder.Configuration);
-
-if (!string.IsNullOrEmpty(applicationInsightsConnectionString))
-{
-    // NOTE: due to a bug in application insights, this must be registered before anything else
-    // See https://github.com/microsoft/ApplicationInsights-dotnet/issues/2879
-    builder.Services.AddSingleton(typeof(ITelemetryChannel), new ServerTelemetryChannel() { StorageFolder = "/tmp/logtelemetry" });
-    builder.Services.AddApplicationInsightsTelemetry(new ApplicationInsightsServiceOptions
-    {
-        ConnectionString = applicationInsightsConnectionString
-    });
-
-    builder.Services.AddApplicationInsightsTelemetryProcessor<HealthTelemetryFilter>();
-    builder.Services.AddApplicationInsightsTelemetryProcessor<IdentityTelemetryFilter>();
-    builder.Services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>();
-
-    logger.LogInformation("Startup // ApplicationInsightsConnectionString = {applicationInsightsConnectionString}", applicationInsightsConnectionString);
-}
+builder.AddDefaultConfiguration();
 
 builder.AddAltinnServiceDefaults("resource-registry");
 
@@ -84,7 +50,15 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 builder.Services.AddControllers(opts =>
 {
     opts.OutputFormatters.Insert(0, new RdfOutputFormatter());
-});
+    opts.ModelBinderProviders.InsertSingleton<RequestConditionCollection.ModelBinderProvider>(0);
+    opts.ModelBinderProviders.InsertSingleton<AccessListIncludesModelBinder>(0);
+})
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.WriteIndented = true;
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+    });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer()
@@ -127,27 +101,16 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+app.MapDefaultAltinnEndpoints();
+
 Configure(builder.Configuration);
 
 app.Run();
 
 void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
-    services.AddControllers(options =>
-    {
-        options.ModelBinderProviders.InsertSingleton<RequestConditionCollection.ModelBinderProvider>(0);
-        options.ModelBinderProviders.InsertSingleton<AccessListIncludesModelBinder>(0);
-    })
-        .AddJsonOptions(options =>
-        {
-            options.JsonSerializerOptions.WriteIndented = true;
-            options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-            options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-        });
-
     services.AddMemoryCache();
     services.AddSingleton(config);
-    services.AddHealthChecks().AddCheck<HealthCheck>("resourceregistry_health_check");
 
     services.AddResourceRegistryCoreServices();
     services.AddResourceRegistryPersistence();
@@ -217,11 +180,11 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 
 void Configure(IConfiguration config)
 {
-    logger.LogInformation("Startup // Configure");
+    Console.WriteLine("Startup // Configure");
 
     if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
     {
-        logger.LogInformation("IsDevelopment || IsStaging");
+        Console.WriteLine("IsDevelopment || IsStaging");
 
         app.UseDeveloperExceptionPage();
 
@@ -251,25 +214,6 @@ void Configure(IConfiguration config)
     app.UseAuthorization();
 
     app.MapControllers();
-    app.MapHealthChecks("/health");
-}
-
-async Task SetConfigurationProviders(ConfigurationManager config)
-{
-    string basePath = Directory.GetParent(Directory.GetCurrentDirectory()).FullName;
-
-    logger.LogInformation($"Program // Loading Configuration from basePath={basePath}");
-
-    config.SetBasePath(basePath);
-    string configJsonFile1 = $"{basePath}/altinn-appsettings/altinn-dbsettings-secret.json";
-
-    logger.LogInformation($"Loading configuration file: '{configJsonFile1}'");
-    config.AddJsonFile(configJsonFile1, optional: true, reloadOnChange: true);
-
-    config.AddEnvironmentVariables();
-    config.AddCommandLine(args);
-
-    await ConnectToKeyVaultAndSetApplicationInsights(config);
 }
 
 void ConfigurePostgreSql()
@@ -309,66 +253,12 @@ void ConfigurePostgreSql()
     }
 }
 
-async Task ConnectToKeyVaultAndSetApplicationInsights(ConfigurationManager config)
-{
-    logger.LogInformation("Program // Connect to key vault and set up application insights");
-
-    KeyVaultSettings keyVaultSettings = new();
-    config.GetSection("kvSetting").Bind(keyVaultSettings);
-
-    if (!string.IsNullOrEmpty(keyVaultSettings.ClientId) &&
-        !string.IsNullOrEmpty(keyVaultSettings.TenantId) &&
-        !string.IsNullOrEmpty(keyVaultSettings.ClientSecret) &&
-        !string.IsNullOrEmpty(keyVaultSettings.SecretUri))
-    {
-        Environment.SetEnvironmentVariable("AZURE_CLIENT_ID", keyVaultSettings.ClientId);
-        Environment.SetEnvironmentVariable("AZURE_CLIENT_SECRET", keyVaultSettings.ClientSecret);
-        Environment.SetEnvironmentVariable("AZURE_TENANT_ID", keyVaultSettings.TenantId);
-
-        try
-        {
-            SecretClient client = new SecretClient(new Uri(keyVaultSettings.SecretUri), new EnvironmentCredential());
-            KeyVaultSecret secret = await client.GetSecretAsync(applicationInsightsKeySecretName);
-            applicationInsightsConnectionString = string.Format("InstrumentationKey={0}", secret.Value);
-        }
-        catch (Exception vaultException)
-        {
-            logger.LogError(vaultException, $"Unable to read application insights key.");
-        }
-
-        try
-        {
-            var azureCredentials = new DefaultAzureCredential();
-            config.AddAzureKeyVault(new Uri(keyVaultSettings.SecretUri), azureCredentials);
-        }
-        catch (Exception vaultException)
-        {
-            logger.LogError(vaultException, $"Unable to add key vault secrets to config.");
-        }
-    }
-}
-
-void ConfigureSetupLogging()
-{
-    // Setup logging for the web host creation
-    var logFactory = LoggerFactory.Create(builder =>
-    {
-        builder
-            .AddFilter("Microsoft", LogLevel.Warning)
-            .AddFilter("System", LogLevel.Warning)
-            .AddFilter("Altinn.ResourceRegistryService.Program", LogLevel.Debug)
-            .AddConsole();
-    });
-
-    logger = logFactory.CreateLogger<Program>();
-
-    NpgsqlLoggingConfiguration.InitializeLogging(logFactory);
-}
-
 void ConfigureLogging(ILoggingBuilder logging)
 {
     // Clear log providers
     logging.ClearProviders();
+
+    var applicationInsightsConnectionString = builder.Configuration.GetValue<string>("ApplicationInsights:InstrumentationKey");
 
     // Setup up application insight if ApplicationInsightsConnectionString is available
     if (!string.IsNullOrEmpty(applicationInsightsConnectionString))
