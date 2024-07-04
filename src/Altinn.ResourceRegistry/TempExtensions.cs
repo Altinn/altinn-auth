@@ -60,16 +60,22 @@ internal static class TempExtensions
 
     private static IHostApplicationBuilder AddApplicationInsights(this IHostApplicationBuilder builder)
     {
-        var applicationInsightsConnectionString = builder.Configuration.GetValue<string>("ApplicationInsights:InstrumentationKey");
+        var applicationInsightsInstrumentationKey = builder.Configuration.GetValue<string>("ApplicationInsights:InstrumentationKey");
 
-        if (!string.IsNullOrEmpty(applicationInsightsConnectionString))
+        if (!string.IsNullOrEmpty(applicationInsightsInstrumentationKey))
         {
+            var applicationInsightsConnectionString = $"InstrumentationKey={applicationInsightsInstrumentationKey}";
+            builder.Configuration.AddInMemoryCollection([
+                KeyValuePair.Create("ApplicationInsights:ConnectionString", applicationInsightsConnectionString),
+                KeyValuePair.Create("ConnectionStrings:ApplicationInsights", applicationInsightsConnectionString),
+            ]);
+
             // NOTE: due to a bug in application insights, this must be registered before anything else
             // See https://github.com/microsoft/ApplicationInsights-dotnet/issues/2879
             builder.Services.AddSingleton(typeof(ITelemetryChannel), new ServerTelemetryChannel() { StorageFolder = "/tmp/logtelemetry" });
             builder.Services.AddApplicationInsightsTelemetry(new ApplicationInsightsServiceOptions
             {
-                ConnectionString = applicationInsightsConnectionString
+                ConnectionString = applicationInsightsConnectionString,
             });
 
             builder.Services.AddApplicationInsightsTelemetryProcessor<HealthTelemetryFilter>();
@@ -77,6 +83,10 @@ internal static class TempExtensions
             builder.Services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>();
 
             Console.WriteLine($"Startup // ApplicationInsightsConnectionString = {applicationInsightsConnectionString}");
+
+            builder.Logging.AddApplicationInsights(
+                configureTelemetryConfiguration: (config) => config.ConnectionString = applicationInsightsConnectionString,
+                configureApplicationInsightsLoggerOptions: (options) => { });
         }
 
         return builder;
