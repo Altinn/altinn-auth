@@ -1,22 +1,14 @@
-using Altinn.ResourceRegistry.Controllers;
-using Altinn.ResourceRegistry.Tests.Utils;
+using Altinn.ResourceRegistry.TestUtils;
 
 namespace Altinn.ResourceRegistry.Tests
 {
-    public class ExportControllerTest : IClassFixture<CustomWebApplicationFactory<ResourceController>>
+    public class ExportControllerTest(DbFixture dbFixture, WebApplicationFixture webApplicationFixture)
+        : WebApplicationTests(dbFixture, webApplicationFixture)
     {
-
-        private readonly CustomWebApplicationFactory<ResourceController> _factory;
-
-        public ExportControllerTest(CustomWebApplicationFactory<ResourceController> factory)
-        {
-            _factory = factory;
-        }
-
         [Fact]
         public async Task Export_OK()
         {
-            HttpClient client = SetupUtil.GetTestClient(_factory);
+            HttpClient client = CreateClient();
             string requestUri = "resourceregistry/api/v1/resource/export";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)

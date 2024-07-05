@@ -1,22 +1,14 @@
-using Altinn.ResourceRegistry.Controllers;
-using Altinn.ResourceRegistry.Tests.Utils;
+using Altinn.ResourceRegistry.TestUtils;
 
 namespace Altinn.ResourceRegistry.Tests
 {
-    public class Altinn2ExportControllerTest : IClassFixture<CustomWebApplicationFactory<ResourceController>>
+    public class Altinn2ExportControllerTest(DbFixture dbFixture, WebApplicationFixture webApplicationFixture)
+        : WebApplicationTests(dbFixture, webApplicationFixture)
     {
-
-        private readonly CustomWebApplicationFactory<ResourceController> _factory;
-
-        public Altinn2ExportControllerTest(CustomWebApplicationFactory<ResourceController> factory)
-        {
-            _factory = factory;
-        }
-
         [Fact]
         public async Task Export_Resource()
         {
-            HttpClient client = SetupUtil.GetTestClient(_factory);
+            HttpClient client = CreateClient();
             string requestUri = "resourceregistry/api/v1/altinn2export/resource?serviceCode=4485&serviceEditionCode=2021";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
@@ -33,7 +25,7 @@ namespace Altinn.ResourceRegistry.Tests
         [Fact]
         public async Task Export_Policy()
         {
-            HttpClient client = SetupUtil.GetTestClient(_factory);
+            HttpClient client = CreateClient();
             string requestUri = "resourceregistry/api/v1/altinn2export/policy?serviceCode=4485&serviceEditionCode=2021";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)

@@ -1,10 +1,11 @@
 ﻿using Altinn.ResourceRegistry.TestUtils;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
 
 namespace Altinn.ResourceRegistry.Persistence.Tests;
 
-public abstract class DbTests 
+public abstract class DbTests
     : IAsyncLifetime
     , IClassFixture<DbFixture>
 {
@@ -16,7 +17,7 @@ public abstract class DbTests
         _dbFixture = dbFixture;
     }
 
-    private ServiceProvider? _services;
+    private IHost? _host;
     private AsyncServiceScope _scope;
 
     protected IServiceProvider Services => _scope!.ServiceProvider;
@@ -26,7 +27,7 @@ public abstract class DbTests
         return ValueTask.CompletedTask;
     }
 
-    protected virtual void ConfigureServices(IServiceCollection services)
+    protected virtual void ConfigureHost(IHostApplicationBuilder builder)
     {
     }
 
@@ -34,24 +35,35 @@ public abstract class DbTests
     {
         await DisposeAsync();
         if (_scope is { } scope) await scope.DisposeAsync();
-        if (_services is { } services) await services.DisposeAsync();
+        if (_host is { } host)
+        {
+            await host.StopAsync();
+            host.Dispose();
+        }
         if (_db is { } db) await db.DisposeAsync();
     }
 
     async Task IAsyncLifetime.InitializeAsync()
     {
-        var container = new ServiceCollection();
-        container.AddLogging(l => l.AddConsole());
-        _db = await _dbFixture.CreateDbAsync();
-        _db.ConfigureServices(container);
-        ConfigureServices(container);
-
-        _services = container.BuildServiceProvider(new ServiceProviderOptions
+        var configuration = new ConfigurationManager();
+        var builder = Host.CreateEmptyApplicationBuilder(new HostApplicationBuilderSettings
         {
-            ValidateOnBuild = true,
-            ValidateScopes = true,
+            ApplicationName = "test",
+            EnvironmentName = "Development",
+            Configuration = configuration,
         });
-        _scope = _services.CreateAsyncScope();
+
+        builder.AddAltinnServiceDefaults("resource-registry");
+
+        _db = await _dbFixture.CreateDbAsync();
+        _db.ConfigureApplication(builder);
+
+        ConfigureHost(builder);
+
+        _host = builder.Build();
+        await _host.StartAsync();
+
+        _scope = _host.Services.CreateAsyncScope();
     }
 }
 

@@ -1,27 +1,19 @@
 ﻿#nullable enable
 
-using Altinn.ResourceRegistry.Controllers;
-using Altinn.ResourceRegistry.Tests.Utils;
+using Altinn.ResourceRegistry.TestUtils;
 using System.Text.Json;
 
 namespace Altinn.ResourceRegistry.Tests;
 
-public class SwaggerEndpointTest 
-    : IClassFixture<CustomWebApplicationFactory<ResourceOwnerController>> 
+public class SwaggerEndpointTest(DbFixture dbFixture, WebApplicationFixture webApplicationFixture)
+    : WebApplicationTests(dbFixture, webApplicationFixture)
 {
-    private readonly CustomWebApplicationFactory<ResourceOwnerController> _factory;
-
-    public SwaggerEndpointTest(CustomWebApplicationFactory<ResourceOwnerController> factory)
-    {
-        _factory = factory;
-    }
-
     [Fact]
-    public async Task Orglist_OK()
+    public async Task SwaggerDoc_OK()
     {
         const string RequestUri = "swagger/v1/swagger.json";
 
-        using var client = SetupUtil.GetTestClient(_factory);
+        using var client = CreateClient();
 
         using var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, RequestUri);
 

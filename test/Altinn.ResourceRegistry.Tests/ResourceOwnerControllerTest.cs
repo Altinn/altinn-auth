@@ -1,23 +1,15 @@
-using Altinn.ResourceRegistry.Controllers;
 using Altinn.ResourceRegistry.Core.Models;
-using Altinn.ResourceRegistry.Tests.Utils;
+using Altinn.ResourceRegistry.TestUtils;
 
 namespace Altinn.ResourceRegistry.Tests
 {
-    public class ResourceOwnerControllerTest : IClassFixture<CustomWebApplicationFactory<ResourceOwnerController>>
+    public class ResourceOwnerControllerTest(DbFixture dbFixture, WebApplicationFixture webApplicationFixture)
+        : WebApplicationTests(dbFixture, webApplicationFixture)
     {
-
-        private readonly CustomWebApplicationFactory<ResourceOwnerController> _factory;
-
-        public ResourceOwnerControllerTest(CustomWebApplicationFactory<ResourceOwnerController> factory)
-        {
-            _factory = factory;
-        }
-
         [Fact]
         public async Task Orglist_OK()
         {
-            HttpClient client = SetupUtil.GetTestClient(_factory);
+            HttpClient client = CreateClient();
             string requestUri = "resourceregistry/api/v1/resource/orgs";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)

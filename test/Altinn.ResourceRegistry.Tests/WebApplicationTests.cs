@@ -2,6 +2,7 @@
 using Altinn.ResourceRegistry.Tests.Mocks;
 using Altinn.ResourceRegistry.TestUtils;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 
@@ -39,7 +40,11 @@ public abstract class WebApplicationTests
         return ValueTask.CompletedTask;
     }
 
-    protected virtual void ConfigureServices(IServiceCollection services)
+    protected virtual void ConfigureTestServices(IServiceCollection services)
+    {
+    }
+
+    protected virtual void ConfigureTestConfiguration(IConfigurationBuilder builder)
     {
     }
 
@@ -58,13 +63,19 @@ public abstract class WebApplicationTests
     async Task IAsyncLifetime.InitializeAsync()
     {
         _db = await _dbFixture.CreateDbAsync();
-        _webApp = _webApplicationFixture.CreateServer(services =>
-        {
-            _db.ConfigureServices(services);
-            services.AddSingleton<MockRegisterClient>();
-            services.AddSingleton<IRegisterClient>(s => s.GetRequiredService<MockRegisterClient>());
-            ConfigureServices(services);
-        });
+        _webApp = _webApplicationFixture.CreateServer(
+            configureConfiguration: config =>
+            {
+                _db.ConfigureConfiguration(config, "resource-registry");
+                ConfigureTestConfiguration(config);
+            },
+            configureServices: services =>
+            {
+                _db.ConfigureServices(services, "resource-registry");
+                services.AddSingleton<MockRegisterClient>();
+                services.AddSingleton<IRegisterClient>(s => s.GetRequiredService<MockRegisterClient>());
+                ConfigureTestServices(services);
+            });
 
         _services = _webApp.Services;
         _scope = _services.CreateAsyncScope();

@@ -6,6 +6,8 @@
     <PackageVersion Include="Altinn.Authorization.ABAC" Version="0.0.8" />
     <PackageVersion Include="Altinn.Authorization.ProblemDetails.Abstractions" Version="2.0.0" />
     <PackageVersion Include="Altinn.Authorization.ProblemDetails" Version="2.0.0" />
+    <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql.Yuniql" Version="1.2.0" />
+    <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql" Version="1.2.0" />
     <PackageVersion Include="Altinn.Authorization.ServiceDefaults" Version="1.2.0" />
     <PackageVersion Include="Altinn.Common.AccessToken" Version="4.4.3" />
     <PackageVersion Include="Altinn.Common.AccessTokenClient" Version="3.0.4" />
@@ -30,6 +32,7 @@
     <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.6" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.FileProviders.Embedded" Version="8.0.6" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
     <PackageVersion Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.22.0" />

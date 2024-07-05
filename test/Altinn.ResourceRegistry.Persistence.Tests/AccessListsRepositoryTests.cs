@@ -2,6 +2,7 @@
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.TestUtils;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Npgsql;
 using System.Collections.Immutable;
 
@@ -18,10 +19,10 @@ public class AccessListsRepositoryTests : DbTests
 
     protected NpgsqlDataSource DataSource => Services.GetRequiredService<NpgsqlDataSource>();
 
-    protected override void ConfigureServices(IServiceCollection services)
+    protected override void ConfigureHost(IHostApplicationBuilder builder)
     {
-        services.AddPartyRegistryRepository();
-        base.ConfigureServices(services);
+        builder.AddPartyRegistryRepository();
+        base.ConfigureHost(builder);
     }
 
     [Fact]

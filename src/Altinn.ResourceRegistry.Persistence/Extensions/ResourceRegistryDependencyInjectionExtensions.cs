@@ -1,12 +1,12 @@
-﻿using Altinn.ResourceRegistry.Core;
+﻿using Altinn.Authorization.ServiceDefaults.Npgsql.Yuniql;
+using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Enums;
 using Altinn.ResourceRegistry.Persistence;
 using Altinn.ResourceRegistry.Persistence.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Npgsql;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -16,97 +16,91 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class ResourceRegistryDependencyInjectionExtensions 
 {
     /// <summary>
-    /// Registers resource registry persistence services with the dependency injection container.
+    /// Registers resource registry persistence services with the dependency injection container of a host application.
     /// </summary>
-    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
-    /// <returns><paramref name="services"/> for further chaining.</returns>
-    public static IServiceCollection AddResourceRegistryPersistence(
-        this IServiceCollection services)
+    /// <param name="builder">The <see cref="IHostApplicationBuilder"/>.</param>
+    /// <returns><paramref name="builder"/> for further chaining.</returns>
+    public static IHostApplicationBuilder AddResourceRegistryPersistence(
+        this IHostApplicationBuilder builder)
     {
-        services.AddResourceRegistryRepository();
-        services.AddPartyRegistryRepository();
-        services.AddResourceRegistryPolicyRepository();
+        builder.AddResourceRegistryRepository();
+        builder.AddPartyRegistryRepository();
+        builder.AddResourceRegistryPolicyRepository();
 
-        return services;
+        return builder;
     }
 
     /// <summary>
-    /// Registers a <see cref="IResourceRegistryRepository"/> with the dependency injection container.
+    /// Registers a <see cref="IResourceRegistryRepository"/> with the dependency injection container of a host application.
     /// </summary>
-    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
-    /// <returns><paramref name="services"/> for further chaining.</returns>
-    public static IServiceCollection AddResourceRegistryRepository(
-        this IServiceCollection services)
+    /// <param name="builder">The <see cref="IHostApplicationBuilder"/>.</param>
+    /// <returns><paramref name="builder"/> for further chaining.</returns>
+    public static IHostApplicationBuilder AddResourceRegistryRepository(
+        this IHostApplicationBuilder builder)
     {
-        services.AddDatabase();
+        builder.AddDatabase();
 
-        services.TryAddTransient<IResourceRegistryRepository, ResourceRegistryRepository>();
+        builder.Services.TryAddTransient<IResourceRegistryRepository, ResourceRegistryRepository>();
 
-        return services;
+        return builder;
     }
 
     /// <summary>
-    /// Registers a <see cref="IAccessListsRepository"/> with the dependency injection container.
+    /// Registers a <see cref="IAccessListsRepository"/> with the dependency injection container of a host application.
     /// </summary>
-    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
-    /// <returns><paramref name="services"/> for further chaining.</returns>
-    public static IServiceCollection AddPartyRegistryRepository(
-        this IServiceCollection services)
+    /// <param name="builder">The <see cref="IHostApplicationBuilder"/>.</param>
+    /// <returns><paramref name="builder"/> for further chaining.</returns>
+    public static IHostApplicationBuilder AddPartyRegistryRepository(
+        this IHostApplicationBuilder builder)
     {
-        services.AddDatabase();
-        services.TryAddSingleton(TimeProvider.System);
+        builder.AddDatabase();
+        builder.Services.TryAddSingleton(TimeProvider.System);
 
-        services.TryAddTransient<IAccessListsRepository, AccessListsRepository>();
+        builder.Services.TryAddTransient<IAccessListsRepository, AccessListsRepository>();
 
-        return services;
+        return builder;
     }
 
     /// <summary>
-    /// Registers a <see cref="IPolicyRepository"/> with the dependency injection container.
+    /// Registers a <see cref="IPolicyRepository"/> with the dependency injection container of a host application.
     /// </summary>
-    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
-    /// <returns><paramref name="services"/> for further chaining.</returns>
-    public static IServiceCollection AddResourceRegistryPolicyRepository(
-        this IServiceCollection services)
+    /// <param name="builder">The <see cref="IHostApplicationBuilder"/>.</param>
+    /// <returns><paramref name="builder"/> for further chaining.</returns>
+    public static IHostApplicationBuilder AddResourceRegistryPolicyRepository(
+        this IHostApplicationBuilder builder)
     {
-        services.AddOptions<AzureStorageConfiguration>()
+        builder.Services.AddOptions<AzureStorageConfiguration>()
             .Validate(s => !string.IsNullOrEmpty(s.ResourceRegistryAccountKey), "account key cannot be null or empty")
             .Validate(s => !string.IsNullOrEmpty(s.ResourceRegistryAccountName), "account name cannot be null or empty")
             .Validate(s => !string.IsNullOrEmpty(s.ResourceRegistryContainer), "container cannot be null or empty")
             .Validate(s => !string.IsNullOrEmpty(s.ResourceRegistryBlobEndpoint), "blob endpoint cannot be null or empty");
 
-        services.TryAddSingleton<IPolicyRepository, PolicyRepository>();
+        builder.Services.TryAddSingleton<IPolicyRepository, PolicyRepository>();
 
-        return services;
+        return builder;
     }
 
-    private static IServiceCollection AddDatabase(this IServiceCollection services)
+    private static IHostApplicationBuilder AddDatabase(this IHostApplicationBuilder builder)
     {
-        services.AddOptions<PostgreSQLSettings>()
-            .Validate(s => !string.IsNullOrEmpty(s.ConnectionString), "connection string cannot be null or empty")
-            .Validate(s => !string.IsNullOrEmpty(s.AuthorizationDbPwd), "connection string password be null or empty");
-
-        services.TryAddSingleton((IServiceProvider sp) =>
+        if (builder.Services.Any(s => s.ServiceType == typeof(Marker)))
         {
-            var settings = sp.GetRequiredService<IOptions<PostgreSQLSettings>>().Value;
-            var connectionString = string.Format(
-                settings.ConnectionString!,
-                settings.AuthorizationDbPwd);
+            // already added
+            return builder;
+        }
 
-            var builder = new NpgsqlDataSourceBuilder(connectionString);
-            builder.UseLoggerFactory(sp.GetRequiredService<ILoggerFactory>());
-            builder.MapEnum<ResourceType>("resourceregistry.resourcetype");
+        builder.Services.AddSingleton<Marker>();
 
-            return builder.BuildMultiHost();
-        });
+        var fs = new ManifestEmbeddedFileProvider(typeof(ResourceRegistryDependencyInjectionExtensions).Assembly, "Migration");
+        builder.AddAltinnPostgresDataSource()
+            .MapEnum<ResourceType>("resourceregistry.resourcetype")
+            .AddYuniqlMigrations(cfg =>
+            {
+                cfg.WorkspaceFileProvider = fs;
+                cfg.Workspace = "/";
+            });
 
-        services.TryAddSingleton((IServiceProvider sp) =>
-        {
-            var multiHost = sp.GetRequiredService<NpgsqlMultiHostDataSource>();
-
-            return (NpgsqlDataSource)multiHost;
-        });
-
-        return services;
+        return builder;
     }
+
+    private record Marker;
 }

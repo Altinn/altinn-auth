@@ -5,7 +5,6 @@ using Altinn.Common.Authentication.Configuration;
 using Altinn.Common.PEP.Authorization;
 using Altinn.Platform.Events.Formatters;
 using Altinn.ResourceRegistry;
-using Altinn.ResourceRegistry.Configuration;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.Clients;
 using Altinn.ResourceRegistry.Core.Clients.Interfaces;
@@ -27,15 +26,18 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.OpenApi.Models;
-using Npgsql;
 using Swashbuckle.AspNetCore.Filters;
-using Yuniql.AspNetCore;
-using Yuniql.PostgreSql;
 
 var builder = WebApplication.CreateBuilder(args);
+
+/************************************************************************************
+ * Configure services
+ ************************************************************************************/
+
 builder.AddDefaultConfiguration();
 
 builder.AddAltinnServiceDefaults("resource-registry");
+MapPostgreSqlConfiguration(builder);
 
 // Add services to the container.
 ConfigureServices(builder.Services, builder.Configuration);
@@ -99,6 +101,10 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+/************************************************************************************
+ * Configure application pipeline
+ ************************************************************************************/
+
 app.MapDefaultAltinnEndpoints();
 
 Configure(builder.Configuration);
@@ -111,7 +117,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton(config);
 
     services.AddResourceRegistryCoreServices();
-    services.AddResourceRegistryPersistence();
+    builder.AddResourceRegistryPersistence();
     services.AddSingleton<IResourceRegistry, ResourceRegistryService>();
     services.AddSingleton<IPRP, PRPClient>();
     services.AddSingleton<IAuthorizationHandler, ScopeAccessHandler>();
@@ -198,8 +204,6 @@ void Configure(IConfiguration config)
     app.UseForwardedHeaders();
     app.UseMiddleware<RequestForwarderLogMiddleware>("after forwarder middleware");
 
-    ConfigurePostgreSql();
-    
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())
     {
@@ -214,41 +218,30 @@ void Configure(IConfiguration config)
     app.MapControllers();
 }
 
-void ConfigurePostgreSql()
+// Note: eventually we can rename the configuration values and remove this mapping
+static void MapPostgreSqlConfiguration(IHostApplicationBuilder builder)
 {
-    if (builder.Configuration.GetValue<bool>("PostgreSQLSettings:EnableDBConnection"))
+    var runMigrations = builder.Configuration.GetValue<bool>("PostgreSQLSettings:EnableDBConnection");
+    var adminConnectionStringFmt = builder.Configuration.GetValue<string>("PostgreSQLSettings:AdminConnectionString");
+    var adminConnectionStringPwd = builder.Configuration.GetValue<string>("PostgreSQLSettings:AuthorizationDbAdminPwd");
+    var connectionStringFmt = builder.Configuration.GetValue<string>("PostgreSQLSettings:ConnectionString");
+    var connectionStringPwd = builder.Configuration.GetValue<string>("PostgreSQLSettings:AuthorizationDbPwd");
+
+    var adminConnectionString = string.Format(adminConnectionStringFmt, adminConnectionStringPwd);
+    var connectionString = string.Format(connectionStringFmt, connectionStringPwd);
+
+    var serviceDescriptor = builder.Services.GetAltinnServiceDescriptor();
+    var existing = builder.Configuration.GetValue<string>($"ConnectionStrings:{serviceDescriptor.Name}_db");
+    if (!string.IsNullOrEmpty(existing))
     {
-        ConsoleTraceService traceService = new ConsoleTraceService { IsDebugEnabled = true };
-
-        string connectionString = string.Format(
-            builder.Configuration.GetValue<string>("PostgreSQLSettings:AdminConnectionString"),
-            builder.Configuration.GetValue<string>("PostgreSQLSettings:authorizationDbAdminPwd"));
-
-        string workspacePath = Path.Combine(Environment.CurrentDirectory, builder.Configuration.GetValue<string>("PostgreSQLSettings:WorkspacePath"));
-        if (builder.Environment.IsDevelopment())
-        {
-            workspacePath = Path.Combine(Directory.GetParent(Environment.CurrentDirectory).FullName, builder.Configuration.GetValue<string>("PostgreSQLSettings:WorkspacePath"));
-        }
-
-        var connectionStringBuilder = new NpgsqlConnectionStringBuilder(connectionString);
-        var user = connectionStringBuilder.Username;
-
-        app.UseYuniql(
-            new PostgreSqlDataService(traceService),
-            new PostgreSqlBulkImportService(traceService),
-            traceService,
-            new Configuration
-            {
-                Environment = "prod",
-                Workspace = workspacePath,
-                ConnectionString = connectionString,
-                IsAutoCreateDatabase = false,
-                IsDebug = true,
-                Tokens = [
-                    KeyValuePair.Create("YUNIQL-USER", user)
-                ]
-            });
+        return;
     }
+
+    builder.Configuration.AddInMemoryCollection([
+        KeyValuePair.Create($"ConnectionStrings:{serviceDescriptor.Name}_db", connectionString),
+        KeyValuePair.Create($"ConnectionStrings:{serviceDescriptor.Name}_db_migrate", adminConnectionString),
+        KeyValuePair.Create($"Altinn:Npgsql:{serviceDescriptor.Name}:Migrate:Enabled", runMigrations ? "true" : "false"),
+    ]);
 }
 
 /// <summary>

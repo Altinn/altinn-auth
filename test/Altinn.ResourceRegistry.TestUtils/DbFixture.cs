@@ -1,8 +1,9 @@
-﻿using Altinn.ResourceRegistry.Persistence.Configuration;
+﻿using Altinn.Authorization.ServiceDefaults.Npgsql.Yuniql;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Npgsql;
 using Testcontainers.PostgreSql;
-using Yuniql.Core;
 
 namespace Altinn.ResourceRegistry.TestUtils;
 
@@ -70,26 +71,6 @@ public class DbFixture
                 var connectionStringBuilder = new NpgsqlConnectionStringBuilder(_connectionString) { Database = dbName, IncludeErrorDetail = true };
                 var connectionString = connectionStringBuilder.ToString();
 
-                var configuration = new Yuniql.AspNetCore.Configuration
-                {
-                    Platform = SUPPORTED_DATABASES.POSTGRESQL,
-                    Workspace = Path.Combine(FindWorkspace(), "src", "Altinn.ResourceRegistry.Persistence", "Migration"),
-                    ConnectionString = connectionString,
-                    IsAutoCreateDatabase = false,
-                    Environment = "integrationtest",
-                    Tokens = [
-                        KeyValuePair.Create("YUNIQL-USER", connectionStringBuilder.Username),
-                    ],
-                };
-
-                var traceService = TraceService.Instance;
-                var dataService = new Yuniql.PostgreSql.PostgreSqlDataService(traceService);
-                var bulkImportService = new Yuniql.PostgreSql.PostgreSqlBulkImportService(traceService);
-                var migrationServiceFactory = new MigrationServiceFactory(traceService);
-                var migrationService = migrationServiceFactory.Create(dataService, bulkImportService);
-                ConfigurationHelper.Initialize(configuration);
-                migrationService.Run();
-
                 var ownedDb = new OwnedDb(connectionString, dbName, fixture, ticket);
                 ticket = null;
                 return ownedDb;
@@ -118,22 +99,6 @@ public class DbFixture
             _throtler.Dispose();
             _dbLock.Dispose();
         }
-
-        static string FindWorkspace()
-        {
-            var dir = Environment.CurrentDirectory;
-            while (dir != null)
-            {
-                if (Directory.Exists(Path.Combine(dir, ".git")))
-                {
-                    return dir;
-                }
-
-                dir = Directory.GetParent(dir)?.FullName;
-            }
-
-            throw new InvalidOperationException("Workspace directory not found");
-        }
     }
 
     public sealed class OwnedDb : IAsyncDisposable
@@ -155,13 +120,26 @@ public class DbFixture
 
         internal string DbName => _dbName;
 
-        public void ConfigureServices(IServiceCollection services)
+        public void ConfigureApplication(IHostApplicationBuilder builder)
         {
-            services.AddOptions<PostgreSQLSettings>()
-                .Configure((PostgreSQLSettings settings) =>
+            var serviceDescriptor = builder.GetAltinnServiceDescriptor();
+            ConfigureConfiguration(builder.Configuration, serviceDescriptor.Name);
+            ConfigureServices(builder.Services, serviceDescriptor.Name);
+        }
+
+        public void ConfigureConfiguration(IConfigurationBuilder builder, string serviceName)
+        {
+            builder.AddInMemoryCollection([
+                KeyValuePair.Create<string, string?>($"ConnectionStrings:{serviceName}_db", _connectionString),
+            ]);
+        }
+
+        public void ConfigureServices(IServiceCollection services, string serviceName)
+        {
+            services.AddOptions<YuniqlDatabaseMigratorOptions>()
+                .Configure(cfg =>
                 {
-                    settings.ConnectionString = ConnectionString;
-                    settings.AuthorizationDbPwd = "unused";
+                    cfg.Environment = "integrationtest";
                 });
         }
 
@@ -169,64 +147,6 @@ public class DbFixture
         {
             await _db.DropDbAsync(this);
             _ticket.Dispose();
-        }
-    }
-
-    class TraceService : Yuniql.Extensibility.ITraceService
-    {
-        public static Yuniql.Extensibility.ITraceService Instance { get; } = new TraceService();
-
-        /// <inheritdoc/>
-        public bool IsDebugEnabled { get; set; } = false;
-
-        /// <inheritdoc/>
-        public bool IsTraceSensitiveData { get; set; } = false;
-
-        /// <inheritdoc/>
-        public bool IsTraceToFile { get; set; } = false;
-
-        /// <inheritdoc/>
-        public bool IsTraceToDirectory { get; set; } = false;
-
-        /// <inheritdoc/>
-        public string? TraceDirectory { get; set; }
-
-        /// <inheritdoc/>
-        public void Info(string message, object? payload = null)
-        {
-            var traceMessage = $"INF   {DateTime.UtcNow.ToString("o")}   {message}{Environment.NewLine}";
-            Console.Write(traceMessage);
-        }
-
-        /// <inheritdoc/>
-        public void Error(string message, object? payload = null)
-        {
-            var traceMessage = $"ERR   {DateTime.UtcNow.ToString("o")}   {message}{Environment.NewLine}";
-            Console.Write(traceMessage);
-        }
-
-        /// <inheritdoc/>
-        public void Debug(string message, object? payload = null)
-        {
-            if (IsDebugEnabled)
-            {
-                var traceMessage = $"DBG   {DateTime.UtcNow.ToString("o")}   {message}{Environment.NewLine}";
-                Console.Write(traceMessage);
-            }
-        }
-
-        /// <inheritdoc/>
-        public void Success(string message, object? payload = null)
-        {
-            var traceMessage = $"INF   {DateTime.UtcNow.ToString("u")}   {message}{Environment.NewLine}";
-            Console.Write(traceMessage);
-        }
-
-        /// <inheritdoc/>
-        public void Warn(string message, object? payload = null)
-        {
-            var traceMessage = $"WRN   {DateTime.UtcNow.ToString("o")}   {message}{Environment.NewLine}";
-            Console.Write(traceMessage);
         }
     }
 }
