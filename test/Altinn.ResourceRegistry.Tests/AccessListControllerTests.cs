@@ -44,7 +44,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}");
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListInfoDto>>();
             Assert.NotNull(content);
@@ -62,7 +62,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}");
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListInfoDto>>();
             Assert.NotNull(content);
@@ -118,7 +118,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             {
                 using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}?include=members");
 
-                response.StatusCode.Should().Be(HttpStatusCode.NotImplemented);
+                response.Should().HaveStatusCode(HttpStatusCode.NotImplemented);
             }
 
             {
@@ -175,12 +175,12 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             {
                 using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}?include=resources");
-                response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+                response.Should().HaveStatusCode(HttpStatusCode.BadRequest);
             }
 
             {
                 using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}?include=resource-actions");
-                response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+                response.Should().HaveStatusCode(HttpStatusCode.BadRequest);
             }
         }
 
@@ -197,7 +197,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             // page 1
             var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}");
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListInfoDto>>();
             Assert.NotNull(content);
@@ -211,7 +211,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 .And.EndWith("test20");
 
             response = await client.GetAsync(content.Links.Next);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             // page 2
             content = await response.Content.ReadFromJsonAsync<Paginated<AccessListInfoDto>>();
@@ -227,7 +227,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             // page 3
             response = await client.GetAsync(content.Links.Next);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             content = await response.Content.ReadFromJsonAsync<Paginated<AccessListInfoDto>>();
             Assert.NotNull(content);
@@ -252,7 +252,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test");
-            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+            response.Should().HaveStatusCode(HttpStatusCode.NotFound);
         }
 
         [Fact]
@@ -263,7 +263,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{def.Identifier}");
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var content = await response.Content.ReadFromJsonAsync<AccessListInfoDto>();
             Assert.NotNull(content);
@@ -291,7 +291,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             protected override async Task ValidateResponse(HttpResponseMessage response, AccessListInfo info)
             {
-                response.StatusCode.Should().Be(HttpStatusCode.OK);
+                response.Should().HaveStatusCode(HttpStatusCode.OK);
 
                 var content = await response.Content.ReadFromJsonAsync<AccessListInfoDto>();
                 Assert.NotNull(content);
@@ -314,7 +314,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test");
-            response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+            response.Should().HaveStatusCode(HttpStatusCode.NoContent);
         }
 
         [Fact]
@@ -325,7 +325,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{def.ResourceOwner}/{def.Identifier}");
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var info = await Repository.LookupInfo(ORG_NR, def.Identifier);
             Assert.Null(info);
@@ -348,7 +348,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             protected override async Task ValidateResponse(HttpResponseMessage response, AccessListInfo info)
             {
-                response.StatusCode.Should().Be(HttpStatusCode.OK);
+                response.Should().HaveStatusCode(HttpStatusCode.OK);
 
                 var content = await response.Content.ReadFromJsonAsync<AccessListInfoDto>();
                 Assert.NotNull(content);
@@ -373,7 +373,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             var identifier = "test1";
             var dto = new CreateAccessListModel(Name: "Test 1", Description: "Test 1 description");
             var response = await client.PutAsJsonAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{identifier}", dto);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var body = await response.Content.ReadFromJsonAsync<AccessListInfoDto>();
             Assert.NotNull(body);
@@ -400,7 +400,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             var identifier = "test1";
             var dto = new CreateAccessListModel(Name: "Test 1", Description: null);
             var response = await client.PutAsJsonAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{identifier}", dto);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var body = await response.Content.ReadFromJsonAsync<AccessListInfoDto>();
             Assert.NotNull(body);
@@ -427,7 +427,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             var identifier = "test1";
             var dto = new CreateAccessListModel(Name: null!, Description: "Test 1 description");
             var response = await client.PutAsJsonAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{identifier}", dto);
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            response.Should().HaveStatusCode(HttpStatusCode.BadRequest);
         }
 
         [Fact]
@@ -439,7 +439,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             var dto = new CreateAccessListModel(Name: "Test 1 updated", Description: "Test 1 description updated");
             var response = await client.PutAsJsonAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{def.Identifier}", dto);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var body = await response.Content.ReadFromJsonAsync<AccessListInfoDto>();
             Assert.NotNull(body);
@@ -467,7 +467,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             var dto = new CreateAccessListModel(Name: "Test 1 updated", Description: null);
             var response = await client.PutAsJsonAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{def.Identifier}", dto);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var body = await response.Content.ReadFromJsonAsync<AccessListInfoDto>();
             Assert.NotNull(body);
@@ -495,7 +495,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             var dto = new CreateAccessListModel(Name: null!, Description: "Test 1 description updated");
             var response = await client.PutAsJsonAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{def.Identifier}", dto);
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            response.Should().HaveStatusCode(HttpStatusCode.BadRequest);
         }
 
         [Fact]
@@ -507,7 +507,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             var dto = new CreateAccessListModel(Name: def.Name, Description: def.Description);
             var response = await client.PutAsJsonAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{def.Identifier}", dto);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var body = await response.Content.ReadFromJsonAsync<AccessListInfoDto>();
             Assert.NotNull(body);
@@ -542,7 +542,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             request.Headers.IfMatch.ParseAdd("*");
 
             var response = await client.SendAsync(request);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
         }
 
         [Fact]
@@ -560,7 +560,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             request.Headers.IfNoneMatch.ParseAdd("*");
 
             var response = await client.SendAsync(request);
-            response.StatusCode.Should().Be(HttpStatusCode.PreconditionFailed);
+            response.Should().HaveStatusCode(HttpStatusCode.PreconditionFailed);
         }
 
         public class ETagHeaders(DbFixture dbFixture, WebApplicationFixture webApplicationFixture)
@@ -584,7 +584,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             protected override async Task ValidateResponse(HttpResponseMessage response, AccessListInfo info)
             {
-                response.StatusCode.Should().Be(HttpStatusCode.OK);
+                response.Should().HaveStatusCode(HttpStatusCode.OK);
 
                 var content = await response.Content.ReadFromJsonAsync<AccessListInfoDto>();
                 Assert.NotNull(content);
@@ -633,7 +633,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
             using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/resource-connections");
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListResourceConnectionDto>>();
             Assert.NotNull(content);
@@ -655,7 +655,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             }
 
             using var nextPageResponse = await client.GetAsync(content.Links.Next);
-            nextPageResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            nextPageResponse.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var nextPageContent = await nextPageResponse.Content.ReadFromJsonAsync<Paginated<AccessListResourceConnectionDto>>();
             Assert.NotNull(nextPageContent);
@@ -677,7 +677,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             }
 
             using var lastPageResponse = await client.GetAsync(nextPageContent.Links.Next);
-            lastPageResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            lastPageResponse.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var lastPageContent = await lastPageResponse.Content.ReadFromJsonAsync<Paginated<AccessListResourceConnectionDto>>();
             Assert.NotNull(lastPageContent);
@@ -731,7 +731,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
             using var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/resource-connections");
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListResourceConnectionDto>>();
             Assert.NotNull(content);
@@ -744,7 +744,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             await aggregate.SaveChanges();
 
             using var nextPageResponse = await client.GetAsync(content.Links.Next);
-            nextPageResponse.StatusCode.Should().Be(HttpStatusCode.PreconditionFailed);
+            nextPageResponse.Should().HaveStatusCode(HttpStatusCode.PreconditionFailed);
         }
 
         public class ETagHeaders(DbFixture dbFixture, WebApplicationFixture webApplicationFixture)
@@ -774,7 +774,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             protected override async Task ValidateResponse(HttpResponseMessage response, AccessListInfo info)
             {
-                response.StatusCode.Should().Be(HttpStatusCode.OK);
+                response.Should().HaveStatusCode(HttpStatusCode.OK);
 
                 var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListResourceConnectionDto>>();
                 Assert.NotNull(content);
@@ -813,7 +813,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             var dto = new UpsertAccessListResourceConnectionDto(ActionFilters: ["read", "write"]);
             var response = await client.PutAsJsonAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{def.Identifier}/resource-connections/test1", dto);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var body = await response.Content.ReadFromJsonAsync<AccessListResourceConnectionDto>();
             Assert.NotNull(body);
@@ -843,7 +843,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             var dto = new UpsertAccessListResourceConnectionDto(ActionFilters: ["write"]);
             var response = await client.PutAsJsonAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{def.Identifier}/resource-connections/test1", dto);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var body = await response.Content.ReadFromJsonAsync<AccessListResourceConnectionDto>();
             Assert.NotNull(body);
@@ -874,7 +874,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             var dto = new UpsertAccessListResourceConnectionDto(ActionFilters: ["read", "write"]);
             var response = await client.PutAsJsonAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{def.Identifier}/resource-connections/test1", dto);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var body = await response.Content.ReadFromJsonAsync<AccessListResourceConnectionDto>();
             Assert.NotNull(body);
@@ -917,7 +917,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             protected override async Task ValidateResponse(HttpResponseMessage response, AccessListInfo info)
             {
-                response.StatusCode.Should().Be(HttpStatusCode.OK);
+                response.Should().HaveStatusCode(HttpStatusCode.OK);
 
                 var content = await response.Content.ReadFromJsonAsync<AccessListResourceConnectionDto>();
                 Assert.NotNull(content);
@@ -939,7 +939,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/resource-connections/test1");
-            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+            response.Should().HaveStatusCode(HttpStatusCode.NotFound);
         }
 
         [Fact]
@@ -950,7 +950,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{def.Identifier}/resource-connections/test1");
-            response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+            response.Should().HaveStatusCode(HttpStatusCode.NoContent);
         }
 
         [Fact]
@@ -965,7 +965,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/{def.Identifier}/resource-connections/test1");
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var data = await response.Content.ReadFromJsonAsync<AccessListResourceConnectionDto>();
             Assert.NotNull(data);
@@ -996,7 +996,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             protected override async Task ValidateResponse(HttpResponseMessage response, AccessListInfo info)
             {
-                response.StatusCode.Should().Be(HttpStatusCode.OK);
+                response.Should().HaveStatusCode(HttpStatusCode.OK);
 
                 var data = await response.Content.ReadFromJsonAsync<AccessListResourceConnectionDto>();
                 Assert.NotNull(data);
@@ -1021,7 +1021,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members");
-            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+            response.Should().HaveStatusCode(HttpStatusCode.NotFound);
         }
 
         [Fact]
@@ -1037,7 +1037,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members");
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
             Assert.NotNull(content);
@@ -1067,7 +1067,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateAuthenticatedClient();
 
             var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members");
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
             Assert.NotNull(content);
@@ -1077,7 +1077,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             received.AddRange(content.Items.Select(m => m.Id.Value));
 
             response = await client.GetAsync(content.Links.Next);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
             Assert.NotNull(content);
@@ -1087,7 +1087,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             received.AddRange(content.Items.Select(m => m.Id.Value));
 
             response = await client.GetAsync(content.Links.Next);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
             Assert.NotNull(content);
@@ -1129,7 +1129,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             protected override async Task ValidateResponse(HttpResponseMessage response, AccessListInfo info)
             {
-                response.StatusCode.Should().Be(HttpStatusCode.OK);
+                response.Should().HaveStatusCode(HttpStatusCode.OK);
 
                 var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
                 Assert.NotNull(content);
@@ -1158,7 +1158,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 PartyUrn.PartyUuid.Create(GenerateUserId()),
             ]));
             var response = await client.PutAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
-            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+            response.Should().HaveStatusCode(HttpStatusCode.NotFound);
         }
 
         [Fact]
@@ -1180,7 +1180,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 PartyUrn.PartyUuid.Create(user4),
             ]));
             var response = await client.PutAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
             Assert.NotNull(content);
@@ -1211,7 +1211,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 PartyUrn.PartyUuid.Create(user4),
             ]));
             var response = await client.PutAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
             var etag = response.Headers.ETag;
@@ -1225,7 +1225,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             content.Items.Should().Contain(m => m.Id.Value == user4);
 
             response = await client.PutAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
             Assert.NotNull(content);
@@ -1257,7 +1257,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 users.Select(PartyUrn.PartyUuid.Create).ToList()));
 
             var response = await client.PutAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            response.Should().HaveStatusCode(HttpStatusCode.BadRequest);
 
             var error = await response.Content.ReadFromJsonAsync<ProblemDetails>();
             Assert.NotNull(error);
@@ -1319,7 +1319,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             protected override async Task ValidateResponse(HttpResponseMessage response, AccessListInfo info)
             {
-                response.StatusCode.Should().Be(HttpStatusCode.OK);
+                response.Should().HaveStatusCode(HttpStatusCode.OK);
 
                 var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
                 Assert.NotNull(content);
@@ -1348,7 +1348,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 PartyUrn.PartyUuid.Create(GenerateUserId()),
             ]));
             var response = await client.PostAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
-            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+            response.Should().HaveStatusCode(HttpStatusCode.NotFound);
         }
 
         [Fact]
@@ -1370,7 +1370,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 PartyUrn.PartyUuid.Create(user4),
             ]));
             var response = await client.PostAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
             Assert.NotNull(content);
@@ -1403,7 +1403,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 PartyUrn.PartyUuid.Create(user4),
             ]));
             var response = await client.PostAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
             var etag = response.Headers.ETag;
@@ -1419,7 +1419,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             content.Items.Should().Contain(m => m.Id.Value == user4);
 
             response = await client.PostAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
             Assert.NotNull(content);
@@ -1453,7 +1453,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 users.Select(PartyUrn.PartyUuid.Create).ToList()));
 
             var response = await client.PostAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            response.Should().HaveStatusCode(HttpStatusCode.BadRequest);
 
             var error = await response.Content.ReadFromJsonAsync<ProblemDetails>();
             Assert.NotNull(error);
@@ -1515,7 +1515,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             protected override async Task ValidateResponse(HttpResponseMessage response, AccessListInfo info)
             {
-                response.StatusCode.Should().Be(HttpStatusCode.OK);
+                response.Should().HaveStatusCode(HttpStatusCode.OK);
 
                 var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
                 Assert.NotNull(content);
@@ -1546,7 +1546,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 PartyUrn.PartyUuid.Create(GenerateUserId()),
             ]));
             var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
-            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+            response.Should().HaveStatusCode(HttpStatusCode.NotFound);
         }
 
         [Fact]
@@ -1568,7 +1568,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 PartyUrn.PartyUuid.Create(user4),
             ]));
             var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
             Assert.NotNull(content);
@@ -1599,7 +1599,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 PartyUrn.PartyUuid.Create(user4),
             ]));
             var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
             var etag = response.Headers.ETag;
@@ -1613,7 +1613,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             content.Items.Should().Contain(m => m.Id.Value == user2);
 
             response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
 
             content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
             Assert.NotNull(content);
@@ -1645,7 +1645,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
                 users.Select(PartyUrn.PartyUuid.Create).ToList()));
 
             var response = await client.DeleteAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}/test1/members", body);
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            response.Should().HaveStatusCode(HttpStatusCode.BadRequest);
 
             var error = await response.Content.ReadFromJsonAsync<ProblemDetails>();
             Assert.NotNull(error);
@@ -1707,7 +1707,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             protected override async Task ValidateResponse(HttpResponseMessage response, AccessListInfo info)
             {
-                response.StatusCode.Should().Be(HttpStatusCode.OK);
+                response.Should().HaveStatusCode(HttpStatusCode.OK);
 
                 var content = await response.Content.ReadFromJsonAsync<Paginated<AccessListMembershipDto>>();
                 Assert.NotNull(content);
@@ -1732,7 +1732,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             using var client = CreateClient();
 
             var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}");
-            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            response.Should().HaveStatusCode(HttpStatusCode.Unauthorized);
         }
 
         [Fact]
@@ -1744,7 +1744,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}");
-            response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+            response.Should().HaveStatusCode(HttpStatusCode.Forbidden);
         }
 
         [Fact]
@@ -1756,7 +1756,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             var response = await client.GetAsync("/resourceregistry/api/v1/access-lists/1234");
-            response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+            response.Should().HaveStatusCode(HttpStatusCode.Forbidden);
         }
 
         [Fact]
@@ -1768,7 +1768,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/{ORG_NR}");
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
         }
 
         [Fact]
@@ -1780,7 +1780,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             var response = await client.GetAsync("/resourceregistry/api/v1/access-lists/1234");
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
         }
     }
     #endregion
@@ -1922,11 +1922,11 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             if (isReadRequest)
             {
-                response.StatusCode.Should().Be(HttpStatusCode.NotModified);
+                response.Should().HaveStatusCode(HttpStatusCode.NotModified);
             }
             else
             {
-                response.StatusCode.Should().Be(HttpStatusCode.PreconditionFailed);
+                response.Should().HaveStatusCode(HttpStatusCode.PreconditionFailed);
 
                 // update should not have gone through
                 var latest = await Repository.LookupInfo(info.ResourceOwner, info.Identifier);
@@ -1951,11 +1951,11 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
 
             if (isReadRequest)
             {
-                response.StatusCode.Should().Be(HttpStatusCode.NotModified);
+                response.Should().HaveStatusCode(HttpStatusCode.NotModified);
             }
             else
             {
-                response.StatusCode.Should().Be(HttpStatusCode.PreconditionFailed);
+                response.Should().HaveStatusCode(HttpStatusCode.PreconditionFailed);
 
                 // update should not have gone through
                 var latest = await Repository.LookupInfo(info.ResourceOwner, info.Identifier);
@@ -1979,7 +1979,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             request.Headers.IfMatch.Add(etag);
 
             var response = await client.SendAsync(request);
-            response.StatusCode.Should().Be(HttpStatusCode.PreconditionFailed);
+            response.Should().HaveStatusCode(HttpStatusCode.PreconditionFailed);
 
             // update should not have gone through
             var latest = await Repository.LookupInfo(info.ResourceOwner, info.Identifier);
@@ -2002,7 +2002,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             request.Headers.IfUnmodifiedSince = lastModified;
 
             var response = await client.SendAsync(request);
-            response.StatusCode.Should().Be(HttpStatusCode.PreconditionFailed);
+            response.Should().HaveStatusCode(HttpStatusCode.PreconditionFailed);
 
             // update should not have gone through
             var latest = await Repository.LookupInfo(info.ResourceOwner, info.Identifier);

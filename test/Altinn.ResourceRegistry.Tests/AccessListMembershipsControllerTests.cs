@@ -38,7 +38,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
         using var client = CreateAuthenticatedClient();
 
         var response = await client.GetAsync("/resourceregistry/api/v1/access-lists/memberships?party=invalid");
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.Should().HaveStatusCode(HttpStatusCode.BadRequest);
 
         var problemDetails = await response.Content.ReadFromJsonAsync<AltinnValidationProblemDetails>();
         Assert.NotNull(problemDetails);
@@ -60,7 +60,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
         using var client = CreateAuthenticatedClient();
 
         var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/memberships?party={user1}&resource=invalid");
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.Should().HaveStatusCode(HttpStatusCode.BadRequest);
 
         var problemDetails = await response.Content.ReadFromJsonAsync<AltinnValidationProblemDetails>();
         Assert.NotNull(problemDetails);
@@ -78,7 +78,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
         using var client = CreateAuthenticatedClient();
 
         var response = await client.GetAsync("/resourceregistry/api/v1/access-lists/memberships");
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.Should().HaveStatusCode(HttpStatusCode.BadRequest);
 
         var problemDetails = await response.Content.ReadFromJsonAsync<AltinnValidationProblemDetails>();
         Assert.NotNull(problemDetails);
@@ -98,7 +98,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
         using var client = CreateAuthenticatedClient();
 
         var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/memberships?party={user1},{user2}");
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.Should().HaveStatusCode(HttpStatusCode.BadRequest);
 
         var problemDetails = await response.Content.ReadFromJsonAsync<AltinnValidationProblemDetails>();
         Assert.NotNull(problemDetails);
@@ -119,7 +119,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
         using var client = CreateAuthenticatedClient();
 
         var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/memberships?party={user1}&resource={resource1},{resource2}");
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.Should().HaveStatusCode(HttpStatusCode.BadRequest);
 
         var problemDetails = await response.Content.ReadFromJsonAsync<AltinnValidationProblemDetails>();
         Assert.NotNull(problemDetails);
@@ -139,7 +139,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
         using var client = CreateAuthenticatedClient();
 
         var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/memberships?party={nonExistingUser}");
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.Should().HaveStatusCode(HttpStatusCode.BadRequest);
 
         var problemDetails = await response.Content.ReadFromJsonAsync<AltinnValidationProblemDetails>();
         Assert.NotNull(problemDetails);
@@ -181,7 +181,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
         using var client = CreateAuthenticatedClient();
 
         var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/memberships?party={user1}");
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Should().HaveStatusCode(HttpStatusCode.OK);
 
         var memberships = await response.Content.ReadFromJsonAsync<ListObject<AccessListResourceMembershipWithActionFilterDto>>();
         Assert.NotNull(memberships);
@@ -225,7 +225,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
         using var client = CreateAuthenticatedClient();
 
         var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/memberships?party={user1}");
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Should().HaveStatusCode(HttpStatusCode.OK);
 
         var memberships = await response.Content.ReadFromJsonAsync<ListObject<AccessListResourceMembershipDto>>();
         Assert.NotNull(memberships);
@@ -263,7 +263,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
         using var client = CreateAuthenticatedClient();
 
         var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/memberships?party={user1}&resource={resource1}");
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Should().HaveStatusCode(HttpStatusCode.OK);
 
         var memberships = await response.Content.ReadFromJsonAsync<ListObject<AccessListResourceMembershipDto>>();
         Assert.NotNull(memberships);
@@ -282,7 +282,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
             using var client = CreateClient();
 
             var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/memberships?party=urn:altinn:party:uuid:{GenerateUserId()}");
-            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            response.Should().HaveStatusCode(HttpStatusCode.Unauthorized);
         }
 
         [Fact]
@@ -294,7 +294,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/memberships?party=urn:altinn:party:uuid:{GenerateUserId()}");
-            response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+            response.Should().HaveStatusCode(HttpStatusCode.Forbidden);
         }
 
         [Fact]
@@ -306,7 +306,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/memberships?party=urn:altinn:party:uuid:{GenerateUserId()}");
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
         }
     }
     #endregion

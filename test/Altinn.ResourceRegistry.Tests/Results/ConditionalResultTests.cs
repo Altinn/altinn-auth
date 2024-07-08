@@ -25,7 +25,7 @@ public class  ConditionalResultTests
 
         var response = await client.GetAsync("/precondition-failed");
 
-        response.StatusCode.Should().Be(HttpStatusCode.PreconditionFailed);
+        response.Should().HaveStatusCode(HttpStatusCode.PreconditionFailed);
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public class  ConditionalResultTests
 
         var response = await client.GetAsync("/not-modified");
 
-        response.StatusCode.Should().Be(HttpStatusCode.NotModified);
+        response.Should().HaveStatusCode(HttpStatusCode.NotModified);
         Assert.NotNull(response.Headers.ETag);
         response.Headers.ETag.ToString().Should().Be(RequestCondition.SerializeETag("5"));
 
@@ -50,7 +50,7 @@ public class  ConditionalResultTests
 
         var response = await client.GetAsync("/not-found");
 
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.Should().HaveStatusCode(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public class  ConditionalResultTests
 
         var response = await client.GetAsync("/not-found-action-result");
 
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.Should().HaveStatusCode(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public class  ConditionalResultTests
 
         var response = await client.GetAsync("/ok");
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Should().HaveStatusCode(HttpStatusCode.OK);
         Assert.NotNull(response.Headers.ETag);
         response.Headers.ETag.ToString().Should().Be(RequestCondition.SerializeETag("5"));
 
@@ -90,7 +90,7 @@ public class  ConditionalResultTests
 
         var response = await client.GetAsync("/ok-conditional");
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Should().HaveStatusCode(HttpStatusCode.OK);
         Assert.NotNull(response.Headers.ETag);
         response.Headers.ETag.ToString().Should().Be(RequestCondition.SerializeETag("5"));
 
