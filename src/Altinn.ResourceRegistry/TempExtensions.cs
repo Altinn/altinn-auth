@@ -23,7 +23,6 @@ internal static class TempExtensions
 
         Console.WriteLine($"Program // Loading Configuration from basePath={basePath}");
 
-        builder.Configuration.SetBasePath(basePath);
         string configJsonFile1 = $"{basePath}/altinn-appsettings/altinn-dbsettings-secret.json";
 
         Console.WriteLine($"Loading configuration file: '{configJsonFile1}'");
