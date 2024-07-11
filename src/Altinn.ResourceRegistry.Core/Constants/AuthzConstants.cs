@@ -12,6 +12,11 @@ namespace Altinn.ResourceRegistry.Core.Constants
     public static class AuthzConstants
     {
         /// <summary>
+        /// Policy tag for authorizing designer access
+        /// </summary>
+        public const string POLICY_STUDIO_DESIGNER = "StudioDesignerAccess";
+
+        /// <summary>
         /// Policy tag for authorizing write scope.
         /// </summary>
         public const string POLICY_SCOPE_RESOURCEREGISTRY_WRITE = "ScopeResourceRegistryWrite";

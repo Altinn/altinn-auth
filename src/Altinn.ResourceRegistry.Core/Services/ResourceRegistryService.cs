@@ -102,7 +102,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         /// <inheritdoc/>
         public async Task<List<ServiceResource>> GetSearchResults(ResourceSearch resourceSearch, CancellationToken cancellationToken = default)
         {
-            List<ServiceResource> resourceList = await GetResourceList(false, false, cancellationToken);
+            List<ServiceResource> resourceList = await GetResourceList(includeApps: false, includeAltinn2: false, includeExpired: false, cancellationToken);
             return ServiceResourceHelper.GetSearchResultsFromResourceList(resourceList, resourceSearch);
         }
 
@@ -183,7 +183,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         }
 
         /// <inheritdoc />
-        public async Task<List<ServiceResource>> GetResourceList(bool includeApps, bool includeAltinn2, CancellationToken cancellationToken = default)
+        public async Task<List<ServiceResource>> GetResourceList(bool includeApps, bool includeAltinn2, bool includeExpired, CancellationToken cancellationToken = default)
         {
             var tasks = new List<Task<List<ServiceResource>>>(3)
             {
@@ -196,7 +196,7 @@ namespace Altinn.ResourceRegistry.Core.Services
                 
                 if (includeAltinn2)
                 {
-                    tasks.Add(GetAltinn2AvailableServices(orgListTask, cancellationToken));
+                    tasks.Add(GetAltinn2AvailableServices(orgListTask, includeExpired: false, cancellationToken));
                 }
                 
                 if (includeApps)
@@ -240,12 +240,12 @@ namespace Altinn.ResourceRegistry.Core.Services
                 return applicationList.Applications.Select(application => MapApplicationToApplicationResource(application, orgList)).ToList();
             }
 
-            async Task<List<ServiceResource>> GetAltinn2AvailableServices(Task<OrgList> orgListTask, CancellationToken cancellationToken = default)
+            async Task<List<ServiceResource>> GetAltinn2AvailableServices(Task<OrgList> orgListTask, bool includeExpired,  CancellationToken cancellationToken = default)
             {
                 var altin2Services = await Task.WhenAll(
-                    _altinn2ServicesClient.AvailableServices(1044, cancellationToken),
-                    _altinn2ServicesClient.AvailableServices(2068, cancellationToken),
-                    _altinn2ServicesClient.AvailableServices(1033, cancellationToken));
+                    _altinn2ServicesClient.AvailableServices(1044, includeExpired, cancellationToken),
+                    _altinn2ServicesClient.AvailableServices(2068, includeExpired, cancellationToken),
+                    _altinn2ServicesClient.AvailableServices(1033, includeExpired, cancellationToken));
 
                 List<AvailableService> altinn2List1044 = altin2Services[0];
                 List<AvailableService> altinn2List2068 = altin2Services[1];

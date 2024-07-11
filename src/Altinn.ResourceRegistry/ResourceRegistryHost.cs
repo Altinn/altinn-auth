@@ -96,7 +96,8 @@ internal static class ResourceRegistryHost
                 .RequireScopeAnyOf(AuthzConstants.SCOPE_RESOURCE_ADMIN, AuthzConstants.SCOPE_ACCESS_LIST_WRITE)
                 .RequireUserOwnsResource())
             .AddPolicy(AuthzConstants.POLICY_ADMIN, policy => policy
-                .RequireScopeAnyOf(AuthzConstants.SCOPE_RESOURCE_ADMIN));
+                .RequireScopeAnyOf(AuthzConstants.SCOPE_RESOURCE_ADMIN))
+            .AddPolicy(AuthzConstants.POLICY_STUDIO_DESIGNER, policy => policy.Requirements.Add(new ClaimAccessRequirement("urn:altinn:app", "studio.designer")));
 
         services.AddResourceRegistryAuthorizationHandlers();
 
@@ -108,7 +109,7 @@ internal static class ResourceRegistryHost
         builder.Services.AddControllers()
             .AddMvcOptions(opts =>
             {
-                opts.OutputFormatters.Insert(0, new RdfOutputFormatter());
+                opts.OutputFormatters.Add(new RdfOutputFormatter());
                 opts.ModelBinderProviders.InsertSingleton<RequestConditionCollection.ModelBinderProvider>(0);
                 opts.ModelBinderProviders.InsertSingleton<AccessListIncludesModelBinder>(0);
             })

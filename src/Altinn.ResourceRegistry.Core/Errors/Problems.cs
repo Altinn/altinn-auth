@@ -30,4 +30,10 @@ public static class Problems
     /// </summary>
     public static ProblemDescriptor ResourceReference_NotFound { get; }
         = _factory.Create(2, HttpStatusCode.BadRequest, "One or more resource references not found.");
+
+    /// <summary>
+    /// Gets a <see cref="ProblemDescriptor"/>.
+    /// </summary>
+    public static ProblemDescriptor IncorrectMatchingOrgForResource { get; }
+        = _factory.Create(3, HttpStatusCode.BadRequest, "Org does not match with resource");
 }

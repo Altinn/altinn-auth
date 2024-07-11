@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using Altinn.Common.PEP.Authorization;
 using Altinn.ResourceRegistry.Auth;
 using Microsoft.AspNetCore.Authorization;
 
@@ -19,6 +20,7 @@ public static class ResourceRegistryAuthAuthorizationServiceCollectionExtensions
     {
         services.AddOwnedResourceAuthorizationHandler();
         services.AddAdminAuthorizationHandler();
+        services.AddClaimAuthorizationHandler();
 
         return services;
     }
@@ -43,6 +45,18 @@ public static class ResourceRegistryAuthAuthorizationServiceCollectionExtensions
     public static IServiceCollection AddAdminAuthorizationHandler(this IServiceCollection services)
     {
         services.TryAddAuthroizationHandler<AdminAuthorizationHandler>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds the authorization handlers for resource registry.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/></param>
+    /// <returns><paramref name="services"/></returns>
+    public static IServiceCollection AddClaimAuthorizationHandler(this IServiceCollection services)
+    {
+        services.TryAddAuthroizationHandler<ClaimAccessHandler>();
 
         return services;
     }

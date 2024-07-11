@@ -5,11 +5,11 @@
     "en": "Agreement on work training"
   },
   "description": {
-    "nb-NO": "Avtalen skal bidra til at personer med behov for bistand fra NAV skal få eller beholde en jobb, samtidig som den støtter arbeidsgivere som inkluderer deg som har nedsatt arbeidsevne. Avtalen inngås mellom arbeidsgiver, arbeidssøker og NAV.",
+    "nb-NO": "Avtalen skal bidra til at personer med behov for bistand fra NAV skal fÃ¥ eller beholde en jobb, samtidig som den stÃ¸tter arbeidsgivere som inkluderer deg som har nedsatt arbeidsevne. Avtalen inngÃ¥s mellom arbeidsgiver, arbeidssÃ¸ker og NAV.",
     "EN": "The agreement will help people who need assistance from NAV to get or keep a job, while supporting employers who include those who have reduced working capacity. The agreement is entered into between the employer, the jobseeker and NAV."
   },
   "rightDescription": {
-    "nb-NO": "Med denne fullmakten kan man inngå en avtale om arbeidstreing med NAV og kommune.",
+    "nb-NO": "Med denne fullmakten kan man inngÃ¥ en avtale om arbeidstreing med NAV og kommune.",
     "EN": "With this authorisation, you can enter into an agreement on work training with NAV and the municipality"
   },
   "hasCompetentAuthority": {
@@ -34,7 +34,7 @@
   "sector": [],
   "keywords": [
     {
-      "word" : "Dødsbo",
+      "word" : "DÃ¸dsbo",
       "language" : "nb"
     }
   ],

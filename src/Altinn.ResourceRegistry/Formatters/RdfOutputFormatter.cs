@@ -16,11 +16,16 @@ namespace Altinn.Platform.Events.Formatters
     public class RdfOutputFormatter : TextOutputFormatter
     {
         /// <summary>
+        /// Accept format
+        /// </summary>
+        public const string RDFMimeType = "application/xml+rdf";
+
+        /// <summary>
         /// Constructs a new instance that uses the given formatter for deserialization.
         /// </summary>
         public RdfOutputFormatter()
         {
-            SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/xml+rdf"));
+            SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse(RDFMimeType));
 
             SupportedEncodings.Add(Encoding.UTF8);
             SupportedEncodings.Add(Encoding.Unicode);
