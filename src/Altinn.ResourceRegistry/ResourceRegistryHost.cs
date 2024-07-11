@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using Altinn.Authorization.ServiceDefaults;
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Common.Authentication.Configuration;
 using Altinn.Common.PEP.Authorization;
@@ -39,13 +40,10 @@ internal static class ResourceRegistryHost
     /// <param name="args">The command line arguments.</param>
     public static WebApplication Create(string[] args)
     {
-        var builder = WebApplication.CreateBuilder(args);
+        var builder = AltinnHost.CreateWebApplicationBuilder("resource-registry", args);
         var services = builder.Services;
         var config = builder.Configuration;
 
-        builder.AddDefaultConfiguration();
-
-        builder.AddAltinnServiceDefaults("resource-registry");
         MapPostgreSqlConfiguration(builder);
         services.AddMemoryCache();
 
