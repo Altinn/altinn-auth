@@ -12,7 +12,7 @@
     <PackageVersion Include="Altinn.Common.AccessToken" Version="4.4.3" />
     <PackageVersion Include="Altinn.Common.AccessTokenClient" Version="3.0.4" />
     <PackageVersion Include="Altinn.Common.PEP" Version="4.0.0" />
-    <PackageVersion Include="Altinn.Platform.Storage.Interface" Version="3.28.0" />
+    <PackageVersion Include="Altinn.Platform.Storage.Interface" Version="3.29.0" />
     <PackageVersion Include="Altinn.Swashbuckle.Abstractions" Version="1.1.1" />
     <PackageVersion Include="Altinn.Urn.Swashbuckle" Version="2.3.2" />
     <PackageVersion Include="Altinn.Urn" Version="2.3.2" />
