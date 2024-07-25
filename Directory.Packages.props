@@ -6,9 +6,9 @@
     <PackageVersion Include="Altinn.Authorization.ABAC" Version="0.0.8" />
     <PackageVersion Include="Altinn.Authorization.ProblemDetails.Abstractions" Version="3.0.0" />
     <PackageVersion Include="Altinn.Authorization.ProblemDetails" Version="3.0.0" />
-    <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql.Yuniql" Version="2.0.0" />
-    <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql" Version="2.0.0" />
-    <PackageVersion Include="Altinn.Authorization.ServiceDefaults" Version="2.0.0" />
+    <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql.Yuniql" Version="2.1.1" />
+    <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql" Version="2.1.1" />
+    <PackageVersion Include="Altinn.Authorization.ServiceDefaults" Version="2.1.1" />
     <PackageVersion Include="Altinn.Common.AccessToken" Version="4.4.4" />
     <PackageVersion Include="Altinn.Common.AccessTokenClient" Version="3.0.5" />
     <PackageVersion Include="Altinn.Common.PEP" Version="4.0.0" />
@@ -20,10 +20,10 @@
     <PackageVersion Include="Azure.Identity" Version="1.12.0" />
     <PackageVersion Include="Azure.Security.KeyVault.Certificates" Version="4.6.0" />
     <PackageVersion Include="Azure.Security.KeyVault.Secrets" Version="4.6.0" />
-    <PackageVersion Include="Azure.Storage.Blobs" Version="12.20.0" />
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.21.0" />
     <PackageVersion Include="CommunityToolkit.Diagnostics" Version="8.2.2" />
     <PackageVersion Include="coverlet.collector" Version="6.0.2" />
-    <PackageVersion Include="dotNetRdf" Version="3.2.0" />
+    <PackageVersion Include="dotNetRdf" Version="3.2.1" />
     <PackageVersion Include="FluentAssertions.Analyzers" Version="0.33.0" />
     <PackageVersion Include="FluentAssertions" Version="6.12.0" />
     <PackageVersion Include="JWTCookieAuthentication" Version="4.0.1" />
