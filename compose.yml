@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   db:
-    image: docker.io/postgres:16.3-alpine
+    image: docker.io/postgres:16.4-alpine
     restart: always
     environment:
       - POSTGRES_USER=platform_authorization
