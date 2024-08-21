@@ -393,6 +393,12 @@ namespace Altinn.ResourceRegistry.Core.Services
             return await _repository.FindSubjectsForResources(resources, cancellationToken);
         }
 
+        /// <inheritdoc/>
+        public async Task<List<UpdatedResourceSubject>> FindUpdatedResourceSubjects(DateTimeOffset lastUpdated, int limit, (Uri ResourceUrn, Uri SubjectUrn)? skipPast = null, CancellationToken cancellationToken = default)
+        {
+            return await _repository.FindUpdatedResourceSubjects(lastUpdated, limit, skipPast, cancellationToken);
+        }
+
         private static ResourceSubjects GetResourceSubjects(ServiceResource resource,  IDictionary<string, ICollection<string>> subjectAttributes)
         {
             AttributeMatchV2 resourceAttribute = new AttributeMatchV2 

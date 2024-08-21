@@ -63,6 +63,16 @@ namespace Altinn.ResourceRegistry.Core
         Task<List<ResourceSubjects>> FindSubjectsForResources(IEnumerable<string> resources, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Returns a list of resource/subject pairs (including deleted) that has been updated since lastUpdated
+        /// </summary>
+        /// <param name="lastUpdated">The timestamp from which to return updated entries</param>
+        /// <param name="limit">The maximum number of entries to return</param>
+        /// <param name="skipPast">Optional ResourceUrn,SubjectUrn pair to skip past if "since" value matches multiple rows</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>List of resource/subject pairs updated since lastUpdated</returns>
+        Task<List<UpdatedResourceSubject>> FindUpdatedResourceSubjects(DateTimeOffset lastUpdated, int limit, (Uri ResourceUrn, Uri SubjectUrn)? skipPast = null, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Resett subjects for a given resource
         /// </summary>
         /// <param name="resourceSubjects">The resourceSubjects with resource and list of subjects</param>

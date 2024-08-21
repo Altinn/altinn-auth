@@ -59,4 +59,16 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor AccessListMemberships_TooManyResources { get; }
         = _factory.Create(7, "Multiple resources currently not supported.");
+
+    /// <summary>
+    /// Gets a validation error descriptor for when an invalid limit is provided for the updated resource subjects endpoint.
+    /// </summary>
+    public static ValidationErrorDescriptor UpdatedResourceSubjects_InvalidLimit { get; }
+        = _factory.Create(8, "Limit must be between 1 and 1000.");
+
+    /// <summary>
+    /// Gets a validation error descriptor for when an invalid skipPast parameter is provided for the updated resource subjects endpoint.
+    /// </summary>
+    public static ValidationErrorDescriptor UpdatedResourceSubjects_InvalidSkipPast { get; }
+        = _factory.Create(9, "Invalid skipPast parameter; must be a comma-separated pair of URNs.");
 }

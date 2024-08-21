@@ -1,5 +1,7 @@
-﻿using Altinn.Platform.Events.Formatters;
+using Altinn.Authorization.ProblemDetails;
+using Altinn.Platform.Events.Formatters;
 using Altinn.ResourceRegistry.Core.Constants;
+using Altinn.ResourceRegistry.Core.Errors;
 using Altinn.ResourceRegistry.Core.Extensions;
 using Altinn.ResourceRegistry.Core.Helpers;
 using Altinn.ResourceRegistry.Core.Models;
@@ -399,6 +401,53 @@ namespace Altinn.ResourceRegistry.Controllers
         {
             return await _resourceRegistry.GetSearchResults(search, cancellationToken);
         }
+
+        /// <summary>
+        /// Gets the updated resources since the provided last updated time (inclusive)
+        /// </summary>
+        /// <param name="since">Date time used for filtering</param>
+        /// <param name="token">Opaque continuation token containing ResourceUrn,SubjectUrn pair to skip past on rows matching "since" exactly</param>
+        /// <param name="limit">Maximum number of pairs returned (1-1000, default: 1000)</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>A list of updated subject/resource pairs since provided timestamp (inclusive)</returns>
+        [HttpGet("updated", Name = "updated")]
+        [Produces("application/json")]
+        public async Task<ActionResult<Paginated<UpdatedResourceSubject>>> UpdatedResourceSubjects([FromQuery] DateTimeOffset since, [FromQuery(Name = "token")] Opaque<UpdatedResourceSubjectsContinuationToken> token = null, [FromQuery] int limit = 1000, CancellationToken cancellationToken = default)
+        {
+            if (limit is < 1 or > 1000)
+            {
+                return new AltinnValidationProblemDetails([
+                    ValidationErrors.UpdatedResourceSubjects_InvalidLimit.ToValidationError(),
+                ]).ToActionResult();
+            }
+
+            (Uri ResourceUrn, Uri SubjectUrn)? skipPastPair = null;
+
+            if (token is not null)
+            {
+                skipPastPair = (token.Value.ResourceUrn, token.Value.SubjectUrn);
+            }
+
+            // Use maxItems + 1 in order to determine if there are more items to fetch
+            List<UpdatedResourceSubject> updatedResourceSubjects = await _resourceRegistry.FindUpdatedResourceSubjects(since.ToUniversalTime(), limit + 1, skipPastPair, cancellationToken);
+
+            if (updatedResourceSubjects.Count != limit + 1)
+            {
+                return Paginated.Create(updatedResourceSubjects, null);
+            }
+
+            updatedResourceSubjects.RemoveAt(limit);
+            UpdatedResourceSubject last = updatedResourceSubjects[^1];
+
+            string nextUrl = Url.Link("updated", new
+            {
+                since = last.UpdatedAt.ToString("O"),
+                token = Opaque.Create(new UpdatedResourceSubjectsContinuationToken(last.ResourceUrn, last.SubjectUrn)),
+                limit
+            });
+
+            return Paginated.Create(updatedResourceSubjects, nextUrl);
+        }
     }
 
     /// <summary>
@@ -421,4 +470,13 @@ namespace Altinn.ResourceRegistry.Controllers
             }
         }
     }
+
+    /// <summary>
+    /// Continuation token for updated resource subjects. Used with "since" value to serve
+    /// as tiebreaker when paginating over resource subjects having the same "updatedAt" value
+    /// split across pages
+    /// </summary>
+    /// <param name="ResourceUrn">The resourceUrn.</param>
+    /// <param name="SubjectUrn">The subjectUrn.</param>
+    public record UpdatedResourceSubjectsContinuationToken(Uri ResourceUrn, Uri SubjectUrn);
 }
