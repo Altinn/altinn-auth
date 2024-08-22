@@ -57,7 +57,7 @@ namespace Altinn.ResourceRegistry.Tests
         public async Task DelegationCount()
         {
             HttpClient client = CreateClient();
-            string token = PrincipalUtil.GetAccessToken("studio.designer");
+            string token = PrincipalUtil.GetOrgToken("digdir", "991825827", "altinn:resourceregistry/resource.admin");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             string requestUri = "resourceregistry/api/v1/altinn2export/delegationcount?serviceCode=4485&serviceEditionCode=2021";
 
@@ -145,7 +145,7 @@ namespace Altinn.ResourceRegistry.Tests
         public async Task Trigger_Batch_MissingResource()
         {
             HttpClient client = CreateClient();
-            string token = PrincipalUtil.GetAccessToken("studio.designer");
+            string token = PrincipalUtil.GetOrgToken("digdir", "991825827", "altinn:resourceregistry/resource.admin");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             string requestUri = "resourceregistry/api/v1/altinn2export/exportdelegations";
 
@@ -176,7 +176,7 @@ namespace Altinn.ResourceRegistry.Tests
         public async Task Trigger_Batch_Ok()
         {
             HttpClient client = CreateClient();
-            string token = PrincipalUtil.GetAccessToken("studio.designer");
+            string token = PrincipalUtil.GetOrgToken("digdir", "991825827", "altinn:resourceregistry/resource.admin");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             string requestUri = "resourceregistry/api/v1/altinn2export/exportdelegations";
 
@@ -203,7 +203,7 @@ namespace Altinn.ResourceRegistry.Tests
         public async Task Trigger_Batch_NoMatchingORg()
         {
             HttpClient client = CreateClient();
-            string token = PrincipalUtil.GetAccessToken("studio.designer");
+            string token = PrincipalUtil.GetOrgToken("digdir", "991825827", "altinn:resourceregistry/resource.admin");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             string requestUri = "resourceregistry/api/v1/altinn2export/exportdelegations";
 

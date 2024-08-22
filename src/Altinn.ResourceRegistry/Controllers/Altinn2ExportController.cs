@@ -81,7 +81,7 @@ namespace Altinn.ResourceRegistry.Controllers
         /// <summary>
         /// Information about number of delegations for a service
         /// </summary>
-        [Authorize(Policy = AuthzConstants.POLICY_STUDIO_DESIGNER)]
+        [Authorize(Policy = AuthzConstants.POLICY_ADMIN)]
         [HttpGet("delegationcount")]
         public async Task<ActionResult<DelegationCountOverview>> GetDelegationCount([FromQueryAttribute] string serviceCode, [FromQueryAttribute] int serviceEditionCode, CancellationToken cancellationToken = default)
         {
@@ -93,7 +93,7 @@ namespace Altinn.ResourceRegistry.Controllers
         /// <summary>
         /// Request a batch run of delegations from service in Altinn 2 to resource in Altinn 3
         /// </summary>
-        [Authorize(Policy = AuthzConstants.POLICY_STUDIO_DESIGNER)]
+        [Authorize(Policy = AuthzConstants.POLICY_ADMIN)]
         [HttpPost("exportdelegations")]
         public async Task<ActionResult> ExportDelegations([FromBody] ExportDelegationsRequestBE exportDelegationsRequestBE, CancellationToken cancellationToken = default)
         {
