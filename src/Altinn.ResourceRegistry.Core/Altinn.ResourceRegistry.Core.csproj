@@ -25,4 +25,8 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+		<InternalsVisibleTo Include="Altinn.ResourceRegistry.Tests"/>
+	</ItemGroup>
+
 </Project>

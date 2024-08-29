@@ -1,7 +1,9 @@
 ﻿#nullable enable
 
 using System.Buffers;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Altinn.Swashbuckle.Examples;
@@ -12,12 +14,15 @@ namespace Altinn.ResourceRegistry.Core.Register;
 /// A organization number (a string of 9 digits).
 /// </summary>
 [JsonConverter(typeof(OrganizationNumber.JsonConverter))]
-public class OrganizationNumber
+[DebuggerDisplay("{_value}")]
+public sealed class OrganizationNumber
     : IParsable<OrganizationNumber>
     , ISpanParsable<OrganizationNumber>
     , IFormattable
     , ISpanFormattable
     , IExampleDataProvider<OrganizationNumber>
+    , IEquatable<OrganizationNumber>
+    , IEqualityOperators<OrganizationNumber, OrganizationNumber, bool>
 {
     private static readonly SearchValues<char> NUMBERS = SearchValues.Create(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']);
 
@@ -43,7 +48,7 @@ public class OrganizationNumber
     public static OrganizationNumber Parse(string s, IFormatProvider? provider)
         => TryParse(s, provider, out var result)
         ? result
-        : throw new FormatException("Invalid SSN");
+        : throw new FormatException("Invalid organization number");
 
     /// <inheritdoc cref="ISpanParsable{TSelf}.Parse(ReadOnlySpan{char}, IFormatProvider?)"/>
     public static OrganizationNumber Parse(ReadOnlySpan<char> s)
@@ -53,7 +58,7 @@ public class OrganizationNumber
     public static OrganizationNumber Parse(ReadOnlySpan<char> s, IFormatProvider? provider)
         => TryParse(s, provider, out var result)
         ? result
-        : throw new FormatException("Invalid SSN");
+        : throw new FormatException("Invalid organization number");
 
     /// <inheritdoc/>
     public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out OrganizationNumber result)
@@ -106,6 +111,26 @@ public class OrganizationNumber
         charsWritten = _value.Length;
         return true;
     }
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj)
+        => obj is OrganizationNumber other && Equals(other);
+
+    /// <inheritdoc/>
+    public bool Equals(OrganizationNumber? other)
+        => other is not null && string.Equals(_value, other._value, StringComparison.Ordinal);
+
+    /// <inheritdoc/>
+    public override int GetHashCode()
+        => string.GetHashCode(_value, StringComparison.Ordinal);
+
+    /// <inheritdoc/>
+    public static bool operator ==(OrganizationNumber? left, OrganizationNumber? right)
+        => left is null ? right is null : left.Equals(right);
+
+    /// <inheritdoc/>
+    public static bool operator !=(OrganizationNumber? left, OrganizationNumber? right)
+        => !(left == right);
 
     private sealed class JsonConverter : JsonConverter<OrganizationNumber>
     {

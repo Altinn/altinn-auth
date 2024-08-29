@@ -1,6 +1,6 @@
 #nullable enable
 
-using Altinn.ResourceRegistry.Core.Errors;
+using Altinn.Authorization.ProblemDetails;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Versioned;
 using Altinn.ResourceRegistry.Core.Register;

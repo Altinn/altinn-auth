@@ -15,6 +15,7 @@ public class ResourceOwnerFromRouteValueAttribute
     , IResourceOwnerProvider<HttpRequest>
 {
     private readonly string _routeValueName;
+    private readonly string _path;
 
     /// <summary>
     /// Creates a new instance of <see cref="ResourceOwnerFromRouteValueAttribute"/>.
@@ -23,7 +24,11 @@ public class ResourceOwnerFromRouteValueAttribute
     public ResourceOwnerFromRouteValueAttribute(string routeValueName)
     {
         _routeValueName = routeValueName;
+        _path = $"/$PATH/{routeValueName}";
     }
+
+    /// <inheritdoc/>
+    public string Path => _path;
 
     /// <inheritdoc/>
     public bool TryGetResourceOwner(HttpContext resource, [NotNullWhen(true)] out string? resourceOwner)
@@ -42,5 +47,17 @@ public class ResourceOwnerFromRouteValueAttribute
 
         resourceOwner = null;
         return false;
+    }
+
+    /// <inheritdoc/>
+    public void SetResourceOwner(HttpContext resource, string resourceOwner)
+    {
+        SetResourceOwner(resource.Request, resourceOwner);
+    }
+
+    /// <inheritdoc/>
+    public void SetResourceOwner(HttpRequest resource, string resourceOwner)
+    {
+        resource.RouteValues[_routeValueName] = resourceOwner;
     }
 }

@@ -71,4 +71,10 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor UpdatedResourceSubjects_InvalidSkipPast { get; }
         = _factory.Create(9, "Invalid skipPast parameter; must be a comma-separated pair of URNs.");
+
+    /// <summary>
+    /// Gets a validation error descriptor for when an access list owner is an organization number.
+    /// </summary>
+    public static ValidationErrorDescriptor AccessList_Owner_MustBe_OrgCode { get; }
+        = _factory.Create(10, "Access list owner must be a valid and registered org-code.");
 }

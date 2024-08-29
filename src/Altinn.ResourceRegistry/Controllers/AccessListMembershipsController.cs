@@ -115,9 +115,9 @@ public class AccessListMembershipsController
             resources,
             cancellationToken);
 
-        if (result.IsProblem(out var problemResult))
+        if (result.IsProblem)
         {
-            return problemResult.ToActionResult();
+            return result.Problem.ToActionResult();
         }
 
         return ListObject.Create(result.Value.Select(AccessListResourceMembershipWithActionFilterDto.From));

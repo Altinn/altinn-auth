@@ -1,4 +1,6 @@
-﻿using System.Net;
+﻿#nullable enable
+
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
@@ -8,7 +10,9 @@ namespace Altinn.ResourceRegistry.Filters;
 /// A filter that converts <see cref="NotImplementedException"/> to a 501 Not Implemented response.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
-internal sealed class NotImplementedFilterAttribute : Attribute, IExceptionFilter
+internal sealed class NotImplementedFilterAttribute 
+    : Attribute
+    , IExceptionFilter
 {
     /// <inheritdoc/>
     public void OnException(ExceptionContext context)

@@ -29,8 +29,9 @@ namespace Altinn.ResourceRegistry.Controllers;
 [NotImplementedFilter]
 [ResourceOwnerFromRouteValue("owner")]
 [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_READ)]
+[OwnerMustBeOrgcodeFilter]
 public class AccessListsController 
-    : Controller
+    : ControllerBase
 {
     /// <summary>
     /// Route name for <see cref="GetAccessListsByOwner"/>.

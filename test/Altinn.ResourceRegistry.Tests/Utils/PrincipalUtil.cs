@@ -58,7 +58,7 @@ namespace Altinn.ResourceRegistry.Tests.Utils
             return token;
         }
 
-        public static ClaimsPrincipal GetClaimsPrincipal(string org, string orgNumber, string? scope = null, string[]? prefixes = null)
+        public static ClaimsPrincipal GetClaimsPrincipal(string? org, string orgNumber, string? scope = null, string[]? prefixes = null)
         {
             string issuer = "www.altinn.no";
 
@@ -92,7 +92,7 @@ namespace Altinn.ResourceRegistry.Tests.Utils
             return new ClaimsPrincipal(identity);
         }
 
-        public static string GetOrgToken(string org, string orgNumber = "991825827", string? scope = null, string[]? prefixes = null)
+        public static string GetOrgToken(string? org, string orgNumber = "991825827", string? scope = null, string[]? prefixes = null)
         {
             ClaimsPrincipal principal = GetClaimsPrincipal(org, orgNumber, scope, prefixes);
 

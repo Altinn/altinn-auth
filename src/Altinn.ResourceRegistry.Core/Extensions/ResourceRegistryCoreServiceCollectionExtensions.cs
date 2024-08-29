@@ -1,4 +1,5 @@
 ﻿using Altinn.ResourceRegistry.Core.AccessLists;
+using Altinn.ResourceRegistry.Core.ServiceOwners;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -16,6 +17,7 @@ public static class ResourceRegistryCoreServiceCollectionExtensions
     public static IServiceCollection AddResourceRegistryCoreServices(this IServiceCollection services)
     {
         services.AddAccessListsService();
+        services.AddResourceOwnerService();
 
         return services;
     }
@@ -28,6 +30,18 @@ public static class ResourceRegistryCoreServiceCollectionExtensions
     public static IServiceCollection AddAccessListsService(this IServiceCollection services)
     {
         services.TryAddTransient<IAccessListService, AccessListService>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Register the <see cref="IServiceOwnerService"/> in the <see cref="IServiceCollection"/>.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/></param>
+    /// <returns><paramref name="services"/></returns>
+    public static IServiceCollection AddResourceOwnerService(this IServiceCollection services)
+    {
+        services.TryAddSingleton<IServiceOwnerService, ServiceOwnerService>();
 
         return services;
     }

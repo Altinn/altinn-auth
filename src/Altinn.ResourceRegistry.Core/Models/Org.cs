@@ -11,7 +11,7 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// Name of organization. With lanugage support
         /// </summary>
         [JsonProperty("name")]
-        public Dictionary<string, string> Name { get; set; }
+        public IReadOnlyDictionary<string, string> Name { get; set; } = new Dictionary<string, string>();
 
         /// <summary>
         /// The logo
@@ -31,6 +31,6 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// <summary>
         /// The environments available for the organzation
         /// </summary>
-        public List<string> Environments { get; set; } 
+        public IReadOnlyCollection<string> Environments { get; set; } = new List<string>();
     }
 }

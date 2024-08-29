@@ -8,7 +8,7 @@ namespace Altinn.ResourceRegistry.Core.Services
     public interface IOrgListClient
     {
         /// <summary>
-        /// Returns a list of orga
+        /// Fetches a list of orgs.
         /// </summary>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns></returns>

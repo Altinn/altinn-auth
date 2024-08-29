@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using Altinn.ResourceRegistry.Core.Models;
 
 namespace Altinn.ResourceRegistry.Core.Services.Interfaces
@@ -24,7 +24,7 @@ namespace Altinn.ResourceRegistry.Core.Services.Interfaces
         /// <param name="includeExpired">Defines if expired Altinn 2 serviices should be include</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns></returns>
-        Task<List<ServiceResource>> GetResourceList(bool includeApps, bool includeAltinn2, bool includeExpired,  CancellationToken cancellationToken = default);
+        Task<List<ServiceResource>> GetResourceList(bool includeApps, bool includeAltinn2, bool includeExpired, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Creates a service resource in the resource registry if it pass all validation checks

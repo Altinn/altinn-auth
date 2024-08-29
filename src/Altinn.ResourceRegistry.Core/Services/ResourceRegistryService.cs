@@ -1,8 +1,9 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Net;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
+using Altinn.Authorization.ProblemDetails;
 using Altinn.Platform.Storage.Interface.Models;
 using Altinn.ResourceRegistry.Core.Clients.Interfaces;
 using Altinn.ResourceRegistry.Core.Constants;
@@ -11,10 +12,10 @@ using Altinn.ResourceRegistry.Core.Extensions;
 using Altinn.ResourceRegistry.Core.Helpers;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Altinn2;
+using Altinn.ResourceRegistry.Core.ServiceOwners;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Azure;
 using Azure.Storage.Blobs.Models;
-using Microsoft.Extensions.Caching.Memory;
 using Nerdbank.Streams;
 
 namespace Altinn.ResourceRegistry.Core.Services
@@ -29,13 +30,11 @@ namespace Altinn.ResourceRegistry.Core.Services
         private readonly IAccessManagementClient _accessManagementClient;
         private readonly IAltinn2Services _altinn2ServicesClient;
         private readonly IApplications _applicationsClient;
-        private readonly IOrgListClient _orgList;
-        private readonly IMemoryCache _memoryCache;
-        private readonly IResourceRegistryRepository _resourceRegistryRepository;
+        private readonly IServiceOwnerService _serviceOwnerService;
 
         /// <summary>
         /// Creates a new instance of the <see cref="ResourceRegistryService"/> service.
-        /// The ResourceRegistryService is responcible for business logic and implementations for working with the resource registry
+        /// The ResourceRegistryService is responsible for business logic and implementations for working with the resource registry
         /// </summary>
         public ResourceRegistryService(
             IResourceRegistryRepository repository, 
@@ -43,18 +42,14 @@ namespace Altinn.ResourceRegistry.Core.Services
             IAccessManagementClient accessManagementClient, 
             IAltinn2Services altinn2ServicesClient, 
             IApplications applicationsClient, 
-            IOrgListClient orgList, 
-            IMemoryCache memoryCache,
-            IResourceRegistryRepository resourceRegistryRepostory)
+            IServiceOwnerService serviceOwnerService)
         {
             _repository = repository;
             _policyRepository = policyRepository;
             _accessManagementClient = accessManagementClient;
             _altinn2ServicesClient = altinn2ServicesClient;
             _applicationsClient = applicationsClient;
-            _orgList = orgList;
-            _memoryCache = memoryCache;
-            _resourceRegistryRepository = resourceRegistryRepostory;
+            _serviceOwnerService = serviceOwnerService;
         }
 
         /// <inheritdoc/>
@@ -114,7 +109,7 @@ namespace Altinn.ResourceRegistry.Core.Services
             Response<BlobContentInfo> response = await _policyRepository.WritePolicyAsync(serviceResource.Identifier, policyContent.AsStream(), cancellationToken);
             IDictionary<string, ICollection<string>> subjectAttributes = policy.GetAttributeDictionaryByCategory(XacmlConstants.MatchAttributeCategory.Subject);
             ResourceSubjects resourceSubjects = GetResourceSubjects(serviceResource, subjectAttributes);
-            await _resourceRegistryRepository.SetResourceSubjects(resourceSubjects, CancellationToken.None);
+            await _repository.SetResourceSubjects(resourceSubjects, CancellationToken.None);
             return response?.GetRawResponse()?.Status == (int)HttpStatusCode.Created;
         }
 
@@ -144,7 +139,7 @@ namespace Altinn.ResourceRegistry.Core.Services
             XacmlPolicy policy = await PolicyHelper.ParsePolicy(policyContent);
             IDictionary<string, ICollection<string>> subjectAttributes = policy.GetAttributeDictionaryByCategory(XacmlConstants.MatchAttributeCategory.Subject);
             ResourceSubjects resourceSubjects = GetResourceSubjects(serviceResource, subjectAttributes);
-            await _resourceRegistryRepository.SetResourceSubjects(resourceSubjects, cancellationToken);
+            await _repository.SetResourceSubjects(resourceSubjects, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -163,7 +158,7 @@ namespace Altinn.ResourceRegistry.Core.Services
                 } 
             };
             ResourceSubjects resourceSubjects = GetResourceSubjects(virtualAppResource, subjectAttributes);
-            await _resourceRegistryRepository.SetResourceSubjects(resourceSubjects, cancellationToken);
+            await _repository.SetResourceSubjects(resourceSubjects, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -192,16 +187,14 @@ namespace Altinn.ResourceRegistry.Core.Services
 
             if (includeApps || includeAltinn2)
             {
-                var orgListTask = GetOrgList(cancellationToken);
-                
                 if (includeAltinn2)
                 {
-                    tasks.Add(GetAltinn2AvailableServices(orgListTask, includeExpired: false, cancellationToken));
+                    tasks.Add(GetAltinn2AvailableServices(includeExpired: false, cancellationToken));
                 }
                 
                 if (includeApps)
                 {
-                    tasks.Add(GetAltinn3Applications(orgListTask, cancellationToken));
+                    tasks.Add(GetAltinn3Applications(cancellationToken));
                 }
             }
 
@@ -232,15 +225,15 @@ namespace Altinn.ResourceRegistry.Core.Services
                 return resources;
             }
 
-            async Task<List<ServiceResource>> GetAltinn3Applications(Task<OrgList> orgListTask, CancellationToken cancellationToken = default)
+            async Task<List<ServiceResource>> GetAltinn3Applications(CancellationToken cancellationToken = default)
             {
                 ApplicationList applicationList = await _applicationsClient.GetApplicationList(cancellationToken);
-                var orgList = await orgListTask;
+                var serviceOwners = await _serviceOwnerService.GetServiceOwners(cancellationToken);
 
-                return applicationList.Applications.Select(application => MapApplicationToApplicationResource(application, orgList)).ToList();
+                return applicationList.Applications.Select(application => MapApplicationToApplicationResource(application, serviceOwners)).ToList();
             }
 
-            async Task<List<ServiceResource>> GetAltinn2AvailableServices(Task<OrgList> orgListTask, bool includeExpired,  CancellationToken cancellationToken = default)
+            async Task<List<ServiceResource>> GetAltinn2AvailableServices(bool includeExpired,  CancellationToken cancellationToken = default)
             {
                 var altin2Services = await Task.WhenAll(
                     _altinn2ServicesClient.AvailableServices(1044, includeExpired, cancellationToken),
@@ -250,7 +243,7 @@ namespace Altinn.ResourceRegistry.Core.Services
                 List<AvailableService> altinn2List1044 = altin2Services[0];
                 List<AvailableService> altinn2List2068 = altin2Services[1];
                 List<AvailableService> altinn2List1033 = altin2Services[2];
-                var orgList = await orgListTask;
+                var serviceOwners = await _serviceOwnerService.GetServiceOwners(cancellationToken);
 
                 var serviceResources = new List<ServiceResource>(altinn2List1044.Count);
                 foreach (AvailableService service in altinn2List1044)
@@ -275,13 +268,13 @@ namespace Altinn.ResourceRegistry.Core.Services
                         endelegationDescription = service1033.DelegationDescription;
                     }
 
-                    serviceResources.Add(MapAltinn2ServiceToServiceResource(service, orgList, entext, nntext, endelegationDescription, nndelegationDescription));
+                    serviceResources.Add(MapAltinn2ServiceToServiceResource(service, serviceOwners, entext, nntext, endelegationDescription, nndelegationDescription));
                 }
 
                 return serviceResources;
             }
 
-            ServiceResource MapAltinn2ServiceToServiceResource(AvailableService availableService, OrgList orgList, string entext, string nntext, string endelegationDescription, string nndelegationDescription)
+            ServiceResource MapAltinn2ServiceToServiceResource(AvailableService availableService, ServiceOwnerLookup serviceOwners, string entext, string nntext, string endelegationDescription, string nndelegationDescription)
             {
                 ServiceResource serviceResource = new ServiceResource();
                 serviceResource.ResourceType = Enums.ResourceType.Altinn2Service;
@@ -325,16 +318,16 @@ namespace Altinn.ResourceRegistry.Core.Services
                 };
                 serviceResource.HasCompetentAuthority = new CompetentAuthority();
                 serviceResource.HasCompetentAuthority.Orgcode = availableService.ServiceOwnerCode.ToLower();
-                if (orgList.Orgs.TryGetValue(serviceResource.HasCompetentAuthority.Orgcode.ToLower(), out Org orgentity))
+                if (serviceOwners.TryGet(serviceResource.HasCompetentAuthority.Orgcode.ToLower(), out var orgentity))
                 {
-                    serviceResource.HasCompetentAuthority.Organization = orgentity.Orgnr;
+                    serviceResource.HasCompetentAuthority.Organization = orgentity.OrganizationNumber.ToString();
                     serviceResource.HasCompetentAuthority.Name = orgentity.Name;
                 }
 
                 return serviceResource;
             }
 
-            ServiceResource MapApplicationToApplicationResource(Application application, OrgList orgList)
+            ServiceResource MapApplicationToApplicationResource(Application application, ServiceOwnerLookup serviceOwners)
             {
                 ServiceResource service = new ServiceResource();
                 service.Title = application.Title;
@@ -351,33 +344,13 @@ namespace Altinn.ResourceRegistry.Core.Services
                 };
                 service.HasCompetentAuthority = new CompetentAuthority();
                 service.HasCompetentAuthority.Orgcode = application.Org.ToLower();
-                if (orgList.Orgs.TryGetValue(service.HasCompetentAuthority.Orgcode, out Org orgentity))
+                if (serviceOwners.TryGet(service.HasCompetentAuthority.Orgcode, out var orgentity))
                 {
-                    service.HasCompetentAuthority.Organization = orgentity.Orgnr;
+                    service.HasCompetentAuthority.Organization = orgentity.OrganizationNumber.ToString();
                     service.HasCompetentAuthority.Name = orgentity.Name;
                 }
 
                 return service;
-            }
-
-            async Task<OrgList> GetOrgList(CancellationToken cancellationToken = default)
-            {
-                string cacheKey = "fullorglist";
-
-                if (!_memoryCache.TryGetValue(cacheKey, out OrgList orgList))
-                {
-                    orgList = await _orgList.GetOrgList(cancellationToken);
-                    var cacheEntryOptions = new MemoryCacheEntryOptions()
-                        .SetPriority(CacheItemPriority.High)
-                        .SetAbsoluteExpiration(new TimeSpan(0, 3600, 0));
-
-                    if (orgList != null)
-                    {
-                        _memoryCache.Set(cacheKey, orgList, cacheEntryOptions);
-                    }
-                }
-
-                return orgList;
             }
         }
 
