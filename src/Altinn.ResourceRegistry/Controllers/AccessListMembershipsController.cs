@@ -23,7 +23,6 @@ namespace Altinn.ResourceRegistry.Controllers;
 [Produces("application/json")]
 [Route("resourceregistry/api/v1/access-lists/memberships")]
 [NotImplementedFilter]
-[ResourceOwnerFromRouteValue("owner")]
 [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_READ)]
 public class AccessListMembershipsController
     : ControllerBase
@@ -51,7 +50,7 @@ public class AccessListMembershipsController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A list-object of access-list memberships that include <paramref name="partiesQuery"/> and <paramref name="resourcesQuery"/>.</returns>
     [HttpGet("")]
-    [Authorize(Policy = AuthzConstants.POLICY_ADMIN)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_PDP)]
     public async Task<ActionResult<ListObject<AccessListResourceMembershipWithActionFilterDto>>> GetMembershipsForResourceForParty(
         [FromQuery(Name = "party")] List<string?>? partiesQuery = null,
         [FromQuery(Name = "resource")] List<string?>? resourcesQuery = null,

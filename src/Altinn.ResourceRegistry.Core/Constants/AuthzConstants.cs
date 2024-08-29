@@ -36,6 +36,11 @@
         public const string POLICY_ADMIN = "Admin";
 
         /// <summary>
+        /// Scope required for PDP Access List
+        /// </summary>
+        public const string POLICY_ACCESS_LIST_PDP = "AccessListPDP";
+
+        /// <summary>
         /// Scope for resourceregistry read access
         /// </summary>
         public const string SCOPE_RESOURCE_READ = "altinn:resourceregistry/resource.read";
@@ -53,12 +58,17 @@
         /// <summary>
         /// Scope for access list read access
         /// </summary>
-        public const string SCOPE_ACCESS_LIST_READ = "altinn:resourceregistry/access-list.read";
+        public const string SCOPE_ACCESS_LIST_READ = "altinn:resourceregistry/accesslist.read";
 
         /// <summary>
         /// Scope for access list write access
         /// </summary>
-        public const string SCOPE_ACCESS_LIST_WRITE = "altinn:resourceregistry/access-list.write";
+        public const string SCOPE_ACCESS_LIST_WRITE = "altinn:resourceregistry/accesslist.write";
+
+        /// <summary>
+        /// Scope for access list info for PDP
+        /// </summary>
+        public const string SCOPE_ACCESS_LIST_PDP = "altinn:resourceregistry/pdp:accesslist.read";
 
         /// <summary>
         /// Claim for scopes from maskinporten token

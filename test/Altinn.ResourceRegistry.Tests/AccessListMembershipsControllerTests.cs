@@ -26,7 +26,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
     {
         var client = CreateClient();
 
-        var token = PrincipalUtil.GetOrgToken("skd", "974761076", $"{AuthzConstants.SCOPE_RESOURCE_ADMIN}");
+        var token = PrincipalUtil.GetOrgToken("skd", "974761076", $"{AuthzConstants.SCOPE_ACCESS_LIST_PDP}");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         return client;
@@ -298,7 +298,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
         }
 
         [Fact]
-        public async Task CorrectScopeAndAdmin_Returns_Ok()
+        public async Task CorrectScopeAndAdmin_Returns_Forbidden()
         {
             using var client = CreateClient();
 
@@ -306,7 +306,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/memberships?party=urn:altinn:party:uuid:{GenerateUserId()}");
-            response.Should().HaveStatusCode(HttpStatusCode.OK);
+            response.Should().HaveStatusCode(HttpStatusCode.Forbidden);
         }
     }
     #endregion

@@ -44,7 +44,7 @@ public static class ResourceRegistryAuthAuthorizationServiceCollectionExtensions
     /// <returns><paramref name="services"/></returns>
     public static IServiceCollection AddAdminAuthorizationHandler(this IServiceCollection services)
     {
-        services.TryAddAuthroizationHandler<AdminAuthorizationHandler>();
+        services.TryAddAuthroizationHandler<ResourceOwnerExcemptScopesHandler>();
 
         return services;
     }

@@ -90,13 +90,19 @@ internal static class ResourceRegistryHost
             .AddPolicy(AuthzConstants.POLICY_SCOPE_RESOURCEREGISTRY_WRITE, policy => policy
                 .RequireScopeAnyOf(AuthzConstants.SCOPE_RESOURCE_ADMIN, AuthzConstants.SCOPE_RESOURCE_WRITE))
             .AddPolicy(AuthzConstants.POLICY_ACCESS_LIST_READ, policy => policy
-                .RequireScopeAnyOf(AuthzConstants.SCOPE_RESOURCE_ADMIN, AuthzConstants.SCOPE_ACCESS_LIST_READ, AuthzConstants.SCOPE_ACCESS_LIST_WRITE)
+                .RequireScopeAnyOf(
+                    AuthzConstants.SCOPE_RESOURCE_ADMIN,
+                    AuthzConstants.SCOPE_ACCESS_LIST_READ,
+                    AuthzConstants.SCOPE_ACCESS_LIST_WRITE,
+                    AuthzConstants.SCOPE_ACCESS_LIST_PDP)
                 .RequireUserOwnsResource())
             .AddPolicy(AuthzConstants.POLICY_ACCESS_LIST_WRITE, policy => policy
                 .RequireScopeAnyOf(AuthzConstants.SCOPE_RESOURCE_ADMIN, AuthzConstants.SCOPE_ACCESS_LIST_WRITE)
                 .RequireUserOwnsResource())
             .AddPolicy(AuthzConstants.POLICY_ADMIN, policy => policy
                 .RequireScopeAnyOf(AuthzConstants.SCOPE_RESOURCE_ADMIN))
+            .AddPolicy(AuthzConstants.POLICY_ACCESS_LIST_PDP, policy => policy
+                .RequireScopeAnyOf(AuthzConstants.SCOPE_ACCESS_LIST_PDP))
             .AddPolicy(AuthzConstants.POLICY_STUDIO_DESIGNER, policy => policy.Requirements.Add(new ClaimAccessRequirement("urn:altinn:app", "studio.designer")));
 
         services.AddResourceRegistryAuthorizationHandlers();
