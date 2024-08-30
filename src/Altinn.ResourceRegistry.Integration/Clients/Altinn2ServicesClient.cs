@@ -70,7 +70,7 @@ namespace Altinn.ResourceRegistry.Integration.Clients
         public async Task<DelegationCountOverview?> GetDelegationCount(string serviceCode, int serviceEditionCode, CancellationToken cancellationToken = default)
         {
             string bridgeBaseUrl = _settings.BridgeApiEndpoint;
-            string url = $"{bridgeBaseUrl}authorization/api/rights/delegation/delegationcount?serviceCode={serviceCode}&serviceEditionCode={serviceEditionCode}";
+            string url = $"{bridgeBaseUrl}authorization/api/rights/delegation/delegationcount/{serviceCode}/{serviceEditionCode}";
 
             HttpResponseMessage response = await _client.GetAsync(url, cancellationToken);
             response.EnsureSuccessStatusCode();
