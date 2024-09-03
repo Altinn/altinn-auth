@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using System.Collections.Generic;
 using System.Net;
 using Altinn.Authorization.ABAC.Constants;
@@ -37,11 +37,11 @@ namespace Altinn.ResourceRegistry.Core.Services
         /// The ResourceRegistryService is responsible for business logic and implementations for working with the resource registry
         /// </summary>
         public ResourceRegistryService(
-            IResourceRegistryRepository repository, 
-            IPolicyRepository policyRepository, 
-            IAccessManagementClient accessManagementClient, 
-            IAltinn2Services altinn2ServicesClient, 
-            IApplications applicationsClient, 
+            IResourceRegistryRepository repository,
+            IPolicyRepository policyRepository,
+            IAccessManagementClient accessManagementClient,
+            IAltinn2Services altinn2ServicesClient,
+            IApplications applicationsClient,
             IServiceOwnerService serviceOwnerService)
         {
             _repository = repository;
@@ -86,6 +86,12 @@ namespace Altinn.ResourceRegistry.Core.Services
         public async Task<ServiceResource> GetResource(string id, CancellationToken cancellationToken = default)
         {
             return await _repository.GetResource(id, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task<Result<CompetentAuthorityReference>> GetResourceOwner(string id, CancellationToken cancellationToken = default)
+        {
+            return await _repository.GetResourceOwner(id, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -149,13 +155,13 @@ namespace Altinn.ResourceRegistry.Core.Services
             policyContent.Position = 0;
             XacmlPolicy policy = await PolicyHelper.ParsePolicy(policyContent);
             IDictionary<string, ICollection<string>> subjectAttributes = policy.GetAttributeDictionaryByCategory(XacmlConstants.MatchAttributeCategory.Subject);
-            ServiceResource virtualAppResource = new ServiceResource() 
-            { 
-                Identifier = $"app_{org.ToLower()}_{app.ToLower()}".ToLower(), 
-                HasCompetentAuthority = new CompetentAuthority() 
-                { 
-                    Orgcode = org.ToLower() 
-                } 
+            ServiceResource virtualAppResource = new ServiceResource()
+            {
+                Identifier = $"app_{org.ToLower()}_{app.ToLower()}".ToLower(),
+                HasCompetentAuthority = new CompetentAuthority()
+                {
+                    Orgcode = org.ToLower()
+                }
             };
             ResourceSubjects resourceSubjects = GetResourceSubjects(virtualAppResource, subjectAttributes);
             await _repository.SetResourceSubjects(resourceSubjects, cancellationToken);
@@ -164,7 +170,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         /// <inheritdoc/>
         public async Task<Stream> GetPolicy(string resourceId, CancellationToken cancellationToken = default)
         {
-              return await _policyRepository.GetPolicyAsync(resourceId, cancellationToken);
+            return await _policyRepository.GetPolicyAsync(resourceId, cancellationToken);
         }
 
         /// <inheritdoc />
@@ -191,7 +197,7 @@ namespace Altinn.ResourceRegistry.Core.Services
                 {
                     tasks.Add(GetAltinn2AvailableServices(includeExpired: false, cancellationToken));
                 }
-                
+
                 if (includeApps)
                 {
                     tasks.Add(GetAltinn3Applications(cancellationToken));
@@ -202,7 +208,7 @@ namespace Altinn.ResourceRegistry.Core.Services
             var resourcesCount = resourceLists.Sum(list => list.Count);
             var resources = new List<ServiceResource>(resourcesCount);
             foreach (var resourceList in resourceLists)
-            { 
+            {
                 resources.AddRange(resourceList);
             }
 
@@ -233,7 +239,7 @@ namespace Altinn.ResourceRegistry.Core.Services
                 return applicationList.Applications.Select(application => MapApplicationToApplicationResource(application, serviceOwners)).ToList();
             }
 
-            async Task<List<ServiceResource>> GetAltinn2AvailableServices(bool includeExpired,  CancellationToken cancellationToken = default)
+            async Task<List<ServiceResource>> GetAltinn2AvailableServices(bool includeExpired, CancellationToken cancellationToken = default)
             {
                 var altin2Services = await Task.WhenAll(
                     _altinn2ServicesClient.AvailableServices(1044, includeExpired, cancellationToken),
@@ -372,15 +378,15 @@ namespace Altinn.ResourceRegistry.Core.Services
             return await _repository.FindUpdatedResourceSubjects(lastUpdated, limit, skipPast, cancellationToken);
         }
 
-        private static ResourceSubjects GetResourceSubjects(ServiceResource resource,  IDictionary<string, ICollection<string>> subjectAttributes)
+        private static ResourceSubjects GetResourceSubjects(ServiceResource resource, IDictionary<string, ICollection<string>> subjectAttributes)
         {
-            AttributeMatchV2 resourceAttribute = new AttributeMatchV2 
+            AttributeMatchV2 resourceAttribute = new AttributeMatchV2
             {
-                    Type = AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute,
-                    Value = resource.Identifier,
-                    Urn = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute}:{resource.Identifier}"
+                Type = AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute,
+                Value = resource.Identifier,
+                Urn = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute}:{resource.Identifier}"
             };
-           
+
             string resourceOwner = string.Empty;
             if (resource.HasCompetentAuthority?.Orgcode != null)
             {
@@ -390,9 +396,9 @@ namespace Altinn.ResourceRegistry.Core.Services
             List<AttributeMatchV2> subjectAttributeMatches = new List<AttributeMatchV2>();
             foreach (KeyValuePair<string, ICollection<string>> kvp in subjectAttributes)
             {
-                foreach (string subjectAttributeValue in kvp.Value) 
+                foreach (string subjectAttributeValue in kvp.Value)
                 {
-                    AttributeMatchV2 subjectMatch = new AttributeMatchV2 
+                    AttributeMatchV2 subjectMatch = new AttributeMatchV2
                     {
                         Type = kvp.Key,
                         Value = subjectAttributeValue.ToLower(),
@@ -407,9 +413,9 @@ namespace Altinn.ResourceRegistry.Core.Services
             }
 
             return new ResourceSubjects
-            { 
-                Resource = resourceAttribute, 
-                Subjects = subjectAttributeMatches, 
+            {
+                Resource = resourceAttribute,
+                Subjects = subjectAttributeMatches,
                 ResourceOwner = resourceOwner
             };
         }

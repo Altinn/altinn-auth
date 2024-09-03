@@ -1,4 +1,5 @@
-using System.Buffers;
+﻿using System.Buffers;
+using Altinn.Authorization.ProblemDetails;
 using Altinn.ResourceRegistry.Core.Models;
 
 namespace Altinn.ResourceRegistry.Core.Services.Interfaces
@@ -15,6 +16,14 @@ namespace Altinn.ResourceRegistry.Core.Services.Interfaces
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns>ServiceResource</returns>
         Task<ServiceResource> GetResource(string id, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets the resource owner for a given resource, or <see langword="null"/> if it has no owner.
+        /// </summary>
+        /// <param name="id">The resource identifier to retrieve</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>A <see cref="CompetentAuthorityReference"/> or <see langword="null"/> if the resource exists, otherwise a <see cref="Result{T}"/> with an error.</returns>
+        Task<Result<CompetentAuthorityReference>> GetResourceOwner(string id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Returns the full list of 

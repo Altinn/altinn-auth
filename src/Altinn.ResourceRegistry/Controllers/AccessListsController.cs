@@ -1,5 +1,6 @@
 #nullable enable
 
+using System.Diagnostics;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.ResourceRegistry.Auth;
 using Altinn.ResourceRegistry.Core.AccessLists;
@@ -8,6 +9,7 @@ using Altinn.ResourceRegistry.Core.Errors;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Models.Versioned;
 using Altinn.ResourceRegistry.Core.Register;
+using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Filters;
 using Altinn.ResourceRegistry.JsonPatch;
 using Altinn.ResourceRegistry.Models;
@@ -49,13 +51,17 @@ public class AccessListsController
     public const string ROUTE_GET_MEMBERS = "access-lists/get-members";
 
     private readonly IAccessListService _service;
+    private readonly IResourceRegistry _resources;
+    private readonly IAuthorizationService _authorization;
 
     /// <summary>
     /// Constructs a new <see cref="AccessListsController"/>.
     /// </summary>
-    public AccessListsController(IAccessListService service)
+    public AccessListsController(IAccessListService service, IAuthorizationService authorization, IResourceRegistry resources)
     {
         _service = service;
+        _authorization = authorization;
+        _resources = resources;
     }
 
     /// <summary>
@@ -518,6 +524,19 @@ public class AccessListsController
         [FromBody] UpsertAccessListResourceConnectionDto model,
         CancellationToken cancellationToken = default)
     {
+        var resourceOwnerResult = await _resources.GetResourceOwner(resourceIdentifier, cancellationToken);
+        if (resourceOwnerResult.IsProblem)
+        {
+            return resourceOwnerResult.Problem.ToActionResult();
+        }
+
+        var resourceOwner = resourceOwnerResult.Value;
+        var authorizationResult = await _authorization.AuthorizeAsync(User, new ResourceOwner(resourceOwner), UserOwnsResourceRequirement.Instance);
+        if (!authorizationResult.Succeeded)
+        {
+            return Problems.AccessList_References_OtherServiceOwners_Resource.ToActionResult();
+        }
+
         var result = await _service.UpsertAccessListResourceConnection(
             owner,
             identifier,
@@ -568,12 +587,18 @@ public class AccessListsController
     /// </summary>
     /// <param name="Version">The access list version.</param>
     /// <param name="ContinueFrom">What resource identifier to continue from.</param>
-    public record AccessListResourceConnectionContinuationToken(ulong Version, string ContinueFrom);
+    public sealed record AccessListResourceConnectionContinuationToken(ulong Version, string ContinueFrom);
 
     /// <summary>
     /// Continuation token for access list members.
     /// </summary>
     /// <param name="Version">The access list version.</param>
     /// <param name="ContinueFrom">What member to continue from.</param>
-    public record AccessListMembersContinuationToken(ulong Version, Guid ContinueFrom);
+    public sealed record AccessListMembersContinuationToken(ulong Version, Guid ContinueFrom);
+
+    private sealed record ResourceOwner(CompetentAuthorityReference Owner)
+        : IHasResourceOwner
+    {
+        string IHasResourceOwner.ResourceOwner => Owner.Orgcode;
+    }
 }

@@ -1,4 +1,5 @@
-﻿using Altinn.ResourceRegistry.Core.Register;
+﻿using Altinn.ResourceRegistry.Core.Models;
+using Altinn.ResourceRegistry.Core.Register;
 using Altinn.ResourceRegistry.Core.Services;
 using Altinn.ResourceRegistry.Tests.Mocks;
 using Altinn.ResourceRegistry.TestUtils;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using System.Text.Json;
 
 namespace Altinn.ResourceRegistry.Tests;
 
@@ -14,6 +16,16 @@ public abstract class WebApplicationTests
     , IClassFixture<WebApplicationFixture>
     , IAsyncLifetime
 {
+    protected const string ORG_CODE = "skd";
+    protected const string ORG_NO = "974761076";
+
+    private readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    protected readonly CompetentAuthority DefaultAuthority = new CompetentAuthority
+    {
+        Orgcode = ORG_CODE,
+        Organization = ORG_NO,
+    };
+
     private readonly DbFixture _dbFixture;
     private readonly WebApplicationFixture _webApplicationFixture;
 
@@ -85,12 +97,20 @@ public abstract class WebApplicationTests
     }
 
     #region Utils
-    protected async Task AddResource(string name)
+    protected async Task AddResource(string name, CompetentAuthority? owner = null)
     {
+        owner ??= DefaultAuthority;
+
         await using var resourceCmd = DataSource.CreateCommand(/*strpsql*/"INSERT INTO resourceregistry.resources (identifier, created, serviceresourcejson) VALUES (@name, NOW(), @json);");
         var nameParam = resourceCmd.Parameters.Add("name", NpgsqlTypes.NpgsqlDbType.Text);
         var jsonParam = resourceCmd.Parameters.Add("json", NpgsqlTypes.NpgsqlDbType.Jsonb);
-        jsonParam.Value = "{}";
+
+        jsonParam.Value = 
+            $$"""
+            {
+              "hasCompetentAuthority": {{JsonSerializer.Serialize(owner, JsonOptions)}}
+            }
+            """;
 
         nameParam.Value = name;
         await resourceCmd.ExecuteNonQueryAsync();

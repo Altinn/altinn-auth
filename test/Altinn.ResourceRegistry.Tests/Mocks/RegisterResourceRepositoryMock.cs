@@ -1,4 +1,6 @@
-﻿using Altinn.ResourceRegistry.Core;
+﻿using Altinn.Authorization.ProblemDetails;
+using Altinn.ResourceRegistry.Core;
+using Altinn.ResourceRegistry.Core.Errors;
 using Altinn.ResourceRegistry.Core.Extensions;
 using Altinn.ResourceRegistry.Core.Models;
 
@@ -34,6 +36,17 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             }
 
             return null;
+        }
+
+        public async Task<Result<CompetentAuthorityReference>> GetResourceOwner(string id, CancellationToken cancellationToken = default)
+        {
+            var resource = await GetResource(id, cancellationToken);
+            if (resource is null)
+            {
+                return Problems.ResourceReference_NotFound;
+            }
+
+            return resource.HasCompetentAuthority!;
         }
 
         public async Task<List<ServiceResource>> Search(ResourceSearch resourceSearch, CancellationToken cancellationToken = default)

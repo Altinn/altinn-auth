@@ -1,7 +1,9 @@
 ﻿using System.Data;
 using System.Data.SqlTypes;
 using System.Text.Json;
+using Altinn.Authorization.ProblemDetails;
 using Altinn.ResourceRegistry.Core;
+using Altinn.ResourceRegistry.Core.Errors;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Persistence.Extensions;
 using Microsoft.Extensions.Logging;
@@ -168,6 +170,39 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             _logger.LogError(e, "Authorization // ResourceRegistryRepository // GetResource // Exception");
             throw;
         }
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<CompetentAuthorityReference>> GetResourceOwner(string id, CancellationToken cancellationToken = default)
+    {
+        const string QUERY =
+            /*strpsql*/"""
+            SELECT
+                serviceresourcejson->'hasCompetentAuthority'->>'organization' AS organization,
+                serviceresourcejson->'hasCompetentAuthority'->>'orgcode' AS orgcode
+            FROM resourceregistry.resources
+            WHERE identifier = @identifier
+            """;
+
+        await using var cmd = _conn.CreateCommand(QUERY);
+        cmd.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, id);
+
+        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return Problems.ResourceReference_NotFound;
+        }
+
+        var org = reader.GetString(0);
+        var orgCode = reader.GetString(1);
+
+        var authority = new CompetentAuthorityReference
+        {
+            Organization = org,
+            Orgcode = orgCode,
+        };
+
+        return authority;
     }
 
     /// <inheritdoc/>

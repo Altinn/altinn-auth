@@ -35,5 +35,11 @@ public static class Problems
     /// Gets a <see cref="ProblemDescriptor"/>.
     /// </summary>
     public static ProblemDescriptor IncorrectMatchingOrgForResource { get; }
-        = _factory.Create(3, HttpStatusCode.BadRequest, "Org does not match with resource");
+        = _factory.Create(3, HttpStatusCode.BadRequest, "Org does not match with resource.");
+
+    /// <summary>
+    /// Gets a <see cref="ProblemDescriptor"/>.
+    /// </summary>
+    public static ProblemDescriptor AccessList_References_OtherServiceOwners_Resource { get; }
+        = _factory.Create(4, HttpStatusCode.Forbidden, "Cannot create a access-list connection to a resource not owned by the same service-owner as the access-list.");
 }

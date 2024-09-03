@@ -9,7 +9,7 @@ public class CompetentAuthority
     /// <summary>
     /// The organization name. If not set it will be retrieved from register based on Organization number
     /// </summary>
-    public IReadOnlyDictionary<string, string> Name { get; set; }
+    public IReadOnlyDictionary<string, string> Name { get; set; } = new Dictionary<string, string>();
 }
 
 /// <summary>

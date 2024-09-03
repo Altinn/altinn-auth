@@ -1,5 +1,6 @@
 ﻿using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Constants;
+using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Register;
 using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Tests.Utils;
@@ -18,9 +19,6 @@ namespace Altinn.ResourceRegistry.Tests;
 public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixture webApplicationFixture)
         : WebApplicationTests(dbFixture, webApplicationFixture)
 {
-    private const string ORG_CODE = "skd";
-    private const string ORG_NO = "974761076";
-
     protected IAccessListsRepository Repository => Services.GetRequiredService<IAccessListsRepository>();
     protected AdvanceableTimeProvider TimeProvider => Services.GetRequiredService<AdvanceableTimeProvider>();
 
@@ -862,7 +860,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
         }
 
         [Fact]
-        public async Task Does_Not_Create_New_Versio_If_Identical()
+        public async Task Does_Not_Create_New_Version_If_Identical()
         {
             await AddResource("test1");
 
@@ -891,6 +889,66 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             updated.TryGetResourceConnections("test1", out var conn).Should().BeTrue();
             conn!.Actions.Should().BeEquivalentTo(["read", "write"]);
             updated.CommittedVersion.Should().Be(version);
+        }
+
+        [Fact]
+        public async Task Disallows_Referencing_Other_ServiceOwners_Resource_If_WriteScope()
+        {
+            var resourceOwner = new CompetentAuthority
+            {
+                Orgcode = "other",
+                Organization = "987654321",
+            };
+
+            await AddResource("test1", owner: resourceOwner);
+
+            var def = await Repository.CreateAccessList(ORG_CODE, "test1", "Test 1", "test 1 description");
+            await def.SaveChanges();
+            var version = def.CommittedVersion;
+
+            using var client = CreateClient();
+
+            var token = PrincipalUtil.GetOrgToken("skd", ORG_NO, AuthzConstants.SCOPE_ACCESS_LIST_WRITE);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var dto = new UpsertAccessListResourceConnectionDto(ActionFilters: ["write"]);
+            var response = await client.PutAsJsonAsync($"/resourceregistry/api/v1/access-lists/{ORG_CODE}/{def.Identifier}/resource-connections/test1", dto);
+            response.Should().HaveStatusCode(HttpStatusCode.Forbidden);
+
+            var updated = await Repository.LoadAccessList(ORG_CODE, def.Identifier);
+            Assert.NotNull(updated);
+            updated.TryGetResourceConnections("test1", out var conn).Should().BeFalse();
+            updated.CommittedVersion.Should().Be(version);
+        }
+
+        [Fact]
+        public async Task Allows_Referencing_Other_ServiceOwners_Resource_If_AdminScope()
+        {
+            var resourceOwner = new CompetentAuthority
+            {
+                Orgcode = "other",
+                Organization = "987654321",
+            };
+
+            await AddResource("test1", owner: resourceOwner);
+
+            var def = await Repository.CreateAccessList(ORG_CODE, "test1", "Test 1", "test 1 description");
+            await def.SaveChanges();
+            var version = def.CommittedVersion;
+
+            using var client = CreateClient();
+
+            var token = PrincipalUtil.GetOrgToken("skd", ORG_NO, AuthzConstants.SCOPE_RESOURCE_ADMIN);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var dto = new UpsertAccessListResourceConnectionDto(ActionFilters: ["write"]);
+            var response = await client.PutAsJsonAsync($"/resourceregistry/api/v1/access-lists/{ORG_CODE}/{def.Identifier}/resource-connections/test1", dto);
+            response.Should().HaveStatusCode(HttpStatusCode.OK);
+
+            var updated = await Repository.LoadAccessList(ORG_CODE, def.Identifier);
+            Assert.NotNull(updated);
+            updated.TryGetResourceConnections("test1", out var conn).Should().BeTrue();
+            updated.CommittedVersion.Should().NotBe(version);
         }
 
         public class ETagHeaders(DbFixture dbFixture, WebApplicationFixture webApplicationFixture)
