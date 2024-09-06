@@ -38,7 +38,7 @@
         /// <summary>
         /// Scope required for PDP Access List
         /// </summary>
-        public const string POLICY_ACCESS_LIST_PDP = "AccessListPDP";
+        public const string POLICY_PLATFORM_COMPONENT_ONLY = "PlatformComponentOnly";
 
         /// <summary>
         /// Scope for resourceregistry read access

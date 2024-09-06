@@ -24,7 +24,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.ResourceRegistry.Int
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.ResourceRegistry.Persistence.Tests", "test\Altinn.ResourceRegistry.Persistence.Tests\Altinn.ResourceRegistry.Persistence.Tests.csproj", "{94F981FC-53C6-4ABE-9D8C-89D0E174E6E7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.ResourceRegistry.TestUtils", "test\Altinn.ResourceRegistry.TestUtils\Altinn.ResourceRegistry.TestUtils.csproj", "{26A867FC-DFB4-461E-AFCB-E401BA20E90C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.ResourceRegistry.TestUtils", "test\Altinn.ResourceRegistry.TestUtils\Altinn.ResourceRegistry.TestUtils.csproj", "{26A867FC-DFB4-461E-AFCB-E401BA20E90C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

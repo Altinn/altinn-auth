@@ -24,7 +24,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             {
                 Subject = new ClaimsIdentity(principal.Identity),
                 Expires = DateTime.UtcNow.AddSeconds(tokenExpiry.TotalSeconds),
-                SigningCredentials = GetSigningCredentials(),
+                SigningCredentials = GetSigningCredentials(issuer),
                 Audience = "altinn.no",
                 Issuer = issuer
             };
@@ -35,8 +35,17 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             return serializedToken;
         }
 
-        private static SigningCredentials GetSigningCredentials()
+        private static SigningCredentials GetSigningCredentials(string issuer)
         {
+            string certPath = "selfSignedTestCertificate.pfx";
+            if (!issuer.Equals("UnitTest")  && File.Exists($"{issuer}-org.pfx"))
+            {
+                certPath = $"{issuer}-org.pfx";
+
+                X509Certificate2 certIssuer = new X509Certificate2(certPath);
+                return new X509SigningCredentials(certIssuer, SecurityAlgorithms.RsaSha256);
+            }
+
             X509Certificate2 cert = new X509Certificate2("selfSignedTestCertificate.pfx", "qwer1234");
             return new X509SigningCredentials(cert, SecurityAlgorithms.RsaSha256);
         }

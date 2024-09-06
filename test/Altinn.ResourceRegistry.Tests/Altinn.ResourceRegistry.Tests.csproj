@@ -15,8 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Altinn.ResourceRegistry\Altinn.ResourceRegistry.csproj" />
-    <ProjectReference
-      Include="..\Altinn.ResourceRegistry.TestUtils\Altinn.ResourceRegistry.TestUtils.csproj" />
+    <ProjectReference Include="..\Altinn.ResourceRegistry.TestUtils\Altinn.ResourceRegistry.TestUtils.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -36,6 +35,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Data\ResourcePolicies\altinn_access_management.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="platform-org.pem">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="platform-org.pfx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="selfSignedTestCertificate.pfx">

@@ -1,4 +1,5 @@
 ﻿using Altinn.ResourceRegistry.Core.Models;
+using Altinn.Common.AccessToken.Services;
 using Altinn.ResourceRegistry.Core.Register;
 using Altinn.ResourceRegistry.Core.Services;
 using Altinn.ResourceRegistry.Tests.Mocks;
@@ -55,6 +56,7 @@ public abstract class WebApplicationTests
 
     protected virtual void ConfigureTestServices(IServiceCollection services)
     {
+        services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProviderMock>();
     }
 
     protected virtual void ConfigureTestConfiguration(IConfigurationBuilder builder)

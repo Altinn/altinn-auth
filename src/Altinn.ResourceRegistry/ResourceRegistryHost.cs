@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Altinn.Authorization.ServiceDefaults;
+using Altinn.Common.AccessToken;
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Common.Authentication.Configuration;
 using Altinn.Common.PEP.Authorization;
@@ -55,7 +56,7 @@ internal static class ResourceRegistryHost
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
         services.AddTransient<ISigningCredentialsResolver, SigningCredentialsResolver>();
-
+        services.AddSingleton<IAuthorizationHandler, AccessTokenHandler>();
         services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
         services.Configure<ResourceRegistrySettings>(config.GetSection("ResourceRegistrySettings"));
         services.Configure<OidcProviderSettings>(config.GetSection("OidcProviders"));
@@ -101,8 +102,8 @@ internal static class ResourceRegistryHost
                 .RequireUserOwnsResource())
             .AddPolicy(AuthzConstants.POLICY_ADMIN, policy => policy
                 .RequireScopeAnyOf(AuthzConstants.SCOPE_RESOURCE_ADMIN))
-            .AddPolicy(AuthzConstants.POLICY_ACCESS_LIST_PDP, policy => policy
-                .RequireScopeAnyOf(AuthzConstants.SCOPE_ACCESS_LIST_PDP))
+            .AddPolicy(AuthzConstants.POLICY_PLATFORM_COMPONENT_ONLY, policy =>
+                policy.Requirements.Add(new AccessTokenRequirement("platform")))
             .AddPolicy(AuthzConstants.POLICY_STUDIO_DESIGNER, policy => policy.Requirements.Add(new ClaimAccessRequirement("urn:altinn:app", "studio.designer")));
 
         services.AddResourceRegistryAuthorizationHandlers();

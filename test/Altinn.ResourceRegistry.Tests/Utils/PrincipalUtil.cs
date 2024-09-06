@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Altinn.ResourceRegistry.Tests.Mocks;
 using AltinnCore.Authentication.Constants;
+using Azure.Security.KeyVault.Certificates;
 
 namespace Altinn.ResourceRegistry.Tests.Utils
 {
@@ -41,10 +42,9 @@ namespace Altinn.ResourceRegistry.Tests.Utils
         /// </summary>
         /// <param name="appId">The app to add as claim</param>
         /// <returns></returns>
-        public static string GetAccessToken(string appId)
+        public static string GetAccessToken(string appId, string issuer = "www.altinn.no")
         {
             List<Claim> claims = new List<Claim>();
-            string issuer = "www.altinn.no";
             if (!string.IsNullOrEmpty(appId))
             {
                 claims.Add(new Claim("urn:altinn:app", appId, ClaimValueTypes.String, issuer));

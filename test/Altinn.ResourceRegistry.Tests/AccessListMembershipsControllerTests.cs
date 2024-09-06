@@ -26,8 +26,9 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
     {
         var client = CreateClient();
 
-        var token = PrincipalUtil.GetOrgToken("skd", "974761076", $"{AuthzConstants.SCOPE_ACCESS_LIST_PDP}");
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var token = PrincipalUtil.GetAccessToken("pdp", "platform");
+
+        client.DefaultRequestHeaders.Add("PlatformAccessToken", token);
 
         return client;
     }
@@ -36,7 +37,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
     public async Task InvalidPartyUrn_Returns_BadRequest()
     {
         using var client = CreateAuthenticatedClient();
-
+       
         var response = await client.GetAsync("/resourceregistry/api/v1/access-lists/memberships?party=invalid");
         response.Should().HaveStatusCode(HttpStatusCode.BadRequest);
 
