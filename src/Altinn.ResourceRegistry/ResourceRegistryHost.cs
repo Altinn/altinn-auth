@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using Altinn.Authorization.ServiceDefaults;
 using Altinn.Common.AccessToken;
+using Altinn.Common.AccessToken.Services;
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Common.Authentication.Configuration;
 using Altinn.Common.PEP.Authorization;
@@ -57,6 +58,7 @@ internal static class ResourceRegistryHost
         services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
         services.AddTransient<ISigningCredentialsResolver, SigningCredentialsResolver>();
         services.AddSingleton<IAuthorizationHandler, AccessTokenHandler>();
+        services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProvider>(); 
         services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
         services.Configure<ResourceRegistrySettings>(config.GetSection("ResourceRegistrySettings"));
         services.Configure<OidcProviderSettings>(config.GetSection("OidcProviders"));
