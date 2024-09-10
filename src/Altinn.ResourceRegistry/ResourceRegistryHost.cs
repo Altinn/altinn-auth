@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using Altinn.Authorization.ServiceDefaults;
 using Altinn.Common.AccessToken;
+using Altinn.Common.AccessToken.Configuration;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Common.Authentication.Configuration;
@@ -49,6 +50,7 @@ internal static class ResourceRegistryHost
         MapPostgreSqlConfiguration(builder);
         services.AddMemoryCache();
 
+        services.Configure<KeyVaultSettings>(config.GetSection("kvSetting"));
         services.AddResourceRegistryCoreServices();
         builder.AddResourceRegistryPersistence();
         services.AddSingleton<IResourceRegistry, ResourceRegistryService>();
