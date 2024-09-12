@@ -116,6 +116,45 @@ namespace Altinn.ResourceRegistry.Tests
         }
 
         /// <summary>
+        /// Calls SetExpired endpoint without token
+        /// </summary>
+        [Fact]
+        public async Task Setserviceeditionexpired_WithoutToken()
+        {
+            HttpClient client = CreateClient();
+            string requestUri = "resourceregistry/api/v1/altinn2export/setserviceeditionexpired?externalServiceCode=4485&externalServiceEditionCode=2021";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
+            {
+            };
+
+            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+            Assert.Equal(System.Net.HttpStatusCode.Unauthorized, response.StatusCode);
+        }
+
+        /// <summary>
+        /// Calls SetExpired endpoint without token
+        /// </summary>
+        [Fact]
+        public async Task Setserviceeditionexpired_WithValidToken()
+        {
+            HttpClient client = CreateClient();
+            string token = PrincipalUtil.GetOrgToken("digdir", "991825827", "altinn:resourceregistry/resource.admin");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            string requestUri = "resourceregistry/api/v1/altinn2export/setserviceeditionexpired?externalServiceCode=4485&externalServiceEditionCode=2021";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
+            {
+            };
+
+            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+            Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        }
+
+
+        /// <summary>
         /// Tries to trigger batch without Altinn Studio token
         /// </summary>
         [Fact]

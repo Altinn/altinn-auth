@@ -33,5 +33,11 @@ namespace Altinn.ResourceRegistry.Core.Services
         /// Request delegations 
         /// </summary>
         Task ExportDelegations(ExportDelegationsRequestBE exportDelegationsRequestBE, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Set service edition as expired
+        /// </summary>
+        /// <returns></returns>
+        Task SetServiceEditionExpired(string externalServiceCode, int externalServiceEditionCode, CancellationToken cancellationToken = default);
     }
 }

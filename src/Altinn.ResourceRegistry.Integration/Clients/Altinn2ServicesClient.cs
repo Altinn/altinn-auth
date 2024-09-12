@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Json;
 using System.Text.Json;
+using System.Threading;
 using System.Xml;
 using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
@@ -121,6 +122,15 @@ namespace Altinn.ResourceRegistry.Integration.Clients
             }
 
             return policy;
+        }
+
+        /// <inheritdoc/>
+        public async Task SetServiceEditionExpired(string externalServiceCode, int externalServiceEditionCode, CancellationToken cancellationToken = default)
+        {
+            string bridgeBaseUrl = _settings.BridgeApiEndpoint;
+            string url = $"{bridgeBaseUrl}metadata/api/setserviceeditionexpired?externalServiceCode={externalServiceCode}&externalServiceEditionCode={externalServiceEditionCode}";
+            HttpResponseMessage response = await _client.GetAsync(url, cancellationToken);
+            response.EnsureSuccessStatusCode();
         }
     }
 }

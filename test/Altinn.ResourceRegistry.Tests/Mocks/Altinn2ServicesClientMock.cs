@@ -106,5 +106,10 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
         {
             return Task.CompletedTask;
         }
+
+        public Task SetServiceEditionExpired(string externalServiceCode, int externalServiceEditionCode, CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
     }
 }
