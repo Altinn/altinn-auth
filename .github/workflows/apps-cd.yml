@@ -1,7 +1,10 @@
 name: Apps CD
 
 on:
+  workflow_dispatch:
   push:
+    branches:
+      - main
     paths:
       - src/**
       - .github/workflows/apps-*
@@ -10,6 +13,7 @@ env:
   registry: ghcr.io
   image_repository: altinn/altinn-authorization-tmp
   dir: src/apps
+  python_ver: "3.12"
 
 jobs:
   bundle:
@@ -45,9 +49,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Python Install
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: ${{ env.python_ver }}
 
       - name: Read Metadata
         working-directory: .github/scripts
@@ -95,7 +99,7 @@ jobs:
       fail-fast: false
       matrix:
         name: ${{ fromJson(needs.bundle.outputs.dirs) }}
-        environment: [at21, at22, at23, at24]
+        environment: [at21]
     with:
       working_dir: src/apps/${{ matrix.name }}/deploy
       environment: ${{ matrix.environment }}

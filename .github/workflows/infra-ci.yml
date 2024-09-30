@@ -1,12 +1,7 @@
 name: Infra CI
 
 on:
-  push:
-    branches-ignore:
-      - main
-    paths:
-      - infra/**
-      - .github/workflows/infra-*
+  workflow_dispatch:
 
 permissions:
   id-token: write

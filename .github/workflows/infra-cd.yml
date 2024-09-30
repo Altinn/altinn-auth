@@ -1,6 +1,7 @@
 name: Infra CD
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -20,7 +21,7 @@ jobs:
     uses: ./.github/workflows/infra-cd-template.yml
     strategy:
       matrix:
-        environment: [at21, at22, at23, at24]
+        environment: [at21]
     with:
       environment: ${{ matrix.environment }}
       tf_state: cert.tfstate
@@ -32,7 +33,7 @@ jobs:
     uses: ./.github/workflows/infra-cd-template.yml
     strategy:
       matrix:
-        environment: [at21, at22, at23, at24]
+        environment: [at21]
     with:
       environment: ${{ matrix.environment }}
       tf_state: auth.tfstate
