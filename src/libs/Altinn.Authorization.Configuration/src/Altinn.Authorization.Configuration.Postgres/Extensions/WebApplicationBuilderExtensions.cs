@@ -40,8 +40,7 @@ namespace Altinn.Authorization.Configuration.Postgres.Extensions
                 {
                     options.ConfigureManagedIdentity(cred =>
                     {
-                        cred.TokenCredentials =
-                            altinnAppSettings.EntraId.Identities.PostgresAdmin.TokenCredential;
+                        cred.TokenCredentials = altinnAppSettings.EntraId.Identities.PostgresAdmin.TokenCredential;
                     });
                 }
 
@@ -58,7 +57,6 @@ namespace Altinn.Authorization.Configuration.Postgres.Extensions
         /// <returns>The modified <see cref="IHostApplicationBuilder"/> instance.</returns>
         public static IHostApplicationBuilder AddAltinnPostgresConnection(this IHostApplicationBuilder builder, Action<AltinnPostgresOptions> configureOptions)
         {
-            // Configure the services with the provided PostgreSQL options
             builder.Services.Configure(configureOptions);
             builder.Services.AddSingleton<IPostgresConnectionPoolFactory>(services =>
             {

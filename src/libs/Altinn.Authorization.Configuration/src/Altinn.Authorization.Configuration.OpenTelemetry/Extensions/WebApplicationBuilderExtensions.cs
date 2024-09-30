@@ -54,27 +54,13 @@ public static class WebApplicationBuilderExtensions
         var otel = builder.Services.AddOpenTelemetry()
             .ConfigureResource(resource =>
             {
-                var assembly = Assembly.GetCallingAssembly().FullName;
-                var serviceVersion = Environment.GetEnvironmentVariable("CONTAINER_APP_REVISION");
-                var serviceInstanceId = Environment.GetEnvironmentVariable("CONTAINER_APP_REPLICA_NAME");
-                resource.AddService(config.ServiceName, assembly, serviceVersion, string.IsNullOrEmpty(serviceInstanceId), serviceInstanceId);
+                resource.AddService(config.ServiceName, config.ServiceName, config.ServiceVersion, string.IsNullOrEmpty(config.ServiceInstanceId), config.ServiceInstanceId);
             })
             .WithLogging()
             .WithTracing(tracing =>
                 tracing.AddAspNetCoreInstrumentation(instrumentation =>
                 {
-                    instrumentation.Filter = (context) =>
-                    {
-                        foreach (var collectRequest in config.Filters)
-                        {
-                            if (!collectRequest(context))
-                            {
-                                return false;
-                            }
-                        }
-
-                        return true;
-                    };
+                    instrumentation.Filter = (context) => config.Filters.All(filter => filter(context));
                     instrumentation.EnrichWithHttpRequest = (activity, request) =>
                     {
                         foreach (var header in config.TraceHeaders)
@@ -86,7 +72,6 @@ public static class WebApplicationBuilderExtensions
                         }
                     };
                 })
-                .AddHttpClientInstrumentation()
             )
             .WithMetrics(options =>
                 options

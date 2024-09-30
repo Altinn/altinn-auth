@@ -10,6 +10,32 @@ namespace Altinn.Authorization.Configuration.OpenTelemetry.Options
     public class AltinnOpenTelemetryOptions
     {
         /// <summary>
+        /// Gets or sets the name of the service being monitored. 
+        /// This is typically used to identify the service in OpenTelemetry traces.
+        /// </summary>
+        public string ServiceName { get; set; }
+        
+        /// <summary>
+        /// Ges or sets OTEL Service version. It's by default set to the container app's revision
+        /// </summary>
+        public string ServiceVersion { get; set; } = Environment.GetEnvironmentVariable("CONTAINER_APP_REVISION");
+        
+        /// <summary>
+        /// Ges or sets OTEL Service InstanceID. It's by default set to the container's replica name
+        /// </summary>
+        public string ServiceInstanceId { get; set; } = Environment.GetEnvironmentVariable("CONTAINER_APP_REPLICA_NAME");
+
+        /// <summary>
+        /// Gets or sets the connection string for the telemetry backend for application insights. 
+        /// </summary>
+        public string ApplicationInsightsConnectionString { get; set; }
+
+        /// <summary>
+        /// Default Sampling Ratio is 5% of successful traces gets sent
+        /// </summary>
+        public float SamplingRatio { get; set; } = 0.05F;
+        
+        /// <summary>
         /// Initializes a new instance of the <see cref="AltinnOpenTelemetryOptions"/> class 
         /// and applies additional configuration through the provided delegate.
         /// </summary>
@@ -68,21 +94,5 @@ namespace Altinn.Authorization.Configuration.OpenTelemetry.Options
             Filters.AddRange(configureFilter);
             return this;
         }
-
-        /// <summary>
-        /// Gets or sets the name of the service being monitored. 
-        /// This is typically used to identify the service in OpenTelemetry traces.
-        /// </summary>
-        public string ServiceName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the connection string for the telemetry backend for application insights. 
-        /// </summary>
-        public string ApplicationInsightsConnectionString { get; set; }
-
-        /// <summary>
-        /// Default Sampling Ratio is 5% of successfull traces get's sent
-        /// </summary>
-        public float SamplingRatio { get; set; } = 0.05F;
     }
 }

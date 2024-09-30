@@ -46,6 +46,7 @@ public static class IndexHost
     {
         builder.AddAltinnHostDefaults();
         builder.AddAltinnDefaultOpenTelemetry(otel => otel.ServiceName = service);
+        builder.AddAltinnDefaultPostgresConnection();
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();

@@ -17,7 +17,7 @@ public abstract class ConnectionPoolFactory : IPostgresConnectionPoolFactory
     /// A semaphore to control concurrent access to the connection pool creation.
     /// Ensures that only one connection pool is created at a time.
     /// </summary>
-    protected SemaphoreSlim Semaphore { get; } = new SemaphoreSlim(1);
+    protected SemaphoreSlim Semaphore { get; } = new(1);
 
     /// <inheritdoc />
     public abstract Task<NpgsqlDataSource> Create(CancellationToken cancellationToken = default);

@@ -112,7 +112,7 @@ public partial class ConnectionPoolManagedIdentityFactory(ILogger<ConnectionPool
           /// <summary>
           /// The scopes required for authenticating against the PostgreSQL server using Azure Active Directory.
           /// </summary>
-          private static string[] TokenScopes { get; } = { "https://ossrdbms-aad.database.windows.net/.default" };
+          private static string[] TokenScopes { get; } = ["https://ossrdbms-aad.database.windows.net/.default"];
 
           /// <summary>
           /// Refreshes the access token asynchronously using the provided Azure credentials.
