@@ -14,12 +14,12 @@ namespace Altinn.Authorization.Configuration.OpenTelemetry.Options
         /// This is typically used to identify the service in OpenTelemetry traces.
         /// </summary>
         public string ServiceName { get; set; }
-        
+
         /// <summary>
         /// Ges or sets OTEL Service version. It's by default set to the container app's revision
         /// </summary>
         public string ServiceVersion { get; set; } = Environment.GetEnvironmentVariable("CONTAINER_APP_REVISION");
-        
+
         /// <summary>
         /// Ges or sets OTEL Service InstanceID. It's by default set to the container's replica name
         /// </summary>
@@ -34,7 +34,7 @@ namespace Altinn.Authorization.Configuration.OpenTelemetry.Options
         /// Default Sampling Ratio is 5% of successful traces gets sent
         /// </summary>
         public float SamplingRatio { get; set; } = 0.05F;
-        
+
         /// <summary>
         /// Initializes a new instance of the <see cref="AltinnOpenTelemetryOptions"/> class 
         /// and applies additional configuration through the provided delegate.
@@ -60,10 +60,11 @@ namespace Altinn.Authorization.Configuration.OpenTelemetry.Options
         /// <summary>
         /// A collection of filters that define conditions to exclude specific HTTP requests from telemetry tracking.
         /// Each filter is a function that evaluates an <see cref="HttpContext"/>.
+        /// If callback filter returns true, the request should be collected. 
         /// </summary>
         internal List<Func<HttpContext, bool>> Filters { get; } =
         [
-            context => context.Request.Path.StartsWithSegments(new("/health")),
+            context => !context.Request.Path.StartsWithSegments(new("/health")),
         ];
 
         /// <summary>
