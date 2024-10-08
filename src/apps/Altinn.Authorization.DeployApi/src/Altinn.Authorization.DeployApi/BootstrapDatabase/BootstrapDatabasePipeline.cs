@@ -18,6 +18,9 @@ internal sealed class BootstrapDatabasePipeline
     [JsonPropertyName("databaseName")]
     public required string DatabaseName { get; init; }
 
+    [JsonPropertyName("userPrefix")]
+    public required string UserPrefix { get; init; }
+
     [JsonPropertyName("schemas")]
     public required IReadOnlyDictionary<string, SchemaBootstrapModel> Schemas { get; init; }
 
@@ -72,8 +75,8 @@ internal sealed class BootstrapDatabasePipeline
             (_, ct) => serverConn.OpenAsync(ct),
             cancellationToken);
 
-        var migratorUser = await context.RunTask(new CreateDatabaseRoleTask(secretClient, serverConn, $"{DatabaseName}_migrator", Resources.User), cancellationToken);
-        var appUser = await context.RunTask(new CreateDatabaseRoleTask(secretClient, serverConn, $"{DatabaseName}_app", Resources.User), cancellationToken);
+        var migratorUser = await context.RunTask(new CreateDatabaseRoleTask(secretClient, serverConn, $"{UserPrefix}_migrator", Resources.User), cancellationToken);
+        var appUser = await context.RunTask(new CreateDatabaseRoleTask(secretClient, serverConn, $"{UserPrefix}_app", Resources.User), cancellationToken);
         await context.RunTask(new CreateDatabaseTask(serverConn, DatabaseName), cancellationToken);
         await context.RunTask(new GrantDatabasePrivilegesTask(serverConn, DatabaseName, migratorUser.RoleName, "CREATE, CONNECT"), cancellationToken);
         await context.RunTask(new GrantDatabasePrivilegesTask(serverConn, DatabaseName, appUser.RoleName, "CONNECT"), cancellationToken);
