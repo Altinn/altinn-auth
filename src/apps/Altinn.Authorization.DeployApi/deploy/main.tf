@@ -30,8 +30,12 @@ module "app" {
 
   user_assigned_identities = [data.azurerm_user_assigned_identity.application_admin.id]
 
+  variables = {
+    "ManagedIdentity__ClientId" = data.azurerm_user_assigned_identity.application_admin.id
+  }
+
   instance    = var.instance
   environment = var.environment
-  name        = "bootstrapper"
+  name        = "deployapi"
   image       = var.image
 }

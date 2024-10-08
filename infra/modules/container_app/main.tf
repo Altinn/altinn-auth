@@ -89,11 +89,6 @@ data "azurerm_postgresql_flexible_server" "server" {
   resource_group_name = local.infrastructure_resource_group_name
 }
 
-data "azurerm_user_assigned_identity" "postgres_admin" {
-  name                = "mipsqlsrvadmin${local.infrastructure_suffix}"
-  resource_group_name = local.infrastructure_resource_group_name
-}
-
 resource "azurerm_container_app" "app" {
   name = "ca${local.suffix}"
 

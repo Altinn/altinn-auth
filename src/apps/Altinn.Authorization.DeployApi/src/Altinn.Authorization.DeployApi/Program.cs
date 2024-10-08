@@ -31,6 +31,6 @@ builder.Services.AddAuthentication()
 
 var app = builder.Build();
 
-app.MapPost("bootstrapper/api/v1/databases", (BootstrapDatabasePipeline pipeline, HttpContext context) => pipeline.Run(context));
+app.MapPost("deployapi/api/v1/databases/bootstrap", (BootstrapDatabasePipeline pipeline, HttpContext context) => pipeline.Run(context));
 
 app.Run();

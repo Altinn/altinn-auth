@@ -107,8 +107,8 @@ variable "services" {
     },
     {
       domain   = "api"
-      path     = "/bootstrapper"
-      hostname = "bootstrapper"
+      path     = "/deployapi"
+      hostname = "deployapi"
     }
   ]
 
