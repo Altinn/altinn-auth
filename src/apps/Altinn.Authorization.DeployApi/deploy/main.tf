@@ -28,7 +28,7 @@ data "azurerm_user_assigned_identity" "application_admin" {
 module "app" {
   source = "../../../../infra/modules/container_app_api"
 
-  user_assigned_identities = [data.azurerm_user_assigned_identity.application_admin.principal_id]
+  user_assigned_identities = [data.azurerm_user_assigned_identity.application_admin.id]
 
   instance    = var.instance
   environment = var.environment

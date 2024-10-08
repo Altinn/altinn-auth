@@ -103,11 +103,8 @@ resource "azurerm_container_app" "app" {
   workload_profile_name        = "basic"
 
   identity {
-    type = "UserAssigned"
-    identity_ids = [
-      azurerm_user_assigned_identity.app.id,
-      data.azurerm_user_assigned_identity.postgres_admin.id
-    ]
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.app.id]
   }
 
   ingress {
@@ -127,10 +124,6 @@ resource "azurerm_container_app" "app" {
     max_replicas = var.max_replicas
 
     container {
-      env {
-        name  = "EntraId__Identities__PostgresAdmin__ClientId"
-        value = data.azurerm_user_assigned_identity.postgres_admin.client_id
-      }
       env {
         name  = "EntraId__Identities__Service__ClientId"
         value = azurerm_user_assigned_identity.app.client_id
