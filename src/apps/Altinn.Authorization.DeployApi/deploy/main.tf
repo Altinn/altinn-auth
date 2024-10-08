@@ -29,9 +29,8 @@ module "app" {
   source = "../../../../infra/modules/container_app_api"
 
   user_assigned_identities = [data.azurerm_user_assigned_identity.application_admin.id]
-
   variables = {
-    "ManagedIdentity__ClientId" = data.azurerm_user_assigned_identity.application_admin.id
+    "ManagedIdentity__ClientId" = data.azurerm_user_assigned_identity.application_admin.client_id
   }
 
   instance    = var.instance
