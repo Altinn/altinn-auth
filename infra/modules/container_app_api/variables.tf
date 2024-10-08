@@ -14,6 +14,17 @@ variable "location" {
   description = "Specifies the Azure region where the resources will be provisioned (e.g., 'norwayeast')."
 }
 
+variable "variables" {
+  type    = map(string)
+  default = {}
+}
+
+variable "user_assigned_identities" {
+  type        = list(string)
+  default     = []
+  description = "List of principal IDs"
+}
+
 variable "environment" {
   type = string
 }
@@ -31,9 +42,19 @@ variable "registry" {
   default = "ghcr.io"
 }
 
-variable "can_use_service_bus" {
+variable "can_use_auth_service_bus" {
   type    = bool
-  default = true
+  default = false
+}
+
+variable "can_use_auth_key_vault" {
+  type    = bool
+  default = false
+}
+
+variable "can_use_auth_app_configuration" {
+  type    = bool
+  default = false
 }
 
 variable "max_replicas" {

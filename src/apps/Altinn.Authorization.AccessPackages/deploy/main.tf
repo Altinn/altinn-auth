@@ -24,5 +24,7 @@ module "app" {
   name        = "accesspackages"
   image       = var.image
 
-  can_use_service_bus = true
+  can_use_auth_service_bus       = true
+  can_use_auth_app_configuration = true
+  can_use_auth_key_vault         = true
 }

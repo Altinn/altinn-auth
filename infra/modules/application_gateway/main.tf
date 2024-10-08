@@ -155,7 +155,7 @@ resource "azurerm_application_gateway" "appgw" {
           name                       = "path_rule_container_app_${path_rule.value.domain}_${path_rule.value.hostname}"
           backend_address_pool_name  = "backend_address_pool_container_app_${path_rule.value.domain}_${path_rule.value.hostname}"
           backend_http_settings_name = "backend_http_settings_container_app_${path_rule.value.domain}_${path_rule.value.hostname}"
-          paths                      = path_rule.value.path == "/" ? ["/*"] : ["/${path_rule.value.path}/*", "/${path_rule.value.path}"]
+          paths                      = path_rule.value.path == "/" ? ["/*"] : ["${path_rule.value.path}/*", path_rule.value.path]
         }
 
         for_each = { for service in var.services : service.hostname => service if url_path_map.key == service.domain }

@@ -62,36 +62,27 @@ resource "azurerm_role_assignment" "rbac" {
   principal_id         = azurerm_user_assigned_identity.app.principal_id
   role_definition_name = each.value.role_definition_name
   scope                = each.value.scope
+
   for_each = { for arm in [
     {
       id                   = "service_bus_mass_transit"
       scope                = data.azurerm_servicebus_namespace.sb.id
       role_definition_name = "Azure Service Bus Mass Transit"
-      should_assign        = var.can_use_service_bus
+      should_assign        = var.can_use_auth_service_bus
     },
     {
       id                   = "app_configuration"
       scope                = data.azurerm_app_configuration.appconf.id
       role_definition_name = "App Configuration Data Reader"
-      should_assign        = true
+      should_assign        = var.can_use_auth_app_configuration
     },
     {
       id                   = "key_vault"
       scope                = data.azurerm_key_vault.kv.id
       role_definition_name = "Key Vault Secrets User"
-      should_assign        = true
+      should_assign        = var.can_use_auth_key_vault
     }
   ] : arm.id => arm if try(arm.should_assign, false) }
-}
-
-data "azurerm_postgresql_flexible_server" "server" {
-  name                = "psqlsrvaltinn${local.infrastructure_suffix}"
-  resource_group_name = local.infrastructure_resource_group_name
-}
-
-data "azurerm_user_assigned_identity" "postgres_admin" {
-  name                = "mipsqlsrvadmin${local.infrastructure_suffix}"
-  resource_group_name = local.infrastructure_resource_group_name
 }
 
 resource "azurerm_container_app" "app" {
@@ -104,10 +95,10 @@ resource "azurerm_container_app" "app" {
 
   identity {
     type = "UserAssigned"
-    identity_ids = [
-      azurerm_user_assigned_identity.app.id,
-      data.azurerm_user_assigned_identity.postgres_admin.id
-    ]
+    identity_ids = concat(
+      var.user_assigned_identities,
+      [azurerm_user_assigned_identity.app.id],
+    )
   }
 
   ingress {
@@ -128,16 +119,21 @@ resource "azurerm_container_app" "app" {
 
     container {
       env {
-        name  = "EntraId__Identities__PostgresAdmin__ClientId"
-        value = data.azurerm_user_assigned_identity.postgres_admin.client_id
-      }
-      env {
         name  = "EntraId__Identities__Service__ClientId"
         value = azurerm_user_assigned_identity.app.client_id
       }
       env {
         name  = "AppConfiguration__Endpoint"
         value = data.azurerm_app_configuration.appconf.endpoint
+      }
+
+      dynamic "env" {
+        content {
+          name  = env.key
+          value = env.value
+        }
+
+        for_each = var.variables
       }
 
       name  = var.name
@@ -164,4 +160,3 @@ resource "azurerm_container_app_custom_domain" "domain" {
   certificate_binding_type = "Disabled"
   container_app_id         = azurerm_container_app.app.id
 }
-
