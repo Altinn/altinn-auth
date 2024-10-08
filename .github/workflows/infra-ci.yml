@@ -26,3 +26,12 @@ jobs:
       environment: at21
       tf_state: auth.tfstate
       working_dir: infra/deploy/auth
+
+  register:
+    name: Altinn Register
+    secrets: inherit
+    uses: ./.github/workflows/infra-ci-template.yml
+    with:
+      environment: at21
+      tf_state: Altinn.Register.tfstate
+      working_dir: infra/deploy/altinn-register

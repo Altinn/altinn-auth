@@ -38,3 +38,15 @@ jobs:
       environment: ${{ matrix.environment }}
       tf_state: auth.tfstate
       working_dir: infra/deploy/auth
+
+  register:
+    name: Altinn Register
+    secrets: inherit
+    uses: ./.github/workflows/infra-cd-template.yml
+    strategy:
+      matrix:
+        environment: [at21]
+    with:
+      environment: ${{ matrix.environment }}
+      tf_state: Altinn.Register.tfstate
+      working_dir: infra/deploy/altinn-register
