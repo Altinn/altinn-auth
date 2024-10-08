@@ -3,126 +3,130 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libs", "libs", "{D1BED82B-F603-48E3-BF1E-44DB874748D9}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{975139F1-669A-47EF-B6FB-9514471F6058}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Authorization.Hosting", "Altinn.Authorization.Hosting", "{6F243195-F651-4425-A3D3-5F9845CC5799}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "apps", "apps", "{7A57912A-A922-4866-8BD8-A55CEB91B2FD}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6F9E4C3C-5339-452F-A22B-2072CEDDB407}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Authorization.AccessPackages", "Altinn.Authorization.AccessPackages", "{4563D148-CDCF-4126-9888-BD57F293BC37}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Hosting", "src\libs\Altinn.Authorization.Hosting\src\Altinn.Authorization.Hosting\Altinn.Authorization.Hosting.csproj", "{676C7114-4829-4760-B32B-91C396AB39D2}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3BF6354A-38B6-44FA-8372-C297B02593AD}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{46F86171-0313-48FC-B0F1-BC8EFE8109D6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.AccessPackages", "src\apps\Altinn.Authorization.AccessPackages\src\Altinn.Authorization.AccessPackages\Altinn.Authorization.AccessPackages.csproj", "{3BE07AA7-161E-447E-AB3E-1EF3EBC0CFAA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Hosting.Tests", "src\libs\Altinn.Authorization.Hosting\tests\Altinn.Authorization.Hosting.Tests\Altinn.Authorization.Hosting.Tests.csproj", "{7724C311-DBD5-4E8B-BDA3-C8B910CCF8C6}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Authorization.DeployApi", "Altinn.Authorization.DeployApi", "{D257B57A-E3D7-4D91-AFBA-43C0A892ABDC}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Authorization.Configuration", "Altinn.Authorization.Configuration", "{57F7EADB-D618-4D20-9751-9E953CB25573}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C2A52F6B-FA60-49E5-A74B-F508EE7BE4F9}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{47DBC3CF-755F-49C9-BB0C-0499937A43D1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.DeployApi", "src\apps\Altinn.Authorization.DeployApi\src\Altinn.Authorization.DeployApi\Altinn.Authorization.DeployApi.csproj", "{FB9E7D21-3AAA-40A8-A1D2-9140671838EF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Configuration", "src\libs\Altinn.Authorization.Configuration\src\Altinn.Authorization.Configuration\Altinn.Authorization.Configuration.csproj", "{D9C86932-3DF0-442C-9E16-01B5EAE3F7F4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.AccessPackages.Models", "src\apps\Altinn.Authorization.AccessPackages\src\Altinn.Authorization.AccessPackages.Models\Altinn.Authorization.AccessPackages.Models.csproj", "{6AAC3869-D894-45B7-9339-94774CC1F321}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Configuration.OpenTelemetry", "src\libs\Altinn.Authorization.Configuration\src\Altinn.Authorization.Configuration.OpenTelemetry\Altinn.Authorization.Configuration.OpenTelemetry.csproj", "{EE4433FE-68B9-4F09-96AF-567A4A6701FF}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Authorization.Index", "Altinn.Authorization.Index", "{C417CFA9-3AEE-42FF-A70D-C50CA927CA3D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Configuration.Postgres", "src\libs\Altinn.Authorization.Configuration\src\Altinn.Authorization.Configuration.Postgres\Altinn.Authorization.Configuration.Postgres.csproj", "{BADE7097-AFD5-4096-9378-3CCDB0EC95B9}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6D228887-7EEA-4E7F-A6FA-06B34D614141}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{DCA1F893-53AA-4C9E-9794-215F901E0B61}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Index", "src\apps\Altinn.Authorization.Index\src\Altinn.Authorization.Index\Altinn.Authorization.Index.csproj", "{9776299B-47AE-4602-8A34-2A53F8EBAF22}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Configuration.Tests", "src\libs\Altinn.Authorization.Configuration\tests\Altinn.Authorization.Configuration.Tests\Altinn.Authorization.Configuration.Tests.csproj", "{66B2E84E-FF2C-4503-9081-5093928CD20C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libs", "libs", "{8A0804D3-795C-4D1B-B896-EFBF61F275DC}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "apps", "apps", "{15B73811-7124-43E0-9DAF-895121B12EBA}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Authorization.Configuration", "Altinn.Authorization.Configuration", "{B80707D6-12E4-41EC-B72E-D93A264FCD65}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Authorization.Index", "Altinn.Authorization.Index", "{4D36925D-FDBB-43EE-A1AA-62935E832E18}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C37C79A6-1256-4EAC-BC21-918743D0E7EF}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{50EE64F2-349A-46A5-87EB-282BAAE0DA63}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Configuration.Postgres", "src\libs\Altinn.Authorization.Configuration\src\Altinn.Authorization.Configuration.Postgres\Altinn.Authorization.Configuration.Postgres.csproj", "{2296F778-A71F-40B2-818E-23F077D63722}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Index", "src\apps\Altinn.Authorization.Index\src\Altinn.Authorization.Index\Altinn.Authorization.Index.csproj", "{8D1DB300-7C01-45BF-B677-8C402A2E1B65}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{12944668-5C16-4E7B-878D-16797DE5307C}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Authorization.AccessPackages", "Altinn.Authorization.AccessPackages", "{7EB60BDC-609B-4A73-9765-F4B9BFADB007}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Configuration.Tests", "src\libs\Altinn.Authorization.Configuration\tests\Altinn.Authorization.Configuration.Tests\Altinn.Authorization.Configuration.Tests.csproj", "{886728F4-7632-45A6-9C0F-147F71325F12}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C38C05DD-A87C-4166-8D30-58E9305E1FB1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Configuration", "src\libs\Altinn.Authorization.Configuration\src\Altinn.Authorization.Configuration\Altinn.Authorization.Configuration.csproj", "{A0B4E5A8-D7AE-4566-BEEB-40670F1AB32B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.AccessPackages", "src\apps\Altinn.Authorization.AccessPackages\src\Altinn.Authorization.AccessPackages\Altinn.Authorization.AccessPackages.csproj", "{3E719CAF-CE38-4412-B372-D73FFA3DFADE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Configuration.OpenTelemetry", "src\libs\Altinn.Authorization.Configuration\src\Altinn.Authorization.Configuration.OpenTelemetry\Altinn.Authorization.Configuration.OpenTelemetry.csproj", "{C9A0D181-700B-4B54-995E-6AAB62584B15}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.AccessPackages.Models", "src\apps\Altinn.Authorization.AccessPackages\src\Altinn.Authorization.AccessPackages.Models\Altinn.Authorization.AccessPackages.Models.csproj", "{AF91ACE5-6AE2-47B2-9BD1-064064AA910A}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Authorization.Hosting", "Altinn.Authorization.Hosting", "{EB54B6F3-D4CE-4C49-90AC-993D59327008}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Authorization.DeployApi", "Altinn.Authorization.DeployApi", "{400D49D3-87B7-4960-B553-C8693CDB5755}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D4E493DD-D9AB-4D68-BD8E-9BE156CD175A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.DeployApi", "src\apps\Altinn.Authorization.DeployApi\src\Altinn.Authorization.DeployApi\Altinn.Authorization.DeployApi.csproj", "{3238A95C-CC93-4E46-B11F-EADABDD1D17B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Hosting", "src\libs\Altinn.Authorization.Hosting\src\Altinn.Authorization.Hosting\Altinn.Authorization.Hosting.csproj", "{C7F9BA45-8010-4B92-8CC7-5050107F2BFE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{7E2E4A16-8A53-4E6A-BC22-832D541E1B92}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Hosting.Tests", "src\libs\Altinn.Authorization.Hosting\tests\Altinn.Authorization.Hosting.Tests\Altinn.Authorization.Hosting.Tests.csproj", "{53F3961A-B2F9-4BF8-9365-80D93DB621B2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{676C7114-4829-4760-B32B-91C396AB39D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{676C7114-4829-4760-B32B-91C396AB39D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{676C7114-4829-4760-B32B-91C396AB39D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{676C7114-4829-4760-B32B-91C396AB39D2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7724C311-DBD5-4E8B-BDA3-C8B910CCF8C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7724C311-DBD5-4E8B-BDA3-C8B910CCF8C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7724C311-DBD5-4E8B-BDA3-C8B910CCF8C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7724C311-DBD5-4E8B-BDA3-C8B910CCF8C6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D9C86932-3DF0-442C-9E16-01B5EAE3F7F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D9C86932-3DF0-442C-9E16-01B5EAE3F7F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D9C86932-3DF0-442C-9E16-01B5EAE3F7F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D9C86932-3DF0-442C-9E16-01B5EAE3F7F4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EE4433FE-68B9-4F09-96AF-567A4A6701FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EE4433FE-68B9-4F09-96AF-567A4A6701FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EE4433FE-68B9-4F09-96AF-567A4A6701FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EE4433FE-68B9-4F09-96AF-567A4A6701FF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BADE7097-AFD5-4096-9378-3CCDB0EC95B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BADE7097-AFD5-4096-9378-3CCDB0EC95B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BADE7097-AFD5-4096-9378-3CCDB0EC95B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BADE7097-AFD5-4096-9378-3CCDB0EC95B9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{66B2E84E-FF2C-4503-9081-5093928CD20C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{66B2E84E-FF2C-4503-9081-5093928CD20C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{66B2E84E-FF2C-4503-9081-5093928CD20C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{66B2E84E-FF2C-4503-9081-5093928CD20C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8D1DB300-7C01-45BF-B677-8C402A2E1B65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8D1DB300-7C01-45BF-B677-8C402A2E1B65}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8D1DB300-7C01-45BF-B677-8C402A2E1B65}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8D1DB300-7C01-45BF-B677-8C402A2E1B65}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3E719CAF-CE38-4412-B372-D73FFA3DFADE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3E719CAF-CE38-4412-B372-D73FFA3DFADE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3E719CAF-CE38-4412-B372-D73FFA3DFADE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3E719CAF-CE38-4412-B372-D73FFA3DFADE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AF91ACE5-6AE2-47B2-9BD1-064064AA910A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AF91ACE5-6AE2-47B2-9BD1-064064AA910A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AF91ACE5-6AE2-47B2-9BD1-064064AA910A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AF91ACE5-6AE2-47B2-9BD1-064064AA910A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3238A95C-CC93-4E46-B11F-EADABDD1D17B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3238A95C-CC93-4E46-B11F-EADABDD1D17B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3238A95C-CC93-4E46-B11F-EADABDD1D17B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3238A95C-CC93-4E46-B11F-EADABDD1D17B}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{6F243195-F651-4425-A3D3-5F9845CC5799} = {D1BED82B-F603-48E3-BF1E-44DB874748D9}
-		{6F9E4C3C-5339-452F-A22B-2072CEDDB407} = {6F243195-F651-4425-A3D3-5F9845CC5799}
-		{676C7114-4829-4760-B32B-91C396AB39D2} = {6F9E4C3C-5339-452F-A22B-2072CEDDB407}
-		{46F86171-0313-48FC-B0F1-BC8EFE8109D6} = {6F243195-F651-4425-A3D3-5F9845CC5799}
-		{7724C311-DBD5-4E8B-BDA3-C8B910CCF8C6} = {46F86171-0313-48FC-B0F1-BC8EFE8109D6}
-		{57F7EADB-D618-4D20-9751-9E953CB25573} = {D1BED82B-F603-48E3-BF1E-44DB874748D9}
-		{47DBC3CF-755F-49C9-BB0C-0499937A43D1} = {57F7EADB-D618-4D20-9751-9E953CB25573}
-		{D9C86932-3DF0-442C-9E16-01B5EAE3F7F4} = {47DBC3CF-755F-49C9-BB0C-0499937A43D1}
-		{EE4433FE-68B9-4F09-96AF-567A4A6701FF} = {47DBC3CF-755F-49C9-BB0C-0499937A43D1}
-		{BADE7097-AFD5-4096-9378-3CCDB0EC95B9} = {47DBC3CF-755F-49C9-BB0C-0499937A43D1}
-		{DCA1F893-53AA-4C9E-9794-215F901E0B61} = {57F7EADB-D618-4D20-9751-9E953CB25573}
-		{66B2E84E-FF2C-4503-9081-5093928CD20C} = {DCA1F893-53AA-4C9E-9794-215F901E0B61}
-		{4D36925D-FDBB-43EE-A1AA-62935E832E18} = {15B73811-7124-43E0-9DAF-895121B12EBA}
-		{50EE64F2-349A-46A5-87EB-282BAAE0DA63} = {4D36925D-FDBB-43EE-A1AA-62935E832E18}
-		{8D1DB300-7C01-45BF-B677-8C402A2E1B65} = {50EE64F2-349A-46A5-87EB-282BAAE0DA63}
-		{7EB60BDC-609B-4A73-9765-F4B9BFADB007} = {15B73811-7124-43E0-9DAF-895121B12EBA}
-		{C38C05DD-A87C-4166-8D30-58E9305E1FB1} = {7EB60BDC-609B-4A73-9765-F4B9BFADB007}
-		{3E719CAF-CE38-4412-B372-D73FFA3DFADE} = {C38C05DD-A87C-4166-8D30-58E9305E1FB1}
-		{AF91ACE5-6AE2-47B2-9BD1-064064AA910A} = {C38C05DD-A87C-4166-8D30-58E9305E1FB1}
-		{400D49D3-87B7-4960-B553-C8693CDB5755} = {15B73811-7124-43E0-9DAF-895121B12EBA}
-		{3238A95C-CC93-4E46-B11F-EADABDD1D17B} = {400D49D3-87B7-4960-B553-C8693CDB5755}
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3BE07AA7-161E-447E-AB3E-1EF3EBC0CFAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3BE07AA7-161E-447E-AB3E-1EF3EBC0CFAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3BE07AA7-161E-447E-AB3E-1EF3EBC0CFAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3BE07AA7-161E-447E-AB3E-1EF3EBC0CFAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB9E7D21-3AAA-40A8-A1D2-9140671838EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB9E7D21-3AAA-40A8-A1D2-9140671838EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB9E7D21-3AAA-40A8-A1D2-9140671838EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB9E7D21-3AAA-40A8-A1D2-9140671838EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6AAC3869-D894-45B7-9339-94774CC1F321}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6AAC3869-D894-45B7-9339-94774CC1F321}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6AAC3869-D894-45B7-9339-94774CC1F321}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6AAC3869-D894-45B7-9339-94774CC1F321}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9776299B-47AE-4602-8A34-2A53F8EBAF22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9776299B-47AE-4602-8A34-2A53F8EBAF22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9776299B-47AE-4602-8A34-2A53F8EBAF22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9776299B-47AE-4602-8A34-2A53F8EBAF22}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2296F778-A71F-40B2-818E-23F077D63722}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2296F778-A71F-40B2-818E-23F077D63722}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2296F778-A71F-40B2-818E-23F077D63722}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2296F778-A71F-40B2-818E-23F077D63722}.Release|Any CPU.Build.0 = Release|Any CPU
+		{886728F4-7632-45A6-9C0F-147F71325F12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{886728F4-7632-45A6-9C0F-147F71325F12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{886728F4-7632-45A6-9C0F-147F71325F12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{886728F4-7632-45A6-9C0F-147F71325F12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0B4E5A8-D7AE-4566-BEEB-40670F1AB32B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0B4E5A8-D7AE-4566-BEEB-40670F1AB32B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0B4E5A8-D7AE-4566-BEEB-40670F1AB32B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0B4E5A8-D7AE-4566-BEEB-40670F1AB32B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9A0D181-700B-4B54-995E-6AAB62584B15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9A0D181-700B-4B54-995E-6AAB62584B15}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9A0D181-700B-4B54-995E-6AAB62584B15}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9A0D181-700B-4B54-995E-6AAB62584B15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7F9BA45-8010-4B92-8CC7-5050107F2BFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7F9BA45-8010-4B92-8CC7-5050107F2BFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7F9BA45-8010-4B92-8CC7-5050107F2BFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7F9BA45-8010-4B92-8CC7-5050107F2BFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53F3961A-B2F9-4BF8-9365-80D93DB621B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53F3961A-B2F9-4BF8-9365-80D93DB621B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53F3961A-B2F9-4BF8-9365-80D93DB621B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53F3961A-B2F9-4BF8-9365-80D93DB621B2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {995C226B-55B2-491E-A8D2-4E390CFD6CE1}
+	GlobalSection(NestedProjects) = preSolution
+		{7A57912A-A922-4866-8BD8-A55CEB91B2FD} = {975139F1-669A-47EF-B6FB-9514471F6058}
+		{4563D148-CDCF-4126-9888-BD57F293BC37} = {7A57912A-A922-4866-8BD8-A55CEB91B2FD}
+		{3BF6354A-38B6-44FA-8372-C297B02593AD} = {4563D148-CDCF-4126-9888-BD57F293BC37}
+		{3BE07AA7-161E-447E-AB3E-1EF3EBC0CFAA} = {3BF6354A-38B6-44FA-8372-C297B02593AD}
+		{D257B57A-E3D7-4D91-AFBA-43C0A892ABDC} = {7A57912A-A922-4866-8BD8-A55CEB91B2FD}
+		{C2A52F6B-FA60-49E5-A74B-F508EE7BE4F9} = {D257B57A-E3D7-4D91-AFBA-43C0A892ABDC}
+		{FB9E7D21-3AAA-40A8-A1D2-9140671838EF} = {C2A52F6B-FA60-49E5-A74B-F508EE7BE4F9}
+		{6AAC3869-D894-45B7-9339-94774CC1F321} = {3BF6354A-38B6-44FA-8372-C297B02593AD}
+		{C417CFA9-3AEE-42FF-A70D-C50CA927CA3D} = {7A57912A-A922-4866-8BD8-A55CEB91B2FD}
+		{6D228887-7EEA-4E7F-A6FA-06B34D614141} = {C417CFA9-3AEE-42FF-A70D-C50CA927CA3D}
+		{9776299B-47AE-4602-8A34-2A53F8EBAF22} = {6D228887-7EEA-4E7F-A6FA-06B34D614141}
+		{8A0804D3-795C-4D1B-B896-EFBF61F275DC} = {975139F1-669A-47EF-B6FB-9514471F6058}
+		{B80707D6-12E4-41EC-B72E-D93A264FCD65} = {8A0804D3-795C-4D1B-B896-EFBF61F275DC}
+		{C37C79A6-1256-4EAC-BC21-918743D0E7EF} = {B80707D6-12E4-41EC-B72E-D93A264FCD65}
+		{2296F778-A71F-40B2-818E-23F077D63722} = {C37C79A6-1256-4EAC-BC21-918743D0E7EF}
+		{12944668-5C16-4E7B-878D-16797DE5307C} = {B80707D6-12E4-41EC-B72E-D93A264FCD65}
+		{886728F4-7632-45A6-9C0F-147F71325F12} = {12944668-5C16-4E7B-878D-16797DE5307C}
+		{A0B4E5A8-D7AE-4566-BEEB-40670F1AB32B} = {C37C79A6-1256-4EAC-BC21-918743D0E7EF}
+		{C9A0D181-700B-4B54-995E-6AAB62584B15} = {C37C79A6-1256-4EAC-BC21-918743D0E7EF}
+		{EB54B6F3-D4CE-4C49-90AC-993D59327008} = {8A0804D3-795C-4D1B-B896-EFBF61F275DC}
+		{D4E493DD-D9AB-4D68-BD8E-9BE156CD175A} = {EB54B6F3-D4CE-4C49-90AC-993D59327008}
+		{C7F9BA45-8010-4B92-8CC7-5050107F2BFE} = {D4E493DD-D9AB-4D68-BD8E-9BE156CD175A}
+		{7E2E4A16-8A53-4E6A-BC22-832D541E1B92} = {EB54B6F3-D4CE-4C49-90AC-993D59327008}
+		{53F3961A-B2F9-4BF8-9365-80D93DB621B2} = {7E2E4A16-8A53-4E6A-BC22-832D541E1B92}
 	EndGlobalSection
 EndGlobal
