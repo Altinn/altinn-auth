@@ -17,7 +17,7 @@ on:
         required: true
       tf_args:
         type: string
-        description: Name of the Terraform state file
+        description: Additional TF args
         required: false
 
 permissions:

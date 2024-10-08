@@ -1,5 +1,4 @@
 environment                      = "tt02"
-cidr                             = "10.202.0.0/20"
 instance                         = "001"
 is_prod_like                     = true
 cert_keyvault_name               = "kvaltinnauthcert001tt02"

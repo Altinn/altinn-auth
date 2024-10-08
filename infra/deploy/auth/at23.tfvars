@@ -1,5 +1,4 @@
 environment                      = "at23"
-cidr                             = "10.202.0.0/20"
 instance                         = "001"
 is_prod_like                     = false
 cert_keyvault_name               = "kvaltinnauthcert001at23"

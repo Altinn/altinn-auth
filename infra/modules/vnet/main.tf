@@ -41,6 +41,9 @@ locals {
       ipv4_bits    = local.large_subnet
       ipv6_support = false
       nat_gateway  = true
+      service_endpoint = [
+        "Microsoft.Storage"
+      ]
       delegations = {
         fs = {
           name = "Microsoft.DBforPostgreSQL/flexibleServers"

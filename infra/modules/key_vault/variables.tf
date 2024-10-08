@@ -12,6 +12,12 @@ variable "resource_group_name" {
   type = string
 }
 
+variable "entraid_admins" {
+  type        = map(string)
+  default     = {}
+  description = "List of objects IDs"
+}
+
 variable "location" {
   type = string
 }
@@ -26,9 +32,4 @@ variable "subnet_id" {
 
 variable "dns_zones" {
   type = list(string)
-}
-
-variable "prevent_destroy" {
-  type    = bool
-  default = true
 }

@@ -42,6 +42,18 @@ resource "azurerm_resource_group" "auth" {
   }
 }
 
+# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/user_assigned_identity
+resource "azurerm_user_assigned_identity" "application_admin" {
+  name                = "miappadmin${local.metadata.suffix}"
+  resource_group_name = local.resource_group_name
+  location            = var.location
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [tags]
+  }
+}
+
 module "vnet" {
   source              = "../../modules/vnet"
   metadata            = local.metadata
@@ -82,6 +94,8 @@ module "key_vault" {
   resource_group_name = local.resource_group_name
   location            = var.location
 
+  entraid_admins = { "app" : azurerm_user_assigned_identity.application_admin.principal_id }
+
   tenant_id = var.tenant_id
   dns_zones = [module.dns.zones["key_vault"].id]
   subnet_id = module.vnet.subnets["default"].id
@@ -111,6 +125,14 @@ module "postgres_server" {
   location            = var.location
   tenant_id           = var.tenant_id
   is_prod_like        = var.is_prod_like
+
+  entraid_admins = [
+    {
+      principal_id   = azurerm_user_assigned_identity.application_admin.principal_id
+      principal_name = azurerm_user_assigned_identity.application_admin.name
+      principal_type = "ServicePrincipal"
+    }
+  ]
 
   dns_zone     = module.dns.zones["postgres"].id
   key_vault_id = module.key_vault.id
@@ -167,19 +189,12 @@ module "app_configuration" {
   resource_group_name = local.resource_group_name
   location            = var.location
 
-  variables = merge(
-    {
-      for service in var.services : "AltinnApiEndpoints:${title(service.hostname)}" => "http://${service.hostname}.${local.domains.api}" if service.domain == "api"
-    },
-    {
-      for service in var.services : "AltinnFrontendEndpoints:${title(service.hostname)}" => "http://${service.hostname}.${local.domains.frontend}" if service.domain == "frontend"
-    },
-    {
-      "Postgres:Host"                        = module.postgres_server.host
-      "ServiceBus:Endpoint"                  = module.service_bus.host
-      "ApplicationInsights:ConnectionString" = module.application_insights.connection_string,
-      "Sentinel"                             = timestamp()
-  })
+  variables = {
+    "Postgres:Host"                        = module.postgres_server.host
+    "ServiceBus:Endpoint"                  = module.service_bus.host
+    "ApplicationInsights:ConnectionString" = module.application_insights.connection_string,
+    "Sentinel"                             = timestamp()
+  }
 
   depends_on = [azurerm_resource_group.auth]
 }

@@ -2,17 +2,6 @@ locals {
   postgres_server_sku = var.is_prod_like ? "GP_Standard_D4s_v3" : "B_Standard_B2ms"
 }
 
-# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/user_assigned_identity
-resource "azurerm_user_assigned_identity" "postgres_server_admin" {
-  name                = "mipsqlsrvadmin${var.metadata.suffix}"
-  resource_group_name = var.resource_group_name
-  location            = var.location
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes  = [tags]
-  }
-}
 
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/postgresql_flexible_server
 resource "azurerm_postgresql_flexible_server" "postgres_server" {
@@ -33,10 +22,6 @@ resource "azurerm_postgresql_flexible_server" "postgres_server" {
     password_auth_enabled         = false
     tenant_id                     = var.tenant_id
   }
-  identity {
-    type         = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.postgres_server_admin.id]
-  }
 
   sku_name = local.postgres_server_sku
 
@@ -52,7 +37,10 @@ resource "azurerm_postgresql_flexible_server_active_directory_administrator" "ad
   server_name         = azurerm_postgresql_flexible_server.postgres_server.name
   resource_group_name = var.resource_group_name
   tenant_id           = var.tenant_id
-  object_id           = azurerm_user_assigned_identity.postgres_server_admin.principal_id
-  principal_name      = azurerm_user_assigned_identity.postgres_server_admin.name
-  principal_type      = "ServicePrincipal"
+
+  object_id      = each.value.principal_id
+  principal_name = each.value.principal_name
+  principal_type = each.value.principal_type
+
+  for_each = { for value in var.entraid_admins : value.principal_name => value }
 }
