@@ -1,0 +1,30 @@
+name: "CD: Apps"
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+env:
+  registry: ghcr.io
+  image_repository: altinn/altinn-authorization-tmp
+
+jobs:
+  find-verticals:
+    uses: ./.github/workflows/_find-verticals.yml
+    with:
+      type: app
+
+  deploy:
+    name: Deploy
+    needs: find-verticals
+
+    strategy:
+      matrix: ${{ fromJson(needs.find-verticals.outputs.matrix) }}
+
+    uses: ./.github/workflows/_deploy-app.yml
+    with:
+      repository: altinn/altinn-authorization-tmp
+      path: ${{ matrix.path }}
+      imageName: ${{ matrix.imageName }}

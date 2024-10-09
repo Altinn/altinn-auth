@@ -4,10 +4,17 @@ import fs from "node:fs";
 
 export type VerticalType = "app" | "lib" | "pkg";
 
+export type ImageInfo = {
+  readonly name: string;
+};
+
 export type Vertical = {
   readonly type: VerticalType;
   readonly name: string;
+  readonly shortName: string;
   readonly path: string;
+  readonly relPath: string;
+  readonly image?: ImageInfo;
   readonly rawConfig: Readonly<Record<string, unknown>>;
 };
 
@@ -16,6 +23,8 @@ const vertialDirs = {
   lib: "src/libs",
   pkg: "src/pkgs",
 };
+
+const last = (arr: string[]) => arr[arr.length - 1];
 
 const readVertical = (type: VerticalType, dirPath: string): Vertical => {
   const verticalPath = path.resolve(dirPath);
@@ -33,7 +42,28 @@ const readVertical = (type: VerticalType, dirPath: string): Vertical => {
     name = config.name;
   }
 
-  return { type, name, path: verticalPath, rawConfig: config };
+  let shortName = last(name.split("."));
+  if (typeof config.shortName === "string" && config.shortName) {
+    shortName = config.shortName;
+  }
+
+  let image: ImageInfo | undefined;
+  if ("image" in config) {
+    // TODO: validate?
+    image = {
+      name: (config.image as any).name,
+    };
+  }
+
+  return {
+    type,
+    name,
+    shortName,
+    path: verticalPath,
+    relPath: dirPath,
+    image,
+    rawConfig: config,
+  };
 };
 
 const apps = await globby(`${vertialDirs.app}/*`, { onlyDirectories: true });

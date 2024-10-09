@@ -1,0 +1,35 @@
+name: "PR: Check solution files"
+
+on:
+  pull_request: {}
+
+jobs:
+  check-slns:
+    name: Check sln files
+    if: ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.event_name == 'push') && github.repository_owner == 'Altinn' && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          run_install: |
+            - cwd: .github/scripts
+              args: [--frozen-lockfile]
+            - args: [--global, tsx]
+
+      - name: Update all sln files
+        run: tsx ./.github/scripts/update-sln-files.mts
+
+      - name: Assert that no sln files have changed
+        run: git diff --exit-code

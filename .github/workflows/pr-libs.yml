@@ -1,9 +1,7 @@
-name: Libs CI
+name: "PR: Libs"
 
 on:
-  push:
-    branches-ignore:
-      - main
+  pull_request:
     paths:
       - src/**
       - .github/workflows/libs-*
@@ -13,19 +11,17 @@ env:
   DIR: src/libs
 
 jobs:
-  bundle:
-    name: Bundle Libs
-    uses: ./.github/workflows/bundle-template.yml
+  find-verticals:
+    uses: ./.github/workflows/_find-verticals.yml
     with:
-      dir: libs
+      type: lib
 
   ci:
     name: CI
     runs-on: ubuntu-latest
-    needs: bundle
+    needs: find-verticals
     strategy:
-      matrix:
-        name: ${{ fromJson(needs.bundle.outputs.dirs) }}
+      matrix: ${{ fromJson(needs.find-verticals.outputs.matrix) }}
 
     steps:
       - uses: actions/checkout@v4
@@ -36,10 +32,10 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Build
-        working-directory: ${{ env.DIR }}/${{ matrix.name }}
+        working-directory: ${{ matrix.path }}
         run: dotnet build
 
       - name: Test
         if: always()
-        working-directory: ${{ env.DIR }}/${{ matrix.name }}
+        working-directory: ${{ matrix.path }}
         run: dotnet test --no-build
