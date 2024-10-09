@@ -1,6 +1,9 @@
-﻿using System.Text;
+﻿using System.IO.Pipelines;
+using System.Net.WebSockets;
+using System.Text;
 using Altinn.Authorization.DeployApi.Tasks;
 using Microsoft.AspNetCore.Http.Features;
+using Nerdbank.Streams;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 
@@ -11,8 +14,9 @@ public sealed class PipelineContext
     , ISupportRequiredService
     , IKeyedServiceProvider
 {
-    internal static async Task Run(Pipeline pipeline, HttpContext context, CancellationToken cancellationToken)
+    internal static async Task Run(TaskPipeline pipeline, HttpContext context)
     {
+        var ct = context.RequestAborted;
         var responseBody = context.Features.Get<IHttpResponseBodyFeature>()!;
         responseBody.DisableBuffering();
 
@@ -20,9 +24,85 @@ public sealed class PipelineContext
         response.StatusCode = 200;
         response.ContentType = "text/plain; charset=utf-8";
 
-        await responseBody.StartAsync(cancellationToken);
+        await responseBody.StartAsync(ct);
 
-        await using var textWriter = new StreamWriter(responseBody.Stream, Encoding.UTF8);
+        ////await using var textWriter = new StreamWriter(responseBody.Stream, Encoding.UTF8);
+        await Run(pipeline, responseBody.Writer, context.RequestServices, ct);
+
+        await responseBody.CompleteAsync();
+    }
+
+    internal static async Task<TaskPipelineResult> Run(TaskPipeline pipeline, WebSocket context, IServiceProvider services, CancellationToken cancellationToken)
+    {
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var pipe = new Pipe();
+        var ct = cts.Token;
+        var reader = pipe.Reader;
+        var writer = pipe.Writer;
+
+        var readerTask = Task.Run(
+            async () =>
+            {
+                ReadResult result;
+
+                do
+                {
+                    result = await reader.ReadAsync(ct);
+                    if (result.IsCanceled)
+                    {
+                        break;
+                    }
+
+                    var buffer = result.Buffer;
+                    if (buffer.IsSingleSegment)
+                    {
+                        var segment = buffer.First;
+                        await context.SendAsync(segment, WebSocketMessageType.Binary, true, ct);
+                    }
+                    else
+                    {
+                        foreach (var segment in buffer)
+                        {
+                            await context.SendAsync(segment, WebSocketMessageType.Binary, false, ct);
+                        }
+
+                        await context.SendAsync(ArraySegment<byte>.Empty, WebSocketMessageType.Binary, true, ct);
+                    }
+
+                    reader.AdvanceTo(buffer.End);
+                }
+                while (!result.IsCompleted);
+            },
+            ct);
+
+        try
+        {
+            return await Run(pipeline, writer, services, ct);
+        }
+        catch (OperationCanceledException e) when (e.CancellationToken == ct)
+        {
+            return TaskPipelineResult.Canceled;
+        }
+        finally
+        {
+            await writer.CompleteAsync();
+
+            try
+            {
+                await readerTask;
+            }
+            catch (OperationCanceledException e) when (e.CancellationToken == ct)
+            {
+            }
+            catch (Exception e)
+            {
+            }
+        }
+    }
+
+    private static async Task<TaskPipelineResult> Run(TaskPipeline pipeline, PipeWriter writer, IServiceProvider services, CancellationToken cancellationToken)
+    {
+        await using var textWriter = new BufferTextWriter(writer, Encoding.UTF8);
         var consoleOutput = new ConsoleOutput(textWriter);
         var console = new Console(
             AnsiConsole.Create(new AnsiConsoleSettings
@@ -33,7 +113,7 @@ public sealed class PipelineContext
                 Interactive = InteractionSupport.Yes,
             }),
             textWriter,
-            responseBody.Stream);
+            writer);
 
         console.WriteLine();
         var progress = console
@@ -43,13 +123,15 @@ public sealed class PipelineContext
                 new TaskDescriptionColumn { Alignment = Justify.Left },
             ]);
 
-        var ctx = new PipelineContext(console, progress, context);
+        var ctx = new PipelineContext(console, progress, services);
         try
         {
             await pipeline.ExecuteAsync(ctx, cancellationToken);
+            return TaskPipelineResult.Ok;
         }
         catch (OperationCanceledException ex) when (ex.CancellationToken == cancellationToken)
         {
+            return TaskPipelineResult.Canceled;
         }
         catch (Exception ex)
         {
@@ -63,33 +145,33 @@ public sealed class PipelineContext
             {
                 // Ignore exceptions from the exception handler.
             }
-        }
 
-        await responseBody.CompleteAsync();
+            return TaskPipelineResult.Error;
+        }
     }
 
     private readonly IAnsiConsole _console;
     private readonly Progress _progress;
-    private readonly HttpContext _context;
+    private readonly IServiceProvider _services;
 
-    private PipelineContext(IAnsiConsole console, Progress progress, HttpContext context)
+    private PipelineContext(IAnsiConsole console, Progress progress, IServiceProvider services)
     {
         _console = console;
         _progress = progress;
-        _context = context;
+        _services = services;
     }
 
     object? IServiceProvider.GetService(Type serviceType)
-        => _context.RequestServices.GetService(serviceType);
+        => _services.GetService(serviceType);
 
     object ISupportRequiredService.GetRequiredService(Type serviceType)
-        => _context.RequestServices.GetRequiredService(serviceType);
+        => _services.GetRequiredService(serviceType);
 
     object? IKeyedServiceProvider.GetKeyedService(Type serviceType, object? serviceKey)
-        => _context.RequestServices.GetKeyedServices(serviceType, serviceKey);
+        => _services.GetKeyedServices(serviceType, serviceKey);
 
     object IKeyedServiceProvider.GetRequiredKeyedService(Type serviceType, object? serviceKey)
-        => _context.RequestServices.GetRequiredKeyedService(serviceType, serviceKey);
+        => _services.GetRequiredKeyedService(serviceType, serviceKey);
 
     public Task<T> RunTask<T>(StepTask<T> task, CancellationToken cancellationToken)
     {
@@ -160,7 +242,7 @@ public sealed class PipelineContext
         }
     }
 
-    private class Console(IAnsiConsole inner, TextWriter writer, Stream stream)
+    private class Console(IAnsiConsole inner, TextWriter writer, PipeWriter innerWriter)
         : IAnsiConsole
     {
         public Profile Profile => inner.Profile;
@@ -182,7 +264,7 @@ public sealed class PipelineContext
         {
             inner.Write(renderable);
             writer.Flush();
-            stream.Flush();
+            innerWriter.FlushAsync().AsTask().Wait();
         }
     }
 
@@ -221,4 +303,11 @@ public sealed class PipelineContext
         Ok,
         Error,
     }
+}
+
+public enum TaskPipelineResult
+{
+    Ok,
+    Error,
+    Canceled,
 }

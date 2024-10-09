@@ -1,5 +1,6 @@
 using Altinn.Authorization.DeployApi.BootstrapDatabase;
 using Altinn.Authorization.Hosting.Extensions;
+using Altinn.Authorization.DeployApi.Pipelines;
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -34,6 +35,8 @@ builder.Services.AddAuthentication()
 var app = builder.Build();
 
 app.UseAltinnHostDefaults();
-app.MapPost("deployapi/api/v1/databases/bootstrap", (BootstrapDatabasePipeline pipeline, HttpContext context) => pipeline.Run(context));
+app.UseWebSockets();
+
+app.MapTaskPipeline<BootstrapDatabasePipeline>("/deployapi/api/v1/database/bootstrap");
 
 app.Run();

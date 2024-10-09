@@ -1,16 +1,16 @@
-﻿using Altinn.Authorization.DeployApi.Pipelines;
+﻿using System.Text.Json.Serialization;
+using Altinn.Authorization.DeployApi.Pipelines;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.PostgreSql.FlexibleServers;
 using Azure.Security.KeyVault.Secrets;
 using Npgsql;
-using System.Text.Json.Serialization;
 
 namespace Altinn.Authorization.DeployApi.BootstrapDatabase;
 
 internal sealed class BootstrapDatabasePipeline
-    : Pipeline
+    : TaskPipeline
 {
     [JsonPropertyName("resources")]
     public required ResourcesConfig Resources { get; init; }
@@ -108,11 +108,11 @@ internal sealed class BootstrapDatabasePipeline
 
         connStringBuilder.Username = migratorUser.RoleName;
         connStringBuilder.Password = migratorUser.Password;
-        connectionStrings[$"db-{DatabaseName}-migrator"] = connStringBuilder.ToString();
+        connectionStrings[$"db-{UserPrefix}-migrator"] = connStringBuilder.ToString();
 
         connStringBuilder.Username = appUser.RoleName;
         connStringBuilder.Password = appUser.Password;
-        connectionStrings[$"db-{DatabaseName}-app"] = connStringBuilder.ToString();
+        connectionStrings[$"db-{UserPrefix}-app"] = connStringBuilder.ToString();
 
         await context.RunTask(new SaveConnectionStringsTask(secretClient, connectionStrings), cancellationToken);
     }
