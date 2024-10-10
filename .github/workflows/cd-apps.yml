@@ -24,3 +24,5 @@ jobs:
     with:
       path: ${{ matrix.path }}
       name: ${{ matrix.name }}
+      terraform: ${{ matrix.terraform }}
+      terraformStateFile: ${{ matrix.terraformStateFile }}

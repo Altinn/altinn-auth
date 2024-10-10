@@ -13,11 +13,6 @@ on:
         description: Path to the app
         type: string
 
-      infra:
-        description: Whether to deploy infra
-        type: boolean
-        default: false
-
       terraform:
         description: Whether to deploy terraform
         type: boolean
@@ -75,7 +70,7 @@ jobs:
           echo "Tag: ${TAG}"
 
   deploy-terraform:
-    name: Deploy infra
+    name: Run terraform deployment
 
     if: inputs.terraform
 
