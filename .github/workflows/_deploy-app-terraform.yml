@@ -7,14 +7,17 @@ on:
         type: string
         description: GitHub environment
         required: true
+
       working_dir:
         type: string
         description: Name of the working directory
         required: true
+
       tf_state:
         type: string
         description: Name of the Terraform state file
         required: true
+
       tf_args:
         type: string
         description: Additional TF args

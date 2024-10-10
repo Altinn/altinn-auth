@@ -13,6 +13,20 @@ on:
         description: Path to the app
         type: string
 
+      infra:
+        description: Whether to deploy infra
+        type: boolean
+        default: false
+
+      terraform:
+        description: Whether to deploy terraform
+        type: boolean
+        default: false
+
+      terraformStateFile:
+        description: Path to the terraform state file
+        type: string
+
 jobs:
   build-push:
     name: Build and Push
@@ -21,6 +35,10 @@ jobs:
     permissions:
       contents: read
       packages: write
+
+    outputs:
+      image: ${{ steps.img.outputs.image }}
+      tag: ${{ steps.img.outputs.tag }}
 
     steps:
       - uses: actions/checkout@v4
@@ -40,18 +58,9 @@ jobs:
       - uses: docker/login-action@v3
         name: Login to ghcr
         with:
-          registry: ghrc.io
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      # - uses: docker/build-push-action@v6
-      #   id: build
-      #   name: Build and Push
-      #   with:
-      #     file: ${{ inputs.path }}/Dockerfile
-      #     context: ./
-      #     push: true
-      #     tags: ghrc.io/${{ inputs.repository }}/${{ inputs.imageName }}:${{ env.short_sha }}
 
       - name: Build and Push ${{ inputs.name }}
         id: img
@@ -64,3 +73,23 @@ jobs:
         run: |
           echo "Image: ${IMAGE}"
           echo "Tag: ${TAG}"
+
+  deploy-terraform:
+    name: Deploy infra
+
+    if: inputs.terraform
+
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [at21]
+
+    needs:
+      - build-push
+
+    uses: ./.github/workflows/_deploy-app-terraform.yml
+    with:
+      environment: ${{ matrix.environment }}
+      working_dir: ${{ inputs.path }}/deploy
+      tf_state: ${{ inputs.terraformStateFile }}
+      tf_args: "-var image=${{ needs.build-push.outputs.image }}"

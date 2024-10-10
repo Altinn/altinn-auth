@@ -15,21 +15,38 @@ const enqueue = <T extends unknown>(fn: () => Promise<T>): Promise<T> => {
   return task;
 };
 
+const dotnetImageSchema = z.object({
+  type: z.literal("dotnet"),
+  source: z.string().optional(),
+  name: z.string().optional(),
+});
+
+const dockerImageSchema = z.object({
+  type: z.literal("docker"),
+  source: z.string().optional(),
+  name: z.string().min(5),
+});
+
+const imageSchema = z
+  .object({
+    type: z.enum(["dotnet", "docker"]).default("dotnet"),
+  })
+  .passthrough()
+  .pipe(z.discriminatedUnion("type", [dotnetImageSchema, dockerImageSchema]));
+
+const terraformSchema = z.object({
+  stateFile: z.string().min(10),
+});
+
+const infraSchema = z.object({
+  terraform: terraformSchema.optional(),
+});
+
 const configSchema = z.object({
   name: z.string().optional(),
   shortName: z.string().optional(),
-  image: z
-    .object({
-      name: z.string().optional(),
-      type: z.enum(["dotnet", "docker"]).default("dotnet"),
-      source: z.string().optional(),
-    })
-    .refine((v) => {
-      if (v.type === "docker" && !v.name) {
-        return { message: "Image name is required for docker images" };
-      }
-    })
-    .optional(),
+  image: imageSchema.optional(),
+  infra: infraSchema.optional(),
 });
 
 export type VerticalType = "app" | "lib" | "pkg";
@@ -40,6 +57,14 @@ export type ImageInfo = {
   readonly source: string;
 };
 
+export type TerraformInfo = {
+  readonly stateFile: string;
+};
+
+export type InfraInfo = {
+  readonly terraform?: TerraformInfo;
+};
+
 export type Vertical = {
   readonly type: VerticalType;
   readonly name: string;
@@ -47,6 +72,7 @@ export type Vertical = {
   readonly path: string;
   readonly relPath: string;
   readonly image?: ImageInfo;
+  readonly infra?: InfraInfo;
 };
 
 const vertialDirs = {
@@ -68,7 +94,7 @@ const readVertical = async (
   let parsed: any = {};
   try {
     const json = await fs.readFile(configPath, { encoding: "utf-8" });
-    const parsed = JSON.parse(json);
+    parsed = JSON.parse(json);
   } catch (e) {}
 
   const result = await configSchema.safeParseAsync(parsed);
@@ -90,9 +116,9 @@ const readVertical = async (
     shortName = config.shortName;
   }
 
-  let image: ImageInfo | undefined;
+  let image: ImageInfo | undefined = void 0;
+  let infra: InfraInfo | undefined = void 0;
   if (type === "app") {
-    $.cwd = verticalPath;
     const confImage = config.image ?? { type: "dotnet" };
 
     switch (confImage.type) {
@@ -120,8 +146,13 @@ const readVertical = async (
       }
 
       default: {
-        throw new Error(`Unsupported image type: ${confImage.type}`);
+        throw new Error(`Unsupported image type: ${(confImage as any).type}`);
       }
+    }
+
+    const confInfra = config.infra;
+    if (confInfra) {
+      infra = confInfra as InfraInfo;
     }
 
     image = confImage as ImageInfo;
@@ -134,6 +165,7 @@ const readVertical = async (
     path: verticalPath,
     relPath: dirPath,
     image,
+    infra,
   };
 };
 

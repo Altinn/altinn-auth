@@ -1,5 +1,8 @@
 {
-  "image": {
-    "name": "altinn-authorization-deployapi"
+  "image": {},
+  "infra": {
+    "terraform": {
+      "stateFile": "Altinn.Authorization.DeployApi.tfstate"
+    }
   }
 }

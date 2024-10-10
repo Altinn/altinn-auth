@@ -30,6 +30,15 @@ var matrix = {
       ret.imageName = v.image.name;
     }
 
+    if (v.infra) {
+      ret.infra = "true";
+
+      if (v.infra.terraform) {
+        ret.terraform = "true";
+        ret.terraformStateFile = v.infra.terraform.stateFile;
+      }
+    }
+
     return ret;
   }),
 };

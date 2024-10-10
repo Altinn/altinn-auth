@@ -1,5 +1,8 @@
 {
-  "image": {
-    "name": "altinn-authorization-index"
+  "image": {},
+  "infra": {
+    "terraform": {
+      "stateFile": "Altinn.Authorization.Index.tfstate"
+    }
   }
 }
