@@ -5,16 +5,19 @@ import { getApp } from "./_meta.mts";
 import * as actions from "@actions/core";
 
 const argv = yargs(hideBin(process.argv))
+  .command("<name>")
+  .demandCommand(1)
   .positional("name", {
     type: "string",
-    required: true,
   })
   .option("tag", {
     type: "string",
   })
   .parse();
 
-const app = getApp(argv.name);
+console.log(argv);
+
+const app = getApp(argv._[0]);
 const tag =
   argv.tag || (process.env.GITHUB_SHA ?? "").substring(0, 7) || "latest";
 

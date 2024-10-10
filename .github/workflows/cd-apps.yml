@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - ci/cd-fix
 
 env:
   registry: ghcr.io
@@ -21,6 +22,7 @@ jobs:
     needs: find-verticals
 
     strategy:
+      fail-fast: false
       matrix: ${{ fromJson(needs.find-verticals.outputs.matrix) }}
 
     uses: ./.github/workflows/_deploy-app.yml
