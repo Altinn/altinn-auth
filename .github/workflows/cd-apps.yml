@@ -25,6 +25,5 @@ jobs:
 
     uses: ./.github/workflows/_deploy-app.yml
     with:
-      repository: altinn/altinn-authorization-tmp
       path: ${{ matrix.path }}
-      imageName: ${{ matrix.imageName }}
+      name: ${{ matrix.name }}

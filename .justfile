@@ -19,3 +19,8 @@
 @update-sln-files: install-script-packages-frozen
   #!pwsh
   ./.github/scripts/node_modules/.bin/tsx ./.github/scripts/update-sln-files.mts
+
+# Print all projects metadata
+@get-metadata: install-script-packages-frozen
+  #!pwsh
+  ./.github/scripts/node_modules/.bin/tsx ./.github/scripts/get-metadata.mts

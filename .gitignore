@@ -34,3 +34,6 @@ terraform.rc
 .vs
 .idea
 *.DotSettings.user
+
+# MSBuild binlogs
+*.binlog

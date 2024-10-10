@@ -7,9 +7,6 @@ on:
       - .github/workflows/apps-*
       - .github/workflows/infra-*
 
-env:
-  DOTNET_VERSION: 8.0.x
-
 jobs:
   find-verticals:
     uses: ./.github/workflows/_find-verticals.yml
@@ -25,10 +22,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Install .NET ${{ env.DOTNET_VERSION }}
+      - name: Install .NET
         uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Build
         working-directory: ${{ matrix.path }}

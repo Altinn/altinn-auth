@@ -1,0 +1,25 @@
+﻿# top-most EditorConfig file
+root = true
+
+# For all files
+[*]
+insert_final_newline = true
+tab_width = 2
+
+[*.{props,targets,csproj}]
+tab_width = 4
+
+[*.cs]
+tab_width = 4
+
+# VSTHRD200: Use "Async" suffix for async methods
+dotnet_diagnostic.VSTHRD200.severity = none
+
+# SA1001: Commas should be spaced correctly
+dotnet_diagnostic.SA1001.severity = none
+
+# FAA0002: Replace Xunit assertion with Fluent Assertions equivalent
+dotnet_diagnostic.FAA0002.severity = none
+
+# CA1822: Mark members as static
+dotnet_diagnostic.CA1822.severity = none

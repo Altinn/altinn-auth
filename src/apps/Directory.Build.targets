@@ -1,0 +1,28 @@
+<Project>
+    <Import Project="..\Directory.Build.targets" />
+
+    <Choose>
+        <When Condition=" '$(IsAppProject)' == 'true' ">
+
+            <PropertyGroup>
+                <IsPublishable>true</IsPublishable>
+                <EnableSdkContainerSupport>true</EnableSdkContainerSupport>
+
+                <LocalRegistry>localhost</LocalRegistry>
+                <ContainerRegistry>ghcr.io</ContainerRegistry>
+                <ContainerRepository>altinn/altinn-authorization-tmp/$(ContainerName)</ContainerRepository>
+            </PropertyGroup>
+
+        </When>
+
+        <Otherwise>
+
+            <PropertyGroup>
+                <IsPublishable>false</IsPublishable>
+                <EnableSdkContainerSupport>false</EnableSdkContainerSupport>
+            </PropertyGroup>
+
+        </Otherwise>
+    </Choose>
+
+</Project>
