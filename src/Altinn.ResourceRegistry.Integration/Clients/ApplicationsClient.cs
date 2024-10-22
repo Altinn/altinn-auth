@@ -38,7 +38,14 @@ namespace Altinn.ResourceRegistry.Integration.Clients
             {
                 HttpResponseMessage response = await _client.GetAsync(availabbleServicePath, cancellationToken);
 
-                return await response.Content.ReadFromJsonAsync<ApplicationList>(SerializerOptions, cancellationToken);
+                ApplicationList? applications = await response.Content.ReadFromJsonAsync<ApplicationList>(SerializerOptions, cancellationToken);
+                return applications != null
+                    ? new()
+                    {
+                        Applications = applications.Applications
+                            .Where(a => !a.Id.Contains("/a2-") && !a.Id.Contains("/a1-")).ToList()
+                    }
+                    : null;
             }
             catch (Exception ex)
             {
