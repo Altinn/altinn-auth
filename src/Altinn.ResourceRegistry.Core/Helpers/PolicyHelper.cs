@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Data;
 using System.Xml;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Utils;
@@ -6,6 +7,8 @@ using Altinn.Authorization.ABAC.Xacml;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Extensions;
 using Altinn.ResourceRegistry.Core.Models;
+using Altinn.Urn;
+using Altinn.Urn.Json;
 using Nerdbank.Streams;
 using static Altinn.ResourceRegistry.Core.Constants.AltinnXacmlConstants;
 
@@ -153,6 +156,158 @@ namespace Altinn.ResourceRegistry.Core.Helpers
             return $"{org.AsFileName()}/{app.AsFileName()}/policy.xml";
         }
 
+        /// <summary>
+        /// Converts a XACML policy to a list of PolicyRule
+        /// </summary>
+        public static List<PolicyRule> ConvertToPolicyRules(XacmlPolicy xacmlPolicy)
+        {
+            List<PolicyRule> rules = new List<PolicyRule>();
+            foreach (XacmlRule xacmlRule in xacmlPolicy.Rules)
+            {
+                FlattenXacmlRule(xacmlRule, rules);    
+            }
+
+            return rules;
+        }
+
+        /// <summary>
+        /// Returns a list of rights for a resource. A right is a combination of resource and action. The response list the subjects in policy that is granted the right.
+        /// Response is grouped by right.
+        /// </summary>
+        public static List<PolicyRight> ConvertToPolicyRight(XacmlPolicy policy)
+        {
+            List<PolicyRule> policyRules = ConvertToPolicyRules(policy);
+            List<PolicyRight> policyRights = new(policyRules.Count);
+
+            Dictionary<string, (PolicyRight Rights, List<PolicySubject> Subjects)> resourceActions = new();
+
+            foreach (PolicyRule rule in policyRules)
+            {
+                List<PolicySubject> subjects = [new PolicySubject { SubjectAttributes = rule.Subject }];
+                PolicyRight policyResourceAction = new PolicyRight()
+                { 
+                    Action = rule.Action, 
+                    Resource = rule.Resource,
+                    Subjects = subjects,
+                };
+                
+                if (resourceActions.ContainsKey(policyResourceAction.RightKey))
+                {
+                    resourceActions[policyResourceAction.RightKey].Subjects.AddRange(policyResourceAction.Subjects);
+                }
+                else
+                {
+                    resourceActions.Add(policyResourceAction.RightKey, (policyResourceAction, subjects));
+                    policyRights.Add(policyResourceAction);
+                }
+            }
+
+            return policyRights;
+        }
+
+        /// <summary>
+        /// This method will flatten the XACML rule into a list of PolicyRule where each PolicyRule contains a list of KeyValueUrn for subject, action and resource
+        /// The list will cotain duplicates if there is duplicate rules in XACML.
+        /// 
+        /// The code also enforce some extra rules:
+        /// For each of the three categories (subject, action, resource) they need to be in a separate AnyOf element in the Target element.
+        /// Action can only be one match in a AllOf element.(you cant do both read and write at the same time)
+        /// Subject have multiple matches in a AllOf element, but it is not used in the current implementation in Altinn. (requiring a user to have multiple roles to access a resource)
+        /// A resource can have multiple matched in a AllOf element to be able to match on multiple attributes. (app, task1 , task2 etc)
+        /// </summary>
+        private static void FlattenXacmlRule(XacmlRule xacmlRule, List<PolicyRule> policyRules)
+        {
+            XacmlAnyOf anyOfSubjects = null;
+            XacmlAnyOf anyOfActions = null;
+            XacmlAnyOf anyOfResourcs = null;
+
+            foreach (XacmlAnyOf anyOf in xacmlRule.Target.AnyOf)
+            {
+                string category = null;
+
+                foreach (XacmlAllOf allOf in anyOf.AllOf)
+                {
+                    foreach (XacmlMatch match in allOf.Matches)
+                    {
+                        if (category == null)
+                        {
+                            category = match.AttributeDesignator.Category.ToString();
+                        }
+                        else if (!category.Equals(match.AttributeDesignator.Category.ToString()))
+                        {
+                            throw new ArgumentException("All matches in a all must have the same category ruleId " + xacmlRule.RuleId);
+                        }
+                    }
+                }
+
+                if (category.Equals(XacmlConstants.MatchAttributeCategory.Action))
+                {
+                    anyOfActions = anyOf;
+                }
+                else if (category.Equals(XacmlConstants.MatchAttributeCategory.Subject))
+                {
+                    anyOfSubjects = anyOf;
+                }
+                else if (category.Equals(XacmlConstants.MatchAttributeCategory.Resource))
+                {
+                    anyOfResourcs = anyOf;
+                }
+            }
+
+            foreach (XacmlAllOf allOfSubject in anyOfSubjects.AllOf)
+            {
+                foreach (XacmlAllOf allOfAction in anyOfActions.AllOf)
+                {
+                    foreach (XacmlAllOf allOfResource in anyOfResourcs.AllOf)
+                    {
+                        PolicyRule policyRule = new PolicyRule()
+                        {
+                            Subject = GetMatchValuesFromAllOff(allOfSubject),
+                            Action = GetMatchValueFromAllOff(allOfAction),
+                            Resource = GetMatchValuesFromAllOff(allOfResource)
+                        };
+                        policyRules.Add(policyRule);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Convert all matches in a allOf to a list of KeyValueUrn
+        /// </summary>
+        private static List<UrnJsonTypeValue> GetMatchValuesFromAllOff(XacmlAllOf allOfs)
+        {
+            List<UrnJsonTypeValue> subjectMatches = new List<UrnJsonTypeValue>();
+
+            foreach (XacmlMatch match in allOfs.Matches)
+            {
+                string attributeId = match.AttributeDesignator.AttributeId.ToString();
+                subjectMatches.Add(KeyValueUrn.Create($"{attributeId}:{match.AttributeValue.Value}", attributeId.Length + 1));
+            }
+
+            return subjectMatches;
+        }
+
+        /// <summary>
+        /// Convert all matches in a allOf to a list of KeyValueUrn
+        /// </summary>
+        private static UrnJsonTypeValue GetMatchValueFromAllOff(XacmlAllOf allOfs)
+        {
+            if (allOfs.Matches.Count > 1)
+            {
+                throw new ArgumentException("Only one match is allowed in a allOf for action category");
+            }
+
+            if (allOfs.Matches.Count == 0)
+            {
+                throw new ArgumentException("No match found in allOf for action category");
+            }
+
+            XacmlMatch match = allOfs.Matches.First();
+            string matchId = match.AttributeDesignator.AttributeId.ToString();
+            return KeyValueUrn.Create($"{matchId}:{match.AttributeValue.Value}", matchId.Length + 1);
+        }
+
         private static AttributeMatch GetActionValueFromRule(XacmlRule rule)
         {
             foreach (XacmlAnyOf anyOf in rule.Target.AnyOf)
@@ -192,5 +347,6 @@ namespace Altinn.ResourceRegistry.Core.Helpers
 
             return result;
         }
+       
     }
 }

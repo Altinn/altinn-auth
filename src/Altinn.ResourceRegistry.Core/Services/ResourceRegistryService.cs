@@ -122,27 +122,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         /// <inheritdoc/>
         public async Task UpdateResourceSubjectsFromResourcePolicy(ServiceResource serviceResource, CancellationToken cancellationToken = default)
         {
-            Stream policyContent = null;
-            if (serviceResource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX))
-            {
-                string[] idParts = serviceResource.Identifier.Split('_');
-
-                // Scenario for app imported in to resource registry
-                if (idParts.Length == 3)
-                {
-                    string org = idParts[1];
-                    string app = idParts[2];
-                    policyContent = await _policyRepository.GetAppPolicyAsync(org, app, cancellationToken);
-                    policyContent.Position = 0;
-                }
-            }
-            else
-            {
-                policyContent = await _policyRepository.GetPolicyAsync(serviceResource.Identifier, cancellationToken);
-                policyContent.Position = 0;
-            }
-
-            XacmlPolicy policy = await PolicyHelper.ParsePolicy(policyContent);
+            XacmlPolicy policy = await GetXacmlPolicy(serviceResource.Identifier, cancellationToken);
             IDictionary<string, ICollection<string>> subjectAttributes = policy.GetAttributeDictionaryByCategory(XacmlConstants.MatchAttributeCategory.Subject);
             ResourceSubjects resourceSubjects = GetResourceSubjects(serviceResource, subjectAttributes);
             await _repository.SetResourceSubjects(resourceSubjects, cancellationToken);
@@ -418,6 +398,58 @@ namespace Altinn.ResourceRegistry.Core.Services
                 Subjects = subjectAttributeMatches,
                 ResourceOwner = resourceOwner
             };
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<PolicyRule>> GetFlattenPolicyRules(string resourceId, CancellationToken cancellationToken = default)
+        {
+            XacmlPolicy policy = await GetXacmlPolicy(resourceId, cancellationToken);
+            if (policy == null)
+            {
+                return null;
+            }
+
+            List<PolicyRule> policyRules = PolicyHelper.ConvertToPolicyRules(policy);
+            return policyRules;
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<PolicyRight>> GetPolicyRights(string resourceId, CancellationToken cancellationToken = default)
+        {
+            XacmlPolicy policy = await GetXacmlPolicy(resourceId, cancellationToken);
+            if (policy == null)
+            {
+                return null;
+            }
+
+            List<PolicyRight> policyResourceActions = PolicyHelper.ConvertToPolicyRight(policy);
+            return policyResourceActions;
+        }
+
+        private async Task<XacmlPolicy> GetXacmlPolicy(string resourceIdentifer, CancellationToken cancellationToken)
+        {
+            Stream policyContent = null;
+            if (resourceIdentifer.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX))
+            {
+                string[] idParts = resourceIdentifer.Split('_');
+
+                // Scenario for app imported in to resource registry
+                if (idParts.Length == 3)
+                {
+                    string org = idParts[1];
+                    string app = idParts[2];
+                    policyContent = await _policyRepository.GetAppPolicyAsync(org, app, cancellationToken);
+                    policyContent.Position = 0;
+                }
+            }
+            else
+            {
+                policyContent = await _policyRepository.GetPolicyAsync(resourceIdentifer, cancellationToken);
+                policyContent.Position = 0;
+            }
+
+            XacmlPolicy policy = await PolicyHelper.ParsePolicy(policyContent);
+            return policy;
         }
     }
 }

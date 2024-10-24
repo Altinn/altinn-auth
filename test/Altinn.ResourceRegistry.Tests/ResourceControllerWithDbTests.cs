@@ -289,9 +289,66 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(subjectMatch);
-        Assert.Equal(12, subjectMatch.Items.Count());
+        Assert.Equal(13, subjectMatch.Items.Count());
     }
 
+    /// <summary>
+    /// Scenario: Get Policy rules for RRH innrapportering
+    /// </summary>
+    [Fact]
+    public async Task GetpolicyRulesRRH()
+    {
+        using var client = CreateAuthenticatedClient();
+
+        string requestUri = "resourceregistry/api/v1/resource/app_brg_rrh-innrapportering/policy/rules";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
+        {
+        };
+
+        httpRequestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+        string content = await response.Content.ReadAsStringAsync();
+        List<PolicyRule>? subjectMatch = await response.Content.ReadFromJsonAsync<List<PolicyRule>>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(subjectMatch);
+        Assert.Equal(238, subjectMatch.Count());
+    }
+
+    /// <summary>
+    /// Scenario: Get Policy rules for RRH innrapportering
+    /// </summary>
+    [Fact]
+    public async Task GetpolicyRightsRRH()
+    {
+        using var client = CreateAuthenticatedClient();
+
+        string requestUri = "resourceregistry/api/v1/resource/app_brg_rrh-innrapportering/policy/rights";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
+        {
+        };
+
+        httpRequestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+        string content = await response.Content.ReadAsStringAsync();
+        List<PolicyRight>? policyRights = await response.Content.ReadFromJsonAsync<List<PolicyRight>>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(policyRights);
+        Assert.Equal(18, policyRights.Count());
+        Assert.Equal(2, policyRights[0].SubjectTypes.Count());
+        Assert.Equal("urn:altinn:org", policyRights[0].SubjectTypes.ToList()[0]);
+        Assert.Equal("urn:altinn:rolecode", policyRights[0].SubjectTypes.ToList()[1]);
+        Assert.Equal("instantiate;rrh-innrapportering;brg;c9e4c013f36877a54c6d92bab8dcb69c", policyRights[0].RightKey);
+        Assert.Equal(2, policyRights[1].SubjectTypes.Count());
+        Assert.Equal("urn:altinn:org", policyRights[1].SubjectTypes.ToList()[0]);
+        Assert.Equal("urn:altinn:rolecode", policyRights[1].SubjectTypes.ToList()[1]);
+        Assert.Equal("read;rrh-innrapportering;brg;52a1e8911c3a9d3a7d2b837ae29a0dd8", policyRights[1].RightKey);
+    }
 
     /// <summary>
     /// Scenario: Reload subject resources for rrh-innlevering. App os imported to registry. Expects 12 subjects
@@ -327,7 +384,7 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(subjectMatch);
-        Assert.Equal(12, subjectMatch.Items.Count());
+        Assert.Equal(13, subjectMatch.Items.Count());
     }
 
 

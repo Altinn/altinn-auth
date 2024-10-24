@@ -9,6 +9,7 @@ using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Extensions;
 using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Utils;
+using Altinn.Urn;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -53,7 +54,7 @@ namespace Altinn.ResourceRegistry.Controllers
             bool includeAltinn2 = true,
             CancellationToken cancellationToken = default)
         {
-            return await _resourceRegistry.GetResourceList(includeApps, includeAltinn2, includeExpired: false,  cancellationToken);
+            return await _resourceRegistry.GetResourceList(includeApps, includeAltinn2, includeExpired: false, cancellationToken);
         }
 
         /// <summary>
@@ -246,7 +247,7 @@ namespace Altinn.ResourceRegistry.Controllers
         }
 
         /// <summary>
-        /// Returns the XACML policy for a resource in resource registry.
+        /// Returns a list of subjects from rules in policy
         /// </summary>
         /// <param name="id">Resource Id</param>
         /// <param name="reloadFromXacml">Defines if subjects should be reloaded from Xacml</param>
@@ -284,6 +285,43 @@ namespace Altinn.ResourceRegistry.Controllers
             }
 
             return Paginated.Create(resourceSubjects[0].Subjects, null);
+        }
+
+        /// <summary>
+        /// Returns a list of flattenrules that only contains on subject, action and resource per rule
+        /// </summary>
+        [HttpGet("{id}/policy/rules")]
+        [Produces("application/json")]
+        [Consumes("application/json")]
+        public async Task<ActionResult<List<PolicyRuleDTO>>> GetFlattenRules(string id, CancellationToken cancellationToken = default)
+        {
+            List<PolicyRule> policyRule = await _resourceRegistry.GetFlattenPolicyRules(id, cancellationToken);
+
+            if (policyRule != null)
+            {
+                return Ok(PolicyRuleDTO.MapFrom(policyRule));
+            }
+
+            return new NotFoundResult();
+        }
+
+        /// <summary>
+        /// Returns a list of rights for a resource. A right is a combination of resource and action. The response list the subjects in policy that is granted the right.
+        /// Response is grouped by right.
+        /// </summary>
+        [HttpGet("{id}/policy/rights")]
+        [Produces("application/json")]
+        [Consumes("application/json")]
+        public async Task<ActionResult<List<PolicyRightsDTO>>> GetRights(string id, CancellationToken cancellationToken = default)
+        {
+            List<PolicyRight> resourceAction = await _resourceRegistry.GetPolicyRights(id, cancellationToken);
+
+            if (resourceAction != null)
+            {
+                return Ok(PolicyRightsDTO.MapFrom(resourceAction));
+            }
+
+            return new NotFoundResult();
         }
 
         /// <summary>

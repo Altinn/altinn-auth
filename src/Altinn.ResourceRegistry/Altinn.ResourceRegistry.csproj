@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Altinn.Authorization.ABAC" />
     <PackageReference Include="Altinn.Authorization.ProblemDetails" />
     <PackageReference Include="Altinn.Authorization.ServiceDefaults" />
     <PackageReference Include="Altinn.Common.AccessToken" />
