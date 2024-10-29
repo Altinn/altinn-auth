@@ -1,4 +1,4 @@
-name: infra-ci-template.yml
+name: "Template: Deploy Infra"
 
 on:
   workflow_call:
