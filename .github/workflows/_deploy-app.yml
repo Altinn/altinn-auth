@@ -77,7 +77,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: [at21]
+        environment: [at21, at22]
 
     needs:
       - build-push

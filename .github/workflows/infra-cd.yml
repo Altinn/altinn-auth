@@ -21,7 +21,7 @@ jobs:
     uses: ./.github/workflows/infra-cd-template.yml
     strategy:
       matrix:
-        environment: [at21]
+        environment: [at21, at22]
     with:
       environment: ${{ matrix.environment }}
       tf_state: cert.tfstate
@@ -33,7 +33,7 @@ jobs:
     uses: ./.github/workflows/infra-cd-template.yml
     strategy:
       matrix:
-        environment: [at21]
+        environment: [at21, at22]
     with:
       environment: ${{ matrix.environment }}
       tf_state: auth.tfstate
@@ -45,7 +45,7 @@ jobs:
     uses: ./.github/workflows/infra-cd-template.yml
     strategy:
       matrix:
-        environment: [at21]
+        environment: [at21, at22]
     with:
       environment: ${{ matrix.environment }}
       tf_state: Altinn.Register.tfstate
