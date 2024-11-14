@@ -74,7 +74,7 @@ resource "azurerm_private_endpoint" "service_bus_private_endpoint" {
 # Service bus Actions List: https://learn.microsoft.com/en-us/azure/role-based-access-control/permissions/integration#microsoftservicebus
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_definition
 resource "azurerm_role_definition" "service_bus_masstransit" {
-  name        = "Azure Service Bus Mass Transit"
+  name        = "Azure Service Bus Mass Transit ${upper(var.metadata.environment)}"
   scope       = azurerm_servicebus_namespace.service_bus.id
   description = "Allow C# Applications use MassTransit with Azure Service Bus"
 

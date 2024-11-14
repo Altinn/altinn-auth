@@ -1,4 +1,4 @@
-name: infra-cd-template.yml
+name: "Template: Terraform CD"
 
 on:
   workflow_call:

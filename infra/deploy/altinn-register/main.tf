@@ -90,7 +90,7 @@ resource "azurerm_role_assignment" "mass_transit_role" {
   scope                            = data.azurerm_servicebus_namespace.sb.id
   principal_type                   = "ServicePrincipal"
   skip_service_principal_aad_check = true
-  role_definition_name             = "Azure Service Bus Mass Transit"
+  role_definition_name             = "Azure Service Bus Mass Transit ${upper(var.environment)}"
 }
 
 resource "azurerm_role_assignment" "key_vault_secret_reader" {

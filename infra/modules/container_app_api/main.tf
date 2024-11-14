@@ -67,7 +67,7 @@ resource "azurerm_role_assignment" "rbac" {
     {
       id                   = "service_bus_mass_transit"
       scope                = data.azurerm_servicebus_namespace.sb.id
-      role_definition_name = "Azure Service Bus Mass Transit"
+      role_definition_name = "Azure Service Bus Mass Transit ${upper(var.environment)}"
       should_assign        = var.can_use_auth_service_bus
     },
     {

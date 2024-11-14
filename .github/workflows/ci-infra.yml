@@ -12,7 +12,7 @@ jobs:
   cert:
     name: Cert
     secrets: inherit
-    uses: ./.github/workflows/_deploy-infra-template.yml
+    uses: ./.github/workflows/_ci-infra-template.yml
     with:
       environment: at21
       tf_state: cert.tfstate
@@ -21,7 +21,7 @@ jobs:
   auth:
     name: Auth
     secrets: inherit
-    uses: ./.github/workflows/_deploy-infra-template.yml
+    uses: ./.github/workflows/_ci-infra-template.yml
     with:
       environment: at21
       tf_state: auth.tfstate
@@ -30,7 +30,7 @@ jobs:
   register:
     name: Altinn Register
     secrets: inherit
-    uses: ./.github/workflows/_deploy-infra-template.yml
+    uses: ./.github/workflows/_ci-infra-template.yml
     with:
       environment: at21
       tf_state: Altinn.Register.tfstate
