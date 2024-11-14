@@ -42,11 +42,19 @@ const infraSchema = z.object({
   terraform: terraformSchema.optional(),
 });
 
+const databaseSchema = z.object({
+  bootstrap: z.boolean().optional().default(false),
+  name: z.string().min(3).optional(),
+  roleprefix: z.string().min(3).optional(),
+  schema: z.any().optional(),
+});
+
 const configSchema = z.object({
   name: z.string().optional(),
   shortName: z.string().optional(),
   image: imageSchema.optional(),
   infra: infraSchema.optional(),
+  database: databaseSchema.optional(),
 });
 
 export type VerticalType = "app" | "lib" | "pkg";
@@ -65,6 +73,13 @@ export type InfraInfo = {
   readonly terraform?: TerraformInfo;
 };
 
+export type DatabaseInfo = {
+  readonly bootstrap: boolean;
+  readonly name: string;
+  readonly roleprefix: string;
+  readonly schema: object;
+};
+
 export type Vertical = {
   readonly type: VerticalType;
   readonly name: string;
@@ -73,6 +88,7 @@ export type Vertical = {
   readonly relPath: string;
   readonly image?: ImageInfo;
   readonly infra?: InfraInfo;
+  readonly database?: DatabaseInfo;
 };
 
 const vertialDirs = {
@@ -118,6 +134,7 @@ const readVertical = async (
 
   let image: ImageInfo | undefined = void 0;
   let infra: InfraInfo | undefined = void 0;
+  let database: DatabaseInfo | undefined = void 0;
   if (type === "app") {
     const confImage = config.image ?? { type: "dotnet" };
 
@@ -155,6 +172,11 @@ const readVertical = async (
       infra = confInfra as InfraInfo;
     }
 
+    const confDatabase = config.database;
+    if (confDatabase) {
+      database = confDatabase as DatabaseInfo;
+    }
+
     image = confImage as ImageInfo;
   }
 
@@ -166,6 +188,7 @@ const readVertical = async (
     relPath: dirPath,
     image,
     infra,
+    database,
   };
 };
 

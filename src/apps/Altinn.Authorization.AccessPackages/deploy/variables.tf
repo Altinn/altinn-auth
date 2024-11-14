@@ -17,6 +17,11 @@ variable "instance" {
   default     = "001"
 }
 
+variable "infrastructure_name" {
+  type    = string
+  default = "auth"
+}
+
 variable "image" {
   type        = string
   description = "Image of the resource that should be deployed"

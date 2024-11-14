@@ -32,6 +32,12 @@ locals {
   }
 }
 
+data "azurerm_client_config" "current" {}
+
+data "azurerm_subscription" "subscription" {
+  subscription_id = data.azurerm_client_config.current.subscription_id
+}
+
 resource "azurerm_resource_group" "auth" {
   name     = local.resource_group_name
   location = var.location
@@ -52,6 +58,14 @@ resource "azurerm_user_assigned_identity" "application_admin" {
     prevent_destroy = true
     ignore_changes  = [tags]
   }
+}
+
+# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment
+# https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#general
+resource "azurerm_role_assignment" "reader" {
+  scope                = data.azurerm_subscription.subscription.id
+  principal_id         = azurerm_user_assigned_identity.application_admin.principal_id
+  role_definition_name = "Reader"
 }
 
 module "vnet" {

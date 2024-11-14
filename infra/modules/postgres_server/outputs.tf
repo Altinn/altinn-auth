@@ -6,3 +6,7 @@ output "id" {
 output "host" {
   value = azurerm_postgresql_flexible_server.postgres_server.fqdn
 }
+
+output "name" {
+  value = azurerm_postgresql_flexible_server.postgres_server.name
+}

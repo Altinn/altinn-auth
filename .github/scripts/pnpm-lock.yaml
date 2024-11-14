@@ -15,20 +15,23 @@ importers:
         specifier: ^7.0.0
         version: 7.0.0
       '@types/node':
-        specifier: ^20.11.30
+        specifier: ^20.16.11
         version: 20.16.11
       chalk:
         specifier: ^5.3.0
         version: 5.3.0
       globby:
-        specifier: ^14.0.1
+        specifier: ^14.0.2
         version: 14.0.2
       tsx:
-        specifier: ^4.7.1
+        specifier: ^4.19.1
         version: 4.19.1
       typescript:
-        specifier: ^5.4.3
-        version: 5.6.2
+        specifier: ^5.6.3
+        version: 5.6.3
+      ws:
+        specifier: ^8.18.0
+        version: 8.18.0
       yargs:
         specifier: ^17.7.2
         version: 17.7.2
@@ -39,7 +42,7 @@ importers:
         specifier: ^3.4.0
         version: 3.4.0(zod@3.23.8)
       zx:
-        specifier: ^8.0.0
+        specifier: ^8.1.9
         version: 8.1.9
 
 packages:
@@ -430,8 +433,8 @@ packages:
     resolution: {integrity: sha512-1h/Lnq9yajKY2PEbBadPXj3VxsDDu844OnaAo52UVmIzIvwwtBPIuNvkjuzBlTWpfJyUbG3ez0KSBibQkj4ojg==}
     engines: {node: '>=0.6.11 <=0.7.0 || >=0.7.3'}
 
-  typescript@5.6.2:
-    resolution: {integrity: sha512-NW8ByodCSNCwZeghjN3o+JX5OFH0Ojg6sadjEKY4huZ52TqbJTJnDo5+Tw98lSy63NZvi4n+ez5m2u5d4PkZyw==}
+  typescript@5.6.3:
+    resolution: {integrity: sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -442,8 +445,8 @@ packages:
     resolution: {integrity: sha512-72RFADWFqKmUb2hmmvNODKL3p9hcB6Gt2DOQMis1SEBaV6a4MH8soBvzg+95CYhCKPFedut2JY9bMfrDl9D23g==}
     engines: {node: '>=14.0'}
 
-  undici@6.19.8:
-    resolution: {integrity: sha512-U8uCCl2x9TK3WANvmBavymRzxbfFYG+tAu+fgx3zxQy3qdagQqBLwJVrdyO1TBfUXvfKveMKJZhpvUYoOjM+4g==}
+  undici@6.20.1:
+    resolution: {integrity: sha512-AjQF1QsmqfJys+LXfGTNum+qw4S88CojRInG/6t31W/1fk6G59s92bnAvGz5Cmur+kQv2SURXEvvudLmbrE8QA==}
     engines: {node: '>=18.17'}
 
   unicorn-magic@0.1.0:
@@ -456,6 +459,18 @@ packages:
   wrap-ansi@7.0.0:
     resolution: {integrity: sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==}
     engines: {node: '>=10'}
+
+  ws@8.18.0:
+    resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
 
   y18n@5.0.8:
     resolution: {integrity: sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA==}
@@ -594,7 +609,7 @@ snapshots:
       '@octokit/plugin-paginate-rest': 11.3.5(@octokit/core@6.1.2)
       '@octokit/plugin-rest-endpoint-methods': 13.2.6(@octokit/core@6.1.2)
       '@octokit/types': 13.6.1
-      undici: 6.19.8
+      undici: 6.20.1
 
   '@octokit/auth-action@5.1.1':
     dependencies:
@@ -823,7 +838,7 @@ snapshots:
 
   tunnel@0.0.6: {}
 
-  typescript@5.6.2: {}
+  typescript@5.6.3: {}
 
   undici-types@6.19.8: {}
 
@@ -831,7 +846,7 @@ snapshots:
     dependencies:
       '@fastify/busboy': 2.1.1
 
-  undici@6.19.8: {}
+  undici@6.20.1: {}
 
   unicorn-magic@0.1.0: {}
 
@@ -842,6 +857,8 @@ snapshots:
       ansi-styles: 4.3.0
       string-width: 4.2.3
       strip-ansi: 6.0.1
+
+  ws@8.18.0: {}
 
   y18n@5.0.8: {}
 

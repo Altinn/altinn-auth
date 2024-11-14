@@ -23,6 +23,26 @@ on:
         description: Additional TF args
         required: false
 
+      databaseBootstrap:
+        type: boolean
+        description: Bootstrap Database
+        default: false
+
+      databaseName:
+        type: string
+        description: Name of database
+        required: false
+
+      databaseRoleprefix:
+        type: string
+        description: Name of database role prefix
+        required: false
+
+      databaseSchema:
+        type: string
+        description: Name of database schema
+        required: false
+
 permissions:
   id-token: write
   contents: read
@@ -65,6 +85,7 @@ jobs:
 
       - name: Terraform Apply
         uses: altinn/altinn-platform/actions/terraform/apply@main
+        id: apply
         with:
           working_directory: ${{ inputs.working_dir }}
           oidc_type: environment
@@ -72,5 +93,23 @@ jobs:
 
           arm_client_id: ${{ vars.ARM_CLIENT_ID }}
           arm_subscription_id: ${{ vars.ARM_SUBSCRIPTION_ID }}
-
           tf_state_name: ${{ inputs.tf_state }}
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          run_install: |
+            - cwd: .github/scripts
+              args: [--frozen-lockfile]
+            - args: [--global, tsx]
+
+      - name: Bootstrap Database ${{ inputs.name }}
+        if: inputs.databaseBootstrap
+        id: bootstrap
+        run: |
+          tsx ./.github/scripts/bootstrap-db.mts \
+            --deploy-api ${{ vars.GATEWAY_API_URL }} \
+            --database ${{ inputs.databaseName }} \
+            --role-prefix ${{ inputs.databaseRoleprefix }} \
+            --schema ${{ inputs.databaseSchema }} \
+            --tf-outfile ${{ inputs.working_dir }}/tf_output.json

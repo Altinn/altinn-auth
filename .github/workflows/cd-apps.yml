@@ -26,3 +26,7 @@ jobs:
       name: ${{ matrix.name }}
       terraform: ${{ matrix.terraform == 'true' }}
       terraformStateFile: ${{ matrix.terraformStateFile }}
+      databaseBootstrap: ${{ matrix.databaseBootstrap == 'true' }}
+      databaseName: ${{ matrix.databaseName }}
+      databaseRoleprefix: ${{ matrix.databaseRolePrefix }}
+      databaseSchema: ${{ matrix.databaseSchema }}

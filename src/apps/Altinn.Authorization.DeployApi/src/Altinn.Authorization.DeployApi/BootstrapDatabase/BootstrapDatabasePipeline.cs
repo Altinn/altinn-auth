@@ -129,7 +129,7 @@ internal sealed class BootstrapDatabasePipeline
         public required string ServerName { get; init; }
 
         [JsonPropertyName("user")]
-        public required string User { get; init; }
+        public required string User { get; init; } = Environment.GetEnvironmentVariable("ManagedIdentity__ClientId");
 
         [JsonPropertyName("keyVaultName")]
         public required string KeyVaultName { get; init; }

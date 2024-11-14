@@ -134,3 +134,4 @@ module "postgres_server" {
   subnet_id = data.azurerm_subnet.postgres.id
   tenant_id = data.azurerm_client_config.current.tenant_id
 }
+

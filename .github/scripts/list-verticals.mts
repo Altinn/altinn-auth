@@ -1,7 +1,9 @@
+import { join } from "path";
 import { verticals } from "./_meta.mts";
 import * as actions from "@actions/core";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
+import { string } from "zod";
 
 const argv = yargs(hideBin(process.argv))
   .option("type", {
@@ -37,6 +39,15 @@ var matrix = {
         ret.terraform = "true";
         ret.terraformStateFile = v.infra.terraform.stateFile;
       }
+    }
+
+    if (v.database) {
+      ret.databaseBootstrap = v.database.bootstrap.toString();
+      ret.databaseName = v.database.name;
+      ret.databaseRolePrefix = v.database.roleprefix;
+      ret.databaseSchema = Object.keys(v.database.schema).join(",");
+    } else {
+      ret.databaseBootstrap = "false";
     }
 
     return ret;
