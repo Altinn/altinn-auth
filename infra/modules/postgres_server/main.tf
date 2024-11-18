@@ -1,5 +1,5 @@
 locals {
-  postgres_server_sku = var.is_prod_like ? "GP_Standard_D4s_v3" : "B_Standard_B2ms"
+  postgres_server_sku = var.is_prod_like ? "GP_Standard_D4s_v3" : "B_Standard_B1ms"
 }
 
 
