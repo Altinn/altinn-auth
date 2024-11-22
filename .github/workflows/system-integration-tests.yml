@@ -9,20 +9,21 @@ on:
         type: choice
         options:
           - at22
+          - at23
+          - at24
           - tt02
-
 env:
   DOTNET_VERSION: '8.0.x'
 
 jobs:
-  build-and-test:
+  build-and-run-integration-tests:
     name: >
       Environment: ${{ github.event.inputs.testenvironment }}
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
-
+        
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -40,3 +41,10 @@ jobs:
         env:
           SYSTEMINTEGRATIONTEST_JSON: ${{ secrets.SYSTEMINTEGRATIONTEST_JSON }}
           TEST_ENVIRONMENT: ${{ github.event.inputs.testenvironment }}
+          
+      - name: Notify Slack on Failure
+        if: failure() # This step runs only if the previous steps fail
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": "Tester feilet i testmiljø:`${{ github.event.inputs.testenvironment }}` på repo: `${{ github.repository }}`. Mer detaljer her: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          }' ${{ secrets.SLACK_WEBHOOK_URL }}
