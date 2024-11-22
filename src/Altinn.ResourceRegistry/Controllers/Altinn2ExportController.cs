@@ -138,7 +138,9 @@ namespace Altinn.ResourceRegistry.Controllers
             {
                 if (resource.Identifier.Equals($"se_{exportRequest.ServiceCode}_{exportRequest.ServiceEditionCode}"))
                 {       
-                    if (resource.HasCompetentAuthority.Orgcode.Equals(org, StringComparison.OrdinalIgnoreCase))
+                    bool isMatchingOrg = resource.HasCompetentAuthority.Orgcode.Equals(org, StringComparison.OrdinalIgnoreCase) || 
+                        (org.Equals("ttd", StringComparison.OrdinalIgnoreCase) && resource.HasCompetentAuthority.Orgcode.Equals("acn", StringComparison.OrdinalIgnoreCase));
+                    if (isMatchingOrg)
                     {
                         return true;
                     }

@@ -261,5 +261,32 @@ namespace Altinn.ResourceRegistry.Tests
 
             Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
         }
+
+        /// <summary>
+        /// Triggers batch with a ttd resource to migrate delegations for an acn Altinn 2 service
+        /// </summary>
+        [Fact]
+        public async Task Trigger_Batch_MigrateAcnServiceForTtd_OK()
+        {
+            HttpClient client = CreateClient();
+            string token = PrincipalUtil.GetOrgToken("ttd", "991825827", "altinn:resourceregistry/resource.admin");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            string requestUri = "resourceregistry/api/v1/altinn2export/exportdelegations";
+
+            ExportDelegationsRequestBE exportDelegationsRequestBE = new ExportDelegationsRequestBE() 
+            { 
+                ResourceId = "altinn_delegation_resource", 
+                DateTimeForExport = DateTime.Now, 
+                ServiceCode = "3225", 
+                ServiceEditionCode = 1596
+            };
+            
+            using HttpContent content = JsonContent.Create(exportDelegationsRequestBE);
+            HttpResponseMessage response = await client.PostAsync(requestUri, content);
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+
+            Assert.Equal(System.Net.HttpStatusCode.NoContent, response.StatusCode);
+        }
     }
 }
