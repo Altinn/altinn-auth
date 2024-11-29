@@ -1,0 +1,81 @@
+{
+  "Request": {
+    "ReturnPolicyIdList": false,
+    "CombinedDecision": false,
+    "XPathVersion": null,
+    "Category": null,
+    "Resource": [
+      {
+        "CategoryId": null,
+        "Id": null,
+        "Content": null,
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:event-id",
+            "Value": "12044771-24d3-425f-9b93-6363716ff395",
+            "Issuer": "Altinn",
+            "DataType": "string",
+            "IncludeInResult": true
+          },
+          {
+            "AttributeId": "urn:altinn:eventtype",
+            "Value": "automatedtest.triggered",
+            "Issuer": "Altinn",
+            "DataType": "string",
+            "IncludeInResult": false
+          },
+          {
+            "AttributeId": "urn:altinn:eventsource",
+            "Value": "https://github.com/Altinn/altinn-events/tree/main/test/k6",
+            "Issuer": "Altinn",
+            "DataType": "string",
+            "IncludeInResult": false
+          },
+          {
+            "AttributeId": "urn:altinn:resource",
+            "Value": "ttd-altinn-events-automated-tests",
+            "Issuer": "Altinn",
+            "DataType": "string",
+            "IncludeInResult": false
+          }
+        ]
+      }
+    ],
+    "Action": [
+      {
+        "CategoryId": null,
+        "Id": null,
+        "Content": null,
+        "Attribute": [
+          {
+            "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+            "Value": "subscribe",
+            "Issuer": "Altinn",
+            "DataType": "string",
+            "IncludeInResult": false
+          }
+        ]
+      }
+    ],
+    "AccessSubject": [
+      {
+        "CategoryId": null,
+        "Id": null,
+        "Content": null,
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:org",
+            "Value": "ttd",
+            "Issuer": "Altinn",
+            "DataType": "http://www.w3.org/2001/XMLSchema#string",
+            "IncludeInResult": false
+          }
+        ]
+      }
+    ],
+    "RecipientSubject": null,
+    "IntermediarySubject": null,
+    "RequestingMachine": null,
+    "MultiRequests": null
+  }
+}

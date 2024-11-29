@@ -1,0 +1,15 @@
+{
+  "subject": {
+    "type": "urn:altinn:organization:identifier-no",
+    "value": "910459880"
+  },
+  "resource": {
+    "type": "urn:altinn:resource",
+    "value": "ttd-accesslist-resource"
+  },
+  "action": {
+    "type": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+    "value": "whatever"
+  },
+  "result": "Authorized"
+}

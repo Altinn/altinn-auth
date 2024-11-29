@@ -1,0 +1,62 @@
+meta {
+  name: getPartiesValidateTrue
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/authorization/api/v1/parties/:partyId/validate?userId={{auth_userId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  userId: {{auth_userId}}
+}
+
+params:path {
+  partyId: {{auth_partyId}}
+}
+
+headers {
+  Accept: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+assert {
+  ~res.status: eq 200
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("auth_userId", testdata.org1.dagl.userid)
+  bru.setVar("auth_partyId", testdata.org1.dagl.partyid)
+  
+  var getTokenParameters = {
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: "",
+    auth_userId: testdata.org1.dagl.userid,
+    auth_partyId: testdata.org1.dagl.partyid,
+    auth_ssn: testdata.org1.dagl.pid
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+script:post-response {
+  //console.log("request url (after): " + req.getUrl());
+}
+
+tests {
+  test("GET verify that the user can represent the given party", function() {
+    const data = res.getBody();
+    expect(res.status).to.equal(200);
+    expect(data).to.equal(true);
+  });
+}
+
+docs {
+  Get parties of an user and validate response
+}

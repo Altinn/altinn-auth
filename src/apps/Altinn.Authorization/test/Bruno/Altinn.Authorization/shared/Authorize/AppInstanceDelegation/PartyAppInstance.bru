@@ -1,0 +1,73 @@
+meta {
+  name: PartyAppInstance
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/authorization/api/v1/authorize
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+body:json {
+  {
+      "Request": {
+          "ReturnPolicyIdList": false,
+          "AccessSubject": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:altinn:person:identifier-no",
+                          "Value": "08069402071",
+                          "DataType": "http://www.w3.org/2001/XMLSchema#string"
+                      }
+                  ]
+              }
+          ],
+          "Action": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+                          "Value": "read",
+                          "DataType": "http://www.w3.org/2001/XMLSchema#string"
+                      }
+                  ]
+              }
+          ],
+          "Resource": [
+              {
+                  "Attribute": [
+                      {
+                        "AttributeId": "urn:altinn:instance-id",
+                        "Value": "50005545/e8225d8e-d664-452a-ae76-259fa0cab0f9" // Need real instance
+                      },
+                      {
+                          "AttributeId": "urn:altinn:task",
+                          "Value": "task_1",
+                          "DataType": "http://www.w3.org/2001/XMLSchema#string"
+                      }
+                  ]
+              }
+          ]
+      }
+  }
+}
+
+script:pre-request {
+  var getTokenParameters = {
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.authorize,
+    auth_org: sharedtestdata.serviceOwners.ttd.org,
+    auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}

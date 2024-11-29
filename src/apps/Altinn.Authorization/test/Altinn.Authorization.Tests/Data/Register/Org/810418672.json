@@ -1,0 +1,29 @@
+{
+  "PartyTypeName": 2,
+  "SSN": "",
+  "OrgNumber": "810418672",
+  "Person": null,
+  "Organization": {
+    "OrgNumber": "810418672",
+    "Name": "KARLSTAD OG ULØYBUKT REGNSKAP",
+    "UnitType": "AS",
+    "TelephoneNumber": null,
+    "MobileNumber": null,
+    "FaxNumber": null,
+    "EMailAddress": "test@test.test",
+    "InternetAddress": null,
+    "MailingAddress": null,
+    "MailingPostalCode": null,
+    "MailingPostalCity": null,
+    "BusinessAddress": null,
+    "BusinessPostalCode": null,
+    "BusinessPostalCity": null
+  },
+  "PartyId": 50004222,
+  "PartyUuid": "00000000-0000-0000-0005-000000004222",
+  "UnitType": "AS",
+  "Name": "KARLSTAD OG ULØYBUKT REGNSKAP",
+  "IsDeleted": false,
+  "OnlyHierarchyElementWithNoAccess": false,
+  "ChildParties": null
+}

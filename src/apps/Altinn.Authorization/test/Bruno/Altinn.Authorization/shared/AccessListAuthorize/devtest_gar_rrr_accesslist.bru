@@ -1,0 +1,45 @@
+meta {
+  name: devtest_gar_rrr_accesslist
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/authorization/api/v1/accesslist/accessmanagement/authorization
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+body:json {
+  {
+    "subject": {
+      "type": "urn:altinn:organization:identifier-no",
+      "value": "910459880"
+    },
+    "resource": {
+      "type": "urn:altinn:resource",
+      "value": "devtest_gar_rrr_accesslist"
+    },
+    "action": {
+      "type": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+      "value": "whatever"
+    }
+  }
+}
+
+script:pre-request {
+  var getTokenParameters = {
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.authorize,
+    auth_org: sharedtestdata.serviceOwners.ttd.org,
+    auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}

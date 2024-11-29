@@ -1,0 +1,19 @@
+{
+  "response": [
+    {
+      "decision": "Indeterminate",
+      "status": {
+        "statusMessage": null,
+        "statusDetails": null,
+        "statusCode": {
+          "value": "urn:oasis:names:tc:xacml:1.0:status:processing-error",
+          "statusCode": null
+        }
+      },
+      "obligations": null,
+      "associateAdvice": null,
+      "category": null,
+      "policyIdentifierList": null
+    }
+  ]
+}

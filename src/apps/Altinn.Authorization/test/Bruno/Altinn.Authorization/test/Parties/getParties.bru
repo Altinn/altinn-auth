@@ -1,0 +1,53 @@
+meta {
+  name: getParties
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/authorization/api/v1/parties?userId={{auth_userId}}
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+assert {
+  ~res.status: eq 200
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("auth_userId", testdata.org1.dagl.userid)
+  
+  var getTokenParameters = {
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: "",
+    auth_userId: testdata.org1.dagl.userid,
+    auth_partyId: testdata.org1.dagl.partyid,
+    auth_ssn: testdata.org1.dagl.pid
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+script:post-response {
+  //console.log("request url (after): " + req.getUrl());
+}
+
+tests {
+  test("GET parties of an user and validate response", function() {
+    const data = res.getBody();
+    expect(res.status).to.equal(200);
+    expect(data).to.not.be.empty;
+  });
+}
+
+docs {
+  Get parties of an user and validate response
+}

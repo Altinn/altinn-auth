@@ -1,0 +1,98 @@
+meta {
+  name: postAuthorizeTtdReadPermitAuthorizeScope
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/authorization/api/v1/authorize
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+body:json {
+  {
+      "Request": {
+          "ReturnPolicyIdList": false,
+          "AccessSubject": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:altinn:org",
+                          "Value": "ttd"
+                      }
+                  ]
+              }
+          ],
+          "Action": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+                          "Value": "read",
+                          "DataType": "http://www.w3.org/2001/XMLSchema#string"
+                      }
+                  ]
+              }
+          ],
+          "Resource": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:altinn:app",
+                          "Value": "apps-test"
+                      },
+                      {
+                          "AttributeId": "urn:altinn:org",
+                          "Value": "ttd"
+                      }
+                  ]
+              }
+          ]
+      }
+  }
+}
+
+assert {
+  ~res.status: eq 200
+  ~res.body: contains created
+}
+
+script:pre-request {
+  var getTokenParameters = {
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.authorize,
+    auth_org: sharedtestdata.serviceOwners.ttd.org,
+    auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+script:post-response {
+  //console.log("request url (after): " + req.getUrl());
+}
+
+tests {
+  test("POST Decision result on read is permit", function() {
+    const data = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(data.response[0]).to.have.property('decision', "Permit");
+  });
+}
+
+docs {
+  Get a decision from PDP with appOwner details and validate response to have Permit.
+  
+  AccessSubject: ['urn:altinn:org']
+  
+  Action: ['read']
+  
+  Resource: ['urn:altinn:app', 'urn:altinn:org']
+}

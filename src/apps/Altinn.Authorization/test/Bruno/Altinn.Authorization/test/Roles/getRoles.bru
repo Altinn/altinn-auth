@@ -1,0 +1,60 @@
+meta {
+  name: getRoles
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/authorization/api/v1/roles?coveredbyuserid={{auth_userId}}&offeredbypartyid={{auth_partyId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  coveredbyuserid: {{auth_userId}}
+  offeredbypartyid: {{auth_partyId}}
+}
+
+headers {
+  Accept: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+assert {
+  ~res.status: eq 200
+  ~res.body: contains created
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("auth_userId", testdata.org1.dagl.userid)
+  bru.setVar("auth_partyId", testdata.org1.dagl.partyid)
+  
+  var getTokenParameters = {
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: "",
+    auth_userId: testdata.org1.dagl.userid,
+    auth_partyId: testdata.org1.dagl.partyid,
+    auth_ssn: testdata.org1.dagl.pid
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+script:post-response {
+  //console.log("request url (after): " + req.getUrl());
+}
+
+tests {
+  test("GET roles of the user itself", function() {
+    const data = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(data).to.not.be.empty;
+  });
+}
+
+docs {
+  Get roles of the user itself
+}

@@ -1,0 +1,89 @@
+{
+  "Request": {
+    "ReturnPolicyIdList": true,
+    "AccessSubject": [
+      {
+        "Id": "s1",
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:userid",
+            "Value": "20001337",
+            "IncludeInResult": true
+          }
+        ]
+      }
+    ],
+    "Action": [
+      {
+        "Id": "a1",
+        "Attribute": [
+          {
+            "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+            "Value": "read",
+            "IncludeInResult": true
+          }
+        ]
+      }
+    ],
+    "Resource": [
+      {
+        "Id": "r1",
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:org",
+            "Value": "org1",
+            "IncludeInResult": true
+          },
+          {
+            "AttributeId": "urn:altinn:app",
+            "Value": "app1",
+            "IncludeInResult": true
+          },
+          {
+            "AttributeId": "urn:altinn:partyid",
+            "Value": "50001337",
+            "IncludeInResult": true
+          }
+        ]
+      },
+      {
+        "Id": "r2",
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:org",
+            "Value": "org1",
+            "IncludeInResult": true
+          },
+          {
+            "AttributeId": "urn:altinn:app",
+            "Value": "app2",
+            "IncludeInResult": true
+          },
+          {
+            "AttributeId": "urn:altinn:partyid",
+            "Value": "50001337",
+            "IncludeInResult": true
+          }
+        ]
+      }
+    ],
+    "MultiRequests": {
+      "RequestReference": [
+        {
+          "ReferenceId": [
+            "s1",
+            "a1",
+            "r1"
+          ]
+        },
+        {
+          "ReferenceId": [
+            "s1",
+            "a1",
+            "r2"
+          ]
+        }
+      ]
+    }
+  }
+}

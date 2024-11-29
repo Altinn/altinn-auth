@@ -1,0 +1,30 @@
+{
+  "id": "eb0d2b21-fef9-4b85-9985-c4ba271c4678",
+  "instanceOwner": {
+    "partyId": "50740574"
+  },
+  "appId": "ttd/oedformuesfullmakt",
+  "org": "ttd",
+  "labels": [
+    "oed"
+  ],
+  "created": "2023-09-07T11:48:25.4597204Z",
+  "lastChanged": "2023-09-07T11:48:25.4597204Z",
+  "dueDateTime": "2023-09-17T11:48:25.4597204Z",
+  "visibleDateTime": "2023-09-07T11:48:25.4597204Z",
+  "presentationField": {
+    "nb": "oedformuesfullmakt"
+  },
+  "instanceState": {
+    "isDeleted": false,
+    "isMarkedForHardDelete": false,
+    "isArchived": false,
+    "deletedDateTime": "2034-09-07T11:48:25.4597204Z"
+  },
+  "data": [],
+  "_rid": "zCw6APRA6nkBAAAAAAAAAA==",
+  "_self": "dbs/zCw6AA==/colls/zCw6APRA6nk=/docs/zCw6APRA6nkBAAAAAAAAAA==/",
+  "_etag": "\"00000000-0000-0000-8feb-f55df16b01d5\"",
+  "_attachments": "attachments/",
+  "_ts": 1572527167
+}

@@ -1,0 +1,137 @@
+{
+  "Request": {
+    "ReturnPolicyIdList": true,
+    "AccessSubject": [
+      {
+        "Id": "s1",
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:person:identifier-no",
+            "Value": "01039012345"
+          }
+        ]
+      },
+      {
+        "Id": "s2",
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:userid",
+            "Value": "1337"
+          }
+        ]
+      }
+    ],
+    "Action": [
+      {
+        "Id": "a1",
+        "Attribute": [
+          {
+            "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+            "Value": "read",
+            "DataType": "http://www.w3.org/2001/XMLSchema#string",
+            "IncludeInResult": true
+          }
+        ]
+      }
+    ],
+    "Resource": [
+      {
+        "Id": "r1",
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:resource",
+            "Value": "ttd-externalpdp-resource1",
+            "IncludeInResult": true
+          },
+          {
+            "AttributeId": "urn:altinn:organization:identifier-no",
+            "Value": "897069651",
+            "IncludeInResult": true
+          }
+        ]
+      },
+      {
+        "Id": "r2",
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:resource",
+            "Value": "ttd-externalpdp-resource1",
+            "IncludeInResult": true
+          },
+          {
+            "AttributeId": "urn:altinn:organization:identifier-no",
+            "Value": "950474084",
+            "IncludeInResult": true
+          }
+        ]
+      },
+      {
+        "Id": "r3",
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:resource",
+            "Value": "ttd-externalpdp-resource3",
+            "IncludeInResult": true
+          },
+          {
+            "AttributeId": "urn:altinn:organization:identifier-no",
+            "Value": "950474084",
+            "IncludeInResult": true
+          }
+        ]
+      },
+      {
+        "Id": "r4",
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:resource",
+            "Value": "ttd-externalpdp-resource3",
+            "IncludeInResult": true
+          },
+          {
+            "AttributeId": "urn:altinn:resource:instance-id",
+            "Value": "4c1b880e-f425-4050-9a46-cd1b3e56bf94",
+            "IncludeInResult": true
+          },
+          {
+            "AttributeId": "urn:altinn:organization:identifier-no",
+            "Value": "910459880",
+            "IncludeInResult": true
+          }
+        ]
+      }
+    ],
+    "MultiRequests": {
+      "RequestReference": [
+        {
+          "ReferenceId": [
+            "s1",
+            "a1",
+            "r1"
+          ]
+        },
+        {
+          "ReferenceId": [
+            "s1",
+            "a1",
+            "r2"
+          ]
+        },
+        {
+          "ReferenceId": [
+            "s1",
+            "a1",
+            "r3"
+          ]
+        },
+        {
+          "ReferenceId": [
+            "s2",
+            "a1",
+            "r4"
+          ]
+        }
+      ]
+    }
+  }
+}

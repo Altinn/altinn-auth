@@ -1,0 +1,151 @@
+meta {
+  name: MultiReqAppDelegations
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/authorization/api/v1/authorize
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+body:json {
+  {
+    "Request": {
+      "ReturnPolicyIdList": false,
+      "AccessSubject": [
+        {
+          "Id": "s1",
+          "Attribute": [
+            {
+              "AttributeId": "urn:altinn:person:identifier-no",
+              "Value": "24925798149",
+              "IncludeInResult": true
+            }
+          ]
+        }
+      ],
+      "Action": [
+        {
+          "Id": "a1",
+          "Attribute": [
+            {
+              "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+              "Value": "read",
+              "DataType": "http://www.w3.org/2001/XMLSchema#string",
+              "IncludeInResult": true
+            }
+          ]
+        }
+      ],
+      "Resource": [
+        {
+          "Id": "r1",
+          "Attribute": [
+            {
+              "AttributeId": "urn:altinn:org",
+              "Value": "ttd",
+              "DataType": "http://www.w3.org/2001/XMLSchema#string",
+              "IncludeInResult": true
+            },
+            {
+              "AttributeId": "urn:altinn:app",
+              "Value": "authz-bruno-testapp1",
+              "DataType": "http://www.w3.org/2001/XMLSchema#string",
+              "IncludeInResult": true
+            },
+            {
+              "AttributeId": "urn:altinn:organization:identifier-no",
+              "Value": "313332330",
+              "DataType": "http://www.w3.org/2001/XMLSchema#string",
+              "IncludeInResult": true
+            }
+          ]
+        },
+        {
+          "Id": "r2",
+          "Attribute": [
+            {
+              "AttributeId": "urn:altinn:org",
+              "Value": "ttd",
+              "DataType": "http://www.w3.org/2001/XMLSchema#string",
+              "IncludeInResult": true
+            },
+            {
+              "AttributeId": "urn:altinn:app",
+              "Value": "authz-bruno-testapp2",
+              "DataType": "http://www.w3.org/2001/XMLSchema#string",
+              "IncludeInResult": true
+            },
+            {
+              "AttributeId": "urn:altinn:organization:identifier-no",
+              "Value": "313332330",
+              "DataType": "http://www.w3.org/2001/XMLSchema#string",
+              "IncludeInResult": true
+            }
+          ]
+        }
+      ],
+      "MultiRequests": {
+        "RequestReference": [
+          {
+            "ReferenceId": [
+              "s1",
+              "a1",
+              "r1"
+            ]
+          },
+          {
+            "ReferenceId": [
+              "s1",
+              "a1",
+              "r2"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
+
+assert {
+  ~res.status: eq 200
+  ~res.body: contains created
+}
+
+script:pre-request {
+  var getTokenParameters = {
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.authorize,
+    auth_org: sharedtestdata.serviceOwners.ttd.org,
+    auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("MultiReqAppDelegations Decision result on read is permit", function() {
+    const data = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(data.response[0]).to.have.property('decision', "Permit");
+    expect(data.response[1]).to.have.property('decision', "Permit");
+  });
+}
+
+docs {
+  Get a decision from PDP with appOwner details and validate response to have Permit.
+  
+  AccessSubject: ['urn:altinn:org']
+  
+  Action: ['read']
+  
+  Resource: ['urn:altinn:app', 'urn:altinn:org']
+}

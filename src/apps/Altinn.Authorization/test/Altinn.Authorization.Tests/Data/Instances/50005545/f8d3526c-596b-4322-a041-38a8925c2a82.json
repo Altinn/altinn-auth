@@ -1,0 +1,30 @@
+{
+  "id": "f8d3526c-596b-4322-a041-38a8925c2a82",
+  "instanceOwner": {
+    "partyId": "50005545"
+  },
+  "appId": "org1/app1",
+  "org": "org1",
+  "labels": [
+    "hei"
+  ],
+  "created": "2024-10-25T13:37:00.0001337Z",
+  "lastChanged": "2024-10-25T13:37:00.0001337Z",
+  "dueDateTime": "2024-10-25T13:37:00.0001337Z",
+  "visibleDateTime": "2024-10-25T13:37:00.0001337Z",
+  "presentationField": {
+    "nb": "integrasjonstestInstansdelegering"
+  },
+  "instanceState": {
+    "isDeleted": false,
+    "isMarkedForHardDelete": false,
+    "isArchived": false,
+    "deletedDateTime": "2034-10-25T13:37:00.0001337"
+  },
+  "data": [],
+  "_rid": "zCw6APRA6nkBAAAAAAAAAA==",
+  "_self": "dbs/zCw6AA==/colls/zCw6APRA6nk=/docs/zCw6APRA6nkBAAAAAAAAAA==/",
+  "_etag": "\"00000000-0000-0000-8feb-f55df16b01d5\"",
+  "_attachments": "attachments/",
+  "_ts": 1572527167
+}
