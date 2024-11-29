@@ -6,9 +6,11 @@ WORKDIR /src/apps/Altinn.Authorization/src/Altinn.Authorization
 RUN dotnet publish -c Release -o /app
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS final
-EXPOSE 5110
+EXPOSE 5050
 WORKDIR /app
 COPY --from=build /app .
+
+COPY src/apps/Altinn.Authorization/src/Altinn.Authorization/Migration ./Migration
 
 # setup the user and group
 # the user will have no password, using shell /bin/false and using the group dotnet
