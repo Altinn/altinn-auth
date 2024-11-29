@@ -89,27 +89,27 @@ jobs:
           echo "Image: ${IMAGE}"
           echo "Tag: ${TAG}"
 
-  deploy-terraform:
-    name: Run terraform deployment
+  # deploy-terraform:
+  #   name: Run terraform deployment
 
-    if: inputs.terraform
+  #   if: inputs.terraform
 
-    strategy:
-      fail-fast: false
-      matrix:
-        environment: [at21, at22]
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       environment: [at21, at22]
 
-    needs:
-      - build-push
+  #   needs:
+  #     - build-push
 
-    uses: ./.github/workflows/_deploy-app-terraform.yml
-    with:
-      environment: ${{ matrix.environment }}
-      working_dir: ${{ inputs.path }}/deploy
-      tf_state: ${{ inputs.terraformStateFile }}
-      tf_args: "-var image=${{ needs.build-push.outputs.image }}"
+  #   uses: ./.github/workflows/_deploy-app-terraform.yml
+  #   with:
+  #     environment: ${{ matrix.environment }}
+  #     working_dir: ${{ inputs.path }}/deploy
+  #     tf_state: ${{ inputs.terraformStateFile }}
+  #     tf_args: "-var image=${{ needs.build-push.outputs.image }}"
 
-      databaseBootstrap: ${{ inputs.databaseBootstrap }}
-      databaseName: ${{ inputs.databaseName }}
-      databaseRoleprefix: ${{ inputs.databaseRoleprefix }}
-      databaseSchema: ${{ inputs.databaseSchema }}
+  #     databaseBootstrap: ${{ inputs.databaseBootstrap }}
+  #     databaseName: ${{ inputs.databaseName }}
+  #     databaseRoleprefix: ${{ inputs.databaseRoleprefix }}
+  #     databaseSchema: ${{ inputs.databaseSchema }}

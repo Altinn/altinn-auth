@@ -1,0 +1,37 @@
+[
+  {
+    "rightKey": "digdirs_company_car:drive",
+    "resource": [
+      {
+        "id": "urn:altinn:resource",
+        "value": "digdirs_company_car"
+      }
+    ],
+    "action": "drive",
+    "hasPermit": false,
+    "rightSources": [
+      {
+        "rightSourceType": "ResourceRegistryPolicy",
+        "policyId": "urn:altinn:example:delegationscheme:policyid:1",
+        "policyVersion": "1.0",
+        "ruleId": "urn:altinn:example:ruleid:1",
+        "hasPermit": false,
+        "userSubjects": [
+          {
+            "id": "urn:altinn:rolecode",
+            "value": "HADM"
+          }
+        ],
+        "policySubjects": [
+          [
+            {
+              "matchFound": null,
+              "id": "urn:altinn:rolecode",
+              "value": "DAGL"
+            }
+          ]
+        ]
+      }
+    ]
+  }
+]

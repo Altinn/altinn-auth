@@ -1,0 +1,53 @@
+{
+  "identifier": "digdirs_company_car",
+  "title": {
+    "en": "DigDir's company car'",
+    "nb-no": "DigDir's company car",
+    "nn-no": "DigDir's company car"
+  },
+  "description": {
+    "en": "Only the manager (DAGL) has access to drive the company car",
+    "nb-no": "Bare daglig leder (DAGL) har tilgang til � kj�re firmabilen",
+    "nn-no": "Berre dagleg leiar (DAGL) har h�ve til � kj�yre firmabilen"
+  },
+  "rightDescription": {
+    "en": "Gives an employee permission to borrow the company car",
+    "nb-no": "Gir en ansatt lov til � l�ne firmabilen",
+    "nn-no": "Gjev ein tilsett l�yve til � ta ei r�nerunde ned i vik"
+  },
+  "homepage": "https://www.jksfirmabiler.no/",
+  "status": "Active",
+  "validFrom": "2022-09-20T06:46:07.598Z",
+  "validTo": "2099-12-24T23:59:59",
+  "isPartOf": "jk_ressurser",
+  "isPublicService": true,
+  "thematicArea": "http://publications.europa.eu/resource/authority/eurovoc/2468",
+  "resourceReferences": [
+    {
+      "referenceSource": "Altinn3",
+      "reference": "urn:altinn:resource:digdirs_company_car",
+      "referenceType": "Uri"
+    }
+  ],
+  "isComplete": true,
+  "hasCompetentAuthority": {
+    "organization": "991825827",
+    "orgcode": "DIGDIR"
+  },
+  "keywords": [
+    {
+      "word": "bil",
+      "language": "nb"
+    }
+  ],
+  "sector": [
+    "offentlig"
+  ],
+  "resourceType": "MaskinportenSchema",
+  "authorizationReference": [
+    {
+      "id": "urn:altinn:resource",
+      "value": "digdirs_company_car"
+    }
+  ]
+}

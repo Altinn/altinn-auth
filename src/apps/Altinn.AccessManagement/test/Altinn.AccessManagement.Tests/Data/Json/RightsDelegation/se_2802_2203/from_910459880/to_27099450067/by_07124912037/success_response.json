@@ -1,0 +1,58 @@
+{
+  "to": [
+    {
+      "id": "urn:altinn:person:identifier-no",
+      "value": "27099450067"
+    },
+    {
+      "id": "urn:altinn:person:lastname",
+      "value": "RAVNÅS"
+    }
+  ],
+  "RightDelegationResults": [
+    {
+      "RightKey": "2802,2203:read",
+      "Resource": [
+        {
+          "id": "urn:altinn:servicecode",
+          "value": "2802"
+        },
+        {
+          "id": "urn:altinn:serviceeditioncode",
+          "value": "2203"
+        }
+      ],
+      "Action": "read",
+      "Status": "Delegated",
+      "Details": [
+        {
+          "Code": "DelegationAccess",
+          "Description": null,
+          "Parameters": {}
+        }
+      ]
+    },
+    {
+      "RightKey": "2802,2203:write",
+      "Resource": [
+        {
+          "id": "urn:altinn:servicecode",
+          "value": "2802"
+        },
+        {
+          "id": "urn:altinn:serviceeditioncode",
+          "value": "2203"
+        }
+      ],
+      "Action": "write",
+      "Status": "Delegated",
+      "Details": [
+        {
+          "Code": "DelegationAccess",
+          "Description": null,
+          "Parameters": {}
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+    "env": "tt02",
+    "org": "ttd",
+    "app": "apps-test-undeploy",
+    "org1": {
+        "orgno": "810414782",
+        "partyid": 50189353,
+        "dagl": {
+            "pid":"21025400167",
+            "userid": 92356,
+            "partyid": 50077669
+        },
+        "hadm": {
+            "pid": "17048001742",
+            "userid": 92095,
+            "partyid": 50063278
+        },
+        "apiadm": {
+            "pid": "18036000275",
+            "userid": 92147,
+            "partyid": 50066592
+        }
+    },
+    "org2": {
+        "orgno": "910049356",
+        "partyid": 50189988,
+        "dagl": {
+            "pid": "26013000394",
+            "userid": 92630,
+            "partyid": 50096367
+        }
+    },
+    "org3": {
+        "orgno": "312822881",
+        "partyid": 51636963,
+        "dagl": {
+            "pid": "47827602783",
+            "lastname": "ELEV",
+            "userid": 1420963,
+            "partyid": 51275190
+        },
+        "tilg": {
+            "pid":"05859399586",
+            "lastname": "DESIMETER",
+            "userid": 1420959,
+            "partyid": 50553001
+        }
+    },
+    "digdir": {
+        "orgno": "991825827",
+        "partyid": 50167512
+    }
+}

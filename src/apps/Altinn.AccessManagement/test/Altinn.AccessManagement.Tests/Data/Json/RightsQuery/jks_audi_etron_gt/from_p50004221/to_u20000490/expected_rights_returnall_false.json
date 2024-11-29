@@ -1,0 +1,110 @@
+[
+  {
+    "rightKey": "jks_audi_etron_gt:race",
+    "resource": [
+      {
+        "id": "urn:altinn:resource",
+        "value": "jks_audi_etron_gt"
+      }
+    ],
+    "action": "race",
+    "hasPermit": true,
+    "rightSources": [
+      {
+        "rightSourceType": "DelegationPolicy",
+        "policyId": "urn:altinn:policyid:5",
+        "policyVersion": "1.0",
+        "ruleId": "e7a89266-9457-45c9-86c4-53155c6f0230",
+        "offeredByPartyId": 50004221,
+        "hasPermit": true,
+        "userSubjects": [
+          {
+            "id": "urn:altinn:userid",
+            "value": "20000490"
+          }
+        ],
+        "policySubjects": [
+          [
+            {
+              "matchFound": null,
+              "id": "urn:altinn:userid",
+              "value": "20000490"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "rightKey": "jks_audi_etron_gt:park",
+    "resource": [
+      {
+        "id": "urn:altinn:resource",
+        "value": "jks_audi_etron_gt"
+      }
+    ],
+    "action": "park",
+    "hasPermit": true,
+    "rightSources": [
+      {
+        "rightSourceType": "DelegationPolicy",
+        "policyId": "urn:altinn:policyid:3",
+        "policyVersion": "1.0",
+        "ruleId": "16f91ee0-2c15-474c-a9df-712371289b15",
+        "offeredByPartyId": 50004222,
+        "hasPermit": true,
+        "userSubjects": [
+          {
+            "id": "urn:altinn:userid",
+            "value": "20000490"
+          }
+        ],
+        "policySubjects": [
+          [
+            {
+              "matchFound": null,
+              "id": "urn:altinn:userid",
+              "value": "20000490"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "rightKey": "jks_audi_etron_gt:drive",
+    "resource": [
+      {
+        "id": "urn:altinn:resource",
+        "value": "jks_audi_etron_gt"
+      }
+    ],
+    "action": "drive",
+    "hasPermit": true,
+    "rightSources": [
+      {
+        "rightSourceType": "DelegationPolicy",
+        "policyId": "urn:altinn:policyid:4",
+        "policyVersion": "1.0",
+        "ruleId": "45453412-efea-4238-8887-6256d8d1727f",
+        "offeredByPartyId": 50004222,
+        "hasPermit": true,
+        "userSubjects": [
+          {
+            "id": "urn:altinn:partyid",
+            "value": "50005545"
+          }
+        ],
+        "policySubjects": [
+          [
+            {
+              "matchFound": null,
+              "id": "urn:altinn:partyid",
+              "value": "50005545"
+            }
+          ]
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,10 @@
+[
+  {
+    "resourceregistryid": "string",
+    "resourcetype": "MaskinportenSchema"
+  },
+  {
+    "resourceregistryid": "string2",
+    "resourcetype": "maskinportenschema"
+  }
+]
