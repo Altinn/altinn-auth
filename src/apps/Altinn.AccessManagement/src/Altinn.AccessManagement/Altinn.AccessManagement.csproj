@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <IsAppProject>true</IsAppProject>
-        <ContainerName>altinn-authorization-deployapi</ContainerName>
+        <ContainerName>altinn-accessmanagement</ContainerName>
     </PropertyGroup>
 
     <ItemGroup>

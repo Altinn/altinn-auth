@@ -2,7 +2,7 @@
   "image": {},
   "infra": {
     "terraform": {
-      "stateFile": "Altinn.Authorization.AccessManagement.tfstate"
+      "stateFile": "Altinn.AccessManagement.tfstate"
     }
   }
 }
