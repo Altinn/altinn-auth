@@ -1,0 +1,43 @@
+{
+    "env": "at22",
+    "org": "ttd",
+    "app": "apps-test",
+    "org1": {
+        "orgno": "910077511",
+        "partyid": "50067614",
+        "dagl": {
+            "pid": "05085301731",
+            "userid": "20004414",
+            "partyid": "50019610"
+        }
+    },
+    "org2": {
+        "orgno": "810028882",
+        "partyid": "50067883",
+        "dagl": {
+            "pid": "16035601159",
+            "userid": "20003461",
+            "partyid": "50019174"
+        },
+        "ecuser": {
+            "userid": "20009673",
+            "partyid": "50067883"
+        }
+    },
+    "org3": {
+        "orgno": "910049488",
+        "partyid": "50067546",
+        "dagl": {
+            "pid": "30124902114",
+            "userid": "20003292",
+            "partyid": "50019460"
+        },
+        "subunit": {
+            "orgno": "910057529",
+            "partyid": "50067176"
+        }
+    },
+    "authorizationTests": {
+        "user": "msandstad"
+    }
+}

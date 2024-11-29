@@ -1,0 +1,8 @@
+{
+    "env": "prod",
+    "org": "ttd",
+    "app": "apps-test-prod",
+    "authorizationTests": {
+        "user": "InstallationTest_prod_auto"
+    }
+}
