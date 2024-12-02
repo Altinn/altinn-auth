@@ -9,8 +9,8 @@ jobs:
     with:
       type: pkg
 
-  ci:
-    name: CI
+  pr:
+    name: PR
     runs-on: ubuntu-latest
     needs: find-verticals
     strategy:

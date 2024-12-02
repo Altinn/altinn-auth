@@ -3,17 +3,14 @@ name: "PR: Libs"
 on:
   pull_request: {}
 
-env:
-  DIR: src/pkgs
-
 jobs:
   find-verticals:
     uses: ./.github/workflows/_find-verticals.yml
     with:
       type: lib
 
-  ci:
-    name: CI
+  pr:
+    name: PR
     runs-on: ubuntu-latest
     needs: find-verticals
     strategy:

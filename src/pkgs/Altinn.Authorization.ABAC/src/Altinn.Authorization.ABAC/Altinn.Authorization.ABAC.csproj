@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <!-- NuGet package properties -->
+        <IsPackageProject>true</IsPackageProject>
+        <PackageId>Altinn.Authorization.ABAC</PackageId>
+        <PackageTags>Altinn;Authorization;ABAC</PackageTags>
+        <Description>
+            Attribute Based Access Control library for .Net Core implementing XACML 3.0 xml and JSON Profile.
+            See details at https://docs.altinn.studio.
+        </Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" />
+        <PackageReference Include="DotNet.ReproducibleBuilds" PrivateAssets="all" />
+    </ItemGroup>
+
+</Project>
