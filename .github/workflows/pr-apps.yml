@@ -1,11 +1,7 @@
 name: "PR: Apps"
 
 on:
-  pull_request:
-    paths:
-      - src/**
-      - .github/workflows/apps-*
-      - .github/workflows/infra-*
+  pull_request: {}
 
 jobs:
   find-verticals:

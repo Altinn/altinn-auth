@@ -1,14 +1,10 @@
 name: "PR: Libs"
 
 on:
-  pull_request:
-    paths:
-      - src/**
-      - .github/workflows/libs-*
+  pull_request: {}
 
 env:
-  DOTNET_VERSION: 8.0.x
-  DIR: src/libs
+  DIR: src/pkgs
 
 jobs:
   find-verticals:
