@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <!-- NuGet package properties -->
+        <IsPackageProject>true</IsPackageProject>
+        <PackageId>Altinn.Authorization.PEP</PackageId>
+        <PackageTags>Altinn;Studio;Authorization;Policy;Enforcement;Point</PackageTags>
+        <Description>
+            Policy Enforcement Point for Attribute-based authorization using
+            Altinn.Authorization.ABAC in ASP.Net apps.
+            See our repository for the full documentation.
+        </Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" />
+        <PackageReference Include="DotNet.ReproducibleBuilds" PrivateAssets="all" />
+        <PackageReference Include="Altinn.Authorization.ABAC" />
+    </ItemGroup>
+
+</Project>

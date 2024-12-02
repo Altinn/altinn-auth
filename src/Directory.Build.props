@@ -10,7 +10,6 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <Authors>Altinn Authorization</Authors>
-        <UserSecretsId>Altinn-Authorization</UserSecretsId>
     </PropertyGroup>
 
 </Project>
