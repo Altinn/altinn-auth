@@ -1,5 +1,5 @@
 meta {
-  name: MissingToken_NotAuthorized
+  name: InstDelg_DelgChk_MissingToken_NotAuthorized
   type: http
   seq: 4
 }
@@ -18,7 +18,7 @@ params:path {
 headers {
   Accept: application/json
   PlatformAccessToken: {{platformAccessToken}}
-  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+  ~Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
 }
 
 script:pre-request {
@@ -30,8 +30,12 @@ script:pre-request {
 }
 
 tests {
-  test("AppsInstanceDelegation DelegationCheck GET MissingToken_NotAuthorized", function() {
-    var body = res.getBody();  
+  // Should be the same as the .bru request file. Used as prefix in test name which also shows in test result in pipeline.
+  const requestName = "InstDelg_DelgChk_MissingToken_NotAuthorized";
+  const body = res.getBody();
+  
+  test(requestName, function() {
     expect(res.status).to.equal(401);
+    assert.isNotOk(body, `Expected body to be empty. Actual: ${JSON.stringify(body)}`);
   });
 }

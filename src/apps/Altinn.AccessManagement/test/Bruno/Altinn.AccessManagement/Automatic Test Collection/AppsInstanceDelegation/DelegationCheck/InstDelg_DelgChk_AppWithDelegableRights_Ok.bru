@@ -1,5 +1,5 @@
 meta {
-  name: AppWithDelegableRights_Ok
+  name: InstDelg_DelgChk_AppWithDelegableRights_Ok
   type: http
   seq: 1
 }
@@ -43,9 +43,11 @@ script:pre-request {
 }
 
 tests {
-  test("AppsInstanceDelegation DelegationCheck GET AppWithDelegableRights_Ok", function() {
-    var body = res.getBody();
-    var data = body.data;
+  // Should be the same as the .bru request file. Used as prefix in test name which also shows in test result in pipeline.
+  const requestName = "InstDelg_DelgChk_AppWithDelegableRights_Ok";
+  const data = res.getBody().data;
+  
+  test(requestName, function() {
     expect(res.status).to.equal(200);
     expect(data[0]).to.have.property('rightKey', 'app_ttd_authz-bruno-instancedelegation,task_1:read')
     expect(data[0]).to.have.property('status', 'Delegable')
