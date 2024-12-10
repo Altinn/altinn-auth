@@ -1,0 +1,27 @@
+meta {
+  name: devtest_gar_bruno_accesslist
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource/{{resourceId}}/policy
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: 
+}
+
+body:multipart-form {
+  policyFile: @file(Resource/DevTest Resources/Create policy/devtest_gar_bruno_accesslist.xml)
+}
+
+vars:pre-request {
+  resourceId: devtest_gar_bruno_accesslist
+  auth_tokenType: Enterprise
+  auth_scopes: altinn:resourceregistry/resource.write
+  auth_org: ttd
+  auth_orgNo: 991825827
+}

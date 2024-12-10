@@ -1,0 +1,57 @@
+meta {
+  name: Create devtest_gar_bruno_accesslist
+  type: http
+  seq: 17
+}
+
+post {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: 
+}
+
+body:json {
+  {
+    "identifier": "devtest_gar_{{name}}",
+    "title": {
+      "en": "{{title}}",
+      "nb": "{{title}}",
+      "nn": "{{title}}"
+    },
+    "description": {
+      "en": "{{title}} is a test resource requiring access list authorization of the party/reportee for development testing",
+      "nb": "{{title}} er en test ressurs som krever at avgiver har fått tilgang til ressursen gjennom tilgangslister",
+      "nn": "{{title}} er ein test ressurs som krev at avgiver har motteke tilgong til ressursen gjennom tilgongslister"
+    },
+    "rightDescription": {
+      "en": "You'll give access to the resource {{title}}, a test resource requiring access list authorization of the party/reportee for development testing",
+      "nb": "Du gir tilgang til ressursen {{title}}, en test ressurs som krever at avgiver har fått tilgang til ressursen gjennom tilgangslister",
+      "nn": "Du gir tilgong til ressursen {{title}}, ein test ressurs som krev at avgiver har motteke tilgong til ressursen gjennom tilgongslister"
+    },
+    "homepage": "",
+    "status": "Active",
+    "contactPoints": [],
+    "isPartOf": "",
+    "resourceReferences": [],
+    "delegable": true,
+    "visible": true,
+    "hasCompetentAuthority": {
+      "organization": "991825827",
+      "orgcode": "ttd"
+    },
+    "keywords": [],
+    "accessListMode": "Enabled",
+    "selfIdentifiedUserEnabled": false,
+    "enterpriseUserEnabled": true,
+    "resourceType": "GenericAccessResource"
+  }
+}
+
+vars:pre-request {
+  name: bruno_accesslist
+  title: Bruno AccessList Resource
+}
