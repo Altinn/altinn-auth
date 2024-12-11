@@ -124,6 +124,7 @@ internal static class AccessManagementHost
         builder.Services.Configure<KeyVaultSettings>(config.GetSection("kvSetting"));
         builder.Services.Configure<OidcProviderSettings>(config.GetSection("OidcProviders"));
         builder.Services.Configure<UserProfileLookupSettings>(config.GetSection("UserProfileLookupSettings"));
+        builder.Services.Configure<AppsInstanceDelegationSettings>(config.GetSection("AppsInstanceDelegationSettings"));
     }
 
     private static void ConfigureAuthorization(this WebApplicationBuilder builder)

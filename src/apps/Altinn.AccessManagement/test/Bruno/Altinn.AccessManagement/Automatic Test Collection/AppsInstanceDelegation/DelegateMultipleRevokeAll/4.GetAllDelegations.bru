@@ -1,0 +1,119 @@
+meta {
+  name: 4.GetAllDelegations
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/app/delegations/resource/{{resourceId}}/instance/{{revokeAllinstanceId}}
+  body: none
+  auth: none
+}
+
+headers {
+  PlatformAccessToken: {{platformAccessToken}}
+}
+
+body:json {
+  {
+    "from": {
+      "type": "urn:altinn:party:uuid",
+      "value": "{{fromUuid}}"
+    },
+    "to": {
+      "type": "urn:altinn:party:uuid",
+      "value": "{{toUuid}}"
+    },
+    "rights": [
+      {
+        "resource": [
+          {
+            "type": "urn:altinn:resource",
+            "value": "{{resourceId}}"
+          },
+          {
+            "type": "urn:altinn:task",
+            "value": "task_1"
+          }
+        ],
+        "action": {
+          "type": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+          "value": "read"
+        }
+      },
+      {
+        "resource": [
+          {
+            "type": "urn:altinn:resource",
+            "value": "{{resourceId}}"
+          },
+          {
+            "type": "urn:altinn:task",
+            "value": "task_1"
+          }
+        ],
+        "action": {
+          "type": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+          "value": "sign"
+        }
+      }
+    ]
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/instance-delegation/${bru.getEnvVar("tokenEnv")}.json`);
+  const resource = "app_" + sharedtestdata.serviceOwners.ttd.org + "_" + testdata.app;
+  
+  bru.setVar("resourceId", resource);
+  bru.setVar("revokeAllinstanceId", testdata.revokeallinstanceid);
+  bru.setVar("fromUuid", testdata.org1.partyuuid);
+  bru.setVar("toUuid", testdata.org3.partyuuid);
+  
+  var getTokenParameters = {
+      auth_org: sharedtestdata.serviceOwners.ttd.org,
+      auth_app: testdata.app,
+      auth_tokenType: sharedtestdata.authTokenType.platformAccess
+    };
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("platformAccessToken",  token);
+}
+
+tests {
+  test("InstanceDelegation DelegateRightsAndRevokeAll get GetAllInstanceDelegationsBeforeRevoke", function() {
+    const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+    const testdata = require(`./Testdata/instance-delegation/${bru.getEnvVar("tokenEnv")}.json`);
+    const resource = "app_" + sharedtestdata.serviceOwners.ttd.org + "_" + testdata.app;
+    
+    const data = res.getBody();
+    assert.equal(res.status, 200, 'Incorect http status');
+    
+    let toList = [3];
+    toList[0] = testdata.person1.partyuuid;
+    toList[1] = testdata.person3.partyuuid;
+    toList[2] = testdata.org3.partyuuid;
+    
+    assert.equal(data.data.length, toList.length, 'expected result contains not expected count of data');
+      
+    for(var i = 0; i < toList.length; i++) {
+      assert.equal(data.data[i].resourceId, resource, 'Incorect resourceId');
+      assert.equal(data.data[i].instanceId, testdata.revokeallinstanceid, 'Incorect instanceId');
+  
+      assert.equal(data.data[i].from.value, testdata.org1.partyuuid, 'Incorect fromId');
+      
+      assert.include(toList, data.data[i].to.value, 'Expect current (to) to be in expected result list');
+      
+      assert.equal(data.data[i].rights[0].status, 'Delegated', 'Incorect read delegation status');
+      assert.equal(data.data[i].rights[0].action.value, 'read', 'Incorect read delegation action');  
+      assert.equal(data.data[i].rights[0].resource[0].value, resource, 'Incorect read delegation resourceId');
+      assert.equal(data.data[i].rights[0].resource[1].value, 'task_1', 'Incorect read delegation taskId');
+  
+      assert.equal(data.data[i].rights[1].status, 'Delegated', 'Incorect sign delegation status');
+      assert.equal(data.data[i].rights[1].action.value, 'sign', 'Incorect sign delegation action');  
+      assert.equal(data.data[i].rights[1].resource[0].value, resource, 'Incorect sign delegation resourceId');
+      assert.equal(data.data[i].rights[1].resource[1].value, 'task_1', 'Incorect sign delegation taskId');
+    }
+  });
+}

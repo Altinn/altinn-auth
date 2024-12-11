@@ -1,0 +1,133 @@
+meta {
+  name: 14.GetAllDelegationsAfterRevoke
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/app/delegations/resource/{{resourceId}}/instance/{{revokeAllinstanceId}}
+  body: none
+  auth: none
+}
+
+headers {
+  PlatformAccessToken: {{platformAccessToken}}
+}
+
+body:json {
+  {
+    "from": {
+      "type": "urn:altinn:party:uuid",
+      "value": "{{fromUuid}}"
+    },
+    "to": {
+      "type": "urn:altinn:party:uuid",
+      "value": "{{toUuid}}"
+    },
+    "rights": [
+      {
+        "resource": [
+          {
+            "type": "urn:altinn:resource",
+            "value": "{{resourceId}}"
+          },
+          {
+            "type": "urn:altinn:task",
+            "value": "task_1"
+          }
+        ],
+        "action": {
+          "type": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+          "value": "read"
+        }
+      },
+      {
+        "resource": [
+          {
+            "type": "urn:altinn:resource",
+            "value": "{{resourceId}}"
+          },
+          {
+            "type": "urn:altinn:task",
+            "value": "task_1"
+          }
+        ],
+        "action": {
+          "type": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+          "value": "sign"
+        }
+      }
+    ]
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/instance-delegation/${bru.getEnvVar("tokenEnv")}.json`);
+  const resource = "app_" + sharedtestdata.serviceOwners.ttd.org + "_" + testdata.app;
+  
+  bru.setVar("resourceId", resource);
+  bru.setVar("revokeAllinstanceId", testdata.revokeallbeyondlimitinstanceid);
+  bru.setVar("fromUuid", testdata.org1.partyuuid);
+  bru.setVar("toUuid", testdata.org3.partyuuid);
+  
+  var getTokenParameters = {
+      auth_org: sharedtestdata.serviceOwners.ttd.org,
+      auth_app: testdata.app,
+      auth_tokenType: sharedtestdata.authTokenType.platformAccess
+    };
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("platformAccessToken",  token);
+}
+
+tests {
+  test("InstanceDelegation RevokeMoreThanLimit get GetBeforeDeniedRevoke", function() {
+      const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+      const testdata = require(`./Testdata/instance-delegation/${bru.getEnvVar("tokenEnv")}.json`);
+      const resource = "app_" + sharedtestdata.serviceOwners.ttd.org + "_" + testdata.app;
+    
+      const data = res.getBody();
+      assert.equal(res.status, 200, 'httpstatus is incorect');
+    
+      assert.equal(data.data.length, 11, 'There is less than eqpected delegations')
+      
+      let toList = [11];
+      toList[0] = testdata.person1.partyuuid;
+      toList[1] = testdata.person3.partyuuid;
+      toList[2] = testdata.org3.partyuuid;
+      toList[3] = testdata.org4.partyuuid;
+      toList[4] = testdata.org5.partyuuid;
+      toList[5] = testdata.org6.partyuuid;
+      toList[6] = testdata.org7.partyuuid;
+      toList[7] = testdata.org8.partyuuid;
+      toList[8] = testdata.org9.partyuuid;
+      toList[9] = testdata.org10.partyuuid;
+      toList[10] = testdata.org11.partyuuid;
+    
+      for(var i = 0; i < 11; i++)
+      {
+        
+        assert.equal(data.data[i].resourceId, resource, 'ResourceId is incorect');
+        assert.equal(data.data[i].instanceId, testdata.revokeallbeyondlimitinstanceid, 'InstanceId is incorect');
+  
+        assert.equal(data.data[i].from.value, testdata.org1.partyuuid, 'FromId is inncorect');
+        
+        assert.include(toList, data.data[i].to.value, 'Expect current (to) to be in expected result list');
+        
+        assert.equal(data.data[i].rights[0].status, 'Delegated', 'read right has incorrect status');
+        assert.equal(data.data[i].rights[0].action.value, 'read', 'read right has incorrect action');  
+        assert.equal(data.data[i].rights[0].resource[0].value, resource, 'read right has incorrect resource');
+        assert.equal(data.data[i].rights[0].resource[1].value, 'task_1', 'read right has incorrect task');
+  
+        assert.equal(data.data[i].rights[1].status, 'Delegated', 'sign right has incorrect status');
+        assert.equal(data.data[i].rights[1].action.value, 'sign', 'sign right has incorrect action');  
+        assert.equal(data.data[i].rights[1].resource[0].value, resource, 'read right has incorrect resource');
+        assert.equal(data.data[i].rights[1].resource[1].value, 'task_1', 'read right has incorrect task');
+        
+      }
+      
+    
+    
+    });
+}

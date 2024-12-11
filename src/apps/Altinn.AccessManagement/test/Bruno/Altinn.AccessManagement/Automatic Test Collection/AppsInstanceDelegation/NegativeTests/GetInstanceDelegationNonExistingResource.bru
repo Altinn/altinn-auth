@@ -35,18 +35,17 @@ script:pre-request {
 }
 
 tests {
-  test("get InstanceDelegation NoResource", function() {
+  test("InstanceDelegation GetNonExistingResource get NoResource", function() {
       const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
       const testdata = require(`./Testdata/instance-delegation/${bru.getEnvVar("tokenEnv")}.json`);
       const resource = "app_" + sharedtestdata.serviceOwners.ttd.org + "_" + "authz-bruno-testapp1";
     
       const data = res.getBody();
-      expect(res.status).to.equal(400);
+      assert.equal(res.status, 400, 'httpstatus is incorect');
     
-      expect(data.status).to.equal(400);
+      assert.equal(data.status, 400, 'error response httpstatus is incorect');
     
-      expect(data.validationErrors[0].code).to.equal("AM.VLD-00002");
-      expect(data.validationErrors[0].paths[0]).to.equal("request.Resource");
-      
+      assert.equal(data.validationErrors[0].code, 'AM.VLD-00002', 'Incorect error code');
+      assert.equal(data.validationErrors[0].paths[0], 'request.Resource', 'Incorect path');
     });
 }

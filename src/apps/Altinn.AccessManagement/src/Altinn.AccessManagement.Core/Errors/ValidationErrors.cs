@@ -40,5 +40,5 @@ public static class ValidationErrors
     /// Gets a validation error descriptor for when a Resource not has any delegable rights for the app
     /// </summary>
     public static ValidationErrorDescriptor ToManyDelegationsToRevoke { get; }
-        = _factory.Create(5, $"There must be 10 or less policy files to update.");
+        = _factory.Create(5, $"There is to many policy files to update. Must delete individual delegations.");
 }

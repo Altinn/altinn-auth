@@ -33,6 +33,8 @@ public static class TestDataAppsInstanceDelegation
 
     private static readonly string RevokeAllInstance = "00000000-0000-0000-0000-000000000010";
 
+    private static readonly string RevokeAllInstanceToManyPolicyFiles = "00000000-0000-0000-0000-000000000011";
+
     /// <summary>
     /// Test case:  GET v1/apps/instancedelegation/{resourceId}/{instanceId}/delegationcheck
     ///             with: 
@@ -126,6 +128,16 @@ public static class TestDataAppsInstanceDelegation
             AppId,
             RevokeAllInstance,
             GetExpectedResponse<Paginated<AppsInstanceRevokeResponseDto>>("Revoke", AppId, RevokeAllInstance)
+        }
+    };
+
+    public static TheoryData<string, string, string, AltinnProblemDetails> RevokeAllToManyPolicyFiles() => new()
+    {
+        {
+            PrincipalUtil.GetAccessToken("ttd", "am-devtest-instancedelegation"),
+            AppId,
+            RevokeAllInstanceToManyPolicyFiles,
+            GetExpectedResponse<AltinnProblemDetails>("Revoke", AppId, RevokeAllInstanceToManyPolicyFiles)
         }
     };
 

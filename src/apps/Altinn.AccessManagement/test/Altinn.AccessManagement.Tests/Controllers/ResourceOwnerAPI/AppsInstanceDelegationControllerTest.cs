@@ -126,6 +126,22 @@ public class AppsInstanceDelegationControllerTest : IClassFixture<CustomWebAppli
     }
 
     [Theory]
+    [MemberData(nameof(TestDataAppsInstanceDelegation.RevokeAllToManyPolicyFiles), MemberType = typeof(TestDataAppsInstanceDelegation))]
+    public async Task AppsInstanceDelegationController_ValidToken_RevokeAll_ToManyPolicyFilesToUpdate(string platformToken, string resourceId, string instanceId, AltinnProblemDetails expected)
+    {
+        var client = GetTestClient(platformToken);
+
+        // Act
+        HttpResponseMessage response = await client.DeleteAsync($"accessmanagement/api/v1/app/delegationrevoke/resource/{resourceId}/instance/{instanceId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        AltinnProblemDetails actual = JsonSerializer.Deserialize<AltinnProblemDetails>(await response.Content.ReadAsStringAsync(), options);
+        TestDataAppsInstanceDelegation.AssertAltinnProblemDetailsEqual(expected, actual);
+    }
+
+    [Theory]
     [MemberData(nameof(TestDataAppsInstanceDelegation.RevokeAllUnathorized), MemberType = typeof(TestDataAppsInstanceDelegation))]
     public async Task AppsInstanceDelegationController_NoToken_RevokeAll_Unauthorized(string resourceId, string instanceId)
     {

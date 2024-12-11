@@ -604,6 +604,19 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
                 result.Add(CreateInstanceDelegationChange(source, resourceID, instanceID, Guid.Parse("00000000-0000-0000-0001-000000000012")));
                 result.Add(CreateInstanceDelegationChange(source, resourceID, instanceID, Guid.Parse("00000000-0000-0000-0001-000000000010")));
                 return Task.FromResult(result);
+            case "00000000-0000-0000-0000-000000000011":
+                result.Add(CreateInstanceDelegationChange(source, resourceID, instanceID, Guid.Parse("CE4BA72B-D111-404F-95B5-313FB3847FA1")));
+                result.Add(CreateInstanceDelegationChange(source, resourceID, instanceID, Guid.Parse("0268B99A-5817-4BBF-9B62-D90B16D527EA")));
+                result.Add(CreateInstanceDelegationChange(source, resourceID, instanceID, Guid.Parse("00000000-0000-0000-0001-000000000012")));
+                result.Add(CreateInstanceDelegationChange(source, resourceID, instanceID, Guid.Parse("00000000-0000-0000-0001-000000000010")));
+                result.Add(CreateInstanceDelegationChange(source, resourceID, instanceID, Guid.Parse("00000000-0000-0000-0001-000000000014")));
+                result.Add(CreateInstanceDelegationChange(source, resourceID, instanceID, Guid.Parse("00000000-0000-0000-0001-000000000016")));
+                result.Add(CreateInstanceDelegationChange(source, resourceID, instanceID, Guid.Parse("00000000-0000-0000-0001-000000000018")));
+                result.Add(CreateInstanceDelegationChange(source, resourceID, instanceID, Guid.Parse("00000000-0000-0000-0001-000000000020")));
+                result.Add(CreateInstanceDelegationChange(source, resourceID, instanceID, Guid.Parse("00000000-0000-0000-0001-000000000022")));
+                result.Add(CreateInstanceDelegationChange(source, resourceID, instanceID, Guid.Parse("00000000-0000-0000-0001-000000000024")));
+                result.Add(CreateInstanceDelegationChange(source, resourceID, instanceID, Guid.Parse("00000000-0000-0000-0001-000000000026")));
+                return Task.FromResult(result);
             default:
                 return Task.FromResult(result);
         }

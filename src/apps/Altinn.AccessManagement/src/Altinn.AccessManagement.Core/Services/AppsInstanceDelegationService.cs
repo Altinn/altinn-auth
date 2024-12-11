@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Formats.Asn1;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
+using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Errors;
@@ -16,7 +17,7 @@ using Altinn.Authorization.ProblemDetails;
 using Altinn.Platform.Register.Models;
 using Altinn.Urn;
 using Altinn.Urn.Json;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using Microsoft.Extensions.Options;
 
 namespace Altinn.AccessManagement.Core.Services.Implementation;
 
@@ -29,17 +30,19 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
     private readonly IPolicyInformationPoint _pip;
     private readonly IPolicyAdministrationPoint _pap;
     private readonly IResourceRegistryClient _resourceRegistryClient;
+    private readonly AppsInstanceDelegationSettings _appsInstanceDelegationSettings;
     private readonly string appInstanceResourcePath = "appInstanceDelegationRequest.Resource";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AppsInstanceDelegationService"/> class.
     /// </summary>
-    public AppsInstanceDelegationService(IPartiesClient partiesClient, IResourceRegistryClient resourceRegistryClient, IPolicyInformationPoint pip, IPolicyAdministrationPoint pap)
+    public AppsInstanceDelegationService(IPartiesClient partiesClient, IOptions<AppsInstanceDelegationSettings> appsInstanceDelegationSettings, IResourceRegistryClient resourceRegistryClient, IPolicyInformationPoint pip, IPolicyAdministrationPoint pap)
     {
         _partiesClient = partiesClient;
         _pip = pip;
         _resourceRegistryClient = resourceRegistryClient;
         _pap = pap;
+        _appsInstanceDelegationSettings = appsInstanceDelegationSettings.Value;
     }
 
     private async Task<(UuidType DelegationType, Guid? Uuid)> TranslatePartyUuidToPersonOrganizationUuid(PartyUrn partyId)
@@ -300,6 +303,17 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
         {
             errors.Add(ValidationErrors.MissingDelegableRights, "ResourceId");
         
+            if (errors.TryBuild(out errorResult))
+            {
+                return errorResult;
+            }
+        }
+
+        int limit = _appsInstanceDelegationSettings.MaxPolicyFilesToRevoke;
+        if (rightsToRevoke.Count > limit)
+        {
+            errors.Add(ValidationErrors.ToManyDelegationsToRevoke, "InstanceId");
+
             if (errors.TryBuild(out errorResult))
             {
                 return errorResult;
