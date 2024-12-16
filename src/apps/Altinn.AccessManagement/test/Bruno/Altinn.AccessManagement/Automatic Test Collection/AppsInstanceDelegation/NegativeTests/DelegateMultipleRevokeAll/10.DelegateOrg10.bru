@@ -94,7 +94,7 @@ tests {
       assert.equal(data.instanceId, testdata.revokeallbeyondlimitinstanceid, 'InstanceId is incorect');
   
       assert.equal(data.from.value, testdata.org1.partyuuid, 'FromId is inncorect');
-      assert.equal(data.to.value, testdata.org11.partyuuid, 'ToId is inncorect');
+      assert.equal(data.to.value, testdata.org10.partyuuid, 'ToId is inncorect');
     
       assert.equal(data.rights[0].status, 'Delegated', 'read right has incorrect status');
       assert.equal(data.rights[0].action.value, 'read', 'read right has incorrect action');  
