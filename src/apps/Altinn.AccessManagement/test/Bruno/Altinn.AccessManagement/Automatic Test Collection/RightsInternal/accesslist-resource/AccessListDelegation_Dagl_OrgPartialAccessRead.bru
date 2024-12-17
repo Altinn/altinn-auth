@@ -1,0 +1,85 @@
+meta {
+  name: AccessListDelegation_Dagl_OrgPartialAccessRead
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/{{party}}/rights/delegation/offered
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "to": [
+          {
+              "id": "urn:altinn:person:identifier-no",
+              "value": "{{toSsn}}"
+          },
+          {
+              "id": "urn:altinn:person:lastname",
+              "value": "{{toLastName}}"
+          }
+      ],
+      "rights": [
+          {
+              "resource": [
+                  {
+                      "id": "urn:altinn:resource",
+                      "value": "{{resource}}"
+                  }
+              ],
+              "action": "read"
+          },
+          {
+              "resource": [
+                  {
+                      "id": "urn:altinn:resource",
+                      "value": "{{resource}}"
+                  }
+              ],
+              "action": "write"
+          }
+      ]
+  }
+}
+
+script:pre-request {
+  const testdata = require(`./Testdata/accesslist-delegation/${bru.getEnvVar("tokenEnv")}.json`);
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  bru.setVar("party", testdata.SvenskGeniærklertTiger.partyid);
+  bru.setVar("resource", testdata.resource);
+  bru.setVar("toSsn", testdata.SvenskGeniærklertTiger.dagl.pid);
+  bru.setVar("toLastName", "KRYDDERMÅL");
+  
+  var getTokenParameters = {
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_userId: testdata.SvenskGeniærklertTiger.dagl.userid,
+    auth_partyId: testdata.SvenskGeniærklertTiger.dagl.partyid,
+    auth_ssn: testdata.SvenskGeniærklertTiger.dagl.pid
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  // Should be the same as the .bru request file. Used as prefix in test name which also shows in test result in pipeline.
+  const requestName = "AccessListDelegation_Dagl_OrgPartialAccess";
+  const body = res.getBody();
+  
+  test(requestName + "|HttpStatus.OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test(requestName + "|Read_IsDelegable", function() {
+    const right = body.rightDelegationResults.find(right => right.rightKey === "devtest_gar_bruno_accesslist_actionfilter:read");
+    assert.equal(right.status, "Delegated", `Expected read to be: Delegated`);
+  });
+  
+  test(requestName + "|Write_IsNotDelegable", function() {
+    const right = body.rightDelegationResults.find(right => right.rightKey === "devtest_gar_bruno_accesslist_actionfilter:write");
+    assert.equal(right.status, "NotDelegated", `Expected read to be: NotDelegated`);
+  });
+}

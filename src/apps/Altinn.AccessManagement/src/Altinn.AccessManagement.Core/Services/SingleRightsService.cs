@@ -160,11 +160,12 @@ namespace Altinn.AccessManagement.Core.Services
             List<Right> rightsUserCantDelegate = new List<Right>();
             foreach (Right rightToDelegate in delegation.Rights)
             {
-                if (usersDelegableRights.Contains(rightToDelegate))
+                Right delegableRight = usersDelegableRights.Find(r => r.RightKey == rightToDelegate.RightKey);
+                if (delegableRight != null)
                 {
                     // If delegable and serviceResource.AccessListMode is enabled, call accessListAuthorizationClient
                     AccessListAuthorizationResult accessListAuthorizationResult = AccessListAuthorizationResult.NotApplicable;
-                    if (DelegationHelper.IsAccessListModeEnabledAndApplicable(rightToDelegate, resource, fromParty))
+                    if (DelegationHelper.IsAccessListModeEnabledAndApplicable(delegableRight, resource, fromParty))
                     {
                         AccessListAuthorizationRequest accessListAuthorizationRequest = new AccessListAuthorizationRequest
                         {
