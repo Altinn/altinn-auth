@@ -373,7 +373,7 @@ export function postMaskinportenSystemResourceCannotBeDelegatedTest() {
     'post Maskinporten Systemresource Cannot be delegated - status is 400': (r) => r.status === 400,
     'post Maskinporten Systemresource Cannot be delegated - `One or more validation errors occurred.`': (r) => r.json('title') == 'One or more validation errors occurred.',
     'post Maskinporten Systemresource Cannot be delegated - errors is not null': (r) => r.json('errors') != null,
-    'post Maskinporten Systemresource Cannot be delegated - Invalid resource type': (r) => r.body.includes('This operation only support requests for Maskinporten schema resources. Invalid resource: Identifier: altinn_maskinporten_scope_delegation, ResourceType: Systemresource'),
+    'post Maskinporten Systemresource Cannot be delegated - Not available for delegation': (r) => r.body.includes('The resource: altinn_maskinporten_scope_delegation, does not exist or is not available for delegation'),
   });
 
   addErrorCount(success);
