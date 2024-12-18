@@ -48,16 +48,16 @@ body:json {
 script:pre-request {
   const testdata = require(`./Testdata/accesslist-delegation/${bru.getEnvVar("tokenEnv")}.json`);
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
-  bru.setVar("party", testdata.SvenskGeniærklertTiger.partyid);
+  bru.setVar("party", testdata.OrdentligUlasteligStruts.partyid);
   bru.setVar("resource", testdata.resource);
   bru.setVar("toSsn", testdata.SvenskGeniærklertTiger.dagl.pid);
   bru.setVar("toLastName", "KRYDDERMÅL");
   
   var getTokenParameters = {
     auth_tokenType: sharedtestdata.authTokenType.personal,
-    auth_userId: testdata.SvenskGeniærklertTiger.dagl.userid,
-    auth_partyId: testdata.SvenskGeniærklertTiger.dagl.partyid,
-    auth_ssn: testdata.SvenskGeniærklertTiger.dagl.pid
+    auth_userId: testdata.OrdentligUlasteligStruts.dagl.userid,
+    auth_partyId: testdata.OrdentligUlasteligStruts.dagl.partyid,
+    auth_ssn: testdata.OrdentligUlasteligStruts.dagl.pid
   }
   
   const token = await testTokenGenerator.getToken(getTokenParameters);
