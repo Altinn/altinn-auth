@@ -88,7 +88,7 @@
         <PackageVersion Include="Swashbuckle.AspNetCore.Filters" Version="8.0.2" />
         <PackageVersion Include="Testcontainers.PostgreSql" Version="4.1.0" />
         <PackageVersion Include="xunit" Version="2.9.2" />
-        <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+        <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.0" />
         <PackageVersion Include="Yuniql.AspNetCore" Version=" 1.2.25" />
         <PackageVersion Include="Yuniql.Core" Version=" 1.3.15" />
         <PackageVersion Include="Yuniql.PostgreSql" Version=" 1.3.15" />
