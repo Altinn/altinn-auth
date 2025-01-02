@@ -19,7 +19,7 @@ importers:
         version: 20.17.10
       chalk:
         specifier: ^5.3.0
-        version: 5.3.0
+        version: 5.4.1
       globby:
         specifier: ^14.0.2
         version: 14.0.2
@@ -43,7 +43,7 @@ importers:
         version: 3.4.0(zod@3.24.1)
       zx:
         specifier: ^8.1.9
-        version: 8.2.4
+        version: 8.3.0
 
 packages:
 
@@ -297,8 +297,8 @@ packages:
     resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
     engines: {node: '>=8'}
 
-  chalk@5.3.0:
-    resolution: {integrity: sha512-dLitG79d+GV1Nb/VYcCDFivJeK1hiukt9QjRNVOsUtTy1rR1YJsmpGGTZ3qJos+uw7WmWF4wUwBd9jxjocFC2w==}
+  chalk@5.4.1:
+    resolution: {integrity: sha512-zgVZuo2WcZgfUEmsn6eO3kINexW8RAE4maiQ8QNs8CtpPCSyMiYsULR3HQYkm3w8FIA3SberyMJMSldGsW+U3w==}
     engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
 
   cliui@8.0.1:
@@ -493,8 +493,8 @@ packages:
   zod@3.24.1:
     resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
 
-  zx@8.2.4:
-    resolution: {integrity: sha512-g9wVU+5+M+zVen/3IyAZfsZFmeqb6vDfjqFggakviz5uLK7OAejOirX+jeTOkyvAh/OYRlCgw+SdqzN7F61QVQ==}
+  zx@8.3.0:
+    resolution: {integrity: sha512-L8mY3yfJwo3a8ZDD6f9jZzAcRWJZYcV8GauZmBxLB/aSTwaMzMIEVpPp2Kyx+7yF0gdvuxKnMxAZRft9UCawiw==}
     engines: {node: '>= 12.17.0'}
     hasBin: true
 
@@ -695,7 +695,7 @@ snapshots:
     dependencies:
       fill-range: 7.1.1
 
-  chalk@5.3.0: {}
+  chalk@5.4.1: {}
 
   cliui@8.0.1:
     dependencies:
@@ -880,7 +880,7 @@ snapshots:
 
   zod@3.24.1: {}
 
-  zx@8.2.4:
+  zx@8.3.0:
     optionalDependencies:
       '@types/fs-extra': 11.0.4
       '@types/node': 20.17.10
