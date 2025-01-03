@@ -49,7 +49,7 @@
     <PackageVersion Include="Microsoft.Build.Artifacts" Version="6.1.48" />
     <PackageVersion Include="Microsoft.Extensions.Azure" Version="1.9.0" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.AzureKeyVault" Version="3.1.24" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
