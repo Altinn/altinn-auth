@@ -87,6 +87,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{8115F64C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.ABAC.Tests", "src\pkgs\Altinn.Authorization.ABAC\tests\Altinn.Authorization.ABAC.Tests\Altinn.Authorization.ABAC.Tests.csproj", "{0256E9EA-F368-4BEA-A875-8DE3AE401A92}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.Api.Enduser", "src\apps\Altinn.AccessManagement\src\Altinn.AccessManagement.Api.Enduser\Altinn.AccessManagement.Api.Enduser.csproj", "{1D7FDE01-2493-4578-B94A-681BC0E290FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.AppHost", "src\apps\Altinn.AccessManagement\src\Altinn.AccessManagement.AppHost\Altinn.AccessManagement.AppHost.csproj", "{6B4EFABC-522F-42A9-8737-29BAD7702718}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.Api.Metadata", "src\apps\Altinn.AccessManagement\src\Altinn.AccessManagement.Api.Metadata\Altinn.AccessManagement.Api.Metadata.csproj", "{27389295-D7DC-4566-BDED-FE2984E98395}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.Api.ServiceOwner", "src\apps\Altinn.AccessManagement\src\Altinn.AccessManagement.Api.ServiceOwner\Altinn.AccessManagement.Api.ServiceOwner.csproj", "{2207BB09-FBF6-4DB8-9A99-062E2BFBE78C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -168,6 +176,22 @@ Global
 		{0256E9EA-F368-4BEA-A875-8DE3AE401A92}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0256E9EA-F368-4BEA-A875-8DE3AE401A92}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0256E9EA-F368-4BEA-A875-8DE3AE401A92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D7FDE01-2493-4578-B94A-681BC0E290FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D7FDE01-2493-4578-B94A-681BC0E290FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D7FDE01-2493-4578-B94A-681BC0E290FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D7FDE01-2493-4578-B94A-681BC0E290FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B4EFABC-522F-42A9-8737-29BAD7702718}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B4EFABC-522F-42A9-8737-29BAD7702718}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B4EFABC-522F-42A9-8737-29BAD7702718}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B4EFABC-522F-42A9-8737-29BAD7702718}.Release|Any CPU.Build.0 = Release|Any CPU
+		{27389295-D7DC-4566-BDED-FE2984E98395}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{27389295-D7DC-4566-BDED-FE2984E98395}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{27389295-D7DC-4566-BDED-FE2984E98395}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{27389295-D7DC-4566-BDED-FE2984E98395}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2207BB09-FBF6-4DB8-9A99-062E2BFBE78C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2207BB09-FBF6-4DB8-9A99-062E2BFBE78C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2207BB09-FBF6-4DB8-9A99-062E2BFBE78C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2207BB09-FBF6-4DB8-9A99-062E2BFBE78C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E9D041A5-2AB6-45FD-8D24-EF552025539E} = {2891B160-9E46-42E5-95FF-08523A3192EF}
@@ -211,5 +235,9 @@ Global
 		{2B4AE35C-05E8-4E0C-8E2B-4F7C3A4B8787} = {2560AB0B-D9C7-4732-8073-F716A7E6FCA1}
 		{8115F64C-90F2-4066-8847-885F9A657B5E} = {E696D780-0F61-4E9C-B14B-EE23DBEE08B0}
 		{0256E9EA-F368-4BEA-A875-8DE3AE401A92} = {8115F64C-90F2-4066-8847-885F9A657B5E}
+		{1D7FDE01-2493-4578-B94A-681BC0E290FC} = {18F31807-573F-4CC7-BCDE-09613EB9E35D}
+		{6B4EFABC-522F-42A9-8737-29BAD7702718} = {18F31807-573F-4CC7-BCDE-09613EB9E35D}
+		{27389295-D7DC-4566-BDED-FE2984E98395} = {18F31807-573F-4CC7-BCDE-09613EB9E35D}
+		{2207BB09-FBF6-4DB8-9A99-062E2BFBE78C} = {18F31807-573F-4CC7-BCDE-09613EB9E35D}
 	EndGlobalSection
 EndGlobal

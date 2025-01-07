@@ -3,7 +3,11 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { $, within } from "zx";
+import { $, within, usePwsh } from "zx";
+
+if (process.platform === "win32") {
+  usePwsh();
+}
 
 let _queue: Promise<void> = Promise.resolve();
 const enqueue = <T extends unknown>(fn: () => Promise<T>): Promise<T> => {
