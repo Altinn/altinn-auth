@@ -1,3 +1,4 @@
+using Altinn.AccessManagement.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace Altinn.AccessManagement.Core.Models
@@ -11,6 +12,16 @@ namespace Altinn.AccessManagement.Core.Models
         /// Gets or sets the unique identifier for a specific party for which the requested rule in the policy applies
         /// </summary>
         public int OfferedByPartyId { get; set; }
+
+        /// <summary>
+        /// The type of FromUuid
+        /// </summary>
+        public UuidType FromUuidType { get; set; }
+
+        /// <summary>
+        /// The values of the FromUuid
+        /// </summary>
+        public Guid FromUuid { get; set; } 
 
         /// <summary>
         /// Gets or sets resource match which uniquely identifies the resource this policy applies to.

@@ -1557,6 +1557,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         [MemberData(nameof(TestDataRevokeOfferedDelegationExternal.FromPersonToOrganization), MemberType = typeof(TestDataRevokeOfferedDelegationExternal))]
         [MemberData(nameof(TestDataRevokeOfferedDelegationExternal.FromOrganizationToOrganization), MemberType = typeof(TestDataRevokeOfferedDelegationExternal))]
         [MemberData(nameof(TestDataRevokeOfferedDelegationExternal.FromOrganizationToPerson), MemberType = typeof(TestDataRevokeOfferedDelegationExternal))]
+        [MemberData(nameof(TestDataRevokeOfferedDelegationExternal.FromOrganizationToSystemUser), MemberType = typeof(TestDataRevokeOfferedDelegationExternal))]        
         public async Task RevokeRightsOfferedDelegations_ReturnNoContent(string userToken, RevokeOfferedDelegationExternal input, string partyRouteValue, string headerKey = null, string headerValue = null)
         {
             var client = GetTestClient(userToken, WithPDPMock);

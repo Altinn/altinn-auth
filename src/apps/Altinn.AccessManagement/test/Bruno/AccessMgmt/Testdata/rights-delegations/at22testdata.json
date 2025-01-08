@@ -2,6 +2,7 @@
     "env": "at22",
     "org": "ttd",
     "app": "apps-test-tba",
+    "resource_system": "kravogbetaling",
     "servicecode": "2802",
     "serviceeditioncode": "3",
     "resource": "devtest_gar_bruno-gar",
@@ -52,5 +53,20 @@
         "lastname": "KLOSETT",
         "userid": 20012655,
         "partyid": 50146491
+    },
+    "org_system": {
+        "orgno": "312883287",
+        "partyid": 51593483,
+        "partyuuid": "04FF1920-3099-4AD2-8145-CE72BA049E3F",
+        "systems": [
+    	      "5d5f66da-4e9f-4c6f-ac72-7574ea270163"
+        ],
+        "dagl": {
+            "pid": "03857298151",
+            "lastname": "ÅKER",
+            "userid": 20010879,
+            "partyid": 50749727,
+            "partyuuid": "45579E4E-C218-4BE9-BAAB-5816FD6A4964"
+        }
     }
 }

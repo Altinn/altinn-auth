@@ -22,8 +22,8 @@ public class PartyAttributeResolver : AttributeResolver
     /// <param name="profile">profile client</param>
     public PartyAttributeResolver(IContextRetrievalService contextRetrievalService, IProfileClient profile) : base(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute)
     {
-        AddLeaf([AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute], [AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute], ResolvePartyIdFromParty());
-        AddLeaf([AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute], [AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute], ResolvePartyIdFromUser());
+        AddLeaf([AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute], [AltinnXacmlConstants.MatchAttributeIdentifiers.OrganizationUuid, AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid], ResolvePartyIdOrganizationPersonUuidFromParty());
+        AddLeaf([AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute], [AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid], ResolvePartyIdPersonUuidFromUser());
 
         _contextRetrievalService = contextRetrievalService;
         _profile = profile;
@@ -32,7 +32,7 @@ public class PartyAttributeResolver : AttributeResolver
     /// <summary>
     /// Resolves a PartyId if given <see cref="AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute"/> exists
     /// </summary>
-    public LeafResolver ResolvePartyIdFromUser() => async (attributes, cancellationToken) =>
+    public LeafResolver ResolvePartyIdPersonUuidFromUser() => async (attributes, cancellationToken) =>
     {
         UserProfile user = await _profile.GetUser(
             new() { UserId = attributes.GetRequiredInt(AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute) },
@@ -40,7 +40,11 @@ public class PartyAttributeResolver : AttributeResolver
 
         if (user != null)
         {
-            return [new(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, user.Party.PartyId)];
+            return
+            [
+                new(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, user.Party.PartyId),
+                new(AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid, user.UserUuid),
+            ];
         }
 
         return [];
@@ -49,11 +53,24 @@ public class PartyAttributeResolver : AttributeResolver
     /// <summary>
     /// Resolves a PartyId if given <see cref="AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute"/> exists
     /// </summary>
-    public LeafResolver ResolvePartyIdFromParty() => async (attributes, cancellationToken) =>
+    public LeafResolver ResolvePartyIdOrganizationPersonUuidFromParty() => async (attributes, cancellationToken) =>
     {
         if (await _contextRetrievalService.GetPartyAsync(attributes.GetRequiredInt(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute), cancellationToken) is var party && party != null)
         {
-            return [new(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, party.PartyId)];
+            if (party.Organization != null)
+            {
+                return
+                [
+                    new(AltinnXacmlConstants.MatchAttributeIdentifiers.OrganizationUuid, party.PartyUuid),
+                ];
+            }
+            else if (party.Person != null)
+            {
+                return
+                [
+                    new(AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid, party.PartyUuid),
+                ];
+            }
         }
 
         return [];

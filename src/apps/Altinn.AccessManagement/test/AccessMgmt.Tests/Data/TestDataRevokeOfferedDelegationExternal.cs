@@ -15,6 +15,8 @@ public static class TestDataRevokeOfferedDelegationExternal
 
     private static int PersonPaulaUserId => 20000095;
 
+    private static Guid System1SystemUserId => new Guid("9B2EB39D-701C-4813-B847-315721DBFBAB");
+
     private static int PersonPaulaPartyId => 50002203;
 
     private static string PersonOrjanSSN => "27099450067";
@@ -94,6 +96,20 @@ public static class TestDataRevokeOfferedDelegationExternal
         PrincipalUtil.GetToken(PersonKasperUserId, PersonKasperPartyId, 3),
         NewRevokeOfferedModel(
             WithRevokeOfferedTo(AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, PersonPaulaUserId),
+            WithRevokeOfferedAction("read"),
+            WithRevokeOfferedResource(BaseUrn.Altinn.Resource.AppOwner, ResourceOrg),
+            WithRevokeOfferedResource(BaseUrn.Altinn.Resource.AppId, ResourceAppId)),
+        OrganizationOrstaPartyId
+    ]];
+
+    /// <summary>
+    /// summary
+    /// </summary>
+    /// <returns></returns>
+    public static IEnumerable<object[]> FromOrganizationToSystemUser() => [[
+        PrincipalUtil.GetToken(PersonKasperUserId, PersonKasperPartyId, 3),
+        NewRevokeOfferedModel(
+            WithRevokeOfferedTo(AltinnXacmlConstants.MatchAttributeIdentifiers.SystemUserUuid, System1SystemUserId),
             WithRevokeOfferedAction("read"),
             WithRevokeOfferedResource(BaseUrn.Altinn.Resource.AppOwner, ResourceOrg),
             WithRevokeOfferedResource(BaseUrn.Altinn.Resource.AppId, ResourceAppId)),
