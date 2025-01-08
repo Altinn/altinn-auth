@@ -95,6 +95,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.Api
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.Api.ServiceOwner", "src\apps\Altinn.AccessManagement\src\Altinn.AccessManagement.Api.ServiceOwner\Altinn.AccessManagement.Api.ServiceOwner.csproj", "{2207BB09-FBF6-4DB8-9A99-062E2BFBE78C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccessMgmt.Tests", "src\apps\Altinn.AccessManagement\test\AccessMgmt.Tests\AccessMgmt.Tests.csproj", "{E44860B4-5E08-43C2-AB67-97ADA2A034A4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -192,6 +194,10 @@ Global
 		{2207BB09-FBF6-4DB8-9A99-062E2BFBE78C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2207BB09-FBF6-4DB8-9A99-062E2BFBE78C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2207BB09-FBF6-4DB8-9A99-062E2BFBE78C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E44860B4-5E08-43C2-AB67-97ADA2A034A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E44860B4-5E08-43C2-AB67-97ADA2A034A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E44860B4-5E08-43C2-AB67-97ADA2A034A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E44860B4-5E08-43C2-AB67-97ADA2A034A4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E9D041A5-2AB6-45FD-8D24-EF552025539E} = {2891B160-9E46-42E5-95FF-08523A3192EF}
@@ -239,5 +245,6 @@ Global
 		{6B4EFABC-522F-42A9-8737-29BAD7702718} = {18F31807-573F-4CC7-BCDE-09613EB9E35D}
 		{27389295-D7DC-4566-BDED-FE2984E98395} = {18F31807-573F-4CC7-BCDE-09613EB9E35D}
 		{2207BB09-FBF6-4DB8-9A99-062E2BFBE78C} = {18F31807-573F-4CC7-BCDE-09613EB9E35D}
+		{E44860B4-5E08-43C2-AB67-97ADA2A034A4} = {C80545FE-40C4-4765-B9CF-3CA7DEF0433F}
 	EndGlobalSection
 EndGlobal

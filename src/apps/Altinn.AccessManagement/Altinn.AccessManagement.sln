@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{7EBD92A3-BEBF-4608-9535-F419BF22EE83}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.Tests", "test\Altinn.AccessManagement.Tests\Altinn.AccessManagement.Tests.csproj", "{DC83D8C7-BE67-451D-AD00-172CE364468C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccessMgmt.Tests", "test\AccessMgmt.Tests\AccessMgmt.Tests.csproj", "{DC83D8C7-BE67-451D-AD00-172CE364468C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.Integration", "src\Altinn.AccessManagement.Integration\Altinn.AccessManagement.Integration.csproj", "{F6682422-0B31-4E83-8B03-BE21267A95C4}"
 EndProject
