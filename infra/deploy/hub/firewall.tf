@@ -50,9 +50,5 @@ resource "azurerm_firewall_policy" "firewall" {
   resource_group_name = azurerm_resource_group.hub.name
   location            = azurerm_resource_group.hub.location
 
-  identity {
-    type = "SystemAssigned"
-  }
-
   tags = merge({}, local.default_tags)
 }
