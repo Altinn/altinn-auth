@@ -1,36 +1,27 @@
 variable "organization" {
-  type    = string
-  default = "altinn"
+  type = string
 }
 
 variable "product_name" {
-  type    = string
-  default = "auth"
+  type = string
 }
 
 variable "instance" {
-  type    = string
-  default = "001"
+  type = string
 }
 
 variable "single_stack_ipv4_address_space" {
-  type    = string
-  default = "10.202.0.0/20"
+  type = string
 }
 
 variable "dual_stack_ipv4_address_space" {
-  type    = string
-  default = "10.202.16.0/20"
+  type = string
 }
 
 variable "dual_stack_ipv6_address_space" {
-  type    = string
-  default = "fd0a:7204:c37f::/51"
+  type = string
 }
 
 variable "client_certs" {
   type = list(string)
-  default = [
-    "andreasisnes"
-  ]
 }
