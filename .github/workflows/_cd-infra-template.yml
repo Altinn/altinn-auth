@@ -53,6 +53,7 @@ jobs:
 
   deploy:
     name: Deploy
+    needs: plan
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     steps:
