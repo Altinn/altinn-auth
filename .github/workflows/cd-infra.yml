@@ -15,38 +15,11 @@ permissions:
   pull-requests: write
 
 jobs:
-  cert:
-    name: Cert
+  hub:
+    name: Hub
     secrets: inherit
-    uses: ./.github/workflows/_deploy-app-terraform.yml
-    strategy:
-      matrix:
-        environment: [at21, at22]
+    uses: ./.github/workflows/_cd-infra-template.yml
     with:
-      environment: ${{ matrix.environment }}
-      tf_state: cert.tfstate
-      working_dir: infra/deploy/cert
-
-  auth:
-    name: Auth
-    secrets: inherit
-    uses: ./.github/workflows/_deploy-app-terraform.yml
-    strategy:
-      matrix:
-        environment: [at21, at22]
-    with:
-      environment: ${{ matrix.environment }}
-      tf_state: auth.tfstate
-      working_dir: infra/deploy/auth
-
-  register:
-    name: Altinn Register
-    secrets: inherit
-    uses: ./.github/workflows/_deploy-app-terraform.yml
-    strategy:
-      matrix:
-        environment: [at21, at22]
-    with:
-      environment: ${{ matrix.environment }}
-      tf_state: Altinn.Register.tfstate
-      working_dir: infra/deploy/altinn-register
+      environment: prod
+      tf_state: hub.tfstate
+      working_dir: infra/deploy/hub

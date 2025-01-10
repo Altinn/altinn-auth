@@ -37,6 +37,10 @@ terraform.rc
 
 # MSBuild binlogs
 *.binlog
+*.env
 
 # Visual Studio user specific solution launch file
 /Altinn.Authorization.slnLaunch.user
+
+# Notes
+*.private

@@ -15,9 +15,6 @@ resource "azurerm_private_dns_zone" "dns" {
   resource_group_name = var.resource_group_name
 
   tags = var.metadata
-  lifecycle {
-    prevent_destroy = true
-  }
 
   for_each = local.zones
 }

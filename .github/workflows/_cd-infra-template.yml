@@ -1,0 +1,72 @@
+name: "Infra CD"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        description: GitHub environment
+        required: true
+      tf_state:
+        type: string
+        description: Name of the Terraform state file
+        required: true
+      working_dir:
+        type: string
+        description: Name of the working directory
+        required: true
+      tf_args:
+        type: string
+        description: Name of the Terraform state file
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Terraform Set TFVARS
+        run: echo "TF_VARS_FILE=$(echo ${{ inputs.environment }} | tr '[:upper:]' '[:lower:]').tfvars" >> $GITHUB_ENV
+
+      - name: Terraform Plan
+        uses: altinn/altinn-platform/actions/terraform/plan@main
+        with:
+          working_directory: ${{ inputs.working_dir }}
+          oidc_type: environment
+          oidc_value: ${{ inputs.environment }}
+
+          arm_client_id: ${{ vars.ARM_CLIENT_ID }}
+          arm_subscription_id: ${{ vars.ARM_SUBSCRIPTION_ID }}
+
+          tf_state_name: ${{ inputs.tf_state }}
+          tf_args: -var-file=${{ env.TF_VARS_FILE }} ${{ inputs.tf_args }}
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
+  
+  deploy:
+    name: Plan
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Terraform Apply
+        uses: altinn/altinn-platform/actions/terraform/apply@main
+        id: apply
+        with:
+          working_directory: ${{ inputs.working_dir }}
+          oidc_type: environment
+          oidc_value: ${{ inputs.environment }}
+
+          arm_client_id: ${{ vars.ARM_CLIENT_ID }}
+          arm_subscription_id: ${{ vars.ARM_SUBSCRIPTION_ID }}
+          tf_state_name: ${{ inputs.tf_state }}
