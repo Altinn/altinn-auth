@@ -4,7 +4,7 @@
     "ID": "0192:{vendorId}"
   },
   "Name": {
-    "en": "IntegrationTest{Name}",
+    "en": "Test name english - e2e {Name}",
     "nb": "IntegrationTestNb{Name}",
     "nn": "IntegrationTestNynorsk{Name}"
   },
