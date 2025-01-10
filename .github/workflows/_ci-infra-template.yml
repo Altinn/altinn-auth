@@ -1,4 +1,4 @@
-name: "Template: Terraform CI"
+name: "Template: Infra CI"
 
 on:
   workflow_call:

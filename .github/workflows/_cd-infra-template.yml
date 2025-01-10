@@ -1,4 +1,4 @@
-name: "Infra CD"
+name: "Template: Infra CD"
 
 on:
   workflow_call:
@@ -50,7 +50,7 @@ jobs:
           tf_state_name: ${{ inputs.tf_state }}
           tf_args: -var-file=${{ env.TF_VARS_FILE }} ${{ inputs.tf_args }}
           gh_token: ${{ secrets.GITHUB_TOKEN }}
-  
+
   deploy:
     name: Plan
     runs-on: ubuntu-latest
