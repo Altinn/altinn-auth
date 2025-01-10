@@ -52,7 +52,7 @@ jobs:
           gh_token: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
-    name: Plan
+    name: Deploy
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     steps:
