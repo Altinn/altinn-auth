@@ -25,3 +25,7 @@ variable "dual_stack_ipv6_address_space" {
 variable "client_certs" {
   type = list(string)
 }
+
+variable "maintainers" {
+  type = list(string)
+}

@@ -22,7 +22,7 @@ resource "azuread_application" "vpn" {
     ignore_changes = [identifier_uris]
   }
 
-  owners = [data.azurerm_client_config.current.object_id]
+  owners = var.maintainers
 }
 
 resource "azuread_application_identifier_uri" "vpn" {

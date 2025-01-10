@@ -33,8 +33,10 @@ resource "azurerm_private_dns_zone_virtual_network_link" "key_vault" {
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment
 resource "azurerm_role_assignment" "key_vault_administrator" {
   scope                = azurerm_key_vault.key_vault.id
-  principal_id         = data.azurerm_client_config.current.object_id
+  principal_id         = each.value
   role_definition_name = "Key Vault Administrator" # https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#security
+
+  for_each = toset(var.maintainers)
 }
 
 # Private Endpoint for Key Vault
