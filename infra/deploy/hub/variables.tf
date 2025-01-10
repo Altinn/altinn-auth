@@ -30,7 +30,7 @@ variable "dual_stack_ipv6_address_space" {
 
 variable "client_certs" {
   type = list(string)
-  default = [ 
+  default = [
     "andreasisnes"
   ]
 }
