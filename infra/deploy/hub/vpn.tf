@@ -51,7 +51,7 @@ resource "azurerm_public_ip" "vpn" {
 }
 
 resource "azurerm_virtual_network_gateway" "vpn" {
-  name                = "vpn${local.suffix}"
+  name                = "vpngw${local.suffix}"
   location            = azurerm_resource_group.hub.location
   resource_group_name = azurerm_resource_group.hub.name
 
@@ -160,8 +160,7 @@ resource "tls_self_signed_cert" "root" {
   allowed_uses          = []
 
   subject {
-    common_name         = "Altinn"
-    organizational_unit = "Authorization"
+    common_name = "VPN CA"
   }
 }
 
@@ -200,6 +199,16 @@ resource "pkcs12_from_pem" "client_certs" {
 
   ca_pem   = tls_self_signed_cert.root.cert_pem
   for_each = toset(var.client_certs)
+}
+
+resource "azurerm_storage_blob" "ca_pem_cert" {
+  name                   = "CaCert.pem"
+  storage_container_name = azurerm_storage_container.certs.name
+  storage_account_name   = azurerm_storage_account.storage.name
+
+  access_tier    = "Cool"
+  type           = "Block"
+  source_content = tls_self_signed_cert.root.cert_pem
 }
 
 resource "azurerm_storage_blob" "client_pem_cert" {
