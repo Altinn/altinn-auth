@@ -15,7 +15,7 @@ resource "azurerm_app_configuration" "app_configuration" {
 }
 
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment
-resource "azurerm_role_assignment" "rbac" {
+resource "azurerm_role_assignment" "app_configuration_data_owner" {
   scope                = azurerm_app_configuration.app_configuration.id
   principal_id         = each.value
   role_definition_name = "App Configuration Data Owner" # https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#security

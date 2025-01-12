@@ -1,32 +1,37 @@
 variable "organization" {
-  type    = string
-  default = "altinn"
+  type = string
 }
 
 variable "product_name" {
-  type    = string
-  default = "auth"
+  type = string
 }
 
 variable "instance" {
-  type    = string
-  default = "001"
+  type = string
 }
 
-variable "environment_group" {
-  type    = string
-  default = "at"
+variable "environment" {
+  type = string
 }
 
-variable "ipv4_address_space" {
-  type    = string
-  default = "10.202.0.0/17"
+variable "single_stack_ipv4_address_space" {
+  type = string
 }
 
-# 10.202.128.0/17	
-
-variable "ipv6_address_space" {
-  type    = string
-  default = "fd0a:7204:c37f::/51"
+variable "dual_stack_ipv4_address_space" {
+  type = string
 }
 
+variable "dual_stack_ipv6_address_space" {
+  type = string
+}
+
+variable "hub_subscription_id" {
+  type    = string
+  default = "01de49cb-48ef-4494-bc9d-b9e19a90bcd5"
+}
+
+variable "forced_tunneling_ip" {
+  type    = string
+  default = "10.202.19.4"
+}

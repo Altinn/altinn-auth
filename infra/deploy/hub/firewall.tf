@@ -27,7 +27,7 @@ resource "azurerm_firewall" "firewall" {
   location            = azurerm_resource_group.hub.location
 
   sku_name           = "AZFW_VNet"
-  sku_tier           = "Standard"
+  sku_tier           = "Premium"
   firewall_policy_id = azurerm_firewall_policy.firewall.id
 
   ip_configuration {
@@ -51,4 +51,14 @@ resource "azurerm_firewall_policy" "firewall" {
   location            = azurerm_resource_group.hub.location
 
   tags = merge({}, local.default_tags)
+}
+
+resource "azurerm_app_configuration_key" "name" {
+  value                  = azurerm_firewall.firewall.ip_configuration[0].private_ip_address
+  key                    = "FirewallPrivateIPv4"
+  label                  = "Hub"
+  configuration_store_id = azurerm_app_configuration.app_configuration.id
+  content_type           = "text/plain"
+
+  depends_on = [azurerm_role_assignment.app_configuration_data_owner]
 }

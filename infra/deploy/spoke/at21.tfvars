@@ -1,0 +1,7 @@
+organization                    = "altinn"
+product_name                    = "auth"
+instance                        = "001"
+environment                     = "at21"
+single_stack_ipv4_address_space = "10.202.32.0/20"
+dual_stack_ipv4_address_space   = "10.202.48.0/20"
+dual_stack_ipv6_address_space   = "fd0a:7204:c37f:2000::/51"
