@@ -23,6 +23,7 @@ jobs:
     secrets: inherit
     uses: ./.github/workflows/_ci-infra-template.yml
     strategy:
+      fail-fast: false
       matrix:
         environment: [at21, at22, at23, at24, yt01]
     with:
@@ -35,6 +36,7 @@ jobs:
     secrets: inherit
     uses: ./.github/workflows/_ci-infra-template.yml
     strategy:
+      fail-fast: false
       matrix:
         environment: [tt02]
     with:
@@ -47,6 +49,7 @@ jobs:
     secrets: inherit
     uses: ./.github/workflows/_ci-infra-template.yml
     strategy:
+      fail-fast: false
       matrix:
         environment: [prod]
     with:
