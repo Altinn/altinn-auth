@@ -34,6 +34,27 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Install OpenVPN
+        run: |
+          sudo apt update
+          sudo apt install -y openvpn openvpn-systemd-resolved dnsutils
+
+      - name: Dump OpenVPN Config
+        run: |
+          cat << EOF > .github/openvpn.config
+          ${{ secrets.OVPN_CONFIG }}
+          EOF
+
+      - name: Connect to VPN
+        uses: kota65535/github-openvpn-connect-action@v2
+        with:
+          config_file: .github/openvpn.config
+
+      - name: Update DNS
+        run: |
+          sudo openvpn --config .github/openvpn.config --daemon --writepid openvpn.pid
+          echo "nameserver ${{ secrets.OVPN_NAMESERVER }}" | sudo tee /etc/resolv.conf > /dev/null
+
       - name: Terraform Set TFVARS
         run: echo "TF_VARS_FILE=$(echo ${{ inputs.environment }} | tr '[:upper:]' '[:lower:]').tfvars" >> $GITHUB_ENV
 
@@ -50,3 +71,8 @@ jobs:
           tf_state_name: ${{ inputs.tf_state }}
           tf_args: -var-file=${{ env.TF_VARS_FILE }} ${{ inputs.tf_args }}
           gh_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup
+        if: always()
+        run: |
+          shred -u .github/openvpn.config || true

@@ -26,6 +26,7 @@ variable "client_certs" {
   type = list(string)
 }
 
-variable "maintainers" {
+variable "spoke_principals_ids" {
   type = list(string)
 }
+

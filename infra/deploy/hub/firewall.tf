@@ -49,16 +49,13 @@ resource "azurerm_firewall_policy" "firewall" {
   name                = "fwpolicy${local.suffix}"
   resource_group_name = azurerm_resource_group.hub.name
   location            = azurerm_resource_group.hub.location
+  sku                 = "Premium"
+
+  auto_learn_private_ranges_enabled = true
+  dns {
+    proxy_enabled = true
+    servers       = [azurerm_private_dns_resolver_inbound_endpoint.resolver.ip_configurations[0].private_ip_address]
+  }
 
   tags = merge({}, local.default_tags)
-}
-
-resource "azurerm_app_configuration_key" "name" {
-  value                  = azurerm_firewall.firewall.ip_configuration[0].private_ip_address
-  key                    = "FirewallPrivateIPv4"
-  label                  = "Hub"
-  configuration_store_id = azurerm_app_configuration.app_configuration.id
-  content_type           = "text/plain"
-
-  depends_on = [azurerm_role_assignment.app_configuration_data_owner]
 }

@@ -14,23 +14,6 @@ resource "azurerm_storage_account" "storage" {
   tags = merge({}, local.default_tags)
 }
 
-# Private DNS Zone for Key Vault
-resource "azurerm_private_dns_zone" "blob" {
-  name                = "privatelink.blob.core.windows.net"
-  resource_group_name = azurerm_resource_group.hub.name
-
-  tags = local.default_tags
-}
-
-# Link DNS Zone to Virtual Network
-resource "azurerm_private_dns_zone_virtual_network_link" "blob" {
-  name                  = "storage-account-blob"
-  resource_group_name   = azurerm_resource_group.hub.name
-  private_dns_zone_name = azurerm_private_dns_zone.blob.name
-  virtual_network_id    = azurerm_virtual_network.hub.id
-  tags                  = local.default_tags
-}
-
 # Private Endpoint for Key Vault
 resource "azurerm_private_endpoint" "blob" {
   name                          = "pepstblob${local.suffix}"
@@ -40,12 +23,12 @@ resource "azurerm_private_endpoint" "blob" {
   custom_network_interface_name = "nicstblob${local.suffix}"
 
   private_dns_zone_group {
-    name                 = "storage-account-blob"
-    private_dns_zone_ids = [azurerm_private_dns_zone.blob.id]
+    name                 = azurerm_storage_account.storage.name
+    private_dns_zone_ids = [azurerm_private_dns_zone.dns["privatelink.blob.core.windows.net"].id]
   }
 
   private_service_connection {
-    name                           = "storage-account-blob"
+    name                           = azurerm_storage_account.storage.name
     private_connection_resource_id = azurerm_storage_account.storage.id
     is_manual_connection           = false
     subresource_names = [

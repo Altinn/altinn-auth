@@ -22,13 +22,13 @@ terraform {
     }
   }
 
+
   backend "azurerm" {
     use_azuread_auth = true
   }
 }
 
 provider "azurerm" {
-  # subscription_id = "45177a0a-d27e-490f-9f23-b4726de8ccc1" # For LAB purposes
   features {
   }
 }
@@ -98,7 +98,7 @@ locals {
 resource "static_data" "static" {
   data = {
     api_id     = uuid()
-    created_at = timestamp()
+    created_at = formatdate("EEEE, DD-MMM-YY hh:mm:ss ZZZ", "2018-01-02T23:12:01Z")
   }
 
   lifecycle {
@@ -200,4 +200,20 @@ resource "azurerm_public_ip_prefix" "ipv6" {
 
   prefix_length = 126 # 4 Public IPs
   tags          = merge({}, local.default_tags)
+}
+
+resource "azurerm_role_assignment" "network_contributor" {
+  scope                = azurerm_resource_group.hub.id
+  principal_id         = each.value
+  role_definition_name = "Network Contributor" # https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#security
+
+  for_each = toset(var.spoke_principals_ids)
+}
+
+resource "azurerm_role_assignment" "reader" {
+  scope                = azurerm_resource_group.hub.id
+  principal_id         = each.value
+  role_definition_name = "Reader" # https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#security
+
+  for_each = toset(var.spoke_principals_ids)
 }

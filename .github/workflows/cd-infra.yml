@@ -2,12 +2,6 @@ name: "CD: Infra"
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - infra/**
-      - .github/workflows/infra-*
 
 permissions:
   id-token: write
@@ -23,3 +17,42 @@ jobs:
       environment: prod
       tf_state: hub.tfstate
       working_dir: infra/deploy/hub
+
+  test:
+    name: Test
+    needs: hub
+    secrets: inherit
+    uses: ./.github/workflows/_cd-infra-template.yml
+    strategy:
+      matrix:
+        environment: [at21, at22, at23, at24, yt01]
+    with:
+      environment: ${{ matrix.environment }}
+      tf_state: spokes.tfstate
+      working_dir: infra/deploy/spoke
+
+  staging:
+    name: Staging
+    needs: test
+    secrets: inherit
+    uses: ./.github/workflows/_cd-infra-template.yml
+    strategy:
+      matrix:
+        environment: [tt02]
+    with:
+      environment: ${{ matrix.environment }}
+      tf_state: spokes.tfstate
+      working_dir: infra/deploy/spoke
+
+  prod:
+    name: Prod
+    needs: staging
+    secrets: inherit
+    uses: ./.github/workflows/_cd-infra-template.yml
+    strategy:
+      matrix:
+        environment: [prod]
+    with:
+      environment: ${{ matrix.environment }}
+      tf_state: spokes.tfstate
+      working_dir: infra/deploy/spoke

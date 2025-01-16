@@ -7,6 +7,10 @@ on:
     branches: [main]
     types: [opened, synchronize, reopened]
   workflow_dispatch:
+
+permissions:
+  pull-requests: write
+
 jobs:
   find-verticals:
     uses: ./.github/workflows/_find-verticals.yml
@@ -130,7 +134,7 @@ jobs:
         shell: bash
         run: |
           dotnet tool install --global dotnet-coverage
-          ./.sonar/scanner/dotnet-sonarscanner begin /k:"Altinn_altinn-register" /o:"altinn" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vstest.reportsPaths="**/*.trx" /d:sonar.cs.vscoveragexml.reportsPaths="TestResults/coverage.xml"
+          ./.sonar/scanner/dotnet-sonarscanner begin /k:"Altinn_altinn-authorization-tmp" /o:"altinn" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vstest.reportsPaths="**/*.trx" /d:sonar.cs.vscoveragexml.reportsPaths="TestResults/coverage.xml"
 
           dotnet build --no-incremental
           dotnet coverage collect 'dotnet test --no-build --results-directory TestResults/' -f xml -o 'TestResults/coverage.xml'

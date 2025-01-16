@@ -9,14 +9,15 @@ terraform {
       version = "0.1.0"
     }
   }
+
+  backend "azurerm" {
+    use_azuread_auth = true
+  }
 }
 
 provider "azurerm" {
-  subscription_id = "45177a0a-d27e-490f-9f23-b4726de8ccc1"
   features {
   }
-
-  # Configuration options
 }
 
 provider "azurerm" {
@@ -48,19 +49,27 @@ locals {
       name         = "Default"
       include_ipv6 = true
       ipv4_bits    = 22 - local.ipv4_cidr_prefix
+      create       = true
     },
     {
-      name             = "Aks"
-      include_ipv6     = true
-      ipv4_bits        = 22 - local.ipv4_cidr_prefix
-      forced_tunneling = true
+      name         = "Aks"
+      include_ipv6 = true
+      ipv4_bits    = 22 - local.ipv4_cidr_prefix
+      create       = false
+    },
+    {
+      name         = "ServiceBus"
+      include_ipv6 = true
+      ipv4_bits    = 25 - local.ipv4_cidr_prefix
+      create       = true
     }
   ]
 
   single_stack_subnets = [
     {
       name      = "Postgres"
-      ipv4_bits = 24 - local.ipv4_cidr_prefix
+      ipv4_bits = 22 - local.ipv4_cidr_prefix
+      create    = true
     }
   ]
 }
@@ -76,17 +85,10 @@ resource "static_data" "static" {
   }
 }
 
-data "azurerm_app_configuration" "app_configuration" {
-  name                = "appconf${local.hub_suffix}"
+data "azurerm_virtual_network" "hub_vnet" {
+  name                = "vnet${local.hub_suffix}"
   resource_group_name = "rg${local.hub_suffix}"
   provider            = azurerm.hub
-}
-
-data "azurerm_app_configuration_key" "firewall_private_ipv4" {
-  configuration_store_id = data.azurerm_app_configuration.app_configuration.id
-  key                    = "FirewallPrivateIPv4"
-  label                  = "Hub"
-  provider               = azurerm.hub
 }
 
 resource "azurerm_resource_group" "spoke" {
@@ -105,7 +107,13 @@ resource "azurerm_virtual_network" "dual_stack" {
     var.dual_stack_ipv6_address_space
   ]
 
-  tags = merge({}, local.default_tags)
+  dns_servers = [var.firewall_private_ipv4]
+
+  tags = merge(
+    { for subnet in local.dual_stack_subnets : "${subnet.name}IPv4" => module.subnet_ipv4_dual_stack.networks[index(module.subnet_ipv4_dual_stack.networks.*.name, subnet.name)].cidr_block },
+    { for subnet in local.dual_stack_subnets : "${subnet.name}IPv6" => module.subnet_ipv6_dual_stack.networks[index(module.subnet_ipv6_dual_stack.networks.*.name, subnet.name)].cidr_block if try(local.dual_stack_subnets[index(local.dual_stack_subnets.*.name, subnet.name)].include_ipv6, false) },
+    local.default_tags
+  )
 }
 
 resource "azurerm_virtual_network" "single_stack" {
@@ -116,7 +124,12 @@ resource "azurerm_virtual_network" "single_stack" {
     var.single_stack_ipv4_address_space,
   ]
 
-  tags = merge({}, local.default_tags)
+  dns_servers = [var.firewall_private_ipv4]
+
+  tags = merge(
+    { for subnet in local.single_stack_subnets : "${subnet.name}IPv4" => module.subnet_ipv4_single_stack.networks[index(module.subnet_ipv4_single_stack.networks.*.name, subnet.name)].cidr_block },
+    local.default_tags
+  )
 }
 
 module "subnet_ipv4_single_stack" {
@@ -175,7 +188,7 @@ resource "azurerm_subnet" "single_stack" {
     prevent_destroy = false
   }
 
-  for_each = { for subnet in local.single_stack_subnets : subnet.name => subnet }
+  for_each = { for subnet in local.single_stack_subnets : subnet.name => subnet if try(subnet.create, false) }
 }
 
 resource "azurerm_subnet" "dual_stack" {
@@ -205,7 +218,7 @@ resource "azurerm_subnet" "dual_stack" {
     prevent_destroy = false
   }
 
-  for_each = { for subnet in local.dual_stack_subnets : subnet.name => subnet }
+  for_each = { for subnet in local.dual_stack_subnets : subnet.name => subnet if try(subnet.create, false) }
 }
 
 resource "azurerm_route_table" "forced_tunneling" {
@@ -217,28 +230,63 @@ resource "azurerm_route_table" "forced_tunneling" {
       name                   = "IPv4ForcedTunneling"
       address_prefix         = "0.0.0.0/0"
       next_hop_type          = "VirtualAppliance"
-      next_hop_in_ip_address = var.forced_tunneling_ip
+      next_hop_in_ip_address = var.firewall_private_ipv4
     },
     # {
     #   name                   = "IPv6ForcedTunneling"
     #   address_prefix         = "::/0"
     #   next_hop_type          = "VirtualAppliance"
-    #   next_hop_in_ip_address = "" # IPv6 Address of firewall (Need Premium Tier)
+    #   next_hop_in_ip_address = data.azurerm_app_configuration_key.firewall_private_ipv6.value
     # }
   ]
 }
 
-resource "azurerm_subnet_route_table_association" "dual_stack" {
-  route_table_id = azurerm_route_table.forced_tunneling.id
-  subnet_id      = azurerm_subnet.dual_stack[each.key].id
+resource "azurerm_virtual_network_peering" "hub_to_spoke_single_stack" {
+  name                         = "spoke-single-stack-${lower(var.environment)}"
+  resource_group_name          = "rg${local.hub_suffix}"
+  virtual_network_name         = data.azurerm_virtual_network.hub_vnet.name
+  remote_virtual_network_id    = azurerm_virtual_network.single_stack.id
+  allow_virtual_network_access = true
+  allow_forwarded_traffic      = true
+  allow_gateway_transit        = true
+  use_remote_gateways          = false
 
-  for_each = { for subnet in local.dual_stack_subnets : subnet.name => subnet if try(subnet.forced_tunneling, false) }
+  provider = azurerm.hub
 }
 
+resource "azurerm_virtual_network_peering" "hub_to_spoke_dual_stack" {
+  name                         = "spoke-dual-stack-${lower(var.environment)}"
+  resource_group_name          = "rg${local.hub_suffix}"
+  virtual_network_name         = data.azurerm_virtual_network.hub_vnet.name
+  remote_virtual_network_id    = azurerm_virtual_network.dual_stack.id
+  allow_virtual_network_access = true
+  allow_forwarded_traffic      = true
+  allow_gateway_transit        = true
+  use_remote_gateways          = false
 
-resource "azurerm_subnet_route_table_association" "single_stack" {
-  route_table_id = azurerm_route_table.forced_tunneling.id
-  subnet_id      = azurerm_subnet.single_stack[each.key].id
+  provider = azurerm.hub
+}
 
-  for_each = { for subnet in local.single_stack_subnets : subnet.name => subnet if try(subnet.forced_tunneling, false) }
+resource "azurerm_virtual_network_peering" "spoke_to_hub_single_stack" {
+  name                      = "hub"
+  resource_group_name       = azurerm_resource_group.spoke.name
+  virtual_network_name      = azurerm_virtual_network.single_stack.name
+  remote_virtual_network_id = data.azurerm_virtual_network.hub_vnet.id
+
+  allow_virtual_network_access = true
+  allow_forwarded_traffic      = true
+  allow_gateway_transit        = false
+  use_remote_gateways          = true
+}
+
+resource "azurerm_virtual_network_peering" "spoke_to_hub_dual_stack" {
+  name                      = "hub"
+  resource_group_name       = azurerm_resource_group.spoke.name
+  virtual_network_name      = azurerm_virtual_network.dual_stack.name
+  remote_virtual_network_id = data.azurerm_virtual_network.hub_vnet.id
+
+  allow_virtual_network_access = true
+  allow_forwarded_traffic      = true
+  allow_gateway_transit        = false
+  use_remote_gateways          = true
 }
