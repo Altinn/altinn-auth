@@ -105,7 +105,7 @@ module "postgres_server" {
 
 resource "azurerm_management_lock" "delete" {
   name       = "Terraform"
-  scope      = each.key
+  scope      = each.value
   lock_level = "CanNotDelete"
   notes      = "Terraform Managed Lock"
 
