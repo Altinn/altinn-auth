@@ -30,7 +30,7 @@ resource "azurerm_private_endpoint" "key_vault" {
   custom_network_interface_name = "nickv${local.suffix}"
 
   private_dns_zone_group {
-    name                 = "key-vault"
+    name                 = "privatelink.vaultcore.azure.net"
     private_dns_zone_ids = [azurerm_private_dns_zone.dns["privatelink.vaultcore.azure.net"].id]
   }
 

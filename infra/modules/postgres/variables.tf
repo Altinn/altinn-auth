@@ -1,3 +1,7 @@
+variable "name" {
+  type = string
+}
+
 variable "suffix" {
   type = string
 }
@@ -24,13 +28,14 @@ variable "tags" {
 }
 
 variable "tier" {
-  type = ""
+  type    = string
+  default = "P4"
 }
 
 variable "compute_tier" {
   type = string
   validation {
-    condition     = contains(["Burstable", "GeneralPurpose", "MemoryOptimized"], var.sku)
+    condition     = contains(["Burstable", "GeneralPurpose", "MemoryOptimized"], var.compute_tier)
     error_message = "Possible values are Burstable, GeneralPurpose and MemoryOptimized"
   }
 
@@ -42,9 +47,19 @@ variable "compute_size" {
   type = string
 }
 
+variable "backup_retention_days" {
+  type        = number
+  default     = 14
+  description = "(Optional) The backup retention days for the PostgreSQL Flexible Server. Possible values are between 7 and 35 days."
+  validation {
+    condition     = 7 <= var.backup_retention_days && var.backup_retention_days <= 35
+    error_message = "must be between 7 and 35 days, are ${var.backup_retention_days}"
+  }
+}
+
 variable "entraid_admins" {
   type = list(object({
-    object_id      = string
+    principal_id   = string
     principal_name = string
     principal_type = string
   }))

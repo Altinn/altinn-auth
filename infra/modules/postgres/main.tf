@@ -10,7 +10,7 @@ locals {
 }
 
 resource "azurerm_postgresql_flexible_server" "postgres_server" {
-  name                = "psqlsrv${var.suffix}"
+  name                = "psqlsrv${var.name}${var.suffix}"
   resource_group_name = var.resource_group_name
   location            = var.location
   version             = var.postgres_version
@@ -21,10 +21,15 @@ resource "azurerm_postgresql_flexible_server" "postgres_server" {
 
   storage_mb        = var.storage_mb
   auto_grow_enabled = true
+  storage_tier      = var.tier
+
+  administrator_login    = null
+  administrator_password = null
+  backup_retention_days  = var.backup_retention_days
 
   authentication {
     active_directory_auth_enabled = true
-    password_auth_enabled         = true
+    password_auth_enabled         = false
     tenant_id                     = data.azurerm_client_config.current.tenant_id
   }
 

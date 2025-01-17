@@ -31,7 +31,8 @@ data "azurerm_client_config" "current" {}
 
 locals {
   hub_suffix = lower("${var.organization}${var.product_name}${var.instance}hub")
-  suffix     = "${var.organization}${var.product_name}${var.instance}${var.environment}"
+  suffix     = lower("${var.organization}${var.product_name}${var.instance}${var.environment}")
+  repo       = "altinn-authorization-tmp"
 
   ipv4_cidr_prefix = tonumber(split("/", var.single_stack_ipv4_address_space)[1])
   ipv6_cidr_prefix = tonumber(split("/", var.dual_stack_ipv6_address_space)[1])
@@ -77,7 +78,7 @@ locals {
 resource "static_data" "static" {
   data = {
     api_id     = uuid()
-    created_at = timestamp()
+    created_at = formatdate("EEEE, DD-MMM-YY hh:mm:ss ZZZ", "2018-01-02T23:12:01Z")
   }
 
   lifecycle {
@@ -289,4 +290,21 @@ resource "azurerm_virtual_network_peering" "spoke_to_hub_dual_stack" {
   allow_forwarded_traffic      = true
   allow_gateway_transit        = false
   use_remote_gateways          = true
+}
+
+resource "azurerm_user_assigned_identity" "admin" {
+  name                = "mipgsqladmin${local.suffix}"
+  resource_group_name = azurerm_resource_group.spoke.name
+  location            = azurerm_resource_group.spoke.location
+  tags                = merge({}, local.default_tags)
+}
+
+resource "azurerm_federated_identity_credential" "admin" {
+  parent_id           = azurerm_user_assigned_identity.admin.id
+  resource_group_name = azurerm_resource_group.spoke.name
+
+  name     = "GitHub Action"
+  audience = ["api://AzureADTokenExchange"]
+  issuer   = "https://token.actions.githubusercontent.com"
+  subject  = "repo:Altinn/${local.repo}:environment:${var.environment}"
 }

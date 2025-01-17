@@ -18,7 +18,7 @@ jobs:
       tf_state: hub.tfstate
       working_dir: infra/deploy/hub
 
-  test:
+  test-spoke:
     name: Test
     secrets: inherit
     uses: ./.github/workflows/_ci-infra-template.yml
@@ -31,7 +31,20 @@ jobs:
       tf_state: spokes.tfstate
       working_dir: infra/deploy/spoke
 
-  staging:
+  test-register:
+    name: Register Test
+    secrets: inherit
+    uses: ./.github/workflows/_ci-infra-template.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [at21, at22, at23, at24, yt01]
+    with:
+      environment: ${{ matrix.environment }}
+      tf_state: register.tfstate
+      working_dir: infra/deploy/altinn-register
+
+  staging-spoke:
     name: Staging
     secrets: inherit
     uses: ./.github/workflows/_ci-infra-template.yml
@@ -44,7 +57,20 @@ jobs:
       tf_state: spokes.tfstate
       working_dir: infra/deploy/spoke
 
-  prod:
+  staging-register:
+    name: Register Staging
+    secrets: inherit
+    uses: ./.github/workflows/_ci-infra-template.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [tt02]
+    with:
+      environment: ${{ matrix.environment }}
+      tf_state: register.tfstate
+      working_dir: infra/deploy/altinn-register
+
+  staging-prod:
     name: Prod
     secrets: inherit
     uses: ./.github/workflows/_ci-infra-template.yml
@@ -56,3 +82,16 @@ jobs:
       environment: ${{ matrix.environment }}
       tf_state: spokes.tfstate
       working_dir: infra/deploy/spoke
+
+  prod-register:
+    name: Register Prod
+    secrets: inherit
+    uses: ./.github/workflows/_ci-infra-template.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [prod]
+    with:
+      environment: ${{ matrix.environment }}
+      tf_state: register.tfstate
+      working_dir: infra/deploy/altinn-register
