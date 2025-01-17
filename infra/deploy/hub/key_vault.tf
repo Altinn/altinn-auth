@@ -10,6 +10,10 @@ resource "azurerm_key_vault" "key_vault" {
   sku_name                      = "standard"
 
   tags = merge({}, local.default_tags)
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment

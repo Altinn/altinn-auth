@@ -43,6 +43,10 @@ resource "azurerm_firewall" "firewall" {
   }
 
   tags = merge({}, local.default_tags)
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "azurerm_firewall_policy" "firewall" {

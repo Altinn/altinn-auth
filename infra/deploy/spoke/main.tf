@@ -97,6 +97,10 @@ resource "azurerm_resource_group" "spoke" {
   location = "norwayeast"
 
   tags = merge({}, local.default_tags)
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "azurerm_virtual_network" "dual_stack" {
@@ -115,7 +119,19 @@ resource "azurerm_virtual_network" "dual_stack" {
     { for subnet in local.dual_stack_subnets : "${subnet.name}IPv6" => module.subnet_ipv6_dual_stack.networks[index(module.subnet_ipv6_dual_stack.networks.*.name, subnet.name)].cidr_block if try(local.dual_stack_subnets[index(local.dual_stack_subnets.*.name, subnet.name)].include_ipv6, false) },
     local.default_tags
   )
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
+
+resource "azurerm_management_lock" "spoke" {
+  name       = azurerm_resource_group.spoke.name
+  scope      = azurerm_resource_group.spoke.id
+  lock_level = "CanNotDelete"
+  notes      = "Terraform Management Lock"
+}
+
 
 resource "azurerm_virtual_network" "single_stack" {
   name                = "vnetss${local.suffix}"
@@ -131,6 +147,10 @@ resource "azurerm_virtual_network" "single_stack" {
     { for subnet in local.single_stack_subnets : "${subnet.name}IPv4" => module.subnet_ipv4_single_stack.networks[index(module.subnet_ipv4_single_stack.networks.*.name, subnet.name)].cidr_block },
     local.default_tags
   )
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 module "subnet_ipv4_single_stack" {
@@ -185,11 +205,12 @@ resource "azurerm_subnet" "single_stack" {
   }
 
   service_endpoints = try(each.value.service_endpoint, [])
-  lifecycle {
-    prevent_destroy = false
-  }
 
   for_each = { for subnet in local.single_stack_subnets : subnet.name => subnet if try(subnet.create, false) }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "azurerm_subnet" "dual_stack" {
@@ -215,11 +236,12 @@ resource "azurerm_subnet" "dual_stack" {
   }
 
   service_endpoints = try(each.value.service_endpoint, [])
-  lifecycle {
-    prevent_destroy = false
-  }
 
   for_each = { for subnet in local.dual_stack_subnets : subnet.name => subnet if try(subnet.create, false) }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "azurerm_route_table" "forced_tunneling" {
@@ -307,4 +329,20 @@ resource "azurerm_federated_identity_credential" "admin" {
   audience = ["api://AzureADTokenExchange"]
   issuer   = "https://token.actions.githubusercontent.com"
   subject  = "repo:Altinn/${local.repo}:environment:${var.environment}"
+}
+
+resource "azurerm_management_lock" "delete" {
+  name       = "Terraform"
+  scope      = each.value
+  lock_level = "CanNotDelete"
+  notes      = "Terraform Managed Lock"
+
+  for_each = { for lock in [
+    azurerm_virtual_network.dual_stack,
+    azurerm_virtual_network.single_stack,
+    azurerm_servicebus_namespace.service_bus,
+    azurerm_key_vault.key_vault,
+    azurerm_log_analytics_workspace.telemetry,
+    azurerm_application_insights.telemetry,
+  ] : lock.name => lock.id }
 }

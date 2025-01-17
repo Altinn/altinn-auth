@@ -156,7 +156,7 @@ resource "tls_self_signed_cert" "root" {
   set_authority_key_id = true
   set_subject_key_id   = true
 
-  validity_period_hours = 87600 # 1 years
+  validity_period_hours = 87600 # 1 year
   allowed_uses          = []
 
   subject {
@@ -181,7 +181,7 @@ resource "tls_locally_signed_cert" "client" {
   ca_cert_pem        = tls_self_signed_cert.root.cert_pem
   ca_private_key_pem = tls_private_key.root.private_key_pem
 
-  validity_period_hours = 8760 # 1 years
+  validity_period_hours = 8760 # 1 year
   allowed_uses          = ["client_auth"]
   set_subject_key_id    = true
 
