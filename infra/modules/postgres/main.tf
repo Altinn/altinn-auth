@@ -26,7 +26,6 @@ resource "azurerm_postgresql_flexible_server" "postgres_server" {
   administrator_login    = null
   administrator_password = null
   backup_retention_days  = var.backup_retention_days
-  zone                   = "1"
 
   authentication {
     active_directory_auth_enabled = true
@@ -38,6 +37,7 @@ resource "azurerm_postgresql_flexible_server" "postgres_server" {
   sku_name    = local.sku_name
 
   lifecycle {
+    ignore_changes  = [zone]
     prevent_destroy = true
   }
 
