@@ -71,6 +71,14 @@ locals {
       name      = "Postgres"
       ipv4_bits = 22 - local.ipv4_cidr_prefix
       create    = true
+      delegations = {
+        fs = {
+          name = "Microsoft.DBforPostgreSQL/flexibleServers"
+          actions = [
+            "Microsoft.Network/virtualNetworks/subnets/join/action"
+          ]
+        }
+      }
     }
   ]
 }
@@ -124,14 +132,6 @@ resource "azurerm_virtual_network" "dual_stack" {
     prevent_destroy = true
   }
 }
-
-resource "azurerm_management_lock" "spoke" {
-  name       = azurerm_resource_group.spoke.name
-  scope      = azurerm_resource_group.spoke.id
-  lock_level = "CanNotDelete"
-  notes      = "Terraform Management Lock"
-}
-
 
 resource "azurerm_virtual_network" "single_stack" {
   name                = "vnetss${local.suffix}"
