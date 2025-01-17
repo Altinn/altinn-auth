@@ -338,8 +338,6 @@ resource "azurerm_management_lock" "delete" {
   notes      = "Terraform Managed Lock"
 
   for_each = { for lock in [
-    azurerm_virtual_network.dual_stack,
-    azurerm_virtual_network.single_stack,
     azurerm_servicebus_namespace.service_bus,
     azurerm_key_vault.key_vault,
     azurerm_log_analytics_workspace.telemetry,

@@ -1,9 +1,11 @@
-variable "name" {
-  type = string
+variable "prefix" {
+  type    = string
+  default = ""
 }
 
 variable "suffix" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "resource_group_name" {

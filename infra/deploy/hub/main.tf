@@ -243,7 +243,6 @@ resource "azurerm_management_lock" "delete" {
   for_each = { for lock in [
     azurerm_public_ip_prefix.ipv4,
     azurerm_public_ip_prefix.ipv6,
-    azurerm_virtual_network.hub,
     azurerm_app_configuration.app_configuration,
     azurerm_key_vault.key_vault,
     azurerm_virtual_network_gateway.vpn,

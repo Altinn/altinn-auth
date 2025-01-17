@@ -74,7 +74,7 @@ data "azurerm_user_assigned_identity" "admin" {
 }
 
 resource "azurerm_resource_group" "register" {
-  name     = "rgregister${local.suffix}"
+  name     = "rg${local.suffix}"
   location = "norwayeast"
 
   lifecycle {
@@ -84,7 +84,6 @@ resource "azurerm_resource_group" "register" {
 
 module "postgres_server" {
   source              = "../../modules/postgres"
-  name                = "register"
   suffix              = local.suffix
   resource_group_name = azurerm_resource_group.register.name
   location            = "norwayeast"

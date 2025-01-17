@@ -10,7 +10,7 @@ locals {
 }
 
 resource "azurerm_postgresql_flexible_server" "postgres_server" {
-  name                = "psqlsrv${var.name}${var.suffix}"
+  name                = "psqlsrv${var.prefix}${var.suffix}"
   resource_group_name = var.resource_group_name
   location            = var.location
   version             = var.postgres_version
