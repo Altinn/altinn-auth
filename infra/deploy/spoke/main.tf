@@ -303,7 +303,7 @@ resource "azurerm_federated_identity_credential" "admin" {
   parent_id           = azurerm_user_assigned_identity.admin.id
   resource_group_name = azurerm_resource_group.spoke.name
 
-  name     = "GitHub Action"
+  name     = "GitHubAction"
   audience = ["api://AzureADTokenExchange"]
   issuer   = "https://token.actions.githubusercontent.com"
   subject  = "repo:Altinn/${local.repo}:environment:${var.environment}"

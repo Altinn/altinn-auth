@@ -22,7 +22,7 @@ resource "azurerm_key_vault" "key_vault" {
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment
 resource "azurerm_role_assignment" "key_vault_administrator" {
   scope                = azurerm_key_vault.key_vault.id
-  principal_id         = azurerm_user_assigned_identity.admin.id
+  principal_id         = azurerm_user_assigned_identity.admin.principal_id
   role_definition_name = "Key Vault Administrator" # https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#security
 }
 
