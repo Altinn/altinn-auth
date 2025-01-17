@@ -71,6 +71,9 @@ locals {
       name      = "Postgres"
       ipv4_bits = 22 - local.ipv4_cidr_prefix
       create    = true
+      service_endpoint = [
+        "Microsoft.Storage"
+      ]
       delegations = {
         fs = {
           name = "Microsoft.DBforPostgreSQL/flexibleServers"
