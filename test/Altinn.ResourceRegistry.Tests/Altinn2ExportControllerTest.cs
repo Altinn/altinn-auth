@@ -232,7 +232,7 @@ namespace Altinn.ResourceRegistry.Tests
 
             string responseContent = await response.Content.ReadAsStringAsync();
 
-            Assert.Equal(System.Net.HttpStatusCode.NoContent, response.StatusCode);
+            Assert.Equal(System.Net.HttpStatusCode.Created, response.StatusCode);
         }
 
         /// <summary>
@@ -286,7 +286,7 @@ namespace Altinn.ResourceRegistry.Tests
 
             string responseContent = await response.Content.ReadAsStringAsync();
 
-            Assert.Equal(System.Net.HttpStatusCode.NoContent, response.StatusCode);
+            Assert.Equal(System.Net.HttpStatusCode.Created, response.StatusCode);
         }
     }
 }
