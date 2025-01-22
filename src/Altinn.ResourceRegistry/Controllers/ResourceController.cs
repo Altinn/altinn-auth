@@ -80,9 +80,26 @@ namespace Altinn.ResourceRegistry.Controllers
         /// <returns>ServiceResource</returns>
         [HttpGet("{id}")]
         [Produces("application/json")]
-        public async Task<ServiceResource> Get(string id, CancellationToken cancellationToken)
+        public async Task<ActionResult<ServiceResource>> Get(string id, CancellationToken cancellationToken)
         {
-            return await _resourceRegistry.GetResource(id, cancellationToken);
+            ServiceResource resource = await _resourceRegistry.GetResource(id, cancellationToken);
+
+            if (resource == null && id.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX))
+            {
+                List<ServiceResource> resourceList = await _resourceRegistry.GetResourceList(includeApps: true, includeAltinn2: false, includeExpired: false, cancellationToken);
+                ServiceResource appResource = resourceList.FirstOrDefault(r => r.Identifier == id);
+                if (appResource != null)
+                {
+                    return Ok(appResource);
+                }
+            }
+
+            if (resource == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(resource);
         }
 
         /// <summary>
