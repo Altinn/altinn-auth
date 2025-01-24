@@ -38,7 +38,7 @@ namespace Altinn.Platform.Authorization.Helpers
         public static AuthorizationEvent MapAuthorizationEventFromContextRequest(XacmlContextRequest contextRequest, HttpContext context, XacmlContextResponse contextRespsonse, DateTimeOffset currentDateTime)
         {
             (string resource, string instanceId, int? resourcePartyId) = GetResourceAttributes(contextRequest);
-            (int? userId, int? partyId, string org, int? orgNumber, string? sessionId) = GetSubjectInformation(contextRequest);
+            (int? userId, int? partyId, string org, int? orgNumber, string? sessionId, string? partyUuid) = GetSubjectInformation(contextRequest);
             AuthorizationEvent authorizationEvent = new AuthorizationEvent
             {
                 SessionId = sessionId,
@@ -54,6 +54,7 @@ namespace Altinn.Platform.Authorization.Helpers
                 IpAdress = GetClientIpAddress(context),
                 ContextRequestJson = JsonSerializer.Serialize(contextRequest),
                 Decision = contextRespsonse.Results?.FirstOrDefault()?.Decision,
+                SubjectPartyUuid = partyUuid,
             };
 
             return authorizationEvent;
@@ -115,13 +116,14 @@ namespace Altinn.Platform.Authorization.Helpers
         /// </summary>
         /// <param name="request">The requestId</param>
         /// <returns></returns>
-        public static (int? UserId, int? PartyId, string Org, int? OrgNumber, string? SessionId) GetSubjectInformation(XacmlContextRequest request)
+        public static (int? UserId, int? PartyId, string Org, int? OrgNumber, string? SessionId, string? PartyUuid) GetSubjectInformation(XacmlContextRequest request)
         {
             int? userId = null;
             int? partyId = null;
             string org = string.Empty;
             int? orgNumber = null;
             string? sessionId = null;
+            string? partyUuid = null;
 
             if (request != null)
             {
@@ -153,11 +155,16 @@ namespace Altinn.Platform.Authorization.Helpers
                         {
                             sessionId = xacmlAtr.AttributeValues.First().Value;
                         }
+
+                        if (xacmlAtr.AttributeId.OriginalString.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.SystemUserIdAttribute))
+                        {
+                            partyUuid = xacmlAtr.AttributeValues.First().Value;
+                        }
                     }
                 }
-            }                
+            }
 
-            return (userId, partyId, org, orgNumber, sessionId);
+            return (userId, partyId, org, orgNumber, sessionId, partyUuid);
         }
 
         /// <summary>

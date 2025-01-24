@@ -1,0 +1,11 @@
+{
+  "resource": "app_org1_app1",
+  "operation": "read",
+  "created": "2018-05-15T02:05:00+00:00",
+  "SubjectOrgCode": "",
+  "InstanceId": "",
+  "resourcePartyId": 50005545,
+  "contextRequestJson": "{\"ReturnPolicyIdList\":false,\"CombinedDecision\":false,\"XPathVersion\":null,\"Attributes\":[{\"Id\":null,\"Content\":null,\"Attributes\":[{\"Issuer\":null,\"AttributeId\":\"urn:altinn:systemuser:uuid\",\"IncludeInResult\":false,\"AttributeValues\":[{\"Value\":\"47caea5b-a80b-4343-b1d3-31eb523a4e28\",\"DataType\":\"http:\/\/www.w3.org\/2001\/XMLSchema#string\",\"Attributes\":[],\"Elements\":[]}]}],\"Category\":\"urn:oasis:names:tc:xacml:1.0:subject-category:access-subject\"},{\"Id\":null,\"Content\":null,\"Attributes\":[{\"Issuer\":null,\"AttributeId\":\"urn:oasis:names:tc:xacml:1.0:action:action-id\",\"IncludeInResult\":false,\"AttributeValues\":[{\"Value\":\"read\",\"DataType\":\"http:\/\/www.w3.org\/2001\/XMLSchema#string\",\"Attributes\":[],\"Elements\":[]}]}],\"Category\":\"urn:oasis:names:tc:xacml:3.0:attribute-category:action\"},{\"Id\":null,\"Content\":null,\"Attributes\":[{\"Issuer\":null,\"AttributeId\":\"urn:altinn:org\",\"IncludeInResult\":false,\"AttributeValues\":[{\"Value\":\"org1\",\"DataType\":\"http:\/\/www.w3.org\/2001\/XMLSchema#string\",\"Attributes\":[],\"Elements\":[]}]},{\"Issuer\":null,\"AttributeId\":\"urn:altinn:app\",\"IncludeInResult\":false,\"AttributeValues\":[{\"Value\":\"app1\",\"DataType\":\"http:\/\/www.w3.org\/2001\/XMLSchema#string\",\"Attributes\":[],\"Elements\":[]}]},{\"Issuer\":null,\"AttributeId\":\"urn:altinn:partyid\",\"IncludeInResult\":false,\"AttributeValues\":[{\"Value\":\"50005545\",\"DataType\":\"http:\/\/www.w3.org\/2001\/XMLSchema#string\",\"Attributes\":[],\"Elements\":[]}]}],\"Category\":\"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\"}],\"RequestReferences\":[]}",
+  "Decision": "Permit",
+  "SubjectPartyUuid": "47caea5b-a80b-4343-b1d3-31eb523a4e28"
+}

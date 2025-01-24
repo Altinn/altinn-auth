@@ -95,6 +95,11 @@ namespace Altinn.Platform.Authorization.Constants
             /// SessionId Attribute match identifier
             /// </summary>
             public const string SessionIdAttribute = "urn:altinn:sessionid";
+
+            /// <summary>
+            /// SystemUserId Attribute match identifier
+            /// </summary>
+            public const string SystemUserIdAttribute = "urn:altinn:systemuser:uuid";
         }
 
         /// <summary>

@@ -394,7 +394,15 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         public async Task PDP_Decision_DelegationPolicy_AltinnAppsOrg1App1_SystemUserDelegation_Permit()
         {
             string testCase = "AltinnApps_SystemUserWithDelegation_Permit";
-            HttpClient client = GetTestClient();
+            Mock<IFeatureManager> featureManageMock = new Mock<IFeatureManager>();
+            featureManageMock
+                .Setup(m => m.IsEnabledAsync("AuditLog"))
+                .Returns(Task.FromResult(true));
+            Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            AuthorizationEvent expectedAuthorizationEvent = TestSetupUtil.GetAuthorizationEvent(testCase);
+
+            HttpClient client = GetTestClient(eventQueue.Object, featureManageMock.Object, timeProviderMock.Object);
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
             XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
 
@@ -403,6 +411,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
 
             // Assert
             AssertionUtil.AssertEqual(expected, contextResponse);
+            AssertionUtil.AssertAuthorizationEvent(eventQueue, expectedAuthorizationEvent, Times.Once());
         }
 
         [Fact]
