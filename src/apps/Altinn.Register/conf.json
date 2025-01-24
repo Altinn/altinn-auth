@@ -1,0 +1,15 @@
+{
+  "image": {},
+  "database": {
+    "prefix": "register",
+    "name": "register",
+    "schema": {
+      "register": {}
+    }
+  },
+  "infra": {
+    "terraform": {
+      "stateFile": "Altinn.Register.tfstate"
+    }
+  }
+}

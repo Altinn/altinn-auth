@@ -61,7 +61,7 @@ const configSchema = z.object({
   database: databaseSchema.optional(),
 });
 
-export type VerticalType = "app" | "lib" | "pkg";
+export type VerticalType = "app" | "lib" | "pkg" | "tool";
 
 export type ImageInfo = {
   readonly name: string;
@@ -99,6 +99,7 @@ const vertialDirs = {
   app: "src/apps",
   lib: "src/libs",
   pkg: "src/pkgs",
+  tool: "src/tools",
 };
 
 const last = (arr: string[]) => arr[arr.length - 1];
@@ -199,10 +200,12 @@ const readVertical = async (
 const apps = await globby(`${vertialDirs.app}/*`, { onlyDirectories: true });
 const libs = await globby(`${vertialDirs.lib}/*`, { onlyDirectories: true });
 const pkgs = await globby(`${vertialDirs.pkg}/*`, { onlyDirectories: true });
+const tools = await globby(`${vertialDirs.tool}/*`, { onlyDirectories: true });
 const promises = [
   ...apps.map((app) => readVertical("app", app)),
   ...libs.map((lib) => readVertical("lib", lib)),
   ...pkgs.map((pkg) => readVertical("pkg", pkg)),
+  ...tools.map((tool) => readVertical("tool", tool)),
 ];
 const verticals = await Promise.all(promises);
 
