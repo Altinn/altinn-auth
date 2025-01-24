@@ -40,6 +40,12 @@ jobs:
               args: [--frozen-lockfile]
             - args: [--global, tsx]
 
-      - name: Find all ${{ inputs.type }}
+      - name: Find all ${{ inputs.type }}s
         id: list
         run: tsx ./.github/scripts/list-verticals.mts --type ${{ inputs.type }}
+
+      - name: Display found verticals and matrix content
+        run: |
+          echo "Found verticals: ${{ steps.list.outputs.verticals }}"
+          echo "Found matrix: ${{ steps.list.outputs.matrix }}"
+
