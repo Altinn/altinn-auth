@@ -117,7 +117,7 @@ jobs:
         shell: bash
         run: |
           dotnet tool install --global dotnet-coverage
-          ./.sonar/scanner/dotnet-sonarscanner begin /k:"Authorization_${{ matrix.shortName }}" /o:"altinn" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.scanner.scanAll=false /d:sonar.coverage.exclusions="**/Migration/**" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vstest.reportsPaths="**/*.trx" /d:sonar.cs.vscoveragexml.reportsPaths="TestResults/coverage.xml"
+          ./.sonar/scanner/dotnet-sonarscanner begin /k:"Authorization_${{ matrix.shortName }}" /o:"altinn" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.scanner.scanAll=false /d:sonar.coverage.exclusions="**/Migration/**" /d:sonar.test.exclusions="test/**/*" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.vstest.reportsPaths="**/*.trx" /d:sonar.cs.vscoveragexml.reportsPaths="TestResults/coverage.xml"
 
           dotnet build --no-incremental
           dotnet coverage collect 'dotnet test --no-build --results-directory TestResults/' -f xml -o 'TestResults/coverage.xml'
