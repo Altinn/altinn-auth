@@ -223,7 +223,7 @@ resource "azurerm_role_assignment" "network_contributor" {
   principal_id         = each.value
   role_definition_name = "Network Contributor" # https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#security
 
-  for_each = toset(var.spoke_principals_ids)
+  for_each = toset(var.spoke_principal_ids)
 }
 
 resource "azurerm_role_assignment" "reader" {
@@ -231,7 +231,7 @@ resource "azurerm_role_assignment" "reader" {
   principal_id         = each.value
   role_definition_name = "Reader" # https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#security
 
-  for_each = toset(var.spoke_principals_ids)
+  for_each = toset(var.spoke_principal_ids)
 }
 
 resource "azurerm_management_lock" "delete" {

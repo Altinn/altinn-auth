@@ -14,13 +14,39 @@ resource "azurerm_app_configuration" "app_configuration" {
   tags = merge({}, local.default_tags)
 }
 
-# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment
 resource "azurerm_role_assignment" "app_configuration_data_owner" {
+  scope                = azurerm_app_configuration.app_configuration.id
+  principal_id         = each.value
+  role_definition_name = "App Configuration Data Owner" # https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#security
+
+  for_each = toset(concat(var.maintainers_principal_ids))
+}
+
+# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment
+resource "azurerm_role_assignment" "user_access_administrator" {
   scope                = azurerm_app_configuration.app_configuration.id
   principal_id         = each.value
   role_definition_name = "User Access Administrator" # https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#security
 
-  for_each = toset(var.spoke_principals_ids)
+  for_each = toset(concat(var.maintainers_principal_ids, var.spoke_principal_ids))
+}
+
+# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment
+resource "azurerm_role_assignment" "app_configuration_contributor" {
+  scope                = azurerm_app_configuration.app_configuration.id
+  principal_id         = each.value
+  role_definition_name = "App Configuration Contributor" # https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#security
+
+  for_each = toset(concat(var.developer_prod_principal_ids))
+}
+
+# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment
+resource "azurerm_role_assignment" "app_configuration_data_reader" {
+  scope                = azurerm_app_configuration.app_configuration.id
+  principal_id         = each.value
+  role_definition_name = "App Configuration Data Reader" # https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#security
+
+  for_each = toset(concat(var.developer_dev_principal_ids))
 }
 
 # Private Endpoint for Key Vault

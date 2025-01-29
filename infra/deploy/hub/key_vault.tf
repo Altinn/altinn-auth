@@ -22,7 +22,7 @@ resource "azurerm_role_assignment" "key_vault_administrator" {
   principal_id         = each.value
   role_definition_name = "Key Vault Administrator" # https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#security
 
-  for_each = toset(var.spoke_principals_ids)
+  for_each = toset(var.maintainers_principal_ids)
 }
 
 # Private Endpoint for Key Vault
