@@ -41,3 +41,7 @@ variable "developer_prod_principal_ids" {
 variable "developer_dev_principal_ids" {
   type = list(string)
 }
+
+variable "vpn_owners_principal_ids" {
+  type = list(string)
+}

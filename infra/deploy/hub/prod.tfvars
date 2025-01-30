@@ -3,7 +3,7 @@ product_name                    = "auth"
 instance                        = "001"
 single_stack_ipv4_address_space = "10.202.0.0/20"
 dual_stack_ipv4_address_space   = "10.202.16.0/20"
-dual_stack_ipv6_address_space   = "fd0a:7204:c37f::/51"
+dual_stack_ipv6_address_space   = "fd0a:7204:c37f::/56"
 client_certs = [
   "andreasisnes",
   "github",
@@ -22,4 +22,8 @@ developer_dev_principal_ids = [
 ]
 developer_prod_principal_ids = [
   "c410f062-def4-44f5-9a45-b23ddcdd57c3" # Altinn Product Authorization: Developers Prod
+]
+vpn_owners_principal_ids = [
+  "48587eaa-8f33-43ed-a0c3-108c3681e84b", # ai-prod
+  "a9585a64-20f0-4d18-aba6-9930f92b809c"  # GitHub: altinn/altinn-authorization-tmp - Prod"
 ]

@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: [at21, at22, at23, at24, yt01]
+        environment: [at22, at23, at24, yt01]
     with:
       environment: ${{ matrix.environment }}
       tf_state: spokes.tfstate
@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: [at21, at22, at23, at24, yt01]
+        environment: [at22, at23, at24, yt01]
     with:
       environment: ${{ matrix.environment }}
       tf_state: register.tfstate
