@@ -46,8 +46,9 @@ jobs:
           EOF
 
       - name: Connect to VPN
-        uses: kota65535/github-openvpn-connect-action@v2
+        uses: kota65535/github-openvpn-connect-action@v3
         with:
+          echo_config: false
           config_file: .github/openvpn.config
 
       - name: Update DNS
