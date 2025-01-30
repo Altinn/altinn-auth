@@ -24,6 +24,6 @@ developer_prod_principal_ids = [
   "c410f062-def4-44f5-9a45-b23ddcdd57c3" # Altinn Product Authorization: Developers Prod
 ]
 vpn_owners_principal_ids = [
-  "48587eaa-8f33-43ed-a0c3-108c3681e84b", # ai-prod
-  "a9585a64-20f0-4d18-aba6-9930f92b809c"  # GitHub: altinn/altinn-authorization-tmp - Prod"
+  "6eaed23e-df7f-4708-9c8e-a7f34deeadb4", # GitHub: altinn/altinn-authorization-tmp - Dev
+  "a9585a64-20f0-4d18-aba6-9930f92b809c"  # GitHub: altinn/altinn-authorization-tmp - Prod
 ]
