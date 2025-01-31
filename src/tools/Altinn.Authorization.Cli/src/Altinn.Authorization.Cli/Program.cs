@@ -1,5 +1,5 @@
 using System.CommandLine;
-using Altinn.Authorization.CLI.Database;
+using Altinn.Authorization.Cli.Database;
 using Spectre.Console;
 
 var root = new RootCommand("App");

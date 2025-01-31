@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Altinn.Authorization.CLI.Config;
+namespace Altinn.Authorization.Cli.Config;
 
 /// <summary>
 /// Represents the conf.json settings for an application under apps.

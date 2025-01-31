@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{71F9A3A4-220E-4200-9072-599E56D4BBA3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.CLI", "src\Altinn.Authorization.CLI\Altinn.Authorization.CLI.csproj", "{E007D4D5-CF6A-4833-89C5-7643B71948C6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Cli", "src\Altinn.Authorization.Cli\Altinn.Authorization.Cli.csproj", "{E007D4D5-CF6A-4833-89C5-7643B71948C6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

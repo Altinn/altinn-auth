@@ -1,7 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using System.Text.Json;
-using Altinn.Authorization.CLI.Config;
+using Altinn.Authorization.Cli.Config;
 using Azure;
 using Azure.Core;
 using Azure.Identity;
@@ -12,7 +12,7 @@ using Azure.Security.KeyVault.Secrets;
 using Npgsql;
 using Spectre.Console;
 
-namespace Altinn.Authorization.CLI.Database;
+namespace Altinn.Authorization.Cli.Database;
 
 /// <summary>
 /// Handles the initialization of PostgreSQL databases, roles, and connection strings, 

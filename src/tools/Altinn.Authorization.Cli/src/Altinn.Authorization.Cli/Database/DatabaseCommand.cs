@@ -3,7 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Azure.Identity;
 using Spectre.Console;
 
-namespace Altinn.Authorization.CLI.Database;
+namespace Altinn.Authorization.Cli.Database;
 
 /// <summary>
 /// Contains commands for managing PostgreSQL servers, such as bootstrapping basic roles
