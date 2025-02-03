@@ -2,17 +2,23 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
+		<AssemblyName>altinn-authorization</AssemblyName>
+		<PackAsTool>true</PackAsTool>
+		<ToolCommandName>$(AssemblyName)</ToolCommandName>
+		<LangVersion>13</LangVersion>
+		<Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="System.CommandLine" />
         <PackageReference Include="Azure.Identity" />
         <PackageReference Include="Azure.ResourceManager.KeyVault" />
         <PackageReference Include="Azure.ResourceManager.PostgreSql" />
         <PackageReference Include="Azure.Security.KeyVault.Secrets" />
+        <PackageReference Include="CommunityToolkit.Diagnostics" />
         <PackageReference Include="Npgsql" />
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
         <PackageReference Include="Spectre.Console" />
+        <PackageReference Include="Spectre.Console.Cli" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
     </ItemGroup>
 
 </Project>

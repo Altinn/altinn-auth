@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Altinn.Authorization.Cli.Config;
@@ -40,7 +41,7 @@ public class AppsConfig
         /// Gets or sets the schemas and their associated configuration.
         /// </summary>
         [JsonPropertyName("schema")]
-        public IDictionary<string, object> Schemas { get; set; }
+        public IDictionary<string, JsonElement> Schemas { get; set; }
     }
 
     /// <summary>

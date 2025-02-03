@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "cp AT22 register to local": {
+      "commandName": "Project",
+      "commandLineArgs": "db cp\r\n\"${REGISTER_DB_MIGRATOR_AT22}\"\r\n\"${REGISTER_DB_LOCAL}\"\r\n\"register\""
+    },
+    "export AT22 register": {
+      "commandName": "Project",
+      "commandLineArgs": "db export\r\n\"${REGISTER_DB_MIGRATOR_AT22}\"\r\nregister\r\n\"C:\\temp\\export\""
+    },
+    "bootstrap AT22 register": {
+      "commandName": "Project",
+      "commandLineArgs": "db bootstrap\r\n\"..\\..\\..\\..\\..\\..\\..\\apps\\Altinn.Register\\conf.json\"\r\n--tenant \"${AZ_TENANT_ID}\"\r\n--server-subscription \"${REGISTER_DB_SUBSCRIPTION_AT22}\"\r\n--server-resource-group \"${REGISTER_DB_RG_AT22}\"\r\n--server-name \"${REGISTER_DB_NAME_AT22}\"\r\n--kv-subscription \"${REGISTER_KV_SUBSCRIPTION_AT22}\"\r\n--kv-resource-group \"${REGISTER_KV_RG_AT22}\"\r\n--kv-name \"${REGISTER_KV_NAME_AT22}\""
+    }
+  }
+}

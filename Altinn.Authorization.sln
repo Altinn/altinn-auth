@@ -91,11 +91,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccessMgmt.Tests", "src\app
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{DE32678C-866F-4454-B927-A9571C06EDEB}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Authorization.CLI", "Altinn.Authorization.CLI", "{F8C40E97-181E-4129-88A0-951A992413AD}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Authorization.Cli", "Altinn.Authorization.Cli", "{F8C40E97-181E-4129-88A0-951A992413AD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{FC53605A-DC31-4861-8A9F-B533EC5665D8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.CLI", "src\tools\Altinn.Authorization.CLI\src\Altinn.Authorization.CLI\Altinn.Authorization.CLI.csproj", "{2D2CC929-F66B-44A1-BB6D-F736009E6F5B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Cli", "src\tools\Altinn.Authorization.Cli\src\Altinn.Authorization.Cli\Altinn.Authorization.Cli.csproj", "{2D2CC929-F66B-44A1-BB6D-F736009E6F5B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Register", "Altinn.Register", "{D86EBBC6-8803-40C6-BB66-FC1FDA8F49C4}"
 EndProject
