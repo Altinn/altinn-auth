@@ -9,5 +9,5 @@ public class AppSettingsOptions
     /// Gets or sets the labels used for app configuration.
     /// These labels help in fetching specific configuration settings.
     /// </summary>
-    public IEnumerable<string> AppConfigurationLabels { get; set; }
+    public IEnumerable<string> AppConfigurationLabels { get; set; } = [];
 }
