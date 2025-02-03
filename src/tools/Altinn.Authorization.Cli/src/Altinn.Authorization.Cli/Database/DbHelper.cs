@@ -23,6 +23,9 @@ internal sealed class DbHelper
         var connStrBuilder = new NpgsqlConnectionStringBuilder(connectionString);
         connStrBuilder.Pooling = false;
         connStrBuilder.IncludeErrorDetail = true;
+        connStrBuilder.Timeout = 600; // seconds
+        connStrBuilder.CancellationTimeout = 60 * 1000; // milliseconds
+        connStrBuilder.CommandTimeout = 600; // seconds
 
         NpgsqlDataSource? source = NpgsqlDataSource.Create(connStrBuilder);
         try
