@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Azure" />
+        <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" />
+        <PackageReference Include="Azure.Storage.Blobs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Altinn.Authorization.Host\Altinn.Authorization.Hosting.csproj" />
+    </ItemGroup>
+
+</Project>

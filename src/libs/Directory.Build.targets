@@ -1,0 +1,18 @@
+<Project>
+    <Import Project="..\Directory.Build.targets" />
+    <Choose>
+
+        <When Condition=" '$(IsLibProject)' == 'true' ">
+        </When>
+
+        <Otherwise>
+
+            <PropertyGroup>
+                <IsPublishable>false</IsPublishable>
+                <EnableSdkContainerSupport>false</EnableSdkContainerSupport>
+            </PropertyGroup>
+
+        </Otherwise>
+    </Choose>
+
+</Project>
