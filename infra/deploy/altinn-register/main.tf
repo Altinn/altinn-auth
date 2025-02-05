@@ -25,23 +25,3 @@ provider "azurerm" {
   features {
   }
 }
-
-data "azurerm_client_config" "current" {}
-
-locals {
-  environment = lower(var.environment)
-  suffix      = "register${var.organization}${var.product_name}${var.instance}${var.environment}"
-  default_tags = {
-    Component   = "Register"
-    ProductName = var.product_name
-    Environment = var.environment
-    Instance    = "001"
-    CreatedAt   = try(static_data.static.output.created_at, formatdate("EEEE, DD-MMM-YY hh:mm:ss ZZZ", "2018-01-02T23:12:01Z"))
-  }
-
-  hub_suffix              = lower("${var.organization}${var.product_name}${var.instance}hub")
-  hub_resource_group_name = lower("rg${local.hub_suffix}")
-
-  spoke_suffix              = lower("${var.organization}${var.product_name}${var.instance}${var.environment}")
-  spoke_resource_group_name = lower("rg${local.spoke_suffix}")
-}
