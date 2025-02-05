@@ -28,6 +28,9 @@ permissions:
   contents: read
   pull-requests: write
 
+env:
+  TF_VERSION: 1.10.2
+
 jobs:
   plan:
     name: Plan
@@ -46,10 +49,9 @@ jobs:
           working_directory: ${{ inputs.working_dir }}
           oidc_type: environment
           oidc_value: ${{ inputs.environment }}
-
           arm_client_id: ${{ vars.ARM_CLIENT_ID }}
           arm_subscription_id: ${{ vars.ARM_SUBSCRIPTION_ID }}
-
+          tf_version: ${{ env.TF_VERSION }}
           tf_state_name: ${{ inputs.tf_state }}
           tf_args: -var-file=${{ env.TF_VARS_FILE }} ${{ inputs.tf_args }}
           gh_token: ${{ secrets.GITHUB_TOKEN }}
@@ -75,4 +77,5 @@ jobs:
           oidc_value: ${{ inputs.environment }}
           arm_client_id: ${{ vars.ARM_CLIENT_ID }}
           arm_subscription_id: ${{ vars.ARM_SUBSCRIPTION_ID }}
+          tf_version: ${{ env.TF_VERSION }}
           tf_state_name: ${{ inputs.tf_state }}
