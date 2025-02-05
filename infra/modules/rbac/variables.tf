@@ -1,3 +1,7 @@
+variable "hub_subscription_id" {
+  type = string
+}
+
 variable "hub_suffix" {
   type = string
 }

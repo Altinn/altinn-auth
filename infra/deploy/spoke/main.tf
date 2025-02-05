@@ -21,8 +21,9 @@ provider "azurerm" {
 }
 
 provider "azurerm" {
-  alias           = "hub"
-  subscription_id = var.hub_subscription_id
+  alias               = "hub"
+  subscription_id     = var.hub_subscription_id
+  storage_use_azuread = true
   features {
   }
 }
@@ -104,6 +105,12 @@ resource "azurerm_resource_group" "spoke" {
   lifecycle {
     prevent_destroy = true
   }
+}
+
+module "app_configuration" {
+  source              = "../../modules/appsettings"
+  hub_subscription_id = var.hub_subscription_id
+  hub_suffix          = local.hub_suffix
 }
 
 resource "azurerm_virtual_network" "dual_stack" {

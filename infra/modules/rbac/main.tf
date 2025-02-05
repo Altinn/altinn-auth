@@ -1,12 +1,12 @@
-terraform {
-  required_providers {
-    azurerm = {
-      source = "hashicorp/azurerm"
-      configuration_aliases = [
-        azurerm.hub,
-      ]
-    }
+provider "azurerm" {
+  alias           = "hub"
+  subscription_id = var.hub_subscription_id
+  features {
   }
+}
+
+locals {
+  configuration_store_id = "/subscriptions/${var.hub_subscription_id}/resourceGroups/rg${var.hub_suffix}/providers/Microsoft.AppConfiguration/configurationStores/appconf${var.hub_suffix}"
 }
 
 data "azurerm_resource_group" "hub" {
@@ -18,12 +18,13 @@ data "azurerm_resource_group" "spoke" {
   name = "rg${var.spoke_suffix}"
 }
 
-data "azurerm_app_configuration" "use_app_configuration" {
-  name                = "appconf${var.hub_suffix}"
-  resource_group_name = data.azurerm_resource_group.hub.name
-  count               = var.use_app_configuration ? 1 : 0
-  provider            = azurerm.hub
-}
+// Auth issue when looking up app conf
+# data "azurerm_app_configuration" "use_app_configuration" {
+#   name                = "appconf${var.hub_suffix}"
+#   resource_group_name = data.azurerm_resource_group.hub.name
+#   count               = var.use_app_configuration ? 1 : 0
+#   provider            = azurerm.hub
+# }
 
 data "azurerm_servicebus_namespace" "use_masstransit" {
   name                = "sb${var.spoke_suffix}"
@@ -57,7 +58,7 @@ resource "azurerm_role_assignment" "use_lease" {
 # https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
 resource "azurerm_role_assignment" "use_app_configuration" {
   principal_id         = var.principal_id
-  scope                = data.azurerm_app_configuration.use_app_configuration[0].id
+  scope                = local.configuration_store_id
   count                = var.use_app_configuration ? 1 : 0
   role_definition_name = "App Configuration Data Reader"
   provider             = azurerm.hub

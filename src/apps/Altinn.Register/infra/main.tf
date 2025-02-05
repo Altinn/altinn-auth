@@ -96,26 +96,21 @@ resource "azurerm_federated_identity_credential" "aks_federation" {
 }
 
 module "rbac" {
-  source       = "../../../../infra/modules/rbac"
-  principal_id = azurerm_user_assigned_identity.register.principal_id
-  hub_suffix   = local.hub_suffix
-  spoke_suffix = local.spoke_suffix
+  source              = "../../../../infra/modules/rbac"
+  principal_id        = azurerm_user_assigned_identity.register.principal_id
+  hub_subscription_id = var.hub_subscription_id
+  hub_suffix          = local.hub_suffix
+  spoke_suffix        = local.spoke_suffix
 
   use_app_configuration = true
   use_lease             = true
   use_masstransit       = true
-
-  providers = {
-    azurerm.hub = azurerm.hub
-  }
 }
 
 module "appsettings" {
-  source     = "../../../../infra/modules/appsettings"
-  hub_suffix = local.hub_suffix
-  providers = {
-    azurerm.hub = azurerm.hub
-  }
+  source              = "../../../../infra/modules/appsettings"
+  hub_suffix          = local.hub_suffix
+  hub_subscription_id = var.hub_subscription_id
 }
 
 module "postgres_server" {
