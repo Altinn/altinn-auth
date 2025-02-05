@@ -1,7 +1,11 @@
-provider "azurerm" {
-  alias           = "hub"
-  subscription_id = var.hub_subscription_id
-  features {
+terraform {
+  required_providers {
+    azurerm = {
+      source = "hashicorp/azurerm"
+      configuration_aliases = [
+        azurerm.hub,
+      ]
+    }
   }
 }
 
@@ -56,4 +60,5 @@ resource "azurerm_role_assignment" "use_app_configuration" {
   scope                = data.azurerm_app_configuration.use_app_configuration[0].id
   count                = var.use_app_configuration ? 1 : 0
   role_definition_name = "App Configuration Data Reader"
+  provider             = azurerm.hub
 }
