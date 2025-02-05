@@ -70,23 +70,23 @@ data "azurerm_user_assigned_identity" "admin" {
   resource_group_name = local.spoke_resource_group_name
 }
 
-resource "azurerm_resource_group" "access_management" {
+resource "azurerm_resource_group" "register" {
   name     = "rg${local.suffix}"
   location = "norwayeast"
   tags     = merge({}, local.default_tags)
 }
 
-resource "azurerm_user_assigned_identity" "access_management" {
+resource "azurerm_user_assigned_identity" "register" {
   name                = "mi${local.suffix}"
-  location            = azurerm_resource_group.access_management.location
-  resource_group_name = azurerm_resource_group.access_management.name
+  location            = azurerm_resource_group.register.location
+  resource_group_name = azurerm_resource_group.register.name
   tags                = merge({}, local.default_tags)
 }
 
 resource "azurerm_federated_identity_credential" "aks_federation" {
   name                = "Aks"
-  resource_group_name = azurerm_resource_group.access_management.name
-  parent_id           = azurerm_user_assigned_identity.access_management.id
+  resource_group_name = azurerm_resource_group.register.name
+  parent_id           = azurerm_user_assigned_identity.register.id
 
   audience = ["api://AzureADTokenExchange"]
   subject  = "system:serviceaccount:${each.value.namespace}:${each.value.service_account}"
@@ -97,7 +97,7 @@ resource "azurerm_federated_identity_credential" "aks_federation" {
 
 module "rbac" {
   source       = "../../../../infra/modules/rbac"
-  principal_id = azurerm_user_assigned_identity.access_management.principal_id
+  principal_id = azurerm_user_assigned_identity.register.principal_id
   hub_suffix   = local.hub_suffix
   spoke_suffix = local.spoke_suffix
 
@@ -126,7 +126,7 @@ module "postgres_server" {
 
   subnet_id           = data.azurerm_subnet.postgres.id
   private_dns_zone_id = data.azurerm_private_dns_zone.postgres.id
-  postgres_version    = "17"
+  postgres_version    = "16"
   configurations = {
     "azure.extensions" : "HSTORE"
   }

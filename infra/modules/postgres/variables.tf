@@ -76,7 +76,7 @@ variable "entraid_admins" {
 
 variable "postgres_version" {
   type    = string
-  default = "17"
+  default = "16"
 }
 
 variable "storage_mb" {
