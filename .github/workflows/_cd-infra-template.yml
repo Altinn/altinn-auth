@@ -46,7 +46,7 @@ jobs:
           EOF
 
       - name: Connect to VPN
-        uses: kota65535/github-openvpn-connect-action@v3
+        uses: kota65535/github-openvpn-connect-action@v3.1.0
         with:
           echo_config: false
           config_file: .github/openvpn.config
@@ -99,7 +99,7 @@ jobs:
           EOF
 
       - name: Connect to VPN
-        uses: kota65535/github-openvpn-connect-action@v3
+        uses: kota65535/github-openvpn-connect-action@v3.1.0
         with:
           echo_config: false
           config_file: .github/openvpn.config
