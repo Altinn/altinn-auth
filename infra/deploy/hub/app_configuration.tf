@@ -19,7 +19,7 @@ resource "azurerm_role_assignment" "app_configuration_data_owner" {
   principal_id         = each.value
   role_definition_name = "App Configuration Data Owner" # https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#security
 
-  for_each = toset(concat(var.maintainers_principal_ids))
+  for_each = toset(concat(var.maintainers_principal_ids, var.spoke_principal_ids))
 }
 
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment

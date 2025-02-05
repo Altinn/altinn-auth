@@ -32,20 +32,6 @@ jobs:
       tf_state: spokes.tfstate
       working_dir: infra/deploy/spoke
 
-  test-register:
-    name: Register Test
-    needs: test-spoke
-    secrets: inherit
-    uses: ./.github/workflows/_cd-infra-template.yml
-    strategy:
-      fail-fast: false
-      matrix:
-        environment: [at22, at23, at24, yt01]
-    with:
-      environment: ${{ matrix.environment }}
-      tf_state: register.tfstate
-      working_dir: infra/deploy/altinn-register
-
   staging-spoke:
     name: Spoke Staging
     needs: test-spoke
@@ -60,20 +46,6 @@ jobs:
       tf_state: spokes.tfstate
       working_dir: infra/deploy/spoke
 
-  staging-register:
-    name: Register Staging
-    needs: staging-spoke
-    secrets: inherit
-    uses: ./.github/workflows/_cd-infra-template.yml
-    strategy:
-      fail-fast: false
-      matrix:
-        environment: [tt02]
-    with:
-      environment: ${{ matrix.environment }}
-      tf_state: register.tfstate
-      working_dir: infra/deploy/altinn-register
-
   prod-spoke:
     name: Spoke Prod
     needs: staging-spoke
@@ -87,17 +59,3 @@ jobs:
       environment: ${{ matrix.environment }}
       tf_state: spokes.tfstate
       working_dir: infra/deploy/spoke
-
-  prod-register:
-    name: Register Prod
-    needs: prod-spoke
-    secrets: inherit
-    uses: ./.github/workflows/_cd-infra-template.yml
-    strategy:
-      fail-fast: false
-      matrix:
-        environment: [prod]
-    with:
-      environment: ${{ matrix.environment }}
-      tf_state: register.tfstate
-      working_dir: infra/deploy/altinn-register

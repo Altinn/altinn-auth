@@ -23,7 +23,7 @@ data "azurerm_private_dns_zone" "hub_service_bus" {
 }
 
 resource "azurerm_servicebus_namespace" "service_bus" {
-  name                = "sbaltinn${local.suffix}"
+  name                = "sb${local.suffix}"
   resource_group_name = azurerm_resource_group.spoke.name
   location            = azurerm_resource_group.spoke.location
 
