@@ -24,8 +24,8 @@ data "azurerm_resource_group" "hub" {
 
 resource "azurerm_app_configuration_feature" "configuration" {
   configuration_store_id = local.configuration_store_id
-  key                    = each.key
-  name                   = each.key
+  key                    = each.value.name
+  name                   = each.value.name
   description            = each.value.description
   enabled                = false
   label                  = each.value.label
