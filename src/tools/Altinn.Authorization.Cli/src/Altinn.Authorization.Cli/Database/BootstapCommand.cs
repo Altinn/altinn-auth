@@ -59,7 +59,6 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
             await CreateDatabase(conn, config.Database.Name, cancellationToken);
             await GrantDatabasePrivileges(conn, config.Database.Name, migratorUser.RoleName, "CREATE, CONNECT", cancellationToken);
             await GrantDatabasePrivileges(conn, config.Database.Name, appUser.RoleName, "CONNECT", cancellationToken);
-            await GrantRole(conn, "azure_pg_admin", migratorUser.RoleName, cancellationToken);
 
             foreach (var (schemaName, schemaCfg) in config.Database.Schemas)
             {
@@ -232,26 +231,6 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
         catch
         {
             WriteOperationFailed($"Grant privileges '{privileges}' for role '{role}' in database.");
-            throw;
-        }
-    }
-
-    private async Task GrantRole(NpgsqlConnection conn, string fromRole, string toRole, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText =
-                /*strpsql*/$"""
-                GRANT "{fromRole}" TO "{toRole}"
-                """;
-
-            await cmd.ExecuteNonQueryAsync(cancellationToken);
-            WriteOperationSucceeded($"Grant role '{fromRole}' to role '{toRole}'.");
-        }
-        catch
-        {
-            WriteOperationFailed($"Grant role '{fromRole}' to role '{toRole}'.");
             throw;
         }
     }

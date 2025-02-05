@@ -55,3 +55,10 @@ resource "azurerm_postgresql_flexible_server_active_directory_administrator" "ad
 
   for_each = { for value in var.entraid_admins : value.principal_id => value }
 }
+
+resource "azurerm_postgresql_flexible_server_configuration" "configuration" {
+  server_id = azurerm_postgresql_flexible_server.postgres_server.id
+  name      = each.key
+  value     = each.value
+  for_each  = var.configurations
+}

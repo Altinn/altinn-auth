@@ -34,13 +34,13 @@ public static class WebApp
         var options = new AppSettingsOptions();
         configureOptions?.Invoke(options);
         builder.Services.Configure<AltinnAppSettings>(builder.Configuration);
-        var localSettings = new AltinnAppSettings(builder.Configuration);
+        var appsettings = new AltinnAppSettings(builder.Configuration);
 
-        if (localSettings?.AppConfiguration?.Endpoint != null)
+        if (appsettings?.AppConfiguration?.Endpoint != null)
         {
             builder.Configuration.AddAzureAppConfiguration(cfg =>
             {
-                cfg.Connect(localSettings.AppConfiguration.Endpoint, DefaultTokenCredential.Instance);
+                cfg.Connect(appsettings.AppConfiguration.Endpoint, DefaultTokenCredential.Instance);
                 cfg.ConfigureStartupOptions(startup =>
                 {
                     startup.Timeout = TimeSpan.FromSeconds(3);
@@ -56,14 +56,14 @@ public static class WebApp
                     refresh.Register("Sentinel", refreshAll: true);
                 });
 
-                foreach (var label in options.AppConfigurationLabels)
+                foreach (var label in options.AzureAppConfiguration.AppKeyValueLabels)
                 {
                     cfg.Select("*", label);
                 }
 
                 cfg.UseFeatureFlags(flags =>
                 {
-                    foreach (var label in options.AppConfigurationLabels)
+                    foreach (var label in options.AzureAppConfiguration.AppFeatureFlagLabels)
                     {
                         flags.Select("*", label);
                     }

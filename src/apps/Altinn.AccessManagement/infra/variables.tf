@@ -28,9 +28,9 @@ variable "hub_subscription_id" {
 }
 
 variable "aks_federation" {
-  type = object({
+  type = list(object({
     issuer_url      = string
     namespace       = string
     service_account = string
-  })
+  }))
 }

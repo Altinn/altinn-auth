@@ -1,6 +1,8 @@
+using Altinn.AccessManagement;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Integration.Register;
 using Altinn.Authorization.Integration.Register.Models;
+using Microsoft.FeatureManagement;
 
 namespace Altinn.Authorization.AccessManagement;
 
@@ -10,11 +12,13 @@ namespace Altinn.Authorization.AccessManagement;
 /// <param name="lease">Lease provider for distributed locking.</param>
 /// <param name="register">Register integration service.</param>
 /// <param name="logger">Logger for logging service activities.</param>
-public partial class RegisterHostedService(IAltinnLease lease, IAltinnRegister register, ILogger<RegisterHostedService> logger) : IHostedService, IDisposable
+/// <param name="featureManager">for reading feature flags</param>
+public partial class RegisterHostedService(IAltinnLease lease, IAltinnRegister register, ILogger<RegisterHostedService> logger, IFeatureManager featureManager) : IHostedService, IDisposable
 {
     private readonly IAltinnLease _lease = lease;
     private readonly IAltinnRegister _register = register;
     private readonly ILogger<RegisterHostedService> _logger = logger;
+    private readonly IFeatureManager _featureManager = featureManager;
     private int _executionCount = 0;
     private Timer _timer = null;
     private readonly CancellationTokenSource _stop = new();
@@ -71,8 +75,11 @@ public partial class RegisterHostedService(IAltinnLease lease, IAltinnRegister r
     /// <param name="state">Cancellation token for stopping execution.</param>
     private void SyncRegisterDispatcher(object state)
     {
-        var cancellationToken = (CancellationToken)state;
-        SyncRegister(cancellationToken).Wait();
+        if (_featureManager.IsEnabledAsync(AccessManagementFeatureFlags.SyncRegister).GetAwaiter().GetResult())
+        {
+            var cancellationToken = (CancellationToken)state;
+            SyncRegister(cancellationToken).GetAwaiter().GetResult();
+        }
     }
 
     /// <summary>
@@ -120,6 +127,10 @@ public partial class RegisterHostedService(IAltinnLease lease, IAltinnRegister r
         {
             Log.SyncError(_logger, ex);
             return;
+        }
+        finally
+        {
+            await _lease.Release(ls, default);
         }
     }
 

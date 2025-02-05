@@ -1,8 +1,6 @@
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Extensions;
-using Altinn.AccessManagement.Core.Services.Implementation;
-using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Health;
 using Altinn.AccessManagement.Integration.Configuration;
 using Altinn.AccessManagement.Integration.Extensions;
@@ -66,11 +64,17 @@ internal static class AccessManagementHost
     private static WebApplicationBuilder ConfigureHostedServices(this WebApplicationBuilder builder)
     {
         builder.Services.AddHostedService<RegisterHostedService>();
-        builder.AddAppSettingDefaults();
+        builder.AddAppSettingDefaults(opts =>
+        {
+            opts.AzureAppConfiguration = new()
+            {
+                AppFeatureFlagLabels = ["at22"]
+            };
+        });
         builder.AddAltinnLease(cgf =>
         {
             cgf.Type = AltinnLeaseType.AzureStorageAccount;
-            cgf.StorageAccount.Endpoint = new Uri("https://{blob_storage_name}.blob.core.windows.net/");
+            cgf.StorageAccount.Endpoint = new Uri("https://{storage_name}.blob.core.windows.net/");
         });
 
         builder.AddAltinnRegister(opts =>

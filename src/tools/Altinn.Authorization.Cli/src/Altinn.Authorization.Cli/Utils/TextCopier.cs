@@ -1,6 +1,4 @@
-﻿using System.Buffers;
-using System.Diagnostics.CodeAnalysis;
-using System.Threading.Channels;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace Altinn.Authorization.Cli.Utils;
 
@@ -10,25 +8,19 @@ namespace Altinn.Authorization.Cli.Utils;
 [ExcludeFromCodeCoverage]
 public sealed class TextCopier
 {
-    private const int KIBIBYTE_CHAR_COUNT = 1024 / sizeof(char);
-    private const int MIBIBYTE_CHAR_COUNT = 1024 * KIBIBYTE_CHAR_COUNT;
-
     /// <summary>
-    /// Creates a new <see cref="TextCopier"/> which uses buffers of size <paramref name="mibibyteCount"/>.
+    /// Creates a new <see cref="TextCopier"/> with a buffer of <paramref name="mibibyteCount"/> MiB.
     /// </summary>
-    /// <param name="mibibyteCount">The size of the character buffers, in MiB.</param>
+    /// <param name="mibibyteCount">The size of the character buffer, in MiB.</param>
     /// <returns>A new <see cref="TextCopier"/>.</returns>
     public static TextCopier Create(int mibibyteCount)
-    {
-        return new(mibibyteCount);
-    }
+        => new(CharBuffers.MiB(mibibyteCount));
 
-    private readonly ArrayPool<char> _pool = ArrayPool<char>.Shared;
-    private readonly int _mibibyteCount;
+    private readonly Memory<char> _buffer;
 
-    private TextCopier(int mibibyteCount)
+    private TextCopier(Memory<char> buffer)
     {
-        _mibibyteCount = mibibyteCount;
+        _buffer = buffer;
     }
 
     /// <summary>
@@ -39,77 +31,28 @@ public sealed class TextCopier
     /// <param name="writer">The <see cref="TextWriter"/> to copy to.</param>
     /// <param name="linesProgress">A <see cref="IProgress{T}"/> reporter to report lines copied to.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/>.</param>
-    public Task CopyLinesAsync<TProgress>(
+    public async Task CopyLinesAsync<TProgress>(
         TextReader reader,
         TextWriter writer,
         TProgress linesProgress,
         CancellationToken cancellationToken = default)
         where TProgress : IProgress<int>
     {
-        var channel = Channel.CreateBounded<ArraySegment<char>>(new BoundedChannelOptions(10)
+        // TODO: this can probably be sped up quite a bit by reading and writing concurrently
+        int read;
+        while (true)
         {
-            FullMode = BoundedChannelFullMode.Wait,
-            AllowSynchronousContinuations = true,
-            SingleReader = true,
-            SingleWriter = true,
-        });
-
-        var readerTask = ReadAsync(reader, _pool, channel.Writer, _mibibyteCount, cancellationToken);
-        var writerTask = WriteAsync(writer, _pool, channel.Reader, linesProgress, _mibibyteCount, cancellationToken);
-
-        return Task.WhenAll(readerTask, writerTask);
-
-        static async Task ReadAsync(TextReader reader, ArrayPool<char> pool, ChannelWriter<ArraySegment<char>> writer, int mibibyteCount, CancellationToken cancellationToken)
-        {
-            int read;
-            while (true)
+            read = await reader.ReadAsync(_buffer, cancellationToken);
+            if (read == 0)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                await writer.WaitToWriteAsync(cancellationToken);
-
-                var buffer = pool.Rent(MIBIBYTE_CHAR_COUNT * mibibyteCount);
-                read = await reader.ReadBlockAsync(buffer.AsMemory(), cancellationToken);
-                if (read == 0)
-                {
-                    // end
-                    break;
-                }
-
-                await writer.WriteAsync(new(buffer, 0, read), cancellationToken);
+                // end
+                break;
             }
 
-            writer.Complete();
-            if (reader is IAsyncDisposable asyncDisposable)
-            {
-                await asyncDisposable.DisposeAsync();
-            }
-            else
-            {
-                reader.Dispose();
-            }
-        }
-
-        static async Task WriteAsync(TextWriter writer, ArrayPool<char> pool, ChannelReader<ArraySegment<char>> reader, TProgress linesProgress, int mibibyteCount, CancellationToken cancellationToken)
-        {
-            await foreach (var result in reader.ReadAllAsync(cancellationToken))
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var newLines = result.AsSpan().Count('\n');
-                await writer.WriteAsync(result.AsMemory(), cancellationToken);
-                linesProgress.Report(newLines);
-
-                pool.Return(result.Array!);
-            }
-
-            if (writer is IAsyncDisposable asyncDisposable)
-            {
-                await asyncDisposable.DisposeAsync();
-            }
-            else
-            {
-                writer.Dispose();
-            }
+            var data = _buffer[..read];
+            var newLines = data.Span.Count('\n');
+            linesProgress.Report(newLines);
+            await writer.WriteAsync(data, cancellationToken);
         }
     }
 }

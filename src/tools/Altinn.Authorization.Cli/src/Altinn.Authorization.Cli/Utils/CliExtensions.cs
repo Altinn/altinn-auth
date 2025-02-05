@@ -61,22 +61,11 @@ public static class CliExtensions
     /// A <see cref="IProgress{T}"/> wrapper for <see cref="ProgressTask"/>.
     /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public class LineProgress(ProgressTask task)
+    public readonly struct LineProgress(ProgressTask task)
         : IProgress<int>
     {
-        private int _realCount;
-
         /// <inheritdoc/>
-        public void Report(int value)
-        {
-            Interlocked.Add(ref _realCount, value);
-            task.Increment(value);
-        }
-
-        /// <summary>
-        /// Gets the real count of reported values.
-        /// </summary>
-        public int RealCount
-            => Volatile.Read(ref _realCount);
+        public readonly void Report(int value)
+            => task.Increment(value);
     }
 }

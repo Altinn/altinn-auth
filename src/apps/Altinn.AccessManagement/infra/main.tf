@@ -10,7 +10,6 @@ terraform {
     }
   }
 
-
   backend "azurerm" {
     use_azuread_auth = true
   }
@@ -21,6 +20,7 @@ provider "azurerm" {
   }
 }
 
+
 provider "azurerm" {
   alias           = "hub"
   subscription_id = var.hub_subscription_id
@@ -29,8 +29,11 @@ provider "azurerm" {
 }
 
 locals {
-  hub_suffix = lower("${var.organization}${var.product_name}${var.name}${var.instance}hub")
-  suffix     = lower("${var.organization}${var.product_name}${var.name}${var.instance}${var.environment}")
+  hub_suffix                = lower("${var.organization}${var.product_name}${var.instance}hub")
+  hub_resource_group_name   = lower("rg${local.hub_suffix}")
+  spoke_suffix              = lower("${var.organization}${var.product_name}${var.instance}${var.environment}")
+  spoke_resource_group_name = lower("rg${local.spoke_suffix}")
+  suffix                    = lower("${var.organization}${var.product_name}${var.name}${var.instance}${var.environment}")
 
   default_tags = {
     ProductName = var.product_name
@@ -51,22 +54,6 @@ resource "static_data" "static" {
   }
 }
 
-data "azurerm_resource_group" "hub" {
-  name     = "rg${local.hub_suffix}"
-  provider = azurerm.hub
-}
-
-data "azurerm_app_configuration" "app_configuration" {
-  name                = "appconf${local.hub_suffix}"
-  resource_group_name = data.azurerm_resource_group.hub.name
-  provider            = azurerm.hub
-}
-
-data "azurerm_storage_account" "storage_account" {
-  name                = "st${local.suffix}"
-  resource_group_name = azurerm_resource_group.access_management.name
-}
-
 resource "azurerm_resource_group" "access_management" {
   name     = "rg${local.suffix}"
   location = "norwayeast"
@@ -77,21 +64,7 @@ resource "azurerm_user_assigned_identity" "access_management" {
   name                = "mi${local.suffix}"
   location            = azurerm_resource_group.access_management.location
   resource_group_name = azurerm_resource_group.access_management.name
-}
-
-# https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
-resource "azurerm_role_assignment" "app_configuration_data_reader" {
-  scope                            = data.azurerm_app_configuration.app_configuration.id
-  principal_id                     = azurerm_user_assigned_identity.access_management
-  skip_service_principal_aad_check = true
-  role_definition_name             = "App Configuration Data Reader"
-}
-
-resource "azurerm_role_assignment" "storage_blob_data_contributor" {
-  scope                            = data.azurerm_storage_account.storage_account.id
-  principal_id                     = azurerm_user_assigned_identity.access_management
-  skip_service_principal_aad_check = true
-  role_definition_name             = "Storage Blob Data Contributor"
+  tags                = merge({}, local.default_tags)
 }
 
 resource "azurerm_federated_identity_credential" "aks_federation" {
@@ -100,7 +73,34 @@ resource "azurerm_federated_identity_credential" "aks_federation" {
   parent_id           = azurerm_user_assigned_identity.access_management.id
 
   audience = ["api://AzureADTokenExchange"]
-  subject  = "system:serviceaccount:${var.aks_federation.namespace}:${var.aks_federation.service_account}"
-  issuer   = var.aks_federation.issuer_url
+  subject  = "system:serviceaccount:${each.value.namespace}:${each.value.service_account}"
+  issuer   = each.value.issuer_url
+
+  for_each = { for federation in var.aks_federation : federation.issuer_url => federation }
 }
 
+module "rbac" {
+  source              = "../../../../infra/modules/rbac"
+  principal_id        = azurerm_user_assigned_identity.access_management.principal_id
+  hub_subscription_id = var.hub_subscription_id
+  hub_suffix          = local.hub_suffix
+  spoke_suffix        = local.spoke_suffix
+
+  use_app_configuration = true
+  use_lease             = true
+  use_masstransit       = true
+}
+
+module "appsettings" {
+  source              = "../../../../infra/modules/appsettings"
+  hub_subscription_id = var.hub_subscription_id
+  hub_suffix          = local.hub_suffix
+
+  feature_flags = [
+    {
+      name        = "AccessManagement.SyncRegister"
+      description = "Specifies if the register data should streamed from register service to access management database"
+      label       = "${lower(var.environment)}_accessmanagement"
+    }
+  ]
+}

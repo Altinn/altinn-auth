@@ -34,6 +34,11 @@ variable "tier" {
   default = "P4"
 }
 
+variable "configurations" {
+  type    = map(string)
+  default = {}
+}
+
 variable "compute_tier" {
   type = string
   validation {
@@ -71,7 +76,7 @@ variable "entraid_admins" {
 
 variable "postgres_version" {
   type    = string
-  default = "16"
+  default = "17"
 }
 
 variable "storage_mb" {
