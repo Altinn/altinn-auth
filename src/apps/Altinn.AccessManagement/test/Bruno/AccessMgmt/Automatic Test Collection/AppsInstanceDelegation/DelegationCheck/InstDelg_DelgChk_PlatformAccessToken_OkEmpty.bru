@@ -25,7 +25,7 @@ script:pre-request {
   const testdata = require(`./Testdata/maskinportenschema/${bru.getEnvVar("tokenEnv")}testdata.json`);
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
   
-  const org = "platform";
+  const org = "ttd";
   bru.setVar("org",  org);
   const app = "some-random-app";
   bru.setVar("app",  app);
