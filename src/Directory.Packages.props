@@ -13,7 +13,7 @@
         <PackageVersion Include="Altinn.Common.AccessTokenClient" Version="3.0.11" />
         <PackageVersion Include="Altinn.Common.PEP" Version="4.1.2" />
         <PackageVersion Include="Altinn.Platform.Models" Version="1.6.1" />
-        <PackageVersion Include="Altinn.Platform.Storage.Interface" Version="4.0.5" />
+        <PackageVersion Include="Altinn.Platform.Storage.Interface" Version="4.0.6" />
         <PackageVersion Include="Altinn.Swashbuckle.Abstractions" Version="2.2.0" />
         <PackageVersion Include="Altinn.Swashbuckle" Version="2.2.0" />
         <PackageVersion Include="Altinn.Urn.Swashbuckle" Version="2.6.1" />
@@ -37,10 +37,10 @@
         <PackageVersion Include="DotNet.ReproducibleBuilds" Version="1.2.25" />
         <PackageVersion Include="IdentityModel" Version="7.0.0" />
         <PackageVersion Include="JWTCookieAuthentication" Version="4.0.1" />
-        <PackageVersion Include="MassTransit" Version="8.3.4" />
-        <PackageVersion Include="MassTransit.Abstractions" Version="8.3.4" />
-        <PackageVersion Include="MassTransit.Analyzers" Version="8.3.4" />
-        <PackageVersion Include="MassTransit.Azure.ServiceBus.Core" Version="8.3.4" />
+        <PackageVersion Include="MassTransit" Version="8.3.6" />
+        <PackageVersion Include="MassTransit.Abstractions" Version="8.3.6" />
+        <PackageVersion Include="MassTransit.Analyzers" Version="8.3.6" />
+        <PackageVersion Include="MassTransit.Azure.ServiceBus.Core" Version="8.3.6" />
         <PackageVersion Include="MassTransit.Extensions.DependencyInjection" Version=" 7.3.1" />
         <PackageVersion Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
         <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.1" />
