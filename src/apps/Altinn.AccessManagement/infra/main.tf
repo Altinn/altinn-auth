@@ -16,16 +16,14 @@ terraform {
 }
 
 provider "azurerm" {
-  features {
-  }
+  features {}
 }
 
 
 provider "azurerm" {
   alias           = "hub"
   subscription_id = var.hub_subscription_id
-  features {
-  }
+  features {}
 }
 
 locals {
@@ -98,7 +96,7 @@ module "appsettings" {
 
   feature_flags = [
     {
-      name        = "AccessManagement.SyncRegister"
+      name        = "AccessManagement.RegisterStream"
       description = "Specifies if the register data should streamed from register service to access management database"
       label       = "${lower(var.environment)}_accessmanagement"
     }

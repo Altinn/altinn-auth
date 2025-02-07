@@ -1,35 +1,34 @@
-variable "metadata" {
-  type = object({
-    name        = string
-    environment = string
-    instance    = string
-    suffix      = string
-    repository  = string
-  })
+variable "subnet_id" {
+  type = string
+}
+
+variable "hub_subscription_id" {
+  type = string
+}
+
+variable "hub_suffix" {
+  type = string
+}
+
+variable "suffix" {
+  type = string
+}
+
+variable "name" {
+  type = string
 }
 
 variable "resource_group_name" {
   type = string
 }
 
-variable "entraid_admins" {
-  type        = map(string)
-  default     = {}
-  description = "List of objects IDs"
-}
-
-variable "location" {
-  type = string
-}
-
-variable "tenant_id" {
-  type = string
-}
-
-variable "subnet_id" {
-  type = string
-}
-
-variable "dns_zones" {
-  type = list(string)
+variable "key_vault_roles" {
+  type = list(object(
+    {
+      operation_id         = string
+      role_definition_name = string
+      principal_id         = string
+    }
+  ))
+  default = []
 }
