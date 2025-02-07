@@ -161,7 +161,6 @@ module "appsettings" {
       key_vault_secret_id = data.azurerm_key_vault_secret.postgres_migration.versionless_id
       label               = "${var.environment}_register"
     }
-
   ]
 }
 

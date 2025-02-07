@@ -45,7 +45,7 @@ resource "azurerm_app_configuration_key" "key_value" {
   value                  = each.value.value
   provider               = azurerm.hub
 
-  for_each = { for flag in var.key_vault_reference : "${flag.key}_${flag.label}" => flag }
+  for_each = { for flag in var.key_value : "${flag.key}_${flag.label}" => flag }
 }
 
 resource "azurerm_app_configuration_key" "key_vault_reference" {
