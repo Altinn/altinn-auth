@@ -202,14 +202,14 @@ resource "null_resource" "bootstrap_database" {
   provisioner "local-exec" {
     working_dir = "../../../tools/Altinn.Authorization.Cli/src/Altinn.Authorization.Cli"
     command     = <<EOT
-      dotnet run -- database bootstrap \
-      --server-resource-group=${azurerm_resource_group.register.name} \
-      --server-subscription=${data.azurerm_client_config.current.subscription_id} \
-      --server-name=${module.postgres_server.name} \
-      --kv-resource-group=${azurerm_resource_group.register.name} \
-      --kv-subscription=${data.azurerm_client_config.current.subscription_id} \
-      --kv-name=${module.key_vault.name} \
-      --config-file=../../../../apps/Altinn.Register/conf.json
-    EOT
+      dotnet run -- db bootstrap ../../../../apps/Altinn.Register/conf.json \
+        --tenant-id=${data.azurerm_client_config.current.tenant_id} \
+        --server-resource-group=${azurerm_resource_group.register.name} \
+        --server-subscription=${data.azurerm_client_config.current.subscription_id} \
+        --server-name=${module.postgres_server.name} \
+        --kv-resource-group=${azurerm_resource_group.register.name} \
+        --kv-subscription=${data.azurerm_client_config.current.subscription_id} \
+        --kv-name=${module.key_vault.name}
+  EOT
   }
 }
