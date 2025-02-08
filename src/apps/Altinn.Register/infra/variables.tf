@@ -27,6 +27,10 @@ variable "hub_subscription_id" {
   default = "01de49cb-48ef-4494-bc9d-b9e19a90bcd5"
 }
 
+variable "deploy_app_principal_id" {
+  type = string
+}
+
 variable "aks_federation" {
   type = list(object({
     issuer_url      = string

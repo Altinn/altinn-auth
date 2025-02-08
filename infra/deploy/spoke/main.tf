@@ -308,6 +308,12 @@ resource "azurerm_user_assigned_identity" "admin" {
   tags                = merge({}, local.default_tags)
 }
 
+resource "azurerm_role_assignment" "admin_reader" {
+  principal_id         = azurerm_user_assigned_identity.admin.principal_id
+  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}"
+  role_definition_name = "Reader"
+}
+
 resource "azurerm_federated_identity_credential" "admin" {
   parent_id           = azurerm_user_assigned_identity.admin.id
   resource_group_name = azurerm_resource_group.spoke.name

@@ -75,6 +75,28 @@ jobs:
           tenant-id: ${{ vars.ARM_TENANT_ID }}
           subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
 
+      - name: Install OpenVPN
+        run: |
+          sudo apt update
+          sudo apt install -y openvpn openvpn-systemd-resolved dnsutils
+
+      - name: Dump OpenVPN Config
+        run: |
+          cat << EOF > .github/openvpn.config
+          ${{ secrets.OVPN_CONFIG }}
+          EOF
+
+      - name: Connect to VPN
+        uses: kota65535/github-openvpn-connect-action@v3.1.0
+        with:
+          echo_config: false
+          config_file: .github/openvpn.config
+
+      - name: Update DNS
+        run: |
+          sudo resolvectl dns tun0 ${{ secrets.OVPN_NAMESERVER }}
+          sudo resolvectl flush-caches
+
       - name: Terraform Apply
         uses: altinn/altinn-platform/actions/terraform/apply@main
         id: apply
@@ -86,3 +108,8 @@ jobs:
           arm_subscription_id: ${{ vars.ARM_SUBSCRIPTION_ID }}
           tf_version: ${{ env.TF_VERSION }}
           tf_state_name: ${{ inputs.tf_state }}
+
+      - name: Cleanup
+        if: always()
+        run: |
+          shred -u .github/openvpn.config || true

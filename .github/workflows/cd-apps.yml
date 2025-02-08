@@ -20,6 +20,7 @@ jobs:
       matrix: ${{ fromJson(needs.find-verticals.outputs.matrix) }}
 
     uses: ./.github/workflows/_deploy-app.yml
+    secrets: inherit
     with:
       path: ${{ matrix.path }}
       name: ${{ matrix.name }}

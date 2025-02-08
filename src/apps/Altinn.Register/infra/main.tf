@@ -122,14 +122,19 @@ module "key_vault" {
   subnet_id           = data.azurerm_subnet.default.id
   key_vault_roles = [
     {
-      operation_id         = "grant_register_app_reader"
+      operation_id         = "grant_register_app_secret_user"
       principal_id         = azurerm_user_assigned_identity.register.principal_id
-      role_definition_name = "Key Vault Reader"
+      role_definition_name = "Key Vault Secrets User"
     },
     {
-      operation_id         = "grant_pgsqlrv_app_contributor"
+      operation_id         = "grant_pgsqlrv_administrator"
       principal_id         = data.azurerm_user_assigned_identity.admin.principal_id
-      role_definition_name = "Key Vault Contributor"
+      role_definition_name = "Key Vault Administrator"
+    },
+    {
+      operation_id         = "grant_deploy_app_administrator"
+      principal_id         = var.deploy_app_principal_id
+      role_definition_name = "Key Vault Administrator"
     }
   ]
 }
@@ -199,11 +204,14 @@ resource "null_resource" "bootstrap_database" {
     kv_name               = module.key_vault.name
   }
 
+  depends_on = [module.key_vault]
+
   provisioner "local-exec" {
     working_dir = "../../../tools/Altinn.Authorization.Cli/src/Altinn.Authorization.Cli"
     command     = <<EOT
       dotnet run -- db bootstrap ../../../../apps/Altinn.Register/conf.json \
         --tenant-id=${data.azurerm_client_config.current.tenant_id} \
+        --principal-name=${data.azurerm_user_assigned_identity.admin.name} \
         --server-resource-group=${azurerm_resource_group.register.name} \
         --server-subscription=${data.azurerm_client_config.current.subscription_id} \
         --server-name=${module.postgres_server.name} \

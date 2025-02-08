@@ -56,8 +56,8 @@ jobs:
 
       - name: Update DNS
         run: |
-          sudo openvpn --config .github/openvpn.config --daemon --writepid openvpn.pid
-          echo "nameserver ${{ secrets.OVPN_NAMESERVER }}" | sudo tee /etc/resolv.conf > /dev/null
+          sudo resolvectl dns tun0 ${{ secrets.OVPN_NAMESERVER }}
+          sudo resolvectl flush-caches
 
       - name: Terraform Set TFVARS
         run: echo "TF_VARS_FILE=$(echo ${{ inputs.environment }} | tr '[:upper:]' '[:lower:]').tfvars" >> $GITHUB_ENV

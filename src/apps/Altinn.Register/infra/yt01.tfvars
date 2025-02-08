@@ -6,3 +6,4 @@ aks_federation = [
     service_account = "altinn-register"
   }
 ]
+deploy_app_principal_id = "6eaed23e-df7f-4708-9c8e-a7f34deeadb4"

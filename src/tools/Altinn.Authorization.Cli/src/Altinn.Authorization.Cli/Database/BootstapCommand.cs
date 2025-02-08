@@ -95,7 +95,6 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
     {
         try
         {
-            
             var serverSubscription = await arm.GetDefaultSubscriptionAsync(cancellationToken);
             var serverResourceGroup = await serverSubscription.GetResourceGroupAsync(settings.KeyVaultResourceGroup, cancellationToken);
             var keyVault = await serverResourceGroup.Value.GetKeyVaultAsync(settings.KeyVaultName, cancellationToken);
@@ -114,15 +113,19 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
         try
         {
             var cred = await token.GetTokenAsync(new(["https://ossrdbms-aad.database.windows.net/.default"]), cancellationToken);
-            var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(cred.Token);
-            var username = jwtToken.Claims.First(claim => claim.Type == "unique_name");
+            var username = settings.PrincipalName;
+            if (string.IsNullOrEmpty(username))
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(cred.Token);
+                username = jwtToken.Claims.First(claim => claim.Type == "unique_name" || claim.Type == "azp_name").Value;
+            }
 
             var connectionString = new NpgsqlConnectionStringBuilder()
             {
                 Host = postgres.Data.FullyQualifiedDomainName,
                 Database = "postgres",
-                Username = username.Value,
+                Username = username,
                 Password = cred.Token,
                 Port = 5432,
                 SslMode = SslMode.Require,
@@ -350,6 +353,14 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
         : BaseCommandSettings
     {
         /// <summary>
+        /// Principal name
+        /// </summary>
+        [CommandOption("--principal-name <PRINCIPAL_NAME>")]
+        [Description("Principal name of signed in principal.")]
+        [ExpandEnvironmentVariables]
+        public string? PrincipalName { get; init; }
+
+        /// <summary>
         /// Gets the tenant ID for the Azure AD application.
         /// </summary>
         [CommandOption("--tenant <TENANT_ID>")]
@@ -363,7 +374,7 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
         [Required]
         [CommandOption("--server-subscription <SUBSCRIPTION_ID>")]
         [Description("ID of subscription for the Postgres Flex server.")]
-        [ExpandEnvironmentVariables]        
+        [ExpandEnvironmentVariables]
         public required string ServerSubscriptionId { get; init; }
 
         /// <summary>
@@ -372,7 +383,7 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
         [Required]
         [CommandOption("--server-resource-group <RESOURCE_GROUP>")]
         [Description("Postgres Flex server's resource group.")]
-        [ExpandEnvironmentVariables]        
+        [ExpandEnvironmentVariables]
         public required string ServerResourceGroup { get; init; }
 
         /// <summary>
@@ -381,7 +392,7 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
         [Required]
         [CommandOption("--server-name <SERVER_NAME>")]
         [Description("Name of the Postgres Flex server.")]
-        [ExpandEnvironmentVariables]        
+        [ExpandEnvironmentVariables]
         public required string ServerName { get; init; }
 
         /// <summary>
@@ -390,7 +401,7 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
         [Required]
         [CommandOption("--kv-subscription <SUBSCRIPTION_ID>")]
         [Description("ID of subscription for the Key Vault.")]
-        [ExpandEnvironmentVariables]        
+        [ExpandEnvironmentVariables]
         public required string KeyVaultSubscriptionId { get; init; }
 
         /// <summary>
@@ -399,7 +410,7 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
         [Required]
         [CommandOption("--kv-resource-group <RESOURCE_GROUP>")]
         [Description("Key Vault's resource group.")]
-        [ExpandEnvironmentVariables]        
+        [ExpandEnvironmentVariables]
         public required string KeyVaultResourceGroup { get; init; }
 
         /// <summary>
@@ -408,7 +419,7 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
         [Required]
         [CommandOption("--kv-name <KEY_VAULT_NAME>")]
         [Description("Name of the Key Vault.")]
-        [ExpandEnvironmentVariables]        
+        [ExpandEnvironmentVariables]
         public required string KeyVaultName { get; init; }
 
         /// <summary>

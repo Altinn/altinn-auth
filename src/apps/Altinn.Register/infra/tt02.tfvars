@@ -6,3 +6,4 @@ aks_federation = [
     service_account = "altinn-register"
   }
 ]
+deploy_app_principal_id = "a9585a64-20f0-4d18-aba6-9930f92b809c" # GitHub: altinn/altinn-authorization-tmp - Prod

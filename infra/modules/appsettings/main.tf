@@ -40,9 +40,10 @@ resource "azurerm_app_configuration_feature" "configuration" {
 
 resource "azurerm_app_configuration_key" "key_value" {
   configuration_store_id = local.configuration_store_id
-  key                    = each.key
   type                   = "kv"
+  key                    = each.value.key
   value                  = each.value.value
+  label                  = each.value.label
   provider               = azurerm.hub
 
   for_each = { for flag in var.key_value : "${flag.key}_${flag.label}" => flag }
@@ -50,9 +51,10 @@ resource "azurerm_app_configuration_key" "key_value" {
 
 resource "azurerm_app_configuration_key" "key_vault_reference" {
   configuration_store_id = local.configuration_store_id
-  key                    = each.key
   type                   = "vault"
+  key                    = each.value.key
   vault_key_reference    = each.value.key_vault_secret_id
+  label                  = each.value.label
   provider               = azurerm.hub
 
   for_each = { for flag in var.key_vault_reference : "${flag.key}_${flag.label}" => flag }
