@@ -7,5 +7,4 @@
         <PackageReference Include="Altinn.Common.AccessTokenClient" />
     </ItemGroup>
 
-
 </Project>

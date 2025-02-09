@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C2EA7975-91DE-4818-AB8B-B02043532240}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Integration.Register", "src\Altinn.Authorization.Integration.Register\Altinn.Authorization.Integration.Register.csproj", "{87069B04-329E-476F-B6C8-57D5DA925A65}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Integration.Platform", "src\Altinn.Authorization.Integration.Platform\Altinn.Authorization.Integration.Platform.csproj", "{012CE811-E60D-42AE-92DC-271BCEB9B3DB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,12 +16,12 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{87069B04-329E-476F-B6C8-57D5DA925A65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{87069B04-329E-476F-B6C8-57D5DA925A65}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{87069B04-329E-476F-B6C8-57D5DA925A65}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{87069B04-329E-476F-B6C8-57D5DA925A65}.Release|Any CPU.Build.0 = Release|Any CPU
+		{012CE811-E60D-42AE-92DC-271BCEB9B3DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{012CE811-E60D-42AE-92DC-271BCEB9B3DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{012CE811-E60D-42AE-92DC-271BCEB9B3DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{012CE811-E60D-42AE-92DC-271BCEB9B3DB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{87069B04-329E-476F-B6C8-57D5DA925A65} = {C2EA7975-91DE-4818-AB8B-B02043532240}
+		{012CE811-E60D-42AE-92DC-271BCEB9B3DB} = {C2EA7975-91DE-4818-AB8B-B02043532240}
 	EndGlobalSection
 EndGlobal

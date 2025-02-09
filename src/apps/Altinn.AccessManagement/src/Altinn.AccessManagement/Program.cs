@@ -28,6 +28,4 @@ await app.RunAsync();
 /// Startup class.
 /// </summary>
 [ExcludeFromCodeCoverage]
-public sealed partial class Program
-{
-}
+public sealed partial class Program { }

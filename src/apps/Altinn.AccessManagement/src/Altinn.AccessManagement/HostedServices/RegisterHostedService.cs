@@ -1,7 +1,6 @@
 using Altinn.AccessManagement;
 using Altinn.Authorization.Host.Lease;
-using Altinn.Authorization.Integration.Register;
-using Altinn.Authorization.Integration.Register.Models;
+using Altinn.Authorization.Integration.Platform.Register;
 using Microsoft.FeatureManagement;
 
 namespace Altinn.Authorization.AccessManagement;
@@ -75,11 +74,11 @@ public partial class RegisterHostedService(IAltinnLease lease, IAltinnRegister r
     /// <param name="state">Cancellation token for stopping execution.</param>
     private void SyncRegisterDispatcher(object state)
     {
-        if (_featureManager.IsEnabledAsync(AccessManagementFeatureFlags.SyncRegister).GetAwaiter().GetResult())
-        {
-            var cancellationToken = (CancellationToken)state;
-            SyncRegister(cancellationToken).GetAwaiter().GetResult();
-        }
+        var cancellationToken = (CancellationToken)state;
+        // if (_featureManager.IsEnabledAsync(AccessManagementFeatureFlags.SyncRegister).GetAwaiter().GetResult())
+        // {
+        SyncRegister(cancellationToken).GetAwaiter().GetResult();
+        // }
     }
 
     /// <summary>
@@ -97,7 +96,7 @@ public partial class RegisterHostedService(IAltinnLease lease, IAltinnRegister r
 
         try
         {
-            await foreach (var page in await _register.Stream(ls.Data?.NextPageLink, _registerFields, cancellationToken))
+            await foreach (var page in await _register.StreamParties([], ls.Data?.NextPageLink, cancellationToken))
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
