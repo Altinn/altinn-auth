@@ -95,7 +95,7 @@ jobs:
       matrix:
         environment: [tt02]
     needs:
-      - build-deploy-terraform-test
+      - deploy-terraform-test
 
     uses: ./.github/workflows/_deploy-app-terraform.yml
     with:
