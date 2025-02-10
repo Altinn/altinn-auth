@@ -25,6 +25,12 @@ resource "azurerm_storage_account" "storage" {
   }
 }
 
+resource "azurerm_storage_container" "lease" {
+  name                  = "leases"
+  storage_account_id    = azurerm_storage_account.storage.id
+  container_access_type = "private"
+}
+
 # Private Endpoint for Key Vault
 resource "azurerm_private_endpoint" "blob" {
   name                          = "pepstblob${local.suffix}"
