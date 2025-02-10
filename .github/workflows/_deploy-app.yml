@@ -69,16 +69,50 @@ jobs:
           echo "Image: ${IMAGE}"
           echo "Tag: ${TAG}"
 
-  deploy-terraform:
-    name: Run terraform deployment
+  deploy-terraform-test:
+    name: Terraform
     if: inputs.terraform
     secrets: inherit
     strategy:
       fail-fast: false
       matrix:
-        environment: [at22, at23, at24, yt01, tt02, prod]
+        environment: [at22, at23, at24, yt01]
     needs:
       - build-push
+
+    uses: ./.github/workflows/_deploy-app-terraform.yml
+    with:
+      environment: ${{ matrix.environment }}
+      working_dir: ${{ inputs.path }}/infra
+      tf_state: ${{ inputs.terraformStateFile }}
+
+  deploy-terraform-staging:
+    name: Terraform
+    if: inputs.terraform
+    secrets: inherit
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [tt02]
+    needs:
+      - build-deploy-terraform-test
+
+    uses: ./.github/workflows/_deploy-app-terraform.yml
+    with:
+      environment: ${{ matrix.environment }}
+      working_dir: ${{ inputs.path }}/infra
+      tf_state: ${{ inputs.terraformStateFile }}
+
+  deploy-terraform-prod:
+    name: Terraform
+    if: inputs.terraform
+    secrets: inherit
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [prod]
+    needs:
+      - deploy-terraform-staging
 
     uses: ./.github/workflows/_deploy-app-terraform.yml
     with:

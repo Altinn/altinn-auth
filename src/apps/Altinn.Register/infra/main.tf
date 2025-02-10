@@ -32,7 +32,8 @@ locals {
   spoke_suffix              = lower("${var.organization}${var.product_name}${var.instance}${var.environment}")
   spoke_resource_group_name = lower("rg${local.spoke_suffix}")
   suffix                    = lower("${var.organization}${var.product_name}${var.name}${var.instance}${var.environment}")
-  conf_json                 = jsondecode(file("${path.module}/../conf.json"))
+  conf_json                 = jsondecode(local.conf_json_path)
+  conf_json_path            = "${path.module}/../conf.json"
 
   default_tags = {
     ProductName = var.product_name
@@ -202,6 +203,7 @@ resource "null_resource" "bootstrap_database" {
     kv_resource_group     = azurerm_resource_group.register.name
     kv_subscription       = data.azurerm_client_config.current.subscription_id
     kv_name               = module.key_vault.name
+    conf                  = local.conf_json.database
   }
 
   depends_on = [module.key_vault]
@@ -209,7 +211,7 @@ resource "null_resource" "bootstrap_database" {
   provisioner "local-exec" {
     working_dir = "../../../tools/Altinn.Authorization.Cli/src/Altinn.Authorization.Cli"
     command     = <<EOT
-      dotnet run -- db bootstrap ../../../../apps/Altinn.Register/conf.json \
+      dotnet run -- db bootstrap ${local.conf_json_path} \
         --tenant-id=${data.azurerm_client_config.current.tenant_id} \
         --principal-name=${data.azurerm_user_assigned_identity.admin.name} \
         --server-resource-group=${azurerm_resource_group.register.name} \

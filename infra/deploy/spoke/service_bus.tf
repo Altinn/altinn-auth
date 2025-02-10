@@ -48,7 +48,7 @@ resource "azurerm_servicebus_namespace" "service_bus" {
 
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/private_endpoint
 resource "azurerm_private_endpoint" "service_bus_private_endpoint" {
-  name                          = "pe${azurerm_servicebus_namespace.service_bus.name}"
+  name                          = "pep${azurerm_servicebus_namespace.service_bus.name}"
   resource_group_name           = azurerm_resource_group.spoke.name
   location                      = azurerm_resource_group.spoke.location
   subnet_id                     = azurerm_subnet.dual_stack["ServiceBus"].id
