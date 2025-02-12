@@ -1,7 +1,7 @@
 meta {
   name: digdir-am-k6-read
   type: http
-  seq: 2
+  seq: 1
 }
 
 get {
@@ -10,7 +10,7 @@ get {
   auth: inherit
 }
 
-query {
+params:query {
   supplierOrg: {{supplierOrg}}
   consumerOrg: {{consumerOrg}}
   scope: {{scope}}

@@ -1556,29 +1556,26 @@ namespace Altinn.AccessManagement.Tests.Controllers
         }
 
         /// <summary>
-        /// Test case: GetMaskinportenSchemaDelegations for an invalid scope format
-        /// Expected: GetMaskinportenSchemaDelegations returns badrequest
+        /// Test case: GetMaskinportenSchemaDelegations for a URN scope format
+        /// Expected: GetMaskinportenSchemaDelegations returns OK
         /// </summary>
         [Fact]
-        public async Task GetMaskinportenSchemaDelegations_Admin_InvalidScopeFormat()
+        public async Task GetMaskinportenSchemaDelegations_Admin_UrnScopeFormat()
         {
             // Arrange
             string token = PrincipalUtil.GetOrgToken("DIGDIR", "991825827", "altinn:maskinporten/delegations.admin");
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            string expected = "Is not well formatted: test invalid scope (Parameter 'scope')";
-
             // Act
             int supplierOrg = 810418672;
             int consumerOrg = 810418192;
-            string scope = "test invalid scope";
+            string scope = "altinn:maskinporten:urn:scope:test";
             HttpResponseMessage response = await _client.GetAsync($"accessmanagement/api/v1/admin/delegations/maskinportenschema/?supplierorg={supplierOrg}&consumerorg={consumerOrg}&scope={scope}");
             string responseContent = await response.Content.ReadAsStringAsync();
-            ValidationProblemDetails errorResponse = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, options);
 
             // Assert
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            Assert.Equal(expected, errorResponse.Errors["scope"][0]);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal("[]", responseContent);
         }
 
         private static List<Rule> GetExpectedRulesForUser()
