@@ -6,7 +6,7 @@ namespace Altinn.Authorization.Integration.Platform;
 /// <summary>
 /// Provides utility methods to create and modify HTTP requests.
 /// </summary>
-public static class RequestCompositor
+public static class RequestComposer
 {
     /// <summary>
     /// Creates a new HTTP request message and applies the provided actions to it.
@@ -122,6 +122,7 @@ public static class RequestCompositor
     public static Action<HttpRequestMessage> WithPlatformAccessToken(IAccessTokenGenerator accessTokenGenerator, string app, string issuer = "platform") => request =>
     {
         var token = accessTokenGenerator.GenerateAccessToken(issuer, app);
+
         if (!string.IsNullOrEmpty(token))
         {
             request.Headers.Add("PlatformAccessToken", token);

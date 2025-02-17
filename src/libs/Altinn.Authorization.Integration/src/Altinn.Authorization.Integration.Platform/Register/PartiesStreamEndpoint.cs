@@ -46,17 +46,17 @@ public partial class RegisterClient
     ];
 
     /// <inheritdoc/>
-    public async Task<IAsyncEnumerable<Paginated<PartyModel>>> StreamParties(IEnumerable<string> fields, string nextPage = null, CancellationToken cancellationToken = default)
+    public async Task<IAsyncEnumerable<PlatformResponse<PageStream<PartyModel>>>> StreamParties(IEnumerable<string> fields, string nextPage = null, CancellationToken cancellationToken = default)
     {
         IEnumerable<Action<HttpRequestMessage>> request = [
-            RequestCompositor.WithHttpVerb(HttpMethod.Get),
-            RequestCompositor.WithSetUri(Options.Value.Endpoint, "register/api/v2/parties/stream"),
-            RequestCompositor.WithSetUri(nextPage),
-            RequestCompositor.WithAppendQueryParam("fields", fields),
-            RequestCompositor.WithPlatformAccessToken(AccessTokenGenerator, "access-management")
+            RequestComposer.WithHttpVerb(HttpMethod.Get),
+            RequestComposer.WithSetUri(Options.Value.Endpoint, "/register/api/v2/internal/parties/stream"),
+            RequestComposer.WithSetUri(nextPage),
+            RequestComposer.WithAppendQueryParam("fields", fields),
+            RequestComposer.WithPlatformAccessToken(AccessTokenGenerator, "access-management")
         ];
 
-        var response = await HttpClient.SendAsync(RequestCompositor.New([.. request]), cancellationToken);
+        var response = await HttpClient.SendAsync(RequestComposer.New([.. request]), cancellationToken);
 
         return new PaginatorStream<PartyModel>(HttpClient, response, request);
     }

@@ -203,7 +203,6 @@ resource "null_resource" "bootstrap_database" {
     kv_resource_group     = azurerm_resource_group.register.name
     kv_subscription       = data.azurerm_client_config.current.subscription_id
     kv_name               = module.key_vault.name
-    conf                  = local.conf_json.database
   }
 
   depends_on = [module.key_vault]

@@ -32,5 +32,5 @@ public interface IAltinnResourceRegister
     /// <param name="nextPage">The URL of the next page of resources (if available).</param>
     /// <param name="cancellationToken">Token for cancelling the operation.</param>
     /// <returns>An asynchronous stream of paginated <see cref="ResourceUpdatedModel"/> objects.</returns>
-    Task<IAsyncEnumerable<Paginated<ResourceUpdatedModel>>> StreamResources(string nextPage = null, CancellationToken cancellationToken = default);
+    Task<IAsyncEnumerable<PlatformResponse<PageStream<ResourceUpdatedModel>>>> StreamResources(string nextPage = null, CancellationToken cancellationToken = default);
 }

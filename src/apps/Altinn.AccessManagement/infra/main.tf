@@ -96,9 +96,16 @@ module "appsettings" {
 
   feature_flags = [
     {
-      name        = "AccessManagement.RegisterStream"
+      name        = "AccessManagement.HostedServices.RegisterSync"
       description = "Specifies if the register data should streamed from register service to access management database"
       label       = "${lower(var.environment)}_accessmanagement"
+      value       = false
+    },
+    {
+      name        = "AccessManagement.Controller.AuthorizedParties"
+      description = "Specifies if the controller AuthorizedParties should be enabled"
+      label       = "${lower(var.environment)}_accessmanagement"
+      value       = true
     }
   ]
 }

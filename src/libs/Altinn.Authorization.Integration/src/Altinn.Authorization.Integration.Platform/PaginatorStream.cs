@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 
 namespace Altinn.Authorization.Integration.Platform;
@@ -10,7 +9,7 @@ namespace Altinn.Authorization.Integration.Platform;
 /// <param name="httpClient">The HTTP client to make requests.</param>
 /// <param name="currentResponse">The current HTTP response message.</param>
 /// <param name="newRequest">The request actions for fetching the next page.</param>
-public class PaginatorStream<T>(HttpClient httpClient, HttpResponseMessage currentResponse, IEnumerable<Action<HttpRequestMessage>> newRequest) : IAsyncEnumerable<Paginated<T>>
+public class PaginatorStream<T>(HttpClient httpClient, HttpResponseMessage currentResponse, IEnumerable<Action<HttpRequestMessage>> newRequest) : IAsyncEnumerable<PlatformResponse<PageStream<T>>>
     where T : class, new()
 {
     private HttpClient HttpClient { get; } = httpClient;
@@ -20,31 +19,33 @@ public class PaginatorStream<T>(HttpClient httpClient, HttpResponseMessage curre
     private IEnumerable<Action<HttpRequestMessage>> NewRequest { get; } = newRequest;
 
     /// <inheritdoc/>
-    public async IAsyncEnumerator<Paginated<T>> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+    public async IAsyncEnumerator<PlatformResponse<PageStream<T>>> GetAsyncEnumerator(CancellationToken cancellationToken = default)
     {
-        var pageResponse = CurrentResponse;
+        var responseIterator = CurrentResponse;
         while (!cancellationToken.IsCancellationRequested)
         {
-            if (pageResponse.IsSuccessStatusCode)
+            var response = ResponseComposer.Handle<PageStream<T>>(
+                responseIterator,
+                ResponseComposer.DeserializeResponseOnSuccess,
+                ResponseComposer.DeserializeProblemDetailsOnUnsuccessStatusCode
+            );
+
+            if (response.IsSuccessful)
             {
-                var content = await pageResponse.Content.ReadFromJsonAsync<Paginated<T>>(cancellationToken);
+                var nextPage = FetchNextPage(response.Content, cancellationToken);
+                yield return response;
 
-                var nextPage = FetchNextPage(content, cancellationToken);
+                responseIterator.Dispose();
+                responseIterator = await nextPage;
 
-                if (content.Items.Any())
-                {
-                    yield return content;
-                }
-
-                pageResponse.Dispose();
-                pageResponse = await nextPage;
-                if (pageResponse == null)
+                if (responseIterator == null)
                 {
                     yield break;
                 }
             }
             else
             {
+                yield return response;
                 yield break;
             }
         }
@@ -56,65 +57,75 @@ public class PaginatorStream<T>(HttpClient httpClient, HttpResponseMessage curre
     /// <param name="content">Current page content.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The next HTTP response message.</returns>
-    private async Task<HttpResponseMessage> FetchNextPage(Paginated<T> content, CancellationToken cancellationToken = default)
+    private async Task<HttpResponseMessage> FetchNextPage(PageStream<T> content, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(content.Links.Next))
         {
             return null;
         }
 
-        var request = NewRequest.Append(RequestCompositor.WithSetUri(content.Links.Next));
-        return await HttpClient.SendAsync(RequestCompositor.New([.. request]), cancellationToken);
+        var request = NewRequest.Append(RequestComposer.WithSetUri(content.Links.Next));
+        return await HttpClient.SendAsync(RequestComposer.New([.. request]), cancellationToken);
     }
 }
 
 /// <summary>
-/// Represents a stream of paginated items.
+/// Represents a paginated stream of data with associated metadata and navigation links.
 /// </summary>
-/// <typeparam name="T">The type of items in the stream.</typeparam>
-/// <param name="Links">Pagination links.</param>
-/// <param name="Stats">Stream statistics.</param>
-/// <param name="Items">The collection of items.</param>
-public record ItemStream<T>(
-    PaginatedLinks Links,
-    ItemStreamStats Stats,
-    IEnumerable<T> Items)
-    : Paginated<T>(Links, Items);
+/// <typeparam name="T">The type of data contained in the stream.</typeparam>
+public class PageStream<T>
+{
+    /// <summary>
+    /// Gets or sets the statistics related to the pagination of the stream.
+    /// </summary>
+    [JsonPropertyName("stats")]
+    public StatsStream Stats { get; set; }
 
-/// <summary>
-/// Represents item stream statistics.
-/// </summary>
-/// <param name="PageStart">The index of the first item on the page.</param>
-/// <param name="PageEnd">The index of the last item on the page.</param>
-/// <param name="SequenceMax">The highest item index in the database.</param>
-public record ItemStreamStats(
-    ulong PageStart,
-    ulong PageEnd,
-    ulong SequenceMax);
+    /// <summary>
+    /// Gets or sets the navigation links for the paginated stream.
+    /// </summary>
+    [JsonPropertyName("links")]
+    public LinksStream Links { get; set; }
 
-/// <summary>
-/// Represents a paginated list of items.
-/// </summary>
-/// <typeparam name="T">The type of items.</typeparam>
-/// <param name="Links">Pagination links.</param>
-/// <param name="Items">The list of items.</param>
-public record Paginated<T>(
-    PaginatedLinks Links,
-    IEnumerable<T> Items)
-    : ListObject<T>(Items);
+    /// <summary>
+    /// Gets or sets the collection of data items in the current page of the stream.
+    /// </summary>
+    [JsonPropertyName("data")]
+    public IEnumerable<T> Data { get; set; }
 
-/// <summary>
-/// Represents pagination links.
-/// </summary>
-/// <param name="Next">The URL to the next page of items (if available).</param>
-public record PaginatedLinks(
-    string Next);
+    /// <summary>
+    /// Represents the navigation links for the paginated stream.
+    /// </summary>
+    public class LinksStream
+    {
+        /// <summary>
+        /// Gets or sets the URL to the next page in the stream.
+        /// </summary>
+        [JsonPropertyName("next")]
+        public string Next { get; set; }
+    }
 
-/// <summary>
-/// Represents a generic list object.
-/// </summary>
-/// <typeparam name="T">The type of items.</typeparam>
-/// <param name="Items">The list of items.</param>
-public record ListObject<T>(
-    [property: JsonPropertyName("data")]
-    IEnumerable<T> Items);
+    /// <summary>
+    /// Represents statistical information about the paginated stream.
+    /// </summary>
+    public class StatsStream
+    {
+        /// <summary>
+        /// Gets or sets the starting position of the current page in the stream.
+        /// </summary>
+        [JsonPropertyName("pageStart")]
+        public ulong PageStart { get; set; }
+
+        /// <summary>
+        /// Gets or sets the ending position of the current page in the stream.
+        /// </summary>
+        [JsonPropertyName("pageEnd")]
+        public ulong PageEnd { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum sequence value available in the stream.
+        /// </summary>
+        [JsonPropertyName("sequenceMax")]
+        public ulong SequenceMax { get; set; }
+    }
+}

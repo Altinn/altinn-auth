@@ -9,6 +9,7 @@ variable "hub_suffix" {
 variable "feature_flags" {
   type = list(object(
     {
+      value       = optional(bool, false)
       name        = string
       label       = string
       description = string

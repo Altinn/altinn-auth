@@ -37,7 +37,7 @@ public interface IAltinnRegister
     /// <param name="nextPage">The URL of the next page, if paginated.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>An asynchronous enumerable of paginated <see cref="PartyModel"/> items.</returns>
-    Task<IAsyncEnumerable<Paginated<PartyModel>>> StreamParties(IEnumerable<string> fields, string nextPage = null, CancellationToken cancellationToken = default);
+    Task<IAsyncEnumerable<PlatformResponse<PageStream<PartyModel>>>> StreamParties(IEnumerable<string> fields, string nextPage = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Streams a paginated list of roles from the Altinn Register service.
@@ -46,5 +46,5 @@ public interface IAltinnRegister
     /// <param name="nextPage">The URL of the next page, if paginated.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>An asynchronous enumerable of paginated <see cref="PartyModel"/> items.</returns>
-    Task<IAsyncEnumerable<Paginated<RoleModel>>> StreamRoles(IEnumerable<string> fields, string nextPage = null, CancellationToken cancellationToken = default);
+    Task<IAsyncEnumerable<PlatformResponse<PageStream<RoleModel>>>> StreamRoles(IEnumerable<string> fields, string nextPage = null, CancellationToken cancellationToken = default);
 }

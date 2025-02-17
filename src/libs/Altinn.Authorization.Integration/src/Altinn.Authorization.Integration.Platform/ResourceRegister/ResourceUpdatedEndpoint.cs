@@ -8,16 +8,16 @@ namespace Altinn.Authorization.Integration.Platform.ResourceRegister;
 public partial class ResourceRegisterClient
 {
     /// <inheritdoc/>
-    public async Task<IAsyncEnumerable<Paginated<ResourceUpdatedModel>>> StreamResources(string nextPage = null, CancellationToken cancellationToken = default)
+    public async Task<IAsyncEnumerable<PlatformResponse<PageStream<ResourceUpdatedModel>>>> StreamResources(string nextPage = null, CancellationToken cancellationToken = default)
     {
         List<Action<HttpRequestMessage>> request = [
-            RequestCompositor.WithHttpVerb(HttpMethod.Get),
-            RequestCompositor.WithSetUri(Options.Value.Endpoint, "resourceregistry/api/v1/resource/updated"),
-            RequestCompositor.WithSetUri(nextPage),
-            RequestCompositor.WithAppendQueryParam("limit", 1000),
+            RequestComposer.WithHttpVerb(HttpMethod.Get),
+            RequestComposer.WithSetUri(Options.Value.Endpoint, "resourceregistry/api/v1/resource/updated"),
+            RequestComposer.WithSetUri(nextPage),
+            RequestComposer.WithAppendQueryParam("limit", 1000),
         ];
 
-        var response = await HttpClient.SendAsync(RequestCompositor.New([.. request]), cancellationToken);
+        var response = await HttpClient.SendAsync(RequestComposer.New([.. request]), cancellationToken);
 
         return new PaginatorStream<ResourceUpdatedModel>(HttpClient, response, request);
     }

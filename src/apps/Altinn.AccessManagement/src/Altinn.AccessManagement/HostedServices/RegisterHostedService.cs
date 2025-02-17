@@ -1,3 +1,4 @@
+using System.Net;
 using Altinn.AccessManagement;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Integration.Platform.Register;
@@ -103,22 +104,24 @@ public partial class RegisterHostedService(IAltinnLease lease, IAltinnRegister r
                     return;
                 }
 
-                foreach (var item in page.Items)
+                if (!page.IsSuccessful)
+                {
+                    Log.ResponseError(_logger, page.StatusCode);
+                }
+
+                foreach (var item in page.Content.Data)
                 {
                     Interlocked.Increment(ref _executionCount);
                     Log.Party(_logger, item.PartyUuid, _executionCount);
                     await WriteToDb(item);
                 }
 
-                if (!string.IsNullOrEmpty(page.Links.Next))
-                {
-                    await _lease.Put(ls, new() { NextPageLink = page.Links.Next }, cancellationToken);
-                }
-                else
+                if (string.IsNullOrEmpty(page?.Content?.Links?.Next))
                 {
                     return;
                 }
 
+                await _lease.Put(ls, new() { NextPageLink = page.Content.Links.Next }, cancellationToken);
                 await _lease.RefreshLease(ls, cancellationToken);
             }
         }
@@ -192,6 +195,9 @@ public partial class RegisterHostedService(IAltinnLease lease, IAltinnRegister r
 
     private static partial class Log
     {
+        [LoggerMessage(EventId = 9, Level = LogLevel.Information, Message = "Error occured while fetching data from register, got {statusCode}")]
+        internal static partial void ResponseError(ILogger logger, HttpStatusCode statusCode);
+
         [LoggerMessage(EventId = 0, Level = LogLevel.Information, Message = "Processing party with uuid {partyUuid} from register. Count {count}")]
         internal static partial void Party(ILogger logger, string partyUuid, int count);
 

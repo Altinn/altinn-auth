@@ -89,7 +89,6 @@ internal static class AccessManagementHost
         builder.AddAltinnLease(cgf =>
         {
             cgf.Type = AltinnLeaseType.InMemory;
-
             // cgf.StorageAccount.Endpoint = new Uri("https://{storage_name}.blob.core.windows.net/");
         });
 

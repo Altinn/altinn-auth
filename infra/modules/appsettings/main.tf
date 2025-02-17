@@ -14,7 +14,6 @@ data "azurerm_resource_group" "hub" {
   provider = azurerm.hub
 }
 
-
 // Auth issue when looking up app conf
 # data "azurerm_app_configuration" "app_configuration" {
 #   name                = "appconf${var.hub_suffix}"
@@ -27,7 +26,7 @@ resource "azurerm_app_configuration_feature" "configuration" {
   key                    = each.value.name
   name                   = each.value.name
   description            = each.value.description
-  enabled                = false
+  enabled                = each.value.value
   label                  = each.value.label
 
   provider = azurerm.hub
