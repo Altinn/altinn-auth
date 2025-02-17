@@ -1,8 +1,11 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
-using Altinn.Authorization.Cli.Database;
 using Spectre.Console;
 using Spectre.Console.Cli;
+
+using Database = Altinn.Authorization.Cli.Database;
+using Register = Altinn.Authorization.Cli.Register;
+using ServiceBus=Altinn.Authorization.Cli.ServiceBus;
 
 using var cancellationTokenSource = new CancellationTokenSource();
 using var sigInt = PosixSignalRegistration.Create(PosixSignal.SIGINT, OnSignal);
@@ -10,7 +13,6 @@ using var sigTerm = PosixSignalRegistration.Create(PosixSignal.SIGTERM, OnSignal
 using var sigQuit = PosixSignalRegistration.Create(PosixSignal.SIGQUIT, OnSignal);
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
-//AnsiConsole.Console.Profile.Capabilities.Unicode = true;
 
 var app = new CommandApp();
 
@@ -18,12 +20,26 @@ app.Configure(config =>
 {
     config.PropagateExceptions();
     config.Settings.Registrar.RegisterInstance(cancellationTokenSource.Token);
+    
     config.AddBranch("db", db =>
     {
-        db.AddCommand<ExportDatabaseCommand>("export");
-        db.AddCommand<CopyCommand>("cp");
-        db.AddCommand<CredentialsCommand>("cred");
-        db.AddCommand<BootstapCommand>("bootstrap");
+        db.SetDescription("Commands for working with databases.");
+        db.AddCommand<Database.ExportDatabaseCommand>("export");
+        db.AddCommand<Database.CopyCommand>("cp");
+        db.AddCommand<Database.CredentialsCommand>("cred");
+        db.AddCommand<Database.BootstapCommand>("bootstrap");
+    });
+    
+    config.AddBranch("sb", sb =>
+    {
+        sb.SetDescription("Commands for working with service bus.");
+        sb.AddCommand<ServiceBus.RetryCommand>("retry");
+    });
+
+    config.AddBranch("register", register =>
+    {
+        register.SetDescription("Commands for working with altinn-register.");
+        register.AddCommand<Register.RetryA2ImportsCommand>("retry");
     });
 });
 

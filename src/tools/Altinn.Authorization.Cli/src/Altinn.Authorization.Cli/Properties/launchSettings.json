@@ -11,6 +11,14 @@
     "bootstrap AT22 register": {
       "commandName": "Project",
       "commandLineArgs": "db bootstrap\r\n\"..\\..\\..\\..\\..\\..\\..\\apps\\Altinn.Register\\conf.json\"\r\n--tenant \"${AZ_TENANT_ID}\"\r\n--server-subscription \"${REGISTER_DB_SUBSCRIPTION_AT22}\"\r\n--server-resource-group \"${REGISTER_DB_RG_AT22}\"\r\n--server-name \"${REGISTER_DB_NAME_AT22}\"\r\n--kv-subscription \"${REGISTER_KV_SUBSCRIPTION_AT22}\"\r\n--kv-resource-group \"${REGISTER_KV_RG_AT22}\"\r\n--kv-name \"${REGISTER_KV_NAME_AT22}\""
+    },
+    "retry AT22 queues": {
+      "commandName": "Project",
+      "commandLineArgs": "sb retry\r\n\"${REGISTER_SB_AT22}\""
+    },
+    "retry AT22 register import": {
+      "commandName": "Project",
+      "commandLineArgs": "register retry\r\n\"${REGISTER_SB_AT22}\""
     }
   }
 }

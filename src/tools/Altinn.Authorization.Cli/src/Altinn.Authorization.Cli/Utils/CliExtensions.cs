@@ -33,10 +33,49 @@ public static class CliExtensions
     /// <summary>
     /// Logs a message if the task fails.
     /// </summary>
+    /// <typeparam name="T">The task type.</typeparam>
+    /// <param name="task">The task.</param>
+    /// <param name="message">The error message.</param>
+    /// <returns>A wrapped task.</returns>
+    public static async Task<T> LogOnFailure<T>(this ValueTask<T> task, string message)
+    {
+        try
+        {
+            return await task;
+        }
+        catch
+        {
+            AnsiConsole.MarkupLine(message);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Logs a message if the task fails.
+    /// </summary>
     /// <param name="task">The task.</param>
     /// <param name="message">The error message.</param>
     /// <returns>A wrapped task.</returns>
     public static async Task LogOnFailure(this Task task, string message)
+    {
+        try
+        {
+            await task;
+        }
+        catch
+        {
+            AnsiConsole.MarkupLine(message);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Logs a message if the task fails.
+    /// </summary>
+    /// <param name="task">The task.</param>
+    /// <param name="message">The error message.</param>
+    /// <returns>A wrapped task.</returns>
+    public static async Task LogOnFailure(this ValueTask task, string message)
     {
         try
         {
