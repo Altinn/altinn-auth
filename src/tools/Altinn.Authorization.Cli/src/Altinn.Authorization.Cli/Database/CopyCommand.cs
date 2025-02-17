@@ -1,5 +1,8 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Immutable;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading.Channels;
 using Altinn.Authorization.Cli.Database.Metadata;
 using Altinn.Authorization.Cli.Database.Prompt;
 using Altinn.Authorization.Cli.Utils;
@@ -35,6 +38,9 @@ public sealed class CopyCommand(CancellationToken cancellationToken)
         var tables = selected.Tables;
         var sequences = selected.Sequences;
 
+        using var dir = TempDir.Create(deleteOnDispose: !Debugger.IsAttached);
+        AnsiConsole.MarkupLineInterpolated($"Temporary directory: [yellow]{dir.DirPath}[/]");
+
         await AnsiConsole.Progress()
             .AutoClear(false)
             .Columns([
@@ -45,67 +51,114 @@ public sealed class CopyCommand(CancellationToken cancellationToken)
             ])
             .StartAsync(async (ctx) =>
             {
+                var plan = CopyPlan.Plan(ctx, tables, sequences, settings);
+
                 await target.BeginTransaction(cancellationToken);
-                if (!settings.NoTruncate)
+                if (plan.Truncate is { } truncateTask)
                 {
-                    var truncTask = ctx.AddTask("Truncating target tables", autoStart: true, maxValue: tables.Length);
-
-                    foreach (var table in tables.AsEnumerable().Reverse())
-                    {
-                        await TruncateTable(target, table, cancellationToken)
-                            .LogOnFailure($"[bold red]Failed to truncate table \"{table.Schema}\".\"{table.Name}\"[/]");
-                        truncTask.Increment(1);
-                        ctx.Refresh();
-                    }
-
-                    truncTask.Value = truncTask.MaxValue;
-                    truncTask.StopTask();
+                    await TruncateTables(target, truncateTask, tables, cancellationToken);
                     ctx.Refresh();
                 }
 
-                var copier = TextCopier.Create(mibibyteCount: 10);
-                foreach (var table in tables)
+                await CopyTables(source, target, plan.Tables, dir, cancellationToken);
+                ctx.Refresh();
+
+                if (plan.Sequences is { } sequencesTask)
                 {
-                    if (table.EstimatedTableRows < 0)
-                    {
-                        // skip tables that are unallocated on the source
-                        continue;
-                    }
-
-                    var copyTask = ctx.AddTask($"""Copy table "[yellow]{table.Name}[/]" """.TrimEnd(), autoStart: true, maxValue: table.EstimatedTableRows);
-                    var colsString = string.Join(',', table.Columns.Select(c => $"\"{c.Name}\""));
-                    var copyFrom = /*strpsql*/$"""COPY "{table.Schema}"."{table.Name}" ({colsString}) FROM STDIN""";
-                    var copyTo = /*strpsql*/$"""COPY "{table.Schema}"."{table.Name}" ({colsString}) TO STDOUT""";
-
-                    using var reader = await source.BeginTextExport(copyTo, cancellationToken);
-                    await using var writer = await target.BeginTextImport(copyFrom, cancellationToken);
-                    await copier.CopyLinesAsync(reader, writer, copyTask.AsLineProgress(), cancellationToken);
-
-                    copyTask.Value = copyTask.MaxValue;
-                    copyTask.StopTask();
-                    ctx.Refresh();
-                }
-
-                if (sequences.Length > 0)
-                {
-                    var seqTask = ctx.AddTask("Updating target sequences", autoStart: true, maxValue: sequences.Length);
-                    foreach (var seq in sequences)
-                    {
-                        await UpdateSequence(target, seq, cancellationToken)
-                            .LogOnFailure($"[bold red]Failed to update sequence \"{seq.Schema}\".\"{seq.Name}\"[/]");
-                        seqTask.Increment(1);
-                        ctx.Refresh();
-                    }
-
-                    seqTask.Value = seqTask.MaxValue;
-                    seqTask.StopTask();
+                    await UpdateSequences(target, sequencesTask, sequences, cancellationToken);
                     ctx.Refresh();
                 }
 
                 await target.Commit(cancellationToken);
             });
 
+        dir.Delete();
         return 0;
+    }
+
+    private async Task CopyTables(DbHelper source, DbHelper target, ImmutableArray<TableTask> tables, TempDir dir, CancellationToken cancellationToken)
+    {
+        var channel = Channel.CreateUnbounded<TableTask>(new UnboundedChannelOptions()
+        {
+            SingleReader = true,
+            SingleWriter = true,
+            AllowSynchronousContinuations = true,
+        });
+
+        var exporterTask = Task.Run(() => ExportTables(source, tables, channel.Writer, dir, cancellationToken), cancellationToken);
+        var importerTask = Task.Run(() => ImportTables(target, channel.Reader, dir, cancellationToken), cancellationToken);
+
+        await Task.WhenAll(exporterTask, importerTask);
+
+        static async Task ExportTables(DbHelper db, ImmutableArray<TableTask> tables, ChannelWriter<TableTask> writer, TempDir dir, CancellationToken cancellationToken)
+        {
+            var copier = TextCopier.Create(10);
+
+            try
+            {
+                foreach (var table in tables)
+                {
+                    await ExportTable(db, table, copier, dir, cancellationToken);
+                    await writer.WriteAsync(table, cancellationToken);
+                }
+            }
+            catch (Exception e)
+            {
+                writer.TryComplete(e);
+                throw;
+            }
+            finally
+            {
+                writer.TryComplete();
+            }
+        }
+
+        static async Task ExportTable(DbHelper db, TableTask table, TextCopier copier, TempDir dir, CancellationToken cancellationToken)
+        {
+            using var _ = table.ExportTask.Run();
+            using var reader = await db.BeginTextExport(table.ExportSql, cancellationToken);
+            await using var writer = dir.CreateText(table.FileName);
+
+            await copier.CopyLinesAsync(reader, writer, table, cancellationToken);
+            table.ExportTask.MaxValue = table.ExportedRows;
+            table.ExportTask.Value = table.ExportedRows;
+        }
+
+        static async Task ImportTables(DbHelper db, ChannelReader<TableTask> reader, TempDir dir, CancellationToken cancellationToken)
+        {
+            var copier = TextCopier.Create(10);
+
+            await foreach (var task in reader.ReadAllAsync(cancellationToken))
+            {
+                await ImportTable(db, task, copier, dir, cancellationToken);
+            }
+        }
+
+        static async Task ImportTable(DbHelper db, TableTask table, TextCopier copier, TempDir dir, CancellationToken cancellationToken)
+        {
+            table.ImportTask.MaxValue = table.ExportedRows;
+
+            using var _ = table.ImportTask.Run();
+            using var reader = dir.OpenText(table.FileName);
+            await using var writer = await db.BeginTextImport(table.ImportSql, cancellationToken);
+
+            await copier.CopyLinesAsync(reader, writer, table.ImportTask.AsLineProgress(), cancellationToken);
+        }
+    }
+
+    private async Task TruncateTables(DbHelper db, ProgressTask ctx, ImmutableArray<TableGraph.Node> tables, CancellationToken cancellationToken)
+    {
+        using var _ = ctx.Run();
+
+        foreach (var table in tables.AsEnumerable().Reverse())
+        {
+            await TruncateTable(db, table, cancellationToken)
+                .LogOnFailure($"[bold red]Failed to truncate table \"{table.Schema}\".\"{table.Name}\"[/]");
+            ctx.Increment(1);
+        }
+
+        ctx.Value = ctx.MaxValue;
+        ctx.StopTask();
     }
 
     private async Task TruncateTable(DbHelper db, TableRef table, CancellationToken cancellationToken)
@@ -114,10 +167,113 @@ public sealed class CopyCommand(CancellationToken cancellationToken)
         await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    private async Task UpdateSequences(DbHelper db, ProgressTask ctx, ImmutableArray<SequenceInfo> sequences, CancellationToken cancellationToken)
+    {
+        using var _ = ctx.Run();
+
+        foreach (var seq in sequences)
+        {
+            await UpdateSequence(db, seq, cancellationToken)
+                .LogOnFailure($"[bold red]Failed to update sequence \"{seq.Schema}\".\"{seq.Name}\"[/]");
+            ctx.Increment(1);
+        }
+
+        ctx.Value = ctx.MaxValue;
+    }
+
     private async Task UpdateSequence(DbHelper db, SequenceInfo seq, CancellationToken cancellationToken)
     {
         await using var cmd = db.CreateCommand(/*strpsql*/$"""SELECT setval('{seq.Schema}.{seq.Name}', {seq.Value}, {(seq.IsCalled ? "true" : "false")})""");
         await cmd.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private sealed class CopyPlan
+    {
+        public static CopyPlan Plan(ProgressContext ctx, ImmutableArray<TableGraph.Node> tables, ImmutableArray<SequenceInfo> sequences, Settings settings)
+        {
+            ProgressTask? truncateTask = null;
+            List<TableTask> tablePlans = new(tables.Length);
+            ProgressTask? sequencesTask = null;
+
+            if (!settings.NoTruncate)
+            {
+                truncateTask = ctx.AddTask("Truncating target tables", autoStart: false, maxValue: tables.Length);
+            }
+
+            var exportTasks = new List<(ProgressTask, TableGraph.Node)>(tables.Length);
+            foreach (var table in tables)
+            {
+                if (table.EstimatedTableRows < 0)
+                {
+                    // skip tables that are unallocated on the source
+                    continue;
+                }
+
+                var exportTask = ctx.AddTask($"""Export table "[yellow]{table.Name}[/]" """.TrimEnd(), autoStart: false, maxValue: table.EstimatedTableRows);
+                exportTasks.Add((exportTask, table));
+            }
+
+            foreach (var (exportTask, table) in exportTasks)
+            {
+                var importTask = ctx.AddTask($"""Import table "[yellow]{table.Name}[/]" """.TrimEnd(), autoStart: false, maxValue: table.EstimatedTableRows);
+
+                var colsString = string.Join(',', table.Columns.Select(c => $"\"{c.Name}\""));
+                var copyFrom = /*strpsql*/$"""COPY "{table.Schema}"."{table.Name}" ({colsString}) FROM STDIN""";
+                var copyTo = /*strpsql*/$"""COPY "{table.Schema}"."{table.Name}" ({colsString}) TO STDOUT""";
+                var fileName = $"{table.Schema}.{table.Name}.txt";
+
+                tablePlans.Add(new TableTask
+                {
+                    ExportTask = exportTask,
+                    ExportSql = copyTo,
+                    ImportTask = importTask,
+                    ImportSql = copyFrom,
+                    FileName = fileName,
+                });
+            }
+
+            if (sequences.Length > 0)
+            {
+                sequencesTask = ctx.AddTask("Updating target sequences", autoStart: false, maxValue: sequences.Length);
+            }
+
+            return new CopyPlan
+            {
+                Truncate = truncateTask,
+                Tables = tablePlans.ToImmutableArray(),
+                Sequences = sequencesTask,
+            };
+        }
+
+        public required ProgressTask? Truncate { get; init; }
+
+        public required ImmutableArray<TableTask> Tables { get; init; }
+
+        public required ProgressTask? Sequences { get; init; }
+    }
+
+    private sealed class TableTask
+        : IProgress<int>
+    {
+        private int _exportedRows;
+
+        public required ProgressTask ExportTask { get; init; }
+
+        public required ProgressTask ImportTask { get; init; }
+
+        public required string ExportSql { get; init; }
+
+        public required string ImportSql { get; init; }
+
+        public required string FileName { get; init; }
+
+        public int ExportedRows => Volatile.Read(ref _exportedRows);
+
+        void IProgress<int>.Report(int value)
+        {
+            Interlocked.Add(ref _exportedRows, value);
+            ExportTask.Increment(value);
+        }
     }
 
     /// <summary>

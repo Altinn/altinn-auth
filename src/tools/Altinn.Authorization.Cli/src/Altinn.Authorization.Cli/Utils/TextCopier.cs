@@ -1,4 +1,6 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading.Channels;
 
 namespace Altinn.Authorization.Cli.Utils;
 
@@ -8,19 +10,27 @@ namespace Altinn.Authorization.Cli.Utils;
 [ExcludeFromCodeCoverage]
 public sealed class TextCopier
 {
+    private const int KIBIBYTE_CHAR_COUNT = 1024 / sizeof(char);
+    private const int MIBIBYTE_CHAR_COUNT = 1024 * KIBIBYTE_CHAR_COUNT;
+
+    private static int MiBCharBufferSize(int mibibyteCount)
+        => MIBIBYTE_CHAR_COUNT * mibibyteCount;
+
     /// <summary>
     /// Creates a new <see cref="TextCopier"/> with a buffer of <paramref name="mibibyteCount"/> MiB.
     /// </summary>
-    /// <param name="mibibyteCount">The size of the character buffer, in MiB.</param>
+    /// <param name="mibibyteCount">The size of the character buffers, in MiB.</param>
     /// <returns>A new <see cref="TextCopier"/>.</returns>
     public static TextCopier Create(int mibibyteCount)
-        => new(CharBuffers.MiB(mibibyteCount));
+        => new(ArrayPool<char>.Shared, MiBCharBufferSize(mibibyteCount));
 
-    private readonly Memory<char> _buffer;
+    private readonly int _bufferSize;
+    private readonly ArrayPool<char> _pool;
 
-    private TextCopier(Memory<char> buffer)
+    private TextCopier(ArrayPool<char> pool, int bufferSize)
     {
-        _buffer = buffer;
+        _pool = pool;
+        _bufferSize = bufferSize;
     }
 
     /// <summary>
@@ -38,21 +48,67 @@ public sealed class TextCopier
         CancellationToken cancellationToken = default)
         where TProgress : IProgress<int>
     {
-        // TODO: this can probably be sped up quite a bit by reading and writing concurrently
-        int read;
-        while (true)
+        var channel = Channel.CreateBounded<ArraySegment<char>>(new BoundedChannelOptions(4)
         {
-            read = await reader.ReadAsync(_buffer, cancellationToken);
-            if (read == 0)
+            SingleReader = true,
+            SingleWriter = true,
+            FullMode = BoundedChannelFullMode.Wait,
+            AllowSynchronousContinuations = true,
+        });
+
+        var readerTask = Task.Run(() => ReadLinesAsync(_pool, _bufferSize, channel.Writer, reader, cancellationToken), cancellationToken);
+        var writerTask = Task.Run(() => WriteLinesTask(_pool, linesProgress, channel.Reader, writer, cancellationToken), cancellationToken);
+        await Task.WhenAll(readerTask, writerTask);
+
+        async static Task ReadLinesAsync(ArrayPool<char> pool, int bufferSize, ChannelWriter<ArraySegment<char>> writer, TextReader reader, CancellationToken cancellationToken)
+        {
+            try
             {
-                // end
-                break;
+                while (await writer.WaitToWriteAsync(cancellationToken))
+                {
+                    var buffer = pool.Rent(bufferSize);
+                    try
+                    {
+                        var count = await reader.ReadBlockAsync(buffer, cancellationToken);
+                        if (count == 0)
+                        {
+                            break;
+                        }
+
+                        await writer.WriteAsync(new ArraySegment<char>(buffer, 0, count), cancellationToken);
+                        buffer = null;
+                    }
+                    finally
+                    {
+                        if (buffer is not null)
+                        {
+                            pool.Return(buffer);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                writer.TryComplete(e);
+                throw;
+            }
+            finally
+            {
+                writer.TryComplete();
+            }
+        }
+
+        async Task WriteLinesTask(ArrayPool<char> pool, TProgress linesProgress, ChannelReader<ArraySegment<char>> reader, TextWriter writer, CancellationToken cancellationToken)
+        {
+            await foreach (var buffer in reader.ReadAllAsync(cancellationToken))
+            {
+                await writer.WriteAsync(buffer, cancellationToken);
+                var lineCount = buffer.AsSpan().Count('\n');
+                pool.Return(buffer.Array!);
+                linesProgress.Report(lineCount);
             }
 
-            var data = _buffer[..read];
-            var newLines = data.Span.Count('\n');
-            linesProgress.Report(newLines);
-            await writer.WriteAsync(data, cancellationToken);
+            await writer.FlushAsync(cancellationToken);
         }
     }
 }

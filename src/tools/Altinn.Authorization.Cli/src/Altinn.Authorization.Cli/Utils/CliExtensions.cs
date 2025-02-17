@@ -68,4 +68,30 @@ public static class CliExtensions
         public readonly void Report(int value)
             => task.Increment(value);
     }
+
+    /// <summary>
+    /// Starts a <see cref="ProgressTask"/> and stops it when disposed.
+    /// </summary>
+    /// <param name="task">The task.</param>
+    /// <returns>A <see cref="IDisposable"/> that stops the <see cref="ProgressTask"/>.</returns>
+    public static IDisposable Run(this ProgressTask task)
+    {
+        task.StartTask();
+
+        return new Disposable(() => task.StopTask());
+    }
+
+    private sealed class Disposable(Action dispose)
+        : IDisposable
+    {
+        private int _disposed = 0;
+
+        void IDisposable.Dispose()
+        {
+            if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)
+            {
+                dispose();
+            }
+        }
+    }
 }
