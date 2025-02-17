@@ -3,25 +3,37 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C2EA7975-91DE-4818-AB8B-B02043532240}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Integration.Platform", "src\Altinn.Authorization.Integration.Platform\Altinn.Authorization.Integration.Platform.csproj", "{012CE811-E60D-42AE-92DC-271BCEB9B3DB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Integration.Platform", "src\Altinn.Authorization.Integration.Platform\Altinn.Authorization.Integration.Platform.csproj", "{75458DBC-6EE0-4926-84D5-E3F93FFBCDFE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{75458DBC-6EE0-4926-84D5-E3F93FFBCDFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75458DBC-6EE0-4926-84D5-E3F93FFBCDFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75458DBC-6EE0-4926-84D5-E3F93FFBCDFE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{75458DBC-6EE0-4926-84D5-E3F93FFBCDFE}.Debug|x64.Build.0 = Debug|Any CPU
+		{75458DBC-6EE0-4926-84D5-E3F93FFBCDFE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{75458DBC-6EE0-4926-84D5-E3F93FFBCDFE}.Debug|x86.Build.0 = Debug|Any CPU
+		{75458DBC-6EE0-4926-84D5-E3F93FFBCDFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75458DBC-6EE0-4926-84D5-E3F93FFBCDFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75458DBC-6EE0-4926-84D5-E3F93FFBCDFE}.Release|x64.ActiveCfg = Release|Any CPU
+		{75458DBC-6EE0-4926-84D5-E3F93FFBCDFE}.Release|x64.Build.0 = Release|Any CPU
+		{75458DBC-6EE0-4926-84D5-E3F93FFBCDFE}.Release|x86.ActiveCfg = Release|Any CPU
+		{75458DBC-6EE0-4926-84D5-E3F93FFBCDFE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{012CE811-E60D-42AE-92DC-271BCEB9B3DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{012CE811-E60D-42AE-92DC-271BCEB9B3DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{012CE811-E60D-42AE-92DC-271BCEB9B3DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{012CE811-E60D-42AE-92DC-271BCEB9B3DB}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{012CE811-E60D-42AE-92DC-271BCEB9B3DB} = {C2EA7975-91DE-4818-AB8B-B02043532240}
+		{75458DBC-6EE0-4926-84D5-E3F93FFBCDFE} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

@@ -29,9 +29,9 @@ set windows-shell := ["pwsh.exe", "-NoLogo", "-CommandWithArgs"]
   pnpm install --frozen-lockfile
 
 # Run the script to update solution files
-@update-sln-files: install-script-packages-frozen
+@update-sln-files *ARGS: install-script-packages-frozen
   #!{{shebang}}
-  ./.github/scripts/node_modules/.bin/tsx ./.github/scripts/update-sln-files.mts
+  ./.github/scripts/node_modules/.bin/tsx ./.github/scripts/update-sln-files.mts -- {{ARGS}}
 
 # Print all projects metadata
 @get-metadata: install-script-packages-frozen

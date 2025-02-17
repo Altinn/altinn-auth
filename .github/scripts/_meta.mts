@@ -19,6 +19,25 @@ const enqueue = <T extends unknown>(fn: () => Promise<T>): Promise<T> => {
   return task;
 };
 
+const depSchema = z.string().transform((val, ctx) => {
+  if (val.startsWith("lib:")) {
+    const lib = val.substring(4);
+    return { type: "lib", name: lib } as Dep;
+  }
+
+  if (val.startsWith("pkg:")) {
+    const pkg = val.substring(4);
+    return { type: "pkg", name: pkg } as Dep;
+  }
+
+  ctx.addIssue({
+    code: z.ZodIssueCode.custom,
+    message: `Invalid dependency: ${val}, must start with 'lib:' or 'pkg:'`,
+  });
+
+  return z.NEVER;
+});
+
 const dotnetImageSchema = z.object({
   type: z.literal("dotnet"),
   source: z.string().optional(),
@@ -59,7 +78,15 @@ const configSchema = z.object({
   image: imageSchema.optional(),
   infra: infraSchema.optional(),
   database: databaseSchema.optional(),
+  deps: z.array(depSchema).default([]),
 });
+
+export type DepType = "lib" | "pkg";
+
+export type Dep = {
+  readonly type: DepType;
+  readonly name: string;
+};
 
 export type VerticalType = "app" | "lib" | "pkg" | "tool";
 
@@ -93,6 +120,22 @@ export type Vertical = {
   readonly image?: ImageInfo;
   readonly infra?: InfraInfo;
   readonly database?: DatabaseInfo;
+  readonly projects: VerticalProjects;
+  readonly deps: readonly Dep[];
+};
+
+export type VerticalProjects = Readonly<
+  Record<ProjectType, readonly Project[]>
+>;
+
+export type ProjectType = "src" | "test";
+
+export type Project = {
+  readonly name: string;
+  readonly path: string;
+  readonly rootRelPath: string;
+  readonly verticalRelPath: string;
+  readonly type: ProjectType;
 };
 
 const vertialDirs = {
@@ -104,6 +147,28 @@ const vertialDirs = {
 
 const last = (arr: string[]) => arr[arr.length - 1];
 
+const readProjects = async (
+  verticalPath: string,
+  verticalRelPath: string,
+  type: ProjectType
+): Promise<readonly Project[]> => {
+  const projectFiles = await globby(`${type}/*/*.*proj`, { cwd: verticalPath });
+  return projectFiles.map((file) => {
+    const ext = path.extname(file);
+    const name = path.basename(file, ext);
+    const filePath = path.resolve(verticalPath, file);
+    const rootRelPath = path.join(verticalRelPath, file).replaceAll("\\", "/");
+
+    return {
+      name,
+      path: filePath,
+      rootRelPath,
+      verticalRelPath: file,
+      type,
+    };
+  });
+};
+
 const readVertical = async (
   type: VerticalType,
   dirPath: string
@@ -111,6 +176,10 @@ const readVertical = async (
   const verticalPath = path.resolve(dirPath);
   const dirName = path.basename(verticalPath);
   const configPath = path.resolve(verticalPath, "conf.json");
+  const projects = {
+    src: await readProjects(verticalPath, dirPath, "src"),
+    test: await readProjects(verticalPath, dirPath, "test"),
+  };
 
   let parsed: any = {};
   try {
@@ -194,7 +263,24 @@ const readVertical = async (
     image,
     infra,
     database,
+    projects,
+    deps: config.deps,
   };
+};
+
+const validateDeps = (verticals: readonly Vertical[]) => {
+  for (const vertical of verticals) {
+    for (const dep of vertical.deps) {
+      const found = verticals.find(
+        (v) => v.name === dep.name && v.type === dep.type
+      );
+      if (!found) {
+        throw new Error(
+          `Dependency ${dep.type}:${dep.name} of ${vertical.name} not found`
+        );
+      }
+    }
+  }
 };
 
 const apps = await globby(`${vertialDirs.app}/*`, { onlyDirectories: true });
@@ -208,6 +294,7 @@ const promises = [
   ...tools.map((tool) => readVertical("tool", tool)),
 ];
 const verticals = await Promise.all(promises);
+validateDeps(verticals);
 
 export const getApp = (name: string) => {
   const app = verticals.find((v) => v.name === name);
