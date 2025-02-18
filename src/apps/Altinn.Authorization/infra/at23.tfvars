@@ -6,3 +6,8 @@ aks_federation = [
     service_account = "altinn-authorization"
   }
 ]
+
+platform_workflow_principal_ids = [
+  "8cb9ad7d-7082-41c0-8a63-8bb362ce9d90", # altinn-authorization-app-at23-aks01
+  "7bf2d553-b1fc-47a5-a4c1-1bb5c7dfb5d4"  # altinn-authorization-app-at23-aks02
+]

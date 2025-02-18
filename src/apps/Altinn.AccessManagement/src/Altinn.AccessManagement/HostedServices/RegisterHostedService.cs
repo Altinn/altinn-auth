@@ -76,10 +76,10 @@ public partial class RegisterHostedService(IAltinnLease lease, IAltinnRegister r
     private void SyncRegisterDispatcher(object state)
     {
         var cancellationToken = (CancellationToken)state;
-        // if (_featureManager.IsEnabledAsync(AccessManagementFeatureFlags.SyncRegister).GetAwaiter().GetResult())
-        // {
-        SyncRegister(cancellationToken).GetAwaiter().GetResult();
-        // }
+        if (_featureManager.IsEnabledAsync(AccessManagementFeatureFlags.HostedServicesRegisterSync).GetAwaiter().GetResult())
+        {
+            SyncRegister(cancellationToken).GetAwaiter().GetResult();
+        }
     }
 
     /// <summary>
@@ -156,7 +156,6 @@ public partial class RegisterHostedService(IAltinnLease lease, IAltinnRegister r
         finally
         {
             _timer?.Change(Timeout.Infinite, 0);
-            _stop.Cancel();
         }
 
         return Task.CompletedTask;
@@ -177,8 +176,9 @@ public partial class RegisterHostedService(IAltinnLease lease, IAltinnRegister r
     {
         if (disposing)
         {
-            _stop?.Dispose();
             _timer?.Dispose();
+            _stop?.Cancel();
+            _stop?.Dispose();
         }
     }
 
@@ -207,7 +207,7 @@ public partial class RegisterHostedService(IAltinnLease lease, IAltinnRegister r
         [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Starting register hosted service")]
         internal static partial void StartRegisterSync(ILogger logger);
 
-        [LoggerMessage(EventId = 3, Level = LogLevel.Error, Message = "Quit register hosted service")]
+        [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "Quit register hosted service")]
         internal static partial void QuitRegisterSync(ILogger logger);
     }
 }

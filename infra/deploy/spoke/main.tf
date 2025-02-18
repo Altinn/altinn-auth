@@ -40,6 +40,10 @@ locals {
   ipv6_cidr_prefix            = tonumber(split("/", var.dual_stack_ipv6_address_space)[1])
   ipv6_bits                   = 64 - local.ipv6_cidr_prefix
 
+  app_settings = merge(var.appsettings_key_value, {
+    "Lease:StorageAccount:BlobEndpoint" = azurerm_storage_account.storage.primary_blob_endpoint
+  })
+
   default_tags = {
     ProductName = var.product_name
     Environment = var.environment
@@ -108,9 +112,18 @@ resource "azurerm_resource_group" "spoke" {
 }
 
 module "app_configuration" {
-  source              = "../../modules/appsettings"
-  hub_subscription_id = var.hub_subscription_id
-  hub_suffix          = local.hub_suffix
+  source     = "../../modules/appsettings"
+  hub_suffix = local.hub_suffix
+
+  key_value = [for key, value in local.app_settings :
+    {
+      key   = key
+      value = value
+      label = lower(var.environment)
+  }]
+  providers = {
+    azurerm.hub = azurerm.hub
+  }
 }
 
 resource "azurerm_virtual_network" "dual_stack" {

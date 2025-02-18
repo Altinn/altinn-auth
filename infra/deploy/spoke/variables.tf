@@ -49,3 +49,7 @@ variable "firewall_public_ipv4" {
   type    = string
   default = "51.120.88.253"
 }
+
+variable "appsettings_key_value" {
+  type = map(string)
+}

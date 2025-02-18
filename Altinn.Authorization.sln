@@ -33,7 +33,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libs", "libs", "{A6286969-5
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Authorization.Host", "Altinn.Authorization.Host", "{67A214B5-757D-C97E-960E-A5C53E1C94EA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Hosting", "src\libs\Altinn.Authorization.Host\src\Altinn.Authorization.Host\Altinn.Authorization.Hosting.csproj", "{1D46FB22-A11D-4460-A518-89E2EB0CE247}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Host", "src\libs\Altinn.Authorization.Host\src\Altinn.Authorization.Host\Altinn.Authorization.Host.csproj", "{1D46FB22-A11D-4460-A518-89E2EB0CE247}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Host.Lease", "src\libs\Altinn.Authorization.Host\src\Altinn.Authorization.Host.Lease\Altinn.Authorization.Host.Lease.csproj", "{3E9D7EFA-81D1-418D-8DBA-E8FCBB72D6C1}"
 EndProject

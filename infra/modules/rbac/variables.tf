@@ -1,7 +1,3 @@
-variable "hub_subscription_id" {
-  type = string
-}
-
 variable "hub_suffix" {
   type = string
 }
@@ -31,5 +27,5 @@ variable "use_lease" {
 
 variable "use_key_vault_secrets" {
   type    = list(string)
-  default = [""]
+  default = []
 }

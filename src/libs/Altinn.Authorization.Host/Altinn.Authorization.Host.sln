@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Hosting", "src\Altinn.Authorization.Host\Altinn.Authorization.Hosting.csproj", "{AD9D85DC-77F1-45B0-8016-207900576B1B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Host", "src\Altinn.Authorization.Host\Altinn.Authorization.Host.csproj", "{AD9D85DC-77F1-45B0-8016-207900576B1B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Host.Lease", "src\Altinn.Authorization.Host.Lease\Altinn.Authorization.Host.Lease.csproj", "{07A42B2D-53BB-4F65-85CA-0CB3EF70774B}"
 EndProject

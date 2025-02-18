@@ -30,7 +30,7 @@ namespace Altinn.Authorization.Host.Lease.Tests
                 Type = AltinnLeaseType.AzureStorageAccount,
                 StorageAccount = new()
                 {
-                    Endpoint = new Uri("https://{storage_account_name}.core.windows.net/"),
+                    BlobEndpoint = new Uri("https://{storage_account_name}.core.windows.net/"),
                 }
             });
 

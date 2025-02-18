@@ -65,32 +65,52 @@ resource "azurerm_user_assigned_identity" "authorization" {
   tags                = merge({}, local.default_tags)
 }
 
-resource "azurerm_federated_identity_credential" "aks_federation" {
-  name                = "Aks"
-  resource_group_name = azurerm_resource_group.authorization.name
-  parent_id           = azurerm_user_assigned_identity.authorization.id
+# resource "azurerm_federated_identity_credential" "aks_federation" {
+#   name                = "Aks"
+#   resource_group_name = azurerm_resource_group.authorization.name
+#   parent_id           = azurerm_user_assigned_identity.authorization.id
 
-  audience = ["api://AzureADTokenExchange"]
-  subject  = "system:serviceaccount:${each.value.namespace}:${each.value.service_account}"
-  issuer   = each.value.issuer_url
+#   audience = ["api://AzureADTokenExchange"]
+#   subject  = "system:serviceaccount:${each.value.namespace}:${each.value.service_account}"
+#   issuer   = each.value.issuer_url
 
-  for_each = { for federation in var.aks_federation : federation.issuer_url => federation }
-}
+#   for_each = { for federation in var.aks_federation : federation.issuer_url => federation }
+# }
 
 module "rbac" {
-  source              = "../../../../infra/modules/rbac"
-  principal_id        = azurerm_user_assigned_identity.authorization.principal_id
-  hub_subscription_id = var.hub_subscription_id
-  hub_suffix          = local.hub_suffix
-  spoke_suffix        = local.spoke_suffix
+  source       = "../../../../infra/modules/rbac"
+  principal_id = azurerm_user_assigned_identity.authorization.principal_id
+  hub_suffix   = local.hub_suffix
+  spoke_suffix = local.spoke_suffix
 
   use_app_configuration = true
   use_lease             = false
   use_masstransit       = false
+  providers = {
+    azurerm.hub = azurerm.hub
+  }
+}
+
+module "rbac_platform_app" {
+  source       = "../../../../infra/modules/rbac"
+  principal_id = each.value
+  hub_suffix   = local.hub_suffix
+  spoke_suffix = local.spoke_suffix
+
+  use_app_configuration = true
+  use_lease             = false
+  use_masstransit       = false
+  providers = {
+    azurerm.hub = azurerm.hub
+  }
+
+  for_each = toset(var.platform_workflow_principal_ids)
 }
 
 module "appsettings" {
-  source              = "../../../../infra/modules/appsettings"
-  hub_suffix          = local.hub_suffix
-  hub_subscription_id = var.hub_subscription_id
+  source     = "../../../../infra/modules/appsettings"
+  hub_suffix = local.hub_suffix
+  providers = {
+    azurerm.hub = azurerm.hub
+  }
 }

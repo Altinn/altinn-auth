@@ -1,12 +1,18 @@
-provider "azurerm" {
-  alias           = "hub"
-  subscription_id = var.hub_subscription_id
-  features {
+terraform {
+  required_providers {
+    azurerm = {
+      source                = "hashicorp/azurerm"
+      configuration_aliases = [azurerm.hub]
+    }
   }
 }
 
+data "azurerm_client_config" "hub" {
+  provider = azurerm.hub
+}
+
 locals {
-  configuration_store_id = "/subscriptions/${var.hub_subscription_id}/resourceGroups/rg${var.hub_suffix}/providers/Microsoft.AppConfiguration/configurationStores/appconf${var.hub_suffix}"
+  configuration_store_id = "/subscriptions/${data.azurerm_client_config.hub.subscription_id}/resourceGroups/rg${var.hub_suffix}/providers/Microsoft.AppConfiguration/configurationStores/appconf${var.hub_suffix}"
 }
 
 data "azurerm_resource_group" "hub" {
@@ -51,7 +57,7 @@ resource "azurerm_role_assignment" "use_masstransit" {
 resource "azurerm_role_assignment" "use_lease" {
   principal_id         = var.principal_id
   scope                = data.azurerm_storage_account.use_lease[0].id
-  count                = var.use_masstransit ? 1 : 0
+  count                = var.use_lease ? 1 : 0
   role_definition_name = "Storage Blob Data Contributor"
 }
 

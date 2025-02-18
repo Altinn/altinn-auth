@@ -1,12 +1,18 @@
-provider "azurerm" {
-  alias           = "hub"
-  subscription_id = var.hub_subscription_id
-  features {
+terraform {
+  required_providers {
+    azurerm = {
+      source                = "hashicorp/azurerm"
+      configuration_aliases = [azurerm.hub]
+    }
   }
 }
 
+data "azurerm_client_config" "hub" {
+  provider = azurerm.hub
+}
+
 locals {
-  configuration_store_id = "/subscriptions/${var.hub_subscription_id}/resourceGroups/rg${var.hub_suffix}/providers/Microsoft.AppConfiguration/configurationStores/appconf${var.hub_suffix}"
+  configuration_store_id = "/subscriptions/${data.azurerm_client_config.hub.subscription_id}/resourceGroups/rg${var.hub_suffix}/providers/Microsoft.AppConfiguration/configurationStores/appconf${var.hub_suffix}"
 }
 
 data "azurerm_resource_group" "hub" {
@@ -26,7 +32,7 @@ resource "azurerm_app_configuration_feature" "configuration" {
   key                    = each.value.name
   name                   = each.value.name
   description            = each.value.description
-  enabled                = each.value.value
+  enabled                = each.value.default
   label                  = each.value.label
 
   provider = azurerm.hub

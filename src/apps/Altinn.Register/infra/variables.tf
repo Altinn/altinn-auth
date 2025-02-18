@@ -38,3 +38,8 @@ variable "aks_federation" {
     service_account = string
   }))
 }
+
+variable "platform_workflow_principal_ids" {
+  type    = list(string)
+  default = []
+}

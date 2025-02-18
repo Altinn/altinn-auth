@@ -9,6 +9,7 @@ terraform {
       version = "0.1.0"
     }
   }
+
   backend "azurerm" {
     use_azuread_auth = true
   }
@@ -102,15 +103,33 @@ resource "azurerm_federated_identity_credential" "aks_federation" {
   for_each            = { for federation in var.aks_federation : federation.issuer_url => federation }
 }
 
-module "rbac" {
+# Should be removed once migrated from Platform AKS to Authorization AKS cluster
+module "rbac_platform_app" {
   source                = "../../../../infra/modules/rbac"
-  principal_id          = azurerm_user_assigned_identity.register.principal_id
-  hub_subscription_id   = var.hub_subscription_id
+  principal_id          = each.value
   hub_suffix            = local.hub_suffix
   spoke_suffix          = local.spoke_suffix
   use_app_configuration = true
-  use_lease             = true
   use_masstransit       = true
+  use_lease             = false
+  providers = {
+    azurerm.hub = azurerm.hub
+  }
+
+  for_each = toset(var.platform_workflow_principal_ids)
+}
+
+module "rbac" {
+  source                = "../../../../infra/modules/rbac"
+  principal_id          = azurerm_user_assigned_identity.register.principal_id
+  hub_suffix            = local.hub_suffix
+  spoke_suffix          = local.spoke_suffix
+  use_app_configuration = true
+  use_masstransit       = true
+  use_lease             = false
+  providers = {
+    azurerm.hub = azurerm.hub
+  }
 }
 
 module "key_vault" {
@@ -121,12 +140,7 @@ module "key_vault" {
   resource_group_name = azurerm_resource_group.register.name
   suffix              = local.spoke_suffix
   subnet_id           = data.azurerm_subnet.default.id
-  key_vault_roles = [
-    {
-      operation_id         = "grant_register_app_secret_user"
-      principal_id         = azurerm_user_assigned_identity.register.principal_id
-      role_definition_name = "Key Vault Secrets User"
-    },
+  key_vault_roles = concat([
     {
       operation_id         = "grant_pgsqlrv_administrator"
       principal_id         = data.azurerm_user_assigned_identity.admin.principal_id
@@ -136,8 +150,21 @@ module "key_vault" {
       operation_id         = "grant_deploy_app_administrator"
       principal_id         = var.deploy_app_principal_id
       role_definition_name = "Key Vault Administrator"
+    },
+    {
+      operation_id         = "grant_register_app_secret_user"
+      principal_id         = azurerm_user_assigned_identity.register.principal_id
+      role_definition_name = "Key Vault Secrets User"
     }
-  ]
+    ],
+    [
+      for principal_id in var.platform_workflow_principal_ids :
+      {
+        operation_id         = "grant_register_platform_app_secret_user_${principal_id}"
+        principal_id         = principal_id
+        role_definition_name = "Key Vault Secrets User"
+      }
+  ])
 }
 
 data "azurerm_key_vault_secret" "postgres_migration" {
@@ -153,9 +180,8 @@ data "azurerm_key_vault_secret" "postgres_app" {
 }
 
 module "appsettings" {
-  source              = "../../../../infra/modules/appsettings"
-  hub_suffix          = local.hub_suffix
-  hub_subscription_id = var.hub_subscription_id
+  source     = "../../../../infra/modules/appsettings"
+  hub_suffix = local.hub_suffix
   key_vault_reference = [
     {
       key                 = "Postgres:AppConnectionString"
@@ -168,6 +194,10 @@ module "appsettings" {
       label               = "${var.environment}_register"
     }
   ]
+
+  providers = {
+    azurerm.hub = azurerm.hub
+  }
 }
 
 module "postgres_server" {

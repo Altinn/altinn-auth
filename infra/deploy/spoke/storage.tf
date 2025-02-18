@@ -5,14 +5,23 @@ data "azurerm_private_dns_zone" "blob_storage" {
 }
 
 resource "azurerm_storage_account" "storage" {
-  name                          = "st${local.suffix}"
-  resource_group_name           = azurerm_resource_group.spoke.name
-  location                      = azurerm_resource_group.spoke.location
-  account_tier                  = "Standard"
-  account_replication_type      = "GRS"
+  name                            = "st${local.suffix}"
+  resource_group_name             = azurerm_resource_group.spoke.name
+  location                        = azurerm_resource_group.spoke.location
+  account_tier                    = "Premium"
+  access_tier                     = "Premium"
+  account_kind                    = "StorageV2"
+  account_replication_type        = "GRS"
+  min_tls_version                 = "TLS1_2"
+  allow_nested_items_to_be_public = false
+  shared_access_key_enabled       = false
+
+  blob_properties {
+    versioning_enabled = true
+  }
+
   https_traffic_only_enabled    = true
   public_network_access_enabled = true
-
 
   identity {
     type = "SystemAssigned"
@@ -21,7 +30,7 @@ resource "azurerm_storage_account" "storage" {
   tags = merge({}, local.default_tags)
 
   lifecycle {
-    prevent_destroy = true
+    # prevent_destroy = false
   }
 }
 

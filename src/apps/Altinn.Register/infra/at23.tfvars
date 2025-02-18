@@ -7,3 +7,7 @@ aks_federation = [
   }
 ]
 deploy_app_principal_id = "6eaed23e-df7f-4708-9c8e-a7f34deeadb4"
+platform_workflow_principal_ids = [
+  "143d9d84-6ef6-4c60-a2a5-9cb232dd2268", # altinn-register-app-at23-aks01
+  "e785218c-e5a5-4c8d-b1df-f262b8eaa241"  # altinn-register-app-at23-aks02
+]

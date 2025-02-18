@@ -1,3 +1,4 @@
+using Altinn.Authorization.Host.Identity;
 using Azure.Messaging.ServiceBus;
 using MassTransit;
 using Microsoft.Extensions.Hosting;
@@ -52,7 +53,7 @@ public static class MassTransitConfiguration
             cfg.UseServiceBusMessageScheduler();
             cfg.Host(options.AzureServiceBus.Endpoint, host =>
             {
-                host.TokenCredential = DefaultTokenCredential.Instance;
+                host.TokenCredential = AzureToken.Default;
                 host.TransportType = ServiceBusTransportType.AmqpWebSockets;
             });
 

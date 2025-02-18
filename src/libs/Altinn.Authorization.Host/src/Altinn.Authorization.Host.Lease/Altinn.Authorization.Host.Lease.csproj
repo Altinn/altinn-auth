@@ -7,7 +7,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Altinn.Authorization.Host\Altinn.Authorization.Hosting.csproj" />
+        <ProjectReference Include="..\Altinn.Authorization.Host\Altinn.Authorization.Host.csproj" />
     </ItemGroup>
 
 </Project>

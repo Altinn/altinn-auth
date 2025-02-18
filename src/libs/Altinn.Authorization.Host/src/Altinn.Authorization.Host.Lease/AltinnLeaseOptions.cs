@@ -28,7 +28,7 @@ public class AltinnLeaseOptions
         /// Gets or sets the URI endpoint for the Azure Storage Account.
         /// This endpoint is used to connect to the storage service where leases will be stored.
         /// </summary>
-        public Uri Endpoint { get; set; }
+        public Uri BlobEndpoint { get; set; }
 
         /// <summary>
         /// The name of the storage account container used for storing leases.

@@ -1,7 +1,3 @@
-variable "hub_subscription_id" {
-  type = string
-}
-
 variable "hub_suffix" {
   type = string
 }
@@ -9,7 +5,7 @@ variable "hub_suffix" {
 variable "feature_flags" {
   type = list(object(
     {
-      value       = optional(bool, false)
+      default     = optional(bool, false)
       name        = string
       label       = string
       description = string
