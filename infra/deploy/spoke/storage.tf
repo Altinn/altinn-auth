@@ -9,12 +9,11 @@ resource "azurerm_storage_account" "storage" {
   resource_group_name             = azurerm_resource_group.spoke.name
   location                        = azurerm_resource_group.spoke.location
   account_tier                    = "Premium"
-  access_tier                     = "Premium"
-  account_kind                    = "StorageV2"
-  account_replication_type        = "GRS"
+  account_kind                    = "BlockBlobStorage"
+  account_replication_type        = "LRS"
   min_tls_version                 = "TLS1_2"
   allow_nested_items_to_be_public = false
-  shared_access_key_enabled       = false
+  shared_access_key_enabled       = true
 
   blob_properties {
     versioning_enabled = true
@@ -30,7 +29,7 @@ resource "azurerm_storage_account" "storage" {
   tags = merge({}, local.default_tags)
 
   lifecycle {
-    # prevent_destroy = false
+    prevent_destroy = false
   }
 }
 
