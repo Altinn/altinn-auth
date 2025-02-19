@@ -1,11 +1,12 @@
 resource "azurerm_storage_account" "storage" {
-  name                          = "st${local.suffix}"
-  resource_group_name           = azurerm_resource_group.hub.name
-  location                      = azurerm_resource_group.hub.location
-  account_tier                  = "Standard"
-  account_replication_type      = "GRS"
-  https_traffic_only_enabled    = true
-  public_network_access_enabled = true
+  name                            = "st${local.suffix}"
+  resource_group_name             = azurerm_resource_group.hub.name
+  location                        = azurerm_resource_group.hub.location
+  account_tier                    = "Standard"
+  account_replication_type        = "GRS"
+  https_traffic_only_enabled      = true
+  public_network_access_enabled   = true
+  allow_nested_items_to_be_public = false
 
   identity {
     type = "SystemAssigned"

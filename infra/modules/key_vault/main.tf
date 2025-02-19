@@ -17,6 +17,11 @@ data "azurerm_private_dns_zone" "key_vault" {
   provider            = azurerm.hub
 }
 
+data "azurerm_log_analytics_workspace" "log_dwh" {
+  name                = "logdwh${var.suffix}"
+  resource_group_name = "rg${var.suffix}"
+}
+
 resource "azurerm_role_assignment" "rbac" {
   role_definition_name = each.value.role_definition_name
   scope                = azurerm_key_vault.key_vault.id
@@ -54,5 +59,24 @@ resource "azurerm_private_endpoint" "key_vault" {
     private_connection_resource_id = azurerm_key_vault.key_vault.id
     is_manual_connection           = false
     subresource_names              = ["vault"]
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "key_vault_diagnostics" {
+  target_resource_id         = azurerm_key_vault.key_vault.id
+  name                       = data.azurerm_log_analytics_workspace.log_dwh.name
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.log_dwh.id
+
+  enabled_log {
+    category_group = "allLogs"
+  }
+
+  enabled_log {
+    category_group = "audit"
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
   }
 }

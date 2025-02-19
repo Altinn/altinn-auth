@@ -68,3 +68,22 @@ resource "azurerm_private_endpoint" "service_bus_private_endpoint" {
     private_dns_zone_ids = [data.azurerm_private_dns_zone.hub_service_bus.id]
   }
 }
+
+resource "azurerm_monitor_diagnostic_setting" "service_bus_diagnostics" {
+  name                       = azurerm_log_analytics_workspace.log_dwh.name
+  target_resource_id         = azurerm_servicebus_namespace.service_bus.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.log_dwh.id
+
+  enabled_log {
+    category_group = "allLogs"
+  }
+
+  enabled_log {
+    category_group = "audit"
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+  }
+}
