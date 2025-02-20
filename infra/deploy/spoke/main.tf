@@ -16,16 +16,15 @@ terraform {
 }
 
 provider "azurerm" {
+  # storage_use_azuread = true
   features {
   }
 }
 
 provider "azurerm" {
-  alias               = "hub"
-  subscription_id     = var.hub_subscription_id
-  storage_use_azuread = true
-  features {
-  }
+  alias           = "hub"
+  subscription_id = var.hub_subscription_id
+  features {}
 }
 
 data "azurerm_client_config" "current" {}

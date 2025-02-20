@@ -12,3 +12,4 @@ appsettings_key_value = {
   "Platform:ResourceRegistryEndpoint" : "http://altinn-resource-registry.default.svc.cluster.local"
   "Platform:RegisterEndpoint" : "http://altinn-register.default.svc.cluster.local"
 }
+spoke_principal_ids = ["6eaed23e-df7f-4708-9c8e-a7f34deeadb4"]

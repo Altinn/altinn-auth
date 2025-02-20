@@ -64,7 +64,7 @@ public partial class RegisterHostedService(IAltinnLease lease, IAltinnRegister r
     {
         Log.StartRegisterSync(_logger);
 
-        _timer = new Timer(SyncRegisterDispatcher, _stop.Token, TimeSpan.Zero, TimeSpan.FromMinutes(2));
+        _timer = new Timer(async state => await SyncRegisterDispatcher(state), _stop.Token, TimeSpan.Zero, TimeSpan.FromMinutes(2));
 
         return Task.CompletedTask;
     }
@@ -73,12 +73,12 @@ public partial class RegisterHostedService(IAltinnLease lease, IAltinnRegister r
     /// Dispatches the register synchronization process in a separate task.
     /// </summary>
     /// <param name="state">Cancellation token for stopping execution.</param>
-    private void SyncRegisterDispatcher(object state)
+    private async Task SyncRegisterDispatcher(object state)
     {
         var cancellationToken = (CancellationToken)state;
-        if (_featureManager.IsEnabledAsync(AccessManagementFeatureFlags.HostedServicesRegisterSync).GetAwaiter().GetResult())
+        if (await _featureManager.IsEnabledAsync(AccessManagementFeatureFlags.HostedServicesRegisterSync))
         {
-            SyncRegister(cancellationToken).GetAwaiter().GetResult();
+            await SyncRegister(cancellationToken);
         }
     }
 

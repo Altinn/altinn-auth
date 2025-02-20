@@ -139,3 +139,13 @@ resource "azurerm_private_endpoint" "blob" {
 
   tags = merge({}, local.default_tags)
 }
+
+# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment
+resource "azurerm_role_assignment" "storage_account_contributor" {
+  scope                = azurerm_resource_group.spoke.id
+  principal_id         = each.value
+  role_definition_name = "Storage Account Contributor" # https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#security
+
+  for_each = toset(var.spoke_principal_ids)
+}
+
