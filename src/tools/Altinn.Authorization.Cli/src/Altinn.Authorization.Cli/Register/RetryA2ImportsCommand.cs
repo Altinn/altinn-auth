@@ -2,15 +2,12 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Channels;
 using Altinn.Authorization.Cli.ServiceBus.MassTransit;
 using Altinn.Authorization.Cli.Utils;
 using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
-using Microsoft.Azure.Amqp.Framing;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Spectre.Console.Rendering;
@@ -21,8 +18,8 @@ namespace Altinn.Authorization.Cli.Register;
 /// Command for retrying failed messages.
 /// </summary>
 [ExcludeFromCodeCoverage]
-public sealed class RetryA2ImportsCommand(CancellationToken cancellationToken)
-    : BaseCommand<RetryA2ImportsCommand.Settings>(cancellationToken)
+public sealed class RetryA2ImportsCommand(CancellationToken ct)
+    : BaseCommand<RetryA2ImportsCommand.Settings>(ct)
 {
     private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web);
 
@@ -38,10 +35,6 @@ public sealed class RetryA2ImportsCommand(CancellationToken cancellationToken)
     {
         var adminClient = new ServiceBusAdministrationClient(settings.ConnectionString);
 
-        var queues = await adminClient.GetQueuesRuntimePropertiesAsync(cancellationToken)
-            .ToDictionaryAsync(static queue => queue.Name, cancellationToken)
-            .LogOnFailure("Failed to get queues");
-
         await AnsiConsole.Progress()
             .AutoClear(false)
             .Columns([
@@ -53,14 +46,23 @@ public sealed class RetryA2ImportsCommand(CancellationToken cancellationToken)
             ])
             .StartAsync(async (ctx) =>
             {
+                HashSet<string> queueNames;
+                {
+                    using var task = ctx.AddTask("Getting queues", autoStart: false).Run(setValueMax: true);
+                    queueNames = await adminClient.GetQueuesRuntimePropertiesAsync(cancellationToken)
+                        .Select(static queue => queue.Name)
+                        .ToHashSetAsync(cancellationToken)
+                        .LogOnFailure("Failed to get queues");
+                }
+
                 var client = new ServiceBusClient(settings.ConnectionString);
                 await using var sender = client.CreateSender("register-a2-party-import");
 
                 foreach (var queue in ErrorQueues)
                 {
-                    if (queues.TryGetValue(queue.Name, out var queueStats))
+                    if (queueNames.Contains(queue.Name) || queueNames.Contains(queue.ErrorQueueName))
                     {
-                        await Process(client, adminClient, sender, queue, ctx, cancellationToken);
+                        await Process(client, adminClient, sender, queue, queueNames, ctx, cancellationToken);
                     }
                 }
             });
@@ -68,20 +70,49 @@ public sealed class RetryA2ImportsCommand(CancellationToken cancellationToken)
         return 0;
     }
 
-    private async Task Process(ServiceBusClient client, ServiceBusAdministrationClient adminClient, ServiceBusSender sender, ErrorQueueHandler queue, ProgressContext ctx, CancellationToken cancellationToken)
+    private async Task Process(
+        ServiceBusClient client,
+        ServiceBusAdministrationClient adminClient,
+        ServiceBusSender sender,
+        ErrorQueueHandler queue,
+        HashSet<string> queueNames,
+        ProgressContext ctx,
+        CancellationToken cancellationToken)
     {
-        await DeadLetter(client, adminClient, queue, ctx, cancellationToken);
-        await Retry(client, adminClient, sender, queue, ctx, cancellationToken);
+        if (queueNames.Contains(queue.Name))
+        {
+            await RetryDeadLetters(client, adminClient, sender, queue, queue.Name, ctx, cancellationToken);
+        }
+
+        if (queueNames.Contains(queue.ErrorQueueName))
+        {
+            await DeadLetterMessages(client, adminClient, queue, queue.ErrorQueueName, ctx, cancellationToken);
+            await RetryDeadLetters(client, adminClient, sender, queue, queue.ErrorQueueName, ctx, cancellationToken);
+        }
     }
 
-    private async Task DeadLetter(ServiceBusClient client, ServiceBusAdministrationClient adminClient, ErrorQueueHandler queue, ProgressContext ctx, CancellationToken cancellationToken)
+    private async Task DeadLetterMessages(
+        ServiceBusClient client,
+        ServiceBusAdministrationClient adminClient,
+        ErrorQueueHandler queue,
+        string queueName,
+        ProgressContext ctx,
+        CancellationToken cancellationToken)
     {
-        var queueStats = await adminClient.GetQueueRuntimePropertiesAsync(queue.Name, cancellationToken);
+        var queueStats = await adminClient.GetQueueRuntimePropertiesAsync(queueName, cancellationToken);
 
         var expected = (int)queueStats.Value.ActiveMessageCount;
-        var task = ctx.AddTask($"Dead-letter {queue.Name} messages", autoStart: true, maxValue: expected);
+        var task = ctx.AddTask($"Dead-letter {queueName} messages", autoStart: true, maxValue: expected);
+        using var _ = task.Run();
 
-        await using var receiver = client.CreateReceiver(queue.Name, new ServiceBusReceiverOptions
+        if (expected == 0)
+        {
+            task.MaxValue = 1;
+            task.Value = 1;
+            return;
+        }
+
+        await using var receiver = client.CreateReceiver(queueName, new ServiceBusReceiverOptions
         {
             ReceiveMode = ServiceBusReceiveMode.PeekLock,
             PrefetchCount = Math.Max(100, (int)expected),
@@ -96,18 +127,31 @@ public sealed class RetryA2ImportsCommand(CancellationToken cancellationToken)
                 task.Increment(1);
             },
             cancellationToken);
-
-        task.StopTask();
     }
 
-    private async Task Retry(ServiceBusClient client, ServiceBusAdministrationClient adminClient, ServiceBusSender sender, ErrorQueueHandler queue, ProgressContext ctx, CancellationToken cancellationToken)
+    private async Task RetryDeadLetters(
+        ServiceBusClient client,
+        ServiceBusAdministrationClient adminClient,
+        ServiceBusSender sender,
+        ErrorQueueHandler queue,
+        string queueName,
+        ProgressContext ctx,
+        CancellationToken cancellationToken)
     {
-        var queueStats = await adminClient.GetQueueRuntimePropertiesAsync(queue.Name, cancellationToken);
+        var queueStats = await adminClient.GetQueueRuntimePropertiesAsync(queueName, cancellationToken);
         
         var expected = (int)queueStats.Value.DeadLetterMessageCount;
-        var task = ctx.AddTask($"Retry {queue.Name} messages", autoStart: true, maxValue: expected);
+        var task = ctx.AddTask($"Retry {queueName} messages", autoStart: true, maxValue: expected);
+        using var _ = task.Run();
 
-        await using var receiver = client.CreateReceiver(queue.Name, new ServiceBusReceiverOptions
+        if (expected == 0)
+        {
+            task.MaxValue = 1;
+            task.Value = 1;
+            return;
+        }
+
+        await using var receiver = client.CreateReceiver(queueName, new ServiceBusReceiverOptions
         {
             ReceiveMode = ServiceBusReceiveMode.PeekLock,
             PrefetchCount = Math.Max(100, (int)expected),
@@ -130,8 +174,6 @@ public sealed class RetryA2ImportsCommand(CancellationToken cancellationToken)
                 task.State.Update<double>("task.skipped", static s => s + 1);
             },
             cancellationToken);
-
-        task.StopTask();
     }
 
     private async Task ProcessMessages(ServiceBusReceiver receiver, Func<ServiceBusReceivedMessage, CancellationToken, Task> process, CancellationToken cancellationToken)
@@ -290,6 +332,8 @@ public sealed class RetryA2ImportsCommand(CancellationToken cancellationToken)
 
         public string Name { get; } = queueName;
 
+        public string ErrorQueueName { get; } = $"{queueName}_error";
+
         public bool Handles(ServiceBusReceivedMessage message)
             => GetHandler(message, out _);
 
@@ -348,7 +392,7 @@ public sealed class RetryA2ImportsCommand(CancellationToken cancellationToken)
 
     private sealed class ImportBatchErrorQueueHandler()
         : ErrorQueueHandler(
-            "register-party-import-batch_error",
+            "register-party-import-batch",
             [
                 new UpsertValidatedPartyCommandHandler()
             ])
@@ -400,7 +444,7 @@ public sealed class RetryA2ImportsCommand(CancellationToken cancellationToken)
 
     private sealed class ImportValidationQueueHandler()
         : ErrorQueueHandler(
-            "register-party-import-validation_error",
+            "register-party-import-validation",
             [
                 new UpsertPartyCommandHandler()
             ])
@@ -452,7 +496,7 @@ public sealed class RetryA2ImportsCommand(CancellationToken cancellationToken)
 
     private sealed class A2ImportErrorQueueHandler()
         : ErrorQueueHandler(
-            "register-a2-party-import_error",
+            "register-a2-party-import",
             [
                 new ImportA2PartyCommandHandler()
             ])
