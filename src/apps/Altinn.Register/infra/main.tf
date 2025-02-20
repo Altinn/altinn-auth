@@ -186,12 +186,12 @@ module "appsettings" {
     {
       key                 = "Postgres:AppConnectionString"
       key_vault_secret_id = data.azurerm_key_vault_secret.postgres_app.versionless_id
-      label               = "${var.environment}_register"
+      label               = "${var.environment}-register"
     },
     {
       key                 = "Postgres:MigrationConnectionString"
       key_vault_secret_id = data.azurerm_key_vault_secret.postgres_migration.versionless_id
-      label               = "${var.environment}_register"
+      label               = "${var.environment}-register"
     }
   ]
 
