@@ -14,6 +14,11 @@
     "en": "The Matrix",
     "nn": "The Matrix"
   },
+  "accesspackages": [
+    {
+      "urn": "urn:altinn:accesspackage:sjøfart"
+    }
+  ],
   "rights": [
     {
       "resource": [
