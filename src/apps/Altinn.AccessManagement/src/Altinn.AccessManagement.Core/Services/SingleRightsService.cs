@@ -128,7 +128,7 @@ namespace Altinn.AccessManagement.Core.Services
         }
 
         /// <inheritdoc/>
-        public async Task<DelegationActionResult> DelegateRights(int authenticatedUserId, int authenticatedUserAuthlevel, DelegationLookup delegation, CancellationToken cancellationToken = default)
+        public async Task<DelegationActionResult> DelegateRights(int authenticatedUserId, Guid authenticatedUserPartyUuid, int authenticatedUserAuthlevel, DelegationLookup delegation, CancellationToken cancellationToken = default)
         {
             (DelegationActionResult result, ServiceResource resource, Party fromParty, List<AttributeMatch> to) = await ValidateDelegationLookupModel(DelegationActionType.Delegation, delegation, authenticatedUserId);
             if (!result.IsValid)
@@ -188,6 +188,7 @@ namespace Altinn.AccessManagement.Core.Services
                         rulesToDelegate.Add(new Rule
                         {
                             DelegatedByUserId = authenticatedUserId,
+                            PerformedBy = new AttributeMatch(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyUuidAttribute, authenticatedUserPartyUuid.ToString()).SingleToList(),
                             OfferedByPartyId = fromParty.PartyId,
                             OfferedByPartyUuid = fromParty.PartyUuid,
                             OfferedByPartyType = fromParty.Person != null ? UuidType.Person : UuidType.Organization,
@@ -227,7 +228,7 @@ namespace Altinn.AccessManagement.Core.Services
         }
 
         /// <inheritdoc/>
-        public async Task<ValidationProblemDetails> RevokeRightsDelegation(int authenticatedUserId, DelegationLookup delegation, CancellationToken cancellationToken)
+        public async Task<ValidationProblemDetails> RevokeRightsDelegation(int authenticatedUserId, Guid authenticatedUserPartyUuid, DelegationLookup delegation, CancellationToken cancellationToken)
         {
             var assertion = AssertRevokeDelegationInput(delegation);
             if (assertion != null)
@@ -241,7 +242,7 @@ namespace Altinn.AccessManagement.Core.Services
             var to = FilterRequiredAttributeMatchesFromAttributeMatchList(toAttribute);
             DelegationHelper.TryGetUuidFromAttributeMatch(fromAttribute.ToList(), out Guid fromUuid, out UuidType fromUuidType);
 
-            var policiesToDelete = DelegationHelper.GetRequestToDeleteResource(authenticatedUserId, delegation.Rights[0].Resource, fromAttribute.GetRequiredInt(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute), to, fromUuidType, fromUuid);
+            var policiesToDelete = DelegationHelper.GetRequestToDeleteResource(authenticatedUserId, authenticatedUserPartyUuid, delegation.Rights[0].Resource, fromAttribute.GetRequiredInt(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute), to, fromUuidType, fromUuid);
 
             await _pap.TryDeleteDelegationPolicies(policiesToDelete, cancellationToken);
             return assertion;

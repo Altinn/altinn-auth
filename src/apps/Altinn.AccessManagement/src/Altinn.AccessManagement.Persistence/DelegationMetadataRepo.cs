@@ -25,6 +25,8 @@ namespace Altinn.AccessManagement.Persistence
         private const string FromType = "fromType";
         private const string ToUuid = "toUuid";
         private const string ToType = "toType";
+        private const string PerformedByUuid = "performedByUuid";
+        private const string PerformedByType = "performedByType";
         private const string InstanceId = "instanceId";
         private const string ResourceId = "resourceId";
         private const string DelegationChangeType = "delegationChangeType";
@@ -733,8 +735,8 @@ namespace Altinn.AccessManagement.Persistence
             using var activity = TelemetryConfig.ActivitySource.StartActivity(ActivityKind.Client);
 
             string query = /*strpsql*/@"
-            INSERT INTO delegation.delegationChanges(delegationChangeType, altinnAppId, offeredByPartyId, fromUuid, fromType, coveredByUserId, coveredByPartyId, toUuid, toType, performedByUserId, blobStoragePolicyPath, blobStorageVersionId)
-            VALUES (@delegationChangeType, @altinnAppId, @offeredByPartyId, @fromUuid, @fromType, @coveredByUserId, @coveredByPartyId, @toUuid, @toType, @performedByUserId, @blobStoragePolicyPath, @blobStorageVersionId)
+            INSERT INTO delegation.delegationChanges(delegationChangeType, altinnAppId, offeredByPartyId, fromUuid, fromType, coveredByUserId, coveredByPartyId, toUuid, toType, performedByUserId, performedbyuuid, performedbytype, blobStoragePolicyPath, blobStorageVersionId)
+            VALUES (@delegationChangeType, @altinnAppId, @offeredByPartyId, @fromUuid, @fromType, @coveredByUserId, @coveredByPartyId, @toUuid, @toType, @performedByUserId, @performedbyuuid, @performedbytype, @blobStoragePolicyPath, @blobStorageVersionId)
             RETURNING *;
             ";
 
@@ -751,6 +753,8 @@ namespace Altinn.AccessManagement.Persistence
                 cmd.Parameters.AddWithNullableValue(ToUuid, NpgsqlDbType.Uuid, delegationChange.ToUuid);
                 cmd.Parameters.Add(new NpgsqlParameter<UuidType?>(ToType, delegationChange.ToUuidType != UuidType.NotSpecified ? delegationChange.ToUuidType : null));
                 cmd.Parameters.AddWithValue("performedByUserId", NpgsqlDbType.Integer, delegationChange.PerformedByUserId);
+                cmd.Parameters.AddWithNullableValue(PerformedByUuid, NpgsqlDbType.Uuid, delegationChange.PerformedByUuid != null ? new Guid(delegationChange.PerformedByUuid) : null);
+                cmd.Parameters.Add(new NpgsqlParameter<UuidType?>(PerformedByType, delegationChange.PerformedByUuidType != UuidType.NotSpecified ? delegationChange.PerformedByUuidType : null));
                 cmd.Parameters.AddWithValue("blobStoragePolicyPath", NpgsqlDbType.Text, delegationChange.BlobStoragePolicyPath);
                 cmd.Parameters.AddWithValue("blobStorageVersionId", NpgsqlDbType.Text, delegationChange.BlobStorageVersionId);
 
@@ -775,28 +779,30 @@ namespace Altinn.AccessManagement.Persistence
 
             string query = /*strpsql*/@"
             WITH insertRow AS (
-                SELECT 
-                @delegationChangeType AS delegationChangeType, 
+                SELECT
+                @delegationChangeType AS delegationChangeType,
                 R.resourceId,
                 R.resourceType,
                 @offeredByPartyId AS offeredByPartyId,
-                @fromUuid AS fromUuid, 
-                @fromType AS fromType, 
-                @coveredByUserId AS coveredByUserId, 
-                @coveredByPartyId AS coveredByPartyId, 
-                @toUuid AS toUuid, 
-                @toType AS toType, 
-                @performedByUserId AS performedByUserId, 
-                @performedByPartyId AS performedByPartyId, 
-                @blobStoragePolicyPath AS blobStoragePolicyPath, 
-                @blobStorageVersionId AS blobStorageVersionId, 
+                @fromUuid AS fromUuid,
+                @fromType AS fromType,
+                @coveredByUserId AS coveredByUserId,
+                @coveredByPartyId AS coveredByPartyId,
+                @toUuid AS toUuid,
+                @toType AS toType,
+                @performedByUserId AS performedByUserId,
+                @performedByPartyId AS performedByPartyId,
+                @performedByUuid AS performedByUuid,
+                @performedByType AS performedByType,
+                @blobStoragePolicyPath AS blobStoragePolicyPath,
+                @blobStorageVersionId AS blobStorageVersionId,
                 @delegatedTime AS delegatedTime
-                FROM accessmanagement.Resource AS R 
+                FROM accessmanagement.Resource AS R
                 WHERE resourceRegistryId = @resourceregistryid
             ), insertAction AS (
                 INSERT INTO delegation.ResourceRegistryDelegationChanges
-                    (delegationChangeType, resourceId_fk, offeredByPartyId, fromUuid, fromType, coveredByUserId, coveredByPartyId, toUuid, toType, performedByUserId, performedByPartyId, blobStoragePolicyPath, blobStorageVersionId, created)
-                SELECT delegationChangeType, resourceId, offeredByPartyId, fromUuid, fromType, coveredByUserId, coveredByPartyId, toUuid, toType, performedByUserId, performedByPartyId, blobStoragePolicyPath, blobStorageVersionId, delegatedTime
+                    (delegationChangeType, resourceId_fk, offeredByPartyId, fromUuid, fromType, coveredByUserId, coveredByPartyId, toUuid, toType, performedByUserId, performedByPartyId, performedByUuid, performedByType, blobStoragePolicyPath, blobStorageVersionId, created)
+                SELECT delegationChangeType, resourceId, offeredByPartyId, fromUuid, fromType, coveredByUserId, coveredByPartyId, toUuid, toType, performedByUserId, performedByPartyId, performedByUuid, performedByType, blobStoragePolicyPath, blobStorageVersionId, delegatedTime
                 FROM insertRow
                 RETURNING *
             )
@@ -814,6 +820,8 @@ namespace Altinn.AccessManagement.Persistence
                 ins.toType,
                 ins.performedByUserId,
                 ins.performedByPartyId,
+                ins.performedByUuid,
+                ins.performedByType, 
                 ins.blobStoragePolicyPath,
                 ins.blobStorageVersionId,	
                 ins.created
@@ -835,6 +843,8 @@ namespace Altinn.AccessManagement.Persistence
                 cmd.Parameters.Add(new NpgsqlParameter<UuidType?>(ToType, delegationChange.ToUuidType != UuidType.NotSpecified ? delegationChange.ToUuidType : null));
                 cmd.Parameters.AddWithNullableValue("performedByUserId", NpgsqlDbType.Integer, delegationChange.PerformedByUserId);
                 cmd.Parameters.AddWithNullableValue("performedByPartyId", NpgsqlDbType.Integer, delegationChange.PerformedByPartyId);
+                cmd.Parameters.AddWithNullableValue(PerformedByUuid, NpgsqlDbType.Uuid, delegationChange.PerformedByUuid != null ? new Guid(delegationChange.PerformedByUuid) : null);
+                cmd.Parameters.Add(new NpgsqlParameter<UuidType?>(PerformedByType, delegationChange.PerformedByUuidType != UuidType.NotSpecified ? delegationChange.PerformedByUuidType : null));
                 cmd.Parameters.AddWithValue("blobStoragePolicyPath", NpgsqlDbType.Text, delegationChange.BlobStoragePolicyPath);
                 cmd.Parameters.AddWithValue("blobStorageVersionId", NpgsqlDbType.Text, delegationChange.BlobStorageVersionId);
                 cmd.Parameters.AddWithValue("delegatedTime", delegationChange.Created.HasValue ? delegationChange.Created.Value : DateTime.UtcNow);

@@ -132,7 +132,10 @@ namespace Altinn.AccessManagement.Core.Helpers
                 RuleId = xacmlRule.RuleId,
                 CreatedSuccessfully = true,
                 DelegatedByUserId = search.DeletedByUserId,
+                PerformedBy = search.PerformedBy,
                 OfferedByPartyId = search.PolicyMatch.OfferedByPartyId,
+                OfferedByPartyUuid = search.PolicyMatch.FromUuid,
+                OfferedByPartyType = search.PolicyMatch.FromUuidType,
                 CoveredBy = search.PolicyMatch.CoveredBy,
                 Resource = GetResourceFromXcamlRule(xacmlRule),
                 Action = GetActionValueFromRule(xacmlRule)

@@ -21,11 +21,12 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         /// Performs the delegation on behalf of the from party
         /// </summary>
         /// <param name="authenticatedUserId">The user id of the authenticated user performing the delegation</param>
+        /// <param name="authenticatedUserPartyUuid">the party uuid of the delegating user</param>
         /// <param name="authenticatedUserAuthlevel">The authentication level of the authenticated user performing the delegation</param>
         /// <param name="delegation">The delegation</param>
         /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>The result of the delegation</returns>
-        public Task<DelegationActionResult> DelegateRights(int authenticatedUserId, int authenticatedUserAuthlevel, DelegationLookup delegation, CancellationToken cancellationToken = default);
+        public Task<DelegationActionResult> DelegateRights(int authenticatedUserId, Guid authenticatedUserPartyUuid, int authenticatedUserAuthlevel, DelegationLookup delegation, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets all offered single rights delegations for a reportee
@@ -46,10 +47,11 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         /// <summary>
         /// Operation to revoke a single rights delegation
         /// </summary>
-        /// <param name="authenticatedUserId">authenticed user</param>
+        /// <param name="authenticatedUserId">authenticed user id</param>
+        /// <param name="authenticatedUserPartyUuid">authenticated user party uuid</param>
         /// <param name="delegation">delegation</param>
-        /// <param name="cancellationToken">http context token</param>
         /// <returns>The result of the deletion</returns>
-        Task<ValidationProblemDetails> RevokeRightsDelegation(int authenticatedUserId, DelegationLookup delegation, CancellationToken cancellationToken);
+        /// <param name="cancellationToken">http context token</param>
+        Task<ValidationProblemDetails> RevokeRightsDelegation(int authenticatedUserId, Guid authenticatedUserPartyUuid, DelegationLookup delegation, CancellationToken cancellationToken);
     }
 }

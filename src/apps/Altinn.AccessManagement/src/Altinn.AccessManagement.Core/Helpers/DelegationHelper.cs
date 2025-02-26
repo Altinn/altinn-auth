@@ -109,6 +109,13 @@ namespace Altinn.AccessManagement.Core.Helpers
                 return Guid.TryParse(currentAttributeMatch.Value, out uuid) && uuid != Guid.Empty;
             }
 
+            currentAttributeMatch = match.Find(m => m.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.PartyUuidAttribute);
+            if (currentAttributeMatch != null)
+            {
+                type = UuidType.Party;
+                return Guid.TryParse(currentAttributeMatch.Value, out uuid) && uuid != Guid.Empty;
+            }
+
             return false;
         }
 
@@ -347,7 +354,7 @@ namespace Altinn.AccessManagement.Core.Helpers
         /// Gets ResourceType, ResourceRegistryId, Org, App, OfferedBy and CoveredBy as out params from a single Rule
         /// </summary>
         /// <returns>A bool indicating whether sufficent params where found</returns>
-        public static bool TryGetDelegationParamsFromRule(Rule rule, out ResourceAttributeMatchType resourceMatchType, out string resourceId, out string org, out string app, out int offeredByPartyId, out Guid? fromUuid, out UuidType fromUuidType, out Guid? toUuid, out UuidType toUuidType, out int? coveredByPartyId, out int? coveredByUserId, out int? delegatedByUserId, out int? delegatedByPartyId, out DateTime delegatedDateTime)
+        public static bool TryGetDelegationParamsFromRule(Rule rule, out ResourceAttributeMatchType resourceMatchType, out string resourceId, out string org, out string app, out int offeredByPartyId, out Guid? fromUuid, out UuidType fromUuidType, out Guid? toUuid, out UuidType toUuidType, out int? coveredByPartyId, out int? coveredByUserId, out int? delegatedByUserId, out int? delegatedByPartyId, out Guid? performedByUuid, out UuidType performedByUuidType, out DateTime delegatedDateTime)
         {
             resourceMatchType = ResourceAttributeMatchType.None;
             resourceId = null;
@@ -363,6 +370,9 @@ namespace Altinn.AccessManagement.Core.Helpers
 
             delegatedByUserId = null;
             delegatedByPartyId = null;
+            performedByUuid = null;
+            performedByUuidType = UuidType.NotSpecified;
+
             delegatedDateTime = DateTime.UtcNow;
 
             try
@@ -381,6 +391,12 @@ namespace Altinn.AccessManagement.Core.Helpers
 
                 delegatedByUserId = rule.DelegatedByUserId;
                 delegatedByPartyId = rule.DelegatedByPartyId;
+                validUuid = TryGetUuidFromAttributeMatch(rule.PerformedBy, out Guid performedByUuidTemp, out performedByUuidType);
+                if (validUuid)
+                {
+                    performedByUuid = performedByUuidTemp;
+                }
+
                 delegatedDateTime = rule.DelegatedDateTime ?? DateTime.UtcNow;
 
                 if (resourceMatchType != ResourceAttributeMatchType.None
@@ -406,7 +422,7 @@ namespace Altinn.AccessManagement.Core.Helpers
         public static bool TryGetDelegationPolicyPathFromRule(Rule rule, out string delegationPolicyPath)
         {
             delegationPolicyPath = null;
-            if (TryGetDelegationParamsFromRule(rule, out ResourceAttributeMatchType resourceMatchType, out string resourceId, out string org, out string app, out int offeredBy, out Guid? fromUuid, out UuidType fromUuidType, out Guid? toUuid, out UuidType toUuidType, out int? coveredByPartyId, out int? coveredByUserId, out _, out _, out _))
+            if (TryGetDelegationParamsFromRule(rule, out ResourceAttributeMatchType resourceMatchType, out string resourceId, out string org, out string app, out int offeredBy, out _, out _, out Guid? toUuid, out UuidType toUuidType, out int? coveredByPartyId, out int? coveredByUserId, out _, out _, out _, out _, out _))
             {
                 try
                 {
@@ -682,10 +698,15 @@ namespace Altinn.AccessManagement.Core.Helpers
         /// <returns>true if a valid type and id was extracted else false</returns>
         public static bool TryGetPerformerFromAttributeMatches(IEnumerable<AttributeMatch> performer, out string id, out UuidType type)
         {
-            string org = null, app = null, person = null, organization = null, enterpriseUser = null, systemUser = null;
+            string org = null, app = null, person = null, organization = null, enterpriseUser = null, systemUser = null, user = null, party = null, partyuuid = null;
             id = null;
             type = UuidType.NotSpecified;
             int counter = 0;
+
+            if (performer == null)
+            {
+                return false;
+            }   
 
             foreach (AttributeMatch match in performer)
             {
@@ -710,6 +731,15 @@ namespace Altinn.AccessManagement.Core.Helpers
                     case AltinnXacmlConstants.MatchAttributeIdentifiers.SystemUserUuid:
                         systemUser = match.Value;
                         break;
+                    case AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute:
+                        user = match.Value;
+                        break;
+                    case AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute:
+                        party = match.Value;
+                        break;
+                    case AltinnXacmlConstants.MatchAttributeIdentifiers.PartyUuidAttribute:
+                        partyuuid = match.Value;
+                        break;
                 }
             }
 
@@ -726,14 +756,28 @@ namespace Altinn.AccessManagement.Core.Helpers
                 type = UuidType.Person;
                 return true;
             }
-            
+
+            if (org == null && app == null && person != null && organization == null && enterpriseUser == null && systemUser == null && user != null && counter == 2)
+            {
+                id = person;
+                type = UuidType.Person;
+                return true;
+            }
+
             if (org == null && app == null && person == null && organization != null && enterpriseUser == null && systemUser == null && counter == 1)
             {
                 id = organization;
                 type = UuidType.Organization;
                 return true;
             }
-            
+
+            if (org == null && app == null && person == null && organization != null && enterpriseUser == null && systemUser == null && party != null && counter == 2)
+            {
+                id = organization;
+                type = UuidType.Organization;
+                return true;
+            }
+
             if (org == null && app == null && person == null && organization == null && enterpriseUser != null && systemUser == null && counter == 1)
             {
                 id = enterpriseUser;
@@ -748,6 +792,13 @@ namespace Altinn.AccessManagement.Core.Helpers
                 return true;
             }
 
+            if (org == null && app == null && person == null && organization == null && enterpriseUser == null && systemUser == null && partyuuid != null && counter == 1)
+            {
+                id = partyuuid;
+                type = UuidType.Party;
+                return true;
+            }
+
             return false;
         }
 
@@ -758,7 +809,7 @@ namespace Altinn.AccessManagement.Core.Helpers
         {
             foreach (Rule rule in rulesList)
             {
-                if (TryGetDelegationParamsFromRule(rule, out _, out _, out _, out _, out _, out Guid? fromUuid, out UuidType fromUuidType, out Guid? toUuid, out UuidType toUuidType, out int? coveredByPartyId, out int? coveredByUserId, out _, out _, out _)
+                if (TryGetDelegationParamsFromRule(rule, out _, out _, out _, out _, out _, out _, out _, out _, out _, out int? coveredByPartyId, out int? coveredByUserId, out _, out _, out _, out _, out _)
                     && rule.Type == RuleType.None)
                 {
                     SetTypeForSingleRule(keyRolePartyIds, offeredByPartyId, coveredBy, parentPartyId, rule, coveredByPartyId, coveredByUserId);
@@ -820,13 +871,14 @@ namespace Altinn.AccessManagement.Core.Helpers
         /// <summary>
         /// Builds a RequestToDelete request model for revoking all delegated rules for the resource if delegated between the from and to parties
         /// </summary>
-        public static List<RequestToDelete> GetRequestToDeleteResource(int authenticatedUserId, IEnumerable<AttributeMatch> resource, int fromPartyId, IEnumerable<AttributeMatch> to, UuidType fromType, Guid from)
+        public static List<RequestToDelete> GetRequestToDeleteResource(int authenticatedUserId, Guid authenticatedUserPartyUuid, IEnumerable<AttributeMatch> resource, int fromPartyId, IEnumerable<AttributeMatch> to, UuidType fromType, Guid from)
         {
             return new List<RequestToDelete>
             {
                 new RequestToDelete
                 {
                     DeletedByUserId = authenticatedUserId,
+                    PerformedBy = new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.PartyUuidAttribute, Value = authenticatedUserPartyUuid.ToString() }.SingleToList(),
                     PolicyMatch = new PolicyMatch
                     {
                         OfferedByPartyId = fromPartyId,

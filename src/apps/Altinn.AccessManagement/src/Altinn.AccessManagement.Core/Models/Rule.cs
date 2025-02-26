@@ -39,6 +39,11 @@ namespace Altinn.AccessManagement.Core.Models
         public int? DelegatedByPartyId { get; set; }
 
         /// <summary>
+        /// Gets or sets a list of identifiers for the user/party performing the delegation
+        /// </summary>
+        public List<AttributeMatch> PerformedBy { get; set; }
+
+        /// <summary>
         /// Datetime used to override now if the Rule is imported from a source with existing Delegation information
         /// </summary>
         public DateTime? DelegatedDateTime { get; set; }

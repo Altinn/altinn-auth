@@ -16,6 +16,11 @@
         public const string UserId = "urn:altinn:userid";
 
         /// <summary>
+        /// Thu uuid of the performing party (user)
+        /// </summary>
+        public const string PartyUuid = "urn:altinn:party:uuid";
+
+        /// <summary>
         /// Party id.
         /// </summary>
         public const string PartyID = "urn:altinn:partyid";

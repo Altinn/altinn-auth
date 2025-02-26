@@ -45,6 +45,12 @@ exports.getToken = async function (getTokenParameters) {
     tokenUrl = `${tokenBaseUrl}/api/Get${tokenType}Token?env=${tokenEnv}&org=${tokenOrg}&app=${tokenApp}&ttl=30`;
   }
 
+  else if (tokenType == "PlatformToken") {
+    const tokenApp = getTokenParameters.auth_app;
+
+    tokenUrl = `${tokenBaseUrl}/api/Get${tokenType}?env=${tokenEnv}&app=${tokenApp}&ttl=30`;
+  }
+
   const response = await axios.get(tokenUrl, {
     headers: { Authorization }
   });

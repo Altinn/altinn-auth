@@ -573,7 +573,7 @@ namespace Altinn.AccessManagement.Core.Services
 
         private async Task<bool> WriteDelegationPolicyInternal(string policyPath, List<Rule> rules, CancellationToken cancellationToken = default)
         {
-            if (!DelegationHelper.TryGetDelegationParamsFromRule(rules[0], out ResourceAttributeMatchType resourceMatchType, out string resourceId, out string org, out string app, out int offeredByPartyId, out Guid? fromUuid, out UuidType fromUuidType, out Guid? toUuid, out UuidType toUuidType, out int? coveredByPartyId, out int? coveredByUserId, out int? delegatedByUserId, out int? delegatedByPartyId, out DateTime delegatedDateTime)
+            if (!DelegationHelper.TryGetDelegationParamsFromRule(rules[0], out ResourceAttributeMatchType resourceMatchType, out string resourceId, out string org, out string app, out int offeredByPartyId, out Guid? fromUuid, out UuidType fromUuidType, out Guid? toUuid, out UuidType toUuidType, out int? coveredByPartyId, out int? coveredByUserId, out int? delegatedByUserId, out int? delegatedByPartyId, out Guid? performedByUuid, out UuidType performedByUuidType, out DateTime delegatedDateTime)
                 || resourceMatchType == ResourceAttributeMatchType.None)
             {
                 _logger.LogWarning("This should not happen. Incomplete rule model received for delegation to delegation policy at: {policyPath}. Incomplete model should have been returned in unsortable rule set by TryWriteDelegationPolicyRules. DelegationHelper.SortRulesByDelegationPolicyPath might be broken.", policyPath);
@@ -667,9 +667,6 @@ namespace Altinn.AccessManagement.Core.Services
                         return false;
                     }
 
-                    string performedUuid = null;
-                    UuidType performedUuidType = UuidType.NotSpecified;
-
                     // Write delegation change to postgresql
                     DelegationChange change = new DelegationChange
                     {
@@ -684,8 +681,8 @@ namespace Altinn.AccessManagement.Core.Services
                         ToUuidType = toUuidType,
                         PerformedByUserId = delegatedByUserId,
                         PerformedByPartyId = delegatedByPartyId,
-                        PerformedByUuid = performedUuid,
-                        PerformedByUuidType = performedUuidType,
+                        PerformedByUuid = performedByUuid?.ToString(),
+                        PerformedByUuidType = performedByUuidType,
                         Created = delegatedDateTime,
                         BlobStoragePolicyPath = policyPath,
                         BlobStorageVersionId = blobResponse.Value.VersionId
@@ -742,6 +739,7 @@ namespace Altinn.AccessManagement.Core.Services
                 bool isAllRulesDeleted = false;
                 string coveredBy = DelegationHelper.GetCoveredByFromMatch(deleteRequest.PolicyMatch.CoveredBy, out int? coveredByUserId, out int? coveredByPartyId, out Guid? coveredByUuid, out UuidType coveredByUuidType);
                 string offeredBy = deleteRequest.PolicyMatch.OfferedByPartyId.ToString();
+                DelegationHelper.TryGetPerformerFromAttributeMatches(deleteRequest.PerformedBy, out string performedByUuid, out UuidType performedByUuidType);
 
                 DelegationChange currentChange = await _delegationRepository.GetCurrentDelegationChange(resourceMatchType, resourceId, deleteRequest.PolicyMatch.OfferedByPartyId, coveredByPartyId, coveredByUserId, coveredByUuid, coveredByUuidType, cancellationToken);
 
@@ -792,9 +790,15 @@ namespace Altinn.AccessManagement.Core.Services
                         DelegationChangeType = isAllRulesDeleted ? DelegationChangeType.RevokeLast : DelegationChangeType.Revoke,
                         ResourceId = resourceId,
                         OfferedByPartyId = deleteRequest.PolicyMatch.OfferedByPartyId,
+                        FromUuid = deleteRequest.PolicyMatch.FromUuid,
+                        FromUuidType = deleteRequest.PolicyMatch.FromUuidType,
                         CoveredByPartyId = coveredByPartyId,
                         CoveredByUserId = coveredByUserId,
+                        ToUuid = coveredByUuid,
+                        ToUuidType = coveredByUuidType,
                         PerformedByUserId = deleteRequest.DeletedByUserId,
+                        PerformedByUuid = performedByUuid,
+                        PerformedByUuidType = performedByUuidType,
                         BlobStoragePolicyPath = policyPath,
                         BlobStorageVersionId = response.Value.VersionId
                     };
@@ -838,6 +842,7 @@ namespace Altinn.AccessManagement.Core.Services
         private async Task<List<Rule>> DeleteAllRulesInPolicy(RequestToDelete policyToDelete, CancellationToken cancellationToken = default)
         {
             string coveredBy = DelegationHelper.GetCoveredByFromMatch(policyToDelete.PolicyMatch.CoveredBy, out int? coveredByUserId, out int? coveredByPartyId, out Guid? coveredByUuid, out UuidType coveredByUuidType);
+            DelegationHelper.TryGetPerformerFromAttributeMatches(policyToDelete.PerformedBy, out string performedByUuid, out UuidType performedByUuidType);
 
             if (!DelegationHelper.TryGetResourceFromAttributeMatch(policyToDelete.PolicyMatch.Resource, out ResourceAttributeMatchType resourceMatchType, out string resourceId, out string org, out string app, out string _, out string _))
             {
@@ -913,6 +918,8 @@ namespace Altinn.AccessManagement.Core.Services
                     FromUuid = policyToDelete.PolicyMatch.FromUuid,
                     FromUuidType = policyToDelete.PolicyMatch.FromUuidType,
                     PerformedByUserId = policyToDelete.DeletedByUserId,
+                    PerformedByUuid = performedByUuid,
+                    PerformedByUuidType = performedByUuidType,
                     BlobStoragePolicyPath = policyPath,
                     BlobStorageVersionId = response.Value.VersionId
                 };

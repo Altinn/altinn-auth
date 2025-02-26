@@ -25,6 +25,22 @@ namespace Altinn.AccessManagement.Core.Helpers
         }
 
         /// <summary>
+        /// Gets the users PartyUuid
+        /// </summary>
+        /// <param name="context">the http context</param>
+        /// <returns>the logged in users party uuid</returns>
+        public static Guid GetPartyUuid(HttpContext context)
+        {
+            var claim = context.User?.Claims.FirstOrDefault(c => c.Type.Equals(AltinnCoreClaimTypes.PartyUuid));
+            if (claim != null && Guid.TryParse(claim.Value, out Guid userUuid))
+            {
+                return userUuid;
+            }
+
+            return Guid.Empty;
+        }
+
+        /// <summary>
         /// Gets the authenticated user's party id
         /// </summary>
         /// <param name="context">the http context</param>
