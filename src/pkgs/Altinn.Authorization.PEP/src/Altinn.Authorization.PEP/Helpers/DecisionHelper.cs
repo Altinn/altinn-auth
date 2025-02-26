@@ -237,7 +237,7 @@ namespace Altinn.Common.PEP.Helpers
                 }
                 else if (IsPartyIdClaim(claim.Type))
                 {
-                    partyIdAttribute = CreateXacmlJsonAttribute(AltinnXacmlUrns.PartyAttribute, claim.Value, DefaultType, claim.Issuer);
+                    partyIdAttribute = CreateXacmlJsonAttribute(AltinnXacmlUrns.PartyId, claim.Value, DefaultType, claim.Issuer);
                 }
                 else if (IsResourceClaim(claim.Type))
                 {
@@ -340,7 +340,7 @@ namespace Altinn.Common.PEP.Helpers
             }
             else if (!string.IsNullOrEmpty(ssn))
             {
-                resourceCategory.Attribute.Add(CreateXacmlJsonAttribute(AltinnXacmlUrns.Ssn, ssn, DefaultType, DefaultIssuer, includeResult));
+                resourceCategory.Attribute.Add(CreateXacmlJsonAttribute(AltinnXacmlUrns.PersonId, ssn, DefaultType, DefaultIssuer, includeResult));
             }
 
             if (!string.IsNullOrWhiteSpace(resourceid))
@@ -400,7 +400,7 @@ namespace Altinn.Common.PEP.Helpers
 
         private static bool IsPartyIdClaim(string name)
         {
-            return name.Equals(AltinnXacmlUrns.PartyAttribute);
+            return name.Equals(AltinnXacmlUrns.PartyId);
         }
 
         private static bool IsResourceClaim(string name)
@@ -423,7 +423,8 @@ namespace Altinn.Common.PEP.Helpers
         {
             if (claim.Type.Equals("authorization_details"))
             {
-                userClaim = JsonSerializer.Deserialize<SystemUserClaim>(claim.Value);
+                JsonSerializerOptions jsonOptions = new(JsonSerializerDefaults.Web);
+                userClaim = JsonSerializer.Deserialize<SystemUserClaim>(claim.Value, jsonOptions);
                 if (userClaim?.Systemuser_id != null && userClaim.Systemuser_id.Count > 0)
                 {
                     return true;

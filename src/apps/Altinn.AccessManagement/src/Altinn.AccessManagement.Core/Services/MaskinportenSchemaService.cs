@@ -163,7 +163,7 @@ namespace Altinn.AccessManagement.Core.Services
         /// <inheritdoc/>
         public async Task<List<Delegation>> GetOfferedMaskinportenSchemaDelegations(AttributeMatch party, CancellationToken cancellationToken = default)
         {
-            if (party.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.SocialSecurityNumberAttribute)
+            if (party.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.PersonId)
             {
                 throw new ArgumentException($"Maskinporten schema delegations is not supported between persons. Invalid argument: {party.Id}");
             }
@@ -185,7 +185,7 @@ namespace Altinn.AccessManagement.Core.Services
         /// <inheritdoc/>
         public async Task<List<Delegation>> GetReceivedMaskinportenSchemaDelegations(AttributeMatch party, CancellationToken cancellationToken = default)
         {
-            if (party.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.SocialSecurityNumberAttribute)
+            if (party.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.PersonId)
             {
                 throw new ArgumentException($"Maskinporten schema delegations is not supported between persons. Invalid argument: {party.Id}");
             }

@@ -179,7 +179,7 @@ namespace Altinn.AccessManagement.Utilities
                     throw new ArgumentException($"The request header '{PersonHeader}' does not provide a well-formed national identity number value: '{context.Request.Headers[PersonHeader]}'");
                 }
 
-                return new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.SocialSecurityNumberAttribute, Value = context.Request.Headers[PersonHeader] };
+                return new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.PersonId, Value = context.Request.Headers[PersonHeader] };
             }
             
             if (int.TryParse(party, out int partyId) && partyId != 0)

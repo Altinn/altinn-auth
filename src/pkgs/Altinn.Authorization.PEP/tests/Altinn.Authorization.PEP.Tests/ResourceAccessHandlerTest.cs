@@ -123,7 +123,7 @@ namespace Altinn.Common.PEP.Authorization
             Assert.False(context.HasFailed);
 
             XacmlJsonRequestRoot request = _pdpMock.Invocations[0].Arguments[0] as XacmlJsonRequestRoot;
-            Assert.Equal("urn:altinn:ssn", request.Request.Resource[0].Attribute[0].AttributeId);
+            Assert.Equal("urn:altinn:person:identifier-no", request.Request.Resource[0].Attribute[0].AttributeId);
             Assert.Equal("01014922047", request.Request.Resource[0].Attribute[0].Value);
         }
 

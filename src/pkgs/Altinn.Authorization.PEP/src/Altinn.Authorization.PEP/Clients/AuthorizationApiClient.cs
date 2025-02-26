@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
@@ -21,6 +22,7 @@ namespace Altinn.Common.PEP.Clients
         private readonly HttpClient _httpClient;
         private readonly ILogger _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly JsonSerializerOptions jsonOptions = new(JsonSerializerDefaults.Web);
 
         /// <summary>
         /// Initialize a new instance of the <see cref="AuthorizationApiClient"/> class.
@@ -30,10 +32,10 @@ namespace Altinn.Common.PEP.Clients
         /// <param name="platformSettings">The current platform settings</param>
         /// <param name="logger">A logger provided by the built in LoggerFactory.</param>
         public AuthorizationApiClient(
-            IHttpContextAccessor httpContextAccessor,
-            HttpClient client,
-            IOptions<PlatformSettings> platformSettings,
-            ILogger<AuthorizationApiClient> logger)
+                IHttpContextAccessor httpContextAccessor,
+                HttpClient client,
+                IOptions<PlatformSettings> platformSettings,
+                ILogger<AuthorizationApiClient> logger)
         {
             _httpContextAccessor = httpContextAccessor;
             _httpClient = client;
@@ -59,7 +61,7 @@ namespace Altinn.Common.PEP.Clients
         {
             XacmlJsonResponse xacmlJsonResponse = null;
             string apiUrl = $"decision";
-            string requestJson = JsonSerializer.Serialize(xacmlJsonRequest);
+            string requestJson = JsonSerializer.Serialize(xacmlJsonRequest, jsonOptions);
             StringContent httpContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
 
             Stopwatch stopWatch = new Stopwatch();
@@ -71,8 +73,7 @@ namespace Altinn.Common.PEP.Clients
 
             if (response.StatusCode == HttpStatusCode.OK)
             {
-                string responseData = await response.Content.ReadAsStringAsync();
-                xacmlJsonResponse = JsonSerializer.Deserialize<XacmlJsonResponse>(responseData);
+                xacmlJsonResponse = await response.Content.ReadFromJsonAsync<XacmlJsonResponse>(jsonOptions);
             }
             else
             {

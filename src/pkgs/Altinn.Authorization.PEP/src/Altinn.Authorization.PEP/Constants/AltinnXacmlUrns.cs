@@ -11,9 +11,9 @@ namespace Altinn.Common.PEP.Constants
         public const string PartyId = "urn:altinn:partyid";
 
         /// <summary>
-        /// Get the URN value for 
+        /// Get the URN value for person. Only supported for use in external Authorize API
         /// </summary>
-        public const string Ssn = "urn:altinn:ssn";
+        public const string PersonId = "urn:altinn:person:identifier-no";
 
         /// <summary>
         /// Get the URN value for organization number. This is the legacy version 
@@ -63,7 +63,7 @@ namespace Altinn.Common.PEP.Constants
         /// <summary>
         /// Get the value Resource Instance
         /// </summary>
-        public const string ResourceInstance = "urn:altinn:resourceinstance";
+        public const string ResourceInstance = "urn:altinn:resource:instance-id";
 
         /// <summary>
         /// Get the value eventType
@@ -99,10 +99,5 @@ namespace Altinn.Common.PEP.Constants
         /// xacml string that represents person universally unique identifier
         /// </summary>
         public const string PersonUuidAttribute = "urn:altinn:person:uuid";
-
-        /// <summary>
-        /// xacml string that represents party
-        /// </summary>
-        public const string PartyAttribute = "urn:altinn:partyid";
     }
 }

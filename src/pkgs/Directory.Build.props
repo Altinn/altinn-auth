@@ -2,4 +2,26 @@
 
     <Import Project="..\Directory.Build.props" />
 
+    <Choose>
+        <When Condition=" '$(IsPackageProject)' == 'true' ">
+
+            <PropertyGroup>
+                <IsPublishable>true</IsPublishable>
+                <CopyArtifactsAfterTargets>Pack</CopyArtifactsAfterTargets>
+                <DefaultArtifactsFileMatch>*nupkg</DefaultArtifactsFileMatch>
+                <BaseArtifactsPath Condition=" '$(BaseArtifactsPath)' == '' ">
+                    $(MSBuildThisFileDirectory)artifacts\</BaseArtifactsPath>
+            </PropertyGroup>
+
+        </When>
+
+        <Otherwise>
+
+            <PropertyGroup>
+                <IsPublishable>false</IsPublishable>
+            </PropertyGroup>
+
+        </Otherwise>
+    </Choose>
+
 </Project>

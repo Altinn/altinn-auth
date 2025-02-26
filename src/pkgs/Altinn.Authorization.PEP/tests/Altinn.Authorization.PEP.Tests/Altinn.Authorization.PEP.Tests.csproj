@@ -1,7 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <IsPackable>false</IsPackable>
+        <TargetFramework></TargetFramework>
+        <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -9,8 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference
-            Include="..\..\src\Altinn.Authorization.PEP\Altinn.Authorization.PEP.csproj" />
+        <ProjectReference Include="..\..\src\Altinn.Authorization.PEP\Altinn.Authorization.PEP.csproj" />
     </ItemGroup>
 
 </Project>

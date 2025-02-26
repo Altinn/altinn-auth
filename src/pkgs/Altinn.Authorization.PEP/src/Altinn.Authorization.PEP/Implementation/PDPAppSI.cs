@@ -54,8 +54,6 @@ namespace Altinn.Common.PEP.Implementation
                 throw new ArgumentNullException("response");
             }
 
-            _logger.LogInformation("// Altinn PEP // PDPAppSI // Request sent to platform authorization: {xacmlJsonRequest}", JsonSerializer.Serialize(xacmlJsonRequest));
-
             return DecisionHelper.ValidatePdpDecision(response.Response, user);
         }
     }

@@ -107,11 +107,6 @@ namespace Altinn.AccessManagement.Core.Constants
             public const string OrganizationNumberAttribute = "urn:altinn:organizationnumber";
 
             /// <summary>
-            /// Social security number attribute match indentifier 
-            /// </summary>
-            public const string SocialSecurityNumberAttribute = "urn:altinn:ssn";
-
-            /// <summary>
             /// Altinn 2 service code attribute match indentifier 
             /// </summary>
             public const string ServiceCodeAttribute = "urn:altinn:servicecode";

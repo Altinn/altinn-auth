@@ -25,6 +25,7 @@ namespace Altinn.Common.PEP.Authorization
         private readonly Mock<IPDP> _pdpMock;
         private readonly IOptions<PepSettings> _generalSettings;
         private readonly AppAccessHandler _aah;
+        private readonly JsonSerializerOptions jsonOptions = new(JsonSerializerDefaults.Web);
 
         public AppAccessHandlerTest()
         {
@@ -268,7 +269,7 @@ namespace Altinn.Common.PEP.Authorization
             };
 
             List<Claim> claims = new List<Claim>();
-            claims.Add(new Claim("authorization_details", JsonSerializer.Serialize(systemUserClaim), "string", "org"));
+            claims.Add(new Claim("authorization_details", JsonSerializer.Serialize(systemUserClaim, jsonOptions), "string", "org"));
             ClaimsPrincipal user = new ClaimsPrincipal(new ClaimsIdentity(claims));
 
             return user;
