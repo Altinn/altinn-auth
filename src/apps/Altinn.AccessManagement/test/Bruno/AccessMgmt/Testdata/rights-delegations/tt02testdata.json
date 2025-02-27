@@ -2,6 +2,7 @@
     "env": "tt02",
     "org": "ttd",
     "app": "apps-test-undeploy",
+	"resource_system": "ske-krav-og-betalinger",
     "servicecode": "2802",
     "serviceeditioncode": "2203",
     "resource": "devtest_gar_bruno-gar",
@@ -52,5 +53,20 @@
         "lastname": "KLOSETT",
         "userid": 1420960,
         "partyid": 51032967
+	},
+    "org_system": {
+        "orgno": "310422649",
+        "partyid": 51562159,
+        "partyuuid": "4E9850BD-CDD4-4AB2-956D-44395D4F7EC1",
+        "systems": [
+    	      "a3cecdb7-40b7-41a0-8ddd-e418b1abe83e"
+        ],
+        "dagl": {
+            "pid": "13856998392",
+            "lastname": "ALMANAKK",
+            "userid": 1279051,
+            "partyid": 50553336,
+            "partyuuid": "3ADDA6EF-2423-4493-BD6E-CA6DE858C2F1"
+        }
     }
 }

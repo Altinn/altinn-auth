@@ -63,3 +63,10 @@ script:pre-request {
   
   bru.setVar("bearerToken",  token);
 }
+
+tests {
+  test("organization to systemuser revoke", function() {
+    const data = res.getBody();  
+    expect(res.status).to.equal(204);  
+  });
+}
