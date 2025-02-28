@@ -44,6 +44,11 @@ variable "db_admins_user_principal_ids" {
       principal_id   = "be1a510a-db1e-473c-a73a-558cdb68e353",
       principal_name = "ext-anils@ai-dev.no",
       principal_type = "User"
+    },
+    {
+      principal_id   = "3ab09791-7fa4-49ec-95ae-cd84b51ab691",
+      principal_name = "acn-joye-prod@ai-dev.no",
+      principal_type = "User"
   }]
 }
 
