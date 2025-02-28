@@ -7,4 +7,6 @@ builder.AddProject<Projects.Altinn_AccessManagement_Api_ServiceOwner>("altinn-ac
 
 builder.AddProject<Projects.Altinn_AccessManagement_Api_Metadata>("altinn-accessmanagement-api-metadata");
 
+//// builder.AddProject<Projects.Altinn_AccessMgmt_AutoApi>("altinn-accessmgmt-autoapi");
+
 builder.Build().Run();

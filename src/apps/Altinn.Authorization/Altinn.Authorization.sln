@@ -25,6 +25,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Authorization.Integr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Integration.Platform", "..\..\libs\Altinn.Authorization.Integration\src\Altinn.Authorization.Integration.Platform\Altinn.Authorization.Integration.Platform.csproj", "{AFC7AF26-688F-4E72-A32B-5E433694DEEA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Host.Database", "..\..\libs\Altinn.Authorization.Host\src\Altinn.Authorization.Host.Database\Altinn.Authorization.Host.Database.csproj", "{D0D5FB63-588D-4F8F-858E-347C3311C0A4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -107,6 +109,18 @@ Global
 		{AFC7AF26-688F-4E72-A32B-5E433694DEEA}.Release|x64.Build.0 = Release|Any CPU
 		{AFC7AF26-688F-4E72-A32B-5E433694DEEA}.Release|x86.ActiveCfg = Release|Any CPU
 		{AFC7AF26-688F-4E72-A32B-5E433694DEEA}.Release|x86.Build.0 = Release|Any CPU
+		{D0D5FB63-588D-4F8F-858E-347C3311C0A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0D5FB63-588D-4F8F-858E-347C3311C0A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0D5FB63-588D-4F8F-858E-347C3311C0A4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D0D5FB63-588D-4F8F-858E-347C3311C0A4}.Debug|x64.Build.0 = Debug|Any CPU
+		{D0D5FB63-588D-4F8F-858E-347C3311C0A4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D0D5FB63-588D-4F8F-858E-347C3311C0A4}.Debug|x86.Build.0 = Debug|Any CPU
+		{D0D5FB63-588D-4F8F-858E-347C3311C0A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0D5FB63-588D-4F8F-858E-347C3311C0A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0D5FB63-588D-4F8F-858E-347C3311C0A4}.Release|x64.ActiveCfg = Release|Any CPU
+		{D0D5FB63-588D-4F8F-858E-347C3311C0A4}.Release|x64.Build.0 = Release|Any CPU
+		{D0D5FB63-588D-4F8F-858E-347C3311C0A4}.Release|x86.ActiveCfg = Release|Any CPU
+		{D0D5FB63-588D-4F8F-858E-347C3311C0A4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -120,5 +134,6 @@ Global
 		{77D1E52C-CDA9-4F61-8410-427CC9AB5C78} = {2473309E-1C4A-4A8C-86EC-DA74D8594D4D}
 		{812E1E71-C7AB-47A0-B6C1-72223E5D4CB1} = {9637F1CF-5D13-4661-996F-955C48A357FF}
 		{AFC7AF26-688F-4E72-A32B-5E433694DEEA} = {812E1E71-C7AB-47A0-B6C1-72223E5D4CB1}
+		{D0D5FB63-588D-4F8F-858E-347C3311C0A4} = {2473309E-1C4A-4A8C-86EC-DA74D8594D4D}
 	EndGlobalSection
 EndGlobal

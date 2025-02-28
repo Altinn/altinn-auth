@@ -1,5 +1,6 @@
 using System.Net;
 using Altinn.AccessManagement;
+using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Integration.Platform.Register;
 using Microsoft.FeatureManagement;

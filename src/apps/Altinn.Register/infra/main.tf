@@ -93,15 +93,15 @@ resource "azurerm_user_assigned_identity" "register" {
   tags                = merge({}, local.default_tags)
 }
 
-resource "azurerm_federated_identity_credential" "aks_federation" {
-  name                = "Aks"
-  resource_group_name = azurerm_resource_group.register.name
-  parent_id           = azurerm_user_assigned_identity.register.id
-  audience            = ["api://AzureADTokenExchange"]
-  subject             = "system:serviceaccount:${each.value.namespace}:${each.value.service_account}"
-  issuer              = each.value.issuer_url
-  for_each            = { for federation in var.aks_federation : federation.issuer_url => federation }
-}
+# resource "azurerm_federated_identity_credential" "aks_federation" {
+#   name                = "Aks"
+#   resource_group_name = azurerm_resource_group.register.name
+#   parent_id           = azurerm_user_assigned_identity.register.id
+#   audience            = ["api://AzureADTokenExchange"]
+#   subject             = "system:serviceaccount:${each.value.namespace}:${each.value.service_account}"
+#   issuer              = each.value.issuer_url
+#   for_each            = { for federation in var.aks_federation : federation.issuer_url => federation }
+# }
 
 # Should be removed once migrated from Platform AKS to Authorization AKS cluster
 module "rbac_platform_app" {

@@ -1,0 +1,281 @@
+[
+    {
+        "id": "66ad5542-4f4a-4606-996f-18690129ce00",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Administrative unit - public sector",
+        "code": "ADOS",
+        "description": "Administrative unit - public sector",
+        "urn": "brreg:role:ados"
+    },
+    {
+        "id": "585ac6f7-aef0-47ca-8597-1ac7e63a58ce",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Deputy manager",
+        "code": "NEST",
+        "description": "Styremedlem som opptrer som styreleder ved leders fravær",
+        "urn": "brreg:role:nest"
+    },
+    {
+        "id": "a715f610-4096-49bf-9b59-1c9ec81966f5",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Part of shared office",
+        "code": "KTRF",
+        "description": "Part of shared office",
+        "urn": "brreg:role:ktrf"
+    },
+    {
+        "id": "ffa924c7-45ba-469b-9657-27bbb66002d4",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Organizational unit in the public sector",
+        "code": "ORGL",
+        "description": "Organizational unit in the public sector",
+        "urn": "brreg:role:orgl"
+    },
+    {
+        "id": "792c01dc-29c9-4dec-ae6d-28cff0b04678",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Specially divided unit",
+        "code": "OPMV",
+        "description": "Specially divided unit",
+        "urn": "brreg:role:opmv"
+    },
+    {
+        "id": "6795081e-e69c-4efd-8d42-2bfccd346777",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "73dfe32a-8f21-465c-9242-40d82e61f320",
+        "name": "Client administrator",
+        "code": "KLA",
+        "description": "Allows managing access to services on behalf of clients for employees",
+        "urn": "digdir:role:kla"
+    },
+    {
+        "id": "857bb1fb-fcaa-4a3c-859d-319032626539",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "General manager",
+        "code": "DAGL",
+        "description": "Individual or entity responsible for daily operations",
+        "urn": "brreg:role:dagl"
+    },
+    {
+        "id": "6c1fbcb9-609c-4ab8-a048-3be8d7da5a82",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "73dfe32a-8f21-465c-9242-40d82e61f320",
+        "name": "Access controller",
+        "code": "TS",
+        "description": "Allows forwarding access within the organization",
+        "urn": "digdir:role:ts"
+    },
+    {
+        "id": "3af9bb77-9455-44bd-8d93-4d3f2a9fda33",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Participant with pro rata liability (shared responsibility)",
+        "code": "DTPR",
+        "description": "Individual or legal entity with personal responsibility for parts of the company’s obligations",
+        "urn": "brreg:role:dtpr"
+    },
+    {
+        "id": "ba1c261c-20ec-44e2-9e0b-4e7cfe9f36e7",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "73dfe32a-8f21-465c-9242-40d82e61f320",
+        "name": "Main administrator",
+        "code": "HA",
+        "description": "Allows management of all accesses for the organization",
+        "urn": "digdir:role:ha"
+    },
+    {
+        "id": "f96756f4-415a-45dd-8d10-4ebee0e6db84",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Proprietor",
+        "code": "INNH",
+        "description": "Individual owning a sole proprietorship",
+        "urn": "brreg:role:innh"
+    },
+    {
+        "id": "5ba618b1-e6a8-4d84-bc93-5623cf680bc0",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "73dfe32a-8f21-465c-9242-40d82e61f320",
+        "name": "Customer administrator",
+        "code": "KUA",
+        "description": " Gir mulighet til å administrere tilganger man har mottatt for sine kunder til ansatte i egen virksomheten",
+        "urn": "digdir:role:kua"
+    },
+    {
+        "id": "77778386-d57f-4378-ac31-5f260b407079",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Participant with joint responsibility (fully liable)",
+        "code": "DTSO",
+        "description": "Individual or legal entity with unlimited personal responsibility for the companys obligations",
+        "urn": "brreg:role:dtso"
+    },
+    {
+        "id": "748ec709-78d6-4b13-a3f9-5fb8e783e679",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Deputy member",
+        "code": "VARA",
+        "description": "Fysisk- eller juridisk person som er stedfortreder for et styremedlem",
+        "urn": "brreg:role:vara"
+    },
+    {
+        "id": "197fbfbb-d867-4c0f-8d4a-62e9287e340d",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Observer",
+        "code": "OBS",
+        "description": "Fysisk person som deltar i styremøter i en virksomhet, men uten stemmerett",
+        "urn": "brreg:role:obs"
+    },
+    {
+        "id": "de42ae15-c265-42b3-8060-64c779684902",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Board member",
+        "code": "MEDL",
+        "description": "Individual or legal entity who is a member of a board",
+        "urn": "brreg:role:medl"
+    },
+    {
+        "id": "72c336a2-1705-4aef-b220-7f4aa6c0e69d",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Chair of the board",
+        "code": "LEDE",
+        "description": "Individual or legal entity who is a board member and chairs the board",
+        "urn": "brreg:role:lede"
+    },
+    {
+        "id": "38453a5d-ff7d-44eb-ba9a-92b1cd7fc98c",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Person involved in personal bankruptcy",
+        "code": "KENK",
+        "description": "Person involved in personal bankruptcy",
+        "urn": "brreg:role:kenk"
+    },
+    {
+        "id": "6adad370-5524-4438-a811-932d27f655b9",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Norwegian representative for foreign entity",
+        "code": "REPR",
+        "description": "Individual or legal entity responsible for daily operations in Norway",
+        "urn": "brreg:role:repr"
+    },
+    {
+        "id": "49def9e7-9ea4-4f78-9013-98c9af5918d4",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Contact person",
+        "code": "KONT",
+        "description": "Individual representing a business",
+        "urn": "brreg:role:kont"
+    },
+    {
+        "id": "d7ab8fd4-de81-4c82-8b0e-9cb6470a274e",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Managing shipowner",
+        "code": "BEST",
+        "description": "Managing shipowner",
+        "urn": "brreg:role:best"
+    },
+    {
+        "id": "d4f78604-db47-4ff7-8537-a4e7318e8c11",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Owner municipality",
+        "code": "EIKM",
+        "description": "Owner municipality",
+        "urn": "brreg:role:eikm"
+    },
+    {
+        "id": "0610a058-2046-4fb7-8566-a7cef6515baf",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Estate manager",
+        "code": "BOBE",
+        "description": "Administrator of a bankruptcy or deceased estate under public probate proceedings",
+        "urn": "brreg:role:bobe"
+    },
+    {
+        "id": "e4674211-034a-45f3-99ac-b2356984968a",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Healthcare enterprise",
+        "code": "HLSE",
+        "description": "Healthcare enterprise",
+        "urn": "brreg:role:hlse"
+    },
+    {
+        "id": "63b5255d-4776-4ba1-bed2-c950bb5b04ab",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Auditor",
+        "code": "REVI",
+        "description": "Auditor",
+        "urn": "brreg:role:revi"
+    },
+    {
+        "id": "e207eaf7-afde-452c-a1ba-ce7ba9305bcc",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Business manager",
+        "code": "FFØR",
+        "description": "Business manager",
+        "urn": "brreg:role:ffør"
+    },
+    {
+        "id": "1005e523-9423-4037-92e7-d23dee6a9813",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "General partner",
+        "code": "KOMP",
+        "description": "General partner",
+        "urn": "brreg:role:komp"
+    },
+    {
+        "id": "e4df5308-56ed-4301-ae53-ef67da3a57e9",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Bankrupt debtor",
+        "code": "KDEB",
+        "description": "Bankrupt debtor",
+        "urn": "brreg:role:kdeb"
+    },
+    {
+        "id": "3bdd603a-dbe0-4caa-bc97-f0b6a1675b15",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Part of church council",
+        "code": "KIRK",
+        "description": "Part of church council",
+        "urn": "brreg:role:kirk"
+    },
+    {
+        "id": "38c368c1-c9f4-4b01-a296-f1ef7e466c13",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Information about the company in the home country",
+        "code": "HFOR",
+        "description": "Information about the company in the home country",
+        "urn": "brreg:role:hfor"
+    },
+    {
+        "id": "303d78e8-a658-454d-88ae-f836596982c7",
+        "entityTypeId": "8c216e2f-afdd-4234-9ba2-691c727bb33d",
+        "providerId": "323f9ff9-11ad-4af3-8ccb-0db7bdb71d75",
+        "name": "Accountant",
+        "code": "REGN",
+        "description": "Accountant",
+        "urn": "brreg:role:regn"
+    }
+]

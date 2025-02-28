@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <PackageReference Include="Npgsql.OpenTelemetry" />
+        <PackageReference Include="Npgsql.DependencyInjection" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Altinn.Authorization.Host\Altinn.Authorization.Host.csproj" />
+    </ItemGroup>
+
+</Project>

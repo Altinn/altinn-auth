@@ -6,8 +6,14 @@ using Altinn.AccessManagement.Integration.Configuration;
 using Altinn.AccessManagement.Integration.Extensions;
 using Altinn.AccessManagement.Persistence.Configuration;
 using Altinn.AccessManagement.Persistence.Extensions;
+using Altinn.AccessMgmt.Persistence;
+using Altinn.AccessMgmt.Persistence.Core.Models;
+using Altinn.AccessMgmt.Persistence.Extensions;
+using Altinn.AccessMgmt.Persistence.Services;
+using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.Authorization.AccessManagement;
 using Altinn.Authorization.Host;
+using Altinn.Authorization.Host.Database;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Host.Startup;
 using Altinn.Authorization.Integration.Platform.Extensions;
@@ -48,6 +54,21 @@ internal static partial class AccessManagementHost
         var builder = AltinnHost.CreateWebApplicationBuilder("access-management", args);
         builder.Services.Configure<AccessManagementAppsettings>(builder.Configuration.Bind);
 
+        builder.AddAltinnDatabase(opt =>
+        {
+            var appsettings = new AccessManagementAppsettings(builder.Configuration);
+            if (string.IsNullOrEmpty(appsettings.Database.Postgres.AppConnectionString) || string.IsNullOrEmpty(appsettings.Database.Postgres.MigrationConnectionString))
+            {
+                Log.PgsqlMissingConnectionString(Logger);
+                opt.Enabled = false;
+            }
+
+            opt.AppSource = new(appsettings.Database.Postgres.AppConnectionString);
+            opt.MigrationSource = new(appsettings.Database.Postgres.MigrationConnectionString);
+            opt.Telemetry.EnableMetrics = true;
+            opt.Telemetry.EnableTraces = true;
+        });
+
         builder.Services.AddAutoMapper(typeof(Program));
         builder.Services.AddControllers();
         builder.Services.AddFeatureManagement();
@@ -64,8 +85,22 @@ internal static partial class AccessManagementHost
         builder.ConfigureInternals();
         builder.ConfigureOpenAPI();
         builder.ConfigureAuthorization();
+        builder.ConfigureAccessManagementPersistence();
+
+        builder.Services.AddScoped<IPackageService, PackageService>();
 
         return builder.Build();
+    }
+
+    private static WebApplicationBuilder ConfigureAccessManagementPersistence(this WebApplicationBuilder builder)
+    {
+        builder.AddDb(opts =>
+        {
+            opts.DbType = MgmtDbType.Postgres;
+            opts.Enabled = true;
+        });
+
+        return builder;
     }
 
     private static WebApplicationBuilder ConfigureLibsIntegrations(this WebApplicationBuilder builder)
@@ -281,5 +316,8 @@ internal static partial class AccessManagementHost
 
         [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Configuration setting '{field}' is null or empty.")]
         internal static partial void ConfigValueIsNullOrEmpty(ILogger logger, string field);
+
+        [LoggerMessage(EventId = 2, Level = LogLevel.Debug, Message = "Connection string(s) for pgsql server are missing")]
+        internal static partial void PgsqlMissingConnectionString(ILogger logger);
     }
 }

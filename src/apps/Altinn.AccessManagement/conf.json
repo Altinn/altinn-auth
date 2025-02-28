@@ -1,5 +1,15 @@
 {
   "image": {},
+  "database": {
+    "prefix": "accessmgmt",
+    "name": "accessmgmt",
+    "schema": {
+      "dbo": {},
+      "translation": {},
+      "dbo_history": {},
+      "translation_history": {}
+    }
+  },
   "infra": {
     "terraform": {
       "stateFile": "Altinn.AccessManagement.tfstate"

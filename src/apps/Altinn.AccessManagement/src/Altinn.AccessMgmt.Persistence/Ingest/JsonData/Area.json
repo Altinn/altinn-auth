@@ -1,0 +1,156 @@
+[
+  {
+    "id": "7d32591d-34b7-4afc-8afa-013722f8c05d",
+    "name": "Skatt, avgift, regnskap og toll",
+    "description": "Dette fullmaktsområdet er relevant for alle virksomheter som betaler eller rapporterer inn informasjon knyttet til skatt, avgift regnskap og toll",
+    "iconname": "Statistics_and_math:PieChart",
+    "groupid": "7E2A3AF8-08CB-43A9-BDD7-7D5C7E377145"
+  },
+  {
+    "id": "6f7f3b02-8b5a-4823-9468-0f4646d3a790",
+    "iconname": "People:PersonTallShort",
+    "description": "",
+    "name": "Personale",
+    "groupid": "7E2A3AF8-08CB-43A9-BDD7-7D5C7E377145"
+  },
+  {
+    "id": "a8834a7c-ed89-4c73-b5d5-19a2347f3b13",
+    "iconname": "Wellness:HeadHeart",
+    "description": "",
+    "name": "Miljø, ulykke og sikkerhet",
+    "groupid": "7E2A3AF8-08CB-43A9-BDD7-7D5C7E377145"
+  },
+  {
+    "id": "6f938de8-34f2-4bab-a0c6-3a3eb64aad3b",
+    "iconname": "Files and application:Folder",
+    "description": "",
+    "name": "Post og arkiv",
+    "groupid": "554F0321-53B8-4D97-BE12-6A585C507159"
+  },
+  {
+    "id": "3f5df819-7aca-49e1-bf6f-3e8f120f20d1",
+    "iconname": "Statistics_and_math:BubbleChart",
+    "description": "",
+    "name": "Forhold ved virksomheten",
+    "groupid": "7E2A3AF8-08CB-43A9-BDD7-7D5C7E377145"
+  },
+  {
+    "id": "892e98c6-1696-46e7-9bb1-59c08761ec64",
+    "iconname": "Development:Migration",
+    "description": "",
+    "name": "Integrasjoner og API-er",
+    "groupid": "554F0321-53B8-4D97-BE12-6A585C507159"
+  },
+  {
+    "id": "536b317c-ef85-45d4-9b48-6511578e1952",
+    "iconname": "Transportation:Truck",
+    "description": "",
+    "name": "Bygg og anlegg",
+    "groupid": "3757643A-316D-4D0E-A52B-4DC7CDEBC0B4"
+  },
+  {
+    "id": "6e152c10-0f63-4060-9b14-66808e7ac320",
+    "iconname": "Workplace:HardHat",
+    "description": "Dette fullmaktsområdet er relevant for alle virksomheter som betaler eller rapporterer inn informasjon knyttet til energi, olje og gass",
+    "name": "Energi, olje og gass",
+    "groupid": "7E2A3AF8-08CB-43A9-BDD7-7D5C7E377145"
+  },
+  {
+    "id": "4deaf3fe-b758-42a1-b6ea-6ce3fc088dd8",
+    "iconname": "Money:Piggybank",
+    "description": "",
+    "name": "Finans og forsikring",
+    "groupid": "7E2A3AF8-08CB-43A9-BDD7-7D5C7E377145"
+  },
+  {
+    "id": "eab59b26-833f-40ca-9e27-72107e8f1908",
+    "iconname": "Wellness:Stethoscope",
+    "description": "",
+    "name": "Helse og legemiddel",
+    "groupid": "7E2A3AF8-08CB-43A9-BDD7-7D5C7E377145"
+  },
+  {
+    "id": "e4ae823f-41db-46ed-873f-8a5d1378fff8",
+    "iconname": "Law_and_security:KeyHorizontal",
+    "description": "Dette fullmaktsområdet er relevant for alle virksomheter som betaler eller rapporterer inn informasjon knyttet til administrasjon av tilganger",
+    "name": "Administrere tilganger",
+    "groupid": "554F0321-53B8-4D97-BE12-6A585C507159"
+  },
+  {
+    "id": "10c2dd29-5ab3-4a26-900e-8e2326150353",
+    "iconname": "Nature_and_animals:Mountain",
+    "description": "",
+    "name": "Industri og bergverk",
+    "groupid": "3757643A-316D-4D0E-A52B-4DC7CDEBC0B4"
+  },
+  {
+    "id": "fc93d25e-80bc-469a-aa43-a6cee80eb3e2",
+    "iconname": "Nature_and_animals:Plant",
+    "description": "",
+    "name": "Jordbruk og skogbruk",
+    "groupid": "3757643A-316D-4D0E-A52B-4DC7CDEBC0B4"
+  },
+  {
+    "id": "5996ba37-6db0-4391-8918-b1b0bd4b394b",
+    "iconname": "Media:Image",
+    "description": "Dette fullmaktsområdet er relevant for alle virksomheter som betaler eller rapporterer inn informasjon knyttet til kunst og kultur",
+    "name": "Kunst og kultur",
+    "groupid": "3757643A-316D-4D0E-A52B-4DC7CDEBC0B4"
+  },
+  {
+    "id": "803afa14-6acf-497c-8169-c01a7dc40f0e",
+    "iconname": "Interface:Monitor",
+    "description": "",
+    "name": "IT",
+    "groupid": "3757643A-316D-4D0E-A52B-4DC7CDEBC0B4"
+  },
+  {
+    "id": "f771057a-4285-4c02-af61-cc4a05042758",
+    "iconname": "Interface:PersonChat",
+    "description": "",
+    "name": "Medier og kommunikasjon",
+    "groupid": "3757643A-316D-4D0E-A52B-4DC7CDEBC0B4"
+  },
+  {
+    "id": "4aa23f6c-a25b-4883-be03-dfdb37ab635b",
+    "iconname": "Nature_and_animals:Waves",
+    "description": "",
+    "name": "Næringsmiddel, fisk og akvakultur",
+    "groupid": "3757643A-316D-4D0E-A52B-4DC7CDEBC0B4"
+  },
+  {
+    "id": "ed350049-dbb8-4054-b28b-e0c82661e4e4",
+    "iconname": "Home:Calculator",
+    "description": "",
+    "name": "Regnskap og revisjon",
+    "groupid": "7E2A3AF8-08CB-43A9-BDD7-7D5C7E377145"
+  },
+  {
+    "id": "3797e9f0-dd83-404c-9897-e356c32ef600",
+    "iconname": "Home:Bed",
+    "description": "",
+    "name": "Servering og overnatting",
+    "groupid": "3757643A-316D-4D0E-A52B-4DC7CDEBC0B4"
+  },
+  {
+    "id": "6ff90072-566b-4acd-baac-ec477534e712",
+    "iconname": "Transportation:Train",
+    "description": "",
+    "name": "Transport",
+    "groupid": "3757643A-316D-4D0E-A52B-4DC7CDEBC0B4"
+  },
+  {
+    "id": "ab90f27a-9b63-4ae6-8ae3-f4d78b915267",
+    "iconname": "Development:Package",
+    "description": "",
+    "name": "Varehandel",
+    "groupid": "3757643A-316D-4D0E-A52B-4DC7CDEBC0B4"
+  },
+  {
+    "id": "e31169f6-d4c7-4e45-93c7-f90bc285b639",
+    "iconname": "Status:Square",
+    "description": "",
+    "name": "Øvrige tjenesteytende bransjer",
+    "groupid": "7E2A3AF8-08CB-43A9-BDD7-7D5C7E377145"
+  }
+]   

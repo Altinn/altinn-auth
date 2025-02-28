@@ -27,6 +27,30 @@ variable "hub_subscription_id" {
   default = "01de49cb-48ef-4494-bc9d-b9e19a90bcd5"
 }
 
+variable "db_admins_user_principal_ids" {
+  type = list(object(
+    {
+      principal_id   = string
+      principal_name = string
+      principal_type = string
+  }))
+
+  default = [{
+    principal_id   = "4241b5ee-326f-4359-bde7-ee1a99287d7f",
+    principal_name = "ext-mthue-prod@ai-dev.no",
+    principal_type = "User"
+    },
+    {
+      principal_id   = "be1a510a-db1e-473c-a73a-558cdb68e353",
+      principal_name = "ext-anils@ai-dev.no",
+      principal_type = "User"
+  }]
+}
+
+variable "deploy_app_principal_id" {
+  type = string
+}
+
 variable "aks_federation" {
   type = list(object({
     issuer_url      = string

@@ -6,6 +6,7 @@ aks_federation = [
     service_account = "altinn-access-management"
   }
 ]
+deploy_app_principal_id = "a9585a64-20f0-4d18-aba6-9930f92b809c" # GitHub: altinn/altinn-authorization-tmp - Prod
 platform_workflow_principal_ids = [
   "1f5bc37d-3a69-4fbb-b2f2-c1da190cd0d2", # altinn-access-management-app-tt02-aks01
   "7df20147-fff7-4c9b-a28d-07a0005687d3"  # altinn-access-management-app-tt02-aks02

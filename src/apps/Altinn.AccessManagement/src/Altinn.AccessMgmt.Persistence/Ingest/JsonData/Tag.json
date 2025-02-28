@@ -1,0 +1,56 @@
+[
+    {
+        "id": "e18d4b17-3588-4b24-be2f-00d202ae84e5",
+        "groupId": null,
+        "parentId": null,
+        "name": "Eiendom"
+    },
+    {
+        "id": "52CA697B-7C6B-48AA-809A-64A452B5597A",
+        "groupId": null,
+        "parentId": null,
+        "name": "Viktig"
+    },
+    {
+        "id": "89D454B8-12A8-4F5E-B3DF-20050820EEE6",
+        "groupId": null,
+        "parentId": null,
+        "name": "Sensitivt"
+    },
+    {
+        "id": "58D53CB7-3AE1-470C-903A-63B7E89B2692",
+        "groupId": "3e5c0530-f57f-4996-97eb-5ff5f18752a3",
+        "parentId": null,
+        "name": "A:Jordbruk"
+    },
+    {
+        "id": "A3F7D194-1714-4CCA-B9D3-E9B55DAA3B1A",
+        "groupId": "3e5c0530-f57f-4996-97eb-5ff5f18752a3",
+        "parentId": null,
+        "name": "B:Bergverksdrift"
+    },
+    {
+        "id": "DECCA79D-3777-46EC-A7C2-5E8430964072",
+        "groupId": "3e5c0530-f57f-4996-97eb-5ff5f18752a3",
+        "parentId": null,
+        "name": "C:Industri"
+    },
+    {
+        "id": "606A472A-AA7C-40B8-8857-198C2004DF30",
+        "groupId": "3e5c0530-f57f-4996-97eb-5ff5f18752a3",
+        "parentId": null,
+        "name": "D:Kraftforsyning"
+    },
+    {
+        "id": "BB4D852B-0138-44D8-A522-8A271A476DB0",
+        "groupId": "3e5c0530-f57f-4996-97eb-5ff5f18752a3",
+        "parentId": null,
+        "name": "E:Vann, avløp, renovasjon"
+    },
+    {
+        "id": "451C2E37-2D25-45EA-A26C-195ED830F4E7",
+        "groupId": "3e5c0530-f57f-4996-97eb-5ff5f18752a3",
+        "parentId": null,
+        "name": "F:Bygge- og annleggsvirksomhet"
+    }
+]   

@@ -44,3 +44,5 @@ terraform.rc
 
 # Notes
 *.private
+src/apps/Altinn.AccessMgmt.Worker.ER/allsubunits
+src/apps/Altinn.AccessMgmt.Worker.ER/allunits

@@ -9,6 +9,15 @@ locals {
   sku_name = "${local.sku[var.compute_tier]}_${var.compute_size}"
 }
 
+resource "random_password" "pass" {
+  length           = 30
+  special          = true
+  override_special = "@#%*()-_=+[]{}:?"
+  keepers = {
+    trigger = timestamp()
+  }
+}
+
 resource "azurerm_postgresql_flexible_server" "postgres_server" {
   name                = "psqlsrv${var.prefix}${var.suffix}"
   resource_group_name = var.resource_group_name
@@ -23,13 +32,13 @@ resource "azurerm_postgresql_flexible_server" "postgres_server" {
   auto_grow_enabled = true
   storage_tier      = var.tier
 
-  administrator_login    = null
-  administrator_password = null
+  administrator_login    = "NotInUse"
+  administrator_password = random_password.pass.result
   backup_retention_days  = var.backup_retention_days
 
   authentication {
     active_directory_auth_enabled = true
-    password_auth_enabled         = false
+    password_auth_enabled         = true
     tenant_id                     = data.azurerm_client_config.current.tenant_id
   }
 
@@ -37,8 +46,8 @@ resource "azurerm_postgresql_flexible_server" "postgres_server" {
   sku_name    = local.sku_name
 
   lifecycle {
-    ignore_changes  = [zone]
-    prevent_destroy = true
+    ignore_changes = [zone]
+    # prevent_destroy = true
   }
 
   tags = var.tags

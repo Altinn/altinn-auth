@@ -1,0 +1,12 @@
+[
+  {
+    "Id": "8C216E2F-AFDD-4234-9BA2-691C727BB33D",
+    "Name": "Organisasjon",
+    "ProviderId": "323F9FF9-11AD-4AF3-8CCB-0DB7BDB71D75"
+  },
+  {
+    "Id": "BFE09E70-E868-44B3-8D81-DFE0E13E058A",
+    "Name": "Person",
+    "ProviderId": "AC991C6F-E404-4C8A-82AB-94C2F772CD00"
+  }
+]
