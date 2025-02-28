@@ -10,7 +10,7 @@ public class AltinnHostDatabaseOptions
     /// <summary>
     /// Specifies if DB connection is enabled
     /// </summary>
-    public bool Enabled { get; set; } = false;
+    public bool Enabled { get; set; } = true;
 
     /// <summary>
     /// Gets or sets the data source for application-related database connections.
