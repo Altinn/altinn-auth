@@ -53,6 +53,16 @@ internal static partial class AccessManagementHost
         Log.CreateAltinnHost(Logger);
         var builder = AltinnHost.CreateWebApplicationBuilder("access-management", args);
         builder.Services.Configure<AccessManagementAppsettings>(builder.Configuration.Bind);
+        builder.ConfigureLibsHost();
+
+        builder.Services.AddAutoMapper(typeof(Program));
+        builder.Services.AddControllers();
+        builder.Services.AddFeatureManagement();
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddHealthChecks()
+            .AddCheck<HealthCheck>("authorization_admin_health_check");
+
+        builder.ConfigureLibsIntegrations();
 
         builder.AddAltinnDatabase(opt =>
         {
@@ -68,16 +78,6 @@ internal static partial class AccessManagementHost
             opt.Telemetry.EnableMetrics = true;
             opt.Telemetry.EnableTraces = true;
         });
-
-        builder.Services.AddAutoMapper(typeof(Program));
-        builder.Services.AddControllers();
-        builder.Services.AddFeatureManagement();
-        builder.Services.AddHttpContextAccessor();
-        builder.Services.AddHealthChecks()
-            .AddCheck<HealthCheck>("authorization_admin_health_check");
-
-        builder.ConfigureLibsHost();
-        builder.ConfigureLibsIntegrations();
 
         builder.ConfigureAppsettings();
         builder.ConfigurePostgreSqlConfiguration();
