@@ -5,7 +5,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="FastMember" />
         <PackageReference Include="Microsoft.Data.SqlClient" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
         <PackageReference Include="Microsoft.Extensions.Options" />
