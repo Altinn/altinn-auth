@@ -14,10 +14,4 @@
 		<ProjectReference Include="..\Altinn.AccessMgmt.Core\Altinn.AccessMgmt.Core.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<None Update="Ingest\JsonData\**\*">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
-
 </Project>

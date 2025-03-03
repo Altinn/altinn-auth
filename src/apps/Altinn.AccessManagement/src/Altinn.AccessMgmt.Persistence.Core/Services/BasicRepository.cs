@@ -277,6 +277,25 @@ public abstract class BasicRepository<T> : IDbBasicRepository<T>
         return await executor.ExecuteCommand(query, parameters, cancellationToken: cancellationToken);
     }
 
+    /// <inheritdoc/>
+    public async Task<int> UpsertTranslation(Guid id, T obj, string language, CancellationToken cancellationToken = default)
+    {
+        if (!Definition.HasTranslation)
+        {
+            return 0;
+        }
+
+        var parameters = BuildTranslationParameters(obj);
+        parameters.Add(new GenericParameter("Language", language));
+        var queryBuilder = definitionRegistry.GetQueryBuilder<T>();
+        string query = queryBuilder.BuildUpsertQuery(parameters, forTranslation: true);
+
+        parameters.Add(new GenericParameter("_language", language));
+        parameters.Add(new GenericParameter("_id", id));
+
+        return await executor.ExecuteCommand(query, parameters, cancellationToken: cancellationToken);
+    }
+
     #endregion
 
 }

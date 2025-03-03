@@ -143,6 +143,19 @@ public interface IDbBasicRepository<T>
     Task<int> UpdateTranslation(Guid id, T obj, string language, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Update or insert translation for an entity in a specified language.
+    /// </summary>
+    /// <param name="id">The unique identifier of the entity whose translation is to be updated.</param>
+    /// <param name="obj">The entity containing the updated translation data.</param>
+    /// <param name="language">The language code for which the translation is to be updated.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
+    /// </returns>
+    Task<int> UpsertTranslation(Guid id, T obj, string language, CancellationToken cancellationToken = default);
+
+
+    /// <summary>
     /// Creates a new instance of a <see cref="GenericFilterBuilder{T}"/> for constructing filter criteria for queries.
     /// </summary>
     /// <returns>A new <see cref="GenericFilterBuilder{T}"/> instance for building filter conditions for the entity type <typeparamref name="T"/>.</returns>

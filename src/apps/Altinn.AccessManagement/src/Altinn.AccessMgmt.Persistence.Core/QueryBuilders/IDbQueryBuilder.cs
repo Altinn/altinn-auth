@@ -45,8 +45,9 @@ public interface IDbQueryBuilder
     /// Builds a UPSERT query
     /// </summary>
     /// <param name="parameters">Parameters</param>
+    /// <param name="forTranslation">Is this for a translation table</param>
     /// <returns></returns>
-    string BuildUpsertQuery(List<GenericParameter> parameters);
+    string BuildUpsertQuery(List<GenericParameter> parameters, bool forTranslation = false);
 
     /// <summary>
     /// Generates mirgration scripts for the definition

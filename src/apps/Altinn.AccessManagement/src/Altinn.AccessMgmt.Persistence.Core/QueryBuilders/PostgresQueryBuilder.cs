@@ -106,13 +106,42 @@ public class PostgresQueryBuilder : IDbQueryBuilder
     }
 
     /// <inheritdoc/>
-    public string BuildUpsertQuery(List<GenericParameter> parameters)
+    public string BuildUpsertQuery(List<GenericParameter> parameters, bool forTranslation = false)
     {
-        var sb = new StringBuilder();
 
-        sb.AppendLine($"INSERT INTO {GetTableName(includeAlias: false)} ({InsertColumns(parameters)}) VALUES({InsertValues(parameters)})");
+        return BuildMergeQuery(parameters, forTranslation);
+
+        /*
+        var sb = new StringBuilder();
+        sb.AppendLine($"INSERT INTO {GetTableName(includeAlias: false, useTranslation: forTranslation)} ({InsertColumns(parameters)}) VALUES({InsertValues(parameters)})");
         sb.AppendLine(" ON CONFLICT (id) DO ");
         sb.AppendLine($"UPDATE SET {UpdateSetStatement(parameters)}");
+        return sb.ToString();
+        */
+
+    }
+
+    private string BuildMergeQuery(List<GenericParameter> parameters, bool forTranslation = false)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("WITH N AS ( SELECT ");
+        sb.AppendLine("@id as id");
+        if (forTranslation)
+        {
+            sb.AppendLine(", @language as language");
+        }
+
+        sb.AppendLine(")");
+        sb.AppendLine($"MERGE INTO {GetTableName(includeAlias: false, useTranslation: forTranslation)} AS T USING N ON T.id = N.id");
+        if (forTranslation)
+        {
+            sb.AppendLine(" AND T.language = N.language");
+        }
+
+        sb.AppendLine("WHEN MATCHED THEN");
+        sb.AppendLine($"UPDATE SET {UpdateSetStatement(parameters)}");
+        sb.AppendLine("WHEN NOT MATCHED THEN");
+        sb.AppendLine($"INSERT ({InsertColumns(parameters)}) VALUES({InsertValues(parameters)});");
 
         return sb.ToString();
     }
@@ -212,7 +241,7 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         if (useTranslation)
         {
             // Example for translation JOIN
-            return $@"""
+            return $"""
                 {GetTableName(includeAlias: true, useHistory: useHistory)}
                 LEFT JOIN LATERAL (SELECT * FROM {GetTableName(includeAlias: false, useTranslation: true, useHistory: useHistory)} AS T 
                 WHERE T.Id = {_definition.ModelType.Name}.Id AND T.Language = @Language ) AS T_{_definition.ModelType.Name} ON 1=1
