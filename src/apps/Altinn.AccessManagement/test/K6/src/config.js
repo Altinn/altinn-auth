@@ -49,12 +49,12 @@ export var platformAuthorization = {
   policy: `https://platform.${baseUrl}/authorization/api/v1/policies`,
   roles: `https://platform.${baseUrl}/authorization/api/v1/roles`,
   getPolicies: `https://platform.${baseUrl}/authorization/api/v1/policies/GetPolicies`,
-  addRules: `https://platform.${baseUrl}/authorization/api/v1/delegations/AddRules`,
-  getRules: `https://platform.${baseUrl}/authorization/api/v1/delegations/GetRules`,
-  deleteRules: `https://platform.${baseUrl}/authorization/api/v1/delegations/DeleteRules`,
-  deletePolicy: `https://platform.${baseUrl}/authorization/api/v1/delegations/DeletePolicy`,
-  maskinPortenSchemaOffered: `https://platform.${baseUrl}/authorization/api/v1/delegations/AddRules`,
-  maskinPortenSchemaReceived: `https://platform.${baseUrl}/authorization/api/v1/delegations/AddRules`,
+  addRules: `https://platform.${baseUrl}/accessmanagement/api/v1/delegations/AddRules`,
+  getRules: `https://platform.${baseUrl}/accessmanagement/api/v1/delegations/GetRules`,
+  deleteRules: `https://platform.${baseUrl}/accessmanagement/api/v1/delegations/DeleteRules`,
+  deletePolicy: `https://platform.${baseUrl}/accessmanagement/api/v1/delegations/DeletePolicy`,
+  maskinPortenSchemaOffered: `https://platform.${baseUrl}/accessmanagement/api/v1/delegations/AddRules`,
+  maskinPortenSchemaReceived: `https://platform.${baseUrl}/accessmanagement/api/v1/delegations/AddRules`,
 };
 
 //PDF
