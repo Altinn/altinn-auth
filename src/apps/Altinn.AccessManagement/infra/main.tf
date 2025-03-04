@@ -8,6 +8,10 @@ terraform {
       source  = "tiwood/static"
       version = "0.1.0"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "0.12.1"
+    }
   }
 
   backend "azurerm" {
@@ -230,6 +234,9 @@ module "postgres_server" {
   resource_group_name = azurerm_resource_group.access_management.name
   location            = "norwayeast"
 
+  hub_suffix = local.hub_suffix
+  pg_dns_hex = var.pg_dns_hex
+
   subnet_id           = data.azurerm_subnet.postgres.id
   private_dns_zone_id = data.azurerm_private_dns_zone.postgres.id
   postgres_version    = "16"
@@ -247,6 +254,10 @@ module "postgres_server" {
       principal_type = "ServicePrincipal"
     },
   ], var.db_admins_user_principal_ids)
+
+  providers = {
+    azurerm.hub = azurerm.hub
+  }
 }
 
 resource "null_resource" "bootstrap_database" {
@@ -254,7 +265,7 @@ resource "null_resource" "bootstrap_database" {
     ts = timestamp()
   }
 
-  depends_on = [module.key_vault, module.postgres_server]
+  depends_on = [module.postgres_server]
   provisioner "local-exec" {
     working_dir = "../../../tools/Altinn.Authorization.Cli/src/Altinn.Authorization.Cli"
     command     = <<EOT

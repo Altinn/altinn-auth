@@ -7,3 +7,8 @@ output "name" {
   value       = azurerm_postgresql_flexible_server.postgres_server.name
   description = "Specifies the name of the Management Lock. Changing this forces a new resource to be created."
 }
+
+output "fqdn" {
+  value       = azurerm_postgresql_flexible_server.postgres_server.fqdn
+  description = "Postgres server fully qualified domain name"
+}

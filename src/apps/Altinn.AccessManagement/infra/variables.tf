@@ -27,6 +27,11 @@ variable "hub_subscription_id" {
   default = "01de49cb-48ef-4494-bc9d-b9e19a90bcd5"
 }
 
+variable "pg_dns_hex" {
+  type    = string
+  default = ""
+}
+
 variable "db_admins_user_principal_ids" {
   type = list(object(
     {

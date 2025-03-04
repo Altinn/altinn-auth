@@ -11,3 +11,4 @@ platform_workflow_principal_ids = [
   "3c6f503e-1dd3-4db2-bbf0-6264dd0390f9", # altinn-register-app-at24-aks01
   "3e2be4e1-e4ea-4cdd-8e3e-62fc06f2eca1"  # altinn-register-app-at24-aks02
 ]
+pg_dns_hex = "af88b1a318a3"

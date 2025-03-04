@@ -3,6 +3,10 @@ variable "prefix" {
   default = ""
 }
 
+variable "hub_suffix" {
+  type = string
+}
+
 variable "suffix" {
   type    = string
   default = ""
@@ -51,6 +55,10 @@ variable "compute_tier" {
 }
 
 variable "compute_size" {
+  type = string
+}
+
+variable "pg_dns_hex" {
   type = string
 }
 

@@ -289,7 +289,7 @@ resource "azurerm_virtual_network_peering" "hub_to_spoke_dual_stack" {
   provider = azurerm.hub
 }
 
-resource "azurerm_virtual_network_peering" "spoke_to_hub_single_stack" {
+resource "azurerm_virtual_network_peering" "spoke_single_stack_to_hub" {
   name                      = "hub"
   resource_group_name       = azurerm_resource_group.spoke.name
   virtual_network_name      = azurerm_virtual_network.single_stack.name
@@ -301,7 +301,7 @@ resource "azurerm_virtual_network_peering" "spoke_to_hub_single_stack" {
   use_remote_gateways          = true
 }
 
-resource "azurerm_virtual_network_peering" "spoke_to_hub_dual_stack" {
+resource "azurerm_virtual_network_peering" "spoke_dual_stack_to_hub" {
   name                      = "hub"
   resource_group_name       = azurerm_resource_group.spoke.name
   virtual_network_name      = azurerm_virtual_network.dual_stack.name
