@@ -27,6 +27,26 @@ resource "random_password" "pass" {
   }
 }
 
+data "azurerm_virtual_network" "hub" {
+  name                = "vnet${var.hub_suffix}"
+  resource_group_name = "rg${var.hub_suffix}"
+  provider            = azurerm.hub
+}
+
+# Pinpointed DNS server that contains just this pgsqlsrv. 
+resource "azurerm_private_dns_zone" "postgres" {
+  name                = "psqlsrv${var.prefix}${var.suffix}.auth.postgres.database.azure.com"
+  resource_group_name = var.resource_group_name
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "link" {
+  name                = data.azurerm_virtual_network.hub.name
+  resource_group_name = var.resource_group_name
+
+  virtual_network_id    = data.azurerm_virtual_network.hub.id
+  private_dns_zone_name = azurerm_private_dns_zone.postgres.name
+}
+
 resource "azurerm_postgresql_flexible_server" "postgres_server" {
   name                = "psqlsrv${var.prefix}${var.suffix}"
   resource_group_name = var.resource_group_name
@@ -34,8 +54,9 @@ resource "azurerm_postgresql_flexible_server" "postgres_server" {
   version             = var.postgres_version
 
   delegated_subnet_id           = var.subnet_id
-  private_dns_zone_id           = var.private_dns_zone_id
+  private_dns_zone_id           = azurerm_private_dns_zone.postgres.id
   public_network_access_enabled = false
+
 
   storage_mb        = var.storage_mb
   auto_grow_enabled = true

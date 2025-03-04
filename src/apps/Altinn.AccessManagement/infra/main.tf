@@ -235,7 +235,6 @@ module "postgres_server" {
   location            = "norwayeast"
 
   hub_suffix = local.hub_suffix
-  pg_dns_hex = var.pg_dns_hex
 
   subnet_id           = data.azurerm_subnet.postgres.id
   private_dns_zone_id = data.azurerm_private_dns_zone.postgres.id

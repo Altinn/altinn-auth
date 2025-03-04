@@ -43,8 +43,3 @@ variable "platform_workflow_principal_ids" {
   type    = list(string)
   default = []
 }
-
-variable "pg_dns_hex" {
-  type    = string
-  default = ""
-}

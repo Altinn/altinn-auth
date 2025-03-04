@@ -11,4 +11,3 @@ platform_workflow_principal_ids = [
   "226b2bbc-a0bd-4cdc-9d66-27822e900f71", # altinn-access-management-app-at24-aks01
   "23120df0-6945-49e6-b62e-3c3a797e5c51"  # altinn-access-management-app-at24-aks02
 ]
-pg_dns_hex = "de076eed7692"

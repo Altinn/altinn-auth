@@ -58,10 +58,6 @@ variable "compute_size" {
   type = string
 }
 
-variable "pg_dns_hex" {
-  type = string
-}
-
 variable "backup_retention_days" {
   type        = number
   default     = 14
