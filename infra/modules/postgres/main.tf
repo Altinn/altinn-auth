@@ -107,7 +107,7 @@ resource "azurerm_management_lock" "postgres" {
   name       = "Terraform Managed Lock"
   scope      = azurerm_postgresql_flexible_server.postgres_server.id
   lock_level = "CanNotDelete"
-  notes      = "Prevents unauthorized user activity to delete postgres server"
+  notes      = "Prevents unauthorized users from deleting the Postgres server."
 }
 
 # sleep for 20 seconds in order for admin change(s) to propegates.
