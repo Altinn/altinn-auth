@@ -8,6 +8,7 @@ using Altinn.AccessManagement.Persistence.Configuration;
 using Altinn.AccessManagement.Persistence.Extensions;
 using Altinn.AccessMgmt.Persistence;
 using Altinn.AccessMgmt.Persistence.Core.Models;
+using Altinn.AccessMgmt.Persistence.Core.Utilities.Search;
 using Altinn.AccessMgmt.Persistence.Extensions;
 using Altinn.AccessMgmt.Persistence.Services;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
@@ -55,6 +56,7 @@ internal static partial class AccessManagementHost
         builder.Services.Configure<AccessManagementAppsettings>(builder.Configuration.Bind);
         builder.ConfigureLibsHost();
 
+        builder.Services.AddMemoryCache();
         builder.Services.AddAutoMapper(typeof(Program));
         builder.Services.AddControllers();
         builder.Services.AddFeatureManagement();
@@ -88,6 +90,7 @@ internal static partial class AccessManagementHost
         builder.ConfigureAccessManagementPersistence();
 
         builder.Services.AddScoped<IPackageService, PackageService>();
+        builder.Services.AddSingleton(typeof(ISearchCache<>), typeof(SearchCache<>));
 
         return builder.Build();
     }

@@ -82,6 +82,7 @@ public abstract class CrossRepository<T, TExtended, TA, TB> : ExtendedRepository
         }
 
         var param = BuildFilterParameters(filters, options);
+        param.Add(new GenericParameter("X_Id", id));
 
         return await executor.ExecuteQuery<TEntity>(query, param, cancellationToken);
     }

@@ -85,9 +85,19 @@ public class DbCrossRelationDefinition
     public string GetIdentityProperty(Type type) => IsA(type) ? AIdentityProperty : BIdentityProperty;
 
     /// <summary>
+    /// Gets the identity property (primary key) based on the given type.
+    /// </summary>
+    public string GetReverseIdentityProperty(Type type) => IsA(type) ? BIdentityProperty : AIdentityProperty;
+
+    /// <summary>
     /// Gets the corresponding reference property in the junction table for the given type.
     /// </summary>
     public string GetReferenceProperty(Type type) => IsA(type) ? AReferenceProperty : BReferenceProperty;
+
+    /// <summary>
+    /// Gets the corresponding reference property in the junction table for the given type.
+    /// </summary>
+    public string GetReverseReferenceProperty(Type type) => IsA(type) ? BReferenceProperty : AReferenceProperty;
 
     /// <summary>
     /// Gets the reference property used to filter the related entity.

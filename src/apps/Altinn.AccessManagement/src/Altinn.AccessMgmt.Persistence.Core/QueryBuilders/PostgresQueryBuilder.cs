@@ -266,15 +266,15 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         var crossRefDef = _definitionRegistry.TryGetDefinition(crossRef.CrossType) ?? throw new InvalidOperationException();
 
         string mainTable = GetTableAlias();
-        string crossTable = GetTableName(crossRefDef, useHistory: useHistory);
-        string mainIdentityProperty = crossRef.GetIdentityProperty(_definition.ModelType);
-        string joinColumn = crossRef.GetReferenceProperty(_definition.ModelType);
-        string filterColumn = crossRef.GetFilterProperty(_definition.ModelType);
+        string crossTable = GetTableName(crossRefDef, includeAlias: false, useHistory: useHistory);
+        string mainIdentityProperty = crossRef.GetReferenceProperty(_definition.ModelType);
+        string joinColumn = crossRef.GetIdentityProperty(_definition.ModelType);
+        string filterColumn = crossRef.GetReverseIdentityProperty(_definition.ModelType);
 
         return $@"
         INNER JOIN {crossTable} AS X 
         ON {mainTable}.{mainIdentityProperty} = X.{joinColumn}
-        AND X.{filterColumn} = @X_{filterColumn}";
+        AND X.{filterColumn} = @X_Id";
     }
 
     private string GenerateFilterStatement(string tableAlias, IEnumerable<GenericFilter>? filters)
