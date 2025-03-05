@@ -7,7 +7,7 @@ meta {
 post {
   url: {{baseUrl}}/resourceregistry/api/v1/resource
   body: json
-  auth: none
+  auth: inherit
 }
 
 body:json {
@@ -37,15 +37,10 @@ body:json {
     "visible": false,
     "hasCompetentAuthority": {
       "organization": "991825827",
-      "orgcode": "DIGDIR",
-      "name": {
-        "en": "DIGITALISERINGSDIREKTORATET",
-        "nb": "DIGITALISERINGSDIREKTORATET",
-        "nn": "DIGITALISERINGSDIREKTORATET"
-      }
+      "orgcode": "DIGDIR"
     },
     "keywords": [],
-    "limitedByRRR": false,
+    "accessListMode": "Disabled",
     "selfIdentifiedUserEnabled": false,
     "enterpriseUserEnabled": true,
     "resourceType": "SystemResource"
@@ -60,5 +55,19 @@ vars:pre-request {
 }
 
 script:pre-request {
-  await tokenGenerator.getToken();
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  var getTokenParameters = {
+    auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
+    auth_org: sharedtestdata.serviceOwners.digdir.org,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.resourceregistryAdmin
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  
+  bru.setVar("bearerToken",  token);
+  
+  
+  
 }

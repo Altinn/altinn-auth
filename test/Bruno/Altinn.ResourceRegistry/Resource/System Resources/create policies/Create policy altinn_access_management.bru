@@ -7,7 +7,7 @@ meta {
 post {
   url: {{baseUrl}}/resourceregistry/api/v1/resource/{{id}}/policy
   body: multipartForm
-  auth: none
+  auth: inherit
 }
 
 headers {
@@ -15,17 +15,27 @@ headers {
 }
 
 body:multipart-form {
-  policyFile: 
+  policyFile: @file(Testdata/Policies/altinn_access_management.xacml)
 }
 
 vars:pre-request {
-  auth_tokenType: Enterprise
-  auth_scopes: altinn:resourceregistry/resource.write
-  auth_org: digdir
-  auth_orgNo: 991825827
   id: altinn_access_management
 }
 
 script:pre-request {
-  await tokenGenerator.getToken();
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  var getTokenParameters = {
+    auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
+    auth_org: sharedtestdata.serviceOwners.digdir.org,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.resourceregistryAdmin
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  
+  bru.setVar("bearerToken",  token);
+  
+  
+  
 }

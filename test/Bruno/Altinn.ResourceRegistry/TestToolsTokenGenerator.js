@@ -1,5 +1,5 @@
 
-exports.getToken = async function () {
+exports.getToken = async function (getTokenParameters) {
   const axios = require("axios");
   const btoa = require("btoa");
 
@@ -9,45 +9,50 @@ exports.getToken = async function () {
   const Authorization = 'Basic ' + btoa(`${basicAuthUser}:${basicAuthPw}`);
 
   const tokenEnv = bru.getEnvVar("tokenEnv");
-  const tokenType = bru.getEnvVar("auth_tokenType");
-  const tokenUser = bru.getEnvVar("auth_userId");
-  const tokenParty = bru.getEnvVar("auth_partyId");
-  const tokenPid = bru.getEnvVar("auth_ssn");
-  const tokenScopes = bru.getEnvVar("auth_scopes");
-  const tokenOrg = bru.getEnvVar("auth_org");
-  const tokenOrgNo = bru.getEnvVar("auth_orgNo");
-  const tokenUsername = bru.getEnvVar("auth_username");
-
-  console.log({
-    tokenEnv,
-    tokenType,
-    tokenUser,
-    tokenParty,
-    tokenPid,
-    tokenScopes,
-    tokenOrg,
-    tokenOrgNo,
-  });
+  const tokenType = getTokenParameters.auth_tokenType;
+  const tokenScopes = getTokenParameters.auth_scopes;
 
   let tokenUrl;
-  if (tokenType == "Personal") {
+	
+	if (tokenType == "Personal") {
+    const tokenUser = getTokenParameters.auth_userId;
+    const tokenParty = getTokenParameters.auth_partyId;
+    const tokenPid = getTokenParameters.auth_ssn;
+
     tokenUrl = `${tokenBaseUrl}/api/Get${tokenType}Token?env=${tokenEnv}&scopes=${tokenScopes}&pid=${tokenPid}&userid=${tokenUser}&partyid=${tokenParty}&authLvl=3&ttl=3000`;
   }
   else if (tokenType == "Enterprise") {
+    const tokenOrg = getTokenParameters.auth_org;
+    const tokenOrgNo = getTokenParameters.auth_orgNo;
+    
+
     tokenUrl = `${tokenBaseUrl}/api/Get${tokenType}Token?env=${tokenEnv}&scopes=${tokenScopes}&org=${tokenOrg}&orgNo=${tokenOrgNo}&ttl=30`;
   }
+
   else if (tokenType == "EnterpriseUser") {
+    const tokenUser = getTokenParameters.auth_userId;
+    const tokenParty = getTokenParameters.auth_partyId;
+    const tokenOrgNo = getTokenParameters.auth_orgNo;
+    const tokenUserName = getTokenParameters.auth_username;
+
     tokenUrl = `${tokenBaseUrl}/api/Get${tokenType}Token?env=${tokenEnv}&scopes=${tokenScopes}&orgNo=${tokenOrgNo}&userId=${tokenUser}&partyId=${tokenParty}&userName=${tokenUserName}&ttl=30`;
   } else {
     throw new Error("Unknown tokenType: " + tokenType);
   }
 
-  console.log("tokenUrl:" +  tokenUrl);
+  else if (tokenType == "PlatformAccess") {
+    const tokenOrg = getTokenParameters.auth_org;
+    const tokenApp = getTokenParameters.auth_app;
 
+    tokenUrl = `${tokenBaseUrl}/api/Get${tokenType}Token?env=${tokenEnv}&org=${tokenOrg}&app=${tokenApp}&ttl=30`;
+  }
+  
+  //console.log("tokenUrl:" + tokenUrl);
   const response = await axios.get(tokenUrl, {
     headers: { Authorization }
   });
 
+	return response.data;
   console.log(response.data);
   bru.setVar("bearerToken", response.data);
 }

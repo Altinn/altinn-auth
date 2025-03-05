@@ -7,7 +7,7 @@ meta {
 post {
   url: {{baseUrl}}/resourceregistry/api/v1/resource
   body: json
-  auth: none
+  auth: inherit
 }
 
 body:json {
@@ -45,7 +45,7 @@ body:json {
       }
     },
     "keywords": [],
-    "limitedByRRR": false,
+    "accessListMode": "Disabled",
     "selfIdentifiedUserEnabled": false,
     "enterpriseUserEnabled": true,
     "resourceType": "GenericAccessResource"
@@ -53,14 +53,25 @@ body:json {
 }
 
 vars:pre-request {
-  auth_tokenType: Enterprise
-  auth_scopes: altinn:resourceregistry/resource.write
-  auth_org: ttd
-  auth_orgNo: 991825827
   name: authparties-main-to-person
   title: AuthorizedParties: Mainunit to Person
 }
 
 script:pre-request {
-  await tokenGenerator.getToken();
+  //const token = await tokenGenerator.getToken();
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  var getTokenParameters = {
+    auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
+    auth_org: sharedtestdata.serviceOwners.ttd.org,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.resourceregistryWrite
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  
+  bru.setVar("bearerToken",  token);
+  
+  
+  
 }

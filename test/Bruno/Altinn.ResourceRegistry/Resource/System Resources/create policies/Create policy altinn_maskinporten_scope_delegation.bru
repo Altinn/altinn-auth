@@ -15,14 +15,10 @@ headers {
 }
 
 body:multipart-form {
-  policyFile: 
+  policyFile: @file(policyFile: altinn_maskinporten_scope_delegation.xacml)
 }
 
 vars:pre-request {
-  auth_tokenType: Enterprise
-  auth_scopes: altinn:resourceregistry/resource.write
-  auth_org: digdir
-  auth_orgNo: 991825827
   id: altinn_maskinporten_scope_delegation
 }
 

@@ -7,7 +7,7 @@ meta {
 post {
   url: {{baseUrl}}/resourceregistry/api/v1/resource/devtest_gar_{{name}}/policy
   body: multipartForm
-  auth: none
+  auth: inherit
 }
 
 headers {
@@ -19,13 +19,24 @@ body:multipart-form {
 }
 
 vars:pre-request {
-  auth_tokenType: Enterprise
-  auth_scopes: altinn:resourceregistry/resource.write
-  auth_org: digdir
-  auth_orgNo: 991825827
   name: 
 }
 
 script:pre-request {
-  await tokenGenerator.getToken();
+  //const token = await tokenGenerator.getToken();
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  var getTokenParameters = {
+    auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
+    auth_org: sharedtestdata.serviceOwners.digdir.org,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.resourceregistryWrite
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  
+  bru.setVar("bearerToken",  token);
+  
+  
+  
 }
