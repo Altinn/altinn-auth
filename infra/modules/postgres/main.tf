@@ -77,8 +77,8 @@ resource "azurerm_postgresql_flexible_server" "postgres_server" {
   sku_name    = local.sku_name
 
   lifecycle {
-    ignore_changes = [zone]
-    # prevent_destroy = true
+    ignore_changes  = [zone]
+    prevent_destroy = true
   }
 
   tags = var.tags
@@ -101,6 +101,13 @@ resource "azurerm_postgresql_flexible_server_configuration" "configuration" {
   name      = each.key
   value     = each.value
   for_each  = var.configurations
+}
+
+resource "azurerm_management_lock" "postgres" {
+  name       = "Terraform Managed Lock"
+  scope      = azurerm_postgresql_flexible_server.postgres_server.id
+  lock_level = "CanNotDelete"
+  notes      = "Prevents unauthorized user activity to delete postgres server"
 }
 
 # sleep for 20 seconds in order for admin change(s) to propegates.
