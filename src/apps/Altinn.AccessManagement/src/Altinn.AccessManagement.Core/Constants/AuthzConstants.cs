@@ -71,6 +71,21 @@
         public const string POLICY_APPS_INSTANCEDELEGATION = "AppsInstanceDelegation";
 
         /// <summary>
+        /// Policy tag for authorizing client administration API read access
+        /// </summary>
+        public const string POLICY_CLIENTDELEGATION_READ = "CLIENTDELEGATION_READ";
+
+        /// <summary>
+        /// Policy tag for authorizing client administration API write access
+        /// </summary>
+        public const string POLICY_CLIENTDELEGATION_WRITE = "CLIENTDELEGATION_WRITE";
+
+        /// <summary>
+        /// Portal enduser scope giving access to most of the end user APIs
+        /// </summary>
+        public const string SCOPE_PORTAL_ENDUSER = "altinn:portal/enduser";
+
+        /// <summary>
         /// Scope giving access to getting authorized parties for a given subject.
         /// </summary>
         public const string SCOPE_AUTHORIZEDPARTIES_ENDUSERSYSTEM = "altinn:accessmanagement/authorizedparties";

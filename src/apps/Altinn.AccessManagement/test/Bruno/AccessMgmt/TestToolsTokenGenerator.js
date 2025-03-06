@@ -17,9 +17,10 @@ exports.getToken = async function (getTokenParameters) {
   if (tokenType == "Personal") {
     const tokenUser = getTokenParameters.auth_userId;
     const tokenParty = getTokenParameters.auth_partyId;
+    const tokenPartyUuid = getTokenParameters.auth_partyUuid;
     const tokenPid = getTokenParameters.auth_ssn;
 
-    tokenUrl = `${tokenBaseUrl}/api/Get${tokenType}Token?env=${tokenEnv}&scopes=${tokenScopes}&pid=${tokenPid}&userid=${tokenUser}&partyid=${tokenParty}&authLvl=3&ttl=3000`;
+    tokenUrl = `${tokenBaseUrl}/api/Get${tokenType}Token?env=${tokenEnv}&scopes=${tokenScopes}&pid=${tokenPid}&userid=${tokenUser}&partyid=${tokenParty}&partyuuid=${tokenPartyUuid}&authLvl=3&ttl=3000`;
   }
 
   else if (tokenType == "Enterprise") {
