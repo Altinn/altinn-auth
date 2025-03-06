@@ -188,12 +188,12 @@ module "appsettings" {
   hub_suffix = local.hub_suffix
   key_vault_reference = [
     {
-      key                 = "Postgres:AppConnectionString"
+      key                 = "Altinn:Npgsql:register:ConnectionString"
       key_vault_secret_id = data.azurerm_key_vault_secret.postgres_app.versionless_id
       label               = "${var.environment}-register"
     },
     {
-      key                 = "Postgres:MigrationConnectionString"
+      key                 = "Altinn:Npgsql:register:Migrate:ConnectionString"
       key_vault_secret_id = data.azurerm_key_vault_secret.postgres_migration.versionless_id
       label               = "${var.environment}-register"
     }
