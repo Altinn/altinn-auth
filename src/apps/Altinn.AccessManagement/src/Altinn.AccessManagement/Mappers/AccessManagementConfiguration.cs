@@ -5,14 +5,14 @@ namespace Altinn.AccessManagement.Mappers
     /// <summary>
     /// Configuration for automapper for access management
     /// </summary>
-    public class AccessManagementConfiguration : MapperConfigurationExpression
+    public class AccessManagementConfiguration
     {
         /// <summary>
         /// access management mapping configuration
         /// </summary>
-        public AccessManagementConfiguration() 
+        public AccessManagementConfiguration(IMapperConfigurationExpression cfg)
         {
-            this.AllowNullCollections = true;   
+            cfg.AllowNullCollections = true;
         }
     }
 }

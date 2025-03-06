@@ -76,7 +76,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         }
 
         /// <inheritdoc/>
-        public async Task<XacmlContextRequest> Enrich(XacmlContextRequest request, bool isExternalRequest, SortedDictionary<string, AuthInfo> appInstanceInfo)
+        public async Task<XacmlContextRequest> Enrich(XacmlContextRequest request, bool isExternalRequest, SortedDictionary<string, AuthInfo> appInstanceInfo, CancellationToken cancellationToken = default)
         {
             await EnrichResourceAttributes(request, isExternalRequest, appInstanceInfo);
             return await Task.FromResult(request);
@@ -88,11 +88,12 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="request">The original Xacml Context Request</param>
         /// <param name="isExternalRequest">Defines if request comes </param>
         /// <param name="appInstanceInfo">Cache of auto info for this request</param>
-        protected async Task EnrichResourceAttributes(XacmlContextRequest request, bool isExternalRequest, SortedDictionary<string, AuthInfo> appInstanceInfo)
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        protected async Task EnrichResourceAttributes(XacmlContextRequest request, bool isExternalRequest, SortedDictionary<string, AuthInfo> appInstanceInfo, CancellationToken cancellationToken = default)
         {
             XacmlContextAttributes resourceContextAttributes = request.GetResourceAttributes();
             XacmlResourceAttributes resourceAttributes = GetResourceAttributeValues(resourceContextAttributes);
-            await EnrichResourceParty(resourceContextAttributes, resourceAttributes, isExternalRequest);
+            await EnrichResourceParty(resourceContextAttributes, resourceAttributes, isExternalRequest, cancellationToken);
 
             bool resourceAttributeComplete = IsResourceComplete(resourceAttributes);
 
@@ -186,11 +187,11 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// Method that adds information about the resource party 
         /// </summary>
         /// <returns></returns>
-        protected async Task EnrichResourceParty(XacmlContextAttributes requestResourceAttributes, XacmlResourceAttributes resourceAttributes, bool isExternalRequest)
+        protected async Task EnrichResourceParty(XacmlContextAttributes requestResourceAttributes, XacmlResourceAttributes resourceAttributes, bool isExternalRequest, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(resourceAttributes.ResourcePartyValue) && !string.IsNullOrEmpty(resourceAttributes.OrganizationNumber))
             {
-                Party party = await _registerService.PartyLookup(resourceAttributes.OrganizationNumber, null);
+                Party party = await _registerService.PartyLookup(resourceAttributes.OrganizationNumber, null, cancellationToken);
                 if (party != null)
                 {
                     resourceAttributes.ResourcePartyValue = party.PartyId.ToString();
@@ -204,9 +205,19 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     throw new ArgumentException("Not allowed to use ssn for internal API");
                 }
 
-                Party party = await _registerService.PartyLookup(null, resourceAttributes.PersonId);
+                Party party = await _registerService.PartyLookup(null, resourceAttributes.PersonId, cancellationToken);
                 if (party != null)
                 {
+                    resourceAttributes.ResourcePartyValue = party.PartyId.ToString();
+                    requestResourceAttributes.Attributes.Add(GetPartyIdsAttribute(new List<int> { party.PartyId }));
+                }
+            }
+            else if (string.IsNullOrEmpty(resourceAttributes.ResourcePartyValue) && resourceAttributes.PartyUuid != Guid.Empty)
+            {
+                List<Party> parties = await _registerService.GetPartiesAsync(new List<Guid> { resourceAttributes.PartyUuid }, cancellationToken: cancellationToken);
+                if (parties != null && parties.Count == 1)
+                {
+                    Party party = parties.FirstOrDefault();
                     resourceAttributes.ResourcePartyValue = party.PartyId.ToString();
                     requestResourceAttributes.Attributes.Add(GetPartyIdsAttribute(new List<int> { party.PartyId }));
                 }
@@ -249,6 +260,11 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 if (attribute.AttributeId.OriginalString.Equals(XacmlRequestAttribute.PartyAttribute))
                 {
                     resourceAttributes.ResourcePartyValue = attribute.AttributeValues.First().Value;
+                }
+
+                if (attribute.AttributeId.OriginalString.Equals(XacmlRequestAttribute.PartyUuidAttribute) && Guid.TryParse(attribute.AttributeValues.First().Value, out Guid partyUuid))
+                {
+                    resourceAttributes.PartyUuid = partyUuid;
                 }
 
                 if (attribute.AttributeId.OriginalString.Equals(XacmlRequestAttribute.TaskAttribute))

@@ -18,8 +18,9 @@ namespace Altinn.AccessManagement.Tests.Util
         /// <param name="userId">The user id</param>
         /// <param name="partyId">The users party id</param>
         /// <param name="authenticationLevel">The users authentication level</param>
+        /// <param name="userPartyUuid">The user's party UUID</param>
         /// <returns>jwt token string</returns>
-        public static string GetToken(int userId, int partyId, int authenticationLevel = 2)
+        public static string GetToken(int userId, int partyId, int authenticationLevel = 2, Guid? userPartyUuid = null)
         {
             List<Claim> claims = new List<Claim>();
             string issuer = "www.altinn.no";
@@ -28,6 +29,11 @@ namespace Altinn.AccessManagement.Tests.Util
             claims.Add(new Claim(AltinnCoreClaimTypes.PartyID, partyId.ToString(), ClaimValueTypes.Integer32, issuer));
             claims.Add(new Claim(AltinnCoreClaimTypes.AuthenticateMethod, "Mock", ClaimValueTypes.String, issuer));
             claims.Add(new Claim(AltinnCoreClaimTypes.AuthenticationLevel, authenticationLevel.ToString(), ClaimValueTypes.Integer32, issuer));
+
+            if (userPartyUuid != null && userPartyUuid != Guid.Empty)
+            {
+                claims.Add(new Claim(Core.Constants.AltinnCoreClaimTypes.PartyUuid, userPartyUuid.ToString(), ClaimValueTypes.String, issuer));
+            }
 
             ClaimsIdentity identity = new ClaimsIdentity("mock");
             identity.AddClaims(claims);

@@ -91,6 +91,11 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return Task.FromResult(parties);
         }
 
+        public Task<List<Party>> GetPartiesAsync(List<Guid> partyUuids, bool includeSubunits = false, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<Party> PartyLookup(string orgNo, string person, CancellationToken cancellationToken = default)
         {
             string cacheKey;

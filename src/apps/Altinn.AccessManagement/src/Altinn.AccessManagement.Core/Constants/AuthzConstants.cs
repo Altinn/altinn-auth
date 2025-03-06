@@ -36,6 +36,21 @@
         public const string POLICY_ACCESS_MANAGEMENT_READ = "AccessManagementRead";
 
         /// <summary>
+        /// Policy tag for reading enduser access management information for the authorized party
+        /// </summary>
+        public const string POLICY_ACCESS_MANAGEMENT_ENDUSER_READ_WITH_PASS_TROUGH = "AccessManagementEndUserReadOrAuthorizedParty";
+
+        /// <summary>
+        /// Policy tag for reading enduser access management information
+        /// </summary>
+        public const string POLICY_ACCESS_MANAGEMENT_ENDUSER_READ = "AccessManagementEndUserRead";
+
+        /// <summary>
+        /// Policy tag for reading enduser access management information
+        /// </summary>
+        public const string POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE = "AccessManagementEndUserWrite";
+
+        /// <summary>
         /// Policy tag for writing access management delegations
         /// </summary>
         public const string POLICY_ACCESS_MANAGEMENT_WRITE = "AccessManagementWrite";

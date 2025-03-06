@@ -10,9 +10,8 @@
         <PackageReference Include="Altinn.Authorization.ServiceDefaults" />
         <PackageReference Include="Altinn.Authorization.ABAC" />
         <PackageReference Include="Altinn.Common.AccessToken" />
-        <PackageReference Include="Altinn.Common.PEP" />
         <PackageReference Include="Altinn.Urn.Swashbuckle" />
-        <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" />
+        <PackageReference Include="AutoMapper" />
         <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" />
         <PackageReference Include="Azure.Identity" />
         <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" />
@@ -32,6 +31,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Altinn.AccessManagement.Api.Enduser\Altinn.AccessManagement.Api.Enduser.csproj" />
         <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Host\src\Altinn.Authorization.Host.Database\Altinn.Authorization.Host.Database.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Api.Metadata\Altinn.AccessManagement.Api.Metadata.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Core\Altinn.AccessManagement.Core.csproj" />

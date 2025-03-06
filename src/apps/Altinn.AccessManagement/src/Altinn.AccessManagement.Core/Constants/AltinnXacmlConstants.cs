@@ -160,6 +160,21 @@ namespace Altinn.AccessManagement.Core.Constants
             /// SystemUser uuid
             /// </summary>
             public const string SystemUserUuid = "urn:altinn:systemuser:uuid";
+
+            /// <summary>
+            /// Attribute Matching Identity.
+            /// </summary>
+            public const string ActionId = "urn:oasis:names:tc:xacml:1.0:action:action-id";
+
+            /// <summary>
+            /// Get the value scope
+            /// </summary>
+            public const string Scope = "urn:scope";
+
+            /// <summary>
+            /// Get the value sessionid
+            /// </summary>
+            public const string SessionId = "urn:altinn:sessionid";
         }
 
         /// <summary>
@@ -176,6 +191,6 @@ namespace Altinn.AccessManagement.Core.Constants
             /// The minimum authentication level for organization category
             /// </summary>
             public const string MinimumAuthenticationLevelOrg = "urn:altinn:minimum-authenticationlevel-org";
-        }
+        }        
     }
 }
