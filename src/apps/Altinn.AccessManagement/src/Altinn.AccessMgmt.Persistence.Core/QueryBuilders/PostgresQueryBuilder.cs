@@ -108,8 +108,7 @@ public class PostgresQueryBuilder : IDbQueryBuilder
     /// <inheritdoc/>
     public string BuildUpsertQuery(List<GenericParameter> parameters, bool forTranslation = false)
     {
-
-        return BuildMergeQuery(parameters, forTranslation);
+        return BuildMergeQuery(parameters, new List<GenericFilter>() { new GenericFilter("id", "id") }, forTranslation);
 
         /*
         var sb = new StringBuilder();
@@ -121,8 +120,19 @@ public class PostgresQueryBuilder : IDbQueryBuilder
 
     }
 
-    private string BuildMergeQuery(List<GenericParameter> parameters, bool forTranslation = false)
+    /// <inheritdoc />
+    public string BuildUpsertQuery(List<GenericParameter> parameters, List<GenericFilter> mergeFilter, bool forTranslation = false)
     {
+        return BuildMergeQuery(parameters, mergeFilter, forTranslation);
+    }
+
+    private string BuildMergeQuery(List<GenericParameter> parameters, List<GenericFilter> mergeFilter, bool forTranslation = false)
+    {
+        if (mergeFilter == null || !mergeFilter.Any())
+        {
+            throw new ArgumentException("Missing mergefilter");
+        }
+
         var sb = new StringBuilder();
         sb.AppendLine("WITH N AS ( SELECT ");
         sb.AppendLine("@id as id");
@@ -132,7 +142,9 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         }
 
         sb.AppendLine(")");
-        sb.AppendLine($"MERGE INTO {GetTableName(includeAlias: false, useTranslation: forTranslation)} AS T USING N ON T.id = N.id");
+
+        var mergeStatementFilter = string.Join(',', mergeFilter.Select(t => $"T.{t.PropertyName} = N.{t.PropertyName}"));
+        sb.AppendLine($"MERGE INTO {GetTableName(includeAlias: false, useTranslation: forTranslation)} AS T USING N ON {mergeStatementFilter}");
         if (forTranslation)
         {
             sb.AppendLine(" AND T.language = N.language");

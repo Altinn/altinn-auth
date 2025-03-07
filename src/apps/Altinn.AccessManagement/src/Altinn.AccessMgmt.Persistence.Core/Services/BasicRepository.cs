@@ -220,6 +220,16 @@ public abstract class BasicRepository<T> : IDbBasicRepository<T>
     }
 
     /// <inheritdoc/>
+    public async Task<int> Upsert(T entity, List<GenericFilter> mergeFilter, CancellationToken cancellationToken = default)
+    {
+        var param = BuildParameters(entity);
+        var queryBuilder = definitionRegistry.GetQueryBuilder<T>();
+        string query = queryBuilder.BuildUpsertQuery(param, mergeFilter);
+
+        return await executor.ExecuteCommand(query, param, cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async Task<int> Update(Guid id, T entity, CancellationToken cancellationToken = default)
     {
         var param = BuildParameters(entity);

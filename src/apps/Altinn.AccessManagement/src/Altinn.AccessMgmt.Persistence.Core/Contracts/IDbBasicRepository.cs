@@ -87,6 +87,18 @@ public interface IDbBasicRepository<T>
     /// </returns>
     Task<int> Upsert(T entity, CancellationToken cancellationToken = default);
 
+
+    /// <summary>
+    /// Inserts or updates an entity in the database. If the entity already exists, it will be updated.
+    /// </summary>
+    /// <param name="entity">The entity to upsert.</param>
+    /// <param name="mergeFilter">Properties for merge statement</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
+    /// </returns>
+    Task<int> Upsert(T entity, List<GenericFilter> mergeFilter, CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Updates an existing entity in the database identified by its unique identifier.
     /// </summary>

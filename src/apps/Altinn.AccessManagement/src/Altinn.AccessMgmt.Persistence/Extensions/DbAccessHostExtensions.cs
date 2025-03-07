@@ -53,7 +53,7 @@ public static partial class DbAccessHostExtensions
             var interfaceType = repoType.GetInterfaces().FirstOrDefault(i => i.Name == "I" + repoType.Name);
             if (interfaceType != null)
             {
-                builder.Services.AddScoped(interfaceType, repoType);
+                builder.Services.AddSingleton(interfaceType, repoType);
             }
         }
 
@@ -76,14 +76,14 @@ public static partial class DbAccessHostExtensions
     {
         MgmtDbType.Postgres => () =>
         {
-            builder.Services.AddScoped<IDbConverter, DbConverter>();
-            builder.Services.AddScoped<IDbExecutor, PostgresDbExecutor>();
+            builder.Services.AddSingleton<IDbConverter, DbConverter>();
+            builder.Services.AddSingleton<IDbExecutor, PostgresDbExecutor>();
         }
         ,
         MgmtDbType.MSSQL => () =>
         {
-            builder.Services.AddScoped<IDbConverter, DbConverter>(); // TODO: Add MSSQL converter
-            builder.Services.AddScoped<IDbExecutor, MssqlDbExecutor>();
+            builder.Services.AddSingleton<IDbConverter, DbConverter>(); // TODO: Add MSSQL converter
+            builder.Services.AddSingleton<IDbExecutor, MssqlDbExecutor>();
         }
         ,
         _ => () => throw new InvalidOperationException($"Unknown database type: {dbType}"),

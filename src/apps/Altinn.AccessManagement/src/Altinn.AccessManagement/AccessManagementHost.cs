@@ -91,7 +91,7 @@ internal static partial class AccessManagementHost
         builder.ConfigureAuthorization();
         builder.ConfigureAccessManagementPersistence();
 
-        builder.Services.AddScoped<IPackageService, PackageService>();
+        builder.Services.AddSingleton<IPackageService, PackageService>();
         builder.Services.AddSingleton(typeof(ISearchCache<>), typeof(SearchCache<>));
 
         return builder.Build();
@@ -136,6 +136,8 @@ internal static partial class AccessManagementHost
             {
                 opts.Endpoint = appsettings.Platform.RegisterEndpoint;
             }
+
+            //// opts.Endpoint = new("http://localhost:5020");
         });
 
         return builder;
