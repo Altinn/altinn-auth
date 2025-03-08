@@ -19,12 +19,12 @@ public sealed class CredentialsCommand(CancellationToken cancellationToken)
     {
         var credentials = new DefaultAzureCredential();
         var token = await credentials.GetTokenAsync(new(["https://ossrdbms-aad.database.windows.net/.default"]), cancellationToken);
-
         var parsedToken = new JwtSecurityTokenHandler().ReadJwtToken(token.Token);
         var username = parsedToken.Claims.First(static claim => claim.Type == "unique_name");
 
         AnsiConsole.MarkupLineInterpolated($"[green]username[/]: {username.Value}");
-        AnsiConsole.MarkupLineInterpolated($"[green]password[/]: {token.Token}");
+        AnsiConsole.MarkupInterpolated($"[green]password[/]: ");
+        Console.WriteLine($"{token.Token}");
 
         return 0;
     }

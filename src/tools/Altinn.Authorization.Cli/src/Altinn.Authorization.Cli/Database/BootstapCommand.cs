@@ -55,7 +55,7 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
             var connectionString = await CreateAdminConnectionString(token, postgresResource, settings, config.Database.Name, cancellationToken);
             await using var conn = new NpgsqlConnection(connectionString.ToString());
             await conn.OpenAsync(cancellationToken);
-            WriteOperationSucceeded($"Connected to datbase '{config.Database.Name}'");
+            WriteOperationSucceeded($"Connected to database '{config.Database.Name}'");
 
             var migratorUser = await CreateDatabaseRole(conn, secretClient, $"{config.Database.Prefix}_migrator", connectionString.Username!, settings, cancellationToken);
             var appUser = await CreateDatabaseRole(conn, secretClient, $"{config.Database.Prefix}_app", connectionString.Username!, settings, cancellationToken);

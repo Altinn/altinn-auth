@@ -37,3 +37,6 @@ set windows-shell := ["pwsh.exe", "-NoLogo", "-CommandWithArgs"]
 @get-metadata: install-script-packages-frozen
   #!{{shebang}}
   ./.github/scripts/node_modules/.bin/tsx ./.github/scripts/get-metadata.mts
+
+@db-cred:
+  dotnet run --project "./src/tools/Altinn.Authorization.Cli/src/Altinn.Authorization.Cli" -- db cred
