@@ -1,0 +1,26 @@
+{
+  "pull-request-title-pattern": "release${scope}:${component} ${version}",
+  "release-type": "simple",
+  "packages": {
+    "src/pkgs/Altinn.Authorization.ABAC": {
+      "component": "Altinn.Authorization.ABAC",
+      "extra-files": [
+        {
+          "type": "xml",
+          "path": "Version.props",
+          "xpath": "//Project/PropertyGroup/Version"
+        }
+      ]
+    },
+    "src/pkgs/Altinn.Authorization.PEP": {
+      "component": "Altinn.Authorization.PEP",
+      "extra-files": [
+        {
+          "type": "xml",
+          "path": "Version.props",
+          "xpath": "//Project/PropertyGroup/Version"
+        }
+      ]
+    }
+  }
+}
