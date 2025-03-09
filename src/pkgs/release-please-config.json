@@ -2,7 +2,11 @@
   "pull-request-title-pattern": "release${scope}:${component} ${version}",
   "release-type": "simple",
   "packages": {
-    "Altinn.Authorization.ABAC": {},
-    "Altinn.Authorization.PEP": {}
+    "Altinn.Authorization.ABAC": {
+      "component": "Altinn.Authorization.ABAC"
+    },
+    "Altinn.Authorization.PEP": {
+      "component": "Altinn.Authorization.PEP"
+    }
   }
 }
