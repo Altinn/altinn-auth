@@ -1,6 +1,51 @@
 <Project>
 
-    <!-- Add default target props here before import. In order for imported targets props from sub-projects to override any defaults set here.  -->
+    <PropertyGroup>
+        <ArtifactsPath Condition=" '$(ArtifactsPath)' == '' ">$(BaseArtifactsPath)$(MSBuildProjectName)\</ArtifactsPath>
+        <CoreBuildDependsOn>$(CoreBuildDependsOn);_CheckVersion</CoreBuildDependsOn>
+    </PropertyGroup>
 
     <Import Project="..\Directory.Build.targets" />
+
+    <ItemGroup Condition=" '$(IsPackable)' == 'true' ">
+        <PackageReference Include="Microsoft.Build.Artifacts" PrivateAssets="all"
+            IncludeAssets="build; buildtransitive; buildMultiTargeting" />
+    </ItemGroup>
+
+    <PropertyGroup Condition=" '$(ReadmePath)' == '' ">
+        <ReadmePath>$([MSBuild]::GetPathOfFileAbove('README.md', '$(MSBuildProjectDirectory)'))</ReadmePath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(ChangelogPath)' == '' ">
+        <ChangelogPath>$([MSBuild]::GetPathOfFileAbove('CHANGELOG.md', '$(MSBuildProjectDirectory)'))</ChangelogPath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(VersionFilePath)' == '' ">
+        <VersionFilePath>$([MSBuild]::GetPathOfFileAbove('Version.props', '$(MSBuildProjectDirectory)'))</VersionFilePath>
+    </PropertyGroup>
+
+    <ItemGroup Condition=" '$(IsPackable)' == 'true' And Exists('$(ReadmePath)') ">
+        <None Include="$(ReadmePath)" Pack="true" PackagePath="readme.md" />
+    </ItemGroup>
+
+    <ItemGroup Condition=" '$(IsPackable)' == 'true' And Exists('$(ChangelogPath)') ">
+        <None Include="$(ChangelogPath)" Pack="true" PackagePath="changelog.md" />
+    </ItemGroup>
+
+    <PropertyGroup Condition=" Exists('$(ReadmePath)') ">
+        <PackageReadmeFile>readme.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" Exists('$(ChangelogPath)') ">
+        <PackageReleaseNotes>changelog.md</PackageReleaseNotes>
+    </PropertyGroup>
+
+    <Import Project="$(VersionFilePath)" Condition="Exists('$(VersionFilePath)')" />
+
+    <Target Name="_CheckVersion">
+        <Error Condition="!Exists('$(VersionFilePath)')"
+            Text="Version file not found at '$(VersionFilePath)'" />
+        <Error Condition="'$(Version)' == ''" Text="Version not defined in '$(VersionFilePath)'" />
+    </Target>
+
 </Project>

@@ -1,67 +1,95 @@
-# Overview
-This README defines the release strategy for Altinn Autorization C# packages using Release Please. We follow Semantic Versioning (SemVer) to manage versions consistently.
+# Publishing NuGet Packages with Release Please
 
-# Release
+## Overview
+This guide outlines the release strategy for Altinn Authorization C# packages using Release Please. We adhere to [Semantic Versioning (SemVer)](https://semver.org/) to manage versions consistently.
 
-Releases are automatically created based on commit messages that follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). When a pull request (PR) is merged, Release Please will:
-
-## Specification
-The key words “MUST”, “MUST NOT”, “REQUIRED”, “SHALL”, “SHALL NOT”, “SHOULD”, “SHOULD NOT”, “RECOMMENDED”, “MAY”, and “OPTIONAL” in this document are to be interpreted as described in RFC 2119.
-
-1. Commits MUST be prefixed with a type, which consists of a noun, feat, fix, etc., followed by the OPTIONAL scope, OPTIONAL !, and REQUIRED terminal colon and space.
-2. The type feat MUST be used when a commit adds a new feature to your application or library.
-3. The type fix MUST be used when a commit represents a bug fix for your application.
-4. A scope MAY be provided after a type. A scope MUST consist of a noun describing a section of the codebase surrounded by parenthesis, e.g., fix(parser):
-5. A description MUST immediately follow the colon and space after the type/scope prefix. The description is a short summary of the code changes, e.g., fix: array parsing issue when multiple spaces were contained in string.
-6. A longer commit body MAY be provided after the short description, providing additional contextual information about the code changes. The body MUST begin one blank line after the description.
-7. A commit body is free-form and MAY consist of any number of newline separated paragraphs.
-8. One or more footers MAY be provided one blank line after the body. Each footer MUST consist of a word token, followed by either a :<space> or <space># separator, followed by a string value (this is inspired by the git trailer convention).
-9. A footer’s token MUST use - in place of whitespace characters, e.g., Acked-by (this helps differentiate the footer section from a multi-paragraph body). An exception is made for BREAKING CHANGE, which MAY also be used as a token.
-10. A footer’s value MAY contain spaces and newlines, and parsing MUST terminate when the next valid footer token/separator pair is observed.
-11. Breaking changes MUST be indicated in the type/scope prefix of a commit, or as an entry in the footer.
-12. If included as a footer, a breaking change MUST consist of the uppercase text BREAKING CHANGE, followed by a colon, space, and description, e.g., BREAKING CHANGE: environment variables now take precedence over config files.
-13. If included in the type/scope prefix, breaking changes MUST be indicated by a ! immediately before the :. If ! is used, BREAKING CHANGE: MAY be omitted from the footer section, and the commit description SHALL be used to describe the breaking change.
-14. Types other than feat and fix MAY be used in your commit messages, e.g., docs: update ref docs.
-15. The units of information that make up Conventional Commits MUST NOT be treated as case sensitive by implementors, with the exception of BREAKING CHANGE which MUST be uppercase.
-16. BREAKING-CHANGE MUST be synonymous with BREAKING CHANGE, when used as a token in a footer.
-
-
-Release please
+## Release Process
+Releases are automatically generated based on commit messages that follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification. When a pull request (PR) is merged into the main branch, Release Please will:
 
 1. Detect changes in the repository.
-2. Generate or update the `CHANGELOG.md`.
+2. Update or generate the `CHANGELOG.md`.
 3. Update the version in `*.csproj` or `version.json`.
-4. Create a GitHub Release if required.
+4. Create a GitHub Release if necessary.
 
-## Create Release
-| Segment | PR Title Prefix |
-| ------- | --------------- |
-| Patch   | `fix:`          |
-| Minor   | `feat:`         |
-| Major   | `fix!:`         |
-| Major   | `feat!:`        |
-| Major   | `refactor!:`    |
+## Commit Message Conventions
+Each commit message must follow a structured format to ensure correct versioning:
 
-Automation
-* GitHub Actions runs Release Please when PRs are merged into main.
-* The version is determined automatically based on the commit history.
-* A new release is published only when a version bump is required.
+| Change Type | Prefix       |
+| ----------- | ------------ |
+| Patch       | `fix:`       |
+| Minor       | `feat:`      |
+| Major       | `fix!:`      |
+| Major       | `feat!:`     |
+| Major       | `refactor!:` |
 
-## SemVer
-| **Condition**                                                                | **Version Change**           | **Example** (Current: `1.2.3`) → **(New)** |
-| ---------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------ |
-| 🚀 **Breaking changes** (Changes that require consumers to modify their code) | **Major** (`X.0.0`)          | `1.2.3` → `2.0.0`                          |
-| ➖ **Removing or renaming a public method/class/interface/enums etc.**        | **Major** (`X.0.0`)          | `1.2.3` → `2.0.0`                          |
-| 🔄 **Changing method signatures (parameters, return type, etc.)**             | **Major** (`X.0.0`)          | `1.2.3` → `2.0.0`                          |
-| ⚠ **Changing default behavior in a non-backward-compatible way**             | **Major** (`X.0.0`)          | `1.2.3` → `2.0.0`                          |
-| 🔄 **Removing support for a .NET version**                                    | **Major** (`X.0.0`)          | `1.2.3` → `2.0.0`                          |
-| 🔄 **Upgrading to a new .NET version that breaks compatibility**              | **Major** (`X.0.0`)          | `1.2.3` → `2.0.0`                          |
-| 🔄 **Upgrading to a new .NET version (but fully backward-compatible)**        | **Minor** (`X.Y.0`)          | `1.2.3` → `1.3.0`                          |
-| ✨ **Adding new features (backward-compatible)**                              | **Minor** (`X.Y.0`)          | `1.2.3` → `1.3.0`                          |
-| ➕ **Adding a new public method/class**                                       | **Minor** (`X.Y.0`)          | `1.2.3` → `1.3.0`                          |
-| 📦 **Enhancing performance or internal improvements (no API changes)**        | **Minor** (`X.Y.0`)          | `1.2.3` → `1.3.0`                          |
-| 🔧 **Deprecating a method (but still keeping it for now)**                    | **Minor** (`X.Y.0`)          | `1.2.3` → `1.3.0`                          |
-| 🐛 **Bug fixes (no new features, no breaking changes)**                       | **Patch** (`X.Y.Z`)          | `1.2.3` → `1.2.4`                          |
-| 📌 **Fixing a security vulnerability (no breaking changes)**                  | **Patch** (`X.Y.Z`)          | `1.2.3` → `1.2.4`                          |
-| 📈 **Performance improvements (no API change)**                               | **Patch** (`X.Y.Z`)          | `1.2.3` → `1.2.4`                          |
-| 📝 **Documentation updates only (no code changes)**                           | **No version bump required** | -                                          |
+### Example
+Removing support for .NET 8 in the PEP package:
+```bash
+git add .
+git commit -m "feat!: remove support for .NET 8"
+```
+
+Then, create a PR with the following title format:
+```
+release(<scope>): <component> <version>
+```
+For example:
+```
+release(main): Altinn.Authorization.PEP 5.0.0
+```
+Since we introduced a breaking change, we must bump the major version.
+
+When this PR is merged, Release Please will create another PR with the updated changelog, including:
+```
+feat!: remove support for .NET 8
+```
+Once the Release Please PR is merged, the package can be safely deployed.
+
+## Specification
+This guide follows the key terms defined in [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119):
+- **MUST**: A requirement that must be followed.
+- **MAY**: An optional action.
+- **SHOULD**: A recommendation.
+
+### Commit Message Structure
+1. A commit **MUST** be prefixed with a type (`feat`, `fix`, etc.), followed by an optional scope, an optional `!` for breaking changes, and a required colon and space.
+2. `feat` **MUST** be used for new features.
+3. `fix` **MUST** be used for bug fixes.
+4. An optional scope **MAY** be provided in parentheses, e.g., `fix(parser):`.
+5. The description **MUST** immediately follow the colon and space.
+6. A longer commit body **MAY** be included, starting one blank line after the description.
+7. A commit body **MAY** include multiple paragraphs.
+8. Footers **MAY** be included after one blank line.
+9. Footers **MUST** follow the format `<token>: <value>`, e.g., `BREAKING CHANGE: environment variables now take precedence over config files`.
+10. Breaking changes **MUST** be indicated in either the type prefix (`!`) or the footer.
+11. `BREAKING CHANGE` in the footer **MAY** be omitted if `!` is used in the prefix.
+12. Other commit types **MAY** be used, such as `docs: update API documentation`.
+13. Commit messages **MUST NOT** be case-sensitive, except `BREAKING CHANGE` which **MUST** be uppercase.
+
+## Automation
+- **GitHub Actions** runs Release Please when PRs are merged into `main`.
+- The version bump is determined automatically based on commit history.
+- A new release is created only when a version change is required.
+
+## Semantic Versioning Rules
+| **Condition**                                                     | **Version Change**  | **Example** (`1.2.3 →`) |
+| ----------------------------------------------------------------- | ------------------- | ----------------------- |
+| 🚀 **Breaking changes** (require code modifications by consumers)  | **Major** (`X.0.0`) | `2.0.0`                 |
+| ➖ **Removing or renaming public APIs**                            | **Major** (`X.0.0`) | `2.0.0`                 |
+| 🔄 **Changing method signatures**                                  | **Major** (`X.0.0`) | `2.0.0`                 |
+| ⚠ **Changing default behavior in a non-backward-compatible way**  | **Major** (`X.0.0`) | `2.0.0`                 |
+| 🔄 **Removing support for a .NET version**                         | **Major** (`X.0.0`) | `2.0.0`                 |
+| 🔄 **Upgrading to a new .NET version (breaking compatibility)**    | **Major** (`X.0.0`) | `2.0.0`                 |
+| 🔄 **Upgrading to a new .NET version (fully backward-compatible)** | **Minor** (`X.Y.0`) | `1.3.0`                 |
+| ✨ **Adding new features (backward-compatible)**                   | **Minor** (`X.Y.0`) | `1.3.0`                 |
+| ➕ **Adding a new public API**                                     | **Minor** (`X.Y.0`) | `1.3.0`                 |
+| 📦 **Internal performance improvements (no API changes)**          | **Minor** (`X.Y.0`) | `1.3.0`                 |
+| 🔧 **Deprecating an API (but still available for now)**            | **Minor** (`X.Y.0`) | `1.3.0`                 |
+| 🐛 **Bug fixes (no breaking changes)**                             | **Patch** (`X.Y.Z`) | `1.2.4`                 |
+| 📌 **Fixing security vulnerabilities (no breaking changes)**       | **Patch** (`X.Y.Z`) | `1.2.4`                 |
+| 📈 **Performance optimizations (no API change)**                   | **Patch** (`X.Y.Z`) | `1.2.4`                 |
+| 📝 **Documentation updates only (no code changes)**                | **No version bump** | -                       |
+
+---
+By following this guide, you ensure that releases are structured, predictable, and automated correctly.
+

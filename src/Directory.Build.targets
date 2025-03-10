@@ -1,7 +1,7 @@
 <Project>
     <Choose>
 
-        <When Condition=" '$(IsTestProject)' == 'true' ">
+        <When Condition=" '$(IsTestProject)' == 'true' Or '$(IsTestLibrary)' == 'true'">
             <ItemGroup>
                 <PackageReference Include="Microsoft.NET.Test.Sdk" />
                 <PackageReference Include="xunit" />
@@ -17,6 +17,7 @@
             </ItemGroup>
 
             <PropertyGroup>
+                <GenerateDocumentationFile>false</GenerateDocumentationFile>
                 <IsPublishable>false</IsPublishable>
             </PropertyGroup>
         </When>
@@ -37,7 +38,7 @@
         </AdditionalFiles>
     </ItemGroup>
 
-    <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <PropertyGroup>
         <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)Altinn.ruleset</CodeAnalysisRuleSet>
     </PropertyGroup>
 

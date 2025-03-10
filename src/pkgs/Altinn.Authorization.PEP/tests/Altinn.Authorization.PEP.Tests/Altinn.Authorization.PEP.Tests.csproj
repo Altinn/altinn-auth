@@ -2,9 +2,11 @@
 
     <PropertyGroup>
         <IsPackable>false</IsPackable>
-        <TargetFramework></TargetFramework>
-        <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Moq" />

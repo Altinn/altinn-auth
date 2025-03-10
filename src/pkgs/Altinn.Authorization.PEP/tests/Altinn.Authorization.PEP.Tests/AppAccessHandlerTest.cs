@@ -1,21 +1,16 @@
-using System;
-using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Security.Claims;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Configuration;
 using Altinn.Common.PEP.Interfaces;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using Xunit;
 
 namespace Altinn.Common.PEP.Authorization
 {
