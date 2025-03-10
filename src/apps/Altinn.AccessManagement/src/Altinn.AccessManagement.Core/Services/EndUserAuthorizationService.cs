@@ -19,7 +19,6 @@ namespace Altinn.AccessManagement.Core.Services
         private readonly ILogger<IEndUserAuthorizationService> _logger;
         private readonly IAuthorizedPartiesService _authorizedPartiesService;
 
-
         /// <summary>
         /// Initializes a new instance of the <see cref="EndUserAuthorizationService"/> class.
         /// </summary>
@@ -43,7 +42,7 @@ namespace Altinn.AccessManagement.Core.Services
             }
 
             List<AuthorizedParty> authorizedParties = await _authorizedPartiesService.GetAuthorizedPartiesForUser(1, true, includeAuthorizedResourcesThroughRoles: false, default);
-            AuthorizedParty? authorizedParty = authorizedParties.Find(ap => ap.PartyUuid == directionPartyUuid && !ap.OnlyHierarchyElementWithNoAccess) ??
+            AuthorizedParty authorizedParty = authorizedParties.Find(ap => ap.PartyUuid == directionPartyUuid && !ap.OnlyHierarchyElementWithNoAccess) ??
             authorizedParties.SelectMany(ap => ap.Subunits).FirstOrDefault(subunit => subunit.PartyUuid == directionPartyUuid);
 
             if (authorizedParty != null)
@@ -52,6 +51,6 @@ namespace Altinn.AccessManagement.Core.Services
             }
 
             return false;
-        }                
+        }
     }
 }

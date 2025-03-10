@@ -24,7 +24,7 @@ public class MssqlQueryBuilder : IDbQueryBuilder
     }
 
     /// <inheritdoc/>
-    public string BuildBasicSelectQuery(RequestOptions options, IEnumerable<GenericFilter> filters, DbCrossRelationDefinition? crossDef = null)
+    public string BuildBasicSelectQuery(RequestOptions options, IEnumerable<GenericFilter> filters, DbCrossRelationDefinition crossDef = null)
     {
         throw new NotImplementedException();
     }
@@ -36,7 +36,7 @@ public class MssqlQueryBuilder : IDbQueryBuilder
     }
 
     /// <inheritdoc/>
-    public string BuildExtendedSelectQuery(RequestOptions options, IEnumerable<GenericFilter> filters, DbCrossRelationDefinition? crossDef = null)
+    public string BuildExtendedSelectQuery(RequestOptions options, IEnumerable<GenericFilter> filters, DbCrossRelationDefinition crossDef = null)
     {
         throw new NotImplementedException();
     }
@@ -54,16 +54,12 @@ public class MssqlQueryBuilder : IDbQueryBuilder
     }
 
     /// <inheritdoc/>
-    public string BuildUpsertQuery(List<GenericParameter> parameters)
-    {
-        throw new NotImplementedException();
-    }
-
     public string BuildUpsertQuery(List<GenericParameter> parameters, bool forTranslation = false)
     {
         throw new NotImplementedException();
     }
 
+    /// <inheritdoc/>
     public string BuildUpsertQuery(List<GenericParameter> parameters, List<GenericFilter> mergeFilter, bool forTranslation = false)
     {
         throw new NotImplementedException();

@@ -36,7 +36,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
             request.Action = new List<XacmlJsonCategory>();
             request.Resource = new List<XacmlJsonCategory>();
 
-            string? party = queryParams.FirstOrDefault(p => p.Key == ParamParty).Value.FirstOrDefault();
+            string party = queryParams.FirstOrDefault(p => p.Key == ParamParty).Value.FirstOrDefault();
 
             request.AccessSubject.Add(CreateSubjectCategory(context.User.Claims));
             request.Action.Add(CreateActionCategory(requirement.ActionType));
@@ -53,7 +53,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
                 throw new ArgumentException("invalid party " + party);
             }
 
-            XacmlJsonRequestRoot jsonRequest = new XacmlJsonRequestRoot() { Request = request };
+            XacmlJsonRequestRoot jsonRequest = new() { Request = request };
 
             return jsonRequest;
         }
@@ -117,7 +117,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
         /// <returns>The 'from' parameter as a Guid if valid, otherwise null</returns>
         public static Guid? GetFromParam(HttpContext context)
         {
-            string? from = context.Request.Query[ParamFrom];
+            string from = context.Request.Query[ParamFrom];
             if (Guid.TryParse(from, out Guid fromGuid))
             {
                 return fromGuid;
@@ -133,7 +133,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
         /// <returns>The 'to' parameter as a Guid if valid, otherwise null</returns>
         public static Guid? GetToParam(HttpContext context)
         {
-            string? from = context.Request.Query[ParamTo];
+            string from = context.Request.Query[ParamTo];
             if (Guid.TryParse(from, out Guid toGuid))
             {
                 return toGuid;
@@ -149,7 +149,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
         /// <returns>The 'party' parameter as a Guid if valid, otherwise null</returns>
         public static Guid? GetPartyParam(HttpContext context)
         {
-            string? from = context.Request.Query[ParamParty];
+            string from = context.Request.Query[ParamParty];
             if (Guid.TryParse(from, out Guid partyGuid))
             {
                 return partyGuid;
@@ -195,11 +195,11 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
             return true;
         }
 
-        private static XacmlJsonAttributeAssignment? GetObligation(string category, List<XacmlJsonObligationOrAdvice> obligations)
+        private static XacmlJsonAttributeAssignment GetObligation(string category, List<XacmlJsonObligationOrAdvice> obligations)
         {
             foreach (XacmlJsonObligationOrAdvice obligation in obligations)
             {
-                XacmlJsonAttributeAssignment? assignment = obligation.AttributeAssignment.FirstOrDefault(a => a.Category.Equals(category));
+                XacmlJsonAttributeAssignment assignment = obligation.AttributeAssignment.FirstOrDefault(a => a.Category.Equals(category));
                 if (assignment != null)
                 {
                     return assignment;
@@ -211,12 +211,12 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
 
         private static List<XacmlJsonAttribute> CreateSubjectAttributes(IEnumerable<Claim> claims)
         {
-            List<XacmlJsonAttribute> attributes = new List<XacmlJsonAttribute>();
+            List<XacmlJsonAttribute> attributes = new();
 
             // Mapping all claims on user to attributes
             foreach (Claim claim in claims)
             {
-                if (IsSystemUserClaim(claim, out SystemUserClaim? userClaim))
+                if (IsSystemUserClaim(claim, out SystemUserClaim userClaim))
                 {
                     attributes.Add(CreateXacmlJsonAttribute(MatchAttributeIdentifiers.SystemUserUuid, userClaim.Systemuser_id[0], DefaultType, claim.Issuer));
                 }
@@ -285,7 +285,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
             return actionAttributes;
         }
 
-        private static bool IsSystemUserClaim(Claim claim, out SystemUserClaim? userClaim)
+        private static bool IsSystemUserClaim(Claim claim, out SystemUserClaim userClaim)
         {
             if (claim.Type.Equals("authorization_details"))
             {

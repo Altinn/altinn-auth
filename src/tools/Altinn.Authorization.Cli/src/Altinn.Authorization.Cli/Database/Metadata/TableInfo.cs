@@ -10,7 +10,6 @@ namespace Altinn.Authorization.Cli.Database.Metadata;
 public class TableInfo
     : TableRef
 {
-
     /// <summary>
     /// Initializes a new instance of the <see cref="TableInfo"/> class.
     /// </summary>

@@ -103,7 +103,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
             return result;
         }
-                
+
         /// <inheritdoc/>
         public async Task<List<Rule>> TryDeleteDelegationPolicyRules(List<RequestToDelete> rulesToDelete)
         {
@@ -230,7 +230,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     else
                     {
                         delegationPolicy = PolicyHelper.BuildDelegationPolicy(org, app, offeredByPartyId, coveredByPartyId, coveredByUserId, rules);
-                    }       
+                    }
 
                     // Write delegation policy to blob storage
                     MemoryStream dataStream = PolicyHelper.GetXmlMemoryStreamFromXacmlPolicy(delegationPolicy);
@@ -273,12 +273,12 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     {
                         _logger.LogCritical(new EventId(delegationChangeEventQueueErrorId, "DelegationChangeEventQueue.Push.Error"), ex, "AddRules could not push DelegationChangeEvent to DelegationChangeEventQueue. DelegationChangeEvent must be retried for successful sync with SBL Authorization. DelegationChange: {change}", change);
                     }
-                    
+
                     return true;
                 }
                 finally
                 {
-                    _policyRepository.ReleaseBlobLease(policyPath, leaseId);
+                    await _policyRepository.ReleaseBlobLease(policyPath, leaseId);
                 }
             }
 
@@ -384,7 +384,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             }
             finally
             {
-                _policyRepository.ReleaseBlobLease(policyPath, leaseId);
+                await _policyRepository.ReleaseBlobLease(policyPath, leaseId);
             }
 
             return currentRules;
@@ -490,7 +490,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             }
             finally
             {
-                _policyRepository.ReleaseBlobLease(policyPath, leaseId);
+                await _policyRepository.ReleaseBlobLease(policyPath, leaseId);
             }
         }
 
@@ -499,7 +499,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             string coveredBy = DelegationHelper.GetCoveredByFromMatch(rulesToDelete.PolicyMatch.CoveredBy, out int? coveredByUserId, out int? coveredByPartyId);
 
             DelegationHelper.TryGetResourceFromAttributeMatch(rulesToDelete.PolicyMatch.Resource, out string org, out string app);
-            
+
             string policyPath;
             try
             {

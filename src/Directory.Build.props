@@ -10,6 +10,7 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <Authors>Altinn Authorization</Authors>
+        <NoWarn>SA1600;CS1591;CS8767;CS8632</NoWarn>
     </PropertyGroup>
 
 </Project>

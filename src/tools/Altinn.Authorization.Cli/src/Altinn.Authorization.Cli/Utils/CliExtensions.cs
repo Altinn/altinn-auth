@@ -118,7 +118,8 @@ public static class CliExtensions
     {
         task.StartTask();
 
-        return new Disposable(() => {
+        return new Disposable(() =>
+        {
             if (setValueMax)
             {
                 task.Value = task.MaxValue;

@@ -25,9 +25,9 @@ public static class EndpointExtension
             {
                 Type entityType = definition.ModelType;
                 Type serviceType = GetRepositoryContract(entityType);
-                Type? crossRefA = definition.CrossRelation?.AType;
-                Type? crossRefB = definition.CrossRelation?.BType;
-                Type? extendedType = definition.Relations.FirstOrDefault()?.ExtendedType ?? definition.CrossRelation?.CrossExtendedType;
+                Type crossRefA = definition.CrossRelation?.AType;
+                Type crossRefB = definition.CrossRelation?.BType;
+                Type extendedType = definition.Relations.FirstOrDefault()?.ExtendedType ?? definition.CrossRelation?.CrossExtendedType;
 
                 bool isCross = crossRefA != null && crossRefB != null && extendedType != null;
                 bool isExtended = extendedType != null;
@@ -61,6 +61,7 @@ public static class EndpointExtension
     /// </summary>
     /// <param name="app">WebApplication</param>
     /// <param name="hasExtendedType">This type has an extended type</param>
+    /// <param name="isCross">is cross</param>
     /// <returns></returns>
     public static WebApplication MapDefaults<TService, T>(this WebApplication app, bool hasExtendedType, bool isCross)
         where TService : IDbBasicRepository<T>
@@ -185,7 +186,7 @@ public static class EndpointExtension
             var res = await service.CreateCross(id, linkId);
             return res > 0 ? Results.Created($"/{name}/{res}", null) : Results.Problem();
         }).WithOpenApi().WithTags(endpointAGroup).WithSummary($"Create {name}");
-        
+
         app.MapDelete($"/{nameA}/{{id}}/{nameB}/{{linkId}}", async ([FromServices] TService service, Guid id, Guid linkId) =>
         {
             return await service.DeleteCross(id, linkId);
@@ -233,7 +234,7 @@ public static class EndpointExtension
 
         return options;
     }
-    
+
     private static string Pluralize(string name)
     {
         return name.EndsWith("y") ? name[..^1] + "ies" : name + "s";

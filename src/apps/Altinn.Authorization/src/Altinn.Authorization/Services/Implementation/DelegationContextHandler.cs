@@ -119,7 +119,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                         requestResourceAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.AppAttribute, resourceAttributes.AppValue));
                     }
                 }
-                
+
                 if (resourceAttribute == null && orgAttribute != null && appAttribute != null)
                 {
                     // Missing org and app attribute for Altinn App

@@ -36,7 +36,7 @@ namespace Altinn.AccessManagement.Tests.Mocks
 
         private async Task<ICollection<SecurityKey>> GetSigningKeys()
         {
-            List<SecurityKey> signingKeys = new List<SecurityKey>();
+            List<SecurityKey> signingKeys = [];
 
             X509Certificate2 cert = new X509Certificate2("selfSignedTestCertificatePublic.cer");
             SecurityKey key = new X509SecurityKey(cert);

@@ -41,7 +41,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.AuthorizationHandler
         /// <returns>A Task</returns>
         protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, EndUserResourceAccessRequirement requirement)
         {
-            HttpContext? httpContext = _httpContextAccessor.HttpContext;
+            HttpContext httpContext = _httpContextAccessor.HttpContext;
 
             if (httpContext == null)
             {
@@ -73,6 +73,6 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.AuthorizationHandler
             httpContext.Items.Add("HasRequestedPermission", false);
             context.Succeed(requirement);
             await Task.CompletedTask;
-        }                           
+        }
     }
 }

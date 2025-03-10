@@ -63,7 +63,7 @@ public static class FuzzySearch
             {
                 var (fieldThreshold, fieldMaxDistance) = FuzzynessSettings[fuzzyness];
 
-                var valueObj = selector(obj) ?? "";
+                var valueObj = selector(obj) ?? string.Empty;
                 string value = valueObj.ToString();
                 List<SearchWord> words = value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(word => new SearchWord() { Content = word, LowercaseContent = word.ToLower(), IsMatch = false, Score = 0 }).ToList();
                 double fieldScore = 0;
@@ -153,6 +153,7 @@ public static class FuzzySearch
                 {
                     continue;
                 }
+
                 s1Matches[i] = s2Matches[j] = true;
                 matches++;
                 break;
@@ -171,14 +172,17 @@ public static class FuzzySearch
             {
                 continue;
             }
+
             while (!s2Matches[k])
             {
                 k++;
             }
+
             if (s1[i] != s2[k])
             {
                 transpositions++;
             }
+
             k++;
         }
 

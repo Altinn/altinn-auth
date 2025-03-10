@@ -1,17 +1,17 @@
 namespace Altinn.Platform.Authorization.Models
 {
     /// <summary>
-    /// Model for requesting OED/Digitalt dødsbo role assignments between two persons
+    /// Model for requesting OED/Digitalt dÃ¸dsbo role assignments between two persons
     /// </summary>
     public class OedRoleAssignmentRequest
     {
         /// <summary>
-        /// The person the OED/Digitalt dødsbo role if provided from (the deceased)
+        /// The person the OED/Digitalt dÃ¸dsbo role if provided from (the deceased)
         /// </summary>
         public string From { get; set; }
 
         /// <summary>
-        /// The person the OED/Digitalt dødsbo role if provided to
+        /// The person the OED/Digitalt dÃ¸dsbo role if provided to
         /// </summary>
         public string To { get; set; }
     }

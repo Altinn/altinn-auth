@@ -53,11 +53,11 @@ namespace AccessMgmt.Tests.Controllers
         public async Task AuthorizeTrue()
         {
             // Arrange
-           
+
             // Act
             HttpResponseMessage response = await GetTestClient(sblUserToken, true).GetAsync($"accessmanagement/api/v1/enduser/access/recipients?party=DE68AC03-BC16-4749-8358-E72CD3E553EA&from=DE68AC03-BC16-4749-8358-E72CD3E553EA&to=12029316-3FDE-4DE7-B002-384740637BC7");
             string responseContent = await response.Content.ReadAsStringAsync();
-            
+
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.Equal("true", responseContent);
@@ -104,6 +104,7 @@ namespace AccessMgmt.Tests.Controllers
                     {
                         services.AddSingleton<IPDP, PdpDenyMock>();
                     }
+
                     services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
                     services.AddSingleton<IDelegationChangeEventQueue>(new DelegationChangeEventQueueMock());
                     services.AddSingleton<IAuthenticationClient>(new AuthenticationMock());

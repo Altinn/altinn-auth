@@ -70,7 +70,7 @@ namespace Altinn.Platform.Authorization.Repositories.Interface
         /// </summary>
         /// <param name="filepath">The file path of the base blob to release</param>
         /// <param name="leaseId">The lease id from to release</param>
-        void ReleaseBlobLease(string filepath, string leaseId);
+        Task ReleaseBlobLease(string filepath, string leaseId);
 
         /// <summary>
         /// Checks whether there exists a blob at the specified path

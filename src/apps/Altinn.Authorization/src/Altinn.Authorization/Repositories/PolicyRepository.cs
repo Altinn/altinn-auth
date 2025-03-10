@@ -45,7 +45,7 @@ namespace Altinn.Platform.Authorization.Repositories
 
             StorageSharedKeyCredential delegationsCredentials = new StorageSharedKeyCredential(_storageConfig.DelegationsAccountName, _storageConfig.DelegationsAccountKey);
             BlobServiceClient delegationsServiceClient = new BlobServiceClient(new Uri(_storageConfig.DelegationsBlobEndpoint), delegationsCredentials);
-            _delegationsContainerClient = delegationsServiceClient.GetBlobContainerClient(_storageConfig.DelegationsContainer);           
+            _delegationsContainerClient = delegationsServiceClient.GetBlobContainerClient(_storageConfig.DelegationsContainer);
         }
 
         /// <inheritdoc/>
@@ -112,7 +112,7 @@ namespace Altinn.Platform.Authorization.Repositories
         }
 
         /// <inheritdoc/>
-        public async void ReleaseBlobLease(string filepath, string leaseId)
+        public async Task ReleaseBlobLease(string filepath, string leaseId)
         {
             BlobClient blobClient = CreateBlobClient(filepath);
             BlobLeaseClient blobLeaseClient = blobClient.GetBlobLeaseClient(leaseId);

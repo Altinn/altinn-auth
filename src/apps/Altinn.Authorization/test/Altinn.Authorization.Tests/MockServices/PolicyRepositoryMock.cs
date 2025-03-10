@@ -33,7 +33,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
 
         public Task<Response<BlobContentInfo>> WritePolicyAsync(string filepath, Stream fileStream, CancellationToken cancellationToken = default)
         {
-            return WriteStreamToTestDataFolder(filepath, fileStream);            
+            return WriteStreamToTestDataFolder(filepath, fileStream);
         }
 
         public Task<Response> DeletePolicyVersionAsync(string filepath, string version, CancellationToken cancellationToken = default)
@@ -56,13 +56,14 @@ namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
             if (filepath.Contains("error/blobstoragegetleaselockfail"))
             {
                 return Task.FromResult((string)null);
-            }   
+            }
 
             return Task.FromResult("CorrectLeaseId");
         }
 
-        public void ReleaseBlobLease(string filepath, string leaseId)
+        public Task ReleaseBlobLease(string filepath, string leaseId)
         {
+            return Task.CompletedTask;
         }
 
         public Task<bool> PolicyExistsAsync(string filepath, CancellationToken cancellationToken = default)

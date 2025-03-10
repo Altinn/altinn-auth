@@ -60,7 +60,7 @@ public interface IPolicyRepository
     /// </summary>
     /// <param name="leaseId">The lease id from to release</param>
     /// <param name="cancellationToken">cancellation token</param>
-    void ReleaseBlobLease(string leaseId, CancellationToken cancellationToken = default);
+    Task ReleaseBlobLease(string leaseId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks whether there exists a blob at the specified path

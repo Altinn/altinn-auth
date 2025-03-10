@@ -103,7 +103,7 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
 
         var expected = (int)queueStats.Value.ActiveMessageCount;
         var task = ctx.AddTask($"Dead-letter {queueName} messages", autoStart: true, maxValue: expected);
-        using var _ = task.Run();
+        using var dqlTask = task.Run();
 
         if (expected == 0)
         {
@@ -139,10 +139,10 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
         CancellationToken cancellationToken)
     {
         var queueStats = await adminClient.GetQueueRuntimePropertiesAsync(queueName, cancellationToken);
-        
+
         var expected = (int)queueStats.Value.DeadLetterMessageCount;
         var task = ctx.AddTask($"Retry {queueName} messages", autoStart: true, maxValue: expected);
-        using var _ = task.Run();
+        using var retryTask = task.Run();
 
         if (expected == 0)
         {
@@ -509,7 +509,7 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
                 handler = JunkHandler.Instance;
                 return true;
             }
-            
+
             return base.GetHandler(message, out handler);
         }
 

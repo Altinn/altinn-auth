@@ -137,3 +137,14 @@ public static class OrganizationSeeds
         }
     }
 }
+
+/// <summary>
+/// For seeds
+/// </summary>
+public interface IParty
+{
+    /// <summary>
+    /// Get Party profile from seed
+    /// </summary>
+    Party Party { get; }
+}

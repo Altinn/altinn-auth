@@ -5,12 +5,12 @@ using Altinn.Platform.Authorization.Models.Oed;
 namespace Altinn.Platform.Authorization.Services.Interface
 {
     /// <summary>
-    /// Service mapping OED/Digitalt dødsbo role assignments
+    /// Service mapping OED/Digitalt dÃ¸dsbo role assignments
     /// </summary>
     public interface IOedRoleAssignmentWrapper
     {
         /// <summary>
-        /// Gets OED/Digitalt dødsbo role assignments between the deceased party and the inheriting party
+        /// Gets OED/Digitalt dÃ¸dsbo role assignments between the deceased party and the inheriting party
         /// </summary>
         /// <param name="from">the deceased party</param>
         /// <param name="to"> the inheriting party</param>

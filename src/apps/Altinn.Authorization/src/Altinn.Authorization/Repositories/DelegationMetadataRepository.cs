@@ -178,7 +178,7 @@ namespace Altinn.Platform.Authorization.Repositories
                     pgcom.Parameters.AddWithValue("_endId", endId);
                 }
 
-                pgcom.Parameters.AddWithValue("_startId", startId);                
+                pgcom.Parameters.AddWithValue("_startId", startId);
 
                 using NpgsqlDataReader reader = pgcom.ExecuteReader();
                 while (reader.Read())

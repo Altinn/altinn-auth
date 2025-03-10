@@ -15,8 +15,6 @@ public class AccessMgmtPersistenceOptions
     /// </summary>
     public MgmtDbType DbType { get; set; } = MgmtDbType.Postgres;
 
-
-
     /// <summary>
     /// Gets or sets the default language code for translations (e.g., "nob").
     /// </summary>

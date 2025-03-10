@@ -17,7 +17,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
     /// <summary>
     /// Test class for <see cref="ContextHandler"></see>
     /// </summary>
-    public class DelegationHelperTest 
+    public class DelegationHelperTest
     {
         private PolicyRetrievalPointMock _prpMock = new PolicyRetrievalPointMock(new HttpContextAccessor(), new Mock<ILogger<PolicyRetrievalPointMock>>().Object);
 
@@ -206,7 +206,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         /// Rule is found and expected result is returned
         /// </summary>
         [Fact]
-        public async void PolicyContainsMatchingRule_PolicyContainsRule_True()
+        public async Task PolicyContainsMatchingRule_PolicyContainsRule_True()
         {
             // Arrange
             Rule rule = TestDataHelper.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", "org1", "app1");
@@ -230,7 +230,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         /// Rule is found and expected result is returned
         /// </summary>
         [Fact]
-        public async void PolicyContainsMatchingRule_PolicyContainsRule_PolicyResourcesOutOfOrder_True()
+        public async Task PolicyContainsMatchingRule_PolicyContainsRule_PolicyResourcesOutOfOrder_True()
         {
             // Arrange
             Rule rule = TestDataHelper.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "unorderedresources");
@@ -255,7 +255,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         /// Rule is found and expected result is returned
         /// </summary>
         [Fact]
-        public async void PolicyContainsMatchingRule_PolicyContainsRule_SingleComplexRulePolicy_True()
+        public async Task PolicyContainsMatchingRule_PolicyContainsRule_SingleComplexRulePolicy_True()
         {
             // Arrange
             Rule rule = TestDataHelper.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "eat", "org1", "singlecomplexrule", appresource: "banana");
@@ -279,7 +279,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         /// Rule is found and expected result is returned
         /// </summary>
         [Fact]
-        public async void PolicyContainsMatchingRule_PolicyContainsRule_SignForTask_True()
+        public async Task PolicyContainsMatchingRule_PolicyContainsRule_SignForTask_True()
         {
             // Arrange
             Rule rule = TestDataHelper.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "sign", "org1", "app1", task: "task1");
@@ -303,7 +303,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         /// Rule is not found and expected result is returned
         /// </summary>
         [Fact]
-        public async void PolicyContainsMatchingRule_PolicyContainsRule_InvalidAction_False()
+        public async Task PolicyContainsMatchingRule_PolicyContainsRule_InvalidAction_False()
         {
             // Arrange
             Rule rule = TestDataHelper.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "sign", "org1", "app1");
@@ -327,7 +327,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         /// Rule is not found and expected result is returned
         /// </summary>
         [Fact]
-        public async void PolicyContainsMatchingRule_PolicyContainsRule_InvalidOrg_False()
+        public async Task PolicyContainsMatchingRule_PolicyContainsRule_InvalidOrg_False()
         {
             // Arrange
             Rule rule = TestDataHelper.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org2", "app1");
@@ -351,7 +351,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         /// Rule is not found and expected result is returned
         /// </summary>
         [Fact]
-        public async void PolicyContainsMatchingRule_PolicyContainsRule_InvalidApp_False()
+        public async Task PolicyContainsMatchingRule_PolicyContainsRule_InvalidApp_False()
         {
             // Arrange
             Rule rule = TestDataHelper.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org2", "app1");
@@ -376,7 +376,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         /// Rule is not found and expected result is returned
         /// </summary>
         [Fact]
-        public async void PolicyContainsMatchingRule_PolicyContainsRule_PolicyWithoutAppLevelResource_False()
+        public async Task PolicyContainsMatchingRule_PolicyContainsRule_PolicyWithoutAppLevelResource_False()
         {
             // Arrange
             Rule rule = TestDataHelper.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "eat", "org1", "singlecomplexrule");

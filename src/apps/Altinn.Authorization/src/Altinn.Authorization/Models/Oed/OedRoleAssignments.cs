@@ -4,12 +4,12 @@ using Altinn.Platform.Authorization.Models.Oed;
 namespace Altinn.Platform.Authorization.Models
 {
     /// <summary>
-    /// Model for a list of OED/Digitalt dødsbo role assignment
+    /// Model for a list of OED/Digitalt dÃ¸dsbo role assignment
     /// </summary>
     public class OedRoleAssignments
     {
         /// <summary>
-        /// The list of OED/Digitalt dødsbo role assignments
+        /// The list of OED/Digitalt dÃ¸dsbo role assignments
         /// </summary>
         public List<OedRoleAssignment> RoleAssignments { get; set; }
     }

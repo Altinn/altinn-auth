@@ -25,8 +25,7 @@ namespace Altinn.AccessManagement.Tests.Mocks
         /// <inheritdoc/>
         public Task<IEnumerable<SecurityKey>> GetSigningKeys(string issuer)
         {
-            List<SecurityKey> signingKeys = new List<SecurityKey>();
-
+            List<SecurityKey> signingKeys = [];
             X509Certificate2 cert = new X509Certificate2($"{issuer}-org.pem");
             SecurityKey key = new X509SecurityKey(cert);
 

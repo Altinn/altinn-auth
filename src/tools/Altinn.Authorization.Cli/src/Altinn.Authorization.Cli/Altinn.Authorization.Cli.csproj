@@ -2,11 +2,10 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-		<AssemblyName>altinn-authorization</AssemblyName>
-		<PackAsTool>true</PackAsTool>
-		<ToolCommandName>$(AssemblyName)</ToolCommandName>
-		<LangVersion>13</LangVersion>
-		<Nullable>enable</Nullable>
+        <AssemblyName>altinn-authorization</AssemblyName>
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>$(AssemblyName)</ToolCommandName>
+        <LangVersion>13</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>

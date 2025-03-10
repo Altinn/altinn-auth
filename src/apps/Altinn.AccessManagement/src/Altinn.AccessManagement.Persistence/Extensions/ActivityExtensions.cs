@@ -22,7 +22,7 @@ public static class ActivityExtensions
     {
         if (activity?.Recorded ?? false)
         {
-            activity.RecordException(ex);
+            activity.AddException(ex);
             activity.SetStatus(ActivityStatusCode.Error, statusDescription);
         }
     }

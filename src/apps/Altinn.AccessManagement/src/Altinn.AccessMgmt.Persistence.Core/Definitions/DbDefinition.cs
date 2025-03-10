@@ -61,44 +61,4 @@ public class DbDefinition(Type type)
     /// Indicates whether the entity supports history tracking.
     /// </summary>
     public bool HasHistory { get; set; } = false;
-
-    ///// <summary>
-    ///// Gets or sets the default language code for translations (e.g., "nob").
-    ///// </summary>
-    //public string DefaultLanguage { get; set; } = "nob"; // no-NB?
-
-    ///// <summary>
-    ///// Gets or sets the name of the base schema where the entity's table is located.
-    ///// </summary>
-    //public string BaseSchema { get; set; } = "dbo";
-
-    ///// <summary>
-    ///// Gets or sets the name of the schema used for storing translations of the entity.
-    ///// </summary>
-    //public string TranslationSchema { get; set; } = "translation";
-
-    ///// <summary>
-    ///// Gets or sets the alias prefix used for translation views in queries.
-    ///// </summary>
-    //public string TranslationAliasPrefix { get; set; } = "t_"; // translation view name?
-
-    ///// <summary>
-    ///// Gets or sets the name of the schema used for storing historical records of the entity.
-    ///// </summary>
-    //public string BaseHistorySchema { get; set; } = "dbo_history";
-
-    ///// <summary>
-    ///// Gets or sets the alias prefix used for history views in queries.
-    ///// </summary>
-    //public string HistoryAliasPrefix { get; set; } = "h_";
-
-    ///// <summary>
-    ///// Gets or sets the name of the schema used for storing historical translations of the entity.
-    ///// </summary>
-    //public string TranslationHistorySchema { get; set; } = "translation_history";
-
-    ///// <summary>
-    ///// Gets or sets the name of the schema used for storing historical translations of the entity.
-    ///// </summary>
-    //public string DatabaseReadUser { get; set; } = "platform_authorization";
 }

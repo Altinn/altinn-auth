@@ -28,9 +28,9 @@ public class SearchCache<T> : ISearchCache<T>
     }
 
     /// <inheritdoc/>
-    public List<T>? GetData()
+    public List<T> GetData()
     {
-        return _cache.TryGetValue(_cacheKey, out List<T>? data) ? new List<T>(data) : null;
+        return _cache.TryGetValue(_cacheKey, out List<T> data) ? [.. data] : null;
     }
 }
 
@@ -50,5 +50,5 @@ public interface ISearchCache<T>
     /// <summary>
     /// Get data
     /// </summary>
-    List<T>? GetData();
+    List<T> GetData();
 }

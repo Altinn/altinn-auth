@@ -47,7 +47,7 @@ public class GenericFilterBuilder<T> : IEnumerable<GenericFilter>
     /// <exception cref="ArgumentException">Thrown if the expression does not refer to a valid property.</exception>
     private PropertyInfo ExtractPropertyInfo<TProperty>(Expression<Func<T, TProperty>> expression)
     {
-        MemberExpression? memberExpression = expression.Body switch
+        MemberExpression memberExpression = expression.Body switch
         {
             MemberExpression member => member,
             UnaryExpression { Operand: MemberExpression member } => member,

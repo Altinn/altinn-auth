@@ -128,3 +128,19 @@ public static class ResourceSeeds
         }
     }
 }
+
+/// <summary>
+/// For seeds
+/// </summary>
+public interface IAccessManagementResource
+{
+    /// <summary>
+    /// Db resource
+    /// </summary>
+    AccessManagementResource DbResource { get; }
+
+    /// <summary>
+    /// Get resource from seed
+    /// </summary>
+    ServiceResource Resource { get; }
+}

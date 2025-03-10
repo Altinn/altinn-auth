@@ -1,7 +1,7 @@
-﻿using Spectre.Console;
-using Spectre.Console.Cli;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
+using Spectre.Console;
+using Spectre.Console.Cli;
 
 namespace Altinn.Authorization.Cli.Utils;
 

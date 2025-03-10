@@ -29,7 +29,7 @@ namespace Altinn.AccessManagement.Core.Services
         private readonly IDelegationMetadataRepository _delegationRepository;
         private readonly IDelegationChangeEventQueue _eventQueue;
         private readonly int delegationChangeEventQueueErrorId = 911;
-        
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PolicyAdministrationPoint"/> class.
         /// </summary>
@@ -121,7 +121,7 @@ namespace Altinn.AccessManagement.Core.Services
                 }
                 finally
                 {
-                    policyClient.ReleaseBlobLease(leaseId, CancellationToken.None);
+                    await policyClient.ReleaseBlobLease(leaseId, CancellationToken.None);
                 }
             }
 
@@ -161,7 +161,7 @@ namespace Altinn.AccessManagement.Core.Services
                 {
                     // Build delegation XacmlPolicy either as a new policy or add rules to existing
                     XacmlPolicy delegationPolicy = BuildInstanceDelegationPolicy(policyData.ExistingDelegationPolicy, rules);
-                    
+
                     // Write delegation policy to blob storage
                     MemoryStream dataStream = PolicyHelper.GetXmlMemoryStreamFromXacmlPolicy(delegationPolicy);
                     Response<BlobContentInfo> blobResponse =
@@ -173,25 +173,25 @@ namespace Altinn.AccessManagement.Core.Services
                         string reasonPhrase = httpResponse.ReasonPhrase;
                         _logger.LogError(
                             "Writing of delegation policy at path: {policyPath} failed. Response Status Code:\n{status}. Response Reason Phrase:\n{reasonPhrase}",
-                            policyPath, 
+                            policyPath,
                             status,
                             reasonPhrase);
                         return false;
                     }
 
                     // Update db and use new version from latest update
-                    return await WritePolicyUpdateToDB(policyPath, blobResponse.Value.VersionId, DelegationChangeType.Grant, rules, cancellationToken);                    
+                    return await WritePolicyUpdateToDB(policyPath, blobResponse.Value.VersionId, DelegationChangeType.Grant, rules, cancellationToken);
                 }
                 finally
                 {
-                    policyClient.ReleaseBlobLease(leaseId, CancellationToken.None);
+                    await policyClient.ReleaseBlobLease(leaseId, CancellationToken.None);
                 }
             }
 
             LogLeaseLockError(policyPath);
             return false;
         }
-        
+
         private async Task<bool> WritePolicyUpdateToDB(string policyPath, string versionId, DelegationChangeType changeType, InstanceRight rules, CancellationToken cancellationToken)
         {
             // Update db and use new version from latest update
@@ -298,7 +298,7 @@ namespace Altinn.AccessManagement.Core.Services
                     delegationPolicy.Rules.Remove(xacmlRule);
                 }
             }
-            
+
             return delegationPolicy;
         }
 
@@ -306,7 +306,7 @@ namespace Altinn.AccessManagement.Core.Services
         public async Task<InstanceRight> TryWriteInstanceDelegationPolicyRules(InstanceRight rules, CancellationToken cancellationToken = default)
         {
             bool validPath = DelegationHelper.TryGetDelegationPolicyPathFromInstanceRule(rules, out string path);
-            
+
             if (validPath)
             {
                 bool writePolicySuccess = false;
@@ -319,7 +319,7 @@ namespace Altinn.AccessManagement.Core.Services
                 {
                     _logger.LogError(
                         ex,
-                        "An exception occured while processing authorization rules for delegation on delegation policy path: {path}", 
+                        "An exception occured while processing authorization rules for delegation on delegation policy path: {path}",
                         path);
                 }
 
@@ -380,7 +380,7 @@ namespace Altinn.AccessManagement.Core.Services
                     rule.CreatedSuccessfully = false;
                 }
             }
-        
+
             return rules;
         }
 
@@ -446,7 +446,7 @@ namespace Altinn.AccessManagement.Core.Services
                     {
                         return false;
                     }
-                    
+
                     currentPolicyWrite.LeaseId = await currentPolicyWrite.PolicyClient.TryAcquireBlobLease(cancellationToken);
                     if (currentPolicyWrite.LeaseId != null)
                     {
@@ -487,7 +487,7 @@ namespace Altinn.AccessManagement.Core.Services
             {
                 foreach (var policy in policyWriteOutputs.Where(p => p.LeaseId != null))
                 {
-                    policy.PolicyClient.ReleaseBlobLease(policy.LeaseId, CancellationToken.None);                    
+                    await policy.PolicyClient.ReleaseBlobLease(policy.LeaseId, CancellationToken.None);
                 }
             }
         }
@@ -714,7 +714,7 @@ namespace Altinn.AccessManagement.Core.Services
                 }
                 finally
                 {
-                    policyClient.ReleaseBlobLease(leaseId, CancellationToken.None);
+                    await policyClient.ReleaseBlobLease(leaseId, CancellationToken.None);
                 }
             }
 
@@ -833,7 +833,7 @@ namespace Altinn.AccessManagement.Core.Services
             }
             finally
             {
-                policyClient.ReleaseBlobLease(leaseId, CancellationToken.None);
+                await policyClient.ReleaseBlobLease(leaseId, CancellationToken.None);
             }
 
             return currentRules;
@@ -955,7 +955,7 @@ namespace Altinn.AccessManagement.Core.Services
             }
             finally
             {
-                policyClient.ReleaseBlobLease(leaseId, CancellationToken.None);
+                await policyClient.ReleaseBlobLease(leaseId, CancellationToken.None);
             }
         }
 

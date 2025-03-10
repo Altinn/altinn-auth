@@ -25,5 +25,5 @@ public class DbPropertyDefinition
     /// <summary>
     /// Default value (if any)
     /// </summary>
-    public string? DefaultValue { get; set; }
+    public string DefaultValue { get; set; }
 }

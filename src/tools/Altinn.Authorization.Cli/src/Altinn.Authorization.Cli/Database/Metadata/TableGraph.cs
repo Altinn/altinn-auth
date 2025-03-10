@@ -1,11 +1,11 @@
-﻿using CommunityToolkit.Diagnostics;
-using Npgsql;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Immutable;
 using System.Data;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using CommunityToolkit.Diagnostics;
+using Npgsql;
 
 namespace Altinn.Authorization.Cli.Database.Metadata;
 
@@ -88,28 +88,28 @@ public sealed class TableGraph
         const string QUERY =
             /*strpsql*/"""
             WITH "tables" AS (
-            	SELECT t.table_name
-            	FROM information_schema."tables" t
-            	WHERE t.table_schema = @schema
+                SELECT t.table_name
+                FROM information_schema."tables" t
+                WHERE t.table_schema = @schema
             ), "table_deps" AS (
-            	SELECT DISTINCT
-            		kcu.table_name "from",
-            		rel_tco.table_name "to"
-            	FROM
-            		information_schema.table_constraints tco
-            	JOIN information_schema.key_column_usage kcu
-            		ON tco.constraint_schema = kcu.constraint_schema
-            		AND tco.constraint_name = kcu.constraint_name
-            	JOIN information_schema.referential_constraints rco 
-            		ON tco.constraint_schema = rco.constraint_schema
-            		AND tco.constraint_name = rco.constraint_name
-            	JOIN information_schema.table_constraints rel_tco 
-            		ON rco.unique_constraint_schema = rel_tco.constraint_schema 
-            		AND rco.unique_constraint_name = rel_tco.constraint_name
-            	WHERE
-            			tco.constraint_type = 'FOREIGN KEY'
-            		AND kcu.table_schema = @schema
-            		AND rel_tco.table_schema = @schema
+                SELECT DISTINCT
+                    kcu.table_name "from",
+                    rel_tco.table_name "to"
+                FROM
+                    information_schema.table_constraints tco
+                JOIN information_schema.key_column_usage kcu
+                    ON tco.constraint_schema = kcu.constraint_schema
+                    AND tco.constraint_name = kcu.constraint_name
+                JOIN information_schema.referential_constraints rco 
+                    ON tco.constraint_schema = rco.constraint_schema
+                    AND tco.constraint_name = rco.constraint_name
+                JOIN information_schema.table_constraints rel_tco 
+                    ON rco.unique_constraint_schema = rel_tco.constraint_schema 
+                    AND rco.unique_constraint_name = rel_tco.constraint_name
+                WHERE
+                        tco.constraint_type = 'FOREIGN KEY'
+                    AND kcu.table_schema = @schema
+                    AND rel_tco.table_schema = @schema
             ), "est_rows" AS (
                 SELECT
                     relname "table_name",
@@ -167,7 +167,7 @@ public sealed class TableGraph
         while (builder.Count < results.Count)
         {
             var added = false;
-            foreach (var (table, estRows, cols, deps) in results) 
+            foreach (var (table, estRows, cols, deps) in results)
             {
                 ref var nodeRef = ref CollectionsMarshal.GetValueRefOrAddDefault(lookup, table, out var exists);
                 if (exists)

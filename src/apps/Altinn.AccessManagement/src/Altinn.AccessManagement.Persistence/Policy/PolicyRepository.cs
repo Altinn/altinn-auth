@@ -42,7 +42,7 @@ public class PolicyRepository(BlobClient client, PolicyOptions options) : IPolic
         await RoundTripper(async () => await Client.ExistsAsync(cancellationToken: cancellationToken));
 
     /// <inheritdoc/>
-    public async void ReleaseBlobLease(string leaseId, CancellationToken cancellationToken = default) =>
+    public async Task ReleaseBlobLease(string leaseId, CancellationToken cancellationToken = default) =>
         await RoundTripper(async () => await Client.GetBlobLeaseClient(leaseId).ReleaseAsync(cancellationToken: cancellationToken));
 
     /// <inheritdoc/>

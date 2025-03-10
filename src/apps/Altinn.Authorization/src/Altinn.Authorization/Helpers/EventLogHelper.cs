@@ -1,24 +1,10 @@
 ﻿#nullable enable
 
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Security.Claims;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Altinn.Authorization.ABAC.Constants;
-using Altinn.Authorization.ABAC.Interface;
 using Altinn.Authorization.ABAC.Xacml;
-using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Constants;
-using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Models.EventLog;
-using Altinn.Platform.Authorization.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.Documents.SystemFunctions;
-using Microsoft.FeatureManagement;
 
 namespace Altinn.Platform.Authorization.Helpers
 {
@@ -59,7 +45,7 @@ namespace Altinn.Platform.Authorization.Helpers
 
             return authorizationEvent;
         }
-        
+
         /// <summary>
         /// Returens the policy resource type based on XacmlContextRequest
         /// </summary>
@@ -105,7 +91,7 @@ namespace Altinn.Platform.Authorization.Helpers
                         }
                     }
                 }
-            }           
+            }
 
             resource = string.IsNullOrEmpty(resource) ? $"app_{org}_{app}" : resource;
             return (resource, instanceId, resourcePartyId);
@@ -186,7 +172,7 @@ namespace Altinn.Platform.Authorization.Helpers
                     }
                 }
             }
-            
+
             return actionId;
         }
 
@@ -197,8 +183,8 @@ namespace Altinn.Platform.Authorization.Helpers
         /// <returns></returns>
         public static string GetClientIpAddress(HttpContext context)
         {
-            string[] clientIpList = context?.Request?.Headers?.GetCommaSeparatedValues("x-forwarded-for");
-            return clientIpList?.Length > 0 ? clientIpList[0] : null;
+            string[] clientIpList = context?.Request?.Headers?.GetCommaSeparatedValues("x-forwarded-for") ?? [];
+            return clientIpList.FirstOrDefault() ?? null;
         }
     }
 }

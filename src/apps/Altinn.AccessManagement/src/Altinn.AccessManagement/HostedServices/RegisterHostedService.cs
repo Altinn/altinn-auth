@@ -303,7 +303,7 @@ public partial class RegisterHostedService(
         var role = (await roleRepository.Get(t => t.Urn, roleIdentifier)).FirstOrDefault();
         if (role == null)
         {
-            var provider = (await providerRepository.Get(t => t.Name, roleSource == "ccr" ? "Br�nn�ysundregistrene" : "Digdir")).FirstOrDefault() ?? throw new Exception(string.Format("Provider '{0}' not found while creating new role.", roleSource));
+            var provider = (await providerRepository.Get(t => t.Name, roleSource == "ccr" ? "Brønnøysundregistrene" : "Digdir")).FirstOrDefault() ?? throw new Exception(string.Format("Provider '{0}' not found while creating new role.", roleSource));
             var entityType = (await entityTypeRepository.Get(t => t.Name, "Organisasjon")).FirstOrDefault() ?? throw new Exception(string.Format("Unable to get type for '{0}'", "Organisasjon"));
 
             await roleRepository.Create(new Role()

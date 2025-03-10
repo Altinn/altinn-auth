@@ -1,9 +1,9 @@
-﻿using Altinn.Authorization.Cli.Database.Metadata;
-using CommunityToolkit.Diagnostics;
-using Spectre.Console;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using Altinn.Authorization.Cli.Database.Metadata;
+using CommunityToolkit.Diagnostics;
+using Spectre.Console;
 
 namespace Altinn.Authorization.Cli.Database.Prompt;
 
@@ -68,13 +68,14 @@ public sealed class SchemaItemPrompt
     }
 
     /// <inheritdoc cref="MultiSelectionPrompt{T}.Title"/>
-    public string? Title {
+    public string? Title
+    {
         get => _inner.Title;
         set => _inner.Title = value;
     }
 
     /// <inheritdoc cref="MultiSelectionPrompt{T}.PageSize"/>
-    public string? MoreChoicesText 
+    public string? MoreChoicesText
     {
         get => _inner.MoreChoicesText;
         set => _inner.MoreChoicesText = value;

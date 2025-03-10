@@ -17,7 +17,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
     /// <summary>
     /// Test class for <see cref="ContextHandler"></see>
     /// </summary>
-    public class ContextHandlerTest 
+    public class ContextHandlerTest
     {
         private readonly ContextHandler _contextHandler;
         private HttpContext _httpContext = new DefaultHttpContext();
@@ -53,7 +53,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         {
             // Arrange
             string testCase = "AltinnApps0021";
-            _httpContext.Request.Headers.Add("testcase", testCase);
+            _httpContext.Request.Headers.Append("testcase", testCase);
 
             XacmlContextRequest request = TestSetupUtil.CreateXacmlContextRequest(testCase);
             XacmlContextRequest expectedEnrichedRequest = TestSetupUtil.GetEnrichedRequest(testCase);
@@ -82,7 +82,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         {
             // Arrange
             string testCase = "AltinnApps0022";
-            _httpContext.Request.Headers.Add("testcase", testCase);
+            _httpContext.Request.Headers.Append("testcase", testCase);
 
             XacmlContextRequest request = TestSetupUtil.CreateXacmlContextRequest(testCase);
             XacmlContextRequest expectedEnrichedRequest = TestSetupUtil.GetEnrichedRequest(testCase);
@@ -111,7 +111,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         {
             // Arrange
             string testCase = "AltinnApps0023";
-            _httpContext.Request.Headers.Add("testcase", testCase);
+            _httpContext.Request.Headers.Append("testcase", testCase);
 
             XacmlContextRequest request = TestSetupUtil.CreateXacmlContextRequest(testCase);
             XacmlContextRequest expectedEnrichedRequest = TestSetupUtil.GetEnrichedRequest(testCase);
@@ -140,7 +140,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         {
             // Arrange
             string testCase = "AltinnApps0024";
-            _httpContext.Request.Headers.Add("testcase", testCase);
+            _httpContext.Request.Headers.Append("testcase", testCase);
 
             XacmlContextRequest request = TestSetupUtil.CreateXacmlContextRequest(testCase);
             XacmlContextRequest expectedEnrichedRequest = TestSetupUtil.GetEnrichedRequest(testCase);
@@ -169,7 +169,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         {
             // Arrange
             string testCase = "AltinnApps0025";
-            _httpContext.Request.Headers.Add("testcase", testCase);
+            _httpContext.Request.Headers.Append("testcase", testCase);
 
             XacmlContextRequest request = TestSetupUtil.CreateXacmlContextRequest(testCase);
             XacmlContextRequest expectedEnrichedRequest = TestSetupUtil.GetEnrichedRequest(testCase);
@@ -198,7 +198,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         {
             // Arrange
             string testCase = "AltinnApps0026";
-            _httpContext.Request.Headers.Add("testcase", testCase);
+            _httpContext.Request.Headers.Append("testcase", testCase);
 
             XacmlContextRequest request = TestSetupUtil.CreateXacmlContextRequest(testCase);
             XacmlContextRequest expectedEnrichedRequest = TestSetupUtil.GetEnrichedRequest(testCase);

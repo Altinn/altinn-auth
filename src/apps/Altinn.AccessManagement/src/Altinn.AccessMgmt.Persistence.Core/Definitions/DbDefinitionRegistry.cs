@@ -3,7 +3,6 @@ using System.Reflection;
 using Altinn.AccessMgmt.Persistence.Core.Contracts;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.QueryBuilders;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.AccessMgmt.Persistence.Core.Definitions;
@@ -11,19 +10,14 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions;
 /// <summary>
 /// Registry for database definitions.
 /// </summary>
-public class DbDefinitionRegistry
+public class DbDefinitionRegistry(IOptions<AccessMgmtPersistenceOptions> configuration)
 {
     /// <summary>
     /// The internal store for database definitions, keyed by type.
     /// </summary>
     private readonly ConcurrentDictionary<Type, DbDefinition> store = new();
     private readonly ConcurrentDictionary<Type, Lazy<IDbQueryBuilder>> _queryBuilders = new();
-    private readonly IOptions<AccessMgmtPersistenceOptions> configuration;
-
-    public DbDefinitionRegistry(IOptions<AccessMgmtPersistenceOptions> configuration)
-    {
-        this.configuration=configuration;
-    }
+    private readonly IOptions<AccessMgmtPersistenceOptions> configuration = configuration;
 
     /// <summary>
     /// Get QueryBuilder
@@ -54,7 +48,6 @@ public class DbDefinitionRegistry
             })
         ).Value;
     }
-
 
     /// <summary>
     /// Configures and registers a database definition for type <typeparamref name="T"/> using a configuration action.
@@ -125,7 +118,7 @@ public class DbDefinitionRegistry
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    public DbDefinition? TryGetBaseDefinition<T>()
+    public DbDefinition TryGetBaseDefinition<T>()
     {
         return store.Where(t => t.Value.ModelType == typeof(T)).FirstOrDefault().Value;
     }
@@ -137,7 +130,7 @@ public class DbDefinitionRegistry
     /// <returns>
     /// The corresponding <see cref="DbDefinition"/> if found; otherwise, <c>null</c>.
     /// </returns>
-    public DbDefinition? TryGetDefinition(Type type)
+    public DbDefinition TryGetDefinition(Type type)
     {
         return store.ContainsKey(type) ? store[type] : null;
     }
@@ -149,7 +142,7 @@ public class DbDefinitionRegistry
     /// <returns>
     /// The corresponding <see cref="DbDefinition"/> if found; otherwise, <c>null</c>.
     /// </returns>
-    public DbDefinition? TryGetDefinition<T>()
+    public DbDefinition TryGetDefinition<T>()
     {
         return store.ContainsKey(typeof(T)) ? store[typeof(T)] : null;
     }
@@ -164,7 +157,7 @@ public class DbDefinitionRegistry
     /// </param>
     public void RegisterAllDefinitions(string definitionNamespace = "")
     {
-        List<IDbDefinition>? definitions;
+        List<IDbDefinition> definitions;
         if (string.IsNullOrEmpty(definitionNamespace))
         {
             var executingAssemblyName = Assembly.GetExecutingAssembly().GetName().Name!;

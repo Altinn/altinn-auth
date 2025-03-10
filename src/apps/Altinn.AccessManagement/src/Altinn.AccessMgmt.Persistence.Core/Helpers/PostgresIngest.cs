@@ -12,24 +12,16 @@ namespace Altinn.AccessMgmt.Persistence.Core.Helpers;
 /// <summary>
 /// Handles bulk importing of data using PostgreSQL's binary COPY.
 /// </summary>
-public class PostgresIngest<T> : IDbIngest<T> 
+/// <remarks>
+/// Initializes a new instance of the <see cref="PostgresIngest{T}"/> class.
+/// </remarks>
+/// <param name="options"><see cref="IOptions{TOptions}"/></param>
+/// <param name="definition">DbDefinition</param>
+public class PostgresIngest<T>(IOptions<AccessMgmtPersistenceOptions> options, DbDefinition definition) : IDbIngest<T>
     where T : class, new()
 {
-    private readonly IOptions<AccessMgmtPersistenceOptions> config;
-    private readonly IDbExecutor executor;
-    private readonly DbDefinition _definition;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PostgresIngest{T}"/> class.
-    /// </summary>
-    /// <param name="executor">IDbExecutor</param>
-    /// <param name="definition">DbDefinition</param>
-    public PostgresIngest(IOptions<AccessMgmtPersistenceOptions> options, IDbExecutor executor, DbDefinition definition)
-    {
-        this.config = options;
-        this.executor = executor;
-        _definition = definition;
-    }
+    private readonly IOptions<AccessMgmtPersistenceOptions> config = options;
+    private readonly DbDefinition _definition = definition;
 
     /// <summary>
     /// Ingests a list of data into the database using PostgreSQL's binary COPY.
@@ -37,7 +29,7 @@ public class PostgresIngest<T> : IDbIngest<T>
     /// <param name="data">Data</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    public async Task<int> Ingest(List<T> data, CancellationToken cancellationToken = default)
+    public Task<int> Ingest(List<T> data, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
         /*

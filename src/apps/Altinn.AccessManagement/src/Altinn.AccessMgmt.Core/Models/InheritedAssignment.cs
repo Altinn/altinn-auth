@@ -37,7 +37,11 @@ public class InheritedAssignment
     /// </summary>
     public string Type { get; set; }
 }
-public class ExtInheritedAssignment : InheritedAssignment 
+
+/// <summary>
+/// DOCS
+/// </summary>
+public class ExtInheritedAssignment : InheritedAssignment
 {
     /// <summary>
     /// From (Entity)
@@ -57,5 +61,5 @@ public class ExtInheritedAssignment : InheritedAssignment
     /// <summary>
     /// The base role that gives the entity the role
     /// </summary>
-    public Role? ViaRole { get; set; }
+    public Role ViaRole { get; set; }
 }

@@ -40,7 +40,7 @@ public static class DelegationChangesTestData
         var coveredBy = data.CoveredByPartyId != null ? $"p{data.CoveredByPartyId}" : $"u{data.CoveredByUserId}";
         coveredBy = data.ToUuid.HasValue ? $"{data.ToUuidType}{data.ToUuid}" : coveredBy;
         data.BlobStoragePolicyPath = $"{data.ResourceId}/{offeredBy}/{coveredBy}/delegationpolicy.xml";
-    } 
+    }
 
     public static Action<DelegationChangeExternal> WithChangeID(int changeID) => (delegation) => delegation.DelegationChangeId = changeID;
 

@@ -54,5 +54,5 @@ public class ExtRolePackage : RolePackage
     /// <summary>
     /// Variant (optional)
     /// </summary>
-    public EntityVariant? EntityVariant { get; set; }
+    public EntityVariant EntityVariant { get; set; }
 }

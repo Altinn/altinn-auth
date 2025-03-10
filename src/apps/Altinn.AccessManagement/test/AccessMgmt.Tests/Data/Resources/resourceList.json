@@ -1426,8 +1426,7 @@
     "validTo": "2099-12-24T23:59:59",
     "homepage": "https://www.digdir.no/",
     "isPartOf": "Altinn",
-    "keywords": [
-    ],
+    "keywords": [],
     "validFrom": "2022-09-20T06:46:07.598Z",
     "identifier": "mp_validation_problem_details",
     "isComplete": true,
@@ -1444,8 +1443,7 @@
       "nb-no": "Acces to this MaskinportenSchema",
       "nn-no": "Acces to this MaskinportenSchema"
     },
-    "resourceReferences": [
-    ],
+    "resourceReferences": [],
     "hasCompetentAuthority": {
       "orgcode": "DIGDIR",
       "organization": "991825827",
@@ -1471,13 +1469,13 @@
     },
     "description": {
       "en": "Only the manager (DAGL) has access to drive the company car",
-      "nb-no": "Bare daglig leder (DAGL) har tilgang til � kj�re firmabilen",
-      "nn-no": "Berre dagleg leiar (DAGL) har h�ve til � kj�yre firmabilen"
+      "nb-no": "Bare daglig leder (DAGL) har tilgang til å kjøre firmabilen",
+      "nn-no": "Berre dagleg leiar (DAGL) har håve til å kjøyre firmabilen"
     },
     "rightDescription": {
       "en": "Gives an employee permission to borrow the company car",
-      "nb-no": "Gir en ansatt lov til � l�ne firmabilen",
-      "nn-no": "Gjev ein tilsett l�yve til � ta ei r�nerunde ned i vik"
+      "nb-no": "Gir en ansatt lov til å låne firmabilen",
+      "nn-no": "Gjev ein tilsett løyve til å ta ei rånerunde ned i vik"
     },
     "homepage": "https://www.jksfirmabiler.no/",
     "status": "Active",
@@ -1529,8 +1527,7 @@
     "validTo": "2099-12-24T23:59:59",
     "homepage": "https://www.digdir.no/",
     "isPartOf": "Altinn",
-    "keywords": [
-    ],
+    "keywords": [],
     "validFrom": "2022-09-20T06:46:07.598Z",
     "identifier": "system_resource",
     "isComplete": true,
@@ -1547,8 +1544,7 @@
       "nb-no": "Acces to this random system resource",
       "nn-no": "Acces to this random system resource"
     },
-    "resourceReferences": [
-    ],
+    "resourceReferences": [],
     "hasCompetentAuthority": {
       "orgcode": "DIGDIR",
       "organization": "991825827",
@@ -1579,8 +1575,7 @@
     "validTo": "2099-12-24T23:59:59",
     "homepage": "https://www.digdir.no/",
     "isPartOf": "Altinn",
-    "keywords": [
-    ],
+    "keywords": [],
     "validFrom": "2022-09-20T06:46:07.598Z",
     "identifier": "non_delegable_maskinportenschema",
     "isComplete": true,
@@ -1597,8 +1592,7 @@
       "nb-no": "Not delegable",
       "nn-no": "Not delegable"
     },
-    "resourceReferences": [
-    ],
+    "resourceReferences": [],
     "hasCompetentAuthority": {
       "orgcode": "DIGDIR",
       "organization": "991825827",

@@ -9,7 +9,7 @@ namespace Altinn.AccessMgmt.Persistence.Core.Utilities.Search;
 /// <typeparam name="T">The type of objects being searched.</typeparam>
 public class SearchPropertyBuilder<T>
 {
-    private readonly Dictionary<string, (Func<T, object> Selector, double Weight, FuzzynessLevel fuzzyness)> _properties = new();
+    private readonly Dictionary<string, (Func<T, object> Selector, double Weight, FuzzynessLevel Fuzzyness)> _properties = [];
 
     /// <summary>
     /// Adds a property to the search configuration.
@@ -42,7 +42,7 @@ public class SearchPropertyBuilder<T>
     public SearchPropertyBuilder<T> AddCollection<TCollection>(
         Expression<Func<T, IEnumerable<TCollection>>> collectionSelector,
         Func<TCollection, string> itemSelector,
-        double weight, 
+        double weight,
         FuzzynessLevel fuzzyness,
         bool detailed = false)
     {
@@ -68,7 +68,7 @@ public class SearchPropertyBuilder<T>
     /// Builds and returns the configured property dictionary for search operations.
     /// </summary>
     /// <returns>A dictionary mapping property names to their search configurations.</returns>
-    public Dictionary<string, (Func<T, object>, double, FuzzynessLevel)> Build()
+    public Dictionary<string, (Func<T, object> Callback, double A, FuzzynessLevel FuzzynessLevel)> Build()
     {
         return _properties;
     }
@@ -76,7 +76,6 @@ public class SearchPropertyBuilder<T>
     /// <summary>
     /// Extracts the full property name from an expression, preserving nested properties.
     /// </summary>
-    /// <typeparam name="T">The type of the object containing the property.</typeparam>
     /// <typeparam name="TProperty">The type of the property being extracted.</typeparam>
     /// <param name="expression">An expression selecting a property from the object.</param>
     /// <returns>
@@ -84,7 +83,7 @@ public class SearchPropertyBuilder<T>
     /// Example: "Area_Group_Name" for `pkg.Area.Group.Name`.
     /// Returns "UnknownProperty" if the expression type is not recognized.
     /// </returns>
-    private static string GetPropertyName<T, TProperty>(Expression<Func<T, TProperty>> expression)
+    private static string GetPropertyName<TProperty>(Expression<Func<T, TProperty>> expression)
     {
         if (expression.Body is MemberExpression member)
         {
@@ -114,7 +113,7 @@ public class SearchPropertyBuilder<T>
     /// </returns>
     private static string GetFullPropertyName(MemberExpression member)
     {
-        List<string> parts = new();
+        List<string> parts = [];
         while (member != null)
         {
             parts.Add(member.Member.Name);

@@ -26,7 +26,7 @@ public sealed class CopyCommand(CancellationToken cancellationToken)
 
         await using var target = await DbHelper.Create(settings.TargetConnectionString!, cancellationToken)
             .LogOnFailure("[bold red]Failed to connect to the target database[/]");
-        
+
         var schemaInfo = await source.GetSchemaInfo(settings.SchemaName!, cancellationToken)
             .LogOnFailure($"[bold red]Failed to get table graph for schema \"{settings.SchemaName}\"[/]");
 
@@ -115,7 +115,7 @@ public sealed class CopyCommand(CancellationToken cancellationToken)
 
         static async Task ExportTable(DbHelper db, TableTask table, TextCopier copier, TempDir dir, CancellationToken cancellationToken)
         {
-            using var _ = table.ExportTask.Run();
+            using var exportTask = table.ExportTask.Run();
             using var reader = await db.BeginTextExport(table.ExportSql, cancellationToken);
             await using var writer = dir.CreateText(table.FileName);
 
@@ -138,7 +138,7 @@ public sealed class CopyCommand(CancellationToken cancellationToken)
         {
             table.ImportTask.MaxValue = table.ExportedRows;
 
-            using var _ = table.ImportTask.Run();
+            using var importTask = table.ImportTask.Run();
             using var reader = dir.OpenText(table.FileName);
             await using var writer = await db.BeginTextImport(table.ImportSql, cancellationToken);
 
@@ -148,7 +148,7 @@ public sealed class CopyCommand(CancellationToken cancellationToken)
 
     private async Task TruncateTables(DbHelper db, ProgressTask ctx, ImmutableArray<TableGraph.Node> tables, CancellationToken cancellationToken)
     {
-        using var _ = ctx.Run();
+        using var updateTask = ctx.Run();
 
         foreach (var table in tables.AsEnumerable().Reverse())
         {
@@ -169,7 +169,7 @@ public sealed class CopyCommand(CancellationToken cancellationToken)
 
     private async Task UpdateSequences(DbHelper db, ProgressTask ctx, ImmutableArray<SequenceInfo> sequences, CancellationToken cancellationToken)
     {
-        using var _ = ctx.Run();
+        using var updateTask = ctx.Run();
 
         foreach (var seq in sequences)
         {

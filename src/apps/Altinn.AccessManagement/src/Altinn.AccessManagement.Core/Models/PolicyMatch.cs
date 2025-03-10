@@ -1,5 +1,5 @@
-using Altinn.AccessManagement.Enums;
 using System.ComponentModel.DataAnnotations;
+using Altinn.AccessManagement.Enums;
 
 namespace Altinn.AccessManagement.Core.Models
 {
@@ -21,7 +21,7 @@ namespace Altinn.AccessManagement.Core.Models
         /// <summary>
         /// The values of the FromUuid
         /// </summary>
-        public Guid FromUuid { get; set; } 
+        public Guid FromUuid { get; set; }
 
         /// <summary>
         /// Gets or sets resource match which uniquely identifies the resource this policy applies to.

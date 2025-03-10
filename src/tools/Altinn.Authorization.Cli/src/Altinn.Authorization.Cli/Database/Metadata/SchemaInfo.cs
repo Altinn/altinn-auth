@@ -1,8 +1,8 @@
-﻿using CommunityToolkit.Diagnostics;
-using Npgsql;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using CommunityToolkit.Diagnostics;
+using Npgsql;
 
 namespace Altinn.Authorization.Cli.Database.Metadata;
 
@@ -78,8 +78,8 @@ public sealed class SchemaInfo
         await cmd.PrepareAsync(cancellationToken);
         await using var batch = connection.CreateBatch();
 
+        await using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
         {
-            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {
                 var seqCmd = batch.CreateBatchCommand();
@@ -99,9 +99,9 @@ public sealed class SchemaInfo
             }
         }
 
+        await using (var reader = await batch.ExecuteReaderAsync(cancellationToken))
         {
             var builder = ImmutableArray.CreateBuilder<SequenceInfo>(batch.BatchCommands.Count);
-            await using var reader = await batch.ExecuteReaderAsync(cancellationToken);
 
             do
             {
@@ -113,7 +113,8 @@ public sealed class SchemaInfo
 
                     builder.Add(new SequenceInfo(schema, name, last_value, isCalled));
                 }
-            } while (await reader.NextResultAsync(cancellationToken));
+            }
+            while (await reader.NextResultAsync(cancellationToken));
 
             return builder.DrainToImmutable();
         }

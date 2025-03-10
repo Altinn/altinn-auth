@@ -29,7 +29,7 @@ using Xunit;
 
 namespace Altinn.Platform.Authorization.IntegrationTests
 {
-    public class ExternalDecisionTest :IClassFixture<CustomWebApplicationFactory<DecisionController>>
+    public class ExternalDecisionTest : IClassFixture<CustomWebApplicationFactory<DecisionController>>
     {
         private readonly CustomWebApplicationFactory<DecisionController> _factory;
         private readonly Mock<IFeatureManager> featureManageMock = new Mock<IFeatureManager>();
@@ -254,7 +254,6 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             AssertionUtil.AssertEqual(expected, contextResponse);
             AssertionUtil.AssertAuthorizationEvent(eventQueue, expectedAuthorizationEvent, Times.Once());
         }
-
 
         /// <summary>
         /// Scenario where systemuser has received delegation from the resource party for the resource. Should give Permit result.

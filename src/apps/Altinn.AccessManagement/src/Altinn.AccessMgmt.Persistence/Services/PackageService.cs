@@ -50,6 +50,7 @@ public class PackageService(
 
         return results;
     }
+
     private async Task<List<PackageDto>> GetSearchData()
     {
         var cache = searchPackageCache.GetData();
@@ -80,7 +81,7 @@ public class PackageService(
 
         return result;
     }
-    
+
     /// <inheritdoc/>
     public async Task<PackageDto> GetPackageByUrnValue(string urnValue)
     {
@@ -107,7 +108,6 @@ public class PackageService(
             Resources = resources
         };
     }
-
 
     /// <inheritdoc/>
     public async Task<PackageDto> GetPackage(Guid id)
@@ -256,6 +256,5 @@ public class PackageService(
         };
     }
 
-    
     #endregion
 }

@@ -68,8 +68,9 @@ namespace Altinn.AccessManagement.Tests.Mocks
         }
 
         /// <inheritdoc/>
-        public void ReleaseBlobLease(string leaseId, CancellationToken cancellationToken = default)
+        public Task ReleaseBlobLease(string leaseId, CancellationToken cancellationToken = default)
         {
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc/>

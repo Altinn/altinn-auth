@@ -26,8 +26,8 @@
         <PackageReference Include="Altinn.Authorization.ABAC" />
         <PackageReference Include="Altinn.Platform.Storage.Interface" />
         <PackageReference Include="JWTCookieAuthentication" />
-        <PackageReference Include="Microsoft.Azure.DocumentDB.Core" />
         <PackageReference Include="Microsoft.Azure.Services.AppAuthentication" />
+        <PackageReference Include="Microsoft.Azure.DocumentDB.Core" />
         <PackageReference Include="Microsoft.Extensions.Configuration.AzureKeyVault" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
         <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />

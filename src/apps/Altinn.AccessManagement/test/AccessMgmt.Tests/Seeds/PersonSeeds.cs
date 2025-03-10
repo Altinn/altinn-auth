@@ -177,3 +177,14 @@ public static class PersonSeeds
         }
     }
 }
+
+/// <summary>
+/// For seeds
+/// </summary>
+public interface IUserProfile
+{
+    /// <summary>
+    /// Get User profile from seed
+    /// </summary>
+    UserProfile UserProfile { get; }
+}

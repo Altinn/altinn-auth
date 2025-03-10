@@ -1,7 +1,4 @@
-﻿using System.Data;
-using System.Data.Common;
-using System.Diagnostics.CodeAnalysis;
-using Altinn.AccessMgmt.Persistence.Core.Models;
+﻿using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Utilities;
 using Microsoft.Data.SqlClient;
 
@@ -56,18 +53,21 @@ public class MssqlDbExecutor(SqlConnection connection, IDbConverter dbConverter)
         }
     }
 
-    public Task<int> ExecuteMigrationCommand(string query, List<GenericParameter> parameters, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<IEnumerable<T>> ExecuteMigrationQuery<T>(string query, CancellationToken cancellationToken = default) where T : new()
+    /// <inheritdoc/>
+    public Task<int> ExecuteMigrationCommand(string query, List<GenericParameter> parameters = null, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<T>> ExecuteQuery<T>(string query, List<GenericParameter> parameters, CancellationToken cancellationToken = default) 
+    public Task<IEnumerable<T>> ExecuteMigrationQuery<T>(string query, CancellationToken cancellationToken = default)
+        where T : new()
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<T>> ExecuteQuery<T>(string query, List<GenericParameter> parameters, CancellationToken cancellationToken = default)
         where T : new()
     {
         await using var cmd = connection.CreateCommand();
@@ -77,7 +77,7 @@ public class MssqlDbExecutor(SqlConnection connection, IDbConverter dbConverter)
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<T>> ExecuteQuery<T>(string query, CancellationToken cancellationToken = default) 
+    public async Task<IEnumerable<T>> ExecuteQuery<T>(string query, CancellationToken cancellationToken = default)
         where T : new()
     {
         await using var cmd = connection.CreateCommand();

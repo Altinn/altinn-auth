@@ -66,11 +66,10 @@ public class MigrationService
 
         var defaultDefinition = new DbDefinition(typeof(string));
 
-        //await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseSchema};", new List<GenericParameter>(), cancellationToken);
-        //await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationSchema};", new List<GenericParameter>(), cancellationToken);
-        //await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseHistorySchema};", new List<GenericParameter>(), cancellationToken);
-        //await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationHistorySchema};", new List<GenericParameter>(), cancellationToken);
-
+        // await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseSchema};", new List<GenericParameter>(), cancellationToken);
+        // await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationSchema};", new List<GenericParameter>(), cancellationToken);
+        // await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseHistorySchema};", new List<GenericParameter>(), cancellationToken);
+        // await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationHistorySchema};", new List<GenericParameter>(), cancellationToken);
         var migrationTable = """
         CREATE TABLE IF NOT EXISTS dbo._migration (
         ObjectName text NOT NULL,
@@ -128,7 +127,7 @@ public class MigrationService
         {
             throw new Exception("Nothing to migrate. Remember to generate first.");
         }
-        
+
         await ExecuteMigration();
         await Grants();
     }
@@ -308,7 +307,7 @@ public class MigrationService
         {
             if (NeedMigration(type, script.Key))
             {
-                if (script.Key.Contains("PK_")) 
+                if (script.Key.Contains("PK_"))
                 {
                     Console.WriteLine("PK");
                     continue;
@@ -332,7 +331,7 @@ public class MigrationService
 
     private List<DbMigrationEntry> Migrations { get; set; } = [];
 
-    private Dictionary<Type, List<KeyValuePair<string,string>>> RetryQueue { get; set; } = [];
+    private Dictionary<Type, List<KeyValuePair<string, string>>> RetryQueue { get; set; } = [];
 
     private bool NeedMigration<T>(string key)
     {

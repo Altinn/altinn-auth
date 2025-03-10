@@ -12,7 +12,7 @@ public class EntityService(IEntityRepository entityRepository, IEntityLookupRepo
     private readonly IEntityLookupRepository entityLookupRepository = entityLookupRepository;
 
     /// <inheritdoc/>
-    public async Task<Entity?> GetByOrgNo(string orgNo)
+    public async Task<Entity> GetByOrgNo(string orgNo)
     {
         var filter = entityLookupRepository.CreateFilterBuilder();
         filter.Add(t => t.Key, "OrgNo", Core.Helpers.FilterComparer.Contains);
@@ -41,7 +41,7 @@ public class EntityService(IEntityRepository entityRepository, IEntityLookupRepo
             AsOf = DateTimeOffset.Now.AddHours(-1),
 
             Language = "eng",
-            
+
             OrderBy = "name",
             PageNumber = 1,
             PageSize = 10,

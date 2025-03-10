@@ -107,7 +107,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 else
                 {
                     instanceData = new();
-                    
                     if (!appInstanceInfo.TryGetValue(resourceAttributes.InstanceValue, out AuthInfo authInfo))
                     {
                         authInfo = await _policyInformationRepository.GetAuthInfo(resourceAttributes.InstanceValue);
@@ -301,7 +300,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 {
                     // For supporting legacy use of this attribute. (old PEPS)
                     if (string.IsNullOrEmpty(resourceAttributes.OrganizationNumber))
-                    { 
+                    {
                         resourceAttributes.OrganizationNumber = attribute.AttributeValues.First().Value;
                     }
                 }
@@ -459,7 +458,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 {
                     subjectSsn = await GetPersonIdForUser(subjectUserId);
                 }
-                
+
                 string resourceSsn = await GetSSnForParty(resourcePartyId);
 
                 if (!string.IsNullOrWhiteSpace(subjectSsn) && !string.IsNullOrWhiteSpace(resourceSsn))

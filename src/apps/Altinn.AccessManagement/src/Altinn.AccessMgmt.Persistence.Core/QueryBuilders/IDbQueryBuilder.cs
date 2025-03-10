@@ -12,12 +12,12 @@ public interface IDbQueryBuilder
     /// <summary>
     /// Builds a SELECT query for basic types
     /// </summary>
-    string BuildBasicSelectQuery(RequestOptions options, IEnumerable<GenericFilter> filters, DbCrossRelationDefinition? crossDef = null);
-    
+    string BuildBasicSelectQuery(RequestOptions options, IEnumerable<GenericFilter> filters, DbCrossRelationDefinition crossDef = null);
+
     /// <summary>
     /// Builds a SELECT query for extended types
     /// </summary>
-    string BuildExtendedSelectQuery(RequestOptions options, IEnumerable<GenericFilter> filters, DbCrossRelationDefinition? crossDef = null);
+    string BuildExtendedSelectQuery(RequestOptions options, IEnumerable<GenericFilter> filters, DbCrossRelationDefinition crossDef = null);
 
     /// <summary>
     /// Builds a INSERT query

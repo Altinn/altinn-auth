@@ -11,7 +11,6 @@ namespace Altinn.Authorization.Cli.Database.Metadata;
 public class SequenceInfo
     : SequenceRef
 {
-
     /// <summary>
     /// Initializes a new instance of the <see cref="SequenceInfo"/> class.
     /// </summary>

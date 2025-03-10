@@ -122,19 +122,19 @@ public sealed class DbConverter : IDbConverter
 
         return result;
     }
-    
-    private static readonly ConcurrentDictionary<Type, Dictionary<string, (PropertyInfo Property, Type? ElementType)>> PropertyCache = new();
 
-    private Dictionary<string, (PropertyInfo Property, Type? ElementType)> CreatePropertyCacheWithPrefix(Type type, string prefix)
+    private static readonly ConcurrentDictionary<Type, Dictionary<string, (PropertyInfo Property, Type ElementType)>> PropertyCache = new();
+
+    private Dictionary<string, (PropertyInfo Property, Type ElementType)> CreatePropertyCacheWithPrefix(Type type, string prefix)
     {
-        var properties = new Dictionary<string, (PropertyInfo, Type?)>();
+        var properties = new Dictionary<string, (PropertyInfo, Type)>();
 
         foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             string propertyKey = prefix + property.Name.ToLower();
 
             // Check if type is generic List<T> or IEnumerable<T>
-            Type? elementType = GetListOrEnumerableElementType(property);
+            Type elementType = GetListOrEnumerableElementType(property);
 
             properties[propertyKey] = (property, elementType);
 
@@ -152,23 +152,23 @@ public sealed class DbConverter : IDbConverter
         return properties;
     }
 
-    private List<(PropertyInfo Property, string Prefix, Type? ElementType)> GetPropertiesWithPrefix<T>()
+    private List<(PropertyInfo Property, string Prefix, Type ElementType)> GetPropertiesWithPrefix<T>()
     {
         return GetPropertiesWithPrefix(typeof(T));
     }
 
-    private List<(PropertyInfo Property, string Prefix, Type? ElementType)> GetPropertiesWithPrefix(Type type)
+    private List<(PropertyInfo Property, string Prefix, Type ElementType)> GetPropertiesWithPrefix(Type type)
     {
         return PropertyCache.GetOrAdd(type, type => CreatePropertyCacheWithPrefix(type, string.Empty))
                             .Select(kv =>
                             {
-                                string prefix = kv.Key.Contains("_") ? kv.Key.Substring(0, kv.Key.LastIndexOf('_') + 1) : string.Empty;
+                                string prefix = kv.Key.Contains('_') ? kv.Key.Substring(0, kv.Key.LastIndexOf('_') + 1) : string.Empty;
                                 return (kv.Value.Property, prefix, kv.Value.ElementType);
                             })
                             .ToList();
     }
 
-    private Type? GetListOrEnumerableElementType(PropertyInfo property)
+    private Type GetListOrEnumerableElementType(PropertyInfo property)
     {
         var propertyType = property.PropertyType;
 
@@ -187,7 +187,7 @@ public sealed class DbConverter : IDbConverter
         return null;
     }
 
-    private void SetPropertyValue(PropertyInfo property, object? target, object? value)
+    private void SetPropertyValue(PropertyInfo property, object target, object value)
     {
         if (value != null)
         {

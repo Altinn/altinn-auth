@@ -90,7 +90,7 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
         /// <param name="defaultValue">The default value for the column, if any.</param>
         /// <param name="length">The maximum length of the column (if applicable).</param>
         /// <returns>The current <see cref="DbDefinitionBuilder{T}"/> instance for fluent chaining.</returns>
-        public DbDefinitionBuilder<T> RegisterProperty(Expression<Func<T, object>> column, bool nullable = false, string? defaultValue = null, int? length = null)
+        public DbDefinitionBuilder<T> RegisterProperty(Expression<Func<T, object>> column, bool nullable = false, string defaultValue = null, int? length = null)
         {
             var propertyInfo = ExtractPropertyInfo(column);
             var propertyType = propertyInfo.PropertyType;
