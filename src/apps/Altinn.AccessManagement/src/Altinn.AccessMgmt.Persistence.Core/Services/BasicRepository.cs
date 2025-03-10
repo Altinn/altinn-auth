@@ -6,8 +6,6 @@ using Altinn.AccessMgmt.Persistence.Core.Definitions;
 using Altinn.AccessMgmt.Persistence.Core.Executors;
 using Altinn.AccessMgmt.Persistence.Core.Helpers;
 using Altinn.AccessMgmt.Persistence.Core.Models;
-using Altinn.AccessMgmt.Persistence.Core.QueryBuilders;
-using Microsoft.Extensions.Options;
 
 namespace Altinn.AccessMgmt.Persistence.Core.Services;
 
@@ -15,12 +13,6 @@ namespace Altinn.AccessMgmt.Persistence.Core.Services;
 public abstract class BasicRepository<T> : IDbBasicRepository<T>
     where T : class, new()
 {
-    ///// <summary>
-    ///// DbAccessConfig
-    ///// </summary>
-    // [SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1401:FieldsMustBePrivate", Justification = "Reviewed")]
-    // protected readonly DbAccessConfig config;
-
     /// <summary>
     /// DbDefinitionRegistry
     /// </summary>
@@ -40,7 +32,6 @@ public abstract class BasicRepository<T> : IDbBasicRepository<T>
     /// <param name="executor">NpgsqlDataSource</param>
     public BasicRepository(DbDefinitionRegistry dbDefinitionRegistry, IDbExecutor executor)
     {
-        // config = options.Value;
         this.definitionRegistry = dbDefinitionRegistry;
         this.executor = executor;
     }
@@ -191,14 +182,6 @@ public abstract class BasicRepository<T> : IDbBasicRepository<T>
     }
 
     /// <inheritdoc/>
-    public Task<int> Ingest(List<T> data, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-        //// var importer = new BulkImporter<T>(connection, GetOrAddDefinition);
-        //// return await importer.Ingest(data, cancellationToken);
-    }
-
-    /// <inheritdoc/>
     public async Task<int> Create(T entity, CancellationToken cancellationToken = default)
     {
         var param = BuildParameters(entity);
@@ -307,4 +290,17 @@ public abstract class BasicRepository<T> : IDbBasicRepository<T>
 
     #endregion
 
+    /// <inheritdoc/>
+    public async Task<int> Ingest(List<T> data, int batchSize = 1000, CancellationToken cancellationToken = default)
+    {
+        var queryBuilder = definitionRegistry.GetQueryBuilder<T>();
+        return await executor.Ingest<T>(data, Definition, queryBuilder, batchSize, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<int> IngestAndMerge(List<T> data, int batchSize = 1000, CancellationToken cancellationToken = default)
+    {
+        var queryBuilder = definitionRegistry.GetQueryBuilder<T>();
+        return await executor.IngestAndMerge(data, Definition, queryBuilder, batchSize, cancellationToken);
+    }
 }

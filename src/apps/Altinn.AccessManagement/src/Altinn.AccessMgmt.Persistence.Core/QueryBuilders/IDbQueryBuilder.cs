@@ -20,6 +20,12 @@ public interface IDbQueryBuilder
     string BuildExtendedSelectQuery(RequestOptions options, IEnumerable<GenericFilter> filters, DbCrossRelationDefinition crossDef = null);
 
     /// <summary>
+    /// Gets table name
+    /// </summary>
+    /// <returns></returns>
+    string GetTableName(bool includeAlias = true, bool useHistory = false, bool useTranslation = false, bool useHistoryView = false);
+
+    /// <summary>
     /// Builds a INSERT query
     /// </summary>
     /// <param name="parameters">Parameters</param>

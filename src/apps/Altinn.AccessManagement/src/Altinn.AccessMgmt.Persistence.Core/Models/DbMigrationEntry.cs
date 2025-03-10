@@ -1,37 +1,32 @@
 ﻿namespace Altinn.AccessMgmt.Persistence.Core.Models;
 
 /// <summary>
-/// DbMigrationEntry
+/// Migration information
 /// </summary>
 public class DbMigrationEntry
 {
     /// <summary>
-    /// ObjectName
+    /// Object to migrate
     /// </summary>
-    public string ObjectName { get; set; }
+    public string ObjectName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Key
+    /// Key for object script
     /// </summary>
-    public string Key { get; set; }
+    public string Key { get; set; } = string.Empty;
 
     /// <summary>
-    /// Script
+    /// Version of the script
     /// </summary>
-    public string Script { get; set; }
+    public int Version { get; set; } = 1;
 
     /// <summary>
-    /// Status
+    /// Migrationscript
     /// </summary>
-    public string Status { get; set; }
+    public string Script { get; set; } = string.Empty;
 
     /// <summary>
-    /// At
+    /// When status was last set
     /// </summary>
-    public DateTimeOffset At { get; set; }
-
-    /// <summary>
-    /// Migration Collection Identity
-    /// </summary>
-    public string CollectionId { get; set; }
+    public DateTimeOffset CompletedAt { get; set; }
 }

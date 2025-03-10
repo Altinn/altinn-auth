@@ -59,13 +59,27 @@ public interface IDbBasicRepository<T>
 
     /// <summary>
     /// Performs a bulk ingest operation by importing a list of entities into the database.
+    /// NOT TO BE USED LIGHTLY!
     /// </summary>
     /// <param name="data">The list of entities to import.</param>
+    /// <param name="batchSize">Batch size (default: 1000)</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the number of entities successfully ingested.
     /// </returns>
-    Task<int> Ingest(List<T> data, CancellationToken cancellationToken = default);
+    Task<int> Ingest(List<T> data, int batchSize = 1000, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Performs a bulk ingest operation by importing a list of entities into the database.
+    /// NOT TO BE USED LIGHTLY!
+    /// </summary>
+    /// <param name="data">The list of entities to import.</param>
+    /// <param name="batchSize">Batch size (default: 1000)</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the number of entities successfully ingested.
+    /// </returns>
+    Task<int> IngestAndMerge(List<T> data, int batchSize = 1000, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Inserts a new entity into the database.

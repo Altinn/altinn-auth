@@ -70,4 +70,10 @@ public class MssqlQueryBuilder : IDbQueryBuilder
     {
         throw new NotImplementedException();
     }
+
+    /// <inheritdoc/>
+    public string GetTableName(bool includeAlias = true, bool useHistory = false, bool useTranslation = false, bool useHistoryView = false)
+    {
+        throw new NotImplementedException();
+    }
 }
