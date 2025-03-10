@@ -4,7 +4,8 @@
     "prefix": "register",
     "name": "register",
     "schema": {
-      "register": {}
+      "register": {},
+      "yuniql": {}
     }
   },
   "infra": {
