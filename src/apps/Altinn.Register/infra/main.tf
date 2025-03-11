@@ -245,6 +245,7 @@ resource "null_resource" "bootstrap_database" {
     working_dir = "../../../tools/Altinn.Authorization.Cli/src/Altinn.Authorization.Cli"
     command     = <<EOT
       dotnet run -- db bootstrap ${local.conf_json_path} \
+        --max-pool-size=${var.db_max_pool_size} \
         --tenant-id=${data.azurerm_client_config.current.tenant_id} \
         --principal-name=${data.azurerm_user_assigned_identity.admin.name} \
         --server-resource-group=${azurerm_resource_group.register.name} \

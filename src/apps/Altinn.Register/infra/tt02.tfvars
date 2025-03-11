@@ -11,3 +11,4 @@ platform_workflow_principal_ids = [
   "e64ffd29-ca41-4b8c-84dc-a71cff5424c1", # altinn-register-app-tt02-aks01
   "0ba88429-f3ff-4079-ba46-a3d3eeb82f9c"  # altinn-register-app-tt02-aks02
 ]
+db_max_pool_size = 10

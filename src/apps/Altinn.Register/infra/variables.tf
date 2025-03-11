@@ -43,3 +43,8 @@ variable "platform_workflow_principal_ids" {
   type    = list(string)
   default = []
 }
+
+variable "db_max_pool_size" {
+  type    = number
+  default = 4
+}
