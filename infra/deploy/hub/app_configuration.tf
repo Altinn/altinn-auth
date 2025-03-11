@@ -46,7 +46,7 @@ resource "azurerm_role_assignment" "app_configuration_data_reader" {
   principal_id         = each.value
   role_definition_name = "App Configuration Data Reader" # https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#security
 
-  for_each = toset(concat(var.developer_dev_principal_ids, var.spoke_principal_ids))
+  for_each = toset(concat(var.developer_dev_principal_ids, var.spoke_principal_ids, var.developer_prod_principal_ids))
 }
 
 # Private Endpoint for Key Vault
