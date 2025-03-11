@@ -19,6 +19,10 @@
     "retry AT22 register import": {
       "commandName": "Project",
       "commandLineArgs": "register retry\r\n\"${REGISTER_SB_AT22}\""
+    },
+    "get local register ext-roles": {
+      "commandName": "Project",
+      "commandLineArgs": "register roles\r\n\"${REGISTER_DB_LOCAL}\""
     }
   }
 }

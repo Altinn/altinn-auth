@@ -498,7 +498,7 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
         : ErrorQueueHandler(
             "register-a2-party-import",
             [
-                new ImportA2PartyCommandHandler()
+                new ImportA2PartyCommandHandler(),
             ])
     {
         public override bool GetHandler(ServiceBusReceivedMessage message, [NotNullWhen(true)] out ErrorQueueMessageHandler? handler)

@@ -40,6 +40,7 @@ app.Configure(config =>
     {
         register.SetDescription("Commands for working with altinn-register.");
         register.AddCommand<Register.RetryA2ImportsCommand>("retry");
+        register.AddCommand<Register.ExternalRolesCommand>("roles");
     });
 });
 
