@@ -18,6 +18,7 @@ public class DbDataMigrationService(
         IRoleRepository roleService,
         IRoleMapRepository roleMapService,
         IRolePackageRepository rolePackageService,
+        IRoleLookupRepository roleLookupRepository,
         IMigrationService migrationService
         )
 {
@@ -31,6 +32,7 @@ public class DbDataMigrationService(
     private readonly IRoleRepository roleService = roleService;
     private readonly IRoleMapRepository roleMapService = roleMapService;
     private readonly IRolePackageRepository rolePackageService = rolePackageService;
+    private readonly IRoleLookupRepository roleLookupRepository = roleLookupRepository;
     private readonly IMigrationService migrationService = migrationService;
 
     /// <summary>
@@ -523,6 +525,18 @@ public class DbDataMigrationService(
             new Role() { Id = Guid.Parse("38c368c1-c9f4-4b01-a296-f1ef7e466c13"), EntityTypeId = orgEntityTypeId, ProviderId = brrProviderId, Name = "Opplysningar om foretaket i heimalandet", Code = "HFOR", Description = "Opplysningar om foretaket i heimalandet", Urn = "brreg:role:hfor" },
             new Role() { Id = Guid.Parse("303d78e8-a658-454d-88ae-f836596982c7"), EntityTypeId = orgEntityTypeId, ProviderId = brrProviderId, Name = "Reknskapsførar", Code = "REGN", Description = "Reknskapsførar", Urn = "brreg:role:regn" }
         };
+
+        var mergeFilter = new List<Persistence.Core.Helpers.GenericFilter>() 
+        { 
+            new Persistence.Core.Helpers.GenericFilter("RoleId", "RoleId"),
+            new Persistence.Core.Helpers.GenericFilter("Key", "Key")
+        };
+
+        foreach (var role in roles)
+        {
+            // MergeFilter will have the upsert compare on roleId and key instead of default (id).
+            await roleLookupRepository.Upsert(new RoleLookup() { Id = Guid.NewGuid(), RoleId = role.Id, Key = "Urn", Value = role.Urn }, mergeFilter: mergeFilter);
+        }
 
         foreach (var item in roles)
         {
