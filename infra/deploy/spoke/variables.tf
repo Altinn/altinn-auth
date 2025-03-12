@@ -54,6 +54,11 @@ variable "firewall_public_ipv4" {
   default = "51.120.88.253"
 }
 
+variable "service_bus_firewall" {
+  type    = list(string)
+  default = []
+}
+
 variable "appsettings_key_value" {
   type = map(string)
 }
