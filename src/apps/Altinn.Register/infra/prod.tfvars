@@ -12,3 +12,5 @@ platform_workflow_principal_ids = [
   "8a86d76e-91b1-4e47-a411-e81f8e689882"  # altinn-register-app-prod-aks02
 ]
 db_max_pool_size = 10
+db_compute_tier  = "Burstable"
+db_compute_size  = "Standard_B2s"

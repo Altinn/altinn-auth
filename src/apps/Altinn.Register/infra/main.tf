@@ -219,8 +219,8 @@ module "postgres_server" {
     "azure.extensions" : "HSTORE"
   }
 
-  compute_tier = "Burstable"
-  compute_size = "Standard_B1ms"
+  compute_tier = var.db_compute_tier
+  compute_size = var.db_compute_size
 
   entraid_admins = [
     {

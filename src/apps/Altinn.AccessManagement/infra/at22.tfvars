@@ -12,3 +12,5 @@ platform_workflow_principal_ids = [
   "2b74d490-2e91-48ad-aee1-478276b7e4e4"  # altinn-access-management-app-at22-aks02
 ]
 db_max_pool_size = 4
+db_compute_tier  = "Burstable"
+db_compute_size  = "Standard_B2s"
