@@ -92,20 +92,16 @@ resource "azurerm_route_table" "vpn" {
   resource_group_name = azurerm_resource_group.hub.name
   location            = azurerm_resource_group.hub.location
 
-  route = [
-    {
-      name                   = "IPv4ForcedTunneling1"
-      address_prefix         = "0.0.0.0/1"
-      next_hop_type          = "VirtualAppliance"
-      next_hop_in_ip_address = azurerm_firewall.firewall.ip_configuration[0].private_ip_address
-    },
-    {
-      name                   = "IPv4ForcedTunneling2"
-      address_prefix         = "128.0.0.0/1"
+  dynamic "route" {
+    content {
+      name                   = route.key
+      address_prefix         = route.value
       next_hop_type          = "VirtualAppliance"
       next_hop_in_ip_address = azurerm_firewall.firewall.ip_configuration[0].private_ip_address
     }
-  ]
+
+    for_each = var.vpn_routes
+  }
 }
 
 resource "azurerm_subnet_route_table_association" "vpn" {

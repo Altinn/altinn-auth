@@ -13,24 +13,28 @@ client_certs = [
   "github",
 ]
 hub_principal_ids = [
-  "a9585a64-20f0-4d18-aba6-9930f92b809c" # GitHub: altinn/altinn-authorization-tmp - Prod
+  "a9585a64-20f0-4d18-aba6-9930f92b809c" # App: GitHub: altinn/altinn-authorization-tmp - Prod
 ]
 spoke_principal_ids = [
-  "6eaed23e-df7f-4708-9c8e-a7f34deeadb4" # GitHub: altinn/altinn-authorization-tmp - Dev
+  "6eaed23e-df7f-4708-9c8e-a7f34deeadb4" # App: GitHub: altinn/altinn-authorization-tmp - Dev
 ]
 maintainers_principal_ids = [
-  "3863fbc0-a24b-42bf-af3d-f45111814457", # Altinn Product Authorization: Admins Prod
-  "48587eaa-8f33-43ed-a0c3-108c3681e84b", # ai-prod
-  "be1a510a-db1e-473c-a73a-558cdb68e353", # ai-dev
-  "a9585a64-20f0-4d18-aba6-9930f92b809c"  # GitHub: altinn/altinn-authorization-tmp - Prod
+  "93bed750-6ca4-47ae-ac43-b45fff4930f6", # Group: Altinn Product Authorization: Admins Dev
+  "3863fbc0-a24b-42bf-af3d-f45111814457", # Group: Altinn Product Authorization: Admins Prod
+  "a9585a64-20f0-4d18-aba6-9930f92b809c", # App: GitHub: altinn/altinn-authorization-tmp - Prod
+  "48587eaa-8f33-43ed-a0c3-108c3681e84b", # User: Nilsen, Andreas Isnes (ai-prod) -- NOTE: Temporarily
+  "be1a510a-db1e-473c-a73a-558cdb68e353"  # User: Nilsen, Andreas Isnes (ai-dev)  -- NOTE: Temporarily
 ]
 developer_dev_principal_ids = [
-  "6d54df21-3547-41a2-8d0d-529fad054807" # Altinn Product Authorization: Developers Dev
+  "6d54df21-3547-41a2-8d0d-529fad054807" # Group: Altinn Product Authorization: Developers Dev
 ]
 developer_prod_principal_ids = [
-  "c410f062-def4-44f5-9a45-b23ddcdd57c3" # Altinn Product Authorization: Developers Prod
+  "c410f062-def4-44f5-9a45-b23ddcdd57c3" # Group: Altinn Product Authorization: Developers Prod
 ]
 vpn_owners_principal_ids = [
-  "6eaed23e-df7f-4708-9c8e-a7f34deeadb4", # GitHub: altinn/altinn-authorization-tmp - Dev
-  "a9585a64-20f0-4d18-aba6-9930f92b809c"  # GitHub: altinn/altinn-authorization-tmp - Prod
+  "6eaed23e-df7f-4708-9c8e-a7f34deeadb4", # App: GitHub: altinn/altinn-authorization-tmp - Dev
+  "a9585a64-20f0-4d18-aba6-9930f92b809c"  # App: GitHub: altinn/altinn-authorization-tmp - Prod
 ]
+vpn_routes = {
+  AuthorizationInfrastructure : "10.202.0.0/16"
+}
