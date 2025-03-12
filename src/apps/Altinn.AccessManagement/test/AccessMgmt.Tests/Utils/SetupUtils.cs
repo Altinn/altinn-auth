@@ -25,9 +25,9 @@ namespace Altinn.AccessManagement.Tests.Utils
         /// </summary>
         /// <param name="customFactory">Web app factory to configure test services for</param>
         /// <returns>HttpClient</returns>
-        public static HttpClient GetTestClient(CustomWebApplicationFactory<DelegationRequestsController> customFactory)
+        public static HttpClient GetTestClient(CustomWebApplicationFactory<DelegationsController> customFactory)
         {
-            WebApplicationFactory<DelegationRequestsController> factory = customFactory.WithWebHostBuilder(builder =>
+            WebApplicationFactory<DelegationsController> factory = customFactory.WithWebHostBuilder(builder =>
             {
                 builder.ConfigureTestServices(services =>
                 {
