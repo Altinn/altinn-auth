@@ -10,7 +10,7 @@ public class ServiceOwnerTests
     [Fact]
     public void Equals_ReturnsTrue_WhenComparingEqualServiceOwners()
     {
-        var org1 = new Org
+        var org1 = new Core.Models.Org
         {
             Name = new Dictionary<string, string>
             {
@@ -23,7 +23,7 @@ public class ServiceOwnerTests
             Environments = [ "test", "prod" ],
         };
 
-        var org2 = new Org
+        var org2 = new Core.Models.Org
         {
             Name = new Dictionary<string, string>
             {
