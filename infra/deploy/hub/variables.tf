@@ -46,10 +46,12 @@ variable "vpn_owners_principal_ids" {
   type = list(string)
 }
 
-variable "vpn_routes" {
-  type = map(string)
-}
-
 variable "hub_principal_ids" {
   type = list(string)
 }
+
+variable "vpn_routes" {
+  type = map(list(string))
+}
+
+
