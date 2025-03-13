@@ -2,5 +2,75 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>Altinn/renovate-config"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["nuget"],
+      "groupName": "Microsoft.CodeAnalysis",
+      "groupSlug": "microsoft-codeanalysis",
+      "prBodyNotes": [
+        ":warning: Updating Microsoft.CodeAnalysis packages requires new compiler version. This typically requires people to update VS. :warning:"
+      ],
+      "addLabels": [
+        "dependencies/breaking"
+      ],
+      "minimumReleaseAge": "60 days",
+      "matchPackageNames": [
+        "Microsoft.CodeAnalysis{/,}**"
+      ]
+    },
+    {
+      "matchManagers": ["nuget"],
+      "matchPackageNames": [
+        "System.IdentityModel.Tokens.Jwt",
+        "Microsoft.IdentityModel.Tokens"
+      ],
+      "groupName": "IdentityModel Extensions for .NET",
+      "groupSlug": "azure-activedirectory-identitymodel-extensions-for-dotnet",
+      "matchUpdateTypes": [
+        "major"
+      ]
+    },
+    {
+      "matchManagers": ["nuget"],
+      "matchPackageNames": [
+        "Testcontainers",
+        "Testcontainers.PostgreSql"
+      ],
+      "groupName": "Testcontainers for .NET",
+      "groupSlug": "testcontainers-for-dotnet",
+      "matchUpdateTypes": [
+        "major"
+      ]
+    },
+    {
+      "matchManagers": ["nuget"],
+      "matchPackageNames": [
+        "xunit.v3.extensibility.core",
+        "xunit.v3",
+        "xunit.v3.assert"
+      ],
+      "groupName": "XUnit v3",
+      "groupSlug": "xunit-v3",
+      "matchUpdateTypes": [
+        "major"
+      ]
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchPackageNames": [
+        "@digdir/designsystemet-css",
+        "@digdir/designsystemet-react",
+        "@digdir/designsystemet-theme"
+      ],
+      "groupName": "Digdir Designsystemet",
+      "groupSlug": "digdir-designsystemet",
+      "matchUpdateTypes": [
+        "major"
+      ]
+    }
   ]
 }
