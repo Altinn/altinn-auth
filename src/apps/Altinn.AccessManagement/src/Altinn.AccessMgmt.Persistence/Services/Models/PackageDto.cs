@@ -35,5 +35,5 @@ public class PackageDto
     /// <summary>
     /// Gets or sets the collection of resources linked to the package.
     /// </summary>
-    public IEnumerable<Resource> Resources { get; set; }
+    public IEnumerable<ExtResource> Resources { get; set; }
 }

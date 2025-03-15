@@ -23,7 +23,8 @@ public class ProviderDefinition : BaseDbDefinition<Provider>, IDbDefinition
 
             def.RegisterProperty(t => t.Name);
             def.RegisterProperty(t => t.RefId, nullable: true);
-            
+            def.RegisterProperty(t => t.LogoUrl, nullable: true);
+
             def.RegisterUniqueConstraint([t => t.Name]);
         });
     }

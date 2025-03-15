@@ -58,8 +58,8 @@ public abstract class CrossRepository<T, TExtended, TA, TB> : ExtendedRepository
         where TEntity : class, new()
     {
         // Get the definition for the entity type
-        var def = definitionRegistry.TryGetDefinition<TEntity>() ?? definitionRegistry.TryGetBaseDefinition<TEntity>();
-
+        var def = definitionRegistry.TryGetDefinition<TEntity>() ?? definitionRegistry.TryGetDefinition(typeof(TEntity).BaseType) ?? definitionRegistry.TryGetBaseDefinition<TEntity>();
+        
         if (def == null)
         {
             throw new Exception($"GetOrAddDefinition not found for {typeof(TEntity).Name}");
@@ -70,7 +70,7 @@ public abstract class CrossRepository<T, TExtended, TA, TB> : ExtendedRepository
         options ??= new RequestOptions();
         filters ??= new List<GenericFilter>();
 
-        var queryBuilder = definitionRegistry.GetQueryBuilder<TEntity>();
+        var queryBuilder = definitionRegistry.GetQueryBuilder(def.ModelType);
         string query = query = isExtended
             ? queryBuilder.BuildExtendedSelectQuery(options, filters, Definition.CrossRelation)
             : queryBuilder.BuildBasicSelectQuery(options, filters, Definition.CrossRelation);

@@ -29,9 +29,9 @@ public class PackagesController : ControllerBase
     /// </summary>
     /// <param name="term">Søketerm.</param>
     /// <returns>Liste over søkeresultater.</returns>
-    [Route("search/{term}")]
+    [Route("search")]
     [HttpGet]
-    public async Task<IEnumerable<SearchObject<PackageDto>>> Search(string term)
+    public async Task<IEnumerable<SearchObject<PackageDto>>> Search([FromQuery] string term)
     {
         return await packageService.Search(term);
     }

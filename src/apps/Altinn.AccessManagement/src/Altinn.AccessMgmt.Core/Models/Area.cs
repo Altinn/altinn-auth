@@ -21,7 +21,12 @@ public class Area
     public string Description { get; set; }
 
     /// <summary>
-    /// IconName
+    /// IconUrl
+    /// </summary>
+    public string IconUrl { get; set; }
+
+    /// <summary>
+    /// Obsolete - Use IconUrl
     /// </summary>
     public string IconName { get; set; }
 

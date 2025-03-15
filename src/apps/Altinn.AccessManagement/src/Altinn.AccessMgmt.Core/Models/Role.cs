@@ -29,7 +29,7 @@ public class Role
 
     /// <summary>
     /// Code
-    /// e.g DAGL
+    /// e.g daglig-leder
     /// </summary>
     public string Code { get; set; }
 
@@ -41,7 +41,8 @@ public class Role
 
     /// <summary>
     /// Urn
-    /// e.g altinn:role:dagl
+    /// e.g altinn:external-role:ccr:daglig-leder
+    /// altinn:role:tilgangsstyrer
     /// </summary>
     public string Urn { get; set; }
 }

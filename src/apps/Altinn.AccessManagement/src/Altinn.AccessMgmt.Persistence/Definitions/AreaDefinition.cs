@@ -24,7 +24,7 @@ public class AreaDefinition : BaseDbDefinition<Area>, IDbDefinition
 
             def.RegisterProperty(t => t.Name);
             def.RegisterProperty(t => t.Description);
-            def.RegisterProperty(t => t.IconName);
+            def.RegisterProperty(t => t.IconUrl, nullable: true);
             def.RegisterProperty(t => t.GroupId);
             def.RegisterProperty(t => t.Urn);
 

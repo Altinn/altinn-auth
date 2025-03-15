@@ -48,8 +48,13 @@ public static class FuzzySearch
     /// </returns>
     public static List<SearchObject<T>> PerformFuzzySearch<T>(List<T> data, string term, SearchPropertyBuilder<T> builder)
     {
-        var properties = builder.Build();
         List<SearchObject<T>> results = new();
+        if (string.IsNullOrEmpty(term))
+        {
+            return results;
+        }
+
+        var properties = builder.Build();
         var searchTerms = term.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
         foreach (var obj in data)

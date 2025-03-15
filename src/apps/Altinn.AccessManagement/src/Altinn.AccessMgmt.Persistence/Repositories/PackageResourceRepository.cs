@@ -11,7 +11,7 @@ namespace Altinn.AccessMgmt.Persistence.Repositories;
 /// <summary>
 /// Data service for PackageResource
 /// </summary>
-public class PackageResourceRepository : CrossRepository<PackageResource, ExtPackageResource, Package, Resource>, IPackageResourceRepository
+public class PackageResourceRepository : CrossRepository<PackageResource, ExtPackageResource, Package, ExtResource>, IPackageResourceRepository
 {
     /// <inheritdoc/>
     public PackageResourceRepository(DbDefinitionRegistry dbDefinitionRegistry, IDbExecutor executor) : base(dbDefinitionRegistry, executor)

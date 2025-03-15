@@ -19,4 +19,9 @@ public class Provider
     /// Refrence Identifier (e.g. OrgNo)
     /// </summary>
     public string RefId { get; set; }
+
+    /// <summary>
+    /// Logo url
+    /// </summary>
+    public string LogoUrl { get; set; }
 }

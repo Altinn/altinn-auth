@@ -54,7 +54,7 @@ public abstract class ExtendedRepository<T, TExtended> : BasicRepository<T>, IDb
         filters ??= new List<GenericFilter>();
 
         var queryBuilder = definitionRegistry.GetQueryBuilder<T>();
-        var query = queryBuilder.BuildExtendedSelectQuery(options, filters);
+        var query = queryBuilder.BuildExtendedSelectQuery(options, filters); //// TODO: Add CrossDefinition when needed
         var param = BuildFilterParameters(filters, options);
 
         return await executor.ExecuteQuery<TExtended>(query, param, cancellationToken);
