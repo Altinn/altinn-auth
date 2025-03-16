@@ -37,7 +37,7 @@ public interface IDbQueryBuilder
     /// Builds a DELETE query
     /// </summary>
     /// <returns></returns>
-    string BuildDeleteQuery();
+    string BuildDeleteQuery(IEnumerable<GenericFilter> filters);
 
     /// <summary>
     /// Builds a UPDATE query

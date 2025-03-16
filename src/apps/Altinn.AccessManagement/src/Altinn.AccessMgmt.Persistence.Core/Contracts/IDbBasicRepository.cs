@@ -58,30 +58,6 @@ public interface IDbBasicRepository<T>
     Task<IEnumerable<T>> Get(IEnumerable<GenericFilter> filters, RequestOptions options = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Performs a bulk ingest operation by importing a list of entities into the database.
-    /// NOT TO BE USED LIGHTLY!
-    /// </summary>
-    /// <param name="data">The list of entities to import.</param>
-    /// <param name="batchSize">Batch size (default: 1000)</param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains the number of entities successfully ingested.
-    /// </returns>
-    Task<int> Ingest(List<T> data, int batchSize = 1000, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Performs a bulk ingest operation by importing a list of entities into the database.
-    /// NOT TO BE USED LIGHTLY!
-    /// </summary>
-    /// <param name="data">The list of entities to import.</param>
-    /// <param name="batchSize">Batch size (default: 1000)</param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains the number of entities successfully ingested.
-    /// </returns>
-    Task<int> IngestAndMerge(List<T> data, int batchSize = 1000, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Inserts a new entity into the database.
     /// </summary>
     /// <param name="entity">The entity to create.</param>
@@ -143,6 +119,16 @@ public interface IDbBasicRepository<T>
     /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
     /// </returns>
     Task<int> Delete(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes an entity from the database identified by its unique identifier.
+    /// </summary>
+    /// <param name="filters">List of generic filters</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
+    /// </returns>
+    Task<int> Delete(IEnumerable<GenericFilter> filters, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Creates a translation entry for the specified entity in a different language.

@@ -30,7 +30,7 @@ public class MssqlQueryBuilder : IDbQueryBuilder
     }
 
     /// <inheritdoc/>
-    public string BuildDeleteQuery()
+    public string BuildDeleteQuery(IEnumerable<GenericFilter> filters)
     {
         throw new NotImplementedException();
     }

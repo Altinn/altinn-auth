@@ -143,7 +143,7 @@ public class PostgresQueryBuilder : IDbQueryBuilder
 
         sb.AppendLine(")");
 
-        var mergeStatementFilter = string.Join(',', mergeFilter.Select(t => $"T.{t.PropertyName} = N.{t.PropertyName}"));
+        var mergeStatementFilter = string.Join(" AND ", mergeFilter.Select(t => $"T.{t.PropertyName} = N.{t.PropertyName}"));
         sb.AppendLine($"MERGE INTO {GetTableName(includeAlias: false, useTranslation: forTranslation)} AS T USING N ON {mergeStatementFilter}");
         if (forTranslation)
         {
@@ -159,9 +159,10 @@ public class PostgresQueryBuilder : IDbQueryBuilder
     }
 
     /// <inheritdoc/>
-    public string BuildDeleteQuery()
+    public string BuildDeleteQuery(IEnumerable<GenericFilter> filters)
     {
-        return $"DELETE FROM {GetTableName(includeAlias: false)} WHERE id = @_id";
+        var filterStatement = GenerateFilterStatement(_definition.ModelType.Name, filters);
+        return $"DELETE FROM {GetTableName(includeAlias: false)} {filterStatement}";
     }
 
     /// <inheritdoc />
@@ -266,11 +267,11 @@ public class PostgresQueryBuilder : IDbQueryBuilder
     }
 
     /// <summary>
-    /// Generates an INNER JOIN SQL statement for a cross-reference relationship.
+    /// Generates an INNER JOIN SQL filterStatement for a cross-reference relationship.
     /// </summary>
     /// <param name="crossRef">The cross-reference definition.</param>
     /// <param name="options">Request options that may affect SQL generation.</param>
-    /// <returns>A formatted SQL INNER JOIN statement.</returns>
+    /// <returns>A formatted SQL INNER JOIN filterStatement.</returns>
     private string GenerateCrossReferenceJoin(DbCrossRelationDefinition crossRef, RequestOptions options)
     {
         bool useHistory = options.AsOf.HasValue;

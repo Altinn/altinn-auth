@@ -122,7 +122,7 @@ public static class RequestComposer
     public static Action<HttpRequestMessage> WithPlatformAccessToken(IAccessTokenGenerator accessTokenGenerator, string app, string issuer = "platform") => request =>
     {
         var token = accessTokenGenerator.GenerateAccessToken(issuer, app);
-
+        
         if (!string.IsNullOrEmpty(token))
         {
             request.Headers.Add("PlatformAccessToken", token);

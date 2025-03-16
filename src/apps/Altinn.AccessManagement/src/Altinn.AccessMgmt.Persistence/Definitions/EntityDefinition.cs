@@ -28,8 +28,9 @@ public class EntityDefinition : BaseDbDefinition<Entity>, IDbDefinition
             def.RegisterProperty(t => t.VariantId);
 
             def.RegisterExtendedProperty<ExtEntity, EntityType>(t => t.TypeId, t => t.Id, t => t.Type, cascadeDelete: false);
-            def.RegisterExtendedProperty<ExtEntity, EntityVariant>(t => t.TypeId, t => t.Id, t => t.Type, cascadeDelete: false);
-            def.RegisterUniqueConstraint([t => t.Name, t => t.TypeId, t => t.RefId]);
+            def.RegisterExtendedProperty<ExtEntity, EntityVariant>(t => t.VariantId, t => t.Id, t => t.Variant, cascadeDelete: false);
+            
+            //// def.RegisterUniqueConstraint([t => t.Name, t => t.TypeId, t => t.RefId]);
         });
     }
 }

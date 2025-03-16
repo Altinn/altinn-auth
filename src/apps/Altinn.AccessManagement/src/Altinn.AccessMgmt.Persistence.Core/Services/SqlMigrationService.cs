@@ -1,4 +1,4 @@
-﻿using Altinn.AccessMgmt.Persistence.Core.Executors;
+﻿using Altinn.AccessMgmt.Persistence.Core.Contracts;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 
 namespace Altinn.AccessMgmt.Persistence.Core.Services;
