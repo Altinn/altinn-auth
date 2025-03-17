@@ -186,6 +186,15 @@ data "azurerm_key_vault_secret" "postgres_app" {
 module "appsettings" {
   source     = "../../../../infra/modules/appsettings"
   hub_suffix = local.hub_suffix
+
+  key_value = [
+    {
+      key   = "Altinn:MassTransit:register:AzureServiceBus:Endpoint"
+      value = "sb://sb${local.spoke_suffix}.servicebus.windows.net"
+      label = "${var.environment}-register"
+    }
+  ]
+
   key_vault_reference = [
     {
       key                 = "Altinn:Npgsql:register:ConnectionString"
