@@ -15,7 +15,7 @@ public interface IPackageService
     /// </summary>
     /// <param name="term">The search term to filter packages.</param>
     /// <returns>A list of search results containing packages that match the term.</returns>
-    Task<List<SearchObject<PackageDto>>> Search(string term);
+    Task<IEnumerable<SearchObject<PackageDto>>> Search(string term);
 
     /// <summary>
     /// Retrieves the hierarchical structure of area groups.
