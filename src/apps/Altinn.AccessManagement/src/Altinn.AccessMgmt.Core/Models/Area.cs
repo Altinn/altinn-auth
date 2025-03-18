@@ -26,11 +26,6 @@ public class Area
     public string IconUrl { get; set; }
 
     /// <summary>
-    /// Obsolete - Use IconUrl
-    /// </summary>
-    public string IconName { get; set; }
-
-    /// <summary>
     /// GroupId
     /// </summary>
     public Guid GroupId { get; set; }

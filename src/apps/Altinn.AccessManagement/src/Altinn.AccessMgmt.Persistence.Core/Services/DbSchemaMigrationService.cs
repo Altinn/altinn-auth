@@ -34,10 +34,11 @@ public class DbSchemaMigrationService
 
     private async Task PreMigration()
     {
-        //// await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseSchema};", new List<GenericParameter>(), cancellationToken);
-        //// await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationSchema};", new List<GenericParameter>(), cancellationToken);
-        //// await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseHistorySchema};", new List<GenericParameter>(), cancellationToken);
-        //// await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationHistorySchema};", new List<GenericParameter>(), cancellationToken);
+        var config = this.options.Value;
+        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseSchema};", new List<GenericParameter>());
+        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationSchema};", new List<GenericParameter>());
+        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseHistorySchema};", new List<GenericParameter>());
+        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationHistorySchema};", new List<GenericParameter>());
 
         await Task.CompletedTask;
     }
@@ -46,24 +47,22 @@ public class DbSchemaMigrationService
     {
         var config = this.options.Value;
 
-        /*
-        // Moved to terraform/bootstraping
+        string schemaGrant = $"""
         GRANT USAGE ON SCHEMA {config.BaseSchema} TO {config.DatabaseReadUser};
         GRANT USAGE ON SCHEMA {config.TranslationSchema} TO {config.DatabaseReadUser};
         GRANT USAGE ON SCHEMA {config.BaseHistorySchema} TO {config.DatabaseReadUser};
         GRANT USAGE ON SCHEMA {config.TranslationHistorySchema} TO {config.DatabaseReadUser};
-        */
+        """;
+        await executor.ExecuteMigrationCommand(schemaGrant);
 
-        //// TODO: Move to CREATE TABLE script
-
-        string script = $"""
+        string tableGrant = $"""
         GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {config.BaseSchema} TO {config.DatabaseReadUser};
         GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {config.TranslationSchema} TO {config.DatabaseReadUser};
         GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {config.BaseHistorySchema} TO {config.DatabaseReadUser};
         GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {config.TranslationHistorySchema} TO {config.DatabaseReadUser};
         """;
 
-        await executor.ExecuteMigrationCommand(script);
+        await executor.ExecuteMigrationCommand(tableGrant);
     }
 
     /// <summary>
