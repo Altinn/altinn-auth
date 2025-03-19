@@ -32,7 +32,7 @@ public static class IntegrationDependencyInjectionExtensions
         builder.Services.AddHttpClient<IAltinnRolesClient, AltinnRolesClient>();
         builder.Services.AddHttpClient<IAltinn2RightsClient, Altinn2RightsClient>();
         builder.Services.AddHttpClient<IAuthenticationClient, AuthenticationClient>();
-        builder.Services.AddHttpClient<IResourceRegistryClient, ResourceRegistryClient>();
+        builder.Services.AddSingleton<IResourceRegistryClient, ResourceRegistryClient>();
 
         return builder;
     }
