@@ -27,4 +27,18 @@ public interface IEntityService
     /// <param name="profileId">profileId</param>
     /// <returns></returns>
     Task<Entity> GetByProfile(string profileId);
+
+    /// <summary>
+    /// Get parent Entity based on parentId
+    /// </summary>
+    /// <param name="parentId">profileId</param>
+    /// <returns></returns>
+    Task<Entity> GetParent(Guid parentId);
+
+    /// <summary>
+    /// Get all child entities based on parentId
+    /// </summary>
+    /// <param name="parentId">Parent entity identifier</param>
+    /// <returns></returns>
+    Task<IEnumerable<Entity>> GetChildren(Guid parentId);
 }

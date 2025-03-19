@@ -100,6 +100,18 @@ public interface IDbBasicRepository<T>
     Task<int> Update(Guid id, T entity, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Updates a single property on an existing entity in the database identified by its unique identifier.
+    /// </summary>
+    /// <param name="property">Property to update</param>
+    /// <param name="value">Value for property</param>
+    /// <param name="id">The unique identifier of the entity to update.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
+    /// </returns>
+    Task<int> Update<TProperty>(Expression<Func<T, TProperty>> property, TProperty value, Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Updates specific properties of an existing entity in the database using a list of generic parameters.
     /// </summary>
     /// <param name="id">The unique identifier of the entity to update.</param>

@@ -1,0 +1,48 @@
+﻿<div class="bf-accordion-item">
+    <div class="bf-accordion-item-title">
+        <button style="cursor:default;" disabled >
+            <span class="bf-accordion-item-angle-circle">
+                <i class="fa-solid fa-info"></i>
+            </span>
+            <span>
+                @if (!string.IsNullOrEmpty(Icon))
+                {
+                    <Icon Name="@Icon"></Icon>
+
+                    <span>&nbsp;</span>
+                }
+                @Title
+            </span>
+            <div style="display: flex; gap: 6px; padding: 0 6px;">
+                @foreach(var tag in Tags)
+                {
+                    <span class="bf-badge bfc-theme-bg bf-badge-compact">@tag</span>
+                }
+            </div>
+            <div>
+                @if (!string.IsNullOrEmpty(Url))
+                {
+                    <a href="@Url">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+                }
+            </div>
+
+        </button>
+    </div>
+    @if (ChildContent != null)
+    {
+    <div class="bf-accordion-item-content">
+        @ChildContent
+    </div>
+    }
+</div>
+
+@code {
+
+    [Parameter] public string Title { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public string Icon { get; set; }
+    [Parameter] public string Url { get; set; }
+    [Parameter] public List<string> Tags { get; set; } = new List<string>();
+}

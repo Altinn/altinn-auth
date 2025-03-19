@@ -1,0 +1,126 @@
+﻿@page "/delegation/{id}"
+@inject IDelegationRepository delegationService
+@inject IDelegationPackageRepository delegationPackageRepository
+@inject IAssignmentRepository assignmentService
+
+@if(Delegation != null && Assignment != null)
+{
+    <PageTitle>Delegation</PageTitle>
+
+    <PageHeader>
+        <LeftContent>
+            <BreadcrumbContainer>
+                <BreadcrumbItem Url=@($"/entity/{Assignment.FromId}")>@Assignment.From.Name</BreadcrumbItem>
+                <BreadcrumbItem Url=@($"/assignment/{Assignment.Id}")>Assignment</BreadcrumbItem>
+            </BreadcrumbContainer>
+            <H1>Delegation</H1>
+            <p><Icon Name="circle-info"></Icon> <strong>@Assignment.From.Name</strong> har satt opp <strong>@Assignment.To.Name</strong> med rollen <strong>@Assignment.Role.Name</strong>. <strong>@Assignment.To.Name</strong> har her valgt å delegere dette videre som vist under.</p>
+        </LeftContent>
+        <RightContent>
+            <ButtonGroup>
+                <Button>Legg til pakke</Button>
+                <Button>Legg til gruppe</Button>
+                <Button>Legg til person</Button>
+            </ButtonGroup>
+        </RightContent>
+    </PageHeader>
+
+    <div>
+        <H2>Tildeling</H2>
+        <VerticalTable>
+            <VerticalTableCell Title="Fra">@Assignment.From.Name</VerticalTableCell>
+            <VerticalTableCell Title="Rolle">@Assignment.Role.Name</VerticalTableCell>
+            <VerticalTableCell Title="Til">@Assignment.To.Name</VerticalTableCell>
+        </VerticalTable>
+    </div>
+
+    <Grid>
+
+        @if(Packages != null && Packages.Any())
+        {
+            <div>
+                <H2>Pakker</H2>
+                <SimpleTable>
+                    <Head>
+                        <SimpleTableRow IsHeaderRow>
+                            <th>Navn</th>
+                            <th>Beskrivelse</th>
+                            <th>&nbsp;</th>
+                        </SimpleTableRow>
+                    </Head>
+                    <Body>
+                        @foreach(var package in Packages)
+                        {
+                            <SimpleTableRow>
+                                <td><a href=@($"/package/{package.Id}")>@package.Name</a></td>
+                                <td>@package.Description</td>
+                                <td><Icon Name="trash-can"></Icon></td>
+                            </SimpleTableRow>
+                        }
+                    </Body>
+                </SimpleTable>
+            </div>
+        }
+
+        @if (Assignments != null && Assignments.Any())
+        {
+            <div>
+                <H2>Tildelinger</H2>
+                <SimpleTable>
+                    <Head>
+                        <SimpleTableRow IsHeaderRow>
+                            <th>From</th>
+                            <th>Role</th>
+                            <th>To</th>
+                            <th>&nbsp;</th>
+                        </SimpleTableRow>
+                    </Head>
+                    <Body>
+                        @foreach (var extAssignment in Assignments)
+                        {
+                            <SimpleTableRow>
+                                <td title="@extAssignment.From.RefId"><a href=@($"/entity/{extAssignment.From.Id}")><EntityTypeIcon Id="@extAssignment.From.TypeId" />@extAssignment.From.Name</a></td>
+                                <td>
+                                    <Badge Title="@extAssignment.Role.Description">@extAssignment.Role.Code</Badge>
+                                </td>
+                                <td title="@extAssignment.To.RefId"><a href=@($"/entity/{extAssignment.To.Id}")><EntityTypeIcon Id="@extAssignment.To.TypeId" />@extAssignment.To.Name</a></td>
+                                <td>
+                                    <Icon Name="trash-can"></Icon>
+                                </td>
+                            </SimpleTableRow>
+                        }
+                    </Body>
+                </SimpleTable>
+            </div>
+        }
+
+    </Grid>
+
+    <Drawer>
+
+    </Drawer>
+
+}
+
+
+@code {
+
+    [Parameter] public string id { get; set; }
+
+    public Delegation Delegation { get; set; }
+    public ExtAssignment Assignment { get; set; }
+
+    public IEnumerable<Package> Packages { get; set; }
+    public List<ExtAssignment> Assignments { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Delegation = await delegationService.Get(Guid.Parse(id));
+        if (Delegation != null)
+        {
+            Packages = await delegationPackageRepository.GetB(Delegation.Id);
+            Assignment = await assignmentService.GetExtended(Delegation.FromId);
+        }
+    }
+
+}

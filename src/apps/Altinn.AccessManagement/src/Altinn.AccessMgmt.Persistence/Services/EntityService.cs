@@ -56,4 +56,16 @@ public class EntityService(IEntityRepository entityRepository, IEntityLookupRepo
     {
         throw new NotImplementedException();
     }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<Entity>> GetChildren(Guid parentId)
+    {
+        return await entityRepository.GetExtended(t => t.ParentId, parentId);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Entity> GetParent(Guid parentId)
+    {
+        return await entityRepository.GetExtended(parentId);
+    }
 }

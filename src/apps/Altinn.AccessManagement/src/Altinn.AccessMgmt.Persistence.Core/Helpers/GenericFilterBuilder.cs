@@ -39,6 +39,40 @@ public class GenericFilterBuilder<T> : IEnumerable<GenericFilter>
     }
 
     /// <summary>
+    /// Adds an equality filter condition for the specified property.
+    /// </summary>
+    /// <typeparam name="TProperty">The type of the property.</typeparam>
+    /// <param name="property">An expression selecting the property to filter on.</param>
+    /// <param name="values">The value the property should equal.</param>
+    /// <returns>The current instance of <see cref="GenericFilterBuilder{T}"/>, enabling a fluent API.</returns>
+    public GenericFilterBuilder<T> In<TProperty>(Expression<Func<T, TProperty>> property, IEnumerable<TProperty> values)
+    {
+        foreach (var value in values)
+        {
+            Add(property, value, FilterComparer.Equals);
+        }
+
+        return this;
+    }
+
+    /// <summary>
+    /// Adds an equality filter condition for the specified property.
+    /// </summary>
+    /// <typeparam name="TProperty">The type of the property.</typeparam>
+    /// <param name="property">An expression selecting the property to filter on.</param>
+    /// <param name="values">The value the property should equal.</param>
+    /// <returns>The current instance of <see cref="GenericFilterBuilder{T}"/>, enabling a fluent API.</returns>
+    public GenericFilterBuilder<T> NotIn<TProperty>(Expression<Func<T, TProperty>> property, IEnumerable<TProperty> values)
+    {
+        foreach (var value in values)
+        {
+            Add(property, value, FilterComparer.NotEqual);
+        }
+
+        return this;
+    }
+
+    /// <summary>
     /// Extracts the <see cref="PropertyInfo"/> from the specified property expression.
     /// </summary>
     /// <typeparam name="TProperty">The type of the property.</typeparam>

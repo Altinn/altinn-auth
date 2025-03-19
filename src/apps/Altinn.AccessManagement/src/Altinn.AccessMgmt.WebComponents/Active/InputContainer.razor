@@ -1,0 +1,13 @@
+﻿@namespace Altinn.AccessMgmt.WebComponents
+
+<div class="bf-input-container">
+    <label for="input-" class="bf-label">@Title</label>
+    <div class="bf-label-description">@Description</div>
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; }
+    [Parameter] public string Description { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+}

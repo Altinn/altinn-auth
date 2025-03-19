@@ -45,7 +45,6 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
         /// <returns></returns>
         public DbDefinitionBuilder<T> SetViewQuery(string query)
         {
-            // Add view script??
             DbDefinition.ViewQuery = query;
             return this;
         }
@@ -234,6 +233,12 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
             string baseProperty = ExtractPropertyInfo(TProperty).Name;
             string refProperty = ExtractPropertyInfo(TJoinProperty).Name;
             string extendedProperty = ExtractPropertyInfo(TExtendedProperty).Name;
+            string extendedPropertyType = ExtractPropertyInfo(TExtendedProperty).PropertyType.Name;
+
+            if (extendedPropertyType != typeof(TJoin).Name)
+            {
+                Console.WriteLine($"WARNING: Type missmatch on definition for '{typeof(T).Name}'");
+            }
 
             var join = new DbRelationDefinition()
             {

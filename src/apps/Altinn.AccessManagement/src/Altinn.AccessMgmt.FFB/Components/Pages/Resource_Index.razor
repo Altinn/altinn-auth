@@ -1,0 +1,88 @@
+﻿@page "/resources"
+@inject IResourceRepository resourceData
+
+<PageTitle>Ressurser</PageTitle>
+
+@if(Resources != null)
+{
+    <PageHeader>
+        <LeftContent>
+            <h1>Ressurser (@ResourceFiltered.Count())</h1>
+        </LeftContent>
+        <RightContent>
+            <input style="min-width:400px;" @bind="ResourceSearchTerm" @bind:event="oninput" placeholder="Search" />
+        </RightContent>
+    </PageHeader>
+
+    @if (Resources != null && Resources.Any())
+    {
+        <div>
+            <table class="bf-table bfc-base-3-bg">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Provider @(FilterProvider == null ? "" : "(" + FilterProvider.Name + ")")</th>
+                        <th>Type @(FilterResourceType == null ? "" : "(" + FilterResourceType.Name + ")")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var resource in ResourceFiltered.OrderBy(t => t.Name))
+                    {
+                        <tr class="bf-table-row bf-table-row-compact">
+                            <td><a href=@($"/resource/{resource.Id}")>@resource.Name</a></td>
+                            <td><a href=@($"/provider/{resource.Provider.Id}")>@resource.Provider.Name</a> <span @onclick="() => SetProviderFilter(resource.Provider)"><Icon Name="filter-list"></Icon></span></td>
+                            <td>@resource.Type.Name <span @onclick="() => SetResourceTypeFilter(resource.Type)"><Icon Name="filter-list"></Icon></span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+@code {
+
+    public List<ExtResource> Resources { get; set; }
+    public string ResourceSearchTerm { get; set; } = "";
+    List<ExtResource> ResourceFiltered => Resources.Where(
+        i => 
+        (
+            ((FilterProvider != null && i.Provider.Id == FilterProvider.Id) || FilterProvider == null) &&
+            ((FilterResourceType != null && i.Type.Id == FilterResourceType.Id) || FilterResourceType == null)
+        )
+        && i.Name.ToLower().Contains(ResourceSearchTerm.ToLower())
+    ).ToList();
+
+    public Provider FilterProvider { get; set; }
+    public ResourceType FilterResourceType { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Resources = [.. await resourceData.GetExtended()];
+    }
+
+    private void SetProviderFilter(Provider selected)
+    {
+        Console.WriteLine(selected.Name.ToString());
+        if (FilterProvider != null && FilterProvider.Id == selected.Id)
+        {
+            FilterProvider = null;
+        }
+        else
+        {
+            FilterProvider = selected;
+        }
+    }
+
+    private void SetResourceTypeFilter(ResourceType selected)
+    {
+        Console.WriteLine(selected.Name.ToString());
+        if (FilterResourceType != null && FilterResourceType.Id == selected.Id)
+        {
+            FilterResourceType = null;
+        }
+        else
+        {
+            FilterResourceType = selected;
+        }
+    }
+}

@@ -40,6 +40,11 @@ public class Role
     public string Description { get; set; }
 
     /// <summary>
+    /// Defines the role as a KeyRole
+    /// </summary>
+    public bool IsKeyRole { get; set; }
+
+    /// <summary>
     /// Urn
     /// e.g altinn:external-role:ccr:daglig-leder
     /// altinn:role:tilgangsstyrer

@@ -5,6 +5,9 @@ using Altinn.AccessMgmt.Persistence.Core.Executors;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Services;
 using Altinn.AccessMgmt.Persistence.Core.Utilities;
+using Altinn.AccessMgmt.Persistence.Core.Utilities.Search;
+using Altinn.AccessMgmt.Persistence.Data.Mock;
+using Altinn.AccessMgmt.Persistence.Services;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.AccessMgmt.Repo.Data;
 using Altinn.Authorization.Host.Startup;
@@ -30,23 +33,18 @@ public static partial class DbAccessHostExtensions
     /// <param name="builder">The host application builder.</param>
     /// <param name="configureOptions">Action to configure database access options.</param>
     /// <returns>The updated host application builder.</returns>
-    public static IHostApplicationBuilder AddDb(this IHostApplicationBuilder builder, Action<AccessMgmtPersistenceOptions> configureOptions)
+    public static IHostApplicationBuilder AddAccessMgmtDb(this IHostApplicationBuilder builder, Action<AccessMgmtPersistenceOptions> configureOptions)
     {
         var options = new AccessMgmtPersistenceOptions();
         configureOptions?.Invoke(options);
 
-        if (builder.Services.Contains(Marker.ServiceDescriptor) || options.Enabled == false)
-        {
-            return builder;
-        }
-
         Log.ConfigureDbType(Logger, options.DbType);
-        builder.ConfigureDb(options.DbType)();
+        builder.ConfigureAccessMgmtDb(options.DbType)();
 
         // Add repository implementations dynamically
         var assembly = Assembly.GetExecutingAssembly();
         var repositoryTypes = assembly.GetTypes()
-            .Where(t => t.IsClass && !t.IsAbstract && t.Name.EndsWith("Repository"))
+            .Where(t => t.IsClass && !t.IsAbstract && t.Namespace == "Altinn.AccessMgmt.Persistence.Repositories" && t.Name.EndsWith("Repository"))
             .ToList();
 
         foreach (var repoType in repositoryTypes)
@@ -58,12 +56,24 @@ public static partial class DbAccessHostExtensions
             }
         }
 
-        builder.Services.AddSingleton<IIngestService, PostgresIngestService>();
         builder.Services.AddSingleton<DbDefinitionRegistry>();
+        builder.Services.AddSingleton(typeof(ISearchCache<>), typeof(SearchCache<>));
+
+        builder.Services.AddSingleton<IConnectionService, ConnectionService>();
+        builder.Services.AddSingleton<IAssignmentService, AssignmentService>();
+        builder.Services.AddSingleton<IDelegationService, DelegationService>();
+        builder.Services.AddSingleton<IPackageService, PackageService>();
+        builder.Services.AddSingleton<IRoleService, RoleService>();
+
+        builder.Services.AddSingleton<IIngestService, PostgresIngestService>();
+        builder.Services.AddSingleton<IDbExecutor, PostgresDbExecutor>();
+        builder.Services.AddSingleton<IDbConverter, DbConverter>();
         builder.Services.AddSingleton<IMigrationService, SqlMigrationService>();
-        builder.Services.AddScoped<DbSchemaMigrationService>();
-        builder.Services.AddScoped<DbDataMigrationService>();
-        //// builder.Services.AddScoped<MockupService>();
+        builder.Services.AddSingleton<DbDefinitionRegistry>();
+        builder.Services.AddSingleton<DbSchemaMigrationService>();
+        builder.Services.AddSingleton<DbDataMigrationService>();
+        builder.Services.AddSingleton<MockDataService>();
+
         builder.Services.Add(Marker.ServiceDescriptor);
 
         return builder;
@@ -75,7 +85,7 @@ public static partial class DbAccessHostExtensions
     /// <param name="builder">The host application builder.</param>
     /// <param name="dbType">The type of database to configure.</param>
     /// <returns>An action to configure the database services.</returns>
-    private static Action ConfigureDb(this IHostApplicationBuilder builder, MgmtDbType dbType) => dbType switch
+    private static Action ConfigureAccessMgmtDb(this IHostApplicationBuilder builder, MgmtDbType dbType) => dbType switch
     {
         MgmtDbType.Postgres => () =>
         {
@@ -97,7 +107,7 @@ public static partial class DbAccessHostExtensions
     /// </summary>
     /// <param name="host">The application host.</param>
     /// <returns>The updated host after applying database changes.</returns>
-    public static async Task<IHost> UseDb(this IHost host)
+    public static async Task<IHost> UseAccessMgmtDb(this IHost host)
     {
         // Make sure migration don't run if DB is not enabled
         if (host.Services.GetService(Marker.Type) == null)
@@ -108,18 +118,18 @@ public static partial class DbAccessHostExtensions
 
         // Add definitions to the database definition registry
         DefineAllModels(host.Services);
-        using (var scope = host.Services.CreateScope())
-        {
-            var migration = scope.ServiceProvider.GetRequiredService<DbSchemaMigrationService>();
-            migration.GenerateAll();
-            await migration.MigrateAll();
 
-            var dbIngest = scope.ServiceProvider.GetRequiredService<DbDataMigrationService>();
-            await dbIngest.IngestAll();
+        var migration = host.Services.GetRequiredService<DbSchemaMigrationService>();
+        migration.GenerateAll();
+        await migration.MigrateAll();
 
-            //// var mockService = scope.ServiceProvider.GetRequiredService<MockupService>();
-            //// await mockService.Run();
-        }
+        var dbIngest = host.Services.GetRequiredService<DbDataMigrationService>();
+        await dbIngest.IngestAll();
+
+        //// TODO: Add FeatureFlag
+        //// var mockService = host.Services.GetRequiredService<MockDataService>();
+        //// await mockService.GenerateBasicData();
+        //// await mockService.GeneratePackageResources();
 
         return host;
     }
@@ -159,7 +169,7 @@ public static partial class DbAccessHostExtensions
         [LoggerMessage(EventId = 0, Level = LogLevel.Debug, Message = "Configuring {dbtype} database for access management")]
         internal static partial void ConfigureDbType(ILogger logger, MgmtDbType dbtype);
 
-        [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = $"Database is not enabled make sure it's initialized by calling IHostApplicationBuilder.AddDb.")]
+        [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = $"Database is not enabled make sure it's initialized by calling IHostApplicationBuilder.AddAccessMgmtDb.")]
         internal static partial void DbNotEnabled(ILogger logger);
     }
 }

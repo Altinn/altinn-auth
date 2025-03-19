@@ -1,0 +1,69 @@
+﻿@page "/entityvariant/{id:guid}"
+@inject IEntityVariantRepository variantData
+@inject IEntityVariantRoleRepository variantRoleData
+
+@if(Variant != null)
+{
+    
+
+<PageTitle>Variant - @Variant.Name</PageTitle>
+
+    <PageHeader>
+        <LeftContent>
+            <BreadcrumbContainer>
+                <BreadcrumbItem Url=@($"/entitytype")>Entity Types</BreadcrumbItem>
+                <BreadcrumbItem Url=@($"/entitytype/{Variant.Type.Id}")>@Variant.Type.Name</BreadcrumbItem>
+                <BreadcrumbItem Url=@($"/entityvariant/{Variant.Id}")>@Variant.Name</BreadcrumbItem>
+            </BreadcrumbContainer>
+            <H1>@Variant.Name | @Variant.Description</H1>
+        </LeftContent>
+        <RightContent>
+           @*  <button @onclick=@(() => Flyouts.ToggleFlyout("edit"))>Edit</button>
+            <button @onclick=@(() => Flyouts.ToggleFlyout("newPackageResource"))>Resource</button>
+            <button @onclick=@(() => Flyouts.ToggleFlyout("newPackageResource"))>Tags</button>
+            <button @onclick=@(() => Flyouts.ToggleFlyout("newPackageResource"))>Translation</button> *@
+        </RightContent>
+    </PageHeader>
+    
+<div>
+    <h2>Roller</h2>
+    @if (Roles != null)
+    {
+            <table class="bf-table  bfc-base-3-bg">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Roles.OrderBy(t => t.Code))
+                {
+                        <tr class="bf-table-row bf-table-row-compact">
+                        <td><a href=@($"/role/{r.Id}")>@r.Name (@r.Code)</a></td>
+                        <td>@r.Description</td>
+                        @* <td><span class="tag" title="Edit" @onclick=@(()=> Flyouts.ToggleFlyout("editRolePackage"))>✎</span></td> *@
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+    }
+</div>
+}
+
+@code {
+
+    [Parameter] public Guid Id { get; set; }
+    public ExtEntityVariant Variant { get; set; }
+    public List<Role> Roles { get; set; }
+
+    protected async override Task OnParametersSetAsync()
+    {
+        var opt = UserData.GetRequestOptions();
+
+        Variant = await variantData.GetExtended(Id, options: opt);
+        Roles = [.. await variantRoleData.GetB(Variant.Id, options: opt) ?? new List<Role>()];
+    }
+
+}

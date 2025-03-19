@@ -120,7 +120,7 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         */
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public string BuildUpsertQuery(List<GenericParameter> parameters, List<GenericFilter> mergeFilter, bool forTranslation = false)
     {
         return BuildMergeQuery(parameters, mergeFilter, forTranslation);
@@ -150,7 +150,11 @@ public class PostgresQueryBuilder : IDbQueryBuilder
             sb.AppendLine(" AND T.language = N.language");
         }
 
-        sb.AppendLine("WHEN MATCHED THEN");
+        sb.AppendLine("WHEN MATCHED");
+
+        sb.AppendLine($"AND ({MergeUpdateMatchStatement(parameters)})");
+
+        sb.AppendLine("THEN");
         sb.AppendLine($"UPDATE SET {UpdateSetStatement(parameters)}");
         sb.AppendLine("WHEN NOT MATCHED THEN");
         sb.AppendLine($"INSERT ({InsertColumns(parameters)}) VALUES({InsertValues(parameters)});");
@@ -299,7 +303,9 @@ public class PostgresQueryBuilder : IDbQueryBuilder
 
         var conditions = new List<string>();
 
-        foreach (var filter in filters)
+        var multiple = filters.CountBy(t => t.PropertyName).Where(t => t.Value > 1).Select(t => t.Key);
+
+        foreach (var filter in filters.Where(t => !multiple.Contains(t.PropertyName)))
         {
             string condition = filter.Comparer switch
             {
@@ -316,6 +322,41 @@ public class PostgresQueryBuilder : IDbQueryBuilder
             };
 
             conditions.Add(condition);
+        }
+
+        foreach (var m in multiple)
+        {
+            var inList = new List<string>();
+            var notInList = new List<string>();
+
+            int a = 1;
+            foreach (var filter in filters.Where(t => t.PropertyName == m))
+            {
+                if (filter.Comparer == FilterComparer.Equals)
+                {
+                    inList.Add($"@{m}_{a}");
+                }
+                else if (filter.Comparer == FilterComparer.NotEqual)
+                {
+                    notInList.Add($"@{m}_{a}");
+                }
+                else
+                {
+                    throw new Exception("Filter not supported");
+                }
+
+                a++;
+            }
+
+            if (inList.Any())
+            {
+                conditions.Add($"{tableAlias}.{m} IN ({string.Join(",", notInList)})");
+            }
+
+            if (notInList.Any())
+            {
+                conditions.Add($"{tableAlias}.{m} NOT IN ({string.Join(",", notInList)})");
+            }
         }
 
         return conditions.Count > 0 ? "WHERE " + string.Join(" AND ", conditions) : string.Empty;
@@ -440,6 +481,15 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         return string.Join(',', values.OrderBy(t => t).Select(t => $"@{t}").ToList());
     }
 
+    private string MergeUpdateMatchStatement(List<GenericParameter> values)
+    {
+        return MergeUpdateMatchStatement(values.Select(t => t.Key));
+    }
+
+    private string MergeUpdateMatchStatement(IEnumerable<string> values)
+    {
+        return string.Join(" OR ", values.OrderBy(t => t).Select(t => $"T.{t} <> @{t}").ToList());
+    }
     #endregion
 
     #region Schema

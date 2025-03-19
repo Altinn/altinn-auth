@@ -1,0 +1,43 @@
+﻿@page "/options"
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+
+@if(Options != null)
+{
+    <h3>Options</h3>
+
+    <input placeholder="Language" @bind-value="@Options.Language" />
+    <input placeholder="AsOf" @bind-value="@Options.AsOf" />
+
+    <button @onclick=SaveOptions>Save</button>
+}
+else
+{
+    <button @onclick=LoadOptions>Load</button>
+}
+
+@code {
+    protected RequestOptions Options { get; set; }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Options == null)
+        {
+            await LoadOptions();
+        }
+    }
+
+    protected async Task LoadOptions()
+    {
+        if (await localStorage.ContainKeyAsync("RequestOptions"))
+        {
+            Options = await localStorage.GetItemAsync<RequestOptions>("RequestOptions") ?? new RequestOptions();
+        }
+        else
+        {
+            Options = new RequestOptions();
+        }
+    }
+
+    protected async Task SaveOptions() => await localStorage.SetItemAsync<RequestOptions>("RequestOptions", Options);
+
+}

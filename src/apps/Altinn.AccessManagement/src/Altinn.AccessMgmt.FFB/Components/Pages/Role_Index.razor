@@ -1,0 +1,93 @@
+﻿@page "/roles"
+@inject IRoleRepository roleData
+@inject IRoleMapRepository roleMapData
+
+<PageTitle>Roles</PageTitle>
+
+@if(Roles != null)
+{
+    <PageHeader>
+        <LeftContent>
+            <BreadcrumbContainer>
+                <BreadcrumbItem Url=@($"/roles")>Roller</BreadcrumbItem>
+            </BreadcrumbContainer>
+            <H1>Roller</H1>
+        </LeftContent>
+        <RightContent>
+            <Input @bind-Value=SearchTerm Placeholder="Search" />
+        </RightContent>
+    </PageHeader>
+
+    @if (Roles != null)
+    {
+        <div>
+            <table class="bf-table bfc-base-3-bg">
+                <thead>
+                    <tr>
+                        <th>Kode</th>
+                        <th>Navn</th>
+                        <th>Kilde</th>
+                        <th>Type</th>
+                        <th>Urn</th>
+                        <th>Beskrivelse</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var role in Filtered.OrderBy(t=>t.Urn))
+                    {
+                        <tr class="bf-table-row bf-table-row-compact">
+                            <td>@role.Code</td>
+                            <td><a href=@($"/role/{role.Id}")>@role.Name</a></td>
+                            <td><a href=@($"/provider/{role.Provider.Id}")>@role.Provider.Name</a></td>
+                            <td><a href=@($"/entitytype/{role.EntityType.Id}")>@role.EntityType.Name</a></td>
+                            <td>@role.Urn</td>
+                            <td>@role.Description</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if(RoleMaps != null)
+    {        
+        <div style="margin-top: 12px;">
+            <H2>Rolle til rolle koblinger</H2>
+
+            <table class="bf-table bfc-base-3-bg">
+                <thead>
+                    <tr>
+                        <th>Har</th>
+                        <th>Gir</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var role in RoleMaps.OrderBy(t => t.HasRole.Code))
+                    {
+                        <tr class="bf-table-row bf-table-row-compact">
+                            <td><a href=@($"/role/{role.HasRole.Id}")>@role.HasRole.Name</a></td>
+                            <td><a href=@($"/role/{role.GetRole.Id}")>@role.GetRole.Name</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@code {
+    public List<ExtRole> Roles { get; set; }
+    public List<ExtRoleMap> RoleMaps { get; set; }
+
+    public string SearchTerm { get; set; } = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var opt = UserData.GetRequestOptions();
+        Roles = [.. await roleData.GetExtended(options: opt) ?? new List<ExtRole>()];
+        RoleMaps = [.. await roleMapData.GetExtended(options: opt) ?? new List<ExtRoleMap>()];
+    }
+
+    List<ExtRole> Filtered => Roles.Where(i => i.Name.ToLower().Contains(SearchTerm.ToLower()) || i.Description.ToLower().Contains(SearchTerm.ToLower())).ToList();
+
+}

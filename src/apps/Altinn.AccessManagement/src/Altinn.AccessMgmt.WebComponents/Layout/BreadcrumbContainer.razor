@@ -1,0 +1,12 @@
+﻿@namespace Altinn.AccessMgmt.WebComponents
+<div class="bf-breadcrumbs">
+    <div>
+        <a href="/"><Icon Name="house"></Icon></a>
+    </div>
+    @ChildContent
+</div>
+
+@code 
+{
+    [Parameter] public RenderFragment ChildContent { get; set; }
+}

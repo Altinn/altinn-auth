@@ -1,0 +1,172 @@
+﻿@page "/profile"
+@inject IEntityRepository entityService
+@inject IAssignmentRepository assignmentService
+@inject IDelegationRepository delegationService
+
+
+<H1>Profile</H1>
+
+<div>
+
+    <H2>Bruker</H2>
+
+    <div style="display: flex; gap: 1rem;">
+        <Input @bind-Value="UserSearchTerm" Placeholder="Søk etter bruker ..."></Input>
+        <Button OnClick="SearchUser">Søk</Button>
+    </div>
+
+    @if(UserSearchResult != null && UserSearchResult.Any())
+    {
+        <RadioGroup @bind-Value=SelectedUserId Key="SelectedUser" Vertical>
+            @foreach(var user in UserSearchResult)
+            {
+                <RadioItem Value=@user.Id.ToString() Compact UseButtonStyle>@user.Name</RadioItem>
+            }
+        </RadioGroup>
+    }
+
+</div>
+
+<hr />
+
+
+<div>
+    <H2>Avgivere</H2>
+    <Button OnClick="GetAvgivere">Last avgivere</Button>
+    @if(Avgivere != null && Avgivere.Any())
+    {
+        <ul>
+            @foreach(var entity in Avgivere)
+            {
+                <li>@entity.Name</li>
+            }
+        </ul>
+    }
+</div>
+
+
+<div>
+    <H2>Rettighetsholdere</H2>
+    <Button OnClick="GetRightHolders">Last rettighetshavere</Button>
+    @if (RightHolders != null && RightHolders.Any())
+    {
+        <ul>
+            @foreach (var entity in RightHolders)
+            {
+                <li>@entity.Name</li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+
+    public string UserSearchTerm { get; set; }
+    public IEnumerable<Entity> UserSearchResult { get; set; }
+    public string SelectedUserId { get; set; }
+
+    private async Task SearchUser()
+    {
+        var filter = entityService.CreateFilterBuilder();
+        filter.Add(t => t.Name, UserSearchTerm, Persistence.Core.Helpers.FilterComparer.Contains);
+        UserSearchResult = await entityService.Get();
+    }
+
+
+    public List<Entity> Avgivere { get; set; }
+    public async Task GetAvgivere()
+    {
+        Avgivere = new List<Entity>();
+        var id = Guid.Parse(SelectedUserId);
+        var self = await entityService.Get(id);
+        var delegations = new List<Delegation>();
+        var delegatedAssignments = new List<ExtAssignment>();
+
+        foreach(var delegation in delegations)
+        {
+            delegatedAssignments.Add(await assignmentService.GetExtended(delegation.FromId));
+        }
+
+
+        Avgivere.Add(self);
+        foreach(var del in delegatedAssignments)
+        {
+            if (!Avgivere.Exists(t => t.Id == del.FromId))
+            {
+                Avgivere.Add(del.From);
+            }
+        }
+
+
+        /*
+         * 
+         * Vis : Self, Assignments (Direct), DelegatedAssignments (Delegated)
+         * 
+         */
+
+        /*
+         * Seg selv
+         * De man har en direkte rolle til (DAGL, STYR, ANSATT, osv)
+         * De man har fått delegert ansvar for via roller
+         * De man har fått delegert via gruppemedlemskap
+         * 
+         * De man har fått en enkel delegering fra (single rights, instance, osv)
+         */
+    }
+
+    public List<Entity> RightHolders { get; set; }
+    public async Task GetRightHolders()
+    {
+        RightHolders = new List<Entity>();
+        var id = Guid.Parse(SelectedUserId);
+        var self = await entityService.Get(id);
+        var delegations = new List<Delegation>();
+        var delegatedAssignments = new List<ExtAssignment>();
+
+        var assignments = await assignmentService.GetExtended(t => t.FromId, id);
+
+        // var groupMemberships = await groupMemberService.Get(t => t.MemberId, id);
+        // foreach (var grp in groupMemberships)
+        // {
+        //     delegations.AddRange(await delegationGroupService.GetA(grp.GroupId));
+        // }
+
+        foreach (var delegation in delegations)
+        {
+            delegatedAssignments.Add(await assignmentService.GetExtended(delegation.FromId));
+        }
+
+
+        RightHolders.Add(self);
+        foreach (var ass in assignments)
+        {
+            if (!RightHolders.Exists(t => t.Id == ass.ToId))
+            {
+                RightHolders.Add(ass.To);
+            }
+        }
+        foreach (var del in delegatedAssignments)
+        {
+            if (!RightHolders.Exists(t => t.Id == del.ToId))
+            {
+                RightHolders.Add(del.To);
+            }
+        }
+
+
+        /*
+         *
+         * Vis : Self, Assignments (Direct), DelegatedAssignments (Delegated)
+         *
+         */
+
+        /*
+         * Seg selv
+         * De man har en direkte rolle til (DAGL, STYR, ANSATT, osv)
+         * De man har fått delegert ansvar for via roller
+         * De man har fått delegert via gruppemedlemskap
+         *
+         * De man har fått en enkel delegering fra (single rights, instance, osv)
+         */
+    }
+}

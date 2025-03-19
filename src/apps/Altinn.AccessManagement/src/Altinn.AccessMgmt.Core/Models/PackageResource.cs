@@ -19,21 +19,6 @@ public class PackageResource
     /// ResourceId
     /// </summary>
     public Guid ResourceId { get; set; }
-
-    /// <summary>
-    /// Read
-    /// </summary>
-    public bool Read { get; set; }
-
-    /// <summary>
-    /// Write
-    /// </summary>
-    public bool Write { get; set; }
-
-    /// <summary>
-    /// Sign
-    /// </summary>
-    public bool Sign { get; set; }
 }
 
 /// <summary>

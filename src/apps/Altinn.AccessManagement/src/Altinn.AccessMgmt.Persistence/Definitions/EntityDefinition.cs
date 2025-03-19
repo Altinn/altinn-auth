@@ -26,10 +26,12 @@ public class EntityDefinition : BaseDbDefinition<Entity>, IDbDefinition
             def.RegisterProperty(t => t.RefId);
             def.RegisterProperty(t => t.TypeId);
             def.RegisterProperty(t => t.VariantId);
+            def.RegisterProperty(t => t.ParentId, nullable: true);
 
             def.RegisterExtendedProperty<ExtEntity, EntityType>(t => t.TypeId, t => t.Id, t => t.Type, cascadeDelete: false);
             def.RegisterExtendedProperty<ExtEntity, EntityVariant>(t => t.VariantId, t => t.Id, t => t.Variant, cascadeDelete: false);
-            
+            def.RegisterExtendedProperty<ExtEntity, Entity>(t => t.ParentId, t => t.Id, t => t.Parent, cascadeDelete: false);
+
             //// def.RegisterUniqueConstraint([t => t.Name, t => t.TypeId, t => t.RefId]);
         });
     }

@@ -19,6 +19,11 @@ public class Delegation
     /// Assignment to delegate to
     /// </summary>
     public Guid ToId { get; set; }
+
+    /// <summary>
+    /// Entity owner of the Delegation
+    /// </summary>
+    public Guid FacilitatorId { get; set; }
 }
 
 /// <summary>
@@ -35,4 +40,10 @@ public class ExtDelegation : Delegation
     /// Assignment to delegate to
     /// </summary>
     public Assignment To { get; set; }
+
+    /// <summary>
+    /// Delegation facilitator
+    /// </summary>
+    public Entity Facilitator { get; set; }
+
 }

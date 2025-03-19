@@ -1,4 +1,3 @@
-using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,15 +5,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.AddDb(opts =>
+builder.AddAccessMgmtDb(opts =>
 {
-    opts.DbType = MgmtDbType.Postgres;
-    opts.Enabled = true;
+    builder.Configuration.GetSection("AccessMgmtPersistenceOptions").Bind(opts);
 });
 
 var app = builder.Build();
 
-await app.UseDb();
+await app.UseAccessMgmtDb();
 
 app.MapAllDefinitionEndpoints();
 

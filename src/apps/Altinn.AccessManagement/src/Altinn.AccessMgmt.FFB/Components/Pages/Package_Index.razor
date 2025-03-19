@@ -1,0 +1,119 @@
+﻿@page "/packages"
+@inject IPackageRepository packageData
+@inject IPackageResourceRepository packageResourceData
+@inject IResourceRepository resourceData
+
+<PageTitle>Tilgangspakker</PageTitle>
+
+<PageHeader>
+    <LeftContent>
+        <BreadcrumbContainer>
+            <BreadcrumbItem Url=@($"/packages")>Tilgangspakker</BreadcrumbItem>
+        </BreadcrumbContainer>
+        <H1>Tilgangspakker</H1>
+    </LeftContent>
+    <RightContent>
+        <Input @bind-Value=SearchTerm Placeholder="Search" />
+        <Switch @bind-Checked=GroupByGroups>Fordel i grupper</Switch>
+    </RightContent>
+</PageHeader>
+
+@if (Packages != null)
+{
+    if (GroupByGroups)
+    {
+        foreach(var area in Packages.Select(t => t.Area).DistinctBy(t => t.Id))
+        {
+            <div>
+
+                <div class="bf-h3" style="display: flex;gap: .5rem;margin-top: 1rem; margin-bottom:.5rem; align-items: center;">
+                    <SvgIcon Path="@area.IconUrl" Small /> @area.Name
+                </div>
+
+                <table class="bf-table bfc-base-3-bg">
+                    <thead>
+                        <tr>
+                            <th>Navn</th>
+                            <th>Beskrivelse</th>
+                            <th style="text-align:center">Delegerbar</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var package in Filtered.Where(t=>t.AreaId == area.Id).OrderBy(t => t.Name))
+                        {
+                            <tr class="bf-table-row bf-table-row-compact">
+                                <td><a href=@($"/package/{package.Id}")>@package.Name</a></td>
+                                <td>@package.Description</td>
+                                <td style="text-align:center">
+                                    @if (package.IsAssignable)
+                                    {
+                                        <Icon Name="square-check"></Icon>
+                                    }
+                                    else
+                                    {
+                                        <Icon Name="ban"></Icon>
+                                    }
+                                </td>
+                                <td><a href=@($"/entitytype/{package.EntityType.Id}")>@package.EntityType.Name</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+    else
+    {
+        <div>
+            <table class="bf-table bfc-base-3-bg">
+                <thead>
+                    <tr>
+                        <th>Område</th>
+                        <th>Navn</th>
+                        <th>Beskrivelse</th>
+                        <th style="text-align:center">Delegerbar</th>
+                        <th>Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var package in Filtered.OrderBy(t => t.Name))
+                    {
+                        <tr class="bf-table-row bf-table-row-compact">
+                            <td title="@package.Area.Name"><a href=@($"/area/{package.Area.Id}")><SvgIcon Path="@package.Area.IconUrl" Small /></a></td>
+                            <td><a href=@($"/package/{package.Id}")>@package.Name</a></td>
+                            <td>@package.Description</td>
+                            <td style="text-align:center">
+                                @if (package.IsAssignable)
+                                {
+                                    <Icon Name="square-check"></Icon>
+                                }
+                                else
+                                {
+                                    <Icon Name="ban"></Icon>
+                                }
+                            </td>
+                            <td><a href=@($"/entitytype/{package.EntityType.Id}")>@package.EntityType.Name</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+
+@code {
+
+    public List<ExtPackage> Packages { get; set; }
+    public string SearchTerm { get; set; } = "";
+    public bool GroupByGroups { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var opt = UserData.GetRequestOptions();
+        Packages = [.. await packageData.GetExtended(options: opt) ?? new List<ExtPackage>()];
+    }
+
+    List<ExtPackage> Filtered => Packages.Where(i => i.Name.ToLower().Contains(SearchTerm.ToLower()) || i.Description.ToLower().Contains(SearchTerm.ToLower())).ToList();
+}

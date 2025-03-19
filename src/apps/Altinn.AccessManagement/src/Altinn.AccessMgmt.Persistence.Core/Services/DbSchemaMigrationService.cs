@@ -32,18 +32,16 @@ public class DbSchemaMigrationService
         this.migrationService = migrationService;
     }
 
-    private async Task PreMigration()
+    private async Task PreMigration(CancellationToken cancellationToken = default)
     {
         var config = this.options.Value;
-        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseSchema};", new List<GenericParameter>());
-        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationSchema};", new List<GenericParameter>());
-        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseHistorySchema};", new List<GenericParameter>());
-        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationHistorySchema};", new List<GenericParameter>());
-
-        await Task.CompletedTask;
+        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseSchema};", new List<GenericParameter>(), cancellationToken);
+        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationSchema};", new List<GenericParameter>(), cancellationToken);
+        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseHistorySchema};", new List<GenericParameter>(), cancellationToken);
+        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationHistorySchema};", new List<GenericParameter>(), cancellationToken);
     }
 
-    private async Task PostMigration()
+    private async Task PostMigration(CancellationToken cancellationToken = default)
     {
         var config = this.options.Value;
 
@@ -69,16 +67,16 @@ public class DbSchemaMigrationService
     /// MigrateAll
     /// </summary>
     /// <returns></returns>
-    public async Task MigrateAll()
+    public async Task MigrateAll(CancellationToken cancellationToken = default)
     {
         if (Scripts.Count == 0)
         {
             throw new Exception("Nothing to migrate. Remember to generate first.");
         }
 
-        await PreMigration();
-        await ExecuteMigration();
-        await PostMigration();
+        await PreMigration(cancellationToken: cancellationToken);
+        await ExecuteMigration(cancellationToken: cancellationToken);
+        await PostMigration(cancellationToken: cancellationToken);
     }
 
     /// <summary>

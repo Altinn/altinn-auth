@@ -1,0 +1,15 @@
+﻿<div class="pageHeader">
+    <div>
+        @LeftContent
+    </div>
+    <div style="display: flex;gap: .5rem;">
+        @RightContent
+    </div>
+</div>
+@code {
+
+    [Parameter] public RenderFragment LeftContent { get; set; }
+    [Parameter] public RenderFragment RightContent { get; set; }
+
+
+}

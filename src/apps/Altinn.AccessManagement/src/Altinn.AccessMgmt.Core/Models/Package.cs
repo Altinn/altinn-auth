@@ -36,7 +36,12 @@ public class Package
     public string Description { get; set; }
 
     /// <summary>
-    /// IsDelegable
+    /// Can be assigned
+    /// </summary>
+    public bool IsAssignable { get; set; }
+
+    /// <summary>
+    /// Can be delegate
     /// </summary>
     public bool IsDelegable { get; set; }
 

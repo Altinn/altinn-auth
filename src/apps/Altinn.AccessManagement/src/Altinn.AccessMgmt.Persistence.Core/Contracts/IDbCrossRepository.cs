@@ -30,6 +30,18 @@ public interface IDbCrossRepository<T, TExtended, TA, TB> : IDbExtendedRepositor
     Task<IEnumerable<TA>> GetA(Guid id, RequestOptions options = null, List<GenericFilter> filters = null, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves a collection of related entities of type <typeparamref name="TA"/> that are associated 
+    /// with the primary entity of type <typeparamref name="T"/> through the cross-reference table.
+    /// </summary>
+    /// <param name="filters">A collection of generic filters used to refine the query results.</param>
+    /// <param name="options">The request options that specify query parameters such as pagination, sorting, or language preferences.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the collection of related entities of type <typeparamref name="TA"/>.
+    /// </returns>
+    Task<IEnumerable<TA>> GetA(List<GenericFilter> filters, RequestOptions options = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Retrieves a collection of related entities of type <typeparamref name="TB"/> that are associated 
     /// with the primary entity of type <typeparamref name="T"/> through the cross-reference table.
     /// </summary>
@@ -41,6 +53,18 @@ public interface IDbCrossRepository<T, TExtended, TA, TB> : IDbExtendedRepositor
     /// A task that represents the asynchronous operation. The task result contains the collection of related entities of type <typeparamref name="TB"/>.
     /// </returns>
     Task<IEnumerable<TB>> GetB(Guid id, RequestOptions options = null, List<GenericFilter> filters = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a collection of related entities of type <typeparamref name="TB"/> that are associated 
+    /// with the primary entity of type <typeparamref name="T"/> through the cross-reference table.
+    /// </summary>
+    /// <param name="filters">A collection of generic filters used to refine the query results.</param>
+    /// <param name="options">The request options that specify query parameters such as pagination, sorting, or language preferences.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the collection of related entities of type <typeparamref name="TB"/>.
+    /// </returns>
+    Task<IEnumerable<TB>> GetB(List<GenericFilter> filters, RequestOptions options = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Create a cross-reference between two entities.

@@ -1,0 +1,30 @@
+﻿@namespace Altinn.AccessMgmt.WebComponents
+
+<div class="bfl-grid bf-grid" style=@Style>
+    @ChildContent
+</div>
+
+@code {
+#pragma warning disable BL0007
+
+    [Parameter] public RenderFragment ChildContent { get; set; }
+
+    private int? _small { get; set; }
+
+    [Parameter] public int Small { get { return _small ?? 1; } set { _small = value; } }
+    
+    private int? _medium { get; set; }
+    [Parameter] public int Medium { get { return _medium ?? Small; } set { _medium = value; } }
+    
+    private int? _large { get; set; }
+    [Parameter] public int Large { get { return _large ?? Medium; } set { _large = value; } }
+
+    private int? _big { get; set; }
+    [Parameter] public int Big { get { return _big ?? Large; } set { _big = value; } }
+
+    private int? _huge { get; set; }
+    [Parameter] public int Huge { get { return _huge ?? Big; } set { _huge = value; } }
+
+    public string Style => $"--bf-grid-cols: {Small}; --bf-grid-s-cols: {Small}; --bf-grid-m-cols: {Medium}; --bf-grid-l-cols: {Large}; --bf-grid-xl-cols: {Big}; --bf-grid-xxl-cols: {Huge};";
+#pragma warning restore BL0007
+}

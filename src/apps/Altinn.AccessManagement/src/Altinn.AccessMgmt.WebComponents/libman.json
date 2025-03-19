@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "defaultProvider": "unpkg",
+  "libraries": [
+    {
+      "provider": "unpkg",
+      "library": "@intility/bifrost-css@latest",
+      "destination": "wwwroot/css/bifrost/",
+      "files": [
+        "dist/bifrost-all.css",
+        "dist/bifrost-base.css",
+        "dist/bifrost-breakpoints.css",
+        "dist/bifrost-bundle.css",
+        "dist/bifrost-colors.css",
+        "dist/bifrost-components.css",
+        "dist/bifrost-layout.css",
+        "dist/font-imports.css"
+      ]
+    }
+  ]
+}

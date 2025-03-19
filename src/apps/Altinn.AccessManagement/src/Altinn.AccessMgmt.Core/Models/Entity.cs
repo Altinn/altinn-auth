@@ -29,6 +29,11 @@ public class Entity
     /// RefId
     /// </summary>
     public string RefId { get; set; }
+
+    /// <summary>
+    /// Parent identifier
+    /// </summary>
+    public Guid? ParentId { get; set; }
 }
 
 /// <summary>
@@ -45,4 +50,9 @@ public class ExtEntity : Entity
     /// Variant
     /// </summary>
     public EntityVariant Variant { get; set; }
+
+    /// <summary>
+    /// Parent
+    /// </summary>
+    public Entity Parent { get; set; }
 }

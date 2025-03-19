@@ -1,0 +1,9 @@
+﻿<input @bind-value="Value" @bind-value:event="oninput" @bind-value:after="After" />
+
+@code {
+
+    [Parameter] public string Value { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public Action After { get; set; }
+
+}

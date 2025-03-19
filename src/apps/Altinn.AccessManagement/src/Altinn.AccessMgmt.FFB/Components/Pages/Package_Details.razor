@@ -1,0 +1,151 @@
+﻿@page "/package/{id:guid}"
+@inject IPackageRepository packageData
+@inject IPackageResourceRepository packageResourceService
+@inject IRolePackageRepository rolePackageService
+@inject IAreaGroupRepository areaGroupData
+
+@if(Package != null)
+{
+    <PageTitle>Package - @Package.Name</PageTitle>
+    
+    <PageHeader>
+        <LeftContent>
+            <BreadcrumbContainer>
+                <BreadcrumbItem Url="/packages">Tilgangspakker</BreadcrumbItem>
+                <BreadcrumbItem Url=@($"/areagroup/{Package.Area.GroupId}")>@(GetAreaGroup(Package.Area.GroupId).Name)</BreadcrumbItem>
+                <BreadcrumbItem Url=@($"/area/{Package.Area.Id}")>@Package.Area.Name</BreadcrumbItem>
+                <BreadcrumbItem Url=@($"/packages/{Package.Id}")>@Package.Name</BreadcrumbItem>
+            </BreadcrumbContainer>
+            <H1><SvgIcon Path="@Package.Area.IconUrl"></SvgIcon> @Package.Name</H1>
+            <p>@Package.Description</p>
+        </LeftContent>
+        <RightContent>
+            <ButtonGroup>
+                <Button OnClick=@(() => IsEditPackageOpen = !IsEditPackageOpen )>Edit</Button>
+                <Button OnClick=@(() => IsEditPackageOpen = !IsEditPackageOpen )>Resource</Button>
+                <Button OnClick=@(() => IsEditPackageOpen = !IsEditPackageOpen )>Tags</Button>
+                <Button OnClick=@(() => IsEditPackageOpen = !IsEditPackageOpen )>Translation</Button>
+            </ButtonGroup>
+        </RightContent>
+    </PageHeader>
+        
+
+    <Grid Medium="2">
+
+
+        @if (RolePolicies != null)
+        {
+            <div>
+                <h2>Roller</h2>
+                <p>Denne tilgangspakken blir tildelt følgende rolle automatisk</p>
+                <table class="bf-table bfc-base-3-bg">
+                    <thead>
+                        <tr>
+                            <th>Rolle</th>
+                            <th>Kan delegere</th>
+                            <th>Har tilgang</th>
+                            <th>&nbsp;</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in RolePolicies.OrderBy(t => t.Role.Code))
+                        {
+                            <tr class="bf-table-row bf-table-row-compact">
+                                <td><a href=@($"/role/{r.Role.Id}")>@r.Role.Name (@r.Role.Code)</a></td>
+                                <td>
+                                    @if (r.CanDelegate)
+                                    {
+                                        <Icon Name="square-check"></Icon>
+                                    }
+                                    else
+                                    {
+                                        <Icon Name="ban"></Icon>
+                                    }
+                                </td>
+                                <td>
+                                    @if (r.HasAccess)
+                                    {
+                                        <Icon Name="square-check"></Icon>
+                                    }
+                                    else
+                                    {
+                                        <Icon Name="ban"></Icon>
+                                    }
+                                </td>
+                                <td><Button Variant="Button.ButtonVariant.Flat" OnClick=@(()=> IsEditPackageOpen = !IsEditPackageOpen)><Icon Name="pencil"></Icon></Button></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (Resources != null)
+        {
+            <div>
+                <h2>Ressurser</h2>
+                <p>Ressurser koblet til denne tilgangspakken</p>
+
+                <table class="bf-table bfc-base-3-bg">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Resources.OrderBy(t => t.Resource.Name))
+                        {
+                            <tr class="bf-table-row bf-table-row-compact">
+                                <td>
+                                    <a href=@($"/resource/{r.Resource.Id}")>@r.Resource.Name</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+    </Grid>
+  
+    <Drawer Title="Add resource to package" @bind-IsOpen=IsAddResourceOpen>
+        <Button Variant="Button.ButtonVariant.Filled">Legg til</Button>
+    </Drawer>
+
+
+    <Drawer Title="Edit package" @bind-IsOpen=IsEditPackageOpen>
+        <Input Title="Name" Description="Unikt navn for package" Placeholder="Name" />
+        <Button Variant="Button.ButtonVariant.Filled">Save</Button>
+    </Drawer>
+
+
+}
+
+@code {
+
+    [Parameter] public Guid Id { get; set; }
+    public ExtPackage Package { get; set; }
+    public IEnumerable<ExtPackageResource> Resources { get; set; }
+    public IEnumerable<ExtRolePackage> RolePolicies { get; set; }
+    public List<AreaGroup> AreaGroups { get; set; }
+
+    public bool IsAddResourceOpen { get; set; }
+    public bool IsEditPackageOpen { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var opt = UserData.GetRequestOptions();
+        Package = await packageData.GetExtended(Id, options: opt);
+        Resources = await packageResourceService.GetExtended(t => t.PackageId, Package.Id, options: opt);
+        RolePolicies = await rolePackageService.GetExtended(t => t.PackageId, Package.Id, options: opt);
+        AreaGroups = [.. await areaGroupData.Get(options: opt) ?? new List<AreaGroup>()];
+
+    }
+
+    private AreaGroup GetAreaGroup(Guid id)
+    {
+        return AreaGroups.First(t => t.Id == id) ?? null;
+    }
+
+}
+

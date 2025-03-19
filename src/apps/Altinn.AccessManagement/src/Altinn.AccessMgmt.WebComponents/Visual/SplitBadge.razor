@@ -1,0 +1,44 @@
+﻿@namespace Altinn.AccessMgmt.WebComponents
+<span class="bf-split-badge">
+    <span class="bf-split-badge-key bfc-dimmed-bg" title="@Key">@Key</span>
+    <span class="bf-split-badge-value @ClassStyle()" title=@Value>@Value</span>
+</span>
+@code {
+    public enum BadgeState { Theme, Success, Warning, Alert, Attn, Chill, Dimmed };
+
+    [Parameter] public string Key { get; set; }
+    [Parameter] public string Value { get; set; }
+    [Parameter] public BadgeState State { get; set; } = BadgeState.Theme;
+    [Parameter] public bool Inverted { get; set; }
+
+    public string ClassStyle()
+    {
+        string res = "";
+        switch (State)
+        {
+            case BadgeState.Theme:
+                res += Inverted ? " bfc-theme-bg" : " bfc-theme-fade-bg";
+                break;
+            case BadgeState.Success:
+                res += Inverted ? " bfc-success-bg" : " bfc-success-fade-bg";
+                break;
+            case BadgeState.Warning:
+                res += Inverted ? " bfc-warning-bg" : " bfc-warning-fade-bg";
+                break;
+            case BadgeState.Alert:
+                res += Inverted ? " bfc-alert-bg" : " bfc-alert-fade-bg";
+                break;
+            case BadgeState.Attn:
+                res += Inverted ? " bfc-base-c-attn-bg" : " bfc-attn-c-bg";
+                break;
+            case BadgeState.Chill:
+                res += Inverted ? " bfc-base-c-chill-bg" : " bfc-chill-c-bg";
+                break;
+            case BadgeState.Dimmed:
+                res += Inverted ? " bfc-base-c-2-bg" : " bfc-dimmed-bg";
+                break;
+        }
+
+        return res;
+    }
+}

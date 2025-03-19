@@ -1,0 +1,195 @@
+/* #region scren/viewport media queries */
+@media (max-width: 599.9px) {
+  .from-small {
+    display: none !important;
+  }
+}
+@media (min-width: 600px) {
+  .to-small {
+    display: none !important;
+  }
+}
+@media (max-width: 959.9px) {
+  .from-medium {
+    display: none !important;
+  }
+}
+@media (min-width: 960px) {
+  .to-medium {
+    display: none !important;
+  }
+}
+@media (max-width: 1279.9px) {
+  .from-large {
+    display: none !important;
+  }
+}
+@media (min-width: 1280px) {
+  .to-large {
+    display: none !important;
+  }
+}
+@media (max-width: 1599.9px) {
+  .from-xl {
+    display: none !important;
+  }
+}
+@media (min-width: 1600px) {
+  .to-xl {
+    display: none !important;
+  }
+}
+@media (max-width: 1919.9px) {
+  .from-xxl {
+    display: none !important;
+  }
+}
+@media (min-width: 1920px) {
+  .to-xxl {
+    display: none !important;
+  }
+}
+/* #endregion */
+/* #region container queries */
+@supports (container-type: inline-size) {
+  :where(.bf-container) {
+    container-name: bf-container;
+    container-type: inline-size;
+  }
+  @container bf-container (width < 300px) {
+    .from-xs-container {
+      display: none !important;
+    }
+  }
+  @container bf-container (300px <= width) {
+    .to-xs-container {
+      display: none !important;
+    }
+  }
+  @container bf-container (width < 600px) {
+    .from-s-container,
+    .from-small-container {
+      display: none !important;
+    }
+  }
+  @container bf-container (600px <= width) {
+    .to-s-container,
+    .to-small-container {
+      display: none !important;
+    }
+  }
+  @container bf-container (width < 960px) {
+    .from-m-container,
+    .from-medium-container {
+      display: none !important;
+    }
+  }
+  @container bf-container (960px <= width) {
+    .to-m-container,
+    .to-medium-container {
+      display: none !important;
+    }
+  }
+  @container bf-container (width < 1280px) {
+    .from-l-container,
+    .from-large-container {
+      display: none !important;
+    }
+  }
+  @container bf-container (1280px <= width) {
+    .to-l-container,
+    .to-large-container {
+      display: none !important;
+    }
+  }
+  @container bf-container (width < 1600px) {
+    .from-xl-container {
+      display: none !important;
+    }
+  }
+  @container bf-container (1600px <= width ) {
+    .to-xl-container {
+      display: none !important;
+    }
+  }
+  @container bf-container (width < 1920px) {
+    .from-xxl-container {
+      display: none !important;
+    }
+  }
+  @container bf-container (1920px <= width) {
+    .to-xxl-container {
+      display: none !important;
+    }
+  }
+}
+/* fall back to media queries if container queries are not supported */
+@supports not (container-type: inline-size) {
+  @media (max-width: 299.9px) {
+    .from-xs-container {
+      display: none !important;
+    }
+  }
+  @media (min-width: 300px) {
+    .to-xs-container {
+      display: none !important;
+    }
+  }
+  @media (max-width: 599.9px) {
+    .from-s-container,
+    .from-small-container {
+      display: none !important;
+    }
+  }
+  @media (min-width: 600px) {
+    .to-s-container,
+    .to-small-container {
+      display: none !important;
+    }
+  }
+  @media (max-width: 959.9px) {
+    .from-m-container,
+    .from-medium-container {
+      display: none !important;
+    }
+  }
+  @media (min-width: 960px) {
+    .to-m-container,
+    .to-medium-container {
+      display: none !important;
+    }
+  }
+  @media (max-width: 1279.9px) {
+    .from-l-container,
+    .from-large-container {
+      display: none !important;
+    }
+  }
+  @media (min-width: 1280px) {
+    .to-l-container,
+    .to-large-container {
+      display: none !important;
+    }
+  }
+  @media (max-width: 1599.9px) {
+    .from-xl-container {
+      display: none !important;
+    }
+  }
+  @media (min-width: 1600px) {
+    .to-xl-container {
+      display: none !important;
+    }
+  }
+  @media (max-width: 1919.9px) {
+    .from-xxl-container {
+      display: none !important;
+    }
+  }
+  @media (min-width: 1920px) {
+    .to-xxl-container {
+      display: none !important;
+    }
+  }
+}
+/* #endregion */

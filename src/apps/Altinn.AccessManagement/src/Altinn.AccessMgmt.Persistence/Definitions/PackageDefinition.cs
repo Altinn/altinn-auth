@@ -25,7 +25,8 @@ public class PackageDefinition : BaseDbDefinition<Package>, IDbDefinition
             def.RegisterProperty(t => t.Name);
             def.RegisterProperty(t => t.Description);
             def.RegisterProperty(t => t.Urn);
-            def.RegisterProperty(t => t.IsDelegable);
+            def.RegisterProperty(t => t.IsAssignable, defaultValue: "false");
+            def.RegisterProperty(t => t.IsDelegable, defaultValue: "false");
             def.RegisterProperty(t => t.HasResources);
             def.RegisterProperty(t => t.ProviderId);
             def.RegisterProperty(t => t.EntityTypeId);

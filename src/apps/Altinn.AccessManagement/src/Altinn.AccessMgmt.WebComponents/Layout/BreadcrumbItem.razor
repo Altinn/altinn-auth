@@ -1,0 +1,10 @@
+﻿@namespace Altinn.AccessMgmt.WebComponents
+<div class="bf-breadcrumb-separator">/</div>
+<div>
+    <a href=@Url>@ChildContent</a>
+</div>
+
+@code {
+    [Parameter] public string Url { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+}

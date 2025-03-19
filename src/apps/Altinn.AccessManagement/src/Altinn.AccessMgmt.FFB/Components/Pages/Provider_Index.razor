@@ -1,0 +1,48 @@
+﻿@page "/providers"
+@inject IProviderRepository providerData
+
+<PageTitle>Providers</PageTitle>
+
+@if(Providers != null)
+{
+    <PageHeader>
+        <LeftContent>
+            <BreadcrumbContainer>
+                <BreadcrumbItem Url="/providers">Providers</BreadcrumbItem>
+            </BreadcrumbContainer>
+            <H1>Providers</H1>
+        </LeftContent>
+        <RightContent>
+            <input @bind="SearchTerm" @bind:event="oninput" placeholder="Search" />
+        </RightContent>
+    </PageHeader>
+
+    <hr />
+
+    <Accordion>
+        @foreach (var provider in FilteredProviders)
+        {
+            <ListItem Title="@provider.Name" Url=@($"/provider/{provider.Id}")></ListItem>
+        }
+    </Accordion>
+}
+
+
+
+@code {
+
+    public List<Provider> Providers { get; set; }
+    public string SearchTerm { get; set; } = "";
+
+    List<Provider> FilteredProviders => Providers.Where(i => i.Name.ToLower().Contains(SearchTerm.ToLower())).ToList();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        //using var a = Telemetry.StartActivity<Provider>("Index");
+        var opt = UserData.GetRequestOptions();
+
+        Providers = [.. await providerData.Get(options: opt) ?? new List<Provider>()];
+       // a.Stop();
+    }
+}

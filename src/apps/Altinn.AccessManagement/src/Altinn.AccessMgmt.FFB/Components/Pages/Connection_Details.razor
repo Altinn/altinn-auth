@@ -1,0 +1,299 @@
+﻿@page "/connection/{Id:guid}"
+@inject IConnectionService connectionService
+@inject IConnectionRepository connectionRepository
+@inject IConnectionPackageRepository connectionPackageRepository
+@inject IConnectionResourceRepository connectionResourceRepository
+@inject IAssignmentRepository assignmentRepository
+@inject IDelegationRepository delegationRepository
+@inject IAssignmentPackageRepository assignmentPackageRepository
+
+<PageTitle>Tildeling</PageTitle>
+
+@if(Connection != null)
+{
+    <PageHeader>
+        <LeftContent>
+            <BreadcrumbContainer>
+                <BreadcrumbItem Url=@($"/entity/{Connection.From.Id}")>@Connection.From.Name</BreadcrumbItem>
+                <BreadcrumbItem Url=@($"/entity/{Connection.To.Id}")>@Connection.To.Name</BreadcrumbItem>
+            </BreadcrumbContainer>
+            @if (IsDelegation)
+            {
+                <H1>Delegering</H1>
+                <p><Icon Name="circle-info"></Icon> <strong>@Connection.From.Name</strong> har satt opp <strong>@Connection.Facilitator.Name</strong> med rollen <strong>@Connection.Role.Name</strong>. <strong>@Connection.Facilitator.Name</strong> har delegert dette videre til <strong>@Connection.To.Name</strong> med rollen <strong>@Connection.FacilitatorRole.Name</strong></p>
+            }
+            else
+            {
+                <H1>Tildeling</H1>
+                <p><Icon Name="circle-info"></Icon> <strong>@Connection.From.Name</strong> har satt opp <strong>@Connection.To.Name</strong> med rollen <strong>@Connection.Role.Name</strong>.</p>
+            }
+        </LeftContent>
+        <RightContent>
+            <ButtonGroup>
+                <Button>Ny delegering</Button>
+                @*<Button OnClick=@(() => CreateAssignmentPackageModalIsOpen = !CreateAssignmentPackageModalIsOpen)>Gi pakke</Button>
+                <Button OnClick=@(() => CreateAssignmentResourceModalIsOpen = !CreateAssignmentResourceModalIsOpen)>Gi ressurs</Button> *@
+            </ButtonGroup>
+        </RightContent>
+    </PageHeader>
+
+
+    @if (IsDelegation)
+    {
+        <div>
+            <VerticalTable>
+                <VerticalTableCell Title="From"><a href=@($"/entity/{Connection.From.Id}")>@Connection.From.Name</a></VerticalTableCell>
+                <VerticalTableCell Title="Role"><a href=@($"/role/{Connection.Role.Id}")>@Connection.Role.Name</a></VerticalTableCell>
+                <VerticalTableCell Title="Facilitator"><a href=@($"/entity/{Connection.Facilitator.Id}")>@Connection.Facilitator.Name</a></VerticalTableCell>
+                <VerticalTableCell Title="Facilitator Role"><a href=@($"/role/{Connection.FacilitatorRole.Id}")>@Connection.FacilitatorRole.Name</a></VerticalTableCell>
+                <VerticalTableCell Title="To"><a href=@($"/entity/{Connection.To.Id}")>@Connection.To.Name</a></VerticalTableCell>
+            </VerticalTable>
+        </div>
+    }
+    else
+    {
+        <div>
+            <VerticalTable>
+                <VerticalTableCell Title="From"><a href=@($"/entity/{Connection.From.Id}")>@Connection.From.Name</a></VerticalTableCell>
+                <VerticalTableCell Title="Role"><a href=@($"/role/{Connection.Role.Id}")>@Connection.Role.Name</a></VerticalTableCell>
+                <VerticalTableCell Title="To"><a href=@($"/entity/{Connection.To.Id}")>@Connection.To.Name</a></VerticalTableCell>
+            </VerticalTable>
+        </div>
+    }
+
+    <Grid>
+
+        @if(Packages != null && Packages.Any())
+        {
+            <div>
+                <H2>Packages</H2>
+                <SimpleTable>
+                    <Head>
+                        <SimpleTableRow IsHeaderRow>
+                            <th>Name</th>
+                            <th>IsDelegable</th>
+                            <th>Urn</th>
+                            @if (IsDelegation)
+                            {
+                                <th>Action</th>
+                            }
+                        </SimpleTableRow>
+                    </Head>
+                    <Body>
+                        @foreach (var package in SourcePackages)
+                        {
+                            <SimpleTableRow>
+                                <td>@package.Name</td>
+                                <td>@package.IsDelegable</td>
+                                <td>@package.Urn</td>
+                                @if (IsDelegation)
+                                {
+                                    <td>
+                                        @if(Packages.Count(t=>t.Id == package.Id) == 1)
+                                        {
+                                            <Button State="Button.ButtonState.Alert" Variant="Button.ButtonVariant.Filled">Remove</Button>
+                                        }
+                                        else
+                                        {
+                                            <Button State="Button.ButtonState.Inverted" Variant="Button.ButtonVariant.Filled">Add</Button>
+                                        }
+                                    </td>
+                                }
+                            </SimpleTableRow>
+                        }
+                    </Body>
+                </SimpleTable>
+            </div>
+        }
+
+        @if (Resources != null && Resources.Any())
+        {
+            <div>
+                <SimpleTable>
+                    <Head>
+                        <SimpleTableRow IsHeaderRow>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Type</th>
+                            <th>Provider</th>
+                        </SimpleTableRow>
+                    </Head>
+                    <Body>
+                        @foreach (var resource in Resources)
+                        {
+                            <SimpleTableRow>
+                                <td>@resource.Name</td>
+                                <td>@resource.Description</td>
+                                <td>@resource.TypeId</td>
+                                <td>@resource.ProviderId</td>
+                            </SimpleTableRow>
+                        }
+                    </Body>
+                </SimpleTable>
+            </div>
+        }
+
+        @if (ClientDelegations != null && ClientDelegations.Any())
+        {
+            <div>
+                <H2>Clients</H2>
+                <SimpleTable>
+                    <Head>
+                        <SimpleTableRow IsHeaderRow>
+                            <th>From</th>
+                            <th>Role</th>
+                            <th>To</th>
+                            <th>&nbsp;</th>
+                        </SimpleTableRow>
+                    </Head>
+                    <Body>
+                        @foreach (var delegation in ClientDelegations)
+                        {
+                            <SimpleTableRow>
+                               @*  <td>
+                                    @if (IsDelegation)
+                                    {
+                                        <Icon Name="arrow-right-to-arc"></Icon>
+                                    }
+                                    else
+                                    {
+                                        <Icon Name="arrow-down-to-arc"></Icon>
+                                    }
+                                </td> *@
+                                <td><EntityTypeIcon Name="@delegation.From.Type" /> <a href=@($"/entity/{delegation.From.Id}")>@delegation.From.Name</a></td>
+                                @if (delegation.FacilitatorRole == null)
+                                {
+                                    <td><Badge Inverted>@delegation.Role.Name</Badge></td>
+                                }
+                                else
+                                {
+                                    if (delegation.Facilitator == null)
+                                    {
+                                        <td><SplitBadge Inverted Key=@delegation.FacilitatorRole.Name Value=@delegation.Role.Name></SplitBadge></td>
+                                    }
+                                    else
+                                    {
+                                        <td><SplitBadge Inverted Key=@delegation.Role.Name Value=@delegation.FacilitatorRole.Name></SplitBadge></td>
+                                    }
+                                }
+                                <td><EntityTypeIcon Name="@delegation.To.Type" /> <a href=@($"/entity/{delegation.To.Id}")>@delegation.To.Name</a></td>
+                                <td><a href=@($"/connection/{delegation.Id}")><Icon Name="arrow-up-right-from-square"></Icon></a></td>
+                            </SimpleTableRow>
+                        }
+                    </Body>
+                </SimpleTable>
+            </div>
+        }
+
+        @if (AgentDelegations != null && AgentDelegations.Any())
+        {
+            <div>
+                <H2>Agents</H2>
+                <SimpleTable>
+                    <Head>
+                        <SimpleTableRow IsHeaderRow>
+                            <th>From</th>
+                            <th>Role</th>
+                            <th>To</th>
+                            <th>&nbsp;</th>
+                        </SimpleTableRow>
+                    </Head>
+                    <Body>
+                        @foreach (var delegation in AgentDelegations)
+                        {
+                            <SimpleTableRow>
+                                <td><EntityTypeIcon Name="@delegation.From.Type" /> <a href=@($"/entity/{delegation.From.Id}")>@delegation.From.Name</a></td>
+                                @if (delegation.FacilitatorRole == null)
+                                {
+                                    <td><Badge Inverted>@delegation.Role.Name</Badge></td>
+                                }
+                                else
+                                {
+                                    if (delegation.Facilitator == null)
+                                    {
+                                        <td><SplitBadge Inverted Key=@delegation.FacilitatorRole.Name Value=@delegation.Role.Name></SplitBadge></td>
+                                    }
+                                    else
+                                    {
+                                        <td><SplitBadge Inverted Key=@delegation.Role.Name Value=@delegation.FacilitatorRole.Name></SplitBadge></td>
+                                    }
+                                }
+                                <td><EntityTypeIcon Name="@delegation.To.Type" /> <a href=@($"/entity/{delegation.To.Id}")>@delegation.To.Name</a></td>
+                                <td><a href=@($"/connection/{delegation.Id}")><Icon Name="arrow-up-right-from-square"></Icon></a></td>
+                            </SimpleTableRow>
+                        }
+                    </Body>
+                </SimpleTable>
+            </div>
+        }
+
+    </Grid>
+
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    public ExtConnection Connection { get; set; }
+    public Assignment Assignment { get; set; }
+    public Delegation Delegation { get; set; }
+
+    public IEnumerable<Package> Packages { get; set; }
+    public IEnumerable<Resource> Resources { get; set; }
+
+    public IEnumerable<Package> SourcePackages { get; set; }
+
+    public bool IsDelegation { get; set; }
+
+    public List<ExtConnection> AgentDelegations { get; set; } = new();
+    public List<ExtConnection> ClientDelegations { get; set; } = new();
+
+    protected async override Task OnParametersSetAsync()
+    {
+        Connection = await connectionService.Get(Id);
+        Assignment = await assignmentRepository.Get(Id);
+        Delegation = await delegationRepository.Get(Id);
+
+        IsDelegation = Delegation != null;
+
+        Packages = await connectionService.GetPackages(Id); // connectionPackageRepository.GetB(Id);
+        Resources = await connectionService.GetResources(Id); // connectionResourceRepository.GetB(Id);
+
+        var sourceFilter = assignmentRepository.CreateFilterBuilder();
+        sourceFilter.Equal(t => t.FromId, Connection.From.Id);
+        sourceFilter.Equal(t => t.RoleId, Connection.Role.Id);
+        if (IsDelegation)
+        {
+            sourceFilter.Equal(t => t.ToId, Connection.Facilitator.Id);
+        }
+        else
+        {
+            sourceFilter.Equal(t => t.ToId, Connection.To.Id);
+        }
+        var sourceAssignment = (await assignmentRepository.Get(sourceFilter)).FirstOrDefault() ?? Assignment;
+        SourcePackages = await connectionPackageRepository.GetB(sourceAssignment.Id);
+
+
+        if (!IsDelegation)
+        {
+            /*Find all Agents*/
+            var agentFilter = delegationRepository.CreateFilterBuilder();
+            agentFilter.Equal(t => t.FromId, Connection.Id);
+            var r1 = await delegationRepository.GetExtended(agentFilter);
+            foreach(var rr in r1)
+            {
+                AgentDelegations.Add(await connectionService.Get(rr.Id));
+            }
+
+            /*Find all Clients*/
+            var clientFilter = delegationRepository.CreateFilterBuilder();
+            clientFilter.Equal(t => t.ToId, Connection.Id);
+            var r2 = await delegationRepository.GetExtended(clientFilter);
+            foreach (var rr in r2)
+            {
+                ClientDelegations.Add(await connectionService.Get(rr.Id));
+            }
+        }
+        
+       
+    }
+}

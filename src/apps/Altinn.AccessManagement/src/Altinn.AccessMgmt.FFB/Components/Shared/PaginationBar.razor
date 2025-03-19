@@ -1,0 +1,75 @@
+﻿<style>
+    .pagination {
+        display: flex;
+        flex-direction: row;
+    }
+
+        .pagination * {
+            color: black;
+            float: left;
+            padding: 8px 16px;
+            text-decoration: none;
+        }
+
+        .pagination .element {
+            cursor: pointer;
+        }
+
+            .pagination .element:hover {
+                background-color: #efefef;
+            }
+
+            .pagination .element.active {
+                background-color: #1eaef7;
+            }
+
+                .pagination .element.active:hover {
+                    background-color: #1eaef7;
+                }
+</style>
+
+<div class="pagination">
+    <span class="element" @onclick="() => SetCurrentPage(CurrentPage-1)">&lt;</span>
+    @foreach (int a in Enumerable.Range(1, PageCount))
+    {
+        if(a == 1)
+        {
+            <span class="element @(a==CurrentPage ? "active" : "")" @onclick="() => SetCurrentPage(a)">@a</span>
+            if (CurrentPage > VisiblePageCount + 2)
+            {
+                <span>...</span>
+            }
+        }
+        if (a > 1 && a != PageCount && a >= CurrentPage-VisiblePageCount && a<= CurrentPage+VisiblePageCount)
+        {
+            <span class="element @(a==CurrentPage ? "active" : "")" @onclick="() => SetCurrentPage(a)">@a</span>
+        }
+        if (a == PageCount && a > 1)
+        {
+            if (CurrentPage <= PageCount - VisiblePageCount -1)
+            {
+                <span>...</span>
+            }
+            <span class="element @(a==CurrentPage ? "active" : "")" @onclick="() => SetCurrentPage(a)">@a</span>
+        }
+    }
+    <span class="element" @onclick="() => SetCurrentPage(CurrentPage+1)">&gt;</span>
+</div>
+
+@code {
+
+    [Parameter] public int PageCount { get; set; }
+    [Parameter] public int CurrentPage { get; set; }
+    [Parameter] public EventCallback<int> CurrentPageChanged { get; set; }
+    [Parameter] public int VisiblePageCount { get; set; } = 5;
+
+    [Parameter] public EventCallback<int> PageChanged { get; set; }
+
+    private async Task SetCurrentPage(int value)
+    {
+        CurrentPage = value;
+        await CurrentPageChanged.InvokeAsync(value);
+        await PageChanged.InvokeAsync(value);
+        this.ShouldRender();
+    }
+}

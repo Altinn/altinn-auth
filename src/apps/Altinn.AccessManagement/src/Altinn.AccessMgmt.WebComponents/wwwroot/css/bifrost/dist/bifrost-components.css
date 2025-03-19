@@ -1,0 +1,4460 @@
+@charset "UTF-8";
+/* stylelint-disable selector-class-pattern */
+.bf-textarea-container,
+.bf-input-container,
+.bf-select-container,
+.bf-datepicker-container {
+  font-size: var(--bf-font-size-m);
+}
+
+/* REQUIRED TEXT */
+.bf-label-required {
+  color: var(--bfc-base-c-2);
+  font-weight: normal;
+  font-style: italic;
+  margin-left: var(--bfs4);
+}
+
+/* DESCRIPTION */
+.bf-label-description {
+  color: var(--bfc-base-c-2);
+  font-weight: normal;
+  font-size: var(--bf-font-size-m);
+}
+
+/* PLACEHOLDER TEXT */
+.bf-input::placeholder,
+.bf-textarea::placeholder,
+.bf-datepicker::placeholder {
+  color: var(--bfc-base-c-2);
+  opacity: 1;
+}
+
+/* DISABLED */
+.bf-input-disabled.bf-input-container .bf-input,
+.bf-input-disabled.bf-input-container .bf-input:hover,
+.bf-datepicker-disabled.bf-datepicker-container .bf-datepicker,
+.bf-datepicker-disabled.bf-datepicker-container .bf-datepicker:hover,
+.bf-textarea:disabled,
+.bf-textarea-disabled.bf-textarea-container .bf-textarea:hover {
+  cursor: default;
+  color: var(--bfc-base-c);
+  border-color: transparent;
+  background: var(--bfc-base-dimmed);
+}
+
+.bf-input-disabled.bf-input-container .bf-input::placeholder,
+.bf-datepicker-disabled.bf-datepicker-container .bf-datepicker::placeholder,
+.bf-textarea:disabled::placeholder {
+  color: var(--bfc-base-c-2);
+}
+
+/* DISABLED LABEL ICON */
+.bf-label > .bf-input-disabled-icon {
+  color: var(--bfc-base-c-2);
+  margin: 0 var(--bfs4);
+}
+
+/* INPUT FIELD */
+.bf-textarea,
+.bf-input,
+.bf-select,
+.bf-datepicker {
+  background: var(--bfc-base-3);
+  color: var(--bfc-base-c);
+  border: 1px solid var(--bfc-base-c-wcag);
+  border-radius: var(--bf-radius-s);
+  font-family: inherit;
+  font-size: var(--bf-font-size-l);
+  padding: 7px var(--bfs12);
+  width: 100%;
+}
+
+/* INPUT FIELD HOVER */
+.bf-textarea:hover,
+.bf-input:hover,
+.bf-select:hover,
+.bf-datepicker:hover {
+  border-color: var(--bfc-base-c-inverted);
+}
+
+/* INPUT FIELD FOCUS */
+.bf-textarea:focus,
+.bf-input:focus,
+.bf-select:focus,
+.bf-input-focus,
+.bf-datepicker:focus {
+  border-color: var(--bfc-base-c-inverted);
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--bfc-base-c-inverted);
+}
+
+/* loading spinner */
+.bf-input-loading-icon {
+  font-size: var(--bf-font-size-l);
+}
+
+.bf-input-icon-button .bf-input-loading-icon {
+  color: inherit;
+}
+
+.bf-select-container .bf-input-loading-icon {
+  margin-top: 3px;
+  margin-right: 3px;
+}
+
+/* FEEDBACK TEXT */
+.bf-label-feedback {
+  color: var(--bfc-base-c);
+  text-align: right;
+  font-size: var(--bf-font-size-s);
+  margin-top: 4px;
+}
+
+.bf-label-feedback > :first-child {
+  margin: 0;
+}
+
+/* ALERT BORDER COLOR */
+.bf-input-alert .bf-input,
+.bf-textarea-alert .bf-textarea,
+.bf-select-alert .bf-select__control,
+.bf-datepicker-alert .bf-datepicker {
+  border-color: var(--bfc-base-c-alert);
+}
+
+.bf-input-alert .bf-input:hover,
+.bf-textarea-alert .bf-textarea:hover,
+.bf-select-alert .bf-select__control:hover,
+.bf-datepicker-alert .bf-datepicker:hover {
+  border-color: var(--bfc-alert-2);
+}
+
+.bf-input-alert .bf-input:focus,
+.bf-textarea-alert .bf-textarea:focus,
+.bf-select-alert .bf-select__control.bf-select__control--is-focused,
+.bf-datepicker-alert .bf-datepicker:focus {
+  border-color: var(--bfc-base-c-inverted);
+  box-shadow: inset 0 0 0 1px var(--bfc-base-c-inverted);
+}
+
+/* ALERT SVG COLOR */
+.bf-textarea-alert svg,
+.bf-datepicker-alert svg {
+  color: var(--bfc-base-c-alert);
+}
+
+/* label, fieldset and legend */
+.bf-fieldset,
+:where(.bf-content, .bf-elements) fieldset {
+  padding: 0;
+  margin: 0;
+  border: none;
+}
+
+.bf-legend,
+:where(.bf-content, .bf-elements) legend {
+  font-size: var(--bf-font-size-h3);
+  color: var(--bfc-base-c-2);
+  padding: 0;
+  margin: 0;
+}
+
+:where(.bf-content) legend {
+  margin: 0 0 var(--bfs16) 0;
+}
+
+.bf-label,
+:where(.bf-content, .bf-elements) label {
+  font-size: var(--bf-font-size-m);
+  font-weight: 600;
+  color: var(--bfc-base-c);
+  display: block;
+}
+
+/* space between label and input */
+.bf-legend.bf-label,
+:where(.bf-content, .bf-elements) legend.bf-label {
+  margin: 0 0 var(--bfs4) 0;
+}
+
+.bf-label ~ :is(.bf-input,
+.bf-select,
+.bf-input-icon-container,
+.bf-textarea,
+.bf-textarea-icon-container,
+.bf-datepicker-icon-container) {
+  /* Select gets this space from selectStyles object. See Select.tsx */
+  margin-top: var(--bfs4);
+}
+
+/* #region native <select> styling (see Select.tsx for react <Select> component styling) */
+select.bf-select {
+  --bf-select-arrow-color: var(--bfc-base-c-2);
+  --bf-select-arrow-size: 6px;
+  --bf-select-arrow-padding-right: calc(12px + var(--bf-select-arrow-size));
+  /* hide browser-native arrow(s) */
+  appearance: none;
+  /* roll our own with a trianble background image */
+  background-image: linear-gradient(45deg, transparent 50%, var(--bf-select-arrow-color) 50%), linear-gradient(-45deg, transparent 50%, var(--bf-select-arrow-color) 50%);
+  background-position: calc(100% - var(--bf-select-arrow-padding-right)) calc(1em + 1px), calc(100% - var(--bf-select-arrow-padding-right) + var(--bf-select-arrow-size)) calc(1em + 1px);
+  background-size: var(--bf-select-arrow-size) var(--bf-select-arrow-size), var(--bf-select-arrow-size) var(--bf-select-arrow-size);
+  background-repeat: no-repeat;
+  padding-right: 32px;
+}
+
+select.bf-select:hover {
+  --bf-select-arrow-color: var(--bfc-base-c);
+}
+
+/* all <option> styling is ignored completely on MacOS and iOS */
+select.bf-select option {
+  color: var(--bfc-base-c);
+}
+
+/* only seems to work for chromium on windows */
+select.bf-select option:checked {
+  font-weight: 600;
+}
+
+/* gray text for the value-less option */
+select.bf-select option:where([value=""], :not([value])) {
+  color: var(--bfc-base-c-2);
+}
+
+/* gray text for select with a value-less option currently selected, actually works everywhere? */
+select.bf-select:has(option:checked:where([value=""], :not([value]))) {
+  color: var(--bfc-base-c-2);
+}
+
+/* #endregion */
+:where(.bf-section-header) {
+  padding: var(--bfs8) var(--bfs16);
+  border-bottom: var(--bf-border);
+  min-height: 53px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+:where(.bf-section-header.bf-no-padding) {
+  padding: 0;
+}
+
+/* stretch content wrapper so arrow will be pushed to the right */
+:where(.bf-section-header > :first-child) {
+  flex: 1 1;
+}
+
+/* make sure link focus outline will be displayed */
+:where(a:has(.bf-section-header)) {
+  display: block;
+}
+
+.bf-box-arrow,
+.bf-box-arrow-external {
+  color: var(--bfc-base-c-2);
+  translate: 0;
+  transition-property: translate, color;
+  transition-duration: var(--bf-animation-duration);
+  transition-timing-function: var(--bf-timing-function);
+}
+
+:is(a, button):hover .bf-box-arrow {
+  color: var(--bfc-base-c);
+  translate: 3px 0;
+}
+
+.bf-box-arrow-external {
+  rotate: -45deg;
+}
+
+:is(a, button):hover .bf-box-arrow-external {
+  color: var(--bfc-base-c);
+  translate: 2px -2px;
+}
+
+.bf-button {
+  --bf-button-border-color: var(--bfc-base-c-theme);
+  --bf-button-border-radius: var(--bf-radius-s);
+  border: 1px solid var(--bf-button-border-color);
+  border-radius: var(--bf-button-border-radius);
+  background: var(--bfc-base-3);
+  line-height: 1.5;
+  color: var(--bfc-base-c);
+  padding: 0.5312rem 16px; /* 8.5px */
+  font-size: var(--bf-font-size-m);
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  min-width: 40px;
+  /* required for positioning ::before outline on hover, and z-index on focus */
+  position: relative;
+}
+
+:where(a).bf-button {
+  display: inline-block;
+  text-align: center;
+  text-decoration-line: none;
+}
+
+.bf-button:where(:focus) {
+  outline: none;
+}
+
+.bf-button:where(:hover:not(:disabled, .bf-button-filled, .bf-button-flat))::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--bf-button-border-radius) - 1px);
+  outline: 2px solid var(--bf-button-border-color);
+  outline-offset: -1px;
+}
+
+.bf-button:where(:active:hover:not(:disabled)) {
+  will-change: scale;
+  scale: 0.95;
+}
+
+/* stretch clickable area while scaling down the button to make sure edges are clickable */
+.bf-button:where(:active:hover:not(:disabled))::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* need to increase by sligtly more than 0.05 because  is a lower size after scaling parent to 0.95 */
+  scale: 1.06;
+}
+
+/* make sure button border and outline is not overridden by link focus styling.
+ test by tabbing to a filled pill button link */
+.bf-button:where(:focus-visible),
+:where(a).bf-button:focus-visible {
+  outline: 2px dotted var(--bfc-base-c);
+  outline-offset: 2px;
+  z-index: 1;
+  border-radius: var(--bf-button-border-radius);
+}
+
+.bf-button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.bf-button-pill {
+  --bf-button-border-radius: var(--bf-radius-xl);
+}
+
+.bf-button-small {
+  padding-block: 0.2812rem; /* 4.5px */
+  padding-inline: 12px;
+  min-width: 32px;
+}
+
+.bf-button-nopadding {
+  padding-inline: 0;
+}
+
+.bf-button-inactive:hover {
+  color: var(--bfc-base-c);
+}
+
+.bf-button-inactive,
+.bf-button-inactive:disabled {
+  --bf-button-border-color: var(--bfc-base-dimmed);
+  color: var(--bfc-base-c-2);
+}
+
+.bf-button-alert {
+  --bf-button-border-color: var(--bfc-alert);
+}
+
+.bf-button-neutral {
+  --bf-button-border-color: var(--bfc-base-c);
+}
+
+.bf-button-inverted {
+  --bf-button-border-color: var(--bfc-base-3);
+  background: var(--bfc-base-c-inverted);
+  color: var(--bfc-base-3);
+}
+
+.bf-button-inverted:focus-visible {
+  outline-color: var(--bfc-base-3);
+}
+
+.bf-button-flat,
+:is(.bf-button-filled, .bf-button-flat):is(:hover, :active:hover) {
+  --bf-button-border-color: transparent;
+}
+
+.bf-button-filled:hover {
+  background: var(--bfc-theme-2);
+}
+
+.bf-button-filled,
+.bf-button-filled:disabled {
+  background: var(--bfc-theme);
+  color: var(--bfc-theme-c-base-3);
+}
+
+.bf-button-filled.bf-button-inactive:hover {
+  background: var(--bfc-base-dimmed-3);
+  color: var(--bfc-base-c);
+}
+
+.bf-button-filled.bf-button-inactive,
+.bf-button-filled.bf-button-inactive:disabled {
+  background: var(--bfc-base-dimmed-2);
+  color: var(--bfc-base-c-2);
+}
+
+.bf-button-filled.bf-button-alert:hover {
+  background: var(--bfc-alert-2);
+}
+
+.bf-button-filled.bf-button-alert,
+.bf-button-filled.bf-button-alert:disabled {
+  background: var(--bfc-alert);
+  color: var(--bfc-alert-c);
+}
+
+.bf-button-filled.bf-button-neutral:hover {
+  background: var(--bfc-base-c-inverted-2);
+}
+
+.bf-button-filled.bf-button-neutral,
+.bf-button-filled.bf-button-neutral:disabled {
+  background: var(--bfc-base-c);
+  color: var(--bfc-base-3);
+}
+
+.bf-button-filled.bf-button-inverted:hover {
+  background: var(--bfc-base-dimmed);
+}
+
+.bf-button-filled.bf-button-inverted,
+.bf-button-filled.bf-button-inverted:disabled {
+  background: var(--bfc-base);
+  color: var(--bfc-base-c);
+}
+
+.bf-button-flat:hover {
+  background: var(--bfc-theme-fade);
+  color: var(--bfc-theme-fade-c);
+}
+
+.bf-button-flat,
+.bf-button-flat:disabled {
+  background: none;
+  color: var(--bfc-base-c-theme);
+}
+
+.bf-button-flat.bf-button-inactive:hover {
+  background: var(--bfc-base-dimmed-2);
+}
+
+.bf-button-flat.bf-button-inactive,
+.bf-button-flat.bf-button-inactive:disabled {
+  background: none;
+  color: var(--bfc-base-c-2);
+}
+
+.bf-button-flat.bf-button-alert:hover {
+  background: var(--bfc-alert-fade);
+  color: var(--bfc-alert-fade-c);
+}
+
+.bf-button-flat.bf-button-alert,
+.bf-button-flat.bf-button-alert:disabled {
+  background: none;
+  color: var(--bfc-base-c-alert);
+}
+
+.bf-button-flat.bf-button-neutral:hover {
+  background: var(--bfc-base-dimmed-2);
+}
+
+.bf-button-flat.bf-button-neutral,
+.bf-button-flat.bf-button-neutral:disabled {
+  background: none;
+  color: var(--bfc-base-c);
+}
+
+.bf-button-flat.bf-button-inverted:hover {
+  background: var(--bfc-base-c-inverted-3);
+}
+
+.bf-button-flat.bf-button-inverted,
+.bf-button-flat.bf-button-inverted:disabled {
+  background: none;
+  color: var(--bfc-base);
+}
+
+/* stylelint-disable-next-line selector-class-pattern */
+.bf-button-left-icon .svg-inline--fa,
+.bf-button-left-icon .fa {
+  margin-right: var(--bfs8);
+}
+
+/* stylelint-disable-next-line selector-class-pattern */
+.bf-button-right-icon .svg-inline--fa,
+.bf-button-right-icon .fa {
+  margin-left: var(--bfs8);
+}
+
+.bf-button-group {
+  padding: 0.1875rem; /* 3px */
+  border: 1px solid var(--bfc-base-c-wcag);
+  border-radius: var(--bf-radius-s);
+  background: var(--bfc-base-3);
+  display: inline-flex;
+  flex-wrap: nowrap;
+}
+
+.bf-button-group .bf-button {
+  --bf-button-border-radius: var(--bf-radius-xs);
+  --bf-button-border-color: transparent;
+  margin-right: 4px;
+  padding: 0.2187rem 12px; /* 3.5px */
+  color: var(--bfc-base-c);
+  border: 0.125rem dotted var(--bf-button-border-color); /* 2px */
+  transition: none;
+  font-weight: 600;
+}
+
+.bf-button-group .bf-button:where(:hover:not(:disabled)) {
+  background-color: var(--bfc-base-dimmed-2);
+}
+
+.bf-button-group .bf-button:last-child {
+  margin-right: 0;
+}
+
+.bf-button-group .bf-button-selected,
+.bf-button-group .bf-button-selected:where(:hover:not(:disabled)),
+.bf-button-group .bf-button-selected:focus-visible {
+  background-color: var(--bfc-theme);
+  color: var(--bfc-theme-c-base-3);
+}
+
+.bf-button-group .bf-button-selected:where(:hover:not(:disabled)) {
+  background-color: var(--bfc-theme-2);
+}
+
+.bf-button-group .bf-button-inactive {
+  background-color: var(--bfc-base-3);
+  color: var(--bfc-base-c-2);
+}
+
+.bf-button-group .bf-button:focus-visible {
+  --bf-button-border-radius: var(--bf-radius-s);
+  border-color: var(--bfc-base-c);
+  outline: none;
+}
+
+.bf-button-group .bf-button-selected:focus-visible {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--bfc-base-3), inset 0 0 0 1000px var(--bfc-theme);
+}
+
+.bf-button-group .bf-button-selected:focus-visible:where(:hover:not(:disabled)) {
+  box-shadow: inset 0 0 0 1px var(--bfc-base-3), inset 0 0 0 1000px var(--bfc-theme);
+}
+
+.bf-button-expand.bf-neutral-link {
+  font-size: var(--bf-font-size-m);
+}
+
+.bf-button-expand:hover .bf-expand-icon-wrapper {
+  background-color: var(--bfc-base-dimmed);
+}
+
+.bf-button-expand:focus-visible .bf-expand-icon-wrapper {
+  outline: 1px dashed var(--bfc-base-c-theme);
+}
+
+button.bf-button-expand.bf-neutral-link:focus-visible {
+  outline: none;
+}
+
+.bf-expand-icon-wrapper + .bf-neutral-link-text {
+  margin-left: var(--bfs4);
+}
+
+:root {
+  --bf-switch-height: 1.5rem;
+  --bf-switch-width: 2.75rem;
+  --bf-checkbox-text-space: 0.5rem;
+  /* paddings used for button (and button small), default 0 */
+  --bf-checkbox-padding-x: 0px;
+  --bf-checkbox-padding-y: 0px;
+}
+
+.bf-checkbox {
+  /* font awesome icon size + text space */
+  --bf-checkbox-space: calc(
+    1.125rem + var(--bf-checkbox-text-space) + var(--bf-checkbox-padding-x)
+  );
+  font-size: var(--bf-font-size-m);
+  display: inline-block;
+  padding: var(--bf-checkbox-padding-y) var(--bf-checkbox-padding-x) var(--bf-checkbox-padding-y) var(--bf-checkbox-space);
+  cursor: pointer;
+  position: relative;
+  border-radius: var(--bf-radius-s);
+  min-height: 1.5rem;
+  font-weight: normal;
+}
+
+.bf-checkbox-icon {
+  color: var(--bfc-base-c-2);
+  position: absolute;
+  left: var(--bf-checkbox-padding-x);
+  display: inline-block;
+  scale: 1.3;
+  padding-inline: 1px;
+}
+
+.bf-checkbox-checked {
+  color: var(--bfc-base-c);
+}
+
+.bf-checkbox:hover:not(:has(:disabled)) .bf-checkbox-icon svg {
+  color: var(--bfc-base-c);
+  scale: 1.1;
+}
+
+.bf-checkbox input:checked ~ * .bf-checkbox-unchecked {
+  display: none;
+}
+
+.bf-checkbox input:not(:checked) ~ * .bf-checkbox-checked {
+  display: none;
+}
+
+.bf-checkbox input {
+  /* you cannot focus on a field with
+   * visibility: hidden; or display: none;
+  * so we hide the input some other way */
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+}
+
+/* focus state */
+.bf-checkbox:has(input:focus-visible) {
+  outline: 2px dotted var(--bfc-base-c);
+  outline-offset: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+/* checkbox align right (left is default) */
+.bf-checkbox-right.bf-checkbox {
+  padding-left: var(--bf-checkbox-padding-x);
+  padding-right: var(--bf-checkbox-space);
+}
+
+.bf-checkbox-right :is(.bf-checkbox-icon, .bf-switch) {
+  left: auto;
+  right: var(--bf-checkbox-padding-x);
+}
+
+/* button style */
+.bf-checkbox-button {
+  --bf-checkbox-padding-x: 16px;
+  /* ~40px height when label is a single line */
+  --bf-checkbox-padding-y: 0.531rem;
+}
+
+.bf-checkbox-button.bf-checkbox {
+  background-color: var(--bfc-base-3);
+  border: 1px solid var(--bfc-base-dimmed);
+  border-radius: var(--bf-radius-s);
+}
+
+.bf-checkbox-button:hover:where(:not(:has(input:disabled))) {
+  background-color: var(--bfc-base-2);
+  border-color: var(--bfc-base-dimmed-3);
+}
+
+.bf-checkbox-button.bf-checkbox-small {
+  --bf-checkbox-padding-x: 12px;
+  /* ~32px height when label is a single line */
+  --bf-checkbox-padding-y: 0.28rem;
+}
+
+.bf-checkbox-button .bf-checkbox-icon {
+  top: 0.562rem;
+}
+
+.bf-checkbox-button.bf-checkbox-small .bf-checkbox-icon {
+  top: 0.312rem;
+}
+
+.bf-checkbox-button .bf-switch {
+  top: 0.437rem;
+}
+
+.bf-checkbox-button.bf-switch-wrapper.bf-checkbox-small .bf-switch {
+  top: 0.187rem;
+}
+
+/* switch styles */
+.bf-switch-wrapper {
+  --bf-switch-thumb-size: calc(var(--bf-switch-height) - 0.25rem);
+  /* padding + switch size + text space (icons have a slightly larger box than switch) */
+  --bf-checkbox-space: calc(
+    var(--bf-checkbox-padding-x) + var(--bf-switch-width) +
+      var(--bf-checkbox-text-space) + 0.125rem
+  );
+}
+
+.bf-switch {
+  height: var(--bf-switch-height);
+  width: var(--bf-switch-width);
+  background-color: var(--bfc-base-c-2);
+  border-radius: var(--bf-radius-full);
+  position: absolute;
+  left: var(--bf-checkbox-padding-x);
+  padding: 0.125rem;
+  top: -0.125rem;
+}
+
+.bf-switch-thumb {
+  width: var(--bf-switch-thumb-size);
+  height: 1.25rem;
+  line-height: var(--bf-switch-thumb-size);
+  text-align: center;
+  position: absolute;
+  border-radius: var(--bf-radius-full);
+  background-color: var(--bfc-base-3);
+  left: 0.125rem;
+  /* transition short-hand does not work with multiple properties */
+  transition-property: background-color, margin-left;
+  transition-duration: var(--bf-animation-duration);
+  transition-timing-function: var(--bf-timing-function);
+  font-size: 0.8rem; /* magic value appears to almost fix centering browser rendering issue */
+  color: var(--bfc-base-c-2);
+}
+
+/* switched on. account for <Checkbox> and <CheckboxCard> DOM */
+:where(.bf-checkbox input:checked) ~ .bf-switch,
+:where(.bf-checkboxcard input:checked) ~ * .bf-switch {
+  background-color: var(--bfc-base-c);
+}
+
+/* thumb på hover (ikke disabled) */
+:where(.bf-checkbox, .bf-checkboxcard):where(:hover:not(:has(input:disabled))) .bf-switch-thumb {
+  scale: 0.9;
+}
+
+/* thumb for switch på active+hover, ikke disabled */
+:where(.bf-checkbox, .bf-checkboxcard):where(:active:hover:not(:has(input:disabled))) .bf-switch-thumb {
+  margin-left: 0.25rem;
+}
+
+/* thumb for checked */
+:where(.bf-checkbox, .bf-checkboxcard):where(:has(input:checked)) .bf-switch-thumb {
+  margin-left: calc(var(--bf-switch-width) - var(--bf-switch-height));
+  background-color: var(--bfc-base-3);
+  color: var(--bfc-base-c);
+}
+
+/* thumb for checked på active+hover, ikke disabled */
+:where(.bf-checkbox, .bf-checkboxcard):where(:hover:active:has(input:checked:not(:disabled))) .bf-switch-thumb {
+  margin-left: calc(var(--bf-switch-width) - var(--bf-switch-height) - 0.25rem);
+}
+
+/* hidden label */
+.bf-checkbox-hidelabel .bf-checkbox-text {
+  width: 0;
+  height: 0;
+  white-space: nowrap;
+  display: inline-block;
+  overflow: hidden;
+}
+
+.bf-checkbox-hidelabel .bf-switch {
+  top: 0;
+}
+
+.bf-checkbox-hidelabel .bf-checkbox-icon {
+  position: relative;
+  top: 0.06rem;
+}
+
+.bf-checkbox-hidelabel {
+  /* icon will take up its own space through position: static; */
+  --bf-checkbox-space: 0px;
+}
+
+.bf-checkbox-hidelabel.bf-switch-wrapper {
+  padding: 0 0 0 var(--bf-switch-width);
+  border-radius: var(--bf-radius-full);
+}
+
+/* disabled */
+.bf-checkbox:has(:disabled),
+:where(.bf-checkbox, .bf-checkboxcard) :disabled ~ .bf-checkbox-icon {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.bf-checkboxcard {
+  font-size: var(--bf-font-size-m);
+  background-color: var(--bfc-base-3);
+  border: 1px solid var(--bfc-base-dimmed);
+  border-radius: var(--bf-radius-s);
+  cursor: pointer;
+  display: block;
+  overflow: hidden;
+  position: relative;
+}
+
+.bf-checkboxcard:hover:not(:has(input:disabled)) {
+  background-color: var(--bfc-base-2);
+  border-color: var(--bfc-base-dimmed-3);
+}
+
+.bf-checkboxcard input {
+  /* you cannot focus on a field with
+   * visibility: hidden; or display: none;
+  * so we hide it some other way */
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+}
+
+.bf-checkboxcard-header {
+  background-color: var(--bfc-base-2);
+}
+
+.bf-checkboxcard:hover:not(:has(input:disabled)) .bf-checkboxcard-header {
+  background-color: var(--bfc-base-1);
+}
+
+.bf-checkboxcard-content {
+  padding: 12px;
+  font-weight: 400;
+  color: var(--bfc-base-c-2);
+}
+
+.bf-checkboxcard-label-text {
+  display: block;
+  position: relative;
+  margin-bottom: var(--bfs8);
+  padding-right: var(--bfs24);
+  color: var(--bfc-base-c);
+  font-weight: 600;
+}
+
+/* hover state */
+label:hover .bf-checkboxcard-icon {
+  color: var(--bfc-theme-2);
+}
+
+/* focus state */
+.bf-checkboxcard:has(input:focus-visible) {
+  outline: 2px dotted var(--bfc-base-c);
+  outline-offset: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+/* disabled */
+.bf-checkboxcard:has(input:disabled) {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.bf-checkboxcard input:disabled ~ .bf-checkboxcard-header {
+  cursor: default;
+}
+
+.bf-checkboxcard .bf-checkbox-icon {
+  position: absolute;
+  right: 0;
+  top: 0;
+  left: auto;
+  scale: 1.3;
+}
+
+.bf-checkboxcard:hover:not(:has(input:disabled)) .bf-checkbox-icon svg {
+  scale: 1.1;
+}
+
+.bf-checkboxcard .bf-switch {
+  left: auto;
+  right: 0;
+}
+
+.bf-checkboxcard input:checked ~ .bf-checkboxcard-content .bf-checkbox-unchecked {
+  display: none;
+}
+
+.bf-checkboxcard input:not(:checked) ~ .bf-checkboxcard-content .bf-checkbox-checked {
+  display: none;
+}
+
+/* also see bifrost-form.css */
+.bf-input-icon-container {
+  position: relative;
+  display: flex;
+}
+
+.bf-input-icon-container .bf-input {
+  height: var(--bfs40);
+}
+
+.bf-input-icon,
+.bf-state-icon,
+.bf-input-clear-icon {
+  color: var(--bfc-base-c-2);
+  position: absolute;
+  height: var(--bfs32);
+  width: var(--bfs32);
+  margin: var(--bfs4);
+  padding: var(--bfs4) 0;
+  text-align: center;
+  font-size: var(--bf-font-size-l);
+}
+
+/* click-through on icons to hit input field behind
+ * (avoid on button element for `onIconClick`) */
+:where(.bf-input-icon, .bf-state-icon):not(button) {
+  pointer-events: none;
+}
+
+/* #region disabled input (also see bifrost-form.css) */
+/* Disabled: search */
+.bf-input-disabled .bf-input-icon-button,
+.bf-input-disabled .bf-input-icon-button:hover {
+  color: var(--bfc-base-c-2);
+  cursor: default;
+}
+
+/* Disabled: search iconButton */
+.bf-input-disabled .bf-input-icon-button-filled .bf-input-icon-button,
+.bf-input-disabled .bf-input-icon-button-filled .bf-input-icon-button:hover {
+  color: var(--bfc-base-3);
+  background-color: var(--bfc-base-c);
+  opacity: 0.3;
+}
+
+/* Disabled: clearable */
+.bf-input-disabled .bf-input-clear-icon {
+  display: none;
+}
+
+/* Disabled: states */
+.bf-input-disabled .bf-input-icon-state .bf-state-icon {
+  color: var(--bfc-base-c-2);
+}
+
+/* #endregion */
+.bf-input-icon-left .bf-input-icon,
+.bf-input-icon-state .bf-input-icon {
+  right: auto;
+  left: 0;
+}
+
+.bf-input-icon-right .bf-input-icon,
+.bf-input-icon-state .bf-state-icon,
+.bf-input-clearable .bf-input-clear-icon {
+  left: auto;
+  right: 0;
+}
+
+.bf-input-icon-container .bf-input-state-only {
+  padding-left: var(--bfs12);
+}
+
+.bf-input-success .bf-state-icon {
+  color: var(--bfc-base-c-success);
+}
+
+.bf-input-alert .bf-state-icon {
+  color: var(--bfc-base-c-alert);
+}
+
+/* Clickable icon */
+.bf-input-icon-button {
+  background-color: transparent;
+  font-size: var(--bf-font-size-l);
+  border: 2px dotted transparent;
+  border-radius: var(--bf-radius-xs);
+  position: absolute;
+  padding: 0;
+  left: 0;
+  right: auto;
+  top: 0;
+  outline: none;
+  cursor: pointer;
+}
+
+/* make clickable area larger without changing the button appearance,
+avoids input hover effect when hovering right next to button */
+.bf-input-icon-button::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
+.bf-input-icon-button:focus-visible {
+  border-color: var(--bfc-base-c);
+  border-radius: var(--bf-radius-s);
+}
+
+/* Clickable icon with rightIcon prop */
+.bf-input-icon-right .bf-input-icon-button {
+  left: auto;
+  right: 0;
+}
+
+.bf-input-icon-button:is(:hover, :active) {
+  color: var(--bfc-base-c);
+}
+
+/* IconButton prop */
+.bf-input-icon-button-filled .bf-input-icon-button {
+  --bf-input-icon-button-filled-bg: var(--bfc-theme);
+  background-color: var(--bf-input-icon-button-filled-bg);
+  color: var(--bfc-theme-c);
+}
+
+.bf-input-icon-button-filled .bf-input-icon-button:hover {
+  --bf-input-icon-button-filled-bg: var(--bfc-theme-2);
+}
+
+.bf-input-icon-button-filled .bf-input-icon-button:active {
+  scale: 0.95;
+}
+
+.bf-input-icon-button-filled .bf-input-icon-button:focus-visible {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1px var(--bfc-base-3), inset 0 0 0 1000px var(--bf-input-icon-button-filled-bg);
+  border-color: var(--bfc-base-c);
+}
+
+/* "X" clear icon */
+.bf-input-clear-icon {
+  cursor: pointer;
+}
+
+.bf-input-clear-icon:hover {
+  color: var(--bfc-base-c);
+}
+
+/* #region spacing and positioning for icons
+32 px wide icon + 4px margin each side = 40px */
+.bf-input-icon-right .bf-input,
+.bf-input-icon-state .bf-input,
+.bf-input-clearable .bf-input:enabled {
+  padding-right: var(--bfs40);
+}
+
+.bf-input-icon-left .bf-input {
+  padding-left: var(--bfs40);
+}
+
+/* two icons on right-hand side */
+.bf-input-icon-right.bf-input-clearable .bf-input:enabled,
+.bf-input-icon-state.bf-input-clearable .bf-input:enabled {
+  padding-right: 70px;
+}
+
+/* move clear icon when there is also another icon on right-hand side */
+.bf-input-icon-right .bf-input-clear-icon,
+.bf-input-icon-state .bf-input-clear-icon {
+  right: 32px;
+}
+
+/* #endregion */
+/* also see bifrost-form.css */
+.bf-textarea-container {
+  max-width: 100%;
+}
+
+.bf-textarea-icon-container {
+  white-space: nowrap;
+  position: relative;
+  font-size: var(--bf-font-size-l);
+}
+
+.bf-textarea-icon-container .bf-textarea-icon,
+.bf-textarea-icon-container svg {
+  position: absolute;
+  vertical-align: top;
+  top: var(--bfs12);
+  right: var(--bfs24);
+}
+
+.bf-textarea {
+  display: block;
+  resize: vertical;
+  height: 100px;
+  width: 100%;
+  min-width: 200px;
+  min-height: 50px;
+  max-width: 100%;
+  max-height: 500px;
+  overflow-y: auto;
+  cursor: auto;
+}
+
+.bf-textarea-icon-container .bf-textarea {
+  padding-right: var(--bfs40);
+}
+
+/* DISABLED */
+/* Also see bifrost-form.css */
+.bf-textarea-disabled .bf-textarea-icon-container textarea {
+  resize: none;
+  background: var(--bfc-base-dimmed);
+  border-bottom-color: transparent;
+}
+
+.bf-textarea-disabled .bf-textarea-icon-container textarea::placeholder {
+  color: var(--bfc-base-c-2);
+  opacity: 1;
+}
+
+/* Disabled: states */
+.bf-textarea-disabled .bf-textarea-icon-state svg {
+  color: var(--bfc-base-c-2);
+}
+
+/* stylelint-disable selector-class-pattern */
+/* Component label */
+fieldset legend.bf-label.bf-fieldgroup-legend {
+  margin: 0;
+  padding: 0;
+}
+
+/* Component */
+.bf-fieldgroup {
+  display: flex;
+  position: relative;
+  width: 100%;
+}
+
+/* FieldGroup.Item */
+.bf-fieldgroup .bf-fieldgroup-item {
+  flex-grow: 0;
+}
+
+.bf-fieldgroup .bf-fieldgroup-item > div {
+  color: var(--bfc-base-c);
+  background-color: var(--bfc-base);
+  cursor: default;
+  height: var(--bfs40);
+}
+
+.bf-fieldgroup:not(.bf-fieldgroup-disabled) .bf-fieldgroup-item .bf-input:hover {
+  border-color: var(--bfc-base-c-wcag);
+}
+
+/* Set margin top if fieldgroup has label or description */
+.bf-label-description ~ .bf-fieldgroup,
+.bf-label ~ .bf-fieldgroup {
+  margin-top: var(--bfs4);
+}
+
+/* Remove border radius */
+.bf-fieldgroup .bf-select__control,
+.bf-fieldgroup .bf-input,
+.bf-fieldgroup .bf-fieldgroup-item > div {
+  border-radius: 0;
+}
+
+/* All children */
+.bf-fieldgroup .bf-input-container,
+.bf-fieldgroup .bf-select-container,
+.bf-fieldgroup .bf-datepicker-container {
+  flex-grow: 1;
+}
+
+/* remove double borders between items by overlapping with 1px */
+.bf-fieldgroup:not(.bf-fieldgroup-disabled) > * + * {
+  margin-left: -1px;
+}
+
+/* make sure all outside borders are visible for hovered/focused field */
+.bf-fieldgroup > :is(:focus, :focus-within, :hover):not(.bf-fieldgroup-item) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Checkbox support for FieldGroup (button variant only) */
+.bf-fieldgroup .bf-checkbox {
+  border: 1px solid var(--bfc-base-c-wcag);
+  border-radius: 0;
+}
+
+.bf-fieldgroup .bf-checkbox:hover {
+  border: 1px solid var(--bfc-base-c-inverted-2);
+}
+
+/* DatePicker support */
+.bf-fieldgroup .bf-datepicker-container .react-datepicker__input-container input {
+  border-radius: 0;
+}
+
+/* First child border radius */
+.bf-fieldgroup > :first-child,
+.bf-fieldgroup > :first-child :is(.bf-input,
+.bf-select__control,
+.react-datepicker__input-container input) {
+  border-top-left-radius: var(--bf-radius-s);
+  border-bottom-left-radius: var(--bf-radius-s);
+}
+
+/* Last child border radius */
+.bf-fieldgroup > :last-child,
+.bf-fieldgroup > :last-child :is(.bf-input,
+.bf-select__control,
+.react-datepicker__input-container input) {
+  border-top-right-radius: var(--bf-radius-s);
+  border-bottom-right-radius: var(--bf-radius-s);
+}
+
+/* Alert state */
+.bf-fieldgroup-alert :is(.bf-select__control,
+.bf-input,
+.react-datepicker__input-container input):not(.bf-select__control--is-focused, :focus) {
+  border-color: var(--bfc-base-c-alert);
+}
+
+.bf-fieldgroup-alert :is(.bf-select__control,
+.bf-input,
+.react-datepicker__input-container input):not(.bf-select__control--is-focused, :focus):hover {
+  border-color: var(--bfc-alert-fade-c);
+}
+
+/* Disabled */
+.bf-fieldgroup-disabled .bf-input-container .bf-input,
+.bf-fieldgroup-disabled .bf-fieldgroup-item > div {
+  cursor: default;
+  color: var(--bfc-base-c-2);
+  border-color: transparent;
+  background: var(--bfc-base-dimmed);
+}
+
+/* separator between items in disabled fieldgroup */
+.bf-fieldgroup-disabled > * + * {
+  border-left: 1px solid var(--bfc-base-c-disabled);
+}
+
+.bf-accordion {
+  border: 1px solid var(--bff-dimmed);
+  border-radius: var(--bf-radius);
+  background: var(--bfc-base-3);
+}
+
+.bf-accordion-noborder {
+  border: none;
+  border-radius: 0;
+}
+
+.bf-accordion-item {
+  color: var(--bfc-base-c);
+}
+
+.bf-accordion-item + .bf-accordion-item {
+  border-top: 1px solid var(--bff-dimmed);
+}
+
+.bf-accordion-item-title {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: 1fr;
+  font-size: var(--bf-font-size-m);
+}
+
+.bf-accordion-item-title > button {
+  padding: var(--bfs12);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: auto 1fr;
+  gap: var(--bfs-8);
+}
+
+.bf-accordion-item-title > button:focus {
+  outline: none;
+}
+
+.bf-accordion-item:last-child .bf-accordion-item-title,
+.bf-accordion-item:last-child .bf-accordion-item-content {
+  border-bottom: 0;
+}
+
+.bf-accordion-item:where(:last-child) .bf-accordion-item-content {
+  border-bottom-left-radius: var(--bf-radius);
+  border-bottom-right-radius: var(--bf-radius);
+}
+
+.bf-accordion-item-title .bf-accordion-item-angle {
+  transition: all var(--bf-animation-duration);
+}
+
+.bf-accordion-item-angle-circle {
+  width: 21px;
+  height: 21px;
+  display: inline-flex;
+  place-items: center center;
+  place-content: center center;
+  margin-right: var(--bfs12);
+  border-radius: var(--bf-radius-full);
+}
+
+.bf-accordion-item-title > button:hover .bf-accordion-item-angle-circle {
+  background-color: var(--bfc-base);
+}
+
+.bf-accordion-item-active > .bf-accordion-item-title .bf-accordion-item-angle {
+  transform: rotate(90deg);
+}
+
+.bf-accordion-item-content {
+  padding: var(--bfs16);
+  background-color: var(--bfc-base-2);
+  word-wrap: break-word;
+  font-size: var(--bf-font-size-m);
+  position: relative;
+}
+
+.bf-accordion-item-content.bfl-nopadding {
+  padding: 0;
+}
+
+.bf-accordion-item-title > button:focus-visible,
+.bf-accordion-action:focus-visible {
+  outline: 1px dashed var(--bff-theme);
+  /* make sure the outline is visible on top of expanded accordion item content */
+  position: relative;
+  z-index: 1;
+}
+
+/* Disabled */
+.bf-accordion-item-disabled,
+.bf-accordion-item-disabled .bf-accordion-item-title svg {
+  pointer-events: none;
+  color: var(--bfc-base-c-disabled);
+}
+
+.bf-accordion-item-icon {
+  margin-right: var(--bfs8);
+  color: var(--bfc-base-c-2);
+}
+
+.bf-accordion-item-actions {
+  margin-right: var(--bfs4);
+}
+
+/* #region styled variant */
+.bf-accordion-styled {
+  border: none;
+  background-color: transparent;
+}
+
+.bf-accordion-styled .bf-accordion-item {
+  border: 1px solid var(--bff-dimmed);
+  border-radius: var(--bf-radius-s);
+  background-color: var(--bfc-base-3);
+}
+
+.bf-accordion-styled .bf-accordion-item-content {
+  border-bottom-left-radius: var(--bf-radius-s);
+  border-bottom-right-radius: var(--bf-radius-s);
+}
+
+.bf-accordion-styled.bf-accordion-noborder .bf-accordion-item {
+  border: none;
+}
+
+.bf-accordion-styled .bf-accordion-item + .bf-accordion-item {
+  margin-top: var(--bfs12);
+}
+
+.bf-accordion-styled .bf-accordion-item-title > button {
+  padding-block: 18px;
+}
+
+.bf-accordion-styled .bf-accordion-item:has(.bf-accordion-item-title > button:hover) {
+  box-shadow: var(--bf-shadow);
+}
+
+/* #endregion */
+/* #region responsive / compact */
+.bf-accordion-compact {
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
+}
+
+.bf-accordion-compact.bf-accordion-styled .bf-accordion-item {
+  border: none;
+  border-radius: 0;
+}
+
+@media (max-width: 599.9px) {
+  .bf-accordion-responsive {
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+  }
+  .bf-accordion-responsive.bf-accordion-styled .bf-accordion-item {
+    border: none;
+    border-radius: 0;
+  }
+}
+/* #endregion */
+/* #region Accordion.Action */
+.bf-accordion-action {
+  display: inline-flex;
+  font: inherit;
+  text-decoration-line: inherit;
+  text-decoration-style: inherit;
+  background: inherit;
+  border: inherit;
+  border-radius: inherit;
+  cursor: pointer;
+  padding: var(--bfs8);
+  color: var(--bfc-base-c-theme);
+}
+
+.bf-accordion-action-circle {
+  display: block;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--bf-radius-full);
+  padding: 5px;
+}
+
+.bf-accordion-action:hover .bf-accordion-action-circle {
+  background-color: var(--bfc-base);
+}
+
+.bf-accordion-action:active .bf-accordion-action-circle {
+  background-color: var(--bfc-base-c-dimmed);
+}
+
+.bf-accordion-styled .bf-accordion-action {
+  padding-block: 13px;
+}
+
+/* #endregion */
+.bf-close-button {
+  position: absolute;
+  top: var(--bf-page-padding);
+  font-size: var(--bf-font-size-h2);
+  color: var(--bfc-base-c);
+  cursor: pointer;
+  border: none;
+  border-radius: var(--bf-radius-full);
+  width: 40px;
+  height: 40px;
+  text-overflow: unset;
+  white-space: unset;
+  background: inherit;
+  line-height: 1;
+  padding: 0; /* since iOS Safari behaves differently than all other browsers */
+  /* fallback for browsers that don't understand env() */
+  right: var(--bf-page-padding, 0);
+  /* stylelint-disable-next-line declaration-block-no-duplicate-properties */
+  right: calc(var(--bf-page-padding, 0px) + env(safe-area-inset-right));
+}
+
+.bf-close-button:hover,
+.bf-close-button:focus-visible:hover {
+  background: var(--bfc-base-dimmed-2);
+}
+
+.bf-close-button:focus-visible {
+  outline: 2px dotted var(--bfc-base-c);
+  outline-offset: 2px;
+}
+
+.bf-close-button:active:hover {
+  will-change: scale;
+  scale: 0.95;
+}
+
+:root {
+  --bf-drawer-width: 480px;
+}
+
+/* Drawer */
+.bf-drawer {
+  position: fixed;
+  top: var(--bf-nav-top-height, 0);
+  right: 0;
+  bottom: 0;
+  z-index: 99999;
+  outline: none;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: var(--bf-page-padding, 0);
+  width: var(--bf-drawer-width);
+  background: var(--bfc-base-2);
+  margin-right: calc(var(--bf-drawer-width) * -1);
+  transition-duration: var(--bf-animation-duration);
+  transition-timing-function: var(--bf-timing-function);
+  transition-property: width, margin, top;
+}
+
+.bf-drawer.bf-drawer-nopadding {
+  padding: 0;
+}
+
+.bf-drawer:where(:not(.bf-drawer-with-footer, .bf-drawer-nopadding)) {
+  padding-left: calc(var(--bf-page-padding, 0px) + env(safe-area-inset-left));
+  padding-right: calc(var(--bf-page-padding, 0px) + env(safe-area-inset-right));
+}
+
+.bf-drawer.bf-drawer-open {
+  margin-right: 0;
+}
+
+/* #region Bottom position */
+.bf-drawer-bottom {
+  width: unset;
+  top: unset;
+  margin-right: 0;
+  margin-bottom: -100lvh;
+  left: var(--bf-nav-side-width, 0);
+  border-radius: var(--bf-radius-l) var(--bf-radius-l) 0 0;
+  box-shadow: var(--bf-shadow);
+  /* todo: remove `vh` fallback when `dvh` is better supported */
+  max-height: calc(100vh - var(--bf-nav-top-height));
+  /* stylelint-disable-next-line declaration-block-no-duplicate-properties */
+  max-height: calc(100dvh - var(--bf-nav-top-height));
+}
+
+.bf-drawer-bottom.bf-drawer-open {
+  margin-bottom: 0;
+}
+
+.bf-drawer-bottom .bf-drawer-header {
+  padding-right: 0;
+}
+
+/* #endregion */
+/* Header */
+.bf-drawer-header {
+  font-size: var(--bf-font-size-h2);
+  font-weight: 660;
+}
+
+.bf-drawer-with-close .bf-drawer-header {
+  /* make space for close button */
+  padding-right: 40px;
+}
+
+/* Footer */
+.bf-drawer-with-footer {
+  display: grid;
+  overflow: visible;
+  padding: 0;
+}
+
+.bf-drawer-with-footer > :not(.bf-drawer-content-not-visible) {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: calc(var(--bf-page-padding, 0px) / 2);
+  /* todo: remove `vh` fallback when `dvh` is better supported */
+  height: calc(100vh - var(--bf-nav-top-height, 0px));
+  /* stylelint-disable-next-line declaration-block-no-duplicate-properties */
+  height: calc(100dvh - var(--bf-nav-top-height, 0px));
+}
+
+.bf-drawer-with-footer.bf-drawer-nopadding > :not(.bf-drawer-content-not-visible) {
+  gap: 0;
+}
+
+.bf-drawer-with-footer:not(.bf-drawer-nopadding) :where(.bf-drawer-footer, .bf-drawer-content) {
+  padding-left: calc(var(--bf-page-padding, 0px) + env(safe-area-inset-left));
+  padding-right: calc(var(--bf-page-padding, 0px) + env(safe-area-inset-right));
+}
+
+.bf-drawer-with-footer .bf-drawer-content {
+  overflow: auto;
+  overscroll-behavior: contain;
+  position: relative;
+  padding-top: var(--bf-page-padding, 0);
+}
+
+.bf-drawer-with-footer:not(.bf-drawer-nopadding) .bf-drawer-footer {
+  padding-bottom: var(--bf-page-padding, 0);
+}
+
+.bf-drawer-with-footer.bf-drawer-nopadding .bf-drawer-content {
+  padding-top: 0;
+}
+
+/* Overlay */
+.bf-drawer-overlay {
+  position: fixed;
+  inset: var(--bf-nav-top-height) 0 0 0;
+  background-color: var(--bfc-overlay);
+  transition-duration: var(--bf-animation-duration);
+  transition-timing-function: var(--bf-timing-function);
+  transition-property: opacity, visibility, top;
+  z-index: 99998;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.bf-drawer-overlay-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Small */
+@media (max-width: 599.9px), (max-height: 599.9px) {
+  :root {
+    --bf-drawer-width: 100dvw;
+  }
+}
+/* Large */
+@media (min-width: 1280px) {
+  :root {
+    --bf-drawer-width: 620px;
+  }
+  .bf-drawer:not(.bf-drawer-bottom) {
+    border-left: 1px solid var(--bfc-base-dimmed);
+  }
+  .bf-drawer-padding {
+    padding-right: calc(var(--bf-drawer-width) + 24px);
+  }
+}
+html.bf-drawer-overlay-active {
+  overflow-y: hidden;
+}
+
+.bf-dropdown {
+  background: var(--bfc-base-3);
+  color: var(--bfc-base-c);
+  border: 1px solid var(--bfc-base-dimmed);
+  border-radius: var(--bf-radius-s);
+  min-width: 200px;
+  box-shadow: var(--bf-shadow);
+  font-size: var(--bf-font-size-m);
+}
+
+.bf-dropdown .tippy-content {
+  overflow: auto;
+  padding: var(--bfs12);
+  /* todo: remove `vh` fallback when `dvh` is better supported */
+  max-height: calc(100vh - var(--bf-nav-top-height) - 20px);
+  /* stylelint-disable-next-line declaration-block-no-duplicate-properties */
+  max-height: calc(100dvh - var(--bf-nav-top-height) - 20px);
+}
+
+/* dropdowns inside a hidden top nav */
+.bf-nav-top-hide-for-mobile:not(:focus-within) .bf-dropdown .tippy-content {
+  /* todo: remove `vh` fallback when `dvh` is better supported */
+  max-height: calc(100vh - 20px);
+  /* stylelint-disable-next-line declaration-block-no-duplicate-properties */
+  max-height: calc(100dvh - 20px);
+}
+
+.bf-dropdown > .tippy-arrow {
+  color: var(--bfc-base-3);
+}
+
+.bf-dropdown-nopadding,
+.bf-dropdown-nopadding .tippy-content {
+  padding: 0;
+}
+
+.bf-dropdown.tippy-box {
+  line-height: unset;
+}
+
+/* Dropdown with Checkbox */
+.bf-dropdown .bf-checkbox {
+  display: block;
+  margin-block: var(--bfs8);
+  margin-left: var(--bfs16);
+  margin-right: var(--bfs8);
+}
+
+.bf-message {
+  padding: var(--bfs12);
+  border-radius: var(--bf-radius-xs);
+  font-size: var(--bf-font-size-m);
+}
+
+.bf-message-header {
+  margin-bottom: var(--bfs8);
+  font-weight: 600;
+}
+
+/* No margin-bottom when header only */
+.bf-message-only-header .bf-message-header {
+  margin-bottom: 0;
+}
+
+.bf-message-icon {
+  margin-right: var(--bfs8);
+}
+
+.bf-message-statusbar {
+  padding-top: var(--bfs8);
+  padding-bottom: var(--bfs8);
+  font-weight: 600;
+  position: relative;
+}
+
+.bf-message-close {
+  float: right;
+  position: relative;
+  background-color: transparent;
+  color: inherit;
+  border: 1px dashed transparent;
+  border-radius: var(--bf-radius-full);
+  text-align: center;
+  cursor: pointer;
+  padding: 0;
+  height: 21px;
+  width: 21px;
+  line-height: 1.4;
+}
+
+.bf-message-close:focus {
+  outline: none;
+}
+
+.bf-message-close:focus-visible {
+  border-color: currentcolor;
+}
+
+/* remove firefox dotted line on focus */
+.bf-message-close::-moz-focus-inner {
+  border: 0;
+}
+
+/* expand and close buttons hover state background colors */
+.bfc-theme-fade-bg {
+  --bf-message-hover-bg-hsl: var(--bfc-theme-fade-c-hsl);
+}
+
+.bfc-success-fade-bg {
+  --bf-message-hover-bg-hsl: var(--bfc-success-fade-c-hsl);
+}
+
+.bfc-warning-fade-bg {
+  --bf-message-hover-bg-hsl: var(--bfc-warning-fade-c-hsl);
+}
+
+.bfc-alert-fade-bg {
+  --bf-message-hover-bg-hsl: var(--bfc-alert-fade-c-hsl);
+}
+
+.bfc-theme-bg {
+  --bf-message-hover-bg-hsl: var(--bfc-theme-c-hsl);
+}
+
+.bfc-success-bg {
+  --bf-message-hover-bg-hsl: var(--bfc-success-c-hsl);
+}
+
+.bfc-warning-bg {
+  --bf-message-hover-bg-hsl: var(--bfc-warning-c-hsl);
+}
+
+.bfc-alert-bg {
+  --bf-message-hover-bg-hsl: var(--bfc-alert-c-hsl);
+}
+
+.bfc-dimmed-bg {
+  --bf-message-hover-bg-hsl: var(--bfc-base-c-hsl);
+}
+
+.bf-message-close:hover {
+  background-color: hsla(var(--bf-message-hover-bg-hsl), 0.1);
+}
+
+.bf-message-expandable-content {
+  background-color: var(--bfc-base-3);
+  font-size: var(--bf-font-size-m);
+  padding: var(--bfs16);
+  color: var(--bfc-base-c-1);
+  border-bottom-left-radius: var(--bf-radius-s);
+  border-bottom-right-radius: var(--bf-radius-s);
+}
+
+.bf-message-expandable-content.bf-nopadding {
+  padding: 0;
+}
+
+.bf-message-expandable-icon {
+  display: inline-block;
+  margin-right: var(--bfs8);
+  border-radius: var(--bf-radius-full);
+  height: 21px;
+  width: 21px;
+  text-align: center;
+  transition: all var(--bf-animation-duration) var(--bf-timing-function);
+}
+
+.bf-message-expandable-active .bf-message-expandable-icon {
+  transform: rotate(90deg);
+}
+
+.bf-message-expandable {
+  border: 1px solid var(--bfc-base-dimmed);
+  /* add an extra px to match inner header radius  */
+  border-radius: calc(var(--bf-radius-s) + 1px);
+  padding: 0;
+}
+
+.bf-message-expandable .bf-message-header {
+  border-radius: var(--bf-radius-s);
+  cursor: pointer;
+  outline: none;
+  margin: 0;
+  padding: 17px var(--bfs12);
+}
+
+.bf-message-expandable.bf-message-expandable-active .bf-message-header {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.bf-message-expandable:has(.bf-message-header:hover) {
+  box-shadow: var(--bf-shadow);
+}
+
+.bf-message-expandable .bf-message-header:hover .bf-message-expandable-icon {
+  background-color: hsla(var(--bf-message-hover-bg-hsl), 0.1);
+}
+
+.bf-message-expandable .bf-message-header:focus-visible {
+  outline: 1px dashed;
+}
+
+/* Remove margin from first and last elements inside message */
+.bf-message .bf-message-header + * {
+  margin-top: 0;
+}
+
+.bf-message > :last-child:not(.bf-message-header) {
+  margin-bottom: 0;
+}
+
+.bf-modal {
+  --bf-modal-padding: var(--bfs40);
+  --bf-modal-width: 100%;
+  padding: unset;
+  border: unset;
+  background: unset;
+  max-width: min(100% - var(--bf-modal-padding) * 2, var(--bf-modal-width));
+  overscroll-behavior: contain;
+}
+
+/* the dialog itself is usually not focusable, except if you press ESC
+on an unclosable dialog (and don't have focus elsewhere)? */
+.bf-modal:focus-visible {
+  outline: none;
+}
+
+.bf-modal-content {
+  /* avoid padding on modal element directly to reliably
+  detect if a click is on content or outside (on backdrop) */
+  padding: var(--bf-modal-padding);
+  background: var(--bfc-base);
+  color: var(--bfc-base-c);
+  border-radius: var(--bf-radius);
+}
+
+.bf-modal-content.bf-no-padding {
+  --bf-modal-padding: 0;
+}
+
+/* header */
+.bf-modal-header {
+  font-size: var(--bf-font-size-h5);
+  font-weight: 740;
+  padding-bottom: var(--bfs16);
+}
+
+/* overlay */
+.bf-modal::backdrop {
+  background-color: var(--bfc-overlay);
+}
+
+/* close button */
+.bf-modal-close {
+  display: block;
+  margin-left: auto;
+  font-size: var(--bf-font-size-h5);
+  color: var(--bfc-overlay-c);
+  cursor: pointer;
+  border: none;
+  border-radius: var(--bf-radius-full);
+  width: 24px;
+  height: 24px;
+  text-overflow: unset;
+  white-space: unset;
+  background: unset;
+  line-height: 1;
+  padding: 0; /* since iOS Safari behaves differently than all other browsers */
+  margin-bottom: var(--bfs8);
+}
+
+.bf-modal-close:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border: 1px dashed currentcolor;
+  background-color: transparent;
+}
+
+/* small screens in portrait or landscape */
+@media (max-width: 599.9px), (max-height: 599.9px) {
+  .bf-modal {
+    --bf-modal-padding: var(--bfs16);
+  }
+}
+.bf-pagination {
+  white-space: nowrap;
+  text-align: center;
+  font-size: var(--bf-font-size-m);
+  user-select: none;
+}
+
+.bf-pagination-button {
+  padding: 0 4px;
+  display: inline-block;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1;
+  background-color: transparent;
+  color: var(--bfc-base-c-1);
+  outline: none;
+  min-width: 28px;
+  height: 28px;
+  border-radius: var(--bf-radius-full);
+  margin: 0 var(--bfs8);
+  text-align: center;
+  cursor: pointer;
+  border: none;
+}
+
+.bf-pagination-prev,
+.bf-pagination-next {
+  background-color: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1;
+  padding: 0;
+  margin: 0 var(--bfs8);
+  outline-offset: 4px;
+}
+
+.bf-pagination-prev svg {
+  margin-right: var(--bfs4);
+}
+
+.bf-pagination-next svg {
+  margin-left: var(--bfs4);
+}
+
+.bf-pagination-dots {
+  display: inline-block;
+  text-align: center;
+  min-width: 28px;
+  margin: 0 var(--bfs8);
+}
+
+.bf-pagination > .to-small {
+  padding: 0 var(--bfs8);
+}
+
+.bf-pagination-button-arrow {
+  color: var(--bfc-base-c);
+  margin: 0;
+}
+
+.bf-pagination-button:focus-visible {
+  outline: 2px dotted var(--bfc-base-c);
+  outline-offset: 2px;
+}
+
+.bf-pagination-button:hover {
+  background-color: var(--bfc-base-dimmed-2);
+}
+
+.bf-pagination-button:disabled {
+  cursor: default;
+}
+
+.bf-pagination-button-arrow:disabled,
+.bf-pagination-button-arrow:disabled:focus-visible,
+.bf-pagination-button-arrow:disabled:hover,
+.bf-pagination-button-arrow:disabled:active {
+  color: var(--bfc-base-disabled);
+  background-color: transparent;
+}
+
+.bf-pagination-button-selected,
+.bf-pagination-button-selected:focus-visible,
+.bf-pagination-button-selected:hover,
+.bf-pagination-button-selected:active {
+  font-weight: 600;
+  background-color: var(--bfc-base-c);
+  color: var(--bfc-base-3);
+}
+
+/* #region main table styles */
+.bf-table {
+  border-collapse: inherit;
+  border-spacing: 0;
+  color: var(--bfc-base-c);
+  font-size: var(--bf-font-size-m);
+  width: 100%;
+  border-radius: var(--bf-radius-xs);
+}
+
+/* table header */
+.bf-table > thead {
+  color: var(--bfc-base-c);
+  text-align: left;
+}
+
+/* table header cell */
+.bf-table > * > tr > th {
+  color: var(--bfc-base-c);
+  font-weight: 600;
+}
+
+/* first table header cell border */
+.bf-table > thead > tr > th:first-child {
+  border-left: 6px solid var(--bfc-base-c-2);
+  border-top-left-radius: var(--bf-radius-xs);
+}
+
+/* table row vertical separator line */
+.bf-table > tbody > tr + tr > * {
+  border-top: 1px solid var(--bfc-base-dimmed);
+}
+
+/* gray left table border */
+.bf-table > tbody > tr > td:first-child {
+  border-left: 6px solid var(--bfc-base-dimmed);
+}
+
+/* #endregion */
+/* #region table cell padding */
+/* https://gitlab.intility.com/DeveloperServices/portal2/bifrost/-/issues/326#note_124827
+default cell padding
+24px left
+8px right
+24px right for last column
+
+mobile (600px-)
+12px left
+8px right
+12px right for last column
+
+applies to both th and td inside thead, tbody or tfoot
+(the valid children of table tag, therefore *)
+
+top and bottom padding in figma is 18.5px to give 58px high rows
+when single line text content. approximated to 18px in css.
+this gives 57px high rows default but stretches to accommodate taller content
+*/
+.bf-table > * > tr > * {
+  padding: 18px var(--bf-table-cell-padding, 24px) 18px var(--bf-table-cell-padding-tight, 8px);
+}
+
+/* first column */
+.bf-table > * > tr > :first-child {
+  padding-left: var(--bf-table-cell-padding, 24px);
+}
+
+/* stylelint-disable-next-line no-duplicate-selectors */
+.bf-table {
+  --bf-table-cell-padding-tight: var(--bfs8);
+}
+
+@media (max-width: 599.9px) {
+  .bf-table {
+    --bf-table-cell-padding: var(--bfs12);
+  }
+}
+@media (min-width: 600px) {
+  .bf-table {
+    --bf-table-cell-padding: var(--bfs24);
+  }
+}
+/* #endregion */
+/* #region table cell shadows */
+/* Safari doesnt support box-shadow on table row,
+therefore we have put shadow on table cells */
+/* stylelint-disable-next-line no-duplicate-selectors */
+.bf-table {
+  --bf-table-shadow: rgba(0, 0, 0, 0.25);
+}
+
+.bf-lightmode .bf-table {
+  --bf-table-shadow: rgba(0, 0, 0, 0.15);
+}
+
+/* Each table cell of first row after header gets top shadow only */
+.bf-table > thead + tbody > tr:first-child > * {
+  box-shadow: inset 0 6px 4px -5px var(--bf-table-shadow);
+}
+
+/* Vertical table first column after header column gets left shadow only */
+.bf-table > tbody > tr > th + td {
+  box-shadow: inset 6px 0 4px -5px var(--bf-table-shadow);
+}
+
+/* Two-dimensional table, cell of first row and column gets left and top shadow */
+.bf-table > thead + tbody > tr:first-child > th + td {
+  box-shadow: inset 6px 6px 4px -5px var(--bf-table-shadow);
+}
+
+/* #endregion */
+/* #region focus and hover states */
+.bf-table > * > tr:focus,
+.bf-table > * > tr > *:focus {
+  outline: none;
+}
+
+.bf-table > * > tr:focus-visible,
+.bf-table > * > tr > :focus-visible {
+  outline: 1px dashed var(--bfc-base-c);
+}
+
+.bf-table-row-clickable:hover > * {
+  background-color: var(--bfc-base-2);
+}
+
+.bf-table-cell-clickable,
+.bf-table-row-clickable {
+  cursor: pointer;
+}
+
+/* #endregion */
+/* #region sort buttons */
+.bf-table-header-cell-sort {
+  margin-left: var(--bfs8);
+}
+
+.bf-table th:hover .bf-table-header-cell-sort,
+.bf-table th:focus-visible .bf-table-header-cell-sort,
+.bf-table-header-cell-sort:hover,
+.bf-table-header-cell-sort:focus-visible {
+  color: var(--bfc-base-c-1);
+}
+
+.bf-table-header-cell-sort-none {
+  color: var(--bfc-base-c-wcag);
+}
+
+/* #endregion */
+/* #region expandable */
+.bf-table td.bf-table-expandable-cell {
+  height: auto;
+  padding: 0;
+  border: 0;
+}
+
+.bf-table-expanded-content {
+  border-top: 1px solid var(--bfc-base-dimmed);
+}
+
+.bf-table tr:last-child .bf-table-expandable-cell {
+  border-bottom-left-radius: var(--bf-radius-xs);
+}
+
+.bf-table-expand-icon-cell {
+  width: 1%;
+  line-height: 150%;
+  font-style: normal;
+  font-weight: normal;
+  font-size: var(--bf-font-size-m);
+}
+
+.bf-table .bf-table-expand-icon-cell.bf-table-expand-icon-cell {
+  padding-right: 0;
+}
+
+.bf-table > thead > tr > th:empty {
+  padding: 0;
+}
+
+.bf-table td:hover .bf-table-expand-icon-wrapper,
+.bf-table-expand-nolimit:hover .bf-table-expand-icon-wrapper {
+  background-color: var(--bfc-base-dimmed);
+}
+
+.bf-table-expand-icon-wrapper {
+  width: 21px;
+  height: 21px;
+  border-radius: var(--bf-radius-full);
+  text-align: center;
+}
+
+.bf-table-expand-icon {
+  color: var(--bfc-base-c);
+  transition: transform var(--bf-animation-duration) var(--bf-timing-function);
+}
+
+.bf-table-expand-icon-open {
+  transform: rotate(90deg);
+}
+
+.bf-table-cell-right-border {
+  border-right: 1px solid var(--bfc-base-dimmed);
+}
+
+.bf-table > tbody > tr:last-child > td:first-child,
+.bf-table-expand-closed:nth-last-child(2) > *:first-child,
+.bf-table > tbody > tr:last-child .bf-table-expanded-content {
+  border-bottom-left-radius: var(--bf-radius-xs);
+}
+
+/* delay border-radius when collapsing expandable row */
+.bf-table .bf-table-expand-closed > td:first-child {
+  transition: border-radius 0s 0.25s;
+}
+
+/* #endregion */
+/* #region vertical table */
+/* vertical tables have same border on whole table
+ to prevent notches from border-radius */
+.bf-table-vertical-header {
+  border-left: 6px solid var(--bfc-base-c-2);
+}
+
+.bf-table-vertical-header.bf-table-noborder,
+.bf-table-vertical-header > thead > tr > th:first-child {
+  border-left: none;
+}
+
+.bf-table-vertical-header > * > tr > :nth-child(2) {
+  padding-left: var(--bf-table-cell-padding);
+}
+
+.bf-table-vertical-header > tbody > tr > th {
+  text-align: right;
+  padding-right: var(--bf-table-cell-padding);
+}
+
+/* #endregion */
+/* #region noBorder prop */
+.bf-table-noborder > thead > tr > th:first-child,
+.bf-table-noborder > tbody > tr > td:first-child,
+.bf-table-noborder > tbody > tr > th:first-child {
+  border-left: none;
+}
+
+/* #endregion */
+/* #region hide left border for mobile screens */
+@media (max-width: 599.9px) {
+  .bf-table-vertical-header,
+  .bf-table > thead > tr > th:first-child,
+  .bf-table > tbody > tr > td:first-child,
+  .bf-table > tbody > tr > th:first-child {
+    border-left: none;
+  }
+}
+/* #endregion */
+/* #region Basic tabs */
+.bf-tabs-container {
+  border-bottom: 1px solid var(--bff-dimmed);
+}
+
+:root {
+  --bf-tabs-content-bg: var(--bfc-base);
+}
+
+.bf-tabs-container:where(:not(.bf-tabs-no-background)) {
+  background-color: var(--bfc-base-3);
+}
+
+:where(.bf-tabs-container) .bf-width-overflow-arrow {
+  height: 48px;
+}
+
+.bf-tabs {
+  height: var(--bfs48);
+  display: flex;
+  align-items: stretch;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.bf-tab,
+.bf-tabs :where(a) {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  font-size: var(--bf-font-size-m);
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--bfc-base-c-2);
+  background: transparent;
+  padding: 12px 16px;
+  margin: 0; /* Safari adds weird margins... */
+  text-decoration-line: none;
+}
+
+.bf-tabs a:focus,
+.bf-tab:focus {
+  outline: none;
+}
+
+.bf-tabs a:focus-visible,
+.bf-tab:focus-visible {
+  outline: 2px dotted var(--bfc-base-c);
+  outline-offset: -2px;
+}
+
+.bf-tabs :where(a:not(.active):hover),
+.bf-tab:where(:not(.bf-tab-active):hover) {
+  color: var(--bfc-base-c-1);
+  border-bottom: 2px solid var(--bfc-base-c-dimmed);
+}
+
+.bf-tabs :where(a:not(.active):active:hover),
+.bf-tab:where(:not(.bf-tab-active):active:hover) {
+  scale: 0.95;
+  transform-origin: bottom;
+  border-bottom: 2px solid var(--bfc-base-c);
+}
+
+.bf-tabs :where(a.active),
+.bf-tab-active {
+  border-color: var(--bfc-base-c);
+  color: var(--bfc-base-c-1);
+}
+
+.bf-tabs-styled :where(a.active),
+.bf-tabs-styled :where(.bf-tab-active) {
+  border-color: var(--bfc-base-c);
+  color: var(--bfc-base-c-1);
+}
+
+.bf-tab-content {
+  height: auto;
+  background-color: var(--bf-tabs-content-bg);
+}
+
+.bf-tab-content:empty {
+  display: none;
+}
+
+:where(.bf-tabs) .bf-tab-disabled {
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+@media (max-width: 599.9px) {
+  .bf-tabs {
+    padding-inline: 4px;
+  }
+  .bf-tab {
+    padding-inline: 8px;
+  }
+}
+@media (min-width: 600px) and (max-width: 1919.9px) {
+  .bf-tabs {
+    padding-inline: 8px;
+  }
+  .bf-tab {
+    padding-inline: 16px;
+  }
+}
+@media (min-width: 1920px) {
+  .bf-tabs {
+    padding-inline: 24px;
+  }
+  .bf-tab {
+    padding-inline: 16px;
+  }
+}
+/* #endregion */
+/* #region Styled tabs */
+.bf-tabs-styled {
+  border-bottom: 1px solid var(--bff-dimmed);
+}
+
+.bf-tabs-styled:where(:not(.bf-tabs-no-background)) {
+  background-color: var(--bfc-base-2);
+}
+
+:where(.bf-tabs-styled) .bf-width-overflow-arrow {
+  height: 48px;
+}
+
+:where(.bf-tabs-styled) .bf-tabs {
+  padding-inline: 8px;
+  padding-top: var(--bfs8);
+  height: var(--bfs56);
+  margin-bottom: -1px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+.bf-tabs-styled :where(.bf-tabs a),
+.bf-tabs-styled :where(.bf-tab) {
+  padding: 12.5px 16px;
+  border-bottom: 1px solid transparent;
+  border-left: 1px solid transparent;
+  border-right: 1px solid transparent;
+  border-top: 1px solid transparent;
+  border-top-left-radius: var(--bf-radius-s);
+  border-top-right-radius: var(--bf-radius-s);
+}
+
+.bf-tabs-styled :where(.bf-tabs a:not(a.active):hover),
+.bf-tabs-styled :where(.bf-tab:not(.bf-tab-active):hover) {
+  border: 1px solid var(--bfc-base-c-dimmed);
+}
+
+.bf-tabs-styled :where(.bf-tabs a:not(a.active):active:hover),
+.bf-tabs-styled :where(.bf-tab:not(.bf-tab-active):active:hover) {
+  background-color: var(--bfc-base);
+  border-bottom: 1px solid transparent;
+  color: var(--bfc-base-c);
+  transform: translateY(1px);
+  scale: 0.95;
+}
+
+.bf-tabs-styled :where(.bf-tabs a.active),
+.bf-tabs-styled :where(.bf-tab-active) {
+  border-color: var(--bff-dimmed);
+  background-color: var(--bf-tabs-content-bg);
+  color: var(--bfc-base-c-1);
+  border-bottom: 1px solid transparent;
+}
+
+.bf-tabs-no-padding {
+  padding: 0;
+}
+
+@media (max-width: 599.9px) {
+  :where(.bf-tabs-styled) .bf-tabs {
+    padding-inline: 4px;
+  }
+  :where(.bf-tabs-styled) .bf-tab {
+    padding-inline: 8px;
+  }
+}
+@media (min-width: 600px) and (max-width: 1919.9px) {
+  :where(.bf-tabs-styled) .bf-tabs {
+    padding-inline: 8px;
+  }
+  :where(.bf-tabs-styled) .bf-tab {
+    padding-inline: 16px;
+  }
+}
+@media (min-width: 1920px) {
+  :where(.bf-tabs-styled) .bf-tabs {
+    padding-inline: 24px;
+  }
+  :where(.bf-tabs-styled) .bf-tab {
+    padding-inline: 16px;
+  }
+}
+/* #endregion */
+.bf-width-overflow {
+  position: relative;
+}
+
+.bf-width-overflow-content {
+  white-space: nowrap;
+  overflow-x: scroll;
+  scrollbar-width: none;
+}
+
+.bf-width-overflow-content::-webkit-scrollbar {
+  display: none;
+}
+
+.bf-width-overflow-arrow {
+  border: 0;
+  background-color: transparent;
+  color: var(--bfc-base-c);
+  cursor: pointer;
+  font-size: var(--bf-font-size-m);
+  font-family: inherit;
+  position: absolute;
+  width: 48px;
+  padding: 0 var(--bfs12);
+}
+
+.bf-width-overflow-arrow-hover-circle {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--bf-radius-full);
+  text-align: center;
+  line-height: 1.5rem;
+  display: inline-block;
+}
+
+.bf-width-overflow-arrow:hover .bf-width-overflow-arrow-hover-circle {
+  background-color: var(--bfc-base-dimmed-2);
+}
+
+.bf-width-overflow-arrow-left {
+  left: 0;
+  bottom: 0;
+  text-align: left;
+}
+
+.bf-width-overflow-arrow-right {
+  right: 0;
+  bottom: 0;
+  text-align: right;
+}
+
+/* Fade out edges to make arrow visible. Pro tip: change to background image, to actually see the gradient */
+.bf-width-overflow-left .bf-width-overflow-content {
+  mask-image: linear-gradient(90deg, transparent 30px, black 55px);
+}
+
+.bf-width-overflow-right .bf-width-overflow-content {
+  mask-image: linear-gradient(270deg, transparent 30px, black 55px);
+}
+
+.bf-width-overflow-right.bf-width-overflow-left .bf-width-overflow-content {
+  mask-image: linear-gradient(90deg, transparent 30px, black 55px, black 51%, transparent 51%), linear-gradient(270deg, transparent 30px, black 55px, black 51%, transparent 51%);
+}
+
+.bf-tag {
+  --bf-button-border-radius: var(--bf-radius);
+  padding-block: 2px;
+  padding-inline: 12px;
+  font-size: var(--bf-font-size-s);
+}
+
+.bf-tag-compact {
+  --bf-button-border-radius: var(--bf-radius-xs);
+  padding-inline: 8px;
+}
+
+.bf-tooltip {
+  background-color: var(--bfc-base-c);
+  color: var(--bfc-base-3);
+  box-shadow: var(--bf-shadow);
+  font-size: var(--bf-font-size-m);
+  border-radius: var(--bf-radius-s);
+  white-space: normal;
+  max-width: 500px;
+  z-index: 1;
+}
+
+.bf-tooltip > .tippy-content {
+  padding: var(--bfs8) var(--bfs16);
+}
+
+.bf-tooltip-compact {
+  border-radius: var(--bf-radius-xs);
+  font-weight: 600;
+  font-size: var(--bf-font-size-s);
+}
+
+.bf-tooltip-compact > .tippy-content {
+  padding: var(--bfs4) var(--bfs8);
+}
+
+.bf-tooltip > .tippy-arrow::before {
+  transform: scale(0.75);
+}
+
+.bf-tooltip[data-placement^=top] > .tippy-arrow::before {
+  border-top-color: var(--bfc-base-c);
+  left: -1px;
+}
+
+.bf-tooltip[data-placement^=bottom] > .tippy-arrow::before {
+  border-bottom-color: var(--bfc-base-c);
+  left: -1px;
+}
+
+.bf-tooltip[data-placement^=left] > .tippy-arrow::before {
+  border-left-color: var(--bfc-base-c);
+  top: -1px;
+}
+
+.bf-tooltip[data-placement^=right] > .tippy-arrow::before {
+  border-right-color: var(--bfc-base-c);
+  top: -1px;
+}
+
+.bf-tooltip-neutral {
+  background-color: var(--bfc-base-c-dimmed);
+  color: var(--bfc-base-c-1);
+}
+
+.bf-tooltip-neutral[data-placement^=top] > .tippy-arrow::before {
+  border-top-color: var(--bfc-base-c-dimmed);
+  left: -1px;
+}
+
+.bf-tooltip-neutral[data-placement^=bottom] > .tippy-arrow::before {
+  border-bottom-color: var(--bfc-base-c-dimmed);
+  left: -1px;
+}
+
+.bf-tooltip-neutral[data-placement^=left] > .tippy-arrow::before {
+  border-left-color: var(--bfc-base-c-dimmed);
+  top: -1px;
+}
+
+.bf-tooltip-neutral[data-placement^=right] > .tippy-arrow::before {
+  border-right-color: var(--bfc-base-c-dimmed);
+  top: -1px;
+}
+
+.bf-expand {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows var(--bf-animation-duration) var(--bf-timing-function);
+  /* prevent grid blowout */
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.bf-expand.bf-expand-closed {
+  grid-template-rows: 0fr;
+}
+
+/* hide overflow while transitioning (apply bf-expand-expanded only when completely expanded) */
+.bf-expand:not(.bf-expand-expanded) {
+  overflow: hidden;
+}
+
+.bf-expand > * {
+  min-height: 0;
+  transition: visibility var(--bf-animation-duration);
+}
+
+.bf-expand.bf-expand-closed > * {
+  /* hide content for screen readers and prevent keyboard focus */
+  visibility: hidden;
+}
+
+.bf-expand-icon-wrapper {
+  color: var(--bfc-base-c-theme);
+  border-radius: var(--bf-radius-full);
+  display: inline-block;
+  width: 21px;
+  height: 21px;
+  text-align: center;
+}
+
+.bf-expand-icon {
+  transition: transform var(--bf-animation-duration) var(--bf-timing-function);
+}
+
+.bf-expand-icon-open {
+  transform: rotate(90deg);
+}
+
+.bf-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: var(--bf-nav-side-width);
+  background-color: var(--bfc-base-3);
+  box-shadow: var(--bf-shadow-top);
+  transition: left var(--bf-nav-side-transition);
+  padding: var(--bfs8) var(--bf-page-padding);
+  padding-bottom: calc(env(safe-area-inset-bottom) + var(--bfs8));
+  z-index: 2;
+}
+
+.bf-bottom-bar-nopadding {
+  padding: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bf-breadcrumbs {
+  margin: 0;
+  padding: 0;
+  font-size: var(--bf-font-size-m);
+}
+
+.bf-breadcrumbs > * {
+  color: var(--bfc-base-c-2);
+  list-style: none;
+  display: inline-block;
+}
+
+.bf-breadcrumbs :where(a, button, .bf-link) {
+  color: var(--bfc-base-c);
+  text-decoration-line: none;
+}
+
+.bf-breadcrumb-separator {
+  color: var(--bfc-base-c-2);
+  margin: 0 var(--bfs8);
+}
+
+.bf-breadcrumbs a:hover,
+.bf-breadcrumbs .bf-link:hover {
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.bf-breadcrumbs a:focus-visible,
+.bf-breadcrumbs .bf-link:focus-visible {
+  border-radius: var(--bf-radius-xs);
+  outline: 2px dotted var(--bfc-base-c);
+  outline-offset: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+.bf-breadcrumb-separator:first-of-type {
+  display: none;
+}
+
+/* BackButton */
+.bf-breadcrumbs button.bf-link {
+  background: transparent;
+  border: none;
+  font: inherit;
+  display: inline;
+}
+
+/* desired behavior:
+ * fullscreen on mobile without overlay
+ * overlay on landscape tablet
+ * landscape to portrait change should keep nav hidden
+ * avoid animating on page load
+ */
+:root {
+  /* elements outside nav + main should be positioned outside */
+  --bf-nav-top-height: 0rem;
+  --bf-nav-side-width: 0rem;
+  --bf-nav-side-transition: var(--bf-animation-duration)
+    var(--bf-timing-function);
+  --bf-nav-mobile-width: 100%;
+  --bf-nav-item-height: var(--bfs40);
+}
+
+.bf-nav {
+  font-size: var(--bf-font-size-m);
+}
+
+.bf-nav-top,
+.bf-nav-top ~ * {
+  --bf-nav-top-height: var(--bfs56);
+}
+
+.bf-nav-side,
+.bf-nav-side ~ * {
+  --bf-nav-side-width: 230px;
+}
+
+.bf-nav-side-collapsed,
+.bf-nav-side-collapsed ~ * {
+  --bf-nav-side-width: 56px;
+}
+
+/* when nav-side is hidden with .from-medium, .from-large, or .from-xl,
+make sure nav-top and content goes all the way to the left */
+@media (max-width: 959.9px) {
+  .bf-nav-side.from-medium,
+  .bf-nav-side.from-medium ~ *,
+  .bf-nav-side-collapsed.from-medium,
+  .bf-nav-side-collapsed.from-medium ~ * {
+    --bf-nav-side-width: 0rem;
+  }
+}
+@media (max-width: 1279.9px) {
+  .bf-nav-side.from-large,
+  .bf-nav-side.from-large ~ *,
+  .bf-nav-side-collapsed.from-large,
+  .bf-nav-side-collapsed.from-large ~ * {
+    --bf-nav-side-width: 0rem;
+  }
+}
+@media (max-width: 1599.9px) {
+  .bf-nav-side.from-xl,
+  .bf-nav-side.from-xl ~ *,
+  .bf-nav-side-collapsed.from-xl,
+  .bf-nav-side-collapsed.from-xl ~ * {
+    --bf-nav-side-width: 0rem;
+  }
+  html.bf-nav-mobile-is-open {
+    overflow: hidden;
+  }
+  html.bf-nav-mobile-is-open body {
+    overflow: unset;
+  }
+  html.bf-nav-mobile-is-open .bf-nav-top {
+    position: fixed;
+  }
+  html.bf-nav-mobile-is-open main {
+    padding-top: var(--bf-nav-top-height);
+  }
+}
+/* display small 'it' logo for nav-side when collapsed (default hidden)
+todo: remove in 5.0 (all three logo selectors)  */
+.bf-small-it-logo {
+  display: none;
+}
+
+.bf-nav-side-collapsed.bf-nav-side .bf-small-it-logo {
+  display: inline;
+}
+
+.bf-nav-side-collapsed.bf-nav-side .bf-full-intility-logo {
+  display: none;
+}
+
+/* separator between items */
+.bf-nav > hr,
+.bf-nav-side-content > hr,
+.bf-nav-mobile-content > hr {
+  padding: 0;
+  margin: 0;
+  border: var(--bf-border);
+  border-bottom: none;
+}
+
+/* mobile fullscreen popup */
+.bf-nav-mobile {
+  position: fixed;
+  inset: var(--bf-nav-top-height) 0 0 0;
+  overflow: auto;
+  z-index: 99999;
+  background-color: var(--bfc-base-3);
+  font-size: var(--bf-font-size-m);
+  min-width: calc(var(--bf-nav-side-width) + env(safe-area-inset-left));
+  transform: translate(calc(0px - var(--bf-nav-mobile-width)));
+  animation-duration: var(--bf-animation-duration);
+  animation-timing-function: var(--bf-timing-function);
+  /* 8px between items + 4px extra in container for 12px total */
+  padding-top: var(--bfs4);
+  padding-right: env(safe-area-inset-right);
+  padding-left: env(safe-area-inset-left);
+}
+
+.bf-nav-mobile.bf-nav-mobile-open {
+  transform: translate(0);
+  animation-name: navMobileSlideIn;
+}
+
+.bf-nav-mobile.bf-nav-mobile-close {
+  animation-name: navMobileSlideOut;
+}
+
+.bf-nav-mobile.bf-nav-mobile-gone {
+  display: none;
+}
+
+@keyframes navMobileSlideIn {
+  from {
+    transform: translate(calc(0px - var(--bf-nav-mobile-width)));
+  }
+  to {
+    transform: translate(0);
+  }
+}
+@keyframes navMobileSlideOut {
+  from {
+    transform: translate(0);
+  }
+  to {
+    transform: translate(calc(0px - var(--bf-nav-mobile-width)));
+  }
+}
+@media (max-width: 599.9px) {
+  .bf-nav-mobile-overlay {
+    display: none;
+  }
+}
+@media (min-width: 600px) {
+  .bf-nav-mobile {
+    --bf-nav-mobile-width: calc(17.5rem + env(safe-area-inset-left));
+    padding-right: 0;
+    width: var(--bf-nav-mobile-width);
+  }
+}
+/* Overlay */
+.bf-nav-mobile-overlay {
+  position: fixed;
+  inset: var(--bf-nav-top-height) 0 0 0;
+  z-index: -99;
+  background-color: var(--bfc-overlay);
+  transition: all var(--bf-animation-duration) var(--bf-timing-function);
+  opacity: 0;
+}
+
+.bf-nav-mobile-open ~ .bf-nav-mobile-overlay {
+  z-index: 9998;
+  opacity: 1;
+}
+
+.bf-nav-top {
+  display: flex;
+  background: var(--bfc-base-3);
+  height: var(--bf-nav-top-height);
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 2;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  border-bottom: var(--bf-border);
+}
+
+.bf-nav-top .bf-intility-logo {
+  border-bottom: var(--bf-border);
+}
+
+/* todo: remove in 5.0 */
+.bf-nav-top-appname {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  font-size: var(--bf-font-size-l);
+  color: var(--bfc-base-c-2);
+  padding-left: var(--bfs16);
+  border-bottom: var(--bf-border);
+  flex-grow: 2;
+}
+
+.bf-nav-top-logo {
+  flex-grow: 2;
+}
+
+:where(.bf-nav-top-logo) > a {
+  display: inline-block;
+  outline-offset: -2px;
+}
+
+@media (min-width: 600px) {
+  .bf-nav-top .bf-intility-logo {
+    border-right: 1px solid var(--bfc-base-c-dimmed);
+  }
+}
+.bf-nav-top-content {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.bf-nav-top .bf-nav-profile {
+  border-radius: var(--bf-radius-full);
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--bfc-base-c-dimmed);
+  vertical-align: middle;
+}
+
+.bf-nav-side {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  width: var(--bf-nav-side-width);
+  background-color: var(--bfc-base-3);
+  color: var(--bfc-base-c);
+  border-right: var(--bf-border);
+  transition: width var(--bf-nav-side-transition);
+  display: flex;
+  flex-direction: column;
+}
+
+.bf-nav-side:has(~ .bf-nav-top:not(.to-xl)),
+.bf-nav-top:not(.to-xl) ~ .bf-nav-side {
+  top: var(--bfs56);
+}
+
+/* todo: remove in 5.0 */
+.bf-nav-side-appname {
+  padding: 0 21px;
+  line-height: var(--bfs32);
+  font-size: var(--bf-font-size-s);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border-bottom: var(--bf-border);
+  color: var(--bfc-base-c-2);
+  background-color: var(--bfc-base-2);
+}
+
+.bf-nav-side .bf-nav-side-collapse-button {
+  transition: width var(--bf-nav-side-transition);
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  border-top: var(--bf-border);
+}
+
+.bf-nav-side-collapse-button .bf-nav-side-item-icon {
+  color: var(--bfc-base-c-theme);
+}
+
+.bf-nav-side-collapsed .bf-nav-side-collapse-button .bf-nav-item-icon {
+  rotate: 180deg;
+}
+
+/* todo: remove in 5.0 */
+.bf-nav-side-collapsed .bf-nav-side-appname {
+  padding-left: 0;
+  padding-right: 0;
+  text-align: center;
+}
+
+/* make space to the left of main content for the fixed Sidebar */
+.bf-nav-side ~ main,
+.bf-nav-side ~ .bf-main {
+  margin-left: var(--bf-nav-side-width);
+  transition: margin var(--bf-nav-side-transition);
+  position: relative;
+  z-index: 1;
+}
+
+/* make space above main content for the fixed Top bar.
+it's always present in DOM when using <Nav> for small screens (<1600px) */
+@media (max-width: 1599.9px) {
+  .bf-nav-top ~ main {
+    padding-top: var(--bfs56);
+  }
+}
+@media (min-width: 1600px) {
+  .bf-nav-top:not(.to-xl) ~ main {
+    padding-top: var(--bfs56);
+  }
+}
+/* reset default link styling when used as navigation wrappers */
+a:has(> .bf-nav-item) {
+  text-decoration-line: none;
+  /* contain margins */
+  display: flow-root;
+  color: inherit;
+  outline: none;
+}
+
+/* reset default button styling when used as navigation wrappers */
+button:has(> .bf-nav-item) {
+  color: inherit;
+  outline: none;
+  cursor: pointer;
+  border: none;
+  background-color: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+  text-align: left;
+  appearance: none;
+  margin: 0;
+}
+
+:where(.bf-nav-mobile, .bf-nav-side, .bf-nav-group) button:has(> .bf-nav-item) {
+  width: 100%;
+  display: block;
+}
+
+/* Nav.Header */
+.bf-nav-header {
+  margin: var(--bfs8) var(--bfs16);
+  color: var(--bfc-base-c-2);
+  font-size: var(--bf-font-size-s);
+}
+
+.bf-nav-header:first-child {
+  margin-top: var(--bfs4);
+}
+
+@media (max-width: 1599.9px) {
+  .bf-nav-top.bf-nav-top {
+    transition-duration: var(--bf-animation-duration);
+    transition-timing-function: var(--bf-timing-function);
+    transition-property: margin, transform;
+    transform: translateY(0);
+  }
+  /* bf-nav-top-hide-for-mobile is applied when user scrolls down (and the mobile menu is not open).
+     hide the top bar if this class is applied and the current focus is not inside the top nav */
+  .bf-nav-top.bf-nav-top-hide-for-mobile:not(:focus-within) {
+    transform: translateY(-110%);
+  }
+  /* when top nav is hidden, pretend its height is 0px to let other components and css position itself correctly */
+  .bf-nav-top.bf-nav-top-hide-for-mobile:not(:focus-within) ~ main {
+    --bf-nav-top-height: 0px;
+  }
+}
+.bf-hide-until-focus {
+  position: fixed;
+  z-index: 3;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  transition: transform var(--bf-animation-duration) var(--bf-timing-function);
+}
+
+.bf-hide-until-focus:where(:focus, :focus-within) {
+  transform: translate(-50%, 10px);
+}
+
+@media print {
+  .bf-hide-until-focus {
+    display: none;
+  }
+}
+/* #region <Branding> */
+.bf-nav-side-content-wrapper,
+.bf-nav-mobile {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex: 1 1;
+}
+
+.bf-nav-branding {
+  border-top: var(--bf-border);
+  text-align: center;
+  color: var(--bfc-base-c-2);
+  min-height: var(--bfs56);
+  display: flex;
+  place-content: center;
+  place-items: center;
+  gap: var(--bfs4);
+  margin-top: auto;
+  overflow: hidden;
+}
+
+.bf-nav-branding :where(.bf-intility-logo, .bf-it-logo) {
+  height: var(--bfs16);
+  margin-top: 0.1875rem;
+}
+
+/* hide "it" logo in mobile nav and in sidebar when not collapsed */
+.bf-nav-side:not(.bf-nav-side-collapsed) .bf-nav-branding > .bf-it-logo,
+.bf-nav-mobile .bf-nav-branding > .bf-it-logo {
+  display: none;
+}
+
+/* hide "an intility service" in sidebar when collapsed (only show "it") */
+.bf-nav-side.bf-nav-side-collapsed .bf-nav-branding > :where(.bf-intility-logo, span) {
+  display: none;
+}
+
+/* #endregion </Branding> */
+.bf-nav-expand-icon {
+  position: absolute;
+  right: 16px;
+}
+
+/* prevent expand icon from overlapping nav.group name text */
+.bf-nav-group-button .bf-nav-item:has(.bf-nav-expand-icon) {
+  padding-right: 29px;
+}
+
+/* todo: remove in 5.0 */
+.bf-nav-group-content .bf-nav-group-item-circle-wrapper,
+.bf-nav-group-dropout .bf-nav-group-item-circle-wrapper {
+  display: inline;
+  position: absolute;
+  right: var(--bfs16);
+}
+
+/* todo: remove in 5.0 */
+.bf-nav-group-content a.active .bf-nav-group-item-circle,
+.bf-nav-group-dropout a.active .bf-nav-group-item-circle,
+.bf-nav-group-content button.active .bf-nav-group-item-circle,
+.bf-nav-group-dropout button.active .bf-nav-group-item-circle {
+  display: none;
+}
+
+/* todo: remove in 5.0 */
+.bf-nav-group-content a.active .bf-nav-group-item-dot-circle,
+.bf-nav-group-dropout a.active .bf-nav-group-item-dot-circle,
+.bf-nav-group-content button.active .bf-nav-group-item-dot-circle,
+.bf-nav-group-dropout button.active .bf-nav-group-item-dot-circle {
+  display: inline;
+}
+
+:is(.bf-nav-group-content, .bf-nav-group-dropout) .bf-nav-item,
+:is(.bf-nav-group-content, .bf-nav-group-dropout) :is(a, button) > .bf-nav-item {
+  font-size: var(--bf-font-size-m);
+  line-height: 40px;
+  margin: 0;
+  padding-inline: 16px;
+}
+
+.bf-nav-group-content > hr {
+  padding: 0;
+  border: var(--bf-border);
+  border-bottom: none;
+  margin: var(--bfs12) 0;
+}
+
+/* Nav.Group dropout */
+.bf-nav-group-dropout {
+  min-width: 230px;
+  color: var(--bfc-base-c);
+  padding-bottom: var(--bfs12);
+}
+
+.bf-nav-group-dropout .tippy-content,
+.bf-nav-group-dropout.bf-dropdown {
+  padding: 0;
+}
+
+.bf-nav-group-dropout[data-placement^=right] > .tippy-arrow::before {
+  border-right-color: var(--bfc-base-2);
+}
+
+.bf-nav-group-dropout[data-placement^=bottom] > .tippy-arrow::before {
+  border-bottom-color: var(--bfc-base-3);
+}
+
+.bf-nav-group-dropout-title {
+  background-color: var(--bfc-base-2);
+  color: var(--bfc-base-c-2);
+  padding-inline: 24px;
+  line-height: 40px;
+  border-top-left-radius: var(--bf-radius);
+  border-top-right-radius: var(--bf-radius);
+}
+
+.bf-nav-group-dropout hr,
+.bf-nav-group-content hr {
+  padding: 0;
+  margin: var(--bfs8) -8px;
+  border: var(--bf-border);
+  border-bottom: none;
+}
+
+/* Nav.Items within Nav.Group */
+.bf-nav :is(.bf-nav-group-content, .bf-nav-group-dropout) .bf-nav-item-icon {
+  width: 21px;
+}
+
+.bf-nav-group-dropout-content,
+.bf-nav-group-content {
+  padding: var(--bfs8);
+}
+
+:where(.bf-nav-mobile, .bf-nav-side) .bf-nav-group-content {
+  padding-top: 0;
+  box-shadow: 0 -8px 8px -8px var(--bfc-shadow) inset;
+}
+
+.bf-nav-side .bf-nav-group-dropout {
+  /* adjust collapsed sidebar nav.group dropout position to acommodate for the
+  fact that the dropout title has 16px smaller height than its nav.group button, */
+  margin-top: 8px;
+  /* make space for top bar + a few px top and bot */
+  max-height: calc(100dvh - 56px);
+}
+
+.bf-nav-top .bf-nav-group-dropout-content > section {
+  margin: var(--bfs12) 0;
+}
+
+/* style nav.group button as active if any of the grouped links or buttons are .active.
+using :where() to match (0, 2, 1) specificity of active and focus styling of Nav.Item.css */
+.bf-nav-group:has(a.active, button.active) :where(.bf-nav-group-button .bf-nav-item) {
+  --bf-nav-item-icon-color: var(--bft-theme);
+  --bf-nav-item-bg: var(--bfc-base);
+  font-weight: 600;
+}
+
+/* collapsed sidebar nav.group dropout indicator a.k.a. "Arne" */
+.bf-nav-side-collapsed .bf-nav-group-button .bf-nav-item::after {
+  content: "";
+  position: absolute;
+  top: 2.0625rem; /* 33px */
+  left: 31px;
+  border: 3px solid transparent;
+  border-right-color: var(--bfc-base-c);
+  border-bottom-color: var(--bfc-base-c);
+  filter: drop-shadow(-1px -1px 0 var(--bf-nav-item-bg));
+}
+
+/* nav.group button in top bar */
+.bf-nav-top-content > .bf-nav-group > button {
+  height: 56px;
+}
+
+/* Nav.Item */
+.bf-nav-item {
+  --bf-nav-item-icon-color: var(--bfc-base-c-2); /* Diff from Figma sketch. Designed with --bfc-base-c-2*/
+  --bf-nav-item-bg: var(--bfc-base-3);
+  background-color: var(--bf-nav-item-bg);
+  display: block;
+  color: inherit;
+  text-decoration-line: none;
+  z-index: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border-radius: var(--bf-radius-s);
+  margin: 8px;
+}
+
+/* todo: remove in 5.0
+ weird hack since platform-tookit seems to rely on this to place notification badge */
+a:has(> .bf-nav-item),
+button:has(> .bf-nav-item) {
+  position: relative;
+}
+
+.bf-nav-item :where(svg, img) {
+  vertical-align: middle;
+}
+
+/* todo: remove in 5.0 */
+.bf-nav-group-item-circle-wrapper,
+.bf-nav-group-item-dot-circle {
+  display: none;
+}
+
+/* todo: remove in 5.0 */
+.bf-nav-group-item-circle {
+  color: var(--bff-dimmed);
+}
+
+/* sidebar and mobile Nav.Item */
+.bf-nav-mobile .bf-nav-item,
+.bf-nav-side .bf-nav-item {
+  line-height: var(--bf-nav-item-height);
+  overflow: hidden;
+}
+
+.bf-nav-item-icon {
+  color: var(--bf-nav-item-icon-color);
+}
+
+:is(.bf-nav-mobile, .bf-nav-side) .bf-nav-item-icon {
+  display: inline-block;
+  text-align: center;
+  width: 40px;
+  margin-right: 8px;
+}
+
+/* top bar Nav.Item */
+.bf-nav-top .bf-nav-item {
+  /* padding + padding + min-width + border = 56px */
+  padding-inline: 8px;
+  min-width: 39px;
+}
+
+/* remove in 5.0 */
+.bf-nav-top-dropout .bf-nav-item {
+  display: flex;
+  align-items: center;
+}
+
+.bf-nav .bf-nav-mobile-toggle {
+  border-right: var(--bf-border);
+}
+
+.bf-nav-top-content > :has(> .bf-nav-item),
+.bf-nav-top-content > .bf-nav-group > button,
+.bf-nav-mobile-toggle .bf-nav-item {
+  line-height: 40px;
+  text-align: center;
+}
+
+/* top bar nav.item icon color should be same as text
+(including nav.group button, excluding items nested inside nav.grouo)
+match (0, 1, 0) specificity of .bf-nav-item (when not focused or .active) */
+:where(.bf-nav-top .bf-nav-group-button:not(.active)) .bf-nav-item,
+:where(:is(.bf-nav-top, .bf-nav-top-content) > :is(a, button)) > .bf-nav-item,
+:where(.bf-nav-top-content) > .bf-nav-item {
+  --bf-nav-item-icon-color: inherit;
+}
+
+.bf-nav-top-content > :has(> .bf-nav-item),
+.bf-nav-top-content > :where(.bf-nav-item, .bf-nav-group) {
+  border-left: var(--bf-border);
+}
+
+.bf-nav-top-content > .bf-nav-item {
+  height: var(--bf-nav-top-height);
+  border-radius: 0;
+  padding: var(--bfs8) var(--bfs16);
+  margin: 0;
+  min-width: 56px;
+  line-height: 39px;
+  background-color: transparent;
+}
+
+.bf-nav-group-dropout-content :where(a, button):has(> .bf-nav-item) {
+  border-left: none;
+}
+
+.bf-nav-top .bf-nav-item-icon {
+  margin-right: var(--bfs8);
+}
+
+.bf-nav-top .bf-nav-item-icon-only .bf-nav-item-icon {
+  margin-right: 0;
+}
+
+/* .active = "current page" */
+:is(a, button).active > .bf-nav-item {
+  --bf-nav-item-bg: var(--bfc-base);
+  --bf-nav-item-icon-color: var(--bft-theme);
+  font-weight: 600;
+}
+
+/* link and button states */
+:is(a, button):hover > .bf-nav-item {
+  --bf-nav-item-bg: var(--bfc-base-2);
+  --bf-nav-item-icon-color: var(--bft-theme);
+}
+
+.bf-nav :is(a, button):focus-visible > .bf-nav-item {
+  outline: 1px dashed var(--bff-theme);
+  outline-offset: -1px;
+}
+
+.bf-nav-logo {
+  display: grid;
+  grid-template-columns: 57px auto;
+  align-items: center;
+}
+
+.bf-nav-logo-graphic {
+  display: inline-flex;
+  height: 24px;
+  width: 24px;
+  place-self: center;
+  place-content: center;
+}
+
+.bf-nav-logo-graphic > :where(svg, img) {
+  max-height: 100%;
+  max-width: 100%;
+}
+
+.bf-nav-logo-name {
+  font-size: var(--bf-font-size-m);
+  font-weight: 740;
+  line-height: 1.15;
+  padding-block: 10px;
+}
+
+/* #region logo in top bar */
+.bf-nav-top .bf-nav-logo {
+  height: var(--bf-nav-top-height);
+  display: inline-grid;
+}
+
+.bf-nav-top .bf-nav-logo-name {
+  padding-right: var(--bfs16);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* #endregion logo in top bar */
+/* #region logo in sidebar */
+.bf-nav-side-logo {
+  width: var(--bf-nav-side-width);
+  transition: width var(--bf-animation-duration) var(--bf-timing-function);
+  overflow: hidden;
+}
+
+.bf-nav-side .bf-nav-logo {
+  min-height: var(--bfs56);
+  width: 14.375rem; /* keep width static to avoid text wrap while transitioning to collapsed sidebar */
+  border-bottom: var(--bf-border);
+}
+
+/* #endregion logo in sidebar */
+.bf-nav-side-content .bf-nav-search-item,
+.bf-nav-mobile .bf-nav-search-item {
+  padding: 0;
+  border-radius: 0;
+  line-height: normal;
+}
+
+.bf-nav-search-group .bf-nav-group-dropout-content {
+  padding: var(--bfs8);
+}
+
+/* #region top bar */
+.bf-nav-top .bf-nav-search-input {
+  height: 56px;
+  display: grid;
+  place-content: center;
+}
+
+.bf-nav-top .bf-nav-search-input :is(.bf-input, .bf-input-icon) {
+  transition-duration: var(--bf-animation-duration);
+  transition-timing-function: var(--bf-timing-function);
+}
+
+.bf-nav-top .bf-nav-search-input .bf-input {
+  transition-property: width, margin, border-color;
+}
+
+.bf-nav-top .bf-nav-search-input .bf-input-icon {
+  transition-property: right;
+  /* before search input is expanded (focused)
+  we don't want the button to perform a search when clicked,
+  instead let the click fall through to the input behind */
+  pointer-events: none;
+}
+
+/* remove default nav.item padding to allow
+invisible input to be full width (and clickable) */
+.bf-nav-top .bf-nav-search-item {
+  padding: 0;
+}
+
+.bf-nav-top .bf-nav-search-item .bf-input-icon {
+  color: var(--bfc-base-c);
+}
+
+.bf-nav-top .bf-nav-search-item .bf-input-icon-left .bf-input-icon {
+  left: var(--bfs8);
+}
+
+.bf-nav-top .bf-nav-search-item .bf-input-icon-right .bf-input-icon {
+  right: var(--bfs8);
+}
+
+.bf-nav-top .bf-nav-search-item .bf-input:hover ~ .bf-input-icon {
+  color: var(--bfc-theme);
+}
+
+/* hide search input in top bar when it is not focused,
+or has no content (:valid) */
+.bf-nav-top .bf-nav-search-input .bf-input:not(:focus, :valid) {
+  border-color: transparent;
+  width: 0;
+}
+
+/* when the input is expanded (focused),
+allow clicks on icon be picked up by js,
+and hand pointer to be displayed */
+.bf-nav-top .bf-nav-search-input .bf-input:is(:focus, :valid) ~ .bf-input-icon,
+.bf-nav-top .bf-nav-search-input .bf-input-icon:hover {
+  pointer-events: all;
+}
+
+.bf-nav-top .bf-nav-search-input .bf-input:is(:focus, :valid) {
+  width: 200px;
+  margin: 0 var(--bfs8);
+}
+
+.bf-nav-top .bf-nav-search-input.bf-input-icon-right .bf-input:is(:focus, :valid) ~ .bf-input-icon {
+  color: var(--bfc-theme);
+}
+
+.bf-nav-top .bf-nav-search-input.bf-input-icon-left .bf-input:is(:focus, :valid) ~ .bf-input-icon {
+  color: var(--bfc-base-c-2);
+}
+
+/* #endregion */
+.bf-stepbar {
+  display: flex;
+  overflow: hidden;
+  background-color: var(--bfc-base-2);
+  border-radius: var(--bf-radius-xs);
+  font-size: var(--bf-font-size-s);
+}
+
+.bf-stepbar > .bf-stepbar-item,
+.bf-stepbar > a {
+  position: relative;
+  background-color: var(--bfc-base-3);
+  height: 32px;
+  margin-right: var(--bfs16);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 5px;
+  color: var(--bfc-base-c-2);
+  flex-grow: 1;
+}
+
+.bf-stepbar > a .bf-stepbar-item {
+  border: 1px dashed transparent;
+  border-radius: var(--bf-radius-xs);
+  padding: var(--bfs2) var(--bfs4);
+}
+
+.bf-stepbar > .bf-stepbar-item {
+  padding: 0 10px;
+}
+
+.bf-stepbar > a:link,
+.bf-stepbar > a:visited {
+  color: var(--bff-base);
+  text-decoration-line: none;
+  border-radius: 0;
+}
+
+.bf-stepbar > ::before,
+.bf-stepbar > ::after {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.bf-stepbar > ::before {
+  bottom: 0;
+  right: 100%;
+  border-top: 16px solid var(--bfc-base-3);
+  border-bottom: 16px solid var(--bfc-base-3);
+  border-left: 8px solid transparent;
+}
+
+.bf-stepbar > ::after {
+  left: 100%;
+  border-top: 16px solid transparent;
+  border-bottom: 16px solid transparent;
+  border-left: 8px solid var(--bfc-base-3);
+}
+
+.bf-stepbar > :first-child {
+  border-top-left-radius: var(--bf-radius-xs);
+  border-bottom-left-radius: var(--bf-radius-xs);
+}
+
+.bf-stepbar > :last-child {
+  border-top-right-radius: var(--bf-radius-xs);
+  border-bottom-right-radius: var(--bf-radius-xs);
+  margin-right: 0;
+}
+
+.bf-stepbar > :last-child::after {
+  border-top: none;
+  border-bottom: none;
+  border-left: none;
+}
+
+.bf-stepbar > a:hover {
+  color: var(--bfc-base-c-theme);
+}
+
+/* active step */
+.bf-stepbar .bf-stepbar-item-active,
+.bf-stepbar a.active {
+  background-color: var(--bfc-theme-1);
+  color: var(--bfc-theme-c-base-3);
+  font-weight: 600;
+}
+
+.bf-stepbar a.active:hover {
+  background-color: var(--bfc-theme-2);
+}
+
+.bf-stepbar a.active:hover::before {
+  border-top-color: var(--bfc-theme-2);
+  border-bottom-color: var(--bfc-theme-2);
+}
+
+.bf-stepbar a.active:hover::after {
+  border-left-color: var(--bfc-theme-2);
+}
+
+.bf-stepbar .bf-stepbar-item-active::after,
+.bf-stepbar a.active::after {
+  border-left-color: var(--bfc-theme-1);
+}
+
+.bf-stepbar .bf-stepbar-item-active::before,
+.bf-stepbar a.active::before {
+  border-top-color: var(--bfc-theme-1);
+  border-bottom-color: var(--bfc-theme-1);
+}
+
+/* keyboard focus */
+.bf-stepbar > a:focus-visible .bf-stepbar-item {
+  border-color: var(--bfc-base-c-theme);
+}
+
+.bf-stepbar > a:focus-visible {
+  outline: none;
+}
+
+/* Focus state on selected step */
+.bf-stepbar > a.active:focus-visible .bf-stepbar-item {
+  border-color: var(--bfc-theme-c-1);
+}
+
+/*** circle variant ***/
+.bf-stepbar-circle {
+  display: grid;
+  grid-auto-flow: column;
+}
+
+.bf-stepbar-circle > a,
+.bf-stepbar-circle > .bf-stepbar-item {
+  color: var(--bfc-base-c-2);
+  text-decoration-line: none;
+  text-align: center;
+  font-size: var(--bf-font-size-m);
+  position: relative;
+  padding-bottom: 2.5rem;
+}
+
+.bf-stepbar-circle > a:hover {
+  color: var(--bfc-base-c);
+}
+
+/* stepbar line */
+.bf-stepbar-circle > a::after,
+.bf-stepbar-circle > .bf-stepbar-item::after,
+.bf-stepbar-circle > a.active:last-child::after,
+.bf-stepbar-circle > .bf-stepbar-item-active:last-child::after {
+  position: absolute;
+  height: 4px;
+  content: "";
+  background: var(--bfc-base-c-theme);
+  bottom: 0.7rem;
+  left: 0;
+  right: 0;
+}
+
+.bf-stepbar-circle > a:first-child::after,
+.bf-stepbar-circle > .bf-stepbar-item:first-child::after {
+  border-top-left-radius: var(--bf-radius-full);
+  border-bottom-left-radius: var(--bf-radius-full);
+}
+
+.bf-stepbar-circle > a:last-child::after,
+.bf-stepbar-circle > .bf-stepbar-item:last-child::after {
+  border-top-right-radius: var(--bf-radius-full);
+  border-bottom-right-radius: var(--bf-radius-full);
+}
+
+/* active circle step */
+.bf-stepbar-circle > a.active,
+.bf-stepbar-circle > .bf-stepbar-item-active {
+  color: var(--bfc-base-c);
+}
+
+.bf-stepbar-circle > a.active::after,
+.bf-stepbar-circle > .bf-stepbar-item-active::after {
+  background: linear-gradient(90deg, var(--bfc-base-c-theme) 50%, var(--bfc-base-c-wcag) 50%);
+}
+
+.bf-stepbar-circle > a.active ~ *::after,
+.bf-stepbar-circle > .bf-stepbar-item-active ~ *::after {
+  background: var(--bfc-base-c-wcag);
+}
+
+/* hide circle icon for non-circle stepbar items */
+.bf-stepbar-circle-icon {
+  display: none;
+}
+
+.bf-stepbar-circle .bf-stepbar-circle-icon {
+  display: block;
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 1;
+  border-radius: var(--bf-radius-full);
+  border: 3px solid transparent;
+  height: 26px;
+  width: 26px;
+  background: var(--bfc-theme);
+  color: var(--bfc-theme-c-base-3);
+}
+
+.bf-stepbar-circle a:hover .bf-stepbar-circle-icon {
+  background: var(--bfc-theme-2);
+}
+
+.bf-stepbar-circle > a.active .bf-stepbar-circle-icon,
+.bf-stepbar-circle > .bf-stepbar-item-active .bf-stepbar-circle-icon {
+  border-color: var(--bfc-base-c-theme);
+  background: var(--bfc-base);
+  color: transparent;
+}
+
+.bf-stepbar-circle > a.active .bf-stepbar-circle-icon::after,
+.bf-stepbar-circle > .bf-stepbar-item-active .bf-stepbar-circle-icon::after {
+  content: "";
+  position: absolute;
+  background-color: var(--bfc-base-c-theme);
+  inset: 4px;
+  border-radius: var(--bf-radius-full);
+}
+
+.bf-stepbar-circle > a.active:hover .bf-stepbar-circle-icon {
+  border-color: var(--bfc-theme-2);
+}
+
+.bf-stepbar-circle > a.active:hover .bf-stepbar-circle-icon::after {
+  background-color: var(--bfc-theme-2);
+}
+
+.bf-stepbar-circle > a.active ~ * .bf-stepbar-circle-icon,
+.bf-stepbar-circle > .bf-stepbar-item-active ~ * .bf-stepbar-circle-icon {
+  border-color: var(--bfc-base-c-wcag);
+  background: var(--bfc-base);
+  color: transparent;
+}
+
+.bf-stepbar-circle > a.active ~ a:hover .bf-stepbar-circle-icon {
+  border-color: var(--bff-theme);
+}
+
+/* collapsed version for mobile, displays numbers only for inactive steps */
+@media (min-width: 600px) {
+  .bf-stepbar-responsive .bf-stepbar-counter {
+    display: none;
+  }
+}
+@media (max-width: 599.9px) {
+  .bf-stepbar-responsive .bf-stepbar-content {
+    display: none;
+  }
+  .bf-stepbar-responsive > a.active .bf-stepbar-content,
+  .bf-stepbar-responsive > .bf-stepbar-item-active .bf-stepbar-content {
+    display: inline;
+  }
+  .bf-stepbar-responsive > a.active .bf-stepbar-counter,
+  .bf-stepbar-responsive > .bf-stepbar-item-active .bf-stepbar-counter {
+    display: none;
+  }
+  .bf-stepbar-responsive {
+    counter-reset: bf-stepbar;
+  }
+  .bf-stepbar-responsive .bf-stepbar-item {
+    counter-increment: bf-stepbar;
+  }
+  .bf-stepbar-responsive .bf-stepbar-counter::after {
+    content: counter(bf-stepbar);
+  }
+}
+.bf-grid {
+  --bfl-columns: var(--bf-grid-cols, 1);
+}
+
+@media (min-width: 600px) {
+  .bf-grid {
+    --bfl-columns: var(--bf-grid-s-cols);
+  }
+}
+@media (min-width: 960px) {
+  .bf-grid {
+    --bfl-columns: var(--bf-grid-m-cols);
+  }
+}
+@media (min-width: 1280px) {
+  .bf-grid {
+    --bfl-columns: var(--bf-grid-l-cols);
+  }
+}
+@media (min-width: 1600px) {
+  .bf-grid {
+    --bfl-columns: var(--bf-grid-xl-cols);
+  }
+}
+@media (min-width: 1920px) {
+  .bf-grid {
+    --bfl-columns: var(--bf-grid-xxl-cols);
+  }
+}
+.bf-grid-span {
+  grid-column: span var(--bf-grid-span, 1);
+}
+
+@media (min-width: 600px) {
+  .bf-grid-span {
+    grid-column: span var(--bf-grid-span-s);
+  }
+}
+@media (min-width: 960px) {
+  .bf-grid-span {
+    grid-column: span var(--bf-grid-span-m);
+  }
+}
+@media (min-width: 1280px) {
+  .bf-grid-span {
+    grid-column: span var(--bf-grid-span-l);
+  }
+}
+@media (min-width: 1600px) {
+  .bf-grid-span {
+    grid-column: span var(--bf-grid-span-xl);
+  }
+}
+@media (min-width: 1920px) {
+  .bf-grid-span {
+    grid-column: span var(--bf-grid-span-xxl);
+  }
+}
+.bf-floatingmessage-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.bf-floatingmessage-stack {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  z-index: 2;
+  transition: left var(--bf-animation-duration);
+  text-align: right;
+  pointer-events: none;
+  margin: var(--bf-page-padding);
+}
+
+.bf-floatingmessage-stack-left {
+  right: auto;
+  left: var(--bf-nav-side-width, 0);
+  text-align: left;
+}
+
+.bf-floatingmessage-stack-top {
+  bottom: auto;
+  top: var(--bf-nav-top-height, 0);
+}
+
+.bf-floatingmessage-stack .bf-message {
+  display: inline-block;
+  position: relative;
+  box-shadow: var(--bf-shadow);
+  pointer-events: auto;
+  text-align: left;
+}
+
+.bf-floatingmessage-stack .bf-message:has(.bf-message-close) {
+  padding-right: 42px;
+}
+
+.bf-floatingmessage-stack .bf-message-close {
+  position: absolute;
+  right: 10px;
+}
+
+.bf-floatingmessage-stack .bf-message-header {
+  margin-bottom: 0;
+}
+
+.bf-floatingmessage-stack .bf-message-content:not(:empty) {
+  margin-top: var(--bfs4);
+}
+
+.bf-floatingmessage-stack > * {
+  display: grid;
+  transition-property: opacity, scale, margin-top, grid-template-rows;
+  transition-duration: var(--bf-animation-duration);
+  overflow: hidden;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.bf-floatingmessage-stack > * > * {
+  min-height: 0;
+}
+
+.bf-floatingmessage-enter,
+.bf-floatingmessage-exit.bf-floatingmessage-exit-active {
+  opacity: 0;
+  margin-top: 0;
+  grid-template-rows: 0fr;
+  scale: 0.9;
+}
+
+.bf-floatingmessage-enter-active,
+.bf-floatingmessage-enter-done,
+.bf-floatingmessage-exit {
+  opacity: 1;
+  margin-top: 8px;
+  grid-template-rows: 1fr;
+  scale: 1;
+}
+
+.bf-floating-area {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  transition: transform var(--bf-animation-duration) ease;
+  transform: translateY(110%);
+}
+
+.bf-floating-area.bf-scrolled-up,
+.bf-floating-area:focus-within {
+  transform: translateY(0);
+}
+
+.bfl-inline,
+.bf-inline {
+  --bf-inline-gap: var(--bfs12);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bf-inline-gap);
+  align-items: flex-start;
+}
+
+.bfl-inline-space,
+.bf-inline-space,
+.bf-inline-separator {
+  margin-left: auto;
+}
+
+/* using <Inline.Separator /> introduces an empty element in the dom,
+remove the added space from the extra gap it creates. */
+.bf-inline-separator {
+  margin-right: calc(var(--bf-inline-gap) * -1);
+}
+
+.bfl-inline-stretch,
+.bf-inline-stretch,
+.bf-inline-stretch-wrapper {
+  flex: 1 1;
+}
+
+/* stretch child items when it is the only child of <Inline.Stretch> */
+.bf-inline-stretch-wrapper > :first-child:last-child {
+  width: 100%;
+}
+
+:root {
+  --bf-sticky-top: var(--bf-page-padding);
+}
+
+.bf-sticky {
+  --bf-sticky-top-total: calc(
+    var(--bf-sticky-top, 0px) + var(--bf-nav-top-height, 0px)
+  );
+  position: sticky;
+  top: var(--bf-sticky-top-total);
+  /* todo: remove `vh` fallback when `dvh` is better supported */
+  max-height: calc(100vh - var(--bf-sticky-top-total) - var(--bf-sticky-top, 0px));
+  /* stylelint-disable-next-line declaration-block-no-duplicate-properties */
+  max-height: calc(100dvh - var(--bf-sticky-top-total) - var(--bf-sticky-top, 0px));
+  overflow-y: auto;
+  transition: top var(--bf-animation-duration) var(--bf-timing-function);
+}
+
+.bf-badge {
+  display: inline-block;
+  padding: var(--bfs2) var(--bfs8);
+  border-radius: var(--bf-radius-xs);
+  font-size: var(--bf-font-size-m);
+  font-weight: 600;
+}
+
+.bf-badge-pill {
+  border-radius: var(--bf-radius-l);
+  padding: var(--bfs2) var(--bfs12);
+}
+
+.bf-banner {
+  background-color: var(--bfc-theme);
+  color: var(--bfc-theme-c-base-3);
+  border-radius: 0 0 var(--bf-radius-xs) var(--bf-radius-xs);
+  outline: none;
+  padding: var(--bfs8) 10px;
+  position: absolute;
+  right: var(--bfs12);
+  top: -8px;
+  z-index: 2;
+}
+
+.bf-banner-left {
+  left: var(--bfs12);
+  right: auto;
+}
+
+.bf-banner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -5px;
+  display: block;
+  height: 0;
+  width: 0;
+  border-bottom: 8px solid var(--bfc-theme-3);
+  border-left: 5px solid transparent;
+}
+
+button.bf-banner {
+  cursor: pointer;
+  border: none;
+  line-height: inherit;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+button.bf-banner:hover {
+  background-color: var(--bfc-theme-2);
+}
+
+button.bf-banner:focus-visible {
+  outline: 1px dashed var(--bfc-base-c-theme);
+  outline-offset: 1px;
+}
+
+button.bf-banner:active {
+  transform: translateY(2px) translateX(-1px);
+}
+
+button.bf-banner:active::before {
+  left: -4px;
+  border-bottom-width: 6px;
+  border-left-width: 4px;
+}
+
+button.bf-banner:active::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  right: -1px;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+}
+
+:root {
+  --bf-card-padding: var(--bfs12);
+}
+
+.bf-card {
+  background-color: var(--bfc-base-3);
+  font-size: var(--bf-font-size-m);
+  position: relative;
+  min-height: 0;
+  display: flow-root;
+  border-radius: var(--bf-radius-xs);
+}
+
+.bf-card > a,
+.bf-card > a:link,
+.bf-card > a:visited,
+.bf-card > a:focus,
+.bf-card > a:hover,
+.bf-card > a:active {
+  padding: 0;
+  background: none;
+  text-decoration-line: none;
+  color: inherit;
+  display: block;
+}
+
+.bf-card > button {
+  padding: 0;
+  outline: none;
+  display: block;
+  width: 100%;
+  text-align: inherit;
+  background: inherit;
+  border: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.bf-card > button:focus-visible,
+.bf-card > a:focus-visible {
+  outline: 1px dashed var(--bff-theme);
+}
+
+/* when a link (or button) wraps the whole card content,
+stretch it to full height to make sure whole area is clickable */
+.bf-card > a:only-child,
+.bf-card > button:only-child {
+  height: 100%;
+}
+
+.bf-card-align-center {
+  text-align: center;
+}
+
+.bf-card-image {
+  background-size: cover;
+  background-position: 50% 50%;
+  aspect-ratio: 16/9;
+}
+
+.bf-card-image:first-child {
+  border-top-left-radius: var(--bf-radius-xs);
+  border-top-right-radius: var(--bf-radius-xs);
+}
+
+.bf-card-logo {
+  height: 70px;
+  width: 70px;
+  border-radius: var(--bf-radius-full);
+  margin: var(--bf-card-padding) auto;
+  font-size: var(--bf-font-size-h2);
+  background-color: var(--bfc-base);
+  background-size: cover;
+  background-position: 50% 20%;
+  position: relative;
+}
+
+.bf-card-image + .bf-card-logo {
+  margin-top: -35px;
+}
+
+.bf-card-logo-icon {
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.bf-card-title {
+  margin: var(--bf-card-padding);
+  margin-bottom: var(--bfs4);
+  color: var(--bfc-base-c);
+  font-size: var(--bf-font-size-l);
+}
+
+.bf-card-title:last-child {
+  margin-bottom: var(--bf-card-padding);
+}
+
+a .bf-card-title,
+button .bf-card-title {
+  color: var(--bff-theme);
+  text-underline-offset: var(--bf-underline-offset);
+}
+
+a.bf-neutral-link .bf-card-title,
+button.bf-neutral-link .bf-card-title {
+  color: inherit;
+}
+
+a:hover .bf-card-title,
+button:hover .bf-card-title {
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+}
+
+.bf-card > .bf-card-title:last-child {
+  margin-bottom: var(--bf-card-padding);
+}
+
+.bf-card-content {
+  margin: var(--bf-card-padding) 0 var(--bf-card-padding) 0;
+  padding: 0 var(--bf-card-padding);
+  text-decoration-line: none;
+}
+
+.bf-card-content + .bf-card-content {
+  border-top: 1px solid var(--bfc-base-c-dimmed);
+  padding-top: var(--bf-card-padding);
+}
+
+.bf-card-title + .bf-card-content {
+  margin-top: var(--bfs4);
+}
+
+.bf-card-content > :first-child {
+  margin-top: 0;
+}
+
+button.bf-card-button {
+  padding: var(--bfs12) var(--bf-card-padding);
+  border-top: 1px solid var(--bfc-base-c-dimmed);
+  font-weight: 600;
+  text-align: center;
+  margin-top: var(--bf-card-padding);
+}
+
+/* responsive padding */
+.bf-card-no-padding {
+  --bf-card-padding: 0;
+}
+
+.bf-card-padding-m {
+  --bf-card-padding: var(--bfs12);
+}
+
+.bf-card-padding-l {
+  --bf-card-padding: var(--bfs16);
+}
+
+@media (min-width: 1280px) {
+  .bf-card-padding-m {
+    --bf-card-padding: var(--bfs16);
+  }
+  .bf-card-padding-l {
+    --bf-card-padding: var(--bfs24);
+  }
+}
+.bf-icon-margin-left {
+  margin-left: 8px;
+}
+
+.bf-icon-margin-right {
+  margin-right: 8px;
+}
+
+.bf-progressbar-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.bf-progressbar {
+  flex-grow: 1;
+  vertical-align: middle;
+  border: 1px solid var(--bfc-theme-fade-c);
+  border-radius: var(--bf-radius-xs);
+  background-color: var(--bfc-theme-fade);
+  height: var(--bfs16);
+}
+
+.bf-progressbar-progress {
+  background-image: var(--bfc-theme-gradient);
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.bf-progressbar-small {
+  height: var(--bfs8);
+}
+
+.bf-progressbar-large {
+  height: var(--bfs24);
+}
+
+.bf-progressbar-label {
+  font-size: var(--bf-font-size-m);
+  padding-left: var(--bfs8);
+  text-align: left;
+  min-width: 2.5rem;
+  font-weight: 600;
+}
+
+/* disabled */
+.bf-progressbar-disabled {
+  border: 1px solid var(--bff-disabled);
+  background-color: var(--bfc-base-3);
+}
+
+.bf-progressbar-disabled .bf-progressbar-progress {
+  background-color: var(--bff-disabled);
+  background-image: none;
+}
+
+.bf-progressbar-disabled ~ .bf-progressbar-label {
+  color: var(--bff-disabled);
+}
+
+.bf-spinner-container {
+  width: auto;
+  height: auto;
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.bf-overlay .bf-spinner-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.bf-spinner-container .bf-spinner-color {
+  color: var(--bfc-theme);
+}
+
+.bf-lightmode .bf-overlay .bf-spinner-color {
+  color: var(--bfc-theme-c-2);
+}
+
+.bf-spinner-container .bf-icon-spinner {
+  animation: bf-spin 2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  margin: auto;
+}
+
+/* SPINNER OVERLAY */
+.bf-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: var(--bfc-overlay);
+  z-index: 9999;
+}
+
+/* SPINNER LABEL */
+.bf-spinner-label {
+  width: inherit;
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.bf-overlay .bf-spinner-label {
+  color: hsl(0, 0%, 90%);
+}
+
+/* ANIMATION */
+@keyframes bf-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(720deg);
+  }
+}
+.bf-skeleton-rect {
+  height: var(--bfs24);
+}
+
+.bf-skeleton-rect,
+.bf-skeleton-text {
+  background-color: hsla(var(--bfc-base-c-inverted-hsl), 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.bf-skeleton-rect::after,
+.bf-skeleton-text::after {
+  inset: 0;
+  content: "";
+  position: absolute;
+  animation: wave 1.5s linear 0.5s infinite;
+  transform: translate3d(-100%, 0, 0);
+  background: linear-gradient(90deg, transparent, hsla(var(--bfc-base-c-inverted-hsl), 0.2), transparent);
+}
+
+.bf-skeleton-text {
+  border-radius: var(--bf-radius-xs);
+  color: transparent;
+  transform: scale(1, 0.6);
+  display: block;
+  min-height: 1lh;
+}
+
+.bf-skeleton-rect.bf-card-image {
+  height: auto;
+}
+
+@keyframes wave {
+  0% {
+    transform: translate3d(-100%, 0, 0);
+  }
+  60% {
+    transform: translate3d(100%, 0, 0);
+  }
+  100% {
+    transform: translate3d(100%, 0, 0);
+  }
+}
