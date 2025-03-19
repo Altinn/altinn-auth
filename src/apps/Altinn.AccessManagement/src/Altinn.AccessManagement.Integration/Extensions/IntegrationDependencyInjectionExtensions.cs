@@ -31,8 +31,8 @@ public static class IntegrationDependencyInjectionExtensions
         builder.Services.AddHttpClient<IAccessListsAuthorizationClient, AccessListAuthorizationClient>();
         builder.Services.AddHttpClient<IAltinnRolesClient, AltinnRolesClient>();
         builder.Services.AddHttpClient<IAltinn2RightsClient, Altinn2RightsClient>();
-        builder.Services.AddSingleton<IAuthenticationClient, AuthenticationClient>();
-        builder.Services.AddSingleton<IResourceRegistryClient, ResourceRegistryClient>();
+        builder.Services.AddHttpClient<IAuthenticationClient, AuthenticationClient>();
+        builder.Services.AddHttpClient<IResourceRegistryClient, ResourceRegistryClient>();
 
         return builder;
     }

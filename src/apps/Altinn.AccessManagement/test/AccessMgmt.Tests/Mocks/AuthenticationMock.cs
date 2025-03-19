@@ -1,14 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Models.Authentication;
-using Altinn.AccessManagement.Tests.Util;
-using Altinn.Platform.Register.Models;
-using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace Altinn.AccessManagement.Tests.Mocks
 {
@@ -18,9 +10,6 @@ namespace Altinn.AccessManagement.Tests.Mocks
     public class AuthenticationMock : IAuthenticationClient
     {
         private readonly JsonSerializerOptions _jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
-
-        /// <inheritdoc/>
-        public async Task<string> RefreshToken(CancellationToken cancellationToken = default) => await Task.FromResult(PrincipalUtil.GetAccessToken("sbl-authorization"));
 
         /// <inheritdoc/>
         public async Task<SystemUser> GetSystemUser(int partyId, string systemUserId, CancellationToken cancellationToken = default)
