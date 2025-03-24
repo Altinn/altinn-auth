@@ -112,6 +112,12 @@ public class PackageService(
     public async Task<PackageDto> GetPackage(Guid id)
     {
         var package = await packageRepository.GetExtended(id);
+
+        if (package == null)
+        {
+            return null;
+        }
+
         var area = await areaRepository.GetExtended(package.AreaId);
         var resources = await packageResourceRepository.GetB(package.Id);
 
