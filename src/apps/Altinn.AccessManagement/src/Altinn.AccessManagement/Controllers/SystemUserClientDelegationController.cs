@@ -45,6 +45,7 @@ public class SystemUserClientDelegationController : ControllerBase
     /// </summary>
     /// <param name="party">The party the authenticated user is performing client administration on behalf of</param>
     /// <param name="request">Request Dto</param>
+    /// <returns><seealso cref="ExtConnection"/>List of connections</returns>
     [HttpPost]
     [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_WRITE)]
     public async Task<ActionResult> PostClientDelegation([FromQuery] Guid party, [FromBody] CreateSystemDelegationRequestDto request)
@@ -56,13 +57,14 @@ public class SystemUserClientDelegationController : ControllerBase
         }
 
         var delegations = await delegationService.CreateClientDelegation(request, userId, party);
-        var result = new List<ExtDelegation>();
+        var result = new List<ExtConnection>();
         
         foreach (var delegation in delegations)
         {
-            result.Add(await delegationRepository.GetExtended(delegation.Id));
+            result.Add(await connectionRepository.GetExtended(delegation.Id));
         }
 
+        // Remark: Kan ikke garantere at det KUN er delegeringer som er opprettet i denne handlingen som blir returnert.
         return Ok(result);
     }
 
@@ -175,7 +177,7 @@ public class SystemUserClientDelegationController : ControllerBase
     /// </summary>
     /// <param name="party">The party the authenticated user is performing client administration on behalf of</param>
     /// <param name="systemUser">The system user the authenticated user is delegating access to</param>
-    /// <returns></returns>
+    /// <returns><seealso cref="ExtConnection"/>List of connections</returns>
     [HttpGet]
     [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_READ)]
     public async Task<ActionResult> GetClientDelegations([FromQuery] Guid party, [FromQuery] Guid systemUser)
@@ -186,10 +188,10 @@ public class SystemUserClientDelegationController : ControllerBase
             return Unauthorized();
         }
 
-        var filter = delegationRepository.CreateFilterBuilder();
-        filter.Equal(t => t.ToId, systemUser);
-        filter.Equal(t => t.FacilitatorId, party);
-        var res = await delegationRepository.GetExtended(filter);
+        var f = connectionRepository.CreateFilterBuilder();
+        f.Equal(t => t.ToId, systemUser);
+        f.Equal(t => t.FacilitatorId, party);
+        var res = await connectionRepository.GetExtended(f);
 
         return Ok(res);
     }
