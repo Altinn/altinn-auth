@@ -78,22 +78,22 @@ public class DbDataMigrationService(
             await migrationService.LogMigration<RoleMap>(dataKey, string.Empty, 3);
         }
 
-        if (migrationService.NeedMigration<AreaGroup>(dataKey, 2))
+        if (migrationService.NeedMigration<AreaGroup>(dataKey, 3))
         {
             await IngestAreaGroup();
-            await migrationService.LogMigration<AreaGroup>(dataKey, string.Empty, 2);
+            await migrationService.LogMigration<AreaGroup>(dataKey, string.Empty, 3);
         }
 
-        if (migrationService.NeedMigration<Area>(dataKey, 2))
+        if (migrationService.NeedMigration<Area>(dataKey, 3))
         {
             await IngestArea();
-            await migrationService.LogMigration<Area>(dataKey, string.Empty, 2);
+            await migrationService.LogMigration<Area>(dataKey, string.Empty, 3);
         }
 
-        if (migrationService.NeedMigration<Package>(dataKey, 2))
+        if (migrationService.NeedMigration<Package>(dataKey, 3))
         {
             await IngestPackage();
-            await migrationService.LogMigration<Package>(dataKey, string.Empty, 2);
+            await migrationService.LogMigration<Package>(dataKey, string.Empty, 3);
         }
 
         if (migrationService.NeedMigration<RolePackage>(dataKey, 2))
