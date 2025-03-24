@@ -60,7 +60,7 @@ resource "azurerm_postgresql_flexible_server" "postgres_server" {
 
   storage_mb        = var.storage_mb
   auto_grow_enabled = true
-  storage_tier      = var.tier
+  storage_tier      = var.storage_tier
 
   administrator_login          = "NotInUse"
   administrator_password       = random_password.pass.result

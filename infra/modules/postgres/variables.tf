@@ -33,7 +33,7 @@ variable "tags" {
   default = {}
 }
 
-variable "tier" {
+variable "storage_tier" {
   type    = string
   default = "P4"
 }
