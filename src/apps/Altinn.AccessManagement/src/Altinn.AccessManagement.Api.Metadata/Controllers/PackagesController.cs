@@ -31,9 +31,15 @@ public class PackagesController : ControllerBase
     /// <returns>Liste over søkeresultater.</returns>
     [Route("search")]
     [HttpGet]
-    public async Task<IEnumerable<SearchObject<PackageDto>>> Search([FromQuery] string term)
+    public async Task<ActionResult<SearchObject<PackageDto>>> Search([FromQuery] string term)
     {
-        return await packageService.Search(term);
+        var res = await packageService.Search(term);
+        if (res == null || !res.Any())
+        {
+            return NoContent();
+        }
+
+        return Ok(res);
     }
 
     /// <summary>
@@ -42,9 +48,15 @@ public class PackagesController : ControllerBase
     /// <returns>Liste over area groups.</returns>
     [Route("export")]
     [HttpGet]
-    public async Task<IEnumerable<AreaGroupDto>> GetHierarchy()
+    public async Task<ActionResult<AreaGroupDto>> GetHierarchy()
     {
-        return await packageService.GetHierarchy();
+        var res = await packageService.GetHierarchy();
+        if (res == null || !res.Any())
+        {
+            return NoContent();
+        }
+
+        return Ok(res);
     }
 
     /// <summary>
@@ -53,9 +65,15 @@ public class PackagesController : ControllerBase
     /// <returns>Liste over area groups.</returns>
     [Route("group/")]
     [HttpGet]
-    public async Task<IEnumerable<AreaGroup>> GetGroups()
+    public async Task<ActionResult<AreaGroup>> GetGroups()
     {
-        return await packageService.GetAreaGroups();
+        var res = await packageService.GetAreaGroups();
+        if (res == null || !res.Any())
+        {
+            return NoContent();
+        }
+
+        return Ok(res);
     }
 
     /// <summary>
@@ -65,9 +83,15 @@ public class PackagesController : ControllerBase
     /// <returns>Den spesifikke area group.</returns>
     [Route("group/{id}")]
     [HttpGet]
-    public async Task<AreaGroup> GetGroup(Guid id)
+    public async Task<ActionResult<AreaGroup>> GetGroup(Guid id)
     {
-        return await packageService.GetAreaGroup(id);
+        var res = await packageService.GetAreaGroup(id);
+        if (res == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(res);
     }
 
     /// <summary>
@@ -77,9 +101,23 @@ public class PackagesController : ControllerBase
     /// <returns>Liste over områder.</returns>
     [Route("group/{id}/areas")]
     [HttpGet]
-    public async Task<IEnumerable<Area>> GetGroupAreas(Guid id)
+    public async Task<ActionResult<Area>> GetGroupAreas(Guid id)
     {
-        return await packageService.GetAreas(id);
+        var res = await packageService.GetAreas(id);
+        if (res == null || !res.Any())
+        {
+            var grp = await packageService.GetAreaGroup(id);
+            if (grp == null)
+            {
+                // Group is not found
+                return NotFound();
+            }
+
+            // Group found, but no areas
+            return NoContent();
+        }
+
+        return Ok(res);
     }
 
     /// <summary>
@@ -89,9 +127,15 @@ public class PackagesController : ControllerBase
     /// <returns>Områdeobjekt.</returns>
     [Route("area/{id}")]
     [HttpGet]
-    public async Task<Area> GetArea(Guid id)
+    public async Task<ActionResult<Area>> GetArea(Guid id)
     {
-        return await packageService.GetArea(id);
+        var res = await packageService.GetArea(id);
+        if (res == null)
+        {
+            return NotFound();
+        }
+        
+        return Ok(res);
     }
 
     /// <summary>
@@ -101,9 +145,23 @@ public class PackagesController : ControllerBase
     /// <returns>Liste over access packages.</returns>
     [Route("area/{id}/packages")]
     [HttpGet]
-    public async Task<IEnumerable<PackageDto>> GetAreaPackages(Guid id)
+    public async Task<ActionResult<PackageDto>> GetAreaPackages(Guid id)
     {
-        return await packageService.GetPackagesByArea(id);
+        var res = await packageService.GetPackagesByArea(id);
+        if (res == null || !res.Any())
+        {
+            var area = await packageService.GetArea(id);
+            if (area == null)
+            {
+                // Area is not found
+                return NotFound();
+            }
+
+            // Area found, but no packages
+            return NoContent();
+        }
+
+        return Ok(res);
     }
 
     /// <summary>
@@ -113,9 +171,15 @@ public class PackagesController : ControllerBase
     /// <returns>Access package objekt.</returns>
     [Route("package/{id}")]
     [HttpGet]
-    public async Task<PackageDto> GetPackage(Guid id)
+    public async Task<ActionResult<PackageDto>> GetPackage(Guid id)
     {
-        return await packageService.GetPackage(id);
+        var res = await packageService.GetPackage(id);
+        if (res == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(res);
     }
 
     /// <summary>
@@ -125,9 +189,15 @@ public class PackagesController : ControllerBase
     /// <returns>Access package objekt.</returns>
     [Route("package/urn/{urnvalue}")]
     [HttpGet]
-    public async Task<PackageDto> GetPackageByUrn(string urnValue)
+    public async Task<ActionResult<PackageDto>> GetPackageByUrn(string urnValue)
     {
-        return await packageService.GetPackageByUrnValue(urnValue);
+        var res = await packageService.GetPackageByUrnValue(urnValue);
+        if (res == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(res);
     }
 
     /// <summary>
@@ -137,8 +207,22 @@ public class PackagesController : ControllerBase
     /// <returns>Liste over ressurser.</returns>
     [Route("package/{id}/resources")]
     [HttpGet]
-    public async Task<IEnumerable<Resource>> GetPackageResources(Guid id)
+    public async Task<ActionResult<Resource>> GetPackageResources(Guid id)
     {
-        return await packageService.GetPackageResources(id);
+        var res = await packageService.GetPackageResources(id);
+        if (res == null || !res.Any())
+        {
+            var pkg = await packageService.GetPackage(id);
+            if (pkg == null)
+            {
+                // Package is not found
+                return NotFound();
+            }
+
+            // Package found, but no resources
+            return NoContent();
+        }
+
+        return Ok(res);
     }
 }

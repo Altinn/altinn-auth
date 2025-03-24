@@ -148,31 +148,13 @@ public class PackageService(
         var areas = await areaRepository.GetExtended();
         var packages = await packageRepository.GetExtended();
 
-        var result = new List<AreaGroupDto>();
-        foreach (var package in packages)
+        var result = groups.Select(t => ConvertToDto(t)).ToList();
+        foreach (var grp in result)
         {
-            var grpId = package.Area.GroupId;
-            var areaId = package.Area.Id;
-
-            if (result.Count(t => t.Id == grpId) == 0)
+            grp.Areas = areas.Where(t => t.GroupId == grp.Id).Select(t => ConvertToDto(t)).ToList();
+            foreach (var area in grp.Areas)
             {
-                result.Add(ConvertToDto(groups.First(t => t.Id == grpId)));
-            }
-
-            var grp = result.First(t => t.Id == grpId);
-            if (grp.Areas == null)
-            {
-                grp.Areas = new List<AreaDto>();
-            }
-
-            if (grp.Areas.Count(t => t.Id == areaId) == 0)
-            {
-                grp.Areas.Add(ConvertToDto(areas.First(t => t.Id == areaId)));
-            }
-            else
-            {
-                var area = grp.Areas.First(t => t.Id == areaId);
-                area.Packages.Add(new PackageDto(package));
+                area.Packages = packages.Where(t => t.AreaId == area.Id).Select(t => new PackageDto(t)).ToList();
             }
         }
 
@@ -194,7 +176,7 @@ public class PackageService(
     /// <inheritdoc/>
     public async Task<IEnumerable<Area>> GetAreas(Guid groupId)
     {
-        return await areaRepository.Get();
+        return await areaRepository.Get(t => t.GroupId, groupId);
     }
 
     /// <inheritdoc/>
