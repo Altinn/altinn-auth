@@ -1,6 +1,7 @@
 ﻿using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessMgmt.Core.Models;
+using Altinn.AccessMgmt.Persistence.Repositories;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
@@ -24,6 +25,7 @@ public class SystemUserClientDelegationController : ControllerBase
     private readonly IDelegationRepository delegationRepository;
     private readonly IAssignmentRepository assignmentRepository;
     private readonly IProviderRepository providerRepository;
+    private readonly IRoleRepository roleRepository;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SystemUserClientDelegationController"/> class.
@@ -33,7 +35,8 @@ public class SystemUserClientDelegationController : ControllerBase
         IDelegationService delegationService, 
         IDelegationRepository delegationRepository,
         IAssignmentRepository assignmentRepository,
-        IProviderRepository providerRepository
+        IProviderRepository providerRepository,
+        IRoleRepository roleRepository
         )
     {
         this.connectionRepository = connectionRepository;
@@ -41,6 +44,7 @@ public class SystemUserClientDelegationController : ControllerBase
         this.delegationRepository = delegationRepository;
         this.assignmentRepository = assignmentRepository;
         this.providerRepository = providerRepository;
+        this.roleRepository = roleRepository;
     }
 
     /// <summary>
@@ -77,7 +81,7 @@ public class SystemUserClientDelegationController : ControllerBase
     /// </summary>
     /// <param name="party">The party the authenticated user is performing client administration on behalf of</param>
     /// <param name="request">Request Dto</param>
-    /// <returns><seealso cref="ExtConnection"/>List of connections</returns>
+    /// <returns><seealso cref="ConnectionDto"/>List of connections</returns>
     [HttpPost]
     [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_WRITE)]
     public async Task<ActionResult<ConnectionDto>> PostClientDelegation([FromQuery] Guid party, [FromBody] CreateSystemDelegationRequestDto request)
@@ -177,7 +181,7 @@ public class SystemUserClientDelegationController : ControllerBase
             return BadRequest("Assignment not found");
         }
 
-        if (assignment.FromId.Equals(party))
+        if (!assignment.FromId.Equals(party))
         {
             return BadRequest("Assignment not from party");
         }
@@ -192,6 +196,82 @@ public class SystemUserClientDelegationController : ControllerBase
         {
             return Problem($"You cannot removed assignments with this role '{assignment.Role.Code}', only '{roleIdentifier}'");
         }
+
+        if (!cascade)
+        {
+            var delegationsFromAssignment = await delegationRepository.Get(t => t.FromId, assignment.Id);
+            var delegationsToAssignment = await delegationRepository.Get(t => t.ToId, assignment.Id);
+
+            if (delegationsFromAssignment.Any() || delegationsToAssignment.Any())
+            {
+                return Problem("Assignment is active in one or more delegations and cascadeflag is false.");
+            }
+        }
+
+        await assignmentRepository.Delete(assignment.Id);
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Delete client delegation
+    /// </summary>
+    /// <param name="party">The party the authenticated user is performing client administration on behalf of</param>
+    /// <param name="agentId">The agent/system party identifier</param>
+    /// <param name="cascade">If true; dependent rows in the database will be deleted</param>
+    [HttpDelete]
+    [Route("deleteagentassignment")]
+    [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_WRITE)]
+    public async Task<ActionResult> DeleteAgentAssignment([FromQuery] Guid party, [FromQuery] Guid agentId, [FromQuery] bool cascade = false)
+    {
+        var userId = AuthenticationHelper.GetPartyUuid(HttpContext);
+        if (userId == Guid.Empty)
+        {
+            return Unauthorized();
+        }
+
+        /*
+        - [X] Assignment exists
+        - [X] Assignment connected to party
+        - [X] Assignment role is owned by Digdir
+        - [X] Assignment not connected to any Delegation (or cascade = true)
+        */
+
+        string roleIdentifier = "agent";
+
+        var role = (await roleRepository.Get(t => t.Code, roleIdentifier)).FirstOrDefault();
+        if (role == null)
+        {
+            return Problem($"Unable to find role '{roleIdentifier}'");
+        }
+
+        var digdirProvider = (await providerRepository.Get(t => t.Name, "Digitaliseringsdirektoratet")).FirstOrDefault();
+        if (digdirProvider == null || role.ProviderId == digdirProvider.Id)
+        {
+            return Problem($"You cannot removed assignments with this role '{role.Code}'");
+        }
+
+        if (!role.Code.Equals(roleIdentifier, StringComparison.OrdinalIgnoreCase))
+        {
+            return Problem($"You cannot removed assignments with this role '{role.Code}', only '{roleIdentifier}'");
+        }
+
+        var assignmentFilter = assignmentRepository.CreateFilterBuilder();
+        assignmentFilter.Equal(t => t.FromId, party);
+        assignmentFilter.Equal(t => t.ToId, agentId);
+        assignmentFilter.Equal(t => t.RoleId, role.Id);
+        var assignments = await assignmentRepository.GetExtended(assignmentFilter);
+        if (assignments == null)
+        {
+            return BadRequest("Assignment not found");
+        }
+
+        if (assignments.Count() > 1)
+        {
+            return BadRequest("To many assignment found");
+        }
+
+        var assignment = assignments.First();
 
         if (!cascade)
         {
