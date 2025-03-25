@@ -30,6 +30,7 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
         /// Sets whether the entity is a view.
         /// </summary>
         /// <param name="value">Default: true</param>
+        /// <param name="version">View version to trigger recreate (default: 1)</param>
         /// <returns></returns>
         public DbDefinitionBuilder<T> IsView(bool value = true, int version = 1)
         {

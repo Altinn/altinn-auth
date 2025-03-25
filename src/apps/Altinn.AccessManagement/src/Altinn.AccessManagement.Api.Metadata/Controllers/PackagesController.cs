@@ -187,7 +187,7 @@ public class PackagesController : ControllerBase
     /// </summary>
     /// <param name="urnValue">URN-verdi for access package.</param>
     /// <returns>Access package objekt.</returns>
-    [Route("package/urn/{urnvalue}")]
+    [Route("package/urn/{urnValue}")]
     [HttpGet]
     public async Task<ActionResult<PackageDto>> GetPackageByUrn(string urnValue)
     {
