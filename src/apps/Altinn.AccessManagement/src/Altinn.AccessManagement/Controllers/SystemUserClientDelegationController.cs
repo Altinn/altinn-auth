@@ -24,7 +24,6 @@ public class SystemUserClientDelegationController : ControllerBase
     private readonly IDelegationService delegationService;
     private readonly IDelegationRepository delegationRepository;
     private readonly IAssignmentRepository assignmentRepository;
-    private readonly IProviderRepository providerRepository;
     private readonly IRoleRepository roleRepository;
 
     /// <summary>
@@ -35,7 +34,6 @@ public class SystemUserClientDelegationController : ControllerBase
         IDelegationService delegationService, 
         IDelegationRepository delegationRepository,
         IAssignmentRepository assignmentRepository,
-        IProviderRepository providerRepository,
         IRoleRepository roleRepository
         )
     {
@@ -43,7 +41,6 @@ public class SystemUserClientDelegationController : ControllerBase
         this.delegationService = delegationService;
         this.delegationRepository = delegationRepository;
         this.assignmentRepository = assignmentRepository;
-        this.providerRepository = providerRepository;
         this.roleRepository = roleRepository;
     }
 
@@ -186,12 +183,6 @@ public class SystemUserClientDelegationController : ControllerBase
             return BadRequest("Assignment not from party");
         }
 
-        var digdirProvider = (await providerRepository.Get(t => t.Name, "Digitaliseringsdirektoratet")).FirstOrDefault();
-        if (digdirProvider == null || assignment.Role.ProviderId == digdirProvider.Id)
-        {
-            return Problem($"You cannot removed assignments with this role '{assignment.Role.Code}'");
-        }
-
         if (!assignment.Role.Code.Equals(roleIdentifier, StringComparison.OrdinalIgnoreCase))
         {
             return Problem($"You cannot removed assignments with this role '{assignment.Role.Code}', only '{roleIdentifier}'");
@@ -243,12 +234,6 @@ public class SystemUserClientDelegationController : ControllerBase
         if (role == null)
         {
             return Problem($"Unable to find role '{roleIdentifier}'");
-        }
-
-        var digdirProvider = (await providerRepository.Get(t => t.Name, "Digitaliseringsdirektoratet")).FirstOrDefault();
-        if (digdirProvider == null || role.ProviderId == digdirProvider.Id)
-        {
-            return Problem($"You cannot removed assignments with this role '{role.Code}'");
         }
 
         if (!role.Code.Equals(roleIdentifier, StringComparison.OrdinalIgnoreCase))
