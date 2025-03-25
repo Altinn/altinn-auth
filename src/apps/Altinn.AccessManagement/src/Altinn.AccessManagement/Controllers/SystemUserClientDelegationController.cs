@@ -246,7 +246,7 @@ public class SystemUserClientDelegationController : ControllerBase
         assignmentFilter.Equal(t => t.ToId, agentId);
         assignmentFilter.Equal(t => t.RoleId, role.Id);
         var assignments = await assignmentRepository.GetExtended(assignmentFilter);
-        if (assignments == null)
+        if (assignments == null || !assignments.Any())
         {
             return BadRequest("Assignment not found");
         }
