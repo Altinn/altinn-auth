@@ -1,13 +1,11 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Text;
 using Altinn.Authorization.Cli.Database;
 using Altinn.Authorization.Cli.Database.Utils;
 using Altinn.Authorization.Cli.Utils;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using Spectre.Console.Rendering;
 
 namespace Altinn.Authorization.Cli.Register;
 

@@ -24,7 +24,8 @@ internal sealed class DbHelper
     public static async Task<DbHelper> Create(string connectionString, CancellationToken cancellationToken)
     {
         var connStrBuilder = new NpgsqlConnectionStringBuilder(connectionString);
-        connStrBuilder.Pooling = false;
+        connStrBuilder.Pooling = true;
+        connStrBuilder.MaxPoolSize = 5;
         connStrBuilder.IncludeErrorDetail = true;
         connStrBuilder.Timeout = (int)TimeSpan.FromMinutes(10).TotalSeconds;
         connStrBuilder.CommandTimeout = (int)TimeSpan.FromMinutes(10).TotalSeconds;
@@ -60,6 +61,8 @@ internal sealed class DbHelper
         _source = source;
         _conn = conn;
     }
+
+    public NpgsqlDataSource Source => _source;
 
     public Task<SchemaInfo> GetSchemaInfo(string schemaName, CancellationToken cancellationToken)
         => SchemaInfo.GetAsync(_conn, schemaName, cancellationToken);

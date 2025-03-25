@@ -18,11 +18,23 @@
     },
     "retry AT22 register import": {
       "commandName": "Project",
-      "commandLineArgs": "register retry\r\n\"${REGISTER_SB_AT22}\""
+      "commandLineArgs": "register retry\r\n\"${REGISTER_SB_AT22}\"\r\n\"${REGISTER_DB_AT22}\""
     },
     "get local register ext-roles": {
       "commandName": "Project",
       "commandLineArgs": "register roles\r\n\"${REGISTER_DB_LOCAL}\""
+    },
+    "register export errors": {
+      "commandName": "Project",
+      "commandLineArgs": "register export-errors\r\n\"${REGISTER_SB_YT01}\"\r\n\"${ERROR_DB}\""
+    },
+    "retry AT23 register import": {
+      "commandName": "Project",
+      "commandLineArgs": "register retry\r\n\"${REGISTER_SB_AT23}\"\r\n\"${REGISTER_DB_AT23}\""
+    },
+    "retry AT24 register import": {
+      "commandName": "Project",
+      "commandLineArgs": "register retry\r\n\"${REGISTER_SB_AT24}\"\r\n\"${REGISTER_DB_AT24}\""
     }
   }
 }
