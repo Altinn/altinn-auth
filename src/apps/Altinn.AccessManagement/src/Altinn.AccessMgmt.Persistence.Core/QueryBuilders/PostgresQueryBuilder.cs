@@ -501,7 +501,7 @@ public class PostgresQueryBuilder : IDbQueryBuilder
 
         if (_definition.IsView)
         {
-            scriptCollection.AddScripts(CreateView());
+            scriptCollection.AddScripts(CreateView(_definition.ViewVersion));
             foreach (var dep in _definition.ViewDependencies)
             {
                 scriptCollection.AddDependency(dep);
@@ -553,7 +553,7 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         return scriptCollection;
     }
 
-    private OrderedDictionary<string, string> CreateView()
+    private OrderedDictionary<string, string> CreateView(int version = 1)
     {
         var scripts = new OrderedDictionary<string, string>();
 
@@ -562,7 +562,7 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         {_definition.ViewQuery}
         """;
 
-        scripts.Add($"CREATE VIEW {GetTableName(includeAlias: false)}", query);
+        scripts.Add($"CREATE VIEW {GetTableName(includeAlias: false)} {version}", query);
 
         return scripts;
     }

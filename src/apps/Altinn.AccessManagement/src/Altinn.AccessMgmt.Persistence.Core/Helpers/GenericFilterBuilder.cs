@@ -47,6 +47,11 @@ public class GenericFilterBuilder<T> : IEnumerable<GenericFilter>
     /// <returns>The current instance of <see cref="GenericFilterBuilder{T}"/>, enabling a fluent API.</returns>
     public GenericFilterBuilder<T> In<TProperty>(Expression<Func<T, TProperty>> property, IEnumerable<TProperty> values)
     {
+        if (values == null || !values.Any())
+        {
+            throw new ArgumentException("Must have values in IN query");
+        }
+
         foreach (var value in values)
         {
             Add(property, value, FilterComparer.Equals);
@@ -64,6 +69,11 @@ public class GenericFilterBuilder<T> : IEnumerable<GenericFilter>
     /// <returns>The current instance of <see cref="GenericFilterBuilder{T}"/>, enabling a fluent API.</returns>
     public GenericFilterBuilder<T> NotIn<TProperty>(Expression<Func<T, TProperty>> property, IEnumerable<TProperty> values)
     {
+        if (values == null || !values.Any())
+        {
+            throw new ArgumentException("Must have values in IN query");
+        }
+
         foreach (var value in values)
         {
             Add(property, value, FilterComparer.NotEqual);

@@ -31,10 +31,11 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
         /// </summary>
         /// <param name="value">Default: true</param>
         /// <returns></returns>
-        public DbDefinitionBuilder<T> IsView(bool value = true)
+        public DbDefinitionBuilder<T> IsView(bool value = true, int version = 1)
         {
             // Add view script??
             DbDefinition.IsView = value;
+            DbDefinition.ViewVersion = version;
             return this;
         }
 

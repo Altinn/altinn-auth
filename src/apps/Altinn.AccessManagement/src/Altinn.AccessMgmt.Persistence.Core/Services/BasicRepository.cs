@@ -169,24 +169,30 @@ public abstract class BasicRepository<T> : IDbBasicRepository<T>
             parameters.Add(new GenericParameter(filter.PropertyName, value));
         }
 
-        foreach (var m in multiple)
+        if (multiple != null && multiple.Any())
         {
-            int a = 1;
-            foreach (var filter in filters.Where(t => t.PropertyName == m))
+            foreach (var m in multiple)
             {
-                parameters.Add(new GenericParameter($"@{m}_{a}", filter.Value));
-                a++;
+                int a = 1;
+                foreach (var filter in filters.Where(t => t.PropertyName == m))
+                {
+                    parameters.Add(new GenericParameter($"@{m}_{a}", filter.Value));
+                    a++;
+                }
             }
         }
 
-        if (options.Language != null)
+        if (options != null)
         {
-            parameters.Add(new GenericParameter("Language", options.Language));
-        }
+            if (options.Language != null)
+            {
+                parameters.Add(new GenericParameter("Language", options.Language));
+            }
 
-        if (options.AsOf.HasValue)
-        {
-            parameters.Add(new GenericParameter("_AsOf", options.AsOf.Value));
+            if (options.AsOf.HasValue)
+            {
+                parameters.Add(new GenericParameter("_AsOf", options.AsOf.Value));
+            }
         }
 
         return parameters;

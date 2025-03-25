@@ -43,6 +43,11 @@ public class DbDefinition(Type type)
     public bool IsView { get; set; }
 
     /// <summary>
+    /// Version of view script
+    /// </summary>
+    public int ViewVersion { get; set; } = 1;
+
+    /// <summary>
     /// The SQL query used in the view.
     /// </summary>
     public string ViewQuery { get; set; }

@@ -18,7 +18,7 @@ public class ConnectionDefinition : BaseDbDefinition<Connection>, IDbDefinition
     {
         definitionRegistry.Define<Connection>(def =>
         {
-            def.IsView();
+            def.IsView(version: 2);
 
             def.RegisterProperty(t => t.Id);
             def.RegisterProperty(t => t.FromId);
