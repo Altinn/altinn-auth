@@ -34,6 +34,11 @@ public class Connection
     /// The role the facilitator has to the client
     /// </summary>
     public Guid? FacilitatorRoleId { get; set; }
+
+    /// <summary>
+    /// Delegation identifier
+    /// </summary>
+    public Guid? DelegationId { get; set; }
 }
 
 /// <summary>
@@ -47,17 +52,24 @@ public class ExtConnection //: Connection
     public Guid Id { get; set; }
 
     /// <summary>
-    /// The entity identity the connection is from (origin, client, source etc) 
+    /// The delegation connecting the assignments
+    /// </summary>
+    public Delegation Delegation { get; set; }
+
+    /// <summary>
+    /// The entity the connection is from (origin, client, source etc)
+    /// For Assignments this is From for Delegations this is From.From
     /// </summary>
     public EntityParty From { get; set; }
 
     /// <summary>
-    /// The role To identifies as
+    /// The role To identifies as either to From or to Facilitator
     /// </summary>
     public Role Role { get; set; }
 
     /// <summary>
-    /// The entity identity the connection is to (destination, agent, etc)
+    /// The entity the connection is to (destination, agent, etc)
+    /// For Assignments this is To for Delegations this is To.To
     /// </summary>
     public EntityParty To { get; set; }
 

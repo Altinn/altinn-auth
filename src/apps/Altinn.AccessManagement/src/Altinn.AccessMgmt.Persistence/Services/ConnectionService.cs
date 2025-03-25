@@ -2,6 +2,7 @@
 using Altinn.AccessMgmt.Persistence.Repositories;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
+using Altinn.AccessMgmt.Persistence.Services.Models;
 
 namespace Altinn.AccessMgmt.Persistence.Services;
 
@@ -70,5 +71,44 @@ public class ConnectionService(
     public async Task<IEnumerable<Resource>> GetResources(Guid id)
     {
         return await connectionResourceRepository.GetB(id);
+    }
+}
+
+/// <summary>
+/// Convert database models to dto models
+/// </summary>
+public static class ConnectionConverter
+{
+    /// <summary>
+    /// Convert database model to dto model
+    /// </summary>
+    public static ConnectionDto ConvertToDto(ExtConnection connection)
+    {
+        return new ConnectionDto()
+        {
+            Id = connection.Id,
+            From = connection.From,
+            To = connection.To,
+            Facilitator = connection.Facilitator,
+            Role = ConvertToDto(connection.Role),
+            FacilitatorRole = ConvertToDto(connection.FacilitatorRole),
+            Delegation = connection.Delegation
+        };
+    }
+
+    /// <summary>
+    /// Convert database model to dto model
+    /// </summary>
+    public static RoleDto ConvertToDto(Role role)
+    {
+        return new RoleDto()
+        {
+            Id = role.Id,
+            Description = role.Description,
+            Name = role.Name,
+            Code = role.Code,
+            Urn = role.Urn,
+            IsKeyRole = role.IsKeyRole
+        };
     }
 }

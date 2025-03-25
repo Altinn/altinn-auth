@@ -100,17 +100,19 @@ public class DelegationService(
     /// <inheritdoc/>
     public async Task<bool> AddPackageToDelegation(Guid userId, Guid delegationId, Guid packageId)
     {
-        /*
-        [ ] Check i Pacakge is Delegable
-        */
-
         /* 
         [X] Check if user is DelegationAdmin on ViaId 
         [X] Check if assignment has the package
         [X] Check if the assignment role has the package
+        [X] Check i Pacakge is Delegable
         */
 
         var package = await packageRepository.Get(packageId);
+
+        if (!package.IsDelegable)
+        {
+            return false;
+        }
 
         var delegation = await delegationRepository.GetExtended(delegationId);
         var fromAssignment = await assignmentRepository.GetExtended(delegation.FromId);
