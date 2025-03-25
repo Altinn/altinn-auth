@@ -35,6 +35,10 @@
     "retry AT24 register import": {
       "commandName": "Project",
       "commandLineArgs": "register retry\r\n\"${REGISTER_SB_AT24}\"\r\n\"${REGISTER_DB_AT24}\""
+    },
+    "retry YT01 register import": {
+      "commandName": "Project",
+      "commandLineArgs": "register retry\r\n\"${REGISTER_SB_YT01}\"\r\n\"${REGISTER_DB_YT01}\""
     }
   }
 }

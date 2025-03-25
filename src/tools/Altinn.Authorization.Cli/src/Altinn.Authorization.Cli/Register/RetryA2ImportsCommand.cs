@@ -119,7 +119,7 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
         await using var receiver = sb.Client.CreateReceiver(queueName, new ServiceBusReceiverOptions
         {
             ReceiveMode = ServiceBusReceiveMode.PeekLock,
-            PrefetchCount = Math.Max(100, (int)expected),
+            PrefetchCount = Math.Clamp((int)expected, 100, 10_000),
             SubQueue = SubQueue.None,
         });
 
@@ -179,28 +179,19 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
             cancellationToken);
     }
 
-    private async Task ProcessMessages(ServiceBusReceiver receiver, Func<ServiceBusReceivedMessage, CancellationToken, Task> process, CancellationToken cancellationToken)
+    private async Task ProcessMessages(ServiceBusReceiver receiver, Func<ServiceBusReceivedMessage, CancellationToken, ValueTask> process, CancellationToken cancellationToken)
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         cancellationToken = cts.Token;
 
-        var channel = Channel.CreateBounded<ServiceBusReceivedMessage>(10);
+        var channel = Channel.CreateBounded<ServiceBusReceivedMessage>(100);
 
-        var workers = new List<Task>(5);
-        for (var i = 0; i < workers.Capacity - 1; i++)
-        {
-            workers.Add(Task.Run(
-                async () =>
-                {
-                    await foreach (var message in channel.Reader.ReadAllAsync(cancellationToken))
-                    {
-                        await process(message, cancellationToken);
-                    }
-                },
-                cancellationToken));
-        }
+        var workersTask = Parallel.ForEachAsync(
+            channel.Reader.ReadAllAsync(cancellationToken),
+            cancellationToken,
+            process);
 
-        workers.Add(Task.Run(
+        var readerTask = Task.Run(
             async () =>
             {
                 try
@@ -230,15 +221,15 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
                     channel.Writer.Complete();
                 }
             },
-            cancellationToken));
+            cancellationToken);
 
         try
         {
-            await Task.WhenAll(workers);
+            await Task.WhenAll(workersTask, readerTask);
         }
         catch
         {
-            Debugger.Break();
+            await cts.CancelAsync();
             throw;
         }
 
@@ -261,7 +252,7 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
 
         static Task RenewLocks(ServiceBusReceiver receiver, Queue<ServiceBusReceivedMessage> messages, CancellationToken cancellationToken)
         {
-            return Task.WhenAll(messages.Select(msg => receiver.RenewMessageLockAsync(msg, cancellationToken)));
+            return Parallel.ForEachAsync(messages, cancellationToken, (msg, ct) => new(receiver.RenewMessageLockAsync(msg, ct)));
         }
     }
 
