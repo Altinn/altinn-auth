@@ -29,7 +29,7 @@ public class AssignmentDefinition : BaseDbDefinition<Assignment>, IDbDefinition
             def.RegisterExtendedProperty<ExtAssignment, Entity>(t => t.ToId, t => t.Id, t => t.To, cascadeDelete: true);
             def.RegisterExtendedProperty<ExtAssignment, Role>(t => t.RoleId, t => t.Id, t => t.Role, cascadeDelete: true);
 
-            def.RegisterUniqueConstraint([t => t.FromId, t => t.ToId, t => t.RoleId]);
+            def.RegisterUniqueConstraint([t => t.FromId, t => t.ToId, t => t.RoleId], includedProperties: [t => t.Id]);
         });
     }
 }

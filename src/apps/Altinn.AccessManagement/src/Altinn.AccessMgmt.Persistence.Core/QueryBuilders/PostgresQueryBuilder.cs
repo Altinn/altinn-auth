@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Data;
+using System.Text;
 using Altinn.AccessMgmt.Persistence.Core.Definitions;
 using Altinn.AccessMgmt.Persistence.Core.Helpers;
 using Altinn.AccessMgmt.Persistence.Core.Models;
@@ -686,8 +687,10 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         return (key, query);
     }
 
-    private (string Key, string Query) CreateUniqueConstraint(DbConstraintDefinition constraint)
+    private OrderedDictionary<string, string> CreateUniqueConstraint(DbConstraintDefinition constraint)
     {
+        var res = new OrderedDictionary<string, string>();
+
         string name = string.IsNullOrEmpty(constraint.Name) ? _definition.ModelType.Name : constraint.Name;
 
         var props = _definition.ModelType.GetProperties();
@@ -703,11 +706,21 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         string key = $"ADD CONSTRAINT {GetTableName(includeAlias: false)}.{name}";
         string query = $"ALTER TABLE {GetTableName(includeAlias: false)} ADD CONSTRAINT {name} UNIQUE ({string.Join(',', constraint.Properties.Keys)});";
 
-        return (key, query);
+        res.Add(key, query);
+
+        var idxName = $"uc_{_definition.ModelType.Name}_{string.Join('_', constraint.Properties.Keys)}_idx".ToLower();
+        var idxKey = $"CREATE INDEX {idxName}";
+        var idxQuery = $"CREATE UNIQUE INDEX IF NOT EXISTS {idxName} ON {GetTableName(includeAlias: false)} ({string.Join(',', constraint.Properties.Keys)}) {(constraint.IncludedProperties.Any() ? $"INCLUDE ({string.Join(',', constraint.IncludedProperties.Keys)})" : string.Empty)};";
+
+        res.Add(idxKey, idxQuery);
+
+        return res;
     }
 
-    private (string Key, string Query) CreateForeignKeyConstraint(DbRelationDefinition foreignKey)
+    private OrderedDictionary<string, string> CreateForeignKeyConstraint(DbRelationDefinition foreignKey)
     {
+        var res = new OrderedDictionary<string, string>();
+
         if (!_definition.ModelType.GetProperties().ToList().Exists(t => t.Name.Equals(foreignKey.BaseProperty, StringComparison.OrdinalIgnoreCase)))
         {
             throw new Exception($"{_definition.ModelType.Name} does not contain the property '{foreignKey.BaseProperty}'");
@@ -729,7 +742,15 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         var key = $"ADD CONSTRAINT {GetTableName(includeAlias: false)}.{name}";
         var query = $"ALTER TABLE {GetTableName(includeAlias: false)} ADD CONSTRAINT {name} FOREIGN KEY ({foreignKey.BaseProperty}) REFERENCES {GetTableName(targetDef, includeAlias: false)} ({foreignKey.RefProperty}) {(foreignKey.UseCascadeDelete ? "ON DELETE CASCADE" : "ON DELETE SET NULL")};";
 
-        return (key, query);
+        res.Add(key, query);
+
+        var idxName = $"fk_{_definition.ModelType.Name}_{foreignKey.BaseProperty}_{targetDef.ModelType.Name}_idx".ToLower();
+        var idxKey = $"CREATE INDEX {idxName}";
+        var idxQuery = $"CREATE INDEX IF NOT EXISTS {idxName} ON {GetTableName(includeAlias: false)} ({foreignKey.BaseProperty});";
+
+        res.Add(idxKey, idxQuery);
+
+        return res;
     }
 
     private OrderedDictionary<string, string> CreateSharedHistoryFunction()

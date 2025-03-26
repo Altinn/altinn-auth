@@ -27,7 +27,7 @@ public class RoleLookupDefinition : BaseDbDefinition<RoleLookup>, IDbDefinition
             def.RegisterProperty(t => t.Value);
 
             def.RegisterExtendedProperty<ExtRoleLookup, Role>(t => t.RoleId, t => t.Id, t => t.Role, cascadeDelete: true);
-            def.RegisterUniqueConstraint([t => t.RoleId, t => t.Key]);
+            def.RegisterUniqueConstraint([t => t.RoleId, t => t.Key], includedProperties: [t => t.Value, t => t.Id]);
         });
     }
 }

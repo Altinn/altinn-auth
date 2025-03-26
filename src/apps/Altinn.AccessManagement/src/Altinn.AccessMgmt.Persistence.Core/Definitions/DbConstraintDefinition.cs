@@ -11,9 +11,14 @@ public class DbConstraintDefinition
     public string Name { get; set; }
 
     /// <summary>
-    /// Gets or sets the properties that are part of this constraint along with their types.
+    /// Properties that are part of this constraint along with their types.
     /// </summary>
     public Dictionary<string, Type> Properties { get; set; } = new();
+
+    /// <summary>
+    /// Properties that are included in the unique index. Resulting in an covering index.
+    /// </summary>
+    public Dictionary<string, Type> IncludedProperties { get; set; } = new();
 
     /// <summary>
     /// Indicates whether this constraint represents the primary key of the model.

@@ -153,11 +153,13 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
         /// </summary>
         /// <param name="properties">A collection of expressions identifying the properties.</param>
         /// <param name="isPrimaryKey">Specifies whether this is a primary key constraint.</param>
+        /// <param name="includedProperties">A collection of expressions identifying the properties to be included in an unique covering index</param>
         /// <returns>The current <see cref="DbDefinitionBuilder{T}"/> instance for fluent chaining.</returns>
         /// <exception cref="Exception">Thrown if any of the specified properties does not exist on the model type.</exception>
-        private DbDefinitionBuilder<T> RegisterConstraint(IEnumerable<Expression<Func<T, object>>> properties, bool isPrimaryKey)
+        private DbDefinitionBuilder<T> RegisterConstraint(IEnumerable<Expression<Func<T, object>>> properties, bool isPrimaryKey, IEnumerable<Expression<Func<T, object>>> includedProperties)
         {
             var propertyDefinitions = new Dictionary<string, Type>();
+            var includedPropertyDefinitions = new Dictionary<string, Type>();
             var propertyInfos = typeof(T).GetProperties().ToDictionary(p => p.Name, p => p.PropertyType);
 
             foreach (var property in properties)
@@ -172,10 +174,26 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
                 propertyDefinitions[propertyInfo.Name] = propertyInfo.PropertyType;
             }
 
+            if (includedProperties != null)
+            {
+                foreach (var property in includedProperties)
+                {
+                    var propertyInfo = ExtractPropertyInfo(property);
+
+                    if (!propertyInfos.ContainsKey(propertyInfo.Name))
+                    {
+                        throw new Exception($"{typeof(T).Name} does not contain the property '{propertyInfo.Name}'");
+                    }
+
+                    includedPropertyDefinitions[propertyInfo.Name] = propertyInfo.PropertyType;
+                }
+            }
+
             var constraint = new DbConstraintDefinition()
             {
                 Properties = propertyDefinitions,
-                IsPrimaryKey = isPrimaryKey
+                IsPrimaryKey = isPrimaryKey,
+                IncludedProperties = includedPropertyDefinitions
             };
 
             if (isPrimaryKey)
@@ -198,15 +216,15 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
         /// <param name="properties">A collection of expressions identifying the properties that form the primary key.</param>
         /// <returns>The current <see cref="DbDefinitionBuilder{T}"/> instance for fluent chaining.</returns>
         public DbDefinitionBuilder<T> RegisterPrimaryKey(IEnumerable<Expression<Func<T, object>>> properties)
-            => RegisterConstraint(properties, isPrimaryKey: true);
+            => RegisterConstraint(properties, isPrimaryKey: true, includedProperties: null);
 
         /// <summary>
         /// Registers a unique constraint for the specified properties.
         /// </summary>
         /// <param name="properties">A collection of expressions identifying the properties that should have a unique constraint.</param>
         /// <returns>The current <see cref="DbDefinitionBuilder{T}"/> instance for fluent chaining.</returns>
-        public DbDefinitionBuilder<T> RegisterUniqueConstraint(IEnumerable<Expression<Func<T, object>>> properties)
-            => RegisterConstraint(properties, isPrimaryKey: false);
+        public DbDefinitionBuilder<T> RegisterUniqueConstraint(IEnumerable<Expression<Func<T, object>>> properties, IEnumerable<Expression<Func<T, object>>> includedProperties = null)
+            => RegisterConstraint(properties, isPrimaryKey: false, includedProperties: includedProperties);
 
         #endregion
 

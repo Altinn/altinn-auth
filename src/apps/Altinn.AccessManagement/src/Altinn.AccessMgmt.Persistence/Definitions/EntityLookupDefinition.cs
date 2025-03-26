@@ -27,7 +27,7 @@ public class EntityLookupDefinition : BaseDbDefinition<EntityLookup>, IDbDefinit
             def.RegisterProperty(t => t.Value);
 
             def.RegisterExtendedProperty<ExtEntityLookup, Entity>(t => t.EntityId, t => t.Id, t => t.Entity, cascadeDelete: true);
-            def.RegisterUniqueConstraint([t => t.EntityId, t => t.Key]);
+            def.RegisterUniqueConstraint([t => t.EntityId, t => t.Key], includedProperties: [t => t.Value, t => t.Id]);
         });
     }
 }

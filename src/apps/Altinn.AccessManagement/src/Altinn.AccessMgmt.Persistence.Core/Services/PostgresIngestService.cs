@@ -50,7 +50,7 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
         var ingestName = ingestId.ToString().Replace("-", string.Empty);
         string ingestTableName = tableName + "_" + ingestName;
 
-        var createIngestTable = $"CREATE TABLE IF NOT EXISTS {ingestTableName} AS SELECT {columnStatement} FROM {tableName} WITH NO DATA;";
+        var createIngestTable = $"CREATE UNLOGGED TABLE IF NOT EXISTS {ingestTableName} AS SELECT {columnStatement} FROM {tableName} WITH NO DATA;";
         await dbExecutor.ExecuteMigrationCommand(createIngestTable, null, cancellationToken);
         
         var completed = await WriteToIngest(data, ingestColumns, ingestTableName, cancellationToken);
