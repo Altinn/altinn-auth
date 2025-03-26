@@ -47,6 +47,11 @@ public class MssqlQueryBuilder : IDbQueryBuilder
         throw new NotImplementedException();
     }
 
+    public string BuildSingleNullUpdateQuery(GenericParameter parameter, bool forTranslation = false)
+    {
+        throw new NotImplementedException();
+    }
+
     /// <inheritdoc/>
     public string BuildUpdateQuery(List<GenericParameter> parameters, bool forTranslation = false)
     {

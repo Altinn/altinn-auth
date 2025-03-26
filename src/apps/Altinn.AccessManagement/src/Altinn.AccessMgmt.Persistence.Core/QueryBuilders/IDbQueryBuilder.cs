@@ -48,6 +48,14 @@ public interface IDbQueryBuilder
     string BuildUpdateQuery(List<GenericParameter> parameters, bool forTranslation = false);
 
     /// <summary>
+    /// Builds a UPDATE query
+    /// </summary>
+    /// <param name="parameter">Parameter</param>
+    /// <param name="forTranslation">Is this for a translation table</param>
+    /// <returns></returns>
+    string BuildSingleNullUpdateQuery(GenericParameter parameter, bool forTranslation = false);
+
+    /// <summary>
     /// Builds a UPSERT query
     /// </summary>
     /// <param name="parameters">Parameters</param>

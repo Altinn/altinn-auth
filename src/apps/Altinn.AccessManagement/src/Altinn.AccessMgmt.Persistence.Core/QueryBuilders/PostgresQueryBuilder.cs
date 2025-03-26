@@ -108,6 +108,12 @@ public class PostgresQueryBuilder : IDbQueryBuilder
     }
 
     /// <inheritdoc/>
+    public string BuildSingleNullUpdateQuery(GenericParameter parameter, bool forTranslation = false)
+    {
+        return $"UPDATE {GetTableName(includeAlias: false, useTranslation: forTranslation)} SET {parameter.Key} = NULL WHERE id = @_id{(forTranslation ? " AND language = @_language" : string.Empty)}";
+    }
+
+    /// <inheritdoc/>
     public string BuildUpsertQuery(List<GenericParameter> parameters, bool forTranslation = false)
     {
         return BuildMergeQuery(parameters, [new GenericFilter("id", "id")], forTranslation);

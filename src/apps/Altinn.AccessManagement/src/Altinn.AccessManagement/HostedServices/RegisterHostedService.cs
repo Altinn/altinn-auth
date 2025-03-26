@@ -470,7 +470,7 @@ public partial class RegisterHostedService(
     {
         try
         {
-            await entityRepository.Update(t => t.ParentId, null, childId, cancellationToken);
+            await entityRepository.Update(t => t.ParentId, childId, cancellationToken);
         }
         catch (Exception ex)
         {
