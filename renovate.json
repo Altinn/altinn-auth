@@ -39,7 +39,8 @@
       "matchPackageNames": [
         "Swashbuckle.AspNetCore",
         "Swashbuckle.AspNetCore.Swagger",
-        "Swashbuckle.AspNetCore.SwaggerGen"
+        "Swashbuckle.AspNetCore.SwaggerGen",
+        "Swashbuckle.AspNetCore.Annotations"
       ],
       "groupName": "Swashbuckle",
       "groupSlug": "swashbuckle",
