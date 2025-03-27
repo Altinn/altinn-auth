@@ -1,0 +1,81 @@
+meta {
+  name: SysUser_ClientDelg_AccPkg_ENK-INNH_Permit
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/authorization/api/v1/decision
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+body:json {
+  /*
+  See Docs tab for test case description
+  */
+  {
+      "Request": {
+          "ReturnPolicyIdList": false,
+          "AccessSubject": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:altinn:systemuser:uuid",
+                          "Value": "{{subjectSystemUser}}"
+                      }
+                  ]
+              }
+          ],
+          "Action": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+                          "Value": "read",
+                          "DataType": "http://www.w3.org/2001/XMLSchema#string"
+                      }
+                  ]
+              }
+          ],
+          "Resource": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:altinn:resource",
+                          "Value": "{{resourceId}}"
+                      },
+                      {
+                          "AttributeId": "urn:altinn:party:uuid",
+                          "Value": "{{resourcePartyUuid}}",
+                          "DataType": "http://www.w3.org/2001/XMLSchema#string"
+                      }
+                  ]
+              }
+          ]
+      }
+  }
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("requestName", "SysUser_ClientDelg_AccPkg_ENK-INNH_Permit");
+  bru.setVar("resourceId", testdata.resources.clientDelgResourceId);
+  bru.setVar("subjectSystemUser", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser.partyUuid);
+  bru.setVar("resourcePartyUuid", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.partyUuid);
+  
+}
+
+tests {
+  test("Decision_" + bru.getVar("requestName"), function() {
+    const data = res.getBody();
+    expect(res.status).to.equal(200);
+    expect(data.response[0]).to.have.property('decision', "Permit");
+  });
+}

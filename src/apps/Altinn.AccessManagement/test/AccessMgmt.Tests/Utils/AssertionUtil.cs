@@ -5,6 +5,7 @@ using Altinn.AccessManagement.Core.Models.Rights;
 using Altinn.AccessManagement.Models;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
+using Altinn.Authorization.Models;
 using Altinn.Urn.Json;
 using Microsoft.AspNetCore.Mvc;
 
@@ -668,6 +669,14 @@ namespace Altinn.AccessManagement.Tests.Utils
             Assert.True(expected.HasValue);
 
             Assert.Equal(expected.Value.Urn, actual.Value.Urn);
+        }
+
+        public static void AssertAccessPackageUrn(AccessPackageUrn expected, AccessPackageUrn actual)
+        {
+            Assert.NotNull(actual);
+            Assert.NotNull(expected);
+
+            Assert.Equal(expected.Urn, actual.Urn);
         }
 
         private static void AssertUrnJsonTypeValue(UrnJsonTypeValue expected, UrnJsonTypeValue actual)

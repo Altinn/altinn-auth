@@ -1,0 +1,52 @@
+meta {
+  name: SystemUser_AccessPackages
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/policyinformation/accesspackages?from={{clientId}}&to={{systemUser}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  from: {{clientId}}
+  to: {{systemUser}}
+}
+
+body:json {
+  {
+    "subject":
+    {
+      "id": "urn:altinn:systemuser:uuid",
+      "value": "fc59de4f-9715-4fe5-b317-ed4b12d57126"
+    },
+    "party":
+    {
+      "id": "urn:altinn:partyid",
+      "value": "50005545"
+    },
+    "resource": 
+    [
+      {
+        "id": "urn:altinn:org",
+        "value": "ttd"
+      },
+      {
+        "id": "urn:altinn:app",
+        "value": "apps-test"
+      }
+    ]
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("requestName", "SystemUser_AccessPackages");
+  bru.setVar("systemUser", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser.partyUuid);
+  bru.setVar("clientId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.partyUuid);
+  
+}

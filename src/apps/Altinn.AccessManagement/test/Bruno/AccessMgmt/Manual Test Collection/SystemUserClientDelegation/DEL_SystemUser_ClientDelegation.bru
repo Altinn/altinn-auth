@@ -5,7 +5,7 @@ meta {
 }
 
 delete {
-  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation?party={{party}}&systemUser={{systemUser}}&client={{client}}
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/delete?party={{party}}&systemUser={{systemUser}}&client={{clientId}}
   body: json
   auth: inherit
 }
@@ -13,7 +13,7 @@ delete {
 params:query {
   party: {{party}}
   systemUser: {{systemUser}}
-  client: {{client}}
+  client: {{clientId}}
 }
 
 headers {
@@ -27,7 +27,7 @@ script:pre-request {
   
   bru.setVar("party", testdata.org_system.partyuuid);
   bru.setVar("systemUser", testdata.org_system.systems[0]);
-  bru.setVar("client", testdata.org_system.partyuuid);
+  bru.setVar("clientId", testdata.org_system.partyuuid);
   
   var getTokenParameters = {
     auth_userId: testdata.org_system.dagl.userid,

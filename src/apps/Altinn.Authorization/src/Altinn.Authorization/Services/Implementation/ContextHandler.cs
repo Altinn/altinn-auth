@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
+using Altinn.Authorization.Models;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Models;
@@ -46,6 +47,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         protected readonly GeneralSettings _generalSettings;
         protected readonly IRegisterService _registerService;
         protected readonly IPolicyRetrievalPoint _prp;
+        protected readonly IAccessManagementWrapper _accessManagementWrapper;
 #pragma warning restore SA1401 // Fields should be private
 #pragma warning restore SA1600 // Elements should be documented
 
@@ -61,8 +63,9 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="settings">The app settings</param>
         /// <param name="registerService">Register service</param>
         /// <param name="prp">service handling policy retireval</param>
+        /// <param name="accessManagementWrapper">accessmanagement pip api wrapper</param>
         public ContextHandler(
-            IInstanceMetadataRepository policyInformationRepository, IRoles rolesWrapper, IOedRoleAssignmentWrapper oedRolesWrapper, IParties partiesWrapper, IProfile profileWrapper, IMemoryCache memoryCache, IOptions<GeneralSettings> settings, IRegisterService registerService, IPolicyRetrievalPoint prp)
+            IInstanceMetadataRepository policyInformationRepository, IRoles rolesWrapper, IOedRoleAssignmentWrapper oedRolesWrapper, IParties partiesWrapper, IProfile profileWrapper, IMemoryCache memoryCache, IOptions<GeneralSettings> settings, IRegisterService registerService, IPolicyRetrievalPoint prp, IAccessManagementWrapper accessManagementWrapper)
         {
             _policyInformationRepository = policyInformationRepository;
             _rolesWrapper = rolesWrapper;
@@ -73,6 +76,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             _generalSettings = settings.Value;
             _registerService = registerService;
             _prp = prp;
+            _accessManagementWrapper = accessManagementWrapper;
         }
 
         /// <inheritdoc/>
@@ -138,7 +142,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 }
             }
 
-            await EnrichSubjectAttributes(request, resourceAttributes.ResourcePartyValue, isExternalRequest);
+            await EnrichSubjectAttributes(request, resourceAttributes, isExternalRequest);
         }
 
         private static bool IsResourceComplete(XacmlResourceAttributes resourceAttributes)
@@ -352,22 +356,17 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// Enriches the XacmlContextRequest with the Roles the subject user has for the resource reportee
         /// </summary>
         /// <param name="request">The original Xacml Context Request</param>
-        /// <param name="resourceParty">The resource reportee party id</param>
+        /// <param name="resourceAttr">The resource reportee attributes</param>
         /// <param name="isExternalRequest">Used to enforce stricter requirements</param>
-        protected async Task EnrichSubjectAttributes(XacmlContextRequest request, string resourceParty, bool isExternalRequest)
+        protected async Task EnrichSubjectAttributes(XacmlContextRequest request, XacmlResourceAttributes resourceAttr, bool isExternalRequest)
         {
-            // If there is no resource party then it is impossible to enrich roles
-            if (string.IsNullOrEmpty(resourceParty))
-            {
-                return;
-            }
-
             XacmlContextAttributes subjectContextAttributes = request.GetSubjectAttributes();
 
             int subjectUserId = 0;
-            int resourcePartyId = Convert.ToInt32(resourceParty);
+            int.TryParse(resourceAttr.ResourcePartyValue, out int resourcePartyId);
             string subjectSsn = string.Empty;
             string subjectOrgnNo = string.Empty;
+            Guid subjectSystemUser = Guid.Empty;
             bool foundLegacyOrgNoAttribute = false;
 
             if (subjectContextAttributes.Attributes.Any(a => a.AttributeId.OriginalString.Equals(XacmlRequestAttribute.SystemUserIdAttribute)) && subjectContextAttributes.Attributes.Count > 1)
@@ -401,6 +400,11 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 if (xacmlAttribute.AttributeId.OriginalString.Equals(XacmlRequestAttribute.OrganizationNumberAttribute))
                 {
                     subjectOrgnNo = xacmlAttribute.AttributeValues.First().Value;
+                }
+
+                if (xacmlAttribute.AttributeId.OriginalString.Equals(XacmlRequestAttribute.SystemUserIdAttribute) && !Guid.TryParse(xacmlAttribute.AttributeValues.First().Value, out subjectSystemUser))
+                {
+                    throw new ArgumentException($"{XacmlRequestAttribute.SystemUserIdAttribute}: Not a valid uuid");
                 }
             }
 
@@ -439,19 +443,40 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 subjectContextAttributes.Attributes.Add(GetPartyIdsAttribute(new List<int> { party.PartyId }));
             }
 
-            // No need for further enrichment of roles of no user subject exists
-            if (subjectUserId == 0)
-            {
-                return;
-            }
-
             XacmlPolicy xacmlPolicy = await _prp.GetPolicyAsync(request);
             if (xacmlPolicy == null)
             {
                 return;
             }
 
+            // Get all subject attribute types used in the policy
             IDictionary<string, ICollection<string>> policySubjectAttributes = xacmlPolicy.GetAttributeDictionaryByCategory(XacmlConstants.MatchAttributeCategory.Subject);
+
+            if (policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.AccessPackageAttribute) && subjectSystemUser != Guid.Empty)
+            {
+                if (resourceAttr.PartyUuid == Guid.Empty)
+                {
+                    List<Party> party = await _registerService.GetPartiesAsync(new List<int> { resourcePartyId });
+
+                    if (party.Count == 1 && party[0].PartyUuid.HasValue)
+                    {
+                        resourceAttr.PartyUuid = party[0].PartyUuid.Value;
+                    }
+                    else
+                    {
+                        return;
+                    }                    
+                }
+
+                await AddAccessPackageAttributes(subjectContextAttributes, subjectSystemUser, resourceAttr.PartyUuid);
+            }
+
+            // Further enrichment of roles can/must be skipped if no subject userId or resource partyId exists
+            if (subjectUserId == 0 || resourcePartyId == 0)
+            {
+                return;
+            }
+
             if (policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.OedRoleAttribute))
             {
                 if (string.IsNullOrEmpty(subjectSsn))
@@ -478,6 +503,21 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 {
                     subjectContextAttributes.Attributes.Add(GetRoleAttribute(roleList));
                 }
+            }
+        }
+
+        /// <summary>
+        /// Enriches the context with all access package attributes the given subject has access to on behalf of the party
+        /// </summary>
+        /// <param name="subjectContextAttributes">The subject attribute collection to enrich with access packages (if any) the subject user has for the party</param>
+        /// <param name="subjectSystemUser">The system user to check if has any access packages for the party</param>
+        /// <param name="resourceParty">The party to check if system user has any access packages for.</param>
+        protected async Task AddAccessPackageAttributes(XacmlContextAttributes subjectContextAttributes, Guid subjectSystemUser, Guid resourceParty)
+        {
+            IEnumerable<AccessPackageUrn> accessPackages = await _accessManagementWrapper.GetAccessPackages(subjectSystemUser, resourceParty);
+            foreach (AccessPackageUrn accessPackage in accessPackages)
+            {
+                subjectContextAttributes.Attributes.Add(GetStringAttribute(accessPackage.PrefixSpan.ToString(), accessPackage.ValueSpan.ToString()));
             }
         }
 

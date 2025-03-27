@@ -1,12 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Security.Claims;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Altinn.Authorization.Enums;
+using Altinn.Authorization.Models;
 using Altinn.Platform.Authenticaiton.Extensions;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.IntegrationTests.Data;
@@ -145,6 +139,22 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         }
 
         return Task.FromResult<IEnumerable<AuthorizedPartyDto>>([]);
+    }
+
+    public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
+    {
+        List<AccessPackageUrn> accessPackages = new();
+        if (from.ToString() == "066148fe-7077-4484-b7ea-44b5ede0014e" && to.ToString() == "e2eba2c3-b369-4ff9-8418-99a810d6bb58")
+        {
+            accessPackages.AddRange(new List<AccessPackageUrn>
+            {
+                AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("skatt-naering")),
+                AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("ansettelsesforhold")),
+                AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("maskinporten-scopes"))
+            });
+        }
+
+        return Task.FromResult(accessPackages as IEnumerable<AccessPackageUrn>);
     }
 
     private static string GetAuthorizedPartiesPath(int userId)

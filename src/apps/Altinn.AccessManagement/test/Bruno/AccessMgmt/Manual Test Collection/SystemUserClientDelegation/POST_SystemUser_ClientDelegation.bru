@@ -5,20 +5,33 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation?party={{party}}&systemUser={{systemUser}}&client={{client}}
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation?party={{party}}
   body: json
   auth: inherit
 }
 
 params:query {
   party: {{party}}
-  systemUser: {{systemUser}}
-  client: {{client}}
 }
 
 headers {
   Content-Type: application/json
   Accept: application/json
+}
+
+body:json {
+  {
+    "clientId": "{{clientId}}",
+    "agentId": "{{systemUser}}",
+    "agentName": "Bruno Test SystemUser",
+    "agentRole": "agent",
+    "rolePackages": [
+      {
+        "roleIdentifier": "regnskapsforer",
+        "packageUrn": "urn:altinn:accesspackage:regnskapsforer-lonn"
+      }
+    ]
+  }
 }
 
 script:pre-request {
@@ -27,7 +40,7 @@ script:pre-request {
   
   bru.setVar("party", testdata.org_system.partyuuid);
   bru.setVar("systemUser", testdata.org_system.systems[0]);
-  bru.setVar("client", testdata.org_system.partyuuid);
+  bru.setVar("clientId", testdata.org_system.partyuuid);
   
   var getTokenParameters = {
     auth_userId: testdata.org_system.dagl.userid,

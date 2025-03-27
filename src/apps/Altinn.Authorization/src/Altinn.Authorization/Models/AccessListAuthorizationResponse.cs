@@ -1,5 +1,6 @@
 using System;
 using Altinn.Authorization.Enums;
+using Altinn.Authorization.Models;
 using Altinn.Authorization.Models.Register;
 using Altinn.Authorization.Models.ResourceRegistry;
 using Altinn.Urn.Json;

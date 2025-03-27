@@ -257,6 +257,42 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             AssertionUtil.AssertAuthorizationEvent(eventQueue, expectedAuthorizationEvent, Times.Once());
         }
 
+        /// <summary>
+        /// Tests the scenario where subject is a system user with resource delegation giving access the resource.
+        /// </summary>
+        [Fact]
+        public async Task PDP_Decision_ResourceRegistry_SystemUserWithDelegation_Permit()
+        {
+            string testCase = "ResourceRegistry_SystemUserWithDelegation_Permit";
+            HttpClient client = GetTestClient();
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// Tests the scenario where subject is a system user with access package giving access the resource. Request is a multi request testing all possible resource party identifiers.
+        /// </summary>
+        [Fact]
+        public async Task PDP_Decision_ResourceRegistry_SystemUser_WithAccessPackage_MultiRequest_Permit()
+        {
+            string testCase = "ResourceRegistry_SystemUser_WithAccessPackage_MultiRequest_Permit";
+            HttpClient client = GetTestClient();
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
         private HttpClient GetTestClient(IEventsQueueClient eventLog = null, IFeatureManager featureManager = null, TimeProvider timeProviderMock = null)
         {
             HttpClient client = _factory.WithWebHostBuilder(builder =>
@@ -274,6 +310,8 @@ namespace Altinn.Platform.Authorization.IntegrationTests
                     services.AddSingleton<IDelegationChangeEventQueue, DelegationChangeEventQueueMock>();
                     services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
                     services.AddSingleton<IRegisterService, RegisterServiceMock>();
+                    services.AddSingleton<IAccessManagementWrapper, AccessManagementWrapperMock>();
+
                     if (featureManager != null)
                     {
                         services.AddSingleton(featureManager);

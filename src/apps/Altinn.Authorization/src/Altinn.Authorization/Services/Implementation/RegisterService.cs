@@ -90,7 +90,7 @@ namespace Altinn.Platform.Authorization.Services
         public async Task<List<Party>> GetPartiesAsync(List<Guid> partyUuids, bool includeSubunits = false, CancellationToken cancellationToken = default)
         {
             List<Party> parties = new List<Party>();
-            List<Guid> partyIdsNotInCache = new List<Guid>();
+            List<Guid> partyUuidsNotInCache = new List<Guid>();
 
             foreach (Guid partyUuid in partyUuids.Distinct())
             {
@@ -100,11 +100,11 @@ namespace Altinn.Platform.Authorization.Services
                 }
                 else
                 {
-                    partyIdsNotInCache.Add(partyUuid);
+                    partyUuidsNotInCache.Add(partyUuid);
                 }
             }
 
-            if (partyIdsNotInCache.Count == 0)
+            if (partyUuidsNotInCache.Count == 0)
             {
                 return parties;
             }
@@ -112,7 +112,7 @@ namespace Altinn.Platform.Authorization.Services
             string endpointUrl = $"parties/partylistbyuuid?fetchSubUnits={includeSubunits}";
             string token = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _generalSettings.RuntimeCookieName);
             string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "authorization");
-            StringContent requestBody = new StringContent(JsonSerializer.Serialize(partyIdsNotInCache), Encoding.UTF8, "application/json");
+            StringContent requestBody = new StringContent(JsonSerializer.Serialize(partyUuidsNotInCache), Encoding.UTF8, "application/json");
 
             HttpResponseMessage response = await _client.PostAsync(endpointUrl, requestBody, token, accessToken, cancellationToken);
             string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);

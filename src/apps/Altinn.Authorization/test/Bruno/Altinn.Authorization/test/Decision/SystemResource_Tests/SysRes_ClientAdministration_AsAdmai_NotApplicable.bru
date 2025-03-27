@@ -1,0 +1,81 @@
+meta {
+  name: SysRes_ClientAdministration_AsAdmai_NotApplicable
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/authorization/api/v1/decision
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+body:json {
+  /*
+  See Docs tab for test case description
+  */
+  {
+      "Request": {
+          "ReturnPolicyIdList": false,
+          "AccessSubject": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:altinn:userid",
+                          "Value": "{{subjectUserId}}"
+                      }
+                  ]
+              }
+          ],
+          "Action": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+                          "Value": "write",
+                          "DataType": "http://www.w3.org/2001/XMLSchema#string"
+                      }
+                  ]
+              }
+          ],
+          "Resource": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:altinn:resource",
+                          "Value": "{{resourceId}}"
+                      },
+                      {
+                          "AttributeId": "urn:altinn:partyid",
+                          "Value": "{{resourcePartyId}}",
+                          "DataType": "http://www.w3.org/2001/XMLSchema#string"
+                      }
+                  ]
+              }
+          ]
+      }
+  }
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("requestName", "SysRes_ClientAdministration_AsAdmai_NotApplicable");
+  bru.setVar("resourceId", sharedtestdata.systemResources.client_administration);
+  bru.setVar("subjectUserId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.a2_tilgangsstyrer.userId);
+  bru.setVar("resourcePartyId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyId);
+  
+}
+
+tests {
+  test("Decision_" + bru.getVar("requestName"), function() {
+    const data = res.getBody();
+    expect(res.status).to.equal(200);
+    expect(data.response[0]).to.have.property('decision', "NotApplicable");
+  });
+}

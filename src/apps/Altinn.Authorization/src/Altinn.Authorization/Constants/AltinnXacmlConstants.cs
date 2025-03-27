@@ -92,6 +92,11 @@ namespace Altinn.Platform.Authorization.Constants
             public const string OedRoleAttribute = "urn:digitaltdodsbo:rolecode";
 
             /// <summary>
+            /// AccessPackage Attribute match identifier
+            /// </summary>
+            public const string AccessPackageAttribute = "urn:altinn:accesspackage";
+
+            /// <summary>
             /// SessionId Attribute match identifier
             /// </summary>
             public const string SessionIdAttribute = "urn:altinn:sessionid";
