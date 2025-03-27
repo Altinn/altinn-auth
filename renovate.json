@@ -37,6 +37,18 @@
     {
       "matchManagers": ["nuget"],
       "matchPackageNames": [
+        "Swashbuckle.AspNetCore.Swagger",
+        "Swashbuckle.AspNetCore.SwaggerGen"
+      ],
+      "groupName": "Swashbuckle",
+      "groupSlug": "swashbuckle",
+      "matchUpdateTypes": [
+        "major"
+      ]
+    },
+    {
+      "matchManagers": ["nuget"],
+      "matchPackageNames": [
         "Testcontainers",
         "Testcontainers.PostgreSql"
       ],
