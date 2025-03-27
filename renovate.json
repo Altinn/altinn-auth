@@ -37,6 +37,7 @@
     {
       "matchManagers": ["nuget"],
       "matchPackageNames": [
+        "Swashbuckle.AspNetCore",
         "Swashbuckle.AspNetCore.Swagger",
         "Swashbuckle.AspNetCore.SwaggerGen"
       ],
