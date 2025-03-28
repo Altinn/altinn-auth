@@ -18,5 +18,8 @@
   "deps": [
     "lib:Altinn.Authorization.Host",
     "lib:Altinn.Authorization.Integration"
-  ]
+  ],
+  "sonarcloud": {
+    "projectKey": "Authorization_AccessManagement"
+  }
 }

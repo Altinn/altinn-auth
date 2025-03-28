@@ -1,5 +1,9 @@
 {
-  "image": {},
+  "image": {
+    "_comment": "This is fake, as register isn't built from here yet",
+    "type": "docker",
+    "name": "altinn-register"
+  },
   "database": {
     "prefix": "register",
     "name": "register",
@@ -12,5 +16,6 @@
     "terraform": {
       "stateFile": "Altinn.Register.tfstate"
     }
-  }
+  },
+  "sonarcloud": false
 }

@@ -8,7 +8,7 @@ on:
 
 jobs:
   find-verticals:
-    uses: ./.github/workflows/_find-verticals.yml
+    uses: ./.github/workflows/tpl-find-verticals.yml
     with:
       type: app
 

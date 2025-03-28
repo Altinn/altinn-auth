@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  find-verticals:
+    uses: ./.github/workflows/tpl-find-verticals.yml
+    with:
+      type: all
+      changed: full
+      checkSlns: true
+
+  ci:
+    needs: find-verticals
+    strategy:
+      matrix: ${{ fromJson(needs.find-verticals.outputs.matrix) }}
+      fail-fast: false
+    uses: ./.github/workflows/tpl-vertical-ci.yml
+    secrets: inherit
+    with:
+      id: ${{ matrix.id }}
+      slug: ${{ matrix.slug }}
+      type: ${{ matrix.type }}
+      displayName: ${{ matrix.displayName }}
+      path: ${{ matrix.path }}
+      shortName: ${{ matrix.shortName }}
+      name: ${{ matrix.name }}
+      sonarProjectKey: ${{ matrix.sonarcloud }}
+      sonarProjectName: ${{ matrix.sonarcloudName }}

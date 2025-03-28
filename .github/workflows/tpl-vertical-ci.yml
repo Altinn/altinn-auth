@@ -1,0 +1,144 @@
+name: "Template: Vertical CI"
+
+on:
+  workflow_call:
+    inputs:
+      id:
+        required: true
+        type: string
+        description: The ID of the vertical for which to run CI
+
+      slug:
+        required: true
+        type: string
+        description: The slug of the vertical for which to run CI
+
+      type:
+        required: true
+        type: string
+        description: The type of vertical to run CI for
+
+      displayName:
+        required: true
+        type: string
+        description: The display name of the vertical for which to run CI
+
+      path:
+        required: true
+        type: string
+        description: The path to the vertical for which to run CI
+
+      shortName:
+        required: true
+        type: string
+        description: The short name of the vertical for which to run CI
+
+      name:
+        required: true
+        type: string
+        description: The name of the vertical for which to run CI
+
+      sonarProjectKey:
+        required: true
+        type: string
+        description: The SonarCloud project key for the vertical (or false to disable SonarCloud analysis)
+
+      sonarProjectName:
+        required: true
+        type: string
+        description: The SonarCloud project name for the vertical
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - name: Restore dotnet workloads
+        run: dotnet workload restore
+        working-directory: ${{ inputs.path }}
+
+      - name: Build
+        run: dotnet build -c Release -bl:binlog/build.binlog
+        working-directory: ${{ inputs.path }}
+
+      - name: Test
+        run: dotnet test -c Release --no-build -bl:binlog/test.binlog
+        working-directory: ${{ inputs.path }}
+
+      - name: Pack
+        run: dotnet pack -c Release --no-build -bl:binlog/pack.binlog
+        working-directory: ${{ inputs.path }}
+        if: inputs.type == 'pkg'
+
+      - name: Create binlog artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.slug }}-binlog
+          path: ${{ inputs.path }}/binlog/*.binlog
+          if-no-files-found: error
+          retention-days: 1
+
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    if: inputs.sonarProjectKey != 'false'
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - name: Restore dotnet workloads
+        run: dotnet workload restore
+        working-directory: ${{ inputs.path }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "microsoft"
+          java-version: 17
+
+      - name: Install SonarCloud scanner and dependencies
+        shell: bash
+        run: |
+          dotnet tool install --global dotnet-sonarscanner
+          dotnet tool install --global dotnet-coverage
+
+      - name: Analyze
+        working-directory: ${{ inputs.path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_KEY: ${{ inputs.sonarProjectKey }}
+          SONAR_NAME: ${{ inputs.sonarProjectName }}
+        shell: bash
+        run: |
+          dotnet-sonarscanner begin \
+            /key:"$SONAR_KEY" \
+            /name:"$SONAR_NAME" \
+            /o:"altinn" /d:sonar.token="$SONAR_TOKEN" \
+            /d:sonar.scanner.scanAll=false \
+            /d:sonar.coverage.exclusions="**/Migration/**" \
+            /d:sonar.test.exclusions="test/**/*" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.cs.vstest.reportsPaths="**/*.trx" \
+            /d:sonar.cs.vscoveragexml.reportsPaths="TestResults/coverage.xml"
+
+          dotnet build --no-incremental
+          dotnet coverage collect 'dotnet test --no-build --results-directory TestResults/' \
+            -f xml -o 'TestResults/coverage.xml'
+
+          dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"

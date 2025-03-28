@@ -1,0 +1,109 @@
+name: "Template: Find verticals"
+
+on:
+  workflow_call:
+    outputs:
+      matrix:
+        value: ${{ jobs.list.outputs.matrix }}
+        description: JSON object containing a job matrix of verticals
+
+      verticals:
+        value: ${{ jobs.list.outputs.verticals }}
+        description: JSON list of folders in either <apps, pkgs, libs>
+
+    inputs:
+      type:
+        required: true
+        description: <app, pkg, lib, all>
+        type: string
+
+      changed:
+        required: false
+        description: <full, selfOnly, self, infra, none>
+        type: string
+        default: none
+
+      checkSlns:
+        required: false
+        description: Whether to check sln files
+        type: boolean
+        default: false
+
+jobs:
+  list:
+    name: Find ${{ inputs.type == 'all' && 'all' || format('{0}s', inputs.type) }}
+    runs-on: ubuntu-latest
+
+    outputs:
+      verticals: ${{ steps.list.outputs.verticals }}
+      matrix: ${{ steps.list.outputs.matrix }}
+
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@v4.3.1
+
+      - uses: pnpm/action-setup@v4.1.0
+        with:
+          version: 9
+          run_install: |
+            - cwd: .github/scripts
+              args: [--frozen-lockfile]
+            - args: [--global, tsx]
+
+      - name: Get path filters
+        id: get-filters
+        run: tsx ./.github/scripts/get-path-filters.mts --type ${{ inputs.type }}
+
+      - name: Get changed files
+        id: changed
+        uses: dorny/paths-filter@v3.0.2
+        with:
+          filters: ${{ steps.get-filters.outputs.pathsFilters }}
+
+      - name: Find ${{ inputs.type == 'all' && 'all' || format('{0}s', inputs.type) }}
+        id: list
+        run: tsx ./.github/scripts/list-verticals.mts --type ${{ inputs.type }} --changed ${{ inputs.changed }}
+        env:
+          PATHS_CHANGED: ${{ toJson(steps.changed.outputs) }}
+
+      - name: Display found verticals and matrix content
+        run: |
+          echo "Found verticals:"
+          echo "$VERTICALS" | jq --color-output
+          echo "Found matrix:"
+          echo "$MATRIX" | jq --color-output
+          echo "Unfiltered verticals:"
+          echo "$ALL" | jq --color-output
+        env:
+          VERTICALS: ${{ steps.list.outputs.verticals }}
+          MATRIX: ${{ steps.list.outputs.matrix }}
+          ALL: ${{ steps.list.outputs.all }}
+
+  check-slns:
+    name: Check sln files
+    if: inputs.checkSlns
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          run_install: |
+            - cwd: .github/scripts
+              args: [--frozen-lockfile]
+            - args: [--global, tsx]
+
+      - name: Update all sln files
+        run: tsx ./.github/scripts/update-sln-files.mts
+
+      - name: Assert that no sln files have changed
+        run: git diff --exit-code

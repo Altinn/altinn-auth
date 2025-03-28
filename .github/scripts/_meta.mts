@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { $, within, usePwsh } from "zx";
+import slugify from "slugify";
 
 if (process.platform === "win32") {
   usePwsh();
@@ -22,12 +23,12 @@ const enqueue = <T extends unknown>(fn: () => Promise<T>): Promise<T> => {
 const depSchema = z.string().transform((val, ctx) => {
   if (val.startsWith("lib:")) {
     const lib = val.substring(4);
-    return { type: "lib", name: lib } as Dep;
+    return { type: "lib", name: lib } as RawDep;
   }
 
   if (val.startsWith("pkg:")) {
     const pkg = val.substring(4);
-    return { type: "pkg", name: pkg } as Dep;
+    return { type: "pkg", name: pkg } as RawDep;
   }
 
   ctx.addIssue({
@@ -72,6 +73,18 @@ const databaseSchema = z.object({
   schema: z.any().optional(),
 });
 
+const sonarcloudSchema = z
+  .boolean()
+  .transform((val, ctx) => {
+    return { enabled: val } as RawSonarcloud;
+  })
+  .or(
+    z.object({
+      enabled: z.boolean().default(true),
+      projectKey: z.string().optional(),
+    })
+  );
+
 const configSchema = z.object({
   name: z.string().optional(),
   shortName: z.string().optional(),
@@ -79,13 +92,19 @@ const configSchema = z.object({
   infra: infraSchema.optional(),
   database: databaseSchema.optional(),
   deps: z.array(depSchema).default([]),
+  sonarcloud: sonarcloudSchema.default({ enabled: true }),
 });
 
 export type DepType = "lib" | "pkg";
 
-export type Dep = {
+type RawDep = {
   readonly type: DepType;
   readonly name: string;
+};
+
+type RawSonarcloud = {
+  readonly enabled: boolean;
+  readonly projectKey?: string;
 };
 
 export type VerticalType = "app" | "lib" | "pkg" | "tool";
@@ -111,7 +130,22 @@ export type DatabaseInfo = {
   readonly schema: object;
 };
 
-export type Vertical = {
+export type SonarcloudInfo =
+  | {
+      readonly enabled: false;
+      readonly projectKey: undefined;
+      readonly displayName: undefined;
+    }
+  | {
+      readonly enabled: true;
+      readonly projectKey: string;
+      readonly displayName: string;
+    };
+
+type RawVertical = {
+  readonly id: string;
+  readonly slug: string;
+  readonly displayName: string;
   readonly type: VerticalType;
   readonly name: string;
   readonly shortName: string;
@@ -121,7 +155,25 @@ export type Vertical = {
   readonly infra?: InfraInfo;
   readonly database?: DatabaseInfo;
   readonly projects: VerticalProjects;
-  readonly deps: readonly Dep[];
+  readonly sonarcloud: SonarcloudInfo;
+  readonly deps: readonly RawDep[];
+};
+
+export type Vertical = {
+  readonly id: string;
+  readonly slug: string;
+  readonly displayName: string;
+  readonly type: VerticalType;
+  readonly name: string;
+  readonly shortName: string;
+  readonly path: string;
+  readonly relPath: string;
+  readonly image?: ImageInfo;
+  readonly infra?: InfraInfo;
+  readonly database?: DatabaseInfo;
+  readonly projects: VerticalProjects;
+  readonly sonarcloud: SonarcloudInfo;
+  readonly deps: readonly Vertical[];
 };
 
 export type VerticalProjects = Readonly<
@@ -172,7 +224,7 @@ const readProjects = async (
 const readVertical = async (
   type: VerticalType,
   dirPath: string
-): Promise<Vertical> => {
+): Promise<RawVertical> => {
   const verticalPath = path.resolve(dirPath);
   const dirName = path.basename(verticalPath);
   const configPath = path.resolve(verticalPath, "conf.json");
@@ -254,7 +306,23 @@ const readVertical = async (
     image = confImage as ImageInfo;
   }
 
+  const id = `${type}:${name}`;
+  const displayName = `${type}: ${shortName}`;
+  const slug = slugify(id.replaceAll(/[\.:]/g, "-"), { lower: true });
+
+  const confSonarcloud = config.sonarcloud;
+  const sonarcloud = confSonarcloud.enabled
+    ? ({
+        enabled: true,
+        projectKey: confSonarcloud.projectKey ?? `authorization-${slug}`,
+        displayName: `Authorization ${name}`,
+      } as const)
+    : ({ enabled: false } as const);
+
   return {
+    id,
+    slug,
+    displayName,
     type,
     name,
     shortName,
@@ -264,23 +332,9 @@ const readVertical = async (
     infra,
     database,
     projects,
+    sonarcloud,
     deps: config.deps,
   };
-};
-
-const validateDeps = (verticals: readonly Vertical[]) => {
-  for (const vertical of verticals) {
-    for (const dep of vertical.deps) {
-      const found = verticals.find(
-        (v) => v.name === dep.name && v.type === dep.type
-      );
-      if (!found) {
-        throw new Error(
-          `Dependency ${dep.type}:${dep.name} of ${vertical.name} not found`
-        );
-      }
-    }
-  }
 };
 
 const apps = await globby(`${vertialDirs.app}/*`, { onlyDirectories: true });
@@ -293,11 +347,56 @@ const promises = [
   ...pkgs.map((pkg) => readVertical("pkg", pkg)),
   ...tools.map((tool) => readVertical("tool", tool)),
 ];
-const verticals = await Promise.all(promises);
-validateDeps(verticals);
+const rawVerticals = await Promise.all(promises);
+rawVerticals.sort((a, b) => a.deps.length - b.deps.length);
+const lookup = new Map<string, Vertical>();
+
+// first pass, populate lookup
+for (const raw of rawVerticals) {
+  lookup.set(raw.id, { ...raw, deps: [] });
+}
+
+// second pass, direct deps
+for (const raw of rawVerticals) {
+  const vertical = lookup.get(raw.id)!;
+  for (const dep of raw.deps) {
+    const resolved = lookup.get(`${dep.type}:${dep.name}`);
+    if (!resolved) {
+      throw new Error(`Dependency not found: ${dep.type}:${dep.name}`);
+    }
+
+    (vertical.deps as Vertical[]).push(resolved);
+  }
+}
+
+// third pass, transitive deps
+for (const vertical of lookup.values()) {
+  const todo = [vertical];
+  const deps = vertical.deps as Vertical[];
+  const seen = new Set<Vertical>();
+
+  while (todo.length > 0) {
+    const node = todo.pop()!;
+    if (seen.has(node)) {
+      continue;
+    }
+
+    seen.add(node);
+    for (const dep of node.deps) {
+      if (seen.has(dep)) {
+        continue;
+      }
+
+      todo.push(dep);
+      if (!deps.includes(dep)) {
+        deps.push(dep);
+      }
+    }
+  }
+}
 
 export const getApp = (name: string) => {
-  const app = verticals.find((v) => v.name === name);
+  const app = lookup.get(`app:${name}`);
   if (!app) {
     throw new Error(`App not found: ${name}`);
   }
@@ -305,4 +404,6 @@ export const getApp = (name: string) => {
   return app;
 };
 
+const verticals = [...lookup.values()];
+verticals.sort((a, b) => (a.type < b.type ? -1 : 1));
 export { verticals };
