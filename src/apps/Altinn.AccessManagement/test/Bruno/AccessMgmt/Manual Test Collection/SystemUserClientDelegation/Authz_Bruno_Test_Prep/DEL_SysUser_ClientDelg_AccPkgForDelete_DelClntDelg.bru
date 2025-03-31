@@ -1,19 +1,18 @@
 meta {
-  name: DEL_SysUser_ClientDelg_AccPkgForDelete
+  name: DEL_SysUser_ClientDelg_AccPkgForDelete_DelClntDelg
   type: http
-  seq: 6
+  seq: 7
 }
 
 delete {
-  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/delete?party={{party}}&systemUser={{systemUser}}&client={{clientId}}
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/deletedelegation?party={{party}}&delegationId
   body: json
   auth: inherit
 }
 
 params:query {
   party: {{party}}
-  systemUser: {{systemUser}}
-  client: {{clientId}}
+  delegationId: 
 }
 
 headers {

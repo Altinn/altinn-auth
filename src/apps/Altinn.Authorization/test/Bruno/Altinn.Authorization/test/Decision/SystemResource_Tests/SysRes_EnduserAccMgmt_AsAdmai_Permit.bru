@@ -76,6 +76,6 @@ tests {
   test("Decision_" + bru.getVar("requestName"), function() {
     const data = res.getBody();
     expect(res.status).to.equal(200);
-    expect(data.response[0]).to.have.property('decision', "NotApplicable");
+    expect(data.response[0]).to.have.property('decision', "Permit");
   });
 }

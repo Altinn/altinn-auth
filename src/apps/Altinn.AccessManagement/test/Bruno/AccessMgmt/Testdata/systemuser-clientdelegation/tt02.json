@@ -80,7 +80,7 @@
             "directPackageToDelegate": "urn:altinn:accesspackage:ansettelsesforhold",
             "clientPackageToDelegate": "urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet",
             "clientEnkPackageToDelegate": "urn:altinn:accesspackage:regnskapsforer-lonn",
-            "clientEnkPackageForDelete": "urn:altinn:accesspackage:regnskapsforer-uten-signeringsrettighet"
+            "clientPackageForDelete": "urn:altinn:accesspackage:regnskapsforer-uten-signeringsrettighet"
         },
         "subunit": {
             "name": "ULASTELIG RETTFERDIG TIGER AS",
