@@ -9,6 +9,7 @@ using Altinn.Platform.Events.Tests.Mocks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
 using Moq;
 using Xunit;
 
@@ -20,6 +21,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
     public class ContextHandlerTest
     {
         private readonly ContextHandler _contextHandler;
+        private readonly Mock<IFeatureManager> featureManageMock = new Mock<IFeatureManager>();
         private HttpContext _httpContext = new DefaultHttpContext();
 
         public ContextHandlerTest()
@@ -36,7 +38,8 @@ namespace Altinn.Platform.Authorization.IntegrationTests
                 Options.Create(new GeneralSettings { RoleCacheTimeout = 5 }),
                 new RegisterServiceMock(),
                 new PolicyRetrievalPointMock(httpContextAccessorMock.Object, null),
-                new AccessManagementWrapperMock(httpContextAccessorMock.Object));
+                new AccessManagementWrapperMock(httpContextAccessorMock.Object),
+                featureManageMock.Object);
         }
 
         /// <summary>

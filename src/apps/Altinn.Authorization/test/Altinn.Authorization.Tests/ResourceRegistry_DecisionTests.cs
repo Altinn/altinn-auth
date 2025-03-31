@@ -35,7 +35,8 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         public ResourceRegistry_DecisionTests(CustomWebApplicationFactory<DecisionController> fixture)
         {
             _factory = fixture;
-            SetupFeatureMock(true);
+            SetupFeatureMock("AuditLog", true);
+            SetupFeatureMock("SystemUserAccessPackageAuthorization", true);
             SetupDateTimeMock();
         }
 
@@ -282,7 +283,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         public async Task PDP_Decision_ResourceRegistry_SystemUser_WithAccessPackage_MultiRequest_Permit()
         {
             string testCase = "ResourceRegistry_SystemUser_WithAccessPackage_MultiRequest_Permit";
-            HttpClient client = GetTestClient();
+            HttpClient client = GetTestClient(featureManager: featureManageMock.Object);
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
             XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
 
@@ -332,10 +333,10 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             return client;
         }
 
-        private void SetupFeatureMock(bool featureFlag)
+        private void SetupFeatureMock(string feature, bool featureFlag)
         {
             featureManageMock
-                .Setup(m => m.IsEnabledAsync("AuditLog"))
+                .Setup(m => m.IsEnabledAsync(feature))
                 .Returns(Task.FromResult(featureFlag));
         }
 

@@ -19,6 +19,7 @@ using Altinn.Platform.Storage.Interface.Models;
 using Authorization.Platform.Authorization.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
 
 namespace Altinn.Platform.Authorization.Services.Implementation
 {
@@ -48,6 +49,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         protected readonly IRegisterService _registerService;
         protected readonly IPolicyRetrievalPoint _prp;
         protected readonly IAccessManagementWrapper _accessManagementWrapper;
+        protected readonly IFeatureManager _featureManager;
 #pragma warning restore SA1401 // Fields should be private
 #pragma warning restore SA1600 // Elements should be documented
 
@@ -64,8 +66,9 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="registerService">Register service</param>
         /// <param name="prp">service handling policy retireval</param>
         /// <param name="accessManagementWrapper">accessmanagement pip api wrapper</param>
+        /// <param name="featureManager">Feature manager</param>
         public ContextHandler(
-            IInstanceMetadataRepository policyInformationRepository, IRoles rolesWrapper, IOedRoleAssignmentWrapper oedRolesWrapper, IParties partiesWrapper, IProfile profileWrapper, IMemoryCache memoryCache, IOptions<GeneralSettings> settings, IRegisterService registerService, IPolicyRetrievalPoint prp, IAccessManagementWrapper accessManagementWrapper)
+            IInstanceMetadataRepository policyInformationRepository, IRoles rolesWrapper, IOedRoleAssignmentWrapper oedRolesWrapper, IParties partiesWrapper, IProfile profileWrapper, IMemoryCache memoryCache, IOptions<GeneralSettings> settings, IRegisterService registerService, IPolicyRetrievalPoint prp, IAccessManagementWrapper accessManagementWrapper, IFeatureManager featureManager)
         {
             _policyInformationRepository = policyInformationRepository;
             _rolesWrapper = rolesWrapper;
@@ -77,6 +80,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             _registerService = registerService;
             _prp = prp;
             _accessManagementWrapper = accessManagementWrapper;
+            _featureManager = featureManager;
         }
 
         /// <inheritdoc/>
@@ -452,7 +456,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             // Get all subject attribute types used in the policy
             IDictionary<string, ICollection<string>> policySubjectAttributes = xacmlPolicy.GetAttributeDictionaryByCategory(XacmlConstants.MatchAttributeCategory.Subject);
 
-            if (policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.AccessPackageAttribute) && subjectSystemUser != Guid.Empty)
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.SystemUserAccessPackageAuthorization) && policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.AccessPackageAttribute) && subjectSystemUser != Guid.Empty)
             {
                 if (resourceAttr.PartyUuid == Guid.Empty)
                 {
@@ -465,7 +469,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     else
                     {
                         return;
-                    }                    
+                    }
                 }
 
                 await AddAccessPackageAttributes(subjectContextAttributes, subjectSystemUser, resourceAttr.PartyUuid);
