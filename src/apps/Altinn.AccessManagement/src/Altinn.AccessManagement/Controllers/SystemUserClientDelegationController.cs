@@ -98,7 +98,7 @@ public class SystemUserClientDelegationController : ControllerBase
         }
 
         // Remark: Kan ikke garantere at det KUN er delegeringer som er opprettet i denne handlingen som blir returnert.
-        return Ok(delegations);
+        return Ok(result);
     }
 
     /// <summary>
