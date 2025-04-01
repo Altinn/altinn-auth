@@ -6,9 +6,17 @@
 public class Assignment
 {
     /// <summary>
-    /// Id
+    /// Initializes a new instance of the <see cref="Assignment"/> class.
     /// </summary>
-    public Guid Id { get; set; }
+    public Assignment()
+    {
+        Id = Guid.CreateVersion7();
+    }
+
+    /// <summary>
+    /// Identity
+    /// </summary>
+    public Guid Id { get; private set; }
 
     /// <summary>
     /// RoleId

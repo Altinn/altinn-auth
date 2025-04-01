@@ -111,7 +111,7 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
     /// <inheritdoc />
     public async Task<int> IngestAndMergeData<T>(List<T> data, IEnumerable<GenericParameter> matchColumns = null, CancellationToken cancellationToken = default)
     {
-        var ingestId = Guid.NewGuid();
+        var ingestId = Guid.CreateVersion7();
         await IngestTempData(data, ingestId, cancellationToken);
         var res = await MergeTempData<T>(ingestId, matchColumns, cancellationToken);
 

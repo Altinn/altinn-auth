@@ -6,9 +6,17 @@
 public class AssignmentResource
 {
     /// <summary>
+    /// Initializes a new instance of the <see cref="AssignmentResource"/> class.
+    /// </summary>
+    public AssignmentResource()
+    {
+        Id = Guid.CreateVersion7();
+    }
+
+    /// <summary>
     /// Identity
     /// </summary>
-    public Guid Id { get; set; }
+    public Guid Id { get; private set; }
 
     /// <summary>
     /// Assignment identity

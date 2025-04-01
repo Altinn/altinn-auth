@@ -419,7 +419,7 @@
         {
             foreach(var to in CreateAssignmentPerson.Where(t => t.Value))
             {
-                await assignmentService.Create(new Assignment() { Id = Guid.NewGuid(), FromId = Entity.Id, RoleId = role.Key, ToId = to.Key });
+                await assignmentService.Create(new Assignment() { FromId = Entity.Id, RoleId = role.Key, ToId = to.Key });
                 createCount++;
             }
         }

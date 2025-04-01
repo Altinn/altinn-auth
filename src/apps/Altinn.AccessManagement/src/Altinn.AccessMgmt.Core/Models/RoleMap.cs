@@ -7,9 +7,17 @@
 public class RoleMap
 {
     /// <summary>
-    /// Id
+    /// Initializes a new instance of the <see cref="RoleMap"/> class.
     /// </summary>
-    public Guid Id { get; set; }
+    public RoleMap()
+    {
+        Id = Guid.CreateVersion7();
+    }
+
+    /// <summary>
+    /// Identity
+    /// </summary>
+    public Guid Id { get; private set; }
 
     /// <summary>
     /// HasRoleId

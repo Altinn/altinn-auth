@@ -6,9 +6,17 @@
 public class RoleLookup
 {
     /// <summary>
+    /// Initializes a new instance of the <see cref="RoleLookup"/> class.
+    /// </summary>
+    public RoleLookup()
+    {
+        Id = Guid.CreateVersion7();
+    }
+
+    /// <summary>
     /// Identity
     /// </summary>
-    public Guid Id { get; set; }
+    public Guid Id { get; private set; }
 
     /// <summary>
     /// Role identifier

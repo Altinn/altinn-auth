@@ -176,7 +176,7 @@ public partial class RegisterHostedService(
                 throw new Exception("Stream page is not successful");
             }
 
-            Guid batchId = Guid.NewGuid();
+            Guid batchId = Guid.CreateVersion7();
             var batchName = batchId.ToString().ToLower().Replace("-", string.Empty);
             _logger.LogInformation("Starting proccessing role page '{0}'", batchName);
 
@@ -251,7 +251,7 @@ public partial class RegisterHostedService(
                 }
                 finally
                 {
-                    batchId = Guid.NewGuid();
+                    batchId = Guid.CreateVersion7();
                     batchData.Clear();
                 }
             }
@@ -338,7 +338,7 @@ public partial class RegisterHostedService(
     private async Task SyncRolesBatched(LeaseResult<LeaseContent> ls, CancellationToken cancellationToken)
     {
         int batchSize = 1000;
-        Guid batchId = Guid.NewGuid();
+        Guid batchId = Guid.CreateVersion7();
         var batchData = new List<Assignment>();
 
         await foreach (var page in await _register.StreamRoles([], ls.Data?.RoleStreamNextPageLink, cancellationToken))
@@ -449,7 +449,7 @@ public partial class RegisterHostedService(
                 await Task.Delay(2000);
             }
 
-            batchId = Guid.NewGuid();
+            batchId = Guid.CreateVersion7();
             batchData.Clear();
         }
     }
@@ -494,7 +494,6 @@ public partial class RegisterHostedService(
             var role = await GetOrCreateRole(model.RoleIdentifier, model.RoleSource);
             return new Assignment()
             {
-                Id = Guid.CreateVersion7(),
                 FromId = Guid.Parse(model.FromParty),
                 ToId = Guid.Parse(model.ToParty),
                 RoleId = role.Id
@@ -575,7 +574,7 @@ public partial class RegisterHostedService(
                 throw new Exception("Stream page is not successful");
             }
             
-            Guid batchId = Guid.NewGuid();
+            Guid batchId = Guid.CreateVersion7();
             var batchName = batchId.ToString().ToLower().Replace("-", string.Empty);
             _logger.LogInformation("Starting proccessing party page '{0}'", batchName);
 
@@ -776,7 +775,6 @@ public partial class RegisterHostedService(
         {
             res.Add(new EntityLookup()
             {
-                Id = Guid.NewGuid(),
                 EntityId = Guid.Parse(model.PartyUuid),
                 Key = "DateOfBirth",
                 Value = model.DateOfBirth
@@ -784,7 +782,6 @@ public partial class RegisterHostedService(
 
             res.Add(new EntityLookup()
             {
-                Id = Guid.NewGuid(),
                 EntityId = Guid.Parse(model.PartyUuid),
                 Key = "PartyId",
                 Value = model.PartyId.ToString()
@@ -792,7 +789,6 @@ public partial class RegisterHostedService(
 
             res.Add(new EntityLookup()
             {
-                Id = Guid.NewGuid(),
                 EntityId = Guid.Parse(model.PartyUuid),
                 Key = "PersonIdentifier",
                 Value = model.PersonIdentifier
@@ -802,7 +798,6 @@ public partial class RegisterHostedService(
         {
             res.Add(new EntityLookup()
             {
-                Id = Guid.NewGuid(),
                 EntityId = Guid.Parse(model.PartyUuid),
                 Key = "PartyId",
                 Value = model.PartyId.ToString()
@@ -810,7 +805,6 @@ public partial class RegisterHostedService(
 
             res.Add(new EntityLookup()
             {
-                Id = Guid.NewGuid(),
                 EntityId = Guid.Parse(model.PartyUuid),
                 Key = "OrganizationIdentifier",
                 Value = model.OrganizationIdentifier
@@ -820,7 +814,6 @@ public partial class RegisterHostedService(
         {
             res.Add(new EntityLookup()
             {
-                Id = Guid.NewGuid(),
                 EntityId = Guid.Parse(model.PartyUuid),
                 Key = "PartyId",
                 Value = model.PartyId.ToString()

@@ -15,7 +15,6 @@ public class StatusService(IStatusRecordRepository statusRecordRepository) : ISt
         {
             status = new StatusRecord()
             {
-                Id = id,
                 Name = name,
                 RetryLimit = limit,
                 RetryCount = 0,

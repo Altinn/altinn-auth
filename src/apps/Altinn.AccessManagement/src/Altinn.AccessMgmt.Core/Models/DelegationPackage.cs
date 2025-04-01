@@ -6,9 +6,17 @@
 public class DelegationPackage
 {
     /// <summary>
-    /// Identifier
+    /// Initializes a new instance of the <see cref="DelegationPackage"/> class.
     /// </summary>
-    public Guid Id { get; set; }
+    public DelegationPackage()
+    {
+        Id = Guid.CreateVersion7();
+    }
+
+    /// <summary>
+    /// Identity
+    /// </summary>
+    public Guid Id { get; private set; }
 
     /// <summary>
     /// Delegation identifier

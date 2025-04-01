@@ -15,7 +15,7 @@ public class SearchCache<T> : ISearchCache<T>
     public SearchCache(IMemoryCache cache)
     {
         _cache = cache;
-        _cacheKey = typeof(T).FullName ?? Guid.NewGuid().ToString();
+        _cacheKey = typeof(T).FullName ?? Guid.CreateVersion7().ToString();
     }
 
     /// <inheritdoc/>

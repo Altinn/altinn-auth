@@ -6,9 +6,17 @@
 public class AssignmentPackage
 {
     /// <summary>
+    /// Initializes a new instance of the <see cref="AssignmentPackage"/> class.
+    /// </summary>
+    public AssignmentPackage()
+    {
+        Id = Guid.CreateVersion7();
+    }
+
+    /// <summary>
     /// Identity
     /// </summary>
-    public Guid Id { get; set; }
+    public Guid Id { get; private set; }
 
     /// <summary>
     /// Assignment identity

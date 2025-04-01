@@ -6,9 +6,17 @@
 public class EntityLookup
 {
     /// <summary>
+    /// Initializes a new instance of the <see cref="EntityLookup"/> class.
+    /// </summary>
+    public EntityLookup()
+    {
+        Id = Guid.CreateVersion7();
+    }
+
+    /// <summary>
     /// Identity
     /// </summary>
-    public Guid Id { get; set; }
+    public Guid Id { get; private set; }
 
     /// <summary>
     /// Entity

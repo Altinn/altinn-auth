@@ -111,7 +111,6 @@ public class AssignmentService(
 
         await assignmentPackageRepository.Create(new AssignmentPackage()
         {
-            Id = Guid.NewGuid(),
             AssignmentId = assignmentId,
             PackageId = packageId
         });
@@ -173,7 +172,6 @@ public class AssignmentService(
 
         await assignmentRepository.Create(new Assignment()
         {
-            Id = Guid.NewGuid(),
             FromId = fromEntityId,
             ToId = toEntityId,
             RoleId = role.Id

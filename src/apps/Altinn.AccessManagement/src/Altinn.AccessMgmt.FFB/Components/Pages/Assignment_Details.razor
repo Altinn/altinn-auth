@@ -400,7 +400,6 @@
         {
             var delegation = new Delegation()
                 {
-                    Id = Guid.NewGuid(),
                     FromId = Assignment.Id
                 };
 
@@ -444,7 +443,6 @@
         {
             await assignmentPackageService.Create(new AssignmentPackage()
             {
-                Id = Guid.NewGuid(),
                 AssignmentId = Assignment.Id,
                 PackageId = package.Key
             });
@@ -473,7 +471,6 @@
         {
             await assignmentResourceService.Create(new AssignmentResource()
                 {
-                    Id = Guid.NewGuid(),
                     AssignmentId = Assignment.Id,
                     ResourceId = Resource.Key
                 });

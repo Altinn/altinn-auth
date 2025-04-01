@@ -83,7 +83,6 @@ public class DelegationService(
 
         var delegation = new Delegation()
         {
-            Id = Guid.NewGuid(),
             FromId = fromAssignmentId,
             ToId = toAssignmentId
         };
@@ -127,7 +126,6 @@ public class DelegationService(
         }
 
         var res = await delegationPackageRepository.Create(new DelegationPackage() { 
-            Id = Guid.NewGuid(),
             DelegationId = delegationId,
             PackageId = packageId
         });
@@ -173,10 +171,8 @@ public class DelegationService(
             throw new Exception($"The source assignment does not have the resource '{resource.Name}'");
         }
 
-
         var res = await delegationResourceRepository.Create(new DelegationResource()
         {
-            Id = Guid.NewGuid(),
             DelegationId = delegationId,
             ResourceId = resourceId
         });
@@ -277,7 +273,6 @@ public class DelegationService(
         {
             var res = await delegationPackageRepository.Create(new DelegationPackage()
             {
-                Id = Guid.CreateVersion7(),
                 DelegationId = delegationId,
                 PackageId = packageId
             });
@@ -300,7 +295,6 @@ public class DelegationService(
         {
             var res = await delegationRepository.Create(new Delegation()
             {
-                Id = Guid.CreateVersion7(),
                 FromId = from.Id,
                 ToId = to.Id,
                 FacilitatorId = facilitator.Id
@@ -362,7 +356,6 @@ public class DelegationService(
 
             var res = await assignmentRepository.Create(new Assignment()
             {
-                Id = Guid.NewGuid(),
                 FromId = from.Id,
                 ToId = to.Id,
                 RoleId = role.Id

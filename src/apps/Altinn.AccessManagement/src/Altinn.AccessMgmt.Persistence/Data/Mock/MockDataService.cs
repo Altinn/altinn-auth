@@ -99,27 +99,27 @@ public class MockDataService
         await entityRepository.Upsert(martinGrundt);
         await entityRepository.Upsert(edithTommesen);
 
-        await assignmentRepository.Upsert(new Assignment() { Id = Guid.Parse("7C044E7B-BC31-4609-9A75-8205B8F020A0"), FromId = spirhAS.Id, ToId = mariusThuen.Id, RoleId = roleDagligLeder.Id });
-        await assignmentRepository.Upsert(new Assignment() { Id = Guid.Parse("383BC154-9F3C-40F5-8A67-8ED7218D8119"), FromId = spirhAS.Id, ToId = mariusThuen.Id, RoleId = roleStyreLeder.Id });
-        await assignmentRepository.Upsert(new Assignment() { Id = Guid.Parse("930D972E-4E7B-43D7-9B02-913970AAF2D8"), FromId = bakerHansenAS.Id, ToId = fredrikJohnsen.Id, RoleId = roleDagligLeder.Id });
-        await assignmentRepository.Upsert(new Assignment() { Id = Guid.Parse("95196B34-D8B6-4EE0-90E9-95DBA7A0D4E1"), FromId = bakerHansenAS.Id, ToId = annaLindeberg.Id, RoleId = roleStyreLeder.Id });
-        await assignmentRepository.Upsert(new Assignment() { Id = Guid.Parse("F0E4318C-9642-472B-A64C-982683978648"), FromId = bakerHansenAS.Id, ToId = gunnarHansen.Id, RoleId = roleStyreMedlem.Id });
-        await assignmentRepository.Upsert(new Assignment() { Id = Guid.Parse("852A6A26-CD14-459B-B178-A3004C1EEEC6"), FromId = regnskapsfolkAS.Id, ToId = sivertMoestue.Id, RoleId = roleDagligLeder.Id });
-        await assignmentRepository.Upsert(new Assignment() { Id = Guid.Parse("527B7EAF-73F7-40DD-BA1A-ACBAE87CB8BE"), FromId = regnskapsfolkAS.Id, ToId = nicolineWaltersen.Id, RoleId = roleStyreLeder.Id });
-        await assignmentRepository.Upsert(new Assignment() { Id = Guid.Parse("A763AF6C-F341-48C6-A958-BBD9891310A1"), FromId = revisjonstroll.Id, ToId = viggoPettersen.Id, RoleId = roleDagligLeder.Id });
-        await assignmentRepository.Upsert(new Assignment() { Id = Guid.Parse("A8C31715-CE59-411F-8C81-BE69103C5131"), FromId = revisjonstroll.Id, ToId = petterStromstad.Id, RoleId = roleStyreLeder.Id });
-        await assignmentRepository.Upsert(new Assignment() { Id = Guid.Parse("FBAB1C24-B4A1-487F-86BA-E02BE9CC4053"), FromId = bakerNordbyAS.Id, ToId = kjetilNordby.Id, RoleId = roleDagligLeder.Id });
-        await assignmentRepository.Upsert(new Assignment() { Id = Guid.Parse("CCB8E1F9-DEC4-47E2-9026-E72F03D133ED"), FromId = bakerNordbyAS.Id, ToId = kjetilNordby.Id, RoleId = roleStyreLeder.Id });
-        await assignmentRepository.Upsert(new Assignment() { Id = Guid.Parse("995F7F16-A426-4B85-B23D-F05F56BC5E6F"), FromId = spirhAS.Id, ToId = norskRegnskap.Id, RoleId = roleRegnskap.Id });
-        await assignmentRepository.Upsert(new Assignment() { Id = Guid.Parse("B6C603B2-3CAC-4940-90A4-FA226D4DEBE4"), FromId = bakerHansenAS.Id, ToId = regnskapsfolkAS.Id, RoleId = roleRegnskap.Id });
-        await assignmentRepository.Upsert(new Assignment() { Id = Guid.Parse("E2DCA66E-4C40-4B4B-8902-FDDD394A3054"), FromId = bakerHansenAS.Id, ToId = revisjonstroll.Id, RoleId = roleRevisor.Id });
-        await assignmentRepository.Upsert(new Assignment() { Id = Guid.Parse("F32BE41A-49C6-4DAE-8DC1-38BD4C14D3D5"), FromId = bakerNordbyAS.Id, ToId = regnskapsfolkAS.Id, RoleId = roleRegnskap.Id });
-        await assignmentRepository.Upsert(new Assignment() { Id = Guid.Parse("254542D7-3061-42F2-8246-4BB8F5A1FCA6"), FromId = regnskapsfolkAS.Id, ToId = revisjonstroll.Id, RoleId = roleRevisor.Id });
+        await assignmentRepository.Upsert(new Assignment() { FromId = spirhAS.Id, ToId = mariusThuen.Id, RoleId = roleDagligLeder.Id });
+        await assignmentRepository.Upsert(new Assignment() { FromId = spirhAS.Id, ToId = mariusThuen.Id, RoleId = roleStyreLeder.Id });
+        await assignmentRepository.Upsert(new Assignment() { FromId = bakerHansenAS.Id, ToId = fredrikJohnsen.Id, RoleId = roleDagligLeder.Id });
+        await assignmentRepository.Upsert(new Assignment() { FromId = bakerHansenAS.Id, ToId = annaLindeberg.Id, RoleId = roleStyreLeder.Id });
+        await assignmentRepository.Upsert(new Assignment() { FromId = bakerHansenAS.Id, ToId = gunnarHansen.Id, RoleId = roleStyreMedlem.Id });
+        await assignmentRepository.Upsert(new Assignment() { FromId = regnskapsfolkAS.Id, ToId = sivertMoestue.Id, RoleId = roleDagligLeder.Id });
+        await assignmentRepository.Upsert(new Assignment() { FromId = regnskapsfolkAS.Id, ToId = nicolineWaltersen.Id, RoleId = roleStyreLeder.Id });
+        await assignmentRepository.Upsert(new Assignment() { FromId = revisjonstroll.Id, ToId = viggoPettersen.Id, RoleId = roleDagligLeder.Id });
+        await assignmentRepository.Upsert(new Assignment() { FromId = revisjonstroll.Id, ToId = petterStromstad.Id, RoleId = roleStyreLeder.Id });
+        await assignmentRepository.Upsert(new Assignment() { FromId = bakerNordbyAS.Id, ToId = kjetilNordby.Id, RoleId = roleDagligLeder.Id });
+        await assignmentRepository.Upsert(new Assignment() { FromId = bakerNordbyAS.Id, ToId = kjetilNordby.Id, RoleId = roleStyreLeder.Id });
+        await assignmentRepository.Upsert(new Assignment() { FromId = spirhAS.Id, ToId = norskRegnskap.Id, RoleId = roleRegnskap.Id });
+        await assignmentRepository.Upsert(new Assignment() { FromId = bakerHansenAS.Id, ToId = regnskapsfolkAS.Id, RoleId = roleRegnskap.Id });
+        await assignmentRepository.Upsert(new Assignment() { FromId = bakerHansenAS.Id, ToId = revisjonstroll.Id, RoleId = roleRevisor.Id });
+        await assignmentRepository.Upsert(new Assignment() { FromId = bakerNordbyAS.Id, ToId = regnskapsfolkAS.Id, RoleId = roleRegnskap.Id });
+        await assignmentRepository.Upsert(new Assignment() { FromId = regnskapsfolkAS.Id, ToId = revisjonstroll.Id, RoleId = roleRevisor.Id });
 
-        var assignment001 = new Assignment() { Id = Guid.Parse("29E84061-D2D2-485D-AA14-9382CB78CC55"), FromId = agderKyllingAS.Id, ToId = carlOveJensen.Id, RoleId = roleDagligLeder.Id };
-        var assignment002 = new Assignment() { Id = Guid.Parse("D7C4761C-1975-43E1-86A1-AC85A9D93997"), FromId = agderKyllingAS.Id, ToId = norskRegnskap.Id, RoleId = roleRegnskap.Id };
-        var assignment003 = new Assignment() { Id = Guid.Parse("7977A871-F012-490C-ABDC-C15C533C3F25"), FromId = norskRegnskap.Id, ToId = martinGrundt.Id, RoleId = roleDagligLeder.Id };
-        var assignment004 = new Assignment() { Id = Guid.Parse("28A4CAE0-CC59-4F4D-ABC3-D3F7780713F4"), FromId = norskRegnskap.Id, ToId = edithTommesen.Id, RoleId = roleAgent.Id };
+        var assignment001 = new Assignment() {FromId = agderKyllingAS.Id, ToId = carlOveJensen.Id, RoleId = roleDagligLeder.Id };
+        var assignment002 = new Assignment() {FromId = agderKyllingAS.Id, ToId = norskRegnskap.Id, RoleId = roleRegnskap.Id };
+        var assignment003 = new Assignment() {FromId = norskRegnskap.Id, ToId = martinGrundt.Id, RoleId = roleDagligLeder.Id };
+        var assignment004 = new Assignment() {FromId = norskRegnskap.Id, ToId = edithTommesen.Id, RoleId = roleAgent.Id };
         await assignmentRepository.Upsert(assignment001);
         await assignmentRepository.Upsert(assignment002);
         await assignmentRepository.Upsert(assignment003);
@@ -139,7 +139,7 @@ public class MockDataService
         var resourceTypes = await resourceTypeRepository.Get();
         if (resourceTypes == null || !resourceTypes.Any())
         {
-            await resourceTypeRepository.Create(new ResourceType() { Id = Guid.Parse("3EB4985E-948C-479E-AFEB-ED12730FC1A4"), Name = "Default" });
+            await resourceTypeRepository.Create(new ResourceType() { Name = "Default" });
             resourceTypes = await resourceTypeRepository.Get();
         }
 
@@ -156,7 +156,6 @@ public class MockDataService
                     var resourceId = Guid.NewGuid();
                     await resourceRepository.Create(new Resource()
                     {
-                        Id = resourceId,
                         Name = GetRandomResourceTitle(i),
                         Description = "Somthing generated for the " + package.Name,
                         RefId = resourceId.ToString().ToLower(),
@@ -166,7 +165,6 @@ public class MockDataService
 
                     await packageResourceRepository.Create(new PackageResource()
                     {
-                        Id = Guid.NewGuid(),
                         PackageId = package.Id,
                         ResourceId = resourceId
                     });

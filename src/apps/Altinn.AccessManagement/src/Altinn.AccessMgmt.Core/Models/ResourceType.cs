@@ -6,9 +6,17 @@
 public class ResourceType
 {
     /// <summary>
-    /// Id
+    /// Initializes a new instance of the <see cref="ResourceType"/> class.
     /// </summary>
-    public Guid Id { get; set; }
+    public ResourceType()
+    {
+        Id = Guid.CreateVersion7();
+    }
+
+    /// <summary>
+    /// Identity
+    /// </summary>
+    public Guid Id { get; private set; }
 
     /// <summary>
     /// Name
