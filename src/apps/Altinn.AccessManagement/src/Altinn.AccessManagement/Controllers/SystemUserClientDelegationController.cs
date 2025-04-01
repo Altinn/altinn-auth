@@ -78,10 +78,10 @@ public class SystemUserClientDelegationController : ControllerBase
     /// </summary>
     /// <param name="party">The party the authenticated user is performing client administration on behalf of</param>
     /// <param name="request">Request Dto</param>
-    /// <returns><seealso cref="ConnectionDto"/>List of connections</returns>
+    /// <returns><seealso cref="CreateDelegationResponse"/>List of delegation responses</returns>
     [HttpPost]
     [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_WRITE)]
-    public async Task<ActionResult<ConnectionDto>> PostClientDelegation([FromQuery] Guid party, [FromBody] CreateSystemDelegationRequestDto request)
+    public async Task<ActionResult<CreateDelegationResponse>> PostClientDelegation([FromQuery] Guid party, [FromBody] CreateSystemDelegationRequestDto request)
     {
         var userId = AuthenticationHelper.GetPartyUuid(HttpContext);
         if (userId == Guid.Empty)
@@ -90,15 +90,15 @@ public class SystemUserClientDelegationController : ControllerBase
         }
 
         var delegations = await delegationService.CreateClientDelegation(request, userId, party);
-        var result = new List<ConnectionDto>();
-        
+
+        var result = new List<CreateDelegationResponse>();
         foreach (var delegation in delegations)
         {
-            result.Add(ConnectionConverter.ConvertToDto(await connectionRepository.GetExtended(delegation.Id)));
+            result.Add(ConnectionConverter.ConvertToResponseModel(await connectionRepository.Get(delegation.Id)));
         }
 
         // Remark: Kan ikke garantere at det KUN er delegeringer som er opprettet i denne handlingen som blir returnert.
-        return Ok(result);
+        return Ok(delegations);
     }
 
     /// <summary>

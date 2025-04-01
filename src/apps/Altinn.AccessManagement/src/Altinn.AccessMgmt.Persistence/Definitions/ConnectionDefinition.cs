@@ -28,10 +28,10 @@ public class ConnectionDefinition : BaseDbDefinition<Connection>, IDbDefinition
             def.RegisterProperty(t => t.FacilitatorRoleId, nullable: true);
             def.RegisterProperty(t => t.DelegationId, nullable: true);
 
-            def.RegisterExtendedProperty<ExtConnection, EntityParty>(t => t.FromId, t => t.Id, t => t.From);
+            def.RegisterExtendedProperty<ExtConnection, Entity>(t => t.FromId, t => t.Id, t => t.From);
             def.RegisterExtendedProperty<ExtConnection, Role>(t => t.RoleId, t => t.Id, t => t.Role);
-            def.RegisterExtendedProperty<ExtConnection, EntityParty>(t => t.FacilitatorId, t => t.Id, t => t.Facilitator, optional: true);
-            def.RegisterExtendedProperty<ExtConnection, EntityParty>(t => t.ToId, t => t.Id, t => t.To);
+            def.RegisterExtendedProperty<ExtConnection, Entity>(t => t.FacilitatorId, t => t.Id, t => t.Facilitator, optional: true);
+            def.RegisterExtendedProperty<ExtConnection, Entity>(t => t.ToId, t => t.Id, t => t.To);
             def.RegisterExtendedProperty<ExtConnection, Role>(t => t.FacilitatorRoleId, t => t.Id, t => t.FacilitatorRole, optional: true);
             def.RegisterExtendedProperty<ExtConnection, Delegation>(t => t.DelegationId, t => t.Id, t => t.Delegation, optional: true);
 

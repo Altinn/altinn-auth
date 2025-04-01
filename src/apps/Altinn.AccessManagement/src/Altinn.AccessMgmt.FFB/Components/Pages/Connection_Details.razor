@@ -160,7 +160,7 @@
                                         <Icon Name="arrow-down-to-arc"></Icon>
                                     }
                                 </td> *@
-                                <td><EntityTypeIcon Name="@delegation.From.Type" /> <a href=@($"/entity/{delegation.From.Id}")>@delegation.From.Name</a></td>
+                                <td><EntityTypeIcon Id="@delegation.From.TypeId" /> <a href=@($"/entity/{delegation.From.Id}")>@delegation.From.Name</a></td>
                                 @if (delegation.FacilitatorRole == null)
                                 {
                                     <td><Badge Inverted>@delegation.Role.Name</Badge></td>
@@ -176,7 +176,7 @@
                                         <td><SplitBadge Inverted Key=@delegation.Role.Name Value=@delegation.FacilitatorRole.Name></SplitBadge></td>
                                     }
                                 }
-                                <td><EntityTypeIcon Name="@delegation.To.Type" /> <a href=@($"/entity/{delegation.To.Id}")>@delegation.To.Name</a></td>
+                                <td><EntityTypeIcon Id="@delegation.To.TypeId" /> <a href=@($"/entity/{delegation.To.Id}")>@delegation.To.Name</a></td>
                                 <td><a href=@($"/connection/{delegation.Id}")><Icon Name="arrow-up-right-from-square"></Icon></a></td>
                             </SimpleTableRow>
                         }
@@ -202,7 +202,7 @@
                         @foreach (var delegation in AgentDelegations)
                         {
                             <SimpleTableRow>
-                                <td><EntityTypeIcon Name="@delegation.From.Type" /> <a href=@($"/entity/{delegation.From.Id}")>@delegation.From.Name</a></td>
+                                <td><EntityTypeIcon Id="@delegation.From.TypeId" /> <a href=@($"/entity/{delegation.From.Id}")>@delegation.From.Name</a></td>
                                 @if (delegation.FacilitatorRole == null)
                                 {
                                     <td><Badge Inverted>@delegation.Role.Name</Badge></td>
@@ -218,7 +218,7 @@
                                         <td><SplitBadge Inverted Key=@delegation.Role.Name Value=@delegation.FacilitatorRole.Name></SplitBadge></td>
                                     }
                                 }
-                                <td><EntityTypeIcon Name="@delegation.To.Type" /> <a href=@($"/entity/{delegation.To.Id}")>@delegation.To.Name</a></td>
+                                <td><EntityTypeIcon Id="@delegation.To.TypeId" /> <a href=@($"/entity/{delegation.To.Id}")>@delegation.To.Name</a></td>
                                 <td><a href=@($"/connection/{delegation.Id}")><Icon Name="arrow-up-right-from-square"></Icon></a></td>
                             </SimpleTableRow>
                         }

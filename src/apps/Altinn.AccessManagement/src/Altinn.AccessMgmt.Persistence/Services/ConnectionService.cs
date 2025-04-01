@@ -80,6 +80,18 @@ public class ConnectionService(
 public static class ConnectionConverter
 {
     /// <summary>
+    /// Convert database model to response model
+    /// </summary>
+    public static CreateDelegationResponse ConvertToResponseModel(Connection connection)
+    {
+        return new CreateDelegationResponse()
+        {
+            DelegationId = connection.Id,
+            FromEntityId = connection.FromId
+        };
+    }
+
+    /// <summary>
     /// Convert database model to dto model
     /// </summary>
     public static ConnectionDto ConvertToDto(ExtConnection connection)

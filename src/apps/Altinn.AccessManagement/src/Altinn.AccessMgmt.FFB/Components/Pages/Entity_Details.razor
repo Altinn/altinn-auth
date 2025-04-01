@@ -54,7 +54,7 @@
                         @foreach (var connection in Given)
                         {
                             <SimpleTableRow>
-                                <td><EntityTypeIcon Name="@connection.To.Type" /> <a href=@($"/entity/{connection.To.Id}")>@connection.To.Name</a></td>
+                                <td><EntityTypeIcon Id="@connection.To.TypeId" /> <a href=@($"/entity/{connection.To.Id}")>@connection.To.Name</a></td>
                                 @if (connection.FacilitatorRole == null)
                                 {
                                     <td><Badge Inverted>@connection.Role.Name</Badge></td>
@@ -76,7 +76,7 @@
                                 }
                                 else
                                 {
-                                    <td><EntityTypeIcon Name="@connection.Facilitator.Type" /> <a href=@($"/entity/{connection.Facilitator.Id}")>@connection.Facilitator.Name</a></td>
+                                    <td><EntityTypeIcon Id="@connection.Facilitator.TypeId" /> <a href=@($"/entity/{connection.Facilitator.Id}")>@connection.Facilitator.Name</a></td>
                                 }
                                 <td><a href=@($"/connection/{connection.Id}")><Icon Name="arrow-up-right-from-square"></Icon></a></td>
                             </SimpleTableRow>
@@ -103,7 +103,7 @@
                         @foreach (var connection in Recived)
                         {
                             <SimpleTableRow>
-                                <td><EntityTypeIcon Name="@connection.From.Type" />  <a href=@($"/entity/{connection.From.Id}")>@connection.From.Name</a></td>
+                                <td><EntityTypeIcon Id="@connection.From.TypeId" />  <a href=@($"/entity/{connection.From.Id}")>@connection.From.Name</a></td>
                                 @if (connection.FacilitatorRole == null)
                                 {
                                     <td><Badge Inverted>@connection.Role.Name</Badge></td>
@@ -125,7 +125,7 @@
                                 }
                                 else
                                 {
-                                    <td><EntityTypeIcon Name="@connection.Facilitator.Type" /> <a href=@($"/entity/{connection.Facilitator.Id}")>@connection.Facilitator.Name</a></td>
+                                    <td><EntityTypeIcon Id="@connection.Facilitator.TypeId" /> <a href=@($"/entity/{connection.Facilitator.Id}")>@connection.Facilitator.Name</a></td>
                                 }
                                 <td><a href=@($"/connection/{connection.Id}")><Icon Name="arrow-up-right-from-square"></Icon></a></td>
                             </SimpleTableRow>
@@ -153,12 +153,12 @@
                         @foreach (var connection in Facilitated)
                         {
                             <SimpleTableRow>
-                                <td><EntityTypeIcon Name="@connection.From.Type" /> <a href=@($"/entity/{connection.From.Id}")>@connection.From.Name</a></td>
+                                <td><EntityTypeIcon Id="@connection.From.TypeId" /> <a href=@($"/entity/{connection.From.Id}")>@connection.From.Name</a></td>
                                 <td>
                                     <Badge>@connection.Role.Name</Badge>
                                     <Badge>@connection.FacilitatorRole.Name</Badge>
                                 </td>
-                                <td><EntityTypeIcon Name="@connection.To.Type" /> <a href=@($"/entity/{connection.To.Id}")>@connection.To.Name</a></td>
+                                <td><EntityTypeIcon Id="@connection.To.TypeId" /> <a href=@($"/entity/{connection.To.Id}")>@connection.To.Name</a></td>
                                 <td><a href=@($"/connection/{connection.Id}")><Icon Name="arrow-up-right-from-square"></Icon></a></td>
                             </SimpleTableRow>
                         }
