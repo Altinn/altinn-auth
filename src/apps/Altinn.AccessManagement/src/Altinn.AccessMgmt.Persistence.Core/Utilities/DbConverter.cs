@@ -193,6 +193,47 @@ public sealed class DbConverter : IDbConverter
         {
             if (property.PropertyType == typeof(Guid))
             {
+                value = value is Guid ? value : Guid.Parse(value.ToString());
+            }
+            else if (property.PropertyType == typeof(Guid?))
+            {
+                if (value is Guid guidValue)
+                {
+                    value = guidValue == Guid.Empty ? null : (Guid?)guidValue;
+                }
+                else if (string.IsNullOrWhiteSpace(value.ToString()))
+                {
+                    value = null;
+                }
+                else
+                {
+                    value = (Guid?)Guid.Parse(value.ToString());
+                }
+            }
+            else if (property.PropertyType == typeof(DateTimeOffset))
+            {
+                value = string.IsNullOrWhiteSpace(value.ToString()) ? null : DateTimeOffset.Parse(value.ToString());
+            }
+            else
+            {
+                value = Convert.ChangeType(value, property.PropertyType);
+            }
+
+            // Use the non-public setter if available
+            var setter = property.GetSetMethod(true);
+            if (setter != null)
+            {
+                setter.Invoke(target, new[] { value });
+            }
+        }
+    }
+
+    private void SetPropertyValueOld(PropertyInfo property, object target, object value)
+    {
+        if (value != null)
+        {
+            if (property.PropertyType == typeof(Guid))
+            {
                 // Set Guid directly og parse from string
                 property.SetValue(target, value is Guid ? value : Guid.Parse(value.ToString()));
             }
