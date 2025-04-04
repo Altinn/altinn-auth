@@ -4,4 +4,4 @@ using Altinn.AccessMgmt.Persistence.Core.Contracts;
 namespace Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 
 /// <inheritdoc/>
-public interface IProviderRepository : IDbBasicRepository<Provider> { }
+public interface IProviderRepository : IDbExtendedRepository<Provider, ExtProvider> { }

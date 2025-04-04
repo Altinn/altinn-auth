@@ -9,7 +9,7 @@ namespace Altinn.AccessMgmt.Persistence.Repositories;
 /// <summary>
 /// Data service for Provider
 /// </summary>
-public class ProviderRepository : BasicRepository<Provider>, IProviderRepository
+public class ProviderRepository : ExtendedRepository<Provider, ExtProvider>, IProviderRepository
 {
     /// <inheritdoc/>
     public ProviderRepository(DbDefinitionRegistry dbDefinitionRegistry, IDbExecutor executor) : base(dbDefinitionRegistry, executor)
