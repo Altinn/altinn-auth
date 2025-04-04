@@ -1,0 +1,66 @@
+meta {
+  name: Create altinn_keyrole_access
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "identifier": "altinn_keyrole_access",
+    "title": {
+      "en": "Key role resource",
+      "nb": "Nøkkelrolle ressurs",
+      "nn": "Nøkkelrolle ressurs"
+    },
+    "description": {
+      "en": "System resource for authorization of user for having a key role for a given party.",
+      "nb": "System ressurs for autorisasjon av om bruker har nøkkelrolle for en gitt part.",
+      "nn": "System ressurs for autorisasjon av om brukar har nøkkelrolle for ein gitt part."
+    },
+    "rightDescription": {
+      "en": "Not available for delegation.",
+      "nb": "Ikke tilgjengelig for delegering.",
+      "nn": "Ikkje tilgjengeleg for delegering."
+    },
+    "homepage": "https://altinn.no",
+    "status": "Active",
+    "contactPoints": [],
+    "isPartOf": "",
+    "resourceReferences": [],
+    "delegable": false,
+    "visible": false,
+    "hasCompetentAuthority": {
+      "organization": "991825827",
+      "orgcode": "DIGDIR"
+    },
+    "keywords": [],
+    "accessListMode": "Disabled",
+    "selfIdentifiedUserEnabled": false,
+    "enterpriseUserEnabled": false,
+    "resourceType": "SystemResource"
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  var getTokenParameters = {
+    auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
+    auth_org: sharedtestdata.serviceOwners.digdir.org,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.resourceregistryAdmin
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  
+  bru.setVar("bearerToken", token);
+  
+  
+  
+}
