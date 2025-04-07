@@ -54,10 +54,10 @@ public class DbDataMigrationService(
             await migrationService.LogMigration<ProviderType>(dataKey, string.Empty, 1);
         }
 
-        if (migrationService.NeedMigration<Provider>(dataKey, 2))
+        if (migrationService.NeedMigration<Provider>(dataKey, 3))
         {
             await IngestProvider();
-            await migrationService.LogMigration<Provider>(dataKey, string.Empty, 2);
+            await migrationService.LogMigration<Provider>(dataKey, string.Empty, 3);
         }
 
         if (migrationService.NeedMigration<EntityType>(dataKey, 3))
@@ -75,7 +75,7 @@ public class DbDataMigrationService(
         if (migrationService.NeedMigration<Role>(dataKey, 6))
         {
             await IngestRole();
-            await migrationService.LogMigration<Role>(dataKey, string.Empty, 5);
+            await migrationService.LogMigration<Role>(dataKey, string.Empty, 6);
         }
 
         if (migrationService.NeedMigration<RoleMap>(dataKey, 3))
