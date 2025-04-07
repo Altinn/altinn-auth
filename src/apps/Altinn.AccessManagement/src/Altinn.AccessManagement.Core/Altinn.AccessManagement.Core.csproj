@@ -2,7 +2,7 @@
 
     <ItemGroup>
         <PackageReference Include="Altinn.Authorization.ABAC" />
-        <PackageReference Include="Altinn.Authorization.ProblemDetails.Abstractions" />
+        <PackageReference Include="Altinn.Authorization.ProblemDetails" />
         <PackageReference Include="Altinn.Common.AccessTokenClient" />
         <PackageReference Include="Altinn.Platform.Models" />
         <PackageReference Include="Altinn.Platform.Storage.Interface" />
@@ -16,7 +16,7 @@
         <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
         <PackageReference Include="Microsoft.Extensions.Telemetry.Abstractions" />
-        <PackageReference Include="Npgsql" />
+        <PackageReference Include="Npgsql"/>
     </ItemGroup>
 
     <ItemGroup>

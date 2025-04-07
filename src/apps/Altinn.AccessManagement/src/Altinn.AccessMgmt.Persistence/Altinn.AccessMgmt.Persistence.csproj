@@ -8,6 +8,7 @@
 		<ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Host\src\Altinn.Authorization.Host\Altinn.Authorization.Host.csproj" />
 		<ProjectReference Include="..\Altinn.AccessMgmt.Persistence.Core\Altinn.AccessMgmt.Persistence.Core.csproj" />
 		<ProjectReference Include="..\Altinn.AccessMgmt.Core\Altinn.AccessMgmt.Core.csproj" />
+		<ProjectReference Include="..\Altinn.AccessManagement.Core\Altinn.AccessManagement.Core.csproj" />
 	</ItemGroup>
 
 </Project>

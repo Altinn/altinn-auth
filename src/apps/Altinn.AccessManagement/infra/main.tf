@@ -221,7 +221,13 @@ module "appsettings" {
       description = "Specifies if database should be migrated"
       label       = "${lower(var.environment)}-access-management"
       value       = false
-    }
+    },
+    {
+      name        = "AccessManagement.Enduser.AccessParties"
+      description = "Specifies if feature access parties are enabled for endusers."
+      label       = "${lower(var.environment)}-access-management"
+      value       = true
+    },
   ]
   providers = {
     azurerm.hub = azurerm.hub

@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
+        <PackageReference Include="Altinn.Authorization.ProblemDetails" />
         <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
         <PackageReference Include="Azure.Identity" />
         <PackageReference Include="Microsoft.Azure.AppConfiguration.AspNetCore" />
