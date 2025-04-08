@@ -17,7 +17,7 @@ public class RoleMapDefinition : BaseDbDefinition<RoleMap>, IDbDefinition
     {
         definitionRegistry.Define<RoleMap>(def =>
         {
-            def.EnableHistory();
+            def.EnableAudit();
             def.EnableTranslation();
             def.RegisterPrimaryKey([t => t.Id]);
             def.RegisterProperty(t => t.Id);

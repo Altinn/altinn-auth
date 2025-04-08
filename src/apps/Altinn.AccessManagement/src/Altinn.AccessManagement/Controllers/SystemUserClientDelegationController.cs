@@ -1,7 +1,7 @@
 ﻿using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Helpers;
-using Altinn.AccessMgmt.Core.Models;
-using Altinn.AccessMgmt.Persistence.Repositories;
+using Altinn.AccessMgmt.Persistence.Core.Models;
+using Altinn.AccessMgmt.Persistence.Data;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
@@ -89,7 +89,13 @@ public class SystemUserClientDelegationController : ControllerBase
             return Unauthorized();
         }
 
-        var delegations = await delegationService.CreateClientDelegation(request, userId, party);
+        var options = new ChangeRequestOptions()
+        {
+            ChangedBy = userId,
+            ChangedBySystem = AuditDefaults.EnduserApi
+        };
+
+        var delegations = await delegationService.CreateClientDelegation(request, party, options);
 
         var result = new List<CreateDelegationResponse>();
         foreach (var delegation in delegations)
@@ -140,7 +146,13 @@ public class SystemUserClientDelegationController : ControllerBase
             return BadRequest("Party does not match delegation assignments");
         }
 
-        await delegationRepository.Delete(delegation.Id);
+        var options = new ChangeRequestOptions()
+        {
+            ChangedBy = userId,
+            ChangedBySystem = AuditDefaults.EnduserApi
+        };
+
+        await delegationRepository.Delete(delegation.Id, options: options);
 
         return Ok();
     }
@@ -199,7 +211,13 @@ public class SystemUserClientDelegationController : ControllerBase
             }
         }
 
-        await assignmentRepository.Delete(assignment.Id);
+        var options = new ChangeRequestOptions()
+        {
+            ChangedBy = userId,
+            ChangedBySystem = AuditDefaults.EnduserApi
+        };
+
+        await assignmentRepository.Delete(assignment.Id, options: options);
 
         return Ok();
     }
@@ -269,7 +287,13 @@ public class SystemUserClientDelegationController : ControllerBase
             }
         }
 
-        await assignmentRepository.Delete(assignment.Id);
+        var options = new ChangeRequestOptions()
+        {
+            ChangedBy = userId,
+            ChangedBySystem = AuditDefaults.EnduserApi
+        };
+
+        await assignmentRepository.Delete(assignment.Id, options: options);
 
         return Ok();
     }

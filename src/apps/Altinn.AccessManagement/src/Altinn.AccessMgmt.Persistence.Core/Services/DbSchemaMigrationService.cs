@@ -39,6 +39,8 @@ public class DbSchemaMigrationService
         await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationSchema};", new List<GenericParameter>(), cancellationToken);
         await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseHistorySchema};", new List<GenericParameter>(), cancellationToken);
         await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationHistorySchema};", new List<GenericParameter>(), cancellationToken);
+        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.IngestSchema};", new List<GenericParameter>(), cancellationToken);
+        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.ArchiveSchema};", new List<GenericParameter>(), cancellationToken);
     }
 
     private async Task PostMigration(CancellationToken cancellationToken = default)
@@ -46,18 +48,22 @@ public class DbSchemaMigrationService
         var config = this.options.Value;
 
         string schemaGrant = $"""
-        GRANT USAGE ON SCHEMA {config.BaseSchema} TO {config.DatabaseReadUser};
-        GRANT USAGE ON SCHEMA {config.TranslationSchema} TO {config.DatabaseReadUser};
-        GRANT USAGE ON SCHEMA {config.BaseHistorySchema} TO {config.DatabaseReadUser};
-        GRANT USAGE ON SCHEMA {config.TranslationHistorySchema} TO {config.DatabaseReadUser};
+        GRANT USAGE ON SCHEMA {config.BaseSchema} TO {config.DatabaseAppUser};
+        GRANT USAGE ON SCHEMA {config.TranslationSchema} TO {config.DatabaseAppUser};
+        GRANT USAGE ON SCHEMA {config.BaseHistorySchema} TO {config.DatabaseAppUser};
+        GRANT USAGE ON SCHEMA {config.TranslationHistorySchema} TO {config.DatabaseAppUser};
+        GRANT USAGE ON SCHEMA {config.IngestSchema} TO {config.DatabaseAppUser};
+        GRANT USAGE ON SCHEMA {config.ArchiveSchema} TO {config.DatabaseAppUser};
         """;
         await executor.ExecuteMigrationCommand(schemaGrant);
 
         string tableGrant = $"""
-        GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {config.BaseSchema} TO {config.DatabaseReadUser};
-        GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {config.TranslationSchema} TO {config.DatabaseReadUser};
-        GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {config.BaseHistorySchema} TO {config.DatabaseReadUser};
-        GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {config.TranslationHistorySchema} TO {config.DatabaseReadUser};
+        GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {config.BaseSchema} TO {config.DatabaseAppUser};
+        GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {config.TranslationSchema} TO {config.DatabaseAppUser};
+        GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {config.BaseHistorySchema} TO {config.DatabaseAppUser};
+        GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {config.TranslationHistorySchema} TO {config.DatabaseAppUser};
+        GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {config.IngestSchema} TO {config.DatabaseAppUser};
+        GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {config.ArchiveSchema} TO {config.DatabaseAppUser};
         """;
 
         await executor.ExecuteMigrationCommand(tableGrant);
@@ -126,6 +132,20 @@ public class DbSchemaMigrationService
                     continue;
                 }
 
+                bool needMigration = migrationService.NeedAnyMigration(script.Key, script.Value.Scripts.Select(t => t.Key).ToList());
+
+                if(script.Key.Name == "Area")
+                {
+                    needMigration = true;
+                }
+
+                if (!needMigration)
+                {
+                    status[script.Key] = true;
+                    retry[script.Key] = 0;
+                    continue;
+                }
+
                 if (!script.Value.Dependencies.Any())
                 {
                     try
@@ -142,15 +162,6 @@ public class DbSchemaMigrationService
                         retry[script.Key]++;
                         continue;
                     }
-                }
-
-                bool needMigration = migrationService.NeedAnyMigration(script.Key, script.Value.Scripts.Select(t => t.Key).ToList());
-
-                if (!needMigration)
-                {
-                    status[script.Key] = true;
-                    retry[script.Key] = 0;
-                    continue;
                 }
 
                 // Check if all dependencies are migrated
@@ -190,10 +201,19 @@ public class DbSchemaMigrationService
     private async Task ExecuteMigration(Type type, DbMigrationScriptCollection collection)
     {
         var dbDefinition = definitionRegistry.TryGetDefinition(type) ?? throw new Exception($"GetOrAddDefinition for '{type.Name}' not found.");
+        bool any = migrationService.NeedAnyMigration(type, collection.Scripts.Keys.ToList()); //// TODO: This needs to be refined to not allways run everything
+        bool ver = migrationService.NeedMigration(type, "Version", 1);
+
         foreach (var script in collection.Scripts)
         {
-            if (migrationService.NeedMigration(type, script.Key))
+            // Run all if any (temp)
+            if (any || ver || migrationService.NeedMigration(type, script.Key))
             {
+                if (script.Key.StartsWith("ADD CONSTRAINT") && !migrationService.NeedMigration(type, script.Key))
+                {
+                    continue;
+                }
+
                 if (script.Key.Contains("PK_")) 
                 {
                     //// TODO: Hack ... Remove from scripts ...
@@ -214,5 +234,7 @@ public class DbSchemaMigrationService
                 }
             }
         }
+
+        await migrationService.LogMigration(type, "Version", "", 1);
     }
 }

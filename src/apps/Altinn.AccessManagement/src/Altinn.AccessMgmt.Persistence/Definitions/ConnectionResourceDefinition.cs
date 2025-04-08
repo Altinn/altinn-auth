@@ -18,6 +18,7 @@ public class ConnectionResourceDefinition : BaseDbDefinition<ConnectionResource>
     {
         definitionRegistry.Define<ConnectionResource>(def =>
         {
+            def.SetVersion(2);
             def.IsView();
 
             def.RegisterProperty(t => t.ConnectionId);

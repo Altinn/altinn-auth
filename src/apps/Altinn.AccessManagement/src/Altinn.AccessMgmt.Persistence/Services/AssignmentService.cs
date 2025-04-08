@@ -1,10 +1,12 @@
-﻿using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using Altinn.AccessManagement.Core.Errors;
-using Altinn.AccessMgmt.Core.Models;
+using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
+using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessMgmt.Core.Models;
 using Altinn.Authorization.ProblemDetails;
+using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics;
+using Microsoft.Extensions.Options;
 
 namespace Altinn.AccessMgmt.Persistence.Services;
 
@@ -57,7 +59,7 @@ public class AssignmentService(
     }
 
     /// <inheritdoc/>
-    public async Task<bool> AddPackageToAssignment(Guid userId, Guid assignmentId, Guid packageId)
+    public async Task<bool> AddPackageToAssignment(Guid userId, Guid assignmentId, Guid packageId, ChangeRequestOptions options)
     {
         /*
         [X] Check if user is TS
@@ -112,17 +114,22 @@ public class AssignmentService(
             throw new Exception(string.Format("User '{0}' does not have package '{1}'", user.Name, package.Name));
         }
 
-        await assignmentPackageRepository.Create(new AssignmentPackage()
-        {
-            AssignmentId = assignmentId,
-            PackageId = packageId
-        });
+
+
+        await assignmentPackageRepository.Create(
+            new AssignmentPackage()
+            {
+                AssignmentId = assignmentId,
+                PackageId = packageId
+            }, 
+            options: options
+        );
 
         return true;
     }
 
     /// <inheritdoc/>
-    public Task<bool> AddResourceToAssignment(Guid userId, Guid assignmentId, Guid resourceId)
+    public Task<bool> AddResourceToAssignment(Guid userId, Guid assignmentId, Guid resourceId, ChangeRequestOptions options)
     {
         /*
         [ ] Check if user is TS
@@ -142,7 +149,7 @@ public class AssignmentService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<Assignment>> GetOrCreateAssignment2(Guid fromEntityId, Guid toEntityId, string roleCode, CancellationToken cancellationToken = default)
+    public async Task<Result<Assignment>> GetOrCreateAssignment2(Guid fromEntityId, Guid toEntityId, string roleCode, ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         ValidationErrorBuilder errors = default;
         var fromEntityExt = await entityRepository.GetExtended(fromEntityId, cancellationToken: cancellationToken);
@@ -196,7 +203,7 @@ public class AssignmentService(
             RoleId = roleId,
         };
 
-        var result = await assignmentRepository.Create(existingAssignment, cancellationToken);
+        var result = await assignmentRepository.Create(existingAssignment, options:options, cancellationToken);
         if (result == 0)
         {
             Unreachable();
@@ -206,7 +213,7 @@ public class AssignmentService(
     }
 
     /// <inheritdoc/>
-    public async Task<Assignment> GetOrCreateAssignment(Guid fromEntityId, Guid toEntityId, string roleCode)
+    public async Task<Assignment> GetOrCreateAssignment(Guid fromEntityId, Guid toEntityId, string roleCode, ChangeRequestOptions options)
     {
         var roleResult = await roleRepository.Get(t => t.Name, roleCode);
         if (roleResult == null || !roleResult.Any())
@@ -214,11 +221,11 @@ public class AssignmentService(
             throw new Exception(string.Format("Role '{0}' not found", roleCode));
         }
 
-        return await GetOrCreateAssignment(fromEntityId, toEntityId, roleResult.First().Id);
+        return await GetOrCreateAssignment(fromEntityId, toEntityId, roleResult.First().Id, options: options);
     }
 
     /// <inheritdoc/>
-    public async Task<Assignment> GetOrCreateAssignment(Guid fromEntityId, Guid toEntityId, Guid roleId)
+    public async Task<Assignment> GetOrCreateAssignment(Guid fromEntityId, Guid toEntityId, Guid roleId, ChangeRequestOptions options)
     {
         var assignment = await GetAssignment(fromEntityId, toEntityId, roleId);
         if (assignment != null)
@@ -243,12 +250,15 @@ public class AssignmentService(
             throw new Exception(string.Format("Multiple inheirited assignment exists. Use Force = true to create anyway."));
         }
 
-        await assignmentRepository.Create(new Assignment()
-        {
-            FromId = fromEntityId,
-            ToId = toEntityId,
-            RoleId = role.Id
-        });
+        await assignmentRepository.Create(
+            new Assignment()
+            {
+                FromId = fromEntityId,
+                ToId = toEntityId,
+                RoleId = role.Id
+            },
+            options: options
+        );
 
         throw new NotImplementedException();
     }

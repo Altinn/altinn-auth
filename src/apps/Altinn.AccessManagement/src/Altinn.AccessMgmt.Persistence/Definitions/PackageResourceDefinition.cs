@@ -17,7 +17,7 @@ public class PackageResourceDefinition : BaseDbDefinition<PackageResource>, IDbD
     {
         definitionRegistry.Define<PackageResource>(def =>
         {
-            def.EnableHistory();
+            def.EnableAudit();
             def.EnableTranslation();
             def.RegisterPrimaryKey([t => t.Id]);
             def.RegisterProperty(t => t.Id);

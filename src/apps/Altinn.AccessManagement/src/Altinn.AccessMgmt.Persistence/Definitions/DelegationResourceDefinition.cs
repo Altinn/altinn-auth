@@ -17,7 +17,7 @@ public class DelegationResourceDefinition : BaseDbDefinition<DelegationResource>
     {
         definitionRegistry.Define<DelegationResource>(def =>
         {
-            def.EnableHistory();
+            def.EnableAudit();
             def.EnableTranslation();
             def.RegisterPrimaryKey([t => t.Id]);
             def.RegisterProperty(t => t.Id);

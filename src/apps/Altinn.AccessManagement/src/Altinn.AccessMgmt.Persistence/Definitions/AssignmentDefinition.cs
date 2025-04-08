@@ -17,7 +17,7 @@ public class AssignmentDefinition : BaseDbDefinition<Assignment>, IDbDefinition
     {
         definitionRegistry.Define<Assignment>(def =>
         {
-            def.EnableHistory();
+            def.EnableAudit();
             def.RegisterPrimaryKey([t => t.Id]);
             def.RegisterProperty(t => t.Id);
 

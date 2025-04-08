@@ -17,7 +17,7 @@ public class PackageDefinition : BaseDbDefinition<Package>, IDbDefinition
     {
         definitionRegistry.Define<Package>(def =>
         {
-            def.EnableHistory();
+            def.EnableAudit();
             def.EnableTranslation();
             def.RegisterPrimaryKey([t => t.Id]);
             def.RegisterProperty(t => t.Id);

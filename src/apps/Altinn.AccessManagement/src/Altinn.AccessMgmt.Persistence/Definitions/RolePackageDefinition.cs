@@ -17,7 +17,7 @@ public class RolePackageDefinition : BaseDbDefinition<RolePackage>, IDbDefinitio
     {
         definitionRegistry.Define<RolePackage>(def =>
         {
-            def.EnableHistory();
+            def.EnableAudit();
             def.EnableTranslation();
             def.RegisterPrimaryKey([t => t.Id]);
             def.RegisterProperty(t => t.Id);

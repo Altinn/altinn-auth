@@ -18,6 +18,11 @@ public class DbDefinition(Type type)
     public Type ModelType { get; set; } = type;
 
     /// <summary>
+    /// Version
+    /// </summary>
+    public int Version { get; set; } = 1;
+
+    /// <summary>
     /// Gets or sets the collection of column definitions for the entity.
     /// </summary>
     public List<DbPropertyDefinition> Properties { get; set; } = new();
@@ -43,11 +48,6 @@ public class DbDefinition(Type type)
     public bool IsView { get; set; }
 
     /// <summary>
-    /// Version of view script
-    /// </summary>
-    public int ViewVersion { get; set; } = 1;
-
-    /// <summary>
     /// The SQL query used in the view.
     /// </summary>
     public string ViewQuery { get; set; }
@@ -58,12 +58,12 @@ public class DbDefinition(Type type)
     public List<Type> ViewDependencies { get; set; } = new();
 
     /// <summary>
-    /// Indicates whether the entity supports translations.
+    /// Indicates whether the tables supports history tracking.
     /// </summary>
-    public bool HasTranslation { get; set; } = false;
+    public bool EnableAudit { get; set; } = false;
 
     /// <summary>
-    /// Indicates whether the entity supports history tracking.
+    /// Will create a translation table
     /// </summary>
-    public bool HasHistory { get; set; } = false;
+    public bool EnableTranslation { get; set; } = false;
 }

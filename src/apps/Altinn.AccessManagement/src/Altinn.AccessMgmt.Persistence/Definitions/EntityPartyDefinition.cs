@@ -18,6 +18,7 @@ public class EntityPartyDefinition : BaseDbDefinition<EntityParty>, IDbDefinitio
     {
         definitionRegistry.Define<EntityParty>(def =>
         {
+            def.SetVersion(2);
             def.IsView();
 
             def.RegisterProperty(t => t.Id);

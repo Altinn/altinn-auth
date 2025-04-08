@@ -19,7 +19,7 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
     private readonly DbDefinitionRegistry definitionRegistry = definitionRegistry;
 
     /// <inheritdoc />
-    public async Task<int> IngestData<T>(List<T> data, CancellationToken cancellationToken = default)
+    public async Task<int> IngestData<T>(List<T> data, ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         var type = typeof(T);
         var definition = definitionRegistry.TryGetDefinition<T>() ?? throw new Exception(string.Format("Definition not found for '{0}'", type.Name));
@@ -28,11 +28,11 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
         string tableName = queryBuilder.GetTableName(includeAlias: false);
         var ingestColumns = GetColumns(definition, queryBuilder);
 
-        return await WriteToIngest(data, ingestColumns, tableName, cancellationToken);
+        return await WriteToIngest(data, ingestColumns, tableName, options, cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<int> IngestTempData<T>(List<T> data, Guid ingestId, CancellationToken cancellationToken = default)
+    public async Task<int> IngestTempData<T>(List<T> data, Guid ingestId, ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         if (ingestId.Equals(Guid.Empty))
         {
@@ -48,18 +48,18 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
 
         string tableName = queryBuilder.GetTableName(includeAlias: false);
         var ingestName = ingestId.ToString().Replace("-", string.Empty);
-        string ingestTableName = tableName + "_" + ingestName;
+        string ingestTableName = "ingest." + queryBuilder.GetTableName(includeAlias: false, includeSchema: false) + "_" + ingestName;
 
         var createIngestTable = $"CREATE UNLOGGED TABLE IF NOT EXISTS {ingestTableName} AS SELECT {columnStatement} FROM {tableName} WITH NO DATA;";
         await dbExecutor.ExecuteMigrationCommand(createIngestTable, null, cancellationToken);
         
-        var completed = await WriteToIngest(data, ingestColumns, ingestTableName, cancellationToken);
+        var completed = await WriteToIngest(data, ingestColumns, ingestTableName, options, cancellationToken);
 
         return completed;
     }
 
     /// <inheritdoc />
-    public async Task<int> MergeTempData<T>(Guid ingestId, IEnumerable<GenericParameter> matchColumns = null, CancellationToken cancellationToken = default)
+    public async Task<int> MergeTempData<T>(Guid ingestId, ChangeRequestOptions options, IEnumerable<GenericParameter> matchColumns = null, CancellationToken cancellationToken = default)
     {
         if (matchColumns == null || matchColumns.Count() == 0)
         {
@@ -75,7 +75,7 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
 
         string tableName = queryBuilder.GetTableName(includeAlias: false);
         var ingestName = ingestId.ToString().Replace("-", string.Empty);
-        string ingestTableName = tableName + "_" + ingestName;
+        string ingestTableName = "ingest." + queryBuilder.GetTableName(includeAlias: false, includeSchema: false) + "_" + ingestName;
 
         var mergeMatchStatement = string.Join(" AND ", matchColumns.Select(t => $"target.{t.Key} = source.{t.Key}"));
         var mergeUpdateUnMatchStatement = string.Join(" OR ", ingestColumns.Where(t => matchColumns.Count(y => y.Key.Equals(t.Name, StringComparison.OrdinalIgnoreCase)) == 0).Select(t => $"target.{t.Name} <> source.{t.Name}"));
@@ -84,15 +84,19 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
         var insertValues = string.Join(" , ", ingestColumns.Select(t => $"source.{t.Name}"));
 
         var sb = new StringBuilder();
+
+        sb.AppendLine(GetAuditVariables(options));
         sb.AppendLine($"MERGE INTO {tableName} AS target USING {ingestTableName} AS source ON {mergeMatchStatement}");
+        
         if (type.Name != "Assignment")
         {
             sb.AppendLine($"WHEN MATCHED AND ({mergeUpdateUnMatchStatement}) THEN ");
             sb.AppendLine($"UPDATE SET {mergeUpdateStatement}");
         }
-
+            
         sb.AppendLine($"WHEN NOT MATCHED THEN ");
         sb.AppendLine($"INSERT ({insertColumns}) VALUES ({insertValues});");
+
         string mergeStatement = sb.ToString();
 
         Console.WriteLine("Starting MERGE");
@@ -109,16 +113,16 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
     }
 
     /// <inheritdoc />
-    public async Task<int> IngestAndMergeData<T>(List<T> data, IEnumerable<GenericParameter> matchColumns = null, CancellationToken cancellationToken = default)
+    public async Task<int> IngestAndMergeData<T>(List<T> data, ChangeRequestOptions options, IEnumerable<GenericParameter> matchColumns = null, CancellationToken cancellationToken = default)
     {
         var ingestId = Guid.CreateVersion7();
-        await IngestTempData(data, ingestId, cancellationToken);
-        var res = await MergeTempData<T>(ingestId, matchColumns, cancellationToken);
+        await IngestTempData(data, ingestId, options, cancellationToken);
+        var res = await MergeTempData<T>(ingestId, options, matchColumns, cancellationToken);
 
         return res;
     }
 
-    private async Task<int> WriteToIngest<T>(List<T> data, List<IngestColumnDefinition> ingestColumns, string tableName, CancellationToken cancellationToken = default)
+    private async Task<int> WriteToIngest<T>(List<T> data, List<IngestColumnDefinition> ingestColumns, string tableName, ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         using var conn = _databaseFactory.CreatePgsqlConnection(SourceType.Migration);
         if (conn.State != ConnectionState.Open)
@@ -127,6 +131,7 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
         }
 
         string columnStatement = string.Join(',', ingestColumns.Select(t => t.Name));
+        // ADD LOCAL VARIABLES
         using var writer = await conn.BeginBinaryImportAsync($"COPY {tableName} ({columnStatement}) FROM STDIN (FORMAT BINARY)", cancellationToken: cancellationToken);
         writer.Timeout = TimeSpan.FromMinutes(10);
         int completed = 0;
@@ -205,7 +210,12 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
         TypedIngestColumnDefinitions.Add(definition.ModelType, columns);
         return columns;
     }
-    
+
+    private static string GetAuditVariables(ChangeRequestOptions options)
+    {
+        return string.Format("SET LOCAL app.changed_by = '{0}'; SET LOCAL app.changed_by_system = '{1}'; SET LOCAL app.change_operation_id = '{2}';", options.ChangedBy, options.ChangedBySystem, options.ChangeOperationId);
+    }
+
     /// <summary>
     /// Definition of column to ingest
     /// </summary>

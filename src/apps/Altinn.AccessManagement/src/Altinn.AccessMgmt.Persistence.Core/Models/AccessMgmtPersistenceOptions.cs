@@ -51,9 +51,19 @@ public class AccessMgmtPersistenceOptions
     public string TranslationHistorySchema { get; set; } = "translation_history";
 
     /// <summary>
-    /// Gets or sets the name of the schema used for storing historical translations of the entity.
+    /// Gets or sets the name of the schema used for ingesting data.
     /// </summary>
-    public string DatabaseReadUser { get; set; } = "platform_authorization";
+    public string IngestSchema { get; set; } = "ingest";
+
+    /// <summary>
+    /// Gets or sets the name of the schema used for storing archive rows.
+    /// </summary>
+    public string ArchiveSchema { get; set; } = "archive";
+
+    /// <summary>
+    /// Gets or sets the name of the database app user
+    /// </summary>
+    public string DatabaseAppUser { get; set; } = "platform_authorization";
 
     /// <summary>
     /// A list of language codes (e.g., "en", "nb", "de") that should be considered

@@ -21,6 +21,12 @@ public class DbMigrationScriptCollection
     public Dictionary<Type, int> Dependencies { get; set; }
 
     /// <summary>
+    /// Top-level version
+    /// To force run of all scripts
+    /// </summary>
+    public int Version { get; set; }
+
+    /// <summary>
     /// Default constructor for DbMigrationScriptCollection
     /// </summary>
     /// <param name="type">Type</param>

@@ -5,7 +5,7 @@ using Altinn.AccessMgmt.Persistence.Core.Services;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Microsoft.Extensions.Configuration;
 
-namespace Altinn.AccessMgmt.Repo.Data;
+namespace Altinn.AccessMgmt.Persistence.Data;
 
 /// <summary>
 /// Service for running data migrations
@@ -18,6 +18,7 @@ public class DbDataMigrationService(
         IConfiguration configuration,
         IEntityTypeRepository entityTypeService,
         IEntityVariantRepository entityVariantService,
+        IEntityRepository entityRepository,
         IPackageRepository packageService,
         IRoleRepository roleService,
         IMigrationService migrationService,
@@ -30,12 +31,13 @@ public class DbDataMigrationService(
     private readonly IAreaGroupRepository areaGroupService = areaGroupService;
     private readonly IEntityTypeRepository entityTypeService = entityTypeService;
     private readonly IEntityVariantRepository entityVariantService = entityVariantService;
+    private readonly IEntityRepository entityRepository = entityRepository;
     private readonly IPackageRepository packageService = packageService;
     private readonly IRoleRepository roleService = roleService;
     private readonly IMigrationService migrationService = migrationService;
     private readonly IIngestService ingestService = ingestService;
     private readonly string iconBaseUrl = configuration["AltinnCDN:AccessPackageIconsBaseURL"];
-
+    
     /// <summary>
     /// Ingest all static data
     /// </summary>
@@ -45,121 +47,137 @@ public class DbDataMigrationService(
     {
         //// TODO: Add featureflags
         //// TODO: Add Activity logging
+        
+        var options = new ChangeRequestOptions()
+        {
+            ChangedBy = AuditDefaults.StaticDataIngest,
+            ChangedBySystem = AuditDefaults.StaticDataIngest
+        };
 
         string dataKey = "<data>";
 
         if (migrationService.NeedMigration<ProviderType>(dataKey, 1))
         {
-            await IngestProviderType();
+            await IngestProviderType(options: options, cancellationToken: cancellationToken);
             await migrationService.LogMigration<ProviderType>(dataKey, string.Empty, 1);
         }
 
         if (migrationService.NeedMigration<Provider>(dataKey, 3))
         {
-            await IngestProvider();
+            await IngestProvider(options: options, cancellationToken: cancellationToken);
             await migrationService.LogMigration<Provider>(dataKey, string.Empty, 3);
         }
 
-        if (migrationService.NeedMigration<EntityType>(dataKey, 3))
+        if (migrationService.NeedMigration<EntityType>(dataKey, 4))
         {
-            await IngestEntityType();
-            await migrationService.LogMigration<EntityType>(dataKey, string.Empty, 3);
+            await IngestEntityType(options: options, cancellationToken: cancellationToken);
+            await migrationService.LogMigration<EntityType>(dataKey, string.Empty, 4);
         }
 
-        if (migrationService.NeedMigration<EntityVariant>(dataKey, 3))
+        if (migrationService.NeedMigration<EntityVariant>(dataKey, 4))
         {
-            await IngestEntityVariant();
-            await migrationService.LogMigration<EntityVariant>(dataKey, string.Empty, 3);
+            await IngestEntityVariant(options: options, cancellationToken: cancellationToken);
+            await migrationService.LogMigration<EntityVariant>(dataKey, string.Empty, 4);
+        }
+
+        if (migrationService.NeedMigration<Entity>(dataKey, 2))
+        {
+            await IngestSystemEntity(options: options, cancellationToken: cancellationToken);
+            await migrationService.LogMigration<Entity>(dataKey, string.Empty, 2);
         }
 
         if (migrationService.NeedMigration<Role>(dataKey, 6))
         {
-            await IngestRole();
+            await IngestRole(options: options, cancellationToken: cancellationToken);
             await migrationService.LogMigration<Role>(dataKey, string.Empty, 6);
         }
 
         if (migrationService.NeedMigration<RoleMap>(dataKey, 3))
         {
-            await IngestRoleMap();
+            await IngestRoleMap(options: options, cancellationToken: cancellationToken);
             await migrationService.LogMigration<RoleMap>(dataKey, string.Empty, 3);
         }
 
-        if (migrationService.NeedMigration<AreaGroup>(dataKey, 3))
+        if (migrationService.NeedMigration<AreaGroup>(dataKey, 4))
         {
-            await IngestAreaGroup();
-            await migrationService.LogMigration<AreaGroup>(dataKey, string.Empty, 3);
+            await IngestAreaGroup(options: options, cancellationToken: cancellationToken);
+            await migrationService.LogMigration<AreaGroup>(dataKey, string.Empty, 4);
         }
 
-        if (migrationService.NeedMigration<Area>(dataKey, 3))
+        if (migrationService.NeedMigration<Area>(dataKey, 4))
         {
-            await IngestArea();
-            await migrationService.LogMigration<Area>(dataKey, string.Empty, 3);
+            await IngestArea(options: options, cancellationToken: cancellationToken);
+            await migrationService.LogMigration<Area>(dataKey, string.Empty, 4);
         }
 
         if (migrationService.NeedMigration<Package>(dataKey, 4))
         {
-            await IngestPackage();
+            await IngestPackage(options: options, cancellationToken: cancellationToken);
             await migrationService.LogMigration<Package>(dataKey, string.Empty, 4);
         }
 
         if (migrationService.NeedMigration<RolePackage>(dataKey, 2))
         {
-            await IngestRolePackage();
+            await IngestRolePackage(options: options, cancellationToken: cancellationToken);
             await migrationService.LogMigration<RolePackage>(dataKey, string.Empty, 2);
         }
 
         if (migrationService.NeedMigration<EntityVariantRole>(dataKey, 2))
         {
-            await IngestEntityVariantRole();
+            await IngestEntityVariantRole(options: options, cancellationToken: cancellationToken);
             await migrationService.LogMigration<EntityVariantRole>(dataKey, string.Empty, 2);
         }
     }
 
-    public async Task IngestProviderType(CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Ingest all static providertype data
+    /// </summary>
+    /// <param name="options"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public async Task IngestProviderType(ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         var data = new List<ProviderType>()
         {
             new ProviderType() { Id = Guid.Parse("0195efb8-7c80-7bb5-a35c-11d58ea36695"), Name = "System" },
-            new ProviderType() { Id = Guid.Parse("0195efb8-7c80-713e-ad96-a9896d12f444"), Name = "Tjenesteeier" },
-            //// new ProviderType() { Id = Guid.Parse("0195efb8-7c80-7005-a8db-1f6387b28a5e"), Name = "Andre" }
+            new ProviderType() { Id = Guid.Parse("0195efb8-7c80-713e-ad96-a9896d12f444"), Name = "Tjenesteeier" }
         };
 
         var dataEng = new List<ProviderType>()
         {
             new ProviderType() { Id = Guid.Parse("0195efb8-7c80-7bb5-a35c-11d58ea36695"), Name = "System" },
-            new ProviderType() { Id = Guid.Parse("0195efb8-7c80-713e-ad96-a9896d12f444"), Name = "ServiceOwner" },
-            //// new ProviderType() { Id = Guid.Parse("0195efb8-7c80-7005-a8db-1f6387b28a5e"), Name = "Other" }
+            new ProviderType() { Id = Guid.Parse("0195efb8-7c80-713e-ad96-a9896d12f444"), Name = "ServiceOwner" }
         };
 
         var dataNno = new List<ProviderType>()
         {
             new ProviderType() { Id = Guid.Parse("0195efb8-7c80-7bb5-a35c-11d58ea36695"), Name = "System" },
-            new ProviderType() { Id = Guid.Parse("0195efb8-7c80-713e-ad96-a9896d12f444"), Name = "Tenesteeigar" },
-            //// new ProviderType() { Id = Guid.Parse("0195efb8-7c80-7005-a8db-1f6387b28a5e"), Name = "Annan" }
+            new ProviderType() { Id = Guid.Parse("0195efb8-7c80-713e-ad96-a9896d12f444"), Name = "Tenesteeigar" }
         };
 
         foreach (var d in data)
         {
-            await providerTypeRepository.Upsert(d, cancellationToken);
+            await providerTypeRepository.Upsert(d, options: options, cancellationToken: cancellationToken);
         }
 
         foreach (var d in dataEng)
         {
-            await providerTypeRepository.UpdateTranslation(d.Id, d, "eng", cancellationToken);
+            await providerTypeRepository.UpdateTranslation(d.Id, d, "eng", options: options, cancellationToken: cancellationToken);
         }
 
         foreach (var d in dataNno)
         {
-            await providerTypeRepository.UpdateTranslation(d.Id, d, "nno", cancellationToken);
+            await providerTypeRepository.UpdateTranslation(d.Id, d, "nno", options: options, cancellationToken: cancellationToken);
         }
     }
 
     /// <summary>
     /// Ingest all static provider data
     /// </summary>
+    /// <param name="options"></param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    public async Task IngestProvider(CancellationToken cancellationToken = default)
+    public async Task IngestProvider(ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         var systemType = (await providerTypeRepository.Get(t => t.Name, "System")).FirstOrDefault() ?? throw new Exception("Providertype 'System' not found.");
 
@@ -171,7 +189,7 @@ public class DbDataMigrationService(
             new Provider() { Id = Guid.Parse("0195ea92-2080-758b-89db-7735c4f68320"), Name = "Enhetsregisteret", Code = "sys-ccr", TypeId = systemType.Id }
         };
 
-        await ingestService.IngestAndMergeData(systemProviders, new List<GenericParameter>() { new GenericParameter("code", "code") }, cancellationToken);
+        await ingestService.IngestAndMergeData(systemProviders, options: options, new List<GenericParameter>() { new GenericParameter("code", "code") }, cancellationToken);
     }
 
     /// <summary>
@@ -179,7 +197,7 @@ public class DbDataMigrationService(
     /// </summary>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    public async Task IngestEntityType(CancellationToken cancellationToken = default)
+    public async Task IngestEntityType(ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         var providerA3 = (await providerRepository.Get(t => t.Code, "sys-altinn3")).FirstOrDefault() ?? throw new KeyNotFoundException("Altinn3 provider not found");
 
@@ -188,6 +206,7 @@ public class DbDataMigrationService(
             new EntityType() { Id = Guid.Parse("8C216E2F-AFDD-4234-9BA2-691C727BB33D"), Name = "Organisasjon", ProviderId = providerA3.Id },
             new EntityType() { Id = Guid.Parse("BFE09E70-E868-44B3-8D81-DFE0E13E058A"), Name = "Person", ProviderId = providerA3.Id },
             new EntityType() { Id = Guid.Parse("FE643898-2F47-4080-85E3-86BF6FE39630"), Name = "Systembruker", ProviderId = providerA3.Id },
+            new EntityType() { Id = Guid.Parse("4557CC81-C10D-40B4-8134-F8825060016E"), Name = "Intern", ProviderId = providerA3.Id },
         };
 
         var entityTypesNno = new List<EntityType>()
@@ -195,6 +214,7 @@ public class DbDataMigrationService(
             new EntityType() { Id = Guid.Parse("8C216E2F-AFDD-4234-9BA2-691C727BB33D"), Name = "Organisasjon", ProviderId = providerA3.Id },
             new EntityType() { Id = Guid.Parse("BFE09E70-E868-44B3-8D81-DFE0E13E058A"), Name = "Person", ProviderId = providerA3.Id },
             new EntityType() { Id = Guid.Parse("FE643898-2F47-4080-85E3-86BF6FE39630"), Name = "Systembrukar", ProviderId = providerA3.Id },
+            new EntityType() { Id = Guid.Parse("4557CC81-C10D-40B4-8134-F8825060016E"), Name = "Intern", ProviderId = providerA3.Id },
         };
 
         var entityTypesEng = new List<EntityType>()
@@ -202,21 +222,22 @@ public class DbDataMigrationService(
             new EntityType() { Id = Guid.Parse("8C216E2F-AFDD-4234-9BA2-691C727BB33D"), Name = "Organization", ProviderId = providerA3.Id },
             new EntityType() { Id = Guid.Parse("BFE09E70-E868-44B3-8D81-DFE0E13E058A"), Name = "Person", ProviderId = providerA3.Id },
             new EntityType() { Id = Guid.Parse("FE643898-2F47-4080-85E3-86BF6FE39630"), Name = "SystemUser", ProviderId = providerA3.Id },
+            new EntityType() { Id = Guid.Parse("4557CC81-C10D-40B4-8134-F8825060016E"), Name = "Internal", ProviderId = providerA3.Id },
         };
 
         foreach (var item in entityTypes)
         {
-            await entityTypeService.Upsert(item, cancellationToken);
+            await entityTypeService.Upsert(item, options: options, cancellationToken: cancellationToken);
         }
 
         foreach (var item in entityTypesNno)
         {
-            await entityTypeService.UpdateTranslation(item.Id, item, "nno", cancellationToken);
+            await entityTypeService.UpdateTranslation(item.Id, item, "nno", options: options, cancellationToken: cancellationToken);
         }
 
         foreach (var item in entityTypesEng)
         {
-            await entityTypeService.UpdateTranslation(item.Id, item, "eng", cancellationToken);
+            await entityTypeService.UpdateTranslation(item.Id, item, "eng", options: options, cancellationToken: cancellationToken);
         }
     }
 
@@ -225,11 +246,13 @@ public class DbDataMigrationService(
     /// </summary>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    public async Task IngestEntityVariant(CancellationToken cancellationToken = default)
+    public async Task IngestEntityVariant(ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
-        var orgTypeId = (await entityTypeService.Get(t => t.Name, "Organisasjon")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("EntityType not found", "Organisasjon"));
-        var persTypeId = (await entityTypeService.Get(t => t.Name, "Person")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("EntityType not found", "Person"));
-        var systemTypeId = (await entityTypeService.Get(t => t.Name, "Systembruker")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("EntityType not found", "System"));
+        var orgTypeId = (await entityTypeService.Get(t => t.Name, "Organisasjon")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("EntityType '{0}' not found", "Organisasjon"));
+        var persTypeId = (await entityTypeService.Get(t => t.Name, "Person")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("EntityType '{0}' not found", "Person"));
+        var systemTypeId = (await entityTypeService.Get(t => t.Name, "Systembruker")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("EntityType '{0}' not found", "System"));
+        var internalTypeId = (await entityTypeService.Get(t => t.Name, "Intern")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("EntityType '{0}' not found", "Intern"));
+
         var entityVariants = new List<EntityVariant>()
         {
             new EntityVariant() { Id = Guid.Parse("d786bc0e-8e9e-4116-bfc2-0344207c9127"), TypeId = orgTypeId, Name = "SAM", Description = "Tingsrettslig sameie" },
@@ -279,6 +302,7 @@ public class DbDataMigrationService(
             new EntityVariant() { Id = Guid.Parse("b0690e14-7a75-45a4-8c02-437f6705b5ee"), TypeId = persTypeId, Name = "Person", Description = "Person" },
             new EntityVariant() { Id = Guid.Parse("8CA2FFDB-B4A9-4C64-8A9A-ED0F8DD722A3"), TypeId = systemTypeId, Name = "System", Description = "System" },
             new EntityVariant() { Id = Guid.Parse("03D08113-40D0-48BD-85B6-BD4430CCC182"), TypeId = persTypeId, Name = "SI", Description = "Selvidentifisert bruker" },
+            new EntityVariant() { Id = Guid.Parse("CBE2834D-3DB0-4A14-BAA2-D32DE004D6D7"), TypeId = internalTypeId, Name = "Standard", Description = "Standard intern entitet" },
         };
 
         var entityVariantsEng = new List<EntityVariant>()
@@ -330,6 +354,7 @@ public class DbDataMigrationService(
             new EntityVariant() { Id = Guid.Parse("b0690e14-7a75-45a4-8c02-437f6705b5ee"), TypeId = persTypeId, Name = "Person", Description = "Person" },
             new EntityVariant() { Id = Guid.Parse("8CA2FFDB-B4A9-4C64-8A9A-ED0F8DD722A3"), TypeId = systemTypeId, Name = "System", Description = "System" },
             new EntityVariant() { Id = Guid.Parse("03D08113-40D0-48BD-85B6-BD4430CCC182"), TypeId = persTypeId, Name = "SI", Description = "Self-identified user" },
+            new EntityVariant() { Id = Guid.Parse("CBE2834D-3DB0-4A14-BAA2-D32DE004D6D7"), TypeId = internalTypeId, Name = "Default", Description = "Default internal entity" },
         };
 
         var entityVariantsNno = new List<EntityVariant>()
@@ -381,21 +406,46 @@ public class DbDataMigrationService(
             new EntityVariant() { Id = Guid.Parse("b0690e14-7a75-45a4-8c02-437f6705b5ee"), TypeId = persTypeId, Name = "PERS", Description = "Person" },
             new EntityVariant() { Id = Guid.Parse("8CA2FFDB-B4A9-4C64-8A9A-ED0F8DD722A3"), TypeId = systemTypeId, Name = "System", Description = "System" },
             new EntityVariant() { Id = Guid.Parse("03D08113-40D0-48BD-85B6-BD4430CCC182"), TypeId = persTypeId, Name = "SI", Description = "Sjølvidentifisert brukar" },
+            new EntityVariant() { Id = Guid.Parse("CBE2834D-3DB0-4A14-BAA2-D32DE004D6D7"), TypeId = internalTypeId, Name = "Standard", Description = "Standard intern entitet" },
         };
 
         foreach (var item in entityVariants)
         {
-            await entityVariantService.Upsert(item, cancellationToken);
+            await entityVariantService.Upsert(item, options:options, cancellationToken: cancellationToken);
         }
 
         foreach (var item in entityVariantsEng)
         {
-            await entityVariantService.UpsertTranslation(item.Id, item, "eng", cancellationToken);
+            await entityVariantService.UpsertTranslation(item.Id, item, "eng", options: options, cancellationToken: cancellationToken);
         }
 
         foreach (var item in entityVariantsNno)
         {
-            await entityVariantService.UpsertTranslation(item.Id, item, "nno", cancellationToken);
+            await entityVariantService.UpsertTranslation(item.Id, item, "nno", options: options, cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Ingest all static entity data
+    /// </summary>
+    /// <param name="cancellationToken">CancellationToken</param>
+    /// <returns></returns>
+    public async Task IngestSystemEntity(ChangeRequestOptions options, CancellationToken cancellationToken = default)
+    {
+        var internalTypeId = (await entityTypeService.Get(t => t.Name, "Intern")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("EntityType '{0}' not found", "Intern"));
+        var internalVariantId = (await entityVariantService.Get(t => t.TypeId, internalTypeId)).FirstOrDefault(t => t.Name.Equals("Standard", StringComparison.OrdinalIgnoreCase))?.Id ?? throw new KeyNotFoundException(string.Format("EntityVariant '{0}' not found", "Intern"));
+
+        var systemEntities = new List<Entity>()
+        {
+            // Static data ingest
+            new Entity() { Id = AuditDefaults.StaticDataIngest, Name = "StaticDataIngest", RefId = "sys-static-data-ingest", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
+            new Entity() { Id = AuditDefaults.RegisterImportSystem, Name = "RegisterImportSystem", RefId = "sys-register-import-system", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
+            new Entity() { Id = AuditDefaults.EnduserApi, Name = "EnduserApi", RefId = "accessmgmt-enduser-api", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
+        };
+
+        foreach (var item in systemEntities)
+        {
+            await entityRepository.Upsert(item, options: options, cancellationToken: cancellationToken);
         }
     }
 
@@ -404,7 +454,7 @@ public class DbDataMigrationService(
     /// </summary>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    public async Task IngestRole(CancellationToken cancellationToken = default)
+    public async Task IngestRole(ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         var orgEntityTypeId = (await entityTypeService.Get(t => t.Name, "Organisasjon")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("EntityType not found '{0}'", "Organisasjon"));
         var persEntityTypeId = (await entityTypeService.Get(t => t.Name, "Person")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("EntityType not found '{0}'", "Person"));
@@ -495,33 +545,33 @@ public class DbDataMigrationService(
             new Role() { Id = Guid.Parse("b3f5c1e8-4e3b-4d2a-8c3e-1f2b3d4e5f6a"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId,    Name = "Maskinporten Administrator",   Code = "maskinporten-administrator",    Description = "Allows the user to manage access to Maskinporten scopes", Urn = "urn:altinn:role:maskinporten-administrator" },
 
             new Role() { Id = Guid.Parse("66ad5542-4f4a-4606-996f-18690129ce00"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Administrative Unit - Public Sector",                 Code = "administrativ-enhet-offentlig-sektor",  Description = "Administrative Unit - Public Sector", Urn = "urn:altinn:external-role:ccr:administrativ-enhet-offentlig-sektor" },
-            new Role() { Id = Guid.Parse("585ac6f7-aef0-47ca-8597-1ac7e63a58ce"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Deputy Leader",                                       Code = "nestleder",                             Description = "Board member who acts as chair in the absence of the leader", Urn = "urn:altinn:external-role:ccr:nestleder" },
-            new Role() { Id = Guid.Parse("a715f610-4096-49bf-9b59-1c9ec81966f5"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Part of Office Community",                            Code = "kontorfelleskapmedlem",                 Description = "Participates in office community", Urn = "urn:altinn:external-role:ccr:kontorfelleskapmedlem" },
-            new Role() { Id = Guid.Parse("ffa924c7-45ba-469b-9657-27bbb66002d4"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Organizational Unit in the Public Sector",            Code = "organisasjonsledd-offentlig-sektor",    Description = "Organizational Unit in the Public Sector", Urn = "urn:altinn:external-role:ccr:organisasjonsledd-offentlig-sektor" },
-            new Role() { Id = Guid.Parse("792c01dc-29c9-4dec-ae6d-28cff0b04678"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Distinct Subunit",                                    Code = "saerskilt-oppdelt-enhet",               Description = "Distinct Subunit", Urn = "urn:altinn:external-role:ccr:saerskilt-oppdelt-enhet" },
-            new Role() { Id = Guid.Parse("857bb1fb-fcaa-4a3c-859d-319032626539"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Managing Director",                                   Code = "daglig-leder",                          Description = "An individual or legal entity responsible for the daily operations of a business", Urn = "urn:altinn:external-role:ccr:daglig-leder" },
-            new Role() { Id = Guid.Parse("3af9bb77-9455-44bd-8d93-4d3f2a9fda33"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Participant with Shared Responsibility",              Code = "deltaker-delt-ansvar",                  Description = "An individual or legal entity who has personal responsibility for parts of the company's obligations", Urn = "urn:altinn:external-role:ccr:deltaker-delt-ansvar" },
-            new Role() { Id = Guid.Parse("f96756f4-415a-45dd-8d10-4ebee0e6db84"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Owner",                                               Code = "innehaver",                             Description = "An individual who is the owner of a sole proprietorship", Urn = "urn:altinn:external-role:ccr:innehaver" },
-            new Role() { Id = Guid.Parse("77778386-d57f-4378-ac31-5f260b407079"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Participant with Full Responsibility",                Code = "deltaker-fullt-ansvar",                 Description = "An individual or legal entity who has unlimited personal responsibility for the company's obligations", Urn = "urn:altinn:external-role:ccr:deltaker-fullt-ansvar" },
-            new Role() { Id = Guid.Parse("748ec709-78d6-4b13-a3f9-5fb8e783e679"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Alternate Member",                                    Code = "varamedlem",                            Description = "An individual or legal entity who acts as a substitute for a board member", Urn = "urn:altinn:external-role:ccr:varamedlem" },
-            new Role() { Id = Guid.Parse("197fbfbb-d867-4c0f-8d4a-62e9287e340d"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Observer",                                            Code = "observator",                            Description = "An individual who participates in board meetings of a business, but without voting rights", Urn = "urn:altinn:external-role:ccr:observator" },
-            new Role() { Id = Guid.Parse("de42ae15-c265-42b3-8060-64c779684902"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Board Member",                                        Code = "styremedlem",                           Description = "An individual or legal entity who is a member of a board", Urn = "urn:altinn:external-role:ccr:styremedlem" },
-            new Role() { Id = Guid.Parse("72c336a2-1705-4aef-b220-7f4aa6c0e69d"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Chair of the Board",                                  Code = "styreleder",                            Description = "An individual or legal entity who is a board member and chairs the board", Urn = "urn:altinn:external-role:ccr:styreleder" },
-            new Role() { Id = Guid.Parse("38453a5d-ff7d-44eb-ba9a-92b1cd7fc98c"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Personal Bankruptcy",                                 Code = "personlige-konkurs",                    Description = "Personal Bankruptcy", Urn = "urn:altinn:external-role:ccr:personlige-konkurs" },
-            new Role() { Id = Guid.Parse("6adad370-5524-4438-a811-932d27f655b9"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Norwegian Representative for a Foreign Entity",       Code = "norsk-representant",                    Description = "An individual or legal entity responsible for the daily operations in Norway", Urn = "urn:altinn:external-role:ccr:norsk-representant" },
-            new Role() { Id = Guid.Parse("49def9e7-9ea4-4f78-9013-98c9af5918d4"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Contact Person",                                      Code = "kontaktperson",                         Description = "An individual who represents a business", Urn = "urn:altinn:external-role:ccr:kontaktperson" },
-            new Role() { Id = Guid.Parse("1BCEEA98-3D3A-4CFB-9C1A-3D09FAD9E70B"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Contact Person NUF",                                  Code = "kontaktperson-nuf",                     Description = "An individual who represents a business - NUF", Urn = "urn:altinn:external-role:ccr:kontaktperson-nuf" },
-            new Role() { Id = Guid.Parse("d7ab8fd4-de81-4c82-8b0e-9cb6470a274e"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Managing Shipowner",                                  Code = "bestyrende-reder",                      Description = "Managing Shipowner", Urn = "urn:altinn:external-role:ccr:bestyrende-reder" },
-            new Role() { Id = Guid.Parse("d4f78604-db47-4ff7-8537-a4e7318e8c11"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Owning Municipality",                                 Code = "eierkommune",                           Description = "Owning Municipality", Urn = "urn:altinn:external-role:ccr:eierkommune" },
-            new Role() { Id = Guid.Parse("0610a058-2046-4fb7-8566-a7cef6515baf"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Estate Administrator",                                Code = "bostyrer",                              Description = "Administrator of a bankruptcy or probate estate under public administration", Urn = "urn:altinn:external-role:ccr:bostyrer" },
+            new Role() { Id = Guid.Parse("29a24eab-a25f-445d-b56d-e3b914844853"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Deputy Leader",                                       Code = "nestleder",                             Description = "Board member who acts as chair in the absence of the leader", Urn = "urn:altinn:external-role:ccr:nestleder" },
+            new Role() { Id = Guid.Parse("8c1e91c2-a71c-4abf-a74e-a600a98be976"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Part of Office Community",                            Code = "kontorfelleskapmedlem",                 Description = "Participates in office community", Urn = "urn:altinn:external-role:ccr:kontorfelleskapmedlem" },
+            new Role() { Id = Guid.Parse("cfc41a92-2061-4ff4-97dc-658ffba2c00e"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Organizational Unit in the Public Sector",            Code = "organisasjonsledd-offentlig-sektor",    Description = "Organizational Unit in the Public Sector", Urn = "urn:altinn:external-role:ccr:organisasjonsledd-offentlig-sektor" },
+            new Role() { Id = Guid.Parse("2fec6d4b-cead-419a-adf3-1bf482a3c9dc"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Distinct Subunit",                                    Code = "saerskilt-oppdelt-enhet",               Description = "Distinct Subunit", Urn = "urn:altinn:external-role:ccr:saerskilt-oppdelt-enhet" },
+            new Role() { Id = Guid.Parse("55bd7d4d-08dd-46ee-ac8e-3a44d800d752"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Managing Director",                                   Code = "daglig-leder",                          Description = "An individual or legal entity responsible for the daily operations of a business", Urn = "urn:altinn:external-role:ccr:daglig-leder" },
+            new Role() { Id = Guid.Parse("18baa914-ac43-4663-9fa4-6f5760dc68eb"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Participant with Shared Responsibility",              Code = "deltaker-delt-ansvar",                  Description = "An individual or legal entity who has personal responsibility for parts of the company's obligations", Urn = "urn:altinn:external-role:ccr:deltaker-delt-ansvar" },
+            new Role() { Id = Guid.Parse("2651ed07-f31b-4bc1-87bd-4d270742a19d"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Owner",                                               Code = "innehaver",                             Description = "An individual who is the owner of a sole proprietorship", Urn = "urn:altinn:external-role:ccr:innehaver" },
+            new Role() { Id = Guid.Parse("f1021b8c-9fbc-4296-bd17-a05d713037ef"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Participant with Full Responsibility",                Code = "deltaker-fullt-ansvar",                 Description = "An individual or legal entity who has unlimited personal responsibility for the company's obligations", Urn = "urn:altinn:external-role:ccr:deltaker-fullt-ansvar" },
+            new Role() { Id = Guid.Parse("d41d67f2-15b0-4c82-95db-b8d5baaa14a4"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Alternate Member",                                    Code = "varamedlem",                            Description = "An individual or legal entity who acts as a substitute for a board member", Urn = "urn:altinn:external-role:ccr:varamedlem" },
+            new Role() { Id = Guid.Parse("1f8a2518-9494-468a-80a0-7405f0daf9e9"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Observer",                                            Code = "observator",                            Description = "An individual who participates in board meetings of a business, but without voting rights", Urn = "urn:altinn:external-role:ccr:observator" },
+            new Role() { Id = Guid.Parse("f045ffda-dbdc-41da-b674-b9b276ad5b01"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Board Member",                                        Code = "styremedlem",                           Description = "An individual or legal entity who is a member of a board", Urn = "urn:altinn:external-role:ccr:styremedlem" },
+            new Role() { Id = Guid.Parse("9e5d3acf-cef7-4bbe-b101-8e9ab7b8b3e4"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Chair of the Board",                                  Code = "styreleder",                            Description = "An individual or legal entity who is a board member and chairs the board", Urn = "urn:altinn:external-role:ccr:styreleder" },
+            new Role() { Id = Guid.Parse("2e2fc06e-d9b7-4cd9-91bc-d5de766d20de"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Personal Bankruptcy",                                 Code = "personlige-konkurs",                    Description = "Personal Bankruptcy", Urn = "urn:altinn:external-role:ccr:personlige-konkurs" },
+            new Role() { Id = Guid.Parse("e852d758-e8dd-41ec-a1e2-4632deb6857d"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Norwegian Representative for a Foreign Entity",       Code = "norsk-representant",                    Description = "An individual or legal entity responsible for the daily operations in Norway", Urn = "urn:altinn:external-role:ccr:norsk-representant" },
+            new Role() { Id = Guid.Parse("db013059-4a8a-442d-bf90-b03539fe5dda"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Contact Person",                                      Code = "kontaktperson",                         Description = "An individual who represents a business", Urn = "urn:altinn:external-role:ccr:kontaktperson" },
+            new Role() { Id = Guid.Parse("69c4397a-9e34-4e73-9f69-534bc1bb74c8"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Contact Person NUF",                                  Code = "kontaktperson-nuf",                     Description = "An individual who represents a business - NUF", Urn = "urn:altinn:external-role:ccr:kontaktperson-nuf" },
+            new Role() { Id = Guid.Parse("8f0cf433-954e-4680-a25d-a3cf9ffdf149"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Managing Shipowner",                                  Code = "bestyrende-reder",                      Description = "Managing Shipowner", Urn = "urn:altinn:external-role:ccr:bestyrende-reder" },
+            new Role() { Id = Guid.Parse("9ce84a4d-4970-4ef2-8208-b8b8f4d45556"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Owning Municipality",                                 Code = "eierkommune",                           Description = "Owning Municipality", Urn = "urn:altinn:external-role:ccr:eierkommune" },
+            new Role() { Id = Guid.Parse("2cacfb35-2346-4a8d-95f6-b6fa4206881c"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Estate Administrator",                                Code = "bostyrer",                              Description = "Administrator of a bankruptcy or probate estate under public administration", Urn = "urn:altinn:external-role:ccr:bostyrer" },
             new Role() { Id = Guid.Parse("e4674211-034a-45f3-99ac-b2356984968a"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Healthcare Institution",                              Code = "helseforetak",                          Description = "Healthcare Institution", Urn = "urn:altinn:external-role:ccr:helseforetak" },
-            new Role() { Id = Guid.Parse("63b5255d-4776-4ba1-bed2-c950bb5b04ab"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Auditor",                                             Code = "revisor",                               Description = "Auditor", Urn = "urn:altinn:external-role:ccr:revisor" },
-            new Role() { Id = Guid.Parse("e207eaf7-afde-452c-a1ba-ce7ba9305bcc"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Business Manager",                                    Code = "forretningsforer",                      Description = "Business Manager", Urn = "urn:altinn:external-role:ccr:forretningsforer" },
-            new Role() { Id = Guid.Parse("1005e523-9423-4037-92e7-d23dee6a9813"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "General Partner",                                     Code = "komplementar",                          Description = "General Partner", Urn = "urn:altinn:external-role:ccr:komplementar" },
-            new Role() { Id = Guid.Parse("e4df5308-56ed-4301-ae53-ef67da3a57e9"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Bankrupt Debtor",                                     Code = "konkursdebitor",                        Description = "Bankrupt Debtor", Urn = "urn:altinn:external-role:ccr:konkursdebitor" },
-            new Role() { Id = Guid.Parse("3bdd603a-dbe0-4caa-bc97-f0b6a1675b15"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Part of a Church Council",                            Code = "kirkelig-fellesraad",                   Description = "Part of a Church Council", Urn = "urn:altinn:external-role:ccr:kirkelig-fellesraad" },
-            new Role() { Id = Guid.Parse("38c368c1-c9f4-4b01-a296-f1ef7e466c13"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Information about the Company in the Home Country",   Code = "hovedforetak",                          Description = "Information about the company in the home country", Urn = "urn:altinn:external-role:ccr:hovedforetak" },
-            new Role() { Id = Guid.Parse("303d78e8-a658-454d-88ae-f836596982c7"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Accountant",                                          Code = "regnskapsforer",                        Description = "Accountant", Urn = "urn:altinn:external-role:ccr:regnskapsforer" }
+            new Role() { Id = Guid.Parse("f76b997a-9bd8-4f7b-899f-fcd85d35669f"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Auditor",                                             Code = "revisor",                               Description = "Auditor", Urn = "urn:altinn:external-role:ccr:revisor" },
+            new Role() { Id = Guid.Parse("348b2f47-47ee-4084-abf8-68aa54c2b27f"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Business Manager",                                    Code = "forretningsforer",                      Description = "Business Manager", Urn = "urn:altinn:external-role:ccr:forretningsforer" },
+            new Role() { Id = Guid.Parse("cfcf75af-9902-41f7-ab47-b77ba60bcae5"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "General Partner",                                     Code = "komplementar",                          Description = "General Partner", Urn = "urn:altinn:external-role:ccr:komplementar" },
+            new Role() { Id = Guid.Parse("50cc3f41-4dde-4417-8c04-eea428f169dd"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Bankrupt Debtor",                                     Code = "konkursdebitor",                        Description = "Bankrupt Debtor", Urn = "urn:altinn:external-role:ccr:konkursdebitor" },
+            new Role() { Id = Guid.Parse("d78dd1d8-a3f3-4ae6-807e-ea5149f47035"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Part of a Church Council",                            Code = "kirkelig-fellesraad",                   Description = "Part of a Church Council", Urn = "urn:altinn:external-role:ccr:kirkelig-fellesraad" },
+            new Role() { Id = Guid.Parse("185f623b-f614-4a83-839c-1788764bd253"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Information about the Company in the Home Country",   Code = "hovedforetak",                          Description = "Information about the company in the home country", Urn = "urn:altinn:external-role:ccr:hovedforetak" },
+            new Role() { Id = Guid.Parse("46e27685-b3ba-423e-8b42-faab54de5817"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Accountant",                                          Code = "regnskapsforer",                        Description = "Accountant", Urn = "urn:altinn:external-role:ccr:regnskapsforer" }
         };
 
         var rolesNno = new List<Role>()
@@ -534,54 +584,54 @@ public class DbDataMigrationService(
             new Role() { Id = Guid.Parse("b3f5c1e8-4e3b-4d2a-8c3e-1f2b3d4e5f6a"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId, Name = "Maskinporten administrator",       Code = "maskinporten-administrator",    Description = "Gjev høve til å administrere tilgongar for Maskinporten scopes", Urn = "urn:altinn:role:maskinporten-administrator" },
 
             new Role() { Id = Guid.Parse("66ad5542-4f4a-4606-996f-18690129ce00"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Administrativ eining - offentleg sektor",             Code = "administrativ-enhet-offentlig-sektor",  Description = "Administrativ eining - offentleg sektor", Urn = "urn:altinn:external-role:ccr:administrativ-enhet-offentlig-sektor" },
-            new Role() { Id = Guid.Parse("585ac6f7-aef0-47ca-8597-1ac7e63a58ce"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Nestleiar",                                           Code = "nestleder",                             Description = "Styremedlem som fungerer som styreleiar ved leiarens fråvær", Urn = "urn:altinn:external-role:ccr:nestleder" },
-            new Role() { Id = Guid.Parse("a715f610-4096-49bf-9b59-1c9ec81966f5"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Inngår i kontorfellesskap",                           Code = "kontorfelleskapmedlem",                 Description = "Inngår i kontorfellesskap", Urn = "urn:altinn:external-role:ccr:kontorfelleskapmedlem" },
-            new Role() { Id = Guid.Parse("ffa924c7-45ba-469b-9657-27bbb66002d4"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Organisasjonsledd i offentleg sektor",                Code = "organisasjonsledd-offentlig-sektor",    Description = "Organisasjonsledd i offentleg sektor", Urn = "urn:altinn:external-role:ccr:organisasjonsledd-offentlig-sektor" },
-            new Role() { Id = Guid.Parse("792c01dc-29c9-4dec-ae6d-28cff0b04678"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Særskild oppdelt eining",                             Code = "saerskilt-oppdelt-enhet",               Description = "Særskild oppdelt eining", Urn = "urn:altinn:external-role:ccr:saerskilt-oppdelt-enhet" },
-            new Role() { Id = Guid.Parse("857bb1fb-fcaa-4a3c-859d-319032626539"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Dagleg leiar",                                        Code = "daglig-leder",                          Description = "Fysisk- eller juridisk person som har ansvaret for den daglege drifta i ei verksemd", Urn = "urn:altinn:external-role:ccr:daglig-leder" },
-            new Role() { Id = Guid.Parse("3af9bb77-9455-44bd-8d93-4d3f2a9fda33"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Deltakar delt ansvar",                                Code = "deltaker-delt-ansvar",                  Description = "Fysisk- eller juridisk person som har personleg ansvar for delar av selskapet sine forpliktingar", Urn = "urn:altinn:external-role:ccr:deltaker-delt-ansvar" },
-            new Role() { Id = Guid.Parse("f96756f4-415a-45dd-8d10-4ebee0e6db84"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Innehavar",                                           Code = "innehaver",                             Description = "Fysisk person som er eigar av eit enkeltpersonforetak", Urn = "urn:altinn:external-role:ccr:innehaver" },
-            new Role() { Id = Guid.Parse("77778386-d57f-4378-ac31-5f260b407079"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Deltakar fullt ansvar",                               Code = "deltaker-fullt-ansvar",                 Description = "Fysisk- eller juridisk person som har ubegrensa, personleg ansvar for selskapet sine forpliktingar", Urn = "urn:altinn:external-role:ccr:deltaker-fullt-ansvar" },
-            new Role() { Id = Guid.Parse("748ec709-78d6-4b13-a3f9-5fb8e783e679"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Varamedlem",                                          Code = "varamedlem",                            Description = "Fysisk- eller juridisk person som er staden for eit styremedlem", Urn = "urn:altinn:external-role:ccr:varamedlem" },
-            new Role() { Id = Guid.Parse("197fbfbb-d867-4c0f-8d4a-62e9287e340d"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Observatør",                                          Code = "observator",                            Description = "Fysisk person som deltek i styremøter i ei verksemd, men utan stemmerett", Urn = "urn:altinn:external-role:ccr:observator" },
-            new Role() { Id = Guid.Parse("de42ae15-c265-42b3-8060-64c779684902"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Styremedlem",                                         Code = "styremedlem",                           Description = "Fysisk- eller juridisk person som inngår i eit styre", Urn = "urn:altinn:external-role:ccr:styremedlem" },
-            new Role() { Id = Guid.Parse("72c336a2-1705-4aef-b220-7f4aa6c0e69d"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Styrets leiar",                                       Code = "styreleder",                            Description = "Fysisk- eller juridisk person som er styremedlem og leiar eit styre", Urn = "urn:altinn:external-role:ccr:styreleder" },
-            new Role() { Id = Guid.Parse("38453a5d-ff7d-44eb-ba9a-92b1cd7fc98c"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Den personlege konkursen angår",                      Code = "personlige-konkurs",                    Description = "Den personlege konkursen angår", Urn = "urn:altinn:external-role:ccr:personlige-konkurs" },
-            new Role() { Id = Guid.Parse("6adad370-5524-4438-a811-932d27f655b9"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Norsk representant for utanlandsk eining",            Code = "norsk-representant",                    Description = "Fysisk- eller juridisk person som har ansvaret for den daglege drifta i Noreg", Urn = "urn:altinn:external-role:ccr:norsk-representant" },
-            new Role() { Id = Guid.Parse("49def9e7-9ea4-4f78-9013-98c9af5918d4"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Kontaktperson",                                       Code = "kontaktperson",                         Description = "Fysisk person som representerer ei verksemd", Urn = "urn:altinn:external-role:ccr:kontaktperson" },
-            new Role() { Id = Guid.Parse("1BCEEA98-3D3A-4CFB-9C1A-3D09FAD9E70B"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Kontaktperson NUF",                                   Code = "kontaktperson-nuf",                     Description = "Fysisk person som representerer ei verksemd - NUF", Urn = "urn:altinn:external-role:ccr:kontaktperson-nuf" },
-            new Role() { Id = Guid.Parse("d7ab8fd4-de81-4c82-8b0e-9cb6470a274e"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Bestyrande reder",                                    Code = "bestyrende-reder",                      Description = "Bestyrande reder", Urn = "urn:altinn:external-role:ccr:bestyrende-reder" },
-            new Role() { Id = Guid.Parse("d4f78604-db47-4ff7-8537-a4e7318e8c11"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Eigarkommune",                                        Code = "eierkommune",                           Description = "Eigarkommune", Urn = "urn:altinn:external-role:ccr:eierkommune" },
-            new Role() { Id = Guid.Parse("0610a058-2046-4fb7-8566-a7cef6515baf"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Bobestyrar",                                          Code = "bostyrer",                              Description = "Bestyrar av eit konkursbo eller dødsbo som er under offentleg skiftehandtering", Urn = "urn:altinn:external-role:ccr:bostyrer" },
+            new Role() { Id = Guid.Parse("29a24eab-a25f-445d-b56d-e3b914844853"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Nestleiar",                                           Code = "nestleder",                             Description = "Styremedlem som fungerer som styreleiar ved leiarens fråvær", Urn = "urn:altinn:external-role:ccr:nestleder" },
+            new Role() { Id = Guid.Parse("8c1e91c2-a71c-4abf-a74e-a600a98be976"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Inngår i kontorfellesskap",                           Code = "kontorfelleskapmedlem",                 Description = "Inngår i kontorfellesskap", Urn = "urn:altinn:external-role:ccr:kontorfelleskapmedlem" },
+            new Role() { Id = Guid.Parse("cfc41a92-2061-4ff4-97dc-658ffba2c00e"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Organisasjonsledd i offentleg sektor",                Code = "organisasjonsledd-offentlig-sektor",    Description = "Organisasjonsledd i offentleg sektor", Urn = "urn:altinn:external-role:ccr:organisasjonsledd-offentlig-sektor" },
+            new Role() { Id = Guid.Parse("2fec6d4b-cead-419a-adf3-1bf482a3c9dc"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Særskild oppdelt eining",                             Code = "saerskilt-oppdelt-enhet",               Description = "Særskild oppdelt eining", Urn = "urn:altinn:external-role:ccr:saerskilt-oppdelt-enhet" },
+            new Role() { Id = Guid.Parse("55bd7d4d-08dd-46ee-ac8e-3a44d800d752"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Dagleg leiar",                                        Code = "daglig-leder",                          Description = "Fysisk- eller juridisk person som har ansvaret for den daglege drifta i ei verksemd", Urn = "urn:altinn:external-role:ccr:daglig-leder" },
+            new Role() { Id = Guid.Parse("18baa914-ac43-4663-9fa4-6f5760dc68eb"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Deltakar delt ansvar",                                Code = "deltaker-delt-ansvar",                  Description = "Fysisk- eller juridisk person som har personleg ansvar for delar av selskapet sine forpliktingar", Urn = "urn:altinn:external-role:ccr:deltaker-delt-ansvar" },
+            new Role() { Id = Guid.Parse("2651ed07-f31b-4bc1-87bd-4d270742a19d"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Innehavar",                                           Code = "innehaver",                             Description = "Fysisk person som er eigar av eit enkeltpersonforetak", Urn = "urn:altinn:external-role:ccr:innehaver" },
+            new Role() { Id = Guid.Parse("f1021b8c-9fbc-4296-bd17-a05d713037ef"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Deltakar fullt ansvar",                               Code = "deltaker-fullt-ansvar",                 Description = "Fysisk- eller juridisk person som har ubegrensa, personleg ansvar for selskapet sine forpliktingar", Urn = "urn:altinn:external-role:ccr:deltaker-fullt-ansvar" },
+            new Role() { Id = Guid.Parse("d41d67f2-15b0-4c82-95db-b8d5baaa14a4"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Varamedlem",                                          Code = "varamedlem",                            Description = "Fysisk- eller juridisk person som er staden for eit styremedlem", Urn = "urn:altinn:external-role:ccr:varamedlem" },
+            new Role() { Id = Guid.Parse("1f8a2518-9494-468a-80a0-7405f0daf9e9"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Observatør",                                          Code = "observator",                            Description = "Fysisk person som deltek i styremøter i ei verksemd, men utan stemmerett", Urn = "urn:altinn:external-role:ccr:observator" },
+            new Role() { Id = Guid.Parse("f045ffda-dbdc-41da-b674-b9b276ad5b01"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Styremedlem",                                         Code = "styremedlem",                           Description = "Fysisk- eller juridisk person som inngår i eit styre", Urn = "urn:altinn:external-role:ccr:styremedlem" },
+            new Role() { Id = Guid.Parse("9e5d3acf-cef7-4bbe-b101-8e9ab7b8b3e4"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Styrets leiar",                                       Code = "styreleder",                            Description = "Fysisk- eller juridisk person som er styremedlem og leiar eit styre", Urn = "urn:altinn:external-role:ccr:styreleder" },
+            new Role() { Id = Guid.Parse("2e2fc06e-d9b7-4cd9-91bc-d5de766d20de"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Den personlege konkursen angår",                      Code = "personlige-konkurs",                    Description = "Den personlege konkursen angår", Urn = "urn:altinn:external-role:ccr:personlige-konkurs" },
+            new Role() { Id = Guid.Parse("e852d758-e8dd-41ec-a1e2-4632deb6857d"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Norsk representant for utanlandsk eining",            Code = "norsk-representant",                    Description = "Fysisk- eller juridisk person som har ansvaret for den daglege drifta i Noreg", Urn = "urn:altinn:external-role:ccr:norsk-representant" },
+            new Role() { Id = Guid.Parse("db013059-4a8a-442d-bf90-b03539fe5dda"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Kontaktperson",                                       Code = "kontaktperson",                         Description = "Fysisk person som representerer ei verksemd", Urn = "urn:altinn:external-role:ccr:kontaktperson" },
+            new Role() { Id = Guid.Parse("69c4397a-9e34-4e73-9f69-534bc1bb74c8"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Kontaktperson NUF",                                   Code = "kontaktperson-nuf",                     Description = "Fysisk person som representerer ei verksemd - NUF", Urn = "urn:altinn:external-role:ccr:kontaktperson-nuf" },
+            new Role() { Id = Guid.Parse("8f0cf433-954e-4680-a25d-a3cf9ffdf149"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Bestyrande reder",                                    Code = "bestyrende-reder",                      Description = "Bestyrande reder", Urn = "urn:altinn:external-role:ccr:bestyrende-reder" },
+            new Role() { Id = Guid.Parse("9ce84a4d-4970-4ef2-8208-b8b8f4d45556"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Eigarkommune",                                        Code = "eierkommune",                           Description = "Eigarkommune", Urn = "urn:altinn:external-role:ccr:eierkommune" },
+            new Role() { Id = Guid.Parse("2cacfb35-2346-4a8d-95f6-b6fa4206881c"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Bobestyrar",                                          Code = "bostyrer",                              Description = "Bestyrar av eit konkursbo eller dødsbo som er under offentleg skiftehandtering", Urn = "urn:altinn:external-role:ccr:bostyrer" },
             new Role() { Id = Guid.Parse("e4674211-034a-45f3-99ac-b2356984968a"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Helseforetak",                                        Code = "helseforetak",                          Description = "Helseforetak", Urn = "urn:altinn:external-role:ccr:helseforetak" },
-            new Role() { Id = Guid.Parse("63b5255d-4776-4ba1-bed2-c950bb5b04ab"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Revisor",                                             Code = "revisor",                               Description = "Revisor", Urn = "urn:altinn:external-role:ccr:revisor" },
-            new Role() { Id = Guid.Parse("e207eaf7-afde-452c-a1ba-ce7ba9305bcc"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Forretningsførar",                                    Code = "forretningsforer",                      Description = "Forretningsførar", Urn = "urn:altinn:external-role:ccr:forretningsforer" },
-            new Role() { Id = Guid.Parse("1005e523-9423-4037-92e7-d23dee6a9813"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Komplementar",                                        Code = "komplementar",                          Description = "Komplementar", Urn = "urn:altinn:external-role:ccr:komplementar" },
-            new Role() { Id = Guid.Parse("e4df5308-56ed-4301-ae53-ef67da3a57e9"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Konkursdebitor",                                      Code = "konkursdebitor",                        Description = "Konkursdebitor", Urn = "urn:altinn:external-role:ccr:konkursdebitor" },
-            new Role() { Id = Guid.Parse("3bdd603a-dbe0-4caa-bc97-f0b6a1675b15"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Inngår i kyrkjeleg fellesråd",                        Code = "kirkelig-fellesraad",                   Description = "Inngår i kyrkjeleg fellesråd", Urn = "urn:altinn:external-role:ccr:kirkelig-fellesraad" },
-            new Role() { Id = Guid.Parse("38c368c1-c9f4-4b01-a296-f1ef7e466c13"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Opplysningar om foretaket i heimalandet",             Code = "hovedforetak",                          Description = "Opplysningar om foretaket i heimalandet", Urn = "urn:altinn:external-role:ccr:hovedforetak" },
-            new Role() { Id = Guid.Parse("303d78e8-a658-454d-88ae-f836596982c7"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Reknskapsførar",                                      Code = "regnskapsforer",                        Description = "Reknskapsførar", Urn = "urn:altinn:external-role:ccr:regnskapsforer" }
+            new Role() { Id = Guid.Parse("f76b997a-9bd8-4f7b-899f-fcd85d35669f"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Revisor",                                             Code = "revisor",                               Description = "Revisor", Urn = "urn:altinn:external-role:ccr:revisor" },
+            new Role() { Id = Guid.Parse("348b2f47-47ee-4084-abf8-68aa54c2b27f"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Forretningsførar",                                    Code = "forretningsforer",                      Description = "Forretningsførar", Urn = "urn:altinn:external-role:ccr:forretningsforer" },
+            new Role() { Id = Guid.Parse("cfcf75af-9902-41f7-ab47-b77ba60bcae5"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Komplementar",                                        Code = "komplementar",                          Description = "Komplementar", Urn = "urn:altinn:external-role:ccr:komplementar" },
+            new Role() { Id = Guid.Parse("50cc3f41-4dde-4417-8c04-eea428f169dd"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Konkursdebitor",                                      Code = "konkursdebitor",                        Description = "Konkursdebitor", Urn = "urn:altinn:external-role:ccr:konkursdebitor" },
+            new Role() { Id = Guid.Parse("d78dd1d8-a3f3-4ae6-807e-ea5149f47035"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Inngår i kyrkjeleg fellesråd",                        Code = "kirkelig-fellesraad",                   Description = "Inngår i kyrkjeleg fellesråd", Urn = "urn:altinn:external-role:ccr:kirkelig-fellesraad" },
+            new Role() { Id = Guid.Parse("185f623b-f614-4a83-839c-1788764bd253"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Opplysningar om foretaket i heimalandet",             Code = "hovedforetak",                          Description = "Opplysningar om foretaket i heimalandet", Urn = "urn:altinn:external-role:ccr:hovedforetak" },
+            new Role() { Id = Guid.Parse("46e27685-b3ba-423e-8b42-faab54de5817"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Reknskapsførar",                                      Code = "regnskapsforer",                        Description = "Reknskapsførar", Urn = "urn:altinn:external-role:ccr:regnskapsforer" }
         };
 
         foreach (var item in roles)
         {
-            await roleService.Upsert(item, cancellationToken);
+            await roleService.Upsert(item, options: options, cancellationToken: cancellationToken);
         }
 
         foreach (var item in rolesEng)
         {
-            await roleService.UpsertTranslation(item.Id, item, "eng", cancellationToken);
+            await roleService.UpsertTranslation(item.Id, item, "eng", options: options, cancellationToken: cancellationToken);
         }
 
         foreach (var item in rolesNno)
         {
-            await roleService.UpsertTranslation(item.Id, item, "nno", cancellationToken);
+            await roleService.UpsertTranslation(item.Id, item, "nno", options: options, cancellationToken: cancellationToken);
         }
 
-        await RoleLookup(roles, cancellationToken);
+        await RoleLookup(roles, options: options, cancellationToken: cancellationToken);
     }
 
-    private async Task RoleLookup(List<Role> roles, CancellationToken cancellationToken = default)
+    private async Task RoleLookup(List<Role> roles, ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         var urn = new List<RoleLookup>
         {
@@ -658,8 +708,8 @@ public class DbDataMigrationService(
             new GenericParameter("Key", "Key")
         };
 
-        await ingestService.IngestAndMergeData(erCodes, mergeFilter, cancellationToken);
-        await ingestService.IngestAndMergeData(urn, mergeFilter, cancellationToken);
+        await ingestService.IngestAndMergeData(erCodes, options: options, mergeFilter, cancellationToken);
+        await ingestService.IngestAndMergeData(urn, options: options, mergeFilter, cancellationToken);
     }
 
     /// <summary>
@@ -667,7 +717,7 @@ public class DbDataMigrationService(
     /// </summary>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    public async Task IngestRoleMap(CancellationToken cancellationToken = default)
+    public async Task IngestRoleMap(ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         var roleDagl = (await roleService.Get(t => t.Urn, "urn:altinn:external-role:ccr:daglig-leder")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("Role not found '{0}'", "daglig-leder"));
         var roleLede = (await roleService.Get(t => t.Urn, "urn:altinn:external-role:ccr:styreleder")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("Role not found '{0}'", "styreleder"));
@@ -727,7 +777,7 @@ public class DbDataMigrationService(
             new RoleMap() { HasRoleId = roleKnuf, GetRoleId = roleMPA }
         };
 
-        await ingestService.IngestAndMergeData(roleMaps, null, cancellationToken);
+        await ingestService.IngestAndMergeData(roleMaps, options: options, null, cancellationToken);
     }
 
     /// <summary>
@@ -735,7 +785,7 @@ public class DbDataMigrationService(
     /// </summary>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    public async Task IngestAreaGroup(CancellationToken cancellationToken = default)
+    public async Task IngestAreaGroup(ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         var orgEntityTypeId = (await entityTypeService.Get(t => t.Name, "Organisasjon")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("EntityType not found '{0}'", "Organisasjon"));
 
@@ -762,17 +812,17 @@ public class DbDataMigrationService(
 
         foreach (var item in areaGroups)
         {
-            await areaGroupService.Upsert(item, cancellationToken);
+            await areaGroupService.Upsert(item, options: options, cancellationToken: cancellationToken);
         }
 
         foreach (var item in areaGroupsEng)
         {
-            await areaGroupService.UpsertTranslation(item.Id, item, "eng", cancellationToken);
+            await areaGroupService.UpsertTranslation(item.Id, item, "eng", options: options, cancellationToken: cancellationToken);
         }
 
         foreach (var item in areaGroupsNno)
         {
-            await areaGroupService.UpsertTranslation(item.Id, item, "nno", cancellationToken);
+            await areaGroupService.UpsertTranslation(item.Id, item, "nno", options: options, cancellationToken: cancellationToken);
         }
     }
 
@@ -781,7 +831,7 @@ public class DbDataMigrationService(
     /// </summary>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    public async Task IngestArea(CancellationToken cancellationToken = default)
+    public async Task IngestArea(ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         var areas = new List<Area>()
         {
@@ -857,17 +907,17 @@ public class DbDataMigrationService(
 
         foreach (var item in areas)
         {
-            await areaService.Upsert(item, cancellationToken);
+            await areaService.Upsert(item, options: options, cancellationToken: cancellationToken);
         }
 
         foreach (var item in areasEng)
         {
-            await areaService.UpsertTranslation(item.Id, item, "eng", cancellationToken);
+            await areaService.UpsertTranslation(item.Id, item, "eng", options: options, cancellationToken: cancellationToken);
         }
 
         foreach (var item in areasNno)
         {
-            await areaService.UpsertTranslation(item.Id, item, "eng", cancellationToken);
+            await areaService.UpsertTranslation(item.Id, item, "eng", options: options, cancellationToken: cancellationToken);
         }
     }
 
@@ -876,7 +926,7 @@ public class DbDataMigrationService(
     /// </summary>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    public async Task IngestPackage(CancellationToken cancellationToken = default)
+    public async Task IngestPackage(ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         //// TODO: Translate
 
@@ -1031,7 +1081,7 @@ public class DbDataMigrationService(
             new Package() { Id = Guid.Parse("0e219609-02c6-44e6-9c80-fe2c1997940e"), ProviderId = provider, EntityTypeId = orgEntityType, AreaId = area_fullmakter_for_konkursbo, Urn = "urn:altinn:accesspackage:konkursbo-skrivetilgang", Name = "Konkursbo skrivetilgang", Description = "Denne fullmakten gir bostyrers medhjelper tilgang til å jobbe på vegne av bostyrer. Bostyrer delegerer denne fullmakten sammen med Konkursbo lesetilgang til medhjelper for hvert konkursbo.", IsDelegable = true, HasResources = true },
         };
 
-        await ingestService.IngestAndMergeData(packages, null, cancellationToken);
+        await ingestService.IngestAndMergeData(packages, options: options, null, cancellationToken);
     }
 
     /// <summary>
@@ -1039,7 +1089,7 @@ public class DbDataMigrationService(
     /// </summary>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    public async Task IngestRolePackage(CancellationToken cancellationToken = default)
+    public async Task IngestRolePackage(ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         var packages = new Dictionary<string, Guid>();
         foreach (var pack in await packageService.Get())
@@ -1934,7 +1984,7 @@ public class DbDataMigrationService(
             new RolePackage() { RoleId = roles["urn:altinn:role:hovedadministrator"], PackageId = packages["urn:altinn:accesspackage:post-til-virksomheten-med-taushetsbelagt-innhold"], EntityVariantId = null, CanDelegate = true, HasAccess = false },
         };
 
-        await ingestService.IngestAndMergeData(rolePackages, null, cancellationToken);
+        await ingestService.IngestAndMergeData(rolePackages, options: options, null, cancellationToken);
     }
 
     /// <summary>
@@ -1942,7 +1992,7 @@ public class DbDataMigrationService(
     /// </summary>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    public async Task IngestEntityVariantRole(CancellationToken cancellationToken = default)
+    public async Task IngestEntityVariantRole(ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         var roles = new Dictionary<string, Guid>();
         foreach (var role in await roleService.Get())
@@ -2331,6 +2381,6 @@ public class DbDataMigrationService(
             new EntityVariantRole() { Id = Guid.Parse("a3719e58-286d-4395-95b0-1a654f2eeafa"), VariantId = variants["VPFO"], RoleId = roles["urn:altinn:external-role:ccr:daglig-leder"] },
         };
 
-        await ingestService.IngestAndMergeData(variantRoles, null, cancellationToken);
+        await ingestService.IngestAndMergeData(variantRoles, options: options, null, cancellationToken);
     }
 }

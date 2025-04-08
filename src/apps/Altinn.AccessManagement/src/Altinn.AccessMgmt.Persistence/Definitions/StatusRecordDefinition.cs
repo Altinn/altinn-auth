@@ -17,6 +17,10 @@ public class StatusRecordDefinition : BaseDbDefinition<StatusRecord>, IDbDefinit
     {
         definitionRegistry.Define<StatusRecord>(def =>
         {
+            def.SetVersion(2);
+
+            def.EnableAudit();
+
             def.RegisterPrimaryKey([t => t.Id]);
 
             def.RegisterProperty(t => t.Id);

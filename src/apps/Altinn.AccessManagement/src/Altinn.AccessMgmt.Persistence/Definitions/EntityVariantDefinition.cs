@@ -17,7 +17,7 @@ public class EntityVariantDefinition : BaseDbDefinition<EntityVariant>, IDbDefin
     {
         definitionRegistry.Define<EntityVariant>(def =>
         {
-            def.EnableHistory();
+            def.EnableAudit();
             def.EnableTranslation();
             def.RegisterPrimaryKey([t => t.Id]);
             def.RegisterProperty(t => t.Id);

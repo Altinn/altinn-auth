@@ -17,7 +17,7 @@ public class RoleDefinition : BaseDbDefinition<Role>, IDbDefinition
     {
         definitionRegistry.Define<Role>(def =>
         {
-            def.EnableHistory();
+            def.EnableAudit();
             def.EnableTranslation();
             def.RegisterPrimaryKey([t => t.Id]);
             def.RegisterProperty(t => t.Id);

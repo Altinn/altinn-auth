@@ -1,4 +1,5 @@
 ﻿using Altinn.AccessMgmt.Core.Models;
+using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using System;
 
@@ -8,7 +9,7 @@ public class StatusService(IStatusRecordRepository statusRecordRepository) : ISt
 {
     private readonly IStatusRecordRepository statusRecordRepository = statusRecordRepository;
     
-    public async Task<StatusRecord> GetOrCreateRecord(Guid id, string name, int limit = 5)
+    public async Task<StatusRecord> GetOrCreateRecord(Guid id, string name, ChangeRequestOptions options, int limit = 5)
     {
         var status = await statusRecordRepository.Get(id);
         if (status == null)
@@ -21,25 +22,25 @@ public class StatusService(IStatusRecordRepository statusRecordRepository) : ISt
                 Message = "Initial",
                 Payload = "[]",
                 State = "RUNNING",
-                Timestamp = DateTimeOffset.Now
+                Timestamp = DateTimeOffset.UtcNow
             };
 
-            await statusRecordRepository.Upsert(status);
+            await statusRecordRepository.Upsert(status, options);
         }
 
         return status;
     }
 
-    public async Task RunFailed(StatusRecord record, Exception exception)
+    public async Task RunFailed(StatusRecord record, Exception exception, ChangeRequestOptions options)
     {
         record.State = "RETRY";
         record.Message = exception.Message;
         record.Payload = "[]";
-        record.Timestamp = DateTimeOffset.Now;
-        await statusRecordRepository.Upsert(record);
+        record.Timestamp = DateTimeOffset.UtcNow;
+        await statusRecordRepository.Upsert(record, options);
     }
 
-    public async Task RunSuccess(StatusRecord record)
+    public async Task RunSuccess(StatusRecord record, ChangeRequestOptions options)
     {
         if (record.State != "RUNNING" || record.Timestamp.AddMinutes(15) < DateTimeOffset.Now)
         {
@@ -47,12 +48,12 @@ public class StatusService(IStatusRecordRepository statusRecordRepository) : ISt
             record.RetryCount = 0;
             record.Message = "Ok";
             record.Payload = "[]";
-            record.Timestamp = DateTimeOffset.Now;
-            await statusRecordRepository.Upsert(record);
+            record.Timestamp = DateTimeOffset.UtcNow;
+            await statusRecordRepository.Upsert(record, options);
         }
     }
 
-    public async Task<bool> TryToRun(StatusRecord record)
+    public async Task<bool> TryToRun(StatusRecord record, ChangeRequestOptions options)
     {
         if (record.State == "STOPPED")
         {
@@ -62,8 +63,8 @@ public class StatusService(IStatusRecordRepository statusRecordRepository) : ISt
         if (record.RetryCount >= record.RetryLimit)
         {
             record.State = "STOPPED";
-            record.Timestamp = DateTimeOffset.Now;
-            await statusRecordRepository.Upsert(record);
+            record.Timestamp = DateTimeOffset.UtcNow;
+            await statusRecordRepository.Upsert(record, options);
             return false;
         }
 
@@ -72,8 +73,8 @@ public class StatusService(IStatusRecordRepository statusRecordRepository) : ISt
             record.RetryCount += 1;
         }
 
-        record.Timestamp = DateTimeOffset.Now;
-        await statusRecordRepository.Upsert(record);
+        record.Timestamp = DateTimeOffset.UtcNow;
+        await statusRecordRepository.Upsert(record, options);
 
         return true;
     }
@@ -81,10 +82,11 @@ public class StatusService(IStatusRecordRepository statusRecordRepository) : ISt
 
 public interface IStatusService
 {
-    Task<StatusRecord> GetOrCreateRecord(Guid id, string name, int limit = 5);
+    Task<StatusRecord> GetOrCreateRecord(Guid id, string name, ChangeRequestOptions options, int limit = 5);
 
-    Task<bool> TryToRun(StatusRecord record);
+    Task<bool> TryToRun(StatusRecord record, ChangeRequestOptions options);
 
-    Task RunSuccess(StatusRecord record);
-    Task RunFailed(StatusRecord record, Exception exception);
+    Task RunSuccess(StatusRecord record, ChangeRequestOptions options);
+
+    Task RunFailed(StatusRecord record, Exception exception, ChangeRequestOptions options);
 }

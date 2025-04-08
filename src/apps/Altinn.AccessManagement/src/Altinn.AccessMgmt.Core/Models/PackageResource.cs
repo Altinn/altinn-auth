@@ -42,5 +42,5 @@ public class ExtPackageResource : PackageResource
     /// <summary>
     /// Resource
     /// </summary>
-    public ExtResource Resource { get; set; }
+    public Resource Resource { get; set; }
 }

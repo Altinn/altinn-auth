@@ -1,10 +1,5 @@
-using System.Data;
-using System.Data.Common;
-using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessMgmt.Persistence.Core.Contracts;
-using Altinn.AccessMgmt.Persistence.Core.Definitions;
 using Altinn.AccessMgmt.Persistence.Core.Models;
-using Altinn.AccessMgmt.Persistence.Core.QueryBuilders;
 using Altinn.AccessMgmt.Persistence.Core.Utilities;
 using Microsoft.Data.SqlClient;
 

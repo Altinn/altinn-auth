@@ -51,5 +51,5 @@ public class StatusRecord
     /// <summary>
     /// Last update timestamp
     /// </summary>
-    public DateTimeOffset Timestamp { get; set; }
+    public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
 }

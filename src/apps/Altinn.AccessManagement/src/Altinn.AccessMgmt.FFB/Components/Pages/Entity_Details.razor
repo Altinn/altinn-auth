@@ -1,4 +1,5 @@
 ﻿@page "/entity/{Id:guid}"
+@using Altinn.AccessMgmt.Persistence.Data
 @inject IEntityRepository entityData
 @inject IAssignmentRepository assignmentData
 @inject IEntityRepository entityService
@@ -415,11 +416,17 @@
 
         int createCount = 0;
 
+        var options = new ChangeRequestOptions()
+        {
+            ChangedBy = AuditDefaults.EnduserApi, // TODO: Get UserId
+            ChangedBySystem = AuditDefaults.EnduserApi
+        };
+
         foreach (var role in CreateAssignmentRoles.Where(t => t.Value))
         {
             foreach(var to in CreateAssignmentPerson.Where(t => t.Value))
             {
-                await assignmentService.Create(new Assignment() { FromId = Entity.Id, RoleId = role.Key, ToId = to.Key });
+                await assignmentService.Create(new Assignment() { FromId = Entity.Id, RoleId = role.Key, ToId = to.Key }, options);
                 createCount++;
             }
         }

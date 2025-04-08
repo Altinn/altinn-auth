@@ -29,14 +29,23 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
         /// <summary>
         /// Sets whether the entity is a view.
         /// </summary>
-        /// <param name="value">Default: true</param>
-        /// <param name="version">View version to trigger recreate (default: 1)</param>
+        /// <param name="version">Default: 1</param>
         /// <returns></returns>
-        public DbDefinitionBuilder<T> IsView(bool value = true, int version = 1)
+        public DbDefinitionBuilder<T> SetVersion(int version = 1)
         {
             // Add view script??
+            DbDefinition.Version = version;
+            return this;
+        }
+
+        /// <summary>
+        /// Sets whether the entity is a view.
+        /// </summary>
+        /// <param name="value">Default: true</param>
+        /// <returns></returns>
+        public DbDefinitionBuilder<T> IsView(bool value = true)
+        {
             DbDefinition.IsView = value;
-            DbDefinition.ViewVersion = version;
             return this;
         }
 
@@ -68,7 +77,7 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
         /// <returns>The current <see cref="DbDefinitionBuilder{T}"/> instance for fluent chaining.</returns>
         public DbDefinitionBuilder<T> EnableTranslation(bool value = true)
         {
-            DbDefinition.HasTranslation = value;
+            DbDefinition.EnableTranslation = value;
             return this;
         }
 
@@ -77,9 +86,9 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
         /// </summary>
         /// <param name="value">If set to <c>true</c>, history is enabled; otherwise, it is disabled.</param>
         /// <returns>The current <see cref="DbDefinitionBuilder{T}"/> instance for fluent chaining.</returns>
-        public DbDefinitionBuilder<T> EnableHistory(bool value = true)
+        public DbDefinitionBuilder<T> EnableAudit(bool value = true)
         {
-            DbDefinition.HasHistory = value;
+            DbDefinition.EnableAudit = value;
             return this;
         }
 

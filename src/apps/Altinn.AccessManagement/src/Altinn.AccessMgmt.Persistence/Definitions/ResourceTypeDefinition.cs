@@ -17,7 +17,7 @@ public class ResourceTypeDefinition : BaseDbDefinition<ResourceType>, IDbDefinit
     {
         definitionRegistry.Define<ResourceType>(def =>
         {
-            def.EnableHistory();
+            def.EnableAudit();
             def.EnableTranslation();
             def.RegisterPrimaryKey([t => t.Id]);
             def.RegisterProperty(t => t.Id);

@@ -46,12 +46,12 @@ public class ExtInheritedAssignment : InheritedAssignment
     /// <summary>
     /// From (Entity)
     /// </summary>
-    public ExtEntity From { get; set; }
+    public Entity From { get; set; }
 
     /// <summary>
     /// To (Entity)
     /// </summary>
-    public ExtEntity To { get; set; }
+    public Entity To { get; set; }
 
     /// <summary>
     /// This role is assigned to the entity

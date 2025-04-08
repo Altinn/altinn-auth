@@ -17,9 +17,9 @@ public class InheritedAssignmentDefinition : BaseDbDefinition<InheritedAssignmen
     {
         definitionRegistry.Define<InheritedAssignment>(def =>
         {
+            def.SetVersion(2);
             def.IsView();
-            //// def.EnableHistory();
-            //// def.EnableTranslation();
+
             def.RegisterProperty(t => t.Id);
             def.RegisterProperty(t => t.FromId);
             def.RegisterProperty(t => t.ToId);

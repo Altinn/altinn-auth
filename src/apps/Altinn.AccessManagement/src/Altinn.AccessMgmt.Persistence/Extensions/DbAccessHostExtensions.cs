@@ -6,10 +6,10 @@ using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Services;
 using Altinn.AccessMgmt.Persistence.Core.Utilities;
 using Altinn.AccessMgmt.Persistence.Core.Utilities.Search;
+using Altinn.AccessMgmt.Persistence.Data;
 using Altinn.AccessMgmt.Persistence.Data.Mock;
 using Altinn.AccessMgmt.Persistence.Services;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
-using Altinn.AccessMgmt.Repo.Data;
 using Altinn.Authorization.Host.Startup;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -127,10 +127,12 @@ public static partial class DbAccessHostExtensions
         var dbIngest = host.Services.GetRequiredService<DbDataMigrationService>();
         await dbIngest.IngestAll();
 
+        /*
         //// TODO: Add FeatureFlag
-        //// var mockService = host.Services.GetRequiredService<MockDataService>();
-        //// await mockService.GenerateBasicData();
-        //// await mockService.GeneratePackageResources();
+        // var mockService = host.Services.GetRequiredService<MockDataService>();
+        // await mockService.GenerateBasicData();
+        // await mockService.GeneratePackageResources();
+        */
 
         return host;
     }

@@ -1,4 +1,5 @@
 ﻿using Altinn.AccessMgmt.Core.Models;
+using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Models;
@@ -64,11 +65,12 @@ public class DelegationService(
         {
             return false;
         }
+
         return true;
     }
 
     /// <inheritdoc/>
-    public async Task<ExtDelegation> CreateDelgation(Guid userId, Guid fromAssignmentId, Guid toAssignmentId)
+    public async Task<ExtDelegation> CreateDelgation(Guid userId, Guid fromAssignmentId, Guid toAssignmentId, ChangeRequestOptions options)
     {
         var fromAssignment = await assignmentRepository.GetExtended(fromAssignmentId);
         var toAssignment = await assignmentRepository.GetExtended(toAssignmentId);
@@ -87,7 +89,7 @@ public class DelegationService(
             ToId = toAssignmentId
         };
 
-        var res = await delegationRepository.Create(delegation);
+        var res = await delegationRepository.Create(delegation, options: options);
         if (res == 0)
         {
             throw new Exception("Failed to create delegation");
@@ -97,7 +99,7 @@ public class DelegationService(
     }
 
     /// <inheritdoc/>
-    public async Task<bool> AddPackageToDelegation(Guid userId, Guid delegationId, Guid packageId)
+    public async Task<bool> AddPackageToDelegation(Guid userId, Guid delegationId, Guid packageId, ChangeRequestOptions options)
     {
         /* 
         [X] Check if user is DelegationAdmin on ViaId 
@@ -125,16 +127,20 @@ public class DelegationService(
             throw new Exception($"The source assignment does not have the package '{package.Name}'");
         }
 
-        var res = await delegationPackageRepository.Create(new DelegationPackage() { 
-            DelegationId = delegationId,
-            PackageId = packageId
-        });
+        var res = await delegationPackageRepository.Create(
+            new DelegationPackage() 
+            { 
+                DelegationId = delegationId,
+                PackageId = packageId
+            },
+            options: options
+        );
 
         return res > 0;
     }
 
     /// <inheritdoc/>
-    public async Task<bool> AddResourceToDelegation(Guid userId, Guid delegationId, Guid resourceId)
+    public async Task<bool> AddResourceToDelegation(Guid userId, Guid delegationId, Guid resourceId, ChangeRequestOptions options)
     {
         /*
         [ ] Check i Pacakge is Delegable (?)
@@ -171,20 +177,23 @@ public class DelegationService(
             throw new Exception($"The source assignment does not have the resource '{resource.Name}'");
         }
 
-        var res = await delegationResourceRepository.Create(new DelegationResource()
-        {
-            DelegationId = delegationId,
-            ResourceId = resourceId
-        });
+        var res = await delegationResourceRepository.Create(
+            new DelegationResource()
+            {
+                DelegationId = delegationId,
+                ResourceId = resourceId
+            },
+            options: options
+        );
 
         return res > 0;
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<Delegation>> CreateClientDelegation(CreateSystemDelegationRequestDto request, Guid userId, Guid facilitatorPartyId)
+    public async Task<IEnumerable<Delegation>> CreateClientDelegation(CreateSystemDelegationRequestDto request, Guid facilitatorPartyId, ChangeRequestOptions options)
     {
         // Find user : Fredrik
-        var user = (await entityRepository.Get(userId)) ?? throw new Exception(string.Format("Party not found '{0}' for user", userId));
+        var user = (await entityRepository.Get(options.ChangedBy)) ?? throw new Exception(string.Format("Party not found '{0}' for user", options.ChangedBy));
 
         // Find Facilitator : Regnskapsfolk
         var facilitator = (await entityRepository.Get(facilitatorPartyId)) ?? throw new Exception(string.Format("Party not found '{0}' for facilitator", facilitatorPartyId));
@@ -195,19 +204,18 @@ public class DelegationService(
         var agentRole = await GetRole(request.AgentRole) ?? throw new Exception(string.Format("Role not found '{0}'", request.AgentRole));
 
         // Find Agent
-        var agent = await GetOrCreateEntity(request.AgentId, request.AgentName, request.AgentId.ToString(), "Systembruker", "System") ?? throw new Exception(string.Format("Could not find or create party '{0}' for agent", request.AgentId));
+        var agent = await GetOrCreateEntity(request.AgentId, request.AgentName, request.AgentId.ToString(), "Systembruker", "System", options) ?? throw new Exception(string.Format("Could not find or create party '{0}' for agent", request.AgentId));
         
         // Find ClientId : Bakeriet
         var client = (await entityRepository.Get(request.ClientId)) ?? throw new Exception(string.Format("Party not found '{0}' for client", request.ClientId));
 
         // Find or Create Agent Assignment : Regnskapsfolk - AGENT - SystemBruker01
-        var agentAssignment = await GetOrCreateAssignment(facilitator, agent, agentRole) ?? throw new Exception(string.Format("Could not find or create assignment '{0}' - {1} - {2}", facilitator.Name, agentRole.Code, agent.Name));
+        var agentAssignment = await GetOrCreateAssignment(facilitator, agent, agentRole, options) ?? throw new Exception(string.Format("Could not find or create assignment '{0}' - {1} - {2}", facilitator.Name, agentRole.Code, agent.Name));
 
-
-        return await CreateClientDelegations(request.RolePackages, client, facilitator, agentAssignment);
+        return await CreateClientDelegations(request.RolePackages, client, facilitator, agentAssignment, options);
     }
 
-    private async Task<IEnumerable<Delegation>> CreateClientDelegations(List<CreateSystemDelegationRolePackageDto> rolepackages, Entity client, Entity facilitator, Assignment agentAssignment)
+    private async Task<IEnumerable<Delegation>> CreateClientDelegations(List<CreateSystemDelegationRolePackageDto> rolepackages, Entity client, Entity facilitator, Assignment agentAssignment, ChangeRequestOptions options)
     {
         var result = new List<Delegation>();
 
@@ -223,10 +231,10 @@ public class DelegationService(
             var clientRole = (await roleRepository.Get(t => t.Code, rp.Key)).First() ?? throw new Exception(string.Format("Role not found '{0}'", rp.Key));
 
             // Find ClientAssignment : Bakeriet - (REGN) - Regnskapsfolk 
-            var clientAssignment = await GetOrCreateAssignment(client, facilitator, clientRole) ?? throw new Exception(string.Format("Could not find or create assignment '{0}' - {1} - {2}", client.Name, clientRole.Code, facilitator.Name));
+            var clientAssignment = await GetOrCreateAssignment(client, facilitator, clientRole, options) ?? throw new Exception(string.Format("Could not find or create assignment '{0}' - {1} - {2}", client.Name, clientRole.Code, facilitator.Name));
 
             // Find or create Delegation : Bakeriet - Regnskapsfolka - SystemBruker01
-            var delegation = await GetOrCreateDelegation(clientAssignment, agentAssignment, facilitator) ?? throw new Exception(string.Format("Could not find or create delegation '{0}' - {1} - {2}", client.Name, facilitator.Name, agentAssignment.Id));
+            var delegation = await GetOrCreateDelegation(clientAssignment, agentAssignment, facilitator, options) ?? throw new Exception(string.Format("Could not find or create delegation '{0}' - {1} - {2}", client.Name, facilitator.Name, agentAssignment.Id));
 
             foreach (var package in rp.Value)
             {
@@ -250,7 +258,7 @@ public class DelegationService(
                 }
 
                 // Find or Create DelegationPackage
-                var delegationPackage = await GetOrCreateDelegationPackage(delegation.Id, repoPackage.Id);
+                var delegationPackage = await GetOrCreateDelegationPackage(delegation.Id, repoPackage.Id, options);
                 if (delegationPackage == null)
                 {
                     throw new Exception("Unable to add package to delegation");
@@ -263,7 +271,7 @@ public class DelegationService(
         return result;
     }
 
-    private async Task<DelegationPackage> GetOrCreateDelegationPackage(Guid delegationId, Guid packageId)
+    private async Task<DelegationPackage> GetOrCreateDelegationPackage(Guid delegationId, Guid packageId, ChangeRequestOptions options)
     {
         var delegationPackageFilter = delegationPackageRepository.CreateFilterBuilder();
         delegationPackageFilter.Equal(t => t.DelegationId, delegationId);
@@ -271,11 +279,15 @@ public class DelegationService(
         var delegationPackage = (await delegationPackageRepository.Get(delegationPackageFilter)).FirstOrDefault();
         if (delegationPackage == null)
         {
-            var res = await delegationPackageRepository.Create(new DelegationPackage()
-            {
-                DelegationId = delegationId,
-                PackageId = packageId
-            });
+            var res = await delegationPackageRepository.Create(
+                new DelegationPackage()
+                {
+                    DelegationId = delegationId,
+                    PackageId = packageId
+                },
+                options: options
+            );
+
             return (await delegationPackageRepository.Get(delegationPackageFilter)).FirstOrDefault();
         }
         else
@@ -284,7 +296,7 @@ public class DelegationService(
         }
     }
 
-    private async Task<Delegation> GetOrCreateDelegation(Assignment from, Assignment to, Entity facilitator)
+    private async Task<Delegation> GetOrCreateDelegation(Assignment from, Assignment to, Entity facilitator, ChangeRequestOptions options)
     {
         var delegationFilter = delegationRepository.CreateFilterBuilder();
         delegationFilter.Equal(t => t.FromId, from.Id);
@@ -293,12 +305,15 @@ public class DelegationService(
         var delegation = (await delegationRepository.Get(delegationFilter)).FirstOrDefault();
         if (delegation == null)
         {
-            var res = await delegationRepository.Create(new Delegation()
-            {
-                FromId = from.Id,
-                ToId = to.Id,
-                FacilitatorId = facilitator.Id
-            });
+            var res = await delegationRepository.Create(
+                new Delegation()
+                {
+                    FromId = from.Id,
+                    ToId = to.Id,
+                    FacilitatorId = facilitator.Id
+                },
+                options: options
+            );
 
             return (await delegationRepository.Get(delegationFilter)).FirstOrDefault();
         }
@@ -308,7 +323,7 @@ public class DelegationService(
         }
     }
 
-    private async Task<Entity> GetOrCreateEntity(Guid id, string name, string refId, string type, string variant)
+    private async Task<Entity> GetOrCreateEntity(Guid id, string name, string refId, string type, string variant, ChangeRequestOptions options)
     {
         var entity = await entityRepository.Get(id);
         if (entity != null)
@@ -322,19 +337,22 @@ public class DelegationService(
         variantFilter.Equal(t => t.Name, variant);
         var entityVariant = (await entityVariantRepository.Get(variantFilter)).First() ?? throw new Exception(string.Format("Variant not found '{0}'", type));
 
-        await entityRepository.Create(new Entity()
-        {
-            Id = id,
-            Name = name,
-            RefId = refId,
-            TypeId = entityType.Id,
-            VariantId = entityVariant.Id
-        });
+        await entityRepository.Create(
+            new Entity()
+            {
+                Id = id,
+                Name = name,
+                RefId = refId,
+                TypeId = entityType.Id,
+                VariantId = entityVariant.Id
+            },
+            options: options
+            );
 
         return await entityRepository.Get(id);
     }
 
-    private async Task<Assignment> GetOrCreateAssignment(Entity from, Entity to, Role role)
+    private async Task<Assignment> GetOrCreateAssignment(Entity from, Entity to, Role role, ChangeRequestOptions options)
     {
         var filter = assignmentRepository.CreateFilterBuilder();
         filter.Equal(t => t.RoleId, role.Id);
@@ -349,17 +367,20 @@ public class DelegationService(
         else
         {
             var roleProvider = await providerRepository.Get(role.ProviderId);
-            if (roleProvider.Name != "Digitaliseringsdirektoratet") // Get system from token
+            if (roleProvider.Code != "sys-altinn3") // Get system from token
             {
                 throw new Exception(string.Format("You cannot create assignment with the role '{0}' ({1})", role.Name, role.Code));
             }
 
-            var res = await assignmentRepository.Create(new Assignment()
-            {
-                FromId = from.Id,
-                ToId = to.Id,
-                RoleId = role.Id
-            });
+            var res = await assignmentRepository.Create(
+                new Assignment()
+                {
+                    FromId = from.Id,
+                    ToId = to.Id,
+                    RoleId = role.Id
+                }, 
+                options: options
+            );
         }
 
         return (await assignmentRepository.Get(filter)).FirstOrDefault();

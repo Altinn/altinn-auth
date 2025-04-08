@@ -18,6 +18,7 @@ public class ConnectionPackageDefinition : BaseDbDefinition<ConnectionPackage>, 
     {
         definitionRegistry.Define<ConnectionPackage>(def =>
         {
+            def.SetVersion(2);
             def.IsView();
 
             def.RegisterProperty(t => t.ConnectionId);
@@ -48,6 +49,7 @@ public class ConnectionPackageDefinition : BaseDbDefinition<ConnectionPackage>, 
             def.AddViewDependency<Package>();
             def.AddViewDependency<Assignment>();
             def.AddViewDependency<RolePackage>();
+            def.AddViewDependency<DelegationPackage>();
         });
     }
 }

@@ -2,6 +2,8 @@
 using Altinn.AccessMgmt.Persistence.Core.Definitions;
 using Altinn.AccessMgmt.Persistence.Core.Helpers;
 using Altinn.AccessMgmt.Persistence.Core.Models;
+using Altinn.AccessMgmt.Persistence.Data;
+using Azure.Core;
 using Microsoft.AspNetCore.Mvc;
 
 /// <summary>
@@ -97,26 +99,26 @@ public static class EndpointExtension
 
         if (mapPost && !def.IsView)
         {
-            app.MapPost($"/{name}", async ([FromServices] TService service, [FromBody] T obj) =>
+            app.MapPost($"/{name}", async ([FromServices] TService service, [FromBody] T obj, HttpRequest request) =>
             {
-                var res = await service.Create(obj);
+                var res = await service.Create(obj, GenerateChangeRequestOptions(request));
                 return res > 0 ? Results.Created($"/{name}/{res}", obj) : Results.Problem();
             }).WithOpenApi().WithTags(name).WithSummary($"Create {name}");
         }
 
         if (mapPut && !def.IsView)
         {
-            app.MapPut($"/{name}/{{id}}", async ([FromServices] TService service, Guid id, [FromBody] T obj) =>
+            app.MapPut($"/{name}/{{id}}", async ([FromServices] TService service, Guid id, [FromBody] T obj, HttpRequest request) =>
             {
-                return await service.Update(id, obj);
+                return await service.Update(id, obj, GenerateChangeRequestOptions(request));
             }).WithOpenApi().WithTags(name).WithSummary($"Update {name}");
         }
 
         if (mapDelete && !def.IsView)
         {
-            app.MapDelete($"/{name}/{{id}}", async ([FromServices] TService service, Guid id) =>
+            app.MapDelete($"/{name}/{{id}}", async ([FromServices] TService service, Guid id, HttpRequest request) =>
             {
-                return await service.Delete(id);
+                return await service.Delete(id, GenerateChangeRequestOptions(request));
             }).WithOpenApi().WithTags(name).WithSummary($"Delete {name}");
         }
 
@@ -210,6 +212,17 @@ public static class EndpointExtension
         }).WithOpenApi().WithTags(endpointBGroup).WithSummary($"Delete {name}");
 
         return app;
+    }
+
+    private static ChangeRequestOptions GenerateChangeRequestOptions(HttpRequest request)
+    {
+        var options = new ChangeRequestOptions()
+        {
+            ChangedBy = AuditDefaults.EnduserApi, // TODO: Get UserId
+            ChangedBySystem = AuditDefaults.EnduserApi
+        };
+        
+        return options;
     }
 
     private static RequestOptions GenerateRequestOptions(HttpRequest request)

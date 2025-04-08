@@ -17,7 +17,7 @@ public class EntityDefinition : BaseDbDefinition<Entity>, IDbDefinition
     {
         definitionRegistry.Define<Entity>(def =>
         {
-            def.EnableHistory();
+            def.EnableAudit();
             def.EnableTranslation();
             def.RegisterPrimaryKey([t => t.Id]);
             def.RegisterProperty(t => t.Id);
