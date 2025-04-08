@@ -44,7 +44,7 @@ public class Connection
 /// <summary>
 /// Extended Connection
 /// </summary>
-public class ExtConnection //: Connection
+public class ExtConnection //// : Connection
 {
     /// <summary>
     /// Identity, either assignment og delegation

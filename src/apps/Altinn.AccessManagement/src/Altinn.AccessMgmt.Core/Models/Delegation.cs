@@ -53,5 +53,4 @@ public class ExtDelegation : Delegation
     /// Delegation facilitator
     /// </summary>
     public Entity Facilitator { get; set; }
-
 }

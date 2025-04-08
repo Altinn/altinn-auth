@@ -45,7 +45,6 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
             return Ok(res);
         }
 
-
         /// <summary>
         /// Alle enheter {id} har gitt tilgang til.
         /// </summary>

@@ -46,8 +46,15 @@ public class DbAudit
     public Guid DeleteOperation { get; set; }
 }
 
+/// <summary>
+/// Extended DbAudit with Object
+/// </summary>
+/// <typeparam name="T"></typeparam>
 public class TypedDbAudit<T> : DbAudit
 {
+    /// <summary>
+    /// Object
+    /// </summary>
     public T Object { get; set; }
 }
 

@@ -231,6 +231,7 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
         /// Registers a unique constraint for the specified properties.
         /// </summary>
         /// <param name="properties">A collection of expressions identifying the properties that should have a unique constraint.</param>
+        /// <param name="includedProperties">Properties to include</param>
         /// <returns>The current <see cref="DbDefinitionBuilder{T}"/> instance for fluent chaining.</returns>
         public DbDefinitionBuilder<T> RegisterUniqueConstraint(IEnumerable<Expression<Func<T, object>>> properties, IEnumerable<Expression<Func<T, object>>> includedProperties = null)
             => RegisterConstraint(properties, isPrimaryKey: false, includedProperties: includedProperties);

@@ -15,15 +15,10 @@ public class ConnectionPackage
     /// </summary>
     public Guid PackageId { get; set; }
 
-    /// <summary>
-    /// HasAccess
-    /// </summary>
-    //// public bool HasAccess { get; set; }
-
-    /// <summary>
-    /// CanDelegate
-    /// </summary>
-    //// public bool CanDelegate { get; set; }
+    /*
+    public bool HasAccess { get; set; }
+    public bool CanDelegate { get; set; }
+    */
 }
 
 /// <summary>

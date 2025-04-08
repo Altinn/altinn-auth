@@ -317,7 +317,7 @@ public partial class RegisterHostedService(
                 RoleId = role.Id
             };
         } 
-        catch (Exception ex)
+        catch
         {
             throw new Exception(string.Format("Failed to convert model to Assignment. From:{0} To:{1} Role:{2}", model.FromParty, model.ToParty, model.RoleIdentifier));
         }
@@ -597,7 +597,6 @@ public partial class RegisterHostedService(
                 throw new Exception(string.Format("Unable to find type '{0}' and variant '{1}'", model.PartyType, model.UnitType));
             }
         }
-       
     }
 
     private List<EntityLookup> ConvertPartyModelToLookup(PartyModel model)

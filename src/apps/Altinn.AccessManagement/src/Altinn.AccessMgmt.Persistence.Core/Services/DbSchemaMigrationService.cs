@@ -134,7 +134,7 @@ public class DbSchemaMigrationService
 
                 bool needMigration = migrationService.NeedAnyMigration(script.Key, script.Value.Scripts.Select(t => t.Key).ToList());
 
-                if(script.Key.Name == "Area")
+                if (script.Key.Name == "Area")
                 {
                     needMigration = true;
                 }
@@ -235,6 +235,6 @@ public class DbSchemaMigrationService
             }
         }
 
-        await migrationService.LogMigration(type, "Version", "", 1);
+        await migrationService.LogMigration(type, "Version", string.Empty, 1);
     }
 }

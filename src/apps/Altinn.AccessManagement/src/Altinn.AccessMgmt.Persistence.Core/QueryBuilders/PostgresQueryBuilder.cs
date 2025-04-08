@@ -191,7 +191,6 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         var mergeUpdateUnMatchStatement = string.Join(" OR ", parameters.Where(t => mergeFilter.Count(y => y.PropertyName.Equals(t.Key, StringComparison.OrdinalIgnoreCase)) == 0).Select(t => $"T.{t.Key} <> @{t.Key}"));
         var mergeUpdateStatement = string.Join(" , ", parameters.Where(t => mergeFilter.Count(y => y.PropertyName.Equals(t.Key, StringComparison.OrdinalIgnoreCase)) == 0).Select(t => $"{t.Key} = @{t.Key}"));
 
-
         var sb = new StringBuilder();
         sb.AppendLine($"{GetAuditVariables(options)}");
         sb.AppendLine("WITH N AS ( SELECT ");
@@ -731,14 +730,12 @@ public class PostgresQueryBuilder : IDbQueryBuilder
             {
                 script.AppendLine($", CONSTRAINT PK_{_definition.ModelType.Name} PRIMARY KEY ({string.Join(',', _definition.Constraints.First(t => t.IsPrimaryKey).Properties.Select(t => $"{t.Key}"))}, language)");
                 var query = $"ALTER TABLE {GetSchemaName(useTranslation: true)}.{GetTableName(includeAlias: false, includeSchema: false)} ADD CONSTRAINT FK_{_definition.ModelType.Name}_id FOREIGN KEY (id) REFERENCES {GetSchemaName()}.{GetTableName(includeAlias: false, includeSchema: false)} (id) ON DELETE CASCADE;";
-
             }
             else
             {
                 script.AppendLine($", CONSTRAINT PK_{_definition.ModelType.Name} PRIMARY KEY ({string.Join(',', _definition.Constraints.First(t => t.IsPrimaryKey).Properties.Select(t => $"{t.Key}"))})");
             }
         }
-
 
         script.AppendLine(");");
 
@@ -849,7 +846,6 @@ public class PostgresQueryBuilder : IDbQueryBuilder
 
     private string CreateHistoryView(bool isTranslation)
     {
-
         string tableName = GetTableName(includeAlias: true, useHistory: false, useTranslation: isTranslation);
         string columnDefinitions = string.Join(',', _definition.Properties.Select(t => t.Name));
 

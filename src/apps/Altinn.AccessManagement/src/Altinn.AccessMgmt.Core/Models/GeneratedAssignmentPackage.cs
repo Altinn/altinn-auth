@@ -46,6 +46,7 @@ public class GeneratedAssignmentPackage
     public string Description { get; set; }
 }
 
+/*
 public class ExtGeneratedAssignmentPackage : GeneratedAssignmentPackage
 {
     public Entity From { get; set; }
@@ -55,3 +56,4 @@ public class ExtGeneratedAssignmentPackage : GeneratedAssignmentPackage
     public Entity DelegateEntity { get; set; }
     public Role DelegateRole { get; set; }
 }
+*/

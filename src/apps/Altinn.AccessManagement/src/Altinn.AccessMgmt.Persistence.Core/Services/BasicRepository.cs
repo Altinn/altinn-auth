@@ -88,11 +88,13 @@ public abstract class BasicRepository<T> : IDbBasicRepository<T>
         return await executor.ExecuteQuery<T>(query, param, cancellationToken: cancellationToken);
     }
 
+    /// <inheritdoc />
     public Task<IEnumerable<TypedDbAudit<T>>> GetFromHistory(Guid id, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
+    /// <inheritdoc />
     public Task<TypedDbAudit<T>> GetFromHistory(Guid id, DateTimeOffset asOf, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();

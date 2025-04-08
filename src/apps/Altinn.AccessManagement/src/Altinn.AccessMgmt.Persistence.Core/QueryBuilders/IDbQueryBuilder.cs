@@ -65,6 +65,7 @@ public interface IDbQueryBuilder
     /// Builds a UPSERT query
     /// </summary>
     /// <param name="parameters">Parameters</param>
+    /// <param name="options">Options for the request</param>
     /// <param name="forTranslation">Is this for a translation table</param>
     /// <returns></returns>
     string BuildUpsertQuery(List<GenericParameter> parameters, ChangeRequestOptions options, bool forTranslation = false);

@@ -331,7 +331,6 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
             }
 
             return Problem("Unable to add package to assignment");
-
         }
 
         /// <summary>
@@ -420,7 +419,6 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
             }
 
             return Problem("Unable to add package to assignment");
-
         }
 
         /// <summary>
@@ -440,7 +438,6 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
             var userEntity = await entityRepository.Get(userId);
 
             // If user has access
-
             var assignment = await assignmentRepository.Get(id);
             var package = await packageRepository.Get(packageId);
 
@@ -471,7 +468,6 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
             var userEntity = await entityRepository.Get(userId);
             
             // If user has access
-            
             var assignment = await assignmentRepository.Get(id);
             var resource = await resourceRepository.Get(resourceId);
 

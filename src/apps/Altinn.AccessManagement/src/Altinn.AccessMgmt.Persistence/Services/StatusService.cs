@@ -1,14 +1,15 @@
 ﻿using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
-using System;
 
 namespace Altinn.AccessMgmt.Persistence.Services;
 
+/// <inheritdoc />
 public class StatusService(IStatusRecordRepository statusRecordRepository) : IStatusService
 {
     private readonly IStatusRecordRepository statusRecordRepository = statusRecordRepository;
-    
+
+    /// <inheritdoc />
     public async Task<StatusRecord> GetOrCreateRecord(Guid id, string name, ChangeRequestOptions options, int limit = 5)
     {
         var status = await statusRecordRepository.Get(id);
@@ -31,6 +32,7 @@ public class StatusService(IStatusRecordRepository statusRecordRepository) : ISt
         return status;
     }
 
+    /// <inheritdoc />
     public async Task RunFailed(StatusRecord record, Exception exception, ChangeRequestOptions options)
     {
         record.State = "RETRY";
@@ -40,6 +42,7 @@ public class StatusService(IStatusRecordRepository statusRecordRepository) : ISt
         await statusRecordRepository.Upsert(record, options);
     }
 
+    /// <inheritdoc />
     public async Task RunSuccess(StatusRecord record, ChangeRequestOptions options)
     {
         if (record.State != "RUNNING" || record.Timestamp.AddMinutes(15) < DateTimeOffset.Now)
@@ -53,6 +56,7 @@ public class StatusService(IStatusRecordRepository statusRecordRepository) : ISt
         }
     }
 
+    /// <inheritdoc />
     public async Task<bool> TryToRun(StatusRecord record, ChangeRequestOptions options)
     {
         if (record.State == "STOPPED")
@@ -80,13 +84,32 @@ public class StatusService(IStatusRecordRepository statusRecordRepository) : ISt
     }
 }
 
+/// <summary>
+/// Status service for jobs
+/// </summary>
 public interface IStatusService
 {
+    /// <summary>
+    /// Get or create record
+    /// </summary>
+    /// <returns></returns>
     Task<StatusRecord> GetOrCreateRecord(Guid id, string name, ChangeRequestOptions options, int limit = 5);
 
+    /// <summary>
+    /// Try to run, checks state
+    /// </summary>
+    /// <returns></returns>
     Task<bool> TryToRun(StatusRecord record, ChangeRequestOptions options);
 
+    /// <summary>
+    /// Log run success
+    /// </summary>
+    /// <returns></returns>
     Task RunSuccess(StatusRecord record, ChangeRequestOptions options);
 
+    /// <summary>
+    /// Log run failed
+    /// </summary>
+    /// <returns></returns>
     Task RunFailed(StatusRecord record, Exception exception, ChangeRequestOptions options);
 }

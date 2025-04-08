@@ -15,6 +15,7 @@ public interface IDelegationService
     /// <param name="userId">User</param>
     /// <param name="fromAssignmentId">From</param>
     /// <param name="toAssignmentId">To</param>
+    /// <param name="options">ChangeRequestOptions</param>
     /// <returns></returns>
     Task<ExtDelegation> CreateDelgation(Guid userId, Guid fromAssignmentId, Guid toAssignmentId, ChangeRequestOptions options);
 

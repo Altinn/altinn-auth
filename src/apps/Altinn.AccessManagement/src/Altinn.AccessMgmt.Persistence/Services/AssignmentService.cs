@@ -1,12 +1,11 @@
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
-using Altinn.AccessManagement.Core.Errors;
-using Altinn.AccessMgmt.Core.Models;
 using Altinn.Authorization.ProblemDetails;
-using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics;
-using Microsoft.Extensions.Options;
 
 namespace Altinn.AccessMgmt.Persistence.Services;
 
@@ -113,8 +112,6 @@ public class AssignmentService(
         {
             throw new Exception(string.Format("User '{0}' does not have package '{1}'", user.Name, package.Name));
         }
-
-
 
         await assignmentPackageRepository.Create(
             new AssignmentPackage()

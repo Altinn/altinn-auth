@@ -131,7 +131,6 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
         }
 
         string columnStatement = string.Join(',', ingestColumns.Select(t => t.Name));
-        // ADD LOCAL VARIABLES
         using var writer = await conn.BeginBinaryImportAsync($"COPY {tableName} ({columnStatement}) FROM STDIN (FORMAT BINARY)", cancellationToken: cancellationToken);
         writer.Timeout = TimeSpan.FromMinutes(10);
         int completed = 0;

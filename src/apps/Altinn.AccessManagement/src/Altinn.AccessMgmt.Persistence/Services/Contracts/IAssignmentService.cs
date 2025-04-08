@@ -39,11 +39,39 @@ public interface IAssignmentService
     /// <returns></returns>
     Task<bool> AddResourceToAssignment(Guid userId, Guid assignmentId, Guid resourceId, ChangeRequestOptions options);
 
+    /// <summary>
+    /// Get Assignment
+    /// </summary>
+    /// <param name="fromId">From Entity Id</param>
+    /// <param name="toId">To Entity Id</param>
+    /// <param name="roleId">Role Id</param>
+    /// <returns></returns>
     Task<Assignment> GetAssignment(Guid fromId, Guid toId, Guid roleId);
 
+    /// <summary>
+    /// Get Assignment
+    /// </summary>
+    /// <param name="fromId">From Entity Id</param>
+    /// <param name="toId">To Entity Id</param>
+    /// <param name="roleCode">Role Code</param>
+    /// <returns></returns>
     Task<Assignment> GetAssignment(Guid fromId, Guid toId, string roleCode);
 
+    /// <summary>
+    /// Get Inheirited Assignments
+    /// </summary>
+    /// <param name="fromId">From Entity Id</param>
+    /// <param name="toId">To Entity Id</param>
+    /// <param name="roleId">Role Id</param>
+    /// <returns></returns>
     Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, Guid roleId);
 
+    /// <summary>
+    /// Get Inheirited Assignments
+    /// </summary>
+    /// <param name="fromId">From Entity Id</param>
+    /// <param name="toId">To Entity Id</param>
+    /// <param name="roleCode">Role Code</param>
+    /// <returns></returns>
     Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, string roleCode);
 }

@@ -97,7 +97,6 @@ public abstract class CrossRepository<T, TExtended, TA, TB> : ExtendedRepository
     /// Retrieves entities from a cross-reference table based on the given type.
     /// </summary>
     /// <typeparam name="TEntity">The entity type to retrieve.</typeparam>
-    /// <param name="id">The cross-reference identifier.</param>
     /// <param name="options">Query request options.</param>
     /// <param name="filters">Optional filters.</param>
     /// <param name="cancellationToken">Cancellation token.</param>

@@ -20,7 +20,6 @@ public class MockDataService
     IResourceRepository resourceRepository,
     IResourceTypeRepository resourceTypeRepository,
     IProviderRepository providerRepository,
-    IDelegationRepository delegationRepository,
     IDelegationPackageRepository delegationPackageRepository,
     IAssignmentPackageRepository assignmentPackageRepository,
     IConnectionPackageRepository connectionPackageRepository
@@ -40,6 +39,10 @@ public class MockDataService
     private readonly IAssignmentPackageRepository assignmentPackageRepository = assignmentPackageRepository;
     private readonly IConnectionPackageRepository connectionPackageRepository = connectionPackageRepository;
 
+    /// <summary>
+    /// Create basic mockdata
+    /// </summary>
+    /// <returns></returns>
     public async Task GenerateBasicData()
     {
         var options = new ChangeRequestOptions()
@@ -122,24 +125,24 @@ public class MockDataService
         await assignmentRepository.Upsert(new Assignment() { FromId = bakerNordbyAS.Id, ToId = regnskapsfolkAS.Id, RoleId = roleRegnskap.Id }, options);
         await assignmentRepository.Upsert(new Assignment() { FromId = regnskapsfolkAS.Id, ToId = revisjonstroll.Id, RoleId = roleRevisor.Id }, options);
 
-        var assignment001 = new Assignment() {FromId = agderKyllingAS.Id, ToId = carlOveJensen.Id, RoleId = roleDagligLeder.Id };
-        var assignment002 = new Assignment() {FromId = agderKyllingAS.Id, ToId = norskRegnskap.Id, RoleId = roleRegnskap.Id };
-        var assignment003 = new Assignment() {FromId = norskRegnskap.Id, ToId = martinGrundt.Id, RoleId = roleDagligLeder.Id };
-        var assignment004 = new Assignment() {FromId = norskRegnskap.Id, ToId = edithTommesen.Id, RoleId = roleAgent.Id };
+        var assignment001 = new Assignment() { FromId = agderKyllingAS.Id, ToId = carlOveJensen.Id, RoleId = roleDagligLeder.Id };
+        var assignment002 = new Assignment() { FromId = agderKyllingAS.Id, ToId = norskRegnskap.Id, RoleId = roleRegnskap.Id };
+        var assignment003 = new Assignment() { FromId = norskRegnskap.Id, ToId = martinGrundt.Id, RoleId = roleDagligLeder.Id };
+        var assignment004 = new Assignment() { FromId = norskRegnskap.Id, ToId = edithTommesen.Id, RoleId = roleAgent.Id };
         await assignmentRepository.Upsert(assignment001, options);
         await assignmentRepository.Upsert(assignment002, options);
         await assignmentRepository.Upsert(assignment003, options);
         await assignmentRepository.Upsert(assignment004, options);
 
-        //var delegation01 = new Delegation() { Id = Guid.Parse("119B118F-DC5D-48F9-8DAA-DDF4175EBD16"), FromId = assignment002.Id, ToId = assignment004.Id, FacilitatorId = norskRegnskap.Id };
-        //await delegationRepository.Upsert(delegation01);
-
-        //var packages = await connectionPackageRepository.GetB(delegation01.FromId);
-
-        //await delegationPackageRepository.Upsert(new DelegationPackage() { Id = Guid.Parse("90A840A5-325F-4FC9-BD77-F9BFED592CEE"), DelegationId = delegation01.Id, PackageId = packages.First().Id });
+        /*
+        var delegation01 = new Delegation() { Id = Guid.Parse("119B118F-DC5D-48F9-8DAA-DDF4175EBD16"), FromId = assignment002.Id, ToId = assignment004.Id, FacilitatorId = norskRegnskap.Id };
+        await delegationRepository.Upsert(delegation01);
+        var packages = await connectionPackageRepository.GetB(delegation01.FromId);
+        await delegationPackageRepository.Upsert(new DelegationPackage() { Id = Guid.Parse("90A840A5-325F-4FC9-BD77-F9BFED592CEE"), DelegationId = delegation01.Id, PackageId = packages.First().Id });
+        */
     }
 
-    public async Task GeneratePackageResources(ChangeRequestOptions options)
+    private async Task GeneratePackageResources(ChangeRequestOptions options)
     {
         var packages = await packageRepository.GetExtended();
         var resourceTypes = await resourceTypeRepository.Get();
@@ -183,7 +186,6 @@ public class MockDataService
                 }
             }
         }
-
     }
 
     private static readonly Random _random = new Random();
