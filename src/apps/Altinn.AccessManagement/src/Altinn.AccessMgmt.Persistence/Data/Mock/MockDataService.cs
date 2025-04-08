@@ -44,8 +44,8 @@ public class MockDataService
     {
         var options = new ChangeRequestOptions()
         {
-            ChangedBy = AuditDefaults.MockDataIngestSystem,
-            ChangedBySystem = AuditDefaults.MockDataIngestSystem
+            ChangedBy = AuditDefaults.StaticDataIngest,
+            ChangedBySystem = AuditDefaults.StaticDataIngest
         };
 
         var orgType = (await entityTypeRepository.Get(t => t.Name, "Organisasjon")).FirstOrDefault() ?? throw new Exception("Could not find type 'Organisasjon'");
