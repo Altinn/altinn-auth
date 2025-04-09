@@ -169,6 +169,7 @@ public partial class RegisterHostedService(
     private async Task SyncRoles(LeaseResult<LeaseContent> ls, CancellationToken cancellationToken)
     {
         var batchData = new List<Assignment>();
+        Guid batchId = Guid.CreateVersion7();
 
         var options = new ChangeRequestOptions()
         {
@@ -189,7 +190,6 @@ public partial class RegisterHostedService(
                 throw new Exception("Stream page is not successful");
             }
 
-            Guid batchId = Guid.CreateVersion7();
             options.ChangeOperationId = batchId.ToString();
             var batchName = batchId.ToString().ToLower().Replace("-", string.Empty);
             _logger.LogInformation("Starting proccessing role page '{0}'", batchName);
@@ -241,12 +241,15 @@ public partial class RegisterHostedService(
 
             await _lease.Put(ls, new() { RoleStreamNextPageLink = page.Content.Links.Next, PartyStreamNextPageLink = ls.Data?.PartyStreamNextPageLink }, cancellationToken);
             await _lease.RefreshLease(ls, cancellationToken);
+        }
 
-            async Task Flush(Guid batchId)
+        await Flush(batchId);
+
+        async Task Flush(Guid batchId)
             {
                 try
                 {
-                    _logger.LogInformation("Ingest and Merge Assignment batch '{0}' to db", batchName);
+                    _logger.LogInformation("Ingest and Merge Assignment batch '{0}' to db", batchId.ToString());
                     var ingested = await ingestService.IngestTempData<Assignment>(batchData, batchId, options: options, cancellationToken: cancellationToken);
 
                     if (ingested != batchData.Count)
@@ -260,8 +263,8 @@ public partial class RegisterHostedService(
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to ingest and/or merge Assignment and EntityLookup batch {0} to db", batchName);
-                    throw new Exception(string.Format("Failed to ingest and/or merge Assignment and EntityLookup batch {0} to db", batchName), ex);
+                    _logger.LogError(ex, "Failed to ingest and/or merge Assignment and EntityLookup batch {0} to db", batchId.ToString());
+                    throw new Exception(string.Format("Failed to ingest and/or merge Assignment and EntityLookup batch {0} to db", batchId.ToString()), ex);
                 }
                 finally
                 {
@@ -269,7 +272,6 @@ public partial class RegisterHostedService(
                     batchData.Clear();
                 }
             }
-        }
     }
 
     private async Task SetParent(Guid childId, Guid parentId, ChangeRequestOptions options, CancellationToken cancellationToken = default)
