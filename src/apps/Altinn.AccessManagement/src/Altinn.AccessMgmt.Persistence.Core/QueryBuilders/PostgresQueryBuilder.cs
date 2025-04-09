@@ -222,7 +222,7 @@ public class PostgresQueryBuilder : IDbQueryBuilder
     public string BuildDeleteQuery(IEnumerable<GenericFilter> filters, ChangeRequestOptions options)
     {
         var filterStatement = GenerateFilterStatement(_definition.ModelType.Name, filters);
-        return $"BEGIN; {GetAuditTempTable(options)} DELETE FROM {GetTableName(includeAlias: false)} {filterStatement} COMMIT;";
+        return $"BEGIN; {GetAuditTempTable(options)} DELETE FROM {GetTableName(includeAlias: false)} {filterStatement}; COMMIT;";
     }
 
     /// <inheritdoc />
