@@ -131,8 +131,8 @@ jobs:
             /name:"$SONAR_NAME" \
             /o:"altinn" /d:sonar.token="$SONAR_TOKEN" \
             /d:sonar.scanner.scanAll=false \
-            /d:sonar.coverage.exclusions="**/Migration/**" \
-            /d:sonar.test.exclusions="test/**/*" \
+            /d:sonar.coverage.exclusions="**/Migration/**,**/Altinn.AccessMgmt.FFB/**,**/Altinn.AccessMgmt.WebComponents/**" \
+            /d:sonar.test.exclusions="**/test/**/*,**/Altinn.AccessMgmt.FFB/**,**/Altinn.AccessMgmt.WebComponents/**" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.cs.vstest.reportsPaths="**/*.trx" \
             /d:sonar.cs.vscoveragexml.reportsPaths="TestResults/coverage.xml"
