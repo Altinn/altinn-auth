@@ -17,7 +17,8 @@ public class AssignmentService(
     IAssignmentPackageRepository assignmentPackageRepository,
     IRoleRepository roleRepository,
     IRolePackageRepository rolePackageRepository,
-    IEntityRepository entityRepository
+    IEntityRepository entityRepository,
+    IDelegationRepository delegationRepository
     ) : IAssignmentService
 {
     private readonly IAssignmentRepository assignmentRepository = assignmentRepository;
@@ -27,16 +28,17 @@ public class AssignmentService(
     private readonly IRoleRepository roleRepository = roleRepository;
     private readonly IRolePackageRepository rolePackageRepository = rolePackageRepository;
     private readonly IEntityRepository entityRepository = entityRepository;
+    private readonly IDelegationRepository delegationRepository = delegationRepository;
 
     /// <inheritdoc/>
-    public async Task<Assignment> GetAssignment(Guid fromId, Guid toId, Guid roleId)
+    public async Task<Assignment> GetAssignment(Guid fromId, Guid toId, Guid roleId, CancellationToken cancellationToken = default)
     {
         var filter = assignmentRepository.CreateFilterBuilder();
         filter.Equal(t => t.FromId, fromId);
         filter.Equal(t => t.ToId, toId);
         filter.Equal(t => t.RoleId, roleId);
 
-        var result = await assignmentRepository.Get(filter);
+        var result = await assignmentRepository.Get(filter, cancellationToken: cancellationToken);
         if (result == null || !result.Any())
         {
             return null;
@@ -118,7 +120,7 @@ public class AssignmentService(
             {
                 AssignmentId = assignmentId,
                 PackageId = packageId
-            }, 
+            },
             options: options
         );
 
@@ -139,41 +141,16 @@ public class AssignmentService(
         throw new NotImplementedException();
     }
 
-    [DoesNotReturn]
-    private static void Unreachable()
-    {
-        throw new UnreachableException();
-    }
-
     /// <inheritdoc/>
-    public async Task<Result<Assignment>> GetOrCreateAssignment2(Guid fromEntityId, Guid toEntityId, string roleCode, ChangeRequestOptions options, CancellationToken cancellationToken = default)
+    public async Task<ProblemInstance> DeleteAssignment(Guid fromEntityId, Guid toEntityId, string roleCode, ChangeRequestOptions options, bool cascade = false, CancellationToken cancellationToken = default)
     {
         ValidationErrorBuilder errors = default;
         var fromEntityExt = await entityRepository.GetExtended(fromEntityId, cancellationToken: cancellationToken);
-        if (fromEntityExt is null)
-        {
-            errors.Add(ValidationErrors.MissingPartyInDb, "/$QUERY/party", [new("partyId", fromEntityId.ToString())]);
-        }
-        else
-        {
-            if (!fromEntityExt.Type.Name.Equals("Organisasjon"))
-            {
-                errors.Add(ValidationErrors.InvalidPartyType, "/$QUERY/party", [new("partyId", $"expected party of type 'Organisasjon' got '{fromEntityExt.Type.Name}'.")]);
-            }
-        }
-
         var toEntityExt = await entityRepository.GetExtended(toEntityId, cancellationToken: cancellationToken);
-        if (toEntityExt is null)
-        {
-            errors.Add(ValidationErrors.MissingPartyInDb, "/$QUERY/to", [new("partyId", toEntityId.ToString())]);
-        }
-        else
-        {
-            if (!toEntityExt.Type.Name.Equals("Organisasjon"))
-            {
-                errors.Add(ValidationErrors.InvalidPartyType, "/$QUERY/to", [new("partyId", $"expected party of type 'Organisasjon' got '{fromEntityExt.Type.Name}'.")]);
-            }
-        }
+        ValidatePartyIsNotNull(fromEntityId, fromEntityExt, ref errors, "$QUERY/party");
+        ValidatePartyIsOrg(fromEntityExt, ref errors, "$QUERY/party");
+        ValidatePartyIsNotNull(toEntityId, toEntityExt, ref errors, "$QUERY/to");
+        ValidatePartyIsOrg(toEntityExt, ref errors, "$QUERY/to");
 
         var roleResult = await roleRepository.Get(t => t.Name, roleCode, cancellationToken: cancellationToken);
         if (roleResult == null || !roleResult.Any())
@@ -182,7 +159,62 @@ public class AssignmentService(
         }
 
         var roleId = roleResult.First().Id;
-        var existingAssignment = await GetAssignment(fromEntityId, toEntityId, roleId);
+        var existingAssignment = await GetAssignment(fromEntityId, toEntityId, roleId, cancellationToken);
+        if (existingAssignment == null)
+        {
+            return null;
+        }
+        else
+        {
+            if (!cascade)
+            {
+                var packages = await assignmentPackageRepository.Get(f => f.AssignmentId, existingAssignment.Id, cancellationToken: cancellationToken);
+                if (packages != null && packages.Any())
+                {
+                    errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("packages", string.Join(",", packages.Select(p => p.Id.ToString())))]);
+                }
+
+                var delegations = await delegationRepository.Get(f => f.FromId, existingAssignment.Id, cancellationToken: cancellationToken);
+                if (delegations != null && delegations.Any())
+                {
+                    errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("delegations", string.Join(",", delegations.Select(p => p.Id.ToString())))]);
+                }
+            }
+        }
+
+        if (errors.TryBuild(out var errorResult))
+        {
+            return errorResult;
+        }
+
+        var result = await roleRepository.Delete(existingAssignment.Id, options, cancellationToken);
+        if (result == 0)
+        {
+            Unreachable();
+        }
+
+        return null;
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<Assignment>> GetOrCreateAssignment(Guid fromEntityId, Guid toEntityId, string roleCode, ChangeRequestOptions options, CancellationToken cancellationToken = default)
+    {
+        ValidationErrorBuilder errors = default;
+        var fromEntityExt = await entityRepository.GetExtended(fromEntityId, cancellationToken: cancellationToken);
+        var toEntityExt = await entityRepository.GetExtended(toEntityId, cancellationToken: cancellationToken);
+        ValidatePartyIsNotNull(fromEntityId, fromEntityExt, ref errors, "$QUERY/party");
+        ValidatePartyIsOrg(fromEntityExt, ref errors, "$QUERY/party");
+        ValidatePartyIsNotNull(toEntityId, toEntityExt, ref errors, "$QUERY/to");
+        ValidatePartyIsOrg(toEntityExt, ref errors, "$QUERY/to");
+
+        var roleResult = await roleRepository.Get(t => t.Name, roleCode, cancellationToken: cancellationToken);
+        if (roleResult == null || !roleResult.Any())
+        {
+            Unreachable();
+        }
+
+        var roleId = roleResult.First().Id;
+        var existingAssignment = await GetAssignment(fromEntityId, toEntityId, roleId, cancellationToken);
         if (existingAssignment != null)
         {
             return existingAssignment;
@@ -200,7 +232,7 @@ public class AssignmentService(
             RoleId = roleId,
         };
 
-        var result = await assignmentRepository.Create(existingAssignment, options:options, cancellationToken);
+        var result = await assignmentRepository.Create(existingAssignment, options: options, cancellationToken);
         if (result == 0)
         {
             Unreachable();
@@ -282,5 +314,27 @@ public class AssignmentService(
 
         var roleId = roleResult.First().Id;
         return await GetInheritedAssignment(fromId, toId, roleId);
+    }
+
+    private static void ValidatePartyIsNotNull(Guid id, ExtEntity entity, ref ValidationErrorBuilder errors, string param)
+    {
+        if (entity is null)
+        {
+            errors.Add(ValidationErrors.MissingPartyInDb, param, [new("partyId", id.ToString())]);
+        }
+    }
+
+    private static void ValidatePartyIsOrg(ExtEntity entity, ref ValidationErrorBuilder errors, string param)
+    {
+        if (entity is not null && !entity.Type.Name.Equals("Organisasjon", StringComparison.InvariantCultureIgnoreCase))
+        {
+            errors.Add(ValidationErrors.InvalidPartyType, param, [new("partyId", $"expected party of type 'Organisasjon' got '{entity.Type.Name}'.")]);
+        }
+    }
+
+    [DoesNotReturn]
+    private static void Unreachable()
+    {
+        throw new UnreachableException();
     }
 }

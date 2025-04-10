@@ -10,7 +10,7 @@ namespace Altinn.AccessMgmt.Persistence.Services.Contracts;
 public interface IAssignmentService
 {
     /// <summary>
-    /// Gets assignment and creates if not exits
+    /// Gets assignment and creates if not exists.
     /// </summary>
     /// <returns></returns>
     Task<Assignment> GetOrCreateAssignment(Guid fromId, Guid toId, string roleCode, ChangeRequestOptions options);
@@ -19,7 +19,13 @@ public interface IAssignmentService
     /// Gets assignment and creates if not exits
     /// </summary>
     /// <returns></returns>
-    Task<Result<Assignment>> GetOrCreateAssignment2(Guid fromEntityId, Guid toEntityId, string roleCode, ChangeRequestOptions options, CancellationToken cancellationToken = default);
+    Task<Result<Assignment>> GetOrCreateAssignment(Guid fromEntityId, Guid toEntityId, string roleCode, ChangeRequestOptions options, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets assignment and creates if not exits
+    /// </summary>
+    /// <returns></returns>
+    Task<ProblemInstance> DeleteAssignment(Guid fromEntityId, Guid toEntityId, string roleCode, ChangeRequestOptions options, bool cascade = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets assignment and creates if not exits
@@ -40,38 +46,22 @@ public interface IAssignmentService
     Task<bool> AddResourceToAssignment(Guid userId, Guid assignmentId, Guid resourceId, ChangeRequestOptions options);
 
     /// <summary>
-    /// Get Assignment
+    /// Fetches assignment.
     /// </summary>
-    /// <param name="fromId">From Entity Id</param>
-    /// <param name="toId">To Entity Id</param>
-    /// <param name="roleId">Role Id</param>
-    /// <returns></returns>
-    Task<Assignment> GetAssignment(Guid fromId, Guid toId, Guid roleId);
+    Task<Assignment> GetAssignment(Guid fromId, Guid toId, Guid roleId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Get Assignment
+    /// Fetches assignment.
     /// </summary>
-    /// <param name="fromId">From Entity Id</param>
-    /// <param name="toId">To Entity Id</param>
-    /// <param name="roleCode">Role Code</param>
-    /// <returns></returns>
     Task<Assignment> GetAssignment(Guid fromId, Guid toId, string roleCode);
 
     /// <summary>
-    /// Get Inheirited Assignments
+    /// Fetches inherited assignments.
     /// </summary>
-    /// <param name="fromId">From Entity Id</param>
-    /// <param name="toId">To Entity Id</param>
-    /// <param name="roleId">Role Id</param>
-    /// <returns></returns>
     Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, Guid roleId);
 
     /// <summary>
-    /// Get Inheirited Assignments
+    /// Fetches inherited assignments.
     /// </summary>
-    /// <param name="fromId">From Entity Id</param>
-    /// <param name="toId">To Entity Id</param>
-    /// <param name="roleCode">Role Code</param>
-    /// <returns></returns>
     Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, string roleCode);
 }
