@@ -1,10 +1,14 @@
-﻿namespace Altinn.AccessMgmt.Core.Models;
+﻿using Altinn.AccessManagement.Core.Extensions;
+
+namespace Altinn.AccessMgmt.Core.Models;
 
 /// <summary>
 /// Resources mapped directly to roles
 /// </summary>
 public class RoleResource
 {
+    private Guid _id;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="RoleResource"/> class.
     /// </summary>
@@ -16,7 +20,19 @@ public class RoleResource
     /// <summary>
     /// Identity
     /// </summary>
-    public Guid Id { get; private set; }
+    public Guid Id
+    {
+        get => _id;
+        set
+        {
+            if (!value.IsVersion7Uuid())
+            {
+                throw new ArgumentException("Id must be a version 7 UUID", nameof(value));
+            }
+
+            _id = value;
+        }
+    }
 
     /// <summary>
     /// Role identity

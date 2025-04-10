@@ -1,3 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+  <ItemGroup>
+    <ProjectReference Include="..\Altinn.AccessManagement.Core\Altinn.AccessManagement.Core.csproj" />
+  </ItemGroup>
 </Project>

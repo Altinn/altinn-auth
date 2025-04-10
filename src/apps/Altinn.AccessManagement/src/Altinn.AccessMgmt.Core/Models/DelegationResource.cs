@@ -1,10 +1,14 @@
-﻿namespace Altinn.AccessMgmt.Core.Models;
+﻿using Altinn.AccessManagement.Core.Extensions;
+
+namespace Altinn.AccessMgmt.Core.Models;
 
 /// <summary>
 /// Resources given to a delegation
 /// </summary>
 public class DelegationResource
 {
+    private Guid _id;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="DelegationResource"/> class.
     /// </summary>
@@ -16,7 +20,19 @@ public class DelegationResource
     /// <summary>
     /// Identity
     /// </summary>
-    public Guid Id { get; private set; }
+    public Guid Id
+    {
+        get => _id;
+        set
+        {
+            if (!value.IsVersion7Uuid())
+            {
+                throw new ArgumentException("Id must be a version 7 UUID", nameof(value));
+            }
+
+            _id = value;
+        }
+    }
 
     /// <summary>
     /// Delegation identifier
