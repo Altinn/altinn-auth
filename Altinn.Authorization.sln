@@ -117,6 +117,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessMgmt.FFB", "sr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessMgmt.WebComponents", "src\apps\Altinn.AccessManagement\src\Altinn.AccessMgmt.WebComponents\Altinn.AccessMgmt.WebComponents.csproj", "{B622E4D6-C181-4061-B314-87C9B346B870}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Authorization.Integration", "Altinn.Authorization.Integration", "{E2B9F536-143E-2EFE-9BA7-27631E2A18AC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{4E9EC514-8336-0CD0-5DC8-E1FC3796F34B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Integration.Tests", "src\libs\Altinn.Authorization.Integration\test\Altinn.Authorization.Integration.Tests\Altinn.Authorization.Integration.Tests.csproj", "{20FDE669-0245-4997-AECF-C15E1014AB1D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -511,6 +517,18 @@ Global
 		{B622E4D6-C181-4061-B314-87C9B346B870}.Release|x64.Build.0 = Release|Any CPU
 		{B622E4D6-C181-4061-B314-87C9B346B870}.Release|x86.ActiveCfg = Release|Any CPU
 		{B622E4D6-C181-4061-B314-87C9B346B870}.Release|x86.Build.0 = Release|Any CPU
+		{20FDE669-0245-4997-AECF-C15E1014AB1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20FDE669-0245-4997-AECF-C15E1014AB1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20FDE669-0245-4997-AECF-C15E1014AB1D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{20FDE669-0245-4997-AECF-C15E1014AB1D}.Debug|x64.Build.0 = Debug|Any CPU
+		{20FDE669-0245-4997-AECF-C15E1014AB1D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{20FDE669-0245-4997-AECF-C15E1014AB1D}.Debug|x86.Build.0 = Debug|Any CPU
+		{20FDE669-0245-4997-AECF-C15E1014AB1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20FDE669-0245-4997-AECF-C15E1014AB1D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{20FDE669-0245-4997-AECF-C15E1014AB1D}.Release|x64.ActiveCfg = Release|Any CPU
+		{20FDE669-0245-4997-AECF-C15E1014AB1D}.Release|x64.Build.0 = Release|Any CPU
+		{20FDE669-0245-4997-AECF-C15E1014AB1D}.Release|x86.ActiveCfg = Release|Any CPU
+		{20FDE669-0245-4997-AECF-C15E1014AB1D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -569,5 +587,8 @@ Global
 		{8A5AE676-9E92-41B9-A911-1DE81BE17B91} = {F99C2BE1-BC3E-6573-FD46-70E5E7335796}
 		{AD8DD9FF-5574-47A1-AF8E-0753FE4E6290} = {F99C2BE1-BC3E-6573-FD46-70E5E7335796}
 		{B622E4D6-C181-4061-B314-87C9B346B870} = {F99C2BE1-BC3E-6573-FD46-70E5E7335796}
+		{E2B9F536-143E-2EFE-9BA7-27631E2A18AC} = {3A8DF596-E814-FECC-DD4B-D8EF8AAC1A0D}
+		{4E9EC514-8336-0CD0-5DC8-E1FC3796F34B} = {E2B9F536-143E-2EFE-9BA7-27631E2A18AC}
+		{20FDE669-0245-4997-AECF-C15E1014AB1D} = {4E9EC514-8336-0CD0-5DC8-E1FC3796F34B}
 	EndGlobalSection
 EndGlobal

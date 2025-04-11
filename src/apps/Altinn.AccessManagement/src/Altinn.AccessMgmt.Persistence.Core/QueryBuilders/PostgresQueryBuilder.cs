@@ -1010,7 +1010,7 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         string tableName = GetTableName(includeAlias: false, useTranslation: isTranslation);
 
         var sb = new StringBuilder();
-        sb.AppendLine($"CREATE TRIGGER {modelName}_Audit_Update AFTER UPDATE ON {tableName}");
+        sb.AppendLine($"CREATE OR REPLACE TRIGGER {modelName}_Audit_Update AFTER UPDATE ON {tableName}");
         sb.AppendLine($"FOR EACH ROW EXECUTE FUNCTION {schema}.{functionName}();");
 
         scripts.Add($"CREATE TRIGGER {schema}.{modelName}_Audit_Update", sb.ToString());
@@ -1028,7 +1028,7 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         string tableName = GetTableName(includeAlias: false, useTranslation: isTranslation);
 
         var sb = new StringBuilder();
-        sb.AppendLine($"CREATE TRIGGER {modelName}_Audit_Delete AFTER DELETE ON {tableName}");
+        sb.AppendLine($"CREATE OR REPLACE  TRIGGER {modelName}_Audit_Delete AFTER DELETE ON {tableName}");
         sb.AppendLine($"FOR EACH ROW EXECUTE FUNCTION {schema}.{functionName}();");
 
         scripts.Add($"CREATE TRIGGER {schema}.{modelName}_Audit_Delete", sb.ToString());

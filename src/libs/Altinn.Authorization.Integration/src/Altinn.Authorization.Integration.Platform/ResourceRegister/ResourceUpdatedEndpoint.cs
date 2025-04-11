@@ -12,7 +12,7 @@ public partial class ResourceRegisterClient
     {
         List<Action<HttpRequestMessage>> request = [
             RequestComposer.WithHttpVerb(HttpMethod.Get),
-            RequestComposer.WithSetUri(Options.Value.Endpoint, "resourceregistry/api/v1/resource/updated"),
+            RequestComposer.WithSetUri(ResourceRegisterOptions.Value.Endpoint, "resourceregistry/api/v1/resource/updated"),
             RequestComposer.WithSetUri(nextPage),
             RequestComposer.WithAppendQueryParam("limit", 1000),
         ];

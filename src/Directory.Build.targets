@@ -2,24 +2,43 @@
     <Choose>
 
         <When Condition=" '$(IsTestProject)' == 'true' Or '$(IsTestLibrary)' == 'true'">
+            <PropertyGroup>
+                <GenerateDocumentationFile>false</GenerateDocumentationFile>
+                <NoWarn>$(NoWarn);SA0001</NoWarn>
+                <XUnitVersion Condition=" '$(XUnitVersion)' == '' ">v2</XUnitVersion>
+            </PropertyGroup>
+
             <ItemGroup>
-                <PackageReference Include="Microsoft.NET.Test.Sdk" />
-                <PackageReference Include="xunit" />
-                <PackageReference Include="xunit.runner.visualstudio">
-                    <PrivateAssets>all</PrivateAssets>
-                    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-                </PackageReference>
+                <DocFileItem Remove="@(DocFileItem)" />
+            </ItemGroup>
+
+            <ItemGroup Condition=" '$(IsTestProject)' == 'true' ">
                 <PackageReference Include="coverlet.collector">
                     <PrivateAssets>all</PrivateAssets>
                     <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
                 </PackageReference>
+
+                <PackageReference Include="Microsoft.NET.Test.Sdk" />
+                <PackageReference Include="xunit" Condition=" '$(XUnitVersion)' == 'v2' " />
+                <PackageReference Include="xunit.v3" Condition=" '$(XUnitVersion)' == 'v3' " />
+                <PackageReference Include="xunit.runner.visualstudio">
+                    <PrivateAssets>all</PrivateAssets>
+                    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+                </PackageReference>
+            </ItemGroup>
+
+            <ItemGroup Condition=" '$(IsTestLibrary)' == 'true' ">
+                <PackageReference Include="xunit.assert" Condition=" '$(XUnitVersion)' == 'v2' " />
+                <PackageReference Include="xunit.extensibility.core" Condition=" '$(XUnitVersion)' == 'v2' " />
+                <PackageReference Include="xunit.v3.assert" Condition=" '$(XUnitVersion)' == 'v3' " />
+                <PackageReference Include="xunit.v3.extensibility.core"
+                    Condition=" '$(XUnitVersion)' == 'v3' " />
+            </ItemGroup>
+
+            <ItemGroup>
                 <Using Include="Xunit" />
             </ItemGroup>
 
-            <PropertyGroup>
-                <GenerateDocumentationFile>false</GenerateDocumentationFile>
-                <IsPublishable>false</IsPublishable>
-            </PropertyGroup>
         </When>
 
         <Otherwise>

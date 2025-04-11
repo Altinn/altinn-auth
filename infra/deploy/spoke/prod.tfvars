@@ -10,8 +10,10 @@ hub_subscription_id             = "01de49cb-48ef-4494-bc9d-b9e19a90bcd5"
 hub_principal_id                = "a9585a64-20f0-4d18-aba6-9930f92b809c"
 prod_like                       = true
 appsettings_key_value = {
-  "Platform:ResourceRegistryEndpoint" : "http://altinn-resource-registry.default.svc.cluster.local"
-  "Platform:RegisterEndpoint" : "http://altinn-register.default.svc.cluster.local"
+  "Platform:ResourceRegistryEndpoint" : "http://altinn-resource-registry.default.svc.cluster.local" # Obsolete
+  "Platform:RegisterEndpoint" : "http://altinn-register.default.svc.cluster.local"                  # Obsolete
+  "Platform:ResourceRegistry:Endpoint" : "http://altinn-resource-registry.default.svc.cluster.local"
+  "Platform:Register:Endpoint" : "http://altinn-register.default.svc.cluster.local"
 }
 spoke_principal_ids = ["a9585a64-20f0-4d18-aba6-9930f92b809c"]
 service_bus_firewall = [

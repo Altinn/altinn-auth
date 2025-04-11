@@ -1,0 +1,48 @@
+name: altinn_authorization
+services:
+  redis:
+    image: redis:6.2-alpine
+    container_name: altinn_authorization_redis
+    restart: always
+    ports:
+      - '8002:6379'
+    environment:
+      - REDIS_PASSWORD=admin
+      - REDIS_PORT=6379
+      - REDIS_DATABASES=16
+    volumes:
+      - altinn_authorization_data:/redis
+      - altinn_authorization_data:/redis/redis.conf
+  postgres:
+    image: postgres
+    container_name: altinn_authorization_postgres
+    restart: always
+    ports:
+      - "8001:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: postgres
+    networks:
+      - postgres
+    volumes:
+      - altinn_authorization_data:/postgres
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: altinn_authorization_pgadmin
+    restart: always
+    ports:
+      - "8000:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - altinn_authorization_data:/pgadmin
+
+networks:
+  postgres:
+    driver: bridge
+
+volumes:
+  altinn_authorization_data:
+

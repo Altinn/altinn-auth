@@ -7,7 +7,6 @@
             <PropertyGroup>
                 <IsPublishable>true</IsPublishable>
                 <EnableSdkContainerSupport>true</EnableSdkContainerSupport>
-                <UserSecretsId>Altinn-Authorization</UserSecretsId>
                 <LocalRegistry>localhost</LocalRegistry>
                 <ContainerRegistry>ghcr.io</ContainerRegistry>
                 <ContainerRepository>altinn/altinn-authorization-tmp/$(ContainerName)</ContainerRepository>

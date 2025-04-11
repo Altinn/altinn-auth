@@ -13,10 +13,10 @@ public partial class RegisterClient
     {
         List<Action<HttpRequestMessage>> request = [
             RequestComposer.WithHttpVerb(HttpMethod.Get),
-            RequestComposer.WithSetUri(Options.Value.Endpoint, "/register/api/v2/internal/parties/external-roles/assignments/events/stream"),
+            RequestComposer.WithSetUri(RegisterOptions.Value.Endpoint, "/register/api/v2/internal/parties/external-roles/assignments/events/stream"),
             RequestComposer.WithSetUri(nextPage),
             RequestComposer.WithAppendQueryParam("fields", fields),
-            RequestComposer.WithPlatformAccessToken(AccessTokenGenerator, "access-management")
+            RequestComposer.WithJWTToken(await TokenGenerator.CreatePlatformAccessToken(cancellationToken))
         ];
 
         var response = await HttpClient.SendAsync(RequestComposer.New([.. request]), cancellationToken);

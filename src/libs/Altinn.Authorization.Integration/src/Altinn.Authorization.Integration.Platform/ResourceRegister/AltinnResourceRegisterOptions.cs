@@ -23,10 +23,10 @@ public class AltinnResourceRegisterOptions
     }
 
     /// <summary>
-    /// Gets or sets the endpoint URL for the Altinn Register service.
+    /// Gets or sets the endpoint URL for the Altinn Resource Register service.
     /// </summary>
     /// <remarks>
-    /// This URL is used to make requests to the Altinn Register API.
+    /// This URL is used to make requests to the Altinn Resource Register API.
     /// </remarks>
     public Uri Endpoint { get; set; }
 }

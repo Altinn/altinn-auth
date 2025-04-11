@@ -18,6 +18,8 @@ public class ProviderDefinition : BaseDbDefinition<Provider>, IDbDefinition
         definitionRegistry.Define<Provider>(def =>
         {
             def.EnableAudit();
+            def.EnableTranslation();
+
             def.RegisterPrimaryKey([t => t.Id]);
             def.RegisterProperty(t => t.Id);
 

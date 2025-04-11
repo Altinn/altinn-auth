@@ -189,7 +189,7 @@ public class DbDataMigrationService(
             new Provider() { Id = Guid.Parse("0195ea92-2080-758b-89db-7735c4f68320"), Name = "Enhetsregisteret", Code = "sys-ccr", TypeId = systemType.Id }
         };
 
-        await ingestService.IngestAndMergeData(systemProviders, options: options, new List<GenericParameter>() { new GenericParameter("code", "code") }, cancellationToken);
+        await ingestService.IngestAndMergeData(systemProviders, options: options, ["code"], cancellationToken);
     }
 
     /// <summary>
@@ -617,7 +617,7 @@ public class DbDataMigrationService(
             new Role() { Id = Guid.Parse("46e27685-b3ba-423e-8b42-faab54de5817"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Reknskapsførar",                                      Code = "regnskapsforer",                        Description = "Reknskapsførar", Urn = "urn:altinn:external-role:ccr:regnskapsforer" }
         };
 
-        await ingestService.IngestAndMergeData(roles, options, new List<GenericParameter>() { new GenericParameter("EntityTypeId", "EntityTypeId"), new GenericParameter("Code", "Code") }, cancellationToken);
+        await ingestService.IngestAndMergeData(roles, options,["EntityTypeId", "Code"], cancellationToken);
 
         foreach (var item in rolesEng)
         {
@@ -703,10 +703,9 @@ public class DbDataMigrationService(
             new RoleLookup() { RoleId = roles.First(t => t.Code == "regnskapsforer").Id, Key = "ERCode", Value = "REGN" }
         };
 
-        var mergeFilter = new List<GenericParameter>()
+        var mergeFilter = new List<string>()
         {
-            new GenericParameter("RoleId", "RoleId"),
-            new GenericParameter("Key", "Key")
+            "RoleId", "Key"
         };
 
         await ingestService.IngestAndMergeData(erCodes, options: options, mergeFilter, cancellationToken);

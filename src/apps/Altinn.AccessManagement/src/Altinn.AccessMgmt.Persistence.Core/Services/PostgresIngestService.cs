@@ -59,11 +59,11 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
     }
 
     /// <inheritdoc />
-    public async Task<int> MergeTempData<T>(Guid ingestId, ChangeRequestOptions options, IEnumerable<GenericParameter> matchColumns = null, CancellationToken cancellationToken = default)
+    public async Task<int> MergeTempData<T>(Guid ingestId, ChangeRequestOptions options, IEnumerable<string> matchColumns = null, CancellationToken cancellationToken = default)
     {
         if (matchColumns == null || matchColumns.Count() == 0)
         {
-            matchColumns = [new GenericParameter("id", "id")];
+            matchColumns = ["id"];
         }
 
         var type = typeof(T);
@@ -77,9 +77,9 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
         var ingestName = ingestId.ToString().Replace("-", string.Empty);
         string ingestTableName = "ingest." + queryBuilder.GetTableName(includeAlias: false, includeSchema: false) + "_" + ingestName;
 
-        var mergeMatchStatement = string.Join(" AND ", matchColumns.Select(t => $"target.{t.Key} = source.{t.Key}"));
-        var mergeUpdateUnMatchStatement = string.Join(" OR ", ingestColumns.Where(t => matchColumns.Count(y => y.Key.Equals(t.Name, StringComparison.OrdinalIgnoreCase)) == 0).Select(t => $"target.{t.Name} <> source.{t.Name}"));
-        var mergeUpdateStatement = string.Join(" , ", ingestColumns.Where(t => matchColumns.Count(y => y.Key.Equals(t.Name, StringComparison.OrdinalIgnoreCase)) == 0).Select(t => $"{t.Name} = source.{t.Name}"));
+        var mergeMatchStatement = string.Join(" AND ", matchColumns.Select(t => $"target.{t} = source.{t}"));
+        var mergeUpdateUnMatchStatement = string.Join(" OR ", ingestColumns.Where(t => matchColumns.Count(y => y.Equals(t.Name, StringComparison.OrdinalIgnoreCase)) == 0).Select(t => $"target.{t.Name} <> source.{t.Name}"));
+        var mergeUpdateStatement = string.Join(" , ", ingestColumns.Where(t => matchColumns.Count(y => y.Equals(t.Name, StringComparison.OrdinalIgnoreCase)) == 0).Select(t => $"{t.Name} = source.{t.Name}"));
         var insertColumns = string.Join(" , ", ingestColumns.Select(t => $"{t.Name}"));
         var insertValues = string.Join(" , ", ingestColumns.Select(t => $"source.{t.Name}"));
 
@@ -113,7 +113,7 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
     }
 
     /// <inheritdoc />
-    public async Task<int> IngestAndMergeData<T>(List<T> data, ChangeRequestOptions options, IEnumerable<GenericParameter> matchColumns = null, CancellationToken cancellationToken = default)
+    public async Task<int> IngestAndMergeData<T>(List<T> data, ChangeRequestOptions options, IEnumerable<string> matchColumns = null, CancellationToken cancellationToken = default)
     {
         var ingestId = Guid.CreateVersion7();
         await IngestTempData(data, ingestId, options, cancellationToken);

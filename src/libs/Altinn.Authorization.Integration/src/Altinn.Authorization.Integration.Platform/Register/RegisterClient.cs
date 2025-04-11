@@ -1,4 +1,3 @@
-using Altinn.Common.AccessTokenClient.Services;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Authorization.Integration.Platform.Register;
@@ -7,22 +6,24 @@ namespace Altinn.Authorization.Integration.Platform.Register;
 /// Client for interacting with the Altinn Register service.
 /// </summary>
 /// <param name="httpClientFactory">Factory for creating HTTP clients.</param>
-/// <param name="accessTokenGenerator">Service for generating access tokens.</param>
-/// <param name="options">Configuration options for the Altinn Register service.</param>
-public partial class RegisterClient(IHttpClientFactory httpClientFactory, IAccessTokenGenerator accessTokenGenerator, IOptions<AltinnRegisterOptions> options) : IAltinnRegister
+/// <param name="registerOptions">Options for configuring the Altinn Register services.</param>
+/// <param name="platformOptions">Options for configuring platform integration services.</param>
+/// <param name="tokenGenerator">Service for generating authentication tokens.</param>
+public partial class RegisterClient(
+    IHttpClientFactory httpClientFactory,
+    IOptions<AltinnRegisterOptions> registerOptions,
+    IOptions<AltinnIntegrationOptions> platformOptions,
+    ITokenGenerator tokenGenerator) : IAltinnRegister
 {
-    /// <summary>
-    /// The name of the HTTP client used to communicate with the Altinn Register service.
-    /// </summary>
-    internal const string HttpClientName = "Altinn Register";
-
-    private HttpClient HttpClient => HttpClientFactory.CreateClient(HttpClientName);
+    private HttpClient HttpClient => HttpClientFactory.CreateClient(PlatformOptions.Value.HttpClientName);
 
     private IHttpClientFactory HttpClientFactory { get; } = httpClientFactory;
 
-    private IOptions<AltinnRegisterOptions> Options { get; } = options;
+    private IOptions<AltinnRegisterOptions> RegisterOptions { get; } = registerOptions;
 
-    private IAccessTokenGenerator AccessTokenGenerator { get; } = accessTokenGenerator;
+    private IOptions<AltinnIntegrationOptions> PlatformOptions { get; } = platformOptions;
+
+    private ITokenGenerator TokenGenerator { get; } = tokenGenerator;
 }
 
 /// <summary>
@@ -45,6 +46,6 @@ public interface IAltinnRegister
     /// <param name="fields">The fields to include in the response.</param>
     /// <param name="nextPage">The URL of the next page, if paginated.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>An asynchronous enumerable of paginated <see cref="PartyModel"/> items.</returns>
+    /// <returns>An asynchronous enumerable of paginated <see cref="RoleModel"/> items.</returns>
     Task<IAsyncEnumerable<PlatformResponse<PageStream<RoleModel>>>> StreamRoles(IEnumerable<string> fields, string nextPage = null, CancellationToken cancellationToken = default);
 }

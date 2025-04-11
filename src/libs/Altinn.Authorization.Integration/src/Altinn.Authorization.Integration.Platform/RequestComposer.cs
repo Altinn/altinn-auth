@@ -1,12 +1,16 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Runtime.CompilerServices;
+using System.Text;
 using System.Web;
 using Altinn.Common.AccessTokenClient.Services;
+using CommunityToolkit.Diagnostics;
 
 namespace Altinn.Authorization.Integration.Platform;
 
 /// <summary>
 /// Provides utility methods to create and modify HTTP requests.
 /// </summary>
-public static class RequestComposer
+internal static class RequestComposer
 {
     /// <summary>
     /// Creates a new HTTP request message and applies the provided actions to it.
@@ -112,20 +116,36 @@ public static class RequestComposer
         }.Uri;
     };
 
+    public static Action<HttpRequestMessage> WithBasicAuth(string username, string password) => request =>
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(nameof(username));
+        ArgumentException.ThrowIfNullOrWhiteSpace(nameof(password));
+
+        var cred = $"{username}:{password}";
+        request.Headers.Authorization = new("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes(cred)));
+    };
+
     /// <summary>
     /// Adds a platform access token to the request headers.
     /// </summary>
-    /// <param name="accessTokenGenerator">The access token generator.</param>
-    /// <param name="app">The application identifier.</param>
-    /// <param name="issuer">The token issuer (default: "platform").</param>
     /// <returns>An action to add the access token to the request headers.</returns>
-    public static Action<HttpRequestMessage> WithPlatformAccessToken(IAccessTokenGenerator accessTokenGenerator, string app, string issuer = "platform") => request =>
+    public static Action<HttpRequestMessage> WithPlatformAccessToken(string token) => request =>
     {
-        var token = accessTokenGenerator.GenerateAccessToken(issuer, app);
-        
         if (!string.IsNullOrEmpty(token))
         {
             request.Headers.Add("PlatformAccessToken", token);
+        }
+    };
+
+    /// <summary>
+    /// Adds a platform access token to the request headers.
+    /// </summary>
+    /// <returns>An action to add the access token to the request headers.</returns>
+    public static Action<HttpRequestMessage> WithJWTToken(string token) => request =>
+    {
+        if (!string.IsNullOrEmpty(token))
+        {
+            request.Headers.Add("Authorization", $"Bearer {token}");
         }
     };
 }

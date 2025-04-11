@@ -16,7 +16,7 @@ public class PlatformAuthorizationTokenProvider : IPlatformAuthorizationTokenPro
     private readonly OidcProviderSettings _oidcProviderSettings;
     private readonly AccessTokenSettings _accessTokenSettings;
     private readonly KeyVaultSettings _keyVaultSettings;
-    private static readonly SemaphoreSlim Semaphore = new SemaphoreSlim(1, 1);
+    private static readonly SemaphoreSlim Semaphore = new(1, 1);
     private DateTime _cacheTokenUntil = DateTime.MinValue;
     private string _accessToken;
 

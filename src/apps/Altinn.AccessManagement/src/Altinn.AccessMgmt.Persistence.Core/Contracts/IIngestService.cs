@@ -20,10 +20,10 @@ public interface IIngestService
     /// <summary>
     /// Merge data from temp table to original
     /// </summary>
-    Task<int> MergeTempData<T>(Guid ingestId, ChangeRequestOptions options, IEnumerable<GenericParameter> matchColumns = null, CancellationToken cancellationToken = default);
+    Task<int> MergeTempData<T>(Guid ingestId, ChangeRequestOptions options, IEnumerable<string> matchColumns = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Ingest data to temp table, using original table as template
     /// </summary>
-    Task<int> IngestAndMergeData<T>(List<T> data, ChangeRequestOptions options, IEnumerable<GenericParameter> matchColumns = null, CancellationToken cancellationToken = default);
+    Task<int> IngestAndMergeData<T>(List<T> data, ChangeRequestOptions options, IEnumerable<string> matchColumns = null, CancellationToken cancellationToken = default);
 }
