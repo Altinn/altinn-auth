@@ -617,10 +617,7 @@ public class DbDataMigrationService(
             new Role() { Id = Guid.Parse("46e27685-b3ba-423e-8b42-faab54de5817"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Reknskapsførar",                                      Code = "regnskapsforer",                        Description = "Reknskapsførar", Urn = "urn:altinn:external-role:ccr:regnskapsforer" }
         };
 
-        foreach (var item in roles)
-        {
-            await roleService.Upsert(item, options: options, cancellationToken: cancellationToken);
-        }
+        await ingestService.IngestAndMergeData(roles, options, new List<GenericParameter>() { new GenericParameter("EntityTypeId", "EntityTypeId"), new GenericParameter("Code", "Code") }, cancellationToken);
 
         foreach (var item in rolesEng)
         {
@@ -862,6 +859,7 @@ public class DbDataMigrationService(
             new Area() { Id = Guid.Parse("64cbcdc8-01c9-448c-b3d2-eb9582beb3c2"), Urn = "accesspackage:area:fullmakter_for_regnskapsforer", Name = "Fullmakter for regnskapsfører", Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til fullmakter for regnskapsfører.", IconUrl = $"{iconBaseUrl}Aksel_Home_Calculator.svg", GroupId = Guid.Parse("554F0321-53B8-4D97-BE12-6A585C507159") },
             new Area() { Id = Guid.Parse("7df15290-f43c-4831-a1b4-3edfa43e526d"), Urn = "accesspackage:area:fullmakter_for_revisor", Name = "Fullmakter for revisor", Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til fullmakter for revisor.", IconUrl = $"{iconBaseUrl}Aksel_Files-and-application_FileSearch.svg", GroupId = Guid.Parse("554F0321-53B8-4D97-BE12-6A585C507159") },
             new Area() { Id = Guid.Parse("f3daddb7-6e21-455e-b6d2-65a281375b6b"), Urn = "accesspackage:area:fullmakter_for_konkursbo", Name = "Fullmakter for konkursbo", Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til fullmakter for konkursbo.", IconUrl = $"{iconBaseUrl}Aksel_Statistics-and-math_TrendDown.svg", GroupId = Guid.Parse("554F0321-53B8-4D97-BE12-6A585C507159") },
+            new Area() { Id = Guid.Parse("0195efb8-7c80-76b3-bb86-ae9dfd74bca2"), Urn = "accesspackage:area:fullmakter_for_forretningsforer", Name = "Fullmakter for forretningsfører", Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til fullmakter for forretningsfører.", IconUrl = $"{iconBaseUrl}Aksel_Statistics-and-math_TrendDown.svg", GroupId = Guid.Parse("554F0321-53B8-4D97-BE12-6A585C507159") },
         };
 
         var areasEng = new List<Area>()
@@ -886,6 +884,7 @@ public class DbDataMigrationService(
             new Area() { Id = Guid.Parse("64cbcdc8-01c9-448c-b3d2-eb9582beb3c2"), Urn = "accesspackage:area:fullmakter_for_regnskapsforer", Name = "Authorizations for Accountants", Description = "This authorization area includes access packages related to authorizations for accountants.", IconUrl = $"{iconBaseUrl}Aksel_Home_Calculator.svg", GroupId = Guid.Parse("554F0321-53B8-4D97-BE12-6A585C507159") },
             new Area() { Id = Guid.Parse("7df15290-f43c-4831-a1b4-3edfa43e526d"), Urn = "accesspackage:area:fullmakter_for_revisor", Name = "Authorizations for Auditors", Description = "This authorization area includes access packages related to authorizations for auditors.", IconUrl = $"{iconBaseUrl}Aksel_Files-and-application_FileSearch.svg", GroupId = Guid.Parse("554F0321-53B8-4D97-BE12-6A585C507159") },
             new Area() { Id = Guid.Parse("f3daddb7-6e21-455e-b6d2-65a281375b6b"), Urn = "accesspackage:area:fullmakter_for_konkursbo", Name = "Authorizations for Bankruptcy Estates", Description = "This authorization area includes access packages related to authorizations for bankruptcy estates.", IconUrl = $"{iconBaseUrl}Aksel_Statistics-and-math_TrendDown.svg", GroupId = Guid.Parse("554F0321-53B8-4D97-BE12-6A585C507159") },
+            new Area() { Id = Guid.Parse("0195efb8-7c80-76b3-bb86-ae9dfd74bca2"), Urn = "accesspackage:area:fullmakter_for_forretningsforer", Name = "Authorizations for Bussineses", Description = "This authorization area includes access packages related to authorizations for bussineses.", IconUrl = $"{iconBaseUrl}Aksel_Statistics-and-math_TrendDown.svg", GroupId = Guid.Parse("554F0321-53B8-4D97-BE12-6A585C507159") },
         };
 
         var areasNno = new List<Area>()
@@ -910,6 +909,7 @@ public class DbDataMigrationService(
             new Area() { Id = Guid.Parse("64cbcdc8-01c9-448c-b3d2-eb9582beb3c2"), Urn = "accesspackage:area:fullmakter_for_regnskapsforer", Name = "Fullmakter for rekneskapsførar", Description = "Dette fullmaktsområdet omfattar tilgangspakkar knytt til fullmakter for rekneskapsførar.", IconUrl = $"{iconBaseUrl}Aksel_Home_Calculator.svg", GroupId = Guid.Parse("554F0321-53B8-4D97-BE12-6A585C507159") },
             new Area() { Id = Guid.Parse("7df15290-f43c-4831-a1b4-3edfa43e526d"), Urn = "accesspackage:area:fullmakter_for_revisor", Name = "Fullmakter for revisor", Description = "Dette fullmaktsområdet omfattar tilgangspakkar knytt til fullmakter for revisor.", IconUrl = $"{iconBaseUrl}Aksel_Files-and-application_FileSearch.svg", GroupId = Guid.Parse("554F0321-53B8-4D97-BE12-6A585C507159") },
             new Area() { Id = Guid.Parse("f3daddb7-6e21-455e-b6d2-65a281375b6b"), Urn = "accesspackage:area:fullmakter_for_konkursbo", Name = "Fullmakter for konkursbo", Description = "Dette fullmaktsområdet omfattar tilgangspakkar knytt til fullmakter for konkursbo.", IconUrl = $"{iconBaseUrl}Aksel_Statistics-and-math_TrendDown.svg", GroupId = Guid.Parse("554F0321-53B8-4D97-BE12-6A585C507159") },
+            new Area() { Id = Guid.Parse("0195efb8-7c80-76b3-bb86-ae9dfd74bca2"), Urn = "accesspackage:area:fullmakter_for_forretningsforer", Name = "Fullmakter for forretningsfører", Description = "Dette fullmaktsområdet omfattar tilgangspakkar knytt til fullmakter for forretningsfører.", IconUrl = $"{iconBaseUrl}Aksel_Statistics-and-math_TrendDown.svg", GroupId = Guid.Parse("554F0321-53B8-4D97-BE12-6A585C507159") },
         };
 
         foreach (var item in areas)
@@ -963,6 +963,8 @@ public class DbDataMigrationService(
         var area_fullmakter_for_regnskapsforer = areas.FirstOrDefault(t => t.Urn == "accesspackage:area:fullmakter_for_regnskapsforer")?.Id ?? throw new KeyNotFoundException(string.Format("Area not found '{0}'", "Fullmakter for regnskapsfører")); /*64cbcdc8-01c9-448c-b3d2-eb9582beb3c2*/
         var area_fullmakter_for_revisor = areas.FirstOrDefault(t => t.Urn == "accesspackage:area:fullmakter_for_revisor")?.Id ?? throw new KeyNotFoundException(string.Format("Area not found '{0}'", "Fullmakter for revisor")); /*7df15290-f43c-4831-a1b4-3edfa43e526d*/
         var area_fullmakter_for_konkursbo = areas.FirstOrDefault(t => t.Urn == "accesspackage:area:fullmakter_for_konkursbo")?.Id ?? throw new KeyNotFoundException(string.Format("Area not found '{0}'", "Fullmakter for konkursbo")); /*f3daddb7-6e21-455e-b6d2-65a281375b6b*/
+        var area_fullmakter_for_forretningsforer = areas.FirstOrDefault(t => t.Urn == "accesspackage:area:fullmakter_for_forretningsforer")?.Id ?? throw new KeyNotFoundException(string.Format("Area not found '{0}'", "Fullmakter for forretningsforer")); /*0195efb8-7c80-76b3-bb86-ae9dfd74bca2*/
+
 
         var packages = new List<Package>()
         {
@@ -1087,6 +1089,8 @@ public class DbDataMigrationService(
             new Package() { Id = Guid.Parse("96120c32-389d-46eb-8212-0a6540540c25"), ProviderId = provider, EntityTypeId = orgEntityType, AreaId = area_fullmakter_for_revisor, Urn = "urn:altinn:accesspackage:revisormedarbeider", Name = "Revisormedarbeider", Description = "Denne fullmakten gir revisor tilgang til å opptre som revisormedarbeider for en kunde og utføre alle tjenester som krever denne fullmakten. Dette er tjenester som tjenestetilbyder har vurdert det som naturlig at en revisor utfører på vegne av sin kunde. Fullmakten gis kun til autoriserte revisorer. Fullmakt hos revisor oppstår når kunden registrerer revisor i Enhetsregisteret. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.", IsDelegable = true, HasResources = true },
             new Package() { Id = Guid.Parse("5ef836c7-69cc-4ea8-84d6-fb933cc4fc5c"), ProviderId = provider, EntityTypeId = orgEntityType, AreaId = area_fullmakter_for_konkursbo, Urn = "urn:altinn:accesspackage:konkursbo-lesetilgang", Name = "Konkursbo lesetilgang", Description = "Denne fullmakten delegeres til kreditorer og andre som skal ha lesetilgang til det enkelte konkursbo.", IsDelegable = true, HasResources = true },
             new Package() { Id = Guid.Parse("0e219609-02c6-44e6-9c80-fe2c1997940e"), ProviderId = provider, EntityTypeId = orgEntityType, AreaId = area_fullmakter_for_konkursbo, Urn = "urn:altinn:accesspackage:konkursbo-skrivetilgang", Name = "Konkursbo skrivetilgang", Description = "Denne fullmakten gir bostyrers medhjelper tilgang til å jobbe på vegne av bostyrer. Bostyrer delegerer denne fullmakten sammen med Konkursbo lesetilgang til medhjelper for hvert konkursbo.", IsDelegable = true, HasResources = true },
+            new Package() { Id = Guid.Parse("0195efb8-7c80-7642-b9b8-c748ee4fecd4"), ProviderId = provider, EntityTypeId = orgEntityType, AreaId = area_bygg_anlegg_og_eiendom, Urn = "urn:altinn:accesspackage:tinglysing-eiendom", Name = "Tinglysing eiendom", Description = "Denne tilgangspakken gir fullmakter til tjenester knyttet til elektronisk tinglysing av rettigheter i eiendom.", IsDelegable = true, HasResources = true },
+            new Package() { Id = Guid.Parse("0195efb8-7c80-7cf2-bcc8-720a3fb39d44"), ProviderId = provider, EntityTypeId = orgEntityType, AreaId = area_fullmakter_for_forretningsforer, Urn = "urn:altinn:accesspackage:forretningsforer-eiendom", Name = "Forretningsforer eiendom", Description = "Denne fullmakten gir forretningsfører for Borettslag og Eierseksjonssameie tilgang til å opptre på vegne av kunde, og utføre alle tjenester som krever denne fullmakten. Dette er tjenester som tjenestetilbyder har vurdert det som naturlig at en forretningsfører utfører på vegne av sin kunde. Fullmakt hos forretningsfører oppstår når Borettslaget eller Eierseksjonssameiet registrerer forretningsfører i Enhetsregisteret. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.", IsDelegable = true, HasResources = true },
         };
 
         await ingestService.IngestAndMergeData(packages, options: options, null, cancellationToken);
@@ -1115,7 +1119,7 @@ public class DbDataMigrationService(
         var variants = new Dictionary<string, Guid>();
         foreach (var variant in await entityVariantService.Get())
         {
-            roles.Add(variant.Name, variant.Id);
+            variants.Add(variant.Name, variant.Id);
         }
 
         var rolePackages = new List<RolePackage>()
@@ -1990,9 +1994,15 @@ public class DbDataMigrationService(
             new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:bestyrende-reder"], PackageId = packages["urn:altinn:accesspackage:folkeregister"], EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:bostyrer"], PackageId = packages["urn:altinn:accesspackage:folkeregister"], EntityVariantId = null, CanDelegate = true, HasAccess = true },
 
-            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:forretningsforer"], PackageId = packages["urn:altinn:accesspackage:tinglysing-eiendom"], EntityVariantId = variants["ESEK"], CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:daglig-leder"], PackageId = packages["urn:altinn:accesspackage:tinglysing-eiendom"], EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:styreleder"], PackageId = packages["urn:altinn:accesspackage:tinglysing-eiendom"], EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:innehaver"], PackageId = packages["urn:altinn:accesspackage:tinglysing-eiendom"], EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:deltaker-fullt-ansvar"], PackageId = packages["urn:altinn:accesspackage:tinglysing-eiendom"], EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:deltaker-delt-ansvar"], PackageId = packages["urn:altinn:accesspackage:tinglysing-eiendom"], EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:komplementar"], PackageId = packages["urn:altinn:accesspackage:tinglysing-eiendom"], EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:bestyrende-reder"], PackageId = packages["urn:altinn:accesspackage:tinglysing-eiendom"], EntityVariantId = null, CanDelegate = true, HasAccess = true },
+
             new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:forretningsforer"], PackageId = packages["urn:altinn:accesspackage:forretningsforer-eiendom"], EntityVariantId = variants["ESEK"], CanDelegate = true, HasAccess = true },
-            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:forretningsforer"], PackageId = packages["urn:altinn:accesspackage:tinglysing-eiendom"], EntityVariantId = variants["BBL"], CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:forretningsforer"], PackageId = packages["urn:altinn:accesspackage:forretningsforer-eiendom"], EntityVariantId = variants["BBL"], CanDelegate = true, HasAccess = true },
 
             new RolePackage() { RoleId = roles["urn:altinn:role:hovedadministrator"], PackageId = packages["urn:altinn:accesspackage:post-til-virksomheten-med-taushetsbelagt-innhold"], EntityVariantId = null, CanDelegate = true, HasAccess = false },
