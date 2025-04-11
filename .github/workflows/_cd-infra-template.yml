@@ -35,7 +35,7 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Install OpenVPN
         run: |
@@ -49,7 +49,7 @@ jobs:
           EOF
 
       - name: Connect to VPN
-        uses: kota65535/github-openvpn-connect-action@v3.1.0
+        uses: kota65535/github-openvpn-connect-action@cd2ed8a90cc7b060dc4e001143e811b5f7ea0af5 # v3.1.0
         with:
           echo_config: false
           config_file: .github/openvpn.config
@@ -87,7 +87,7 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Install OpenVPN
         run: |
@@ -101,7 +101,7 @@ jobs:
           EOF
 
       - name: Connect to VPN
-        uses: kota65535/github-openvpn-connect-action@v3.1.0
+        uses: kota65535/github-openvpn-connect-action@cd2ed8a90cc7b060dc4e001143e811b5f7ea0af5 # v3.1.0
         with:
           echo_config: false
           config_file: .github/openvpn.config
