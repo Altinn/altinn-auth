@@ -207,7 +207,7 @@ public class AssignmentService(
         ValidatePartyIsNotNull(toEntityId, toEntityExt, ref errors, "$QUERY/to");
         ValidatePartyIsOrg(toEntityExt, ref errors, "$QUERY/to");
 
-        var roleResult = await roleRepository.Get(t => t.Name, roleCode, cancellationToken: cancellationToken);
+        var roleResult = await roleRepository.Get(t => t.Code, roleCode, cancellationToken: cancellationToken);
         if (roleResult == null || !roleResult.Any())
         {
             Unreachable();
