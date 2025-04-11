@@ -86,10 +86,10 @@ public class DbDataMigrationService(
             await migrationService.LogMigration<Entity>(dataKey, string.Empty, 2);
         }
 
-        if (migrationService.NeedMigration<Role>(dataKey, 6))
+        if (migrationService.NeedMigration<Role>(dataKey, 7))
         {
             await IngestRole(options: options, cancellationToken: cancellationToken);
-            await migrationService.LogMigration<Role>(dataKey, string.Empty, 6);
+            await migrationService.LogMigration<Role>(dataKey, string.Empty, 7);
         }
 
         if (migrationService.NeedMigration<RoleMap>(dataKey, 3))
@@ -104,22 +104,22 @@ public class DbDataMigrationService(
             await migrationService.LogMigration<AreaGroup>(dataKey, string.Empty, 4);
         }
 
-        if (migrationService.NeedMigration<Area>(dataKey, 4))
+        if (migrationService.NeedMigration<Area>(dataKey, 5))
         {
             await IngestArea(options: options, cancellationToken: cancellationToken);
-            await migrationService.LogMigration<Area>(dataKey, string.Empty, 4);
+            await migrationService.LogMigration<Area>(dataKey, string.Empty, 5);
         }
 
-        if (migrationService.NeedMigration<Package>(dataKey, 4))
+        if (migrationService.NeedMigration<Package>(dataKey, 5))
         {
             await IngestPackage(options: options, cancellationToken: cancellationToken);
-            await migrationService.LogMigration<Package>(dataKey, string.Empty, 4);
+            await migrationService.LogMigration<Package>(dataKey, string.Empty, 5);
         }
 
-        if (migrationService.NeedMigration<RolePackage>(dataKey, 2))
+        if (migrationService.NeedMigration<RolePackage>(dataKey, 3))
         {
             await IngestRolePackage(options: options, cancellationToken: cancellationToken);
-            await migrationService.LogMigration<RolePackage>(dataKey, string.Empty, 2);
+            await migrationService.LogMigration<RolePackage>(dataKey, string.Empty, 3);
         }
 
         if (migrationService.NeedMigration<EntityVariantRole>(dataKey, 2))
@@ -488,7 +488,7 @@ public class DbDataMigrationService(
             new Role() { Id = Guid.Parse("f045ffda-dbdc-41da-b674-b9b276ad5b01"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Styremedlem",                                 /*"MEDL"*/  Code = "styremedlem",                           Description = "Fysisk- eller juridisk person som inngår i et styre", Urn = "urn:altinn:external-role:ccr:styremedlem", IsKeyRole = false },
             new Role() { Id = Guid.Parse("9e5d3acf-cef7-4bbe-b101-8e9ab7b8b3e4"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Styrets leder",                               /*"LEDE"*/  Code = "styreleder",                            Description = "Fysisk- eller juridisk person som er styremedlem og leder et styre", Urn = "urn:altinn:external-role:ccr:styreleder", IsKeyRole = true },
             new Role() { Id = Guid.Parse("2e2fc06e-d9b7-4cd9-91bc-d5de766d20de"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Den personlige konkursen angår",              /*"KENK"*/  Code = "personlige-konkurs",                    Description = "Den personlige konkursen angår", Urn = "urn:altinn:external-role:ccr:personlige-konkurs", IsKeyRole = false },
-            new Role() { Id = Guid.Parse("e852d758-e8dd-41ec-a1e2-4632deb6857d"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Norsk representant for utenlandsk enhet",     /*"REPR"*/  Code = "norsk-representant",                    Description = "Fysisk- eller juridisk person som har ansvaret for den daglige driften i Norge", Urn = "urn:altinn:external-role:ccr:norsk-representant", IsKeyRole = true },
+            new Role() { Id = Guid.Parse("e852d758-e8dd-41ec-a1e2-4632deb6857d"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Norsk representant for utenlandsk enhet",     /*"REPR"*/  Code = "norsk-representant",                    Description = "Fysisk- eller juridisk person som har ansvaret for den daglige driften i Norge", Urn = "urn:altinn:external-role:ccr:norsk-representant", IsKeyRole = false },
             new Role() { Id = Guid.Parse("db013059-4a8a-442d-bf90-b03539fe5dda"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Kontaktperson",                               /*"KONT"*/  Code = "kontaktperson",                         Description = "Fysisk person som representerer en virksomhet", Urn = "urn:altinn:external-role:ccr:kontaktperson", IsKeyRole = false },
             new Role() { Id = Guid.Parse("69c4397a-9e34-4e73-9f69-534bc1bb74c8"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Kontaktperson NUF",                           /*"KNUF"*/  Code = "kontaktperson-nuf",                     Description = "Fysisk person som representerer en virksomhet - NUF", Urn = "urn:altinn:external-role:ccr:kontaktperson-nuf", IsKeyRole = false },
             new Role() { Id = Guid.Parse("8f0cf433-954e-4680-a25d-a3cf9ffdf149"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Bestyrende reder",                            /*"BEST"*/  Code = "bestyrende-reder",                      Description = "Bestyrende reder", Urn = "urn:altinn:external-role:ccr:bestyrende-reder", IsKeyRole = true },
@@ -728,7 +728,6 @@ public class DbDataMigrationService(
         var roleDtpr = (await roleService.Get(t => t.Urn, "urn:altinn:external-role:ccr:deltaker-delt-ansvar")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("Role not found '{0}'", "deltaker-delt-ansvar"));
         var roleKomp = (await roleService.Get(t => t.Urn, "urn:altinn:external-role:ccr:komplementar")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("Role not found '{0}'", "komplementar"));
         var roleBest = (await roleService.Get(t => t.Urn, "urn:altinn:external-role:ccr:bestyrende-reder")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("Role not found '{0}'", "bestyrende-reder"));
-        var roleRepr = (await roleService.Get(t => t.Urn, "urn:altinn:external-role:ccr:norsk-representant")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("Role not found '{0}'", "norsk-representant"));
         var roleBobe = (await roleService.Get(t => t.Urn, "urn:altinn:external-role:ccr:bostyrer")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("Role not found '{0}'", "bostyrer"));
         var roleRegn = (await roleService.Get(t => t.Urn, "urn:altinn:external-role:ccr:regnskapsforer")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("Role not found '{0}'", "regnskapsforer"));
         var roleRevi = (await roleService.Get(t => t.Urn, "urn:altinn:external-role:ccr:revisor")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("Role not found '{0}'", "revisor"));
@@ -774,7 +773,6 @@ public class DbDataMigrationService(
             new RoleMap() { HasRoleId = roleDtpr, GetRoleId = roleMPA },
             new RoleMap() { HasRoleId = roleKomp, GetRoleId = roleMPA },
             new RoleMap() { HasRoleId = roleBest, GetRoleId = roleMPA },
-            new RoleMap() { HasRoleId = roleRepr, GetRoleId = roleMPA },
             new RoleMap() { HasRoleId = roleBobe, GetRoleId = roleMPA },
             new RoleMap() { HasRoleId = roleKnuf, GetRoleId = roleMPA }
         };
@@ -2006,6 +2004,7 @@ public class DbDataMigrationService(
             new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:forretningsforer"], PackageId = packages["urn:altinn:accesspackage:forretningsforer-eiendom"], EntityVariantId = variants["BBL"], CanDelegate = true, HasAccess = true },
 
             new RolePackage() { RoleId = roles["urn:altinn:role:hovedadministrator"], PackageId = packages["urn:altinn:accesspackage:post-til-virksomheten-med-taushetsbelagt-innhold"], EntityVariantId = null, CanDelegate = true, HasAccess = false },
+            new RolePackage() { RoleId = roles["urn:altinn:role:hovedadministrator"], PackageId = packages["urn:altinn:accesspackage:eksplisitt"], EntityVariantId = null, CanDelegate = true, HasAccess = false },
         };
 
         await ingestService.IngestAndMergeData(rolePackages, options: options, null, cancellationToken);
