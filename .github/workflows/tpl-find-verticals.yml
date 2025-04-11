@@ -94,7 +94,7 @@ jobs:
             8.0.x
             9.0.x
 
-      - uses: pnpm/action-setup@v3
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4
         with:
           version: 9
           run_install: |
