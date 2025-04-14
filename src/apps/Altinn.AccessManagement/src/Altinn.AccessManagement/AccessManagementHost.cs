@@ -123,7 +123,7 @@ internal static partial class AccessManagementHost
         {
             var appsettings = new AccessManagementAppsettings(builder.Configuration);
             appsettings.Platform.Token.TestTool.Environment = appsettings.Environment;
-            if (builder.Configuration.GetValue<string>("kvSetting:Endpoint") is var endpoint && endpoint != null)
+            if (builder.Configuration.GetValue<string>("kvSetting:SecretUri") is var endpoint && endpoint != null)
             {
                 appsettings.Platform.Token.KeyVault.Endpoint = new Uri(endpoint);
             }
