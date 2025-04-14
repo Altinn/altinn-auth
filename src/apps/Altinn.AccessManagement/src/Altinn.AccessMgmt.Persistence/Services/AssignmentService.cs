@@ -232,7 +232,7 @@ public class AssignmentService(
             RoleId = roleId,
         };
 
-        var result = await assignmentRepository.Create(existingAssignment, options: options, cancellationToken);
+        var result = await assignmentRepository.Create(assignment, options: options, cancellationToken);
         if (result == 0)
         {
             Unreachable();
