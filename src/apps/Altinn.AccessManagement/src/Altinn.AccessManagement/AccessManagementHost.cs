@@ -119,10 +119,15 @@ internal static partial class AccessManagementHost
 
     private static WebApplicationBuilder ConfigureLibsIntegrations(this WebApplicationBuilder builder)
     {
-        builder.Services.AddAltinnPlatformIntegrationDefaults(() => 
+        builder.Services.AddAltinnPlatformIntegrationDefaults(() =>
         {
             var appsettings = new AccessManagementAppsettings(builder.Configuration);
             appsettings.Platform.Token.TestTool.Environment = appsettings.Environment;
+            if (builder.Configuration.GetValue<string>("kvSetting:Endpoint") is var endpoint && endpoint != null)
+            {
+                appsettings.Platform.Token.KeyVault.Endpoint = new Uri(endpoint);
+            }
+
             return appsettings.Platform;
         });
         return builder;
