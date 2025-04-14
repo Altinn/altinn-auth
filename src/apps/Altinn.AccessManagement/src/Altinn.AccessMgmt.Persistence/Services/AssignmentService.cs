@@ -187,7 +187,7 @@ public class AssignmentService(
             return errorResult;
         }
 
-        var result = await roleRepository.Delete(existingAssignment.Id, options, cancellationToken);
+        var result = await assignmentRepository.Delete(existingAssignment.Id, options, cancellationToken);
         if (result == 0)
         {
             Unreachable();
