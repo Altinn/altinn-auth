@@ -30,7 +30,7 @@ public class EntityDefinition : BaseDbDefinition<Entity>, IDbDefinition
 
             def.RegisterExtendedProperty<ExtEntity, EntityType>(t => t.TypeId, t => t.Id, t => t.Type, cascadeDelete: false);
             def.RegisterExtendedProperty<ExtEntity, EntityVariant>(t => t.VariantId, t => t.Id, t => t.Variant, cascadeDelete: false);
-            def.RegisterExtendedProperty<ExtEntity, Entity>(t => t.ParentId, t => t.Id, t => t.Parent, cascadeDelete: false);
+            def.RegisterExtendedProperty<ExtEntity, Entity>(t => t.ParentId, t => t.Id, t => t.Parent, optional: true, cascadeDelete: false);
 
             //// def.RegisterUniqueConstraint([t => t.Name, t => t.TypeId, t => t.RefId]);
         });
