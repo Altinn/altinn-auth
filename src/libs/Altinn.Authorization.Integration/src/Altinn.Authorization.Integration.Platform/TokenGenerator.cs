@@ -9,7 +9,7 @@ namespace Altinn.Authorization.Integration.Platform;
 
 internal class TokenGenerator
 {
-    internal class TokenGeneratorTestTool(IOptions<AltinnIntegrationOptions> options, IHttpClientFactory httpClientFactory) : ITokenGenerator
+    internal class TestTool(IOptions<AltinnIntegrationOptions> options, IHttpClientFactory httpClientFactory) : ITokenGenerator
     {
         private IOptions<AltinnIntegrationOptions> Options { get; } = options;
 
@@ -66,7 +66,7 @@ internal class TokenGenerator
         }
     }
 
-    internal class TokenGeneratorKeyVault(
+    internal class KeyVault(
             IOptions<AltinnIntegrationOptions> options,
             IAzureClientFactory<SecretClient> azureSecretClientFactory,
             IAzureClientFactory<CertificateClient> azureCertificateClientFactory,

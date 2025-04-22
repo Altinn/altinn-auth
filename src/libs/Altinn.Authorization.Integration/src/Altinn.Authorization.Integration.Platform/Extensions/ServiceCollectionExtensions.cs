@@ -32,7 +32,7 @@ public static partial class ServiceCollectionExtensions
         {
             opts.PlatformAccessToken.App = descriptor.Name;
             opts.PlatformAccessToken.Issuer = "platform";
-            if (opts.PlatformAccessToken.KeyVault.Endpoint != null)
+            if (appsettings.Token.KeyVault.Endpoint != null)
             {
                 Log.AddKeyVaultTokenSource(Logger);
                 opts.PlatformAccessToken.TokenSource = AltinnIntegrationOptions.TokenSource.AzureKeyVault;
@@ -104,23 +104,22 @@ public static partial class ServiceCollectionExtensions
             {
                 builder.UseCredential(AzureToken.Default);
                 builder.AddCertificateClient(options.PlatformAccessToken.KeyVault.Endpoint)
-                    .WithName(TokenGenerator.TokenGeneratorKeyVault.ServiceKey);
+                    .WithName(TokenGenerator.KeyVault.ServiceKey);
 
                 builder.AddSecretClient(options.PlatformAccessToken.KeyVault.Endpoint)
-                    .WithName(TokenGenerator.TokenGeneratorKeyVault.ServiceKey);
+                    .WithName(TokenGenerator.KeyVault.ServiceKey);
             });
 
-            services.TryAddSingleton<ITokenGenerator, TokenGenerator.TokenGeneratorKeyVault>();
+            services.TryAddSingleton<ITokenGenerator, TokenGenerator.KeyVault>();
         }
-
-        if (options.PlatformAccessToken.TokenSource == AltinnIntegrationOptions.TokenSource.TestTool)
+        else if (options.PlatformAccessToken.TokenSource == AltinnIntegrationOptions.TokenSource.TestTool)
         {
             if (string.IsNullOrEmpty(options.HttpClientName))
             {
                 services.AddHttpClient();
             }
 
-            services.TryAddSingleton<ITokenGenerator, TokenGenerator.TokenGeneratorTestTool>();
+            services.TryAddSingleton<ITokenGenerator, TokenGenerator.TestTool>();
         }
 
         services.TryAddSingleton(Marker.ServiceDescriptor);
