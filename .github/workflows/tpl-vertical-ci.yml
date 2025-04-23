@@ -131,8 +131,10 @@ jobs:
             /name:"$SONAR_NAME" \
             /o:"altinn" /d:sonar.token="$SONAR_TOKEN" \
             /d:sonar.scanner.scanAll=false \
+            /d:sonar.project.monorepo.enabled=true \
+            /d:sonar.exclusions="**/Migration/**,**/Altinn.AccessMgmt.FFB/**,**/Altinn.AccessMgmt.WebComponents/**" \
             /d:sonar.coverage.exclusions="**/Migration/**,**/Altinn.AccessMgmt.FFB/**,**/Altinn.AccessMgmt.WebComponents/**" \
-            /d:sonar.test.exclusions="**/test/**/*,**/Altinn.AccessMgmt.FFB/**,**/Altinn.AccessMgmt.WebComponents/**" \
+            /d:sonar.test.exclusions="**/test/**/*" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.cs.vstest.reportsPaths="**/*.trx" \
             /d:sonar.cs.vscoveragexml.reportsPaths="TestResults/coverage.xml"
