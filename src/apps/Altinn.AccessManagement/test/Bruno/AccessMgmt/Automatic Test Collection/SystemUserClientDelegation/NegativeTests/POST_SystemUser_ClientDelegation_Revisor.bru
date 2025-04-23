@@ -1,0 +1,58 @@
+meta {
+  name: POST_SystemUser_ClientDelegation_Revisor
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation?party={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+body:json {
+  {
+    "clientId": "{{clientId}}",
+    "agentId": "{{systemUser}}",
+    "agentName": "Bruno Test SystemUser",
+    "agentRole": "agent",
+    "rolePackages": [
+      {
+        "roleIdentifier": "revisor",
+        "packageUrn": "urn:altinn:accesspackage:ansvarlig-revisor"
+      }
+    ]
+  }
+}
+
+script:pre-request {
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  bru.setVar("party", testdata.revisor.partyuuid);
+  bru.setVar("systemUser", testdata.revisor.systemuser.id);
+  bru.setVar("clientId", testdata.revisor.client_org.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.revisor.hovedadministrator.userid,
+    auth_partyId: testdata.revisor.hovedadministrator.partyid,
+    auth_partyUuid: testdata.revisor.hovedadministrator.partyuuid,
+    auth_ssn: testdata.revisor.hovedadministrator.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Access package delegation from client org to systemuser should return 200 ok for Revi Org", function() {
+    expect(res.status).to.equal(200);
+  });
+}

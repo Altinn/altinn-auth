@@ -1,0 +1,52 @@
+meta {
+  name: DEL_SysUser_ClientDelg_AccPkgForDelete_AgentAssignmentid_false
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/SystemUserClientDelegation/deleteassignment?party={{party}}&assignmentId={{toId}}&cascade=false
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  assignmentId: {{toId}}
+  cascade: false
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+  
+  
+  var getTokenParameters = {
+    auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.userId,
+    auth_partyId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.partyId,
+    auth_partyUuid: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.partyUuid,
+    auth_ssn: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Deletion of active delegation through assignmentId should give error with 500 response code ", function() {
+    expect(res.status).to.equal(500);
+    
+    const data = res.getBody();
+    assert.equal(data.detail, "Assignment is active in one or more delegations and cascadeflag is false.");
+    
+  });
+}

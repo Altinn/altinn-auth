@@ -1,0 +1,58 @@
+meta {
+  name: GET_SystemUser_ClientDelegations_Revi_org
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation?party={{party}}&systemUser={{systemUser}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  systemUser: {{systemUser}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  bru.setVar("party", testdata.revisor.partyuuid);
+  bru.setVar("systemUser", testdata.revisor.systemuser.id);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.revisor.dagl.userid,
+    auth_partyId: testdata.revisor.dagl.partyid,
+    auth_partyUuid: testdata.revisor.dagl.partyuuid,
+    auth_ssn: testdata.revisor.dagl.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Access package delegation from client org to systemuser ", function() {
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
+      const data = res.getBody();
+      var delegationId = bru.getEnvVar("delegationId");
+      expect(res.status).to.equal(200);
+      expect(data[0]).to.have.property('id', delegationId);
+      expect(data[0].from).to.have.property('id', testdata.revisor.client_org.partyuuid.toLowerCase());
+      expect(data[0].to).to.have.property('id', testdata.revisor.systemuser.id.toLowerCase());
+    expect(data[0].role).to.have.property('code', "revisor");
+    expect(data[0].facilitator).to.have.property('name', "FINTFØLENDE FRISK TIGER AS");
+    expect(data[0].facilitatorRole).to.have.property('code', "agent");
+      
+    });
+}
