@@ -225,7 +225,8 @@ module "postgres_server" {
   private_dns_zone_id = data.azurerm_private_dns_zone.postgres.id
   postgres_version    = "16"
   configurations = {
-    "azure.extensions" : "HSTORE"
+    "azure.extensions"          : "HSTORE"
+    "max_locks_per_transaction" : "4096"
   }
 
   storage_tier = var.db_storage_tier
