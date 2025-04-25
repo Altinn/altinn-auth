@@ -632,7 +632,7 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         {_definition.ViewQuery}
         """;
 
-        scripts.Add($"CREATE VIEW {GetTableName(includeAlias: false)}", query);
+        scripts.Add($"CREATE VIEW {GetTableName(includeAlias: false)} v{_definition.Version}", query);
 
         return scripts;
     }
