@@ -344,17 +344,28 @@ public class DelegationService(
 
     private async Task<Entity> GetOrCreateEntity(Guid id, string name, string refId, string type, string variant, ChangeRequestOptions options)
     {
-        var entity = await entityRepository.Get(id);
-        if (entity != null)
-        {
-            return entity;
-        }
-
         var entityType = (await entityTypeRepository.Get(t => t.Name, type)).First() ?? throw new Exception(string.Format("Type not found '{0}'", type));
+
         var variantFilter = entityVariantRepository.CreateFilterBuilder();
         variantFilter.Equal(t => t.TypeId, entityType.Id);
         variantFilter.Equal(t => t.Name, variant);
         var entityVariant = (await entityVariantRepository.Get(variantFilter)).First() ?? throw new Exception(string.Format("Variant not found '{0}'", type));
+        
+        var entity = await entityRepository.Get(id);
+        if (entity != null)
+        {
+            if (!entity.TypeId.Equals(entityType.Id))
+            {
+                throw new ArgumentException(string.Format("Entity is not of desired type '{0}'", type), paramName: "Type");
+            }
+
+            if (!entity.VariantId.Equals(entityVariant.Id))
+            {
+                throw new ArgumentException(string.Format("Entity is not of desired variant '{0}'", variant), paramName: "Variant");
+            }
+
+            return entity;
+        }
 
         await entityRepository.Create(
             new Entity()
