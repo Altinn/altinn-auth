@@ -49,15 +49,10 @@ public class RoleSyncService(
         };
 
         OrgType = (await entityTypeRepository.Get(t => t.Name, "Organisasjon")).FirstOrDefault();
-        Provider =(await providerRepository.Get(t => t.Code, "ccr")).FirstOrDefault();
+        Provider = (await providerRepository.Get(t => t.Code, "ccr")).FirstOrDefault();
 
         await foreach (var page in await _register.StreamRoles([], ls.Data?.RoleStreamNextPageLink, cancellationToken))
         {
-            if (await _featureManager.IsEnabledAsync(AccessManagementFeatureFlags.HostedServicesRegisterSync))
-            {
-                return;
-            }
-
             if (cancellationToken.IsCancellationRequested)
             {
                 return;
