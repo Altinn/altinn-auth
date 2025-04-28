@@ -156,7 +156,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
             }
         }
     }
-
+    
     private async Task SetParent(Guid childId, Guid parentId, ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         try

@@ -55,9 +55,9 @@ public class PostgresDbExecutor(IAltinnDatabase databaseFactory, IDbConverter db
     /// </summary>
     public async Task<int> ExecuteMigrationCommand(string query, List<GenericParameter> parameters, CancellationToken cancellationToken = default)
     {
+        using var conn = _databaseFactory.CreatePgsqlConnection(SourceType.Migration);
         try
         {
-            using var conn = _databaseFactory.CreatePgsqlConnection(SourceType.Migration);
             var cmd = conn.CreateCommand();
             cmd.CommandText = query;
             if (parameters != null)
@@ -138,7 +138,14 @@ public class PostgresDbExecutor(IAltinnDatabase databaseFactory, IDbConverter db
         conn.Open();
         foreach (var parameter in parameters)
         {
-            cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
+            if (parameter.Value is null)
+            {
+                cmd.Parameters.Add(new NpgsqlParameter(parameter.Key, DBNull.Value));
+            }
+            else 
+            { 
+                cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
+            }
         }
 
         return _dbConverter.ConvertToObjects<T>(await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult, cancellationToken));

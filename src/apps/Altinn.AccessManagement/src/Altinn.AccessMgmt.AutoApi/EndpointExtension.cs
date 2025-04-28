@@ -97,7 +97,7 @@ public static class EndpointExtension
             }).WithOpenApi().WithTags(name).WithSummary($"Get all {Pluralize(name)}");
         }
 
-        if (mapPost && !def.IsView)
+        if (mapPost && def.DefinitionType == DbDefinitionType.Table)
         {
             app.MapPost($"/{name}", async ([FromServices] TService service, [FromBody] T obj, HttpRequest request) =>
             {
@@ -106,7 +106,7 @@ public static class EndpointExtension
             }).WithOpenApi().WithTags(name).WithSummary($"Create {name}");
         }
 
-        if (mapPut && !def.IsView)
+        if (mapPut && def.DefinitionType == DbDefinitionType.Table)
         {
             app.MapPut($"/{name}/{{id}}", async ([FromServices] TService service, Guid id, [FromBody] T obj, HttpRequest request) =>
             {
@@ -114,7 +114,7 @@ public static class EndpointExtension
             }).WithOpenApi().WithTags(name).WithSummary($"Update {name}");
         }
 
-        if (mapDelete && !def.IsView)
+        if (mapDelete && def.DefinitionType == DbDefinitionType.Table)
         {
             app.MapDelete($"/{name}/{{id}}", async ([FromServices] TService service, Guid id, HttpRequest request) =>
             {
@@ -183,15 +183,15 @@ public static class EndpointExtension
             return await service.GetA(id, GenerateRequestOptions(request));
         }).WithOpenApi().WithTags(endpointAGroup).WithSummary($"Get {pluralNameForB} based on {name}");
 
-        app.MapPost($"/{nameA}/{{id}}/{nameB}/{{linkId}}", async ([FromServices] TService service, Guid id, Guid linkId) =>
+        app.MapPost($"/{nameA}/{{id}}/{nameB}/{{linkId}}", async ([FromServices] TService service, Guid id, Guid linkId, HttpRequest request) =>
         {
-            var res = await service.CreateCross(id, linkId);
+            var res = await service.CreateCross(id, linkId, GenerateChangeRequestOptions(request));
             return res > 0 ? Results.Created($"/{name}/{res}", null) : Results.Problem();
         }).WithOpenApi().WithTags(endpointAGroup).WithSummary($"Create {name}");
 
-        app.MapDelete($"/{nameA}/{{id}}/{nameB}/{{linkId}}", async ([FromServices] TService service, Guid id, Guid linkId) =>
+        app.MapDelete($"/{nameA}/{{id}}/{nameB}/{{linkId}}", async ([FromServices] TService service, Guid id, Guid linkId, HttpRequest request) =>
         {
-            return await service.DeleteCross(id, linkId);
+            return await service.DeleteCross(id, linkId, GenerateChangeRequestOptions(request));
         }).WithOpenApi().WithTags(endpointAGroup).WithSummary($"Delete {name}");
 
         /*B*/
@@ -200,15 +200,15 @@ public static class EndpointExtension
             return await service.GetB(id, GenerateRequestOptions(request));
         }).WithOpenApi().WithTags(endpointBGroup).WithSummary($"Get {pluralNameForA} based on {name}");
 
-        app.MapPost($"/{nameB}/{{id}}/{nameA}/{{linkId}}", async ([FromServices] TService service, Guid id, Guid linkId) =>
+        app.MapPost($"/{nameB}/{{id}}/{nameA}/{{linkId}}", async ([FromServices] TService service, Guid id, Guid linkId, HttpRequest request) =>
         {
-            var res = await service.CreateCross(linkId, id);
+            var res = await service.CreateCross(linkId, id, GenerateChangeRequestOptions(request));
             return res > 0 ? Results.Created($"/{name}/{res}", null) : Results.Problem();
         }).WithOpenApi().WithTags(endpointBGroup).WithSummary($"Create {name}");
 
-        app.MapDelete($"/{nameB}/{{id}}/{nameA}/{{linkId}}", async ([FromServices] TService service, Guid id, Guid linkId) =>
+        app.MapDelete($"/{nameB}/{{id}}/{nameA}/{{linkId}}", async ([FromServices] TService service, Guid id, Guid linkId, HttpRequest request) =>
         {
-            return await service.DeleteCross(linkId, id);
+            return await service.DeleteCross(linkId, id, GenerateChangeRequestOptions(request));
         }).WithOpenApi().WithTags(endpointBGroup).WithSummary($"Delete {name}");
 
         return app;

@@ -83,7 +83,7 @@ public class PolicyInformationPointController : ControllerBase
         if (connections.Count() > 0)
         {
             var conPackFilter = _connectionPackageRepository.CreateFilterBuilder();
-            conPackFilter.In(t => t.ConnectionId, connections.Select(t => t.Id));
+            conPackFilter.In(t => t.Id, connections.Select(t => t.Id));
             var conPackages = await _connectionPackageRepository.GetExtended(conPackFilter);
 
             packages.AddRange(conPackages.Select(conPackage => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(conPackage.Package.Urn.Split(':').Last()))));

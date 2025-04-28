@@ -223,8 +223,8 @@ module "appsettings" {
       value       = false
     },
     {
-      name        = "AccessManagement.Enduser.AccessParties"
-      description = "Specifies if feature access parties are enabled for endusers."
+      name        = "AccessManagement.Enduser.Connections"
+      description = "Specifies if feature access connections are enabled for endusers."
       label       = "${lower(var.environment)}-access-management"
       value       = true
     },

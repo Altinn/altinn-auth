@@ -13,7 +13,7 @@ public interface IAssignmentService
     /// Gets assignment and creates if not exists.
     /// </summary>
     /// <returns></returns>
-    Task<Assignment> GetOrCreateAssignment(Guid fromId, Guid toId, string roleCode, ChangeRequestOptions options);
+    Task<Assignment> GetOrCreateAssignmentInternal(Guid fromId, Guid toId, string roleCode, ChangeRequestOptions options, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets assignment and creates if not exits
@@ -25,25 +25,25 @@ public interface IAssignmentService
     /// Gets assignment and creates if not exits
     /// </summary>
     /// <returns></returns>
-    Task<ProblemInstance> DeleteAssignment(Guid fromEntityId, Guid toEntityId, string roleCode, ChangeRequestOptions options, bool cascade = false, CancellationToken cancellationToken = default);
+    Task<ProblemInstance> DeleteAssignment(Guid fromId, Guid toId, string roleCode, ChangeRequestOptions options, bool cascade = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets assignment and creates if not exits
     /// </summary>
     /// <returns></returns>
-    Task<Assignment> GetOrCreateAssignment(Guid fromId, Guid toId, Guid roleId, ChangeRequestOptions options);
+    Task<Assignment> GetOrCreateAssignment(Guid fromId, Guid toId, Guid roleId, ChangeRequestOptions options, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a package to the delegation
     /// </summary>
     /// <returns></returns>
-    Task<bool> AddPackageToAssignment(Guid userId, Guid assignmentId, Guid packageId, ChangeRequestOptions options);
+    Task<bool> AddPackageToAssignment(Guid userId, Guid assignmentId, Guid packageId, ChangeRequestOptions options, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a resource to the delegation
     /// </summary>
     /// <returns></returns>
-    Task<bool> AddResourceToAssignment(Guid userId, Guid assignmentId, Guid resourceId, ChangeRequestOptions options);
+    Task<bool> AddResourceToAssignment(Guid userId, Guid assignmentId, Guid resourceId, ChangeRequestOptions options, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Fetches assignment.
@@ -53,15 +53,15 @@ public interface IAssignmentService
     /// <summary>
     /// Fetches assignment.
     /// </summary>
-    Task<Assignment> GetAssignment(Guid fromId, Guid toId, string roleCode);
+    Task<Assignment> GetAssignment(Guid fromId, Guid toId, string roleCode, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Fetches inherited assignments.
     /// </summary>
-    Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, Guid roleId);
+    Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, Guid roleId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Fetches inherited assignments.
     /// </summary>
-    Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, string roleCode);
+    Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, string roleCode, CancellationToken cancellationToken = default);
 }

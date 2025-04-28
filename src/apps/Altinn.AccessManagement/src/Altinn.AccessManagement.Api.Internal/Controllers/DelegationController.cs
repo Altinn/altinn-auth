@@ -236,6 +236,12 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
                 return Unauthorized();
             }
 
+            var options = new ChangeRequestOptions()
+            {
+                ChangedBy = userId,
+                ChangedBySystem = AuditDefaults.EnduserApi
+            };
+
             /*
             
             - User must have role:TS on Facilitator
@@ -246,7 +252,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
 
             try
             {
-                var res = await delegationPackageRepository.CreateCross(id, packageId);
+                var res = await delegationPackageRepository.CreateCross(id, packageId, options);
                 if (res > 0)
                 {
                     return Created();
@@ -274,6 +280,12 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
                 return Unauthorized();
             }
 
+            var options = new ChangeRequestOptions()
+            {
+                ChangedBy = userId,
+                ChangedBySystem = AuditDefaults.EnduserApi
+            };
+
             /*
 
            - User must have role:TS on Facilitator
@@ -283,7 +295,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
 
             try
             {
-                var res = await delegationPackageRepository.DeleteCross(id, packageId);
+                var res = await delegationPackageRepository.DeleteCross(id, packageId, options);
                 if (res > 0)
                 {
                     return NoContent();
@@ -340,6 +352,12 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
                 return Unauthorized();
             }
 
+            var options = new ChangeRequestOptions()
+            {
+                ChangedBy = userId,
+                ChangedBySystem = AuditDefaults.EnduserApi
+            };
+
             /*
             
             - User must have role:TS on Facilitator
@@ -350,7 +368,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
 
             try
             {
-                var res = await delegationResourceRepository.CreateCross(id, resourceId);
+                var res = await delegationResourceRepository.CreateCross(id, resourceId, options);
                 if (res > 0)
                 {
                     return Created();
@@ -378,6 +396,12 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
                 return Unauthorized();
             }
 
+            var options = new ChangeRequestOptions()
+            {
+                ChangedBy = userId,
+                ChangedBySystem = AuditDefaults.EnduserApi
+            };
+
             /*
 
            - User must have role:TS on Facilitator
@@ -387,7 +411,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
 
             try
             {
-                var res = await delegationResourceRepository.DeleteCross(id, resourceId);
+                var res = await delegationResourceRepository.DeleteCross(id, resourceId, options);
                 if (res > 0)
                 {
                     return NoContent();

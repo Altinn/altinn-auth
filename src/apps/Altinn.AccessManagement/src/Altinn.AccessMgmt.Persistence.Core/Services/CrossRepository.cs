@@ -2,9 +2,6 @@
 using Altinn.AccessMgmt.Persistence.Core.Definitions;
 using Altinn.AccessMgmt.Persistence.Core.Helpers;
 using Altinn.AccessMgmt.Persistence.Core.Models;
-using Altinn.AccessMgmt.Persistence.Core.QueryBuilders;
-using Microsoft.Extensions.Options;
-using Npgsql;
 
 namespace Altinn.AccessMgmt.Persistence.Core.Services;
 
@@ -24,13 +21,13 @@ public abstract class CrossRepository<T, TExtended, TA, TB> : ExtendedRepository
     { }
 
     /// <inheritdoc/>
-    public Task<int> CreateCross(Guid AIdentity, Guid BIdentity, CancellationToken cancellationToken = default)
+    public Task<int> CreateCross(Guid AIdentity, Guid BIdentity, ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc/>
-    public Task<int> DeleteCross(Guid AIdentity, Guid BIdentity, CancellationToken cancellationToken = default)
+    public Task<int> DeleteCross(Guid AIdentity, Guid BIdentity, ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

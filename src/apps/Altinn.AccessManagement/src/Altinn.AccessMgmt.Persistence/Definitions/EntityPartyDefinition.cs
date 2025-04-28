@@ -34,11 +34,11 @@ public class EntityPartyDefinition : BaseDbDefinition<EntityParty>, IDbDefinitio
             sb.AppendLine($"INNER JOIN dbo.entitytype AS et ON e.{nameof(Entity.TypeId)} = et.{nameof(EntityType.Id)}");
             sb.AppendLine($"INNER JOIN dbo.entityvariant AS ev ON e.{nameof(Entity.VariantId)} = ev.{nameof(EntityVariant.Id)}");
             
-            def.SetViewQuery(sb.ToString());
+            def.SetQuery(sb.ToString());
 
-            def.AddViewDependency<Entity>();
-            def.AddViewDependency<EntityType>();
-            def.AddViewDependency<EntityVariant>();
+            def.AddManualDependency<Entity>();
+            def.AddManualDependency<EntityType>();
+            def.AddManualDependency<EntityVariant>();
         });
     }
 }

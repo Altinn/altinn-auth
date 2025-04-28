@@ -1,6 +1,8 @@
 ﻿using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessMgmt.Core.Models;
+using Altinn.AccessMgmt.Persistence.Core.Helpers;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
+using Altinn.AccessMgmt.Persistence.Services;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -18,13 +20,52 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
         IConnectionRepository connectionRepository,
         IConnectionPackageRepository connectionPackageRepository,
         IConnectionResourceRepository connectionResourceRepository,
-        IDelegationService delegationService
+        IDelegationService delegationService,
+        IConnectionService connectionService
         ) : ControllerBase
     {
         private readonly IConnectionRepository connectionRepository = connectionRepository;
         private readonly IConnectionPackageRepository connectionPackageRepository = connectionPackageRepository;
         private readonly IConnectionResourceRepository connectionResourceRepository = connectionResourceRepository;
         private readonly IDelegationService delegationService = delegationService;
+        private readonly IConnectionService connectionService = connectionService;
+
+        /// <summary>
+        /// Alle enheter {id} har gitt tilgang til.
+        /// </summary>
+        [Route("testing")]
+        [HttpGet]
+        public async Task<ActionResult<ExtConnection>> GetSingleTesting(Guid? fromId, Guid? toId)
+        {
+            if (!fromId.HasValue && !toId.HasValue)
+            {
+                return BadRequest();
+            }
+
+            var filter = connectionRepository.CreateFilterBuilder();
+            filter.Equal(t => t.FromId, fromId);
+            filter.Equal(t => t.ToId, toId);
+            var res = await connectionRepository.Get(filter);
+
+            return Ok(res);
+        }
+
+        /// <summary>
+        /// Alle enheter {id} har gitt tilgang til.
+        /// </summary>
+        [Route("testingpackages")]
+        [HttpGet]
+        public async Task<ActionResult<ConnectionPackage>> GetSingleTestingPackages(Guid? fromId, Guid? toId)
+        {
+            if (!fromId.HasValue && !toId.HasValue)
+            {
+                return BadRequest();
+            }
+
+            var res = await connectionService.GetPackages(fromId, toId);
+
+            return Ok(res);
+        }
 
         /// <summary>
         /// Alle enheter {id} har gitt tilgang til.
@@ -128,7 +169,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
             var connections = await connectionRepository.Get(connectionFilter);
 
             var filter = connectionPackageRepository.CreateFilterBuilder();
-            filter.In(t => t.ConnectionId, connections.Select(t => t.Id));
+            filter.In(t => t.Id, connections.Select(t => t.Id));
             var r = await connectionPackageRepository.GetExtended(filter);
 
             return Ok(r.Select(t => t.Package));

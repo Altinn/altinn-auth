@@ -71,16 +71,18 @@ public interface IDbCrossRepository<T, TExtended, TA, TB> : IDbExtendedRepositor
     /// </summary>
     /// <param name="AIdentity">Identity for A</param>
     /// <param name="BIdentity">Identity for B</param>
+    /// <param name="options">Options used for changing data</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    Task<int> CreateCross(Guid AIdentity, Guid BIdentity, CancellationToken cancellationToken = default);
+    Task<int> CreateCross(Guid AIdentity, Guid BIdentity, ChangeRequestOptions options, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Delete cross reference.
     /// </summary>
     /// <param name="AIdentity">Identity for A</param>
     /// <param name="BIdentity">Identity for B</param>
+    /// <param name="options">Options used for changing data</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    Task<int> DeleteCross(Guid AIdentity, Guid BIdentity, CancellationToken cancellationToken = default);
+    Task<int> DeleteCross(Guid AIdentity, Guid BIdentity, ChangeRequestOptions options, CancellationToken cancellationToken = default);
 }

@@ -48,9 +48,9 @@ public class AssignmentService(
     }
 
     /// <inheritdoc/>
-    public async Task<Assignment> GetAssignment(Guid fromId, Guid toId, string roleCode)
+    public async Task<Assignment> GetAssignment(Guid fromId, Guid toId, string roleCode, CancellationToken cancellationToken = default)
     {
-        var roleResult = await roleRepository.Get(t => t.Code, roleCode);
+        var roleResult = await roleRepository.Get(t => t.Code, roleCode, cancellationToken: cancellationToken);
         if (roleResult == null || !roleResult.Any())
         {
             return null;
@@ -60,7 +60,7 @@ public class AssignmentService(
     }
 
     /// <inheritdoc/>
-    public async Task<bool> AddPackageToAssignment(Guid userId, Guid assignmentId, Guid packageId, ChangeRequestOptions options)
+    public async Task<bool> AddPackageToAssignment(Guid userId, Guid assignmentId, Guid packageId, ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         /*
         [X] Check if user is TS
@@ -71,24 +71,24 @@ public class AssignmentService(
         [ ] Check if package can be delegated
         */
 
-        var user = await entityRepository.Get(userId);
+        var user = await entityRepository.Get(userId, cancellationToken: cancellationToken);
 
-        var assignment = await assignmentRepository.Get(assignmentId);
+        var assignment = await assignmentRepository.Get(assignmentId, cancellationToken: cancellationToken);
 
         /* TODO: Future Sjekk om bruker er Tilgangsstyrer */
 
-        var package = await packageRepository.Get(packageId);
+        var package = await packageRepository.Get(packageId, cancellationToken: cancellationToken);
 
         var userAssignmentFilter = assignmentRepository.CreateFilterBuilder();
         userAssignmentFilter.Equal(t => t.FromId, assignment.FromId);
         userAssignmentFilter.Equal(t => t.ToId, userId);
-        var userAssignments = await assignmentRepository.Get(userAssignmentFilter);
+        var userAssignments = await assignmentRepository.Get(userAssignmentFilter, cancellationToken: cancellationToken);
 
         bool hasPackage = false;
 
         foreach (var userAssignment in userAssignments)
         {
-            var assignmentPackages = await assignmentPackageRepository.GetB(userAssignment.Id);
+            var assignmentPackages = await assignmentPackageRepository.GetB(userAssignment.Id, cancellationToken: cancellationToken);
             if (assignmentPackages != null && assignmentPackages.Count(t => t.Id == packageId) > 0)
             {
                 hasPackage = true;
@@ -101,7 +101,7 @@ public class AssignmentService(
             // Check if AssigmentRole=>RolePackage has package
             foreach (var roleId in userAssignments.Select(t => t.RoleId).Distinct())
             {
-                var rolePackResult = await rolePackageRepository.Get(t => t.RoleId, roleId);
+                var rolePackResult = await rolePackageRepository.Get(t => t.RoleId, roleId, cancellationToken: cancellationToken);
                 if (rolePackResult != null && rolePackResult.Count(t => t.PackageId == packageId) > 0)
                 {
                     hasPackage = true;
@@ -121,14 +121,15 @@ public class AssignmentService(
                 AssignmentId = assignmentId,
                 PackageId = packageId
             },
-            options: options
+            options: options, 
+            cancellationToken: cancellationToken
         );
 
         return true;
     }
 
     /// <inheritdoc/>
-    public Task<bool> AddResourceToAssignment(Guid userId, Guid assignmentId, Guid resourceId, ChangeRequestOptions options)
+    public Task<bool> AddResourceToAssignment(Guid userId, Guid assignmentId, Guid resourceId, ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         /*
         [ ] Check if user is TS
@@ -159,7 +160,7 @@ public class AssignmentService(
         }
 
         var roleId = roleResult.First().Id;
-        var existingAssignment = await GetAssignment(fromEntityId, toEntityId, roleId, cancellationToken);
+        var existingAssignment = await GetAssignment(fromEntityId, toEntityId, roleId, cancellationToken: cancellationToken);
         if (existingAssignment == null)
         {
             return null;
@@ -187,7 +188,7 @@ public class AssignmentService(
             return errorResult;
         }
 
-        var result = await assignmentRepository.Delete(existingAssignment.Id, options, cancellationToken);
+        var result = await assignmentRepository.Delete(existingAssignment.Id, options, cancellationToken: cancellationToken);
         if (result == 0)
         {
             Unreachable();
@@ -214,7 +215,7 @@ public class AssignmentService(
         }
 
         var roleId = roleResult.First().Id;
-        var existingAssignment = await GetAssignment(fromEntityId, toEntityId, roleId, cancellationToken);
+        var existingAssignment = await GetAssignment(fromEntityId, toEntityId, roleId, cancellationToken: cancellationToken);
         if (existingAssignment != null)
         {
             return existingAssignment;
@@ -232,7 +233,7 @@ public class AssignmentService(
             RoleId = roleId,
         };
 
-        var result = await assignmentRepository.Create(assignment, options: options, cancellationToken);
+        var result = await assignmentRepository.Create(assignment, options: options, cancellationToken: cancellationToken);
         if (result == 0)
         {
             Unreachable();
@@ -242,33 +243,33 @@ public class AssignmentService(
     }
 
     /// <inheritdoc/>
-    public async Task<Assignment> GetOrCreateAssignment(Guid fromEntityId, Guid toEntityId, string roleCode, ChangeRequestOptions options)
+    public async Task<Assignment> GetOrCreateAssignmentInternal(Guid fromEntityId, Guid toEntityId, string roleCode, ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
-        var roleResult = await roleRepository.Get(t => t.Name, roleCode);
+        var roleResult = await roleRepository.Get(t => t.Name, roleCode, cancellationToken: cancellationToken);
         if (roleResult == null || !roleResult.Any())
         {
             throw new Exception(string.Format("Role '{0}' not found", roleCode));
         }
 
-        return await GetOrCreateAssignment(fromEntityId, toEntityId, roleResult.First().Id, options: options);
+        return await GetOrCreateAssignment(fromEntityId, toEntityId, roleResult.First().Id, options: options, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<Assignment> GetOrCreateAssignment(Guid fromEntityId, Guid toEntityId, Guid roleId, ChangeRequestOptions options)
+    public async Task<Assignment> GetOrCreateAssignment(Guid fromEntityId, Guid toEntityId, Guid roleId, ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
-        var assignment = await GetAssignment(fromEntityId, toEntityId, roleId);
+        var assignment = await GetAssignment(fromEntityId, toEntityId, roleId, cancellationToken: cancellationToken);
         if (assignment != null)
         {
             return assignment;
         }
 
-        var role = await roleRepository.Get(roleId);
+        var role = await roleRepository.Get(roleId, cancellationToken: cancellationToken);
         if (role == null)
         {
             throw new Exception(string.Format("Role '{0}' not found", roleId));
         }
 
-        var inheritedAssignments = await GetInheritedAssignment(fromEntityId, toEntityId, role.Id);
+        var inheritedAssignments = await GetInheritedAssignment(fromEntityId, toEntityId, role.Id, cancellationToken: cancellationToken);
         if (inheritedAssignments != null && inheritedAssignments.Any())
         {
             if (inheritedAssignments.Count() == 1)
@@ -286,34 +287,35 @@ public class AssignmentService(
                 ToId = toEntityId,
                 RoleId = role.Id
             },
-            options: options
+            options: options, 
+            cancellationToken: cancellationToken
         );
 
         throw new NotImplementedException();
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, Guid roleId)
+    public async Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, Guid roleId, CancellationToken cancellationToken = default)
     {
         var filter = inheritedAssignmentRepository.CreateFilterBuilder();
         filter.Equal(t => t.FromId, fromId);
         filter.Equal(t => t.ToId, toId);
         filter.Equal(t => t.RoleId, roleId);
 
-        return await inheritedAssignmentRepository.Get(filter);
+        return await inheritedAssignmentRepository.Get(filter, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, string roleCode)
+    public async Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, string roleCode, CancellationToken cancellationToken = default)
     {
-        var roleResult = await roleRepository.Get(t => t.Code, roleCode);
+        var roleResult = await roleRepository.Get(t => t.Code, roleCode, cancellationToken: cancellationToken);
         if (roleResult == null || !roleResult.Any())
         {
             throw new Exception(string.Format("Role not found '{0}'", roleCode));
         }
 
         var roleId = roleResult.First().Id;
-        return await GetInheritedAssignment(fromId, toId, roleId);
+        return await GetInheritedAssignment(fromId, toId, roleId, cancellationToken: cancellationToken);
     }
 
     private static void ValidatePartyIsNotNull(Guid id, ExtEntity entity, ref ValidationErrorBuilder errors, string param)

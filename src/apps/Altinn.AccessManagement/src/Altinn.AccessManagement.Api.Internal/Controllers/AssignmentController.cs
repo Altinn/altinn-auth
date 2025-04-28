@@ -262,6 +262,12 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
                 return Unauthorized();
             }
 
+            var options = new ChangeRequestOptions()
+            {
+                ChangedBy = userId,
+                ChangedBySystem = AuditDefaults.EnduserApi
+            };
+
             var userEntity = await entityRepository.Get(userId);
             var assignment = await assignmentRepository.Get(id);
             var package = await packageRepository.Get(packageId);
@@ -324,7 +330,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
                 PackageId = packageId
             };
 
-            var res = await assignmentPackageRepository.CreateCross(assignment.Id, package.Id);
+            var res = await assignmentPackageRepository.CreateCross(assignment.Id, package.Id, options);
             if (res == 1)
             {
                 return Created();
@@ -346,6 +352,12 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
             {
                 return Unauthorized();
             }
+
+            var options = new ChangeRequestOptions()
+            {
+                ChangedBy = userId,
+                ChangedBySystem = AuditDefaults.EnduserApi
+            };
 
             var userEntity = await entityRepository.Get(userId);
             var assignment = await assignmentRepository.Get(id);
@@ -412,7 +424,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
                 ResourceId = resourceId
             };
 
-            var res = await assignmentResourceRepository.CreateCross(assignment.Id, resource.Id);
+            var res = await assignmentResourceRepository.CreateCross(assignment.Id, resource.Id, options);
             if (res == 1)
             {
                 return Created();
@@ -437,6 +449,12 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
 
             var userEntity = await entityRepository.Get(userId);
 
+            var options = new ChangeRequestOptions()
+            {
+                ChangedBy = userId,
+                ChangedBySystem = AuditDefaults.EnduserApi
+            };
+
             // If user has access
             var assignment = await assignmentRepository.Get(id);
             var package = await packageRepository.Get(packageId);
@@ -446,7 +464,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
                 return BadRequest();
             }
 
-            await assignmentPackageRepository.DeleteCross(id, packageId);
+            await assignmentPackageRepository.DeleteCross(id, packageId, options);
 
             return Ok();
         }
@@ -466,7 +484,13 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
             }
 
             var userEntity = await entityRepository.Get(userId);
-            
+
+            var options = new ChangeRequestOptions()
+            {
+                ChangedBy = userId,
+                ChangedBySystem = AuditDefaults.EnduserApi
+            };
+
             // If user has access
             var assignment = await assignmentRepository.Get(id);
             var resource = await resourceRepository.Get(resourceId);
@@ -476,7 +500,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
                 return BadRequest();
             }
 
-            await assignmentPackageRepository.DeleteCross(id, resourceId);
+            await assignmentPackageRepository.DeleteCross(id, resourceId, options);
 
             return Ok();
         }

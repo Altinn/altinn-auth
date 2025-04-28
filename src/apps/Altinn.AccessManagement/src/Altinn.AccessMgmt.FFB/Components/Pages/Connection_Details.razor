@@ -150,7 +150,7 @@
                         @foreach (var delegation in ClientDelegations)
                         {
                             <SimpleTableRow>
-                               @*  <td>
+                                @*  <td>
                                     @if (IsDelegation)
                                     {
                                         <Icon Name="arrow-right-to-arc"></Icon>
@@ -255,7 +255,7 @@
 
         IsDelegation = Delegation != null;
 
-        Packages = await connectionService.GetPackages(Id); // connectionPackageRepository.GetB(Id);
+        Packages = new List<Package>(); //await connectionService.GetPackages(Id); // connectionPackageRepository.GetB(Id);
         Resources = await connectionService.GetResources(Id); // connectionResourceRepository.GetB(Id);
 
         var sourceFilter = assignmentRepository.CreateFilterBuilder();

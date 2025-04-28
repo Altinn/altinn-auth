@@ -43,19 +43,24 @@ public class DbDefinition(Type type)
     public DbCrossRelationDefinition CrossRelation { get; set; }
 
     /// <summary>
-    /// Indicates whether the entity is a view.
+    /// Definition type (Table, View, Query)
     /// </summary>
-    public bool IsView { get; set; }
+    public DbDefinitionType DefinitionType { get; set; } = DbDefinitionType.Table;
 
     /// <summary>
-    /// The SQL query used in the view.
+    /// The SQL query used based on definitiontype
     /// </summary>
-    public string ViewQuery { get; set; }
+    public string Query { get; set; }
+
+    /// <summary>
+    /// The SQL query used for extended type
+    /// </summary>
+    public string ExtendedQuery { get; set; }
 
     /// <summary>
     /// Gets or sets the collection of types that this entity depends on in views.
     /// </summary>
-    public List<Type> ViewDependencies { get; set; } = new();
+    public List<Type> ManualDependencies { get; set; } = new();
 
     /// <summary>
     /// Indicates whether the tables supports history tracking.
@@ -66,4 +71,25 @@ public class DbDefinition(Type type)
     /// Will create a translation table
     /// </summary>
     public bool EnableTranslation { get; set; } = false;
+}
+
+/// <summary>
+/// Type of definition
+/// </summary>
+public enum DbDefinitionType 
+{
+    /// <summary>
+    /// Standard database table
+    /// </summary>
+    Table, 
+
+    /// <summary>
+    /// Database view. Query contains create view script
+    /// </summary>
+    View, 
+
+    /// <summary>
+    /// Query to be run, Query contains query
+    /// </summary>
+    Query 
 }

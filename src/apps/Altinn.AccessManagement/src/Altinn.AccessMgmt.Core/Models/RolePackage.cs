@@ -55,6 +55,11 @@ public class RolePackage
     public bool HasAccess { get; set; }
 
     /// <summary>
+    /// CanAssign
+    /// </summary>
+    public bool CanAssign { get; set; }
+
+    /// <summary>
     /// CanDelegate
     /// </summary>
     public bool CanDelegate { get; set; }
