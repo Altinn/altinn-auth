@@ -13,10 +13,13 @@ using Microsoft.FeatureManagement;
 namespace Altinn.AccessManagement.HostedServices.Services;
 
 /// <inheritdoc />
-public class RoleSyncService(
+public class RoleSyncService : BaseSyncService, IRoleSyncService
+{
+
+    public RoleSyncService(
         IAltinnLease lease,
         IAltinnRegister register,
-        ILogger<RoleSyncService> _logger,
+        ILogger<RoleSyncService> logger,
         IFeatureManager featureManager,
         IIngestService ingestService,
         IRoleRepository roleRepository,
@@ -24,17 +27,26 @@ public class RoleSyncService(
         IAssignmentRepository assignmentRepository,
         IEntityRepository entityRepository,
         IEntityTypeRepository entityTypeRepository
-        ) : IRoleSyncService
-{
+    ) : base(lease, featureManager, register)
+    {
+        _register = register;
+        _logger = logger;
+        _ingestService = ingestService;
+        _roleRepository = roleRepository;
+        _providerRepository = providerRepository;
+        _assignmentRepository = assignmentRepository;
+        _entityRepository = entityRepository;
+        _entityTypeRepository = entityTypeRepository;
+    }
 
-    private readonly IAltinnLease _lease = lease;
-    private readonly IAltinnRegister _register = register;
-    private readonly IFeatureManager _featureManager = featureManager;
-    private readonly IRoleRepository roleRepository = roleRepository;
-    private readonly IProviderRepository providerRepository = providerRepository;
-    private readonly IAssignmentRepository assignmentRepository = assignmentRepository;
-    private readonly IEntityRepository entityRepository = entityRepository;
-    private readonly IEntityTypeRepository entityTypeRepository = entityTypeRepository;
+    private readonly IAltinnRegister _register;
+    private readonly ILogger<RoleSyncService> _logger;
+    private readonly IRoleRepository _roleRepository;
+    private readonly IProviderRepository _providerRepository;
+    private readonly IAssignmentRepository _assignmentRepository;
+    private readonly IEntityRepository _entityRepository;
+    private readonly IEntityTypeRepository _entityTypeRepository;
+    private readonly IIngestService _ingestService;
 
     /// <inheritdoc />
     public async Task SyncRoles(LeaseResult<LeaseContent> ls, CancellationToken cancellationToken)
@@ -48,8 +60,8 @@ public class RoleSyncService(
             ChangedBySystem = AuditDefaults.RegisterImportSystem
         };
 
-        OrgType = (await entityTypeRepository.Get(t => t.Name, "Organisasjon")).FirstOrDefault();
-        Provider = (await providerRepository.Get(t => t.Code, "ccr")).FirstOrDefault();
+        OrgType = (await _entityTypeRepository.Get(t => t.Name, "Organisasjon")).FirstOrDefault();
+        Provider = (await _providerRepository.Get(t => t.Code, "ccr")).FirstOrDefault();
 
         await foreach (var page in await _register.StreamRoles([], ls.Data?.RoleStreamNextPageLink, cancellationToken))
         {
@@ -90,11 +102,11 @@ public class RoleSyncService(
                     }
                     else
                     {
-                        var filter = assignmentRepository.CreateFilterBuilder();
+                        var filter = _assignmentRepository.CreateFilterBuilder();
                         filter.Equal(t => t.FromId, assignment.FromId);
                         filter.Equal(t => t.ToId, assignment.ToId);
                         filter.Equal(t => t.RoleId, assignment.RoleId);
-                        await assignmentRepository.Delete(filter, options: options, cancellationToken: cancellationToken);
+                        await _assignmentRepository.Delete(filter, options: options, cancellationToken: cancellationToken);
 
                         if (item.RoleIdentifier == "hovedenhet" || item.RoleIdentifier == "ikke-naeringsdrivende-hovedenhet")
                         {
@@ -120,14 +132,14 @@ public class RoleSyncService(
                 try
                 {
                     _logger.LogInformation("Ingest and Merge Assignment batch '{0}' to db", batchId.ToString());
-                    var ingested = await ingestService.IngestTempData<Assignment>(batchData, batchId, options: options, cancellationToken: cancellationToken);
+                    var ingested = await _ingestService.IngestTempData<Assignment>(batchData, batchId, options: options, cancellationToken: cancellationToken);
 
                     if (ingested != batchData.Count)
                     {
                         _logger.LogWarning("Ingest partial complete: Assignment ({0}/{1})", ingested, batchData.Count);
                     }
 
-                    var merged = await ingestService.MergeTempData<Assignment>(batchId, options: options, GetAssignmentMergeMatchFilter, cancellationToken: cancellationToken);
+                    var merged = await _ingestService.MergeTempData<Assignment>(batchId, options: options, GetAssignmentMergeMatchFilter, cancellationToken: cancellationToken);
 
                     _logger.LogInformation("Merge complete: Assignment ({0}/{1})", merged, ingested);
                 }
@@ -145,18 +157,11 @@ public class RoleSyncService(
         }
     }
 
-    private async Task UpdateLease(LeaseResult<LeaseContent> ls, Action<LeaseContent> configureLeaseContent, CancellationToken cancellationToken)
-    {
-        configureLeaseContent(ls.Data);
-        await _lease.Put(ls, ls.Data, cancellationToken);
-        await _lease.RefreshLease(ls, cancellationToken);
-    }
-
     private async Task SetParent(Guid childId, Guid parentId, ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         try
         {
-            await entityRepository.Update(t => t.ParentId, parentId, childId, options: options, cancellationToken: cancellationToken);
+            await _entityRepository.Update(t => t.ParentId, parentId, childId, options: options, cancellationToken: cancellationToken);
         }
         catch (Exception ex)
         {
@@ -168,7 +173,7 @@ public class RoleSyncService(
     {
         try
         {
-            await entityRepository.Update(t => t.ParentId, childId, options, cancellationToken: cancellationToken);
+            await _entityRepository.Update(t => t.ParentId, childId, options, cancellationToken: cancellationToken);
         }
         catch (Exception ex)
         {
@@ -205,10 +210,10 @@ public class RoleSyncService(
             return Roles.First(t => t.Code == roleIdentifier);
         }
 
-        var role = (await roleRepository.Get(t => t.Urn, roleIdentifier)).FirstOrDefault();
+        var role = (await _roleRepository.Get(t => t.Code, roleIdentifier)).FirstOrDefault();
         if (role == null)
         {
-            await roleRepository.Create(
+            await _roleRepository.Create(
                 new Role()
                 {
                     Id = Guid.CreateVersion7(),
@@ -222,7 +227,7 @@ public class RoleSyncService(
                 options: options
             );
 
-            role = (await roleRepository.Get(t => t.Urn, roleIdentifier)).FirstOrDefault();
+            role = (await _roleRepository.Get(t => t.Urn, roleIdentifier)).FirstOrDefault();
             if (role == null)
             {
                 throw new Exception(string.Format("Unable to get or create role '{0}'", roleIdentifier));
@@ -234,6 +239,7 @@ public class RoleSyncService(
     }
 
     private EntityType OrgType { get; set; }
+
     private Provider Provider { get; set; }
 
     private List<GenericFilter> assignmentMergeFilter = new List<GenericFilter>()

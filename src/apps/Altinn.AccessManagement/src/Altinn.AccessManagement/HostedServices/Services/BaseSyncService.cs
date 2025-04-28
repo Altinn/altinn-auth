@@ -31,13 +31,16 @@ public class BaseSyncService(IAltinnLease lease, IFeatureManager featureManager,
     /// </summary>
     protected async Task UpdateLease(LeaseResult<LeaseContent> ls, Action<LeaseContent> configureLeaseContent, CancellationToken cancellationToken)
     {
-        if (ls.Data == null)
+        if (ls.Data is { })
         {
-            await Lease.Put(ls, new LeaseContent(), cancellationToken);
+            configureLeaseContent(ls.Data);
+            await Lease.Put(ls, ls.Data, cancellationToken);
         }
         else
         {
-            configureLeaseContent(ls.Data);
+            var content = new LeaseContent();
+            configureLeaseContent(content);
+            await Lease.Put(ls, content, cancellationToken);
         }
 
         await Lease.RefreshLease(ls, cancellationToken);
