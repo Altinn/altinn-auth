@@ -8,14 +8,15 @@ dual_stack_ipv6_address_space   = "fd0a:7204:c37f:400::/56"
 hub_subscription_id             = "01de49cb-48ef-4494-bc9d-b9e19a90bcd5"
 hub_principal_id                = "a9585a64-20f0-4d18-aba6-9930f92b809c"
 prod_like                       = false
-appsettings_key_value = {
-  "Platform:ResourceRegistryEndpoint" : "http://altinn-resource-registry.default.svc.cluster.local" # Obsolete
-  "Platform:RegisterEndpoint" : "http://altinn-register.default.svc.cluster.local"                  # Obsolete
-  "Platform:ResourceRegistry:Endpoint" : "http://altinn-resource-registry.default.svc.cluster.local"
-  "Platform:Register:Endpoint" : "http://altinn-register.default.svc.cluster.local"
-}
+
 spoke_principal_ids = ["6eaed23e-df7f-4708-9c8e-a7f34deeadb4"]
 service_bus_firewall = [
   "20.100.48.108/31", # platform-at24-01-prefix
   "20.100.48.112/31", #platform-at24-02-prefix
 ]
+
+appconfiguration = {
+  platform_resource_registry_endpoint = "http://altinn-resource-registry.default.svc.cluster.local"
+  platform_register_endpoint          = "http://altinn-register.default.svc.cluster.local"
+  platform_sbl_endpoint               = "https://at24.altinn.cloud/sblbridge/"
+}
