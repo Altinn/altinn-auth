@@ -617,7 +617,7 @@ public class DbDataMigrationService(
             new Role() { Id = Guid.Parse("46e27685-b3ba-423e-8b42-faab54de5817"), EntityTypeId = orgEntityTypeId, ProviderId = ccrProviderId, Name = "Reknskapsførar",                                      Code = "regnskapsforer",                        Description = "Reknskapsførar", Urn = "urn:altinn:external-role:ccr:regnskapsforer" }
         };
 
-        await ingestService.IngestAndMergeData(roles, options,["EntityTypeId", "Code"], cancellationToken);
+        await ingestService.IngestAndMergeData(roles, options, cancellationToken: cancellationToken);
 
         foreach (var item in rolesEng)
         {
