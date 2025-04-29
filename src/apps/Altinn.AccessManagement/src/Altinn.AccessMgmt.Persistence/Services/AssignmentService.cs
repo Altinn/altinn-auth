@@ -245,7 +245,7 @@ public class AssignmentService(
     /// <inheritdoc/>
     public async Task<Assignment> GetOrCreateAssignmentInternal(Guid fromEntityId, Guid toEntityId, string roleCode, ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
-        var roleResult = await roleRepository.Get(t => t.Name, roleCode, cancellationToken: cancellationToken);
+        var roleResult = await roleRepository.Get(t => t.Code, roleCode, cancellationToken: cancellationToken);
         if (roleResult == null || !roleResult.Any())
         {
             throw new Exception(string.Format("Role '{0}' not found", roleCode));
