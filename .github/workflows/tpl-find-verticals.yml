@@ -11,6 +11,10 @@ on:
         value: ${{ jobs.list.outputs.verticals }}
         description: JSON list of folders in either <apps, pkgs, libs>
 
+      any:
+        value: ${{ jobs.list.outputs.any }}
+        description: Whether any verticals were found/matched
+
     inputs:
       type:
         required: true
@@ -37,6 +41,7 @@ jobs:
     outputs:
       verticals: ${{ steps.list.outputs.verticals }}
       matrix: ${{ steps.list.outputs.matrix }}
+      any: ${{ steps.list.outputs.any }}
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

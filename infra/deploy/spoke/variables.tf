@@ -63,6 +63,6 @@ variable "appconfiguration" {
   type = object({
     platform_resource_registry_endpoint = string
     platform_register_endpoint          = string
-    platform_sbl_endpoint               = string
+    platform_sbl_bridge_endpoint        = string
   })
 }

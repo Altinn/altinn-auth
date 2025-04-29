@@ -91,3 +91,4 @@ var matrix = {
 actions.setOutput("matrix", JSON.stringify(matrix));
 actions.setOutput("verticals", JSON.stringify(paths));
 actions.setOutput("all", JSON.stringify(mapped));
+actions.setOutput("any", JSON.stringify(filtered.length > 0));

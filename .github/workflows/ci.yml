@@ -17,6 +17,7 @@ jobs:
 
   ci:
     needs: find-verticals
+    if: needs.find-verticals.outputs.any == 'true'
     strategy:
       matrix: ${{ fromJson(needs.find-verticals.outputs.matrix) }}
       fail-fast: false
