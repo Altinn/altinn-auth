@@ -192,6 +192,11 @@ module "appsettings" {
       key   = "Altinn:MassTransit:register:AzureServiceBus:Endpoint"
       value = "sb://sb${local.spoke_suffix}.servicebus.windows.net"
       label = "${var.environment}-register"
+    },
+    {
+      key   = "A2PartyImport:BridgeApiEndpoint"
+      value = var.sbl_endpoint
+      label = "${var.environment}-register"
     }
   ]
 

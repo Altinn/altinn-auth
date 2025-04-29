@@ -14,3 +14,4 @@ platform_workflow_principal_ids = [
 db_max_pool_size = 4
 db_compute_tier  = "Burstable"
 db_compute_size  = "Standard_B2s"
+sbl_endpoint     = "https://at24.altinn.cloud/sblbridge/"

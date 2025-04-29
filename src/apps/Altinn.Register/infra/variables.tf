@@ -61,3 +61,7 @@ variable "db_storage_tier" {
   type    = string
   default = "P4"
 }
+
+variable "sbl_endpoint" {
+  type = string
+}
