@@ -86,10 +86,10 @@ public class DbDataMigrationService(
             await migrationService.LogMigration<Entity>(dataKey, string.Empty, 2);
         }
 
-        if (migrationService.NeedMigration<Role>(dataKey, 7))
+        if (migrationService.NeedMigration<Role>(dataKey, 8))
         {
             await IngestRole(options: options, cancellationToken: cancellationToken);
-            await migrationService.LogMigration<Role>(dataKey, string.Empty, 7);
+            await migrationService.LogMigration<Role>(dataKey, string.Empty, 8);
         }
 
         if (migrationService.NeedMigration<RoleMap>(dataKey, 3))
@@ -467,7 +467,7 @@ public class DbDataMigrationService(
 
         var roles = new List<Role>()
         {
-            new Role() { Id = Guid.Parse("42CAE370-2DC1-4FDC-9C67-C2F4B0F0F829"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId, Name = "Rettighetshaver",              Code = "rettighetshaver",                   Description = "Gir mulighet til å motta delegerte fullmakter for virksomheten", Urn = "urn:altinn:role:rightholder", IsKeyRole = false },
+            new Role() { Id = Guid.Parse("42CAE370-2DC1-4FDC-9C67-C2F4B0F0F829"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId, Name = "Rettighetshaver",              Code = "rettighetshaver",                   Description = "Gir mulighet til å motta delegerte fullmakter for virksomheten", Urn = "urn:altinn:role:rettighetshaver", IsKeyRole = false },
             new Role() { Id = Guid.Parse("FF4C33F5-03F7-4445-85ED-1E60B8AAFB30"), EntityTypeId = persEntityTypeId, ProviderId = a3ProviderId, Name = "Agent",                       Code = "agent",                         Description = "Gir mulighet til å motta delegerte fullmakter for virksomheten", Urn = "urn:altinn:role:agent", IsKeyRole = false },
             new Role() { Id = Guid.Parse("6795081e-e69c-4efd-8d42-2bfccd346777"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId, Name = "Klientadministrator",          Code = "klientadministrator",           Description = "Gir mulighet til å administrere tilgang til tjenester videre til ansatte på vegne av deres kunder", Urn = "urn:altinn:role:klientadministrator", IsKeyRole = false },
             new Role() { Id = Guid.Parse("6c1fbcb9-609c-4ab8-a048-3be8d7da5a82"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId, Name = "Tilgangsstyrer",               Code = "tilgangsstyrer",                Description = "Gir mulighet til å gi videre tilganger for virksomheten som man selv har mottatt", Urn = "urn:altinn:role:tilgangsstyrer", IsKeyRole = false },
@@ -541,8 +541,8 @@ public class DbDataMigrationService(
 
         var rolesEng = new List<Role>()
         {
-            new Role() { Id = Guid.Parse("42CAE370-2DC1-4FDC-9C67-C2F4B0F0F829"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId,    Name = "Rightholder",                     Code = "rettighetshaver",                       Description = "Allows receiving delegated authorizations for the business", Urn = "urn:altinn:role:rightholder", IsKeyRole = false },
-            new Role() { Id = Guid.Parse("FF4C33F5-03F7-4445-85ED-1E60B8AAFB30"), EntityTypeId = persEntityTypeId, ProviderId = a3ProviderId,   Name = "Agent",                        Code = "agent",                         Description = "Allows receiving delegated authorizations for the business", Urn = "digdir:role:agent" },
+            new Role() { Id = Guid.Parse("42CAE370-2DC1-4FDC-9C67-C2F4B0F0F829"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId,    Name = "Rightholder",                     Code = "rettighetshaver",                       Description = "Allows receiving delegated authorizations for the business", Urn = "urn:altinn:role:rettighetshaver", IsKeyRole = false },
+            new Role() { Id = Guid.Parse("FF4C33F5-03F7-4445-85ED-1E60B8AAFB30"), EntityTypeId = persEntityTypeId, ProviderId = a3ProviderId,   Name = "Agent",                        Code = "agent",                         Description = "Allows receiving delegated authorizations for the business", Urn = "urn:altinn:role:agent" },
             new Role() { Id = Guid.Parse("6795081e-e69c-4efd-8d42-2bfccd346777"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId,    Name = "Client Administrator",         Code = "klientadministrator",           Description = "Allows managing access to services for employees on behalf of their clients", Urn = "urn:altinn:role:klientadministrator" },
             new Role() { Id = Guid.Parse("6c1fbcb9-609c-4ab8-a048-3be8d7da5a82"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId,    Name = "Access Manager",               Code = "tilgangsstyrer",                Description = "Allows granting further accesses for the business that have been received", Urn = "urn:altinn:role:tilgangsstyrer" },
             new Role() { Id = Guid.Parse("ba1c261c-20ec-44e2-9e0b-4e7cfe9f36e7"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId,    Name = "Main Administrator",           Code = "hovedadministrator",            Description = "Allows managing all accesses for the business", Urn = "urn:altinn:role:hovedadministrator" },
@@ -580,8 +580,8 @@ public class DbDataMigrationService(
 
         var rolesNno = new List<Role>()
         {
-            new Role() { Id = Guid.Parse("42CAE370-2DC1-4FDC-9C67-C2F4B0F0F829"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId,  Name = "Rettshavar",                   Code = "rettighetshaver",                 Description = "Gjev høve til å motta delegerte fullmakter for verksemda", Urn = "urn:altinn:role:rightholder", IsKeyRole = false },
-            new Role() { Id = Guid.Parse("FF4C33F5-03F7-4445-85ED-1E60B8AAFB30"), EntityTypeId = persEntityTypeId, ProviderId = a3ProviderId, Name = "Agent",                           Code = "agent",                         Description = "Gjev høve til å motta delegerte fullmakter for verksemda", Urn = "digdir:role:agent" },
+            new Role() { Id = Guid.Parse("42CAE370-2DC1-4FDC-9C67-C2F4B0F0F829"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId,  Name = "Rettshavar",                   Code = "rettighetshaver",                 Description = "Gjev høve til å motta delegerte fullmakter for verksemda", Urn = "urn:altinn:role:rettighetshaver", IsKeyRole = false },
+            new Role() { Id = Guid.Parse("FF4C33F5-03F7-4445-85ED-1E60B8AAFB30"), EntityTypeId = persEntityTypeId, ProviderId = a3ProviderId, Name = "Agent",                           Code = "agent",                         Description = "Gjev høve til å motta delegerte fullmakter for verksemda", Urn = "urn:altinn:role:agent" },
             new Role() { Id = Guid.Parse("6795081e-e69c-4efd-8d42-2bfccd346777"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId, Name = "Klientadministrator",              Code = "klientadministrator",           Description = "Gjev høve til å administrere tilgang til tenester vidare til tilsette på vegne av kundane deira", Urn = "urn:altinn:role:klientadministrator" },
             new Role() { Id = Guid.Parse("6c1fbcb9-609c-4ab8-a048-3be8d7da5a82"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId, Name = "Tilgangsstyrer",                   Code = "tilgangsstyrer",                Description = "Gjev høve til å vidareformidle tilgongar for verksemda som ein sjølv har motteke", Urn = "urn:altinn:role:tilgangsstyrer" },
             new Role() { Id = Guid.Parse("ba1c261c-20ec-44e2-9e0b-4e7cfe9f36e7"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId, Name = "Hovudadministrator",               Code = "hovedadministrator",            Description = "Gjev høve til å administrere alle tilgongar for verksemda", Urn = "urn:altinn:role:hovedadministrator" },
