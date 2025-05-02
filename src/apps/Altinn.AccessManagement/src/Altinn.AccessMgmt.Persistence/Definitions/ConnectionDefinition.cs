@@ -22,9 +22,9 @@ public class ConnectionDefinition : BaseDbDefinition<Connection>, IDbDefinition
             def.SetType(DbDefinitionType.Query);
 
             def.RegisterProperty(t => t.Id);
-            def.RegisterProperty(t => t.FromId);
+            def.RegisterProperty(t => t.FromId, nullable: true);
             def.RegisterProperty(t => t.RoleId);
-            def.RegisterProperty(t => t.ToId);
+            def.RegisterProperty(t => t.ToId, nullable: true);
             def.RegisterProperty(t => t.FacilitatorId, nullable: true);
             def.RegisterProperty(t => t.FacilitatorRoleId, nullable: true);
 
@@ -35,9 +35,9 @@ public class ConnectionDefinition : BaseDbDefinition<Connection>, IDbDefinition
             def.RegisterProperty(t => t.IsRoleMap);
             def.RegisterProperty(t => t.IsKeyRole);
 
-            def.RegisterExtendedProperty<ExtConnection, Entity>(t => t.FromId, t => t.Id, t => t.From);
+            def.RegisterExtendedProperty<ExtConnection, Entity>(t => t.FromId, t => t.Id, t => t.From, optional: true);
             def.RegisterExtendedProperty<ExtConnection, Role>(t => t.RoleId, t => t.Id, t => t.Role);
-            def.RegisterExtendedProperty<ExtConnection, Entity>(t => t.ToId, t => t.Id, t => t.To);
+            def.RegisterExtendedProperty<ExtConnection, Entity>(t => t.ToId, t => t.Id, t => t.To, optional: true);
             def.RegisterExtendedProperty<ExtConnection, Entity>(t => t.FacilitatorId, t => t.Id, t => t.Facilitator, optional: true);
             def.RegisterExtendedProperty<ExtConnection, Role>(t => t.FacilitatorRoleId, t => t.Id, t => t.FacilitatorRole, optional: true);
 

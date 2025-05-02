@@ -242,7 +242,7 @@
     private async Task Load()
     {
         Given = [.. await connectionService.GetGiven(Id)];
-        Recived = [.. await connectionService.GetRecived(Id)];
+        Recived = [.. await connectionService.GetReceived(Id)];
         Facilitated = [.. await connectionService.GetFacilitated(Id)];
     }
 

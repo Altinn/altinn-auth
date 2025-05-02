@@ -23,20 +23,21 @@ public class ConnectionService(
     IDelegationPackageRepository delegationPackageRepository
     ) : IConnectionService
 {
-    
     /// <inheritdoc />
-    public async Task<IEnumerable<ExtConnection>> GetGiven(Guid id, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ExtConnection>> GetGiven(Guid toId, CancellationToken cancellationToken = default)
     {
         var filter = connectionRepository.CreateFilterBuilder();
-        filter.Equal(t => t.FromId, id);
+        filter.Equal(t => t.ToId, toId);
+        filter.Equal(t => t.FromId, null);
         return await connectionRepository.GetExtended(filter, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ExtConnection>> GetRecived(Guid id, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ExtConnection>> GetReceived(Guid fromId, CancellationToken cancellationToken = default)
     {
         var filter = connectionRepository.CreateFilterBuilder();
-        filter.Equal(t => t.ToId, id);
+        filter.Equal(t => t.FromId, fromId);
+        filter.Equal(t => t.ToId, null);
         return await connectionRepository.GetExtended(filter, cancellationToken: cancellationToken);
     }
 
@@ -393,7 +394,7 @@ public static class ConnectionConverter
         return new CreateDelegationResponse()
         {
             DelegationId = connection.Id,
-            FromEntityId = connection.FromId
+            FromEntityId = connection.FromId.Value
         };
     }
 

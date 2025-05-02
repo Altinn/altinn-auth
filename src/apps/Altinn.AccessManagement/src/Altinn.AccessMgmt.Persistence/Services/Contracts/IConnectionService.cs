@@ -9,23 +9,26 @@ namespace Altinn.AccessMgmt.Persistence.Services.Contracts;
 public interface IConnectionService
 {
     /// <summary>
-    /// Gets the connections given by the specified entity (Assignment.From).
+    /// Gets the connections given to the specified entity (Assignment.To).
     /// </summary>
-    /// <param name="id">The identifier of the entity.</param>
+    /// <param name="toId">The identifier of the entity access has been provided to.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A collection of given connections.</returns>
-    Task<IEnumerable<ExtConnection>> GetGiven(Guid id, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ExtConnection>> GetGiven(Guid toId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the connections received by the specified entity (Assignment.To).
+    /// Gets the connections received from the specified entity (Assignment.From).
     /// </summary>
-    /// <param name="id">The identifier of the entity.</param>
+    /// <param name="fromId">The identifier of the entity, access has been provided from.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A collection of received connections.</returns>
-    Task<IEnumerable<ExtConnection>> GetRecived(Guid id, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ExtConnection>> GetReceived(Guid fromId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the connections facilitated by the specified entity.
     /// </summary>
     /// <param name="id">The identifier of the entity.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A collection of facilitated connections.</returns>
     Task<IEnumerable<ExtConnection>> GetFacilitated(Guid id, CancellationToken cancellationToken = default);
 
@@ -34,6 +37,7 @@ public interface IConnectionService
     /// </summary>
     /// <param name="fromId">The identifier of the entity giving the connection.</param>
     /// <param name="toId">The identifier of the entity receiving the connection.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A collection of specific connections.</returns>
     Task<IEnumerable<ExtConnection>> GetSpecific(Guid fromId, Guid toId, CancellationToken cancellationToken = default);
 
@@ -41,7 +45,7 @@ public interface IConnectionService
     /// Gets the specific connection between two entities.
     /// </summary>
     /// <param name="Id">The identifier of the connection.</param>
-    /// <param name="cancellationToken">CancellationToken</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A specific connection.</returns>
     Task<ExtConnection> Get(Guid Id, CancellationToken cancellationToken = default);
 
@@ -50,7 +54,7 @@ public interface IConnectionService
     /// </summary>
     /// <param name="fromId">Assign from entity</param>
     /// <param name="toId">Assign to entity</param>
-    /// <param name="cancellationToken">CancellationToken</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A collection of packages.</returns>
     Task<IEnumerable<ConnectionPackage>> GetPackages(Guid? fromId, Guid? toId, CancellationToken cancellationToken = default);
 
@@ -60,7 +64,7 @@ public interface IConnectionService
     /// <param name="connectionId">Connection identifierr</param>
     /// <param name="packageId">Package identifier</param>
     /// <param name="options">Change request options</param>
-    /// <param name="cancellationToken">CancellationToken</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns></returns>
     Task<bool> AddPackage(Guid connectionId, Guid packageId, ChangeRequestOptions options, CancellationToken cancellationToken = default);
 
@@ -73,7 +77,7 @@ public interface IConnectionService
     /// <param name="roleCode">Assignment role</param>
     /// <param name="packageId">Package to add to assignment</param>
     /// <param name="options">Change request options (audit)</param>
-    /// <param name="cancellationToken">CancellationToken</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns></returns>
     Task<bool> AddPackage(Guid fromId, Guid toId, string roleCode, Guid packageId, ChangeRequestOptions options, CancellationToken cancellationToken = default);
 
@@ -86,7 +90,7 @@ public interface IConnectionService
     /// <param name="roleCode">Assignment role</param>
     /// <param name="packageUrn">Package to add to assignment</param>
     /// <param name="options">Change request options (audit)</param>
-    /// <param name="cancellationToken">CancellationToken</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns></returns>
     Task<bool> AddPackage(Guid fromId, Guid toId, string roleCode, string packageUrn, ChangeRequestOptions options, CancellationToken cancellationToken = default);
 
@@ -96,7 +100,7 @@ public interface IConnectionService
     /// <param name="connectionId">Connection identifierr</param>
     /// <param name="packageId">Package identifier</param>
     /// <param name="options">Change request options</param>
-    /// <param name="cancellationToken">CancellationToken</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns></returns>
     Task<bool> RemovePackage(Guid connectionId, Guid packageId, ChangeRequestOptions options, CancellationToken cancellationToken = default);
 
@@ -109,7 +113,7 @@ public interface IConnectionService
     /// <param name="roleCode">Assignment role</param>
     /// <param name="packageId">Package to remove from assignment</param>
     /// <param name="options">Change request options (audit)</param>
-    /// <param name="cancellationToken">CancellationToken</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns></returns>
     Task<bool> RemovePackage(Guid fromId, Guid toId, string roleCode, Guid packageId, ChangeRequestOptions options, CancellationToken cancellationToken = default);
 
@@ -117,7 +121,7 @@ public interface IConnectionService
     /// Gets the resources associated with the specified entity.
     /// </summary>
     /// <param name="id">The identifier of the entity.</param>
-    /// <param name="cancellationToken">CancellationToken</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A collection of resources.</returns>
     Task<IEnumerable<Resource>> GetResources(Guid id, CancellationToken cancellationToken = default);
 }
