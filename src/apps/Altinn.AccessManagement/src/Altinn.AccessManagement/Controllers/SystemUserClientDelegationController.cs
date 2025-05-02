@@ -62,7 +62,7 @@ public class SystemUserClientDelegationController : ControllerBase
             return Unauthorized();
         }
 
-        return Ok(await connectionService.GetReceived(party));
+        return Ok(await connectionService.GetGiven(party));
     }
 
     /// <summary>
