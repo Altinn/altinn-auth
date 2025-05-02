@@ -118,6 +118,11 @@
       "name": "TEST_SBS_KLIENT",
       "id": "ad98adff-ecf5-4d16-820b-965956da25cc"
     },
+    "invalid_pkg_systemuser" : {
+      "name": "TEST_SBS_KLIENT",
+      "id": "d0f19a13-55cc-450f-b837-fe1f066756de"
+
+    },
     "client_org": {
       "name": "ALFABETISK PASSIV TIGER AS",
       "partyuuid": "ACEF4B54-D1B3-45CD-BD5F-5C30FA380118",
@@ -153,6 +158,10 @@
       "name": "TEST_SBS_KLIENT",
       "id": "a931f4fa-69ba-4f5b-bd3f-0fdb0fedcfed"
     },
+    "forretningsforer_systemuser": {
+      "name": "Klient_delegation_FFØR",
+      "id": "120b03af-d7a9-44ae-9ad7-0e8854c55f47"
+    },
     "client_org": {
       "name": "SKRAVLETE PUSSIG KATT RETNINGSLINJE",
       "partyuuid": "023AF04E-E43D-4EE5-8D01-08F41A44D02B",
@@ -176,5 +185,26 @@
         "pid": "28835096523"
       }
     }
+  },
+  "bbl_type_client_org" : {
+    "name": "USELVSTENDIG FLAT PUMA BBL",
+    "partyuuid": "7F059B2B-F6D2-409B-83FD-194F1AAAB90D",
+    "orgno": "210815872",
+    "dagl": {
+      "name": "REDELIG HABITT",
+      "pid": "11896799993"
+    }
+  },
+  "esek_type_client_org" : {
+    "name": "TALEFØR UGLESETT LØVE SAMEIE",
+    "partyuuid": "D103E1A0-39FD-40AE-8C81-1BCDC661BF29",
+    "orgno": "313239586",
+    "leder": {
+      "name": "TILBAKEHOLDEN ALGORITME",
+      "pid": "15828998770"
+    }
   }
+
+
+
 }

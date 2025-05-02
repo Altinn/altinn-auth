@@ -1,0 +1,66 @@
+meta {
+  name: POST_SysUser_ClientDele_FFØR_AccPkg_ikke_BBL_Clientorg
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation?party={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+body:json {
+  {
+    "clientId": "{{clientId}}",
+    "agentId": "{{systemUser}}",
+    "agentName": "Bruno Test SystemUser",
+    "agentRole": "agent",
+    "rolePackages": [
+      {
+        "roleIdentifier": "forretningsforer",
+        "packageUrn": "urn:altinn:accesspackage:forretningsforer-eiendom"
+      }
+    ]
+  }
+}
+
+script:pre-request {
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  bru.setVar("party", testdata.regnskapsforer.partyuuid);
+  bru.setVar("systemUser", testdata.regnskapsforer.systemuser.id);
+  bru.setVar("clientId", testdata.regnskapsforer.client_org.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.regnskapsforer.hovedadministrator.userid,
+    auth_partyId: testdata.regnskapsforer.hovedadministrator.partyid,
+    auth_partyUuid: testdata.regnskapsforer.hovedadministrator.partyuuid,
+    auth_ssn: testdata.regnskapsforer.hovedadministrator.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+  
+}
+
+script:post-response {
+  let data = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
+  if (Array.isArray(data) && data.length > 0) {
+   const delegationId = data[0].delegationId;
+   bru.setEnvVar("delegationId", delegationId);
+  }
+}
+
+tests {
+  test("Forretningsforer access package delegation from non_BBL_client org to systemuser should return 500 ok with", function() {
+    expect(res.status).to.equal(500);
+  });
+}

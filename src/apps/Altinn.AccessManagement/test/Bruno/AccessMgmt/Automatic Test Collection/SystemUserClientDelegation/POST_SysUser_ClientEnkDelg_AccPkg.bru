@@ -57,6 +57,14 @@ script:pre-request {
   bru.setVar("bearerToken",  token);
 }
 
+script:post-response {
+  let data = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
+  if (Array.isArray(data) && data.length > 0) {
+   const delegationId = data[0].delegationId;
+   bru.setEnvVar("delegationId", delegationId);
+  }
+}
+
 tests {
   test("Should return 200 OK", function() {
     expect(res.status).to.equal(200);
