@@ -62,17 +62,17 @@ public class ConnectionController(IHttpContextAccessor accessor, IConnectionServ
 
         if (from.HasValue && to.HasValue)
         {
-            return Ok(await connectionService.GetSpecific(from.Value, to.Value));
+            return Ok(await connectionService.Get(fromId: from.Value, toId: to.Value, facilitatorId: null, cancellationToken: cancellationToken));
         }
 
         if (from.HasValue)
         {
-            return Ok(await connectionService.GetReceived(from.Value));
+            return Ok(await connectionService.GetReceived(from.Value, cancellationToken: cancellationToken));
         }
 
         if (to.HasValue)
         {
-            return Ok(await connectionService.GetGiven(to.Value));
+            return Ok(await connectionService.GetGiven(to.Value, cancellationToken: cancellationToken));
         }
         
         return BadRequest();

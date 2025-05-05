@@ -41,8 +41,8 @@ public class ConnectionDefinition : BaseDbDefinition<Connection>, IDbDefinition
             def.RegisterExtendedProperty<ExtConnection, Entity>(t => t.FacilitatorId, t => t.Id, t => t.Facilitator, optional: true);
             def.RegisterExtendedProperty<ExtConnection, Role>(t => t.FacilitatorRoleId, t => t.Id, t => t.FacilitatorRole, optional: true);
 
-            var basicScript = BasicScript();
-            var extendedScript = ExtendedScript();
+            var basicScript = GetScripts(extended: false);
+            var extendedScript = GetScripts(extended: true);
 
             def.SetQuery(basicScript, extendedScript);
 
@@ -54,74 +54,7 @@ public class ConnectionDefinition : BaseDbDefinition<Connection>, IDbDefinition
         });
     }
 
-    private string BasicScript()
-    {
-        var sb = new StringBuilder();
-
-        sb.AppendLine("WITH a1 AS (");
-
-        // DIRECT
-        sb.AppendLine("SELECT a.id, a.fromid, NULL::uuid AS viaid, NULL::uuid AS viaroleid, a.toid, a.roleid,");
-        sb.AppendLine("'DIRECT' AS source, 1 AS isdirect, 0 AS isparent, 0 AS isrolemap, 0 AS iskeyrole");
-        sb.AppendLine("FROM dbo.assignment a");
-        sb.AppendLine("WHERE a.fromid = COALESCE(@fromid::uuid, a.fromid)");
-        sb.AppendLine("AND a.toid   = COALESCE(@toid::uuid, a.toid)");
-
-        sb.AppendLine("UNION ALL");
-
-        // PARENT
-        sb.AppendLine("SELECT");
-        sb.AppendLine("a.id,");
-        sb.AppendLine("fe.id AS fromid,");
-        sb.AppendLine("a.fromid AS viaid,");
-        sb.AppendLine("NULL::uuid AS viaroleid,");
-        sb.AppendLine("a.toid,");
-        sb.AppendLine("a.roleid,");
-        sb.AppendLine("'PARENT' AS source,");
-        sb.AppendLine("0 AS isdirect,");
-        sb.AppendLine("1 AS isparent,");
-        sb.AppendLine("0 AS isrolemap,");
-        sb.AppendLine("0 AS iskeyrole");
-        sb.AppendLine("FROM dbo.assignment a");
-        sb.AppendLine("JOIN dbo.entity fe   ON a.fromid = fe.parentid");
-        sb.AppendLine("WHERE fe.id    = COALESCE(@fromid::uuid, fe.id)");
-        sb.AppendLine("AND a.toid   = COALESCE(@toid::uuid, a.toid)");
-
-        sb.AppendLine("),");
-
-        sb.AppendLine("a2 AS(");
-        sb.AppendLine("SELECT * FROM a1");
-
-        sb.AppendLine("UNION ALL");
-
-        sb.AppendLine("SELECT x.id, x.fromid, x.fromid AS viaid, x.roleid AS viaroleid, x.toid, rm.getroleid AS roleid, ");
-        sb.AppendLine("x.source || 'MAP' AS source, x.isdirect, x.isparent, 1             AS isrolemap, x.iskeyrole");
-        sb.AppendLine("FROM a1 x");
-        sb.AppendLine("JOIN dbo.rolemap rm ON x.roleid = rm.hasroleid");
-        sb.AppendLine("),");
-
-        sb.AppendLine("a3 AS(");
-        sb.AppendLine("SELECT* FROM a2");
-
-        sb.AppendLine("UNION ALL");
-
-        sb.AppendLine("SELECT s.id, s.fromid, s.toid AS viaid, s.roleid AS viaroleid, a.toid, a.roleid, ");
-        sb.AppendLine("s.source || 'KEY' AS source, s.isdirect, s.isparent, s.isrolemap, 1 AS iskeyrole");
-        sb.AppendLine("FROM a2 s");
-        sb.AppendLine("JOIN dbo.assignment a ON s.toid = a.fromid");
-        sb.AppendLine("JOIN dbo.role r ON a.roleid = r.id");
-        sb.AppendLine("AND r.iskeyrole = TRUE");
-        sb.AppendLine(")");
-
-        sb.AppendLine("SELECT a.*");
-        sb.AppendLine("FROM a3 a");
-        sb.AppendLine("WHERE a.fromid = COALESCE(@fromid::uuid, a.fromid)");
-        sb.AppendLine("AND a.toid = COALESCE(@toid::uuid, a.toid);");
-
-        return sb.ToString();
-    }
-
-    private string ExtendedScript()
+    private string GetScripts(bool extended)
     {
         var sb = new StringBuilder();
 
@@ -134,9 +67,8 @@ public class ConnectionDefinition : BaseDbDefinition<Connection>, IDbDefinition
         sb.AppendLine("WHERE a.fromid = COALESCE(@fromid, a.fromid)::uuid");
         sb.AppendLine("AND a.toid   = COALESCE(@toid, a.toid)::uuid");
 
-        sb.AppendLine("UNION ALL");
-
         // PARENT
+        sb.AppendLine("UNION ALL");
         sb.AppendLine("SELECT");
         sb.AppendLine("a.id,");
         sb.AppendLine("fe.id AS fromid,");
@@ -154,6 +86,18 @@ public class ConnectionDefinition : BaseDbDefinition<Connection>, IDbDefinition
         sb.AppendLine("WHERE fe.id    = COALESCE(@fromid, fe.id)::uuid");
         sb.AppendLine("AND a.toid   = COALESCE(@toid, a.toid)::uuid");
 
+        // DELEGATION
+        sb.AppendLine("UNION ALL");
+        sb.AppendLine("select d.id, fe.fromid, f.id AS viaid, fe.roleid AS viaroleid, te.toid, te.roleid,");
+        sb.AppendLine("'DELEGATED' AS source, 0 AS isdirect, 0 AS isparent, 0 AS isrolemap, 0 AS iskeyrole");
+        sb.AppendLine("from dbo.delegation as d");
+        sb.AppendLine("inner join dbo.assignment as fe on d.fromid = fe.id");
+        sb.AppendLine("inner join dbo.assignment as te on d.toid = te.id");
+        sb.AppendLine("inner join dbo.entity as f on d.facilitatorid = f.id");
+        sb.AppendLine("WHERE fe.fromid = COALESCE(@fromid, fe.fromid)::uuid");
+        sb.AppendLine("AND te.toid   = COALESCE(@toid, te.toid)::uuid");
+        sb.AppendLine("AND d.facilitatorid = COALESCE(@facilitatorid, d.facilitatorid)::uuid");
+
         sb.AppendLine("),");
 
         sb.AppendLine("a2 AS(");
@@ -162,9 +106,9 @@ public class ConnectionDefinition : BaseDbDefinition<Connection>, IDbDefinition
         sb.AppendLine("UNION ALL");
 
         sb.AppendLine("SELECT x.id, x.fromid, x.fromid AS viaid, x.roleid AS viaroleid, x.toid, rm.getroleid AS roleid, ");
-        sb.AppendLine("x.source || 'MAP' AS source, x.isdirect, x.isparent, 1             AS isrolemap, x.iskeyrole");
-        sb.AppendLine("FROM a1 x");
-        sb.AppendLine("JOIN dbo.rolemap rm ON x.roleid = rm.hasroleid");
+        sb.AppendLine("x.source || 'MAP' AS source, x.isdirect, x.isparent, 1 AS isrolemap, x.iskeyrole");
+        sb.AppendLine("FROM a1 as x");
+        sb.AppendLine("JOIN dbo.rolemap as rm ON x.roleid = rm.hasroleid");
         sb.AppendLine("),");
 
         sb.AppendLine("a3 AS(");
@@ -180,27 +124,35 @@ public class ConnectionDefinition : BaseDbDefinition<Connection>, IDbDefinition
         sb.AppendLine("AND r.iskeyrole = TRUE");
         sb.AppendLine(")");
 
-        sb.AppendLine("SELECT a.*, ");
-
-        /*EXTENDED*/
-        sb.AppendLine(EntityColumns("fe", "From") + ",");
-        sb.AppendLine(EntityColumns("te", "To") + ",");
-        sb.AppendLine(RoleColumns("r", "Role") + ",");
-        sb.AppendLine(EntityColumns("ve", "Facilitator") + ",");
-        sb.AppendLine(RoleColumns("vr", "FacilitatorRole") + " ");
-        //// sb.AppendLine(DelegationColumns("d", "Delegation") + " ");
+        sb.AppendLine("SELECT a.*, row_number() over (order by a.id) as _rownum, ");
+        if (extended)
+        {
+            sb.AppendLine("SELECT a.*, row_number() over (order by a.id) as _rownum, ");
+            sb.AppendLine(EntityColumns("fe", "From") + ",");
+            sb.AppendLine(EntityColumns("te", "To") + ",");
+            sb.AppendLine(RoleColumns("r", "Role") + ",");
+            sb.AppendLine(EntityColumns("ve", "Facilitator") + ",");
+            sb.AppendLine(RoleColumns("vr", "FacilitatorRole") + " ");
+        }
+        else
+        {
+            sb.AppendLine("SELECT a.*, row_number() over (order by a.id) as _rownum");
+        }
 
         sb.AppendLine("FROM a3 a");
 
-        /*EXTENDED*/
-        sb.AppendLine("JOIN dbo.entity fe ON a.fromid = fe.id");
-        sb.AppendLine("JOIN dbo.entity te ON a.toid   = te.id");
-        sb.AppendLine("JOIN dbo.role r ON a.roleid = r.id");
-        sb.AppendLine("LEFT JOIN dbo.entity ve ON a.viaid = ve.id");
-        sb.AppendLine("LEFT JOIN dbo.role vr ON a.viaroleid = vr.id");
-        
+        if (extended)
+        {
+            sb.AppendLine("JOIN dbo.entity fe ON a.fromid = fe.id");
+            sb.AppendLine("JOIN dbo.entity te ON a.toid   = te.id");
+            sb.AppendLine("JOIN dbo.role r ON a.roleid = r.id");
+            sb.AppendLine("LEFT JOIN dbo.entity ve ON a.viaid = ve.id");
+            sb.AppendLine("LEFT JOIN dbo.role vr ON a.viaroleid = vr.id");
+        }
+
         sb.AppendLine("WHERE a.fromid = COALESCE(@fromid, a.fromid)::uuid");
-        sb.AppendLine("AND a.toid = COALESCE(@toid, a.toid)::uuid;");
+        sb.AppendLine("AND a.toid = COALESCE(@toid, a.toid)::uuid");
+        sb.AppendLine("AND a.viaid = COALESCE(@facilitatorid, a.viaid)::uuid");
 
         return sb.ToString();
     }

@@ -24,47 +24,70 @@ public class ConnectionService(
     ) : IConnectionService
 {
     /// <inheritdoc />
-    public async Task<IEnumerable<ExtConnection>> GetGiven(Guid toId, CancellationToken cancellationToken = default)
-    {
-        var filter = connectionRepository.CreateFilterBuilder();
-        filter.Equal(t => t.ToId, toId);
-        filter.IsNull(t => t.FromId);
-        return await connectionRepository.GetExtended(filter, cancellationToken: cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public async Task<IEnumerable<ExtConnection>> GetReceived(Guid fromId, CancellationToken cancellationToken = default)
-    {
-        var filter = connectionRepository.CreateFilterBuilder();
-        filter.Equal(t => t.FromId, fromId);
-        filter.IsNull(t => t.ToId);
-        return await connectionRepository.GetExtended(filter, cancellationToken: cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public async Task<IEnumerable<ExtConnection>> GetFacilitated(Guid id, CancellationToken cancellationToken = default)
-    {
-        var filter = connectionRepository.CreateFilterBuilder();
-        filter.Equal(t => t.FacilitatorId, id);
-        return await connectionRepository.GetExtended(filter, cancellationToken: cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public async Task<IEnumerable<ExtConnection>> GetSpecific(Guid fromId, Guid toId, CancellationToken cancellationToken = default)
-    {
-        var filter = connectionRepository.CreateFilterBuilder();
-        filter.Equal(t => t.FromId, fromId);
-        filter.Equal(t => t.ToId, toId);
-        return await connectionRepository.GetExtended(filter, cancellationToken: cancellationToken);
-    }
-
-    /// <inheritdoc />
     public async Task<ExtConnection> Get(Guid Id, CancellationToken cancellationToken = default)
     {
         var filter = connectionRepository.CreateFilterBuilder();
         filter.Equal(t => t.Id, Id);
         var res = await connectionRepository.GetExtended(filter, cancellationToken: cancellationToken);
         return res.FirstOrDefault();
+    }
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<ExtConnection>> Get(Guid? fromId = null, Guid? toId = null, Guid? facilitatorId = null, CancellationToken cancellationToken = default)
+    {
+        var filter = connectionRepository.CreateFilterBuilder();
+
+        if (fromId.HasValue)
+        {
+            filter.Equal(t => t.FromId, fromId.Value);
+        }
+        else
+        {
+            filter.IsNull(t => t.FromId);
+        }
+
+        if (toId.HasValue)
+        {
+            filter.Equal(t => t.ToId, toId.Value);
+        }
+        else
+        {
+            filter.IsNull(t => t.ToId);
+        }
+
+        if (facilitatorId.HasValue)
+        {
+            filter.Equal(t => t.FacilitatorId, facilitatorId.Value);
+        }
+        else
+        {
+            filter.IsNull(t => t.FacilitatorId);
+        }
+
+        if (!filter.Any())
+        {
+            throw new ArgumentException("You need to define a filter");
+        }
+
+        return await connectionRepository.GetExtended(filter, cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<ExtConnection>> GetGiven(Guid toId, CancellationToken cancellationToken = default)
+    {
+        return await Get(toId: toId, cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<ExtConnection>> GetReceived(Guid fromId, CancellationToken cancellationToken = default)
+    {
+        return await Get(fromId: fromId, cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<ExtConnection>> GetFacilitated(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await Get(facilitatorId: id, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc />
@@ -192,6 +215,13 @@ public class ConnectionService(
         {
             filter.IsNull(t => t.ToId);
         }
+
+        //var options = new RequestOptions()
+        //{
+        //    PageNumber = 1,
+        //    PageSize = 50,
+        //    UsePaging = true
+        //};
 
         return await connectionPackageRepository.Get(filter, cancellationToken: cancellationToken);
     }

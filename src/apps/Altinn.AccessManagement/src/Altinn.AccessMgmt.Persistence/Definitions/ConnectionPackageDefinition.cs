@@ -46,7 +46,7 @@ public class ConnectionPackageDefinition : BaseDbDefinition<ConnectionPackage>, 
                 defineB: (t => t.PackageId, t => t.Id, t => t.Package, false)
             );
 
-            def.SetQuery(BasicScript(), ExtendedScript());
+            def.SetQuery(GetScript(extended: false), GetScript(extended: true));
 
             def.AddManualDependency<Connection>();
             def.AddManualDependency<Package>();
@@ -56,7 +56,7 @@ public class ConnectionPackageDefinition : BaseDbDefinition<ConnectionPackage>, 
         });
     }
 
-    private string BasicScript()
+    private string GetScript(bool extended)
     {
         var sb = new StringBuilder();
 
@@ -115,109 +115,43 @@ public class ConnectionPackageDefinition : BaseDbDefinition<ConnectionPackage>, 
         sb.AppendLine("AND r.iskeyrole = TRUE");
         sb.AppendLine(")");
         sb.AppendLine(",result AS(");
+
         sb.AppendLine("SELECT Source.*, AP.PackageId, 1::bool AS HasAccess, 1::bool AS CanAssign, 'DIRECT' AS PackageSource");
         sb.AppendLine("FROM a3 AS Source");
         sb.AppendLine("JOIN dbo.AssignmentPackage AS AP ON AP.AssignmentId = Source.Id");
+
         sb.AppendLine("UNION ALL");
         sb.AppendLine("SELECT Source.*, AP.PackageId, AP.HasAccess, AP.CanDelegate AS CanAssign, 'ROLE' AS PackageSource");
         sb.AppendLine("FROM a3 AS Source");
         sb.AppendLine("JOIN dbo.RolePackage AS AP ON AP.RoleId = Source.RoleId");
         sb.AppendLine(")");
 
-        sb.AppendLine("SELECT result.*");
-        sb.AppendLine("FROM result");
-
-        sb.AppendLine("WHERE result.fromid = COALESCE(@fromid, result.fromid)::uuid");
-        sb.AppendLine("AND result.toid = COALESCE(@toid, result.toid)::uuid;");
-
-        return sb.ToString();
-    }
-
-    private string ExtendedScript()
-    {
-        var sb = new StringBuilder();
-
-        sb.AppendLine("WITH a1 AS (");
-
-        // DIRECT
-        sb.AppendLine("SELECT a.id, a.fromid, NULL::uuid AS viaid, NULL::uuid AS viaroleid, a.toid, a.roleid,");
-        sb.AppendLine("'DIRECT' AS source, 1 AS isdirect, 0 AS isparent, 0 AS isrolemap, 0 AS iskeyrole");
-        sb.AppendLine("FROM dbo.assignment a");
-        sb.AppendLine("WHERE a.fromid = COALESCE(@fromid, a.fromid)::uuid");
-        sb.AppendLine("AND a.toid   = COALESCE(@toid, a.toid)::uuid");
-
-        sb.AppendLine("UNION ALL");
-
-        // PARENT
-        sb.AppendLine("SELECT");
-        sb.AppendLine("a.id,");
-        sb.AppendLine("fe.id AS fromid,");
-        sb.AppendLine("a.fromid AS viaid,");
-        sb.AppendLine("NULL::uuid AS viaroleid,");
-        sb.AppendLine("a.toid,");
-        sb.AppendLine("a.roleid,");
-        sb.AppendLine("'PARENT' AS source,");
-        sb.AppendLine("0 AS isdirect,");
-        sb.AppendLine("1 AS isparent,");
-        sb.AppendLine("0 AS isrolemap,");
-        sb.AppendLine("0 AS iskeyrole");
-        sb.AppendLine("FROM dbo.assignment a");
-        sb.AppendLine("JOIN dbo.entity fe   ON a.fromid = fe.parentid");
-        sb.AppendLine("WHERE fe.id    = COALESCE(@fromid, fe.id)::uuid");
-        sb.AppendLine("AND a.toid   = COALESCE(@toid, a.toid)::uuid");
-
-        sb.AppendLine("),");
-
-        sb.AppendLine("a2 AS(");
-        sb.AppendLine("SELECT * FROM a1");
-
-        sb.AppendLine("UNION ALL");
-
-        sb.AppendLine("SELECT x.id, x.fromid, x.fromid AS viaid, x.roleid AS viaroleid, x.toid, rm.getroleid AS roleid, ");
-        sb.AppendLine("x.source || 'MAP' AS source, x.isdirect, x.isparent, 1 AS isrolemap, x.iskeyrole");
-        sb.AppendLine("FROM a1 x");
-        sb.AppendLine("JOIN dbo.rolemap rm ON x.roleid = rm.hasroleid");
-        sb.AppendLine("),");
-
-        sb.AppendLine("a3 AS(");
-        sb.AppendLine("SELECT* FROM a2");
-
-        sb.AppendLine("UNION ALL");
-
-        sb.AppendLine("SELECT s.id, s.fromid, s.toid AS viaid, s.roleid AS viaroleid, a.toid, a.roleid, ");
-        sb.AppendLine("s.source || 'KEY' AS source, s.isdirect, s.isparent, s.isrolemap, 1 AS iskeyrole");
-        sb.AppendLine("FROM a2 s");
-        sb.AppendLine("JOIN dbo.assignment a ON s.toid = a.fromid");
-        sb.AppendLine("JOIN dbo.role r ON a.roleid = r.id");
-        sb.AppendLine("AND r.iskeyrole = TRUE");
-        sb.AppendLine(")");
-        sb.AppendLine(",result AS(");
-        sb.AppendLine("SELECT Source.*, AP.PackageId, 1::bool AS HasAccess, 1::bool AS CanAssign, 'DIRECT' AS PackageSource");
-        sb.AppendLine("FROM a3 AS Source");
-        sb.AppendLine("JOIN dbo.AssignmentPackage AS AP ON AP.AssignmentId = Source.Id");
-        sb.AppendLine("UNION ALL");
-        sb.AppendLine("SELECT Source.*, AP.PackageId, AP.HasAccess, AP.CanDelegate AS CanAssign, 'ROLE' AS PackageSource");
-        sb.AppendLine("FROM a3 AS Source");
-        sb.AppendLine("JOIN dbo.RolePackage AS AP ON AP.RoleId = Source.RoleId");
-        sb.AppendLine(")");
-
-        sb.AppendLine("SELECT result.*, ");
-
-        sb.AppendLine(PackageColumns("pck", "Package") + ",");
-        sb.AppendLine(EntityColumns("fe", "From") + ",");
-        sb.AppendLine(EntityColumns("te", "To") + ",");
-        sb.AppendLine(RoleColumns("r", "Role") + ",");
-        sb.AppendLine(EntityColumns("ve", "Facilitator") + ",");
-        sb.AppendLine(RoleColumns("vr", "FacilitatorRole") + " ");
+        if (extended)
+        {
+            sb.AppendLine("SELECT result.*, row_number() over (order by result.id) as _rownum, ");
+            sb.AppendLine(PackageColumns("pck", "Package") + ",");
+            sb.AppendLine(EntityColumns("fe", "From") + ",");
+            sb.AppendLine(EntityColumns("te", "To") + ",");
+            sb.AppendLine(RoleColumns("r", "Role") + ",");
+            sb.AppendLine(EntityColumns("ve", "Facilitator") + ",");
+            sb.AppendLine(RoleColumns("vr", "FacilitatorRole") + " ");
+        }
+        else
+        {
+            sb.AppendLine("SELECT result.*, row_number() over (order by result.id) as _rownum ");
+        }
 
         sb.AppendLine("FROM result");
 
-        sb.AppendLine("JOIN dbo.package pck ON result.packageid = pck.id");
-        sb.AppendLine("JOIN dbo.entity fe ON result.fromid = fe.id");
-        sb.AppendLine("JOIN dbo.entity te ON result.toid   = te.id");
-        sb.AppendLine("JOIN dbo.role r ON result.roleid = r.id");
-        sb.AppendLine("LEFT JOIN dbo.entity ve ON result.viaid = ve.id");
-        sb.AppendLine("LEFT JOIN dbo.role vr ON result.viaroleid = vr.id");
+        if (extended)
+        {
+            sb.AppendLine("JOIN dbo.package pck ON result.packageid = pck.id");
+            sb.AppendLine("JOIN dbo.entity fe ON result.fromid = fe.id");
+            sb.AppendLine("JOIN dbo.entity te ON result.toid   = te.id");
+            sb.AppendLine("JOIN dbo.role r ON result.roleid = r.id");
+            sb.AppendLine("LEFT JOIN dbo.entity ve ON result.viaid = ve.id");
+            sb.AppendLine("LEFT JOIN dbo.role vr ON result.viaroleid = vr.id");
+        }
 
         sb.AppendLine("WHERE result.fromid = COALESCE(@fromid, result.fromid)::uuid");
         sb.AppendLine("AND result.toid = COALESCE(@toid, result.toid)::uuid;");
