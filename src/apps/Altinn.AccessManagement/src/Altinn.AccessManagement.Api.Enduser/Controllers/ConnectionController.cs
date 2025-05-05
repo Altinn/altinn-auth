@@ -172,8 +172,8 @@ public class ConnectionController(IHttpContextAccessor accessor, IConnectionServ
     /// Creates an assignment between the authenticated user's selected party and the specified target party.
     /// </summary>
     /// <param name="party">The GUID identifying the party the authenticated user is acting on behalf of.</param>
-    /// <param name="fromId">The GUID identifying the party the authenticated user is acting for</param>
-    /// <param name="toId">The GUID identifying the target party to which the assignment should be created.</param>
+    /// <param name="from">The GUID identifying the party the authenticated user is acting for</param>
+    /// <param name="to">The GUID identifying the target party to which the assignment should be created.</param>
     /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     [HttpGet]
     [Route("accesspackages")]
