@@ -196,12 +196,6 @@ public class ConnectionController(IHttpContextAccessor accessor, IConnectionServ
             return BadRequest();
         }
 
-        var audit = new ChangeRequestOptions()
-        {
-            ChangedBy = Accessor.GetPartyUuid(),
-            ChangedBySystem = AuditDefaults.EnduserApi
-        };
-
         var res = await connectionService.GetPackages(fromId: from, toId: to);
 
         return Ok(res);

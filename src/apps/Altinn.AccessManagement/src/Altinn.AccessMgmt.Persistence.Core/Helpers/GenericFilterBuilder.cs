@@ -43,6 +43,19 @@ public class GenericFilterBuilder<T> : IEnumerable<GenericFilter>
     /// </summary>
     /// <typeparam name="TProperty">The type of the property.</typeparam>
     /// <param name="property">An expression selecting the property to filter on.</param>
+    /// <returns>The current instance of <see cref="GenericFilterBuilder{T}"/>, enabling a fluent API.</returns>
+    public GenericFilterBuilder<T> IsNull<TProperty>(Expression<Func<T, TProperty>> property)
+    {
+        var propertyInfo = ExtractPropertyInfo(property);
+        _filters.Add(new GenericFilter(propertyInfo.Name, null, FilterComparer.Equals));
+        return this;
+    }
+
+    /// <summary>
+    /// Adds an equality filter condition for the specified property.
+    /// </summary>
+    /// <typeparam name="TProperty">The type of the property.</typeparam>
+    /// <param name="property">An expression selecting the property to filter on.</param>
     /// <param name="values">The value the property should equal.</param>
     /// <returns>The current instance of <see cref="GenericFilterBuilder{T}"/>, enabling a fluent API.</returns>
     public GenericFilterBuilder<T> In<TProperty>(Expression<Func<T, TProperty>> property, IEnumerable<TProperty> values)

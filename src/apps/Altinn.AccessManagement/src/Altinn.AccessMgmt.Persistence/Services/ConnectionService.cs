@@ -28,7 +28,7 @@ public class ConnectionService(
     {
         var filter = connectionRepository.CreateFilterBuilder();
         filter.Equal(t => t.ToId, toId);
-        filter.Equal(t => t.FromId, null);
+        filter.IsNull(t => t.FromId);
         return await connectionRepository.GetExtended(filter, cancellationToken: cancellationToken);
     }
 
@@ -37,7 +37,7 @@ public class ConnectionService(
     {
         var filter = connectionRepository.CreateFilterBuilder();
         filter.Equal(t => t.FromId, fromId);
-        filter.Equal(t => t.ToId, null);
+        filter.IsNull(t => t.ToId);
         return await connectionRepository.GetExtended(filter, cancellationToken: cancellationToken);
     }
 
@@ -174,10 +174,26 @@ public class ConnectionService(
         */
 
         var filter = connectionPackageRepository.CreateFilterBuilder();
-        filter.Equal(t => t.FromId, fromId);
-        filter.Equal(t => t.ToId, toId);
-        return await connectionPackageRepository.Get(filter, cancellationToken: cancellationToken);
 
+        if (fromId.HasValue)
+        {
+            filter.Equal(t => t.FromId, fromId.Value);
+        }
+        else
+        {
+            filter.IsNull(t => fromId);
+        }
+
+        if (toId.HasValue)
+        {
+            filter.Equal(t => t.ToId, toId.Value);
+        }
+        else
+        {
+            filter.IsNull(t => t.ToId);
+        }
+
+        return await connectionPackageRepository.Get(filter, cancellationToken: cancellationToken);
     }
 
     private async Task<IEnumerable<ExtConnectionPackage>> GetConnectionPackages(Guid fromId, Guid toId, Guid packageId, CancellationToken cancellationToken = default)
@@ -394,7 +410,7 @@ public static class ConnectionConverter
         return new CreateDelegationResponse()
         {
             DelegationId = connection.Id,
-            FromEntityId = connection.FromId.Value
+            FromEntityId = connection.FromId
         };
     }
 

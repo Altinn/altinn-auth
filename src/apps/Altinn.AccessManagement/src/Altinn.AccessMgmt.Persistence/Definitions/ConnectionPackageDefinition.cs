@@ -54,8 +54,8 @@ public class ConnectionPackageDefinition : BaseDbDefinition<ConnectionPackage>, 
             sb.AppendLine("SELECT a.id, a.fromid, NULL::uuid AS viaid, NULL::uuid AS viaroleid, a.toid, a.roleid,");
             sb.AppendLine("'DIRECT' AS source, 1 AS isdirect, 0 AS isparent, 0 AS isrolemap, 0 AS iskeyrole");
             sb.AppendLine("FROM dbo.assignment a");
-            sb.AppendLine("WHERE a.fromid = COALESCE(@fromid::uuid, a.fromid)");
-            sb.AppendLine("AND a.toid   = COALESCE(@toid::uuid, a.toid)");
+            sb.AppendLine("WHERE a.fromid = COALESCE(@fromid, a.fromid)::uuid");
+            sb.AppendLine("AND a.toid   = COALESCE(@toid, a.toid)::uuid");
 
             sb.AppendLine("UNION ALL");
 
@@ -74,8 +74,8 @@ public class ConnectionPackageDefinition : BaseDbDefinition<ConnectionPackage>, 
             sb.AppendLine("0 AS iskeyrole");
             sb.AppendLine("FROM dbo.assignment a");
             sb.AppendLine("JOIN dbo.entity fe   ON a.fromid = fe.parentid");
-            sb.AppendLine("WHERE fe.id    = COALESCE(@fromid::uuid, fe.id)");
-            sb.AppendLine("AND a.toid   = COALESCE(@toid::uuid, a.toid)");
+            sb.AppendLine("WHERE fe.id    = COALESCE(@fromid, fe.id)::uuid");
+            sb.AppendLine("AND a.toid   = COALESCE(@toid, a.toid)::uuid");
 
             sb.AppendLine("),");
 
@@ -115,8 +115,8 @@ public class ConnectionPackageDefinition : BaseDbDefinition<ConnectionPackage>, 
             sb.AppendLine("SELECT result.*");
             sb.AppendLine("FROM result");
 
-            sb.AppendLine("WHERE result.fromid = COALESCE(@fromid::uuid, result.fromid)");
-            sb.AppendLine("AND result.toid = COALESCE(@toid::uuid, result.toid);");
+            sb.AppendLine("WHERE result.fromid = COALESCE(@fromid, result.fromid)::uuid");
+            sb.AppendLine("AND result.toid = COALESCE(@toid, result.toid)::uuid;");
 
 
             def.SetQuery(sb.ToString());

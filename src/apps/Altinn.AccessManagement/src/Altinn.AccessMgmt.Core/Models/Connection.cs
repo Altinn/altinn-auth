@@ -13,7 +13,7 @@ public class Connection
     /// <summary>
     /// The entity identity the connection is from (origin, client, source etc) 
     /// </summary>
-    public Guid? FromId { get; set; }
+    public Guid FromId { get; set; }
 
     /// <summary>
     /// The role To identifies as
@@ -23,7 +23,7 @@ public class Connection
     /// <summary>
     /// The entity identity the connection is to (destination, agent, etc)
     /// </summary>
-    public Guid? ToId { get; set; }
+    public Guid ToId { get; set; }
 
     /// <summary>
     /// The entity betweeen from and to. When connection is delegated.
