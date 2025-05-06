@@ -124,7 +124,6 @@ public class ConnectionDefinition : BaseDbDefinition<Connection>, IDbDefinition
         sb.AppendLine("AND r.iskeyrole = TRUE");
         sb.AppendLine(")");
 
-        sb.AppendLine("SELECT a.*, row_number() over (order by a.id) as _rownum, ");
         if (extended)
         {
             sb.AppendLine("SELECT a.*, row_number() over (order by a.id) as _rownum, ");

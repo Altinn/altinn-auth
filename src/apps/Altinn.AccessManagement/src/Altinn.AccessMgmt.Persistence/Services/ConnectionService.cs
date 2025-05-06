@@ -466,14 +466,16 @@ public static class ConnectionConverter
     /// </summary>
     public static RoleDto ConvertToDto(Role role)
     {
-        return new RoleDto()
-        {
-            Id = role.Id,
-            Description = role.Description,
-            Name = role.Name,
-            Code = role.Code,
-            Urn = role.Urn,
-            IsKeyRole = role.IsKeyRole
-        };
+        return role != null
+            ? new RoleDto()
+            {
+                Id = role.Id,
+                Description = role.Description,
+                Name = role.Name,
+                Code = role.Code,
+                Urn = role.Urn,
+                IsKeyRole = role.IsKeyRole
+            }
+            : null;
     }
 }
