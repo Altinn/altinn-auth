@@ -9,7 +9,7 @@ namespace Altinn.AccessMgmt.Persistence.Repositories;
 /// <summary>
 /// Data service for AssignmentPackage
 /// </summary>
-public class ConnectionPackageRepository : CrossRepository<ConnectionPackage, ExtConnectionPackage, Connection, Package>, IConnectionPackageRepository
+public class ConnectionPackageRepository : ExtendedRepository<ConnectionPackage, ExtConnectionPackage>, IConnectionPackageRepository
 {
     /// <inheritdoc/>
     public ConnectionPackageRepository(DbDefinitionRegistry dbDefinitionRegistry, IDbExecutor executor) : base(dbDefinitionRegistry, executor)

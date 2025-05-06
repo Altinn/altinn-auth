@@ -41,11 +41,6 @@ public class ConnectionPackageDefinition : BaseDbDefinition<ConnectionPackage>, 
             def.RegisterProperty(t => t.CanAssign);
             def.RegisterProperty(t => t.PackageSource);
 
-            def.RegisterAsCrossReferenceExtended<ExtConnectionPackage, Connection, Package>(
-                defineA: (t => t.Id, t => t.Id, t => t.Connection, false),
-                defineB: (t => t.PackageId, t => t.Id, t => t.Package, false)
-            );
-
             def.SetQuery(GetScript(extended: false), GetScript(extended: true));
 
             def.AddManualDependency<Connection>();

@@ -270,7 +270,7 @@
             sourceFilter.Equal(t => t.ToId, Connection.To.Id);
         }
         var sourceAssignment = (await assignmentRepository.Get(sourceFilter)).FirstOrDefault() ?? Assignment;
-        SourcePackages = await connectionPackageRepository.GetB(sourceAssignment.Id);
+        //SourcePackages = await connectionPackageRepository.GetB(sourceAssignment.Id);
 
 
         if (!IsDelegation)

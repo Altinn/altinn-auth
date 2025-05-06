@@ -189,7 +189,9 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
                 return Unauthorized();
             }
 
-            return Ok(await connectionPackageRepository.GetB(id));
+            var filter = connectionPackageRepository.CreateFilterBuilder();
+            filter.Equal(t => t.Id, id);
+            return Ok((await connectionPackageRepository.GetExtended(filter)).Select(t => t.Package));
         }
 
         /// <summary>

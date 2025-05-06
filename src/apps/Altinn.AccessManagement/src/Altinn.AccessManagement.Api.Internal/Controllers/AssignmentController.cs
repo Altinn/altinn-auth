@@ -2,6 +2,7 @@
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Data;
+using Altinn.AccessMgmt.Persistence.Repositories;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -296,7 +297,9 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
             var availablePackages = new List<Package>();
             foreach (var con in connections)
             {
-                availablePackages.AddRange(await connectionPackageRepository.GetB(con.Id));
+                var connPackFilter = connectionPackageRepository.CreateFilterBuilder();
+                connPackFilter.Equal(t => t.Id, con.Id);
+                availablePackages.AddRange((await connectionPackageRepository.GetExtended(connPackFilter)).Select(t => t.Package));
             }
 
             if (availablePackages.Count(t => t.Id == package.Id) == 0)

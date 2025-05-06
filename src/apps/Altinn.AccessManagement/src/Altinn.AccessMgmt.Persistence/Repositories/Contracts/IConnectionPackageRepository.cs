@@ -4,4 +4,4 @@ using Altinn.AccessMgmt.Persistence.Core.Contracts;
 namespace Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 
 /// <inheritdoc/>
-public interface IConnectionPackageRepository : IDbCrossRepository<ConnectionPackage, ExtConnectionPackage, Connection, Package> { }
+public interface IConnectionPackageRepository : IDbExtendedRepository<ConnectionPackage, ExtConnectionPackage> { }

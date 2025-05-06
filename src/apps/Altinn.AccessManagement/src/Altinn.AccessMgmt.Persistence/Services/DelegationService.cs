@@ -1,5 +1,6 @@
 ﻿using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Models;
+using Altinn.AccessMgmt.Persistence.Repositories;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Models;
@@ -223,16 +224,18 @@ public class DelegationService(
 
             // Find ClientAssignment
             var clientAssignment = await GetAssignment(client.Id, facilitator.Id, clientRole.Id) ?? throw new Exception(string.Format("Could not find client assignment '{0}' - {1} - {2}", client.Name, clientRole.Code, facilitator.Name));
+            var clientPackages = await GetConnectionPackages(client.Id, facilitator.Id);
+
 
             Delegation delegation = null;
             foreach (var package in rp.Value)
             {
-                // Find AssignmentPackage from Client
-                var clientPackages = await connectionPackageRepository.GetB(clientAssignment.Id);
-                var assignmentPackage = clientPackages.FirstOrDefault(t => t.Id == package.Id);
-                if (assignmentPackage == null)
+                var filter = connectionPackageRepository.CreateFilterBuilder();
+
+                // TODO: Add "&& t.CanAssign" when data is ready
+                if (!clientPackages.Any(t => t.PackageId == package.Id))
                 {
-                    throw new Exception(string.Format("ClientPartyId assignment does not have the package '{0}'", package.Urn));
+                    throw new Exception(string.Format("Party does not have the package '{0}'", package.Urn));
                 }
 
                 if (delegation == null)
@@ -390,6 +393,15 @@ public class DelegationService(
         filter.Equal(t => t.ToId, to);
 
         return (await assignmentRepository.Get(filter)).FirstOrDefault();
+    }
+
+    private async Task<IEnumerable<ExtConnectionPackage>> GetConnectionPackages(Guid from, Guid to)
+    {
+        var filter = connectionPackageRepository.CreateFilterBuilder();
+        filter.Equal(t => t.FromId, from);
+        filter.Equal(t => t.ToId, to);
+
+        return await connectionPackageRepository.GetExtended(filter);
     }
 
     private async Task<Assignment> GetOrCreateAssignment(Entity from, Entity to, Role role, ChangeRequestOptions options)

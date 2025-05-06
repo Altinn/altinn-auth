@@ -115,7 +115,7 @@ public class SystemUserClientDelegationController : ControllerBase
         var result = new List<CreateDelegationResponse>();
         foreach (var delegation in delegations)
         {
-            result.Add(ConnectionConverter.ConvertToResponseModel(await connectionService.Get(delegation.Id)));
+            result.Add(ConnectionConverter.ConvertToResponseModel(await delegationRepository.GetExtended(delegation.Id)));
         }
 
         // Remark: Kan ikke garantere at det KUN er delegeringer som er opprettet i denne handlingen som blir returnert.
