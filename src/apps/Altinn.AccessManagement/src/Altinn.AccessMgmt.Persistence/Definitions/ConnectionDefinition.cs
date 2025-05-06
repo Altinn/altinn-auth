@@ -151,7 +151,7 @@ public class ConnectionDefinition : BaseDbDefinition<Connection>, IDbDefinition
 
         sb.AppendLine("WHERE a.fromid = COALESCE(@fromid, a.fromid)::uuid");
         sb.AppendLine("AND a.toid = COALESCE(@toid, a.toid)::uuid");
-        sb.AppendLine("AND a.viaid = COALESCE(@facilitatorid, a.viaid)::uuid");
+        sb.AppendLine("AND COALESCE(a.viaid, '00000000-0000-0000-0000-000000000000') = COALESCE(@facilitatorid, a.viaid, '00000000-0000-0000-0000-000000000000')::uuid");
 
         return sb.ToString();
     }
