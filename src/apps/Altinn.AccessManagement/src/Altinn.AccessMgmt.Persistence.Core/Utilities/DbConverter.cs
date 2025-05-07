@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using Altinn.AccessMgmt.Persistence.Core.Models;
+using System.Collections.Concurrent;
 using System.Data;
 using System.Reflection;
 using System.Text.Json;
@@ -32,17 +33,32 @@ public sealed class DbConverter : IDbConverter
         }
     }
 
-    /// <summary>
-    /// ConvertToObjects
-    /// </summary>
-    /// <typeparam name="T">Type</typeparam>
-    /// <param name="reader">IDataReader</param>
-    /// <returns></returns>
+    /// <inheritdoc />
+    public QueryResponse<T> ConvertToResult<T>(IDataReader reader)
+    where T : new()
+    {
+        var converted = ConvertToObjects<T>(reader, true);
+        return new QueryResponse<T>()
+        {
+            Data = converted.Data,
+            Page = converted.PageInfo
+        };
+    }
+
+    /// /// <inheritdoc />
     public List<T> ConvertToObjects<T>(IDataReader reader)
+    where T : new()
+    {
+        return ConvertToObjects<T>(reader, false).Data;
+    }
+
+    private (List<T> Data, QueryPageInfo PageInfo) ConvertToObjects<T>(IDataReader reader, bool includePageColumns)
     where T : new()
     {
         var properties = GetPropertiesWithPrefix<T>();
         var result = new List<T>();
+
+        var pageInfo = new QueryPageInfo();
 
         while (reader.Read())
         {
@@ -53,6 +69,34 @@ public sealed class DbConverter : IDbConverter
             {
                 string columnName = reader.GetName(i).ToLower();
                 object value = reader.IsDBNull(i) ? null : reader.GetValue(i);
+
+                if (includePageColumns)
+                {
+                    if (columnName == "_rownumber")
+                    {
+                        if (pageInfo.FirstRowOnPage == 0)
+                        {
+                            pageInfo.FirstRowOnPage = (int)value;
+                        }
+
+                        pageInfo.LastRowOnPage = (int)value;
+                    }
+
+                    if (pageInfo.TotalSize == 0 && columnName == "_totalItemCount")
+                    {
+                        pageInfo.TotalSize = (int)value;
+                    }
+
+                    if (pageInfo.PageSize == 0 && columnName == "_pageSize")
+                    {
+                        pageInfo.PageSize = (int)value;
+                    }
+
+                    if (pageInfo.PageNumber == 0 && columnName == "_pageNumber")
+                    {
+                        pageInfo.PageNumber = (int)value;
+                    }
+                }
 
                 foreach (var (property, prefix, elementType) in properties)
                 {
@@ -120,7 +164,7 @@ public sealed class DbConverter : IDbConverter
             result.Add(instance);
         }
 
-        return result;
+        return (result, pageInfo);
     }
 
     private static readonly ConcurrentDictionary<Type, Dictionary<string, (PropertyInfo Property, Type ElementType)>> PropertyCache = new();

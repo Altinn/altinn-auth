@@ -42,7 +42,7 @@
         //using var a = Telemetry.StartActivity<Provider>("Index");
         var opt = UserData.GetRequestOptions();
 
-        Providers = [.. await providerData.Get(options: opt) ?? new List<Provider>()];
+        Providers = [.. (await providerData.Get(options: opt)).Data ?? new List<Provider>()];
        // a.Stop();
     }
 }

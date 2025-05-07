@@ -63,7 +63,7 @@
         var opt = UserData.GetRequestOptions();
 
         Variant = await variantData.GetExtended(Id, options: opt);
-        Roles = [.. await variantRoleData.GetB(Variant.Id, options: opt) ?? new List<Role>()];
+        Roles = [.. (await variantRoleData.GetB(Variant.Id, options: opt)).Data ?? new List<Role>()];
     }
 
 }

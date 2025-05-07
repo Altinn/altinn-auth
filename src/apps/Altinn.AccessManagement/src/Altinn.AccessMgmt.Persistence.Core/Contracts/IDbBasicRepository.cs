@@ -16,7 +16,7 @@ public interface IDbBasicRepository<T>
     /// <param name="options">The request options such as paging, language, or as-of date. If null, default options are applied.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the collection of entities.</returns>
-    Task<IEnumerable<T>> Get(RequestOptions options = null, CancellationToken cancellationToken = default);
+    Task<QueryResponse<T>> Get(RequestOptions options = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves a single entity by its unique identifier.
@@ -37,7 +37,7 @@ public interface IDbBasicRepository<T>
     /// <param name="options">RequestOptions</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns>T<see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-    Task<IEnumerable<T>> Get<TProperty>(Expression<Func<T, TProperty>> property, TProperty value, RequestOptions options = null, CancellationToken cancellationToken = default);
+    Task<QueryResponse<T>> Get<TProperty>(Expression<Func<T, TProperty>> property, TProperty value, RequestOptions options = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves a collection of entities that match the criteria specified by a <see cref="GenericFilterBuilder{T}"/>.
@@ -46,7 +46,7 @@ public interface IDbBasicRepository<T>
     /// <param name="options">The request options, such as paging or language settings.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the collection of matching entities.</returns>
-    Task<IEnumerable<T>> Get(GenericFilterBuilder<T> filterBuilder, RequestOptions options = null, CancellationToken cancellationToken = default);
+    Task<QueryResponse<T>> Get(GenericFilterBuilder<T> filterBuilder, RequestOptions options = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves a collection of entities that match the provided list of filters.
@@ -55,7 +55,7 @@ public interface IDbBasicRepository<T>
     /// <param name="options">The request options, such as paging, language, or as-of date.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the collection of matching entities.</returns>
-    Task<IEnumerable<T>> Get(IEnumerable<GenericFilter> filters, RequestOptions options = null, CancellationToken cancellationToken = default);
+    Task<QueryResponse<T>> Get(IEnumerable<GenericFilter> filters, RequestOptions options = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get history records

@@ -33,19 +33,19 @@ public abstract class CrossRepository<T, TExtended, TA, TB> : ExtendedRepository
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<TA>> GetA(Guid id, RequestOptions options, List<GenericFilter> filters = null, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<TA>> GetA(Guid id, RequestOptions options, List<GenericFilter> filters = null, CancellationToken cancellationToken = default)
         => await GetCrossReferencedEntities<TA>(id, options, filters, cancellationToken);
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<TA>> GetA(List<GenericFilter> filters, RequestOptions options, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<TA>> GetA(List<GenericFilter> filters, RequestOptions options, CancellationToken cancellationToken = default)
         => await GetCrossReferencedEntities<TA>(options, filters, cancellationToken);
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<TB>> GetB(Guid id, RequestOptions options, List<GenericFilter> filters = null, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<TB>> GetB(Guid id, RequestOptions options, List<GenericFilter> filters = null, CancellationToken cancellationToken = default)
         => await GetCrossReferencedEntities<TB>(id, options, filters, cancellationToken);
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<TB>> GetB(List<GenericFilter> filters, RequestOptions options, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<TB>> GetB(List<GenericFilter> filters, RequestOptions options, CancellationToken cancellationToken = default)
         => await GetCrossReferencedEntities<TB>(options, filters, cancellationToken);
 
     /// <summary>
@@ -57,7 +57,7 @@ public abstract class CrossRepository<T, TExtended, TA, TB> : ExtendedRepository
     /// <param name="filters">Optional filters.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A collection of entities of type <typeparamref name="TEntity"/>.</returns>
-    private async Task<IEnumerable<TEntity>> GetCrossReferencedEntities<TEntity>(
+    private async Task<QueryResponse<TEntity>> GetCrossReferencedEntities<TEntity>(
         Guid id, RequestOptions options, List<GenericFilter> filters = null, CancellationToken cancellationToken = default)
         where TEntity : class, new()
     {
@@ -98,7 +98,7 @@ public abstract class CrossRepository<T, TExtended, TA, TB> : ExtendedRepository
     /// <param name="filters">Optional filters.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A collection of entities of type <typeparamref name="TEntity"/>.</returns>
-    private async Task<IEnumerable<TEntity>> GetCrossReferencedEntities<TEntity>(
+    private async Task<QueryResponse<TEntity>> GetCrossReferencedEntities<TEntity>(
         RequestOptions options, List<GenericFilter> filters = null, CancellationToken cancellationToken = default)
         where TEntity : class, new()
     {

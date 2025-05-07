@@ -294,8 +294,8 @@
 
         if (Entity != null)
         {
-            FromAssignments = [.. await assignmentData.GetExtended(t => t.FromId, Entity.Id, options: opt) ?? new List<ExtAssignment>()];
-            ToAssignments = [.. await assignmentData.GetExtended(t => t.ToId, Entity.Id, options: opt) ?? new List<ExtAssignment>()];
+            FromAssignments = [.. (await assignmentData.GetExtended(t => t.FromId, Entity.Id, options: opt)).Data ?? new List<ExtAssignment>()];
+            ToAssignments = [.. (await assignmentData.GetExtended(t => t.ToId, Entity.Id, options: opt)).Data ?? new List<ExtAssignment>()];
         }
 
         // if (FromAssignments != null && FromAssignments.Any())

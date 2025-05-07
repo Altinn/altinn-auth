@@ -47,7 +47,7 @@
     protected async override Task OnParametersSetAsync()
     {
         var opt = UserData.GetRequestOptions();
-        EntityTypes = [.. await typeData.GetExtended(options: opt) ?? new List<ExtEntityType>()];
+        EntityTypes = [.. (await typeData.GetExtended(options: opt)).Data ?? new List<ExtEntityType>()];
     }
 
 

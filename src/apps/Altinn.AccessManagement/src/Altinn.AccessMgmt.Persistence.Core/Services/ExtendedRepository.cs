@@ -20,17 +20,17 @@ public abstract class ExtendedRepository<T, TExtended> : BasicRepository<T>, IDb
     public async Task<TExtended> GetExtended(Guid id, RequestOptions options = null, CancellationToken cancellationToken = default)
     {
         var res = await GetExtended([new GenericFilter("Id", id)], options, cancellationToken);
-        return res.FirstOrDefault();
+        return res.Data.FirstOrDefault();
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<TExtended>> GetExtended(RequestOptions options = null, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<TExtended>> GetExtended(RequestOptions options = null, CancellationToken cancellationToken = default)
     {
         return await GetExtended(filters: [], options, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<TExtended>> GetExtended<TProperty>(Expression<Func<TExtended, TProperty>> property, TProperty value, RequestOptions options = null, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<TExtended>> GetExtended<TProperty>(Expression<Func<TExtended, TProperty>> property, TProperty value, RequestOptions options = null, CancellationToken cancellationToken = default)
     {
         string propertyName = ExtractPropertyInfo(property).Name;
         var filters = new List<GenericFilter>
@@ -41,13 +41,13 @@ public abstract class ExtendedRepository<T, TExtended> : BasicRepository<T>, IDb
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<TExtended>> GetExtended(GenericFilterBuilder<TExtended> filter, RequestOptions options = null, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<TExtended>> GetExtended(GenericFilterBuilder<TExtended> filter, RequestOptions options = null, CancellationToken cancellationToken = default)
     {
         return await GetExtended(filters: filter, options, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<TExtended>> GetExtended(IEnumerable<GenericFilter> filters, RequestOptions options = null, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<TExtended>> GetExtended(IEnumerable<GenericFilter> filters, RequestOptions options = null, CancellationToken cancellationToken = default)
     {
         options ??= new RequestOptions();
         filters ??= new List<GenericFilter>();

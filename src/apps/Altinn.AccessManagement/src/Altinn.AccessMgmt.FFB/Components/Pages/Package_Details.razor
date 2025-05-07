@@ -138,7 +138,7 @@
         Package = await packageData.GetExtended(Id, options: opt);
         Resources = await packageResourceService.GetExtended(t => t.PackageId, Package.Id, options: opt);
         RolePolicies = await rolePackageService.GetExtended(t => t.PackageId, Package.Id, options: opt);
-        AreaGroups = [.. await areaGroupData.Get(options: opt) ?? new List<AreaGroup>()];
+        AreaGroups = [.. (await areaGroupData.Get(options: opt)).Data ?? new List<AreaGroup>()];
 
     }
 

@@ -68,21 +68,21 @@ public class MssqlDbExecutor(SqlConnection connection, IDbConverter dbConverter)
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<T>> ExecuteQuery<T>(string query, List<GenericParameter> parameters, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<T>> ExecuteQuery<T>(string query, List<GenericParameter> parameters, CancellationToken cancellationToken = default)
         where T : new()
     {
         await using var cmd = connection.CreateCommand();
         cmd.CommandText = query;
         cmd.Parameters.AddRange(parameters.ToArray());
-        return dbConverter.ConvertToObjects<T>(await cmd.ExecuteReaderAsync(cancellationToken));
+        return dbConverter.ConvertToResult<T>(await cmd.ExecuteReaderAsync(cancellationToken));
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<T>> ExecuteQuery<T>(string query, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<T>> ExecuteQuery<T>(string query, CancellationToken cancellationToken = default)
         where T : new()
     {
         await using var cmd = connection.CreateCommand();
         cmd.CommandText = query;
-        return dbConverter.ConvertToObjects<T>(await cmd.ExecuteReaderAsync(cancellationToken));
+        return dbConverter.ConvertToResult<T>(await cmd.ExecuteReaderAsync(cancellationToken));
     }
 }

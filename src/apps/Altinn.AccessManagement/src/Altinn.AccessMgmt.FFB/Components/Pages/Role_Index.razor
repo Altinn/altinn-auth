@@ -84,8 +84,8 @@
     protected override async Task OnInitializedAsync()
     {
         var opt = UserData.GetRequestOptions();
-        Roles = [.. await roleData.GetExtended(options: opt) ?? new List<ExtRole>()];
-        RoleMaps = [.. await roleMapData.GetExtended(options: opt) ?? new List<ExtRoleMap>()];
+        Roles = [.. (await roleData.GetExtended(options: opt)).Data ?? new List<ExtRole>()];
+        RoleMaps = [.. (await roleMapData.GetExtended(options: opt)).Data ?? new List<ExtRoleMap>()];
     }
 
     List<ExtRole> Filtered => Roles.Where(i => i.Name.ToLower().Contains(SearchTerm.ToLower()) || i.Description.ToLower().Contains(SearchTerm.ToLower())).ToList();

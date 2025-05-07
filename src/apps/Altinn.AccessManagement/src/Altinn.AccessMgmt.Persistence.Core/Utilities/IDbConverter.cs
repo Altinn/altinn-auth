@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using Altinn.AccessMgmt.Persistence.Core.Models;
+using System.Data;
 
 namespace Altinn.AccessMgmt.Persistence.Core.Utilities;
 
@@ -17,6 +18,6 @@ public interface IDbConverter
     /// <returns>
     /// A list of objects of type <typeparamref name="T"/> constructed from the data read.
     /// </returns>
-    List<T> ConvertToObjects<T>(IDataReader reader) 
+    QueryResponse<T> ConvertToResult<T>(IDataReader reader)
         where T : new();
 }

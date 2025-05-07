@@ -112,7 +112,7 @@
     protected override async Task OnInitializedAsync()
     {
         var opt = UserData.GetRequestOptions();
-        Packages = [.. await packageData.GetExtended(options: opt) ?? new List<ExtPackage>()];
+        Packages = [.. (await packageData.GetExtended(options: opt)).Data ?? new List<ExtPackage>()];
     }
 
     List<ExtPackage> Filtered => Packages.Where(i => i.Name.ToLower().Contains(SearchTerm.ToLower()) || i.Description.ToLower().Contains(SearchTerm.ToLower())).ToList();

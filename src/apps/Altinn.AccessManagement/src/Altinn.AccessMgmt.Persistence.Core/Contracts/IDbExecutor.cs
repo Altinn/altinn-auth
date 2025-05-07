@@ -43,7 +43,7 @@ public interface IDbExecutor
     /// <param name="parameters">Parameters</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    Task<IEnumerable<T>> ExecuteQuery<T>(string query, List<GenericParameter> parameters, CancellationToken cancellationToken = default)
+    Task<QueryResponse<T>> ExecuteQuery<T>(string query, List<GenericParameter> parameters, CancellationToken cancellationToken = default)
     where T : new();
 
     /// <summary>
@@ -52,7 +52,7 @@ public interface IDbExecutor
     /// <param name="query">Query to execute</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    Task<IEnumerable<T>> ExecuteQuery<T>(string query, CancellationToken cancellationToken = default)
+    Task<QueryResponse<T>> ExecuteQuery<T>(string query, CancellationToken cancellationToken = default)
     where T : new();
 
     /// <summary>

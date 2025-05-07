@@ -149,7 +149,7 @@ public class ConnectionPackageDefinition : BaseDbDefinition<ConnectionPackage>, 
         }
 
         sb.AppendLine("WHERE result.fromid = COALESCE(@fromid, result.fromid)::uuid");
-        sb.AppendLine("AND result.toid = COALESCE(@toid, result.toid)::uuid;");
+        sb.AppendLine("AND result.toid = COALESCE(@toid, result.toid)::uuid");
 
         return sb.ToString();
     }

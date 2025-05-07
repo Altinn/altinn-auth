@@ -47,7 +47,7 @@ public class PostgresDbExecutor(IAltinnDatabase databaseFactory, IDbConverter db
         var cmd = conn.CreateCommand();
         cmd.CommandText = query;
         conn.Open();
-        return _dbConverter.ConvertToObjects<T>(await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult, cancellationToken));
+        return _dbConverter.ConvertToResult<T>(await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult, cancellationToken)).Data;
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public class PostgresDbExecutor(IAltinnDatabase databaseFactory, IDbConverter db
     /// <summary>
     /// Executes a query and maps the result to objects of type T.
     /// </summary>
-    public async Task<IEnumerable<T>> ExecuteQuery<T>(string query, List<GenericParameter> parameters, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<T>> ExecuteQuery<T>(string query, List<GenericParameter> parameters, CancellationToken cancellationToken = default)
         where T : new()
     {
         using var conn = _databaseFactory.CreatePgsqlConnection(SourceType.App);
@@ -142,25 +142,25 @@ public class PostgresDbExecutor(IAltinnDatabase databaseFactory, IDbConverter db
             {
                 cmd.Parameters.Add(new NpgsqlParameter(parameter.Key, DBNull.Value));
             }
-            else 
-            { 
+            else
+            {
                 cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
             }
         }
 
-        return _dbConverter.ConvertToObjects<T>(await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult, cancellationToken));
+        return _dbConverter.ConvertToResult<T>(await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult, cancellationToken));
     }
 
     /// <summary>
     /// Executes a query and maps the result to objects of type T.
     /// </summary>
-    public async Task<IEnumerable<T>> ExecuteQuery<T>(string query, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<T>> ExecuteQuery<T>(string query, CancellationToken cancellationToken = default)
         where T : new()
     {
         using var conn = _databaseFactory.CreatePgsqlConnection(SourceType.App);
         var cmd = conn.CreateCommand();
         cmd.CommandText = query;
         conn.Open();
-        return _dbConverter.ConvertToObjects<T>(await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult, cancellationToken));
+        return _dbConverter.ConvertToResult<T>(await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult, cancellationToken));
     }
 }

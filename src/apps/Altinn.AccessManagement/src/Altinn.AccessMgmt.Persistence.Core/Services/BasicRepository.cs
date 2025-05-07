@@ -5,7 +5,6 @@ using Altinn.AccessMgmt.Persistence.Core.Contracts;
 using Altinn.AccessMgmt.Persistence.Core.Definitions;
 using Altinn.AccessMgmt.Persistence.Core.Helpers;
 using Altinn.AccessMgmt.Persistence.Core.Models;
-using Microsoft.AspNetCore.Http.Extensions;
 
 namespace Altinn.AccessMgmt.Persistence.Core.Services;
 
@@ -50,11 +49,11 @@ public abstract class BasicRepository<T> : IDbBasicRepository<T>
     public async Task<T> Get(Guid id, RequestOptions options = null, CancellationToken cancellationToken = default)
     {
         var res = await Get(new List<GenericFilter>() { new GenericFilter("id", id) }, options, cancellationToken: cancellationToken);
-        return res.FirstOrDefault();
+        return res.Data.FirstOrDefault();
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<T>> Get<TProperty>(Expression<Func<T, TProperty>> property, TProperty value, RequestOptions options = null, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<T>> Get<TProperty>(Expression<Func<T, TProperty>> property, TProperty value, RequestOptions options = null, CancellationToken cancellationToken = default)
     {
         string propertyName = ExtractPropertyInfo(property).Name;
         var filters = new List<GenericFilter>
@@ -65,19 +64,19 @@ public abstract class BasicRepository<T> : IDbBasicRepository<T>
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<T>> Get(RequestOptions options = null, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<T>> Get(RequestOptions options = null, CancellationToken cancellationToken = default)
     {
         return await Get(filters: new List<GenericFilter>(), options: options, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<T>> Get(GenericFilterBuilder<T> filterBuilder, RequestOptions options = null, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<T>> Get(GenericFilterBuilder<T> filterBuilder, RequestOptions options = null, CancellationToken cancellationToken = default)
     {
         return await Get(filters: filterBuilder, options: options, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<T>> Get(IEnumerable<GenericFilter> filters, RequestOptions options = null, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<T>> Get(IEnumerable<GenericFilter> filters, RequestOptions options = null, CancellationToken cancellationToken = default)
     {
         options ??= new RequestOptions();
         filters ??= new List<GenericFilter>();
