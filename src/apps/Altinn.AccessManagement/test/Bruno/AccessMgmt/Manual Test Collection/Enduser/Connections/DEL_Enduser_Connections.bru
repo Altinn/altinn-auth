@@ -1,0 +1,44 @@
+meta {
+  name: DEL_Enduser_Connections
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{toUuid}}&cascade=false
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toUuid}}
+  cascade: false
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("requestName", "DEL_Enduser_Connections");
+  
+  bru.setVar("party", );
+  bru.setVar("toOrg", );
+  
+  var getTokenParameters = {
+    auth_userId: "",
+    auth_partyId: "",
+    auth_partyUuid: "",
+    auth_ssn: "",
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
