@@ -134,7 +134,8 @@ public class ConnectionDefinition : BaseDbDefinition<Connection>, IDbDefinition
             sb.AppendLine(EntityColumns("te", "To") + ",");
             sb.AppendLine(RoleColumns("r", "Role") + ",");
             sb.AppendLine(EntityColumns("ve", "Facilitator") + ",");
-            sb.AppendLine(RoleColumns("vr", "FacilitatorRole") + " ");
+            sb.AppendLine(RoleColumns("vr", "FacilitatorRole") + ",");
+            sb.AppendLine(DelegationColumns("d", "Delegation") + " ");
         }
         else
         {
@@ -150,6 +151,7 @@ public class ConnectionDefinition : BaseDbDefinition<Connection>, IDbDefinition
             sb.AppendLine("JOIN dbo.role r ON a.roleid = r.id");
             sb.AppendLine("LEFT JOIN dbo.entity ve ON a.viaid = ve.id");
             sb.AppendLine("LEFT JOIN dbo.role vr ON a.viaroleid = vr.id");
+            sb.AppendLine("LEFT JOIN dbo.delegation d ON a.id = d.id");
         }
 
         sb.AppendLine("WHERE a.id = COALESCE(@id, a.id)::uuid");
