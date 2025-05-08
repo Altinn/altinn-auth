@@ -8,7 +8,7 @@
     <PackageVersion Include="Altinn.Authorization.ProblemDetails" Version="3.2.2" />
     <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql.Yuniql" Version="2.11.0" />
     <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql" Version="2.11.0" />
-    <PackageVersion Include="Altinn.Authorization.ServiceDefaults" Version="2.11.0" />
+    <PackageVersion Include="Altinn.Authorization.ServiceDefaults" Version="3.0.0" />
     <PackageVersion Include="Altinn.Common.AccessToken" Version="5.0.3" />
     <PackageVersion Include="Altinn.Common.AccessTokenClient" Version="3.0.14" />
     <PackageVersion Include="Altinn.Common.PEP" Version="4.1.2" />
