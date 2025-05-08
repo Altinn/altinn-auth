@@ -16,3 +16,9 @@ db_compute_tier  = "GeneralPurpose"
 db_compute_size  = "Standard_D8s_v3"
 db_storage_tier  = "P15"
 sbl_endpoint     = "https://ai-yt01-vip-sblbridge.ai.basefarm.net/sblbridge/"
+
+features = {
+  a2_party_import = {
+    parties = true
+  }
+}
