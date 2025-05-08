@@ -77,7 +77,7 @@ resource "azurerm_postgresql_flexible_server" "postgres_server" {
   sku_name    = local.sku_name
 
   lifecycle {
-    ignore_changes  = [zone]
+    ignore_changes  = [zone, storage_mb]
     prevent_destroy = true
   }
 
