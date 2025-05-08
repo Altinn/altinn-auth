@@ -1,4 +1,5 @@
 ﻿using Altinn.AccessMgmt.Core.Models;
+using Altinn.AccessMgmt.Persistence.Services.Models;
 
 namespace Altinn.AccessMgmt.Persistence.Services.Contracts;
 
@@ -8,16 +9,22 @@ namespace Altinn.AccessMgmt.Persistence.Services.Contracts;
 public interface IRoleService
 {
     /// <summary>
+    /// Get all roles
+    /// </summary>
+    /// <returns></returns>
+    Task<IEnumerable<RoleDto>> GetAll();
+
+    /// <summary>
     /// Get role based on code
     /// </summary>
     /// <returns></returns>
-    Task<IEnumerable<Role>> GetByCode(string code);
+    Task<IEnumerable<RoleDto>> GetByCode(string code);
 
     /// <summary>
     /// Get role based on id
     /// </summary>
     /// <returns></returns>
-    Task<ExtRole> GetById(Guid id);
+    Task<RoleDto> GetById(Guid id);
 
     /// <summary>
     /// Get role based on Lookup
@@ -25,12 +32,25 @@ public interface IRoleService
     /// <param name="key">Key from lookup</param>
     /// <param name="value">Value from lookup</param>
     /// <returns></returns>
-    Task<IEnumerable<Role>> GetByKeyValue(string key, string value);
+    Task<IEnumerable<RoleDto>> GetByKeyValue(string key, string value);
+
+    /// <summary>
+    /// Get possible lookup keys
+    /// </summary>
+    /// <returns></returns>
+    Task<IEnumerable<string>> GetLookupKeys();
 
     /// <summary>
     /// Get role for provider
     /// </summary>
     /// <param name="providerId">Provider identity</param>
     /// <returns></returns>
-    Task<IEnumerable<ExtRole>> GetByProvider(Guid providerId);
+    Task<IEnumerable<RoleDto>> GetByProvider(Guid providerId);
+
+    /// <summary>
+    /// Get packages for role
+    /// </summary>
+    /// <param name="id">Role identity</param>
+    /// <returns></returns>
+    Task<IEnumerable<RolePackageDto>> GetPackagesForRole(Guid id);
 }

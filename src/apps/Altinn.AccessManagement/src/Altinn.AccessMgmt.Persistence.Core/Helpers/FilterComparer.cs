@@ -48,5 +48,10 @@ public enum FilterComparer
     /// <summary>
     /// Check if the property is not equal to the value.
     /// </summary>
-    NotEqual
+    NotEqual,
+
+    /// <summary>
+    /// Check if the property is like the value.
+    /// </summary>
+    Like
 }
