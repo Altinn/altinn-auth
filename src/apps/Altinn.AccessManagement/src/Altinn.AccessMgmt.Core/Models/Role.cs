@@ -50,6 +50,11 @@ public class Role
     /// altinn:role:tilgangsstyrer
     /// </summary>
     public string Urn { get; set; }
+
+    /// <summary>
+    /// Can be assigned
+    /// </summary>
+    public bool IsAssignable { get; set; }
 }
 
 /// <summary>

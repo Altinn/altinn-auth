@@ -27,6 +27,7 @@ public class RoleDefinition : BaseDbDefinition<Role>, IDbDefinition
             def.RegisterProperty(t => t.Urn);
             def.RegisterProperty(t => t.Description);
             def.RegisterProperty(t => t.IsKeyRole, defaultValue: "false");
+            def.RegisterProperty(t => t.IsAssignable, defaultValue: "false");
             def.RegisterProperty(t => t.ProviderId);
             def.RegisterProperty(t => t.EntityTypeId);
 
