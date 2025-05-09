@@ -37,3 +37,27 @@ variable "key_vault_reference" {
 
   default = []
 }
+
+variable "labels" {
+  type = map(object({
+    values = optional(
+      map(object({
+        value        = string
+        content_type = optional(string)
+      }))
+    , {})
+    vault_references = optional(
+      map(object({
+        vault_key_reference = string
+      }))
+    , {})
+    feature_flags = optional(
+      map(object({
+        name        = optional(string)
+        description = optional(string)
+      }))
+    , {})
+  }))
+
+  default = {}
+}

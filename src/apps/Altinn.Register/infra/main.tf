@@ -183,49 +183,27 @@ data "azurerm_key_vault_secret" "postgres_app" {
   depends_on   = [null_resource.bootstrap_database]
 }
 
-locals {
-  features = {
-    "Altinn:register:PartyImport:A2:Enable"             = var.features.a2_party_import.parties
-    "Altinn:register:PartyImport:A2:PartyUserId:Enable" = var.features.a2_party_import.user_ids
-  }
-}
-
 module "appsettings" {
   source     = "../../../../infra/modules/appsettings"
   hub_suffix = local.hub_suffix
 
-  key_value = concat(
-    [
-      {
-        key   = "Altinn:MassTransit:register:AzureServiceBus:Endpoint"
-        value = "sb://sb${local.spoke_suffix}.servicebus.windows.net"
-        label = "${var.environment}-register"
-      },
-      {
-        key   = "A2PartyImport:BridgeApiEndpoint"
-        value = var.sbl_endpoint
-        label = "${var.environment}-register"
-      }
-    ],
-    [for key, value in local.features : {
-      key   = key
-      value = value ? "true" : "false"
-      label = "${var.environment}-register"
-    }]
-  )
+  labels = {
+    "${var.environment}-register" = {
+      values = {
+        "Altinn:MassTransit:register:AzureServiceBus:Endpoint" = { value : "sb://sb${local.spoke_suffix}.servicebus.windows.net" }
+        "A2PartyImport:BridgeApiEndpoint"                      = { value : var.sbl_endpoint }
 
-  key_vault_reference = [
-    {
-      key                 = "Altinn:Npgsql:register:ConnectionString"
-      key_vault_secret_id = data.azurerm_key_vault_secret.postgres_app.versionless_id
-      label               = "${var.environment}-register"
-    },
-    {
-      key                 = "Altinn:Npgsql:register:Migrate:ConnectionString"
-      key_vault_secret_id = data.azurerm_key_vault_secret.postgres_migration.versionless_id
-      label               = "${var.environment}-register"
+        // features
+        "Altinn:register:PartyImport:A2:Enable"             = { value : var.features.a2_party_import.parties }
+        "Altinn:register:PartyImport:A2:PartyUserId:Enable" = { value : var.features.a2_party_import.user_ids }
+      }
+
+      vault_references = {
+        "Altinn:Npgsql:register:ConnectionString"         = { vault_key_reference : data.azurerm_key_vault_secret.postgres_app.versionless_id }
+        "Altinn:Npgsql:register:Migrate:ConnectionString" = { vault_key_reference : data.azurerm_key_vault_secret.postgres_migration.versionless_id }
+      }
     }
-  ]
+  }
 
   providers = {
     azurerm.hub = azurerm.hub
