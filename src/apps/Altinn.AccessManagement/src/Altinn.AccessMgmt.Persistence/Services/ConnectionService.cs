@@ -1,5 +1,6 @@
 ﻿using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Models;
+using Altinn.AccessMgmt.Persistence.Repositories;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Models;
@@ -265,7 +266,11 @@ public class ConnectionService(
             return true;
         }
 
-        var deleteResult = await assignmentPackageRepository.DeleteCross(assignmentId, packageId, options, cancellationToken: cancellationToken);
+        var deleteFilter = assignmentPackageRepository.CreateFilterBuilder();
+        deleteFilter.Equal(t => t.AssignmentId, assignmentId);
+        deleteFilter.Equal(t => t.PackageId, packageId);
+        var deleteResult = await assignmentPackageRepository.Delete(deleteFilter, options, cancellationToken: cancellationToken);
+
         if (deleteResult > 0)
         {
             return true;
@@ -307,7 +312,11 @@ public class ConnectionService(
             return true;
         }
 
-        var deleteResult = await delegationPackageRepository.DeleteCross(delegationId, packageId, options, cancellationToken: cancellationToken);
+        var deleteFilter = delegationPackageRepository.CreateFilterBuilder();
+        deleteFilter.Equal(t => t.DelegationId, delegationId);
+        deleteFilter.Equal(t => t.PackageId, packageId);
+        var deleteResult = await delegationPackageRepository.Delete(deleteFilter, options, cancellationToken: cancellationToken);
+
         if (deleteResult > 0)
         {
             return true;
@@ -352,7 +361,7 @@ public class ConnectionService(
             return checkResult.Data.First();
         }
 
-        var createResult = await assignmentPackageRepository.CreateCross(assignmentId, packageId, options, cancellationToken: cancellationToken);
+        var createResult = await assignmentPackageRepository.Create(new AssignmentPackage() { AssignmentId = assignmentId, PackageId = packageId }, options, cancellationToken: cancellationToken);
         if (createResult > 0)
         {
             var createCheckResult = await assignmentPackageRepository.Get();
@@ -402,7 +411,7 @@ public class ConnectionService(
             return checkResult.First();
         }
 
-        var createResult = await delegationPackageRepository.CreateCross(delegationId, packageId, options, cancellationToken: cancellationToken);
+        var createResult = await delegationPackageRepository.Create(new DelegationPackage() { DelegationId = delegationId, PackageId = packageId }, options, cancellationToken: cancellationToken);
         if (createResult > 0)
         {
             var createCheckResult = await delegationPackageRepository.Get(filter, cancellationToken: cancellationToken);

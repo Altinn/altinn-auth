@@ -2,6 +2,7 @@
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Data;
+using Altinn.AccessMgmt.Persistence.Repositories;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -252,7 +253,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
 
             try
             {
-                var res = await delegationPackageRepository.CreateCross(id, packageId, options);
+                var res = await delegationPackageRepository.Create(new DelegationPackage() { DelegationId = id, PackageId = packageId }, options);
                 if (res > 0)
                 {
                     return Created();
@@ -295,7 +296,11 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
 
             try
             {
-                var res = await delegationPackageRepository.DeleteCross(id, packageId, options);
+                var deleteFilter = delegationPackageRepository.CreateFilterBuilder();
+                deleteFilter.Equal(t => t.DelegationId, id);
+                deleteFilter.Equal(t => t.PackageId, packageId);
+                var res = await delegationPackageRepository.Delete(deleteFilter, options);
+
                 if (res > 0)
                 {
                     return NoContent();
@@ -368,7 +373,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
 
             try
             {
-                var res = await delegationResourceRepository.CreateCross(id, resourceId, options);
+                var res = await delegationResourceRepository.Create(new DelegationResource() { DelegationId = id, ResourceId = resourceId }, options);
                 if (res > 0)
                 {
                     return Created();
@@ -411,7 +416,11 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
 
             try
             {
-                var res = await delegationResourceRepository.DeleteCross(id, resourceId, options);
+                var deleteFilter = delegationResourceRepository.CreateFilterBuilder();
+                deleteFilter.Equal(t => t.DelegationId, id);
+                deleteFilter.Equal(t => t.ResourceId, resourceId);
+                var res = await delegationResourceRepository.Delete(deleteFilter, options);
+
                 if (res > 0)
                 {
                     return NoContent();

@@ -333,7 +333,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
                 PackageId = packageId
             };
 
-            var res = await assignmentPackageRepository.CreateCross(assignment.Id, package.Id, options);
+            var res = await assignmentPackageRepository.Create(new AssignmentPackage() { AssignmentId = assignment.Id, PackageId = package.Id }, options);
             if (res == 1)
             {
                 return Created();
@@ -427,7 +427,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
                 ResourceId = resourceId
             };
 
-            var res = await assignmentResourceRepository.CreateCross(assignment.Id, resource.Id, options);
+            var res = await assignmentResourceRepository.Create(new AssignmentResource() { AssignmentId = assignment.Id, ResourceId = resource.Id }, options);
             if (res == 1)
             {
                 return Created();
@@ -467,7 +467,10 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
                 return BadRequest();
             }
 
-            await assignmentPackageRepository.DeleteCross(id, packageId, options);
+            var deleteFilter = assignmentPackageRepository.CreateFilterBuilder();
+            deleteFilter.Equal(t => t.AssignmentId, assignment.Id);
+            deleteFilter.Equal(t => t.PackageId, package.Id);
+            await assignmentPackageRepository.Delete(deleteFilter, options);
 
             return Ok();
         }
@@ -503,7 +506,10 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers
                 return BadRequest();
             }
 
-            await assignmentPackageRepository.DeleteCross(id, resourceId, options);
+            var deleteFilter = assignmentResourceRepository.CreateFilterBuilder();
+            deleteFilter.Equal(t => t.AssignmentId, assignment.Id);
+            deleteFilter.Equal(t => t.ResourceId, resource.Id);
+            await assignmentResourceRepository.Delete(deleteFilter, options);
 
             return Ok();
         }

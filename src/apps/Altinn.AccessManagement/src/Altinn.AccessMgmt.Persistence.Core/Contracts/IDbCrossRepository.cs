@@ -74,6 +74,7 @@ public interface IDbCrossRepository<T, TExtended, TA, TB> : IDbExtendedRepositor
     /// <param name="options">Options used for changing data</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
+    [Obsolete]
     Task<int> CreateCross(Guid AIdentity, Guid BIdentity, ChangeRequestOptions options, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -84,5 +85,6 @@ public interface IDbCrossRepository<T, TExtended, TA, TB> : IDbExtendedRepositor
     /// <param name="options">Options used for changing data</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
+    [Obsolete]
     Task<int> DeleteCross(Guid AIdentity, Guid BIdentity, ChangeRequestOptions options, CancellationToken cancellationToken = default);
 }
