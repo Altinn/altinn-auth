@@ -18,7 +18,6 @@ sbl_endpoint     = "https://at24.altinn.cloud/sblbridge/"
 
 features = {
   a2_party_import = {
-    parties  = true
-    user_ids = true
+    parties = true
   }
 }
