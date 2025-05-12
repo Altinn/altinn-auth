@@ -1,5 +1,5 @@
 meta {
-  name: POST_Enduser_Connections_AddOrg
+  name: POST_Enduser_Conn_ToOthers_AddOrg
   type: http
   seq: 1
 }
@@ -24,10 +24,10 @@ script:pre-request {
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
   const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
   
-  bru.setVar("requestName", "POST_Enduser_Connections_AddOrg");
+  bru.setVar("requestName", "POST_Enduser_Conn_ToOthers_AddOrg");
   
   bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
-  bru.setVar("toOrg", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.rightHolderOrg.partyUuid);
+  bru.setVar("toOrg", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg1.partyUuid);
   
   var getTokenParameters = {
     auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.userId,
@@ -40,4 +40,19 @@ script:pre-request {
   
   const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken",  token);
+}
+
+tests {
+  
+  test(bru.getVar("requestName"), function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(200);
+    assert.notEqual(data, [], "Expected response body to return created asssignment");
+    
+    assert.equal(data.fromId, bru.getVar("party"));
+    assert.equal(data.toId, bru.getVar("toOrg"));
+    assert.equal(data.roleId, "42cae370-2dc1-4fdc-9c67-c2f4b0f0f829"); // rettighetshaver uuid
+    
+  });
 }

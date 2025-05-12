@@ -1,0 +1,60 @@
+meta {
+  name: GET_Enduser_Conn_AccPcks_FromOthers_FromOrg
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{fromOrg}}&to={{party}}&package=&packageUrn=
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{fromOrg}}
+  to: {{party}}
+  package: 
+  packageUrn: 
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("requestName", "GET_Enduser_Conn_AccPcks_FromOthers_FromOrg");
+  
+  bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.partyUuid);
+  bru.setVar("fromOrg", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.dagligleder.userId,
+    auth_partyId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.dagligleder.partyId,
+    auth_partyUuid: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.dagligleder.partyUuid,
+    auth_ssn: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  
+  test(bru.getVar("requestName"), function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(200);
+    assert.notEqual(data, [], "Expected response body to contain connections");
+    
+    assert.equal(data[0].fromId, bru.getVar("fromOrg"));
+    assert.equal(data[0].toId, bru.getVar("party"));
+    assert.equal(data[0].roleId, "42cae370-2dc1-4fdc-9c67-c2f4b0f0f829"); // rettighetshaver uuid
+    
+  });
+}

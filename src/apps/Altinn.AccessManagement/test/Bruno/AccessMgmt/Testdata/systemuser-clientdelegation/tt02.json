@@ -53,6 +53,34 @@
             "partyId": 51867229,
             "partyUuid": "b528fc72-ca98-4cc5-bb7e-d65988e023fe"
         },
+        "client_rightholderOrg1": {
+            "name": "TOPP FIRKANTET TIGER AS",
+            "orgno": "311127845",
+            "partyId": 51624448,
+            "partyUuid": "d778f3f5-4f73-48b4-bec5-144ceec54953",
+            "dagligleder": {
+                "name": "SAMTIDIG MATEMATIKER",
+                "pid": "07888397161",
+                "userId": 1455073,
+                "partyId": 50906465,
+                "partyUuid": "d673d146-ed6f-4bb4-8037-f63696a683c1"
+            },
+            "directPackageToDelegate": "motorvognavgift"
+        },
+        "client_rightholderOrg2": {
+            "name": "STOLT BETYDELIG TIGER AS",
+            "orgno": "313816915",
+            "partyId": 51871764,
+            "partyUuid": "320e6ea2-5860-466e-a8a3-6a1e964096a4",
+            "dagligleder": {
+                "name": "SKRAVLETE KAMERA",
+                "pid": "05838299719",
+                "userId": 1450528,
+                "partyId": 51171325,
+                "partyUuid": "fb7a622c-4d16-41eb-ad9d-5024bfd8ebe5"
+            },
+            "directPackageToDelegate": "mobler-og-annen-industri"
+        },
         "a2_klientadministrator": {
             "name": "RUSTEN AKVARELL",
             "pid": "11860198721",
@@ -88,124 +116,119 @@
             "partyId": 51922024,
             "partyUuid": "8756202f-69d3-4f93-991c-7a2a40c53c87"
         }
-    }, 
+    },
     "revisor": {
-      "name": "FINTFØLENDE FRISK TIGER AS",
-      "partyuuid": "693627a4-fb0f-4fbf-9cf6-8381fbf195fd",
-      "orgno": "310914231",
-      "dagl": {
-        "name": "DYR TRAPP",
-        "pid": "27912948957",
-        "userid": 310968,
-        "partyid": 50766082,
-        "partyuuid": "f83bee07-b593-4c3f-a0fa-9123dc4b627d"
-      },
-      "klientadministrator": {
-        "name": "HØY SYKKEL",
-        "pid": "08864599150",
-        "userid": 1450693,
-        "partyid": 50819825,
-        "partyuuid": "37423cd4-259e-46a1-b1f8-bdd26191e5d8"
-      },
-      "hovedadministrator": {
-        "name": "USIKKER LYD",
-        "pid": "23898496708",
-        "userid": 1450692,
-        "partyid": 51087333,
-        "partyuuid": "AD065915-E79D-4595-8397-B2ACC06FBC20"
-      },
-      "systemuser": {
-        "name": "TEST_SBS_KLIENT",
-        "id": "7697bbf7-f763-40d8-aa92-185fe214c863"
-      },
-      "invalid_pkg_systemuser" : {
-        "name": "TEST_SBS_KLIENT",
-        "id": "2057d750-575b-4f3c-943c-c28d180bf487"
-  
-      },
-      "client_org": {
-        "name": "ALFABETISK PASSIV TIGER AS",
-        "partyuuid": "168f1707-1d2b-4b4d-8543-6af11f2cae3a",
-        "orgno": "313248224",
+        "name": "FINTFØLENDE FRISK TIGER AS",
+        "partyuuid": "693627a4-fb0f-4fbf-9cf6-8381fbf195fd",
+        "orgno": "310914231",
         "dagl": {
-          "name": "MOBIL PRESENTASJON",
-          "pid": "10818298426",
-          "userid": 1450810,
-          "partyid": 50945539,
-          "partyuuid": "61112ba5-91dc-44c2-b665-a7c9a95c804a"
+            "name": "DYR TRAPP",
+            "pid": "27912948957",
+            "userid": 310968,
+            "partyid": 50766082,
+            "partyuuid": "f83bee07-b593-4c3f-a0fa-9123dc4b627d"
+        },
+        "klientadministrator": {
+            "name": "HØY SYKKEL",
+            "pid": "08864599150",
+            "userid": 1450693,
+            "partyid": 50819825,
+            "partyuuid": "37423cd4-259e-46a1-b1f8-bdd26191e5d8"
+        },
+        "hovedadministrator": {
+            "name": "USIKKER LYD",
+            "pid": "23898496708",
+            "userid": 1450692,
+            "partyid": 51087333,
+            "partyuuid": "AD065915-E79D-4595-8397-B2ACC06FBC20"
+        },
+        "systemuser": {
+            "name": "TEST_SBS_KLIENT",
+            "id": "7697bbf7-f763-40d8-aa92-185fe214c863"
+        },
+        "invalid_pkg_systemuser": {
+            "name": "TEST_SBS_KLIENT",
+            "id": "2057d750-575b-4f3c-943c-c28d180bf487"
+        },
+        "client_org": {
+            "name": "ALFABETISK PASSIV TIGER AS",
+            "partyuuid": "168f1707-1d2b-4b4d-8543-6af11f2cae3a",
+            "orgno": "313248224",
+            "dagl": {
+                "name": "MOBIL PRESENTASJON",
+                "pid": "10818298426",
+                "userid": 1450810,
+                "partyid": 50945539,
+                "partyuuid": "61112ba5-91dc-44c2-b665-a7c9a95c804a"
+            }
         }
-      }
     },
     "regnskapsforer": {
-      "name": "FRYKTLØS FIRKANTET TIGER AS",
-      "partyuuid": "897A37EE-EBD2-4DFE-8E8C-5FA8909845A9",
-      "orgno": "314095693",
-      "dagl": {
-        "name": "SKÅNSOM PARYKK",
-        "pid": "20897496934",
-        "userid": 1435102,
-        "partyid": 51372438,
-        "partyuuid": "0599D337-F822-4CD3-A58A-35B7B1120B76"
-      },
-      "hovedadministrator": {
-        "name": "LANG KAMERAT",
-        "pid": "09862449794",
-        "userid": 1450811,
-        "partyid": 50970169,
-        "partyuuid": "f6ab1bd9-f45f-4bb7-a4f1-3ff4cd5b62a6"
-      },
-      "systemuser": {
-        "name": "TEST_SBS_KLIENT",
-        "id": "8d44d556-5f06-4584-b465-d88514c94b46"
-      },
-      "forretningsforer_systemuser": {
-        "name": "TEST_SBS_KLIENT",
-        "id": "62c6aba5-274a-469d-b5f6-31ab13a1f48e"
-      },
-      "client_org": {
-        "name": "SKRAVLETE PUSSIG KATT RETNINGSLINJE",
-        "partyuuid": "7c1f1abf-6f50-4f63-abca-10b3775a4830",
-        "orgno": "310498394",
+        "name": "FRYKTLØS FIRKANTET TIGER AS",
+        "partyuuid": "897A37EE-EBD2-4DFE-8E8C-5FA8909845A9",
+        "orgno": "314095693",
         "dagl": {
-          "name": "SMIGRENDE ASSOSIASJON",
-          "pid": "04815098051"
-  
+            "name": "SKÅNSOM PARYKK",
+            "pid": "20897496934",
+            "userid": 1435102,
+            "partyid": 51372438,
+            "partyuuid": "0599D337-F822-4CD3-A58A-35B7B1120B76"
+        },
+        "hovedadministrator": {
+            "name": "LANG KAMERAT",
+            "pid": "09862449794",
+            "userid": 1450811,
+            "partyid": 50970169,
+            "partyuuid": "f6ab1bd9-f45f-4bb7-a4f1-3ff4cd5b62a6"
+        },
+        "systemuser": {
+            "name": "TEST_SBS_KLIENT",
+            "id": "8d44d556-5f06-4584-b465-d88514c94b46"
+        },
+        "forretningsforer_systemuser": {
+            "name": "TEST_SBS_KLIENT",
+            "id": "62c6aba5-274a-469d-b5f6-31ab13a1f48e"
+        },
+        "client_org": {
+            "name": "SKRAVLETE PUSSIG KATT RETNINGSLINJE",
+            "partyuuid": "7c1f1abf-6f50-4f63-abca-10b3775a4830",
+            "orgno": "310498394",
+            "dagl": {
+                "name": "SMIGRENDE ASSOSIASJON",
+                "pid": "04815098051"
+            }
+        },
+        "non_systemuser": {
+            "pid": "24856298961",
+            "name": "ULIK GLEDE",
+            "partyuuid": "6e679b5a-a5d7-4d06-b4ff-14143a7f7eed"
+        },
+        "client_org_other_Regn": {
+            "name": "AKVATISK OVERBEVISENDE KATT ELEFANT",
+            "partyuuid": "c39bcffd-49a1-45d5-bedd-225d7307602d",
+            "orgno": "313628981",
+            "dagl": {
+                "name": "REDELIG HABITT",
+                "pid": "28835096523"
+            }
         }
-      },
-      "non_systemuser": {
-        "pid" : "24856298961",
-        "name": "ULIK GLEDE",
-        "partyuuid": "6e679b5a-a5d7-4d06-b4ff-14143a7f7eed"
-      },
-      "client_org_other_Regn" : {
-         "name" : "AKVATISK OVERBEVISENDE KATT ELEFANT",
-         "partyuuid" : "c39bcffd-49a1-45d5-bedd-225d7307602d",
-         "orgno" : "313628981",
-         "dagl" : {
-          "name" : "REDELIG HABITT",
-          "pid" : "28835096523"
-        
+    },
+    "bbl_type_client_org": {
+        "name": "USELVSTENDIG FLAT PUMA BBL",
+        "partyuuid": "BD95521A-17E9-4817-8207-735EF015BF53",
+        "orgno": "210815872",
+        "dagl": {
+            "name": "REDELIG HABITT",
+            "pid": "11896799993"
         }
-  
-      }
     },
-    "bbl_type_client_org" : {
-      "name": "USELVSTENDIG FLAT PUMA BBL",
-      "partyuuid": "BD95521A-17E9-4817-8207-735EF015BF53",
-      "orgno": "210815872",
-      "dagl": {
-        "name": "REDELIG HABITT",
-        "pid": "11896799993"
-      }
-    },
-    "esek_type_client_org" : {
-      "name": "TALEFØR UGLESETT LØVE SAMEIE",
-      "partyuuid": "9328EA32-5577-4868-81CF-EA13D78CFB28",
-      "orgno": "313239586",
-      "leder": {
-        "name": "TILBAKEHOLDEN ALGORITME",
-        "pid": "15828998770"
-      }
+    "esek_type_client_org": {
+        "name": "TALEFØR UGLESETT LØVE SAMEIE",
+        "partyuuid": "9328EA32-5577-4868-81CF-EA13D78CFB28",
+        "orgno": "313239586",
+        "leder": {
+            "name": "TILBAKEHOLDEN ALGORITME",
+            "pid": "15828998770"
+        }
     }
 }
-

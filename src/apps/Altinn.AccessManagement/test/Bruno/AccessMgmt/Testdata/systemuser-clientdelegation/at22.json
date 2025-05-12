@@ -53,6 +53,34 @@
       "partyId": 51653860,
       "partyUuid": "0fcdee75-036a-47d9-ab40-5e55509a5b26"
     },
+    "client_rightholderOrg1": {
+      "name": "TOPP FIRKANTET TIGER AS",
+      "orgno": "311127845",
+      "partyId": 51410913,
+      "partyUuid": "703c2e1e-d27c-40a1-b138-46b4f1a01b33",
+      "dagligleder": {
+        "name": "SAMTIDIG MATEMATIKER",
+        "pid": "07888397161",
+        "userId": 20013287,
+        "partyId": 50784075,
+        "partyUuid": "f75f209d-ce25-413e-b635-54897dc8400e"
+      },
+      "directPackageToDelegate": "motorvognavgift"
+    },
+    "client_rightholderOrg2": {
+      "name": "STOLT BETYDELIG TIGER AS",
+      "orgno": "313816915",
+      "partyId": 51658393,
+      "partyUuid": "ffa48a06-6a01-4fc7-ae5e-8aaff6c1a850",
+      "dagligleder": {
+        "name": "SKRAVLETE KAMERA",
+        "pid": "05838299719",
+        "userId": 20016888,
+        "partyId": 50922937,
+        "partyUuid": "11e6a957-5a74-4a10-b89f-c557ccca5b34"
+      },
+      "directPackageToDelegate": "mobler-og-annen-industri"
+    },
     "a2_klientadministrator": {
       "name": "RUSTEN AKVARELL",
       "pid": "11860198721",
@@ -118,10 +146,9 @@
       "name": "TEST_SBS_KLIENT",
       "id": "ad98adff-ecf5-4d16-820b-965956da25cc"
     },
-    "invalid_pkg_systemuser" : {
+    "invalid_pkg_systemuser": {
       "name": "TEST_SBS_KLIENT",
       "id": "d0f19a13-55cc-450f-b837-fe1f066756de"
-
     },
     "client_org": {
       "name": "ALFABETISK PASSIV TIGER AS",
@@ -171,11 +198,11 @@
         "pid": "04815098051"
       }
     },
-      "non_systemuser": {
-        "pid" : "24856298961",
-        "name": "ULIK GLEDE",
-        "partyuuid": "8e06e704-b446-4e7f-9a32-3ee971e5ab0e"
-      },
+    "non_systemuser": {
+      "pid": "24856298961",
+      "name": "ULIK GLEDE",
+      "partyuuid": "8e06e704-b446-4e7f-9a32-3ee971e5ab0e"
+    },
     "client_org_other_Regn": {
       "name": "AKVATISK OVERBEVISENDE KATT ELEFANT",
       "partyuuid": "3177BD2C-3AE1-4A36-8CE9-FBF6DB714E5B",
@@ -186,7 +213,7 @@
       }
     }
   },
-  "bbl_type_client_org" : {
+  "bbl_type_client_org": {
     "name": "USELVSTENDIG FLAT PUMA BBL",
     "partyuuid": "7F059B2B-F6D2-409B-83FD-194F1AAAB90D",
     "orgno": "210815872",
@@ -195,7 +222,7 @@
       "pid": "11896799993"
     }
   },
-  "esek_type_client_org" : {
+  "esek_type_client_org": {
     "name": "TALEFØR UGLESETT LØVE SAMEIE",
     "partyuuid": "D103E1A0-39FD-40AE-8C81-1BCDC661BF29",
     "orgno": "313239586",
@@ -204,7 +231,4 @@
       "pid": "15828998770"
     }
   }
-
-
-
 }
