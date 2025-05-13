@@ -48,7 +48,7 @@ tests {
     const data = res.getBody();
     
     expect(res.status).to.equal(200);
-    assert.notEqual(data, [], "Expected response body to return created asssignment");
+    assert.isOk(data, "Expected response body to return created assignment");
     
     assert.equal(data.fromId, bru.getVar("party"));
     assert.equal(data.toId, bru.getVar("toOrg"));

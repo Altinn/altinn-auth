@@ -50,7 +50,7 @@ tests {
     const data = res.getBody();
     
     expect(res.status).to.equal(204);
-    assert.notExists(data, "Expected response body to be empty");
+    assert.isNotOk(data, "Expected response body to be empty");
     
   });
 }
