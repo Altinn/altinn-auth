@@ -1,16 +1,16 @@
 ﻿using System.Net.Mime;
 using Altinn.AccessManagement.Api.Enduser.Models;
 using Altinn.AccessManagement.Core.Constants;
-using Altinn.AccessManagement.Core.Extensions;
-using Altinn.AccessManagement.Core.Filters;
+using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessManagement.Enduser.Services;
+using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Data;
-using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
-using Altinn.AccessMgmt.Persistence.Services.Contracts;
+using Altinn.AccessMgmt.Persistence.Services;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement.Mvc;
 
 namespace Altinn.AccessManagement.Api.Enduser.Controllers;
@@ -22,115 +22,63 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 [Route("accessmanagement/api/v1/enduser/connections")]
 [FeatureGate(AccessManagementEnduserFeatureFlags.ControllerConnections)]
 [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
-public class ConnectionController(IHttpContextAccessor accessor, IConnectionService connectionService, IAssignmentService assignmentService, IEntityRepository entityRepository) : ControllerBase
+public class ConnectionController(IEnduserConnectionService connectionService) : ControllerBase
 {
-    private IHttpContextAccessor Accessor { get; } = accessor;
+    private IEnduserConnectionService ConnectionService { get; } = connectionService;
 
     /// <summary>
-    /// Creates an assignment between the authenticated user's selected party and the specified target party.
+    /// Get connections between the authenticated user's selected party and the specified target party.
     /// </summary>
-    /// <param name="party">The GUID identifying the party the authenticated user is acting on behalf of.</param>
-    /// <param name="from">The GUID identifying the party the authenticated user is acting for</param>
-    /// <param name="to">The GUID identifying the target party to which the assignment should be created.</param>
-    /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
     [HttpGet]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
-    [ServiceFilter(typeof(AuthorizePartyUuidClaimFilter))]
-    [ProducesResponseType<AssignmentExternal>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<PaginatedResult<Assignment>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetConnection([FromQuery] Guid party, [FromQuery] Guid? from, [FromQuery] Guid? to, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetConnections([FromQuery] ConnectionInput connection, [FromQuery, FromHeader] PagingInput paging, CancellationToken cancellationToken = default)
     {
-        if (!from.HasValue && !to.HasValue)
+        if (ValidationRules.EnduserReadConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
         {
-            return BadRequest();
+            return problem.ToActionResult();
         }
 
-        if (!(from.HasValue && from.Value == party) && !(to.HasValue && to.Value == party))
+        Guid.TryParse(connection.From, out var fromUuid);
+        Guid.TryParse(connection.To, out var toUuid);
+        var result = await ConnectionService.Get(fromUuid, toUuid, cancellationToken: cancellationToken);
+        if (result.IsProblem)
         {
-            // Party must match From or To
-            return BadRequest();
+            return result.Problem.ToActionResult();
         }
 
-        var partyUuid = Accessor.GetPartyUuid();
-        var audit = new ChangeRequestOptions()
-        {
-            ChangedBy = partyUuid,
-            ChangedBySystem = AuditDefaults.EnduserApi
-        };
-
-        if (from.HasValue && to.HasValue)
-        {
-            return Ok(await connectionService.Get(fromId: from.Value, toId: to.Value, facilitatorId: null, cancellationToken: cancellationToken));
-        }
-
-        if (from.HasValue)
-        {
-            return Ok(await connectionService.GetReceived(from.Value, cancellationToken: cancellationToken));
-        }
-
-        if (to.HasValue)
-        {
-            return Ok(await connectionService.GetGiven(to.Value, cancellationToken: cancellationToken));
-        }
-        
-        return BadRequest();
+        return Ok(PaginatedResult.Create(result.Value, null));
     }
 
     /// <summary>
     /// Add package to connection (assignment or delegation)
     /// </summary>
     [HttpPost]
+    [DbAudit(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApiStr)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
-    [ServiceFilter(typeof(AuthorizePartyUuidClaimFilter))]
-    public async Task<IActionResult> AddConnection([FromQuery] Guid party, [FromQuery] Guid from, [FromQuery] Guid to, CancellationToken cancellationToken = default)
+    [ProducesResponseType<Assignment>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> AddAssignment([FromQuery] ConnectionInput connection, CancellationToken cancellationToken = default)
     {
-        var options = new ChangeRequestOptions()
+        if (ValidationRules.EnduserAddConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
         {
-            ChangedBy = Accessor.GetPartyUuid(),
-            ChangedBySystem = AuditDefaults.EnduserApi
-        };
-
-        if (from != party)
-        {
-            throw new Exception("From party does not match from");
+            return problem.ToActionResult();
         }
 
-        //// From must by Type:Organisasjon
-        //// #550:AC:From party må være en organisasjon (skal ikke være mulig å legge til rightholder for privatperson el. andre entitetstyper)
-        var fromEntity = await entityRepository.GetExtended(from);
-        if (fromEntity == null)
+        Guid.TryParse(connection.From, out var fromUuid);
+        Guid.TryParse(connection.To, out var toUuid);
+        var result = await ConnectionService.AddAssignment(fromUuid, toUuid, "rettighetshaver", cancellationToken);
+        if (result.IsProblem)
         {
-            return Problem("From party not found");
+            return result.Problem.ToActionResult();
         }
 
-        if (!fromEntity.Type.Name.Equals("Organisasjon", StringComparison.OrdinalIgnoreCase))
-        {
-            return Problem("From must be of type 'Organisasjon'");
-        }
-
-        //// To must be Type:Organisasjon
-        //// #550:AC:Det skal bare være mulig å legge til Organisasjoner som ny Rightholder
-        var toEntity = await entityRepository.GetExtended(to);
-        if (toEntity == null)
-        {
-            return Problem("To party not found");
-        }
-
-        if (!toEntity.Type.Name.Equals("Organisasjon", StringComparison.OrdinalIgnoreCase))
-        {
-            return Problem("To must be of type 'Organisasjon'");
-        }
-
-        var res = await assignmentService.GetOrCreateAssignmentInternal(fromId: from, toId: to, roleCode: "rettighetshaver", options, cancellationToken: cancellationToken);
-
-        if (res != null)
-        {
-            return Ok(res);
-        }
-
-        return Problem("Unable add connection");
+        return Ok(result.Value);
     }
 
     /// <summary>
@@ -138,165 +86,120 @@ public class ConnectionController(IHttpContextAccessor accessor, IConnectionServ
     /// </summary>
     [HttpDelete]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
-    [ServiceFilter(typeof(AuthorizePartyUuidClaimFilter))]
-    public async Task<ProblemInstance> RemoveConnection([FromQuery] Guid party, [FromQuery] Guid from, [FromQuery] Guid to, [FromQuery] bool cascade = false, CancellationToken cancellationToken = default)
+    [DbAudit(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApiStr)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> RemoveAssignment([FromQuery] ConnectionInput connection, [FromQuery] bool cascade = false, CancellationToken cancellationToken = default)
     {
-        var options = new ChangeRequestOptions()
+        if (ValidationRules.EnduserRemoveConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
         {
-            ChangedBy = Accessor.GetPartyUuid(),
-            ChangedBySystem = AuditDefaults.EnduserApi
-        };
-
-        if (!(from == party) && !(to == party))
-        {
-            throw new Exception("From party does not match from or to");
+            return problem.ToActionResult();
         }
 
-        //// From must by Type:Organisasjon
-        //// #550:AC:From party må være en organisasjon (skal ikke være mulig å legge til rightholder for privatperson el. andre entitetstyper)
-        var fromEntity = await entityRepository.GetExtended(from);
-        if (fromEntity == null)
+        Guid.TryParse(connection.From, out var fromUuid);
+        Guid.TryParse(connection.To, out var toUuid);
+        problem = await ConnectionService.RemoveAssignment(fromUuid, toUuid, "rettighetshaver", cascade, cancellationToken);
+        if (problem is { })
         {
-            throw new Exception("From party not found");
+            return problem.ToActionResult();
         }
 
-        if (!fromEntity.Type.Name.Equals("Organisasjon", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new Exception("From must be of type 'Organisasjon'");
-        }
-
-        return await assignmentService.DeleteAssignment(fromId: from, toId: to, roleCode: "rettighetshaver", options, cascade: cascade, cancellationToken);
+        return NoContent();
     }
 
     /// <summary>
     /// Creates an assignment between the authenticated user's selected party and the specified target party.
     /// </summary>
-    /// <param name="party">The GUID identifying the party the authenticated user is acting on behalf of.</param>
-    /// <param name="from">The GUID identifying the party the authenticated user is acting for</param>
-    /// <param name="to">The GUID identifying the target party to which the assignment should be created.</param>
-    /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-    [HttpGet]
-    [Route("accesspackages")]
+    [HttpGet("accesspackages")]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
-    [ServiceFilter(typeof(AuthorizePartyUuidClaimFilter))]
-    [ProducesResponseType<AssignmentExternal>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [DbAudit(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApiStr)]
+    [ProducesResponseType<PaginatedResult<ConnectionPackage>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetPackages([FromQuery] Guid party, [FromQuery] Guid? from, [FromQuery] Guid? to, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetPackages([FromQuery] ConnectionInput connection, [FromQuery, FromHeader] PagingInput paging, CancellationToken cancellationToken = default)
     {
-        if (!from.HasValue && !to.HasValue)
+        if (ValidationRules.EnduserReadConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
         {
-            return BadRequest();
+            return problem.ToActionResult();
         }
 
-        if (!(from.HasValue && from.Value == party) && !(to.HasValue && to.Value == party))
+        Guid.TryParse(connection.From, out var fromUuid);
+        Guid.TryParse(connection.To, out var toUuid);
+        var result = await ConnectionService.GetPackages(fromUuid, toUuid, cancellationToken);
+        if (result.IsProblem)
         {
-            // Party must match From or To
-            return BadRequest();
+            return result.Problem.ToActionResult();
         }
 
-        var res = await connectionService.GetPackages(fromId: from, toId: to);
-
-        return Ok(res);
+        return Ok(PaginatedResult.Create(result.Value, null));
     }
 
     /// <summary>
     /// Add package to connection (assignment or delegation)
     /// </summary>
-    [HttpPost]
-    [Route("accesspackages")]
+    [HttpPost("accesspackages")]
+    [DbAudit(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApiStr)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
-    [ServiceFilter(typeof(AuthorizePartyUuidClaimFilter))]
-    public async Task<IActionResult> AddPackages([FromQuery] Guid party, [FromQuery] Guid from, [FromQuery] Guid to, [FromQuery] Guid? package, [FromQuery] string packageUrn, CancellationToken cancellationToken = default)
+    [ProducesResponseType<AssignmentPackage>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> AddPackages([FromQuery] ConnectionInput connection, [FromQuery] Guid? packageId, [FromQuery] string packageUrn, CancellationToken cancellationToken = default)
     {
-        var options = new ChangeRequestOptions()
+        if (ValidationRules.EnduserAddConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
         {
-            ChangedBy = Accessor.GetPartyUuid(),
-            ChangedBySystem = AuditDefaults.EnduserApi
-        };
-
-        if (from != party)
-        {
-            // Party must match From or To
-            return BadRequest();
+            return problem.ToActionResult();
         }
 
-        //// From must by Type:Organisasjon
-        //// #568:AC:From party må være en Organisasjon (skal ikke være mulig å delegere fra privatperson el. andre entitetstyper enda)
-        var fromEntity = await entityRepository.GetExtended(from);
-        if (fromEntity == null)
+        Guid.TryParse(connection.From, out var fromUuid);
+        Guid.TryParse(connection.To, out var toUuid);
+        async Task<Result<AssignmentPackage>> AddPackage()
         {
-            throw new Exception("From party not found");
-        }
-
-        if (!fromEntity.Type.Name.Equals("Organisasjon", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new Exception("From must be of type 'Organisasjon'");
-        }
-
-        //// To must be Type:Organisasjon
-        //// #568:AC:To party må være en Organisasjon (skal ikke være mulig å delegere fra privatperson el. andre entitetstyper enda)
-        var toEntity = await entityRepository.GetExtended(to);
-        if (toEntity == null)
-        {
-            return Problem("To party not found");
-        }
-
-        if (!toEntity.Type.Name.Equals("Organisasjon", StringComparison.OrdinalIgnoreCase))
-        {
-            return Problem("To must be of type 'Organisasjon'");
-        }
-
-        if (package.HasValue)
-        {
-            var res = await connectionService.AddPackage(fromId: from, toId: to, roleCode: "rettighetshaver", packageId: package.Value, options);
-            if (res)
+            if (packageId.HasValue)
             {
-                return Ok();
+                return await ConnectionService.AddPackage(fromUuid, toUuid, "rettighetshaver", packageId.Value, cancellationToken);
             }
-        }
-        else
-        {
-            packageUrn = packageUrn.ToLower().StartsWith("urn:") ? packageUrn : ":" + packageUrn;
-            var res = await connectionService.AddPackage(fromId: from, toId: to, roleCode: "rettighetshaver", packageUrn: packageUrn, options);
-            if (res)
-            {
-                return Ok();
-            }
+
+            return await ConnectionService.AddPackage(fromUuid, toUuid, "rettighetshaver", packageUrn, cancellationToken);
         }
 
-        return Problem("Unable to remove package");
+        var result = await AddPackage();
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok(result.Value);
     }
 
     /// <summary>
     /// Remove package from connection (assignment or delegation)
     /// </summary>
-    [HttpDelete]
-    [Route("accesspackages")]
+    [HttpDelete("accesspackages")]
+    [DbAudit(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApiStr)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
-    [ServiceFilter(typeof(AuthorizePartyUuidClaimFilter))]
-    public async Task<IActionResult> RemovePackages([FromQuery] Guid party, [FromQuery] Guid from, [FromQuery] Guid to, [FromQuery] Guid package, CancellationToken cancellationToken = default)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> RemovePackages([FromQuery] ConnectionInput connection, [FromQuery] Guid package, CancellationToken cancellationToken = default)
     {
-        var options = new ChangeRequestOptions()
+        if (ValidationRules.EnduserRemoveConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
         {
-            ChangedBy = Accessor.GetPartyUuid(),
-            ChangedBySystem = AuditDefaults.EnduserApi
-        };
-
-        if (!(from == party) && !(to == party))
-        {
-            // Party must match From or To
-            return BadRequest();
+            return problem.ToActionResult();
         }
 
-        var res = await connectionService.RemovePackage(fromId: from, toId: to, roleCode: "rettighetshaver", packageId: package, options);
-
-        if (res)
+        Guid.TryParse(connection.From, out var fromUuid);
+        Guid.TryParse(connection.To, out var toUuid);
+        problem = await ConnectionService.RemovePackage(fromUuid, toUuid, "rettighetshaver", package, cancellationToken);
+        if (problem is { })
         {
-            return Ok();
+            return problem.ToActionResult();
         }
 
-        return Problem("Unable to remove package");
+        return NoContent();
     }
 }

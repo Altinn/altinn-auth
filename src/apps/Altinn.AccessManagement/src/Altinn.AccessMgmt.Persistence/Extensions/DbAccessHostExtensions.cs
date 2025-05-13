@@ -11,6 +11,7 @@ using Altinn.AccessMgmt.Persistence.Data.Mock;
 using Altinn.AccessMgmt.Persistence.Services;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.Authorization.Host.Startup;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -26,6 +27,15 @@ public static partial class DbAccessHostExtensions
     /// Logger instance for logging database configuration messages.
     /// </summary>
     private static ILogger Logger { get; } = StartupLoggerFactory.Create(nameof(DbAccessHostExtensions));
+
+    /// <summary>
+    /// Adds Db Audit Middleware
+    /// </summary>
+    public static IApplicationBuilder UseDbAudit(this IApplicationBuilder builder)
+    {
+        builder.UseMiddleware<AuditMiddleware>();
+        return builder;
+    }
 
     /// <summary>
     /// Adds database access services to the application builder.
@@ -55,6 +65,10 @@ public static partial class DbAccessHostExtensions
                 builder.Services.AddSingleton(interfaceType, repoType);
             }
         }
+
+        builder.Services.AddSingleton<AuditMiddleware>();
+        builder.Services.AddSingleton<IDbAudit, AuditFactory>();
+        builder.Services.AddSingleton<IDbAuditService, AuditFactory>();
 
         builder.Services.AddSingleton<DbDefinitionRegistry>();
         builder.Services.AddSingleton(typeof(ISearchCache<>), typeof(SearchCache<>));

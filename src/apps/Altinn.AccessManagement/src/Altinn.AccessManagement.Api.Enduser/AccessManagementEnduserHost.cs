@@ -1,6 +1,4 @@
-using Altinn.AccessManagement.Api.Enduser.Mappers;
-using Altinn.AccessManagement.Api.Enduser.Models;
-using Altinn.AccessMgmt.Core.Models;
+using Altinn.AccessManagement.Enduser.Services;
 using Altinn.Authorization.Host.Startup;
 
 namespace Altinn.AccessManagement.Api.Enduser;
@@ -22,7 +20,7 @@ public static partial class AccessManagementEnduserHost
     public static IHostApplicationBuilder AddAccessManagementEnduser(this IHostApplicationBuilder builder)
     {
         Log.AddHost(Logger);
-        builder.Services.AddSingleton<IMapper<AssignmentExternal, Assignment>, AssignmentExternalMapper>();
+        builder.Services.AddSingleton<IEnduserConnectionService, ConnectionService>();
         return builder;
     }
 

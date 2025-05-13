@@ -4,7 +4,6 @@ using Altinn.AccessManagement.Api.Enduser.Authorization.AuthorizationRequirement
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Extensions;
-using Altinn.AccessManagement.Core.Filters;
 using Altinn.AccessManagement.Health;
 using Altinn.AccessManagement.HostedServices.Contracts;
 using Altinn.AccessManagement.HostedServices.Services;
@@ -189,6 +188,7 @@ internal static partial class AccessManagementHost
                 Type = SecuritySchemeType.ApiKey
             });
             options.OperationFilter<SecurityRequirementsOperationFilter>();
+            options.EnableAnnotations();
 
             var originalIdSelector = options.SchemaGeneratorOptions.SchemaIdSelector;
             options.SchemaGeneratorOptions.SchemaIdSelector = (Type t) =>
@@ -281,7 +281,6 @@ internal static partial class AccessManagementHost
         builder.Services.AddScoped<IAuthorizationHandler, ResourceAccessHandler>();
         builder.Services.AddScoped<IAuthorizationHandler, EndUserResourceAccessHandler>();
         builder.Services.AddScoped<IAuthorizationHandler, ScopeAccessHandler>();
-        builder.Services.AddScoped<AuthorizePartyUuidClaimFilter>();
     }
 
     private static void ConfigurePostgreSqlConfiguration(this WebApplicationBuilder builder)

@@ -121,7 +121,7 @@ public class AssignmentService(
                 AssignmentId = assignmentId,
                 PackageId = packageId
             },
-            options: options, 
+            options: options,
             cancellationToken: cancellationToken
         );
 
@@ -324,7 +324,7 @@ public class AssignmentService(
     {
         if (entity is null)
         {
-            errors.Add(ValidationErrors.MissingPartyInDb, param, [new("partyId", id.ToString())]);
+            errors.Add(ValidationErrors.EntityNotExists, param, [new("partyId", id.ToString())]);
         }
     }
 
@@ -332,7 +332,7 @@ public class AssignmentService(
     {
         if (entity is not null && !entity.Type.Name.Equals("Organisasjon", StringComparison.InvariantCultureIgnoreCase))
         {
-            errors.Add(ValidationErrors.InvalidPartyType, param, [new("partyId", $"expected party of type 'Organisasjon' got '{entity.Type.Name}'.")]);
+            errors.Add(ValidationErrors.InvalidQueryParameter, param, [new("partyId", $"expected party of type 'Organisasjon' got '{entity.Type.Name}'.")]);
         }
     }
 

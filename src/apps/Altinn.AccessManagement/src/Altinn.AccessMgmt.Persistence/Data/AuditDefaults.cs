@@ -18,5 +18,10 @@ public static class AuditDefaults
     /// <summary>
     /// EnduserApi
     /// </summary>
-    public static readonly Guid EnduserApi = Guid.Parse("ED771364-42A8-4934-801E-B482ED20EC3E");
+    public static readonly Guid EnduserApi = Guid.Parse(EnduserApiStr);
+
+    /// <summary>
+    /// EnduserApiStr
+    /// </summary>
+    public const string EnduserApiStr = "ED771364-42A8-4934-801E-B482ED20EC3E";
 }

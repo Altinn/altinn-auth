@@ -50,26 +50,14 @@ public static class ValidationErrors
     /// <summary>
     /// Missing party.
     /// </summary>
-    public static ValidationErrorDescriptor MissingPartyInDb { get; }
-        = _factory.Create(6, $"Missing party.");
+    public static ValidationErrorDescriptor EntityNotExists { get; }
+        = _factory.Create(6, $"Entity do not exists.");
 
     /// <summary>
     /// Invalid party type.
     /// </summary>
-    public static ValidationErrorDescriptor InvalidPartyType { get; }
-        = _factory.Create(7, $"Invalid party type.");
-
-    /// <summary>
-    /// Assignment already exists.
-    /// </summary>
-    public static ValidationErrorDescriptor AssignmentAlreadyExists { get; }
-        = _factory.Create(8, $"Assignment already exists.");
-
-    /// <summary>
-    /// Assignment do not exists.
-    /// </summary>
-    public static ValidationErrorDescriptor AssignmentDoNotExists { get; }
-        = _factory.Create(9, $"Assignment do not exist.");
+    public static ValidationErrorDescriptor InvalidQueryParameter { get; }
+        = _factory.Create(7, $"One or more query parameters are invalid.");
 
     /// <summary>
     /// Assignment is active in one or more delegations.
