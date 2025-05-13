@@ -301,7 +301,7 @@ public class ConnectionService(
         }
 
         var createCheckResult = await AssignmentPackageRepository.Get(assignmentPackageFilter, cancellationToken: cancellationToken);
-        if (createCheckResult == null || !existingPackageAssignment.Any())
+        if (createCheckResult == null || !createCheckResult.Any())
         {
             Unreachable();
         }
