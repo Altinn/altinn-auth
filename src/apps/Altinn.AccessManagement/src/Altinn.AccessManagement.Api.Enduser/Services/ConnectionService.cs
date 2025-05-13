@@ -300,7 +300,7 @@ public class ConnectionService(
             Unreachable();
         }
 
-        var createCheckResult = await AssignmentPackageRepository.Get(t => t.AssignmentId, assignment.Id, cancellationToken: cancellationToken);
+        var createCheckResult = await AssignmentPackageRepository.Get(assignmentPackageFilter, cancellationToken: cancellationToken);
         if (createCheckResult == null || !existingPackageAssignment.Any())
         {
             Unreachable();
