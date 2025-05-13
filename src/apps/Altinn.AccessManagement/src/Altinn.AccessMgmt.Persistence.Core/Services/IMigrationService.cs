@@ -55,4 +55,19 @@ public interface IMigrationService
     /// Check if migration is needed
     /// </summary>
     bool NeedMigration<T>(string key, int version = 1);
+
+    /// <summary>
+    /// Verify that the generated script match the migrationscript from db
+    /// </summary>
+    bool VerifyMigration(string objectName, string key, string script, int version = 1);
+
+    /// <summary>
+    /// Verify that the generated script match the migrationscript from db
+    /// </summary>
+    bool VerifyMigration(Type type, string key, string script, int version = 1);
+
+    /// <summary>
+    /// Remove a migrationentry from db
+    /// </summary>
+    Task UndoMigration(Type type, string key, int version = 1, CancellationToken cancellationToken = default);
 }

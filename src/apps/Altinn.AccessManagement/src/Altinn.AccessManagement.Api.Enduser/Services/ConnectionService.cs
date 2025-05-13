@@ -347,13 +347,13 @@ public class ConnectionService(
             .Equal(t => t.AssignmentId, assignment.Id)
             .Equal(t => t.PackageId, packageId);
 
-        var checkResult = await AssignmentPackageRepository.Get(assignmentFilter, cancellationToken: cancellationToken);
+        var checkResult = await AssignmentPackageRepository.Get(packageFilter, cancellationToken: cancellationToken);
         if (checkResult == null && !checkResult.Any())
         {
             return null;
         }
 
-        var deleteResult = await AssignmentPackageRepository.DeleteCross(assignment.Id, packageId, DbAudit.Value, cancellationToken: cancellationToken);
+        var deleteResult = await AssignmentPackageRepository.Delete(packageFilter, DbAudit.Value, cancellationToken: cancellationToken);
         if (deleteResult == 0)
         {
             return null;

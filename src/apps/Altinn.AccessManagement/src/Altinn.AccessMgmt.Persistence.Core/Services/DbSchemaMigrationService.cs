@@ -117,6 +117,28 @@ public class DbSchemaMigrationService
             retry[key] = 0;
         }
 
+        Console.WriteLine("Verifing migrations");
+        var verificationFailures = 0;
+        var verificationSuccess = 0;
+        foreach (var scriptCollection in Scripts)
+        {
+            foreach (var script in scriptCollection.Value.Scripts)
+            {
+                var verified = migrationService.VerifyMigration(scriptCollection.Key.Name, script.Key, script.Value);
+                if (!verified)
+                {
+                    verificationFailures++;
+                    await migrationService.UndoMigration(scriptCollection.Key, script.Key);
+                }
+                else
+                {
+                    verificationSuccess++;
+                }
+            }
+        }
+
+        Console.WriteLine($"Verification complete: Success: {verificationSuccess} Failed: {verificationFailures}");
+
         while (status.Values.Contains(false) && !failed.Any() && !cancellationToken.IsCancellationRequested)
         {
             foreach (var script in Scripts)
@@ -134,26 +156,38 @@ public class DbSchemaMigrationService
 
                 bool needMigration = migrationService.NeedAnyMigration(script.Key, script.Value.Scripts.Select(t => t.Key).ToList());
 
-                if (script.Key.Name == "Area")
-                {
-                    needMigration = true;
-                }
-
                 if (!needMigration)
                 {
-                    status[script.Key] = true;
-                    retry[script.Key] = 0;
-                    continue;
+                    bool verified = true;
+                    foreach (var s in script.Value.Scripts)
+                    {
+                        var res = migrationService.VerifyMigration(script.Key, s.Key, s.Value);
+                        if (!res)
+                        {
+                            verified = false;
+                            break;
+                        }
+                    }
+
+                    if (verified)
+                    {
+                        status[script.Key] = true;
+                        retry[script.Key] = 0;
+                        continue;
+                    }
                 }
 
                 if (!script.Value.Dependencies.Any())
                 {
                     try
                     {
-                        await ExecuteMigration(script.Key, script.Value);
-                        status[script.Key] = true;
-                        retry[script.Key] = 0;
-                        continue;
+                        var res = await ExecuteMigration(script.Key, script.Value, retry[script.Key]);
+                        if (res)
+                        {
+                            status[script.Key] = true;
+                            retry[script.Key] = 0;
+                            continue;
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -175,10 +209,13 @@ public class DbSchemaMigrationService
 
                 try
                 {
-                    await ExecuteMigration(script.Key, script.Value);
-                    status[script.Key] = true;
-                    retry[script.Key] = 0;
-                    continue;
+                    var res = await ExecuteMigration(script.Key, script.Value, retry[script.Key]);
+                    if (res)
+                    {
+                        status[script.Key] = true;
+                        retry[script.Key] = 0;
+                        continue;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -198,28 +235,23 @@ public class DbSchemaMigrationService
         }
     }
 
-    private async Task ExecuteMigration(Type type, DbMigrationScriptCollection collection)
+    private async Task<bool> ExecuteMigration(Type type, DbMigrationScriptCollection collection, int retryAttempt)
     {
         var dbDefinition = definitionRegistry.TryGetDefinition(type) ?? throw new Exception($"GetOrAddDefinition for '{type.Name}' not found.");
-        bool any = migrationService.NeedAnyMigration(type, collection.Scripts.Keys.ToList()); //// TODO: This needs to be refined to not allways run everything
-        bool ver = migrationService.NeedMigration(type, "Version", 1);
+
+        bool allGood = true;
 
         foreach (var script in collection.Scripts)
         {
             // Run all if any (temp)
-            if (any || ver || migrationService.NeedMigration(type, script.Key))
+            if (migrationService.NeedMigration(type, script.Key))
             {
-                if (script.Key.StartsWith("ADD CONSTRAINT") && !migrationService.NeedMigration(type, script.Key))
-                {
-                    continue;
-                }
-
                 if (script.Key.Contains("PK_")) 
                 {
                     //// TODO: Hack ... Remove from scripts ...
                     continue;
                 }
-
+                
                 try
                 {
                     await executor.ExecuteMigrationCommand(script.Value, new List<GenericParameter>());
@@ -230,11 +262,13 @@ public class DbSchemaMigrationService
                     Console.WriteLine($"ERROR :: Migration '{script.Key}' failed");
                     Console.WriteLine(ex.Message);
                     Console.WriteLine(script.Value);
-                    throw;
+                    allGood = false;
                 }
             }
         }
 
         await migrationService.LogMigration(type, "Version", string.Empty, 1);
+
+        return allGood;
     }
 }

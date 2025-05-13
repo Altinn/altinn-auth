@@ -91,6 +91,65 @@ public class SqlMigrationService(IDbExecutor executor) : IMigrationService
         return !Migrations.Exists(t => t.ObjectName == objectName && t.Key == key && t.Version == version);
     }
 
+    /// <inheritdoc /> 
+    public bool VerifyMigration(Type type, string key, string script, int version = 1)
+    {
+        return VerifyMigration(type.Name, key, script, version);
+    }
+
+    /// <inheritdoc /> 
+    public bool VerifyMigration(string objectName, string key, string script, int version = 1)
+    {
+        if (Migrations == null || !Migrations.Any())
+        {
+            Init().Wait();
+        }
+
+        var migration = Migrations.FirstOrDefault(t => t.ObjectName == objectName && t.Key == key && t.Version == version);
+        if (migration != null)
+        {
+            if (!migration.Script.Equals(script))
+            {
+                Console.WriteLine($"WARNING: Generated script does not match migration script. '{objectName}':'{key}':'{version}'");
+                Console.WriteLine($"Migrated");
+                Console.WriteLine(migration.Script);
+                Console.WriteLine($"Generated");
+                Console.WriteLine(script);
+                Console.WriteLine("=========");
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <inheritdoc/>
+    public async Task UndoMigration(Type type, string key, int version = 1, CancellationToken cancellationToken = default)
+    {
+        var migrationEntry = new DbMigrationEntry
+        {
+            ObjectName = type.Name,
+            Key = key,
+            Version = version,
+            Script = " ",
+            CompletedAt = DateTimeOffset.UtcNow
+        };
+
+        var parameters = new List<GenericParameter>
+        {
+            new GenericParameter("ObjectName", type.Name),
+            new GenericParameter("Key", key),
+            new GenericParameter("Version", version),
+            new GenericParameter("Script", " "),
+            new GenericParameter("CompletedAt", DateTimeOffset.UtcNow)
+        };
+
+        await executor.ExecuteMigrationCommand("DELETE FROM dbo._dbmigration WHERE ObjectName = @ObjectName AND Key = @Key AND Version = @Version", parameters, cancellationToken);
+        Migrations.RemoveAll(t => t.ObjectName == migrationEntry.ObjectName && t.Key == migrationEntry.Key && t.Version == migrationEntry.Version);
+        Console.WriteLine("UNDO: " + key);
+    }
+
     /// <inheritdoc/>
     public async Task LogMigration<T>(string key, string script, int version = 1, CancellationToken cancellationToken = default)
     {

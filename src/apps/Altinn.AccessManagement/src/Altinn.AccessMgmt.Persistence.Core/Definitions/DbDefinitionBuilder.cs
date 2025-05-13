@@ -324,8 +324,8 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
             (Expression<Func<T, object>> Source, Expression<Func<TB, object>> Join, Expression<Func<TExtended, TB>> Extended, bool? CascadeDelete) defineB
         )
         {
-            RegisterExtendedProperty(defineA.Source, defineA.Join, defineA.Extended, defineA.CascadeDelete ?? false);
-            RegisterExtendedProperty(defineB.Source, defineB.Join, defineB.Extended, defineB.CascadeDelete ?? false);
+            RegisterExtendedProperty(defineA.Source, defineA.Join, defineA.Extended, cascadeDelete: defineA.CascadeDelete ?? false);
+            RegisterExtendedProperty(defineB.Source, defineB.Join, defineB.Extended, cascadeDelete: defineB.CascadeDelete ?? false);
 
             var crossRef = new DbCrossRelationDefinition(
                crossType: typeof(T),
