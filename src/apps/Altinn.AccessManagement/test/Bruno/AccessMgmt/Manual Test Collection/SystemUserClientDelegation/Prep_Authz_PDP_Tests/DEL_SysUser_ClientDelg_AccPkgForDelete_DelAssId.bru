@@ -1,17 +1,19 @@
 meta {
-  name: POST_SysUser_ClientDelg_AccPkg
+  name: DEL_SysUser_ClientDelg_AccPkgForDelete_DelAssId
   type: http
-  seq: 2
+  seq: 9
 }
 
-post {
-  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation?party={{party}}
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/deleteassignment?party={{party}}&assignmentId&cascade=false
   body: json
   auth: inherit
 }
 
 params:query {
   party: {{party}}
+  assignmentId: 
+  cascade: false
 }
 
 headers {
@@ -19,30 +21,14 @@ headers {
   Accept: application/json
 }
 
-body:json {
-  {
-    "clientId": "{{clientId}}",
-    "agentId": "{{systemUser}}",
-    "agentName": "Fiken",
-    "agentRole": "agent",
-    "rolePackages": [
-      {
-        "roleIdentifier": "regnskapsforer",
-        "packageUrn": "{{packageToDelegate}}"
-      }
-    ]
-  }
-}
-
 script:pre-request {
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
   const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
   
-  bru.setVar("requestName", "POST_SysUser_ClientDelg_AccPkg");
+  bru.setVar("requestName", "POST_SysUser_ClientEnkDelg_AccPkg");
   bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
   bru.setVar("systemUser", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser.partyUuid);
-  bru.setVar("clientId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_USENSUELL_UVIRKSOM_TIGER.partyUuid);
-  bru.setVar("packageToDelegate", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser.clientPackageToDelegate);
+  bru.setVar("clientId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_WITHOUT_CLIENTDELEGATION.partyUuid);
   
   var getTokenParameters = {
     auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.userId,

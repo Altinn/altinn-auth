@@ -48,10 +48,12 @@ public class SystemUserClientDelegationController : ControllerBase
     /// Gets all clients for a given facilitator
     /// </summary>
     /// <param name="party">The party the authenticated user is performing client administration on behalf of</param>
+    /// <param name="roles"> The list of role codes to filter the connections by</param>
+    /// <param name="packages"> The list of package identifiers to filter the connections by</param>
     /// <returns><seealso cref="ConnectionDto"/>List of connections</returns>
     [HttpGet("clients")]
     [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_READ)]
-    public async Task<ActionResult<ConnectionDto>> GetClientDelegations([FromQuery] Guid party)
+    public async Task<ActionResult<ConnectionDto>> GetClients([FromQuery] Guid party, [FromQuery] string[] roles = null, [FromQuery] string[] packages = null)
     {
         var userId = AuthenticationHelper.GetPartyUuid(HttpContext);
         if (userId == Guid.Empty)
@@ -59,7 +61,9 @@ public class SystemUserClientDelegationController : ControllerBase
             return Unauthorized();
         }
 
-        return Ok(await connectionService.GetGiven(party));
+        var dbResult = await connectionService.GetClients(party, roles, packages);
+
+        return Ok(dbResult.Select(ConnectionConverter.ConvertToDto));
     }
 
     /// <summary>

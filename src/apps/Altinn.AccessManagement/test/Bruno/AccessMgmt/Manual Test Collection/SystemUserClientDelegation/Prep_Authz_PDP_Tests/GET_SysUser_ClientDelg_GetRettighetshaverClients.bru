@@ -1,18 +1,19 @@
 meta {
-  name: DEL_SysUser_ClientDelg_AccPkgForDelete_DelClntDelg
+  name: GET_SysUser_ClientDelg_GetRettighetshaverClients
   type: http
-  seq: 7
+  seq: 11
 }
 
-delete {
-  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/deletedelegation?party={{party}}&delegationId
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/clients?party={{party}}&roles=rettighetshaver
   body: json
   auth: inherit
 }
 
 params:query {
   party: {{party}}
-  delegationId: 
+  roles: rettighetshaver
+  ~packages: 
 }
 
 headers {
@@ -24,10 +25,9 @@ script:pre-request {
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
   const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
   
-  bru.setVar("requestName", "POST_SysUser_ClientEnkDelg_AccPkg");
+  bru.setVar("requestName", "GET_SysUser_ClientDelg_AccPkg");
   bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
   bru.setVar("systemUser", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser.partyUuid);
-  bru.setVar("clientId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_WITHOUT_CLIENTDELEGATION.partyUuid);
   
   var getTokenParameters = {
     auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.userId,

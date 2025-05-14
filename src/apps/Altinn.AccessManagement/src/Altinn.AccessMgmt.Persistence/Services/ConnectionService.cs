@@ -1,6 +1,5 @@
 ﻿using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Models;
-using Altinn.AccessMgmt.Persistence.Repositories;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Models;
@@ -19,7 +18,8 @@ public class ConnectionService(
     IAssignmentRepository assignmentRepository,
     IDelegationRepository delegationRepository,
     IAssignmentPackageRepository assignmentPackageRepository,
-    IDelegationPackageRepository delegationPackageRepository
+    IDelegationPackageRepository delegationPackageRepository,
+    IRoleRepository roleRepository
     ) : IConnectionService
 {
     /// <inheritdoc />
@@ -32,6 +32,62 @@ public class ConnectionService(
         filter.NotSet(t => t.FacilitatorId);
         var res = await connectionRepository.GetExtended(filter, cancellationToken: cancellationToken);
         return res.FirstOrDefault();
+    }
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<ExtConnection>> GetClients(Guid facilitatorId, string[] roles = null, string[] packages = null, CancellationToken cancellationToken = default)
+    {
+        var connFilter = connectionRepository.CreateFilterBuilder();
+        connFilter.NotSet(t => t.Id);
+        connFilter.NotSet(t => t.FromId);
+        connFilter.NotSet(t => t.FacilitatorId);
+
+        // If filter packages are provided, we need to filter the connections by the packages assigned to the facilitator
+        if (packages != null)
+        {
+            var packageFilter = packageRepository.CreateFilterBuilder();
+            packageFilter.In(t => t.Urn, packages.Select(p => $"urn:altinn:accesspackage:{p}"));
+            var packageResult = await packageRepository.Get(packageFilter, cancellationToken: cancellationToken);
+
+            if (packageResult == null || !packageResult.Any() || packageResult.Count() != packages.Count())
+            {
+                throw new ArgumentException($"Filter: {nameof(packages)}, provided contains one or more package identifiers which cannot be found.");
+            }
+
+            var connPkgFilter = connectionPackageRepository.CreateFilterBuilder();
+            connPkgFilter.Equal(t => t.ToId, facilitatorId);
+            connPkgFilter.NotSet(t => t.FromId);
+            connPkgFilter.In(t => t.PackageId, packageResult.Select(p => p.Id));
+
+            var connectionPackages = await connectionPackageRepository.Get(connPkgFilter, cancellationToken: cancellationToken);
+
+            // Add connections filter for connections containing the requested packages
+            connFilter.In(t => t.Id, connectionPackages.Select(cp => cp.Id));
+            connFilter.NotSet(t => t.ToId);
+        }
+        else
+        {
+            // If no filter packages are provided, we need to filter on connection given to facilitator id
+            connFilter.Equal(t => t.ToId, facilitatorId);
+        }
+
+        // If filter role codes are provided, we need to add filter on connections by the roles assigned to the facilitator
+        if (roles != null)
+        {
+            var roleFilter = roleRepository.CreateFilterBuilder();
+            roleFilter.In(t => t.Code, roles);
+            var roleResult = await roleRepository.Get(roleFilter, cancellationToken: cancellationToken);
+
+            if (roleResult == null || !roleResult.Any() || roleResult.Count() != roles.Count())
+            {
+                throw new ArgumentException($"Filter: {nameof(roles)}, provided contains one or more role identifiers which cannot be found.");
+            }
+
+            // Add connections filter for connections containing the requested roles
+            connFilter.In(t => t.RoleId, roleResult.Select(r => r.Id));
+        }
+
+        return await connectionRepository.GetExtended(connFilter, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc />
