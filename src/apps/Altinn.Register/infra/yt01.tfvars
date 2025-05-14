@@ -19,6 +19,7 @@ sbl_endpoint     = "https://ai-yt01-vip-sblbridge.ai.basefarm.net/sblbridge/"
 
 features = {
   a2_party_import = {
-    parties = true
+    parties  = true
+    user_ids = true
   }
 }
