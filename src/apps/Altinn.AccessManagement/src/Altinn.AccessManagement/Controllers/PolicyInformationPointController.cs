@@ -74,15 +74,21 @@ public class PolicyInformationPointController : ControllerBase
     public async Task<ActionResult> GetAccessPackages([FromQuery] Guid from, [FromQuery] Guid to, CancellationToken cancellationToken)
     {
         List<AccessPackageUrn> result = [];
-        var filter = _connectionPackageRepository.CreateFilterBuilder()
+        var connectionFilter = _connectionRepository.CreateFilterBuilder()
             .Equal(t => t.FromId, from)
             .Equal(t => t.ToId, to)
             .NotSet(t => t.FacilitatorId)
-            .NotSet(t => t.PackageId)
             .NotSet(t => t.Id);
 
-        var packages = await _connectionPackageRepository.GetExtended(filter, cancellationToken: cancellationToken);
-        result.AddRange(packages.Select(conPackage => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(conPackage.Package.Urn.Split(':').Last()))));
+        var connections = await _connectionRepository.Get(connectionFilter, cancellationToken: cancellationToken);
+        if (connections != null && connections.Any())
+        {
+            var connectionPackageFilter = _connectionPackageRepository.CreateFilterBuilder()
+                .In(t => t.Id, connections.Select(t => t.Id));
+
+            var packages = await _connectionPackageRepository.GetExtended(connectionPackageFilter, cancellationToken: cancellationToken);
+            result.AddRange(packages.Select(conPackage => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(conPackage.Package.Urn.Split(':').Last()))));
+        }
 
         return Ok(result);
     }
