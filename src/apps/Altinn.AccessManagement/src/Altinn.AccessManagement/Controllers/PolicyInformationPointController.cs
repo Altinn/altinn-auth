@@ -84,6 +84,9 @@ public class PolicyInformationPointController : ControllerBase
         if (connections != null && connections.Any())
         {
             var connectionPackageFilter = _connectionPackageRepository.CreateFilterBuilder()
+                .NotSet(t => t.FromId)
+                .NotSet(t => t.ToId)
+                .NotSet(t => t.FacilitatorId)
                 .In(t => t.Id, connections.Select(t => t.Id));
 
             var packages = await _connectionPackageRepository.GetExtended(connectionPackageFilter, cancellationToken: cancellationToken);
