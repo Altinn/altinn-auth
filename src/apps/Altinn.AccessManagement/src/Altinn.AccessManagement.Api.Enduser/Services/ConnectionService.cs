@@ -43,7 +43,7 @@ public class ConnectionService(
     private IEntityRepository EntityRepository { get; } = entityRepository;
 
     /// <inheritdoc />
-    public async Task<Result<List<ExtConnection>>> Get(Guid? from = null, Guid? to = null, CancellationToken cancellationToken = default)
+    public async Task<Result<List<ExtConnection>>> Get(Guid? fromId = null, Guid? toId = null, CancellationToken cancellationToken = default)
     {
         var filter = ConnectionRepository.CreateFilterBuilder();
         static bool SetFrom(Guid? from, GenericFilterBuilder<Connection> filter)
@@ -70,8 +70,8 @@ public class ConnectionService(
             return false;
         }
 
-        var isFromSet = SetFrom(from, filter);
-        var isToSet = SetTo(to, filter);
+        var isFromSet = SetFrom(fromId, filter);
+        var isToSet = SetTo(toId, filter);
         if (isFromSet || isToSet)
         {
             filter.NotSet(t => t.Id);
@@ -87,9 +87,9 @@ public class ConnectionService(
     }
 
     /// <inheritdoc />
-    public async Task<Result<Assignment>> AddAssignment(Guid from, Guid to, string roleCode, CancellationToken cancellationToken = default)
+    public async Task<Result<Assignment>> AddAssignment(Guid fromId, Guid toId, string role, CancellationToken cancellationToken = default)
     {
-        var dependencies = await GetAssignmentDependencies(from, to, roleCode, cancellationToken);
+        var dependencies = await GetAssignmentDependencies(fromId, toId, role, cancellationToken);
         if (ValidateAssignmentData(dependencies.EntityFrom, dependencies.EntityTo, dependencies.Roles) is var problem && problem is { })
         {
             return problem;
@@ -97,8 +97,8 @@ public class ConnectionService(
 
         var roleId = dependencies.Roles.First().Id;
         var filter = AssignmentRepository.CreateFilterBuilder()
-            .Equal(t => t.FromId, from)
-            .Equal(t => t.ToId, to)
+            .Equal(t => t.FromId, fromId)
+            .Equal(t => t.ToId, toId)
             .Equal(t => t.RoleId, roleId);
 
         var existingAssignment = await AssignmentRepository.Get(filter, cancellationToken: cancellationToken);
@@ -109,8 +109,8 @@ public class ConnectionService(
 
         var assignment = new Assignment()
         {
-            FromId = from,
-            ToId = to,
+            FromId = fromId,
+            ToId = toId,
             RoleId = roleId,
         };
 
@@ -124,9 +124,9 @@ public class ConnectionService(
     }
 
     /// <inheritdoc />
-    public async Task<ValidationProblemInstance> RemoveAssignment(Guid from, Guid to, string roleCode, bool cascade, CancellationToken cancellationToken = default)
+    public async Task<ValidationProblemInstance> RemoveAssignment(Guid fromId, Guid toId, string role, bool cascade, CancellationToken cancellationToken = default)
     {
-        var dependencies = await GetAssignmentDependencies(from, to, roleCode, cancellationToken);
+        var dependencies = await GetAssignmentDependencies(fromId, toId, role, cancellationToken);
         if (ValidateAssignmentData(dependencies.EntityFrom, dependencies.EntityTo, dependencies.Roles) is var problem && problem is { })
         {
             return problem;
@@ -134,8 +134,8 @@ public class ConnectionService(
 
         var roleId = dependencies.Roles.First().Id;
         var filter = AssignmentRepository.CreateFilterBuilder()
-            .Equal(t => t.FromId, from)
-            .Equal(t => t.ToId, to)
+            .Equal(t => t.FromId, fromId)
+            .Equal(t => t.ToId, toId)
             .Equal(t => t.RoleId, roleId);
 
         var existingAssignments = await AssignmentRepository.Get(filter, cancellationToken: cancellationToken);
@@ -173,7 +173,7 @@ public class ConnectionService(
     }
 
     /// <inheritdoc />
-    public async Task<Result<List<ConnectionPackage>>> GetPackages(Guid? from, Guid? to, CancellationToken cancellationToken = default)
+    public async Task<Result<List<ConnectionPackage>>> GetPackages(Guid? fromId, Guid? toId, CancellationToken cancellationToken = default)
     {
         var filter = ConnectionPackageRepository.CreateFilterBuilder();
         static bool SetFrom(Guid? from, GenericFilterBuilder<ConnectionPackage> filter)
@@ -200,8 +200,8 @@ public class ConnectionService(
             return false;
         }
 
-        var isFromSet = SetFrom(from, filter);
-        var isToSet = SetTo(to, filter);
+        var isFromSet = SetFrom(fromId, filter);
+        var isToSet = SetTo(toId, filter);
         if (isFromSet || isToSet)
         {
             filter.NotSet(t => t.Id);
@@ -218,10 +218,12 @@ public class ConnectionService(
     }
 
     /// <inheritdoc />
-    public async Task<Result<AssignmentPackage>> AddPackage(Guid from, Guid to, string roleCode, string packageUrn, CancellationToken cancellationToken = default)
+    public async Task<Result<AssignmentPackage>> AddPackage(Guid fromId, Guid toId, string role, string package, CancellationToken cancellationToken = default)
     {
+        package = (package.StartsWith("urn:", StringComparison.Ordinal) || package.StartsWith(":", StringComparison.Ordinal)) ? package : ":" + package;
+
         var filter = PackageRepository.CreateFilterBuilder()
-            .Add(t => t.Urn, packageUrn, FilterComparer.EndsWith);
+            .Add(t => t.Urn, package, FilterComparer.EndsWith);
 
         var packages = await PackageRepository.Get(filter, cancellationToken: cancellationToken);
         var problem = ValidationRules.Validate(ValidationRules.QueryParameters.PackageUrnLookup(packages));
@@ -230,19 +232,19 @@ public class ConnectionService(
             return problem;
         }
 
-        var package = packages.First();
-        return await AddPackage(from, to, roleCode, package.Id, "packageUrn", cancellationToken);
+        var packageResult = packages.First();
+        return await AddPackage(fromId, toId, role, packageResult.Id, "packageUrn", cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<Result<AssignmentPackage>> AddPackage(Guid from, Guid to, string roleCode, Guid packageId, CancellationToken cancellationToken = default)
+    public async Task<Result<AssignmentPackage>> AddPackage(Guid fromId, Guid toId, string role, Guid packageId, CancellationToken cancellationToken = default)
     {
-        return await AddPackage(from, to, roleCode, packageId, "packageId", cancellationToken);
+        return await AddPackage(fromId, toId, role, packageId, "packageId", cancellationToken);
     }
 
-    private async Task<Result<AssignmentPackage>> AddPackage(Guid from, Guid to, string roleCode, Guid packageId, string queryParamName, CancellationToken cancellationToken)
+    private async Task<Result<AssignmentPackage>> AddPackage(Guid fromId, Guid toId, string role, Guid packageId, string queryParamName, CancellationToken cancellationToken)
     {
-        var dependencies = await GetAssignmentDependencies(from, to, roleCode, cancellationToken);
+        var dependencies = await GetAssignmentDependencies(fromId, toId, role, cancellationToken);
         if (ValidateAssignmentData(dependencies.EntityFrom, dependencies.EntityTo, dependencies.Roles) is var problem && problem is { })
         {
             return problem;
@@ -250,12 +252,12 @@ public class ConnectionService(
 
         var roleId = dependencies.Roles.First().Id;
         var filter = AssignmentRepository.CreateFilterBuilder()
-            .Equal(t => t.FromId, from)
-            .Equal(t => t.ToId, to)
+            .Equal(t => t.FromId, fromId)
+            .Equal(t => t.ToId, toId)
             .Equal(t => t.RoleId, roleId);
 
         var existingAssignments = await AssignmentRepository.Get(filter, cancellationToken: cancellationToken);
-        problem = ValidationRules.Validate(ValidationRules.QueryParameters.VerifyAssignmentRoleExists(existingAssignments, roleCode));
+        problem = ValidationRules.Validate(ValidationRules.QueryParameters.VerifyAssignmentRoleExists(existingAssignments, role));
         if (problem is { })
         {
             return problem;
@@ -265,7 +267,7 @@ public class ConnectionService(
 
         var userPackageFilter = ConnectionPackageRepository.CreateFilterBuilder()
             .Equal(t => t.ToId, DbAudit.Value.ChangedBy)
-            .Equal(t => t.FromId, from)
+            .Equal(t => t.FromId, fromId)
             .Equal(t => t.PackageId, packageId);
 
         var userPackags = await ConnectionPackageRepository.GetExtended(userPackageFilter, cancellationToken: cancellationToken);
@@ -310,9 +312,28 @@ public class ConnectionService(
     }
 
     /// <inheritdoc/>
-    public async Task<ValidationProblemInstance> RemovePackage(Guid fromId, Guid toId, string roleCode, Guid packageId, CancellationToken cancellationToken = default)
+    public async Task<ValidationProblemInstance> RemovePackage(Guid fromId, Guid toId, string role, string package, CancellationToken cancellationToken = default)
     {
-        var roleResult = await RoleRepository.Get(t => t.Code, roleCode, cancellationToken: cancellationToken);
+        package = (package.StartsWith("urn:", StringComparison.Ordinal) || package.StartsWith(":", StringComparison.Ordinal)) ? package : ":" + package;
+
+        var filter = PackageRepository.CreateFilterBuilder()
+            .Add(t => t.Urn, package, FilterComparer.EndsWith);
+
+        var packages = await PackageRepository.Get(filter, cancellationToken: cancellationToken);
+        var problem = ValidationRules.Validate(ValidationRules.QueryParameters.PackageUrnLookup(packages));
+        if (problem is { })
+        {
+            return problem;
+        }
+
+        var packageResult = packages.First();
+        return await RemovePackage(fromId, toId, role, packageResult.Id, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<ValidationProblemInstance> RemovePackage(Guid fromId, Guid toId, string role, Guid packageId, CancellationToken cancellationToken = default)
+    {
+        var roleResult = await RoleRepository.Get(t => t.Code, role, cancellationToken: cancellationToken);
         if (roleResult == null || !roleResult.Any())
         {
             return null;
@@ -399,22 +420,112 @@ public class ConnectionService(
     }
 }
 
+
 /// <summary>
 /// Interface for managing connections.
 /// </summary>
 public interface IEnduserConnectionService
 {
-    Task<Result<List<ExtConnection>>> Get(Guid? from = null, Guid? to = null, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Retrieves a list of external connections, optionally filtered by origin and/or destination entity IDs.
+    /// </summary>
+    /// <param name="fromId">ID of the originating entity to filter connections by.</param>
+    /// <param name="toId">ID of the target entity to filter connections by.</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A <see cref="Result{T}"/> containing a list of <see cref="ExtConnection"/> instances matching the criteria.
+    /// </returns>
+    Task<Result<List<ExtConnection>>> Get(Guid? fromId = null, Guid? toId = null, CancellationToken cancellationToken = default);
 
-    Task<Result<Assignment>> AddAssignment(Guid from, Guid to, string roleCode, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Creates a role assignment between two entities.
+    /// </summary>
+    /// <param name="fromId">ID of the entity from which the assignment originates.</param>
+    /// <param name="toId">ID of the entity to which the assignment is made.</param>
+    /// <param name="role">Name of the role to assign.</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A <see cref="Result{T}"/> containing the newly created <see cref="Assignment"/>.
+    /// </returns>
+    Task<Result<Assignment>> AddAssignment(Guid fromId, Guid toId, string role, CancellationToken cancellationToken = default);
 
-    Task<ValidationProblemInstance> RemoveAssignment(Guid from, Guid to, string roleCode, bool cascade, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Removes a specific role assignment between two entities.
+    /// </summary>
+    /// <param name="fromId">ID of the entity from which the assignment originates.</param>
+    /// <param name="toId">ID of the entity to which the assignment was made.</param>
+    /// <param name="role">Name of the role to remove.</param>
+    /// <param name="cascade">If <c>false</c>, stop if there are any dependent records.</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A <see cref="ValidationProblemInstance"/> indicating success or describing any validation errors.
+    /// </returns>
+    Task<ValidationProblemInstance> RemoveAssignment(Guid fromId, Guid toId, string role, bool cascade, CancellationToken cancellationToken = default);
 
-    Task<Result<List<ConnectionPackage>>> GetPackages(Guid? from, Guid? to, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Retrieves a list of connection packages, optionally filtered by origin and/or destination entity IDs.
+    /// </summary>
+    /// <param name="fromId">ID of the originating entity to filter packages by.</param>
+    /// <param name="toId">ID of the target entity to filter packages by.</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A <see cref="Result{T}"/> containing a list of <see cref="ConnectionPackage"/> instances.
+    /// </returns>
+    Task<Result<List<ConnectionPackage>>> GetPackages(Guid? fromId, Guid? toId, CancellationToken cancellationToken = default);
 
-    Task<Result<AssignmentPackage>> AddPackage(Guid fromId, Guid toId, string rolecode, Guid packageId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Adds a package to an assignment (by package ID) based on the role between two entities.
+    /// </summary>
+    /// <param name="fromId">ID of the entity from which the assignment originates.</param>
+    /// <param name="toId">ID of the entity to which the assignment is made.</param>
+    /// <param name="role">Name of the role assigned.</param>
+    /// <param name="packageId">Unique identifier of the package to assign.</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A <see cref="Result{T}"/> containing the created <see cref="AssignmentPackage"/>.
+    /// </returns>
+    Task<Result<AssignmentPackage>> AddPackage(Guid fromId, Guid toId, string role, Guid packageId, CancellationToken cancellationToken = default);
 
-    Task<Result<AssignmentPackage>> AddPackage(Guid fromId, Guid toId, string rolecode, string packageUrn, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Adds a package to an assignment (by package name or code) based on the role between two entities.
+    /// </summary>
+    /// <param name="fromId">ID of the entity from which the assignment originates.</param>
+    /// <param name="toId">ID of the entity to which the assignment is made.</param>
+    /// <param name="role">Name of the role assigned.</param>
+    /// <param name="package">Urn value of the package to assign.</param>
+    /// <param name="cancellationToken">
+    /// Token to monitor for cancellation requests.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Result{T}"/> containing the created <see cref="AssignmentPackage"/>.
+    /// </returns>
+    Task<Result<AssignmentPackage>> AddPackage(Guid fromId, Guid toId, string role, string package, CancellationToken cancellationToken = default);
 
-    Task<ValidationProblemInstance> RemovePackage(Guid fromId, Guid toId, string roleCode, Guid packageId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Removes a package (by package ID) from assignment based on a specific role between two entities.
+    /// </summary>
+    /// <param name="fromId">ID of the entity from which the assignment originates.</param>
+    /// <param name="toId">ID of the entity to which the assignment was made.</param>
+    /// <param name="role">Name of the role from which the package is removed.</param>
+    /// <param name="packageId">Unique identifier of the package to remove.</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A <see cref="ValidationProblemInstance"/> indicating success or describing any validation errors.
+    /// </returns>
+    Task<ValidationProblemInstance> RemovePackage(Guid fromId, Guid toId, string role, Guid packageId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes a package (by package name or code) from assignment based on a specific role between two entities.
+    /// </summary>
+    /// <param name="fromId">ID of the entity from which the assignment originates.</param>
+    /// <param name="toId">ID of the entity to which the assignment was made.</param>
+    /// <param name="role">Name of the role from which the package is removed.</param>
+    /// <param name="package">Urn value of the package to remove.</param>
+    /// <param name="cancellationToken">
+    /// Token to monitor for cancellation requests.
+    /// </param>
+    /// <returns>
+    /// A <see cref="ValidationProblemInstance"/> indicating success or describing any validation errors.
+    /// </returns>
+    Task<ValidationProblemInstance> RemovePackage(Guid fromId, Guid toId, string role, string package, CancellationToken cancellationToken = default);
 }

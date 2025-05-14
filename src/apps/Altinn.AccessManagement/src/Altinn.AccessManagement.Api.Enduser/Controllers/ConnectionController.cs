@@ -185,7 +185,7 @@ public class ConnectionController(IEnduserConnectionService connectionService) :
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> RemovePackages([FromQuery] ConnectionInput connection, [FromQuery] Guid package, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> RemovePackages([FromQuery] ConnectionInput connection, [FromQuery] Guid? packageId, [FromQuery] string package, CancellationToken cancellationToken = default)
     {
         if (ValidationRules.EnduserRemoveConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
         {
@@ -194,7 +194,14 @@ public class ConnectionController(IEnduserConnectionService connectionService) :
 
         Guid.TryParse(connection.From, out var fromUuid);
         Guid.TryParse(connection.To, out var toUuid);
+
+        if (packageId.HasValue)
+        {
+            problem = await ConnectionService.RemovePackage(fromUuid, toUuid, "rettighetshaver", packageId.Value, cancellationToken);
+        }
+
         problem = await ConnectionService.RemovePackage(fromUuid, toUuid, "rettighetshaver", package, cancellationToken);
+
         if (problem is { })
         {
             return problem.ToActionResult();
