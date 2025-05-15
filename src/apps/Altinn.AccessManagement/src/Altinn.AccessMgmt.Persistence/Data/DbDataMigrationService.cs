@@ -2,6 +2,7 @@
 using Altinn.AccessMgmt.Persistence.Core.Contracts;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Services;
+using Altinn.AccessMgmt.Persistence.Repositories;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Microsoft.Extensions.Configuration;
 
@@ -21,6 +22,7 @@ public class DbDataMigrationService(
         IEntityRepository entityRepository,
         IPackageRepository packageService,
         IRoleRepository roleService,
+        IRolePackageRepository rolePackageRepository,
         IMigrationService migrationService,
         IIngestService ingestService
         )
@@ -34,6 +36,7 @@ public class DbDataMigrationService(
     private readonly IEntityRepository entityRepository = entityRepository;
     private readonly IPackageRepository packageService = packageService;
     private readonly IRoleRepository roleService = roleService;
+    private readonly IRolePackageRepository rolePackageRepository = rolePackageRepository;
     private readonly IMigrationService migrationService = migrationService;
     private readonly IIngestService ingestService = ingestService;
     private readonly string iconBaseUrl = configuration["AltinnCDN:AccessPackageIconsBaseURL"];
@@ -53,6 +56,8 @@ public class DbDataMigrationService(
             ChangedBy = AuditDefaults.StaticDataIngest,
             ChangedBySystem = AuditDefaults.StaticDataIngest
         };
+
+        await Cleanup(options, cancellationToken);
 
         string dataKey = "<data>";
 
@@ -116,10 +121,10 @@ public class DbDataMigrationService(
             await migrationService.LogMigration<Package>(dataKey, string.Empty, 6);
         }
 
-        if (migrationService.NeedMigration<RolePackage>(dataKey, 3))
+        if (migrationService.NeedMigration<RolePackage>(dataKey, 4))
         {
             await IngestRolePackage(options: options, cancellationToken: cancellationToken);
-            await migrationService.LogMigration<RolePackage>(dataKey, string.Empty, 3);
+            await migrationService.LogMigration<RolePackage>(dataKey, string.Empty, 4);
         }
 
         if (migrationService.NeedMigration<EntityVariantRole>(dataKey, 2))
@@ -1999,13 +2004,13 @@ public class DbDataMigrationService(
             new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:bestyrende-reder"], PackageId = packages["urn:altinn:accesspackage:tinglysing-eiendom"], EntityVariantId = null, CanDelegate = true, HasAccess = true },
 
             new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:forretningsforer"], PackageId = packages["urn:altinn:accesspackage:forretningsforer-eiendom"], EntityVariantId = variants["ESEK"], CanDelegate = true, HasAccess = true },
-            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:forretningsforer"], PackageId = packages["urn:altinn:accesspackage:forretningsforer-eiendom"], EntityVariantId = variants["BBL"], CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:forretningsforer"], PackageId = packages["urn:altinn:accesspackage:forretningsforer-eiendom"], EntityVariantId = variants["BRL"], CanDelegate = true, HasAccess = true },
 
             new RolePackage() { RoleId = roles["urn:altinn:role:hovedadministrator"], PackageId = packages["urn:altinn:accesspackage:post-til-virksomheten-med-taushetsbelagt-innhold"], EntityVariantId = null, CanDelegate = true, HasAccess = false },
             new RolePackage() { RoleId = roles["urn:altinn:role:hovedadministrator"], PackageId = packages["urn:altinn:accesspackage:eksplisitt"], EntityVariantId = null, CanDelegate = true, HasAccess = false },
         };
 
-        await ingestService.IngestAndMergeData(rolePackages, options: options, null, cancellationToken);
+        await ingestService.IngestAndMergeData(rolePackages, options: options, matchColumns: ["RoleId", "PackageId", "EntityVariantId"], cancellationToken);
     }
 
     /// <summary>
@@ -2404,5 +2409,48 @@ public class DbDataMigrationService(
         };
 
         await ingestService.IngestAndMergeData(variantRoles, options: options, null, cancellationToken);
+    }
+    private async Task Cleanup(ChangeRequestOptions options, CancellationToken cancellationToken = default)
+    {
+        var dataKey = "<cleanup-data>";
+        if (migrationService.NeedMigration<RolePackage>(dataKey, 1))
+        {
+            await CleanupRolePackage(options, cancellationToken);
+            await migrationService.LogMigration<RolePackage>(dataKey, string.Empty, 1);
+        }
+    }
+
+    private async Task CleanupRolePackage(ChangeRequestOptions options, CancellationToken cancellationToken = default)
+    {
+        var packages = new Dictionary<string, Guid>();
+        foreach (var pack in await packageService.Get())
+        {
+            packages.Add(pack.Urn, pack.Id);
+        }
+
+        var roles = new Dictionary<string, Guid>();
+        foreach (var role in await roleService.Get())
+        {
+            roles.Add(role.Urn, role.Id);
+        }
+
+        var variants = new Dictionary<string, Guid>();
+        foreach (var variant in await entityVariantService.Get())
+        {
+            variants.Add(variant.Name, variant.Id);
+        }
+
+        try 
+        {
+            var filter = rolePackageRepository.CreateFilterBuilder();
+            filter.Equal(t => t.RoleId, roles["urn:altinn:external-role:ccr:forretningsforer"]);
+            filter.Equal(t => t.PackageId, packages["urn:altinn:accesspackage:forretningsforer-eiendom"]);
+            filter.Equal(t => t.EntityVariantId, variants["BBL"]);
+            await rolePackageRepository.Delete(filter, options, cancellationToken);
+        }
+        catch(Exception e)
+        {
+
+        }
     }
 }
