@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toOrg}}&packageUrn={{packageUrn}}
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toOrg}}&package={{package}}
   body: json
   auth: inherit
 }
@@ -14,7 +14,7 @@ params:query {
   party: {{party}}
   from: {{party}}
   to: {{toOrg}}
-  packageUrn: {{packageUrn}}
+  package: {{package}}
 }
 
 headers {
@@ -29,7 +29,7 @@ script:pre-request {
   
   bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg1.partyUuid);
   bru.setVar("toOrg", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
-  bru.setVar("packageUrn", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg1.directPackageToDelegate);
+  bru.setVar("package", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg1.directPackageToDelegate);
   
   var getTokenParameters = {
     auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg1.dagligleder.userId,

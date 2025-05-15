@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{toOrg}}&package=&packageUrn=
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{toOrg}}&packageId=&package=
   body: json
   auth: inherit
 }
@@ -14,8 +14,8 @@ params:query {
   party: {{party}}
   from: {{party}}
   to: {{toOrg}}
+  packageId: 
   package: 
-  packageUrn: 
 }
 
 headers {
