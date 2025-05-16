@@ -84,21 +84,7 @@ internal static partial class AccessManagementHost
 
             opt.AppSource = new(string.Format(connectionStringFmt, connectionStringPwd));
             opt.MigrationSource = new(string.Format(adminConnectionStringFmt, adminConnectionStringPwd));
-            opt.Telemetry.EnableMetrics = true;
-            opt.Telemetry.EnableTraces = true;
         });
-
-        if (!builder.Environment.IsDevelopment())
-        {
-            if (builder.Configuration.GetValue<string>("ApplicationInsights:InstrumentationKey") is var key && !string.IsNullOrEmpty(key))
-            {
-                builder.Services.AddOpenTelemetry()
-                    .UseAzureMonitor(m =>
-                    {
-                        m.ConnectionString = string.Format("InstrumentationKey={0}", key);
-                    });
-            }
-        }
 
         builder.ConfigurePostgreSqlConfiguration();
         builder.ConfigureAltinnPackages();
