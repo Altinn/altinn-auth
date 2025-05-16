@@ -63,7 +63,7 @@ public abstract class CrossRepository<T, TExtended, TA, TB> : ExtendedRepository
     {
         // Get the definition for the entity type
         var def = definitionRegistry.TryGetDefinition<TEntity>() ?? definitionRegistry.TryGetDefinition(typeof(TEntity).BaseType) ?? definitionRegistry.TryGetBaseDefinition<TEntity>();
-        
+
         if (def == null)
         {
             throw new Exception($"GetOrAddDefinition not found for {typeof(TEntity).Name}");
@@ -87,7 +87,7 @@ public abstract class CrossRepository<T, TExtended, TA, TB> : ExtendedRepository
         var param = BuildFilterParameters(filters, options);
         param.Add(new GenericParameter("X_Id", id));
 
-        return await executor.ExecuteQuery<TEntity>(query, param, cancellationToken);
+        return await executor.ExecuteQuery<TEntity>(query, param, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -127,6 +127,6 @@ public abstract class CrossRepository<T, TExtended, TA, TB> : ExtendedRepository
 
         var param = BuildFilterParameters(filters, options);
 
-        return await executor.ExecuteQuery<TEntity>(query, param, cancellationToken);
+        return await executor.ExecuteQuery<TEntity>(query, param, cancellationToken: cancellationToken);
     }
 }

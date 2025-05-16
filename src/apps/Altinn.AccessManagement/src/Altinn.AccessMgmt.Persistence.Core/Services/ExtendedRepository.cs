@@ -56,6 +56,6 @@ public abstract class ExtendedRepository<T, TExtended> : BasicRepository<T>, IDb
         var query = queryBuilder.BuildExtendedSelectQuery(options, filters); //// TODO: Add CrossDefinition when needed
         var param = BuildFilterParameters(filters, options);
 
-        return await executor.ExecuteQuery<TExtended>(query, param, cancellationToken);
+        return await executor.ExecuteQuery<TExtended>(query, param, cancellationToken: cancellationToken);
     }
 }

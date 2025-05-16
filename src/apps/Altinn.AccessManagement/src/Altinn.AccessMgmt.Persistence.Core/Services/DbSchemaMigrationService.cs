@@ -35,12 +35,12 @@ public class DbSchemaMigrationService
     private async Task PreMigration(CancellationToken cancellationToken = default)
     {
         var config = this.options.Value;
-        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseSchema};", new List<GenericParameter>(), cancellationToken);
-        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationSchema};", new List<GenericParameter>(), cancellationToken);
-        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseHistorySchema};", new List<GenericParameter>(), cancellationToken);
-        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationHistorySchema};", new List<GenericParameter>(), cancellationToken);
-        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.IngestSchema};", new List<GenericParameter>(), cancellationToken);
-        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.ArchiveSchema};", new List<GenericParameter>(), cancellationToken);
+        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseSchema};", new List<GenericParameter>(), cancellationToken: cancellationToken);
+        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationSchema};", new List<GenericParameter>(), cancellationToken: cancellationToken);
+        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.BaseHistorySchema};", new List<GenericParameter>(), cancellationToken: cancellationToken);
+        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.TranslationHistorySchema};", new List<GenericParameter>(), cancellationToken: cancellationToken);
+        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.IngestSchema};", new List<GenericParameter>(), cancellationToken: cancellationToken);
+        await executor.ExecuteMigrationCommand($"CREATE SCHEMA IF NOT EXISTS {config.ArchiveSchema};", new List<GenericParameter>(), cancellationToken: cancellationToken);
     }
 
     private async Task PostMigration(CancellationToken cancellationToken = default)
@@ -246,12 +246,12 @@ public class DbSchemaMigrationService
             // Run all if any (temp)
             if (migrationService.NeedMigration(type, script.Key))
             {
-                if (script.Key.Contains("PK_")) 
+                if (script.Key.Contains("PK_"))
                 {
                     //// TODO: Hack ... Remove from scripts ...
                     continue;
                 }
-                
+
                 try
                 {
                     await executor.ExecuteMigrationCommand(script.Value, new List<GenericParameter>());

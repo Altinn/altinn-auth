@@ -1,4 +1,5 @@
-﻿using Altinn.AccessMgmt.Persistence.Core.Definitions;
+﻿using System.Runtime.CompilerServices;
+using Altinn.AccessMgmt.Persistence.Core.Definitions;
 using Altinn.AccessMgmt.Persistence.Core.Helpers;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.QueryBuilders;
@@ -17,7 +18,7 @@ public interface IDbExecutor
     /// <param name="parameters">Parameters</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    Task<int> ExecuteCommand(string query, List<GenericParameter> parameters, CancellationToken cancellationToken = default);
+    Task<int> ExecuteCommand(string query, List<GenericParameter> parameters, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Execute a command
@@ -26,7 +27,7 @@ public interface IDbExecutor
     /// <param name="parameters">Parameters</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    Task<int> ExecuteMigrationCommand(string query, List<GenericParameter> parameters = null, CancellationToken cancellationToken = default);
+    Task<int> ExecuteMigrationCommand(string query, List<GenericParameter> parameters = null, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Execute a command
@@ -34,7 +35,7 @@ public interface IDbExecutor
     /// <param name="query">Command to execute</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    Task<int> ExecuteCommand(string query, CancellationToken cancellationToken = default);
+    Task<int> ExecuteCommand(string query, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Execute a query
@@ -43,7 +44,7 @@ public interface IDbExecutor
     /// <param name="parameters">Parameters</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    Task<QueryResponse<T>> ExecuteQuery<T>(string query, List<GenericParameter> parameters, CancellationToken cancellationToken = default)
+    Task<QueryResponse<T>> ExecuteQuery<T>(string query, List<GenericParameter> parameters, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
     where T : new();
 
     /// <summary>
@@ -52,7 +53,7 @@ public interface IDbExecutor
     /// <param name="query">Query to execute</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    Task<QueryResponse<T>> ExecuteQuery<T>(string query, CancellationToken cancellationToken = default)
+    Task<QueryResponse<T>> ExecuteQuery<T>(string query, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
     where T : new();
 
     /// <summary>
@@ -61,6 +62,6 @@ public interface IDbExecutor
     /// <param name="query">Query to execute</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    Task<IEnumerable<T>> ExecuteMigrationQuery<T>(string query, CancellationToken cancellationToken = default)
+    Task<IEnumerable<T>> ExecuteMigrationQuery<T>(string query, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
     where T : new();
 }

@@ -27,7 +27,7 @@ public class SqlMigrationService(IDbExecutor executor) : IMigrationService
             );
             """;
 
-            await executor.ExecuteMigrationCommand(migrationTable, new List<GenericParameter>(), cancellationToken);
+            await executor.ExecuteMigrationCommand(migrationTable, new List<GenericParameter>(), cancellationToken: cancellationToken);
 
             HasInitialized = true;
         }
@@ -145,7 +145,7 @@ public class SqlMigrationService(IDbExecutor executor) : IMigrationService
             new GenericParameter("CompletedAt", DateTimeOffset.UtcNow)
         };
 
-        await executor.ExecuteMigrationCommand("DELETE FROM dbo._dbmigration WHERE ObjectName = @ObjectName AND Key = @Key AND Version = @Version", parameters, cancellationToken);
+        await executor.ExecuteMigrationCommand("DELETE FROM dbo._dbmigration WHERE ObjectName = @ObjectName AND Key = @Key AND Version = @Version", parameters, cancellationToken: cancellationToken);
         Migrations.RemoveAll(t => t.ObjectName == migrationEntry.ObjectName && t.Key == migrationEntry.Key && t.Version == migrationEntry.Version);
         Console.WriteLine("UNDO: " + key);
     }
@@ -183,7 +183,7 @@ public class SqlMigrationService(IDbExecutor executor) : IMigrationService
             new GenericParameter("CompletedAt", DateTimeOffset.UtcNow)
         };
 
-        await executor.ExecuteMigrationCommand("INSERT INTO dbo._dbmigration (ObjectName, Key, Version, Script, CompletedAt) VALUES(@ObjectName, @Key, @Version, @Script, @CompletedAt)", parameters, cancellationToken);
+        await executor.ExecuteMigrationCommand("INSERT INTO dbo._dbmigration (ObjectName, Key, Version, Script, CompletedAt) VALUES(@ObjectName, @Key, @Version, @Script, @CompletedAt)", parameters, cancellationToken: cancellationToken);
         Migrations.Add(migrationEntry);
         Console.WriteLine(key);
     }

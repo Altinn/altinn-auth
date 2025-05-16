@@ -13,8 +13,8 @@
         <PackageReference Include="Altinn.Urn.Swashbuckle" />
         <PackageReference Include="AutoMapper" />
         <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" />
+        <PackageReference Include="Azure.Monitor.OpenTelemetry.AspNetCore"  />
         <PackageReference Include="Azure.Identity" />
-        <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" />
         <PackageReference Include="JWTCookieAuthentication" />
         <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" />
         <PackageReference Include="Microsoft.Extensions.Configuration.AzureKeyVault" />

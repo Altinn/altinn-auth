@@ -29,11 +29,13 @@ using Altinn.Common.PEP.Clients;
 using Altinn.Common.PEP.Implementation;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.FeatureManagement;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Npgsql;
+using OpenTelemetry;
 using Swashbuckle.AspNetCore.Filters;
 
 namespace Altinn.AccessManagement;
@@ -65,7 +67,6 @@ internal static partial class AccessManagementHost
             .AddCheck<HealthCheck>("authorization_admin_health_check");
 
         builder.ConfigureLibsIntegrations();
-
         builder.ConfigureAppsettings();
         builder.AddAltinnDatabase(opt =>
         {
@@ -85,6 +86,12 @@ internal static partial class AccessManagementHost
             opt.Telemetry.EnableMetrics = true;
             opt.Telemetry.EnableTraces = true;
         });
+
+        if (!builder.Environment.IsDevelopment())
+        {
+            builder.Services.AddOpenTelemetry()
+                .UseAzureMonitor();
+        }
 
         builder.ConfigurePostgreSqlConfiguration();
         builder.ConfigureAltinnPackages();

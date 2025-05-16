@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Altinn.AccessMgmt.Persistence.Core.Contracts;
 using Altinn.AccessMgmt.Persistence.Core.Definitions;
 using Altinn.AccessMgmt.Persistence.Core.Helpers;
@@ -46,37 +47,37 @@ public abstract class BasicRepository<T> : IDbBasicRepository<T>
     #region Read
 
     /// <inheritdoc/>
-    public async Task<T> Get(Guid id, RequestOptions options = null, CancellationToken cancellationToken = default)
+    public async Task<T> Get(Guid id, RequestOptions options = null, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
     {
-        var res = await Get(new List<GenericFilter>() { new GenericFilter("id", id) }, options, cancellationToken: cancellationToken);
+        var res = await Get(new List<GenericFilter>() { new GenericFilter("id", id) }, options, callerName, cancellationToken: cancellationToken);
         return res.Data.FirstOrDefault();
     }
 
     /// <inheritdoc/>
-    public async Task<QueryResponse<T>> Get<TProperty>(Expression<Func<T, TProperty>> property, TProperty value, RequestOptions options = null, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<T>> Get<TProperty>(Expression<Func<T, TProperty>> property, TProperty value, RequestOptions options = null, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
     {
         string propertyName = ExtractPropertyInfo(property).Name;
         var filters = new List<GenericFilter>
         {
             new GenericFilter(propertyName, value!, FilterComparer.Equals)
         };
-        return await Get(filters, options, cancellationToken: cancellationToken);
+        return await Get(filters, options, callerName, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<QueryResponse<T>> Get(RequestOptions options = null, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<T>> Get(RequestOptions options = null, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
     {
-        return await Get(filters: new List<GenericFilter>(), options: options, cancellationToken: cancellationToken);
+        return await Get(filters: new List<GenericFilter>(), options: options, callerName, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<QueryResponse<T>> Get(GenericFilterBuilder<T> filterBuilder, RequestOptions options = null, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<T>> Get(GenericFilterBuilder<T> filterBuilder, RequestOptions options = null, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
     {
-        return await Get(filters: filterBuilder, options: options, cancellationToken: cancellationToken);
+        return await Get(filters: filterBuilder, options: options, callerName, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<QueryResponse<T>> Get(IEnumerable<GenericFilter> filters, RequestOptions options = null, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<T>> Get(IEnumerable<GenericFilter> filters, RequestOptions options = null, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
     {
         options ??= new RequestOptions();
         filters ??= new List<GenericFilter>();
@@ -85,7 +86,7 @@ public abstract class BasicRepository<T> : IDbBasicRepository<T>
         var query = queryBuilder.BuildBasicSelectQuery(options, filters);
         var param = BuildFilterParameters(filters, options);
 
-        return await executor.ExecuteQuery<T>(query, param, cancellationToken: cancellationToken);
+        return await executor.ExecuteQuery<T>(query, param, callerName, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc />
@@ -405,7 +406,6 @@ public abstract class BasicRepository<T> : IDbBasicRepository<T>
 
         return await executor.ExecuteCommand(query, parameters, cancellationToken: cancellationToken);
     }
-
     #endregion
 
 }

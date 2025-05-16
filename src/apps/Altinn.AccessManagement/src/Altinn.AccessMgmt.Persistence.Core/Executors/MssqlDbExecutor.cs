@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Altinn.AccessMgmt.Persistence.Core.Contracts;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Utilities;
@@ -13,7 +14,7 @@ namespace Altinn.AccessMgmt.Persistence.Core.Executors;
 public class MssqlDbExecutor(SqlConnection connection, IDbConverter dbConverter) : IDbExecutor
 {
     /// <inheritdoc/>
-    public async Task<int> ExecuteCommand(string query, List<GenericParameter> parameters, CancellationToken cancellationToken = default)
+    public async Task<int> ExecuteCommand(string query, List<GenericParameter> parameters, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
     {
         try
         {
@@ -35,7 +36,7 @@ public class MssqlDbExecutor(SqlConnection connection, IDbConverter dbConverter)
     }
 
     /// <inheritdoc/>
-    public async Task<int> ExecuteCommand(string query, CancellationToken cancellationToken = default)
+    public async Task<int> ExecuteCommand(string query, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
     {
         try
         {
@@ -55,20 +56,20 @@ public class MssqlDbExecutor(SqlConnection connection, IDbConverter dbConverter)
     }
 
     /// <inheritdoc/>
-    public Task<int> ExecuteMigrationCommand(string query, List<GenericParameter> parameters = null, CancellationToken cancellationToken = default)
+    public Task<int> ExecuteMigrationCommand(string query, List<GenericParameter> parameters = null, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc/>
-    public Task<IEnumerable<T>> ExecuteMigrationQuery<T>(string query, CancellationToken cancellationToken = default)
+    public Task<IEnumerable<T>> ExecuteMigrationQuery<T>(string query, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
         where T : new()
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc/>
-    public async Task<QueryResponse<T>> ExecuteQuery<T>(string query, List<GenericParameter> parameters, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<T>> ExecuteQuery<T>(string query, List<GenericParameter> parameters, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
         where T : new()
     {
         await using var cmd = connection.CreateCommand();
@@ -78,7 +79,7 @@ public class MssqlDbExecutor(SqlConnection connection, IDbConverter dbConverter)
     }
 
     /// <inheritdoc/>
-    public async Task<QueryResponse<T>> ExecuteQuery<T>(string query, CancellationToken cancellationToken = default)
+    public async Task<QueryResponse<T>> ExecuteQuery<T>(string query, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
         where T : new()
     {
         await using var cmd = connection.CreateCommand();
