@@ -30,6 +30,7 @@ using Altinn.Common.PEP.Implementation;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
+using Azure.Monitor.OpenTelemetry.Exporter;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.FeatureManagement;
 using Microsoft.IdentityModel.Tokens;
@@ -89,8 +90,14 @@ internal static partial class AccessManagementHost
 
         if (!builder.Environment.IsDevelopment())
         {
-            builder.Services.AddOpenTelemetry()
-                .UseAzureMonitor();
+            if (builder.Configuration.GetValue<string>("ApplicationInsights:InstrumentationKey") is var key && !string.IsNullOrEmpty(key))
+            {
+                builder.Services.AddOpenTelemetry()
+                    .UseAzureMonitor(m =>
+                    {
+                        m.ConnectionString = string.Format("InstrumentationKey={0}", key);
+                    });
+            }
         }
 
         builder.ConfigurePostgreSqlConfiguration();
