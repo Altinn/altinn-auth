@@ -55,7 +55,7 @@ internal static partial class AccessManagementHost
     public static WebApplication Create(string[] args)
     {
         Log.CreateAltinnHost(Logger);
-        var builder = AltinnHost.CreateWebApplicationBuilder("access-management", args);
+        var builder = AltinnHost.CreateWebApplicationBuilder("access-management", args, opts => opts.ConfigureEnabledServices(services => services.DisableApplicationInsights()));
         builder.ConfigureAppsettings();
         builder.ConfigureLibsHost();
         builder.Services.AddMemoryCache();
@@ -85,6 +85,18 @@ internal static partial class AccessManagementHost
             opt.AppSource = new(string.Format(connectionStringFmt, connectionStringPwd));
             opt.MigrationSource = new(string.Format(adminConnectionStringFmt, adminConnectionStringPwd));
         });
+
+        if (!builder.Environment.IsDevelopment())
+        {
+            if (builder.Configuration.GetValue<string>("ApplicationInsights:InstrumentationKey") is var key && !string.IsNullOrEmpty(key))
+            {
+                builder.Services.AddOpenTelemetry()
+                    .UseAzureMonitor(m =>
+                    {
+                        m.ConnectionString = string.Format("InstrumentationKey={0}", key);
+                    });
+            }
+        }
 
         builder.ConfigurePostgreSqlConfiguration();
         builder.ConfigureAltinnPackages();
