@@ -927,13 +927,16 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         string modelName = _definition.ModelType.Name;
         string schema = GetSchemaName(useHistory: false, useTranslation: isTranslation);
         string functionName = $"set_audit_metadata_fn";
+        string triggerName = $"{modelName}_Meta";
         string tableName = GetTableName(includeAlias: false, useTranslation: isTranslation);
 
         var sb = new StringBuilder();
-        sb.AppendLine($"CREATE OR REPLACE TRIGGER {modelName}_Meta BEFORE INSERT OR UPDATE ON {tableName}");
+        sb.AppendLine($"DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE '{triggerName}' AND t.tgrelid = '{tableName}'::regclass) THEN");
+        sb.AppendLine($"CREATE OR REPLACE TRIGGER {triggerName} BEFORE INSERT OR UPDATE ON {tableName}");
         sb.AppendLine($"FOR EACH ROW EXECUTE FUNCTION dbo.{functionName}();");
+        sb.AppendLine($"END IF; END $$;");
 
-        scripts.Add($"CREATE TRIGGER {schema}.{modelName}_Meta", sb.ToString());
+        scripts.Add($"CREATE TRIGGER {schema}.{triggerName}", sb.ToString());
 
         return scripts;
     }
@@ -1027,13 +1030,16 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         string modelName = _definition.ModelType.Name;
         string schema = GetSchemaName(useHistory: false, useTranslation: isTranslation);
         string functionName = $"audit_{modelName}_update_fn";
+        string triggerName = $"{modelName}_Audit_Update";
         string tableName = GetTableName(includeAlias: false, useTranslation: isTranslation);
 
         var sb = new StringBuilder();
-        sb.AppendLine($"CREATE OR REPLACE TRIGGER {modelName}_Audit_Update AFTER UPDATE ON {tableName}");
+        sb.AppendLine($"DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE '{triggerName}' AND t.tgrelid = '{tableName}'::regclass) THEN");
+        sb.AppendLine($"CREATE OR REPLACE TRIGGER {triggerName} AFTER UPDATE ON {tableName}");
         sb.AppendLine($"FOR EACH ROW EXECUTE FUNCTION {schema}.{functionName}();");
+        sb.AppendLine($"END IF; END $$;");
 
-        scripts.Add($"CREATE TRIGGER {schema}.{modelName}_Audit_Update", sb.ToString());
+        scripts.Add($"CREATE TRIGGER {schema}.{triggerName}", sb.ToString());
 
         return scripts;
     }
@@ -1045,13 +1051,16 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         string modelName = _definition.ModelType.Name;
         string schema = GetSchemaName(useHistory: false, useTranslation: isTranslation);
         string functionName = $"audit_{modelName}_delete_fn";
+        string triggerName = $"{modelName}_Audit_Delete";
         string tableName = GetTableName(includeAlias: false, useTranslation: isTranslation);
 
         var sb = new StringBuilder();
-        sb.AppendLine($"CREATE OR REPLACE  TRIGGER {modelName}_Audit_Delete AFTER DELETE ON {tableName}");
+        sb.AppendLine($"DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE '{triggerName}' AND t.tgrelid = '{tableName}'::regclass) THEN");
+        sb.AppendLine($"CREATE OR REPLACE TRIGGER {triggerName} AFTER DELETE ON {tableName}");
         sb.AppendLine($"FOR EACH ROW EXECUTE FUNCTION {schema}.{functionName}();");
+        sb.AppendLine($"END IF; END $$;");
 
-        scripts.Add($"CREATE TRIGGER {schema}.{modelName}_Audit_Delete", sb.ToString());
+        scripts.Add($"CREATE TRIGGER {schema}.{triggerName}", sb.ToString());
 
         return scripts;
     }
