@@ -226,14 +226,14 @@ public class ConnectionService(
             .Add(t => t.Urn, package, FilterComparer.EndsWith);
 
         var packages = await PackageRepository.Get(filter, callerName: SpanName("Get packages using URN"), cancellationToken: cancellationToken);
-        var problem = ValidationRules.Validate(ValidationRules.QueryParameters.PackageUrnLookup(packages));
+        var problem = ValidationRules.Validate(ValidationRules.QueryParameters.PackageUrnLookup(packages, package));
         if (problem is { })
         {
             return problem;
         }
 
         var packageResult = packages.First();
-        return await AddPackage(fromId, toId, role, packageResult.Id, "packageUrn", cancellationToken);
+        return await AddPackage(fromId, toId, role, packageResult.Id, "package", cancellationToken);
     }
 
     /// <inheritdoc />
@@ -320,7 +320,7 @@ public class ConnectionService(
             .Add(t => t.Urn, package, FilterComparer.EndsWith);
 
         var packages = await PackageRepository.Get(filter, callerName: SpanName("Get packages using URN"), cancellationToken: cancellationToken);
-        var problem = ValidationRules.Validate(ValidationRules.QueryParameters.PackageUrnLookup(packages));
+        var problem = ValidationRules.Validate(ValidationRules.QueryParameters.PackageUrnLookup(packages, package));
         if (problem is { })
         {
             return problem;

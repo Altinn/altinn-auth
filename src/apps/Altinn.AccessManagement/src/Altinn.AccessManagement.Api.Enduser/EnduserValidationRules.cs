@@ -13,13 +13,13 @@ public static class ValidationRules
     /// and adds errors if validation fails.
     /// </summary>
     /// <param name="errors">The reference to the <see cref="ValidationErrorBuilder"/> where validation errors are added.</param>
-    public delegate void Func(ref ValidationErrorBuilder errors);
+    public delegate void ValidationRule(ref ValidationErrorBuilder errors);
 
     /// <summary>
     /// A delegate that returns a validation rule that accepts a reference to a <see cref="ValidationErrorBuilder"/>
     /// and adds errors if validation fails.
     /// </summary>
-    public delegate Func FuncExpression();
+    public delegate ValidationRule RuleExpression();
 
     /// <summary>
     /// Validates a series of rules against the provided parameters.
@@ -31,7 +31,7 @@ public static class ValidationRules
     /// A <see cref="ValidationProblemInstance"/> containing validation errors, if any,
     /// or <c>null</c> if the validation passed without any errors.
     /// </returns>
-    public static ValidationProblemInstance? Validate(params FuncExpression[] rules)
+    public static ValidationProblemInstance? Validate(params RuleExpression[] rules)
     {
         var builder = default(ValidationErrorBuilder);
         All(rules)()(ref builder);
@@ -49,7 +49,7 @@ public static class ValidationRules
     /// A <see cref="ValidationProblemInstance"/> containing validation errors, if any,
     /// or <c>null</c> if the validation passed without any errors.
     /// </returns>
-    public static ValidationProblemInstance? Validate(params Func[] rules)
+    public static ValidationProblemInstance? Validate(params ValidationRule[] rules)
     {
         var builder = default(ValidationErrorBuilder);
         foreach (var rule in rules)
@@ -67,9 +67,9 @@ public static class ValidationRules
     /// </summary>
     /// <param name="funcs">The validation functions to combine.</param>
     /// <returns>A combined validation rule that applies all the specified rules.</returns>
-    public static FuncExpression All(params FuncExpression[] funcs) => () =>
+    public static RuleExpression All(params RuleExpression[] funcs) => () =>
     {
-        var results = new List<Func>();
+        var results = new List<ValidationRule>();
         foreach (var func in funcs)
         {
             if (func() is var fn && fn is { })
@@ -92,9 +92,9 @@ public static class ValidationRules
     /// </summary>
     /// <param name="funcs">The validation functions to combine.</param>
     /// <returns>A combined validation rule that applies any of the specified rules.</returns>
-    public static FuncExpression Any(params FuncExpression[] funcs) => () =>
+    public static RuleExpression Any(params RuleExpression[] funcs) => () =>
     {
-        var results = new List<Func>();
+        var results = new List<ValidationRule>();
         foreach (var func in funcs)
         {
             if (func() is var fn && fn is { })
@@ -136,7 +136,25 @@ public static class ValidationRules
     /// <summary>
     /// Validates the default query parameters for an end user.
     /// </summary>
-    /// <param name="userUuid">The UUID of the user performing the action (current user).</param>
+    /// <param name="party">The UUID of the acting party (the user acting on behalf). Can also be "me".</param>
+    /// <param name="from">The UUID of the 'from' party (could be a person or an organization).</param>
+    /// <param name="to">The UUID of the 'to' party (could be a person or an organization).</param>
+    /// <param name="packageId">The UUID of the package</param>
+    /// <param name="packageUrn">The URN of the package</param>
+    /// <returns>
+    /// A <see cref="ValidationProblemInstance"/> with validation errors if any.
+    /// </returns>
+    public static ValidationProblemInstance EnduserAddConnectionPackage(string party, string from, string to, Guid? packageId, string packageUrn) => Validate(
+        QueryParameters.Party(party),
+        QueryParameters.PartyFrom(from),
+        QueryParameters.PartyTo(to),
+        QueryParameters.PackageReference(packageId, packageUrn),
+        QueryParameters.EnduserAddCombination(party, from, to)
+    );
+
+    /// <summary>
+    /// Validates the default query parameters for an end user.
+    /// </summary>
     /// <param name="party">The UUID of the acting party (the user acting on behalf). Can also be "me".</param>
     /// <param name="from">The UUID of the 'from' party (could be a person or an organization).</param>
     /// <param name="to">The UUID of the 'to' party (could be a person or an organization).</param>
@@ -169,6 +187,25 @@ public static class ValidationRules
     );
 
     /// <summary>
+    /// Validates the default query parameters for an end user.
+    /// </summary>
+    /// <param name="party">The UUID of the acting party (the user acting on behalf). Can also be "me".</param>
+    /// <param name="from">The UUID of the 'from' party (could be a person or an organization).</param>
+    /// <param name="to">The UUID of the 'to' party (could be a person or an organization).</param>
+    /// <param name="packageId">The UUID of the package</param>
+    /// <param name="packageUrn">The URN of the package</param>
+    /// <returns>
+    /// A <see cref="ValidationProblemInstance"/> with validation errors if any.
+    /// </returns>
+    public static ValidationProblemInstance EnduserRemoveConnectionPacakge(string party, string from, string to, Guid? packageId, string packageUrn) => Validate(
+        QueryParameters.Party(party),
+        QueryParameters.PartyFrom(from),
+        QueryParameters.PartyTo(to),
+        QueryParameters.PackageReference(packageId, packageUrn),
+        QueryParameters.EnduserRemoveCombination(party, from, to)
+    );
+
+    /// <summary>
     /// Provides validation rules for query parameters.
     /// </summary>
     public static class QueryParameters
@@ -183,7 +220,7 @@ public static class ValidationRules
         /// <param name="packages">Lists of packages</param>
         /// <param name="paramName">name of query parameter</param>
         /// <returns></returns>
-        public static FuncExpression AnyPackages(IEnumerable<ConnectionPackage> packages, string paramName = "packageId") => () =>
+        internal static RuleExpression AnyPackages(IEnumerable<ConnectionPackage> packages, string paramName = "packageId") => () =>
         {
             ArgumentNullException.ThrowIfNull(packages);
             ArgumentException.ThrowIfNullOrEmpty(paramName);
@@ -203,7 +240,7 @@ public static class ValidationRules
         /// <param name="packages">list of packages</param>
         /// <param name="paramName">name of the query parameter</param>
         /// <returns></returns>
-        public static FuncExpression PackageIsAssignableByDefinition(IEnumerable<ExtConnectionPackage> packages, string paramName = "packageId") => () =>
+        internal static RuleExpression PackageIsAssignableByDefinition(IEnumerable<ExtConnectionPackage> packages, string paramName = "packageId") => () =>
         {
             ArgumentNullException.ThrowIfNull(packages);
             ArgumentException.ThrowIfNullOrEmpty(paramName);
@@ -227,7 +264,7 @@ public static class ValidationRules
         /// <param name="packages">List of packages.</param>
         /// <param name="paramName">name of the query parameter.</param>
         /// <returns></returns>
-        public static FuncExpression PackageIsAssignableByUser(IEnumerable<ConnectionPackage> packages, string paramName = "packageId") => () =>
+        internal static RuleExpression PackageIsAssignableByUser(IEnumerable<ConnectionPackage> packages, string paramName = "packageId") => () =>
         {
             ArgumentNullException.ThrowIfNull(packages);
             ArgumentException.ThrowIfNullOrEmpty(paramName);
@@ -249,20 +286,30 @@ public static class ValidationRules
         /// Used to check if package exists by check URN and resulkt of the DB lookup.
         /// </summary>
         /// <param name="packages">List of packags</param>
+        /// <param name="packageName">Name of the package.</param>
         /// <param name="paramName">name of the query URN parameter.</param>
         /// <returns></returns>
-        public static FuncExpression PackageUrnLookup(IEnumerable<Package> packages, string paramName = "packageUrn") => () =>
+        internal static RuleExpression PackageUrnLookup(IEnumerable<Package> packages, string packageName, string paramName = "package") => () =>
         {
             ArgumentNullException.ThrowIfNull(packages);
             ArgumentException.ThrowIfNullOrEmpty(paramName);
+
+            if (packages?.Count() == 0)
+            {
+                return (ref ValidationErrorBuilder errors) =>
+                    errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramName}", [new("packages", $"No packages were found with the name '{packageName}'.")]
+                    );
+            }
 
             if (packages?.Count() == 1)
             {
                 return null;
             }
 
+            var msg = string.Join(",", packages.Select(p => p.Id.ToString()));
             return (ref ValidationErrorBuilder errors) =>
-                errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, $"QUERY/{paramName}", [new("packages", string.Join(",", packages.Select(p => p.Id.ToString())))]);
+                errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramName}", [new("packages", $"Multiple packages were found with the name '{packageName}'.")]
+                );
         };
 
         /// <summary>
@@ -270,7 +317,7 @@ public static class ValidationRules
         /// </summary>
         /// <param name="packages">List of packages.</param>
         /// <param name="paramName">name of the query parameter.</param>
-        public static FuncExpression HasPackagesAssigned(IEnumerable<AssignmentPackage> packages, string paramName = "cascade") => () =>
+        internal static RuleExpression HasPackagesAssigned(IEnumerable<AssignmentPackage> packages, string paramName = "cascade") => () =>
         {
             ArgumentNullException.ThrowIfNull(packages);
             ArgumentException.ThrowIfNullOrEmpty(paramName);
@@ -291,7 +338,7 @@ public static class ValidationRules
         /// <param name="roleCode">The name of the role to verify.</param>
         /// <param name="paramNameFrom">The name of the source query parameter.</param>
         /// <param name="paramNameTo">The name of the target query parameter.</param>
-        public static FuncExpression VerifyAssignmentRoleExists(IEnumerable<Assignment> packages, string roleCode, string paramNameFrom = "from", string paramNameTo = "to") => () =>
+        internal static RuleExpression VerifyAssignmentRoleExists(IEnumerable<Assignment> packages, string roleCode, string paramNameFrom = "from", string paramNameTo = "to") => () =>
         {
             if (packages is { } && packages.Any())
             {
@@ -309,7 +356,7 @@ public static class ValidationRules
         /// </summary>
         /// <param name="delegations">List of delegations.</param>
         /// <param name="paramName">name of the query parameter.</param>
-        public static FuncExpression HasDelegationsAssigned(IEnumerable<Delegation> delegations, string paramName = "cascade") => () =>
+        internal static RuleExpression HasDelegationsAssigned(IEnumerable<Delegation> delegations, string paramName = "cascade") => () =>
         {
             ArgumentNullException.ThrowIfNull(delegations);
             if (delegations.Any())
@@ -325,7 +372,7 @@ public static class ValidationRules
         /// Checks if party exists
         /// </summary>
         /// <returns></returns>
-        public static FuncExpression PartyExists(Entity party, string paramName = "party") => () =>
+        internal static RuleExpression PartyExists(Entity party, string paramName = "party") => () =>
         {
             if (party is { })
             {
@@ -336,7 +383,7 @@ public static class ValidationRules
                 errors.Add(ValidationErrors.EntityNotExists, $"QUERY/{paramName}", [new("party", $"Entity do not exists.")]);
         };
 
-        public static FuncExpression PartyIsEntityType(ExtEntity party, string entityType, string paramName = "party") => () =>
+        internal static RuleExpression PartyIsEntityType(ExtEntity party, string entityType, string paramName = "party") => () =>
         {
             if (party is { })
             {
@@ -353,7 +400,7 @@ public static class ValidationRules
         /// <summary>
         /// Validates combination of input parameters
         /// </summary>
-        public static FuncExpression EnduserAddCombination(string party, string from, string to) => () =>
+        internal static RuleExpression EnduserAddCombination(string party, string from, string to) => () =>
         {
             if (!Guid.TryParse(party, out var partyUuid) || partyUuid == Guid.Empty)
             {
@@ -396,7 +443,7 @@ public static class ValidationRules
         /// A validation rule that adds an error if any UUID is invalid or empty, 
         /// or if the party does not match either the 'from' or 'to' UUID.
         /// </returns>
-        public static FuncExpression EnduserReadInputCombination(string party, string from, string to) => () =>
+        internal static RuleExpression EnduserReadInputCombination(string party, string from, string to) => () =>
         {
             if (!Guid.TryParse(party, out var partyUuid))
             {
@@ -428,7 +475,7 @@ public static class ValidationRules
         /// <param name="from">The UUID of the 'from' party (could be a person or an organization).</param>
         /// <param name="to">The UUID of the 'to' party (could be a person or an organization).</param>
         /// <returns></returns>
-        public static FuncExpression EnduserRemoveCombination(string party, string from, string to) => () =>
+        internal static RuleExpression EnduserRemoveCombination(string party, string from, string to) => () =>
         {
             if (!Guid.TryParse(party, out var partyUuid))
             {
@@ -471,7 +518,7 @@ public static class ValidationRules
         /// A validation rule that adds an error if the party value is not a valid UUID
         /// and does not match any of the predefined keywords <see cref="ParamKeywords"/>.
         /// </returns>
-        public static FuncExpression PartyIs(string party, string paramName = "party", params string[] values) => () =>
+        internal static RuleExpression PartyIs(string party, string paramName = "party", params string[] values) => () =>
         {
             if (Guid.TryParse(party, out var _))
             {
@@ -500,7 +547,7 @@ public static class ValidationRules
         /// A validation rule that adds an error if the party value is not a valid UUID
         /// and does not match any of the predefined keywords <see cref="ParamKeywords"/>.
         /// </returns>
-        public static FuncExpression Party(string party, string paramName = "party") => () =>
+        internal static RuleExpression Party(string party, string paramName = "party") => () =>
         {
             if (Guid.TryParse(party, out var _))
             {
@@ -525,7 +572,7 @@ public static class ValidationRules
         /// </summary>
         /// <param name="party">The value of the 'from' query parameter to validate.</param>
         /// <returns>A validation rule that adds an error if validation fails.</returns>
-        public static FuncExpression PartyFrom(string party) => Party(party, "from");
+        internal static RuleExpression PartyFrom(string party) => Party(party, "from");
 
         /// <summary>
         /// Validates the 'to' party query parameter.
@@ -533,6 +580,44 @@ public static class ValidationRules
         /// </summary>
         /// <param name="party">The value of the 'to' query parameter to validate.</param>
         /// <returns>A validation rule that adds an error if validation fails.</returns>
-        public static FuncExpression PartyTo(string party) => Party(party, "to");
+        internal static RuleExpression PartyTo(string party) => Party(party, "to");
+
+        /// <summary>
+        /// Validates packages ID
+        /// </summary>
+        /// <param name="packageId">Package ID.</param>
+        /// <param name="packageUrn">Package URN.</param>
+        /// <param name="paramNamePackageId">query param name for package UUID.</param>
+        /// <param name="paramNamePackage">query param name for package URN.</param>
+        internal static RuleExpression PackageReference(Guid? packageId, string packageUrn, string paramNamePackageId = "packageId", string paramNamePackage = "package") => () =>
+        {
+            if ((packageId.HasValue && packageId != Guid.Empty) != !string.IsNullOrEmpty(packageUrn))
+            {
+                return null;
+            }
+
+            if (packageId.HasValue && !string.IsNullOrEmpty(packageUrn))
+            {
+                return (ref ValidationErrorBuilder errors) =>
+                {
+                    errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramNamePackageId}", [new("package", "Provide either a package URN or a package ID, not both.")]);
+                    errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramNamePackage}", [new("package", "Provide either a package URN or a package ID, not both.")]);
+                };
+            }
+
+            if (packageId.HasValue && packageId.Value == Guid.Empty)
+            {
+                return (ref ValidationErrorBuilder errors) =>
+                {
+                    errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramNamePackageId}", [new("package", $"The provided package ID '{packageId}' is an empty UUID, which is invalid.")]);
+                };
+            }
+
+            return (ref ValidationErrorBuilder errors) =>
+            {
+                errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramNamePackageId}", [new("package", "Either a package URN or a package ID must be provided.")]);
+                errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramNamePackage}", [new("package", "Either a package URN or a package ID must be provided.")]);
+            };
+        };
     }
 }
