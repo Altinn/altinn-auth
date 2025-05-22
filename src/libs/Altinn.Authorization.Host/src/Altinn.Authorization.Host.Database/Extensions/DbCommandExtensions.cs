@@ -21,4 +21,19 @@ public static class DbCommandExtensions
             CommandName.Value = previousValue;
         }
     }
+
+    public static async Task<int> ExecuteNonQueryWithSpanNameAsync(this NpgsqlCommand command, string spanName, CancellationToken cancellationToken = default)
+    {
+        var previousValue = CommandName.Value;
+        CommandName.Value = spanName;
+
+        try
+        {
+            return await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+        finally
+        {
+            CommandName.Value = previousValue;
+        }
+    }
 }

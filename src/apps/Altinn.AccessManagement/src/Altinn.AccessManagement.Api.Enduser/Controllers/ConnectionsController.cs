@@ -19,7 +19,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 /// Controller for en user api operations for connections
 /// </summary>
 [ApiController]
-[Route("accessmanagement/api/v1/enduser/[controller]")]
+[Route("accessmanagement/api/v1/enduser/connections")]
 [FeatureGate(AccessManagementEnduserFeatureFlags.ControllerConnections)]
 [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
 public class ConnectionsController(IEnduserConnectionService connectionService) : ControllerBase
@@ -194,13 +194,17 @@ public class ConnectionsController(IEnduserConnectionService connectionService) 
 
         Guid.TryParse(connection.From, out var fromUuid);
         Guid.TryParse(connection.To, out var toUuid);
-
-        if (packageId.HasValue)
+        async Task<ValidationProblemInstance> RemovePackage()
         {
-            problem = await ConnectionService.RemovePackage(fromUuid, toUuid, "rettighetshaver", packageId.Value, cancellationToken);
+            if (packageId.HasValue)
+            {
+                return await ConnectionService.RemovePackage(fromUuid, toUuid, "rettighetshaver", packageId.Value, cancellationToken);
+            }
+
+            return await ConnectionService.RemovePackage(fromUuid, toUuid, "rettighetshaver", package, cancellationToken);
         }
 
-        problem = await ConnectionService.RemovePackage(fromUuid, toUuid, "rettighetshaver", package, cancellationToken);
+        problem = await RemovePackage();
 
         if (problem is { })
         {

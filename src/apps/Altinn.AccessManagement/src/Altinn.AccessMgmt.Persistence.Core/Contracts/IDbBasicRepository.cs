@@ -16,20 +16,27 @@ public interface IDbBasicRepository<T>
     /// </summary>
     /// <param name="options">The request options such as paging, language, or as-of date. If null, default options are applied.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the collection of entities.</returns>
-    Task<QueryResponse<T>> Get(RequestOptions options = null, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default);
+    Task<QueryResponse<T>> Get(RequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Retrieves a single entity by its unique identifier.
     /// </summary>
     /// <param name="id">The unique identifier of the entity.</param>
     /// <param name="options">The request options, such as language or as-of date. If null, default options are applied.</param>
-    /// <param name="callerName">Name of callee</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the entity if found; otherwise, null.
     /// </returns>
-    Task<T> Get(Guid id, RequestOptions options = null, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default);
+    Task<T> Get(Guid id, RequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Get Entities based on property and value
@@ -38,8 +45,12 @@ public interface IDbBasicRepository<T>
     /// <param name="value">Filter value</param>
     /// <param name="options">RequestOptions</param>
     /// <param name="cancellationToken">CancellationToken</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>T<see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-    Task<QueryResponse<T>> Get<TProperty>(Expression<Func<T, TProperty>> property, TProperty value, RequestOptions options = null, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default);
+    Task<QueryResponse<T>> Get<TProperty>(Expression<Func<T, TProperty>> property, TProperty value, RequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Retrieves a collection of entities that match the criteria specified by a <see cref="GenericFilterBuilder{T}"/>.
@@ -47,8 +58,12 @@ public interface IDbBasicRepository<T>
     /// <param name="filterBuilder">A builder object that specifies the filter criteria.</param>
     /// <param name="options">The request options, such as paging or language settings.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the collection of matching entities.</returns>
-    Task<QueryResponse<T>> Get(GenericFilterBuilder<T> filterBuilder, RequestOptions options = null, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default);
+    Task<QueryResponse<T>> Get(GenericFilterBuilder<T> filterBuilder, RequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Retrieves a collection of entities that match the provided list of filters.
@@ -56,8 +71,12 @@ public interface IDbBasicRepository<T>
     /// <param name="filters">A collection of filter criteria.</param>
     /// <param name="options">The request options, such as paging, language, or as-of date.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the collection of matching entities.</returns>
-    Task<QueryResponse<T>> Get(IEnumerable<GenericFilter> filters, RequestOptions options = null, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default);
+    Task<QueryResponse<T>> Get(IEnumerable<GenericFilter> filters, RequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Get history records
@@ -82,10 +101,14 @@ public interface IDbBasicRepository<T>
     /// <param name="entity">The entity to create.</param>
     /// <param name="options">Options used for changing data</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
     /// </returns>
-    Task<int> Create(T entity, ChangeRequestOptions options, CancellationToken cancellationToken = default);
+    Task<int> Create(T entity, ChangeRequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Inserts or updates an entity in the database. If the entity already exists, it will be updated.
@@ -93,10 +116,14 @@ public interface IDbBasicRepository<T>
     /// <param name="entity">The entity to upsert.</param>
     /// <param name="options">Options used for changing data</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
     /// </returns>
-    Task<int> Upsert(T entity, ChangeRequestOptions options, CancellationToken cancellationToken = default);
+    Task<int> Upsert(T entity, ChangeRequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Inserts or updates an entity in the database. If the entity already exists, it will be updated.
@@ -105,10 +132,14 @@ public interface IDbBasicRepository<T>
     /// <param name="mergeFilter">Properties for merge statement</param>
     /// <param name="options">Options used for changing data</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
     /// </returns>
-    Task<int> Upsert(T entity, List<GenericFilter> mergeFilter, ChangeRequestOptions options, CancellationToken cancellationToken = default);
+    Task<int> Upsert(T entity, List<GenericFilter> mergeFilter, ChangeRequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Updates an existing entity in the database identified by its unique identifier.
@@ -117,10 +148,14 @@ public interface IDbBasicRepository<T>
     /// <param name="entity">The updated entity data.</param>
     /// <param name="options">Options used for changing data</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
     /// </returns>
-    Task<int> Update(Guid id, T entity, ChangeRequestOptions options, CancellationToken cancellationToken = default);
+    Task<int> Update(Guid id, T entity, ChangeRequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Updates a single property on an existing entity in the database identified by its unique identifier.
@@ -130,10 +165,14 @@ public interface IDbBasicRepository<T>
     /// <param name="id">The unique identifier of the entity to update.</param>
     /// <param name="options">Options used for changing data</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
     /// </returns>
-    Task<int> Update<TProperty>(Expression<Func<T, TProperty>> property, TProperty value, Guid id, ChangeRequestOptions options, CancellationToken cancellationToken = default);
+    Task<int> Update<TProperty>(Expression<Func<T, TProperty>> property, TProperty value, Guid id, ChangeRequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Updates a single property to NULL on an existing entity in the database identified by its unique identifier.
@@ -142,10 +181,14 @@ public interface IDbBasicRepository<T>
     /// <param name="id">The unique identifier of the entity to update.</param>
     /// <param name="options">Options used for changing data</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
     /// </returns>
-    Task<int> Update<TProperty>(Expression<Func<T, TProperty>> property, Guid id, ChangeRequestOptions options, CancellationToken cancellationToken = default);
+    Task<int> Update<TProperty>(Expression<Func<T, TProperty>> property, Guid id, ChangeRequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Updates specific properties of an existing entity in the database using a list of generic parameters.
@@ -154,10 +197,14 @@ public interface IDbBasicRepository<T>
     /// <param name="parameters">A list of generic parameters representing the properties to update.</param>
     /// <param name="options">Options used for changing data</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
     /// </returns>
-    Task<int> Update(Guid id, List<GenericParameter> parameters, ChangeRequestOptions options, CancellationToken cancellationToken = default);
+    Task<int> Update(Guid id, List<GenericParameter> parameters, ChangeRequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Deletes an entity from the database identified by its unique identifier.
@@ -165,10 +212,14 @@ public interface IDbBasicRepository<T>
     /// <param name="id">The unique identifier of the entity to delete.</param>
     /// <param name="options">Options used for changing data</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
     /// </returns>
-    Task<int> Delete(Guid id, ChangeRequestOptions options, CancellationToken cancellationToken = default);
+    Task<int> Delete(Guid id, ChangeRequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Deletes an entity from the database identified by its unique identifier.
@@ -176,10 +227,14 @@ public interface IDbBasicRepository<T>
     /// <param name="filters">List of generic filters</param>
     /// <param name="options">Options used for changing data</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
     /// </returns>
-    Task<int> Delete(IEnumerable<GenericFilter> filters, ChangeRequestOptions options, CancellationToken cancellationToken = default);
+    Task<int> Delete(IEnumerable<GenericFilter> filters, ChangeRequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Creates a translation entry for the specified entity in a different language.
@@ -188,10 +243,14 @@ public interface IDbBasicRepository<T>
     /// <param name="language">The language code for the translation.</param>
     /// <param name="options">Options used for changing data</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
     /// </returns>
-    Task<int> CreateTranslation(T obj, string language, ChangeRequestOptions options, CancellationToken cancellationToken = default);
+    Task<int> CreateTranslation(T obj, string language, ChangeRequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Updates the translation for an entity in a specified language.
@@ -201,10 +260,14 @@ public interface IDbBasicRepository<T>
     /// <param name="language">The language code for which the translation is to be updated.</param>
     /// <param name="options">Options used for changing data</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
     /// </returns>
-    Task<int> UpdateTranslation(Guid id, T obj, string language, ChangeRequestOptions options, CancellationToken cancellationToken = default);
+    Task<int> UpdateTranslation(Guid id, T obj, string language, ChangeRequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Update or insert translation for an entity in a specified language.
@@ -214,10 +277,14 @@ public interface IDbBasicRepository<T>
     /// <param name="language">The language code for which the translation is to be updated.</param>
     /// <param name="options">Options used for changing data</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="callerName">
+    /// The name of the calling method, automatically provided by the compiler. 
+    /// Used to set the span name for OpenTelemetry tracing to aid in observability and diagnostics.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the number of rows affected.
     /// </returns>
-    Task<int> UpsertTranslation(Guid id, T obj, string language, ChangeRequestOptions options, CancellationToken cancellationToken = default);
+    Task<int> UpsertTranslation(Guid id, T obj, string language, ChangeRequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "");
 
     /// <summary>
     /// Creates a new instance of a <see cref="GenericFilterBuilder{T}"/> for constructing filter criteria for queries.

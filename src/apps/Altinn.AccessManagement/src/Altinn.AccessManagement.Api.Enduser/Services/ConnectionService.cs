@@ -82,7 +82,7 @@ public class ConnectionService(
             Unreachable();
         }
 
-        var result = await ConnectionRepository.GetExtended(filter, cancellationToken: cancellationToken);
+        var result = await ConnectionRepository.GetExtended(filter, callerName: SpanName("Get extended assignments"), cancellationToken: cancellationToken);
         return result?.ToList() ?? [];
     }
 
@@ -101,7 +101,7 @@ public class ConnectionService(
             .Equal(t => t.ToId, toId)
             .Equal(t => t.RoleId, roleId);
 
-        var existingAssignment = await AssignmentRepository.Get(filter, cancellationToken: cancellationToken);
+        var existingAssignment = await AssignmentRepository.Get(filter, callerName: SpanName("Get existing assignments"), cancellationToken: cancellationToken);
         if (existingAssignment != null && existingAssignment.Any())
         {
             return existingAssignment.First();
@@ -114,7 +114,7 @@ public class ConnectionService(
             RoleId = roleId,
         };
 
-        var result = await AssignmentRepository.Create(assignment, DbAudit.Value, cancellationToken);
+        var result = await AssignmentRepository.Create(assignment, DbAudit.Value, callerName: SpanName("Create assignment"), cancellationToken: cancellationToken);
         if (result == 0)
         {
             Unreachable();
@@ -138,7 +138,7 @@ public class ConnectionService(
             .Equal(t => t.ToId, toId)
             .Equal(t => t.RoleId, roleId);
 
-        var existingAssignments = await AssignmentRepository.Get(filter, cancellationToken: cancellationToken);
+        var existingAssignments = await AssignmentRepository.Get(filter, callerName: SpanName("Get existing assignments"), cancellationToken: cancellationToken);
         if (existingAssignments != null && !existingAssignments.Any())
         {
             return null;
@@ -148,9 +148,9 @@ public class ConnectionService(
 
         if (!cascade)
         {
-            var packages = await AssignmentPackageRepository.Get(f => f.AssignmentId, existingAssignment.Id, cancellationToken: cancellationToken);
-            var delegationsFrom = await DelegationRepository.Get(f => f.FromId, existingAssignment.Id, cancellationToken: cancellationToken);
-            var delegationsTo = await DelegationRepository.Get(f => f.ToId, existingAssignment.Id, cancellationToken: cancellationToken);
+            var packages = await AssignmentPackageRepository.Get(f => f.AssignmentId, existingAssignment.Id, callerName: SpanName("Get existing package assignments"), cancellationToken: cancellationToken);
+            var delegationsFrom = await DelegationRepository.Get(f => f.FromId, existingAssignment.Id, callerName: SpanName("Get existing package delegations (From)"), cancellationToken: cancellationToken);
+            var delegationsTo = await DelegationRepository.Get(f => f.ToId, existingAssignment.Id, callerName: SpanName("Get existing package delegations (To)"), cancellationToken: cancellationToken);
 
             problem = ValidationRules.Validate(
                 ValidationRules.QueryParameters.HasPackagesAssigned(packages),
@@ -163,7 +163,7 @@ public class ConnectionService(
             }
         }
 
-        var result = await AssignmentRepository.Delete(existingAssignment.Id, DbAudit.Value, cancellationToken: cancellationToken);
+        var result = await AssignmentRepository.Delete(existingAssignment.Id, DbAudit.Value, callerName: SpanName("Delete assignment"), cancellationToken: cancellationToken);
         if (result == 0)
         {
             Unreachable();
@@ -213,7 +213,7 @@ public class ConnectionService(
             Unreachable();
         }
 
-        var result = await ConnectionPackageRepository.Get(filter, cancellationToken: cancellationToken);
+        var result = await ConnectionPackageRepository.Get(filter, callerName: SpanName("Get assignment packages"), cancellationToken: cancellationToken);
         return result.ToList();
     }
 
@@ -225,7 +225,7 @@ public class ConnectionService(
         var filter = PackageRepository.CreateFilterBuilder()
             .Add(t => t.Urn, package, FilterComparer.EndsWith);
 
-        var packages = await PackageRepository.Get(filter, cancellationToken: cancellationToken);
+        var packages = await PackageRepository.Get(filter, callerName: SpanName("Get packages using URN"), cancellationToken: cancellationToken);
         var problem = ValidationRules.Validate(ValidationRules.QueryParameters.PackageUrnLookup(packages));
         if (problem is { })
         {
@@ -256,7 +256,7 @@ public class ConnectionService(
             .Equal(t => t.ToId, toId)
             .Equal(t => t.RoleId, roleId);
 
-        var existingAssignments = await AssignmentRepository.Get(filter, cancellationToken: cancellationToken);
+        var existingAssignments = await AssignmentRepository.Get(filter, callerName: SpanName("Get existing assignments"), cancellationToken: cancellationToken);
         problem = ValidationRules.Validate(ValidationRules.QueryParameters.VerifyAssignmentRoleExists(existingAssignments, role));
         if (problem is { })
         {
@@ -270,7 +270,7 @@ public class ConnectionService(
             .Equal(t => t.FromId, fromId)
             .Equal(t => t.PackageId, packageId);
 
-        var userPackags = await ConnectionPackageRepository.GetExtended(userPackageFilter, cancellationToken: cancellationToken);
+        var userPackags = await ConnectionPackageRepository.GetExtended(userPackageFilter, callerName: SpanName("Get extended packages assignments"), cancellationToken: cancellationToken);
         var userpackage = userPackags.Where(p => p.PackageId == packageId)
             .ToList();
 
@@ -290,19 +290,19 @@ public class ConnectionService(
             .Equal(t => t.AssignmentId, assignment.Id)
             .Equal(t => t.PackageId, packageId);
 
-        var existingPackageAssignment = await AssignmentPackageRepository.Get(assignmentPackageFilter, cancellationToken: cancellationToken);
+        var existingPackageAssignment = await AssignmentPackageRepository.Get(assignmentPackageFilter, callerName: SpanName("Get existing package assignments"), cancellationToken: cancellationToken);
         if (existingPackageAssignment != null && existingPackageAssignment.Any())
         {
             return existingPackageAssignment.First();
         }
 
-        var createResult = await AssignmentPackageRepository.Create(new AssignmentPackage() { AssignmentId = assignment.Id, PackageId = packageId }, DbAudit.Value, cancellationToken: cancellationToken);
+        var createResult = await AssignmentPackageRepository.Create(new AssignmentPackage() { AssignmentId = assignment.Id, PackageId = packageId }, DbAudit.Value, callerName: SpanName("Create assignment package"), cancellationToken: cancellationToken);
         if (createResult == 0)
         {
             Unreachable();
         }
 
-        var createCheckResult = await AssignmentPackageRepository.Get(assignmentPackageFilter, cancellationToken: cancellationToken);
+        var createCheckResult = await AssignmentPackageRepository.Get(assignmentPackageFilter, callerName: SpanName("Get assignment packages"), cancellationToken: cancellationToken);
         if (createCheckResult == null || !createCheckResult.Any())
         {
             Unreachable();
@@ -319,7 +319,7 @@ public class ConnectionService(
         var filter = PackageRepository.CreateFilterBuilder()
             .Add(t => t.Urn, package, FilterComparer.EndsWith);
 
-        var packages = await PackageRepository.Get(filter, cancellationToken: cancellationToken);
+        var packages = await PackageRepository.Get(filter, callerName: SpanName("Get packages using URN"), cancellationToken: cancellationToken);
         var problem = ValidationRules.Validate(ValidationRules.QueryParameters.PackageUrnLookup(packages));
         if (problem is { })
         {
@@ -333,7 +333,7 @@ public class ConnectionService(
     /// <inheritdoc/>
     public async Task<ValidationProblemInstance> RemovePackage(Guid fromId, Guid toId, string role, Guid packageId, CancellationToken cancellationToken = default)
     {
-        var roleResult = await RoleRepository.Get(t => t.Code, role, cancellationToken: cancellationToken);
+        var roleResult = await RoleRepository.Get(t => t.Code, role, callerName: SpanName("Get roles using role code"), cancellationToken: cancellationToken);
         if (roleResult == null || !roleResult.Any())
         {
             return null;
@@ -344,7 +344,7 @@ public class ConnectionService(
             .Equal(t => t.ToId, toId)
             .Equal(t => t.RoleId, roleResult.First().Id);
 
-        var result = await AssignmentRepository.Get(assignmentFilter, cancellationToken: cancellationToken);
+        var result = await AssignmentRepository.Get(assignmentFilter, callerName: SpanName("Get assignments"), cancellationToken: cancellationToken);
         if (result == null || !result.Any())
         {
             return null;
@@ -357,7 +357,7 @@ public class ConnectionService(
             .Equal(t => t.ToId, toId)
             .Equal(t => t.PackageId, packageId);
 
-        var userPackages = await ConnectionPackageRepository.GetExtended(connectionPackageFilter, cancellationToken: cancellationToken);
+        var userPackages = await ConnectionPackageRepository.GetExtended(connectionPackageFilter, callerName: SpanName("Get extended connection packages for calling user"), cancellationToken: cancellationToken);
 
         if (!userPackages.Any())
         {
@@ -368,13 +368,13 @@ public class ConnectionService(
             .Equal(t => t.AssignmentId, assignment.Id)
             .Equal(t => t.PackageId, packageId);
 
-        var checkResult = await AssignmentPackageRepository.Get(packageFilter, cancellationToken: cancellationToken);
+        var checkResult = await AssignmentPackageRepository.Get(packageFilter, callerName: SpanName("Get assigmment package"), cancellationToken: cancellationToken);
         if (checkResult == null && !checkResult.Any())
         {
             return null;
         }
 
-        var deleteResult = await AssignmentPackageRepository.Delete(packageFilter, DbAudit.Value, cancellationToken: cancellationToken);
+        var deleteResult = await AssignmentPackageRepository.Delete(packageFilter, DbAudit.Value, callerName: SpanName("Delete assignment package"), cancellationToken: cancellationToken);
         if (deleteResult == 0)
         {
             return null;
@@ -407,19 +407,19 @@ public class ConnectionService(
 
     private async Task<(ExtEntity EntityFrom, ExtEntity EntityTo, IEnumerable<Role> Roles)> GetAssignmentDependencies(Guid from, Guid to, string roleCode, CancellationToken cancellationToken)
     {
-        var entityFromTask = EntityRepository.GetExtended(from, cancellationToken: cancellationToken);
-        var entityToTask = EntityRepository.GetExtended(to, cancellationToken: cancellationToken);
-        var roleTask = RoleRepository.Get(t => t.Code, roleCode, cancellationToken: cancellationToken);
+        var entityFromTask = EntityRepository.GetExtended(from, callerName: SpanName("Get extended entities (From)"), cancellationToken: cancellationToken);
+        var entityToTask = EntityRepository.GetExtended(to, callerName: SpanName("Get extended entities (To)"), cancellationToken: cancellationToken);
+        var roleTask = RoleRepository.Get(t => t.Code, roleCode, callerName: SpanName("Get roles using role code"), cancellationToken: cancellationToken);
         return (await entityFromTask, await entityToTask, await roleTask);
     }
 
     [DoesNotReturn]
-    private void Unreachable()
-    {
+    private void Unreachable() =>
         throw new UnreachableException();
-    }
-}
 
+    private static string SpanName(string spanName) =>
+        $"{nameof(ConnectionService)}: {spanName}";
+}
 
 /// <summary>
 /// Interface for managing connections.

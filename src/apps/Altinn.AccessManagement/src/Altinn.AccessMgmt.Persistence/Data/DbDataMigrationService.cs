@@ -40,7 +40,7 @@ public class DbDataMigrationService(
     private readonly IMigrationService migrationService = migrationService;
     private readonly IIngestService ingestService = ingestService;
     private readonly string iconBaseUrl = configuration["AltinnCDN:AccessPackageIconsBaseURL"];
-    
+
     /// <summary>
     /// Ingest all static data
     /// </summary>
@@ -50,7 +50,7 @@ public class DbDataMigrationService(
     {
         //// TODO: Add featureflags
         //// TODO: Add Activity logging
-        
+
         var options = new ChangeRequestOptions()
         {
             ChangedBy = AuditDefaults.StaticDataIngest,
@@ -418,7 +418,7 @@ public class DbDataMigrationService(
 
         foreach (var item in entityVariants)
         {
-            await entityVariantService.Upsert(item, options:options, cancellationToken: cancellationToken);
+            await entityVariantService.Upsert(item, options: options, cancellationToken: cancellationToken);
         }
 
         foreach (var item in entityVariantsEng)
@@ -470,7 +470,7 @@ public class DbDataMigrationService(
         var ccrProviderId = (await providerRepository.Get(t => t.Code, "sys-ccr")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("Provider not found '{0}'", "Enhetsregisteret"));
         var a3ProviderId = (await providerRepository.Get(t => t.Code, "sys-altinn3")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("Provider not found '{0}'", "Altinn 3"));
 
-        var roles = new List<Role>() 
+        var roles = new List<Role>()
         {
             new Role() { Id = Guid.Parse("42CAE370-2DC1-4FDC-9C67-C2F4B0F0F829"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId, Name = "Rettighetshaver",              Code = "rettighetshaver",               Description = "Gir mulighet til å motta delegerte fullmakter for virksomheten", Urn = "urn:altinn:role:rettighetshaver", IsKeyRole = false, IsAssignable = true },
             new Role() { Id = Guid.Parse("FF4C33F5-03F7-4445-85ED-1E60B8AAFB30"), EntityTypeId = persEntityTypeId, ProviderId = a3ProviderId, Name = "Agent",                       Code = "agent",                         Description = "Gir mulighet til å motta delegerte fullmakter for virksomheten", Urn = "urn:altinn:role:agent", IsKeyRole = false, IsAssignable = true },
@@ -2440,15 +2440,15 @@ public class DbDataMigrationService(
             variants.Add(variant.Name, variant.Id);
         }
 
-        try 
+        try
         {
             var filter = rolePackageRepository.CreateFilterBuilder();
             filter.Equal(t => t.RoleId, roles["urn:altinn:external-role:ccr:forretningsforer"]);
             filter.Equal(t => t.PackageId, packages["urn:altinn:accesspackage:forretningsforer-eiendom"]);
             filter.Equal(t => t.EntityVariantId, variants["BBL"]);
-            await rolePackageRepository.Delete(filter, options, cancellationToken);
+            await rolePackageRepository.Delete(filter, options, cancellationToken: cancellationToken);
         }
-        catch(Exception e)
+        catch (Exception e)
         {
 
         }

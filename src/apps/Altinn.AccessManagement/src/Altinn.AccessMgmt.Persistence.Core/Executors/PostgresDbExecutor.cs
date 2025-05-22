@@ -68,7 +68,7 @@ public class PostgresDbExecutor(IAltinnDatabase databaseFactory, IDbConverter db
         }
 
         await openConnection;
-        return await cmd.ExecuteNonQueryAsync(cancellationToken: cancellationToken);
+        return await cmd.ExecuteNonQueryWithSpanNameAsync(callerName, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -86,7 +86,7 @@ public class PostgresDbExecutor(IAltinnDatabase databaseFactory, IDbConverter db
         }
 
         await openConnection;
-        return await cmd.ExecuteNonQueryAsync(cancellationToken: cancellationToken);
+        return await cmd.ExecuteNonQueryWithSpanNameAsync(callerName, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -99,7 +99,7 @@ public class PostgresDbExecutor(IAltinnDatabase databaseFactory, IDbConverter db
         var cmd = conn.CreateCommand(query);
 
         await openConnection;
-        return await cmd.ExecuteNonQueryAsync(cancellationToken: cancellationToken);
+        return await cmd.ExecuteNonQueryWithSpanNameAsync(callerName, cancellationToken: cancellationToken);
     }
 
     /// <summary>
