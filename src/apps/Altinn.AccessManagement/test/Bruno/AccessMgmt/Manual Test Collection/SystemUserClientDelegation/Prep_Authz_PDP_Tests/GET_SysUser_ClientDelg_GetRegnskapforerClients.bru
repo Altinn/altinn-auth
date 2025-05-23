@@ -1,7 +1,7 @@
 meta {
   name: GET_SysUser_ClientDelg_GetRegnskapforerClients
   type: http
-  seq: 12
+  seq: 11
 }
 
 get {
@@ -25,7 +25,7 @@ script:pre-request {
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
   const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
   
-  bru.setVar("requestName", "GET_SysUser_ClientDelg_AccPkg");
+  bru.setVar("requestName", "GET_SysUser_ClientDelg_GetRegnskapforerClients");
   bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
   bru.setVar("systemUser", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser.partyUuid);
   

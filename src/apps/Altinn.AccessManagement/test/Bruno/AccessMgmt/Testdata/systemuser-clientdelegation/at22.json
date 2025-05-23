@@ -32,7 +32,8 @@
         "orgno": "315556155",
         "partyId": 51794395,
         "partyUuid": "86ae6d6a-3545-4956-b395-c67ca0df4e51"
-      }
+      },
+      "directPackageToDelegate": "skatt-naering"
     },
     "client_ENK_HUMAN_TOPP_KATT_BIL": {
       "name": "HUMAN TOPP KATT BIL",
@@ -65,7 +66,8 @@
         "partyId": 50784075,
         "partyUuid": "f75f209d-ce25-413e-b635-54897dc8400e"
       },
-      "directPackageToDelegate": "motorvognavgift"
+      "directPackageToDelegate": "motorvognavgift",
+      "directPackageToDelegate2": "skatt-naering"
     },
     "client_rightholderOrg2": {
       "name": "STOLT BETYDELIG TIGER AS",

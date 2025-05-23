@@ -1,11 +1,11 @@
 meta {
   name: DEL_SysUser_ClientDelg_AccPkgForDelete_DelAgntAss
   type: http
-  seq: 8
+  seq: 7
 }
 
 delete {
-  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/deleteagentassignment?party={{party}}&agentId={{systemUser}}&cascade=false
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/deleteagentassignment?party={{party}}&agentId={{systemUser}}&cascade=true
   body: json
   auth: inherit
 }
@@ -13,7 +13,7 @@ delete {
 params:query {
   party: {{party}}
   agentId: {{systemUser}}
-  cascade: false
+  cascade: true
 }
 
 headers {

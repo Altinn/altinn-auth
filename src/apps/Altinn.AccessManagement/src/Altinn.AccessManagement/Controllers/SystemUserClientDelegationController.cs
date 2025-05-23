@@ -1,5 +1,6 @@
 ﻿using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Helpers;
+using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Data;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
@@ -21,16 +22,19 @@ namespace Altinn.AccessManagement.Controllers;
 public class SystemUserClientDelegationController : ControllerBase
 {
     private readonly IConnectionService connectionService;
+    private readonly IAssignmentService assignmentService;
     private readonly IDelegationService delegationService;
     private readonly IDelegationRepository delegationRepository;
     private readonly IAssignmentRepository assignmentRepository;
     private readonly IRoleRepository roleRepository;
+    private readonly string[] validClientRoles = ["regnskapsforer", "revisor", "forretningsforer", "rettighetshaver"];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SystemUserClientDelegationController"/> class.
     /// </summary>
     public SystemUserClientDelegationController(
         IConnectionService connectionService,
+        IAssignmentService assignmentService,
         IDelegationService delegationService, 
         IDelegationRepository delegationRepository,
         IAssignmentRepository assignmentRepository,
@@ -38,6 +42,7 @@ public class SystemUserClientDelegationController : ControllerBase
         )
     {
         this.connectionService = connectionService;
+        this.assignmentService = assignmentService;
         this.delegationService = delegationService;
         this.delegationRepository = delegationRepository;
         this.assignmentRepository = assignmentRepository;
@@ -50,10 +55,10 @@ public class SystemUserClientDelegationController : ControllerBase
     /// <param name="party">The party the authenticated user is performing client administration on behalf of</param>
     /// <param name="roles"> The list of role codes to filter the connections by</param>
     /// <param name="packages"> The list of package identifiers to filter the connections by</param>
-    /// <returns><seealso cref="ConnectionDto"/>List of connections</returns>
+    /// <returns>List of Clients<seealso cref="ClientDto"/></returns>
     [HttpGet("clients")]
     [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_READ)]
-    public async Task<ActionResult<ConnectionDto>> GetClients([FromQuery] Guid party, [FromQuery] string[] roles = null, [FromQuery] string[] packages = null)
+    public async Task<ActionResult> GetClients([FromQuery] Guid party, [FromQuery] string[] roles = null, [FromQuery] string[] packages = null)
     {
         var userId = AuthenticationHelper.GetPartyUuid(HttpContext);
         if (userId == Guid.Empty)
@@ -61,9 +66,27 @@ public class SystemUserClientDelegationController : ControllerBase
             return Unauthorized();
         }
 
-        var dbResult = await connectionService.GetClients(party, roles, packages);
+        if (roles != null && roles.Length > 0)
+        {
+            var invalidRoles = roles.Where(role => !validClientRoles.Contains(role));
+            if (invalidRoles.Any())
+            {
+                return BadRequest($"Invalid role filter: '{string.Join(",", invalidRoles)}'. Valid Client roles are: '{string.Join(", ", validClientRoles)}'");
+            }
+        }
+        else
+        {
+            roles = validClientRoles;
+        }
 
-        return Ok(dbResult.Select(ConnectionConverter.ConvertToDto));
+        if (packages == null || packages.Length == 0)
+        {
+            packages = [];
+        }
+
+        var clients = await assignmentService.GetClients(party, roles, packages);
+
+        return Ok(clients);
     }
 
     /// <summary>

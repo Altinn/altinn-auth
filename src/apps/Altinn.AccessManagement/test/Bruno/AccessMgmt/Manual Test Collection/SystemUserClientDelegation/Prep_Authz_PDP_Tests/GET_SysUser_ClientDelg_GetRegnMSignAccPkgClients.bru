@@ -1,11 +1,11 @@
 meta {
   name: GET_SysUser_ClientDelg_GetRegnMSignAccPkgClients
   type: http
-  seq: 13
+  seq: 12
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/clients?party={{party}}&packages=regnskapsforer-med-signeringsrettighet
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/clients?party={{party}}&packages=regnskapsforer-med-signeringsrettighet&packages=regnskapsforer-uten-signeringsrettighet
   body: json
   auth: inherit
 }
@@ -13,7 +13,9 @@ get {
 params:query {
   party: {{party}}
   packages: regnskapsforer-med-signeringsrettighet
+  packages: regnskapsforer-uten-signeringsrettighet
   ~roles: regnskapsforer
+  ~packages: skatt-naering
 }
 
 headers {
@@ -25,7 +27,7 @@ script:pre-request {
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
   const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
   
-  bru.setVar("requestName", "GET_SysUser_ClientDelg_AccPkg");
+  bru.setVar("requestName", "GET_SysUser_ClientDelg_GetRegnMSignAccPkgClients");
   bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
   bru.setVar("systemUser", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser.partyUuid);
   

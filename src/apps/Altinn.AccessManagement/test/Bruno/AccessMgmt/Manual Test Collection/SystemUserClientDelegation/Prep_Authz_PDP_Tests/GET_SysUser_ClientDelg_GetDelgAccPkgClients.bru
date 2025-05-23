@@ -1,19 +1,21 @@
 meta {
   name: GET_SysUser_ClientDelg_GetDelgAccPkgClients
   type: http
-  seq: 14
+  seq: 13
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/clients?party={{party}}&packages=motorvognavgift
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/clients?party={{party}}&packages=skatt-naering
   body: json
   auth: inherit
 }
 
 params:query {
   party: {{party}}
-  packages: motorvognavgift
+  packages: skatt-naering
+  ~packages: motorvognavgift
   ~roles: rettighetshaver
+  ~roles: regnskapsforer
 }
 
 headers {
@@ -25,7 +27,7 @@ script:pre-request {
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
   const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
   
-  bru.setVar("requestName", "GET_SysUser_ClientDelg_AccPkg");
+  bru.setVar("requestName", "GET_SysUser_ClientDelg_GetDelgAccPkgClients");
   bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
   bru.setVar("systemUser", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser.partyUuid);
   

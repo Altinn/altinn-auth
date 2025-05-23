@@ -9,16 +9,6 @@ namespace Altinn.AccessMgmt.Persistence.Services.Contracts;
 public interface IConnectionService
 {
     /// <summary>
-    /// Gets all client connections for a specified facilitator entity.
-    /// </summary>
-    /// <param name="facilitatorId">The identifier of the entity, access has been facilitated by.</param>
-    /// <param name="roles"> The list of role codes/identifiers to filter the connections by.</param>
-    /// <param name="packages"> The list of package identifiers to filter the connections by.</param>
-    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-    /// <returns>A collection of all client connections.</returns>
-    Task<IEnumerable<ExtConnection>> GetClients(Guid facilitatorId, string[] roles = null, string[] packages = null, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Gets the connections facilitated by the specified entity.
     /// </summary>
     /// <param name="fromId">The identifier of the entity, access has been provided from.</param>
