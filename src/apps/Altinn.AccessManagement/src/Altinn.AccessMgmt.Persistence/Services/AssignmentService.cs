@@ -19,17 +19,10 @@ public class AssignmentService(
     IRoleRepository roleRepository,
     IRolePackageRepository rolePackageRepository,
     IEntityRepository entityRepository,
+    IEntityVariantRepository entityVariantRepository,
     IDelegationRepository delegationRepository
     ) : IAssignmentService
 {
-    private readonly IAssignmentRepository assignmentRepository = assignmentRepository;
-    private readonly IInheritedAssignmentRepository inheritedAssignmentRepository = inheritedAssignmentRepository;
-    private readonly IPackageRepository packageRepository = packageRepository;
-    private readonly IAssignmentPackageRepository assignmentPackageRepository = assignmentPackageRepository;
-    private readonly IRoleRepository roleRepository = roleRepository;
-    private readonly IRolePackageRepository rolePackageRepository = rolePackageRepository;
-    private readonly IEntityRepository entityRepository = entityRepository;
-    private readonly IDelegationRepository delegationRepository = delegationRepository;
     private static readonly string RETTIGHETSHAVER = "rettighetshaver";
     private static readonly Guid PartyTypeOrganizationUuid = new Guid("8c216e2f-afdd-4234-9ba2-691c727bb33d");
 
@@ -84,19 +77,22 @@ public class AssignmentService(
             }
         }
 
-        return GetFilteredClientsFromAssignments(clients, assignmentPackageResult, roleResult, packageResult, rolePackageResult, packages);
+        return await GetFilteredClientsFromAssignments(clients, assignmentPackageResult, roleResult, packageResult, rolePackageResult, packages, cancellationToken);
     }
 
-    private List<ClientDto> GetFilteredClientsFromAssignments(IEnumerable<ExtAssignment> assignments, IEnumerable<AssignmentPackage> assignmentPackages, QueryResponse<Role> roles, QueryResponse<Package> packages, QueryResponse<RolePackage> rolePackages, string[] filterPackages)
+    private async Task<List<ClientDto>> GetFilteredClientsFromAssignments(IEnumerable<ExtAssignment> assignments, IEnumerable<AssignmentPackage> assignmentPackages, QueryResponse<Role> roles, QueryResponse<Package> packages, QueryResponse<RolePackage> rolePackages, string[] filterPackages, CancellationToken ct)
     {
         Dictionary<Guid, ClientDto> clients = new();
+
+        // Fetch Entity metadata
+        var entityVariants = await entityVariantRepository.Get(cancellationToken: ct);
 
         foreach (var assignment in assignments)
         {
             var roleName = roles.First(r => r.Id == assignment.RoleId).Code;
             var assignmentPackageIds = assignmentPackages != null ? assignmentPackages.Where(ap => ap.AssignmentId == assignment.Id).Select(ap => ap.PackageId) : [];
             var assignmentPackageNames = assignmentPackageIds.Any() ? assignmentPackageIds.Select(ap => packages.First(p => p.Id == ap).Urn.Split(":").Last()).ToArray() : [];
-            var rolePackageIds = rolePackages.Where(rp => rp.RoleId == assignment.RoleId).Select(rp => rp.PackageId);
+            var rolePackageIds = rolePackages.Where(rp => rp.RoleId == assignment.RoleId && (!rp.EntityVariantId.HasValue || rp.EntityVariantId == assignment.From.VariantId)).Select(rp => rp.PackageId);
             var rolePackageNames = rolePackageIds.Select(rp => packages.First(p => p.Id == rp).Urn.Split(":").Last()).ToArray();
 
             // Skip client if connection provides neither assignment-packages or role-packages
@@ -114,7 +110,8 @@ public class AssignmentService(
                     {
                         Id = assignment.FromId,
                         Name = assignment.From.Name,
-                        OrganizationNumber = assignment.From.RefId
+                        OrganizationNumber = assignment.From.RefId,
+                        UnitType = entityVariants.FirstOrDefault(ev => ev.Id == assignment.From.VariantId)?.Name
                     }
                 };
 

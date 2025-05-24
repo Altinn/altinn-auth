@@ -50,16 +50,16 @@ public class ClientDto
         /// </summary>
         public string OrganizationNumber { get; set; }
 
+        /// <summary>
+        /// Gets or sets the unit type if the party is an organization
+        /// </summary>
+        public string UnitType { get; set; }
+
         /* ToBe Added in the future maybe
         /// <summary>
         /// Gets or sets the type of party
         /// </summary>
         public string Type { get; set; }
-
-        /// <summary>
-        /// Gets or sets the unit type if the party is an organization
-        /// </summary>
-        public string UnitType { get; set; }
 
         /// <summary>
         /// Gets or sets whether this party is marked as deleted in the Central Coordinating Register for Legal Entities
