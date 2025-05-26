@@ -1,0 +1,23 @@
+meta {
+  name: GET_access_package
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/package/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 4c859601-9b2b-4662-af39-846f4117ad7a
+}
+
+tests {
+  test("GET_access_package", function() {
+    var body = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(body).to.have.property('urn', 'urn:altinn:accesspackage:skattegrunnlag');
+  });
+}

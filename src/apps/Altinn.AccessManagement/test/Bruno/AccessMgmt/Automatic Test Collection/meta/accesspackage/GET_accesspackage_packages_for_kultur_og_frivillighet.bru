@@ -1,0 +1,25 @@
+meta {
+  name: GET_accesspackage_packages_for_kultur_og_frivillighet
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/area/:id/packages
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 5996ba37-6db0-4391-8918-b1b0bd4b394b
+}
+
+tests {
+  test("GET_accesspackage_packages_for_kultur_og_frivillighet", function() {
+    var body = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(body[0]).to.have.property('name', 'Kunst og underholdning');
+    expect(body[1]).to.have.property('name', 'Biblioteker, museer, arkiver og annen kultur');
+    expect(body[2]).to.have.property('name', 'Lotteri og spill');
+  });
+}

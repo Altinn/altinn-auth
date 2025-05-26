@@ -1,0 +1,23 @@
+meta {
+  name: GET_accesspackage_area_kultur_og_frivillighet
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/area/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 5996ba37-6db0-4391-8918-b1b0bd4b394b
+}
+
+tests {
+  test("GET_accesspackage_area_kultur_og_frivillighet", function() {
+    var body = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(body).to.have.property('name', 'Kultur og frivillighet');
+  });
+}

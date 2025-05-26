@@ -1,0 +1,23 @@
+meta {
+  name: GET_access_package_via_urn
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/package/urn/:urnValue
+  body: none
+  auth: inherit
+}
+
+params:path {
+  urnValue: urn:altinn:accesspackage:kunst-og-underholdning
+}
+
+tests {
+  test("GET_access_package_via_urn", function() {
+    var body = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(body).to.have.property('name', 'Skattegrunnlag');
+  });
+}

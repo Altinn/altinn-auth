@@ -1,0 +1,19 @@
+meta {
+  name: GET accesspackages/export
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/export
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("GET_access_package", function() {
+    var body = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(body).to.not.be.empty;
+  });
+}

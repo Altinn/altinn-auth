@@ -1,0 +1,24 @@
+meta {
+  name: GET_search_for_package_by_name
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/search?term=Opplæringskontorleder
+  body: none
+  auth: inherit
+}
+
+params:query {
+  term: Opplæringskontorleder
+}
+
+tests {
+  test("GET_search_for_package_by_name", function() {
+    var body = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(body[0].object).to.have.property('name', 'Opplæringskontorleder');
+    expect(body[0].object).to.have.property('id', '40397a93-b047-4011-a6b8-6b8af16b6324');
+  });
+}

@@ -1,0 +1,23 @@
+meta {
+  name: GET_accesspackage_group_bransje
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/group/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 3757643a-316d-4d0e-a52b-4dc7cdebc0b4
+}
+
+tests {
+  test("GET_accesspackage_group_bransje", function() {
+    var body = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(body).to.have.property('name', 'Bransje');
+  });
+}

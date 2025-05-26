@@ -1,0 +1,23 @@
+meta {
+  name: GET_package_that_is_assignable
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/package/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 1dba50d6-f604-48e9-bd41-82321b13e85c
+}
+
+tests {
+  test("GET_package_that_is_assignable", function() {
+    var body = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(body).to.have.property('isAssignable', true);
+  });
+}
