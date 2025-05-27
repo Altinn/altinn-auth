@@ -1,5 +1,5 @@
 meta {
-  name: POST_SysUser_ClientDele_FFØR_AccPkg_BBL_Clientorg
+  name: POST_SysUser_ClientDele_FFØR_AccPkg_BRL_Clientorg
   type: http
   seq: 11
 }
@@ -35,7 +35,7 @@ script:pre-request {
   
   bru.setVar("party", testdata.regnskapsforer.partyuuid);
   bru.setVar("systemUser", testdata.regnskapsforer.forretningsforer_systemuser.id);
-  bru.setVar("clientId", testdata.bbl_type_client_org.partyuuid);
+  bru.setVar("clientId", testdata.brl_type_client_org.partyuuid);
   
   var getTokenParameters = {
     auth_userId: testdata.regnskapsforer.hovedadministrator.userid,

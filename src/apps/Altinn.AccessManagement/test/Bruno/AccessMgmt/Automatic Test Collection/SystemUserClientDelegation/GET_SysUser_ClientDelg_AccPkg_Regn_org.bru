@@ -42,14 +42,6 @@ script:pre-request {
   
 }
 
-script:post-response {
-  let data = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
-  if (Array.isArray(data) && data.length > 0) {
-   const assignmentId = data[0].delegation.toId;
-   bru.setEnvVar("toId", assignmentId);
-  }
-}
-
 tests {
   test("Client org has delegated to systembruker", function() {
   const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);

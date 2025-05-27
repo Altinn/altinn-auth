@@ -1,5 +1,5 @@
 meta {
-  name: GET_SysUser_BBL_ClientDelg_FFØR_AccPkg
+  name: GET_SysUser_BRL_ClientDelg_FFØR_AccPkg
   type: http
   seq: 12
 }
@@ -40,14 +40,6 @@ script:pre-request {
   bru.setVar("bearerToken",  token);
   
   
-}
-
-script:post-response {
-  let data = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
-  if (Array.isArray(data) && data.length > 0) {
-   const assignmentId = data[0].delegation.toId;
-   bru.setEnvVar("toId", assignmentId);
-  }
 }
 
 tests {

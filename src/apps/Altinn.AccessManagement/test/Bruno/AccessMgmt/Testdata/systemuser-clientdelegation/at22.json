@@ -215,13 +215,13 @@
       }
     }
   },
-  "bbl_type_client_org": {
-    "name": "USELVSTENDIG FLAT PUMA BBL",
-    "partyuuid": "7F059B2B-F6D2-409B-83FD-194F1AAAB90D",
-    "orgno": "210815872",
+  "brl_type_client_org": {
+    "name": "BORETTSLAGET SMART TØRR HEST",
+    "partyuuid": "D933E9AC-7B3E-473B-A121-8FFD65831521",
+    "orgno": "310104892",
     "dagl": {
-      "name": "REDELIG HABITT",
-      "pid": "11896799993"
+      "name": "INNSIKTSFULL GJESTEROM",
+      "pid": "25815597829"
     }
   },
   "esek_type_client_org": {
