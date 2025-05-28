@@ -59,14 +59,7 @@ public class MssqlQueryBuilder : IDbQueryBuilder
         throw new NotImplementedException();
     }
 
-    /// <inheritdoc />
-    public string BuildUpsertQuery(List<GenericParameter> parameters, ChangeRequestOptions options, bool forTranslation = false)
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <inheritdoc />
-    public string BuildUpsertQuery(List<GenericParameter> parameters, List<GenericFilter> mergeFilter, ChangeRequestOptions options, bool forTranslation = false)
+    public string BuildUpsertQuery(List<GenericParameter> insertParameters, IEnumerable<string> updateProperties, IEnumerable<string> compareProperties, ChangeRequestOptions options, bool forTranslation = false)
     {
         throw new NotImplementedException();
     }

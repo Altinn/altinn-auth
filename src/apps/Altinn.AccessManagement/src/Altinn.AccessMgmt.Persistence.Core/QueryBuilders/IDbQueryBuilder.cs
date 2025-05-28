@@ -64,21 +64,13 @@ public interface IDbQueryBuilder
     /// <summary>
     /// Builds a UPSERT query
     /// </summary>
-    /// <param name="parameters">Parameters</param>
+    /// <param name="insertParameters">Properties to be inserted</param>
+    /// <param name="updateProperties">Properties to update</param>
+    /// <param name="compareProperties">Filter for merge statement</param>
     /// <param name="options">Options for the request</param>
     /// <param name="forTranslation">Is this for a translation table</param>
     /// <returns></returns>
-    string BuildUpsertQuery(List<GenericParameter> parameters, ChangeRequestOptions options, bool forTranslation = false);
-
-    /// <summary>
-    /// Builds a UPSERT query
-    /// </summary>
-    /// <param name="parameters">Parameters</param>
-    /// <param name="mergeFilter">Parameters for merge statement</param>
-    /// <param name="options">Options for the request</param>
-    /// <param name="forTranslation">Is this for a translation table</param>
-    /// <returns></returns>
-    string BuildUpsertQuery(List<GenericParameter> parameters, List<GenericFilter> mergeFilter, ChangeRequestOptions options, bool forTranslation = false);
+    string BuildUpsertQuery(List<GenericParameter> insertParameters, IEnumerable<string> updateProperties, IEnumerable<string> compareProperties, ChangeRequestOptions options, bool forTranslation = false);
 
     /// <summary>
     /// Generates mirgration scripts for the definition

@@ -166,63 +166,42 @@ public class PostgresQueryBuilder : IDbQueryBuilder
     }
 
     /// <inheritdoc/>
-    public string BuildUpsertQuery(List<GenericParameter> parameters, ChangeRequestOptions options, bool forTranslation = false)
+    public string BuildUpsertQuery(List<GenericParameter> insertProperties, IEnumerable<string> updateProperties, IEnumerable<string> compareFilter, ChangeRequestOptions options, bool forTranslation = false)
     {
-        return BuildMergeQuery(parameters, [new GenericFilter("id", "id")], options, forTranslation);
-
-        /*
-        var sb = new StringBuilder();
-        sb.AppendLine($"INSERT INTO {GetTableName(includeAlias: false, useTranslation: forTranslation)} ({InsertColumns(parameters)}) VALUES({InsertValues(parameters)})");
-        sb.AppendLine(" ON CONFLICT (id) DO ");
-        sb.AppendLine($"UPDATE SET {UpdateSetStatement(parameters)}");
-        return sb.ToString();
-        */
-    }
-
-    /// <inheritdoc/>
-    public string BuildUpsertQuery(List<GenericParameter> parameters, List<GenericFilter> mergeFilter, ChangeRequestOptions options, bool forTranslation = false)
-    {
-        if (mergeFilter == null || !mergeFilter.Any())
+        if (compareFilter == null || !compareFilter.Any())
         {
-            mergeFilter.Add(new GenericFilter("id", "id"));
+            compareFilter = new List<string>()
+            {
+                "Id"
+            };
         }
 
-        return BuildMergeQuery(parameters, mergeFilter, options, forTranslation);
+        return BuildMergeQuery(insertProperties.Select(t => t.Key), updateProperties, compareFilter, options, forTranslation);
     }
 
-    private string BuildMergeQuery(List<GenericParameter> parameters, List<GenericFilter> mergeFilter, ChangeRequestOptions options, bool forTranslation = false)
+    private string BuildMergeQuery(IEnumerable<string> insertProperties, IEnumerable<string> updateProperties, IEnumerable<string> compareFilter, ChangeRequestOptions options, bool forTranslation = false)
     {
-        if (mergeFilter == null || !mergeFilter.Any())
-        {
-            throw new ArgumentException("Missing mergefilter");
-        }
-
-        var mergeUpdateUnMatchStatement = string.Join(" OR ", parameters.Where(t => mergeFilter.Count(y => y.PropertyName.Equals(t.Key, StringComparison.OrdinalIgnoreCase)) == 0).Select(t => $"T.{t.Key} <> @{t.Key}"));
-        var mergeUpdateStatement = string.Join(" , ", parameters.Where(t => mergeFilter.Count(y => y.PropertyName.Equals(t.Key, StringComparison.OrdinalIgnoreCase)) == 0).Select(t => $"{t.Key} = @{t.Key}"));
-
         var sb = new StringBuilder();
         sb.AppendLine($"{GetAuditVariables(options)}");
-        sb.AppendLine("WITH N AS ( SELECT ");
-        sb.AppendLine("@id as id");
+        sb.AppendLine("WITH N AS (");
+        sb.AppendLine("SELECT ");
+        sb.AppendLine(string.Join(",", compareFilter.Select(t => $"@{t} as {t}")));
         if (forTranslation)
         {
             sb.AppendLine(", @language as language");
         }
 
         sb.AppendLine(")");
-
-        var mergeStatementFilter = string.Join(" AND ", mergeFilter.Select(t => $"T.{t.PropertyName} = N.{t.PropertyName}"));
-
-        sb.AppendLine($"MERGE INTO {GetTableName(includeAlias: false, useTranslation: forTranslation)} AS T USING N ON {mergeStatementFilter}");
+        sb.AppendLine($"MERGE INTO {GetTableName(includeAlias: false, useTranslation: forTranslation)} AS T USING N ON {string.Join(" AND ", compareFilter.Select(t => $"t.{t} = n.{t}"))}");
         if (forTranslation)
         {
             sb.AppendLine(" AND T.language = N.language");
         }
 
-        sb.AppendLine($"WHEN MATCHED AND ({mergeUpdateUnMatchStatement}) THEN");
-        sb.AppendLine($"UPDATE SET {mergeUpdateStatement}");
+        sb.AppendLine($"WHEN MATCHED AND ({string.Join(" OR ", updateProperties.Select(t => $"T.{t} <> @{t}"))}) THEN");
+        sb.AppendLine($"UPDATE SET {string.Join(",", updateProperties.Select(t => $"{t} = @{t}"))}");
         sb.AppendLine("WHEN NOT MATCHED THEN");
-        sb.AppendLine($"INSERT ({InsertColumns(parameters)}) VALUES({InsertValues(parameters)});");
+        sb.AppendLine($"INSERT ({InsertColumns(insertProperties)}) VALUES({InsertValues(insertProperties)});");
 
         return sb.ToString();
     }

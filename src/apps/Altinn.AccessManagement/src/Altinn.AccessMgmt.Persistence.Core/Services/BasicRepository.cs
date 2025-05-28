@@ -234,26 +234,50 @@ public abstract class BasicRepository<T> : IDbBasicRepository<T>
             throw new Exception($"'{Definition.ModelType.Name}' is not defined as a table");
         }
 
-        var param = BuildParameters(entity);
-        var queryBuilder = definitionRegistry.GetQueryBuilder<T>();
-        string query = queryBuilder.BuildUpsertQuery(param, options: options);
+        var compareProperties = new List<string>
+        {
+            "Id"
+        };
 
-        return await executor.ExecuteCommand(query, param, callerName: callerName, cancellationToken: cancellationToken);
+        var insertParameters = BuildParameters(entity);
+        var updateParameters = new List<string>();
+
+        foreach (GenericParameter param in insertParameters)
+        {
+            if (!compareProperties.Contains(param.Key))
+            {
+                updateParameters.Add(param.Key);
+            }
+        }
+
+        return await Upsert(entity: entity, updateProperties: updateParameters, compareProperties: compareProperties, options: options, cancellationToken: cancellationToken, callerName: callerName);
     }
 
     /// <inheritdoc/>
-    public async Task<int> Upsert(T entity, List<GenericFilter> mergeFilter, ChangeRequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "")
+    public async Task<int> Upsert(T entity, IEnumerable<Expression<Func<T, object>>> updateProperties, IEnumerable<Expression<Func<T, object>>> compareProperties, ChangeRequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "")
     {
         if (Definition.DefinitionType != DbDefinitionType.Table)
         {
             throw new Exception($"'{Definition.ModelType.Name}' is not defined as a table");
         }
 
-        var param = BuildParameters(entity);
-        var queryBuilder = definitionRegistry.GetQueryBuilder<T>();
-        string query = queryBuilder.BuildUpsertQuery(param, mergeFilter, options: options);
+        var comparePropertiesStrings = compareProperties.Select(t => ExtractPropertyInfo(t)).Select(t => t.Name);
+        var updatePropertiesStrings = updateProperties.Select(t => ExtractPropertyInfo(t)).Select(t => t.Name);
+        return await Upsert(entity: entity, updateProperties: updatePropertiesStrings, compareProperties: comparePropertiesStrings, options: options, cancellationToken: cancellationToken, callerName: callerName);
+    }
 
-        return await executor.ExecuteCommand(query, param, callerName: callerName, cancellationToken: cancellationToken);
+    private async Task<int> Upsert(T entity, IEnumerable<string> updateProperties, IEnumerable<string> compareProperties, ChangeRequestOptions options = null, CancellationToken cancellationToken = default, [CallerMemberName] string callerName = "")
+    {
+        if (Definition.DefinitionType != DbDefinitionType.Table)
+        {
+            throw new Exception($"'{Definition.ModelType.Name}' is not defined as a table");
+        }
+
+        var insertParameters = BuildParameters(entity);
+        var queryBuilder = definitionRegistry.GetQueryBuilder<T>();
+        string query = queryBuilder.BuildUpsertQuery(insertParameters: insertParameters, updateProperties: updateProperties, compareProperties: compareProperties, options: options);
+
+        return await executor.ExecuteCommand(query, insertParameters, callerName: callerName, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -399,13 +423,44 @@ public abstract class BasicRepository<T> : IDbBasicRepository<T>
         var parameters = BuildTranslationParameters(obj);
         parameters.Add(new GenericParameter("Language", language));
         var queryBuilder = definitionRegistry.GetQueryBuilder<T>();
-        string query = queryBuilder.BuildUpsertQuery(parameters, forTranslation: true, options: options);
+        string query = queryBuilder.BuildUpsertQuery(parameters, parameters.Where(t => t.Key != "Id" && t.Key != "Language").Select(t => t.Key), ["Id"], forTranslation: true, options: options);
 
         parameters.Add(new GenericParameter("_language", language));
         parameters.Add(new GenericParameter("_id", id));
 
         return await executor.ExecuteCommand(query, parameters, callerName: callerName, cancellationToken: cancellationToken);
     }
+    #endregion
+
+    #region Helpers
+
+    /// <summary>
+    /// Extracts the <see cref="PropertyInfo"/> from the given property expression.
+    /// </summary>
+    /// <typeparam name="TLocal">The type of the object containing the property.</typeparam>
+    /// <param name="expression">An expression that selects a property of <typeparamref name="TLocal"/>.</param>
+    /// <returns>The <see cref="PropertyInfo"/> corresponding to the property in the expression.</returns>
+    /// <exception cref="ArgumentException">Thrown if the expression does not refer to a valid property.</exception>
+    private PropertyInfo ExtractPropertyInfo<TLocal>(Expression<Func<TLocal, object>> expression)
+    {
+        MemberExpression memberExpression;
+
+        if (expression.Body is MemberExpression)
+        {
+            memberExpression = (MemberExpression)expression.Body;
+        }
+        else if (expression.Body is UnaryExpression unaryExpression && unaryExpression.Operand is MemberExpression)
+        {
+            memberExpression = (MemberExpression)unaryExpression.Operand;
+        }
+        else
+        {
+            throw new ArgumentException("Expression must refer to a property.");
+        }
+
+        return memberExpression.Member as PropertyInfo ?? throw new ArgumentException("Member is not a property.");
+    }
+
     #endregion
 
 }
