@@ -62,28 +62,8 @@ namespace Altinn.Platform.Authorization.Services
         /// <inheritdoc/>
         public async Task<Party> GetParty(int partyId, CancellationToken cancellationToken = default)
         {
-            string cacheKey = $"p:{partyId}";
-            if (!_memoryCache.TryGetValue(cacheKey, out Party party))
-            {
-                string endpointUrl = $"parties/{partyId}";
-                string token = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _generalSettings.RuntimeCookieName);
-                string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "authorization");
-
-                HttpResponseMessage response = await _client.GetAsync(endpointUrl, token, accessToken, cancellationToken);
-
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                    party = JsonSerializer.Deserialize<Party>(responseContent, _serializerOptions);
-                    PutInCache(cacheKey, 10, party);
-                }
-                else
-                {
-                    _logger.LogError("// Getting party with partyID {partyId} failed with statuscode {response.StatusCode}", partyId, response.StatusCode);
-                }
-            }
-
-            return party;
+            return await GetPartiesAsync(new List<int> { partyId }, false, cancellationToken)
+                .ContinueWith(task => task.Result.FirstOrDefault(), cancellationToken);
         }
 
         /// <inheritdoc/>
