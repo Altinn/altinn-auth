@@ -58,6 +58,11 @@ public class DbDefinition(Type type)
     public string ExtendedQuery { get; set; }
 
     /// <summary>
+    /// The SQL query used for extended type
+    /// </summary>
+    public Dictionary<int, string> ManualPreMigrationScripts { get; set; } = new();
+
+    /// <summary>
     /// Gets or sets the collection of types that this entity depends on in views.
     /// </summary>
     public List<Type> ManualDependencies { get; set; } = new();

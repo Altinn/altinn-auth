@@ -16,6 +16,11 @@ public class DbConstraintDefinition
     public Dictionary<string, Type> Properties { get; set; } = new();
 
     /// <summary>
+    /// Nullable properties that are part of this constraint along with their types.
+    /// </summary>
+    public Dictionary<string, Type> NullableProperties { get; set; } = new();
+
+    /// <summary>
     /// Properties that are included in the unique index. Resulting in an covering index.
     /// </summary>
     public Dictionary<string, Type> IncludedProperties { get; set; } = new();

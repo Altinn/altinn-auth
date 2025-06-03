@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Security.Cryptography;
 using System.Text;
 using Altinn.AccessMgmt.Persistence.Core.Definitions;
 using Altinn.AccessMgmt.Persistence.Core.Helpers;
@@ -534,6 +535,14 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         var scriptCollection = new DbMigrationScriptCollection(_definition.ModelType);
         scriptCollection.Version = _definition.Version;
 
+        if (_definition.ManualPreMigrationScripts.Any())
+        {
+            foreach (var dep in _definition.ManualPreMigrationScripts)
+            {
+                scriptCollection.AddScripts($"PreMigrationScript({dep.Key})", dep.Value);
+            }
+        }
+
         //// Create view
         if (_definition.DefinitionType == DbDefinitionType.View)
         {
@@ -782,28 +791,156 @@ public class PostgresQueryBuilder : IDbQueryBuilder
 
         string name = string.IsNullOrEmpty(constraint.Name) ? _definition.ModelType.Name : constraint.Name;
 
-        var props = _definition.ModelType.GetProperties();
-
-        foreach (var property in constraint.Properties)
+        var allPropsOnModel = _definition.ModelType.GetProperties().Select(p => p.Name).ToHashSet();
+        foreach (var prop in constraint.Properties.Keys)
         {
-            if (_definition.ModelType.GetProperties().Count(t => t.Name.Equals(property.Key)) == 0)
+            if (!allPropsOnModel.Contains(prop))
             {
-                throw new Exception($"Property {property.Key} not found on {_definition.ModelType.Name}");
+                throw new Exception($"Property {prop} not found on {_definition.ModelType.Name}");
             }
         }
 
-        string key = $"ADD CONSTRAINT {GetTableName(includeAlias: false)}.{name}";
-        string query = $"ALTER TABLE {GetTableName(includeAlias: false)} DROP CONSTRAINT IF EXISTS {name}; ALTER TABLE {GetTableName(includeAlias: false)} ADD CONSTRAINT {name} UNIQUE ({string.Join(',', constraint.Properties.Keys)});";
+        foreach (var prop in constraint.NullableProperties.Keys)
+        {
+            if (!allPropsOnModel.Contains(prop))
+            {
+                throw new Exception($"Property {prop} not found on {_definition.ModelType.Name}");
+            }
+        }
 
-        res.Add(key, query);
+        var nullableProps = constraint.NullableProperties.Keys.ToList();
+        var allProps = constraint.Properties.Keys.ToList();
+        var nonNullableProps = allProps.Where(p => !nullableProps.Contains(p)).ToList();
 
-        var idxName = $"uc_{_definition.ModelType.Name}_{string.Join('_', constraint.Properties.Keys)}_idx".ToLower();
-        var idxKey = $"CREATE INDEX {idxName}";
-        var idxQuery = $"CREATE UNIQUE INDEX IF NOT EXISTS {idxName} ON {GetTableName(includeAlias: false)} ({string.Join(',', constraint.Properties.Keys)}) {(constraint.IncludedProperties.Any() ? $"INCLUDE ({string.Join(',', constraint.IncludedProperties.Keys)})" : string.Empty)};";
+        string tableName = GetTableName(includeAlias: false);
 
-        res.Add(idxKey, idxQuery);
+        string dropConstraintKey = $"ALTER TABLE {tableName} DROP CONSTRAINT IF EXISTS {name}";
+        string dropConstraintQuery = $"ALTER TABLE {tableName} DROP CONSTRAINT IF EXISTS {name};";
+        res.Add(dropConstraintKey, dropConstraintQuery);
+
+        if (!constraint.NullableProperties.Any())
+        {
+            string colsCsv = string.Join(", ", allProps);
+
+            string addConstraintKey = $"ALTER TABLE {tableName} ADD CONSTRAINT {name}";
+            string addConstraintQuery = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} UNIQUE ({colsCsv});";
+            res.Add(addConstraintKey, addConstraintQuery);
+
+            string idxName = $"uc_{_definition.ModelType.Name}_{string.Join("_", allProps)}_idx".ToLowerInvariant();
+            if (idxName.Length > 63)
+            {
+                idxName = GenerateUniqueConstraintName(_definition.ModelType.Name, allProps, 0);
+            }
+
+            string idxKey = $"CREATE INDEX {idxName}";
+            string idxQuery =
+                $"CREATE UNIQUE INDEX IF NOT EXISTS {idxName} " +
+                $"ON {tableName} ({colsCsv}) " +
+                $"{(constraint.IncludedProperties.Any()
+                    ? $"INCLUDE ({string.Join(", ", constraint.IncludedProperties.Keys)}) "
+                    : string.Empty)};";
+            res.Add(idxKey, idxQuery);
+
+            return res;
+        }
+
+        int nullablePropertyCount = nullableProps.Count;
+        int totalCombinations = 1 << nullablePropertyCount;
+
+        for (int mask = 0; mask < totalCombinations; mask++)
+        {
+            var whereConditions = new List<string>();
+            var indexColumns = new List<string>(nonNullableProps);
+            for (int bit = 0; bit < nullablePropertyCount; bit++)
+            {
+                string nullableCol = nullableProps[bit];
+                bool isNotNull = ((mask >> bit) & 1) == 1;
+                if (isNotNull)
+                {
+                    indexColumns.Add(nullableCol);
+                    whereConditions.Add($"{nullableCol} IS NOT NULL");
+                }
+                else
+                {
+                    whereConditions.Add($"{nullableCol} IS NULL");
+                }
+            }
+
+            string idxName = GenerateUniqueConstraintName(_definition.ModelType.Name, allProps, mask);
+
+            string columnsList = string.Join(", ", indexColumns);
+            string whereClause = string.Join(" AND ", whereConditions);
+            string idxKey = $"CREATE INDEX {idxName}";
+            string idxQuery =
+                $"CREATE UNIQUE INDEX IF NOT EXISTS {idxName} " +
+                $"ON {tableName} ({columnsList}) " +
+                $"{(constraint.IncludedProperties.Any() 
+                    ? $"INCLUDE ({string.Join(',', constraint.IncludedProperties.Keys)}) " 
+                    : string.Empty)}" +
+                $"WHERE {whereClause};";
+
+            res.Add(idxKey, idxQuery);
+        }
 
         return res;
+    }
+
+    private string GenerateUniqueConstraintName(string modelName, IList<string> indexColumns, int mask)
+    {
+        const int MaxPgNameLength = 63;
+
+        string columnsPart = string.Join("_", indexColumns).ToLowerInvariant();
+        string baseName = $"uc_{modelName}_{columnsPart}_m{mask}".ToLowerInvariant();
+
+        if (baseName.Length <= MaxPgNameLength)
+        {
+            return baseName;
+        }
+
+        byte[] hashBytes;
+        using (var sha1 = SHA1.Create())
+        {
+            hashBytes = sha1.ComputeHash(Encoding.UTF8.GetBytes(baseName));
+        }
+
+        string fullHashHex = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+        string shortHash = fullHashHex.Substring(0, 8);
+
+        int maskLength = mask.ToString().Length;
+        int reservedLen = /* "uc_" */ 3
+                         + modelName.Length
+                         + /* "_" between modelName and columns */ 1
+                         + /* "_m" + mask */ 2 + maskLength
+                         + /* "_" before hash */ 1
+                         + shortHash.Length;
+
+        int availForColumns = MaxPgNameLength - reservedLen;
+        if (availForColumns < 1)
+        {
+            int reservedMinimal = 3 + modelName.Length + 1 + shortHash.Length;
+            if (reservedMinimal <= MaxPgNameLength)
+            {
+                return $"uc_{modelName}_{shortHash}";
+            }
+            else
+            {
+                int availForModel = MaxPgNameLength - (3 /*"uc_"*/ + 1 /*"_"*/ + shortHash.Length);
+                string truncatedModel = modelName.Substring(0, Math.Max(0, availForModel));
+                return $"uc_{truncatedModel}_{shortHash}";
+            }
+        }
+
+        string truncatedColumns;
+        if (columnsPart.Length <= availForColumns)
+        {
+            truncatedColumns = columnsPart;
+        }
+        else
+        {
+            truncatedColumns = columnsPart.Substring(0, availForColumns);
+        }
+
+        return $"uc_{modelName}_{truncatedColumns}_m{mask}_{shortHash}";
     }
 
     private OrderedDictionary<string, string> CreateForeignKeyConstraint(DbRelationDefinition foreignKey)
