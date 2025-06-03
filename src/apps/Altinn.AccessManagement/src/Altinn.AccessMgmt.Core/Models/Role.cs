@@ -14,7 +14,7 @@ public class Role
     /// EntityTypeId
     /// e.g Organization
     /// </summary>
-    public Guid EntityTypeId { get; set; }
+    public Guid? EntityTypeId { get; set; }
 
     /// <summary>
     /// ProviderId

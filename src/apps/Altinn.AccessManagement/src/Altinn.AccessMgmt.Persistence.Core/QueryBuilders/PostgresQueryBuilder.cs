@@ -872,12 +872,12 @@ public class PostgresQueryBuilder : IDbQueryBuilder
             string whereClause = string.Join(" AND ", whereConditions);
             string idxKey = $"CREATE INDEX {idxName}";
             string idxQuery =
-                $"CREATE UNIQUE INDEX IF NOT EXISTS {idxName} " +
-                $"ON {tableName} ({columnsList}) " +
+                $"CREATE UNIQUE INDEX IF NOT EXISTS {idxName}" +
+                $" ON {tableName} ({columnsList})" +
                 $"{(constraint.IncludedProperties.Any() 
-                    ? $"INCLUDE ({string.Join(',', constraint.IncludedProperties.Keys)}) " 
+                    ? $" INCLUDE ({string.Join(',', constraint.IncludedProperties.Keys)})" 
                     : string.Empty)}" +
-                $"WHERE {whereClause};";
+                $" WHERE {whereClause};";
 
             res.Add(idxKey, idxQuery);
         }
