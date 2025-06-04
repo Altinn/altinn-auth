@@ -262,15 +262,24 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         bool useTranslation = !string.IsNullOrEmpty(options.Language) && _definition.EnableTranslation;
         var columns = new List<string>();
 
-        foreach (var p in _definition.Properties.Select(t => t.Property))
+        foreach (var p in _definition.Properties)
         {
-            if (useTranslation && p.PropertyType == typeof(string))
+            if (_definition.ExtendedProperties.Count(t => t.Name == p.Name) > 0)
             {
-                columns.Add($"coalesce(T_{_definition.ModelType.Name}.{p.Name}, {_definition.ModelType.Name}.{p.Name}) AS {p.Name}");
+                var ep = _definition.ExtendedProperties.First(t => t.Name == p.Name);
+                columns.Add($"{ep.Function}({_definition.ModelType.Name}.{p.Name}) AS {ep.ExtendedProperty.Name}");
             }
             else
             {
-                columns.Add($"{_definition.ModelType.Name}.{p.Name} AS {p.Name}");
+                var property = p.Property;
+                if (useTranslation && property.PropertyType == typeof(string))
+                {
+                    columns.Add($"coalesce(T_{_definition.ModelType.Name}.{property.Name}, {_definition.ModelType.Name}.{property.Name}) AS {property.Name}");
+                }
+                else
+                {
+                    columns.Add($"{_definition.ModelType.Name}.{property.Name} AS {property.Name}");
+                }
             }
         }
 

@@ -75,3 +75,19 @@ public class ExtResource : Resource
     /// </summary>
     public ResourceType Type { get; set; }
 }
+
+/// <summary>
+/// Compact versjon of resource
+/// </summary>
+public class CompactResource
+{
+    /// <summary>
+    /// Unique identifier
+    /// </summary>
+    public Guid Id { get; set; }
+
+    /// <summary>
+    /// Value
+    /// </summary>
+    public string Value { get; set; }
+}

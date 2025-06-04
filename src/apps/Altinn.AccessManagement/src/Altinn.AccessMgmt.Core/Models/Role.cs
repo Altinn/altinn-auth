@@ -72,3 +72,24 @@ public class ExtRole : Role
     /// </summary>
     public Provider Provider { get; set; }
 }
+
+/// <summary>
+/// Compact Role Model
+/// </summary>
+public class CompactRole
+{
+    /// <summary>
+    /// Id
+    /// </summary>
+    public Guid Id { get; set; }
+
+    /// <summary>
+    /// Value
+    /// </summary>
+    public string Value { get; set; }
+
+    /// <summary>
+    /// Children
+    /// </summary>
+    public List<CompactEntity> Children { get; set; }
+}

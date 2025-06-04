@@ -69,6 +69,80 @@ public class DbSchemaMigrationService
         await executor.ExecuteMigrationCommand(tableGrant);
     }
 
+    private async Task MigrateFunctions()
+    {
+        var compactEntityFunction = """
+            create or replace function compactentity(_id uuid, _include_children boolean DEFAULT true, _include_lookups boolean DEFAULT true) returns jsonb stable language sql as
+            $$
+            SELECT jsonb_build_object(
+                'Id', e.Id,
+                'Name', e.Name,
+                'RefId', e.RefId,
+                'Type', et.Name,
+                'Variant', ev.Name,
+                'Parent', compactentity(e.parentid, false, true),
+                'Children', COALESCE(json_agg(compactentity(ce.Id, false, true)) FILTER (WHERE _include_children and ce.Id IS NOT NULL), NULL),
+                'KeyValues', COALESCE(jsonb_object_agg(el.key, el.value) FILTER (WHERE _include_lookups and el.Id IS NOT NULL), NULL)
+                )
+            FROM dbo.Entity e
+            JOIN dbo.EntityType et ON e.TypeId = et.Id
+            JOIN dbo.EntityVariant ev ON e.VariantId = ev.Id
+            LEFT OUTER JOIN dbo.Entity as ce on e.Id = ce.ParentId
+            LEFT OUTER JOIN dbo.EntityLookup as el on e.Id = el.entityid
+            WHERE e.Id = _Id
+            GROUP BY e.Id, e.Name, e.RefId, et.Name, ev.Name;
+            $$;
+            """;
+        await executor.ExecuteMigrationCommand(compactEntityFunction);
+
+        var compactRoleFunction = """
+            create or replace function public.compactRole(_id uuid) returns jsonb stable language sql as
+            $$
+            SELECT jsonb_build_object(
+                'Id', r.Id,
+                'Value', r.Code,
+                'Children', COALESCE(
+                                json_agg(json_build_object('Id', rmr.Id, 'Value', rmr.Code, 'Children', null))
+                                FILTER (WHERE rmr.Id IS NOT NULL), NULL)
+            )
+            FROM dbo.role r
+            left outer join dbo.RoleMap as rm on rm.HasRoleId = r.Id
+            left outer join dbo.Role as rmr on rm.GetRoleId = rmr.Id
+            WHERE r.id = _Id
+            group by r.Id, r.Name;
+            $$;
+            """;
+        await executor.ExecuteMigrationCommand(compactRoleFunction);
+
+        var compactPackageFunction = """
+            create or replace function compactpackage(_id uuid) returns jsonb stable language sql as
+            $$
+            select jsonb_build_object('Id', p.Id,'Value', p.Urn)
+            from dbo.Package as p;
+            $$;
+            """;
+        await executor.ExecuteMigrationCommand(compactPackageFunction);
+
+        var compactResourceFunction = """
+            create or replace function compactresource(_id uuid) returns jsonb stable language sql as
+            $$
+            select jsonb_build_object('Id', r.Id,'Value', r.RefId)
+            from dbo.Resource as r;
+            $$;
+            """;
+        await executor.ExecuteMigrationCommand(compactResourceFunction);
+
+        var nameFunctions = """
+        create or replace function namerole(_id uuid) returns text stable language sql as $$ select code from dbo.role where id = _id; $$;
+        create or replace function nameentity(_id uuid) returns text stable language sql as $$ select e.name || ' (' || ev.name || ')' from dbo.entity as e inner join dbo.entityvariant as ev on e.variantid = ev.id where e.id = _id; $$;
+        create or replace function namepackage(_id uuid) returns text stable language sql as $$ select name from dbo.package where id = _id; $$;
+        create or replace function nameassignment(_id uuid) returns text stable language sql as $$ select nameentity(a.fromid) || ' - ' || namerole(a.roleid) || ' - '  || nameentity(a.toid) from dbo.assignment as a where id = _id; $$;
+        create or replace function namedelegation(_id uuid) returns text stable language sql as $$ select nameassignment(d.fromid) || ' | ' || nameentity(d.facilitatorid) || ' | ' || nameassignment(d.toid) from dbo.delegation as d where id = _id; $$;
+        """;
+
+        await executor.ExecuteMigrationCommand(nameFunctions);
+    }
+
     /// <summary>
     /// MigrateAll
     /// </summary>
@@ -83,6 +157,7 @@ public class DbSchemaMigrationService
         await PreMigration(cancellationToken: cancellationToken);
         await ExecuteMigration(cancellationToken: cancellationToken);
         await PostMigration(cancellationToken: cancellationToken);
+        await MigrateFunctions();
     }
 
     /// <summary>

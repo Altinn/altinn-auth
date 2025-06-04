@@ -76,3 +76,19 @@ public class ExtPackage : Package
     /// </summary>
     public Area Area { get; set; }
 }
+
+/// <summary>
+/// Compact Package Model
+/// </summary>
+public class CompactPackage
+{
+    /// <summary>
+    /// Id
+    /// </summary>
+    public Guid Id { get; set; }
+
+    /// <summary>
+    /// Value
+    /// </summary>
+    public string Value { get; set; }
+}

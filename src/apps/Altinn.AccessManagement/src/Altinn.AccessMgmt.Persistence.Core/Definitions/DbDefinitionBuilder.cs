@@ -142,6 +142,53 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
             return this;
         }
 
+        /// <summary>
+        /// Registers a property as a column in the database definition.
+        /// </summary>
+        /// <param name="column">An expression that identifies the property to register.</param>
+        /// <param name="nullable">Indicates whether the column can contain null values.</param>
+        /// <param name="defaultValue">The default value for the column, if any.</param>
+        /// <param name="length">The maximum length of the column (if applicable).</param>
+        /// <returns>The current <see cref="DbDefinitionBuilder{T}"/> instance for fluent chaining.</returns>
+        public DbDefinitionBuilder<T> RegisterExtProperty<TExtended>(Expression<Func<T, object>> property, Expression<Func<TExtended, object>> extendedProperty, string functionName, bool nullable = false, string defaultValue = null, int? length = null)
+        {
+            var propertyInfo = ExtractPropertyInfo(property);
+            var extendedPropertyInfo = ExtractPropertyInfo(extendedProperty);
+            var propertyType = propertyInfo.PropertyType;
+
+            // Hvis typen er en kompleks type, send den til `RegisterComplexProperty`
+            if (propertyType.Namespace != null && propertyType.Namespace == typeof(T).Namespace
+                && !propertyType.IsPrimitive && propertyType != typeof(string))
+            {
+                RegisterComplexProperty(propertyType, propertyInfo.Name, nullable);
+            }
+            else
+            {
+                // Registrer normal (ikke-kompleks) egenskap
+                var columnDef = new DbPropertyDefinition()
+                {
+                    Name = propertyInfo.Name,
+                    Property = propertyInfo,
+                    DefaultValue = defaultValue,
+                    IsNullable = nullable
+                };
+
+                DbDefinition.Properties.Add(columnDef);
+            }
+
+            var extendedDef = new DbExtendedPropertyDefinition()
+            {
+                Name = propertyInfo.Name,
+                Property = propertyInfo,
+                ExtendedProperty = extendedPropertyInfo,
+                Function = functionName
+            };
+
+            DbDefinition.ExtendedProperties.Add(extendedDef);
+
+            return this;
+        }
+
         private void RegisterComplexProperty(Type complexType, string parentPrefix, bool nullable)
         {
             foreach (var subProperty in complexType.GetProperties(BindingFlags.Public | BindingFlags.Instance))

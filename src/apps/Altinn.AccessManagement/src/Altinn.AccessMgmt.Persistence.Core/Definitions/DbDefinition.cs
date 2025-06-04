@@ -28,6 +28,11 @@ public class DbDefinition(Type type)
     public List<DbPropertyDefinition> Properties { get; set; } = new();
 
     /// <summary>
+    /// Gets or sets the collection of column definitions for the entity.
+    /// </summary>
+    public List<DbExtendedPropertyDefinition> ExtendedProperties { get; set; } = new();
+
+    /// <summary>
     /// Gets or sets the collection of foreign key definitions representing relationships to other tables.
     /// </summary>
     public List<DbRelationDefinition> Relations { get; set; } = new();
