@@ -1,9 +1,12 @@
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
+using Altinn.AccessManagement.Enduser.Services;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
+using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.Authorization.Models;
 using AutoMapper;
+using MassTransit.Initializers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Altinn.AccessManagement.Controllers;
@@ -17,22 +20,19 @@ public class PolicyInformationPointController : ControllerBase
 {
     private readonly IPolicyInformationPoint _pip;
     private readonly IMapper _mapper;
-    private readonly IConnectionRepository _connectionRepository;
-    private readonly IConnectionPackageRepository _connectionPackageRepository;
+    private readonly IRelationService _relationService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PolicyInformationPointController"/> class.
     /// </summary>
     /// <param name="pip">The policy information point</param>
     /// <param name="mapper">The mapper</param>
-    /// <param name="connectionRepository">Connection repo</param>
-    /// <param name="connectionPackageRepository">ConnectionPackage repo</param>
-    public PolicyInformationPointController(IPolicyInformationPoint pip, IMapper mapper, IConnectionRepository connectionRepository, IConnectionPackageRepository connectionPackageRepository)
+    /// <param name="relationService">Relation Service</param>
+    public PolicyInformationPointController(IPolicyInformationPoint pip, IMapper mapper, IRelationService relationService)
     {
         _pip = pip;
         _mapper = mapper;
-        _connectionRepository = connectionRepository;
-        _connectionPackageRepository = connectionPackageRepository;
+        _relationService = relationService;
     }
 
     /// <summary>
@@ -73,18 +73,15 @@ public class PolicyInformationPointController : ControllerBase
     [Route("accesspackages")]
     public async Task<ActionResult> GetAccessPackages([FromQuery] Guid from, [FromQuery] Guid to, CancellationToken cancellationToken)
     {
-        List<AccessPackageUrn> result = [];
-        var filter = _connectionPackageRepository.CreateFilterBuilder()
-            .Equal(t => t.ToId, to)
-            .Equal(t => t.FromId, from)
-            .NotSet(t => t.PackageId);
+        List<AccessPackageUrn> packages = new();
 
-        var packages = await _connectionPackageRepository.GetExtended(filter, cancellationToken: cancellationToken);
-        if (packages is { } && packages.Any())
+        var connectionPackages = await _relationService.GetPackagesFrom(from, to, cancellationToken: cancellationToken);
+
+        if (connectionPackages != null)
         {
-            result.AddRange(packages.Select(package => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(package.Package.Urn.Split(':').Last()))));
+            packages.AddRange(connectionPackages.Select(conPackage => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(conPackage.Value.Split(':').Last()))));
         }
 
-        return Ok(result);
+        return Ok(packages);
     }
 }
