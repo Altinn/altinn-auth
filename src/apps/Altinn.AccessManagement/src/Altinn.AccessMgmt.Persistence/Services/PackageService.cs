@@ -88,6 +88,11 @@ public class PackageService(
     /// <inheritdoc/>
     public async Task<PackageDto> GetPackageByUrnValue(string urnValue)
     {
+        if (!urnValue.StartsWith("urn:") && !urnValue.StartsWith(':'))
+        {
+            urnValue = ":" + urnValue;
+        }
+
         var filter = packageRepository.CreateFilterBuilder();
         filter.Add(t => t.Urn, urnValue, FilterComparer.EndsWith);
         var packages = await packageRepository.GetExtended(filter);
