@@ -10,7 +10,7 @@ namespace Altinn.AccessMgmt.Persistence.Services;
 public class RelationService(IRelationRepository relationRepository, IRelationPermissionRepository relationPermissionRepository) : IRelationService
 {
     /// <inheritdoc />
-    public async Task<IEnumerable<RelationDto>> GetConnectionsFrom(Guid partyId, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null)
+    public async Task<IEnumerable<RelationDto>> GetConnectionsFrom(Guid partyId, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.FromId, partyId);
@@ -30,13 +30,13 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
             filter.Equal(t => t.ResourceId, resourceId.Value);
         }
 
-        var res = await relationPermissionRepository.GetExtended(filter);
+        var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
         return GetConnectionsFrom(res);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CompactRelationDto>> GetConnectionsFrom(Guid partyId, Guid? roleId = null)
+    public async Task<IEnumerable<CompactRelationDto>> GetConnectionsFrom(Guid partyId, Guid? roleId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationRepository.CreateFilterBuilder();
         filter.Equal(t => t.FromId, partyId);
@@ -46,13 +46,13 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
             filter.Equal(t => t.RoleId, roleId.Value);
         }
 
-        var res = await relationRepository.GetExtended(filter);
+        var res = await relationRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
         return GetConnectionsFrom(res);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<RelationDto>> GetConnectionsTo(Guid partyId, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null)
+    public async Task<IEnumerable<RelationDto>> GetConnectionsTo(Guid partyId, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.ToId, partyId);
@@ -72,13 +72,13 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
             filter.Equal(t => t.ResourceId, resourceId.Value);
         }
 
-        var res = await relationPermissionRepository.GetExtended(filter);
+        var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
         return GetConnectionsTo(res);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CompactRelationDto>> GetConnectionsTo(Guid partyId, Guid? roleId = null)
+    public async Task<IEnumerable<CompactRelationDto>> GetConnectionsTo(Guid partyId, Guid? roleId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationRepository.CreateFilterBuilder();
         filter.Equal(t => t.ToId, partyId);
@@ -88,18 +88,18 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
             filter.Equal(t => t.RoleId, roleId.Value);
         }
 
-        var res = await relationRepository.GetExtended(filter);
+        var res = await relationRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
         return GetConnectionsTo(res);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ConnectionPermission>> GetPackagePermissionsFrom(Guid partyId, Guid packageId)
+    public async Task<IEnumerable<ConnectionPermission>> GetPackagePermissionsFrom(Guid partyId, Guid packageId, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.FromId, partyId);
         filter.Equal(t => t.PackageId, packageId);
-        var res = await relationPermissionRepository.GetExtended(filter);
+        var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
         var result = new List<ConnectionPermission>();
 
@@ -122,12 +122,12 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ConnectionPermission>> GetPackagePermissionsTo(Guid partyId, Guid packageId)
+    public async Task<IEnumerable<ConnectionPermission>> GetPackagePermissionsTo(Guid partyId, Guid packageId, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.ToId, partyId);
         filter.Equal(t => t.PackageId, packageId);
-        var res = await relationPermissionRepository.GetExtended(filter);
+        var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
         var result = new List<ConnectionPermission>();
 
@@ -150,7 +150,7 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CompactPackage>> GetPackagesFrom(Guid partyId, Guid? toId = null, Guid? packageId = null)
+    public async Task<IEnumerable<CompactPackage>> GetPackagesFrom(Guid partyId, Guid? toId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.FromId, partyId);
@@ -165,13 +165,13 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
             filter.Equal(t => t.PackageId, packageId.Value);
         }
 
-        var res = await relationPermissionRepository.GetExtended(filter);
+        var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
         return res.Select(t => t.Package);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CompactPackage>> GetPackagesTo(Guid partyId, Guid? fromId = null, Guid? packageId = null)
+    public async Task<IEnumerable<CompactPackage>> GetPackagesTo(Guid partyId, Guid? fromId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.ToId, partyId);
@@ -186,13 +186,13 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
             filter.Equal(t => t.PackageId, packageId.Value);
         }
 
-        var res = await relationPermissionRepository.GetExtended(filter);
+        var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
         return res.Select(t => t.Package);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CompactResource>> GetResourcesFrom(Guid partyId, Guid? toId = null, Guid? packageId = null)
+    public async Task<IEnumerable<CompactResource>> GetResourcesFrom(Guid partyId, Guid? toId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.FromId, partyId);
@@ -207,13 +207,13 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
             filter.Equal(t => t.PackageId, packageId.Value);
         }
 
-        var res = await relationPermissionRepository.GetExtended(filter);
+        var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
         return res.Select(t => t.Resource);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CompactResource>> GetResourcesTo(Guid partyId, Guid? fromId = null, Guid? packageId = null)
+    public async Task<IEnumerable<CompactResource>> GetResourcesTo(Guid partyId, Guid? fromId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.ToId, partyId);
@@ -228,7 +228,7 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
             filter.Equal(t => t.PackageId, packageId.Value);
         }
 
-        var res = await relationPermissionRepository.GetExtended(filter);
+        var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
         return res.Select(t => t.Resource);
     }

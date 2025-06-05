@@ -73,6 +73,7 @@ public static partial class DbAccessHostExtensions
         builder.Services.AddSingleton<DbDefinitionRegistry>();
         builder.Services.AddSingleton(typeof(ISearchCache<>), typeof(SearchCache<>));
 
+        builder.Services.AddSingleton<IRelationService, RelationService>();
         builder.Services.AddSingleton<IConnectionService, ConnectionService>();
         builder.Services.AddSingleton<IAssignmentService, AssignmentService>();
         builder.Services.AddSingleton<IDelegationService, DelegationService>();

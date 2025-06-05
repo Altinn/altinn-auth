@@ -169,9 +169,14 @@ public sealed class DbConverter : IDbConverter
 
     private static readonly ConcurrentDictionary<Type, Dictionary<string, (PropertyInfo Property, Type ElementType)>> PropertyCache = new();
 
-    private Dictionary<string, (PropertyInfo Property, Type ElementType)> CreatePropertyCacheWithPrefix(Type type, string prefix)
+    private Dictionary<string, (PropertyInfo Property, Type ElementType)> CreatePropertyCacheWithPrefix(Type type, string prefix, int level)
     {
         var properties = new Dictionary<string, (PropertyInfo, Type)>();
+
+        if (level > 3)
+        {
+            return properties;
+        }
 
         foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
@@ -185,7 +190,7 @@ public sealed class DbConverter : IDbConverter
             // If property is complex and not a list/enumerable, cache properties with prefix
             if (elementType == null && property.PropertyType.IsClass && property.PropertyType != typeof(string))
             {
-                var subProperties = CreatePropertyCacheWithPrefix(property.PropertyType, propertyKey + "_");
+                var subProperties = CreatePropertyCacheWithPrefix(property.PropertyType, propertyKey + "_", level + 1);
                 foreach (var subProperty in subProperties)
                 {
                     properties[subProperty.Key] = subProperty.Value;
@@ -203,7 +208,7 @@ public sealed class DbConverter : IDbConverter
 
     private List<(PropertyInfo Property, string Prefix, Type ElementType)> GetPropertiesWithPrefix(Type type)
     {
-        return PropertyCache.GetOrAdd(type, type => CreatePropertyCacheWithPrefix(type, string.Empty))
+        return PropertyCache.GetOrAdd(type, type => CreatePropertyCacheWithPrefix(type, string.Empty, 1))
                             .Select(kv =>
                             {
                                 string prefix = kv.Key.Contains('_') ? kv.Key.Substring(0, kv.Key.LastIndexOf('_') + 1) : string.Empty;
