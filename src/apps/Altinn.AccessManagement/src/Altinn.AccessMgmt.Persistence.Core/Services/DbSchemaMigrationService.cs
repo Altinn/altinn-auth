@@ -118,7 +118,8 @@ public class DbSchemaMigrationService
             create or replace function compactpackage(_id uuid) returns jsonb stable language sql as
             $$
             select jsonb_build_object('Id', p.Id,'Value', p.Urn)
-            from dbo.Package as p;
+            from dbo.Package as p
+            where p.id = _id;
             $$;
             """;
         await executor.ExecuteMigrationCommand(compactPackageFunction);
@@ -127,7 +128,8 @@ public class DbSchemaMigrationService
             create or replace function compactresource(_id uuid) returns jsonb stable language sql as
             $$
             select jsonb_build_object('Id', r.Id,'Value', r.RefId)
-            from dbo.Resource as r;
+            from dbo.Resource as r
+            where r.id = _id;
             $$;
             """;
         await executor.ExecuteMigrationCommand(compactResourceFunction);
