@@ -75,11 +75,11 @@ public class PolicyInformationPointController : ControllerBase
     {
         List<AccessPackageUrn> packages = new();
 
-        var connectionPackages = await _relationService.GetPackagesFrom(from, to, cancellationToken: cancellationToken);
+        var connectionPackages = await _relationService.GetPackagePermissionsFromOthers(partyId: to, fromId: from, cancellationToken: cancellationToken);
 
         if (connectionPackages != null)
         {
-            packages.AddRange(connectionPackages.Select(conPackage => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(conPackage.Value.Split(':').Last()))));
+            packages.AddRange(connectionPackages.Select(conPackage => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(conPackage.Package.Value.Split(':').Last()))));
         }
 
         return Ok(packages);

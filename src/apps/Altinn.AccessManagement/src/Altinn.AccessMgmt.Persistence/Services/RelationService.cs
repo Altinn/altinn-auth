@@ -2,7 +2,6 @@
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Models;
-using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.AccessMgmt.Persistence.Services;
 
@@ -10,10 +9,15 @@ namespace Altinn.AccessMgmt.Persistence.Services;
 public class RelationService(IRelationRepository relationRepository, IRelationPermissionRepository relationPermissionRepository) : IRelationService
 {
     /// <inheritdoc />
-    public async Task<IEnumerable<RelationDto>> GetConnectionsFrom(Guid partyId, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<RelationDto>> GetConnectionsToOthers(Guid partyId, Guid? toId = null, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.FromId, partyId);
+
+        if (toId.HasValue)
+        {
+            filter.Equal(t => t.ToId, toId.Value);
+        }
 
         if (roleId.HasValue)
         {
@@ -32,14 +36,19 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
 
         var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
-        return GetConnectionsFrom(res);
+        return ExtractConnectionsToOthers(res, includeSubConnections: false);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CompactRelationDto>> GetConnectionsFrom(Guid partyId, Guid? roleId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<CompactRelationDto>> GetConnectionsToOthers(Guid partyId, Guid? toId = null, Guid? roleId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationRepository.CreateFilterBuilder();
         filter.Equal(t => t.FromId, partyId);
+
+        if (toId.HasValue)
+        {
+            filter.Equal(t => t.ToId, toId.Value);
+        }
 
         if (roleId.HasValue)
         {
@@ -48,14 +57,19 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
 
         var res = await relationRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
-        return GetConnectionsFrom(res);
+        return ExtractConnectionsToOthers(res, includeSubConnections: false);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<RelationDto>> GetConnectionsTo(Guid partyId, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<RelationDto>> GetConnectionsFromOthers(Guid partyId, Guid? fromId = null, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.ToId, partyId);
+
+        if (fromId.HasValue)
+        {
+            filter.Equal(t => t.FromId, fromId.Value);
+        }
 
         if (roleId.HasValue)
         {
@@ -74,14 +88,19 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
 
         var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
-        return GetConnectionsTo(res);
+        return ExtractConnectionsFromOthers(res, includeSubConnections: false);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CompactRelationDto>> GetConnectionsTo(Guid partyId, Guid? roleId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<CompactRelationDto>> GetConnectionsFromOthers(Guid partyId, Guid? fromId = null, Guid? roleId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationRepository.CreateFilterBuilder();
         filter.Equal(t => t.ToId, partyId);
+
+        if (fromId.HasValue)
+        {
+            filter.Equal(t => t.FromId, fromId.Value);
+        }
 
         if (roleId.HasValue)
         {
@@ -90,88 +109,11 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
 
         var res = await relationRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
-        return GetConnectionsTo(res);
+        return ExtractConnectionsFromOthers(res, includeSubConnections: false);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ConnectionPermission>> GetPackagePermissionsFrom(Guid partyId, Guid packageId, CancellationToken cancellationToken = default)
-    {
-        var filter = relationPermissionRepository.CreateFilterBuilder();
-        filter.Equal(t => t.FromId, partyId);
-        filter.Equal(t => t.PackageId, packageId);
-        var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
-
-        var result = new List<ConnectionPermission>();
-
-        foreach (var connection in res.Where(t => t.Reason == "Direct").DistinctBy(t => t.To.Id).Select(t => t.To))
-        {
-            var perm = new ConnectionPermission()
-            {
-                Party = connection,
-                KeyRoles = new List<Permission>(),
-                Delegations = new List<Permission>()
-            };
-
-            perm.KeyRoles = res.Where(t => t.Reason == "KeyRole" && t.Via.Id == connection.Id).Select(t => ConvertToPermission(t)).ToList();
-            perm.Delegations = res.Where(t => t.Reason == "Delegation" && t.Via.Id == connection.Id).Select(t => ConvertToPermission(t)).ToList();
-
-            result.Add(perm);
-        }
-
-        return result.DistinctBy(t => t.Party.Id);
-    }
-
-    /// <inheritdoc />
-    public async Task<IEnumerable<ConnectionPermission>> GetPackagePermissionsTo(Guid partyId, Guid packageId, CancellationToken cancellationToken = default)
-    {
-        var filter = relationPermissionRepository.CreateFilterBuilder();
-        filter.Equal(t => t.ToId, partyId);
-        filter.Equal(t => t.PackageId, packageId);
-        var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
-
-        var result = new List<ConnectionPermission>();
-
-        foreach (var connection in res.Where(t => t.Reason == "Direct").DistinctBy(t => t.From.Id).Select(t => t.From))
-        {
-            var perm = new ConnectionPermission()
-            {
-                Party = connection,
-                KeyRoles = new List<Permission>(),
-                Delegations = new List<Permission>()
-            };
-
-            perm.KeyRoles = res.Where(t => t.Reason == "KeyRole" && t.Via.Id == connection.Id).Select(t => ConvertToPermission(t)).ToList();
-            perm.Delegations = res.Where(t => t.Reason == "Delegation" && t.Via.Id == connection.Id).Select(t => ConvertToPermission(t)).ToList();
-
-            result.Add(perm);
-        }
-
-        return result;
-    }
-
-    /// <inheritdoc />
-    public async Task<IEnumerable<CompactPackage>> GetPackagesFrom(Guid partyId, Guid? toId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
-    {
-        var filter = relationPermissionRepository.CreateFilterBuilder();
-        filter.Equal(t => t.FromId, partyId);
-
-        if (toId.HasValue)
-        {
-            filter.Equal(t => t.ToId, toId.Value);
-        }
-
-        if (packageId.HasValue)
-        {
-            filter.Equal(t => t.PackageId, packageId.Value);
-        }
-
-        var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
-
-        return res.Select(t => t.Package);
-    }
-
-    /// <inheritdoc />
-    public async Task<IEnumerable<CompactPackage>> GetPackagesTo(Guid partyId, Guid? fromId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<PackagePermission>> GetPackagePermissionsFromOthers(Guid partyId, Guid? fromId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.ToId, partyId);
@@ -188,11 +130,15 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
 
         var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
-        return res.Select(t => t.Package);
+        return res.DistinctBy(t => t.Package.Id).Select(permission => new PackagePermission()
+        {
+            Package = permission.Package,
+            Permissions = res.Where(t => t.Package.Id == permission.Package.Id).Select(ConvertToPermission)
+        });
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CompactResource>> GetResourcesFrom(Guid partyId, Guid? toId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<PackagePermission>> GetPackagePermissionsToOthers(Guid partyId, Guid? toId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.FromId, partyId);
@@ -209,11 +155,15 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
 
         var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
-        return res.Select(t => t.Resource);
+        return res.DistinctBy(t => t.Package.Id).Select(permission => new PackagePermission()
+        {
+            Package = permission.Package,
+            Permissions = res.Where(t => t.Package.Id == permission.Package.Id).Select(ConvertToPermission)
+        });
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CompactResource>> GetResourcesTo(Guid partyId, Guid? fromId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ResourcePermission>> GetResourcePermissionsFromOthers(Guid partyId, Guid? fromId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.ToId, partyId);
@@ -228,140 +178,142 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
             filter.Equal(t => t.PackageId, packageId.Value);
         }
 
+        if (resourceId.HasValue)
+        {
+            filter.Equal(t => t.ResourceId, resourceId.Value);
+        }
+
         var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
-        return res.Select(t => t.Resource);
+        return res.DistinctBy(t => t.Resource.Id).Select(permission => new ResourcePermission()
+        {
+            Resource = permission.Resource,
+            Permissions = res.Where(t => t.Package.Id == permission.Package.Id).Select(ConvertToPermission)
+        });
     }
 
-    private IEnumerable<CompactRelationDto> GetConnectionsFrom(IEnumerable<ExtCompactRelation> res)
+    /// <inheritdoc />
+    public async Task<IEnumerable<ResourcePermission>> GetResourcePermissionsToOthers(Guid partyId, Guid? toId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
-        var result = new List<CompactRelationDto>();
+        var filter = relationPermissionRepository.CreateFilterBuilder();
+        filter.Equal(t => t.FromId, partyId);
 
-        var tempResult = new Dictionary<Guid, CompactRelationDto>(); // ViaId - Include Reason for Split in KeyRole & Delegation (?)
-        foreach (var connection in res.Where(t => t.Reason != "Direct").DistinctBy(t => t.To.Id))
+        if (toId.HasValue)
         {
-            var party = connection.To;
-            tempResult.Add(connection.Via.Id, new CompactRelationDto()
-            {
-                Party = party,
-                Roles = res.Where(t => t.To.Id == party.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
-                Connections = new List<CompactRelationDto>(),
-            });
+            filter.Equal(t => t.ToId, toId.Value);
         }
 
-        foreach (var party in res.Where(t => t.Reason == "Direct").Select(t => t.To).DistinctBy(t => t.Id))
+        if (packageId.HasValue)
         {
-            result.Add(new CompactRelationDto()
-            {
-                Party = party,
-                Roles = res.Where(t => t.To.Id == party.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
-                Connections = tempResult.Where(t => t.Key == party.Id).Select(t => t.Value).DistinctBy(t => t.Party.Id).ToList(), // Split in KeyRole & Delegation (?)
-            });
+            filter.Equal(t => t.PackageId, packageId.Value);
         }
 
-        return result;
+        if (resourceId.HasValue)
+        {
+            filter.Equal(t => t.ResourceId, resourceId.Value);
+        }
+
+        var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
+
+        return res.DistinctBy(t => t.Resource.Id).Select(permission => new ResourcePermission()
+        {
+            Resource = permission.Resource,
+            Permissions = res.Where(t => t.Package.Id == permission.Package.Id).Select(ConvertToPermission)
+        });
     }
 
-    private IEnumerable<RelationDto> GetConnectionsFrom(IEnumerable<ExtRelation> res)
+    #region Extractors and Converters
+
+    private IEnumerable<CompactRelationDto> ExtractConnectionsToOthers(IEnumerable<ExtCompactRelation> res, bool includeSubConnections = false)
     {
-        var result = new List<RelationDto>();
-
-        var tempResult = new Dictionary<Guid, RelationDto>(); // ViaId - Include Reason for Split in KeyRole & Delegation (?)
-        foreach (var connection in res.Where(t => t.Reason != "Direct").DistinctBy(t => t.To.Id))
+        return res.Where(t => t.Reason == "Direct").DistinctBy(t => t.To.Id).Select(relation => new CompactRelationDto()
         {
-            var party = connection.To;
-            tempResult.Add(connection.Via.Id, new RelationDto()
-            {
-                Party = party,
-                Roles = res.Where(t => t.To.Id == party.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
-                Packages = res.Where(t => t.To.Id == party.Id).Select(t => t.Package).DistinctBy(t => t.Id).ToList(),
-                Connections = new List<RelationDto>(),
-            });
-        }
-
-        foreach (var party in res.Where(t => t.Reason == "Direct").Select(t => t.To).DistinctBy(t => t.Id))
-        {
-            result.Add(new RelationDto()
-            {
-                Party = party,
-                Roles = res.Where(t => t.To.Id == party.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
-                Packages = res.Where(t => t.To.Id == party.Id).Select(t => t.Package).DistinctBy(t => t.Id).ToList(),
-                Connections = tempResult.Where(t => t.Key == party.Id).Select(t => t.Value).DistinctBy(t => t.Party.Id).ToList(), // Split in KeyRole & Delegation (?)
-            });
-        }
-
-        return result;
+            Party = relation.To,
+            Roles = res.Where(t => t.To.Id == relation.To.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
+            Connections = includeSubConnections ? ExtractSubConnectionToOthers(res, relation.To.Id).ToList() : new()
+        });
     }
 
-    private IEnumerable<CompactRelationDto> GetConnectionsTo(IEnumerable<ExtCompactRelation> res)
+    private IEnumerable<CompactRelationDto> ExtractSubConnectionToOthers(IEnumerable<ExtCompactRelation> res, Guid party)
     {
-        var result = new List<CompactRelationDto>();
-
-        var tempResult = new Dictionary<Guid, CompactRelationDto>(); // ViaId - Include Reason for Split in KeyRole & Delegation (?)
-        foreach (var connection in res.Where(t => t.Reason != "Direct").DistinctBy(t => t.From.Id))
+        return res.Where(t => t.Reason != "Direct" && t.Via.Id == party).DistinctBy(t => t.To.Id).Select(relation => new CompactRelationDto()
         {
-            var fromParty = connection.From;
-            tempResult.Add(connection.Via.Id, new CompactRelationDto()
-            {
-                Party = fromParty,
-                Roles = res.Where(t => t.From.Id == fromParty.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
-                Connections = new List<CompactRelationDto>(),
-            });
-        }
-
-        foreach (var party in res.Where(t => t.Reason == "Direct").Select(t => t.From).DistinctBy(t => t.Id))
-        {
-            result.Add(new CompactRelationDto()
-            {
-                Party = party,
-                Roles = res.Where(t => t.From.Id == party.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
-                Connections = tempResult.Where(t => t.Key == party.Id).Select(t => t.Value).DistinctBy(t => t.Party.Id).ToList(), // Split in KeyRole & Delegation (?)
-            });
-        }
-
-        return result;
+            Party = relation.To,
+            Roles = res.Where(t => t.To.Id == relation.To.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
+            Connections = new()
+        });
     }
 
-    private IEnumerable<RelationDto> GetConnectionsTo(IEnumerable<ExtRelation> res)
+    private IEnumerable<RelationDto> ExtractConnectionsToOthers(IEnumerable<ExtRelation> res, bool includeSubConnections = false)
     {
-        var result = new List<RelationDto>();
-
-        var tempResult = new Dictionary<Guid, RelationDto>(); // ViaId
-        foreach (var connection in res.Where(t => t.Reason != "Direct").DistinctBy(t => t.From.Id))
+        return res.Where(t => t.Reason == "Direct").DistinctBy(t => t.To.Id).Select(relation => new RelationDto()
         {
-            var fromParty = connection.From;
-            tempResult.Add(connection.Via.Id, new RelationDto()
-            {
-                Party = fromParty,
-                Roles = res.Where(t => t.From.Id == fromParty.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
-                Packages = res.Where(t => t.From.Id == fromParty.Id).Select(t => t.Package).DistinctBy(t => t.Id).ToList(),
-                Connections = new List<RelationDto>(),
-            });
-        }
-
-        foreach (var party in res.Where(t => t.Reason == "Direct").Select(t => t.From).DistinctBy(t => t.Id))
-        {
-            result.Add(new RelationDto()
-            {
-                Party = party,
-                Roles = res.Where(t => t.From.Id == party.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
-                Packages = res.Where(t => t.From.Id == party.Id).Select(t => t.Package).DistinctBy(t => t.Id).ToList(),
-                Connections = tempResult.Where(t => t.Key == party.Id).Select(t => t.Value).DistinctBy(t => t.Party.Id).ToList(),
-            });
-        }
-
-        return result;
+            Party = relation.To,
+            Roles = res.Where(t => t.To.Id == relation.To.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
+            Packages = res.Where(t => t.To.Id == relation.To.Id).Select(t => t.Package).DistinctBy(t => t.Id).ToList(),
+            Connections = includeSubConnections ? ExtractSubConnectionToOthers(res, relation.To.Id).ToList() : new()
+        });
     }
 
-    private Permission ConvertToPermission(ExtCompactRelation connection)
+    private IEnumerable<RelationDto> ExtractSubConnectionToOthers(IEnumerable<ExtRelation> res, Guid party)
     {
-        return new Permission()
+        return res.Where(t => t.Reason != "Direct" && t.Via.Id == party).DistinctBy(t => t.To.Id).Select(relation => new RelationDto()
+        {
+            Party = relation.To,
+            Roles = res.Where(t => t.To.Id == relation.To.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
+            Packages = res.Where(t => t.To.Id == relation.To.Id).Select(t => t.Package).DistinctBy(t => t.Id).ToList(),
+            Connections = new()
+        });
+    }
+
+    private IEnumerable<CompactRelationDto> ExtractConnectionsFromOthers(IEnumerable<ExtCompactRelation> res, bool includeSubConnections = false)
+    {
+        return res.Where(t => t.Reason == "Direct").DistinctBy(t => t.From.Id).Select(relation => new CompactRelationDto()
+        {
+            Party = relation.From,
+            Roles = res.Where(t => t.From.Id == relation.From.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
+            Connections = includeSubConnections ? ExtractSubConnectionFromOthers(res, relation.From.Id).ToList() : new()
+        });
+    }
+
+    private IEnumerable<RelationDto> ExtractConnectionsFromOthers(IEnumerable<ExtRelation> res, bool includeSubConnections = false)
+    {
+        return res.Where(t => t.Reason == "Direct").DistinctBy(t => t.From.Id).Select(relation => new RelationDto()
+        {
+            Party = relation.From,
+            Roles = res.Where(t => t.From.Id == relation.From.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
+            Packages = res.Where(t => t.From.Id == relation.From.Id).Select(t => t.Package).DistinctBy(t => t.Id).ToList(),
+            Connections = includeSubConnections ? ExtractSubConnectionFromOthers(res, relation.From.Id).ToList() : new()
+        });
+    }
+
+    private IEnumerable<CompactRelationDto> ExtractSubConnectionFromOthers(IEnumerable<ExtCompactRelation> res, Guid party)
+    {
+        return res.Where(t => t.Reason != "Direct" && t.Via.Id == party).DistinctBy(t => t.From.Id).Select(relation => new CompactRelationDto() 
+        { 
+            Party = relation.From, 
+            Roles = res.Where(t => t.From.Id == relation.From.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(), 
+            Connections = new() 
+        });
+    }
+
+    private IEnumerable<RelationDto> ExtractSubConnectionFromOthers(IEnumerable<ExtRelation> res, Guid party)
+    {
+        return res.Where(t => t.Reason != "Direct" && t.Via.Id == party).DistinctBy(t => t.From.Id).Select(relation => new RelationDto()
+        {
+            Party = relation.From,
+            Roles = res.Where(t => t.From.Id == relation.From.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
+            Packages = res.Where(t => t.From.Id == relation.From.Id).Select(t => t.Package).DistinctBy(t => t.Id).ToList(),
+            Connections = new()
+        });
+    }
+
+    private CompactPermission ConvertToCompactPermission(ExtRelation connection)
+    {
+        return new CompactPermission()
         {
             From = connection.From,
-            To = connection.To,
-            Via = connection.Via,
-            ViaRole = connection.ViaRole,
-            Role = connection.Role
+            To = connection.To
         };
     }
 
@@ -376,4 +328,6 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
             Role = connection.Role
         };
     }
+
+    #endregion
 }

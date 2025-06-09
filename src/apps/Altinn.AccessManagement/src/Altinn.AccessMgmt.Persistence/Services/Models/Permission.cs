@@ -32,3 +32,19 @@ public class Permission
     /// </summary>
     public CompactRole ViaRole { get; set; }
 }
+
+/// <summary>
+/// Permission
+/// </summary>
+public class CompactPermission
+{
+    /// <summary>
+    /// From party
+    /// </summary>
+    public CompactEntity From { get; set; }
+
+    /// <summary>
+    /// To party
+    /// </summary>
+    public CompactEntity To { get; set; }
+}

@@ -15,5 +15,5 @@ public class ResourcePermission
     /// <summary>
     /// Parties with permissions
     /// </summary>
-    public List<ConnectionPermission> Permissions { get; set; }
+    public IEnumerable<Permission> Permissions { get; set; }
 }
