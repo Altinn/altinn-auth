@@ -12,6 +12,10 @@
       "userid": 20012620,
       "partyid": 50656486,
       "partyuuid": "a30eea39-348b-444b-9342-8172f756a6f8"
+    },
+    "systemuser": {
+      "name": "SystemWithAccessList_Bruno",
+      "partyUuid": "468f4355-4bfc-4f9f-a7c9-89dc47468295"
     }
   },
   "SvenskGeniærklertTiger": {
