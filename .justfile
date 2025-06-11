@@ -16,7 +16,7 @@ set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
 
 [private]
 @default:
-  just --list
+  just --choose
 
 # Install node packages required to run scripts - uses pnpm to install the packages
 [private]

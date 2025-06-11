@@ -1,20 +1,23 @@
 import { Chalk, type ChalkInstance } from "chalk";
-import { globby } from "globby";
-import { $, within, echo, cd } from "zx";
+import { $, within, echo, retry } from "zx";
 import path from "node:path";
 import { verticals, type VerticalType, type Vertical } from "./_meta.mts";
 import fs from "node:fs";
-import yargs from "yargs";
-import { hideBin } from "yargs/helpers";
+import { yargs } from "./_yargs.mts";
 
-const argv = yargs(hideBin(process.argv))
+const argv = yargs()
   .option("purge", {
     type: "boolean",
   })
   .option("debug", {
     type: "boolean",
   })
+  .option("slnx", {
+    type: "boolean",
+  })
   .parse();
+
+const format = argv.slnx ? "slnx" : "sln";
 
 const c = new Chalk({ level: 3 });
 
@@ -25,12 +28,23 @@ type SlnSpec = {
   readonly type?: VerticalType;
   readonly tree: ProjectTree;
   readonly vertical?: Vertical;
+  hasProjects: boolean;
 };
 
 type ProjectTree = ProjectTreeNode[];
+type ProjectTreeDirType =
+  | VerticalType
+  | "src"
+  | "test"
+  | `${VerticalType}-type`
+  | "deps:libs-dir"
+  | "deps:pkgs-dir"
+  | "deps:lib"
+  | "deps:pkg";
 type ProjectTreeNode = ProjectTreeDir | ProjectTreeItem;
 type ProjectTreeDir = {
   readonly type: "dir";
+  readonly dirType: ProjectTreeDirType;
   readonly name: string;
   readonly children: ProjectTree;
 };
@@ -43,13 +57,14 @@ type ProjectTreeItem = {
 const depTypeDirName = {
   lib: "libs",
   pkg: "pkgs",
-};
+} as const;
 
 const rootSln: SlnSpec = {
   dir: path.resolve("."),
   name: "Altinn.Authorization",
   displayName: "Altinn.Authorization",
   tree: [],
+  hasProjects: true,
 };
 
 const verticalSlns: SlnSpec[] = [];
@@ -60,33 +75,52 @@ for (const vertical of verticals) {
     (node) => node.type === "dir" && node.name === vertical.type
   ) as ProjectTreeDir;
   if (!typeDir) {
-    typeDir = { type: "dir", name: vertical.type, children: [] };
+    typeDir = {
+      type: "dir",
+      dirType: `${vertical.type}-type`,
+      name: vertical.type,
+      children: [],
+    };
     rootSln.tree.push(typeDir);
   }
 
   const verticalDir: ProjectTreeDir = {
     type: "dir",
+    dirType: vertical.type,
     name: vertical.name,
     children: [],
   };
   typeDir.children.push(verticalDir);
 
-  verticalSlns.push({
+  var verticalSln = {
     dir: vertical.path,
     name: vertical.name,
     displayName: vertical.shortName,
     type: vertical.type,
     tree: verticalDir.children,
     vertical,
-  });
+    hasProjects: false,
+  } as SlnSpec;
+  verticalSlns.push(verticalSln);
 
-  const srcDir: ProjectTreeDir = { type: "dir", name: "src", children: [] };
+  const srcDir: ProjectTreeDir = {
+    type: "dir",
+    dirType: "src",
+    name: "src",
+    children: [],
+  };
   verticalDir.children.push(srcDir);
 
-  const testDir: ProjectTreeDir = { type: "dir", name: "test", children: [] };
+  const testDir: ProjectTreeDir = {
+    type: "dir",
+    dirType: "test",
+    name: "test",
+    children: [],
+  };
   verticalDir.children.push(testDir);
 
   for (const srcProjects of vertical.projects.src) {
+    verticalSln.hasProjects = true;
     srcDir.children.push({
       type: "item",
       name: srcProjects.name,
@@ -95,6 +129,7 @@ for (const vertical of verticals) {
   }
 
   for (const testProjects of vertical.projects.test) {
+    verticalSln.hasProjects = true;
     testDir.children.push({
       type: "item",
       name: testProjects.name,
@@ -105,6 +140,7 @@ for (const vertical of verticals) {
   if (vertical.type === "lib" || vertical.type === "pkg") {
     deps.set(`${vertical.type}:${vertical.name}`, {
       type: "dir",
+      dirType: `deps:${vertical.type}`,
       name: vertical.name,
       children: srcDir.children,
     });
@@ -113,12 +149,18 @@ for (const vertical of verticals) {
 
 for (const sln of verticalSlns) {
   for (const dep of sln.vertical!.deps) {
-    const typeDirName = depTypeDirName[dep.type];
+    const type = dep.type as "lib" | "pkg";
+    const typeDirName = depTypeDirName[type];
     let typeDir = sln.tree.find(
       (node) => node.type === "dir" && node.name === typeDirName
     ) as ProjectTreeDir;
     if (!typeDir) {
-      typeDir = { type: "dir", name: typeDirName, children: [] };
+      typeDir = {
+        type: "dir",
+        dirType: `deps:${type}s-dir`,
+        name: typeDirName,
+        children: [],
+      };
       sln.tree.push(typeDir);
     }
 
@@ -154,13 +196,21 @@ type FlattenedTreeItem = {
   readonly treeDir: string;
 };
 
+const isDepsDir = (dirType: ProjectTreeDirType): boolean =>
+  dirType === "deps:libs-dir" || dirType === "deps:pkgs-dir";
+
 function* flattenTree(
   tree: ProjectTree,
+  includeDeps = true,
   path: readonly string[] = []
 ): Generator<FlattenedTreeItem> {
   for (const item of tree) {
     if (item.type === "dir") {
-      yield* flattenTree(item.children, [...path, item.name]);
+      if (!includeDeps && isDepsDir(item.dirType)) {
+        continue;
+      }
+
+      yield* flattenTree(item.children, includeDeps, [...path, item.name]);
     } else {
       yield {
         name: item.name,
@@ -172,15 +222,25 @@ function* flattenTree(
 }
 
 for (const sln of [rootSln, ...verticalSlns]) {
+  if (!sln.hasProjects) {
+    continue;
+  }
+
   await within(async () => {
     const dir = sln.dir;
     $.cwd = dir;
     $.verbose = argv.debug;
 
+    const isRoot = sln === rootSln;
+
     const p = (p: string, fmt: ChalkInstance = c.yellow) =>
       fmt(path.relative(dir, p).replaceAll("\\", "/"));
 
     const slnFile = path.resolve(dir, `${sln.name}.sln`).replaceAll("\\", "/");
+    const slnxFile = slnFile + "x";
+    const workFile = argv.slnx ? slnxFile : slnFile;
+    const altFile = argv.slnx ? slnFile : slnxFile;
+
     const display = sln.type
       ? `${c.cyan(sln.type)}: ${c.yellow(sln.displayName)}`
       : c.yellow(sln.displayName);
@@ -190,69 +250,53 @@ for (const sln of [rootSln, ...verticalSlns]) {
     echo(`# ${display}`);
 
     if (argv.purge) {
-      echo(`${c.red("~")} ${p(slnFile)}`);
+      echo(`${c.red("~")} ${p(workFile)}`);
       if (fileExists(slnFile)) {
         fs.unlinkSync(slnFile);
       }
 
-      await $`dotnet new sln --name ${sln.name}`;
-    } else if (!fileExists(slnFile)) {
-      echo(`${c.magenta("!")} ${p(slnFile)}`);
-      await $`dotnet new sln --name ${sln.name}`;
+      if (fileExists(slnxFile)) {
+        fs.unlinkSync(slnxFile);
+      }
+
+      await retry(
+        2,
+        () => $`dotnet new sln --name ${sln.name} --format ${format}`
+      );
+    } else if (!fileExists(workFile)) {
+      if (fileExists(altFile)) {
+        echo(`${c.red("~")} ${p(workFile)}`);
+        fs.unlinkSync(altFile);
+      } else {
+        echo(`${c.magenta("!")} ${p(workFile)}`);
+      }
+
+      await retry(
+        2,
+        () => $`dotnet new sln --name ${sln.name} --format ${format}`
+      );
     }
 
-    const existingProjects = await getSlnProjects(slnFile);
+    const existingProjects = await getSlnProjects(workFile);
     for (const proj of existingProjects) {
       const projPath = path.resolve(dir, proj).replaceAll("\\", "/");
       echo(`${c.cyan("-")} ${p(projPath)}`);
     }
 
     let added = 0;
-    for (const item of flattenTree(sln.tree)) {
+    for (const item of flattenTree(sln.tree, !isRoot)) {
       const relPath = path.relative(dir, item.diskPath).replaceAll("\\", "/");
       if (existingProjects.has(relPath)) {
         continue;
       }
 
       echo(`${c.green("+")} ${p(item.diskPath)}`);
-      await $`dotnet sln ${slnFile} add ${item.diskPath} --solution-folder ${item.treeDir}`;
+      await retry(
+        2,
+        () =>
+          $`dotnet sln ${workFile} add ${item.diskPath} --solution-folder ${item.treeDir}`
+      );
       added++;
     }
   });
 }
-
-// const slnSpecs: SlnSpec[] = verticals.map((v) => ({
-//   path: path.resolve(v.path, `${v.name}.sln`),
-//   name: v.name,
-//   searchRoot: v.path,
-//   isRoot: false,
-// }));
-// slnSpecs.unshift({
-//   path: globSlnFile,
-//   searchRoot: srcDir,
-//   name: "Altinn.Authorization",
-//   isRoot: true,
-// });
-
-// for (const spec of slnSpecs) {
-//   const stat = fs.statSync(spec.path, { throwIfNoEntry: false });
-//   if (stat == null || !stat.isFile()) {
-//     echo(`Creating ${p(spec.path)}`);
-//     await within(async () => {
-//       $.cwd = path.dirname(spec.path);
-//       await $`dotnet new sln -n ${spec.name}`;
-//     });
-//   }
-// }
-
-// for (const spec of slnSpecs) {
-//   echo(`Updating ${p(spec.path)}`);
-//   await within(async () => {
-//     $.cwd = path.dirname(spec.path);
-//     const projects = (await globby(`**/*.*proj`, { cwd: spec.searchRoot })).map(
-//       (p) => path.resolve(spec.searchRoot, p).replaceAll("\\", "/")
-//     );
-
-//     await $`dotnet sln add ${projects}`;
-//   });
-// }
