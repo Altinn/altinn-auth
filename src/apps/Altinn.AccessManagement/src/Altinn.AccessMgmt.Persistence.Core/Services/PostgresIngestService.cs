@@ -77,8 +77,19 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
         var ingestName = ingestId.ToString().Replace("-", string.Empty);
         string ingestTableName = "ingest." + queryBuilder.GetTableName(includeAlias: false, includeSchema: false) + "_" + ingestName;
 
-        var mergeMatchStatement = string.Join(" AND ", matchColumns.Select(t => $"target.{t} = source.{t}"));
-        var mergeUpdateUnMatchStatement = string.Join(" OR ", ingestColumns.Where(t => matchColumns.Count(y => y.Equals(t.Name, StringComparison.OrdinalIgnoreCase)) == 0).Select(t => $"target.{t.Name} <> source.{t.Name}"));
+        var mergeMatchStatement = string.Join(" AND ", matchColumns.Select(t => $"(target.{t} IS NULL AND source.{t} IS NULL OR target.{t} = source.{t})"));
+        var mergeUpdateUnMatchStatement = string.Join(
+            " OR ",
+            ingestColumns
+                .Where(t => matchColumns.Count(y => y.Equals(t.Name, StringComparison.OrdinalIgnoreCase)) == 0)
+                .Select(t =>
+                    $"(" +
+                    $"target.{t.Name} <> source.{t.Name} " +
+                    $"OR (target.{t.Name} IS NULL AND source.{t.Name} IS NOT NULL) " +
+                    $"OR (target.{t.Name} IS NOT NULL AND source.{t.Name} IS NULL)" +
+                    $")"
+                )
+        );
         var mergeUpdateStatement = string.Join(" , ", ingestColumns.Where(t => matchColumns.Count(y => y.Equals(t.Name, StringComparison.OrdinalIgnoreCase)) == 0).Select(t => $"{t.Name} = source.{t.Name}"));
         var insertColumns = string.Join(" , ", ingestColumns.Select(t => $"{t.Name}"));
         var insertValues = string.Join(" , ", ingestColumns.Select(t => $"source.{t.Name}"));
