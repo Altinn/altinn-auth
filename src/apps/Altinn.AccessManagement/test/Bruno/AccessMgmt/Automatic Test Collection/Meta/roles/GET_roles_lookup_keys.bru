@@ -1,0 +1,21 @@
+meta {
+  name: GET_roles_lookup_keys
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/lookup/keys
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("GET_roles_lookup_keys", function() {
+    const data = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(data).to.contain('Urn');
+    expect(data).to.contain('ERCode');
+  });
+  
+}

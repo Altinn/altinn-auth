@@ -1,0 +1,25 @@
+meta {
+  name: GET_roles_with_id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 18baa914-ac43-4663-9fa4-6f5760dc68eb
+}
+
+tests {
+  test("GET_roles_with_id", function() {
+    const data = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(data).to.have.property('code', 'deltaker-delt-ansvar');
+    expect(data).to.have.property('urn', 'urn:altinn:external-role:ccr:deltaker-delt-ansvar');
+  });
+  
+}

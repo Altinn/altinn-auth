@@ -1,0 +1,27 @@
+meta {
+  name: GET_roles_rolepackages
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/:id/packages
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: f76b997a-9bd8-4f7b-899f-fcd85d35669f
+}
+
+tests {
+  test("GET_roles_rolepackages", function() {
+    const data = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(data[0].role).to.have.property('code', 'revisor');
+    expect(data[0].package).to.have.property('urn', 'urn:altinn:accesspackage:ansvarlig-revisor');
+    expect(data[1].package).to.have.property('urn', 'urn:altinn:accesspackage:revisormedarbeider');
+    expect(data).to.have.length(2);
+  });
+  
+}

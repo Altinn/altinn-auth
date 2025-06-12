@@ -1,0 +1,19 @@
+meta {
+  name: GET_roles
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("GET_roles", function() {
+    const data = res.getBody();  
+    expect(res.status).to.equal(200);
+  });
+  
+}

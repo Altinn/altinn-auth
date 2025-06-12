@@ -1,0 +1,28 @@
+meta {
+  name: GET_roles_lookup
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/lookup?key=ercode&value=dagl
+  body: none
+  auth: inherit
+}
+
+params:query {
+  key: ercode
+  value: dagl
+}
+
+tests {
+  test("GET_roles_lookup", function() {
+    const data = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(data[0]).to.have.property('id', '55bd7d4d-08dd-46ee-ac8e-3a44d800d752');
+    expect(data[0]).to.have.property('code', 'daglig-leder');
+    expect(data[0]).to.have.property('urn', 'urn:altinn:external-role:ccr:daglig-leder');
+    
+  });
+  
+}
