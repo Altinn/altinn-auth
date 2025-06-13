@@ -8,6 +8,7 @@ using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Data;
 using Altinn.AccessMgmt.Persistence.Services;
+using Altinn.AccessMgmt.Persistence.Services.Models;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -31,7 +32,7 @@ public class ConnectionsController(IEnduserConnectionService connectionService) 
     /// </summary>
     [HttpGet]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
-    [ProducesResponseType<PaginatedResult<Assignment>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<PaginatedResult<CompactRelationDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -115,7 +116,7 @@ public class ConnectionsController(IEnduserConnectionService connectionService) 
     [HttpGet("accesspackages")]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
     [DbAudit(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApiStr)]
-    [ProducesResponseType<PaginatedResult<ConnectionPackage>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<PaginatedResult<PackagePermission>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

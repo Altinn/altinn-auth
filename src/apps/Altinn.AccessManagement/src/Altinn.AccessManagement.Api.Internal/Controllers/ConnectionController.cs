@@ -1,4 +1,4 @@
-﻿using Altinn.AccessManagement.Core.Helpers;
+using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Helpers;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
