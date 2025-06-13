@@ -1,0 +1,53 @@
+meta {
+  name: GET_Enduser_Conn_AccPcks_After_deleting_AccPkg_FromOrg_empty
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{fromOrg}}&to={{party}}&packageId&package={{package}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{fromOrg}}
+  to: {{party}}
+  packageId: 
+  package: {{package}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  
+  bru.setVar("party", testdata.esek_type_org.partyuuid);
+  bru.setVar("fromOrg", testdata.hovedorg_delegates_tilgangspakke.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.esek_type_org.styretsleder.userid,
+    auth_partyId: testdata.esek_type_org.styretsleder.partyid,
+    auth_partyUuid: testdata.esek_type_org.styretsleder.partyuuid,
+    auth_ssn: testdata.esek_type_org.styretsleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  test("GET null response after deleting av delegated access pacakge : FromOthers", function() {
+     const data = res.getBody();
+      expect(res.status).to.equal(200);
+      expect(data.data).to.empty
+    
+    });
+}

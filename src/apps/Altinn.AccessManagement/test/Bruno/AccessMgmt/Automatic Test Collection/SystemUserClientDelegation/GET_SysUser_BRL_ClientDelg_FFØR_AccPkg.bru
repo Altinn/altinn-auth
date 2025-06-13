@@ -48,9 +48,10 @@ tests {
       const data = res.getBody();
       var delegationId = bru.getEnvVar("delegationId");
       expect(res.status).to.equal(200);
-      expect(data[0].facilitator).to.have.property('name', "FRYKTLØS FIRKANTET TIGER AS");
-    expect(data[0].role).to.have.property('code', "forretningsforer");
-    expect(data[0].facilitatorRole).to.have.property('code', "agent");
+      expect(data[13]).to.have.property('id', delegationId);
+      expect(data[13].facilitator).to.have.property('name', "FRYKTLØS FIRKANTET TIGER AS");
+    expect(data[13].role).to.have.property('code', "agent");
+    expect(data[13].facilitatorRole).to.have.property('code', "forretningsforer");
       
     });
 }

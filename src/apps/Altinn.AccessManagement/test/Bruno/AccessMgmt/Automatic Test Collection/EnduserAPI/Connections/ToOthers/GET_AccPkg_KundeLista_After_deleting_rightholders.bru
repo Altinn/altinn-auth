@@ -1,0 +1,45 @@
+meta {
+  name: GET_AccPkg_KundeLista_After_deleting_rightholders
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/clients?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("party", testdata.org2_delegates_tilgangspakke.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.org2_delegates_tilgangspakke.innehaver.userid,
+    auth_partyId: testdata.org2_delegates_tilgangspakke.innehaver.partyid,
+    auth_partyUuid: testdata.org2_delegates_tilgangspakke.innehaver.partyuuid,
+    auth_ssn: testdata.org2_delegates_tilgangspakke.innehaver.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Verify that Org1 appears in the client list for Org2 after Org2 receives delegated access via the access package from Org1 : ToOthers", function() {
+    const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+      const data = res.getBody();
+      expect(res.status).to.equal(200);
+      expect(res.body).to.empty
+    
+    });
+}

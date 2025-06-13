@@ -1,0 +1,62 @@
+meta {
+  name: POST_Enduser_Conn_AccPcks_Delegation_Different_type_org
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toOrg}}&packageId=&package={{package}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toOrg}}
+  packageId: 
+  package: {{package}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  
+  bru.setVar("party", testdata.hovedorg_delegates_tilgangspakke.partyuuid);
+  bru.setVar("toOrg", testdata.esek_type_org.partyuuid);
+  bru.setVar("package", testdata.direct_package_to_delegate);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.hovedorg_delegates_tilgangspakke.Deltaker_med_fullt_ansvar.userid,
+    auth_partyId: testdata.hovedorg_delegates_tilgangspakke.Deltaker_med_fullt_ansvar.partyid,
+    auth_partyUuid: testdata.hovedorg_delegates_tilgangspakke.Deltaker_med_fullt_ansvar.partyuuid,
+    auth_ssn: testdata.hovedorg_delegates_tilgangspakke.Deltaker_med_fullt_ansvar.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+script:post-response {
+  const data = res.getBody();
+  const packageId = data.packageId;
+  bru.setEnvVar("packageId", packageId)
+}
+
+tests {
+  test("Delegate access package from org1 to org2 : FromOthers", function() {
+    const data = res.getBody();
+    var packageId = bru.getEnvVar("packageId");
+    
+    expect(res.status).to.equal(200);
+    expect(data).to.have.property('packageId', packageId);
+    
+  });
+}

@@ -44,7 +44,7 @@ script:pre-request {
 script:post-response {
   let data = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
   if (Array.isArray(data) && data.length > 0) {
-   const assignmentId = data[0].delegation.toId;
+   const assignmentId = data[2].delegation.toId;
    bru.setEnvVar("toId", assignmentId);
   }
 }
@@ -55,9 +55,10 @@ tests {
       const data = res.getBody();
       var delegationId = bru.getEnvVar("delegationId");
       expect(res.status).to.equal(200);
-    expect(data[0].role).to.have.property('code', "regnskapsforer");
-    expect(data[0].facilitator).to.have.property('name', "ULASTELIG RETTFERDIG TIGER AS");
-    expect(data[0].facilitatorRole).to.have.property('code', "agent");
+    expect(data[2]).to.have.property('id', delegationId);
+    expect(data[2].role).to.have.property('code', "agent");
+    expect(data[2].facilitator).to.have.property('name', "ULASTELIG RETTFERDIG TIGER AS");
+    expect(data[2].facilitatorRole).to.have.property('code', "regnskapsforer");
       
     });
 }

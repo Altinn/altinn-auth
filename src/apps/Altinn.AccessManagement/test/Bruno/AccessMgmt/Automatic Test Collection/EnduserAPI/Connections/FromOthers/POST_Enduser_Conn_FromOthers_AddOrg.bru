@@ -43,15 +43,14 @@ script:pre-request {
 }
 
 tests {
-  
   test(bru.getVar("requestName"), function() {
     const data = res.getBody();
     
     expect(res.status).to.equal(200);
     assert.isOk(data, "Expected response body to return created assignment");
     
-    assert.equal(data.fromId, bru.getVar("party"));
-    assert.equal(data.toId, bru.getVar("toOrg"));
+    assert.equal(data.fromId, bru.getVar("party").toLowerCase());
+    assert.equal(data.toId, bru.getVar("toOrg").toLowerCase());
     assert.equal(data.roleId, "42cae370-2dc1-4fdc-9c67-c2f4b0f0f829"); // rettighetshaver uuid
     
   });

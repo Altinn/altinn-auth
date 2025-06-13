@@ -1,0 +1,103 @@
+{
+  "env": "at22",
+  "package_to_delegate": {
+    "package_urn": "urn:altinn:accesspackage:skattegrunnlag",
+    "invalid_pkg" : "12345"
+  },
+  "org1_delegates_tilgangspakke": {
+    "org_type": "AS",
+    "name": "GEOMETRISK VOKSENDE TIGER AS",
+    "orgno": "310757632",
+    "partyuuid": "2BCA4ABC-B2CC-423D-8164-572869D6678B",
+    "dagligleder": {
+      "name": "PARODISK BOKHANDEL",
+      "pid": "11874898327",
+      "partyid": 50162098,
+      "userid": 20049211,
+      "partyuuid": "078EC166-7A96-4242-897B-E7CD1FAF3EA0"
+    },
+    "tilgangstyrrer": {
+      "name": "KRASS DYR LEGEVAKT TRANE",
+      "pid": "68867800674",
+      "partyid": 51221102,
+      "userid": 20235709,
+      "partyuuid": "2F0828DC-6DDC-4C58-A389-DA140DCE5D9A"
+    },
+    "klientadministrator": {
+      "name": "KLOK BAKEPULVER",
+      "pid": "12816396962",
+      "partyid": 50754711,
+      "userid": 20758855,
+      "partyuuid": "9DE6C4D0-507F-460C-B372-E83FF3B1209E"
+    },
+    "styretsleder": {
+      "name": "KLOK BAKEPULVER",
+      "pid": "11874898327",
+      "partyid": 50162098,
+      "userid": 20049211,
+      "partyuuid": "078EC166-7A96-4242-897B-E7CD1FAF3EA0"
+    },
+    "hovedadministrator": {
+      "name": "KONGE ALPAKKA",
+      "pid": "08881898315",
+      "partyid": 50348470,
+      "userid": 20070810,
+      "partyuuid": "0C23B4AD-C507-4C84-B800-790C723CB7B1"
+    },
+    "directdelegatedpackage_urn" : "urn:altinn:accesspackage:toll",
+    "hadm_delegert_package" : "urn:altinn:accesspackage:post-til-virksomheten-med-taushetsbelagt-innhold"
+  },
+    "org2_delegates_tilgangspakke": {
+      "org_type": "ENK",
+      "name": "ALLMEKTIG VERTIKAL KATT PIZZA",
+      "orgno": "311728482",
+      "partyuuid": "1840251A-D08C-4704-9DFB-D175D9C9331A",
+      "innehaver": {
+        "name": "LOGISK ARKEOLOG",
+        "pid": "12827399513",
+        "partyid": 50960264,
+        "userid": 20768243,
+        "partyuuid": "9FE08254-4364-4FE2-9F06-854B30B25468"
+      }
+    },
+    "hovedorg_delegates_tilgangspakke": {
+      "org_type": "ANS",
+      "name": "DYKTIG UTSTRAKT MINK ANS",
+      "orgno": "310848212",
+      "partyuuid": "197fd687-2a8b-4e00-9099-0438d27b3179",
+      "dagligleder": {
+        "name": "FATTIG DYNAMO",
+        "pid": "03917996902",
+        "partyid": 50651063,
+        "userid": 20933369,
+        "partyuuid": "C2C4935B-5ECF-47E2-998D-4521FB314951"
+      },
+      "Deltaker_med_fullt_ansvar": {
+        "name": "BEVISST FELTSTOL",
+        "pid": "02928799754",
+        "partyid": 50363032,
+        "userid": 20838404,
+        "partyuuid": "AEC7682E-EFBF-4C64-B280-6A78A61C638C"
+      },
+      "underenhet": {
+        "name" : "DYKTIG UTSTRAKT MINK ANS",
+        "orgno": "314424034",
+        "partyuuid": "4cfe7ea1-905c-42ab-bdf0-8fc654d9acb8"
+      }
+    },
+    "direct_package_to_delegate" : "urn:altinn:accesspackage:dyrehold",
+    "esek_type_org": {
+      "org_type": "ESEK",
+      "name": "SAMEIET AKADEMISK ELEGANT LØVE",
+      "orgno": "310621749",
+      "partyuuid": "ee5f349a-6f58-43e6-b90d-720b17dbf81c",
+      "styretsleder": {
+        "name": "ULYDIG COSINUS",
+        "pid": "18878398803",
+        "partyid": 50847574,
+        "userid": 21108057,
+        "partyuuid": "E7C1F744-5C5B-4715-B8BE-53465A95EAD0"
+      }
+    }
+
+  }
