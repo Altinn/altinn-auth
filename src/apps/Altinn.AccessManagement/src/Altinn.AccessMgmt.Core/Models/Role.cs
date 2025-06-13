@@ -91,5 +91,5 @@ public class CompactRole
     /// <summary>
     /// Children
     /// </summary>
-    public List<CompactEntity> Children { get; set; }
+    public List<CompactRole> Children { get; set; }
 }
