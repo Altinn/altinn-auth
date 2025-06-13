@@ -1,0 +1,76 @@
+meta {
+  name: POST_ResourceDelegation_ToSystemUser
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/{{party}}/rights/delegation/offered
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+      "to": [
+          {
+              "id": "urn:altinn:systemuser:uuid",
+              "value": "{{systemUser}}"
+          }
+      ],
+      "rights": [
+          {
+              "resource": [
+                  {
+                      "id": "urn:altinn:resource",
+                      "value": "devtest_gar_bruno_direct_resource"
+                  }
+              ],
+              "action": "read"
+          }
+      ]
+  }
+}
+
+vars:pre-request {
+  toPersonUuid: 14f553af-2ab4-46e3-bf9e-9dda1d27f87c
+  resourceId: generic-access-resource
+  auth_tokenType: Personal
+  auth_userId: 20000490
+  auth_partyId: 50002598
+  auth_ssn: '07124912037'
+  party: 50005545
+  toSystemUserUuid: a6355a68-86b8-4344-8a81-0248cb461468
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("requestName", "POST_ResourceDelegation_ToSystemUser");
+  bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyId);
+  bru.setVar("systemUser", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser.partyUuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.userId,
+    auth_partyId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.partyId,
+    auth_partyUuid: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.partyUuid,
+    auth_ssn: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+}

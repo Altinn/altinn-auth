@@ -5,6 +5,7 @@ using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.SblBridge;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
+using Altinn.AccessManagement.Core.Services.Contracts;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Register.Enums;
@@ -19,6 +20,7 @@ public class AuthorizedPartiesService : IAuthorizedPartiesService
     private readonly IDelegationMetadataRepository _delegations;
     private readonly IAltinnRolesClient _altinnRolesClient;
     private readonly IProfileClient _profile;
+    private readonly IAuthorizedPartyRepoService _authorizedPartyRepoService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AuthorizedPartiesService"/> class.
@@ -27,12 +29,14 @@ public class AuthorizedPartiesService : IAuthorizedPartiesService
     /// <param name="delegations">Database repository for delegations</param>
     /// <param name="altinn2">SBL bridge client for role and reportee information from Altinn 2</param>
     /// <param name="profile">Service implementation for user profile retrieval</param>
-    public AuthorizedPartiesService(IContextRetrievalService contextRetrievalService, IDelegationMetadataRepository delegations, IAltinnRolesClient altinn2, IProfileClient profile)
+    /// <param name="authorizedPartyRepoService">Service implementation for getting authorized parties from new database model</param>
+    public AuthorizedPartiesService(IContextRetrievalService contextRetrievalService, IDelegationMetadataRepository delegations, IAltinnRolesClient altinn2, IProfileClient profile, IAuthorizedPartyRepoService authorizedPartyRepoService)
     {
         _contextRetrievalService = contextRetrievalService;
         _delegations = delegations;
         _altinnRolesClient = altinn2;
         _profile = profile;
+        _authorizedPartyRepoService = authorizedPartyRepoService;
     }
 
     /// <inheritdoc/>
@@ -46,6 +50,7 @@ public class AuthorizedPartiesService : IAuthorizedPartiesService
         AltinnXacmlConstants.MatchAttributeIdentifiers.EnterpriseUserUuid => await GetAuthorizedPartiesForEnterpriseUserUuid(subjectAttribute.Value, includeAltinn2AuthorizedParties, includeAuthorizedResourcesThroughRoles, cancellationToken),
         AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute => await GetAuthorizedPartiesForParty(int.Parse(subjectAttribute.Value), includeAltinn2AuthorizedParties, includeAuthorizedResourcesThroughRoles, cancellationToken),
         AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute => await GetAuthorizedPartiesForUser(int.Parse(subjectAttribute.Value), includeAltinn2AuthorizedParties, includeAuthorizedResourcesThroughRoles, cancellationToken),
+        AltinnXacmlConstants.MatchAttributeIdentifiers.SystemUserUuid => await GetAuthorizedPartiesForSystemUser(subjectAttribute.Value, cancellationToken),
         _ => throw new ArgumentException(message: $"Unknown attribute type: {subjectAttribute.Type}", paramName: nameof(subjectAttribute))
     };
 
@@ -162,6 +167,18 @@ public class AuthorizedPartiesService : IAuthorizedPartiesService
         }
 
         return await Task.FromResult(new List<AuthorizedParty>());
+    }
+
+    /// <inheritdoc/>
+    public async Task<List<AuthorizedParty>> GetAuthorizedPartiesForSystemUser(string subjectSystemUserUuid, CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(subjectSystemUserUuid, out Guid systemUserId))
+        {
+            throw new ArgumentException(message: $"Not a well-formed uuid: {subjectSystemUserUuid}", paramName: nameof(subjectSystemUserUuid));
+        }
+
+        var parties = await _authorizedPartyRepoService.Get(systemUserId, cancellationToken);
+        return parties.Value.ToList();
     }
 
     private async Task AddInstanceDelegations(List<DelegationChange> delegations, int subjectUserId, List<int> subjectPartyIds, CancellationToken cancellationToken)

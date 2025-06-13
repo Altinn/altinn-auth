@@ -67,14 +67,18 @@ public class AuthorizedPartiesController : ControllerBase
         try
         {
             int userId = AuthenticationHelper.GetUserId(HttpContext);
-            if (userId == 0)
+            if (userId != 0)
             {
-                return Unauthorized();
+                return _mapper.Map<List<AuthorizedPartyExternal>>(await _authorizedPartiesService.GetAuthorizedPartiesForUser(userId, includeAltinn2, includeAuthorizedResourcesThroughRoles: false, cancellationToken));
             }
 
-            List<AuthorizedParty> authorizedParties = await _authorizedPartiesService.GetAuthorizedPartiesForUser(userId, includeAltinn2, includeAuthorizedResourcesThroughRoles: false, cancellationToken);
+            string systemUserId = AuthenticationHelper.GetSystemUserUuid(HttpContext);
+            if (!string.IsNullOrWhiteSpace(systemUserId))
+            {
+                return _mapper.Map<List<AuthorizedPartyExternal>>(await _authorizedPartiesService.GetAuthorizedPartiesForSystemUser(systemUserId, cancellationToken));
+            }
 
-            return _mapper.Map<List<AuthorizedPartyExternal>>(authorizedParties);
+            return Unauthorized();
         }
         catch (Exception ex)
         {

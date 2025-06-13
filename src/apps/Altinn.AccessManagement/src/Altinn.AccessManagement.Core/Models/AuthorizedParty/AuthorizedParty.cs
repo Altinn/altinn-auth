@@ -115,6 +115,11 @@ public class AuthorizedParty
     public bool OnlyHierarchyElementWithNoAccess { get; set; }
 
     /// <summary>
+    /// Gets or sets a collection of all accesspackage identifiers the authorized subject has some access to on behalf of this party
+    /// </summary>
+    public List<string> AuthorizedAccessPackages { get; set; } = [];
+
+    /// <summary>
     /// Gets or sets a collection of all resource identifier the authorized subject has some access to on behalf of this party
     /// </summary>
     public List<string> AuthorizedResources { get; set; } = [];
@@ -133,6 +138,29 @@ public class AuthorizedParty
     /// Gets or sets a collection of all Authorized Instances 
     /// </summary>
     public List<AuthorizedResource> AuthorizedInstances { get; set; } = [];
+
+    /// <summary>
+    /// Enriches this authorized party and any subunits with a resource access
+    /// </summary>
+    /// <param name="accessPackages">The access packages to add to the authorized party (and any subunits) list of authorized packages</param>
+    public void EnrichWithAccessPackage(IEnumerable<string> accessPackages)
+    {
+        if (!accessPackages.Any())
+        {
+            return;
+        }
+
+        OnlyHierarchyElementWithNoAccess = false;
+        AuthorizedAccessPackages.AddRange(accessPackages);
+
+        if (Subunits != null)
+        {
+            foreach (var subunit in Subunits)
+            {
+                subunit.EnrichWithAccessPackage(accessPackages);
+            }
+        }
+    }
 
     /// <summary>
     /// Enriches this authorized party and any subunits with a resource access

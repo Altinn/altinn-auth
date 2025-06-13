@@ -637,4 +637,9 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
     {
         return Task.FromResult(true);
     }
+
+    public Task<List<DelegationChange>> GetAllDelegationChangesForAuthorizedParties(List<Guid> toPartyUuids, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

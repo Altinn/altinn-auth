@@ -441,6 +441,12 @@ public class DelegationMetadataRepository : IDelegationMetadataRepository
         }
     }
 
+    /// <inheritdoc />
+    public Task<List<DelegationChange>> GetAllDelegationChangesForAuthorizedParties(List<Guid> toPartyUuids, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     private async Task<DelegationChange> InsertAppDelegation(DelegationChange delegationChange, CancellationToken cancellationToken = default)
     {
         using var activity = TelemetryConfig.ActivitySource.StartActivity(ActivityKind.Client);

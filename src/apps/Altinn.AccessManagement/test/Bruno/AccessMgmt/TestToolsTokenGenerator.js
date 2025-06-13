@@ -52,6 +52,14 @@ exports.getToken = async function (getTokenParameters) {
     tokenUrl = `${tokenBaseUrl}/api/Get${tokenType}?env=${tokenEnv}&app=${tokenApp}&ttl=30`;
   }
 
+  else if (tokenType == "SystemUser") {
+    const tokenSystemUser = getTokenParameters.auth_systemUserId;
+    const tokenOrgNo = getTokenParameters.auth_orgNo;
+    const tokenClientId = getTokenParameters.auth_clientId;
+
+    tokenUrl = `${tokenBaseUrl}/api/Get${tokenType}Token?env=${tokenEnv}&scopes=${tokenScopes}&systemUserId=${tokenSystemUser}&orgNo=${tokenOrgNo}&clientId=${tokenClientId}&ttl=30`;
+  }
+  
   const response = await axios.get(tokenUrl, {
     headers: { Authorization }
   });

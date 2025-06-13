@@ -189,4 +189,11 @@ public interface IDelegationMetadataRepository
     /// <param name="coveredByPartyIds">The party ids of the organizations to get received delegation for</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     Task<List<DelegationChange>> GetAllDelegationChangesForAuthorizedParties(List<int> coveredByUserIds, List<int> coveredByPartyIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets all the active app or resource delegations (except MaskinportenSchema delegations) for the set of covered toPartyUuids
+    /// </summary>
+    /// <param name="toPartyUuids">The party uuids to get received delegation for</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    Task<List<DelegationChange>> GetAllDelegationChangesForAuthorizedParties(List<Guid> toPartyUuids, CancellationToken cancellationToken = default);
 }

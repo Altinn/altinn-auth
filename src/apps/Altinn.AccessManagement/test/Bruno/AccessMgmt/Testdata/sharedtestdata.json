@@ -16,7 +16,8 @@
         "enterprise": "Enterprise",
         "enterpriseUser": "EnterpriseUser",
         "platformAccess": "PlatformAccess",
-        "platformToken": "PlatformToken"
+        "platformToken": "PlatformToken",
+        "systemUser": "SystemUser"
     },
   "serviceOwners": {
     "ttd":

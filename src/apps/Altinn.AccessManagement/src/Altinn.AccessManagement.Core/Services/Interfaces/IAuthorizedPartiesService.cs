@@ -96,4 +96,12 @@ public interface IAuthorizedPartiesService
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The unfiltered party list</returns>
     Task<List<AuthorizedParty>> GetAuthorizedPartiesForEnterpriseUserUuid(string subjectEnterpriseUserUuid, bool includeAltinn2AuthorizedParties, bool includeAuthorizedResourcesThroughRoles, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Gets the full unfiltered list of authorized parties the given system user can represent in Altinn
+    /// </summary>
+    /// <param name="subjectSystemUserUuid">The uuid of the system user to retrieve the authorized party list for</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns>The unfiltered party list</returns>
+    Task<List<AuthorizedParty>> GetAuthorizedPartiesForSystemUser(string subjectSystemUserUuid, CancellationToken cancellationToken);
 }

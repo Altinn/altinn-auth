@@ -1539,6 +1539,98 @@ namespace Altinn.AccessManagement.Persistence
             }
         }
 
+        /// <inheritdoc/>
+        public async Task<List<DelegationChange>> GetAllDelegationChangesForAuthorizedParties(List<Guid> toPartyUuids, CancellationToken cancellationToken = default)
+        {
+            using var activity = TelemetryConfig.ActivitySource.StartActivity(ActivityKind.Client);
+
+            if (toPartyUuids.Count == 0)
+            {
+                return [];
+            }
+
+            const string query = /*strpsql*/@"
+            WITH resources AS (
+                SELECT resourceId, resourceRegistryId, resourceType
+                FROM accessmanagement.Resource
+                WHERE resourceType != 'maskinportenschema'
+            ),
+            latestResourceChanges AS (
+                SELECT MAX(resourceRegistryDelegationChangeId) as latestId
+                FROM delegation.ResourceRegistryDelegationChanges
+                WHERE touuid = ANY (@toPartyUuids)
+                GROUP BY resourceId_fk, fromuuid, touuid
+            ),
+            latestAppChanges AS (
+                SELECT MAX(delegationChangeId) as latestId
+                FROM delegation.delegationchanges
+                WHERE touuid = ANY (@toPartyUuids)
+                GROUP BY altinnAppId, fromuuid, touuid
+            )
+            SELECT
+                resourceRegistryDelegationChangeId,
+                null AS delegationChangeId,
+                delegationChangeType,
+                resources.resourceRegistryId,
+                resources.resourceType,
+                null AS altinnAppId,
+                offeredByPartyId,
+                fromUuid,
+                fromType,
+                coveredByUserId,
+                coveredByPartyId,
+                toUuid,
+                toType,
+                performedByUserId,
+                performedByPartyId,
+                blobStoragePolicyPath,
+                blobStorageVersionId,
+                created
+            FROM delegation.ResourceRegistryDelegationChanges
+                INNER JOIN resources ON resourceId_fk = resources.resourceid
+                INNER JOIN latestResourceChanges ON resourceRegistryDelegationChangeId = latestResourceChanges.latestId
+            WHERE delegationchangetype != 'revoke_last'
+            UNION ALL
+            SELECT
+                null AS resourceRegistryDelegationChangeId,
+                delegationChangeId,
+                delegationChangeType,
+                null AS resourceRegistryId,
+                null AS resourceType,
+                altinnAppId,
+                offeredByPartyId,
+                fromUuid,
+                fromType,
+                coveredByUserId,
+                coveredByPartyId,
+                toUuid,
+                toType,
+                performedByUserId,
+                null AS performedByPartyId,
+                blobStoragePolicyPath,
+                blobStorageVersionId,
+                created
+            FROM delegation.delegationchanges
+                INNER JOIN latestAppChanges ON delegationchangeid = latestAppChanges.latestId
+            WHERE delegationchangetype != 'revoke_last'
+            ";
+
+            try
+            {
+                await using var cmd = _conn.CreateCommand(query);
+                cmd.Parameters.AddWithNullableValue("toPartyUuids", NpgsqlDbType.Array | NpgsqlDbType.Uuid, toPartyUuids);
+
+                return await cmd.ExecuteEnumerableAsync(cancellationToken)
+                    .SelectAwait(GetDelegationChange)
+                    .ToListAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                activity?.StopWithError(ex);
+                throw;
+            }
+        }
+
         private static async ValueTask<DelegationChange> GetDelegationChange(NpgsqlDataReader reader)
         {
             return await reader.GetFieldValueAsync<int?>("resourceregistrydelegationchangeid") > 0
