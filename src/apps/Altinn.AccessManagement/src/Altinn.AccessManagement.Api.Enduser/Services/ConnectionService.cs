@@ -55,13 +55,13 @@ public class ConnectionService(
     {
         if (fromId is { } && fromId.Value != Guid.Empty)
         {
-            var result = await RelationService.GetConnectionsFromOthers(fromId.Value, toId is { } && toId != Guid.Empty ? toId : null, null, cancellationToken: cancellationToken);
+            var result = await RelationService.GetConnectionsToOthers(fromId.Value, toId is { } && toId != Guid.Empty ? toId : null, null, cancellationToken: cancellationToken);
             return result.ToList();
         }
 
         if (toId is { } && toId != Guid.Empty)
         {
-            var result = await RelationService.GetConnectionsToOthers(toId.Value, fromId is { } && fromId.Value != Guid.Empty ? fromId : null, null, cancellationToken: cancellationToken);
+            var result = await RelationService.GetConnectionsFromOthers(toId.Value, fromId is { } && fromId.Value != Guid.Empty ? fromId : null, null, cancellationToken: cancellationToken);
             return result.ToList();
         }
 
@@ -160,13 +160,13 @@ public class ConnectionService(
     {
         if (fromId is { } && fromId.Value != Guid.Empty)
         {
-            var result = await RelationService.GetPackagePermissionsFromOthers(fromId.Value, toId is { } && toId != Guid.Empty ? toId : null, null, cancellationToken);
+            var result = await RelationService.GetPackagePermissionsToOthers(fromId.Value, toId is { } && toId != Guid.Empty ? toId : null, null, cancellationToken);
             return result.ToList();
         }
 
         if (toId is { } && toId.Value != Guid.Empty)
         {
-            var result = await RelationService.GetPackagePermissionsToOthers(toId.Value, fromId is { } && fromId.Value != Guid.Empty ? fromId : null, null, cancellationToken);
+            var result = await RelationService.GetPackagePermissionsFromOthers(toId.Value, fromId is { } && fromId.Value != Guid.Empty ? fromId : null, null, cancellationToken);
             return result.ToList();
         }
 
