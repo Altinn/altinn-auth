@@ -48,6 +48,11 @@ public class EntityLookup
     /// Value
     /// </summary>
     public string Value { get; set; }
+
+    /// <summary>
+    /// Data is protected/sensitive
+    /// </summary>
+    public bool IsProtected { get; set; }
 }
 
 /// <summary>

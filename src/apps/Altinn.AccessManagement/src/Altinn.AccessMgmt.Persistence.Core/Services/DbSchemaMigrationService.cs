@@ -71,18 +71,48 @@ public class DbSchemaMigrationService
 
     private async Task MigrateFunctions()
     {
+        var entityChildrenFunction = """
+        create function entitychildren(_id uuid) returns jsonb stable language sql as
+        $$
+        SELECT COALESCE(json_agg(compactentity(e.Id, false, true)) FILTER (WHERE e.Id IS NOT NULL), NULL)
+        FROM dbo.Entity e
+        WHERE e.ParentId = _id
+        GROUP BY e.Id;
+        $$;
+        """;
+        await executor.ExecuteMigrationCommand(entityChildrenFunction);
+
+        var entityLookupValuesFunction = """
+        create function entityLookupValues(_id uuid) returns jsonb stable language sql as
+        $$
+        SELECT jsonb_object_agg(el.key, el.value)
+        FROM dbo.EntityLookup el
+        WHERE el.entityid = _id
+        $$;
+        """;
+        await executor.ExecuteMigrationCommand(entityLookupValuesFunction);
+
+        var roleLookupValuesFunction = """
+        create function roleLookupValues(_id uuid) returns jsonb stable language sql as
+        $$
+        SELECT jsonb_object_agg(rl.key, rl.value)
+        FROM dbo.RoleLookup rl
+        WHERE rl.roleid = _id
+        $$;
+        """;
+        await executor.ExecuteMigrationCommand(roleLookupValuesFunction);
+
         var compactEntityFunction = """
             create or replace function compactentity(_id uuid, _include_children boolean DEFAULT true, _include_lookups boolean DEFAULT true) returns jsonb stable language sql as
             $$
             SELECT jsonb_build_object(
                 'Id', e.Id,
                 'Name', e.Name,
-                'RefId', e.RefId,
                 'Type', et.Name,
                 'Variant', ev.Name,
                 'Parent', compactentity(e.parentid, false, true),
-                'Children', COALESCE(json_agg(compactentity(ce.Id, false, true)) FILTER (WHERE _include_children and ce.Id IS NOT NULL), NULL),
-                'KeyValues', COALESCE(jsonb_object_agg(el.key, el.value) FILTER (WHERE _include_lookups and el.Id IS NOT NULL), NULL)
+                'Children', CASE WHEN _include_children THEN entitychildren(e.id) ELSE NULL END,
+                'KeyValues', CASE WHEN _include_lookups THEN entitylookupvalues(e.id) ELSE NULL END
                 )
             FROM dbo.Entity e
             JOIN dbo.EntityType et ON e.TypeId = et.Id
@@ -100,7 +130,7 @@ public class DbSchemaMigrationService
             $$
             SELECT jsonb_build_object(
                 'Id', r.Id,
-                'Value', r.Code,
+                'Code', r.Code,
                 'Children', COALESCE(
                                 json_agg(json_build_object('Id', rmr.Id, 'Value', rmr.Code, 'Children', null))
                                 FILTER (WHERE rmr.Id IS NOT NULL), NULL)
@@ -117,7 +147,7 @@ public class DbSchemaMigrationService
         var compactPackageFunction = """
             create or replace function compactpackage(_id uuid) returns jsonb stable language sql as
             $$
-            select jsonb_build_object('Id', p.Id,'Value', p.Urn)
+            select jsonb_build_object('Id', p.Id,'Urn', p.Urn, 'AreaId', p.AreaId)
             from dbo.Package as p
             where p.id = _id;
             $$;

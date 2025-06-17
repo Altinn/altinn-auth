@@ -63,7 +63,7 @@ public class AuthorizedPartyRepoService(
                 parties[connection.Party.Id] = party;
             }
 
-            var packages = connection.Packages?.Select(cp => cp?.Value.Split(":").Last());
+            var packages = connection.Packages?.Select(cp => cp?.Urn.Split(":").Last());
             party.EnrichWithAccessPackage(packages);
         }
     }
@@ -97,7 +97,7 @@ public class AuthorizedPartyRepoService(
 
         if (entity.Type == "Organisasjon")
         {
-            party.OrganizationNumber = entity.RefId;
+            party.OrganizationNumber = entity.KeyValues["OrganizationIdentifier"];
             party.Type = AuthorizedPartyType.Organization;
             party.UnitType = entity.Variant;
             
@@ -117,7 +117,7 @@ public class AuthorizedPartyRepoService(
         }
         else
         {
-            party.PersonId = entity.RefId;
+            party.PersonId = entity.KeyValues["PersonIdentifier"];
             party.Type = AuthorizedPartyType.Person;
         }
 

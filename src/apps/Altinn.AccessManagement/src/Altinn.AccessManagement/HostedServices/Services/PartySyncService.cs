@@ -285,7 +285,8 @@ public class PartySyncService : BaseSyncService, IPartySyncService
             {
                 EntityId = Guid.Parse(model.PartyUuid),
                 Key = "PersonIdentifier",
-                Value = model.PersonIdentifier
+                Value = model.PersonIdentifier,
+                IsProtected = true
             });
         }
         else if (model.PartyType.Equals("organization", StringComparison.OrdinalIgnoreCase))

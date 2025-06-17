@@ -88,7 +88,12 @@ public class CompactPackage
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Value
+    /// Urn
     /// </summary>
-    public string Value { get; set; }
+    public string Urn { get; set; }
+
+    /// <summary>
+    /// AreaId
+    /// </summary>
+    public Guid AreaId { get; set; }
 }

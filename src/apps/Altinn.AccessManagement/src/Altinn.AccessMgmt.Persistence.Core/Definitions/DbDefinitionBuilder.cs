@@ -425,6 +425,15 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
             return this;
         }
 
+        /// <summary>
+        /// Adds scripts to be run before main schema migration
+        /// </summary>
+        public DbDefinitionBuilder<T> AddManualPostMigrationScript(int runOrder, string script)
+        {
+            DbDefinition.ManualPostMigrationScripts.Add(runOrder, script);
+            return this;
+        }
+
         #region Helpers
 
         /// <summary>

@@ -79,7 +79,7 @@ public class PolicyInformationPointController : ControllerBase
 
         if (connectionPackages != null)
         {
-            packages.AddRange(connectionPackages.Select(conPackage => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(conPackage.Package.Value.Split(':').Last()))));
+            packages.AddRange(connectionPackages.Select(conPackage => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(conPackage.Package.Urn.Split(':').Last()))));
         }
 
         return Ok(packages);

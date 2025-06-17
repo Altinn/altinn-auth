@@ -633,6 +633,14 @@ public class PostgresQueryBuilder : IDbQueryBuilder
             scriptCollection.AddScripts(CreateAuditDeleteTrigger(isTranslation: true));
         }
 
+        if (_definition.ManualPostMigrationScripts.Any())
+        {
+            foreach (var dep in _definition.ManualPostMigrationScripts)
+            {
+                scriptCollection.AddScripts($"PostMigrationScript({dep.Key})", dep.Value);
+            }
+        }
+
         return scriptCollection;
     }
 
