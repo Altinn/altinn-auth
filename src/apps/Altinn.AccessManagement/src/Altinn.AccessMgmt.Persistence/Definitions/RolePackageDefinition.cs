@@ -59,20 +59,22 @@ public class RolePackageDefinition : BaseDbDefinition<RolePackage>, IDbDefinitio
             DO
             $$
             BEGIN
-                CREATE TEMP TABLE session_audit_context ON COMMIT DROP AS
-                SELECT 
-                  '3296007F-F9EA-4BD0-B6A6-C8462D54633A'::uuid AS changed_by,
-                  '3296007F-F9EA-4BD0-B6A6-C8462D54633A'::uuid AS changed_by_system,
-                  '3296007F-F9EA-4BD0-B6A6-C8462D54633A'::text AS change_operation_id;
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'dbo' AND table_name = 'rolepackage') THEN
+                    CREATE TEMP TABLE session_audit_context ON COMMIT DROP AS
+                    SELECT 
+                      '3296007F-F9EA-4BD0-B6A6-C8462D54633A'::uuid AS changed_by,
+                      '3296007F-F9EA-4BD0-B6A6-C8462D54633A'::uuid AS changed_by_system,
+                      '3296007F-F9EA-4BD0-B6A6-C8462D54633A'::text AS change_operation_id;
 
-                WITH dups AS (
-                  SELECT id, ROW_NUMBER() OVER (PARTITION BY roleid, packageid, entityvariantid ORDER BY id) AS rn
-                  FROM dbo.rolepackage
-                )
-                DELETE FROM dbo.rolepackage AS m
-                USING dups AS d
-                WHERE m.id = d.id AND d.rn > 1;
-            END
+                    WITH dups AS (
+                      SELECT id, ROW_NUMBER() OVER (PARTITION BY roleid, packageid, entityvariantid ORDER BY id) AS rn
+                      FROM dbo.rolepackage
+                    )
+                    DELETE FROM dbo.rolepackage AS m
+                    USING dups AS d
+                    WHERE m.id = d.id AND d.rn > 1;
+                END IF;
+            END;
             $$;
             """;
     }

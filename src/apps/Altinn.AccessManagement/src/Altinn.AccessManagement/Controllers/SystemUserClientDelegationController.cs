@@ -109,7 +109,10 @@ public class SystemUserClientDelegationController : ControllerBase
         var res = new List<ConnectionDto>();
         foreach (var r in dbResult)
         {
-            res.Add(ConnectionConverter.ConvertToDto(r));
+            if (r.Delegation != null)
+            {
+                res.Add(ConnectionConverter.ConvertToDto(r));
+            }
         }
        
         return Ok(res);

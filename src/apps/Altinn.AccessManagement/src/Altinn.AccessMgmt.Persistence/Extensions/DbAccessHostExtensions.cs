@@ -149,6 +149,7 @@ public static partial class DbAccessHostExtensions
         // var mockService = host.Services.GetRequiredService<MockDataService>();
         // await mockService.GenerateBasicData();
         // await mockService.GeneratePackageResources();
+        // await mockService.SystemUserClientDelegation();
         */
 
         return host;
