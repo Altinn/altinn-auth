@@ -215,12 +215,24 @@ public class ConnectionService(
 
         var existingAssignments = await AssignmentRepository.Get(filter, callerName: SpanName("Get existing assignments"), cancellationToken: cancellationToken);
         problem = ValidationRules.Validate(ValidationRules.QueryParameters.VerifyAssignmentRoleExists(existingAssignments, role));
+        Assignment assignment;
         if (problem is { })
         {
-            return problem;
+            var relationsResult = await Get(fromId, toId, cancellationToken: cancellationToken);
+            if (relationsResult is { } && relationsResult.Value is { } && relationsResult.Value.Any())
+            {
+                var assignmentResult = await AddAssignment(fromId, toId, "rettighetshaver", cancellationToken);
+                assignment = assignmentResult.Value;
+            }
+            else
+            {
+                return problem;
+            }
         }
-
-        var assignment = existingAssignments.First();
+        else
+        {
+            assignment = existingAssignments.First();
+        }
 
         var userPackageFilter = ConnectionPackageRepository.CreateFilterBuilder()
             .Equal(t => t.ToId, DbAudit.Value.ChangedBy)
