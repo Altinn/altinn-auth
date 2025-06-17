@@ -72,7 +72,7 @@ public class DbSchemaMigrationService
     private async Task MigrateFunctions()
     {
         var entityChildrenFunction = """
-        create function entitychildren(_id uuid) returns jsonb stable language sql as
+        create or replace function entitychildren(_id uuid) returns jsonb stable language sql as
         $$
         SELECT COALESCE(json_agg(compactentity(e.Id, false, true)) FILTER (WHERE e.Id IS NOT NULL), NULL)
         FROM dbo.Entity e
@@ -83,7 +83,7 @@ public class DbSchemaMigrationService
         await executor.ExecuteMigrationCommand(entityChildrenFunction);
 
         var entityLookupValuesFunction = """
-        create function entityLookupValues(_id uuid) returns jsonb stable language sql as
+        create or replace function entityLookupValues(_id uuid) returns jsonb stable language sql as
         $$
         SELECT jsonb_object_agg(el.key, el.value)
         FROM dbo.EntityLookup el
@@ -93,7 +93,7 @@ public class DbSchemaMigrationService
         await executor.ExecuteMigrationCommand(entityLookupValuesFunction);
 
         var roleLookupValuesFunction = """
-        create function roleLookupValues(_id uuid) returns jsonb stable language sql as
+        create or replace function roleLookupValues(_id uuid) returns jsonb stable language sql as
         $$
         SELECT jsonb_object_agg(rl.key, rl.value)
         FROM dbo.RoleLookup rl
