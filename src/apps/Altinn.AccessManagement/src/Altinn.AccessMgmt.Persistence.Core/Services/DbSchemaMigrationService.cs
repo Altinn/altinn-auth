@@ -71,16 +71,28 @@ public class DbSchemaMigrationService
 
     private async Task MigrateFunctions()
     {
-        var entityChildrenFunction = """
-        create or replace function entitychildren(_id uuid) returns jsonb stable language sql as
-        $$
-        SELECT COALESCE(json_agg(compactentity(e.Id, false, true)) FILTER (WHERE e.Id IS NOT NULL), NULL)
-        FROM dbo.Entity e
-        WHERE e.ParentId = _id
-        GROUP BY e.Id;
-        $$;
+        var entityChildrenPlaceholderFunction = """
+        DO
+        $do$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.routines WHERE routine_schema = 'public' AND routine_name = 'entitychildren' AND routine_type = 'FUNCTION' ) THEN
+
+            CREATE FUNCTION entitychildren(_id uuid) returns jsonb stable language sql as
+            $func$
+            SELECT jsonb_build_object(
+                'Id', e.Id,
+                'Name', e.Name
+                )
+            FROM dbo.Entity e
+            WHERE e.ParentId = _id
+            GROUP BY e.Id
+            $func$;
+
+          END IF;
+        END;
+        $do$;
         """;
-        await executor.ExecuteMigrationCommand(entityChildrenFunction);
+        await executor.ExecuteMigrationCommand(entityChildrenPlaceholderFunction);
 
         var entityLookupValuesFunction = """
         create or replace function entityLookupValues(_id uuid) returns jsonb stable language sql as
@@ -124,6 +136,17 @@ public class DbSchemaMigrationService
             $$;
             """;
         await executor.ExecuteMigrationCommand(compactEntityFunction);
+
+        var entityChildrenFunction = """
+        create or replace function entitychildren(_id uuid) returns jsonb stable language sql as
+        $$
+        SELECT COALESCE(json_agg(compactentity(e.Id, false, true)) FILTER (WHERE e.Id IS NOT NULL), NULL)
+        FROM dbo.Entity e
+        WHERE e.ParentId = _id
+        GROUP BY e.Id;
+        $$;
+        """;
+        await executor.ExecuteMigrationCommand(entityChildrenFunction);
 
         var compactRoleFunction = """
             create or replace function public.compactRole(_id uuid) returns jsonb stable language sql as
