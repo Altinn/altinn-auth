@@ -26,8 +26,9 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         /// Gets a list of Resources from ResourceRegister
         /// </summary>
         /// <param name="scope">The scope of the resource</param>
+        /// <param name="cancellationToken"> Cancellation token to cancel the operation</param>
         /// <returns>resource list based on given scope</returns>
-        Task<List<ServiceResource>> GetResources(string scope);
+        Task<IEnumerable<ServiceResource>> GetResources(string scope, CancellationToken cancellationToken);
 
         /// <summary>
         /// Integration point for retrieving a single resoure by it's resource id

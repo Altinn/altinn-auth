@@ -499,6 +499,32 @@ namespace Altinn.AccessManagement.Tests.Controllers
         }
 
         /// <summary>
+        /// Test case: GetMaskinportenDelegations with serviceowner scope, without specifying a scope query param
+        /// Expected: GetMaskinportenDelegations returns forbidden
+        /// </summary>
+        [Fact]
+        public async Task GetMaskinportenDelegations_ServiceOwnerLookup_WithoutScope()
+        {
+            // Arrange
+            string token = PrincipalUtil.GetOrgToken("SKD", "974761076", "altinn:maskinporten/delegations", new[] { "skd" });
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            string expected = "Not authorized for lookup of delegations without specifying parameter: scope";
+
+            // Act
+            int supplierOrg = 810418362;
+            int consumerOrg = 810418532;
+
+            HttpResponseMessage response = await _client.GetAsync($"accessmanagement/api/v1/maskinporten/delegations/?supplierorg={supplierOrg}&consumerorg={consumerOrg}&scope=");
+            string responseContent = await response.Content.ReadAsStringAsync();
+            ProblemDetails errorResponse = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, options);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+            Assert.Equal(expected, errorResponse.Title);
+        }
+
+        /// <summary>
         /// Test case: GetMaskinportenDelegations for orgnummer that does not have any delegations
         /// Expected: GetMaskinportenDelegations returns ok, no delegations found
         /// </summary>
@@ -524,28 +550,57 @@ namespace Altinn.AccessManagement.Tests.Controllers
         }
 
         /// <summary>
-        /// Test case: GetMaskinportenDelegations without sending scopes
-        /// Expected: GetMaskinportenDelegations returns badrequest
+        /// Test case: GetMaskinportenDelegations authorized with admin scope, without specifying filter scope param
+        /// Expected: GetMaskinportenDelegations returns OK
         /// </summary>
         [Fact]
-        public async Task GetMaskinportenDelegations_Admin_MissingScope()
+        public async Task GetMaskinportenDelegations_Admin_WithoutScope_Valid()
         {
             // Arrange
             string token = PrincipalUtil.GetOrgToken("DIGDIR", "991825827", "altinn:maskinporten/delegations.admin");
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            string expected = "The scope field is required.";
+            List<string> resourceIds = new List<string>
+            {
+                "nav_aa_distribution",
+                "appid-123"
+            };
+            List<MPDelegationExternal> expectedDelegations = GetExpectedMaskinportenSchemaDelegations("810418672", "810418192", resourceIds);
 
             // Act
-            int supplierOrg = 810418362;
-            int consumerOrg = 810418532;
+            int supplierOrg = 810418672;
+            int consumerOrg = 810418192;
+
             HttpResponseMessage response = await _client.GetAsync($"accessmanagement/api/v1/maskinporten/delegations/?supplierorg={supplierOrg}&consumerorg={consumerOrg}&scope=");
             string responseContent = await response.Content.ReadAsStringAsync();
-            ValidationProblemDetails errorResponse = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, options);
+            List<MPDelegationExternal> actualDelegations = JsonSerializer.Deserialize<List<MPDelegationExternal>>(responseContent);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            AssertionUtil.AssertCollections(expectedDelegations, actualDelegations, AssertionUtil.AssertDelegationEqual);
+        }
+
+        /// <summary>
+        /// Test case: GetMaskinportenDelegations without providing any scope, supplierOrg or consumerOrg
+        /// Expected: GetMaskinportenDelegations returns badrequest
+        /// </summary>
+        [Fact]
+        public async Task GetMaskinportenDelegations_Admin_WithoutScopeOrOrgs_BadRequest()
+        {
+            // Arrange
+            string token = PrincipalUtil.GetOrgToken("DIGDIR", "991825827", "altinn:maskinporten/delegations.admin");
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            string expected = "Query without parameter; scope, must provide at least one of; supplierOrg, consumerOrg";
+
+            // Act
+            HttpResponseMessage response = await _client.GetAsync($"accessmanagement/api/v1/maskinporten/delegations/?supplierorg=&consumerorg=&scope=");
+            string responseContent = await response.Content.ReadAsStringAsync();
+            ProblemDetails errorResponse = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, options);
 
             // Assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            Assert.Equal(expected, errorResponse.Errors["scope"][0]);
+            Assert.Equal(expected, errorResponse.Title);
         }
 
         /// <summary>

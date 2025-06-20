@@ -358,8 +358,8 @@ namespace Altinn.AccessManagement.Core.Services
         {
             List<Delegation> delegations = new List<Delegation>();
 
-            List<ServiceResource> resources = await _resourceAdministrationPoint.GetResources(scopes);
-            if (resources.Count == 0)
+            IEnumerable<ServiceResource> resources = await _resourceAdministrationPoint.GetResources(scopes, cancellationToken);
+            if (!resources.Any())
             {
                 return delegations;
             }
@@ -373,7 +373,7 @@ namespace Altinn.AccessManagement.Core.Services
             return await BuildDelegationsResponse(delegationChanges, resources);
         }
 
-        private async Task<List<Delegation>> BuildDelegationsResponse(List<DelegationChange> delegationChanges, List<ServiceResource> resources = null)
+        private async Task<List<Delegation>> BuildDelegationsResponse(List<DelegationChange> delegationChanges, IEnumerable<ServiceResource> resources = null)
         {
             List<Delegation> delegations = new List<Delegation>();
             List<int> parties = delegationChanges.Select(d => d.OfferedByPartyId).ToList();

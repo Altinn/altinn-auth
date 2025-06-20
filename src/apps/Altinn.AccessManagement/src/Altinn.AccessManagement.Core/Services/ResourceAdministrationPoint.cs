@@ -45,21 +45,18 @@ namespace Altinn.AccessManagement.Core.Services
         }
 
         /// <inheritdoc />
-        public async Task<List<ServiceResource>> GetResources(string scope)
+        public async Task<IEnumerable<ServiceResource>> GetResources(string scope, CancellationToken cancellationToken)
         {
-            List<ServiceResource> filteredResources = new List<ServiceResource>();
+            List<ServiceResource> resources = await _contextRetrievalService.GetResources(cancellationToken);
 
-            List<ServiceResource> resources = await _contextRetrievalService.GetResources();
-
-            foreach (ServiceResource resource in resources.Where(r => r.ResourceType == ResourceType.MaskinportenSchema && r.ResourceReferences != null))
+            if (string.IsNullOrWhiteSpace(scope))
             {
-                foreach (ResourceReference reference in resource.ResourceReferences.Where(rf => rf.ReferenceType == ReferenceType.MaskinportenScope && rf.Reference.Equals(scope)))
-                {
-                    filteredResources.Add(resource);
-                }
+                return resources.Where(r => r.ResourceType == ResourceType.MaskinportenSchema && r.ResourceReferences != null && r.ResourceReferences.Any(rf => rf.ReferenceType == ReferenceType.MaskinportenScope));
             }
-
-            return filteredResources;
+            else
+            {
+                return resources.Where(r => r.ResourceType == ResourceType.MaskinportenSchema && r.ResourceReferences != null && r.ResourceReferences.Any(rf => rf.ReferenceType == ReferenceType.MaskinportenScope && rf.Reference.Equals(scope)));
+            }
         }
 
         /// <inheritdoc />

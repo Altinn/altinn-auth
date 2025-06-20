@@ -1454,28 +1454,34 @@ namespace Altinn.AccessManagement.Tests.Controllers
         }
 
         /// <summary>
-        /// Test case: GetMaskinportenSchemaDelegations without sending scopes
-        /// Expected: GetMaskinportenSchemaDelegations returns badrequest
+        /// Test case: GetMaskinportenDelegations authorized with admin scope, without specifying filter scope param
+        /// Expected: GetMaskinportenDelegations returns OK
         /// </summary>
         [Fact]
-        public async Task GetMaskinportenSchemaDelegations_Admin_MissingScope()
+        public async Task GetMaskinportenDelegations_Admin_WithoutScope_Valid()
         {
             // Arrange
             string token = PrincipalUtil.GetOrgToken("DIGDIR", "991825827", "altinn:maskinporten/delegations.admin");
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            string expected = "The scope field is required.";
+            List<string> resourceIds = new List<string>
+            {
+                "nav_aa_distribution",
+                "appid-123"
+            };
+            List<MPDelegationExternal> expectedDelegations = GetExpectedMaskinportenSchemaDelegations("810418672", "810418192", resourceIds);
 
             // Act
-            int supplierOrg = 810418362;
-            int consumerOrg = 810418532;
+            int supplierOrg = 810418672;
+            int consumerOrg = 810418192;
+
             HttpResponseMessage response = await _client.GetAsync($"accessmanagement/api/v1/admin/delegations/maskinportenschema/?supplierorg={supplierOrg}&consumerorg={consumerOrg}&scope=");
             string responseContent = await response.Content.ReadAsStringAsync();
-            ValidationProblemDetails errorResponse = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, options);
+            List<MPDelegationExternal> actualDelegations = JsonSerializer.Deserialize<List<MPDelegationExternal>>(responseContent);
 
             // Assert
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            Assert.Equal(expected, errorResponse.Errors["scope"][0]);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            AssertionUtil.AssertCollections(expectedDelegations, actualDelegations, AssertionUtil.AssertDelegationEqual);
         }
 
         /// <summary>

@@ -21,6 +21,11 @@ namespace Altinn.AccessManagement.Utilities
                 return true;
             }
 
+            if (string.IsNullOrWhiteSpace(scope))
+            {
+                return false;
+            }
+
             return HasAuthorizedScopePrefixClaim(new[] { scope }, claims);
         }
 

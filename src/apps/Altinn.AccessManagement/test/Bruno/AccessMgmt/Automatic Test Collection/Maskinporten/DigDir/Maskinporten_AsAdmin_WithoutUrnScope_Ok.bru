@@ -1,0 +1,52 @@
+meta {
+  name: Maskinporten_AsAdmin_WithoutUrnScope_Ok
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/maskinporten/delegations?supplierOrg={{supplierOrg}}&consumerOrg={{consumerOrg}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  supplierOrg: {{supplierOrg}}
+  consumerOrg: {{consumerOrg}}
+  ~scope: {{scope}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const testdata = require(`./Testdata/maskinportenschema/${bru.getEnvVar("tokenEnv")}testdata.json`);
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  bru.setVar("supplierOrg", testdata.org2.orgno);
+  bru.setVar("consumerOrg", testdata.org1.orgno);
+  
+  var getTokenParameters = {
+    auth_org: testdata.digdir.partyid,
+    auth_orgNo: testdata.digdir.orgno,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.maskinportenAdmin
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  // Should be the same as the .bru request file. Used as prefix in test name which also shows in test result in pipeline.
+  const testdata = require(`./Testdata/maskinportenschema/${bru.getEnvVar("tokenEnv")}testdata.json`);
+  const requestName = "Maskinporten_AsAdmin_WithoutUrnScope_Ok";
+  const body = res.getBody();
+  
+  test(requestName + "|HttpStatus.OK and Body.Data contain expected delegation", function() {
+    expect(res.status).to.equal(200);
+    expect(body[0]).to.have.property('consumer_org', testdata.org1.orgno);
+    expect(body[0]).to.have.property('supplier_org', testdata.org2.orgno);
+    expect(body[0]).to.have.property('resourceid', 'ttd-am-k6');
+  });
+}

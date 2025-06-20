@@ -56,12 +56,27 @@ namespace Altinn.AccessManagement.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
         [ProducesResponseType(500)]
-        public async Task<ActionResult<List<MPDelegationExternal>>> GetMaskinportenDelegations([FromQuery] string? supplierOrg, [FromQuery] string? consumerOrg, [FromQuery] string scope, CancellationToken cancellationToken)
+        public async Task<ActionResult<List<MPDelegationExternal>>> GetMaskinportenDelegations([FromQuery] string? supplierOrg, [FromQuery] string? consumerOrg, [FromQuery] string? scope, CancellationToken cancellationToken)
         {
             if (!MaskinportenSchemaAuthorizer.IsAuthorizedDelegationLookupAccess(scope, HttpContext.User))
             {
-                ProblemDetails result = new() { Title = $"Not authorized for lookup of delegations for the scope: {scope}", Status = StatusCodes.Status403Forbidden, Type = "https://tools.ietf.org/html/rfc7231#section-6.5.3" };
+                ProblemDetails result;
+                if (string.IsNullOrWhiteSpace(scope))
+                {
+                    result = new() { Title = $"Not authorized for lookup of delegations without specifying parameter: {nameof(scope)}", Status = StatusCodes.Status403Forbidden, Type = "https://tools.ietf.org/html/rfc7231#section-6.5.3" };
+                }
+                else
+                {
+                    result = new() { Title = $"Not authorized for lookup of delegations for the scope: {scope}", Status = StatusCodes.Status403Forbidden, Type = "https://tools.ietf.org/html/rfc7231#section-6.5.3" };
+                }
+
                 return StatusCode(StatusCodes.Status403Forbidden, result);
+            }
+
+            if (string.IsNullOrWhiteSpace(scope) && string.IsNullOrWhiteSpace(supplierOrg) && string.IsNullOrWhiteSpace(consumerOrg))
+            {
+                ProblemDetails result = new() { Title = $"Query without parameter; {nameof(scope)}, must provide at least one of; {nameof(supplierOrg)}, {nameof(consumerOrg)}", Status = StatusCodes.Status400BadRequest, Type = "https://tools.ietf.org/html/rfc7231#section-6.5.3" };
+                return StatusCode(StatusCodes.Status400BadRequest, result);
             }
 
             if (!string.IsNullOrEmpty(supplierOrg) && !IdentifierUtil.IsValidOrganizationNumber(supplierOrg))

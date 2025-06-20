@@ -6,6 +6,7 @@
     "auth_scopes": {
         "portalEnduser": "altinn:portal/enduser",
         "read": "altinn:instances:read",
+        "maskinportenDelegations": "altinn:maskinporten/delegations",
         "maskinportenAdmin": "altinn:maskinporten/delegations.admin",
         "authorizedParties": "altinn:accessmanagement/authorizedparties",
         "authorizedPartiesResourceOwner": "altinn:accessmanagement/authorizedparties.resourceowner",
