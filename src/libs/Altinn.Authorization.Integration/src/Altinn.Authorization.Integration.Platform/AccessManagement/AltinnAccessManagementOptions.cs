@@ -3,7 +3,7 @@ namespace Altinn.Authorization.Integration.Platform.AccessManagement;
 /// <summary>
 /// Configuration options for the Altinn Access Management integration.
 /// </summary>
-internal class AltinnAccessManagementOptions
+public class AltinnAccessManagementOptions
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="AltinnAccessManagementOptions"/> class.

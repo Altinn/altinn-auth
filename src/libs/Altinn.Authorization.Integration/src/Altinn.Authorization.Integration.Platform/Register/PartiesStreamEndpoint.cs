@@ -6,7 +6,7 @@ namespace Altinn.Authorization.Integration.Platform.Register;
 /// <summary>
 /// Client for interacting with endpoint that stream parties (organization, users and systemusers).
 /// </summary>
-public partial class RegisterClient
+public partial class AltinnRegisterClient
 {
     /// <summary>
     /// List of available fields that can be retrieved from the register.

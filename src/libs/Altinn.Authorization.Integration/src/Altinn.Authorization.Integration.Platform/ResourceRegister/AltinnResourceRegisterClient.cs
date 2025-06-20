@@ -5,21 +5,16 @@ namespace Altinn.Authorization.Integration.Platform.ResourceRegister;
 /// <summary>
 /// Client for interacting with the Altinn Resource Register API.
 /// </summary>
-/// <param name="httpClientFactory">Factory for creating HTTP client instances.</param>
-/// <param name="resourceRegisterOptions">Configuration options for the Altinn Resource Register.</param>
-/// <param name="platformOptions">General platform integration options.</param>
-public partial class ResourceRegisterClient(
-    IHttpClientFactory httpClientFactory,
-    IOptions<AltinnResourceRegisterOptions> resourceRegisterOptions,
-    IOptions<AltinnIntegrationOptions> platformOptions) : IAltinnResourceRegister
+/// <param name="HttpClientFactory">Factory for creating HTTP client instances.</param>
+/// <param name="ResourceRegisterOptions">Configuration options for the Altinn Resource Register.</param>
+/// <param name="PlatformOptions">General platform integration options.</param>
+public partial class AltinnResourceRegisterClient(
+    IHttpClientFactory HttpClientFactory,
+    IOptions<AltinnResourceRegisterOptions> ResourceRegisterOptions,
+    IOptions<AltinnIntegrationOptions> PlatformOptions
+) : IAltinnResourceRegister
 {
     private HttpClient HttpClient => HttpClientFactory.CreateClient(PlatformOptions.Value.HttpClientName);
-
-    private IHttpClientFactory HttpClientFactory { get; } = httpClientFactory;
-
-    private IOptions<AltinnResourceRegisterOptions> ResourceRegisterOptions { get; } = resourceRegisterOptions;
-
-    private IOptions<AltinnIntegrationOptions> PlatformOptions { get; } = platformOptions;
 }
 
 /// <summary>

@@ -5,13 +5,16 @@ namespace Altinn.Authorization.Integration.Platform.AccessManagement;
 /// <summary>
 /// Client for interacting with the Altinn Register service.
 /// </summary>
-/// <param name="httpClientFactory">Factory for creating HTTP clients.</param>
-/// <param name="options">Configuration options for the Altinn Register service.</param>
-internal partial class AltinnAccessManagementClient(IHttpClientFactory httpClientFactory, IOptions<AltinnAccessManagementClient> options) : IAltinnAccessManagement
+/// <param name="HttpClientFactory">Factory for creating HTTP clients.</param>
+/// <param name="Options">Configuration options for the Altinn Register service.</param>
+/// <param name="PlatformOptions">Options for configuring platform integration services.</param>
+public partial class AltinnAccessManagementClient(
+    IHttpClientFactory HttpClientFactory,
+    IOptions<AltinnAccessManagementClient> Options,
+    IOptions<AltinnIntegrationOptions> PlatformOptions
+) : IAltinnAccessManagement
 {
-    private IHttpClientFactory HttpClientFactory { get; } = httpClientFactory;
-
-    private IOptions<AltinnAccessManagementClient> Options { get; } = options;
+    private HttpClient HttpClient => HttpClientFactory.CreateClient(PlatformOptions.Value.HttpClientName);
 }
 
 /// <summary>

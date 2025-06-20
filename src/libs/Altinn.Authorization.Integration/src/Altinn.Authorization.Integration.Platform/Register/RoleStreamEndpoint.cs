@@ -6,7 +6,7 @@ namespace Altinn.Authorization.Integration.Platform.Register;
 /// <summary>
 /// Client for interacting with endpoint that stream roles (ER-roles).
 /// </summary>
-public partial class RegisterClient
+public partial class AltinnRegisterClient
 {
     /// <inheritdoc/>
     public async Task<IAsyncEnumerable<PlatformResponse<PageStream<RoleModel>>>> StreamRoles(IEnumerable<string> fields, string nextPage = null, CancellationToken cancellationToken = default)

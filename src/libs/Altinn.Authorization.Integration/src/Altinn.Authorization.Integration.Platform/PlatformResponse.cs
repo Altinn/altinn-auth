@@ -19,6 +19,8 @@ public class PlatformResponse<T>
     /// </summary>
     public bool IsSuccessful { get; set; }
 
+    public bool IsProblem => !IsSuccessful;
+
     /// <summary>
     /// Gets or sets the content of the response.
     /// </summary>

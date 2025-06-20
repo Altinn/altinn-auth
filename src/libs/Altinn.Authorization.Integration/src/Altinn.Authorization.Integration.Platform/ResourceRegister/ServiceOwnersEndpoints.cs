@@ -8,7 +8,7 @@ namespace Altinn.Authorization.Integration.Platform.ResourceRegister;
 /// Client for interacting with the Altinn Resource Register API.
 /// Provides methods to service owners.
 /// </summary>
-public partial class ResourceRegisterClient
+public partial class AltinnResourceRegisterClient
 {
     /// <inheritdoc/>
     public async Task<PlatformResponse<ServiceOwners>> GetServiceOwners(CancellationToken cancellationToken = default)

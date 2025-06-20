@@ -5,25 +5,18 @@ namespace Altinn.Authorization.Integration.Platform.Register;
 /// <summary>
 /// Client for interacting with the Altinn Register service.
 /// </summary>
-/// <param name="httpClientFactory">Factory for creating HTTP clients.</param>
-/// <param name="registerOptions">Options for configuring the Altinn Register services.</param>
-/// <param name="platformOptions">Options for configuring platform integration services.</param>
-/// <param name="tokenGenerator">Service for generating authentication tokens.</param>
-public partial class RegisterClient(
-    IHttpClientFactory httpClientFactory,
-    IOptions<AltinnRegisterOptions> registerOptions,
-    IOptions<AltinnIntegrationOptions> platformOptions,
-    ITokenGenerator tokenGenerator) : IAltinnRegister
+/// <param name="HttpClientFactory">Factory for creating HTTP clients.</param>
+/// <param name="RegisterOptions">Options for configuring the Altinn Register services.</param>
+/// <param name="PlatformOptions">Options for configuring platform integration services.</param>
+/// <param name="TokenGenerator">Service for generating authentication tokens.</param>
+public partial class AltinnRegisterClient(
+    IHttpClientFactory HttpClientFactory,
+    IOptions<AltinnRegisterOptions> RegisterOptions,
+    IOptions<AltinnIntegrationOptions> PlatformOptions,
+    ITokenGenerator TokenGenerator
+) : IAltinnRegister
 {
     private HttpClient HttpClient => HttpClientFactory.CreateClient(PlatformOptions.Value.HttpClientName);
-
-    private IHttpClientFactory HttpClientFactory { get; } = httpClientFactory;
-
-    private IOptions<AltinnRegisterOptions> RegisterOptions { get; } = registerOptions;
-
-    private IOptions<AltinnIntegrationOptions> PlatformOptions { get; } = platformOptions;
-
-    private ITokenGenerator TokenGenerator { get; } = tokenGenerator;
 }
 
 /// <summary>
