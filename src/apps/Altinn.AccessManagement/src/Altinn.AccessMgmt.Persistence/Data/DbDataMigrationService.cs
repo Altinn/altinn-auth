@@ -91,10 +91,10 @@ public class DbDataMigrationService(
             await migrationService.LogMigration<Entity>(dataKey, string.Empty, 2);
         }
 
-        if (migrationService.NeedMigration<Role>(dataKey, 11))
+        if (migrationService.NeedMigration<Role>(dataKey, 12))
         {
             await IngestRole(options: options, cancellationToken: cancellationToken);
-            await migrationService.LogMigration<Role>(dataKey, string.Empty, 11);
+            await migrationService.LogMigration<Role>(dataKey, string.Empty, 12);
         }
 
         if (migrationService.NeedMigration<RoleMap>(dataKey, 5))
@@ -854,7 +854,51 @@ public class DbDataMigrationService(
             new RoleLookup() { RoleId = roles.First(t => t.Code == "parti-organ-styremedlem").Id, Key = "Urn", Value = "urn:altinn:external-role:ccr:parti-organ-styremedlem" },
             
             new RoleLookup() { RoleId = roles.First(t => t.Code == "privatperson").Id, Key = "Urn", Value = "urn:altinn:role:privatperson" },
-            new RoleLookup() { RoleId = roles.First(t => t.Code == "selvregistrert").Id, Key = "Urn", Value = "urn:altinn:role:selvregistrert" }
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "selvregistrert").Id, Key = "Urn", Value = "urn:altinn:role:selvregistrert" },
+            
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0212").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0212" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0236").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0236" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0237").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0237" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0238").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0238" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0239").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0239" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0240").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0240" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0241").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0241" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0278").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0278" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0282").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0282" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0286").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0286" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0287").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0287" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0288").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0288" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0293").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0293" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0294").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0294" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0298").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0298" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "ADMAI").Id, Key = "Urn", Value = "urn:altinn:rolecode:ADMAI" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "APIADM").Id, Key = "Urn", Value = "urn:altinn:rolecode:APIADM" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "APIADMNUF").Id, Key = "Urn", Value = "urn:altinn:rolecode:APIADMNUF" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "ATTST").Id, Key = "Urn", Value = "urn:altinn:rolecode:ATTST" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "BOADM").Id, Key = "Urn", Value = "urn:altinn:rolecode:BOADM" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "BOBEL").Id, Key = "Urn", Value = "urn:altinn:rolecode:BOBEL" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "BOBES").Id, Key = "Urn", Value = "urn:altinn:rolecode:BOBES" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "ECKEYROLE").Id, Key = "Urn", Value = "urn:altinn:rolecode:ECKEYROLE" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "EKTJ").Id, Key = "Urn", Value = "urn:altinn:rolecode:EKTJ" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "GKBHT").Id, Key = "Urn", Value = "urn:altinn:rolecode:GKBHT" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "HADM").Id, Key = "Urn", Value = "urn:altinn:rolecode:HADM" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "HVASK").Id, Key = "Urn", Value = "urn:altinn:rolecode:HVASK" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "KLADM").Id, Key = "Urn", Value = "urn:altinn:rolecode:KLADM" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "KOMAB").Id, Key = "Urn", Value = "urn:altinn:rolecode:KOMAB" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "LOPER").Id, Key = "Urn", Value = "urn:altinn:rolecode:LOPER" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "PASIG").Id, Key = "Urn", Value = "urn:altinn:rolecode:PASIG" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "PAVAD").Id, Key = "Urn", Value = "urn:altinn:rolecode:PAVAD" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "PRIUT").Id, Key = "Urn", Value = "urn:altinn:rolecode:PRIUT" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "REGNA").Id, Key = "Urn", Value = "urn:altinn:rolecode:REGNA" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "REVAI").Id, Key = "Urn", Value = "urn:altinn:rolecode:REVAI" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "SENS01").Id, Key = "Urn", Value = "urn:altinn:rolecode:SENS01" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "SIGNE").Id, Key = "Urn", Value = "urn:altinn:rolecode:SIGNE" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "SISKD").Id, Key = "Urn", Value = "urn:altinn:rolecode:SISKD" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "UIHTL").Id, Key = "Urn", Value = "urn:altinn:rolecode:UIHTL" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "UILUF").Id, Key = "Urn", Value = "urn:altinn:rolecode:UILUF" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "UTINN").Id, Key = "Urn", Value = "urn:altinn:rolecode:UTINN" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "UTOMR").Id, Key = "Urn", Value = "urn:altinn:rolecode:UTOMR" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "SENS").Id, Key = "Urn", Value = "urn:altinn:rolecode:SENS" }
         };
 
         var legacyCodes = new List<RoleLookup>
@@ -923,7 +967,51 @@ public class DbDataMigrationService(
             new RoleLookup() { RoleId = roles.First(t => t.Code == "parti-organ-styremedlem").Id, Key = "LegacyCode", Value = "HMDL" },
             
             new RoleLookup() { RoleId = roles.First(t => t.Code == "privatperson").Id, Key = "LegacyCode", Value = "PRIV" },
-            new RoleLookup() { RoleId = roles.First(t => t.Code == "selvregistrert").Id, Key = "LegacyCode", Value = "SELN" }
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "selvregistrert").Id, Key = "LegacyCode", Value = "SELN" },
+            
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0212").Id, Key = "LegacyCode", Value = "A0212" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0236").Id, Key = "LegacyCode", Value = "A0236" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0237").Id, Key = "LegacyCode", Value = "A0237" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0238").Id, Key = "LegacyCode", Value = "A0238" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0239").Id, Key = "LegacyCode", Value = "A0239" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0240").Id, Key = "LegacyCode", Value = "A0240" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0241").Id, Key = "LegacyCode", Value = "A0241" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0278").Id, Key = "LegacyCode", Value = "A0278" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0282").Id, Key = "LegacyCode", Value = "A0282" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0286").Id, Key = "LegacyCode", Value = "A0286" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0287").Id, Key = "LegacyCode", Value = "A0287" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0288").Id, Key = "LegacyCode", Value = "A0288" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0293").Id, Key = "LegacyCode", Value = "A0293" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0294").Id, Key = "LegacyCode", Value = "A0294" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "A0298").Id, Key = "LegacyCode", Value = "A0298" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "ADMAI").Id, Key = "LegacyCode", Value = "ADMAI" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "APIADM").Id, Key = "LegacyCode", Value = "APIADM" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "APIADMNUF").Id, Key = "LegacyCode", Value = "APIADMNUF" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "ATTST").Id, Key = "LegacyCode", Value = "ATTST" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "BOADM").Id, Key = "LegacyCode", Value = "BOADM" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "BOBEL").Id, Key = "LegacyCode", Value = "BOBEL" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "BOBES").Id, Key = "LegacyCode", Value = "BOBES" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "ECKEYROLE").Id, Key = "LegacyCode", Value = "ECKEYROLE" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "EKTJ").Id, Key = "LegacyCode", Value = "EKTJ" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "GKBHT").Id, Key = "LegacyCode", Value = "GKBHT" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "HADM").Id, Key = "LegacyCode", Value = "HADM" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "HVASK").Id, Key = "LegacyCode", Value = "HVASK" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "KLADM").Id, Key = "LegacyCode", Value = "KLADM" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "KOMAB").Id, Key = "LegacyCode", Value = "KOMAB" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "LOPER").Id, Key = "LegacyCode", Value = "LOPER" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "PASIG").Id, Key = "LegacyCode", Value = "PASIG" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "PAVAD").Id, Key = "LegacyCode", Value = "PAVAD" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "PRIUT").Id, Key = "LegacyCode", Value = "PRIUT" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "REGNA").Id, Key = "LegacyCode", Value = "REGNA" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "REVAI").Id, Key = "LegacyCode", Value = "REVAI" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "SENS01").Id, Key = "LegacyCode", Value = "SENS01" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "SIGNE").Id, Key = "LegacyCode", Value = "SIGNE" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "SISKD").Id, Key = "LegacyCode", Value = "SISKD" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "UIHTL").Id, Key = "LegacyCode", Value = "UIHTL" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "UILUF").Id, Key = "LegacyCode", Value = "UILUF" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "UTINN").Id, Key = "LegacyCode", Value = "UTINN" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "UTOMR").Id, Key = "LegacyCode", Value = "UTOMR" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "SENS").Id, Key = "LegacyCode", Value = "SENS" }
         };
 
         var mergeFilter = new List<string>()
