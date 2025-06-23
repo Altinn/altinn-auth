@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to=&packageId=&package=
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to&packageId&package={{package}}
   body: json
   auth: inherit
 }
@@ -15,7 +15,7 @@ params:query {
   from: {{party}}
   to: 
   packageId: 
-  package: 
+  package: {{package}}
 }
 
 headers {
@@ -29,6 +29,7 @@ script:pre-request {
   bru.setVar("requestName", "GET_Enduser_Conn_AccPcks_ToOthers_GetAll");
   
   bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+  bru.setVar("package", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg1.directPackageToDelegate);
   
   var getTokenParameters = {
     auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.userId,

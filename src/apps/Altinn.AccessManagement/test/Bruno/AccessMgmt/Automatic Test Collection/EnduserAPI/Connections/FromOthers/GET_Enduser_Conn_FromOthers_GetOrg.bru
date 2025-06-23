@@ -45,17 +45,12 @@ script:pre-request {
 }
 
 tests {
-  
   test(bru.getVar("requestName"), function() {
-    const body = res.getBody();
-    const data = body.data;
-    
-    expect(res.status).to.equal(200);
-    assert.isNotEmpty(data, "Expected data in response body to NOT be empty array");
-    
-    assert.equal(data[0].from.id, bru.getVar("fromOrg"));
-    assert.equal(data[0].to.id, bru.getVar("party"));
-    assert.equal(data[0].role.code, "rettighetshaver");
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
+     const data = res.getBody();
+      expect(data.data[0].roles[0]).to.have.property('code', "rettighetshaver");
+     expect(data.data[0].party).to.have.property('id', testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.partyUuid.toLowerCase());
+  
     
   });
 }

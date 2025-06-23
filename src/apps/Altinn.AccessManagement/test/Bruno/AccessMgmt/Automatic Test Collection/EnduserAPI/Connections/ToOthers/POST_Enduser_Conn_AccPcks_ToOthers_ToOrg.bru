@@ -45,6 +45,12 @@ script:pre-request {
   bru.setVar("bearerToken", token);
 }
 
+script:post-response {
+  const data = res.getBody();
+  const packageId = data.packageId;
+  bru.setEnvVar("packageId", packageId)
+}
+
 tests {
   
   test(bru.getVar("requestName"), function() {
