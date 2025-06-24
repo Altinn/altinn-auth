@@ -64,6 +64,20 @@ public class RelationDefinition : BaseDbDefinition<Relation>, IDbDefinition
 
         SELECT a.fromid,
         a.roleid,
+        NULL::uuid     AS viaid,
+        NULL::uuid     AS viaroleid,
+        a.toid,
+        rp.packageid,
+        rr.resourceid,
+        'Direct'::text AS reason
+        FROM dbo.assignment a
+        LEFT JOIN dbo.rolepackage rp ON rp.roleid = a.roleid
+        LEFT JOIN dbo.roleresource rr ON rr.roleid = a.roleid
+
+        UNION ALL
+
+        SELECT a.fromid,
+        a.roleid,
         a.toid          AS viaid,
         a2.roleid       AS viaroleid,
         a2.toid,
