@@ -13,14 +13,9 @@ public interface IResourceSyncService
     /// Sync resource owners (ServiceOwner)
     /// </summary>
     Task<bool> SyncResourceOwners(CancellationToken cancellationToken);
-    
-    /// <summary>
-    /// Sync resources
-    /// </summary>
-    Task<bool> SyncResources(CancellationToken cancellationToken);
 
     /// <summary>
     /// Sync resource mapping
     /// </summary>
-    Task SyncResourceMapping(LeaseResult<LeaseContent> ls, CancellationToken cancellationToken);
+    Task SyncResources(LeaseResult<ResourceRegisterLease> ls, CancellationToken cancellationToken);
 }

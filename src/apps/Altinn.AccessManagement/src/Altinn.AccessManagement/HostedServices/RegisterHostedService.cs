@@ -56,18 +56,7 @@ public partial class RegisterHostedService(
     /// <param name="state">Cancellation token for stopping execution.</param>
     private async Task SyncRegisterDispatcher(object state)
     {
-        if (!await _featureManager.IsEnabledAsync(AccessManagementFeatureFlags.HostedServicesRegisterSync))
-        {
-            return;
-        }
-
         var cancellationToken = (CancellationToken)state;
-        await using var ls = await _lease.TryAquireNonBlocking<LeaseContent>("access_management_register_sync", cancellationToken);
-        if (!ls.HasLease || cancellationToken.IsCancellationRequested)
-        {
-            return;
-        }
-
         try
         {
             var options = new ChangeRequestOptions()
@@ -76,61 +65,27 @@ public partial class RegisterHostedService(
                 ChangedBySystem = AuditDefaults.RegisterImportSystem
             };
 
-            var partyStatus = await statusService.GetOrCreateRecord(Guid.Parse("C18B67F6-B07E-482C-AB11-7FE12CD1F48D"), "accessmgmt-sync-register-party", options, 5);
-            var roleStatus = await statusService.GetOrCreateRecord(Guid.Parse("84E9726D-E61B-4DFF-91D7-9E17C8BB41A6"), "accessmgmt-sync-register-role", options, 5);
-            var resourceStatus = await statusService.GetOrCreateRecord(Guid.Parse("BEF7E6C8-2928-423E-9927-225488A5B08B"), "accessmgmt-sync-register-resource", options, 5);
-
-            bool canRunPartySync = await statusService.TryToRun(partyStatus, options);
-            bool canRunRoleSync = await statusService.TryToRun(roleStatus, options);
-            bool canRunResourceSync = await statusService.TryToRun(resourceStatus, options);
-
-            if (!canRunPartySync && !canRunRoleSync && !canRunResourceSync)
+            if (await _featureManager.IsEnabledAsync(AccessManagementFeatureFlags.HostedServicesResourceRegisterSync, cancellationToken))
             {
-                return;
-            }
-
-            try
-            {
-                if (canRunResourceSync)
+                await using var ls = await _lease.TryAquireNonBlocking<ResourceRegisterLease>("access_management_resource_register_sync", cancellationToken);
+                if (!ls.HasLease || cancellationToken.IsCancellationRequested)
                 {
-                    //// await resourceSyncService.SyncResourceOwners(cancellationToken);
-                    //// await resourceSyncService.SyncResources(cancellationToken);
-                    //// await resourceSyncService.SyncResourceMapping(ls, cancellationToken);
-                    await statusService.RunSuccess(resourceStatus, options);
+                    return;
                 }
-            }
-            catch (Exception ex)
-            {
-                Log.SyncError(_logger, ex);
-                await statusService.RunFailed(resourceStatus, ex, options);
+
+                await SyncResourceRegister(ls, options, cancellationToken);
             }
 
-            try
+            if (await _featureManager.IsEnabledAsync(AccessManagementFeatureFlags.HostedServicesRegisterSync))
             {
-                if (canRunPartySync)
+                await using var ls = await _lease.TryAquireNonBlocking<RegisterLease>("access_management_register_sync", cancellationToken);
+                if (!ls.HasLease || cancellationToken.IsCancellationRequested)
                 {
-                    await partySyncService.SyncParty(ls, cancellationToken);
-                    await statusService.RunSuccess(partyStatus, options);
+                    return;
                 }
-            }
-            catch (Exception ex)
-            {
-                Log.SyncError(_logger, ex);
-                await statusService.RunFailed(partyStatus, ex, options);
-            }
 
-            try
-            {
-                if (canRunPartySync)
-                {
-                    await roleSyncService.SyncRoles(ls, cancellationToken);
-                    await statusService.RunSuccess(roleStatus, options);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.SyncError(_logger, ex);
-                await statusService.RunFailed(partyStatus, ex, options);
+                await SyncRegisterParty(ls, options, cancellationToken);
+                await SyncRegisterRoles(ls, options, cancellationToken);
             }
 
             _logger.LogInformation("Register sync completed!");
@@ -139,9 +94,66 @@ public partial class RegisterHostedService(
         {
             Log.SyncError(_logger, ex);
         }
-        finally
+    }
+
+    private async Task SyncRegisterRoles(LeaseResult<RegisterLease> ls, ChangeRequestOptions options, CancellationToken cancellationToken)
+    {
+        var roleStatus = await statusService.GetOrCreateRecord(Guid.Parse("84E9726D-E61B-4DFF-91D7-9E17C8BB41A6"), "accessmgmt-sync-register-role", options, 5);
+        var canRunRoleSync = await statusService.TryToRun(roleStatus, options);
+
+        try
         {
-            await _lease.Release(ls, default);
+            if (canRunRoleSync)
+            {
+                await roleSyncService.SyncRoles(ls, cancellationToken);
+                await statusService.RunSuccess(roleStatus, options);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.SyncError(_logger, ex);
+            await statusService.RunFailed(roleStatus, ex, options);
+        }
+    }
+
+    private async Task SyncResourceRegister(LeaseResult<ResourceRegisterLease> ls, ChangeRequestOptions options, CancellationToken cancellationToken)
+    {
+        var resourceStatus = await statusService.GetOrCreateRecord(Guid.Parse("BEF7E6C8-2928-423E-9927-225488A5B08B"), "accessmgmt-sync-register-resource", options, 5);
+        var canRunResourceSync = await statusService.TryToRun(resourceStatus, options);
+
+        try
+        {
+            if (canRunResourceSync)
+            {
+                await resourceSyncService.SyncResourceOwners(cancellationToken);
+                await resourceSyncService.SyncResources(ls, cancellationToken);
+                await statusService.RunSuccess(resourceStatus, options);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.SyncError(_logger, ex);
+            await statusService.RunFailed(resourceStatus, ex, options);
+        }
+    }
+
+    private async Task SyncRegisterParty(LeaseResult<RegisterLease> ls, ChangeRequestOptions options, CancellationToken cancellationToken)
+    {
+        var partyStatus = await statusService.GetOrCreateRecord(Guid.Parse("C18B67F6-B07E-482C-AB11-7FE12CD1F48D"), "accessmgmt-sync-register-party", options, 5);
+        var canRunPartySync = await statusService.TryToRun(partyStatus, options);
+
+        try
+        {
+            if (canRunPartySync)
+            {
+                await partySyncService.SyncParty(ls, cancellationToken);
+                await statusService.RunSuccess(partyStatus, options);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.SyncError(_logger, ex);
+            await statusService.RunFailed(partyStatus, ex, options);
         }
     }
 

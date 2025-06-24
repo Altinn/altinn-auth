@@ -1,9 +1,9 @@
-﻿namespace Altinn.Authorization.AccessManagement.HostedServices;
+namespace Altinn.Authorization.AccessManagement.HostedServices;
 
 /// <summary>
 /// Lease content
 /// </summary>
-public class LeaseContent()
+public class RegisterLease()
 {
     /// <summary>
     /// The URL of the next page of Party data.
@@ -14,9 +14,4 @@ public class LeaseContent()
     /// The URL of the next page of AssignmentSuccess data.
     /// </summary>
     public string RoleStreamNextPageLink { get; set; }
-
-    /// <summary>
-    /// The URL of the next page of updates resourcs.
-    /// </summary>
-    public string ResourcesNextPageLink { get; set; }
 }

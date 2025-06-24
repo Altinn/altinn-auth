@@ -10,6 +10,11 @@ internal static class AccessManagementFeatureFlags
     /// </summary>
     public const string HostedServicesRegisterSync = $"AccessManagement.HostedServices.RegisterSync";
 
+        /// <summary>
+    /// Specifies if the register data should streamed from register service to access management database
+    /// </summary>
+    public const string HostedServicesResourceRegisterSync = $"AccessManagement.HostedServices.ResourceRegisterSync";
+
     /// <summary>
     /// Specifies if migration should be done.
     /// </summary>

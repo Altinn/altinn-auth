@@ -46,7 +46,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
     /// </summary>
     /// <param name="ls">The lease result containing the lease data and status.</param>
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
-    public async Task SyncParty(LeaseResult<LeaseContent> ls, CancellationToken cancellationToken)
+    public async Task SyncParty(LeaseResult<RegisterLease> ls, CancellationToken cancellationToken)
     {
         var options = new ChangeRequestOptions()
         {

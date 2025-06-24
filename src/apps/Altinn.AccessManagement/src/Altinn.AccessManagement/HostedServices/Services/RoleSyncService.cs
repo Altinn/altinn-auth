@@ -49,7 +49,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
     private readonly IIngestService _ingestService;
 
     /// <inheritdoc />
-    public async Task SyncRoles(LeaseResult<LeaseContent> ls, CancellationToken cancellationToken)
+    public async Task SyncRoles(LeaseResult<RegisterLease> ls, CancellationToken cancellationToken)
     {
         var batchData = new List<Assignment>();
         Guid batchId = Guid.CreateVersion7();

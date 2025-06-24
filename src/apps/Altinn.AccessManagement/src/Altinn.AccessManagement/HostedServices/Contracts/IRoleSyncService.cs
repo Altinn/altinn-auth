@@ -11,5 +11,5 @@ public interface IRoleSyncService
     /// <summary>
     /// Sync roles
     /// </summary>
-    Task SyncRoles(LeaseResult<LeaseContent> ls, CancellationToken cancellationToken);
+    Task SyncRoles(LeaseResult<RegisterLease> ls, CancellationToken cancellationToken);
 }

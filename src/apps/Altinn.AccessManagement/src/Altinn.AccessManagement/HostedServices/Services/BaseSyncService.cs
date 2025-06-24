@@ -29,7 +29,8 @@ public class BaseSyncService(IAltinnLease lease, IFeatureManager featureManager,
     /// <summary>
     /// Update lease
     /// </summary>
-    protected async Task UpdateLease(LeaseResult<LeaseContent> ls, Action<LeaseContent> configureLeaseContent, CancellationToken cancellationToken)
+    protected async Task UpdateLease<T>(LeaseResult<T> ls, Action<T> configureLeaseContent, CancellationToken cancellationToken)
+        where T : class, new()
     {
         if (ls.Data is { })
         {
@@ -38,7 +39,7 @@ public class BaseSyncService(IAltinnLease lease, IFeatureManager featureManager,
         }
         else
         {
-            var content = new LeaseContent();
+            var content = new T();
             configureLeaseContent(content);
             await Lease.Put(ls, content, cancellationToken);
         }

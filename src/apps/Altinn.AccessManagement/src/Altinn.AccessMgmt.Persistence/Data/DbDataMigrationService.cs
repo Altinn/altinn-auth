@@ -85,10 +85,10 @@ public class DbDataMigrationService(
             await migrationService.LogMigration<EntityVariant>(dataKey, string.Empty, 4);
         }
 
-        if (migrationService.NeedMigration<Entity>(dataKey, 2))
+        if (migrationService.NeedMigration<Entity>(dataKey, 3))
         {
             await IngestSystemEntity(options: options, cancellationToken: cancellationToken);
-            await migrationService.LogMigration<Entity>(dataKey, string.Empty, 2);
+            await migrationService.LogMigration<Entity>(dataKey, string.Empty, 3);
         }
 
         if (migrationService.NeedMigration<Role>(dataKey, 12))
@@ -448,6 +448,7 @@ public class DbDataMigrationService(
             // Static data ingest
             new Entity() { Id = AuditDefaults.StaticDataIngest, Name = "StaticDataIngest", RefId = "sys-static-data-ingest", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
             new Entity() { Id = AuditDefaults.RegisterImportSystem, Name = "RegisterImportSystem", RefId = "sys-register-import-system", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
+            new Entity() { Id = AuditDefaults.ResourceRegisterImportSystem, Name = nameof(AuditDefaults.ResourceRegisterImportSystem), RefId = "sys-resource-register-import-system", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
             new Entity() { Id = AuditDefaults.EnduserApi, Name = "EnduserApi", RefId = "accessmgmt-enduser-api", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
         };
 
