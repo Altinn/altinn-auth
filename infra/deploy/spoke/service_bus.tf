@@ -87,8 +87,8 @@ resource "azurerm_monitor_diagnostic_setting" "service_bus_diagnostics" {
     category_group = "audit"
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
+    
   }
 }

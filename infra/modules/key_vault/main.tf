@@ -75,8 +75,7 @@ resource "azurerm_monitor_diagnostic_setting" "key_vault_diagnostics" {
     category_group = "audit"
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
   }
 }
