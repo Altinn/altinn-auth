@@ -3,7 +3,7 @@ namespace Altinn.Authorization.AccessManagement.HostedServices;
 /// <summary>
 /// Lease content
 /// </summary>
-public class ResourceRegisterLease()
+public class ResourceRegistryLease()
 {
     /// <summary>
     /// The URL of the next page of Resource data.

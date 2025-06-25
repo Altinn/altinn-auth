@@ -1,19 +1,19 @@
 using System.Text.Json.Serialization;
 
-namespace Altinn.Authorization.Integration.Platform.ResourceRegister;
+namespace Altinn.Authorization.Integration.Platform.ResourceRegistry;
 
 /// <summary>
 /// Client for interacting with the Altinn Resource Register API.
 /// Provides methods to retrieve resource information.
 /// </summary>
-public partial class AltinnResourceRegisterClient
+public partial class AltinnResourceRegistryClient
 {
     /// <inheritdoc/>
     public async Task<PlatformResponse<ResourceModel>> GetResource(string id, CancellationToken cancellationToken = default)
     {
         List<Action<HttpRequestMessage>> request = [
             RequestComposer.WithHttpVerb(HttpMethod.Get),
-            RequestComposer.WithSetUri(ResourceRegisterOptions.Value.Endpoint, "/resourceregistry/api/v1/resource", id),
+            RequestComposer.WithSetUri(ResourceRegistryOptions.Value.Endpoint, "/resourceregistry/api/v1/resource", id),
         ];
 
         var response = await HttpClient.SendAsync(RequestComposer.New([.. request]), cancellationToken);
@@ -29,7 +29,7 @@ public partial class AltinnResourceRegisterClient
     {
         List<Action<HttpRequestMessage>> request = [
             RequestComposer.WithHttpVerb(HttpMethod.Get),
-            RequestComposer.WithSetUri(ResourceRegisterOptions.Value.Endpoint, "/resourceregistry/api/v1/resource/resourcelist"),
+            RequestComposer.WithSetUri(ResourceRegistryOptions.Value.Endpoint, "/resourceregistry/api/v1/resource/resourcelist"),
         ];
 
         var response = await HttpClient.SendAsync(RequestComposer.New([.. request]), cancellationToken);

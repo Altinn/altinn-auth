@@ -1,18 +1,18 @@
 using System.Text.Json.Serialization;
 
-namespace Altinn.Authorization.Integration.Platform.ResourceRegister;
+namespace Altinn.Authorization.Integration.Platform.ResourceRegistry;
 
 /// <summary>
 /// Client for interacting with endpoint that provides information regarding updated resources.
 /// </summary>
-public partial class AltinnResourceRegisterClient
+public partial class AltinnResourceRegistryClient
 {
     /// <inheritdoc/>
     public async Task<IAsyncEnumerable<PlatformResponse<PageStream<ResourceUpdatedModel>>>> StreamResources(string nextPage = null, CancellationToken cancellationToken = default)
     {
         List<Action<HttpRequestMessage>> request = [
             RequestComposer.WithHttpVerb(HttpMethod.Get),
-            RequestComposer.WithSetUri(ResourceRegisterOptions.Value.Endpoint, "resourceregistry/api/v1/resource/updated"),
+            RequestComposer.WithSetUri(ResourceRegistryOptions.Value.Endpoint, "resourceregistry/api/v1/resource/updated"),
             RequestComposer.WithSetUri(nextPage),
             RequestComposer.WithAppendQueryParam("limit", 1000),
         ];

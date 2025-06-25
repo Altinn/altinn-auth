@@ -1,7 +1,7 @@
 using Altinn.Authorization.Integration.Platform;
-using Altinn.Authorization.Integration.Platform.ResourceRegister;
+using Altinn.Authorization.Integration.Platform.ResourceRegistry;
 
-namespace Altinn.Authorization.Integration.Tests.ResourceRegister;
+namespace Altinn.Authorization.Integration.Tests.ResourceRegistry;
 
 /// <summary>
 /// Tests for the ResourceUpdatedEndpoint.
@@ -11,13 +11,13 @@ public class ResourceUpdatedEndpointTest : IClassFixture<PlatformFixture>
 {
     public ResourceUpdatedEndpointTest(PlatformFixture fixture)
     {
-        fixture.SkipIfMissingConfiguration<AltinnResourceRegisterOptions>();
+        fixture.SkipIfMissingConfiguration<AltinnResourceRegistryOptions>();
         fixture.SkipIfMissingConfiguration<AltinnIntegrationOptions>();
-        fixture.SkipIfDisabled("ResourceRegister");
-        ResourceRegister = fixture.GetService<IAltinnResourceRegister>();
+        fixture.SkipIfDisabled("ResourceRegistry");
+        ResourceRegistry = fixture.GetService<IAltinnResourceRegistry>();
     }
 
-    private IAltinnResourceRegister ResourceRegister { get; }
+    private IAltinnResourceRegistry ResourceRegistry { get; }
 
     /// <summary>
     /// Tests streaming of resources with a limited number of iterations.
@@ -27,7 +27,7 @@ public class ResourceUpdatedEndpointTest : IClassFixture<PlatformFixture>
     [InlineData(5)]
     public async Task TestStreamParties(int iterations)
     {
-        await foreach (var role in await ResourceRegister.StreamResources(null, TestContext.Current.CancellationToken))
+        await foreach (var role in await ResourceRegistry.StreamResources(null, TestContext.Current.CancellationToken))
         {
             if (iterations-- <= 0)
             {
@@ -57,7 +57,7 @@ public class ResourceUpdatedEndpointTest : IClassFixture<PlatformFixture>
     /// <returns>A task representing the asynchronous operation, returning a platform response with resource updates.</returns>
     private async Task<PlatformResponse<PageStream<ResourceUpdatedModel>>> GetPage(string nextPage = null, CancellationToken cancellationToken = default)
     {
-        await foreach (var role in await ResourceRegister.StreamResources(nextPage, cancellationToken))
+        await foreach (var role in await ResourceRegistry.StreamResources(nextPage, cancellationToken))
         {
             return role;
         }

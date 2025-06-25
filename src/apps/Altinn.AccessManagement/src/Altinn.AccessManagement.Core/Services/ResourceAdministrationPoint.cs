@@ -66,7 +66,7 @@ namespace Altinn.AccessManagement.Core.Services
         }
 
         /// <inheritdoc />
-        public async Task<List<AccessManagementResource>> TryWriteResourceFromResourceRegister(List<AccessManagementResource> resources)
+        public async Task<List<AccessManagementResource>> TryWriteResourceFromResourceRegistry(List<AccessManagementResource> resources)
         {
             List<AccessManagementResource> result = new List<AccessManagementResource>();
 

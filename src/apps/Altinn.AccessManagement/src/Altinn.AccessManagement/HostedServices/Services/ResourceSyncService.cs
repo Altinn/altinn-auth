@@ -9,7 +9,7 @@ using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.Authorization.AccessManagement.HostedServices;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Integration.Platform.Register;
-using Altinn.Authorization.Integration.Platform.ResourceRegister;
+using Altinn.Authorization.Integration.Platform.ResourceRegistry;
 using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessManagement.HostedServices.Services;
@@ -18,7 +18,7 @@ namespace Altinn.AccessManagement.HostedServices.Services;
 public partial class ResourceSyncService : BaseSyncService, IResourceSyncService
 {
     private readonly ILogger<ResourceSyncService> _logger;
-    private readonly IAltinnResourceRegister _resourceRegister;
+    private readonly IAltinnResourceRegistry _resourceRegistry;
     private readonly IIngestService _ingestService;
     private readonly IResourceTypeRepository _resourceTypeRepository;
     private readonly IResourceRepository _resourceRepository;
@@ -36,7 +36,7 @@ public partial class ResourceSyncService : BaseSyncService, IResourceSyncService
         IAltinnLease lease,
         IFeatureManager featureManager,
         IAltinnRegister register,
-        IAltinnResourceRegister resourceRegister,
+        IAltinnResourceRegistry resourceRegistry,
         IIngestService ingestService,
         IResourceTypeRepository resourceTypeRepository,
         IResourceRepository resourceRepository,
@@ -50,7 +50,7 @@ public partial class ResourceSyncService : BaseSyncService, IResourceSyncService
         ) : base(lease, featureManager, register)
     {
         _logger = logger;
-        _resourceRegister = resourceRegister;
+        _resourceRegistry = resourceRegistry;
         _ingestService = ingestService;
         _roleResourceRepository = roleResourceRepository;
         _roleLookupRepository = roleLookupRepository;
@@ -65,7 +65,7 @@ public partial class ResourceSyncService : BaseSyncService, IResourceSyncService
     /// <inheritdoc />
     public async Task<bool> SyncResourceOwners(CancellationToken cancellationToken)
     {
-        var serviceOwners = await _resourceRegister.GetServiceOwners(cancellationToken);
+        var serviceOwners = await _resourceRegistry.GetServiceOwners(cancellationToken);
         if (!serviceOwners.IsSuccessful)
         {
             Log.FailedToReadResourceOwners(_logger);
@@ -74,8 +74,8 @@ public partial class ResourceSyncService : BaseSyncService, IResourceSyncService
 
         var options = new ChangeRequestOptions()
         {
-            ChangedBy = AuditDefaults.ResourceRegisterImportSystem,
-            ChangedBySystem = AuditDefaults.ResourceRegisterImportSystem,
+            ChangedBy = AuditDefaults.ResourceRegistryImportSystem,
+            ChangedBySystem = AuditDefaults.ResourceRegistryImportSystem,
         };
 
         var providerType = (await _providerTypeRepository.Get(t => t.Name, "Tjenesteeier")).FirstOrDefault();
@@ -106,17 +106,17 @@ public partial class ResourceSyncService : BaseSyncService, IResourceSyncService
     }
 
     /// <inheritdoc />
-    public async Task SyncResources(LeaseResult<ResourceRegisterLease> ls, CancellationToken cancellationToken)
+    public async Task SyncResources(LeaseResult<ResourceRegistryLease> ls, CancellationToken cancellationToken)
     {
         var options = new ChangeRequestOptions()
         {
-            ChangedBy = AuditDefaults.ResourceRegisterImportSystem,
-            ChangedBySystem = AuditDefaults.ResourceRegisterImportSystem
+            ChangedBy = AuditDefaults.ResourceRegistryImportSystem,
+            ChangedBySystem = AuditDefaults.ResourceRegistryImportSystem
         };
 
         ResourceTypes = [.. await _resourceTypeRepository.Get()];
 
-        await foreach (var page in await _resourceRegister.StreamResources(ls.Data?.ResourceNextPageLink, cancellationToken))
+        await foreach (var page in await _resourceRegistry.StreamResources(ls.Data?.ResourceNextPageLink, cancellationToken))
         {
             if (page.IsProblem)
             {
@@ -257,7 +257,7 @@ public partial class ResourceSyncService : BaseSyncService, IResourceSyncService
 
     private async Task<Resource> UpsertResource(ResourceUpdatedModel resourceUpdated, ChangeRequestOptions options, CancellationToken cancellationToken)
     {
-        var response = await _resourceRegister.GetResource(resourceUpdated.ResourceUrn.Split(":").Last(), cancellationToken: cancellationToken);
+        var response = await _resourceRegistry.GetResource(resourceUpdated.ResourceUrn.Split(":").Last(), cancellationToken: cancellationToken);
         if (response.IsProblem)
         {
             Log.FailedToGetResource(_logger, resourceUpdated.ResourceUrn);

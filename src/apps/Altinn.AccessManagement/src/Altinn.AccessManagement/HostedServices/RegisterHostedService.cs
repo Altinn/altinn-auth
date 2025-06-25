@@ -65,15 +65,15 @@ public partial class RegisterHostedService(
                 ChangedBySystem = AuditDefaults.RegisterImportSystem
             };
 
-            if (await _featureManager.IsEnabledAsync(AccessManagementFeatureFlags.HostedServicesResourceRegisterSync, cancellationToken))
+            if (await _featureManager.IsEnabledAsync(AccessManagementFeatureFlags.HostedServicesResourceRegistrySync, cancellationToken))
             {
-                await using var ls = await _lease.TryAquireNonBlocking<ResourceRegisterLease>("access_management_resource_register_sync", cancellationToken);
+                await using var ls = await _lease.TryAquireNonBlocking<ResourceRegistryLease>("access_management_resource_registry_sync", cancellationToken);
                 if (!ls.HasLease || cancellationToken.IsCancellationRequested)
                 {
                     return;
                 }
 
-                await SyncResourceRegister(ls, options, cancellationToken);
+                await SyncResourceRegistry(ls, options, cancellationToken);
             }
 
             if (await _featureManager.IsEnabledAsync(AccessManagementFeatureFlags.HostedServicesRegisterSync))
@@ -116,7 +116,7 @@ public partial class RegisterHostedService(
         }
     }
 
-    private async Task SyncResourceRegister(LeaseResult<ResourceRegisterLease> ls, ChangeRequestOptions options, CancellationToken cancellationToken)
+    private async Task SyncResourceRegistry(LeaseResult<ResourceRegistryLease> ls, ChangeRequestOptions options, CancellationToken cancellationToken)
     {
         var resourceStatus = await statusService.GetOrCreateRecord(Guid.Parse("BEF7E6C8-2928-423E-9927-225488A5B08B"), "accessmgmt-sync-register-resource", options, 5);
         var canRunResourceSync = await statusService.TryToRun(resourceStatus, options);

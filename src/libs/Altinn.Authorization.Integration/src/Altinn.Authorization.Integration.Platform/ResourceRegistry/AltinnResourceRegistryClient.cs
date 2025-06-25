@@ -1,18 +1,18 @@
 using Microsoft.Extensions.Options;
 
-namespace Altinn.Authorization.Integration.Platform.ResourceRegister;
+namespace Altinn.Authorization.Integration.Platform.ResourceRegistry;
 
 /// <summary>
 /// Client for interacting with the Altinn Resource Register API.
 /// </summary>
 /// <param name="HttpClientFactory">Factory for creating HTTP client instances.</param>
-/// <param name="ResourceRegisterOptions">Configuration options for the Altinn Resource Register.</param>
+/// <param name="ResourceRegistryOptions">Configuration options for the Altinn Resource Register.</param>
 /// <param name="PlatformOptions">General platform integration options.</param>
-public partial class AltinnResourceRegisterClient(
+public partial class AltinnResourceRegistryClient(
     IHttpClientFactory HttpClientFactory,
-    IOptions<AltinnResourceRegisterOptions> ResourceRegisterOptions,
+    IOptions<AltinnResourceRegistryOptions> ResourceRegistryOptions,
     IOptions<AltinnIntegrationOptions> PlatformOptions
-) : IAltinnResourceRegister
+) : IAltinnResourceRegistry
 {
     private HttpClient HttpClient => HttpClientFactory.CreateClient(PlatformOptions.Value.HttpClientName);
 }
@@ -20,7 +20,7 @@ public partial class AltinnResourceRegisterClient(
 /// <summary>
 /// Set of methods for interacting with Altinn Resource Register API.
 /// </summary>
-public interface IAltinnResourceRegister
+public interface IAltinnResourceRegistry
 {
     /// <summary>
     /// Streams updated resources from the Altinn Resource Register in a paginated manner.

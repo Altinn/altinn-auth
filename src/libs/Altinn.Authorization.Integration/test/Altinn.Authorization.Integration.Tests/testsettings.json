@@ -1,6 +1,6 @@
 {
   "Platform": {
-    "ResourceRegister": {
+    "ResourceRegistry": {
       "Enabled": true,
       "Endpoint": "https://platform.altinn.no"
     },

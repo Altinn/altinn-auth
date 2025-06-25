@@ -2,20 +2,20 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
 
-namespace Altinn.Authorization.Integration.Platform.ResourceRegister;
+namespace Altinn.Authorization.Integration.Platform.ResourceRegistry;
 
 /// <summary>
 /// Client for interacting with the Altinn Resource Register API.
 /// Provides methods to service owners.
 /// </summary>
-public partial class AltinnResourceRegisterClient
+public partial class AltinnResourceRegistryClient
 {
     /// <inheritdoc/>
     public async Task<PlatformResponse<ServiceOwners>> GetServiceOwners(CancellationToken cancellationToken = default)
     {
         List<Action<HttpRequestMessage>> request = [
             RequestComposer.WithHttpVerb(HttpMethod.Get),
-            RequestComposer.WithSetUri(ResourceRegisterOptions.Value.Endpoint, "resourceregistry/api/v1/resource/orgs"),
+            RequestComposer.WithSetUri(ResourceRegistryOptions.Value.Endpoint, "resourceregistry/api/v1/resource/orgs"),
         ];
 
         var response = await HttpClient.SendAsync(RequestComposer.New([.. request]), cancellationToken);

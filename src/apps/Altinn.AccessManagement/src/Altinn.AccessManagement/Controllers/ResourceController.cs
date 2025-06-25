@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Altinn.AccessManagement.Controllers
 {
     /// <summary>
-    /// Controller to update AccessManagement with resources existing i ResourceRegister.
+    /// Controller to update AccessManagement with resources existing i resource registry.
     /// </summary>
     [ApiController]
     public class ResourceController : ControllerBase
@@ -45,7 +45,7 @@ namespace Altinn.AccessManagement.Controllers
                 return BadRequest("Missing resources in body");
             }
 
-            List<AccessManagementResource> addResourceResult = await _rap.TryWriteResourceFromResourceRegister(resources);
+            List<AccessManagementResource> addResourceResult = await _rap.TryWriteResourceFromResourceRegistry(resources);
 
             if (addResourceResult.Count == resources.Count)
             {

@@ -1,7 +1,7 @@
 using Altinn.Authorization.Integration.Platform;
-using Altinn.Authorization.Integration.Platform.ResourceRegister;
+using Altinn.Authorization.Integration.Platform.ResourceRegistry;
 
-namespace Altinn.Authorization.Integration.Tests.ResourceRegister;
+namespace Altinn.Authorization.Integration.Tests.ResourceRegistry;
 
 /// <summary>
 /// Contains test cases for the ResourceGetEndpoint.
@@ -10,13 +10,13 @@ public class ResourceGetEndpointTest : IClassFixture<PlatformFixture>
 {
     public ResourceGetEndpointTest(PlatformFixture fixture)
     {
-        fixture.SkipIfMissingConfiguration<AltinnResourceRegisterOptions>();
+        fixture.SkipIfMissingConfiguration<AltinnResourceRegistryOptions>();
         fixture.SkipIfMissingConfiguration<AltinnIntegrationOptions>();
-        fixture.SkipIfDisabled("ResourceRegister");
-        ResourceRegister = fixture.GetService<IAltinnResourceRegister>();
+        fixture.SkipIfDisabled("ResourceRegistry");
+        ResourceRegistry = fixture.GetService<IAltinnResourceRegistry>();
     }
 
-    private IAltinnResourceRegister ResourceRegister { get; }
+    private IAltinnResourceRegistry ResourceRegistry { get; }
 
     /// <summary>
     /// Gets a specific resource from resource registry
@@ -27,7 +27,7 @@ public class ResourceGetEndpointTest : IClassFixture<PlatformFixture>
     [InlineData("altinn_access_management")]
     public async Task GetResource(string resourceId)
     {
-        var result = await ResourceRegister.GetResource(resourceId, TestContext.Current.CancellationToken);
+        var result = await ResourceRegistry.GetResource(resourceId, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccessful);
     }
 }

@@ -1,7 +1,7 @@
 using Altinn.Authorization.Integration.Platform;
-using Altinn.Authorization.Integration.Platform.ResourceRegister;
+using Altinn.Authorization.Integration.Platform.ResourceRegistry;
 
-namespace Altinn.Authorization.Integration.Tests.ResourceRegister;
+namespace Altinn.Authorization.Integration.Tests.ResourceRegistry;
 
 /// <summary>
 /// Tests for the ResourceUpdatedEndpoint.
@@ -11,13 +11,13 @@ public class ServiceOwnersEndpointsTest : IClassFixture<PlatformFixture>
 {
     public ServiceOwnersEndpointsTest(PlatformFixture fixture)
     {
-        fixture.SkipIfMissingConfiguration<AltinnResourceRegisterOptions>();
+        fixture.SkipIfMissingConfiguration<AltinnResourceRegistryOptions>();
         fixture.SkipIfMissingConfiguration<AltinnIntegrationOptions>();
-        fixture.SkipIfDisabled("ResourceRegister");
-        ResourceRegister = fixture.GetService<IAltinnResourceRegister>();
+        fixture.SkipIfDisabled("ResourceRegistry");
+        ResourceRegistry = fixture.GetService<IAltinnResourceRegistry>();
     }
 
-    private IAltinnResourceRegister ResourceRegister { get; }
+    private IAltinnResourceRegistry ResourceRegistry { get; }
 
     /// <summary>
     /// Tests getting all service owners from resource registry.
@@ -25,7 +25,7 @@ public class ServiceOwnersEndpointsTest : IClassFixture<PlatformFixture>
     [Fact]
     public async Task TestGetAllServiceOwners()
     {
-        var response = await ResourceRegister.GetServiceOwners(TestContext.Current.CancellationToken);
+        var response = await ResourceRegistry.GetServiceOwners(TestContext.Current.CancellationToken);
         Assert.True(response.IsSuccessful);
         Assert.True(response.Content.Orgs.Count > 0);
     }
