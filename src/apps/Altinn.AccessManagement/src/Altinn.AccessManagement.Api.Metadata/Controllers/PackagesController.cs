@@ -28,12 +28,13 @@ public class PackagesController : ControllerBase
     /// Søker etter access packages basert på et søkeord.
     /// </summary>
     /// <param name="term">Søketerm.</param>
+    /// <param name="searchInResources">Søk i ressurs verdier</param>
     /// <returns>Liste over søkeresultater.</returns>
     [Route("search")]
     [HttpGet]
-    public async Task<ActionResult<SearchObject<PackageDto>>> Search([FromQuery] string term)
+    public async Task<ActionResult<SearchObject<PackageDto>>> Search([FromQuery] string term, [FromQuery] bool searchInResources = false)
     {
-        var res = await packageService.Search(term);
+        var res = await packageService.Search(term, searchInResources);
         if (res == null || !res.Any())
         {
             return NoContent();

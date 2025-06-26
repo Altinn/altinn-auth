@@ -23,7 +23,7 @@ public class PackageService(
     private readonly ISearchCache<PackageDto> searchPackageCache = searchPackageCache;
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<SearchObject<PackageDto>>> Search(string term)
+    public async Task<IEnumerable<SearchObject<PackageDto>>> Search(string term, bool searchInResources = false)
     {
         var data = await GetSearchData();
 
@@ -38,9 +38,14 @@ public class PackageService(
             .Add(pkg => pkg.Name, 2.0, FuzzynessLevel.High)
             .Add(pkg => pkg.Description, 0.8, FuzzynessLevel.Low)
             .Add(pkg => pkg.Area.Name, 1.5, FuzzynessLevel.Medium)
-            .Add(pkg => pkg.Area.Group.Name, 1.3, FuzzynessLevel.Medium)
-            .AddCollection(pkg => pkg.Resources, r => r.Name, 1.2, FuzzynessLevel.High, detailed)
-            .AddCollection(pkg => pkg.Resources, r => r.Description, 0.7, FuzzynessLevel.Low, detailed);
+            .Add(pkg => pkg.Area.Group.Name, 1.3, FuzzynessLevel.Medium);
+
+        if (searchInResources)
+        {
+            builder
+                .AddCollection(pkg => pkg.Resources, r => r.Name, 1.2, FuzzynessLevel.High, detailed);
+                //// .AddCollection(pkg => pkg.Resources, r => r.Description, 0.7, FuzzynessLevel.Low, detailed);
+        }
 
         var results = FuzzySearch.PerformFuzzySearch(data, term, builder);
 
