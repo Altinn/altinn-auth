@@ -1,0 +1,54 @@
+meta {
+  name: POST_Enduser_Conn_ToOthers_Add_org
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{toOrg}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toOrg}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("party", testdata.hovedorg_delegates_tilgangspakke.partyuuid);
+  bru.setVar("toOrg", testdata.esek_type_org.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.hovedorg_delegates_tilgangspakke.Deltaker_med_fullt_ansvar.userid,
+    auth_partyId: testdata.hovedorg_delegates_tilgangspakke.Deltaker_med_fullt_ansvar.partyid,
+    auth_partyUuid: testdata.hovedorg_delegates_tilgangspakke.Deltaker_med_fullt_ansvar.partyuuid,
+    auth_ssn: testdata.hovedorg_delegates_tilgangspakke.Deltaker_med_fullt_ansvar.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("To add Org1 og Org2 for access package delegation - virksomhetsdelegering", function() {
+    
+    const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`); 
+    const data = res.getBody();
+    expect(res.status).to.equal(200);
+    
+    expect(data).to.have.property('fromId', testdata.hovedorg_delegates_tilgangspakke.partyuuid.toLowerCase());
+    expect(data).to.have.property('toId', testdata.esek_type_org.partyuuid.toLowerCase());
+    
+  });
+}

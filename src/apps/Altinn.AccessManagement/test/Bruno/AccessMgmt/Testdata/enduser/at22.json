@@ -97,7 +97,72 @@
         "partyid": 50847574,
         "userid": 21108057,
         "partyuuid": "E7C1F744-5C5B-4715-B8BE-53465A95EAD0"
+      },
+      "systemuser": {
+        "name": "Klient_delegation_VanligPakke",
+        "partyuuid": "5b8dabe0-1b2b-4bcf-ae52-b20cc7e43275",
+        "directPackageToDelegate": "urn:altinn:accesspackage:skattegrunnlag"
+      },
+      "hovedadministrator": {
+        "name": "KOMISK PARYKK",
+        "pid": "57929300523",
+        "partyid": 50541361,
+        "userid": 20278901,
+        "partyuuid": "383647AA-D65D-4EFA-B4AA-A6FB5F51C550"
       }
-    }
+    },
+    "regn_type_org" : {
+      "org_type": "REGN",
+      "name": "AKUSTISK VARM TIGER AS",
+      "orgno": "314260228",
+      "partyuuid": "793207F7-57A3-4BC9-8A16-EBC93C7CACC9",
+      "dagligleder": {
+        "name": "SANNSYNLIG FJORD",
+        "pid": "13908096791",
+        "partyid": 50323347,
+        "userid": 20532533,
+        "partyuuid": "793207F7-57A3-4BC9-8A16-EBC93C7CACC9"
+      },
+      "systemuser": {
+        "name": "Klient_delegation_VanligPakke",
+        "partyuuid": "35e4c9f5-e9e8-4f49-88b5-21c1cdd374bf",
+        "directPackageToDelegate": "urn:altinn:accesspackage:kjop-og-salg-eiendom"
+      },
+      "klientadministrator": {
+        "name": "MORSK KUTTE",
+        "pid": "01880349895",
+        "partyid": 50617449,
+        "userid": 20841952,
+        "partyuuid": "AF8410F6-7239-4F3F-A03A-77B97CB30C67"
+      },
+      "klient_org": {
+        "name": "MISFORNØYD VASSEN TIGER AS",
+        "orgno": "313157032",
+        "partyuuid": "BA51F227-6150-4A35-880A-1A7BC377F68C",
+        "dagligleder": {
+          "name": "DYKTIG SERVITRISE",
+          "pid": "10866098145",
+          "partyid": 50949098,
+          "userid": 20554501,
+          "partyuuid": "729CDB70-F9B1-4AAD-AFDD-0A6B585CF20E"
+        }
+      }
 
+    },
+    "Konkursbo_type_org" : {
+      "org_type": "KBO",
+      "name": "UPRESIS TØRR ØGLE KONKURSBO",
+      "orgno": "313569772",
+      "partyuuid": "D6E20DC6-6B99-4259-A1ED-1C43CF3EE0B6",
+      "bostyrer": {
+        "name": "FYLDIG KIME",
+        "pid": "28835397965",
+        "partyid": 50289231,
+        "userid": 20878822,
+        "partyuuid": "B73DCD37-511B-448F-9E7D-8DAEA88F6A74"
+      },
+      "pakketoDelegate" : "urn:altinn:accesspackage:reviorattesterer"
+
+    }
   }
+

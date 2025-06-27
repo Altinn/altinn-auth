@@ -1,0 +1,46 @@
+meta {
+  name: DEL_SystemUser_ClientDelegation_delegationId_vanligpakke
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/SystemUserClientDelegation/deletedelegation?party={{party}}&delegationId={{delegationId}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  delegationId: {{delegationId}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  bru.setVar("party", testdata.esek_type_org.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.esek_type_org.hovedadministrator.userid,
+    auth_partyId: testdata.esek_type_org.hovedadministrator.partyid,
+    auth_partyUuid: testdata.esek_type_org.hovedadministrator.partyuuid,
+    auth_ssn: testdata.esek_type_org.hovedadministrator.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Deletion of active delegation should give 200 ok : Virksomhetsdelegering", function() {
+    expect(res.status).to.equal(200);
+  });
+}

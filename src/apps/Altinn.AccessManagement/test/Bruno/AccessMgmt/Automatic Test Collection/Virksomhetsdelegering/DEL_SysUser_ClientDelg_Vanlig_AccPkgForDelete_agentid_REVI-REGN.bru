@@ -1,0 +1,48 @@
+meta {
+  name: DEL_SysUser_ClientDelg_Vanlig_AccPkgForDelete_agentid_REVI/REGN
+  type: http
+  seq: 17
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/deleteagentassignment?party={{party}}&agentId={{systemUser}}&cascade=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  agentId: {{systemUser}}
+  cascade: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("party", testdata.regn_type_org.partyuuid);
+  bru.setVar("systemUser", testdata.regn_type_org.systemuser.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.regn_type_org.klientadministrator.userid,
+    auth_partyId: testdata.regn_type_org.klientadministrator.partyid,
+    auth_partyUuid: testdata.regn_type_org.klientadministrator.partyuuid,
+    auth_ssn: testdata.regn_type_org.klientadministrator.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Verify deletion of delegation with agentId should give 200 ok - virksomhetsdelegering", function() {
+    expect(res.status).to.equal(200);
+  });
+}
