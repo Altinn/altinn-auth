@@ -18,7 +18,6 @@ public class DelegationResourceDefinition : BaseDbDefinition<DelegationResource>
         definitionRegistry.Define<DelegationResource>(def =>
         {
             def.EnableAudit();
-            def.EnableTranslation();
             def.RegisterPrimaryKey([t => t.Id]);
             def.RegisterProperty(t => t.Id);
 
@@ -29,6 +28,21 @@ public class DelegationResourceDefinition : BaseDbDefinition<DelegationResource>
             def.RegisterExtendedProperty<ExtDelegationResource, Resource>(t => t.ResourceId, t => t.Id, t => t.Resource, cascadeDelete: true);
 
             def.RegisterUniqueConstraint([t => t.DelegationId, t => t.ResourceId]);
+
+            def.AddManualPreMigrationScript(1, PreMigrationScript_RemoveTranslations());
         });
+    }
+
+    private string PreMigrationScript_RemoveTranslations()
+    {
+        return """
+            DROP VIEW IF EXISTS translation_history.DelegationResource;
+
+            DROP TABLE IF EXISTS translation_history._DelegationResource;
+            DROP TABLE IF EXISTS translation.DelegationResource;
+
+            drop function translation.audit_delegationresource_delete_fn();
+            drop function translation.audit_delegationresource_update_fn();
+            """;
     }
 }

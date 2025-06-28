@@ -224,8 +224,7 @@ public class DelegationService(
 
             // Find ClientAssignment
             var clientAssignment = await GetAssignment(client.Id, facilitator.Id, clientRole.Id) ?? throw new Exception(string.Format("Could not find client assignment '{0}' - {1} - {2}", client.Name, clientRole.Code, facilitator.Name));
-            var clientPackages = await GetConnectionPackages(client.Id, facilitator.Id);
-
+            var clientPackages = await assignmentService.GetPackagesForAssignment(clientAssignment.Id);
 
             Delegation delegation = null;
             foreach (var package in rp.Value)
@@ -233,7 +232,8 @@ public class DelegationService(
                 var filter = connectionPackageRepository.CreateFilterBuilder();
 
                 // TODO: Add "&& t.CanAssign" when data is ready
-                if (!clientPackages.Any(t => t.PackageId == package.Id))
+                var clientPackage = clientPackages.FirstOrDefault(t => t.PackageId == package.Id);
+                if (clientPackage == null)
                 {
                     throw new Exception(string.Format("Party does not have the package '{0}'", package.Urn));
                 }
@@ -253,8 +253,12 @@ public class DelegationService(
                     delegation = await GetOrCreateDelegation(clientAssignment, agentAssignment, facilitator, options) ?? throw new Exception(string.Format("Could not find or create delegation '{0}' - {1} - {2}", client.Name, facilitator.Name, agentAssignment.Id));
                 }
 
+                // Find AssignmentPackageId or RolePackageId
+                Guid? assignmentPackageId = clientPackage.AssignmentPackageId;
+                Guid? rolePackageId = clientPackage.RolePackageId;
+
                 // Find or Create DelegationPackage
-                var delegationPackage = await GetOrCreateDelegationPackage(delegation.Id, package.Id, options);
+                var delegationPackage = await GetOrCreateDelegationPackage(delegation.Id, package.Id, assignmentPackageId, rolePackageId, options);
                 if (delegationPackage == null)
                 {
                     throw new Exception("Unable to add package to delegation");
@@ -293,11 +297,22 @@ public class DelegationService(
         return rolepacks;
     }
 
-    private async Task<DelegationPackage> GetOrCreateDelegationPackage(Guid delegationId, Guid packageId, ChangeRequestOptions options)
+    private async Task<DelegationPackage> GetOrCreateDelegationPackage(Guid delegationId, Guid packageId, Guid? assignmentPackageId, Guid? rolePackageId, ChangeRequestOptions options)
     {
         var delegationPackageFilter = delegationPackageRepository.CreateFilterBuilder();
         delegationPackageFilter.Equal(t => t.DelegationId, delegationId);
         delegationPackageFilter.Equal(t => t.PackageId, packageId);
+
+        if (assignmentPackageId != null)
+        {
+            delegationPackageFilter.Equal(t => t.AssignmentPackageId, assignmentPackageId);
+        }
+
+        if (rolePackageId != null)
+        {
+            delegationPackageFilter.Equal(t => t.RolePackageId, rolePackageId);
+        }
+
         var delegationPackage = (await delegationPackageRepository.Get(delegationPackageFilter)).FirstOrDefault();
         if (delegationPackage == null)
         {
@@ -305,7 +320,9 @@ public class DelegationService(
                 new DelegationPackage()
                 {
                     DelegationId = delegationId,
-                    PackageId = packageId
+                    PackageId = packageId,
+                    AssignmentPackageId = assignmentPackageId.HasValue ? assignmentPackageId.Value : null,
+                    RolePackageId = rolePackageId.HasValue ? rolePackageId.Value : null
                 },
                 options: options
             );
@@ -393,15 +410,6 @@ public class DelegationService(
         filter.Equal(t => t.ToId, to);
 
         return (await assignmentRepository.Get(filter)).FirstOrDefault();
-    }
-
-    private async Task<IEnumerable<ExtConnectionPackage>> GetConnectionPackages(Guid from, Guid to)
-    {
-        var filter = connectionPackageRepository.CreateFilterBuilder();
-        filter.Equal(t => t.FromId, from);
-        filter.Equal(t => t.ToId, to);
-
-        return await connectionPackageRepository.GetExtended(filter);
     }
 
     private async Task<Assignment> GetOrCreateAssignment(Entity from, Entity to, Role role, ChangeRequestOptions options)

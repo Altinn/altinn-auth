@@ -6,6 +6,7 @@ using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
+using Altinn.AccessMgmt.Persistence.Services.Models;
 using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.AccessMgmt.Persistence.Services;
@@ -441,6 +442,48 @@ public class AssignmentService(
 
         var roleId = roleResult.First().Id;
         return await GetInheritedAssignment(fromId, toId, roleId, cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<AssignmentOrRolePackageAccess>> GetPackagesForAssignment(Guid assignmentId, CancellationToken cancellationToken = default)
+    {
+        List<AssignmentOrRolePackageAccess> result = new();
+
+        // Get Assignment
+        var assignmentFilter = assignmentRepository.CreateFilterBuilder();
+        assignmentFilter.Equal(t => t.Id, assignmentId);
+        var assignmentResult = await assignmentRepository.GetExtended(assignmentFilter, cancellationToken: cancellationToken);
+
+        if (!assignmentResult.Any())
+        {
+            return result;
+        }
+
+        var assignment = assignmentResult.First();
+
+        // Get AssignmentPackages
+        QueryResponse<AssignmentPackage> assignmentPackageResult = null;
+        var assignmentPackageFilter = assignmentPackageRepository.CreateFilterBuilder();
+        assignmentPackageFilter.Equal(t => t.AssignmentId, assignmentId);
+
+        assignmentPackageResult = await assignmentPackageRepository.Get(assignmentPackageFilter, cancellationToken: cancellationToken);
+
+        foreach (var assignmentPackage in assignmentPackageResult)
+        {
+            result.Add(new AssignmentOrRolePackageAccess { AssignmentId = assignment.Id, RoleId = assignment.RoleId, PackageId = assignmentPackage.PackageId, AssignmentPackageId = assignmentPackage.Id });
+        }
+
+        // Get RolePackages
+        var rolePackFilter = rolePackageRepository.CreateFilterBuilder();
+        rolePackFilter.Equal(t => t.RoleId, assignment.RoleId);
+        var rolePackageResult = await rolePackageRepository.Get(rolePackFilter, cancellationToken: cancellationToken);
+
+        foreach (var rolePackage in rolePackageResult)
+        {
+            result.Add(new AssignmentOrRolePackageAccess { AssignmentId = assignment.Id, RoleId = assignment.RoleId, PackageId = rolePackage.PackageId, RolePackageId = rolePackage.Id });
+        }
+
+        return result;
     }
 
     private static void ValidatePartyIsNotNull(Guid id, ExtEntity entity, ref ValidationErrorBuilder errors, string param)

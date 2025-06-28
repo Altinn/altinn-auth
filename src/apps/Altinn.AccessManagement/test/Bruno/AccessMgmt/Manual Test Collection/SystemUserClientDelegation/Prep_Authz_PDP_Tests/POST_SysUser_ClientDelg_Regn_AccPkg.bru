@@ -1,5 +1,5 @@
 meta {
-  name: POST_SysUser_ClientDelg_AccPkg
+  name: POST_SysUser_ClientDelg_Regn_AccPkg
   type: http
   seq: 2
 }
@@ -38,7 +38,7 @@ script:pre-request {
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
   const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
   
-  bru.setVar("requestName", "POST_SysUser_ClientDelg_AccPkg");
+  bru.setVar("requestName", "POST_SysUser_ClientDelg_Regn_AccPkg");
   bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
   bru.setVar("systemUser", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser.partyUuid);
   bru.setVar("clientId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_USENSUELL_UVIRKSOM_TIGER.partyUuid);

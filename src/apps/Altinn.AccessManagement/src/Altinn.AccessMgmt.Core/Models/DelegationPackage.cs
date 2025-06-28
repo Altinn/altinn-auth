@@ -44,7 +44,15 @@ public class DelegationPackage
     /// </summary>
     public Guid PackageId { get; set; }
 
-    //// public Guid DependencyId { get; set; }
+    /// <summary>
+    /// Role dependency
+    /// </summary>
+    public Guid? RolePackageId { get; set; }
+
+    /// <summary>
+    /// Assignment dependency
+    /// </summary>
+    public Guid? AssignmentPackageId { get; set; }
 }
 
 /// <summary>
@@ -61,4 +69,14 @@ public class ExtDelegationPackage : DelegationPackage
     /// Package
     /// </summary>
     public Package Package { get; set; }
+
+    /// <summary>
+    /// Role dependency
+    /// </summary>
+    public RolePackage RolePackage { get; set; }
+
+    /// <summary>
+    /// Assignment dependency
+    /// </summary>
+    public AssignmentPackage AssignmentPackage { get; set; }
 }
