@@ -2,28 +2,28 @@ name: Resource Registry Scan
 
 on:
   schedule:
-  - cron: '0 8 * * 1,4'
+    - cron: "0 8 * * 1,4"
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'src/**'
-      - 'Dockerfile'
+      - "src/**"
+      - "Dockerfile"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     types: [opened, synchronize, reopened]
     paths:
-      - 'src/**'
-      - 'Dockerfile'
+      - "src/**"
+      - "Dockerfile"
 jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-    - name: Build the Docker image
-      run: docker build . --tag altinn-resource-registry:${{github.sha}}
+      - uses: actions/checkout@v4.2.2
+      - name: Build the Docker image
+        run: docker build . --tag altinn-resource-registry:${{github.sha}}
 
-    - uses: Azure/container-scan@f9af925b897d8af5f7e0026b8bca9346261abc93 # v0.1
-      with:
-        image-name: altinn-resource-registry:${{ github.sha }}
-      env:
-        DOCKLE_HOST: "unix:///var/run/docker.sock"
+      - uses: Azure/container-scan@f9af925b897d8af5f7e0026b8bca9346261abc93 # v0.1
+        with:
+          image-name: altinn-resource-registry:${{ github.sha }}
+        env:
+          DOCKLE_HOST: "unix:///var/run/docker.sock"
