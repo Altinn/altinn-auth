@@ -362,7 +362,7 @@ for (const raw of rawVerticals) {
   for (const dep of raw.deps) {
     const resolved = lookup.get(`${dep.type}:${dep.name}`);
     if (!resolved) {
-      throw new Error(`Dependency not found: ${dep.type}:${dep.name}`);
+      throw new Error(`Dependency of ${vertical.displayName} not found: ${dep.type}:${dep.name}`);
     }
 
     (vertical.deps as Vertical[]).push(resolved);

@@ -91,6 +91,32 @@ namespace Altinn.Common.PEP.Helpers
         }
 
         /// <summary>
+        /// Create decision request based for policy decision point.
+        /// </summary>
+        /// <param name="resource">Unique identifier of the organisation responsible for the app.</param>
+        /// <param name="resourcePartyUuid">Unique identifier of the party responsible for the resource.</param>
+        /// <param name="user">Claims principal user.</param>
+        /// <param name="actionType">Policy action type i.e. read, write, delete, instantiate.</param>
+        /// <returns>The decision request.</returns>
+        public static XacmlJsonRequestRoot CreateDecisionRequestForResourceRegistryResource(string resource, Guid resourcePartyUuid, ClaimsPrincipal user, string actionType)
+        {
+            XacmlJsonRequest request = new()
+            {
+                AccessSubject = [],
+                Action = [],
+                Resource = []
+            };
+
+            request.AccessSubject.Add(CreateSubjectCategory(user.Claims));
+            request.Action.Add(CreateActionCategory(actionType));
+            request.Resource.Add(CreateResourceCategoryForResource(resource, null, null, null, resourcePartyUuid));
+
+            XacmlJsonRequestRoot jsonRequest = new XacmlJsonRequestRoot() { Request = request };
+
+            return jsonRequest;
+        }
+
+        /// <summary>
         /// Create a new <see cref="XacmlJsonRequestRoot"/> to represent a decision request.
         /// </summary>
         /// <param name="context">The current <see cref="AuthorizationHandlerContext"/></param>
@@ -147,15 +173,15 @@ namespace Altinn.Common.PEP.Helpers
             int? partyIid = TryParsePartyId(party);
             if (partyIid.HasValue)
             {
-                request.Resource.Add(CreateResourceCategoryForResource(requirement.ResourceId, partyIid, null, null));
+                request.Resource.Add(CreateResourceCategoryForResource(requirement.ResourceId, partyIid, null, null, null));
             }
             else if (party.Equals(OrganizationHeaderTrigger) && headers.ContainsKey(OrganizationNumberHeader) && IDFormatDeterminator.IsValidOrganizationNumber(headers[OrganizationNumberHeader]))
             {
-                request.Resource.Add(CreateResourceCategoryForResource(requirement.ResourceId, null, headers[OrganizationNumberHeader], null));
+                request.Resource.Add(CreateResourceCategoryForResource(requirement.ResourceId, null, headers[OrganizationNumberHeader], null, null));
             }
             else if (party.Equals(PersonHeaderTrigger) && headers.ContainsKey(PersonHeader) && IDFormatDeterminator.IsValidSSN(headers[PersonHeader]))
             {
-                request.Resource.Add(CreateResourceCategoryForResource(requirement.ResourceId, null, null, headers[PersonHeader]));
+                request.Resource.Add(CreateResourceCategoryForResource(requirement.ResourceId, null, null, headers[PersonHeader], null));
             }
             else
             {
@@ -325,7 +351,7 @@ namespace Altinn.Common.PEP.Helpers
             return resourceCategory;
         }
 
-        private static XacmlJsonCategory CreateResourceCategoryForResource(string resourceid, int? partyId, string organizationnumber, string ssn, bool includeResult = false)
+        private static XacmlJsonCategory CreateResourceCategoryForResource(string resourceid, int? partyId, string organizationnumber, string ssn, Guid? partyUuid, bool includeResult = false)
         {
             XacmlJsonCategory resourceCategory = new XacmlJsonCategory();
             resourceCategory.Attribute = new List<XacmlJsonAttribute>();
@@ -333,6 +359,10 @@ namespace Altinn.Common.PEP.Helpers
             if (partyId.HasValue)
             {
                 resourceCategory.Attribute.Add(CreateXacmlJsonAttribute(AltinnXacmlUrns.PartyId, partyId.Value.ToString(), DefaultType, DefaultIssuer, includeResult));
+            }
+            else if (partyUuid.HasValue)
+            {
+                resourceCategory.Attribute.Add(CreateXacmlJsonAttribute(AltinnXacmlUrns.PartyUuidAttribute, partyUuid.Value.ToString(), DefaultType, DefaultIssuer, includeResult));
             }
             else if (!string.IsNullOrEmpty(organizationnumber))
             {

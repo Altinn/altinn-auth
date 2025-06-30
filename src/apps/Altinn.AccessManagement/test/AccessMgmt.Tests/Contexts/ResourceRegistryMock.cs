@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 
 namespace Altinn.AccessManagement.Tests.Contexts;
@@ -14,6 +15,11 @@ namespace Altinn.AccessManagement.Tests.Contexts;
 public class ResourceRegistryMock(MockContext context) : IResourceRegistryClient
 {
     private MockContext Context { get; } = context;
+
+    public Task<ConsentTemplate> GetConsentTemplate(string templateId, int? version, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
     /// <inheritdoc/>
     public Task<ServiceResource> GetResource(string resourceId, CancellationToken cancellationToken = default) =>

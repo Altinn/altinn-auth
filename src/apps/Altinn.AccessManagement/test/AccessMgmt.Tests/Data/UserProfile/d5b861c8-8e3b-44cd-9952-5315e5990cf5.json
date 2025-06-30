@@ -1,0 +1,48 @@
+{
+  "UserId": 220001337,
+  "UserUuid": "d5b861c8-8e3b-44cd-9952-5315e5990cf5",
+  "UserType": 1,
+  "UserName": "",
+  "ExternalIdentity": "",
+  "PhoneNumber": null,
+  "Email": null,
+  "PartyId": 513370001,
+  "Party": {
+    "PartyTypeName": 1,
+    "SSN": "01025161013",
+    "OrgNumber": "",
+    "Person": {
+      "SSN": "01025161013 ",
+      "Name": "ELENA FJÆR",
+      "FirstName": "ELENA",
+      "MiddleName": null,
+      "LastName": "FJÆR",
+      "TelephoneNumber": null,
+      "MobileNumber": null,
+      "MailingAddress": "",
+      "MailingPostalCode": null,
+      "MailingPostalCity": null,
+      "AddressMunicipalNumber": null,
+      "AddressMunicipalName": null,
+      "AddressStreetName": null,
+      "AddressHouseNumber": null,
+      "AddressHouseLetter": null,
+      "AddressPostalCode": null,
+      "AddressCity": null,
+      "DateOfDeath": null
+    },
+    "Organization": null,
+    "PartyId": 513370001,
+    "PartyUuid": "d5b861c8-8e3b-44cd-9952-5315e5990cf5",
+    "UnitType": null,
+    "Name": "ELENA FJÆR",
+    "IsDeleted": false,
+    "OnlyHierarchyElementWithNoAccess": false,
+    "ChildParties": null
+  },
+  "ProfileSettingPreference": {
+    "Language": "nb",
+    "PreSelectedPartyId": 0,
+    "DoNotPromptForParty": false
+  }
+}

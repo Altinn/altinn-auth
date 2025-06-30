@@ -1,0 +1,50 @@
+{
+  "identifier": "ttd_skattegrunnlag2",
+  "title": {
+    "en": "Consent Income Resource ",
+    "nb": "Generisk Tilgangslisteressurs",
+    "nn": "Generisk Tilgongslisteressurs"
+  },
+  "description": {
+    "en": "Very nice generic accesslist resource to check template",
+    "nb": "Veldig fin generisk tilgangslisteressurs",
+    "nn": "Steikje fine generisk tilgongslisteressurs"
+  },
+  "rightDescription": {
+    "en": "You'll give access to this nice generic accesslist resource",
+    "nb": "Du gir tilgang til denne fine generiske tilgangslisteressursen",
+    "nn": "Du gir tilgong til dinne steikje fine generiske tilgongslisteressursen"
+  },
+  "homepage": "https://www.altinn.no",
+  "status": "Active",
+  "contactPoints": [],
+  "isPartOf": "",
+  "resourceReferences": [],
+  "delegable": true,
+  "visible": true,
+  "hasCompetentAuthority": {
+    "organization": "991825827",
+    "orgcode": "ttd",
+    "name": {
+      "en": "Test departement",
+      "nb": "Testdepartement",
+      "nn": "Testdepartement"
+    }
+  },
+  "keywords": [],
+  "accessListMode": "Enabled",
+  "selfIdentifiedUserEnabled": false,
+  "enterpriseUserEnabled": false,
+  "resourceType": "Consent",
+  "consentMetadata": {
+    "fraogmed": {},
+    "tilogmed": {}
+  },
+  "authorizationReference": [
+    {
+      "id": "urn:altinn:resource",
+      "value": "ttd_skattegrunnlag"
+    }
+  ],
+  "consentTemplate":  "sblanesoknad2"
+}

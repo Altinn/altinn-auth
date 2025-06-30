@@ -21,7 +21,7 @@ public class AuthorizedParty
     /// </summary>
     /// <param name="party">Party model from registry</param>
     /// <param name="includeSubunits">Whether model should also build list of subunits if any exists</param>
-    public AuthorizedParty(Party party, bool includeSubunits = true)
+    public AuthorizedParty(Altinn.Platform.Register.Models.Party party, bool includeSubunits = true)
     {
         PartyId = party.PartyId;
         PartyUuid = party.PartyUuid.Value;

@@ -1,13 +1,16 @@
-﻿using System.Reflection;
-using Altinn.AccessManagement.Core.Enums;
+﻿using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Enums;
 using Altinn.AccessManagement.Persistence.Configuration;
+using Altinn.AccessManagement.Persistence.Consent;
 using Altinn.AccessManagement.Persistence.Policy;
 using Altinn.Authorization.ServiceDefaults.Npgsql.Yuniql;
+using Altinn.Platform.Register.Enums;
 using Azure.Core;
 using Azure.Storage;
+using CommunityToolkit.Diagnostics;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
@@ -15,9 +18,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Npgsql;
+using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 
 namespace Altinn.AccessManagement.Persistence.Extensions;
 
@@ -52,6 +55,8 @@ public static class PersistenceDependencyInjectionExtensions
             builder.Services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepository>();
             builder.Services.AddSingleton<IResourceMetadataRepository, ResourceMetadataRepository>();
         }
+
+        builder.Services.AddSingleton<IConsentRepository, ConsentRepository>();
 
         builder.AddDatabase();
         builder.Services.AddDelegationPolicyRepository(builder.Configuration);
@@ -138,6 +143,24 @@ public static class PersistenceDependencyInjectionExtensions
             .MapEnum<UuidType>("delegation.uuidtype")
             .MapEnum<InstanceDelegationMode>("delegation.instancedelegationmode")
             .MapEnum<InstanceDelegationSource>("delegation.instancedelegationsource")
+            .MapEnum<ConsentRequestStatusType>("consent.status_type", new EnumNameTranslator<ConsentRequestStatusType>(static value => value switch
+            {
+                ConsentRequestStatusType.Accepted => "accepted",
+                ConsentRequestStatusType.Rejected => "rejected",
+                ConsentRequestStatusType.Created => "created",
+                ConsentRequestStatusType.Revoked => "revoked",
+                ConsentRequestStatusType.Deleted => "deleted",
+                _ => null,
+            }))
+            .MapEnum<ConsentRequestEventType>("consent.event_type", new EnumNameTranslator<ConsentRequestEventType>(static value => value switch
+            {
+                ConsentRequestEventType.Accepted => "accepted",
+                ConsentRequestEventType.Rejected => "rejected",
+                ConsentRequestEventType.Created => "created",
+                ConsentRequestEventType.Revoked => "revoked",
+                ConsentRequestEventType.Deleted => "deleted",
+                _ => null,
+            }))
             .AddYuniqlMigrations(cfg =>
             {
                 cfg.Workspace = "/";
@@ -148,4 +171,55 @@ public static class PersistenceDependencyInjectionExtensions
     }
 
     private sealed record Marker;
+
+    private sealed class EnumNameTranslator<TEnum>
+    : INpgsqlNameTranslator
+    where TEnum : struct, Enum
+    {
+        private readonly ImmutableArray<(string MemberName, string PgName)> _values;
+
+        public EnumNameTranslator(Func<TEnum, string?> resolver)
+        {
+            var enumValues = Enum.GetValues<TEnum>();
+            var builder = ImmutableArray.CreateBuilder<(string MemberName, string PgName)>(enumValues.Length);
+
+            foreach (var enumValue in enumValues)
+            {
+                var memberName = enumValue.ToString();
+                var pgName = resolver(enumValue);
+                if (pgName is null)
+                {
+                    ThrowHelper.ThrowInvalidOperationException($"Missing mapping for enum member '{memberName}' in type '{typeof(TEnum).FullName}'");
+                }
+
+                builder.Add((memberName, pgName));
+            }
+
+            builder.Sort(static (l, r) => string.CompareOrdinal(l.MemberName, r.MemberName));
+            _values = builder.ToImmutable();
+        }
+
+        public string TranslateMemberName(string clrName)
+        {
+            var index = _values.AsSpan().BinarySearch(new MemberNameMatcher(clrName));
+
+            if (index < 0)
+            {
+                ThrowHelper.ThrowArgumentOutOfRangeException(nameof(clrName));
+            }
+
+            return _values[index].PgName;
+        }
+
+        public string TranslateTypeName(string clrName)
+            => ThrowHelper.ThrowNotSupportedException<string>();
+    }
+
+    private readonly struct MemberNameMatcher(string memberName)
+        : IComparable<(string MemberName, string PgName)>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int CompareTo((string MemberName, string PgName) other)
+            => string.CompareOrdinal(memberName, other.MemberName);
+    }
 }

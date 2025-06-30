@@ -64,4 +64,28 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor AssignmentIsActiveInOneOrMoreDelegations { get; }
         = _factory.Create(10, $"Assignment is active in one or more delegations.");
+
+    /// <summary>
+    /// Gets a validation error descriptor
+    /// </summary>
+    public static ValidationErrorDescriptor TimeNotInFuture { get; }
+        = _factory.Create(22, $"The time need to be in the future");
+
+    /// <summary>
+    /// Gets a validation error descriptor
+    /// </summary>
+    public static ValidationErrorDescriptor EmptyList { get; }
+        = _factory.Create(23, $"The list cant be empty");
+
+    /// <summary>
+    /// Gets a validation error descriptor
+    /// </summary>
+    public static ValidationErrorDescriptor ConsentNotFound { get; }
+    = _factory.Create(24, $"Incorrect consentId or wrong consent receiver");
+   
+    /// <summary>
+    /// Gets a validation error descriptor
+    /// </summary>
+    public static ValidationErrorDescriptor InvalidResourceContext { get; }
+    = _factory.Create(25, $"Resource context does not match consent request rights");
 }

@@ -11,6 +11,11 @@ namespace Altinn.Common.PEP.Constants
         public const string PartyId = "urn:altinn:partyid";
 
         /// <summary>
+        /// xacml string that represents party uuid
+        /// </summary>
+        public const string PartyUuidAttribute = "urn:altinn:party:uuid";
+
+        /// <summary>
         /// Get the URN value for person. Only supported for use in external Authorize API
         /// </summary>
         public const string PersonId = "urn:altinn:person:identifier-no";

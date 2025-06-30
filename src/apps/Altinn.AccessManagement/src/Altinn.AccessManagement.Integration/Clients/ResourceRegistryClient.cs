@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Integration.Configuration;
 using Microsoft.Extensions.Logging;
@@ -125,6 +126,11 @@ namespace Altinn.AccessManagement.Integration.Clients
             }
 
             return subjectResources;
+        }
+
+        public Task<ConsentTemplate> GetConsentTemplate(string templateId, int? version, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
         }
     }
 }

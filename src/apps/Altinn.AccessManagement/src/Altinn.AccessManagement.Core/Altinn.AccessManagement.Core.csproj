@@ -24,6 +24,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Api.Contracts\src\Altinn.Authorization.Api.Contracts\Altinn.Authorization.Api.Contracts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
         <Reference Include="Altinn.Common.AccessTokenClient">
             <HintPath>
                 ..\..\..\..\..\.nuget\packages\altinn.common.accesstokenclient\1.0.6\lib\netstandard2.0\Altinn.Common.AccessTokenClient.dll</HintPath>

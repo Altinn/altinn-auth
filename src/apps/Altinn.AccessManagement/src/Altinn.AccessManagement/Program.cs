@@ -11,7 +11,8 @@ WebApplication app = AccessManagementHost.Create(args);
 
 if (await app.Services.GetRequiredService<FeatureManager>().IsEnabledAsync(AccessManagementFeatureFlags.MigrationDb))
 {
-    await app.UseAccessMgmtDb();
+    bool generateBasicData = await app.Services.GetRequiredService<FeatureManager>().IsEnabledAsync(AccessManagementFeatureFlags.MigrationDbWithBasicData);
+    await app.UseAccessMgmtDb(generateBasicData);
 }
 
 app.AddDefaultAltinnMiddleware(errorHandlingPath: "/accessmanagement/api/v1/error");

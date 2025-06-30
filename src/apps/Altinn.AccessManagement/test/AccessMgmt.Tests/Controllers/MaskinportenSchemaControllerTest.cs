@@ -480,7 +480,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         public async Task GetMaskinportenDelegations_ServiceOwnerLookup_UnauthorizedScope()
         {
             // Arrange
-            string token = PrincipalUtil.GetOrgToken("SKD", "974761076", "altinn:maskinporten/delegations", new[] { "skd" });
+            string token = PrincipalUtil.GetOrgToken("SKD", "974761076", "altinn:maskinporten/delegations", null,  consumerPrefix: new[] { "skd" });
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             string expected = "Not authorized for lookup of delegations for the scope: altinn:instances.read";
@@ -506,7 +506,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         public async Task GetMaskinportenDelegations_ServiceOwnerLookup_WithoutScope()
         {
             // Arrange
-            string token = PrincipalUtil.GetOrgToken("SKD", "974761076", "altinn:maskinporten/delegations", new[] { "skd" });
+            string token = PrincipalUtil.GetOrgToken("SKD", "974761076", "altinn:maskinporten/delegations", null,  new[] { "skd" });
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             string expected = "Not authorized for lookup of delegations without specifying parameter: scope";
@@ -532,7 +532,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
         public async Task GetMaskinportenDelegations_Admin_Valid_DelegationsEmpty()
         {
             // Arrange
-            string token = PrincipalUtil.GetOrgToken("DIGDIR", "991825827", "altinn:maskinporten/delegations.admin");
+            string token = string.Empty;
+            
+            // Trying to move this line
+            token = PrincipalUtil.GetOrgToken("DIGDIR", "991825827", "altinn:maskinporten/delegations.admin", null, null);
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             string expected = "[]";

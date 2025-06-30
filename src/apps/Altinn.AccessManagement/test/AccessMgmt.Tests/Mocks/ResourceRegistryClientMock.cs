@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Integration.Clients;
 
@@ -87,6 +88,25 @@ namespace Altinn.AccessManagement.Tests.Mocks
             }
 
             return Task.FromResult(result);
+        }
+
+        public async Task<ConsentTemplate> GetConsentTemplate(string templateId, int? version, CancellationToken cancellationToken = default)
+        {
+            string path = GetDataPathConsentTemplate();
+            if (!File.Exists(path))
+            {
+                return null;
+            }
+
+            using FileStream stream = File.OpenRead(path);
+            List<ConsentTemplate> allTemplates = await JsonSerializer.DeserializeAsync<List<ConsentTemplate>>(stream, _serializerOptions, cancellationToken);
+            return allTemplates?.FirstOrDefault(ct => ct.Id == templateId);
+        }
+
+        private static string GetDataPathConsentTemplate()
+        {
+            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(ResourceRegistryClientMock).Assembly.Location).LocalPath);
+            return Path.Combine(unitTestFolder, "Data", "ConsentTemplates", "consent_templates.json");
         }
 
         private static string GetResourcePath(string resourceRegistryId)

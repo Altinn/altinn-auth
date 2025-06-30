@@ -11,6 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Api.Contracts\src\Altinn.Authorization.Api.Contracts\Altinn.Authorization.Api.Contracts.csproj" />
         <ProjectReference Include="..\..\src\Altinn.AccessManagement\Altinn.AccessManagement.csproj" />
     </ItemGroup>
 
@@ -20,6 +21,12 @@
         </None>
         <None Update="appsettings.test.json">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="Data\RolesForDelegation\user_20001337\party_50003899\roles.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="Data\Roles\user_20001337\party_50003899\roles.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="platform-org.pem">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>

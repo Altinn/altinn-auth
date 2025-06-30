@@ -19,8 +19,9 @@ namespace Altinn.AccessManagement.Tests.Util
         /// <param name="partyId">The users party id</param>
         /// <param name="authenticationLevel">The users authentication level</param>
         /// <param name="userPartyUuid">The user's party UUID</param>
+        /// <param name="scope">Scopes to add to token</param>
         /// <returns>jwt token string</returns>
-        public static string GetToken(int userId, int partyId, int authenticationLevel = 2, Guid? userPartyUuid = null)
+        public static string GetToken(int userId, int partyId, int authenticationLevel = 2, Guid? userPartyUuid = null, string? scope = null)
         {
             List<Claim> claims = new List<Claim>();
             string issuer = "www.altinn.no";
@@ -29,6 +30,11 @@ namespace Altinn.AccessManagement.Tests.Util
             claims.Add(new Claim(AltinnCoreClaimTypes.PartyID, partyId.ToString(), ClaimValueTypes.Integer32, issuer));
             claims.Add(new Claim(AltinnCoreClaimTypes.AuthenticateMethod, "Mock", ClaimValueTypes.String, issuer));
             claims.Add(new Claim(AltinnCoreClaimTypes.AuthenticationLevel, authenticationLevel.ToString(), ClaimValueTypes.Integer32, issuer));
+
+            if (scope != null)
+            {
+                claims.Add(new Claim("scope", scope, ClaimValueTypes.String));
+            }
 
             if (userPartyUuid != null && userPartyUuid != Guid.Empty)
             {
@@ -90,9 +96,10 @@ namespace Altinn.AccessManagement.Tests.Util
         /// <param name="org">Org code</param>
         /// <param name="orgNumber">Organization number</param>
         /// <param name="scope">Scopes to add to token</param>
+        /// <param name="supplier">The supplier</param>
         /// <param name="consumerPrefix">If maskinporten token sets the scope prefixes the organization owns or authorized for</param>
         /// <returns>Claims principal</returns>
-        public static ClaimsPrincipal GetClaimsPrincipal(string org, string orgNumber, string scope = null, string[] consumerPrefix = null)
+        public static ClaimsPrincipal GetClaimsPrincipal(string org, string orgNumber, string scope = null, string supplier = null,  string[] consumerPrefix = null)
         {
             string issuer = "https://platform.altinn.cloud/authentication/api/v1/openid/";
 
@@ -115,6 +122,11 @@ namespace Altinn.AccessManagement.Tests.Util
                 claims.Add(new Claim(AltinnCoreClaimTypes.Org, org, ClaimValueTypes.String, issuer));
             }
 
+            if (supplier != null)
+            {
+                claims.Add(new Claim("supplier", GetOrgNoObject(supplier)));
+            }
+
             claims.Add(new Claim("consumer", GetOrgNoObject(orgNumber)));
             claims.Add(new Claim(AltinnCoreClaimTypes.OrgNumber, orgNumber.ToString(), ClaimValueTypes.Integer32, issuer));
             claims.Add(new Claim(AltinnCoreClaimTypes.AuthenticateMethod, "IntegrationTestMock", ClaimValueTypes.String, issuer));
@@ -132,11 +144,12 @@ namespace Altinn.AccessManagement.Tests.Util
         /// <param name="org">Org code</param>
         /// <param name="orgNumber">Organization number</param>
         /// <param name="scope">Scopes to add to token</param>
+        /// <param name="supplier">The supplier</param>
         /// <param name="consumerPrefix">If maskinporten token sets the scope prefixes the organization owns or authorized for</param>
         /// <returns>Altinn org-token</returns>
-        public static string GetOrgToken(string org, string orgNumber = "991825827", string scope = null, string[] consumerPrefix = null)
+        public static string GetOrgToken(string org, string orgNumber = "991825827", string scope = null, string supplier = null, string[] consumerPrefix = null)
         {
-            ClaimsPrincipal principal = GetClaimsPrincipal(org, orgNumber, scope, consumerPrefix);
+            ClaimsPrincipal principal = GetClaimsPrincipal(org, orgNumber, scope, supplier, consumerPrefix);
 
             string token = JwtTokenMock.GenerateToken(principal, new TimeSpan(0, 30, 0));
 

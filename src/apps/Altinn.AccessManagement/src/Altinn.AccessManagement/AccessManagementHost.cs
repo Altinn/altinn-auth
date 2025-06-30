@@ -13,6 +13,7 @@ using Altinn.AccessManagement.Persistence.Configuration;
 using Altinn.AccessManagement.Persistence.Extensions;
 using Altinn.AccessMgmt.Persistence.Extensions;
 using Altinn.Authorization.AccessManagement;
+using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.Host;
 using Altinn.Authorization.Host.Database;
 using Altinn.Authorization.Host.Lease;
@@ -208,7 +209,14 @@ internal static partial class AccessManagementHost
             {
                 if (!t.IsNested)
                 {
-                    return originalIdSelector(t);
+                    var orig = originalIdSelector(t);
+
+                    if (t.Assembly == typeof(OrganizationNumber).Assembly)
+                    {
+                        orig = $"AMCoreModels.{orig}";
+                    }
+
+                    return orig;
                 }
 
                 var chain = new List<string>();
@@ -279,12 +287,15 @@ internal static partial class AccessManagementHost
             .AddPolicy(AuthzConstants.POLICY_MASKINPORTEN_DELEGATION_READ, policy => policy.Requirements.Add(new ResourceAccessRequirement("read", "altinn_maskinporten_scope_delegation")))
             .AddPolicy(AuthzConstants.POLICY_MASKINPORTEN_DELEGATION_WRITE, policy => policy.Requirements.Add(new ResourceAccessRequirement("write", "altinn_maskinporten_scope_delegation")))
             .AddPolicy(AuthzConstants.POLICY_MASKINPORTEN_DELEGATIONS_PROXY, policy => policy.Requirements.Add(new ScopeAccessRequirement(["altinn:maskinporten/delegations", "altinn:maskinporten/delegations.admin"])))
+            .AddPolicy(AuthzConstants.POLICY_MASKINPORTEN_CONSENT_READ, policy => policy.Requirements.Add(new ScopeAccessRequirement(["altinn:maskinporten/consent.read"])))
             .AddPolicy(AuthzConstants.POLICY_ACCESS_MANAGEMENT_READ, policy => policy.Requirements.Add(new ResourceAccessRequirement("read", "altinn_access_management")))
             .AddPolicy(AuthzConstants.POLICY_ACCESS_MANAGEMENT_WRITE, policy => policy.Requirements.Add(new ResourceAccessRequirement("write", "altinn_access_management")))
             .AddPolicy(AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ, policy => policy.Requirements.Add(new EndUserResourceAccessRequirement("read", "altinn_enduser_access_management", false)))
             .AddPolicy(AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE, policy => policy.Requirements.Add(new EndUserResourceAccessRequirement("read", "altinn_enduser_access_management", false)))
             .AddPolicy(AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ_WITH_PASS_TROUGH, policy => policy.Requirements.Add(new EndUserResourceAccessRequirement("read", "altinn_enduser_access_management", true)))
             .AddPolicy(AuthzConstants.POLICY_RESOURCEOWNER_AUTHORIZEDPARTIES, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_AUTHORIZEDPARTIES_RESOURCEOWNER, AuthzConstants.SCOPE_AUTHORIZEDPARTIES_ADMIN])))
+            .AddPolicy(AuthzConstants.POLICY_CONSENTREQUEST_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_CONSENTREQUEST_ORG, AuthzConstants.SCOPE_CONSENTREQUEST_WRITE])))
+            .AddPolicy(AuthzConstants.POLICY_CONSENTREQUEST_READ, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_CONSENTREQUEST_ORG, AuthzConstants.SCOPE_CONSENTREQUEST_READ, AuthzConstants.SCOPE_CONSENTREQUEST_WRITE])))
             .AddPolicy(AuthzConstants.POLICY_CLIENTDELEGATION_READ, policy => policy.Requirements.Add(new EndUserResourceAccessRequirement("read", "altinn_client_administration")))
             .AddPolicy(AuthzConstants.POLICY_CLIENTDELEGATION_WRITE, policy => policy.Requirements.Add(new EndUserResourceAccessRequirement("write", "altinn_client_administration")))
             .AddPolicy(AuthzConstants.SCOPE_PORTAL_ENDUSER, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER])));

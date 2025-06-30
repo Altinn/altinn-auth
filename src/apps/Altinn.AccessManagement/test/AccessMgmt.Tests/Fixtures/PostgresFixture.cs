@@ -218,6 +218,8 @@ public class PostgresDatabase(string dbname, string connectionString) : IOptions
         Username = PostgresServer.DbAdminName,
         Password = PostgresServer.DbPassword,
         IncludeErrorDetail = true,
+        Pooling = false,      // or "false" to disable pooling entirely
+        ConnectionIdleLifetime = 30,  // (optional) return idle connections quickly
     };
 
     /// <summary>
@@ -230,6 +232,8 @@ public class PostgresDatabase(string dbname, string connectionString) : IOptions
         Username = PostgresServer.DbUserName,
         Password = PostgresServer.DbPassword,
         IncludeErrorDetail = true,
+        Pooling = false,      // or "false" to disable pooling entirely
+        ConnectionIdleLifetime = 30,  // (optional) return idle connections quickly
     };
 
     /// <summary>

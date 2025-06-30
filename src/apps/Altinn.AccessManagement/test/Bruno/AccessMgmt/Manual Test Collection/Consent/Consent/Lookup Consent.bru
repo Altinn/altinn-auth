@@ -1,0 +1,19 @@
+meta {
+  name: Lookup Consent
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:5117/accessmanagement/api/v1/maskinporten/consent/lookup/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "from": "urn:altinn:person:identifier-no:01014922047",
+    "to": "urn:altinn:organization:identifier-no:910194143"
+  }
+}

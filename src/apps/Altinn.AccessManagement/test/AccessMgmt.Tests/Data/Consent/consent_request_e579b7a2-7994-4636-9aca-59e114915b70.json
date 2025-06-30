@@ -1,0 +1,42 @@
+{
+  "iD": "e579b7a2-7994-4636-9aca-59e114915b70",
+  "from": "urn:altinn:party:uuid:d5b861c8-8e3b-44cd-9952-5315e5990cf5",
+  "to": "urn:altinn:party:uuid:8ef5e5fa-94e1-4869-8635-df86b6219181",
+  "handledBy": "urn:altinn:party:uuid:CDDA2F11-95C5-4BE4-9690-54206FF663F6",
+  "validTo": "2019-09-30T10:30:00.000",
+  "consentRights": [
+    {
+      "action": [
+        "read"
+      ],
+      "resource": [
+        {
+          "type": "urn:altinn:resource",
+          "value": "ttd_skattegrunnlag"
+        }
+      ],
+      "metadata": {
+        "fraOgMed": "2017-06",
+        "tilOgMed": "2017-08"
+      }
+    },
+    {
+      "action": [
+        "read"
+      ],
+      "resource": [
+        {
+          "type": "urn:altinn:resource",
+          "value": "ttd_inntektsopplysninger"
+        }
+      ],
+      "metadata": {
+        "inntektsaar": "2016"
+      }
+    }
+  ],
+  "portalViewMode": "Hide",
+  "redirectUrl": "https:///www.urlfromsavedreqest.com",
+  "templateId": "sblanesoknad",
+  "templateVersion": 1
+}

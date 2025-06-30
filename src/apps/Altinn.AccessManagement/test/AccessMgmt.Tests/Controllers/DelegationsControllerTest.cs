@@ -1410,7 +1410,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         public async Task GetMaskinportenSchemaDelegations_ServiceOwnerLookup_UnauthorizedScope()
         {
             // Arrange
-            string token = PrincipalUtil.GetOrgToken("SKD", "974761076", "altinn:maskinporten/delegations", new[] { "skd" });
+            string token = PrincipalUtil.GetOrgToken("SKD", "974761076", "altinn:maskinporten/delegations", consumerPrefix: new[] { "skd" });
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             string expected = "Not authorized for lookup of delegations for the scope: altinn:instances.read";

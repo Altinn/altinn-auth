@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Consent",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

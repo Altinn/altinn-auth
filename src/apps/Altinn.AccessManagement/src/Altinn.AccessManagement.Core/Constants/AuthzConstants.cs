@@ -59,7 +59,12 @@
         /// Policy tag for scope authorization on the proxy API from Altinn II for the maskinporten integration API
         /// </summary>
         public const string POLICY_MASKINPORTEN_DELEGATIONS_PROXY = "MaskinportenDelegationsProxy";
-        
+
+        /// <summary>
+        /// Policy tag for scope authorization on the consent API for maskinporten to create consent tokens
+        /// </summary>
+        public const string POLICY_MASKINPORTEN_CONSENT_READ = "MaskinportenConsentRead";
+
         /// <summary>
         /// Policy tag for scope authorization on the resource owner API for getting the Authorized Party list for a third party
         /// </summary>
@@ -79,6 +84,16 @@
         /// Policy tag for authorizing client administration API write access
         /// </summary>
         public const string POLICY_CLIENTDELEGATION_WRITE = "CLIENTDELEGATION_WRITE";
+
+        /// <summary>
+        /// Policy tag for authorizing enterprises for consent requests
+        /// </summary>
+        public const string POLICY_CONSENTREQUEST_WRITE = "CONSENTREQUEST_WRITE";
+
+        /// <summary>
+        /// Policy tag for authorizing enterprises for consent requests
+        /// </summary>
+        public const string POLICY_CONSENTREQUEST_READ = "CONSENTREQUEST_READ";
 
         /// <summary>
         /// Portal enduser scope giving access to most of the end user APIs
@@ -109,6 +124,21 @@
         /// Scope giving access to delegations for arbitrary Maskinporten schemes
         /// </summary>
         public const string SCOPE_MASKINPORTEN_DELEGATIONS_ADMIN = "altinn:maskinporten/delegations.admin";
+
+        /// <summary>
+        /// Scope giving access to creating consentrequests for anyone if you are the resource owner for the resources that is part of the consent request
+        /// </summary>
+        public const string SCOPE_CONSENTREQUEST_ORG = "altinn:consentrequests.org";
+
+        /// <summary>
+        /// Scope giving access to creating consentrequests
+        /// </summary>
+        public const string SCOPE_CONSENTREQUEST_WRITE = "altinn:consentrequests.write";
+
+        /// <summary>
+        /// Scope giving access to creating consentrequests
+        /// </summary>
+        public const string SCOPE_CONSENTREQUEST_READ = "altinn:consentrequests.read";
 
         /// <summary>
         /// Claim for scopes from maskinporten token
