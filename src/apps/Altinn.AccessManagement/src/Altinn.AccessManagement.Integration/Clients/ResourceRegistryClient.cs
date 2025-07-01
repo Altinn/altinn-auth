@@ -22,6 +22,7 @@ namespace Altinn.AccessManagement.Integration.Clients
         private readonly HttpClient _httpClient = new();
         private readonly ILogger<IResourceRegistryClient> _logger;
         private readonly JsonSerializerOptions options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        private readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions() { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase, WriteIndented = true };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceRegistryClient"/> class
@@ -128,9 +129,36 @@ namespace Altinn.AccessManagement.Integration.Clients
             return subjectResources;
         }
 
-        public Task<ConsentTemplate> GetConsentTemplate(string templateId, int? version, CancellationToken cancellationToken = default)
+        ///<inheritdoc/>
+        public async Task<ConsentTemplate> GetConsentTemplate(string templateId, int? version, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            List<ConsentTemplate> templates = await GetConsentTemplates();
+            ConsentTemplate consentTemplate = templates.FirstOrDefault(t => t.Id.Equals(templateId, StringComparison.OrdinalIgnoreCase));
+            if (consentTemplate == null)
+            {
+                throw new Exception($"Consent template with id {templateId} and version {version} not found.");
+            }
+
+            return consentTemplate;
+        }
+
+        private async Task<List<ConsentTemplate>> GetConsentTemplates()
+        {
+            // Temp location. Will be moved to CDN
+            string url = "https://raw.githubusercontent.com/Altinn/altinn-studio-docs/master/content/authorization/architecture/resourceregistry/consent_templates.json";
+
+            try
+            {
+                HttpResponseMessage response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+                string consentTemplatesString = await response.Content.ReadAsStringAsync();
+                List<ConsentTemplate> consentTemplates = JsonSerializer.Deserialize<List<ConsentTemplate>>(consentTemplatesString, _serializerOptions);
+                return consentTemplates;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Something went wrong when retrieving consent templates", ex);
+            }
         }
     }
 }
