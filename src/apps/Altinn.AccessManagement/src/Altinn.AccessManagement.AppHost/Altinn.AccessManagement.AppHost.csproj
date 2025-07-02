@@ -17,7 +17,6 @@
         <ProjectReference Include="..\Altinn.AccessManagement.Api.Metadata\Altinn.AccessManagement.Api.Metadata.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Api.ServiceOwner\Altinn.AccessManagement.Api.ServiceOwner.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement\Altinn.AccessManagement.csproj" />
-        <ProjectReference Include="..\Altinn.AccessMgmt.AutoApi\Altinn.AccessMgmt.AutoApi.csproj" />
     </ItemGroup>
 
 </Project>
