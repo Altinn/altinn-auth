@@ -4,11 +4,6 @@
         <ProjectReference Include="..\..\src\Altinn.Authorization.Integration.Platform\Altinn.Authorization.Integration.Platform.csproj" />
     </ItemGroup>
 
-    <PropertyGroup>
-        <IsTestProject>true</IsTestProject>
-        <XUnitVersion>v3</XUnitVersion>
-    </PropertyGroup>
-
     <ItemGroup>
         <None Update="testsettings.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

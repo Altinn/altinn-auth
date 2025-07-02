@@ -1,9 +1,9 @@
+using System.Linq;
 using System.Text.Json;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.Tests.Utils;
 using Altinn.Authorization.ProblemDetails;
-using Dapper;
 
 namespace Altinn.AccessManagement.Tests.Data;
 
@@ -297,8 +297,8 @@ public static class TestDataAppsInstanceDelegation
         Assert.NotNull(actualJson);
         Assert.NotNull(expectedJson);
         
-        var actualExtensionList = actualJson.Value.EnumerateArray().AsList();
-        var expectedExtensionList = expectedJson.Value.EnumerateArray().AsList();
+        var actualExtensionList = actualJson.Value.EnumerateArray().ToList();
+        var expectedExtensionList = expectedJson.Value.EnumerateArray().ToList();
         Assert.Equal(expectedExtensionList.Count, actualExtensionList.Count);
         
         for (int i = 0; i < actualExtensionList.Count; i++)

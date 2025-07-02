@@ -1,11 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <IsPackable>false</IsPackable>
-        <IsTestProject>true</IsTestProject>
-    </PropertyGroup>
-
     <ItemGroup>
         <ProjectReference Include="..\..\src\Altinn.Authorization.Host.Lease\Altinn.Authorization.Host.Lease.csproj" />
     </ItemGroup>
+    
 </Project>

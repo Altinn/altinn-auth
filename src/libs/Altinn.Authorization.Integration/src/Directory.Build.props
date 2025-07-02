@@ -1,5 +1,8 @@
 <Project>
-
+    <PropertyGroup>
+        <IsLibProject>true</IsLibProject>
+    </PropertyGroup>
+    
     <Import Project="..\..\Directory.Build.props" />
 
 </Project>

@@ -13,25 +13,13 @@
         <PackageReference Include="Azure.Security.KeyVault.Secrets" />
         <PackageReference Include="Azure.Storage.Blobs" />
         <PackageReference Include="Azure.Storage.Queues" />
-        <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
         <PackageReference Include="Microsoft.Extensions.Telemetry.Abstractions" />
         <PackageReference Include="Npgsql" />
     </ItemGroup>
 
     <ItemGroup>
-        <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Api.Contracts\src\Altinn.Authorization.Api.Contracts\Altinn.Authorization.Api.Contracts.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Reference Include="Altinn.Common.AccessTokenClient">
-            <HintPath>
-                ..\..\..\..\..\.nuget\packages\altinn.common.accesstokenclient\1.0.6\lib\netstandard2.0\Altinn.Common.AccessTokenClient.dll</HintPath>
-        </Reference>
     </ItemGroup>
 
 </Project>

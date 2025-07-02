@@ -6,11 +6,20 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <LangVersion>12.0</LangVersion>
         <EnableStyleCop>true</EnableStyleCop>
-        <Authors>Altinn Platform Contributors</Authors>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <Authors>Altinn Authorization</Authors>
         <NoWarn>SA1600;CS1591;CS8767;CS8632</NoWarn>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)Altinn.ruleset</CodeAnalysisRuleSet>
+    </PropertyGroup>
+
+    <!-- ReferenceTrimmer - run build with /p:EnableReferenceTrimmer=true to enable -->
+    <PropertyGroup Label="ReferenceTrimmer">
+        <EnableReferenceTrimmer Condition=" '$(EnableReferenceTrimmer)' == '' ">false</EnableReferenceTrimmer>
+    </PropertyGroup>
+
 </Project>
+

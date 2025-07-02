@@ -2,10 +2,11 @@
     <Choose>
 
         <When Condition=" '$(IsTestProject)' == 'true' Or '$(IsTestLibrary)' == 'true'">
+
             <PropertyGroup>
-                <GenerateDocumentationFile>false</GenerateDocumentationFile>
                 <NoWarn>$(NoWarn);SA0001</NoWarn>
                 <XUnitVersion Condition=" '$(XUnitVersion)' == '' ">v2</XUnitVersion>
+                <GenerateDocumentationFile Condition=" '$(EnableReferenceTrimmer)' == '' ">false</GenerateDocumentationFile>
             </PropertyGroup>
 
             <ItemGroup>
@@ -31,8 +32,7 @@
                 <PackageReference Include="xunit.assert" Condition=" '$(XUnitVersion)' == 'v2' " />
                 <PackageReference Include="xunit.extensibility.core" Condition=" '$(XUnitVersion)' == 'v2' " />
                 <PackageReference Include="xunit.v3.assert" Condition=" '$(XUnitVersion)' == 'v3' " />
-                <PackageReference Include="xunit.v3.extensibility.core"
-                    Condition=" '$(XUnitVersion)' == 'v3' " />
+                <PackageReference Include="xunit.v3.extensibility.core" Condition=" '$(XUnitVersion)' == 'v3' " />
             </ItemGroup>
 
             <ItemGroup>
@@ -50,15 +50,10 @@
     </Choose>
 
     <ItemGroup Condition=" '$(EnableStyleCop)' == 'true' ">
-        <PackageReference Include="StyleCop.Analyzers" PrivateAssets="all"
-            IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+        <PackageReference Include="StyleCop.Analyzers" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
         <AdditionalFiles Include="$(MSBuildThisFileDirectory)Stylecop.json">
             <Link>stylecop.json</Link>
         </AdditionalFiles>
     </ItemGroup>
-
-    <PropertyGroup>
-        <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)Altinn.ruleset</CodeAnalysisRuleSet>
-    </PropertyGroup>
 
 </Project>

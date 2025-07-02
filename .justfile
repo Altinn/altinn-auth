@@ -36,6 +36,9 @@ set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
   #!{{shebang}}
   node ./.github/scripts/update-sln-files.mts -- {{ARGS}}
 
+@dotnet-reference-trimmer:
+  dotnet build -p:EnableReferenceTrimmer=true
+
 # Print all projects metadata
 @get-metadata: install-script-packages-frozen
   #!{{shebang}}

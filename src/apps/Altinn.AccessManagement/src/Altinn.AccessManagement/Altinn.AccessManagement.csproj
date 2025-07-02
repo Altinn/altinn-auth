@@ -36,7 +36,7 @@
         <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Host\src\Altinn.Authorization.Host.Database\Altinn.Authorization.Host.Database.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Api.Enterprise\Altinn.AccessManagement.Api.Enterprise.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Api.Internal\Altinn.AccessManagement.Api.Internal.csproj" />
-        <ProjectReference Include="..\Altinn.AccessManagement.API.Maskinporten\Altinn.AccessManagement.Api.Maskinporten.csproj" />
+        <ProjectReference Include="..\Altinn.AccessManagement.Api.Maskinporten\Altinn.AccessManagement.Api.Maskinporten.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Api.Metadata\Altinn.AccessManagement.Api.Metadata.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Core\Altinn.AccessManagement.Core.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Integration\Altinn.AccessManagement.Integration.csproj" />

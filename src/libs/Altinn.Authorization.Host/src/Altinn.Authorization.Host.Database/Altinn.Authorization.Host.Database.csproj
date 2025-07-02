@@ -1,12 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
+        <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
         <PackageReference Include="Npgsql.OpenTelemetry" />
         <PackageReference Include="Npgsql.DependencyInjection" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\Altinn.Authorization.Host\Altinn.Authorization.Host.csproj" />
     </ItemGroup>
 
 </Project>
