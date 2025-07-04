@@ -8,6 +8,7 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Integration.Configuration;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -23,19 +24,22 @@ namespace Altinn.AccessManagement.Integration.Clients
         private readonly ILogger<IResourceRegistryClient> _logger;
         private readonly JsonSerializerOptions options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         private readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions() { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase, WriteIndented = true };
+        private readonly IMemoryCache _memoryCache;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceRegistryClient"/> class
         /// </summary>
         /// <param name="settings">The resource registry config settings</param>
         /// <param name="logger">Logger instance for this ResourceRegistryClient</param>
-        public ResourceRegistryClient(IOptions<PlatformSettings> settings, ILogger<IResourceRegistryClient> logger)
+        /// <param name="memoryCache">Memory cache instance for caching purposes</param>
+        public ResourceRegistryClient(IOptions<PlatformSettings> settings, ILogger<IResourceRegistryClient> logger, IMemoryCache memoryCache)
         {
             PlatformSettings platformSettings = settings.Value;
             _httpClient.BaseAddress = new Uri(platformSettings.ApiResourceRegistryEndpoint);
             _httpClient.Timeout = new TimeSpan(0, 0, 30);
             _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _memoryCache = memoryCache;
             _logger = logger;
         }
 
@@ -146,6 +150,12 @@ namespace Altinn.AccessManagement.Integration.Clients
         {
             // Temp location. Will be moved to CDN
             string url = "https://raw.githubusercontent.com/Altinn/altinn-studio-docs/master/content/authorization/architecture/resourceregistry/consent_templates.json";
+            string cacheKey = "ConsentTemplates";
+
+            if (_memoryCache.TryGetValue(cacheKey, out List<ConsentTemplate> cachedTemplates))
+            {
+                return cachedTemplates;
+            }
 
             try
             {
@@ -153,6 +163,13 @@ namespace Altinn.AccessManagement.Integration.Clients
                 response.EnsureSuccessStatusCode();
                 string consentTemplatesString = await response.Content.ReadAsStringAsync();
                 List<ConsentTemplate> consentTemplates = JsonSerializer.Deserialize<List<ConsentTemplate>>(consentTemplatesString, _serializerOptions);
+
+                // Cache for 1 hour
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromHours(1));
+
+                _memoryCache.Set(cacheKey, consentTemplates, cacheEntryOptions);
+
                 return consentTemplates;
             }
             catch (Exception ex)
