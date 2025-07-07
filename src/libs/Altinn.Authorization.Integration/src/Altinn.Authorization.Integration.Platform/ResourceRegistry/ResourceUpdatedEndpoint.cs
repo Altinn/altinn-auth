@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json.Serialization;
 
 namespace Altinn.Authorization.Integration.Platform.ResourceRegistry;
@@ -8,14 +9,24 @@ namespace Altinn.Authorization.Integration.Platform.ResourceRegistry;
 public partial class AltinnResourceRegistryClient
 {
     /// <inheritdoc/>
-    public async Task<IAsyncEnumerable<PlatformResponse<PageStream<ResourceUpdatedModel>>>> StreamResources(string nextPage = null, CancellationToken cancellationToken = default)
+    public async Task<IAsyncEnumerable<PlatformResponse<PageStream<ResourceUpdatedModel>>>> StreamResources(DateTime since = default, string nextPage = null, CancellationToken cancellationToken = default)
     {
         List<Action<HttpRequestMessage>> request = [
             RequestComposer.WithHttpVerb(HttpMethod.Get),
             RequestComposer.WithSetUri(ResourceRegistryOptions.Value.Endpoint, "resourceregistry/api/v1/resource/updated"),
             RequestComposer.WithSetUri(nextPage),
-            RequestComposer.WithAppendQueryParam("limit", 1000),
+            RequestComposer.WithAppendQueryParam("limit", 100),
         ];
+
+        if (string.IsNullOrEmpty(nextPage))
+        {
+            if (DateTime.Compare(since, DateTime.UnixEpoch) < 0)
+            {
+                since = DateTime.UnixEpoch;
+            }
+
+            request.Add(RequestComposer.WithAppendQueryParam("since", since.ToString("yyyy-MM-dd'T'HH:mm:ss.fffzzz", DateTimeFormatInfo.InvariantInfo)));
+        }
 
         var response = await HttpClient.SendAsync(RequestComposer.New([.. request]), cancellationToken);
 

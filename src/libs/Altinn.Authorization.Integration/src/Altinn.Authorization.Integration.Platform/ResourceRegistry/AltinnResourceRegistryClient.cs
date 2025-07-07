@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using Yuniql.Extensibility;
 
 namespace Altinn.Authorization.Integration.Platform.ResourceRegistry;
 
@@ -25,13 +26,14 @@ public interface IAltinnResourceRegistry
     /// <summary>
     /// Streams updated resources from the Altinn Resource Register in a paginated manner.
     /// </summary>
+    /// <param name="since">Updated resources since</param>
     /// <param name="nextPage">Optional. The URL of the next page of resources, if available.</param>
     /// <param name="cancellationToken">Token for canceling the operation.</param>
     /// <returns>
     /// An asynchronous stream of paginated <see cref="ResourceUpdatedModel"/> objects,
     /// wrapped in a <see cref="PlatformResponse{T}"/>.
     /// </returns>
-    Task<IAsyncEnumerable<PlatformResponse<PageStream<ResourceUpdatedModel>>>> StreamResources(string nextPage = null, CancellationToken cancellationToken = default);
+    Task<IAsyncEnumerable<PlatformResponse<PageStream<ResourceUpdatedModel>>>> StreamResources(DateTime since = default, string nextPage = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves details of a specific resource from the Altinn Resource Register.

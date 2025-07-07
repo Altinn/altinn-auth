@@ -27,7 +27,7 @@ public class ResourceUpdatedEndpointTest : IClassFixture<PlatformFixture>
     [InlineData(5)]
     public async Task TestStreamParties(int iterations)
     {
-        await foreach (var role in await ResourceRegistry.StreamResources(null, TestContext.Current.CancellationToken))
+        await foreach (var role in await ResourceRegistry.StreamResources(cancellationToken: TestContext.Current.CancellationToken))
         {
             if (iterations-- <= 0)
             {
@@ -57,7 +57,7 @@ public class ResourceUpdatedEndpointTest : IClassFixture<PlatformFixture>
     /// <returns>A task representing the asynchronous operation, returning a platform response with resource updates.</returns>
     private async Task<PlatformResponse<PageStream<ResourceUpdatedModel>>> GetPage(string nextPage = null, CancellationToken cancellationToken = default)
     {
-        await foreach (var role in await ResourceRegistry.StreamResources(nextPage, cancellationToken))
+        await foreach (var role in await ResourceRegistry.StreamResources(default, nextPage, cancellationToken))
         {
             return role;
         }

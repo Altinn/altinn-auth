@@ -115,8 +115,9 @@ public partial class ResourceSyncService : BaseSyncService, IResourceSyncService
         };
 
         ResourceTypes = [.. await _resourceTypeRepository.Get()];
+        var since = ls.Data?.Since ?? default;
 
-        await foreach (var page in await _resourceRegistry.StreamResources(ls.Data?.ResourceNextPageLink, cancellationToken))
+        await foreach (var page in await _resourceRegistry.StreamResources(since, ls.Data?.ResourceNextPageLink, cancellationToken))
         {
             if (page.IsProblem)
             {
@@ -126,6 +127,7 @@ public partial class ResourceSyncService : BaseSyncService, IResourceSyncService
 
             foreach (var updatedResource in page.Content.Data)
             {
+                since = updatedResource.UpdatedAt;
                 try
                 {
                     var resource = await UpsertResource(updatedResource, options, cancellationToken);
@@ -148,10 +150,17 @@ public partial class ResourceSyncService : BaseSyncService, IResourceSyncService
                     Log.FailedToWriteUpdateSubjectForResource(_logger, ex, updatedResource.SubjectUrn, updatedResource.ResourceUrn);
                 }
 
-                await Lease.RefreshLease(ls, cancellationToken); 
+                await Lease.RefreshLease(ls, cancellationToken);
             }
 
-            await UpdateLease(ls, data => data.ResourceNextPageLink = page.Content.Links.Next, cancellationToken);
+            await UpdateLease(
+            ls,
+            data =>
+            {
+                data.ResourceNextPageLink = page.Content.Links.Next;
+                data.Since = since;
+            },
+            cancellationToken);
         }
     }
 
