@@ -12,38 +12,20 @@ public partial class AltinnRegisterClient
     /// List of available fields that can be retrieved from the register.
     /// </summary>
     public static readonly IEnumerable<string> AvailableFields = [
-        "party",
-        "org",
-        "person",
-        "identifiers",
-        "person.name",
-        "org.fax",
-        "org.internet",
-        "org.mobile",
-        "person.mailing-address",
-        "org.type",
-        "org.status",
-        "org.mailing-address",
-        "org.business-address",
-        "person.date-of-death",
-        "person.date-of-birth",
-        "org.email",
-        "org.telephone",
         "uuid",
-        "person.short-name",
-        "person.last-name",
-        "person.middle-name",
-        "person.first-name",
-        "version",
-        "deleted",
-        "modified",
-        "created",
-        "org-id",
-        "person-id",
-        "display-name",
-        "type",
         "id",
-        "person.address"
+        "type",
+        "display-name",
+        "person-id",
+        "org-id",
+        "modified",
+        "deleted",
+        "version",
+        "identifiers",
+        "party",
+        "person",
+        "org",
+        "user"
     ];
 
     /// <inheritdoc/>
@@ -107,19 +89,19 @@ public class PartyModel
     public string UnitType { get; set; }
 
     [JsonPropertyName("telephoneNumber")]
-    public object TelephoneNumber { get; set; }
+    public string TelephoneNumber { get; set; }
 
     [JsonPropertyName("mobileNumber")]
-    public object MobileNumber { get; set; }
+    public string MobileNumber { get; set; }
 
     [JsonPropertyName("faxNumber")]
-    public object FaxNumber { get; set; }
+    public string FaxNumber { get; set; }
 
     [JsonPropertyName("emailAddress")]
-    public object EmailAddress { get; set; }
+    public string EmailAddress { get; set; }
 
     [JsonPropertyName("internetAddress")]
-    public object InternetAddress { get; set; }
+    public string InternetAddress { get; set; }
 
     [JsonPropertyName("mailingAddress")]
     public PartyMailingAddress MailingAddress { get; set; }
@@ -147,6 +129,18 @@ public class PartyModel
 
     [JsonPropertyName("dateOfDeath")]
     public string DateOfDeath { get; set; }
+
+    [JsonPropertyName("user")]
+    public UserProfile User { get; set; }
+
+    public class UserProfile
+    {
+        [JsonPropertyName("userId")]
+        public int UserId { get; set; }
+
+        [JsonPropertyName("userIds")]
+        public IEnumerable<int> UserIds { get; set; }
+    }
 
     public class PartyAddress
     {
