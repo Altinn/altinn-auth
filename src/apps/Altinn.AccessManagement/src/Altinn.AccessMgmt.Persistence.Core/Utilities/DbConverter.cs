@@ -45,13 +45,6 @@ public sealed class DbConverter : IDbConverter
         };
     }
 
-    /// <inheritdoc />
-    public List<T> ConvertToObjects<T>(IDataReader reader)
-    where T : new()
-    {
-        return ConvertToObjects<T>(reader, false).Data;
-    }
-
     private (List<T> Data, QueryPageInfo PageInfo) ConvertToObjects<T>(IDataReader reader, bool includePageColumns)
     where T : new()
     {

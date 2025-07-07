@@ -181,7 +181,7 @@ namespace Altinn.Platform.Authorization.Helpers
         /// </summary>
         /// <param name="context">the http request context</param>
         /// <returns></returns>
-        public static string GetClientIpAddress(HttpContext context)
+        public static string? GetClientIpAddress(HttpContext context)
         {
             string[] clientIpList = context?.Request?.Headers?.GetCommaSeparatedValues("x-forwarded-for") ?? [];
             return clientIpList.FirstOrDefault() ?? null;

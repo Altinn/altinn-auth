@@ -133,7 +133,7 @@ namespace Altinn.AccessManagement.Integration.Clients
             return subjectResources;
         }
 
-        ///<inheritdoc/>
+        /// <inheritdoc/>
         public async Task<ConsentTemplate> GetConsentTemplate(string templateId, int? version, CancellationToken cancellationToken = default)
         {
             List<ConsentTemplate> templates = await GetConsentTemplates();

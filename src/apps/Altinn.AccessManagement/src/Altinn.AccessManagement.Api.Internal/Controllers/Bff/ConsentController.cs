@@ -21,11 +21,8 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
     /// </summary>
     [Route("accessmanagement/api/v1/bff")]
     [ApiController]
-    public class ConsentController(IConsent consentService, IPDP pdp) : ControllerBase
+    public class ConsentController(IConsent ConsentService, IPDP Pdp) : ControllerBase
     {
-        private readonly IConsent _consentService = consentService;
-        private readonly IPDP _pdp = pdp;
-
         private readonly string accessManagementResource = "altinn_access_management";
 
         /// <summary>
@@ -48,7 +45,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
 
             Core.Models.Consent.ConsentPartyUrn performedByParty = Core.Models.Consent.ConsentPartyUrn.PartyUuid.Create(performedBy.Value);
 
-            Result<ConsentRequestDetails> consentRequest = await _consentService.GetRequest(requestId, performedByParty, true, cancellationToken);
+            Result<ConsentRequestDetails> consentRequest = await ConsentService.GetRequest(requestId, performedByParty, true, cancellationToken);
             if (consentRequest.IsProblem)
             {
                 return consentRequest.Problem.ToActionResult();
@@ -86,7 +83,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
                 return Unauthorized();
             }
 
-            Result<Consent> consent = await consentService.GetConsent(consentId, cancellationToken);
+            Result<Consent> consent = await ConsentService.GetConsent(consentId, cancellationToken);
             if (consent.IsProblem)
             {
                 consent.Problem.ToActionResult();
@@ -129,7 +126,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
             }
 
             Core.Models.Consent.ConsentPartyUrn performedByParty = Core.Models.Consent.ConsentPartyUrn.PartyUuid.Create(performedBy.Value);
-            Result<ConsentRequestDetails> consentRequest = await _consentService.GetRequest(requestId, performedByParty, true, cancellationToken);
+            Result<ConsentRequestDetails> consentRequest = await ConsentService.GetRequest(requestId, performedByParty, true, cancellationToken);
             if (consentRequest.IsProblem)
             {
                 return consentRequest.Problem.ToActionResult();
@@ -148,7 +145,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
 
             ConsentContext consentContext = context.ToConsentContext();
 
-            consentRequest = await _consentService.AcceptRequest(requestId, performedBy.Value, consentContext, cancellationToken);
+            consentRequest = await ConsentService.AcceptRequest(requestId, performedBy.Value, consentContext, cancellationToken);
 
             if (consentRequest.IsProblem)
             {
@@ -173,7 +170,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
             }
 
             Core.Models.Consent.ConsentPartyUrn performedByParty = Core.Models.Consent.ConsentPartyUrn.PartyUuid.Create(performedBy.Value);
-            Result<ConsentRequestDetails> consentRequest = await _consentService.GetRequest(requestId, performedByParty, true, cancellationToken);
+            Result<ConsentRequestDetails> consentRequest = await ConsentService.GetRequest(requestId, performedByParty, true, cancellationToken);
             if (consentRequest.IsProblem)
             {
                 return consentRequest.Problem.ToActionResult();
@@ -190,7 +187,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
                 }
             }
 
-            consentRequest = await _consentService.RejectRequest(requestId, performedBy.Value, cancellationToken);
+            consentRequest = await ConsentService.RejectRequest(requestId, performedBy.Value, cancellationToken);
 
             if (consentRequest.IsProblem)
             {
@@ -214,7 +211,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
                 return Unauthorized();
             }
 
-            Result<Consent> consent = await consentService.GetConsent(consentId, cancellationToken);
+            Result<Consent> consent = await ConsentService.GetConsent(consentId, cancellationToken);
             if (consent.IsProblem)
             {
                 consent.Problem.ToActionResult();
@@ -231,7 +228,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
                 }
             }
 
-            Result<ConsentRequestDetails> result = await _consentService.RevokeConsent(consentId, performedBy.Value, cancellationToken);
+            Result<ConsentRequestDetails> result = await ConsentService.RevokeConsent(consentId, performedBy.Value, cancellationToken);
 
             if (result.IsProblem)
             {
@@ -244,7 +241,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
         private async Task<bool> AuthorizeResourceAccess(string resource, Guid resourceParty, ClaimsPrincipal userPrincipal,  string action)
         {
             XacmlJsonRequestRoot request = DecisionHelper.CreateDecisionRequestForResourceRegistryResource(resource, resourceParty, userPrincipal, action);
-            XacmlJsonResponse response = await _pdp.GetDecisionForRequest(request);
+            XacmlJsonResponse response = await Pdp.GetDecisionForRequest(request);
 
             if (response?.Response == null)
             {

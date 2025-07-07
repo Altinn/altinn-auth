@@ -145,7 +145,9 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
         /// <summary>
         /// Registers a property as a column in the database definition.
         /// </summary>
-        /// <param name="column">An expression that identifies the property to register.</param>
+        /// <param name="property">An expression for registering properties</param>
+        /// <param name="extendedProperty">>An expression registering the property on the extended entity.</param>
+        /// <param name="functionName">Function name</param>
         /// <param name="nullable">Indicates whether the column can contain null values.</param>
         /// <param name="defaultValue">The default value for the column, if any.</param>
         /// <param name="length">The maximum length of the column (if applicable).</param>
@@ -316,6 +318,7 @@ namespace Altinn.AccessMgmt.Persistence.Core.Definitions
         /// Registers a unique constraint for the specified properties.
         /// </summary>
         /// <param name="properties">A collection of expressions identifying the properties that should have a unique constraint.</param>
+        /// <param name="nullableProperties">Nullable properties</param>
         /// <param name="includedProperties">Properties to include</param>
         /// <returns>The current <see cref="DbDefinitionBuilder{T}"/> instance for fluent chaining.</returns>
         public DbDefinitionBuilder<T> RegisterUniqueConstraint(IEnumerable<Expression<Func<T, object>>> properties, IEnumerable<Expression<Func<T, object>>> nullableProperties, IEnumerable<Expression<Func<T, object>>> includedProperties = null)

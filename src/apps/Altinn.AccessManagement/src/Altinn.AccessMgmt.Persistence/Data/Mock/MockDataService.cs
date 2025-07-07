@@ -1,9 +1,6 @@
-﻿using System;
-using Altinn.AccessMgmt.Core.Models;
+﻿using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Models;
-using Altinn.AccessMgmt.Persistence.Repositories;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
-using Microsoft.Extensions.Options;
 
 namespace Altinn.AccessMgmt.Persistence.Data.Mock;
 
@@ -44,7 +41,6 @@ public class MockDataService
     private readonly IDelegationPackageRepository delegationPackageRepository = delegationPackageRepository;
     private readonly IAssignmentPackageRepository assignmentPackageRepository = assignmentPackageRepository;
     private readonly IConnectionPackageRepository connectionPackageRepository = connectionPackageRepository;
-
 
     public async Task SystemUserClientDelegation()
     {
@@ -202,7 +198,6 @@ public class MockDataService
         await assignmentRepository.Upsert(assignment002, updateProperties: [t => t.FromId, t => t.ToId, t => t.RoleId], compareProperties: [t => t.FromId, t => t.ToId, t => t.RoleId], options: options);
         await assignmentRepository.Upsert(assignment003, updateProperties: [t => t.FromId, t => t.ToId, t => t.RoleId], compareProperties: [t => t.FromId, t => t.ToId, t => t.RoleId], options: options);
         await assignmentRepository.Upsert(assignment004, updateProperties: [t => t.FromId, t => t.ToId, t => t.RoleId], compareProperties: [t => t.FromId, t => t.ToId, t => t.RoleId], options: options);
-
     }
 
     private async Task GeneratePackageResources(ChangeRequestOptions options)

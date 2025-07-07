@@ -35,7 +35,7 @@ public static partial class DbAccessHostExtensions
     /// </summary>
     public static IApplicationBuilder UseDbAudit(this IApplicationBuilder builder)
     {
-        builder.UseMiddleware<AuditMiddleware>();
+        builder.UseMiddleware<AuditService>();
         return builder;
     }
 
@@ -68,7 +68,7 @@ public static partial class DbAccessHostExtensions
             }
         }
 
-        builder.Services.AddSingleton<AuditMiddleware>();
+        builder.Services.AddSingleton<AuditService>();
         builder.Services.AddSingleton<IDbAudit, AuditFactory>();
         builder.Services.AddSingleton<IDbAuditService, AuditFactory>();
 

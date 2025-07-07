@@ -6,7 +6,7 @@ namespace Altinn.AccessManagement.Core.Errors;
 /// <summary>
 /// A utility class that provides methods for validating data using a series of rules.
 /// </summary>
-public static class ValidationRules
+public static class EnduserValidationRules
 {
     /// <summary>
     /// A delegate representing a validation rule that accepts a reference to a <see cref="ValidationErrorBuilder"/>
@@ -513,7 +513,7 @@ public static class ValidationRules
         /// </summary>
         /// <param name="party">The value of the party query parameter to validate.</param>
         /// <param name="paramName">The name of the query parameter (used for error reporting).</param>
-        /// <param name="values"></param>
+        /// <param name="values">values to assert</param>
         /// <returns>
         /// A validation rule that adds an error if the party value is not a valid UUID
         /// and does not match any of the predefined keywords <see cref="ParamKeywords"/>.

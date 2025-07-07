@@ -230,7 +230,6 @@ public class ConnectionService(
         filter.Equal(t => t.ToId, toId);
         filter.Equal(t => t.PackageId, packageId);
         return (await connectionPackageRepository.GetExtended(filter, cancellationToken: cancellationToken)).Data;
-
     }
 
     private async Task<bool> RemoveAssignmentPackage(Guid assignmentId, Guid packageId, ChangeRequestOptions options, CancellationToken cancellationToken = default)
@@ -294,12 +293,6 @@ public class ConnectionService(
         {
             throw new Exception("User does not have the package assigned on this entity");
         }
-
-        //if (!userPackages.Any(t => t.CanDelegate))
-        //{
-        //    throw new Exception("User can't delegate package");
-        //}
-
 
         var filter = delegationPackageRepository.CreateFilterBuilder();
         filter.Equal(t => t.DelegationId, delegationId);
@@ -399,7 +392,6 @@ public class ConnectionService(
         {
             throw new Exception("Package is not assignable");
         }
-
 
         var filter = delegationPackageRepository.CreateFilterBuilder();
         filter.Equal(t => t.DelegationId, delegationId);

@@ -135,10 +135,10 @@ public class ConnectionService(
             var delegationsFrom = await DelegationRepository.Get(f => f.FromId, existingAssignment.Id, callerName: SpanName("Get existing package delegations (From)"), cancellationToken: cancellationToken);
             var delegationsTo = await DelegationRepository.Get(f => f.ToId, existingAssignment.Id, callerName: SpanName("Get existing package delegations (To)"), cancellationToken: cancellationToken);
 
-            problem = ValidationRules.Validate(
-                ValidationRules.QueryParameters.HasPackagesAssigned(packages),
-                ValidationRules.QueryParameters.HasDelegationsAssigned(delegationsFrom),
-                ValidationRules.QueryParameters.HasDelegationsAssigned(delegationsTo)
+            problem = EnduserValidationRules.Validate(
+                EnduserValidationRules.QueryParameters.HasPackagesAssigned(packages),
+                EnduserValidationRules.QueryParameters.HasDelegationsAssigned(delegationsFrom),
+                EnduserValidationRules.QueryParameters.HasDelegationsAssigned(delegationsTo)
             );
             if (problem is { })
             {
@@ -183,7 +183,7 @@ public class ConnectionService(
             .Add(t => t.Urn, package, FilterComparer.EndsWith);
 
         var packages = await PackageRepository.Get(filter, callerName: SpanName("Get packages using URN"), cancellationToken: cancellationToken);
-        var problem = ValidationRules.Validate(ValidationRules.QueryParameters.PackageUrnLookup(packages, package));
+        var problem = EnduserValidationRules.Validate(EnduserValidationRules.QueryParameters.PackageUrnLookup(packages, package));
         if (problem is { })
         {
             return problem;
@@ -214,7 +214,7 @@ public class ConnectionService(
             .Equal(t => t.RoleId, roleId);
 
         var existingAssignments = await AssignmentRepository.Get(filter, callerName: SpanName("Get existing assignments"), cancellationToken: cancellationToken);
-        problem = ValidationRules.Validate(ValidationRules.QueryParameters.VerifyAssignmentRoleExists(existingAssignments, role));
+        problem = EnduserValidationRules.Validate(EnduserValidationRules.QueryParameters.VerifyAssignmentRoleExists(existingAssignments, role));
         Assignment assignment;
         if (problem is { })
         {
@@ -243,10 +243,10 @@ public class ConnectionService(
         var userpackage = userPackags.Where(p => p.PackageId == packageId)
             .ToList();
 
-        problem = ValidationRules.Validate(
-            ValidationRules.QueryParameters.AnyPackages(userpackage, queryParamName),
-            ValidationRules.QueryParameters.PackageIsAssignableByUser(userpackage, queryParamName),
-            ValidationRules.QueryParameters.PackageIsAssignableByDefinition(userpackage, queryParamName)
+        problem = EnduserValidationRules.Validate(
+            EnduserValidationRules.QueryParameters.AnyPackages(userpackage, queryParamName),
+            EnduserValidationRules.QueryParameters.PackageIsAssignableByUser(userpackage, queryParamName),
+            EnduserValidationRules.QueryParameters.PackageIsAssignableByDefinition(userpackage, queryParamName)
         );
 
         if (problem is { })
@@ -289,7 +289,7 @@ public class ConnectionService(
             .Add(t => t.Urn, package, FilterComparer.EndsWith);
 
         var packages = await PackageRepository.Get(filter, callerName: SpanName("Get packages using URN"), cancellationToken: cancellationToken);
-        var problem = ValidationRules.Validate(ValidationRules.QueryParameters.PackageUrnLookup(packages, package));
+        var problem = EnduserValidationRules.Validate(EnduserValidationRules.QueryParameters.PackageUrnLookup(packages, package));
         if (problem is { })
         {
             return problem;
@@ -354,11 +354,11 @@ public class ConnectionService(
 
     private ValidationProblemInstance? ValidateAssignmentData(ExtEntity entityFrom, ExtEntity entityTo, IEnumerable<Role> roles)
     {
-        var problem = ValidationRules.Validate(
-            ValidationRules.QueryParameters.PartyExists(entityFrom, "from"),
-            ValidationRules.QueryParameters.PartyExists(entityTo, "to"),
-            ValidationRules.QueryParameters.PartyIsEntityType(entityFrom, "Organisasjon", "from"),
-            ValidationRules.QueryParameters.PartyIsEntityType(entityTo, "Organisasjon", "to")
+        var problem = EnduserValidationRules.Validate(
+            EnduserValidationRules.QueryParameters.PartyExists(entityFrom, "from"),
+            EnduserValidationRules.QueryParameters.PartyExists(entityTo, "to"),
+            EnduserValidationRules.QueryParameters.PartyIsEntityType(entityFrom, "Organisasjon", "from"),
+            EnduserValidationRules.QueryParameters.PartyIsEntityType(entityTo, "Organisasjon", "to")
         );
 
         if (problem is { })

@@ -1,4 +1,9 @@
-﻿using Altinn.AccessManagement.Api.Internal.Extensions;
+﻿using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
+using Altinn.AccessManagement.Api.Internal.Extensions;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
@@ -17,11 +22,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
 using Xunit.Abstractions;
 
 namespace AccessMgmt.Tests.Controllers.Bff

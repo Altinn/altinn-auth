@@ -472,7 +472,6 @@ public class DbDataMigrationService(
         var a3ProviderId = (await providerRepository.Get(t => t.Code, "sys-altinn3")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("Provider not found '{0}'", "Altinn 3"));
         var a2ProviderId = (await providerRepository.Get(t => t.Code, "sys-altinn2")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("Provider not found '{0}'", "Altinn 2"));
 
-
         var roles = new List<Role>()
         {
             new Role() { Id = Guid.Parse("42CAE370-2DC1-4FDC-9C67-C2F4B0F0F829"), EntityTypeId = orgEntityTypeId, ProviderId = a3ProviderId, Name = "Rettighetshaver",              Code = "rettighetshaver",               Description = "Gir mulighet til å motta delegerte fullmakter for virksomheten", Urn = "urn:altinn:role:rettighetshaver", IsKeyRole = false, IsAssignable = true },
@@ -678,7 +677,6 @@ public class DbDataMigrationService(
 
             new Role() { Id = Guid.Parse("1c6eeec1-fe70-4fc5-8b45-df4a2255dea6"), EntityTypeId = null,  ProviderId = a2ProviderId, Name = "Private person",                                    Code = "privatperson",        Description = "Private person", Urn = "urn:altinn:role:privatperson", IsKeyRole = false },
             new Role() { Id = Guid.Parse("e16ab886-1e1e-4f45-8f79-46f06f720f3e"), EntityTypeId = null,  ProviderId = a2ProviderId, Name = "Self registered user",                              Code = "selvregistrert",      Description = "Self registered user", Urn = "urn:altinn:role:selvregistrert", IsKeyRole = false }
-
         };
 
         var rolesNno = new List<Role>()
@@ -3169,6 +3167,7 @@ public class DbDataMigrationService(
 
         await ingestService.IngestAndMergeData(variantRoles, options: options, null, cancellationToken);
     }
+
     private async Task Cleanup(ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         var dataKey = "<cleanup-data>";
@@ -3207,9 +3206,8 @@ public class DbDataMigrationService(
             filter.Equal(t => t.EntityVariantId, variants["BBL"]);
             await rolePackageRepository.Delete(filter, options, cancellationToken: cancellationToken);
         }
-        catch (Exception e)
+        catch (Exception)
         {
-
         }
     }
 }

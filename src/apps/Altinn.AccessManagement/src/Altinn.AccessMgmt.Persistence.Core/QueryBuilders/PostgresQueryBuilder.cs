@@ -694,9 +694,9 @@ public class PostgresQueryBuilder : IDbQueryBuilder
 
         if (_definition.EnableTranslation)
         {
-            string fkName = $"FK_Translation_{_definition.ModelType.Name}_id";
+            string foreignKey = $"FK_Translation_{_definition.ModelType.Name}_id";
             scripts.Add($"CREATE TABLE {translationName}", translationScript);
-            var translationForeignKey = $"ALTER TABLE {GetSchemaName(useTranslation: true)}.{GetTableName(includeAlias: false, includeSchema: false)} DROP CONSTRAINT IF EXISTS {fkName}; ALTER TABLE {GetSchemaName(useTranslation: true)}.{GetTableName(includeAlias: false, includeSchema: false)} ADD CONSTRAINT {fkName} FOREIGN KEY (id) REFERENCES {GetSchemaName()}.{GetTableName(includeAlias: false, includeSchema: false)} (id) ON DELETE CASCADE;";
+            var translationForeignKey = $"ALTER TABLE {GetSchemaName(useTranslation: true)}.{GetTableName(includeAlias: false, includeSchema: false)} DROP CONSTRAINT IF EXISTS {foreignKey}; ALTER TABLE {GetSchemaName(useTranslation: true)}.{GetTableName(includeAlias: false, includeSchema: false)} ADD CONSTRAINT {foreignKey} FOREIGN KEY (id) REFERENCES {GetSchemaName()}.{GetTableName(includeAlias: false, includeSchema: false)} (id) ON DELETE CASCADE;";
             scripts.Add($"ADD CONSTRAINT FK_Translation_{_definition.ModelType.Name}_id", translationForeignKey);
         }
 
@@ -751,9 +751,9 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         {
             if (isTranslation)
             {
-                string fkName = $"FK_{_definition.ModelType.Name}_id";
+                string foreignKey = $"FK_{_definition.ModelType.Name}_id";
                 script.AppendLine($", CONSTRAINT PK_{_definition.ModelType.Name} PRIMARY KEY ({string.Join(',', _definition.Constraints.First(t => t.IsPrimaryKey).Properties.Select(t => $"{t.Key}"))}, language)");
-                var query = $"ALTER TABLE {GetSchemaName(useTranslation: true)}.{GetTableName(includeAlias: false, includeSchema: false)} DROP CONSTRAINT IF EXISTS {fkName}; ALTER TABLE {GetSchemaName(useTranslation: true)}.{GetTableName(includeAlias: false, includeSchema: false)} ADD CONSTRAINT {fkName} FOREIGN KEY (id) REFERENCES {GetSchemaName()}.{GetTableName(includeAlias: false, includeSchema: false)} (id) ON DELETE CASCADE;";
+                var query = $"ALTER TABLE {GetSchemaName(useTranslation: true)}.{GetTableName(includeAlias: false, includeSchema: false)} DROP CONSTRAINT IF EXISTS {foreignKey}; ALTER TABLE {GetSchemaName(useTranslation: true)}.{GetTableName(includeAlias: false, includeSchema: false)} ADD CONSTRAINT {foreignKey} FOREIGN KEY (id) REFERENCES {GetSchemaName()}.{GetTableName(includeAlias: false, includeSchema: false)} (id) ON DELETE CASCADE;";
             }
             else
             {
@@ -920,7 +920,7 @@ public class PostgresQueryBuilder : IDbQueryBuilder
             hashBytes = sha1.ComputeHash(Encoding.UTF8.GetBytes(baseName));
         }
 
-        string fullHashHex = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+        string fullHashHex = BitConverter.ToString(hashBytes).Replace("-", string.Empty).ToLowerInvariant();
         string shortHash = fullHashHex.Substring(0, 8);
 
         int maskLength = mask.ToString().Length;

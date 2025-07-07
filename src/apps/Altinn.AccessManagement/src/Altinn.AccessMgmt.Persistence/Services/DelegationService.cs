@@ -427,7 +427,9 @@ public class DelegationService(
         else
         {
             var roleProvider = await providerRepository.Get(role.ProviderId);
-            if (roleProvider.Code != "sys-altinn3") // Get system from token
+            
+            // Get system from token
+            if (roleProvider.Code != "sys-altinn3")
             {
                 throw new Exception(string.Format("You cannot create assignment with the role '{0}' ({1})", role.Name, role.Code));
             }

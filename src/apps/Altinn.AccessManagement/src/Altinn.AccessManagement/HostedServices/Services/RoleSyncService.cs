@@ -15,7 +15,6 @@ namespace Altinn.AccessManagement.HostedServices.Services;
 /// <inheritdoc />
 public class RoleSyncService : BaseSyncService, IRoleSyncService
 {
-
     public RoleSyncService(
         IAltinnLease lease,
         IAltinnRegister register,
@@ -156,7 +155,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
             }
         }
     }
-    
+
     private async Task SetParent(Guid childId, Guid parentId, ChangeRequestOptions options, CancellationToken cancellationToken = default)
     {
         try
@@ -248,5 +247,4 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
             new GenericFilter("toid", "toid"),
             new GenericFilter("roleid", "roleid"),
         };
-
 }

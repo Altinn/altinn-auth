@@ -111,7 +111,7 @@ public sealed class PersonIdentifier
             var k1c_2 = (ushort)((12 - k1c_base) % 11);
             var k1c_3 = (ushort)((13 - k1c_base) % 11);
             var k1c_4 = (ushort)((14 - k1c_base) % 11);
-            var k2c = (ushort)((11 - Vector256.Sum(digits * k2weights) % 11) % 11);
+            var k2c = (ushort)((11 - (Vector256.Sum(digits * k2weights) % 11)) % 11);
 
             var k1 = digits[9];
             var k2 = digits[10];
@@ -149,7 +149,7 @@ public sealed class PersonIdentifier
 
     /// <inheritdoc/>
     public bool Equals(PersonIdentifier? other)
-        => ReferenceEquals(this, other) || other is not null && _value == other._value;
+        => ReferenceEquals(this, other) || (other is not null && _value == other._value);
 
     /// <inheritdoc/>
     public bool Equals(string? other)

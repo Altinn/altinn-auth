@@ -788,7 +788,6 @@ namespace Altinn.AccessManagement.Core.Services
                     }
                 }
             }
-
         }
 
         private static ValidationErrorBuilder ValidateValidTo(ConsentRequest consentRequest, ValidationErrorBuilder errors)

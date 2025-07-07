@@ -187,6 +187,7 @@ namespace Altinn.AccessManagement.Persistence.Consent
                 {
                     return null; // Duplicate key violation
                 }
+                
                 throw;
             }
 

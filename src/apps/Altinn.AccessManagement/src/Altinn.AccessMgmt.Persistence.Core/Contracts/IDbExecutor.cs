@@ -16,6 +16,7 @@ public interface IDbExecutor
     /// </summary>
     /// <param name="query">Command to execute</param>
     /// <param name="parameters">Parameters</param>
+    /// <param name="callerName">Used for setting span name.</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
     Task<int> ExecuteCommand(string query, List<GenericParameter> parameters, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default);
@@ -25,6 +26,7 @@ public interface IDbExecutor
     /// </summary>
     /// <param name="query">Command to execute</param>
     /// <param name="parameters">Parameters</param>
+    /// <param name="callerName">Used for setting span name.</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
     Task<int> ExecuteMigrationCommand(string query, List<GenericParameter> parameters = null, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default);
@@ -33,6 +35,7 @@ public interface IDbExecutor
     /// Execute a command
     /// </summary>
     /// <param name="query">Command to execute</param>
+    /// <param name="callerName">Used for setting span name.</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
     Task<int> ExecuteCommand(string query, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default);
@@ -42,6 +45,7 @@ public interface IDbExecutor
     /// </summary>
     /// <param name="query">Query to execute</param>
     /// <param name="parameters">Parameters</param>
+    /// <param name="callerName">Used for setting span name.</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
     Task<QueryResponse<T>> ExecuteQuery<T>(string query, List<GenericParameter> parameters, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
@@ -51,6 +55,7 @@ public interface IDbExecutor
     /// Execute a query
     /// </summary>
     /// <param name="query">Query to execute</param>
+    /// <param name="callerName">Used for setting span name.</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
     Task<QueryResponse<T>> ExecuteQuery<T>(string query, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
@@ -60,6 +65,7 @@ public interface IDbExecutor
     /// Execute a query
     /// </summary>
     /// <param name="query">Query to execute</param>
+    /// <param name="callerName">Used for setting span name.</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
     Task<IEnumerable<T>> ExecuteMigrationQuery<T>(string query, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)

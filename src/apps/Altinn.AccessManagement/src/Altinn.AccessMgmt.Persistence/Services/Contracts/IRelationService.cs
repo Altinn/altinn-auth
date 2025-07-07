@@ -11,6 +11,7 @@ public interface IRelationService
     /// Get Connections given from party
     /// </summary>
     /// <param name="partyId">Filter for party</param>
+    /// <param name="toId">to party</param>
     /// <param name="roleId">Filter for role</param>
     /// <param name="packageId">Filter for package</param>
     /// <param name="resourceId">Filter for resource</param>
@@ -22,6 +23,7 @@ public interface IRelationService
     /// Get Connections recived from party
     /// </summary>
     /// <param name="partyId">Filter for party</param>
+    /// <param name="fromId">to party</param>
     /// <param name="roleId">Filter for role</param>
     /// <param name="packageId">Filter for package</param>
     /// <param name="resourceId">Filter for resource</param>
@@ -33,6 +35,7 @@ public interface IRelationService
     /// Get connections given from party
     /// </summary>
     /// <param name="partyId">Filter for party</param>
+    /// <param name="toId">to party</param>
     /// <param name="roleId">Filter for role</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
@@ -42,6 +45,7 @@ public interface IRelationService
     /// Get Connections recived from party
     /// </summary>
     /// <param name="partyId">Filter for party</param>
+    /// <param name="fromId">to party</param>
     /// <param name="roleId">Filter for role</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>

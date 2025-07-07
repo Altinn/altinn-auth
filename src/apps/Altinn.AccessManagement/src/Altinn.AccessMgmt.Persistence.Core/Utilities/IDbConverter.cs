@@ -1,5 +1,5 @@
-﻿using Altinn.AccessMgmt.Persistence.Core.Models;
-using System.Data;
+﻿using System.Data;
+using Altinn.AccessMgmt.Persistence.Core.Models;
 
 namespace Altinn.AccessMgmt.Persistence.Core.Utilities;
 

@@ -38,7 +38,7 @@ public class ConnectionsController(IEnduserConnectionService connectionService) 
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetConnections([FromQuery] ConnectionInput connection, [FromQuery, FromHeader] PagingInput paging, CancellationToken cancellationToken = default)
     {
-        if (ValidationRules.EnduserReadConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
+        if (EnduserValidationRules.EnduserReadConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
         {
             return problem.ToActionResult();
         }
@@ -66,7 +66,7 @@ public class ConnectionsController(IEnduserConnectionService connectionService) 
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> AddAssignment([FromQuery] ConnectionInput connection, CancellationToken cancellationToken = default)
     {
-        if (ValidationRules.EnduserAddConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
+        if (EnduserValidationRules.EnduserAddConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
         {
             return problem.ToActionResult();
         }
@@ -94,7 +94,7 @@ public class ConnectionsController(IEnduserConnectionService connectionService) 
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> RemoveAssignment([FromQuery] ConnectionInput connection, [FromQuery] bool cascade = false, CancellationToken cancellationToken = default)
     {
-        if (ValidationRules.EnduserRemoveConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
+        if (EnduserValidationRules.EnduserRemoveConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
         {
             return problem.ToActionResult();
         }
@@ -122,7 +122,7 @@ public class ConnectionsController(IEnduserConnectionService connectionService) 
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetPackages([FromQuery] ConnectionInput connection, [FromQuery, FromHeader] PagingInput paging, CancellationToken cancellationToken = default)
     {
-        if (ValidationRules.EnduserReadConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
+        if (EnduserValidationRules.EnduserReadConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
         {
             return problem.ToActionResult();
         }
@@ -150,7 +150,7 @@ public class ConnectionsController(IEnduserConnectionService connectionService) 
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> AddPackages([FromQuery] ConnectionInput connection, [FromQuery] Guid? packageId, [FromQuery] string package, CancellationToken cancellationToken = default)
     {
-        if (ValidationRules.EnduserAddConnectionPackage(connection.Party, connection.From, connection.To, packageId, package) is var problem && problem is { })
+        if (EnduserValidationRules.EnduserAddConnectionPackage(connection.Party, connection.From, connection.To, packageId, package) is var problem && problem is { })
         {
             return problem.ToActionResult();
         }
@@ -188,7 +188,7 @@ public class ConnectionsController(IEnduserConnectionService connectionService) 
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> RemovePackages([FromQuery] ConnectionInput connection, [FromQuery] Guid? packageId, [FromQuery] string package, CancellationToken cancellationToken = default)
     {
-        if (ValidationRules.EnduserRemoveConnectionPacakge(connection.Party, connection.From, connection.To, packageId, package) is var problem && problem is { })
+        if (EnduserValidationRules.EnduserRemoveConnectionPacakge(connection.Party, connection.From, connection.To, packageId, package) is var problem && problem is { })
         {
             return problem.ToActionResult();
         }

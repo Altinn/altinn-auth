@@ -90,7 +90,7 @@ public class OrganizationNumber : ISpanParsable<OrganizationNumber>,
     }
 
     public bool Equals(OrganizationNumber? other)
-        => ReferenceEquals(this, other) || other is not null && _value == other._value;
+        => ReferenceEquals(this, other) || (other is not null && _value == other._value);
 
     /// <inheritdoc/>
     public override string ToString()

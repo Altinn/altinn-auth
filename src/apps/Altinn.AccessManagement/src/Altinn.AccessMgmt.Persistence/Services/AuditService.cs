@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Microsoft.AspNetCore.Http;
 
@@ -6,9 +7,9 @@ namespace Altinn.AccessMgmt.Persistence.Services;
 /// <summary>
 /// Middleware that sets Audit state
 /// </summary>
-internal class AuditMiddleware(IDbAuditService auditService) : IMiddleware
+internal class AuditService(IDbAuditService auditService) : IMiddleware
 {
-    private IDbAuditService AuditService { get; } = auditService;
+    private IDbAuditService DbAuditService { get; } = auditService;
 
     /// <summary>
     /// Middleware that creates change request object
@@ -26,11 +27,11 @@ internal class AuditMiddleware(IDbAuditService auditService) : IMiddleware
 
                 if (claim != null && Guid.TryParse(claim.Value, out var uuid))
                 {
-                    AuditService.Set(new()
+                    DbAuditService.Set(new()
                     {
                         ChangedBy = uuid,
                         ChangedBySystem = Guid.Parse(attr.System),
-                        ChangeOperationId = context.TraceIdentifier,
+                        ChangeOperationId = Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier,
                     });
                 }
             }
