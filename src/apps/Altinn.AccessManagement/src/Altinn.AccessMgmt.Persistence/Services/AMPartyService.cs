@@ -18,11 +18,11 @@ namespace Altinn.AccessMgmt.Persistence.Services
         /// <inheritdoc />
         public async Task<MinimalParty> GetByOrgNo(Authorization.Api.Contracts.Register.OrganizationNumber orgNo, CancellationToken cancellationToken = default)
         {
-            GenericFilterBuilder<AccessMgmt.Core.Models.EntityLookup> filter = entityLookupRepository.CreateFilterBuilder();
-            filter.Add(t => t.Key, "OrganizationIdentifier", Core.Helpers.FilterComparer.Contains);
+            GenericFilterBuilder<EntityLookup> filter = entityLookupRepository.CreateFilterBuilder();
+            filter.Equal(t => t.Key, "OrganizationIdentifier");
             filter.Equal(t => t.Value, orgNo.ToString());
 
-            IEnumerable<AccessMgmt.Core.Models.ExtEntityLookup> res = await entityLookupRepository.GetExtended(filter, cancellationToken: cancellationToken);
+            IEnumerable<ExtEntityLookup> res = await entityLookupRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
             if (res == null || !res.Any())
             {
@@ -53,11 +53,11 @@ namespace Altinn.AccessMgmt.Persistence.Services
         /// <inheritdoc />
         public async Task<MinimalParty> GetByPersonNo(PersonIdentifier personNo, CancellationToken cancellationToken = default)
         {
-            GenericFilterBuilder<AccessMgmt.Core.Models.EntityLookup> filter = entityLookupRepository.CreateFilterBuilder();
-            filter.Add(t => t.Key, "PersonIdentifier", Core.Helpers.FilterComparer.Contains);
+            GenericFilterBuilder<EntityLookup> filter = entityLookupRepository.CreateFilterBuilder();
+            filter.Equal(t => t.Key, "PersonIdentifier");
             filter.Equal(t => t.Value, personNo.ToString());
 
-            IEnumerable<AccessMgmt.Core.Models.ExtEntityLookup> res = await entityLookupRepository.GetExtended(filter, cancellationToken: cancellationToken);
+            IEnumerable<ExtEntityLookup> res = await entityLookupRepository.GetExtended(filter, cancellationToken: cancellationToken);
 
             if (res == null || !res.Any())
             {
