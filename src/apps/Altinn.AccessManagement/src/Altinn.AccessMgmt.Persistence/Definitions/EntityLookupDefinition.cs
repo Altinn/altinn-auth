@@ -31,6 +31,7 @@ public class EntityLookupDefinition : BaseDbDefinition<EntityLookup>, IDbDefinit
             def.RegisterUniqueConstraint([t => t.EntityId, t => t.Key], includedProperties: [t => t.Value, t => t.Id]);
 
             def.AddManualPostMigrationScript(1, PostMigrationScript_IsProtectedInit());
+            def.AddManualPostMigrationScript(2, PostMigrationScript_AddKeyValueIndex());
         });
     }
 
@@ -63,6 +64,13 @@ public class EntityLookupDefinition : BaseDbDefinition<EntityLookup>, IDbDefinit
             END IF;
         END
         $$;
+        """;
+    }
+
+    private string PostMigrationScript_AddKeyValueIndex()
+    {
+        return """
+            CREATE INDEX IF NOT EXISTS entitylookup_key_value_idx ON dbo.entitylookup USING btree (key, value) INCLUDE (id, entityid)
         """;
     }
 }
