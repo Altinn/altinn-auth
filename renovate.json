@@ -1,11 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "local>Altinn/renovate-config"
-  ],
-  "labels": [
-    "dependencies"
-  ],
+  "extends": ["local>Altinn/renovate-config"],
+  "labels": ["dependencies"],
   "packageRules": [
     {
       "matchManagers": ["nuget"],
@@ -14,13 +10,9 @@
       "prBodyNotes": [
         ":warning: Updating Microsoft.CodeAnalysis packages requires new compiler version. This typically requires people to update VS. :warning:"
       ],
-      "addLabels": [
-        "dependencies/breaking"
-      ],
+      "addLabels": ["dependencies/breaking"],
       "minimumReleaseAge": "60 days",
-      "matchPackageNames": [
-        "Microsoft.CodeAnalysis{/,}**"
-      ]
+      "matchPackageNames": ["Microsoft.CodeAnalysis{/,}**"]
     },
     {
       "matchManagers": ["nuget"],
@@ -30,9 +22,7 @@
       ],
       "groupName": "IdentityModel Extensions for .NET",
       "groupSlug": "azure-activedirectory-identitymodel-extensions-for-dotnet",
-      "matchUpdateTypes": [
-        "major"
-      ]
+      "matchUpdateTypes": ["major"]
     },
     {
       "matchManagers": ["nuget"],
@@ -40,25 +30,19 @@
         "Swashbuckle.AspNetCore",
         "Swashbuckle.AspNetCore.Swagger",
         "Swashbuckle.AspNetCore.SwaggerGen",
-        "Swashbuckle.AspNetCore.Annotations"
+        "Swashbuckle.AspNetCore.Annotations",
+        "Swashbuckle.AspNetCore.Filters"
       ],
       "groupName": "Swashbuckle",
       "groupSlug": "swashbuckle",
-      "matchUpdateTypes": [
-        "major"
-      ]
+      "matchUpdateTypes": ["major"]
     },
     {
       "matchManagers": ["nuget"],
-      "matchPackageNames": [
-        "Testcontainers",
-        "Testcontainers.PostgreSql"
-      ],
+      "matchPackageNames": ["Testcontainers", "Testcontainers.PostgreSql"],
       "groupName": "Testcontainers for .NET",
       "groupSlug": "testcontainers-for-dotnet",
-      "matchUpdateTypes": [
-        "major"
-      ]
+      "matchUpdateTypes": ["major"]
     },
     {
       "matchManagers": ["nuget"],
@@ -69,9 +53,7 @@
       ],
       "groupName": "XUnit v3",
       "groupSlug": "xunit-v3",
-      "matchUpdateTypes": [
-        "major"
-      ]
+      "matchUpdateTypes": ["major"]
     },
     {
       "matchManagers": ["npm"],
@@ -82,9 +64,7 @@
       ],
       "groupName": "Digdir Designsystemet",
       "groupSlug": "digdir-designsystemet",
-      "matchUpdateTypes": [
-        "major"
-      ]
+      "matchUpdateTypes": ["major"]
     }
   ]
 }
