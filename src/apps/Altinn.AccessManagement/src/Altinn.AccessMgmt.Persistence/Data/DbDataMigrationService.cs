@@ -3412,7 +3412,7 @@ public class DbDataMigrationService(
         if (migrationService.NeedMigration<RolePackage>(dataKey, 2))
         {
             await CleanupNufRolePackage(options, cancellationToken);
-            ////await migrationService.LogMigration<RolePackage>(dataKey, "Delete non-nuf limited role connections to urn:altinn:accesspackage:maskinporten-scopes-nuf", 2);
+            await migrationService.LogMigration<RolePackage>(dataKey, "Delete non-nuf limited role connections to urn:altinn:accesspackage:maskinporten-scopes-nuf", 2);
         }
 
         if (migrationService.NeedMigration<Role>(dataKey, 1))
