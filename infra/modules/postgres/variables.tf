@@ -35,7 +35,7 @@ variable "tags" {
 
 variable "storage_tier" {
   type    = string
-  default = "P4"
+  default = "P10"
 }
 
 variable "configurations" {
@@ -46,11 +46,11 @@ variable "configurations" {
 variable "compute_tier" {
   type = string
   validation {
-    condition     = contains(["Burstable", "GeneralPurpose", "MemoryOptimized"], var.compute_tier)
-    error_message = "Possible values are Burstable, GeneralPurpose and MemoryOptimized"
+    condition     = contains(["GeneralPurpose", "MemoryOptimized"], var.compute_tier)
+    error_message = "Possible values are GeneralPurpose and MemoryOptimized"
   }
 
-  default     = "Burstable" # Cheapest
+  default     = "GeneralPurpose" # Cheapest
   description = "Compute tier"
 }
 

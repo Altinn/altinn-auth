@@ -12,8 +12,8 @@ platform_workflow_principal_ids = [
   "3e2be4e1-e4ea-4cdd-8e3e-62fc06f2eca1"  # altinn-register-app-at24-aks02
 ]
 db_max_pool_size = 4
-db_compute_tier  = "Burstable"
-db_compute_size  = "Standard_B2s"
+db_compute_tier  = "GeneralPurpose"
+db_compute_size  = "Standard_D2ads_v5"
 sbl_endpoint     = "https://at24.altinn.cloud/sblbridge/"
 
 features = {

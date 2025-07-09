@@ -13,4 +13,4 @@ platform_workflow_principal_ids = [
 ]
 db_max_pool_size = 10
 db_compute_tier  = "GeneralPurpose"
-db_compute_size  = "Standard_D2s_v3"
+db_compute_size  = "Standard_D2ads_v5"
