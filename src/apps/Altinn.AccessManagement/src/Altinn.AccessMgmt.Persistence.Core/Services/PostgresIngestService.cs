@@ -90,9 +90,20 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
                     $")"
                 )
         );
-        var mergeUpdateStatement = string.Join(" , ", ingestColumns.Where(t => matchColumns.Count(y => y.Equals(t.Name, StringComparison.OrdinalIgnoreCase)) == 0).Select(t => $"{t.Name} = source.{t.Name}"));
-        var insertColumns = string.Join(" , ", ingestColumns.Select(t => $"{t.Name}"));
-        var insertValues = string.Join(" , ", ingestColumns.Select(t => $"source.{t.Name}"));
+
+        string mergeUpdateStatement;
+        if (type.Name == "RolePackage")
+        {
+            // PrimaryKey for RolePackage can not be included in update as there exists foreign key constraint on it from DelegationPackage 
+            mergeUpdateStatement = string.Join(", ", ingestColumns.Where(t => !t.Name.Equals("id", StringComparison.OrdinalIgnoreCase) && !matchColumns.Any(y => y.Equals(t.Name, StringComparison.OrdinalIgnoreCase))).Select(t => $"{t.Name} = source.{t.Name}"));
+        }
+        else
+        {
+            mergeUpdateStatement = string.Join(", ", ingestColumns.Where(t => !matchColumns.Any(y => y.Equals(t.Name, StringComparison.OrdinalIgnoreCase))).Select(t => $"{t.Name} = source.{t.Name}"));
+        }
+
+        var insertColumns = string.Join(", ", ingestColumns.Select(t => $"{t.Name}"));
+        var insertValues = string.Join(", ", ingestColumns.Select(t => $"source.{t.Name}"));
 
         var sb = new StringBuilder();
 

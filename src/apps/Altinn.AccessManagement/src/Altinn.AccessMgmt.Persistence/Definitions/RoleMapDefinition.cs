@@ -26,7 +26,7 @@ public class RoleMapDefinition : BaseDbDefinition<RoleMap>, IDbDefinition
             def.RegisterProperty(t => t.GetRoleId);
 
             def.RegisterExtendedProperty<ExtRoleMap, Role>(t => t.HasRoleId, t => t.Id, t => t.HasRole, cascadeDelete: true);
-            def.RegisterExtendedProperty<ExtRoleMap, Role>(t => t.GetRoleId, t => t.Id, t => t.GetRole, cascadeDelete: false);
+            def.RegisterExtendedProperty<ExtRoleMap, Role>(t => t.GetRoleId, t => t.Id, t => t.GetRole, cascadeDelete: true);
 
             def.RegisterUniqueConstraint([t => t.HasRoleId, t => t.GetRoleId]);
         });
