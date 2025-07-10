@@ -259,6 +259,34 @@ public static class EnduserValidationRules
         };
 
         /// <summary>
+        /// Checks the list of packages that all are assignable to the recipient entity type.
+        /// </summary>
+        /// <param name="packages">list of packages</param>
+        /// <param name="toEntity">entity the assignment is to be made to</param>
+        /// <param name="paramName">name of the query parameter</param>
+        /// <returns></returns>
+        internal static RuleExpression PackageIsAssignableToRecipient(IEnumerable<ExtConnectionPackage> packages, ExtEntity toEntity, string paramName = "packageId") => () =>
+        {
+            ArgumentNullException.ThrowIfNull(packages);
+            ArgumentException.ThrowIfNullOrEmpty(paramName);
+
+            if (toEntity.Type.Id == EntityTypeId.Organization)
+            {
+                var packagesNotAssignableToOrg = packages
+                .Where(p => p.Package.Urn.Equals("urn:altinn:accesspackage:hovedadministrator"))
+                .Select(p => p.Package.Urn);
+
+                if (packagesNotAssignableToOrg.Any())
+                {
+                    return (ref ValidationErrorBuilder errors) =>
+                        errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramName}", [new("Packages", $"{string.Join(", ", packagesNotAssignableToOrg)} are not assignable to an organization.")]);
+                }
+            }
+
+            return null;
+        };
+
+        /// <summary>
         /// Checks is packages can be asigned by checking <see cref="ConnectionPackage.CanAssign"/> is set to to true.
         /// </summary>
         /// <param name="packages">List of packages.</param>

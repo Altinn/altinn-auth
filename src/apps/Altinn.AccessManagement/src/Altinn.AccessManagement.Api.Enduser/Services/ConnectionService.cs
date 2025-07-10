@@ -245,8 +245,9 @@ public class ConnectionService(
 
         problem = EnduserValidationRules.Validate(
             EnduserValidationRules.QueryParameters.AnyPackages(userpackage, queryParamName),
+            EnduserValidationRules.QueryParameters.PackageIsAssignableByDefinition(userpackage, queryParamName),
             EnduserValidationRules.QueryParameters.PackageIsAssignableByUser(userpackage, queryParamName),
-            EnduserValidationRules.QueryParameters.PackageIsAssignableByDefinition(userpackage, queryParamName)
+            EnduserValidationRules.QueryParameters.PackageIsAssignableToRecipient(userpackage, dependencies.EntityTo, queryParamName)
         );
 
         if (problem is { })
