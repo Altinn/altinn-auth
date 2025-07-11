@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/resourceregistry/api/v1/resource
+  url: {{baseUrl}}/resourceregistry/api/v1/resource/altinn_keyrole_access
   body: json
   auth: inherit
 }
@@ -13,15 +13,16 @@ post {
 body:json {
   {
     "identifier": "altinn_keyrole_access",
+    "version": "v1",
     "title": {
       "en": "Key role resource",
       "nb": "Nøkkelrolle ressurs",
       "nn": "Nøkkelrolle ressurs"
     },
     "description": {
-      "en": "System resource for authorization of user for having a key role for a given party.",
-      "nb": "System ressurs for autorisasjon av om bruker har nøkkelrolle for en gitt part.",
-      "nn": "System ressurs for autorisasjon av om brukar har nøkkelrolle for ein gitt part."
+      "en": "System resource for authorization of user for having a key role for a given organization. Roles defined as key roles are; Managing Director (DAGL), Chair of the Board (LEDE), Managing Shipowner (BEST), Estate Administrator (BOBE), Participant with Shared Responsibility (DTPR), Participant with Full Responsibility (DTSO), Owner (INNH) and General Partner (KOMP).",
+      "nb": "System ressurs for autorisasjon av om bruker har nøkkelrolle for en gitt virksomhet. Daglig leder (DAGL), Styrets leder (LEDE), Bestyrende reder (BEST), Bostyrer (BOBE), Deltaker med delt ansvar (DTPR), Deltaker med fullt ansvar (DTSO), Innehaver (INNH) and Komplementar (KOMP).",
+      "nn": "System ressurs for autorisasjon av om brukar har nøkkelrolle for ein gitt virksomheit. Dagleg leiar (DAGL), Styrets leiar (LEDE), Bestyrande reder (BEST), Bobestyrar (BOBE), Deltakar delt ansvar (DTPR), Deltakar fullt ansvar (DTSO), Innehavar (INNH) and Komplementar (KOMP)."
     },
     "rightDescription": {
       "en": "Not available for delegation.",
@@ -29,21 +30,36 @@ body:json {
       "nn": "Ikkje tilgjengeleg for delegering."
     },
     "homepage": "https://altinn.no",
-    "status": "Active",
-    "contactPoints": [],
+    "status": "Completed",
+    "contactPoints": [
+      {
+        "category": "Support",
+        "email": "servicedesk@altinn.no",
+        "telephone": "",
+        "contactPage": ""
+      }
+    ],
     "isPartOf": "",
     "resourceReferences": [],
     "delegable": false,
     "visible": false,
     "hasCompetentAuthority": {
+      "name": {
+        "en": "Norwegian Digitalisation Agency",
+        "nb": "Digitaliseringsdirektoratet",
+        "nn": "Digitaliseringsdirektoratet"
+      },
       "organization": "991825827",
-      "orgcode": "DIGDIR"
+      "orgcode": "digdir"
     },
     "keywords": [],
     "accessListMode": "Disabled",
     "selfIdentifiedUserEnabled": false,
     "enterpriseUserEnabled": false,
-    "resourceType": "SystemResource"
+    "resourceType": "Systemresource",
+    "availableForType": [
+      "PrivatePerson"
+    ]
   }
 }
 

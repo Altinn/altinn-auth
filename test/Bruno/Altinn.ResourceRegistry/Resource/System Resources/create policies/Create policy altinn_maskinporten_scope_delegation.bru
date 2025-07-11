@@ -7,7 +7,7 @@ meta {
 post {
   url: {{baseUrl}}/resourceregistry/api/v1/resource/{{id}}/policy
   body: multipartForm
-  auth: none
+  auth: inherit
 }
 
 headers {
@@ -15,7 +15,7 @@ headers {
 }
 
 body:multipart-form {
-  policyFile: @file(policyFile: altinn_maskinporten_scope_delegation.xacml)
+  policyFile: @file(Testdata/Policies/altinn_maskinporten_scope_delegation.xacml)
 }
 
 vars:pre-request {
@@ -23,5 +23,19 @@ vars:pre-request {
 }
 
 script:pre-request {
-  await tokenGenerator.getToken();
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  var getTokenParameters = {
+    auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
+    auth_org: sharedtestdata.serviceOwners.digdir.org,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.resourceregistryAdmin
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  
+  bru.setVar("bearerToken", token);
+  
+  
+  
 }
