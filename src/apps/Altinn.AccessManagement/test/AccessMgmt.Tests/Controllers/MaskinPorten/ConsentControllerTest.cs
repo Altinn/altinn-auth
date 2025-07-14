@@ -107,6 +107,7 @@ namespace AccessMgmt.Tests.Controllers.MaskinPorten
             HttpResponseMessage response = await client.PostAsJsonAsync(url, consentLookup);
             string responseContent = await response.Content.ReadAsStringAsync();
             ConsentInfoMaskinportenDto consentInfo = JsonSerializer.Deserialize<ConsentInfoMaskinportenDto>(responseContent, _jsonOptions);
+            Assert.True(DateTime.UtcNow.AddDays(-2) < consentInfo.Consented);
             Assert.Equal(2, consentInfo.ConsentRights.Count());
         }
 

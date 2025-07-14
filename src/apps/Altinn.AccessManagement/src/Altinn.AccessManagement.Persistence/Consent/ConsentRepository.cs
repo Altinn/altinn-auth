@@ -176,19 +176,14 @@ namespace Altinn.AccessManagement.Persistence.Consent
             command.Parameters.AddWithValue("redirectUrl", NpgsqlDbType.Text, consentRequest.RedirectUrl);
 
             command.Parameters.AddWithValue("validTo", NpgsqlDbType.TimestampTz, consentRequest.ValidTo.ToOffset(TimeSpan.Zero));
-
+            await command.PrepareAsync(cancellationToken);
             try
-            {
+            { 
                 await command.ExecuteNonQueryAsync(cancellationToken);
             }
-            catch (NpgsqlException ex)
+            catch (NpgsqlException ex) when (ex.SqlState == "23505")
             {
-                if (ex.SqlState == "23505")
-                {
-                    return null; // Duplicate key violation
-                }
-                
-                throw;
+                return null;
             }
 
             foreach (ConsentRight consentRight in consentRequest.ConsentRights)
@@ -210,6 +205,8 @@ namespace Altinn.AccessManagement.Persistence.Consent
                 rightsCommand.Parameters.AddWithValue(PARAM_CONSENT_RIGHT_ID, consentRightGuid);
                 rightsCommand.Parameters.AddWithValue(PARAM_CONSENT_REQUEST_ID, consentRequest.Id);
                 rightsCommand.Parameters.AddWithValue("action", consentRight.Action);
+
+                await rightsCommand.PrepareAsync(cancellationToken);
                 await rightsCommand.ExecuteNonQueryAsync(cancellationToken);
 
                 // Bulding up the query for the resource attributes. Typical this is only one, but in theory it can be multiple attributes identifying a resource.
@@ -233,6 +230,7 @@ namespace Altinn.AccessManagement.Persistence.Consent
                 }
 
                 resourceCommand.CommandText = $"INSERT INTO consent.resourceattribute (consentRightId, type, value, version) VALUES {string.Join(", ", values)}";
+                await resourceCommand.PrepareAsync(cancellationToken);
                 await resourceCommand.ExecuteNonQueryAsync(cancellationToken);
 
                 if (consentRight.Metadata != null && consentRight.Metadata.Count > 0)
@@ -250,6 +248,7 @@ namespace Altinn.AccessManagement.Persistence.Consent
                     }
 
                     metadatacommand.CommandText = $"INSERT INTO consent.metadata (consentrightid, id, value) VALUES {string.Join(", ", metaValues)}";
+                    await metadatacommand.PrepareAsync(cancellationToken);
                     await metadatacommand.ExecuteNonQueryAsync(cancellationToken);
                 }
             }
@@ -269,6 +268,7 @@ namespace Altinn.AccessManagement.Persistence.Consent
                 throw new InvalidDataException("Invalid fromPartyUuid");
             }
 
+            await eventCommand.PrepareAsync(cancellationToken);
             await eventCommand.ExecuteNonQueryAsync(cancellationToken);
 
             await tx.CommitAsync(cancellationToken); 
