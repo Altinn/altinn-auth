@@ -45,6 +45,12 @@ internal partial class AccessListsRepository
         => InTransaction(repo => repo.GetAccessListsByOwner(resourceOwner, continueFrom, count, includes, resourceIdentifier, cancellationToken), cancellationToken);
 
     /// <inheritdoc/>
+    public Task<IReadOnlyList<AccessListInfo>> GetAccessListByMember(
+        Guid memberParty, 
+        CancellationToken cancellationToken = default)
+    => InTransaction(repo => repo.GetAccessListByMember(memberParty, cancellationToken), cancellationToken);
+
+    /// <inheritdoc/>
     public Task<AccessListInfo?> LookupInfo(Guid id, AccessListIncludes includes = default, CancellationToken cancellationToken = default)
         => InTransaction(repo => repo.LookupInfo(new(id), includes, cancellationToken), cancellationToken);
 

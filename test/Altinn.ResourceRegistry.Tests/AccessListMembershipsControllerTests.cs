@@ -17,7 +17,7 @@ namespace Altinn.ResourceRegistry.Tests;
 public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplicationFixture webApplicationFixture)
     : WebApplicationTests(dbFixture, webApplicationFixture)
 {
-    private const string ORG_NR = "974761076";
+    private const string ORG_CODE = "ttd";
 
     protected IAccessListsRepository Repository => Services.GetRequiredService<IAccessListsRepository>();
     protected AdvanceableTimeProvider TimeProvider => Services.GetRequiredService<AdvanceableTimeProvider>();
@@ -160,7 +160,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
         var user2 = PartyUrn.PartyUuid.Create(GenerateUserId());
 
         var list1 = await Repository.CreateAccessList(
-            resourceOwner: ORG_NR, 
+            resourceOwner: ORG_CODE, 
             identifier: "access-list1", 
             name: "Access List 1",
             description: "description1");
@@ -170,7 +170,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
         await list1.SaveChanges();
 
         var list2 = await Repository.CreateAccessList(
-            resourceOwner: ORG_NR,
+            resourceOwner: ORG_CODE,
             identifier: "access-list2",
             name: "Access List 2",
             description: "description2");
@@ -213,7 +213,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
         var user2 = PartyUrn.PartyUuid.Create(GenerateUserId());
 
         var list1 = await Repository.CreateAccessList(
-            resourceOwner: ORG_NR,
+            resourceOwner: ORG_CODE,
             identifier: "access-list1",
             name: "Access List 1",
             description: "description1");
@@ -251,7 +251,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
         var user2 = PartyUrn.PartyUuid.Create(GenerateUserId());
 
         var list1 = await Repository.CreateAccessList(
-            resourceOwner: ORG_NR,
+            resourceOwner: ORG_CODE,
             identifier: "access-list1",
             name: "Access List 1",
             description: "description1");
@@ -271,6 +271,102 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
 
         memberships.Items.Should().HaveCount(1);
         memberships.Items.Should().Contain(m => m.Party == user1 && m.Resource == resource1);
+    }
+
+    [Fact]
+    public async Task By_Member_MemberOfOne()
+    {
+        const string RESOURCE1 = "resource1";
+        const string RESOURCE2 = "resource2";
+
+        await AddResource(RESOURCE1);
+        await AddResource(RESOURCE2);
+
+        var resource1 = ResourceUrn.ResourceId.Create(ResourceIdentifier.CreateUnchecked(RESOURCE1));
+        var resource2 = ResourceUrn.ResourceId.Create(ResourceIdentifier.CreateUnchecked(RESOURCE2));
+        var user1 = PartyUrn.PartyUuid.Create(GenerateUserId());
+        var user2 = PartyUrn.PartyUuid.Create(GenerateUserId());
+
+        var list1 = await Repository.CreateAccessList(
+            resourceOwner: ORG_CODE,
+            identifier: "access-list1",
+            name: "Access List 1",
+            description: "description1");
+
+        list1.AddResourceConnection(RESOURCE1, []);
+        list1.AddResourceConnection(RESOURCE2, []);
+        list1.AddMembers([user1.Value, user2.Value]);
+        await list1.SaveChanges();
+
+        using var client = CreateAuthenticatedClient();
+
+        var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/get-by-member?party={user1}");
+        response.Should().HaveStatusCode(HttpStatusCode.OK);
+
+        IReadOnlyList<AccessListInfoDto>? memberships = await response.Content.ReadFromJsonAsync<IReadOnlyList<AccessListInfoDto>>();
+        Assert.NotNull(memberships);
+        Assert.Single(memberships);
+        AccessListInfoDto? list1Resp = memberships.FirstOrDefault(r => r.Identifier.Equals("access-list1"));
+        Assert.NotNull(list1Resp);
+        Assert.Equal("access-list1", list1Resp.Identifier);
+        Assert.Equal("description1", list1Resp.Description);
+        Assert.Equal("urn:altinn:access-list:ttd:access-list1", list1Resp.Urn);
+    }
+
+    [Fact]
+    public async Task By_Member_MemberOfTwo()
+    {
+        const string RESOURCE1 = "resource1";
+        const string RESOURCE2 = "resource2";
+
+        await AddResource(RESOURCE1);
+        await AddResource(RESOURCE2);
+
+        var resource1 = ResourceUrn.ResourceId.Create(ResourceIdentifier.CreateUnchecked(RESOURCE1));
+        var resource2 = ResourceUrn.ResourceId.Create(ResourceIdentifier.CreateUnchecked(RESOURCE2));
+        var party1 = PartyUrn.PartyUuid.Create(GenerateUserId());
+        var party2 = PartyUrn.PartyUuid.Create(GenerateUserId());
+
+        var list1 = await Repository.CreateAccessList(
+            resourceOwner: ORG_CODE,
+            identifier: "access-list1",
+            name: "Access List 1",
+            description: "description1");
+
+        list1.AddResourceConnection(RESOURCE1, []);
+        list1.AddResourceConnection(RESOURCE2, []);
+        list1.AddMembers([party1.Value, party2.Value]);
+        await list1.SaveChanges();
+
+        var list2 = await Repository.CreateAccessList(
+           resourceOwner: ORG_CODE,
+           identifier: "access-list2",
+           name: "Access List 2",
+           description: "description2");
+
+        list2.AddResourceConnection(RESOURCE1, []);
+        list2.AddResourceConnection(RESOURCE2, []);
+        list2.AddMembers([party1.Value, party2.Value]);
+        await list2.SaveChanges();
+
+        using var client = CreateAuthenticatedClient();
+
+        var response = await client.GetAsync($"/resourceregistry/api/v1/access-lists/get-by-member?party={party1}");
+        response.Should().HaveStatusCode(HttpStatusCode.OK);
+
+        IReadOnlyList<AccessListInfoDto>? memberships = await response.Content.ReadFromJsonAsync<IReadOnlyList<AccessListInfoDto>>();
+        Assert.NotNull(memberships);
+        Assert.Equal(2,memberships.Count);
+        AccessListInfoDto? list1Resp = memberships.FirstOrDefault(r => r.Identifier.Equals("access-list1"));
+        AccessListInfoDto? list2Resp = memberships.FirstOrDefault(r => r.Identifier.Equals("access-list2"));
+        Assert.NotNull(list1Resp);
+        Assert.NotNull(list2Resp);
+        Assert.Equal("access-list1", list1Resp.Identifier);
+        Assert.Equal("description1", list1Resp.Description);
+        Assert.Equal("urn:altinn:access-list:ttd:access-list1", list1Resp.Urn);
+        Assert.Equal("access-list2", list2Resp.Identifier);
+        Assert.Equal("description2", list2Resp.Description);
+        Assert.Equal("urn:altinn:access-list:ttd:access-list2", list2Resp.Urn);
     }
 
     #region Authorization

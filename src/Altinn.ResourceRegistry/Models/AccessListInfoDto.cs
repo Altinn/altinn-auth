@@ -14,6 +14,7 @@ namespace Altinn.ResourceRegistry.Models;
 /// <summary>
 /// Represents public access list metadata.
 /// </summary>
+/// <param name="Urn">URN of the access list</param>
 /// <param name="Identifier">The access list identifier</param>
 /// <param name="Name">The access list name</param>
 /// <param name="Description">The access list description</param>
@@ -23,6 +24,7 @@ namespace Altinn.ResourceRegistry.Models;
 /// <param name="Version">The aggregate version</param>
 [SwaggerSchemaFilter(typeof(SchemaFilter))]
 public record AccessListInfoDto(
+    string Urn,
     string Identifier,
     string Name,
     string Description,
@@ -38,6 +40,7 @@ public record AccessListInfoDto(
     /// <inheritdoc/>
     public static AccessListInfoDto From(AccessListInfo info)
         => new(
+            $"urn:altinn:access-list:{info.ResourceOwner}:{info.Identifier}",
             info.Identifier,
             info.Name,
             info.Description,

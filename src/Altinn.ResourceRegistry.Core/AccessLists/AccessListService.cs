@@ -57,6 +57,20 @@ internal class AccessListService
     }
 
     /// <inheritdoc/>
+    public async Task<IReadOnlyList<AccessListInfo>> GetAccessListsByMember(
+        Guid memberPartyUuid,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotDefault(memberPartyUuid);
+
+        IReadOnlyList<AccessListInfo> accessLists = await _repository.GetAccessListByMember(
+            memberPartyUuid,
+            cancellationToken);
+
+        return accessLists;
+    }
+
+    /// <inheritdoc/>
     public async Task<Conditional<AccessListInfo, ulong>> GetAccessList(
         string owner,
         string identifier,

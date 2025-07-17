@@ -225,13 +225,14 @@ internal partial class AccessListsRepository
             Guard.IsNotNullOrEmpty(resourceOwner);
             Guard.IsGreaterThan(count, 0);
 
-            const string QUERY = /*strpsql*/@"
+            const string QUERY = /*strpsql*/"""
                 SELECT aggregate_id, identifier, resource_owner, name, description, created, modified, version
                 FROM resourceregistry.access_list_state
                 WHERE resource_owner = @resource_owner
                 AND (@continue_from IS NULL OR identifier >= @continue_from)
                 ORDER BY identifier ASC
-                LIMIT @count;";
+                LIMIT @count;
+                """;
 
             await using var cmd = _conn.CreateCommand(QUERY);
             cmd.Parameters.AddWithValue("resource_owner", NpgsqlDbType.Text, resourceOwner);
@@ -255,6 +256,23 @@ internal partial class AccessListsRepository
                     cancellationToken);
             }
 
+            return accessLists;
+        }
+
+        public async Task<IReadOnlyList<AccessListInfo>> GetAccessListByMember(Guid memberParty, CancellationToken cancellationToken)
+        {
+            const string QUERY = /*strpsql*/"""
+                            SELECT a.aggregate_id, a.identifier, a.resource_owner, a.name, a.description, a.created, a.modified, a.version
+                            FROM resourceregistry.access_list_members_state AS m
+                            INNER JOIN resourceregistry.access_list_state AS a ON m.aggregate_id = a.aggregate_id
+                            WHERE m.party_id = @party_id;
+                            """;
+            await using var cmd = _conn.CreateCommand(QUERY);
+            cmd.Parameters.AddWithValue("party_id", NpgsqlDbType.Uuid, memberParty);
+            await cmd.PrepareAsync(cancellationToken);
+            var accessLists = await cmd.ExecuteEnumerableAsync(cancellationToken)
+                .Select(CreateAccessListInfo)
+                .ToListAsync(cancellationToken);
             return accessLists;
         }
 

@@ -29,6 +29,13 @@ public interface IAccessListsRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Get all access lists that a given party is member of.
+    /// </summary>
+    Task<IReadOnlyList<AccessListInfo>> GetAccessListByMember(
+        Guid memberParty,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Lookup access list info by id.
     /// </summary>
     /// <param name="id">The id</param>

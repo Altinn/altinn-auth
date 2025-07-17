@@ -32,6 +32,16 @@ public interface IAccessListService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets all access-lists a given party is a member of.
+    /// </summary>
+    /// <param name="memberPartyUuid">The given partyUuid for an member</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
+    /// <returns></returns>
+    Task<IReadOnlyList<AccessListInfo>> GetAccessListsByMember(
+        Guid memberPartyUuid,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets an access list by owner and identifier.
     /// </summary>
     /// <param name="owner">The resource owner (org.nr.).</param>
