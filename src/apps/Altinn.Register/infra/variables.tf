@@ -66,6 +66,11 @@ variable "sbl_endpoint" {
   type = string
 }
 
+variable "use_pgbouncer" {
+  type    = bool
+  default = false
+}
+
 variable "features" {
   type = object({
     a2_party_import = optional(object({

@@ -15,6 +15,7 @@ db_max_pool_size = 4
 db_compute_tier  = "GeneralPurpose"
 db_compute_size  = "Standard_D2ads_v5"
 sbl_endpoint     = "https://at22.altinn.cloud/sblbridge/"
+use_pgbouncer    = true
 
 features = {
   a2_party_import = {

@@ -221,6 +221,7 @@ module "postgres_server" {
   subnet_id           = data.azurerm_subnet.postgres.id
   private_dns_zone_id = data.azurerm_private_dns_zone.postgres.id
   postgres_version    = "16"
+  use_pgbouncer       = true
   configurations = {
     "azure.extensions" : "HSTORE"
     "max_locks_per_transaction" : "4096"
@@ -261,7 +262,8 @@ resource "null_resource" "bootstrap_database" {
         --server-name=${module.postgres_server.name} \
         --kv-resource-group=${azurerm_resource_group.register.name} \
         --kv-subscription=${data.azurerm_client_config.current.subscription_id} \
-        --kv-name=${module.key_vault.name}
+        --kv-name=${module.key_vault.name} \
+        --use-pgbouncer=${var.use_pgbouncer}
   EOT
   }
 }

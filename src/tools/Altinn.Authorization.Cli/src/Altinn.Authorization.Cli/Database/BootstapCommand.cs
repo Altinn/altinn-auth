@@ -319,13 +319,20 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
     {
         var connectionStringBuilder = new NpgsqlConnectionStringBuilder()
         {
+            Host = serverUrl,
             Username = user.RoleName,
             Password = user.Password,
-            Host = serverUrl,
             Database = config.Database.Name,
-            Port = 5432,
             SslMode = SslMode.Require,
+            Port = 5432,
+            Pooling = true,
         };
+
+        if (settings.UsePgbouncer)
+        {
+            connectionStringBuilder.NoResetOnClose = true;
+            connectionStringBuilder.Port = 6432;
+        }
 
         if (settings.MaxPoolSize.HasValue)
         {
@@ -480,6 +487,10 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
         [Description("Name of the Key Vault.")]
         [ExpandEnvironmentVariables]
         public required string KeyVaultName { get; init; }
+
+        [CommandOption("--use-pgbouncer <USE_PGBOUNCER>")]
+        [Description("Indicates that the connection should use the PgBouncer port.")]
+        public bool UsePgbouncer { get; init; }
 
         /// <summary>
         /// Gets the maximum pool size for the database connection.
