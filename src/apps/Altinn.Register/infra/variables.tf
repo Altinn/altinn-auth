@@ -59,7 +59,7 @@ variable "db_compute_size" {
 
 variable "db_storage_tier" {
   type    = string
-  default = "P4"
+  default = "P10"
 }
 
 variable "sbl_endpoint" {
