@@ -16,6 +16,19 @@ locals {
     "MemoryOptimized" = "MO"
   }
   sku_name = "${local.sku[var.compute_tier]}_${var.compute_size}"
+
+  pgbouncer_default_config = {
+    "pgbouncer.enabled" : "true"
+    "pgbouncer.max_prepared_statements" : "5000",
+    "pgbouncer.max_client_conn" : "5000",
+    "pgbouncer.pool_mode" : "TRANSACTION",
+  }
+
+  # latest key takes precedence
+  configuration = merge(
+    var.use_pgbouncer ? local.pgbouncer_default_config : {},
+    var.configurations,
+  )
 }
 
 resource "random_password" "pass" {
@@ -100,7 +113,7 @@ resource "azurerm_postgresql_flexible_server_configuration" "configuration" {
   server_id = azurerm_postgresql_flexible_server.postgres_server.id
   name      = each.key
   value     = each.value
-  for_each  = var.configurations
+  for_each  = local.configuration
 }
 
 resource "azurerm_management_lock" "postgres" {

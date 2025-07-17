@@ -43,6 +43,11 @@ variable "configurations" {
   default = {}
 }
 
+variable "use_pgbouncer" {
+  type = bool
+  default = false
+}
+
 variable "compute_tier" {
   type = string
   validation {
