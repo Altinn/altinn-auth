@@ -18,7 +18,6 @@ locals {
   sku_name = "${local.sku[var.compute_tier]}_${var.compute_size}"
 
   pgbouncer_default_config = {
-    "pgbouncer.enabled" : "true"
     "pgbouncer.max_prepared_statements" : "5000",
     "pgbouncer.max_client_conn" : "5000",
     "pgbouncer.pool_mode" : "TRANSACTION",
@@ -114,7 +113,17 @@ resource "azurerm_postgresql_flexible_server_configuration" "configuration" {
   name      = each.key
   value     = each.value
   for_each  = local.configuration
+
+  depends_on = [azurerm_postgresql_flexible_server_configuration.use_pgbouncer]
 }
+
+# Must be enabled first if azurerm_postgresql_flexible_server_configuration.configuration modifies any pgbouncer settings.
+resource "azurerm_postgresql_flexible_server_configuration" "use_pgbouncer" {
+  server_id = azurerm_postgresql_flexible_server.postgres_server.id
+  name      = "pgbouncer.enabled"
+  value     = var.use_pgbouncer
+}
+
 
 resource "azurerm_management_lock" "postgres" {
   name       = "Terraform Managed Lock"

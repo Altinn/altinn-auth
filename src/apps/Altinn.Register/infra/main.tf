@@ -221,7 +221,7 @@ module "postgres_server" {
   subnet_id           = data.azurerm_subnet.postgres.id
   private_dns_zone_id = data.azurerm_private_dns_zone.postgres.id
   postgres_version    = "16"
-  use_pgbouncer       = true
+  use_pgbouncer       = var.use_pgbouncer
   configurations = {
     "azure.extensions" : "HSTORE"
     "max_locks_per_transaction" : "4096"
