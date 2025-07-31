@@ -59,11 +59,11 @@
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.7" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.7" />
     <PackageVersion Include="Microsoft.AspNetCore.Routing.Abstractions" Version="2.3.0" />
-    <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="8.2.0" />
+    <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="8.3.0" />
     <PackageVersion Include="Microsoft.Azure.DocumentDB.Core" Version="2.22.0" />
     <PackageVersion Include="Microsoft.Azure.Services.AppAuthentication" Version="1.6.2" />
     <PackageVersion Include="Microsoft.Build.Artifacts" Version="6.1.63" />
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.0.2" />
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.1.0" />
     <PackageVersion Include="Microsoft.Extensions.Azure" Version="1.12.0" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.AzureKeyVault" Version="3.1.24" />
@@ -82,8 +82,8 @@
     <PackageVersion Include="Microsoft.Extensions.Options" Version="9.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="9.7.0" />
     <PackageVersion Include="Microsoft.FeatureManagement.AspNetCore" Version="4.2.1" />
-    <PackageVersion Include="Microsoft.IdentityModel.Logging" Version="8.12.1" />
-    <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.12.1" />
+    <PackageVersion Include="Microsoft.IdentityModel.Logging" Version="8.13.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.13.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageVersion Include="Moq" Version="4.20.72" />
@@ -102,7 +102,7 @@
     <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="8.1.4" />
     <PackageVersion Include="Swashbuckle.AspNetCore.Filters" Version="9.0.0" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="8.1.4" />
-    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.13.0" />
     <PackageVersion Include="System.Linq.Async" Version="6.0.3" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.6.0" />
     <PackageVersion Include="xunit.v3.assert" Version="2.0.3" />
