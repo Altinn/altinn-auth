@@ -20,7 +20,7 @@ public static partial class AccessManagementEnduserHost
     public static IHostApplicationBuilder AddAccessManagementEnduser(this IHostApplicationBuilder builder)
     {
         Log.AddHost(Logger);
-        builder.Services.AddSingleton<IEnduserConnectionService, ConnectionService>();
+        builder.Services.AddSingleton<IEnduserConnectionService, EnduserConnectionService>();
         return builder;
     }
 

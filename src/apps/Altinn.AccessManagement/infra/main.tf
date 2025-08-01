@@ -234,6 +234,12 @@ module "appsettings" {
       label       = "${lower(var.environment)}-access-management"
       value       = true
     },
+    {
+      name        = "AccessManagement.Internal.Connections"
+      description = "Specifies if feature access connections are enabled for internal usage."
+      label       = "${lower(var.environment)}-access-management"
+      value       = true
+    },
   ]
   providers = {
     azurerm.hub = azurerm.hub

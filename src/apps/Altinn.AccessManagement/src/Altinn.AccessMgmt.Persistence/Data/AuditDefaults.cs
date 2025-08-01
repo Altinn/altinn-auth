@@ -29,4 +29,14 @@ public static class AuditDefaults
     /// EnduserApiStr
     /// </summary>
     public const string EnduserApiStr = "ED771364-42A8-4934-801E-B482ED20EC3E";
+
+    /// <summary>
+    /// EnduserApi
+    /// </summary>
+    public static readonly Guid InternalApi = Guid.Parse(InternalApiStr);
+
+    /// <summary>
+    /// EnduserApiStr
+    /// </summary>
+    public const string InternalApiStr = "B2B7DD36-8DE5-40FB-A6CE-C7A4020F9DDC";
 }

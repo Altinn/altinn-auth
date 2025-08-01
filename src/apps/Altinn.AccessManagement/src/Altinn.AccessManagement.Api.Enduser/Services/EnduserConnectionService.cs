@@ -14,42 +14,18 @@ namespace Altinn.AccessManagement.Enduser.Services;
 /// <summary>
 /// Service for managing connections.
 /// </summary>
-public class ConnectionService(
-    IDbAudit dbAudit,
-    IPackageRepository packageRepository,
-    IRoleRepository roleRepository,
-    IConnectionPackageRepository connectionPackageRepository,
-    IAssignmentRepository assignmentRepository,
-    IDelegationRepository delegationRepository,
-    IAssignmentPackageRepository assignmentPackageRepository,
-    IEntityRepository entityRepository,
-    IRelationService relationService,
-    IRelationPermissionRepository relationPermissionRepository,
-    IRelationRepository relationRepository
+public class EnduserConnectionService(
+    IDbAudit DbAudit,
+    IPackageRepository PackageRepository,
+    IRoleRepository RoleRepository,
+    IConnectionPackageRepository ConnectionPackageRepository,
+    IAssignmentRepository AssignmentRepository,
+    IDelegationRepository DelegationRepository,
+    IAssignmentPackageRepository AssignmentPackageRepository,
+    IEntityRepository EntityRepository,
+    IRelationService RelationService
     ) : IEnduserConnectionService
 {
-    private IDbAudit DbAudit { get; } = dbAudit;
-
-    private IRelationService RelationService { get; } = relationService;
-
-    private IRelationRepository RelationRepository { get; } = relationRepository;
-
-    private IPackageRepository PackageRepository { get; } = packageRepository;
-
-    private IRoleRepository RoleRepository { get; } = roleRepository;
-
-    private IConnectionPackageRepository ConnectionPackageRepository { get; } = connectionPackageRepository;
-
-    private IAssignmentRepository AssignmentRepository { get; } = assignmentRepository;
-
-    private IDelegationRepository DelegationRepository { get; } = delegationRepository;
-
-    private IAssignmentPackageRepository AssignmentPackageRepository { get; } = assignmentPackageRepository;
-
-    private IEntityRepository EntityRepository { get; } = entityRepository;
-
-    private IRelationPermissionRepository RelationPermissionRepository { get; } = relationPermissionRepository;
-
     /// <inheritdoc />
     public async Task<Result<List<CompactRelationDto>>> Get(Guid? fromId = null, Guid? toId = null, CancellationToken cancellationToken = default)
     {
@@ -388,7 +364,7 @@ public class ConnectionService(
         throw new UnreachableException();
 
     private static string SpanName(string spanName) =>
-        $"{nameof(ConnectionService)}: {spanName}";
+        $"{nameof(EnduserConnectionService)}: {spanName}";
 }
 
 /// <summary>
