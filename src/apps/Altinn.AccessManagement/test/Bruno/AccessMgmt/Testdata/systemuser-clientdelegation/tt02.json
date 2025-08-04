@@ -67,7 +67,8 @@
                 "partyUuid": "d673d146-ed6f-4bb4-8037-f63696a683c1"
             },
             "directPackageToDelegate": "motorvognavgift",
-            "directPackageToDelegate2": "skatt-naering"
+            "directPackageToDelegate2": "skatt-naering",
+            "directPackageTilgangsstyrer": "tilgangsstyrer"
         },
         "client_rightholderOrg2": {
             "name": "STOLT BETYDELIG TIGER AS",

@@ -207,6 +207,12 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
     }
 
     /// <inheritdoc />
+    public async Task<IEnumerable<PackageDelegationCheck>> GetAssignablePackagePermissions(Guid partyId, Guid fromId, IEnumerable<Guid>? packageIds = null, CancellationToken cancellationToken = default)
+    {
+        return await relationPermissionRepository.GetAssignableAccessPackages(fromId, partyId, packageIds, cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<IEnumerable<ResourcePermission>> GetResourcePermissionsToOthers(Guid partyId, Guid? toId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();

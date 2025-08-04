@@ -121,10 +121,10 @@ public class DbDataMigrationService(
             await migrationService.LogMigration<Package>(dataKey, string.Empty, 8);
         }
 
-        if (migrationService.NeedMigration<RolePackage>(dataKey, 6))
+        if (migrationService.NeedMigration<RolePackage>(dataKey, 7))
         {
             await IngestRolePackage(options: options, cancellationToken: cancellationToken);
-            await migrationService.LogMigration<RolePackage>(dataKey, string.Empty, 6);
+            await migrationService.LogMigration<RolePackage>(dataKey, string.Empty, 7);
         }
 
         if (migrationService.NeedMigration<EntityVariantRole>(dataKey, 2))
@@ -1837,6 +1837,7 @@ public class DbDataMigrationService(
         var roleBest = roles["urn:altinn:external-role:ccr:bestyrende-reder"];
         var roleBobe = roles["urn:altinn:external-role:ccr:bostyrer"];
         var roleKnuf = roles["urn:altinn:external-role:ccr:kontaktperson-nuf"];
+        var roleHadm = roles["urn:altinn:role:hovedadministrator"];
 
         var packageKA = packages["urn:altinn:accesspackage:klientadministrator"];
         var packageTS = packages["urn:altinn:accesspackage:tilgangsstyrer"];
@@ -1854,6 +1855,7 @@ public class DbDataMigrationService(
             new RolePackage() { RoleId = roleKomp, PackageId = packageKA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleBest, PackageId = packageKA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleBobe, PackageId = packageKA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleHadm, PackageId = packageKA, EntityVariantId = null, CanDelegate = true, HasAccess = false },
 
             new RolePackage() { RoleId = roleDagl, PackageId = packageTS, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleLede, PackageId = packageTS, EntityVariantId = null, CanDelegate = true, HasAccess = true },
@@ -1864,13 +1866,14 @@ public class DbDataMigrationService(
             new RolePackage() { RoleId = roleBest, PackageId = packageTS, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleBobe, PackageId = packageTS, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleKnuf, PackageId = packageTS, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleHadm, PackageId = packageTS, EntityVariantId = null, CanDelegate = true, HasAccess = false },
 
             new RolePackage() { RoleId = roleDagl, PackageId = packageHA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleLede, PackageId = packageHA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleInnh, PackageId = packageHA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleDtso, PackageId = packageHA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleDtpr, PackageId = packageHA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
-            new RolePackage() { RoleId = roleBobe, PackageId = packageHA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleBobe, PackageId = packageHA, EntityVariantId = null, CanDelegate = true, HasAccess = false },
 
             new RolePackage() { RoleId = roleDagl, PackageId = packageMPA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleLede, PackageId = packageMPA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
@@ -1881,16 +1884,17 @@ public class DbDataMigrationService(
             new RolePackage() { RoleId = roleBest, PackageId = packageMPA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleBobe, PackageId = packageMPA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleKnuf, PackageId = packageMPA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleHadm, PackageId = packageMPA, EntityVariantId = null, CanDelegate = true, HasAccess = false },
 
-            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:regnskapsforer"], PackageId = packages["urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet"], EntityVariantId = null, CanDelegate = true, HasAccess = true },
-            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:regnskapsforer"], PackageId = packages["urn:altinn:accesspackage:regnskapsforer-uten-signeringsrettighet"], EntityVariantId = null, CanDelegate = true, HasAccess = true },
-            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:regnskapsforer"], PackageId = packages["urn:altinn:accesspackage:regnskapsforer-lonn"], EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:regnskapsforer"], PackageId = packages["urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet"], EntityVariantId = null, CanDelegate = false, HasAccess = true },
+            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:regnskapsforer"], PackageId = packages["urn:altinn:accesspackage:regnskapsforer-uten-signeringsrettighet"], EntityVariantId = null, CanDelegate = false, HasAccess = true },
+            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:regnskapsforer"], PackageId = packages["urn:altinn:accesspackage:regnskapsforer-lonn"], EntityVariantId = null, CanDelegate = false, HasAccess = true },
 
-            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:revisor"], PackageId = packages["urn:altinn:accesspackage:ansvarlig-revisor"], EntityVariantId = null, CanDelegate = true, HasAccess = true },
-            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:revisor"], PackageId = packages["urn:altinn:accesspackage:revisormedarbeider"], EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:revisor"], PackageId = packages["urn:altinn:accesspackage:ansvarlig-revisor"], EntityVariantId = null, CanDelegate = false, HasAccess = true },
+            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:revisor"], PackageId = packages["urn:altinn:accesspackage:revisormedarbeider"], EntityVariantId = null, CanDelegate = false, HasAccess = true },
 
-            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:forretningsforer"], PackageId = packages["urn:altinn:accesspackage:forretningsforer-eiendom"], EntityVariantId = variants["ESEK"], CanDelegate = true, HasAccess = true },
-            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:forretningsforer"], PackageId = packages["urn:altinn:accesspackage:forretningsforer-eiendom"], EntityVariantId = variants["BRL"], CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:forretningsforer"], PackageId = packages["urn:altinn:accesspackage:forretningsforer-eiendom"], EntityVariantId = variants["ESEK"], CanDelegate = false, HasAccess = true },
+            new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:forretningsforer"], PackageId = packages["urn:altinn:accesspackage:forretningsforer-eiendom"], EntityVariantId = variants["BRL"], CanDelegate = false, HasAccess = true },
 
             new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:bostyrer"], PackageId = packages["urn:altinn:accesspackage:konkursbo-lesetilgang"], EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roles["urn:altinn:external-role:ccr:bostyrer"], PackageId = packages["urn:altinn:accesspackage:konkursbo-skrivetilgang"], EntityVariantId = null, CanDelegate = true, HasAccess = true },

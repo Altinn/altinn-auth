@@ -3,6 +3,7 @@ using Altinn.AccessMgmt.Persistence.Core.Contracts;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Utilities;
 using Microsoft.Data.SqlClient;
+using Npgsql;
 
 namespace Altinn.AccessMgmt.Persistence.Core.Executors;
 
@@ -85,5 +86,11 @@ public class MssqlDbExecutor(SqlConnection connection, IDbConverter dbConverter)
         await using var cmd = connection.CreateCommand();
         cmd.CommandText = query;
         return dbConverter.ConvertToResult<T>(await cmd.ExecuteReaderAsync(cancellationToken));
+    }
+
+    /// <inheritdoc/>
+    public Task<IEnumerable<T>> ExecuteQuery<T>(string query, List<GenericParameter> parameters, Func<NpgsqlDataReader, ValueTask<T>> map, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

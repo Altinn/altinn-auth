@@ -130,6 +130,46 @@ public class PostgresDbExecutor(IAltinnDatabase databaseFactory, IDbConverter db
     }
 
     /// <summary>
+    /// Execute a custom query and return data mapped to return type using the provided mapping function.
+    /// </summary>
+    /// <param name="query">Query to execute</param>
+    /// <param name="parameters">Parameters</param>
+    /// <param name="map">Function to map the data reader to the specific return type</param>
+    /// <param name="callerName">Used for setting span name.</param>
+    /// <param name="cancellationToken">CancellationToken</param>
+    /// <returns></returns>
+    public async Task<IEnumerable<T>> ExecuteQuery<T>(string query, List<GenericParameter> parameters, Func<NpgsqlDataReader, ValueTask<T>> map, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)
+    {
+        using var conn = _databaseFactory.CreatePgsqlConnection(SourceType.App);
+        var openConnection = conn.OpenAsync(cancellationToken);
+        var cmd = conn.CreateCommand(query);
+
+        foreach (var parameter in parameters)
+        {
+            if (parameter.Value is null)
+            {
+                cmd.Parameters.Add(new NpgsqlParameter(parameter.Key, DBNull.Value));
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
+            }
+        }
+
+        await openConnection;
+
+        using var reader = await cmd.ExecuteReaderWithSpanNameAsync(CommandBehavior.SingleResult, callerName, cancellationToken);
+
+        var results = new List<T>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            results.Add(await map(reader));
+        }
+
+        return results;
+    }
+
+    /// <summary>
     /// Executes a query and maps the result to objects of type T.
     /// </summary>
     public async Task<QueryResponse<T>> ExecuteQuery<T>(string query, [CallerMemberName] string callerName = "", CancellationToken cancellationToken = default)

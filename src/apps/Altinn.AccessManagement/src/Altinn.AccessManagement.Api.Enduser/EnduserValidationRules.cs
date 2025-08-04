@@ -341,6 +341,37 @@ public static class EnduserValidationRules
         };
 
         /// <summary>
+        /// Used to check if package exists by check URN and resulkt of the DB lookup.
+        /// </summary>
+        /// <param name="packages">List of packags</param>
+        /// <param name="packageName">Name of the package.</param>
+        /// <param name="paramName">name of the query URN parameter.</param>
+        /// <returns></returns>
+        internal static RuleExpression PackageUrnLookup(IEnumerable<Package> packages, IEnumerable<string> packageName, string paramName = "package") => () =>
+        {
+            ArgumentNullException.ThrowIfNull(packages);
+            ArgumentException.ThrowIfNullOrEmpty(paramName);
+
+            if (packages.Any())
+            {
+                var msg = string.Join(",", packageName.Select(p => p.ToString()));
+                return (ref ValidationErrorBuilder errors) =>
+                    errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramName}", [new("packages", $"No packages were found with the names '{msg}'.")]
+                );
+            }
+
+            if (packages.Count() != packageName.Count())
+            {
+                var pkgsNotFound = packageName.Where(n => packages.Any(p => p.Name.Equals(n, StringComparison.InvariantCultureIgnoreCase)));
+                return (ref ValidationErrorBuilder errors) =>
+                    errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramName}", [new("packages", $"Packages with name(s) was not found '{pkgsNotFound}'.")]
+                );
+            }
+
+            return null;
+        };
+
+        /// <summary>
         /// Checks if any packages are assigned. Used along with cascade delete
         /// </summary>
         /// <param name="packages">List of packages.</param>
@@ -645,6 +676,48 @@ public static class EnduserValidationRules
             {
                 errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramNamePackageId}", [new("package", "Either a package URN or a package ID must be provided.")]);
                 errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramNamePackage}", [new("package", "Either a package URN or a package ID must be provided.")]);
+            };
+        };
+
+        /// <summary>
+        /// Validates packages ID
+        /// </summary>
+        /// <param name="packageIds">Package ID.</param>
+        /// <param name="packageUrns">Package URN.</param>
+        /// <param name="paramNamePackageId">query param name for package UUID.</param>
+        /// <param name="paramNamePackage">query param name for package URN.</param>
+        internal static RuleExpression PackageReferences(IEnumerable<Guid>? packageIds, IEnumerable<string> packageUrns, string paramNamePackageId = "packageIds", string paramNamePackage = "packages") => () =>
+        {
+            bool hasIds = packageIds?.Any() == true;
+            bool hasUrns = packageUrns?.Any() == true;
+
+            // Early success if only one of them is present and valid
+            if ((hasIds ^ hasUrns) && (!hasIds || packageIds!.All(g => g != Guid.Empty)))
+            {
+                return null;
+            }
+
+            return (ref ValidationErrorBuilder errors) =>
+            {
+                // Both present
+                if (hasIds && hasUrns)
+                {
+                    errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramNamePackageId}", [new("package", "Either list of package URNs or a package IDs must be provided, not both.")]);
+                    errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramNamePackage}", [new("package", "Either list of package URNs or a package IDs must be provided, not both.")]);
+                }
+
+                // Both missing
+                if (!hasIds && !hasUrns)
+                {
+                    errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramNamePackageId}", [new("package", "Either a package URN or a package ID must be provided.")]);
+                    errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramNamePackage}", [new("package", "Either a package URN or a package ID must be provided.")]);
+                }
+
+                // Invalid Guids
+                if (hasIds && packageIds!.Any(g => g == Guid.Empty))
+                {
+                    errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramNamePackageId}", [new("package", "Package IDs must be non-empty GUIDs.")]);
+                }
             };
         };
     }
