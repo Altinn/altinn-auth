@@ -1,7 +1,6 @@
 using System.Net.Mime;
 using Altinn.AccessManagement.Api.Internal.Models;
 using Altinn.AccessManagement.Core.Constants;
-using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Internal.Services;
 using Altinn.AccessMgmt.Core.Models;

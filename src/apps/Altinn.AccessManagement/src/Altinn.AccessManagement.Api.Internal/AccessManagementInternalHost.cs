@@ -20,7 +20,7 @@ public static partial class AccessManagementInternalHost
     public static IHostApplicationBuilder AddAccessManagementInternal(this IHostApplicationBuilder builder)
     {
         Log.AddHost(Logger);
-        builder.Services.AddSingleton<InternalConnectionsService, InternalConnectionsService>();
+        builder.Services.AddSingleton<IInternalConnectionService, InternalConnectionsService>();
         return builder;
     }
 
