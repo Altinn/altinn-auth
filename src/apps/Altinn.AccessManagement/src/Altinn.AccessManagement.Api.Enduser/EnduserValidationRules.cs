@@ -343,16 +343,16 @@ public static class EnduserValidationRules
         /// <summary>
         /// Used to check if package exists by check URN and resulkt of the DB lookup.
         /// </summary>
-        /// <param name="packages">List of packags</param>
+        /// <param name="packageLookupResult">Lookup result of packages based on input</param>
         /// <param name="packageName">Name of the package.</param>
         /// <param name="paramName">name of the query URN parameter.</param>
         /// <returns></returns>
-        internal static RuleExpression PackageUrnLookup(IEnumerable<Package> packages, IEnumerable<string> packageName, string paramName = "package") => () =>
+        internal static RuleExpression PackageUrnLookup(IEnumerable<Package> packageLookupResult, IEnumerable<string> packageName, string paramName = "package") => () =>
         {
-            ArgumentNullException.ThrowIfNull(packages);
+            ArgumentNullException.ThrowIfNull(packageLookupResult);
             ArgumentException.ThrowIfNullOrEmpty(paramName);
 
-            if (packages.Any())
+            if (!packageLookupResult.Any())
             {
                 var msg = string.Join(",", packageName.Select(p => p.ToString()));
                 return (ref ValidationErrorBuilder errors) =>
@@ -360,9 +360,9 @@ public static class EnduserValidationRules
                 );
             }
 
-            if (packages.Count() != packageName.Count())
+            if (packageLookupResult.Count() != packageName.Count())
             {
-                var pkgsNotFound = packageName.Where(n => packages.Any(p => p.Name.Equals(n, StringComparison.InvariantCultureIgnoreCase)));
+                var pkgsNotFound = packageName.Where(n => packageLookupResult.Any(p => p.Name.Equals(n, StringComparison.InvariantCultureIgnoreCase)));
                 return (ref ValidationErrorBuilder errors) =>
                     errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramName}", [new("packages", $"Packages with name(s) was not found '{pkgsNotFound}'.")]
                 );

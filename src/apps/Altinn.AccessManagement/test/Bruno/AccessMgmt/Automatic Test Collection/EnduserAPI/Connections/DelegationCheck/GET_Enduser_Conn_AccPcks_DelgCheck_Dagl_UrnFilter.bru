@@ -5,15 +5,15 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages/delegationcheck?party={{party}}&packages=urn:altinn:accesspackage:hovedadministrator&packages=urn:altinn:accesspackage:barnehageleder&packages=urn:altinn:accesspackage:eksplisitt
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages/delegationcheck?party={{party}}&packages=hovedadministrator&packages=:barnehageleder&packages=urn:altinn:accesspackage:eksplisitt
   body: json
   auth: inherit
 }
 
 params:query {
   party: {{party}}
-  packages: urn:altinn:accesspackage:hovedadministrator
-  packages: urn:altinn:accesspackage:barnehageleder
+  packages: hovedadministrator
+  packages: :barnehageleder
   packages: urn:altinn:accesspackage:eksplisitt
 }
 

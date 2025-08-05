@@ -332,7 +332,12 @@ public class EnduserConnectionService(
 
     public async Task<Result<IEnumerable<PackageDelegationCheckDto>>> CheckPackage(Guid party, IEnumerable<string> packages, IEnumerable<Guid> packageIds = null, CancellationToken cancellationToken = default)
     {
-        packages = packages.Select(p => p.StartsWith("urn:", StringComparison.Ordinal) || p.StartsWith(':') ? p : ":" + p);
+        packages = packages.Select(p =>
+            p.StartsWith("urn:", StringComparison.Ordinal)
+                ? p
+                : (p.StartsWith(":", StringComparison.Ordinal)
+                    ? $"urn:altinn:accesspackage{p}"
+                    : $"urn:altinn:accesspackage:{p}"));
 
         var filter = PackageRepository.CreateFilterBuilder()
             .In(t => t.Urn, packages);
