@@ -41,8 +41,8 @@ tests {
       const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
       const data = res.getBody();
       expect(res.status).to.equal(200);
-      expect(data[0].party).to.have.property('name', testdata.regn_type_org.klient_org.name);
-      expect(data[0].party).to.have.property('organizationNumber', testdata.regn_type_org.klient_org.orgno);
+      expect(data[9].party).to.have.property('name', testdata.regn_type_org.klient_org.name);
+      expect(data[9].party).to.have.property('organizationNumber', testdata.regn_type_org.klient_org.orgno);
     
     });
 }

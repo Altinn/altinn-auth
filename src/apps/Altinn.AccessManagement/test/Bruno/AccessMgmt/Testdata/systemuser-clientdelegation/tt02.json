@@ -106,8 +106,8 @@
             "partyUuid": "b77b311b-9f23-4664-be72-9e3dfae761a6"
         },
         "systemuser": {
-            "name": "Fiken",
-            "partyUuid": "4bfb037e-4ea2-4eac-b52f-fda063247a03",
+            "name": "TEST_SBS_KLIENT",
+            "partyUuid": "26c483dd-068f-497a-b8d2-39a6bd92ecc8",
             "directPackageToDelegate": "urn:altinn:accesspackage:ansettelsesforhold",
             "clientPackageToDelegate": "urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet",
             "clientEnkPackageToDelegate": "urn:altinn:accesspackage:regnskapsforer-lonn",
@@ -154,9 +154,9 @@
             "id": "2057d750-575b-4f3c-943c-c28d180bf487"
         },
         "client_org": {
-            "name": "ALFABETISK PASSIV TIGER AS",
-            "partyuuid": "168f1707-1d2b-4b4d-8543-6af11f2cae3a",
-            "orgno": "313248224",
+            "name": "BARMHJERTIG ESTETISK TIGER AS",
+            "partyuuid": "BF8F05C2-7068-4061-8399-6B5102E4E1ED",
+            "orgno": "310454869",
             "dagl": {
                 "name": "MOBIL PRESENTASJON",
                 "pid": "10818298426",

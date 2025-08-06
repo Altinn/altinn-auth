@@ -35,11 +35,10 @@ script:pre-request {
     auth_tokenType: sharedtestdata.authTokenType.personal,
     auth_scopes: sharedtestdata.auth_scopes.portalEnduser
   }
-  console.log(getTokenParameters)
-  console.log("førtestTokenGenerator")
+  
   const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken",  token);
-  console.log("ettertestTokenGenerator")
+  
 }
 
 tests {

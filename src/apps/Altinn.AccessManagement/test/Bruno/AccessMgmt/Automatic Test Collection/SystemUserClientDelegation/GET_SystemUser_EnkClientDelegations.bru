@@ -55,10 +55,10 @@ tests {
       const data = res.getBody();
       var delegationId = bru.getEnvVar("delegationId");
       expect(res.status).to.equal(200);
-    expect(data[2]).to.have.property('id', delegationId);
-    expect(data[2].role).to.have.property('code', "agent");
-    expect(data[2].facilitator).to.have.property('name', "ULASTELIG RETTFERDIG TIGER AS");
-    expect(data[2].facilitatorRole).to.have.property('code', "regnskapsforer");
+    expect(data[3]).to.have.property('id', delegationId);
+    expect(data[3].role).to.have.property('code', "agent");
+    expect(data[3].facilitator).to.have.property('name', "ULASTELIG RETTFERDIG TIGER AS");
+    expect(data[3].facilitatorRole).to.have.property('code', "regnskapsforer");
       
     });
 }

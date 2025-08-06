@@ -30,6 +30,13 @@
       "userid": 1826315,
       "partyuuid": "53E3CA91-53F6-481A-A0B0-ABD96AE066B7"
     },
+    "styretsleder": {
+      "name": "PARODISK BOKHANDEL",
+      "pid": "11874898327",
+      "partyid": 50947767,
+      "userid": 1709028,
+      "partyuuid": "3929DD88-8F56-46FC-919B-09554ADF7A1F"
+    },
     "hovedadministrator": {
       "name": "KONGE ALPAKKA",
       "pid": "08881898315",
@@ -135,9 +142,9 @@
       "dagligleder": {
         "name": "DYKTIG SERVITRISE",
         "pid": "10866098145",
-        "partyid": 50949098,
-        "userid": 20554501,
-        "partyuuid": "5EAD962D-E5AE-4344-850F-22AD12C51CFE"
+        "partyid": 51200344,
+        "userid": 1908613,
+        "partyuuid": "666C7D37-A553-4CAE-8AAC-C7A6A5869A94"
       }
     }
   },

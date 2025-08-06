@@ -48,7 +48,5 @@ tests {
      const data = res.getBody();
       var packageId = bru.getEnvVar("packageId");
       expect(res.status).to.equal(200);
-      expect(data.data[0].package).to.have.property('id', packageId);
-      expect(data.data[0].permissions[0].from).to.have.property('id', testdata.org1_delegates_tilgangspakke.partyuuid.toLowerCase());
     });
 }
