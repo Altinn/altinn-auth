@@ -197,6 +197,12 @@ namespace Altinn.Platform.Authorization.Controllers
             }
             else
             {
+                SortedList<string, XacmlJsonCategory> sortedResources = new();
+                foreach (var resource in decisionRequest.Resource)
+                {
+                    sortedResources[resource.Id] = resource;
+                }
+
                 logEvent = false;
                 XacmlJsonResponse multiResponse = new XacmlJsonResponse();
                 foreach (XacmlJsonRequestReference xacmlJsonRequestReference in decisionRequest.MultiRequests.RequestReference)
@@ -205,21 +211,21 @@ namespace Altinn.Platform.Authorization.Controllers
 
                     foreach (string refer in xacmlJsonRequestReference.ReferenceId)
                     {
-                        IEnumerable<XacmlJsonCategory> resourceCategoriesPart = decisionRequest.Resource.Where(i => i.Id.Equals(refer));
-
-                        if (resourceCategoriesPart != null && resourceCategoriesPart.Count() > 0)
+                        if (sortedResources.TryGetValue(refer, out XacmlJsonCategory resourceCategory))
                         {
                             if (jsonMultiRequestPart.Resource == null)
                             {
-                                jsonMultiRequestPart.Resource = new List<XacmlJsonCategory>();
+                                jsonMultiRequestPart.Resource = [resourceCategory];
                             }
-
-                            jsonMultiRequestPart.Resource.AddRange(resourceCategoriesPart);
+                            else
+                            {
+                                jsonMultiRequestPart.Resource.Add(resourceCategory);
+                            }
                         }
 
                         IEnumerable<XacmlJsonCategory> subjectCategoriesPart = decisionRequest.AccessSubject.Where(i => i.Id.Equals(refer));
 
-                        if (subjectCategoriesPart != null && subjectCategoriesPart.Count() > 0)
+                        if (subjectCategoriesPart != null && subjectCategoriesPart.Any())
                         {
                             if (jsonMultiRequestPart.AccessSubject == null)
                             {
@@ -231,7 +237,7 @@ namespace Altinn.Platform.Authorization.Controllers
 
                         IEnumerable<XacmlJsonCategory> actionCategoriesPart = decisionRequest.Action.Where(i => i.Id.Equals(refer));
 
-                        if (actionCategoriesPart != null && actionCategoriesPart.Count() > 0)
+                        if (actionCategoriesPart != null && actionCategoriesPart.Any())
                         {
                             if (jsonMultiRequestPart.Action == null)
                             {
@@ -250,7 +256,7 @@ namespace Altinn.Platform.Authorization.Controllers
                         multiResponse.Response = new List<XacmlJsonResult>();
                     }
 
-                    multiResponse.Response.Add(xacmlJsonResponsePart.Response.First());
+                    multiResponse.Response.Add(xacmlJsonResponsePart.Response[0]);
                 }
 
                 return multiResponse;
@@ -272,7 +278,7 @@ namespace Altinn.Platform.Authorization.Controllers
 
         private async Task<ActionResult> AuthorizeJsonRequest(XacmlRequestApiModel model, CancellationToken cancellationToken = default)
         {
-            XacmlJsonRequestRoot jsonRequest = JsonConvert.DeserializeObject<XacmlJsonRequestRoot>(model.BodyContent);
+            XacmlJsonRequestRoot jsonRequest = System.Text.Json.JsonSerializer.Deserialize<XacmlJsonRequestRoot>(model.BodyContent);
 
             XacmlJsonResponse jsonResponse = await Authorize(jsonRequest.Request, cancellationToken: cancellationToken);
 
