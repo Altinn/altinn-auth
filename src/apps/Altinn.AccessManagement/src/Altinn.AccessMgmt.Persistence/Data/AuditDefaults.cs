@@ -16,9 +16,14 @@ public static class AuditDefaults
     public static readonly Guid RegisterImportSystem = Guid.Parse("EFEC83FC-DEBA-4F09-8073-B4DD19D0B16B");
 
     /// <summary>
-    /// RegisterImportSystem
+    /// ResourceRegistryImportSystem
     /// </summary>
     public static readonly Guid ResourceRegistryImportSystem = Guid.Parse("14FD92DB-C124-4208-BA62-293CBABFF2AD");
+
+    /// <summary>
+    /// InternalApiImportSystem
+    /// </summary>
+    public static readonly Guid InternalApiImportSystem = Guid.Parse("B96CDA05-C0E0-4C59-B4B8-F15A7DFF9590");
 
     /// <summary>
     /// EnduserApi

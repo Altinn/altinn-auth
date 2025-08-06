@@ -1,0 +1,54 @@
+meta {
+  name: POST_Internal_Party_SystemUser
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/party
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  PlatformAccessToken: {{platformAccessToken}}
+}
+
+body:json {
+  {
+    "PartyUuid": "{{SystemUser_Uuid}}}",
+    "EntityType": "SystemUser",
+    "EntityVariantType": "System",
+    "DisplayName": "{{SystemUser_Name}}",
+    "CreatedBy": null
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  bru.setVar("requestName", "POST_Internal_Party_SystemUser");
+  
+  var getTokenParameters = {
+    auth_org: "",
+    auth_app: "authentication",
+    auth_tokenType: sharedtestdata.authTokenType.platformAccess
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("platformAccessToken", token);
+  
+}
+
+tests {
+  
+  test(bru.getVar("requestName"), function() {
+    const body = res.getBody();
+    const data = body;
+    
+    expect(res.status).to.equal(200);
+    assert.equal(data.detail, "The Entitytype is not supported");
+    
+  });
+}

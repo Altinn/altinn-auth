@@ -1,0 +1,55 @@
+meta {
+  name: POST_Internal_Party_UuidExists
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/party
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  PlatformAccessToken: {{platformAccessToken}}
+}
+
+body:json {
+  {
+    "PartyUuid": "ee007db6-0db4-4e55-ac21-2a888f04d846",
+    "EntityType": "Systembruker",
+    "EntityVariantType": "System",
+    "DisplayName": "ExistingUuid_ThisShouldNotExist",
+    "CreatedBy": "ee007db6-0db4-4e55-ac21-2a888f04d846"
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  bru.setVar("requestName", "POST_Internal_Party_InvalidEntityType");
+  
+  var getTokenParameters = {
+    auth_org: "",
+    auth_app: "authentication",
+    auth_tokenType: sharedtestdata.authTokenType.platformAccess
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("platformAccessToken", token);
+  
+}
+
+tests {
+  
+  test(bru.getVar("requestName"), function() {
+    const body = res.getBody();
+    const data = body;
+    
+    expect(res.status).to.equal(200);
+    assert.equal(data.partyUuid, "ee007db6-0db4-4e55-ac21-2a888f04d846");
+    assert.equal(data.partyCreated, false);
+    
+  });
+}

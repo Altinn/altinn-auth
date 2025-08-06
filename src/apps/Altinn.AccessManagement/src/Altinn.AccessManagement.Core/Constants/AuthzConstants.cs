@@ -19,7 +19,12 @@
         /// Policy tag for authorizing Altinn.Platform.Authorization API access
         /// </summary>
         public const string PLATFORM_ACCESS_AUTHORIZATION = "PlatformAccess";
-        
+
+        /// <summary>
+        /// Policy used to authorize that platform access token is issued by Altinn Platform
+        /// </summary>
+        public const string PLATFORM_ACCESSTOKEN_ISSUER_ISPLATFORM = "platform";
+
         /// <summary>
         /// Policy tag for reading an maskinporten delegation
         /// </summary>

@@ -81,6 +81,7 @@ public static partial class DbAccessHostExtensions
         builder.Services.AddSingleton<IDelegationService, DelegationService>();
         builder.Services.AddSingleton<IPackageService, PackageService>();
         builder.Services.AddSingleton<IRoleService, RoleService>();
+        builder.Services.AddSingleton<IPartyService, PartyService>();
         builder.Services.AddSingleton<IStatusService, StatusService>();
         builder.Services.AddSingleton<IAuthorizedPartyRepoService, AuthorizedPartyRepoService>();
 

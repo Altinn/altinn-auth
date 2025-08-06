@@ -1,0 +1,53 @@
+meta {
+  name: POST_Internal_Party_InvalidIssuer
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/party
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  PlatformAccessToken: {{platformAccessToken}}
+}
+
+body:json {
+  {
+    "PartyUuid": "90A99F77-F801-4658-8EDA-A73CF7AE1021",
+    "EntityType": "SystemUser",
+    "EntityVariantType": "System",
+    "DisplayName": "InvalidPlatformTokenIssuer_ThisShouldNotExist",
+    "CreatedBy": null
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  bru.setVar("requestName", "POST_Internal_Party_SystemUser");
+  
+  var getTokenParameters = {
+    auth_org: "",
+    auth_app: "authentication",
+    auth_tokenType: sharedtestdata.authTokenType.platformToken // Invalid issuer
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("platformAccessToken", token);
+  
+}
+
+tests {
+  
+  test(bru.getVar("requestName"), function() {
+    const body = res.getBody();
+    const data = body;
+    
+    expect(res.status).to.equal(401);
+    
+  });
+}

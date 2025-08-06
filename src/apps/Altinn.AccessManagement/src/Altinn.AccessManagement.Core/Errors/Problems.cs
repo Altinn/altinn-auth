@@ -78,4 +78,16 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor ConsentWithIdAlreadyExist { get; }
     = _factory.Create(16, HttpStatusCode.BadRequest, $"Consent with id already exist");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor UnsuportedEntityType { get; }
+    = _factory.Create(17, HttpStatusCode.BadRequest, $"The Entitytype is not supported");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor EntityTypeNotFound { get; }
+    = _factory.Create(18, HttpStatusCode.BadRequest, $"The Entitytype is not found");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor EntityVariantNotFoundOrInvalid { get; }
+    = _factory.Create(19, HttpStatusCode.BadRequest, $"The EntityVariant is not found or not valid for the given EntityType");
 }
