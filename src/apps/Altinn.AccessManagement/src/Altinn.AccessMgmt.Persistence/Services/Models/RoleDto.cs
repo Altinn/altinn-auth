@@ -43,6 +43,22 @@ public class RoleDto
     public string Urn { get; set; }
 
     /// <summary>
+    /// Legacy role code
+    /// </summary>
+    public string LegacyRoleCode { get; set; }
+
+    /// <summary>
+    /// Legacy Urn
+    /// </summary>
+    public string LegacyUrn { get; set; }
+
+    /// <summary>
+    /// Provider
+    /// </summary>
+    public Provider Provider { get; set; }
+
+
+    /// <summary>
     /// Construct from Role
     /// </summary>
     /// <param name="role"><see cref="Role"/>Role</param>
@@ -54,6 +70,8 @@ public class RoleDto
         Code = role.Code;
         Description = role.Description;
         IsKeyRole = role.IsKeyRole;
+        LegacyRoleCode = null;
+        LegacyUrn = null;
     }
 
     /// <summary>
@@ -68,6 +86,9 @@ public class RoleDto
         Code = role.Code;
         Description = role.Description;
         IsKeyRole = role.IsKeyRole;
+        LegacyRoleCode = null;
+        LegacyUrn = null;
+        Provider = role.Provider;
     }
 
     /// <summary>

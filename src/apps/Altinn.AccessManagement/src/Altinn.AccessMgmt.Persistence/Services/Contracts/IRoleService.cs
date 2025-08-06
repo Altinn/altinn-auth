@@ -32,7 +32,7 @@ public interface IRoleService
     /// <param name="key">Key from lookup</param>
     /// <param name="value">Value from lookup</param>
     /// <returns></returns>
-    Task<IEnumerable<RoleDto>> GetByKeyValue(string key, string value);
+    Task<RoleDto> GetByKeyValue(string key, string value);
 
     /// <summary>
     /// Get possible lookup keys

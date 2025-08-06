@@ -4,6 +4,11 @@ using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Models;
 using Altinn.AccessMgmt.Repo.Definitions;
+using Authorization.Platform.Authorization.Models;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Azure;
+using Newtonsoft.Json.Linq;
 
 namespace Altinn.AccessMgmt.Persistence.Services;
 
@@ -23,7 +28,11 @@ public class RoleService(IRoleRepository roleRepository, IRoleLookupRepository r
             return null;
         }
 
-        return new RoleDto(extRole);
+        var roleDto = new RoleDto(extRole);
+
+        await GetSingleLegacyRoleCodeAndUrn(roleDto);
+
+        return roleDto;
     }
 
     /// <inheritdoc/>
@@ -35,7 +44,8 @@ public class RoleService(IRoleRepository roleRepository, IRoleLookupRepository r
             return null;
         }
 
-        return roles.Select(t => new RoleDto(t));
+        var roleDtos = roles.Select(t => new RoleDto(t));
+        return await GetLegacyRoleCodeAndUrn(roleDtos);
     }
 
     /// <inheritdoc />
@@ -47,7 +57,8 @@ public class RoleService(IRoleRepository roleRepository, IRoleLookupRepository r
             return null;
         }
 
-        return roles.Select(t => new RoleDto(t));
+        var roleDtos = roles.Select(t => new RoleDto(t));
+        return await GetLegacyRoleCodeAndUrn(roleDtos);
     }
 
     /// <inheritdoc />
@@ -59,11 +70,12 @@ public class RoleService(IRoleRepository roleRepository, IRoleLookupRepository r
             return null;
         }
 
-        return roles.Select(t => new RoleDto(t));
+        var roleDtos = roles.Select(t => new RoleDto(t));
+        return await GetLegacyRoleCodeAndUrn(roleDtos);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<RoleDto>> GetByKeyValue(string key, string value)
+    public async Task<RoleDto> GetByKeyValue(string key, string value)
     {
         var filter = roleLookupRepository.CreateFilterBuilder();
         filter.Add(t => t.Key, key, Core.Helpers.FilterComparer.Like);
@@ -74,7 +86,10 @@ public class RoleService(IRoleRepository roleRepository, IRoleLookupRepository r
             return null;
         }
 
-        return res.Select(t => new RoleDto(t.Role));
+        var id = res.Select(t => t.Role).First().Id;
+        var roleDto = new RoleDto(await roleRepository.GetExtended(id));
+        await GetSingleLegacyRoleCodeAndUrn(roleDto);
+        return roleDto;
     }
 
     /// <inheritdoc />
@@ -98,6 +113,49 @@ public class RoleService(IRoleRepository roleRepository, IRoleLookupRepository r
             return null;
         }
 
-        return rolePackages.Select(t => new RolePackageDto(t));
+        var roleDto = new RoleDto(rolePackages.First().Role);
+        await GetSingleLegacyRoleCodeAndUrn(roleDto);
+
+        var rolePackageDtos = new List<RolePackageDto>();
+        foreach (var rolePackage in rolePackages)
+        {
+            var rolePackageDto = new RolePackageDto(rolePackage);
+            rolePackageDto.Role = roleDto;
+            rolePackageDtos.Add(rolePackageDto);
+        }
+
+        return rolePackageDtos;
+    }
+
+    private async Task<IEnumerable<RoleDto>> GetLegacyRoleCodeAndUrn(IEnumerable<RoleDto> roles)
+    {
+        var roleLookup = await roleLookupRepository.GetExtended();
+        var roleDtos = new List<RoleDto>();
+
+        foreach (var role in roles)
+        {
+            var legacyRoleCode = roleLookup.FirstOrDefault(x => x.RoleId == role.Id && x.Key == "LegacyCode");
+            if (legacyRoleCode != null)
+            {
+                role.LegacyRoleCode = legacyRoleCode.Value;
+                role.LegacyUrn = $"urn:altinn:rolecode:{legacyRoleCode.Value}";
+            }
+            roleDtos.Add(role);
+        }
+
+        return roleDtos;
+    }
+
+    private async Task GetSingleLegacyRoleCodeAndUrn(RoleDto extRole)
+    {
+        var filter = roleLookupRepository.CreateFilterBuilder();
+        filter.Add(t => t.RoleId, extRole.Id, Core.Helpers.FilterComparer.Equals);
+        var res = await roleLookupRepository.GetExtended(filter);
+        var legacyRoleCode = res.Data.FirstOrDefault(x => x.RoleId == extRole.Id && x.Key == "LegacyCode");
+        if (legacyRoleCode != null)
+        {
+            extRole.LegacyRoleCode = legacyRoleCode.Value;
+            extRole.LegacyUrn = $"urn:altinn:rolecode:{legacyRoleCode.Value}";
+        }
     }
 }
