@@ -82,10 +82,13 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor ConsentNotFound { get; }
     = _factory.Create(24, $"Incorrect consentId or wrong consent receiver");
-   
+
     /// <summary>
     /// Gets a validation error descriptor
     /// </summary>
     public static ValidationErrorDescriptor InvalidResourceContext { get; }
     = _factory.Create(25, $"Resource context does not match consent request rights");
+    
+    public static ValidationErrorDescriptor UserNotAuthorized { get; }
+    = _factory.Create(26, $"User not authorized for operation.");
 }

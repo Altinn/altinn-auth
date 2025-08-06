@@ -1,3 +1,4 @@
+using Altinn.AccessManagement.Api.Enduser.Models;
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.Authorization.ProblemDetails;
 
@@ -261,20 +262,20 @@ public static class EnduserValidationRules
         /// <summary>
         /// Checks the list of packages that all are assignable to the recipient entity type.
         /// </summary>
-        /// <param name="packages">list of packages</param>
+        /// <param name="packageUrns">list of packages</param>
         /// <param name="toEntity">entity the assignment is to be made to</param>
         /// <param name="paramName">name of the query parameter</param>
         /// <returns></returns>
-        internal static RuleExpression PackageIsAssignableToRecipient(IEnumerable<ExtConnectionPackage> packages, ExtEntity toEntity, string paramName = "packageId") => () =>
+        internal static RuleExpression PackageIsAssignableToRecipient(IEnumerable<string> packageUrns, ExtEntity toEntity, string paramName = "packageId") => () =>
         {
-            ArgumentNullException.ThrowIfNull(packages);
+            ArgumentNullException.ThrowIfNull(packageUrns);
             ArgumentException.ThrowIfNullOrEmpty(paramName);
 
             if (toEntity.Type.Id == EntityTypeId.Organization)
             {
-                var packagesNotAssignableToOrg = packages
-                .Where(p => p.Package.Urn.Equals("urn:altinn:accesspackage:hovedadministrator"))
-                .Select(p => p.Package.Urn);
+                var packagesNotAssignableToOrg = packageUrns
+                    .Where(p => p.Equals("urn:altinn:accesspackage:hovedadministrator"))
+                    .Select(p => p);
 
                 if (packagesNotAssignableToOrg.Any())
                 {
@@ -366,6 +367,17 @@ public static class EnduserValidationRules
                 return (ref ValidationErrorBuilder errors) =>
                     errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramName}", [new("packages", $"Packages with name(s) was not found '{pkgsNotFound}'.")]
                 );
+            }
+
+            return null;
+        };
+
+        internal static RuleExpression AuthorizePackageAssignment(IEnumerable<PackageDelegationCheckDto> packages, string paramName = "packageId") => () =>
+        {
+            if (packages.Any(p => !p.Result))
+            {
+                var packageUrns = string.Join(", ", packages.Select(p => p.Package.Urn));
+                return (ref ValidationErrorBuilder errors) => errors.Add(ValidationErrors.UserNotAuthorized, $"QUERY/{paramName}", [new("packages", $"User is not allowed to assign the following package(s) '{packageUrns}'.")]);
             }
 
             return null;
