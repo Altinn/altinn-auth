@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Text.Json;
 using System.Xml;
 using Altinn.Authorization.ABAC;
 using Altinn.Authorization.ABAC.Utils;
@@ -31,9 +26,7 @@ using Azure.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
-using Newtonsoft.Json;
 
 namespace Altinn.Platform.Authorization.Controllers
 {
@@ -278,7 +271,11 @@ namespace Altinn.Platform.Authorization.Controllers
 
         private async Task<ActionResult> AuthorizeJsonRequest(XacmlRequestApiModel model, CancellationToken cancellationToken = default)
         {
-            XacmlJsonRequestRoot jsonRequest = System.Text.Json.JsonSerializer.Deserialize<XacmlJsonRequestRoot>(model.BodyContent);
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            XacmlJsonRequestRoot jsonRequest = JsonSerializer.Deserialize<XacmlJsonRequestRoot>(model.BodyContent, options);
 
             XacmlJsonResponse jsonResponse = await Authorize(jsonRequest.Request, cancellationToken: cancellationToken);
 
