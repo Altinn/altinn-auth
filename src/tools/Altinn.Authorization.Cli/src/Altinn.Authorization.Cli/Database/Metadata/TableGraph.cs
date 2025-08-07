@@ -127,12 +127,20 @@ public sealed class TableGraph
             SELECT 
                 t.table_name "name",
                 er.estimated_rows "est_rows",
-                array_agg(c.column_name ORDER BY c.ordinal_position) "columns",
-                array_remove(array_agg(DISTINCT td."to"), NULL) "deps"
+                ARRAY(
+                    SELECT c.column_name
+                    FROM "columns" c
+                    WHERE c.table_name = t.table_name
+                    ORDER BY c.ordinal_position
+                ) "columns",
+                ARRAY(
+                    SELECT td."to"
+                    FROM "table_deps" td
+                    WHERE td."from" = t.table_name
+                    ORDER BY td."to"
+                ) "deps"
             FROM "tables" t
             JOIN "est_rows" er ON t.table_name = er.table_name and er."schema" = @schema
-            LEFT JOIN "table_deps" td ON td."from" = t.table_name
-            LEFT JOIN "columns" c ON c.table_name = t.table_name
             GROUP BY t.table_name, er.estimated_rows
             """;
 

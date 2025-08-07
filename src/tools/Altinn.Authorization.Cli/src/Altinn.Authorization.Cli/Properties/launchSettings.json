@@ -2,7 +2,7 @@
   "profiles": {
     "cp AT22 register to local": {
       "commandName": "Project",
-      "commandLineArgs": "db cp\r\n\"${REGISTER_DB_MIGRATOR_AT22}\"\r\n\"${REGISTER_DB_LOCAL}\"\r\n\"register\""
+      "commandLineArgs": "db cp\r\n\"${REGISTER_DB_AT22}\"\r\n\"${REGISTER_DB_LOCAL}\"\r\n\"register\""
     },
     "export AT22 register": {
       "commandName": "Project",
