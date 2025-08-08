@@ -48,6 +48,7 @@ body:json {
 script:pre-request {
   const testdata = require(`./Testdata/accesslist-delegation/${bru.getEnvVar("tokenEnv")}.json`);
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
   bru.setVar("party", testdata.OrdentligUlasteligStruts.partyid);
   bru.setVar("resource", testdata.resource);
   bru.setVar("toSsn", testdata.SvenskGeniærklertTiger.dagl.pid);

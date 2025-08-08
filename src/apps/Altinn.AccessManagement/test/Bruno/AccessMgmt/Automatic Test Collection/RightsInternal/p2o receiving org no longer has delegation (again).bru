@@ -38,9 +38,30 @@ script:pre-request {
 
 tests {
   test("the sending person successfully revoked delegation from organization", function() {
-    const data = res.getBody();  
+    const testdata = require(`./Testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.json`);
+    const data = res.getBody();
+    
     expect(res.status).to.equal(200);
-    expect(data).to.be.empty;
+    
+    const expectedEntry = {
+      from: [{ id: 'urn:altinn:partyid', value: testdata.org1.dagl.partyid.toString() }],
+      to: [{ id: 'urn:altinn:userid', value: testdata.org2.dagl.userid.toString() }],
+      resource: [
+        { id: 'urn:altinn:org', value: bru.getVar('org') },
+        { id: 'urn:altinn:app', value: bru.getVar('app') }
+      ]
+    };
+  
+    // Checkif that at least one item in `data` matches the expected structure
+    const matchFound = data.some(entry => {
+      return JSON.stringify(entry.from) === JSON.stringify(expectedEntry.from) &&
+             JSON.stringify(entry.to) === JSON.stringify(expectedEntry.to) &&
+             JSON.stringify(entry.resource) === JSON.stringify(expectedEntry.resource);
+    });
+  
+    // Expect match to NOT be found
+    expect(matchFound).to.be.false;
+    
   });
   
 }

@@ -44,9 +44,38 @@ tests {
   const body = res.getBody();
   
   test(requestName + "|HttpStatus.OK and Body.Data contain expected delegation", function() {
+    // Assert httpstatus
     expect(res.status).to.equal(200);
-    expect(body[0]).to.have.property('consumer_org', testdata.org1.orgno);
-    expect(body[0]).to.have.property('supplier_org', testdata.org2.orgno);
-    expect(body[0]).to.have.property('resourceid', 'ttd-am-k6');
+    
+    // Assert the response is an array of length 2
+    assert.isArray(body, 'Response should be an array');
+    assert.lengthOf(body, 2, 'Response should contain two items');
+  
+    // Create a lookup map by resourceid
+    const resourceMap = {};
+    body.forEach(item => {
+      assert.containsAllKeys(item, [
+        'consumer_org',
+        'supplier_org',
+        'scopes',
+        'resourceid'
+      ]);
+      resourceMap[item.resourceid] = item;
+    });
+  
+    // Validate "ttd-am-k6-nuf"
+    assert.property(resourceMap, 'ttd-am-k6-nuf');
+    const k6nuf = resourceMap['ttd-am-k6-nuf'];
+    assert.strictEqual(k6nuf.consumer_org, "810414782");
+    assert.strictEqual(k6nuf.supplier_org, "910049356");
+    assert.sameMembers(k6nuf.scopes, ["test:am/k6nuf.read", "test:am/k6nuf.write"]);
+  
+    // Validate "ttd-am-k6"
+    assert.property(resourceMap, 'ttd-am-k6');
+    const k6 = resourceMap['ttd-am-k6'];
+    assert.strictEqual(k6.consumer_org, "810414782");
+    assert.strictEqual(k6.supplier_org, "910049356");
+    assert.sameMembers(k6.scopes, ["test:am/k6.read", "test:am/k6.write"]);
+  
   });
 }
