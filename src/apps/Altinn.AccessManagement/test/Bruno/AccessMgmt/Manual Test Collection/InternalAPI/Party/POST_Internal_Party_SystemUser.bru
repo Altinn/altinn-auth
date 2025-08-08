@@ -17,18 +17,22 @@ headers {
 
 body:json {
   {
-    "PartyUuid": "{{SystemUser_Uuid}}}",
-    "EntityType": "SystemUser",
+    "PartyUuid": "{{systemUser_uuid}}",
+    "EntityType": "Systembruker",
     "EntityVariantType": "System",
-    "DisplayName": "{{SystemUser_Name}}",
+    "DisplayName": "{{systemUser_name}}",
     "CreatedBy": null
   }
 }
 
 script:pre-request {
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/manualtests/systemuser-directdelegation/${bru.getEnvVar("tokenEnv")}.json`);
   
   bru.setVar("requestName", "POST_Internal_Party_SystemUser");
+  
+  bru.setVar("systemUser_uuid", testdata.Org_GraaPresisTigerAS.partyinternal_systemuser.partyUuid);
+  bru.setVar("systemUser_name", testdata.Org_GraaPresisTigerAS.partyinternal_systemuser.name);
   
   var getTokenParameters = {
     auth_org: "",
@@ -47,8 +51,10 @@ tests {
     const body = res.getBody();
     const data = body;
     
-    expect(res.status).to.equal(200);
-    assert.equal(data.detail, "The Entitytype is not supported");
+    expect(res.status).to.equal(201);
+    
+    assert.equal(data.partyUuid, bru.getVar("systemUser_uuid").toLowerCase());
+    assert.equal(data.partyCreated, true);
     
   });
 }
