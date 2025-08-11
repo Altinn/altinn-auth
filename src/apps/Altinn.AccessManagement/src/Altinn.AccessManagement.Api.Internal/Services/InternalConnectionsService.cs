@@ -30,27 +30,20 @@ public class InternalConnectionsService(
     /// <inheritdoc />
     public async Task<Result<List<CompactRelationDto>>> Get(Guid fromId, Guid? toId = null, CancellationToken cancellationToken = default)
     {
-        var result = await GetRelations(fromId, toId, cancellationToken);
+        var relations = await GetRelations(fromId, toId, cancellationToken);
 
-        return result
-            .Where(r => r.Party.Type.Equals("Organisasjon", StringComparison.InvariantCultureIgnoreCase))
-            .Select(r =>
-            {
-                r.Connections = r.Connections
-                    .Where(c => c.Party.Type.Equals("Systembruker", StringComparison.InvariantCultureIgnoreCase))
-                    .ToList();
-
-                return r;
-            })
+        var result = relations
+            .Where(r => r.Party.Type.Equals("Systembruker", StringComparison.InvariantCultureIgnoreCase))
             .ToList();
 
-        async Task<IEnumerable<CompactRelationDto>> GetRelations(Guid fromId, Guid? toId, CancellationToken cancellationToken)
+        return result;
+
+        async Task<IEnumerable<CompactRelationDto>> GetRelations(Guid fromId, Guid? toId, CancellationToken ct)
         {
-            var fromEntity = await EntityRepository.GetExtended(fromId, cancellationToken: cancellationToken);
+            var fromEntity = await EntityRepository.GetExtended(fromId, cancellationToken: ct);
             if (fromEntity.Type.Name.Equals("Organisasjon", StringComparison.InvariantCultureIgnoreCase))
             {
-                var result = await RelationService.GetConnectionsToOthers(fromId, toId is { } && toId != Guid.Empty ? toId : null, null, cancellationToken: cancellationToken);
-                return result;
+                return await RelationService.GetConnectionsToOthers(fromId, toId is { } validId && validId != Guid.Empty ? validId : null, null, cancellationToken: ct);
             }
 
             return [];
