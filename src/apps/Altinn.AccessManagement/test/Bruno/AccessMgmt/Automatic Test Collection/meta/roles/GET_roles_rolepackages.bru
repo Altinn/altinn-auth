@@ -19,8 +19,8 @@ tests {
     const data = res.getBody();  
     expect(res.status).to.equal(200);
     expect(data[0].role).to.have.property('code', 'revisor');
-    expect(data[0].package).to.have.property('urn', 'urn:altinn:accesspackage:ansvarlig-revisor');
-    expect(data[1].package).to.have.property('urn', 'urn:altinn:accesspackage:revisormedarbeider');
+    expect(data[0].package).to.have.property('urn', 'urn:altinn:accesspackage:revisormedarbeider');
+    expect(data[1].package).to.have.property('urn', 'urn:altinn:accesspackage:ansvarlig-revisor');
     expect(data).to.have.length(2);
   });
   
