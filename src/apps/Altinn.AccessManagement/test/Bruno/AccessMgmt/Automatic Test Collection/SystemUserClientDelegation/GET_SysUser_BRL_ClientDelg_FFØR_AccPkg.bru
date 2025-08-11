@@ -43,7 +43,7 @@ script:pre-request {
 }
 
 tests {
-  test("BBL_Client org has delegated FFØR access package to systembruker", function() {
+  test("BRL_Client org has delegated FFØR access package to systembruker", function() {
   const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
       const data = res.getBody();
       var delegationId = bru.getEnvVar("delegationId");

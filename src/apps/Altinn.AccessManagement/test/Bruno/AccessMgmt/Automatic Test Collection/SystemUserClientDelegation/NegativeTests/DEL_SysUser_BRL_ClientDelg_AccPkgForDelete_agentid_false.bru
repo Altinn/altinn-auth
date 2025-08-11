@@ -1,18 +1,19 @@
 meta {
-  name: DEL_SystemUser_BBL_ClientDelegation_delegationId
+  name: DEL_SysUser_BRL_ClientDelg_AccPkgForDelete_agentid_false
   type: http
-  seq: 15
+  seq: 10
 }
 
 delete {
-  url: {{baseUrl}}/accessmanagement/api/v1/internal/SystemUserClientDelegation/deletedelegation?party={{party}}&delegationId={{delegationId}}
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/deleteagentassignment?party={{party}}&agentId={{systemUser}}&cascade=false
   body: json
   auth: inherit
 }
 
 params:query {
   party: {{party}}
-  delegationId: {{delegationId}}
+  agentId: {{systemUser}}
+  cascade: false
 }
 
 headers {
@@ -21,10 +22,11 @@ headers {
 }
 
 script:pre-request {
-  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
   
   bru.setVar("party", testdata.regnskapsforer.partyuuid);
+  bru.setVar("systemUser", testdata.regnskapsforer.forretningsforer_systemuser.id);
   
   var getTokenParameters = {
     auth_userId: testdata.regnskapsforer.hovedadministrator.userid,
@@ -40,7 +42,11 @@ script:pre-request {
 }
 
 tests {
-  test("Deletion of active delegation should give 200 ok", function() {
-    expect(res.status).to.equal(200);
+  test("Deletion of active delegation through agentId should give error with 500 response code ", function() {
+    expect(res.status).to.equal(500);
+    
+    const data = res.getBody();
+    assert.equal(data.detail, "Assignment is active in one or more delegations and cascadeflag is false.");
+    
   });
 }

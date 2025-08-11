@@ -1,0 +1,86 @@
+meta {
+  name: GET_Enduser_Conn_AccPcks_DelgCheck_Innehaver_UrnFilter
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages/delegationcheck?party={{party}}&packages=hovedadministrator&packages=:barnehageleder&packages=urn:altinn:accesspackage:eksplisitt&packages=urn:altinn:accesspackage:forretningsforer-eiendom
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  packages: hovedadministrator
+  packages: :barnehageleder
+  packages: urn:altinn:accesspackage:eksplisitt
+  packages: urn:altinn:accesspackage:forretningsforer-eiendom
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  
+  bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.partyUuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.userId,
+    auth_partyId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.partyId,
+    auth_partyUuid: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.partyUuid,
+    auth_ssn: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  test("DelegationCheck for Innehaver role with urnFilter", function() {
+    const body = res.getBody();
+    const data = body.data;
+    
+    expect(res.status).to.equal(200);
+    assert.isNotEmpty(data, "Expected data in response body to NOT be empty array");
+   
+    // Assert that there are exactly 4 packages
+    expect(data).to.have.lengthOf(4);
+  
+    // Extract package IDs
+    const packageIds = data.map(item => item.package.id);
+  
+    // Assert that all expected package IDs are present
+    expect(packageIds).to.include.members([
+      "0195efb8-7c80-7e16-ab0c-36dc8ab1a29d",
+      "dcb57f3e-0e5b-4ef7-a10c-74c53bc5a90d",
+      "c0eb20c1-2268-48f5-88c5-f26cb47a6b1f",
+      "0195efb8-7c80-7cf2-bcc8-720a3fb39d44"
+    ]);
+  
+    // Alternatively, assert by URNs
+    const packageUrns = data.map(item => item.package.urn);
+  
+    expect(packageUrns).to.include.members([
+      "urn:altinn:accesspackage:hovedadministrator",
+      "urn:altinn:accesspackage:barnehageleder",
+      "urn:altinn:accesspackage:eksplisitt",
+      "urn:altinn:accesspackage:forretningsforer-eiendom"
+    ]);
+    
+    // ✅ Assert result values for each package
+    const resultByUrn = urn => data.find(p => p.package.urn === urn)?.result;
+  
+    expect(resultByUrn("urn:altinn:accesspackage:hovedadministrator")).to.be.true;
+    expect(resultByUrn("urn:altinn:accesspackage:barnehageleder")).to.be.true;
+    expect(resultByUrn("urn:altinn:accesspackage:eksplisitt")).to.be.false;
+    expect(resultByUrn("urn:altinn:accesspackage:forretningsforer-eiendom")).to.be.false;
+    
+  });
+}

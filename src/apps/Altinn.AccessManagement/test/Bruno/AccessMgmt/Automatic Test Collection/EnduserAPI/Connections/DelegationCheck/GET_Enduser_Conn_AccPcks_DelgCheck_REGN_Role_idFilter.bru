@@ -1,0 +1,53 @@
+meta {
+  name: GET_Enduser_Conn_AccPcks_DelgCheck_REGN_Role_idFilter
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages/delegationcheck?party={{party}}&packageIds=955d5779-3e2b-4098-b11d-0431dc41ddbe&packageIds=a5f7f72a-9b89-445d-85bb-06f678a3d4d1
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  packageIds: 955d5779-3e2b-4098-b11d-0431dc41ddbe
+  packageIds: a5f7f72a-9b89-445d-85bb-06f678a3d4d1
+  ~packageIds: 
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("party", testdata.regn_type_org.klient_org_other.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.regn_type_org.dagligleder.userid,
+    auth_partyId: testdata.regn_type_org.dagligleder.partyid,
+    auth_partyUuid: testdata.regn_type_org.dagligleder.partyuuid,
+    auth_ssn: testdata.regn_type_org.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Negative : DelegationCheck for REGN package which is not direct delegable", function() {
+    const body = res.getBody();
+    const data = body.data;
+    
+    expect(res.status).to.equal(200);
+    expect(data[0].result).to.equal(false)
+    
+    
+  });
+}

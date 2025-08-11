@@ -161,5 +161,17 @@
       "partyuuid": "6662CC3A-810B-4533-AE44-40D6C42CB8EA"
     },
     "pakketoDelegate": "urn:altinn:accesspackage:reviorattesterer"
+  },
+  "bestyrendeReder_role": {
+    "name": "PARTREDERIET UNORMAL REFLEKSIV MOSKUS",
+    "orgno": "313843645",
+    "partyuuid": "2578085D-03F5-407F-AE53-FBCB499FD78B",
+    "bestyrendeReder": {
+      "name": "LUN GALLERI",
+      "pid": "13906998542",
+      "partyid": 51404534,
+      "userid": 1878007,
+      "partyuuid": "5F8147F5-07E5-4890-B430-0A1A041E7BFB"
+    }
   }
 }

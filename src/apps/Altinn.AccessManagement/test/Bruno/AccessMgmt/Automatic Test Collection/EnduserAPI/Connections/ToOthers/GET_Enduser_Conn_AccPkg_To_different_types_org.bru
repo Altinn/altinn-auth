@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toOrg}}&package={{package}}
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{toOrg}}
   body: json
   auth: inherit
 }
@@ -14,7 +14,7 @@ params:query {
   party: {{party}}
   from: {{party}}
   to: {{toOrg}}
-  package: {{package}}
+  ~package: {{package}}
 }
 
 headers {
@@ -43,10 +43,9 @@ script:pre-request {
 }
 
 tests {
-  test("GET all delegated packages from Org1 to Org2 : ToOthers", function() {
+  test("GET Org-2 as rettighetshaver after being added from Org-1 for delegation  : ToOthers", function() {
     const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
      const data = res.getBody();
-      var packageId = bru.getEnvVar("packageId");
       expect(res.status).to.equal(200);
     });
 }

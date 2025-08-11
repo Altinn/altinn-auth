@@ -1,19 +1,18 @@
 meta {
-  name: DEL_SysUser_BBL_ClientDelg_AccPkgForDelete_agentid_false
+  name: DEL_SystemUser_BRL_ClientDelegation_delegationId
   type: http
-  seq: 10
+  seq: 16
 }
 
 delete {
-  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/deleteagentassignment?party={{party}}&agentId={{systemUser}}&cascade=false
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/SystemUserClientDelegation/deletedelegation?party={{party}}&delegationId={{delegationId}}
   body: json
   auth: inherit
 }
 
 params:query {
   party: {{party}}
-  agentId: {{systemUser}}
-  cascade: false
+  delegationId: {{delegationId}}
 }
 
 headers {
@@ -22,11 +21,10 @@ headers {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
   const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
   
   bru.setVar("party", testdata.regnskapsforer.partyuuid);
-  bru.setVar("systemUser", testdata.regnskapsforer.forretningsforer_systemuser.id);
   
   var getTokenParameters = {
     auth_userId: testdata.regnskapsforer.hovedadministrator.userid,
@@ -42,11 +40,7 @@ script:pre-request {
 }
 
 tests {
-  test("Deletion of active delegation through agentId should give error with 500 response code ", function() {
-    expect(res.status).to.equal(500);
-    
-    const data = res.getBody();
-    assert.equal(data.detail, "Assignment is active in one or more delegations and cascadeflag is false.");
-    
+  test("Deletion of active delegation should give 200 ok", function() {
+    expect(res.status).to.equal(200);
   });
 }
