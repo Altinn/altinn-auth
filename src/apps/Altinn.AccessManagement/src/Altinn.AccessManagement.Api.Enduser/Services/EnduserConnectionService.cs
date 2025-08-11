@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using Altinn.AccessManagement.Api.Enduser.Models;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Helpers;
@@ -8,6 +7,7 @@ using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Models;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.AccessManagement.Enduser.Services;
@@ -325,7 +325,7 @@ public class EnduserConnectionService(
         return null;
     }
 
-    public async Task<Result<IEnumerable<PackageDelegationCheckDto>>> CheckPackage(Guid party, IEnumerable<string> packages, IEnumerable<Guid> packageIds = null, CancellationToken cancellationToken = default)
+    public async Task<Result<IEnumerable<AccessPackageDto.Check>>> CheckPackage(Guid party, IEnumerable<string> packages, IEnumerable<Guid> packageIds = null, CancellationToken cancellationToken = default)
     {
         packages = packages.Select(p =>
             p.StartsWith("urn:", StringComparison.Ordinal)
@@ -347,7 +347,7 @@ public class EnduserConnectionService(
         return await CheckPackage(party, (List<Guid>)[.. packageIds, .. allPackages.Select(p => p.Id)], cancellationToken);
     }
 
-    public async Task<Result<IEnumerable<PackageDelegationCheckDto>>> CheckPackage(Guid party, IEnumerable<Guid>? packageIds = null, CancellationToken cancellationToken = default)
+    public async Task<Result<IEnumerable<AccessPackageDto.Check>>> CheckPackage(Guid party, IEnumerable<Guid>? packageIds = null, CancellationToken cancellationToken = default)
     {
         var assignablePackages = await RelationService.GetAssignablePackagePermissions(
             DbAudit.Value.ChangedBy,
@@ -358,16 +358,16 @@ public class EnduserConnectionService(
         return assignablePackages.GroupBy(p => p.Package.Id).Select(group =>
         {
             var firstPackage = group.First();
-            return new PackageDelegationCheckDto
+            return new AccessPackageDto.Check
             {
-                Package = new CompactPackageDto
+                Package = new AccessPackageDto.Compact
                 {
                     Id = firstPackage.Package.Id,
                     Urn = firstPackage.Package.Urn,
                     AreaId = firstPackage.Package.AreaId
                 },
                 Result = group.Any(p => p.Result),
-                Reasons = group.Select(p => new PackageDelegationCheckReasonDto
+                Reasons = group.Select(p => new AccessPackageDto.Check.Reason
                 {
                     Description = p.Reason.Description,
                     RoleId = p.Reason.RoleId,
@@ -542,7 +542,7 @@ public interface IEnduserConnectionService
     /// <returns>
     /// A <see cref="ValidationProblemInstance"/> indicating success or describing any validation errors.
     /// </returns>
-    Task<Result<IEnumerable<PackageDelegationCheckDto>>> CheckPackage(Guid party, IEnumerable<Guid> packageIds = null, CancellationToken cancellationToken = default);
+    Task<Result<IEnumerable<AccessPackageDto.Check>>> CheckPackage(Guid party, IEnumerable<Guid> packageIds = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks if an authpenticated user is an access manager and has the necessary permissions to delegate a specific access package.
@@ -556,5 +556,5 @@ public interface IEnduserConnectionService
     /// <returns>
     /// A <see cref="ValidationProblemInstance"/> indicating success or describing any validation errors.
     /// </returns>
-    Task<Result<IEnumerable<PackageDelegationCheckDto>>> CheckPackage(Guid party, IEnumerable<string> packages, IEnumerable<Guid> packageIds = null, CancellationToken cancellationToken = default);
+    Task<Result<IEnumerable<AccessPackageDto.Check>>> CheckPackage(Guid party, IEnumerable<string> packages, IEnumerable<Guid> packageIds = null, CancellationToken cancellationToken = default);
 }

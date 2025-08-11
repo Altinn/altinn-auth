@@ -1,5 +1,6 @@
 using Altinn.AccessManagement.Api.Enduser.Models;
 using Altinn.AccessMgmt.Core.Models;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.AccessManagement.Core.Errors;
@@ -372,7 +373,7 @@ public static class EnduserValidationRules
             return null;
         };
 
-        internal static RuleExpression AuthorizePackageAssignment(IEnumerable<PackageDelegationCheckDto> packages, string paramName = "packageId") => () =>
+        internal static RuleExpression AuthorizePackageAssignment(IEnumerable<AccessPackageDto.Check> packages, string paramName = "packageId") => () =>
         {
             if (packages.Any(p => !p.Result))
             {
