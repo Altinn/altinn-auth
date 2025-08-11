@@ -307,8 +307,7 @@ public class RelationPermissionRepository : ExtendedRepository<Relation, ExtRela
         		false AS ismainadminpackage,
         		reason
         	FROM userpackages up
-        	WHERE (array_length(@packageIds, 1) IS NULL OR packageid = ANY(@packageIds))
-                AND candelegate = true
+        	WHERE candelegate = true
         		AND isassignable = TRUE
         		AND (packageurn != 'urn:altinn:accesspackage:hovedadministrator' OR isrolepackage = true)	
 
@@ -336,7 +335,6 @@ public class RelationPermissionRepository : ExtendedRepository<Relation, ExtRela
         	FROM userpackages up
         		CROSS JOIN mainAdminPackages admp
         	WHERE up.packageurn = 'urn:altinn:accesspackage:hovedadministrator'
-                AND (array_length(@packageIds, 1) IS NULL OR admp.packageid = ANY(@packageIds))
         		AND admp.isassignable = true
         )
         SELECT
@@ -370,6 +368,8 @@ public class RelationPermissionRepository : ExtendedRepository<Relation, ExtRela
         	LEFT JOIN dbo.entity toEntity ON toid = toEntity.id
         	LEFT JOIN dbo.entity viaEntity ON viaid = viaEntity.id
         	LEFT JOIN dbo.role viaRole ON viaroleid = viaRole.id
+        WHERE
+            (array_length(@packageIds, 1) IS NULL OR p.packageid = ANY(@packageIds))
         """;
     }
 
