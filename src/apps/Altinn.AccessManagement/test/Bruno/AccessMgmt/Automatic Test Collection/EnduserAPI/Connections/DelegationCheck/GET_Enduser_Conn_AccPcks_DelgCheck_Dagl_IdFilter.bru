@@ -5,15 +5,15 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages/delegationcheck?party={{party}}&packageIds=36c245db-3207-449e-92b1-94cb0a0f3031&packageIds=0195efb8-7c80-7e82-9b4f-7d63e773bbca&packageIds=43becc6a-8c6c-4e9e-bb2f-08fe588ada21
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages/delegationcheck?party={{party}}&packageIds=0195efb8-7c80-7e82-9b4f-7d63e773bbca&packageIds=bb0569a6-2268-49b5-9d38-8158b26124c3&packageIds=43becc6a-8c6c-4e9e-bb2f-08fe588ada21
   body: json
   auth: inherit
 }
 
 params:query {
   party: {{party}}
-  packageIds: 36c245db-3207-449e-92b1-94cb0a0f3031
   packageIds: 0195efb8-7c80-7e82-9b4f-7d63e773bbca
+  packageIds: bb0569a6-2268-49b5-9d38-8158b26124c3
   packageIds: 43becc6a-8c6c-4e9e-bb2f-08fe588ada21
 }
 
@@ -60,7 +60,7 @@ tests {
     // Assert that all expected package IDs are present
     expect(packageIds).to.include.members([
       "0195efb8-7c80-7e82-9b4f-7d63e773bbca",
-      "36c245db-3207-449e-92b1-94cb0a0f3031",
+      "bb0569a6-2268-49b5-9d38-8158b26124c3",
       "43becc6a-8c6c-4e9e-bb2f-08fe588ada21"
     ]);
   
@@ -69,7 +69,7 @@ tests {
   
     expect(packageUrns).to.include.members([
       "urn:altinn:accesspackage:klientadministrator",
-      "urn:altinn:accesspackage:veitransport",
+      "urn:altinn:accesspackage:post-til-virksomheten-med-taushetsbelagt-innhold",
       "urn:altinn:accesspackage:regnskapsforer-lonn"
     ]);
     
@@ -77,7 +77,7 @@ tests {
     const resultByUrn = urn => data.find(p => p.package.urn === urn)?.result;
   
     expect(resultByUrn("urn:altinn:accesspackage:klientadministrator")).to.be.true;
-    expect(resultByUrn("urn:altinn:accesspackage:veitransport")).to.be.true;
+    expect(resultByUrn("urn:altinn:accesspackage:post-til-virksomheten-med-taushetsbelagt-innhold")).to.be.true;
     expect(resultByUrn("urn:altinn:accesspackage:regnskapsforer-lonn")).to.be.false;
     
   });

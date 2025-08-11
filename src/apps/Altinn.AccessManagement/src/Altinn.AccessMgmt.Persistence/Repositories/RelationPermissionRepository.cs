@@ -57,7 +57,6 @@ public class RelationPermissionRepository : ExtendedRepository<Relation, ExtRela
         	    p.isassignable,
         	    p.isdelegable
         	FROM dbo.package p
-        	WHERE (array_length(@packageIds, 1) IS NULL OR p.id = ANY(@packageIds))
         ),
         mainAdminPackages AS (
         	-- Get all packages for main administrator
@@ -308,7 +307,8 @@ public class RelationPermissionRepository : ExtendedRepository<Relation, ExtRela
         		false AS ismainadminpackage,
         		reason
         	FROM userpackages up
-        	WHERE candelegate = true
+        	WHERE (array_length(@packageIds, 1) IS NULL OR packageid = ANY(@packageIds))
+                AND candelegate = true
         		AND isassignable = TRUE
         		AND (packageurn != 'urn:altinn:accesspackage:hovedadministrator' OR isrolepackage = true)	
 
@@ -336,6 +336,7 @@ public class RelationPermissionRepository : ExtendedRepository<Relation, ExtRela
         	FROM userpackages up
         		CROSS JOIN mainAdminPackages admp
         	WHERE up.packageurn = 'urn:altinn:accesspackage:hovedadministrator'
+                AND (array_length(@packageIds, 1) IS NULL OR admp.packageid = ANY(@packageIds))
         		AND admp.isassignable = true
         )
         SELECT
