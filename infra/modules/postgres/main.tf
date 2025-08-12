@@ -17,15 +17,22 @@ locals {
   }
   sku_name = "${local.sku[var.compute_tier]}_${var.compute_size}"
 
+  default_config = {
+    "metrics.autovacuum_diagnostics" : "on",
+    "metrics.collector_database_activity" : "on",
+  }
+
   pgbouncer_default_config = {
     "pgbouncer.max_prepared_statements" : "5000",
     "pgbouncer.max_client_conn" : "5000",
     "pgbouncer.pool_mode" : "TRANSACTION",
+    "metrics.pgbouncer_diagnostics" : "on",
   }
 
   # latest key takes precedence
   configuration = merge(
     var.use_pgbouncer ? local.pgbouncer_default_config : {},
+    local.default_config,
     var.configurations,
   )
 }
