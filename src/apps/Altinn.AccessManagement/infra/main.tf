@@ -261,8 +261,8 @@ module "postgres_server" {
     "azure.extensions" : "HSTORE"
   }
 
-  compute_tier = var.db_compute_tier
-  compute_size = var.db_compute_size
+  storage_tier = var.db_storage_tier
+  compute_sku  = var.db_compute_sku
 
   entraid_admins = concat([
     {

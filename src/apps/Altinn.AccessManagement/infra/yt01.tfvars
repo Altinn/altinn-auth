@@ -12,5 +12,4 @@ platform_workflow_principal_ids = [
   "0abd3bf5-4c0c-432a-8475-f977adc816c8"  # altinn-access-management-app-yt01-aks02
 ]
 db_max_pool_size = 10
-db_compute_tier  = "GeneralPurpose"
-db_compute_size  = "Standard_D2ads_v5"
+db_compute_sku   = "D2"

@@ -74,10 +74,11 @@ variable "db_max_pool_size" {
   default = 4
 }
 
-variable "db_compute_tier" {
+variable "db_compute_sku" {
   type = string
 }
 
-variable "db_compute_size" {
-  type = string
+variable "db_storage_tier" {
+  type    = string
+  default = "P10"
 }

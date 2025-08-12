@@ -54,7 +54,7 @@ variable "compute_sku" {
 
   validation {
     condition     = contains(keys(local.compute_skus), var.compute_sku)
-    error_message = "Must be one of [${join(keys(local.compute_skus), ", ")}]"
+    error_message = "Must be one of [${join(", ", keys(local.compute_skus))}]"
   }
 }
 
