@@ -43,7 +43,8 @@ namespace Altinn.AccessManagement.Controllers
                 return res.Problem.ToActionResult();
             }
 
-            return Ok(res.Value.ToPartyResultDto());
+            var partyResultDto = res.Value.ToPartyResultDto();
+            return partyResultDto.PartyCreated ? CreatedAtAction(nameof(AddParty), new { id = partyResultDto.PartyUuid }, partyResultDto) : Ok(partyResultDto);
         }
 
         /// <summary>

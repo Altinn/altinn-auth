@@ -47,7 +47,7 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                 {
                     PartyUuid = Guid.NewGuid(),
                     EntityType = "Systembruker",
-                    EntityVariantType = "System",
+                    EntityVariantType = "StandardSystem",
                     DisplayName = "Test User"
                 }),
                 Headers =
@@ -73,7 +73,7 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                 {
                     PartyUuid = Guid.NewGuid(),
                     EntityType = "Organization",
-                    EntityVariantType = "System",
+                    EntityVariantType = "StandardSystem",
                     DisplayName = "Test User"
                 }),
                 Headers =
@@ -99,7 +99,7 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                 {
                     PartyUuid = Guid.NewGuid(),
                     EntityType = "Organization", // Invalid entity type (at this time only allows for creating type: SystemUser)
-                    EntityVariantType = "System",
+                    EntityVariantType = "StandardSystem",
                     DisplayName = "Test User"
                 }),
                 Headers =
@@ -148,7 +148,7 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
         }
 
         [Fact]
-        public async Task AddParty_ValidParty_ReturnsOkAndTrue()
+        public async Task AddParty_ValidParty_StandardSystem_ReturnsOkAndTrue()
         {
             // Arrange
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "/accessmanagement/api/v1/internal/party")
@@ -157,7 +157,7 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                 {
                     PartyUuid = Guid.NewGuid(),
                     EntityType = "Systembruker",
-                    EntityVariantType = "System",
+                    EntityVariantType = "StandardSystem",
                     DisplayName = "Test User"
                 }),
                 Headers =
@@ -170,7 +170,36 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
             HttpResponseMessage response = await GetClient().SendAsync(httpRequestMessage);
 
             // Assert
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+            var result = await response.Content.ReadFromJsonAsync<AddPartyResultDto>();
+            Assert.True(result.PartyCreated);
+        }
+
+        [Fact]
+        public async Task AddParty_ValidParty_AgentSystem_ReturnsOkAndTrue()
+        {
+            // Arrange
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "/accessmanagement/api/v1/internal/party")
+            {
+                Content = JsonContent.Create(new PartyBaseDto
+                {
+                    PartyUuid = Guid.NewGuid(),
+                    EntityType = "Systembruker",
+                    EntityVariantType = "AgentSystem",
+                    DisplayName = "Test User"
+                }),
+                Headers =
+                {
+                    { "PlatformAccessToken", PrincipalUtil.GetAccessToken("platform", "authentication") }
+                }
+            };
+
+            // Act
+            HttpResponseMessage response = await GetClient().SendAsync(httpRequestMessage);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
             var result = await response.Content.ReadFromJsonAsync<AddPartyResultDto>();
             Assert.True(result.PartyCreated);
