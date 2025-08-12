@@ -12,8 +12,7 @@ platform_workflow_principal_ids = [
   "2ac064c5-5241-4097-a2d6-a27c077f1f51"  # altinn-register-app-at22-aks02
 ]
 db_max_pool_size = 4
-db_compute_tier  = "GeneralPurpose"
-db_compute_size  = "Standard_D2ads_v5"
+db_compute_sku   = "D2"
 sbl_endpoint     = "https://at22.altinn.cloud/sblbridge/"
 use_pgbouncer    = true
 

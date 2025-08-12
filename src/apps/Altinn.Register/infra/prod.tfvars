@@ -12,8 +12,7 @@ platform_workflow_principal_ids = [
   "8a86d76e-91b1-4e47-a411-e81f8e689882"  # altinn-register-app-prod-aks02
 ]
 db_max_pool_size = 10
-db_compute_tier  = "GeneralPurpose"
-db_compute_size  = "Standard_D8ads_v5"
+db_compute_sku   = "D8"
 db_storage_tier  = "P15"
 sbl_endpoint     = "https://ai-pr-vip-sblbridge.ai.basefarm.net/sblbridge/"
 

@@ -228,8 +228,7 @@ module "postgres_server" {
   }
 
   storage_tier = var.db_storage_tier
-  compute_tier = var.db_compute_tier
-  compute_size = var.db_compute_size
+  compute_sku  = var.db_compute_sku
 
   entraid_admins = [
     {

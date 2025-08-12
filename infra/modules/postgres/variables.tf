@@ -44,23 +44,18 @@ variable "configurations" {
 }
 
 variable "use_pgbouncer" {
-  type = bool
+  type    = bool
   default = false
 }
 
-variable "compute_tier" {
-  type = string
+variable "compute_sku" {
+  type    = string
+  default = "D2"
+
   validation {
-    condition     = contains(["GeneralPurpose", "MemoryOptimized"], var.compute_tier)
-    error_message = "Possible values are GeneralPurpose and MemoryOptimized"
+    condition     = contains(keys(local.compute_skus), var.compute_sku)
+    error_message = "Must be one of [${join(keys(local.compute_skus), ", ")}]"
   }
-
-  default     = "GeneralPurpose" # Cheapest
-  description = "Compute tier"
-}
-
-variable "compute_size" {
-  type = string
 }
 
 variable "backup_retention_days" {

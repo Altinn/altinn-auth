@@ -10,23 +10,19 @@ terraform {
 data "azurerm_client_config" "current" {}
 
 locals {
-  sku = {
-    "Burstable"       = "B",
-    "GeneralPurpose"  = "GP",
-    "MemoryOptimized" = "MO"
-  }
-  sku_name = "${local.sku[var.compute_tier]}_${var.compute_size}"
+  compute_sku = local.compute_skus[var.compute_sku]
 
   default_config = {
-    "metrics.autovacuum_diagnostics" : "on",
-    "metrics.collector_database_activity" : "on",
+    "metrics.autovacuum_diagnostics"      = "on"
+    "metrics.collector_database_activity" = "on"
+    "max_connections"                     = tostring(local.compute_sku.max_connections)
   }
 
   pgbouncer_default_config = {
-    "pgbouncer.max_prepared_statements" : "5000",
-    "pgbouncer.max_client_conn" : "5000",
-    "pgbouncer.pool_mode" : "TRANSACTION",
-    "metrics.pgbouncer_diagnostics" : "on",
+    "pgbouncer.max_prepared_statements" = "5000"
+    "pgbouncer.max_client_conn"         = "5000"
+    "pgbouncer.pool_mode"               = "TRANSACTION"
+    "metrics.pgbouncer_diagnostics"     = "on"
   }
 
   # latest key takes precedence
@@ -93,7 +89,7 @@ resource "azurerm_postgresql_flexible_server" "postgres_server" {
   }
 
   create_mode = "Default"
-  sku_name    = local.sku_name
+  sku_name    = local.compute_sku.sku_name
 
   lifecycle {
     ignore_changes  = [zone, storage_mb]

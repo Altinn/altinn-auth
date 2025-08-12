@@ -49,11 +49,7 @@ variable "db_max_pool_size" {
   default = 4
 }
 
-variable "db_compute_tier" {
-  type = string
-}
-
-variable "db_compute_size" {
+variable "db_compute_sku" {
   type = string
 }
 
