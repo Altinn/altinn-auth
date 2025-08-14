@@ -91,10 +91,10 @@ public class DbDataMigrationService(
             await migrationService.LogMigration<Entity>(dataKey, string.Empty, 4);
         }
 
-        if (migrationService.NeedMigration<Role>(dataKey, 13))
+        if (migrationService.NeedMigration<Role>(dataKey, 14))
         {
             await IngestRole(options: options, cancellationToken: cancellationToken);
-            await migrationService.LogMigration<Role>(dataKey, string.Empty, 13);
+            await migrationService.LogMigration<Role>(dataKey, string.Empty, 14);
         }
 
         if (migrationService.NeedMigration<RoleMap>(dataKey, 6))
@@ -895,7 +895,8 @@ public class DbDataMigrationService(
 
         var legacyCodes = new List<RoleLookup>
         {
-            new RoleLookup() { RoleId = roles.First(t => t.Code == "kontaktperson-ados").Id, Key = "LegacyCode", Value = "ADOS" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "administrativ-enhet-offentlig-sektor").Id, Key = "LegacyCode", Value = "ADOS" },
+            new RoleLookup() { RoleId = roles.First(t => t.Code == "kontaktperson-ados").Id, Key = "LegacyCode", Value = "KEMN" },
             new RoleLookup() { RoleId = roles.First(t => t.Code == "nestleder").Id, Key = "LegacyCode", Value = "NEST" },
             new RoleLookup() { RoleId = roles.First(t => t.Code == "kontorfelleskapmedlem").Id, Key = "LegacyCode", Value = "KTRF" },
             new RoleLookup() { RoleId = roles.First(t => t.Code == "organisasjonsledd-offentlig-sektor").Id, Key = "LegacyCode", Value = "ORGL" },
