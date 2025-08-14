@@ -1,6 +1,6 @@
 ﻿using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Models;
+using Altinn.AccessMgmt.Persistence.Models;
 using Altinn.AccessMgmt.Persistence.Services.Models;
 using Altinn.Authorization.ProblemDetails;
 
@@ -56,16 +56,6 @@ public interface IAssignmentService
     /// Fetches assignment.
     /// </summary>
     Task<Assignment> GetAssignment(Guid fromId, Guid toId, string roleCode, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Fetches inherited assignments.
-    /// </summary>
-    Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, Guid roleId, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Fetches inherited assignments.
-    /// </summary>
-    Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, string roleCode, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Fetches Client assignments.

@@ -1,12 +1,11 @@
 ﻿using System.Data;
 using Altinn.AccessManagement.Persistence.Extensions;
-using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Contracts;
 using Altinn.AccessMgmt.Persistence.Core.Definitions;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Services;
+using Altinn.AccessMgmt.Persistence.Models;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
-using Altinn.AccessMgmt.Persistence.Services.Models;
 using Npgsql;
 
 namespace Altinn.AccessMgmt.Persistence.Repositories;

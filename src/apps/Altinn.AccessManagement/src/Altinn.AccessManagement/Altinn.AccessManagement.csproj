@@ -17,6 +17,10 @@
         <PackageReference Include="Azure.Identity" />
         <PackageReference Include="JWTCookieAuthentication" />
         <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+          <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.Extensions.Configuration.AzureKeyVault" />
         <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" />
         <PackageReference Include="Microsoft.FeatureManagement.AspNetCore" />
@@ -41,6 +45,7 @@
         <ProjectReference Include="..\Altinn.AccessManagement.Core\Altinn.AccessManagement.Core.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Integration\Altinn.AccessManagement.Integration.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Persistence\Altinn.AccessManagement.Persistence.csproj" />
+        <ProjectReference Include="..\Altinn.AccessMgmt.PersistenceEF\Altinn.AccessMgmt.PersistenceEF.csproj" />
         <ProjectReference Include="..\Altinn.AccessMgmt.Persistence\Altinn.AccessMgmt.Persistence.csproj" />
         <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Host\src\Altinn.Authorization.Host.Lease\Altinn.Authorization.Host.Lease.csproj" />
         <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Host\src\Altinn.Authorization.Host\Altinn.Authorization.Host.csproj" />

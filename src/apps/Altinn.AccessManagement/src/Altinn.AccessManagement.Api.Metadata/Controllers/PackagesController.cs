@@ -1,5 +1,5 @@
-﻿using Altinn.AccessMgmt.Core.Models;
-using Altinn.AccessMgmt.Persistence.Core.Utilities.Search;
+﻿using Altinn.AccessMgmt.Persistence.Core.Utilities.Search;
+using Altinn.AccessMgmt.Persistence.Models;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Models;
 using Microsoft.AspNetCore.Mvc;

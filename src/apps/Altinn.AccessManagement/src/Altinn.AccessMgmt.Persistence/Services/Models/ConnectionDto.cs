@@ -1,4 +1,4 @@
-﻿using Altinn.AccessMgmt.Core.Models;
+﻿using Altinn.AccessMgmt.Persistence.Models;
 
 namespace Altinn.AccessMgmt.Persistence.Services.Models;
 

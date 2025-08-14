@@ -113,6 +113,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{628615DC-B40
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Cli", "src\tools\Altinn.Authorization.Cli\src\Altinn.Authorization.Cli\Altinn.Authorization.Cli.csproj", "{B1F5E18C-CDB2-484B-A095-8D7D551B1577}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessMgmt.PersistenceEF", "src\apps\Altinn.AccessManagement\src\Altinn.AccessMgmt.PersistenceEF\Altinn.AccessMgmt.PersistenceEF.csproj", "{00BBB51E-E990-400B-8E6F-68476D4E75BD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -471,6 +473,18 @@ Global
 		{B1F5E18C-CDB2-484B-A095-8D7D551B1577}.Release|x64.Build.0 = Release|Any CPU
 		{B1F5E18C-CDB2-484B-A095-8D7D551B1577}.Release|x86.ActiveCfg = Release|Any CPU
 		{B1F5E18C-CDB2-484B-A095-8D7D551B1577}.Release|x86.Build.0 = Release|Any CPU
+		{00BBB51E-E990-400B-8E6F-68476D4E75BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00BBB51E-E990-400B-8E6F-68476D4E75BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00BBB51E-E990-400B-8E6F-68476D4E75BD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{00BBB51E-E990-400B-8E6F-68476D4E75BD}.Debug|x64.Build.0 = Debug|Any CPU
+		{00BBB51E-E990-400B-8E6F-68476D4E75BD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{00BBB51E-E990-400B-8E6F-68476D4E75BD}.Debug|x86.Build.0 = Debug|Any CPU
+		{00BBB51E-E990-400B-8E6F-68476D4E75BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00BBB51E-E990-400B-8E6F-68476D4E75BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00BBB51E-E990-400B-8E6F-68476D4E75BD}.Release|x64.ActiveCfg = Release|Any CPU
+		{00BBB51E-E990-400B-8E6F-68476D4E75BD}.Release|x64.Build.0 = Release|Any CPU
+		{00BBB51E-E990-400B-8E6F-68476D4E75BD}.Release|x86.ActiveCfg = Release|Any CPU
+		{00BBB51E-E990-400B-8E6F-68476D4E75BD}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -527,5 +541,6 @@ Global
 		{B779A4E9-E814-1331-230A-C4FD340B5D4B} = {C2B7AC55-755F-98EC-7131-AA75D4EC5C29}
 		{628615DC-B40F-2350-EE74-A155D8C906F4} = {B779A4E9-E814-1331-230A-C4FD340B5D4B}
 		{B1F5E18C-CDB2-484B-A095-8D7D551B1577} = {628615DC-B40F-2350-EE74-A155D8C906F4}
+		{00BBB51E-E990-400B-8E6F-68476D4E75BD} = {F99C2BE1-BC3E-6573-FD46-70E5E7335796}
 	EndGlobalSection
 EndGlobal

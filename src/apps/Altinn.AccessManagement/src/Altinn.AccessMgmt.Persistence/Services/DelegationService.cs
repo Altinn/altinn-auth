@@ -1,5 +1,5 @@
-﻿using Altinn.AccessMgmt.Core.Models;
-using Altinn.AccessMgmt.Persistence.Core.Models;
+﻿using Altinn.AccessMgmt.Persistence.Core.Models;
+using Altinn.AccessMgmt.Persistence.Models;
 using Altinn.AccessMgmt.Persistence.Repositories;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
@@ -10,7 +10,6 @@ namespace Altinn.AccessMgmt.Persistence.Services;
 /// <inheritdoc/>
 public class DelegationService(
     IRoleRepository roleRepository,
-    IInheritedAssignmentRepository inheritedAssignmentRepository,
     IAssignmentRepository assignmentRepository,
     IAssignmentPackageRepository assignmentPackageRepository,
     IAssignmentResourceRepository assignmentResourceRepository,
@@ -32,7 +31,6 @@ public class DelegationService(
     ) : IDelegationService
 {
     private readonly IRoleRepository roleRepository = roleRepository;
-    private readonly IInheritedAssignmentRepository inheritedAssignmentRepository = inheritedAssignmentRepository;
     private readonly IAssignmentRepository assignmentRepository = assignmentRepository;
     private readonly IAssignmentPackageRepository assignmentPackageRepository = assignmentPackageRepository;
     private readonly IAssignmentResourceRepository assignmentResourceRepository = assignmentResourceRepository;
@@ -55,12 +53,12 @@ public class DelegationService(
     {
         var role = (await roleRepository.Get(t => t.Code, roleCode)).First();
 
-        var filter = inheritedAssignmentRepository.CreateFilterBuilder();
+        var filter = assignmentRepository.CreateFilterBuilder();
         filter.Equal(t => t.FromId, fromId);
         filter.Equal(t => t.ToId, toId);
         filter.Equal(t => t.RoleId, role.Id);
 
-        var userAssignments = await assignmentRepository.Get();
+        var userAssignments = await assignmentRepository.Get(filter);
 
         if (userAssignments == null || !userAssignments.Any())
         {

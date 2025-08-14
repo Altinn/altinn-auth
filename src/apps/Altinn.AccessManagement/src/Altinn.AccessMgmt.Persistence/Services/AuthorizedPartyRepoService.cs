@@ -7,7 +7,7 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Contracts;
 using Altinn.AccessManagement.Core.Services.Interfaces;
-using Altinn.AccessMgmt.Core.Models;
+using Altinn.AccessMgmt.Persistence.Models;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Models;
 using Altinn.Authorization.ProblemDetails;
@@ -18,7 +18,7 @@ namespace Altinn.AccessMgmt.Persistence.Services;
 /// <inheritdoc/>
 public class AuthorizedPartyRepoService(
     IDelegationMetadataRepository resourceDelegationRepository,
-    IRelationService relationService,
+    AccessMgmt.Persistence.Services.Contracts.IRelationService relationService,
     IContextRetrievalService contextRetrievalService
     ) : IAuthorizedPartyRepoService
 {
@@ -40,7 +40,7 @@ public class AuthorizedPartyRepoService(
         return parties.Values;
     }
 
-    private static void EnrichWithAccessPackageParties(Dictionary<Guid, AuthorizedParty> parties, IEnumerable<RelationDto> connections)
+    private static void EnrichWithAccessPackageParties(Dictionary<Guid, AuthorizedParty> parties, IEnumerable<Models.RelationDto> connections)
     {
         foreach (var connection in connections)
         {

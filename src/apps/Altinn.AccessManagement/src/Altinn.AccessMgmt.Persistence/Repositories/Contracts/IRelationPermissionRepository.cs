@@ -1,6 +1,5 @@
-﻿using Altinn.AccessMgmt.Core.Models;
-using Altinn.AccessMgmt.Persistence.Core.Contracts;
-using Altinn.AccessMgmt.Persistence.Services.Models;
+﻿using Altinn.AccessMgmt.Persistence.Core.Contracts;
+using Altinn.AccessMgmt.Persistence.Models;
 
 namespace Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 

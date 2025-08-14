@@ -1,7 +1,7 @@
 ﻿using Altinn.AccessMgmt.Core.Models;
+using Altinn.AccessMgmt.Persistence.Models;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
-using Altinn.AccessMgmt.Persistence.Services.Models;
 
 namespace Altinn.AccessMgmt.Persistence.Services;
 
@@ -9,7 +9,7 @@ namespace Altinn.AccessMgmt.Persistence.Services;
 public class RelationService(IRelationRepository relationRepository, IRelationPermissionRepository relationPermissionRepository) : IRelationService
 {
     /// <inheritdoc />
-    public async Task<IEnumerable<RelationDto>> GetConnectionsToOthers(Guid partyId, Guid? toId = null, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Models.RelationDto>> GetConnectionsToOthers(Guid partyId, Guid? toId = null, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.FromId, partyId);
@@ -40,7 +40,7 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CompactRelationDto>> GetConnectionsToOthers(Guid partyId, Guid? toId = null, Guid? roleId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Models.CompactRelationDto>> GetConnectionsToOthers(Guid partyId, Guid? toId = null, Guid? roleId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationRepository.CreateFilterBuilder();
         filter.Equal(t => t.FromId, partyId);
@@ -61,7 +61,7 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<RelationDto>> GetConnectionsFromOthers(Guid partyId, Guid? fromId = null, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Models.RelationDto>> GetConnectionsFromOthers(Guid partyId, Guid? fromId = null, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.ToId, partyId);
@@ -92,7 +92,7 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CompactRelationDto>> GetConnectionsFromOthers(Guid partyId, Guid? fromId = null, Guid? roleId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Models.CompactRelationDto>> GetConnectionsFromOthers(Guid partyId, Guid? fromId = null, Guid? roleId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationRepository.CreateFilterBuilder();
         filter.Equal(t => t.ToId, partyId);
@@ -113,7 +113,7 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<PackagePermission>> GetPackagePermissionsFromOthers(Guid partyId, Guid? fromId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Models.PackagePermission>> GetPackagePermissionsFromOthers(Guid partyId, Guid? fromId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.ToId, partyId);
@@ -132,7 +132,7 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
 
         if (res is { } && res.Any() && res.Where(r => r.Package is { }) is var packages)
         {
-            return packages.DistinctBy(t => t.Package.Id).Select(permission => new PackagePermission()
+            return packages.DistinctBy(t => t.Package.Id).Select(permission => new Models.PackagePermission()
             {
                 Package = permission.Package,
                 Permissions = packages.Where(t => t.Package.Id == permission.Package.Id).Select(ConvertToPermission)
@@ -143,7 +143,7 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<PackagePermission>> GetPackagePermissionsToOthers(Guid partyId, Guid? toId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Models.PackagePermission>> GetPackagePermissionsToOthers(Guid partyId, Guid? toId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.FromId, partyId);
@@ -161,7 +161,7 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
         var res = await relationPermissionRepository.GetExtended(filter, cancellationToken: cancellationToken);
         if (res is { } && res.Any() && res.Where(r => r.Package is { }) is var packages)
         {
-            return packages.DistinctBy(t => t.Package.Id).Select(permission => new PackagePermission()
+            return packages.DistinctBy(t => t.Package.Id).Select(permission => new Models.PackagePermission()
             {
                 Package = permission.Package,
                 Permissions = packages.Where(t => t.Package.Id == permission.Package.Id).Select(ConvertToPermission)
@@ -172,7 +172,7 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ResourcePermission>> GetResourcePermissionsFromOthers(Guid partyId, Guid? fromId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Models.ResourcePermission>> GetResourcePermissionsFromOthers(Guid partyId, Guid? fromId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.ToId, partyId);
@@ -196,7 +196,7 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
 
         if (res is { } && res.Any() && res.Where(r => r.Resource is { } && r.Package is { }) is var resources)
         {
-            return resources.DistinctBy(t => t.Resource.Id).Select(permission => new ResourcePermission()
+            return resources.DistinctBy(t => t.Resource.Id).Select(permission => new Models.ResourcePermission()
             {
                 Resource = permission.Resource,
                 Permissions = resources.Where(t => t.Package.Id == permission.Package.Id).Select(ConvertToPermission)
@@ -207,13 +207,13 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<PackageDelegationCheck>> GetAssignablePackagePermissions(Guid partyId, Guid fromId, IEnumerable<Guid>? packageIds = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Persistence.Models.PackageDelegationCheck>> GetAssignablePackagePermissions(Guid partyId, Guid fromId, IEnumerable<Guid>? packageIds = null, CancellationToken cancellationToken = default)
     {
         return await relationPermissionRepository.GetAssignableAccessPackages(fromId, partyId, packageIds, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ResourcePermission>> GetResourcePermissionsToOthers(Guid partyId, Guid? toId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Models.ResourcePermission>> GetResourcePermissionsToOthers(Guid partyId, Guid? toId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
         var filter = relationPermissionRepository.CreateFilterBuilder();
         filter.Equal(t => t.FromId, partyId);
@@ -237,7 +237,7 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
 
         if (res is { } && res.Any() && res.Where(r => r.Resource is { } && r.Package is { }) is var resources)
         {
-            return resources.DistinctBy(t => t.Resource.Id).Select(permission => new ResourcePermission()
+            return resources.DistinctBy(t => t.Resource.Id).Select(permission => new Models.ResourcePermission()
             {
                 Resource = permission.Resource,
                 Permissions = resources.Where(t => t.Package.Id == permission.Package.Id).Select(ConvertToPermission)
@@ -249,9 +249,9 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
 
     #region Extractors and Converters
 
-    private IEnumerable<CompactRelationDto> ExtractConnectionsToOthers(IEnumerable<ExtCompactRelation> res, bool includeSubConnections = false)
+    private IEnumerable<Models.CompactRelationDto> ExtractConnectionsToOthers(IEnumerable<ExtCompactRelation> res, bool includeSubConnections = false)
     {
-        return res.Where(t => t.Reason == "Direct").DistinctBy(t => t.To.Id).Select(relation => new CompactRelationDto()
+        return res.Where(t => t.Reason == "Direct").DistinctBy(t => t.To.Id).Select(relation => new Models.CompactRelationDto()
         {
             Party = relation.To,
             Roles = res.Where(t => t.To.Id == relation.To.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
@@ -259,9 +259,9 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
         });
     }
 
-    private IEnumerable<CompactRelationDto> ExtractSubConnectionToOthers(IEnumerable<ExtCompactRelation> res, Guid party)
+    private IEnumerable<Models.CompactRelationDto> ExtractSubConnectionToOthers(IEnumerable<ExtCompactRelation> res, Guid party)
     {
-        return res.Where(t => t.Reason != "Direct" && t.Via.Id == party).DistinctBy(t => t.To.Id).Select(relation => new CompactRelationDto()
+        return res.Where(t => t.Reason != "Direct" && t.Via.Id == party).DistinctBy(t => t.To.Id).Select(relation => new Models.CompactRelationDto()
         {
             Party = relation.To,
             Roles = res.Where(t => t.To.Id == relation.To.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
@@ -269,9 +269,9 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
         });
     }
 
-    private IEnumerable<RelationDto> ExtractConnectionsToOthers(IEnumerable<ExtRelation> res, bool includeSubConnections = false)
+    private IEnumerable<Models.RelationDto> ExtractConnectionsToOthers(IEnumerable<ExtRelation> res, bool includeSubConnections = false)
     {
-        return res.Where(t => t.Reason == "Direct").DistinctBy(t => t.To.Id).Select(relation => new RelationDto()
+        return res.Where(t => t.Reason == "Direct").DistinctBy(t => t.To.Id).Select(relation => new Models.RelationDto()
         {
             Party = relation.To,
             Roles = res.Where(t => t.To.Id == relation.To.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
@@ -280,9 +280,9 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
         });
     }
 
-    private IEnumerable<RelationDto> ExtractSubConnectionToOthers(IEnumerable<ExtRelation> res, Guid party)
+    private IEnumerable<Models.RelationDto> ExtractSubConnectionToOthers(IEnumerable<ExtRelation> res, Guid party)
     {
-        return res.Where(t => t.Reason != "Direct" && t.Via.Id == party).DistinctBy(t => t.To.Id).Select(relation => new RelationDto()
+        return res.Where(t => t.Reason != "Direct" && t.Via.Id == party).DistinctBy(t => t.To.Id).Select(relation => new Models.RelationDto()
         {
             Party = relation.To,
             Roles = res.Where(t => t.To.Id == relation.To.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
@@ -291,9 +291,9 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
         });
     }
 
-    private IEnumerable<CompactRelationDto> ExtractConnectionsFromOthers(IEnumerable<ExtCompactRelation> res, bool includeSubConnections = false)
+    private IEnumerable<Models.CompactRelationDto> ExtractConnectionsFromOthers(IEnumerable<ExtCompactRelation> res, bool includeSubConnections = false)
     {
-        return res.DistinctBy(t => t.From.Id).Select(relation => new CompactRelationDto()
+        return res.DistinctBy(t => t.From.Id).Select(relation => new Models.CompactRelationDto()
         {
             Party = relation.From,
             Roles = res.Where(t => t.From.Id == relation.From.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
@@ -301,9 +301,9 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
         });
     }
 
-    private IEnumerable<RelationDto> ExtractConnectionsFromOthers(IEnumerable<ExtRelation> res, bool includeSubConnections = false)
+    private IEnumerable<Models.RelationDto> ExtractConnectionsFromOthers(IEnumerable<ExtRelation> res, bool includeSubConnections = false)
     {
-        return res.DistinctBy(t => t.From.Id).Select(relation => new RelationDto()
+        return res.DistinctBy(t => t.From.Id).Select(relation => new Models.RelationDto()
         {
             Party = relation.From,
             Roles = res.Where(t => t.From.Id == relation.From.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
@@ -312,9 +312,9 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
         });
     }
 
-    private IEnumerable<CompactRelationDto> ExtractSubConnectionFromOthers(IEnumerable<ExtCompactRelation> res, Guid party)
+    private IEnumerable<Models.CompactRelationDto> ExtractSubConnectionFromOthers(IEnumerable<ExtCompactRelation> res, Guid party)
     {
-        return res.Where(t => t.Reason != "Direct" && t.Via.Id == party).DistinctBy(t => t.From.Id).Select(relation => new CompactRelationDto()
+        return res.Where(t => t.Reason != "Direct" && t.Via.Id == party).DistinctBy(t => t.From.Id).Select(relation => new Models.CompactRelationDto()
         {
             Party = relation.From,
             Roles = res.Where(t => t.From.Id == relation.From.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
@@ -322,9 +322,9 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
         });
     }
 
-    private IEnumerable<RelationDto> ExtractSubConnectionFromOthers(IEnumerable<ExtRelation> res, Guid party)
+    private IEnumerable<Models.RelationDto> ExtractSubConnectionFromOthers(IEnumerable<ExtRelation> res, Guid party)
     {
-        return res.Where(t => t.Reason != "Direct" && t.Via.Id == party).DistinctBy(t => t.From.Id).Select(relation => new RelationDto()
+        return res.Where(t => t.Reason != "Direct" && t.Via.Id == party).DistinctBy(t => t.From.Id).Select(relation => new Models.RelationDto()
         {
             Party = relation.From,
             Roles = res.Where(t => t.From.Id == relation.From.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
@@ -333,18 +333,18 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
         });
     }
 
-    private CompactPermission ConvertToCompactPermission(ExtRelation connection)
+    private Models.CompactPermission ConvertToCompactPermission(ExtRelation connection)
     {
-        return new CompactPermission()
+        return new Models.CompactPermission()
         {
             From = connection.From,
             To = connection.To
         };
     }
 
-    private Permission ConvertToPermission(ExtRelation connection)
+    private Models.Permission ConvertToPermission(ExtRelation connection)
     {
-        return new Permission()
+        return new Models.Permission()
         {
             From = connection.From,
             To = connection.To,

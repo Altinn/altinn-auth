@@ -13,6 +13,8 @@ using Altinn.AccessManagement.Integration.Extensions;
 using Altinn.AccessManagement.Persistence.Configuration;
 using Altinn.AccessManagement.Persistence.Extensions;
 using Altinn.AccessMgmt.Persistence.Extensions;
+using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.Authorization.AccessManagement;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.Host;
@@ -33,6 +35,9 @@ using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.FeatureManagement;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -98,6 +103,8 @@ internal static partial class AccessManagementHost
             }
         }
 
+        // builder.ConfigureEF();
+
         builder.ConfigurePostgreSqlConfiguration();
         builder.ConfigureAltinnPackages();
         builder.ConfigureInternals();
@@ -109,6 +116,31 @@ internal static partial class AccessManagementHost
         builder.AddAccessManagementInternal();
 
         return builder.Build();
+    }
+
+    private static WebApplicationBuilder ConfigureEF(this WebApplicationBuilder builder)
+    {
+        //// builder.Services.Replace(ServiceDescriptor.Singleton<IMigrationsSqlGenerator, CustomMigrationsSqlGenerator>());
+        ///
+        //builder.Services.AddSingleton<IMigrationsSqlGenerator, CustomMigrationsSqlGenerator>();
+
+        //builder.Services.AddScoped<IAuditContextProvider, HttpContextAuditContextProvider>();
+        //builder.Services.AddScoped<AuditConnectionInterceptor>();
+        builder.Services.AddScoped<ReadOnlyInterceptor>();
+
+        builder.Services.AddDbContext<AppDbContext>((sp, options) =>
+        {
+            // var readonlyInterceptor = sp.GetRequiredService<ReadOnlyInterceptor>();
+            //var auditInterceptior = sp.GetRequiredService<AuditConnectionInterceptor>();
+            options.UseNpgsql(builder.Configuration["Database:Postgres:AppConnectionString"])
+            //// .AddInterceptors(readonlyInterceptor)
+            //// .EnableSensitiveDataLogging()
+            //.AddInterceptors(auditInterceptior)
+            .ReplaceService<IMigrationsSqlGenerator, CustomMigrationsSqlGenerator>();
+        });
+
+
+        return builder;
     }
 
     private static WebApplicationBuilder ConfigureAccessManagementPersistence(this WebApplicationBuilder builder)
@@ -351,3 +383,19 @@ internal static partial class AccessManagementHost
         internal static partial void PgsqlMissingConnectionString(ILogger logger);
     }
 }
+
+//public class HttpContextAuditContextProvider(IHttpContextAccessor accessor) : IAuditContextProvider
+//{
+//    public AuditValues Current
+//    {
+//        get
+//        {
+//            var user = accessor.HttpContext?.User;
+//            var userId = Guid.Parse(user?.FindFirst("sub")?.Value ?? throw new Exception("Missing sub"));
+//            var systemId = Guid.Parse("00000000-0000-0000-0000-000000000001"); // evt fra config
+//            var operationId = Guid.NewGuid().ToString();
+
+//            return new AuditValues(userId, systemId, operationId);
+//        }
+//    }
+//}

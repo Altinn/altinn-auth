@@ -1,7 +1,7 @@
 ﻿using System.Text;
-using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Contracts;
 using Altinn.AccessMgmt.Persistence.Core.Definitions;
+using Altinn.AccessMgmt.Persistence.Models;
 
 namespace Altinn.AccessMgmt.Repo.Definitions;
 

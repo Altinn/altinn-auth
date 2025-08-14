@@ -2,8 +2,8 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Models;
+using Altinn.AccessMgmt.Persistence.Models;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Models;
@@ -13,7 +13,6 @@ namespace Altinn.AccessMgmt.Persistence.Services;
 
 /// <inheritdoc/>
 public class AssignmentService(
-    IInheritedAssignmentRepository inheritedAssignmentRepository,
     IAssignmentRepository assignmentRepository,
     IPackageRepository packageRepository,
     IAssignmentPackageRepository assignmentPackageRepository,
@@ -393,16 +392,16 @@ public class AssignmentService(
             throw new Exception(string.Format("Role '{0}' not found", roleId));
         }
 
-        var inheritedAssignments = await GetInheritedAssignment(fromEntityId, toEntityId, role.Id, cancellationToken: cancellationToken);
-        if (inheritedAssignments != null && inheritedAssignments.Any())
-        {
-            if (inheritedAssignments.Count() == 1)
-            {
-                throw new Exception(string.Format("An inheirited assignment exists From:'{0}.FromName' Via:'{0}.ViaName' To:'{}.ToName'. Use Force = true to create anyway.", inheritedAssignments.First()));
-            }
+        //var inheritedAssignments = await GetInheritedAssignment(fromEntityId, toEntityId, role.Id, cancellationToken: cancellationToken);
+        //if (inheritedAssignments != null && inheritedAssignments.Any())
+        //{
+        //    if (inheritedAssignments.Count() == 1)
+        //    {
+        //        throw new Exception(string.Format("An inheirited assignment exists From:'{0}.FromName' Via:'{0}.ViaName' To:'{}.ToName'. Use Force = true to create anyway.", inheritedAssignments.First()));
+        //    }
 
-            throw new Exception(string.Format("Multiple inheirited assignment exists. Use Force = true to create anyway."));
-        }
+        //    throw new Exception(string.Format("Multiple inheirited assignment exists. Use Force = true to create anyway."));
+        //}
 
         assignment = new Assignment()
         {
@@ -420,29 +419,29 @@ public class AssignmentService(
         return assignment;
     }
 
-    /// <inheritdoc/>
-    public async Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, Guid roleId, CancellationToken cancellationToken = default)
-    {
-        var filter = inheritedAssignmentRepository.CreateFilterBuilder();
-        filter.Equal(t => t.FromId, fromId);
-        filter.Equal(t => t.ToId, toId);
-        filter.Equal(t => t.RoleId, roleId);
+    ///// <inheritdoc/>
+    //public async Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, Guid roleId, CancellationToken cancellationToken = default)
+    //{
+    //    var filter = inheritedAssignmentRepository.CreateFilterBuilder();
+    //    filter.Equal(t => t.FromId, fromId);
+    //    filter.Equal(t => t.ToId, toId);
+    //    filter.Equal(t => t.RoleId, roleId);
 
-        return await inheritedAssignmentRepository.Get(filter, cancellationToken: cancellationToken);
-    }
+    //    return await inheritedAssignmentRepository.Get(filter, cancellationToken: cancellationToken);
+    //}
 
-    /// <inheritdoc/>
-    public async Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, string roleCode, CancellationToken cancellationToken = default)
-    {
-        var roleResult = await roleRepository.Get(t => t.Code, roleCode, cancellationToken: cancellationToken);
-        if (roleResult == null || !roleResult.Any())
-        {
-            throw new Exception(string.Format("Role not found '{0}'", roleCode));
-        }
+    ///// <inheritdoc/>
+    //public async Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, string roleCode, CancellationToken cancellationToken = default)
+    //{
+    //    var roleResult = await roleRepository.Get(t => t.Code, roleCode, cancellationToken: cancellationToken);
+    //    if (roleResult == null || !roleResult.Any())
+    //    {
+    //        throw new Exception(string.Format("Role not found '{0}'", roleCode));
+    //    }
 
-        var roleId = roleResult.First().Id;
-        return await GetInheritedAssignment(fromId, toId, roleId, cancellationToken: cancellationToken);
-    }
+    //    var roleId = roleResult.First().Id;
+    //    return await GetInheritedAssignment(fromId, toId, roleId, cancellationToken: cancellationToken);
+    //}
 
     /// <inheritdoc/>
     public async Task<IEnumerable<AssignmentOrRolePackageAccess>> GetPackagesForAssignment(Guid assignmentId, CancellationToken cancellationToken = default)

@@ -1,5 +1,6 @@
 using Altinn.AccessManagement.Api.Enduser.Models;
-using Altinn.AccessMgmt.Core.Models;
+using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessMgmt.Persistence.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 
@@ -237,7 +238,7 @@ public static class EnduserValidationRules
         };
 
         /// <summary>
-        /// Checks the list of packages all <see cref="Package.IsAssignable"/> is set to true.
+        /// Checks the list of packages all <see cref="BasePackage.IsAssignable"/> is set to true.
         /// </summary>
         /// <param name="packages">list of packages</param>
         /// <param name="paramName">name of the query parameter</param>
