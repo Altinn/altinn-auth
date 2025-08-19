@@ -174,8 +174,8 @@ namespace Altinn.Platform.Authorization.Repositories
 
         private async Task<Stream> GetBlobStreamInternal(BlobClient blobClient, CancellationToken cancellationToken)
         {
-            ////try
-            ////{
+            try
+            {
                 Stream memoryStream = new MemoryStream();
 
                 if (await blobClient.ExistsAsync(cancellationToken))
@@ -187,12 +187,12 @@ namespace Altinn.Platform.Authorization.Repositories
                 }
 
                 return memoryStream;
-            ////}
-            ////catch (Exception ex)
-            ////{
-            ////    _logger.LogError(ex, "Failed to read policy file at {blobClient.Name}.", blobClient.Name);
-            ////    throw;
-            ////}
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to read policy file at {BlobClientName}.", blobClient.Name);
+                throw;
+            }
         }
 
         private async Task<Response<BlobContentInfo>> WriteBlobStreamInternal(BlobClient blobClient, Stream fileStream, BlobUploadOptions blobUploadOptions = null, CancellationToken cancellationToken = default)
@@ -210,16 +210,16 @@ namespace Altinn.Platform.Authorization.Repositories
             {
                 if (ex.Status == (int)HttpStatusCode.PreconditionFailed)
                 {
-                    _logger.LogError(ex, "Failed to save policy file {blobClient.Name}. Precondition failed", blobClient.Name);
+                    _logger.LogError(ex, "Failed to save policy file {BlobClientName}. Precondition failed", blobClient.Name);
                     throw;
                 }
 
-                _logger.LogError(ex, "Failed to save policy file {blobClient.Name}. RequestFailedException", blobClient.Name);
+                _logger.LogError(ex, "Failed to save policy file {BlobClientName}. RequestFailedException", blobClient.Name);
                 throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to save policy file {blobClient.Name}. Unexpected exception", blobClient.Name);
+                _logger.LogError(ex, "Failed to save policy file {BlobClientName}. Unexpected exception", blobClient.Name);
                 throw;
             }
         }

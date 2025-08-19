@@ -1,21 +1,20 @@
 using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Xml;
 
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Platform.Authorization.Services.Interface;
-using Azure;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
 {
     public class PolicyRetrievalPointMock : IPolicyRetrievalPoint
     {
+        private readonly IMemoryCache _memoryCache;
+
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         private readonly ILogger<PolicyRetrievalPointMock> _logger;   
@@ -26,8 +25,9 @@ namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
 
         private readonly string _resourceregistryAttributeId = "urn:altinn:resource";
 
-        public PolicyRetrievalPointMock(IHttpContextAccessor httpContextAccessor, ILogger<PolicyRetrievalPointMock> logger)
+        public PolicyRetrievalPointMock(IMemoryCache memoryCache, IHttpContextAccessor httpContextAccessor, ILogger<PolicyRetrievalPointMock> logger)
         {
+            _memoryCache = memoryCache;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
         }
@@ -174,18 +174,33 @@ namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
             return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "Xacml", "3.0", "ConformanceTests");
         }
 
-        public static XacmlPolicy ParsePolicy(string policyDocumentTitle, string policyPath)
+        public XacmlPolicy ParsePolicy(string policyDocumentTitle, string policyPath)
         {
-            XmlDocument policyDocument = new XmlDocument();
-            
-            policyDocument.Load(Path.Combine(policyPath, policyDocumentTitle));
-            XacmlPolicy policy;
-            using (XmlReader reader = XmlReader.Create(new StringReader(policyDocument.OuterXml)))
+            string cacheKey = policyPath;
+            if (!_memoryCache.TryGetValue(cacheKey, out XacmlPolicy policy))
             {
-                policy = XacmlParser.ParseXacmlPolicy(reader);
+                XmlDocument policyDocument = new XmlDocument();
+
+                policyDocument.Load(Path.Combine(policyPath, policyDocumentTitle));
+                
+                using (XmlReader reader = XmlReader.Create(new StringReader(policyDocument.OuterXml)))
+                {
+                    policy = XacmlParser.ParseXacmlPolicy(reader);
+                }
+
+                PutXacmlPolicyInCache(cacheKey, policy);
             }
 
             return policy;
+        }
+
+        private void PutXacmlPolicyInCache(string policyPath, XacmlPolicy policy)
+        {
+            var cacheEntryOptions = new MemoryCacheEntryOptions()
+               .SetPriority(CacheItemPriority.High)
+               .SetAbsoluteExpiration(new TimeSpan(0, 5, 0));
+
+            _memoryCache.Set(policyPath, policy, cacheEntryOptions);
         }
     }
 }

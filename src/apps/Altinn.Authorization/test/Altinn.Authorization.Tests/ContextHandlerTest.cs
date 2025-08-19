@@ -8,6 +8,7 @@ using Altinn.Platform.Authorization.Services.Implementation;
 using Altinn.Platform.Events.Tests.Mocks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Moq;
@@ -26,6 +27,11 @@ namespace Altinn.Platform.Authorization.IntegrationTests
 
         public ContextHandlerTest()
         {
+            ServiceCollection services = new ServiceCollection();
+            services.AddMemoryCache();
+            ServiceProvider serviceProvider = services.BuildServiceProvider();
+            IMemoryCache memoryCache = serviceProvider.GetService<IMemoryCache>();
+
             Mock<IHttpContextAccessor> httpContextAccessorMock = new Mock<IHttpContextAccessor>();
             httpContextAccessorMock.Setup(h => h.HttpContext).Returns(_httpContext);
             _contextHandler = new ContextHandler(
@@ -37,7 +43,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
                 new MemoryCache(new MemoryCacheOptions()),
                 Options.Create(new GeneralSettings { RoleCacheTimeout = 5 }),
                 new RegisterServiceMock(),
-                new PolicyRetrievalPointMock(httpContextAccessorMock.Object, null),
+                new PolicyRetrievalPointMock(memoryCache, httpContextAccessorMock.Object, null),
                 new AccessManagementWrapperMock(httpContextAccessorMock.Object),
                 featureManageMock.Object);
         }

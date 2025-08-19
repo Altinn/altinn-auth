@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Helpers;
@@ -8,9 +7,10 @@ using Altinn.Platform.Authorization.IntegrationTests.Util;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Services.Implementation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
 
 namespace Altinn.Platform.Authorization.IntegrationTests
 {
@@ -19,10 +19,16 @@ namespace Altinn.Platform.Authorization.IntegrationTests
     /// </summary>
     public class DelegationHelperTest
     {
-        private PolicyRetrievalPointMock _prpMock = new PolicyRetrievalPointMock(new HttpContextAccessor(), new Mock<ILogger<PolicyRetrievalPointMock>>().Object);
+        private PolicyRetrievalPointMock _prpMock;
 
         public DelegationHelperTest()
         {
+            ServiceCollection services = new ServiceCollection();
+            services.AddMemoryCache();
+            ServiceProvider serviceProvider = services.BuildServiceProvider();
+            IMemoryCache memoryCache = serviceProvider.GetService<IMemoryCache>();
+
+            _prpMock = new PolicyRetrievalPointMock(memoryCache, new HttpContextAccessor(), new Mock<ILogger<PolicyRetrievalPointMock>>().Object);
         }
 
         /// <summary>

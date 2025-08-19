@@ -275,45 +275,66 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             AssertionUtil.AssertEqual(expected, contextResponse);
         }
 
-        /////// <summary>
-        /////// Multi request scenario for 3 authorization checks in one request
-        /////// </summary>
-        ////[Fact]
-        ////public async Task PDPExternal_Decision_AltinnResourceRegistryMulti0012()
-        ////{
-        ////    string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
-        ////    string testCase = "AltinnResourceRegistryMulti0012";
-        ////    HttpClient client = GetTestClient();
-        ////    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
-        ////    HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
-        ////    XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+        /// <summary>
+        /// Scenario where systemuser has received delegation from the resource party for the resource. Should give Permit result.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_SystemUserWithAppDelegation_MultipleObligationsBugFix_Permit()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
+            string testCase = "AltinnApps_SystemUserWithDelegation_Permit";
+            HttpClient client = GetTestClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
 
-        ////    // Act
-        ////    XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+            // Act multiple times to ensure obligations is not cached multiple times
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, TestSetupUtil.CreateXacmlRequestExternal(testCase));
+            contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, TestSetupUtil.CreateXacmlRequestExternal(testCase));
+            contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, TestSetupUtil.CreateXacmlRequestExternal(testCase));
 
-        ////    // Assert
-        ////    AssertionUtil.AssertEqual(expected, contextResponse);
-        ////}
+            // Assert
+            Assert.True(contextResponse.Response[0].Obligations.Count() == 2, "Expected only the two instances of obligations from main app/resource policy in response");
+        }
 
-        /////// <summary>
-        /////// Scenario where systemuser has received delegation, but request includes multiple subjects as org and orgnumber. Should NOT give Permit. 
-        /////// </summary>
-        ////[Fact]
-        ////public async Task PDPExternal_Decision_SystemUserWithDelegation_TooManyRequestSubjects_Indeterminate()
-        ////{
-        ////    string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
-        ////    string testCase = "ResourceRegistry_SystemUserWithDelegation_TooManyRequestSubjects_Indeterminate";
-        ////    HttpClient client = GetTestClient();
-        ////    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
-        ////    HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
-        ////    XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+        /// <summary>
+        /// Multi request scenario for 3 authorization checks in one request
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_AltinnResourceRegistryMulti0012()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
+            string testCase = "AltinnResourceRegistryMulti0012";
+            HttpClient client = GetTestClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
 
-        ////    // Act
-        ////    XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
 
-        ////    // Assert
-        ////    AssertionUtil.AssertEqual(expected, contextResponse);
-        ////}
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// Scenario where systemuser has received delegation, but request includes multiple subjects as org and orgnumber. Should NOT give Permit. 
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_SystemUserWithDelegation_TooManyRequestSubjects_Indeterminate()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
+            string testCase = "ResourceRegistry_SystemUserWithDelegation_TooManyRequestSubjects_Indeterminate";
+            HttpClient client = GetTestClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
 
         /// <summary>
         /// Scenario where systemuser has received delegation from the resource party for two resources. Multirequest should give Permit result for both.
