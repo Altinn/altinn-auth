@@ -150,32 +150,32 @@ namespace Altinn.Platform.Authorization.Controllers
         [Route("authorization/api/v1/authorize")]
         public async Task<ActionResult<XacmlJsonResponseExternal>> AuthorizeExternal([FromBody] XacmlJsonRequestRootExternal authorizationRequest, CancellationToken cancellationToken = default)
         {
-            try
-            {
+            ////try
+            ////{
                 XacmlJsonRequestRoot jsonRequest = _mapper.Map<XacmlJsonRequestRoot>(authorizationRequest);
                 XacmlJsonResponse xacmlResponse = await Authorize(jsonRequest.Request, true, cancellationToken);
                 return _mapper.Map<XacmlJsonResponseExternal>(xacmlResponse);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "// DecisionController // External Decision // Unexpected Exception");
+            ////}
+            ////catch (Exception ex)
+            ////{
+            ////    _logger.LogError(ex, "// DecisionController // External Decision // Unexpected Exception");
 
-                XacmlContextStatus status = new XacmlContextStatus(XacmlContextStatusCode.SyntaxError);
-                if (ex is ArgumentException)
-                {
-                    status = new XacmlContextStatus(XacmlContextStatusCode.ProcessingError);
-                    status.StatusMessage = ex.Message;
-                }
+            ////    XacmlContextStatus status = new XacmlContextStatus(XacmlContextStatusCode.SyntaxError);
+            ////    if (ex is ArgumentException)
+            ////    {
+            ////        status = new XacmlContextStatus(XacmlContextStatusCode.ProcessingError);
+            ////        status.StatusMessage = ex.Message;
+            ////    }
 
-                XacmlContextResult result = new XacmlContextResult(XacmlContextDecision.Indeterminate)
-                {
-                    Status = status
-                };
+            ////    XacmlContextResult result = new XacmlContextResult(XacmlContextDecision.Indeterminate)
+            ////    {
+            ////        Status = status
+            ////    };
 
-                XacmlContextResponse xacmlContextResponse = new XacmlContextResponse(result);
-                XacmlJsonResponse jsonResult = XacmlJsonXmlConverter.ConvertResponse(xacmlContextResponse);
-                return _mapper.Map<XacmlJsonResponseExternal>(jsonResult);
-            }
+            ////    XacmlContextResponse xacmlContextResponse = new XacmlContextResponse(result);
+            ////    XacmlJsonResponse jsonResult = XacmlJsonXmlConverter.ConvertResponse(xacmlContextResponse);
+            ////    return _mapper.Map<XacmlJsonResponseExternal>(jsonResult);
+            ////}
         }
 
         private async Task<XacmlJsonResponse> Authorize(XacmlJsonRequest decisionRequest, bool isExternalRequest = false, CancellationToken cancellationToken = default)
@@ -307,14 +307,14 @@ namespace Altinn.Platform.Authorization.Controllers
             XacmlContextResponse delegationContextResponse = null;
             if (roleResult.Decision.Equals(XacmlContextDecision.NotApplicable))
             {
-                try
-                {
+                ////try
+                ////{
                     delegationContextResponse = await AuthorizeUsingDelegations(decisionRequest, policy, cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "// DecisionController // Authorize // Delegation // Unexpected Exception");
-                }
+                ////}
+                ////catch (Exception ex)
+                ////{
+                ////    _logger.LogError(ex, "// DecisionController // Authorize // Delegation // Unexpected Exception");
+                ////}
             }
 
             XacmlContextResponse finalResponse = delegationContextResponse ?? rolesContextResponse;

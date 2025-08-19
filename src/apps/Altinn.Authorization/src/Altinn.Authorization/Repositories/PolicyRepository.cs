@@ -174,8 +174,8 @@ namespace Altinn.Platform.Authorization.Repositories
 
         private async Task<Stream> GetBlobStreamInternal(BlobClient blobClient, CancellationToken cancellationToken)
         {
-            try
-            {
+            ////try
+            ////{
                 Stream memoryStream = new MemoryStream();
 
                 if (await blobClient.ExistsAsync(cancellationToken))
@@ -187,12 +187,12 @@ namespace Altinn.Platform.Authorization.Repositories
                 }
 
                 return memoryStream;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to read policy file at {blobClient.Name}.", blobClient.Name);
-                throw;
-            }
+            ////}
+            ////catch (Exception ex)
+            ////{
+            ////    _logger.LogError(ex, "Failed to read policy file at {blobClient.Name}.", blobClient.Name);
+            ////    throw;
+            ////}
         }
 
         private async Task<Response<BlobContentInfo>> WriteBlobStreamInternal(BlobClient blobClient, Stream fileStream, BlobUploadOptions blobUploadOptions = null, CancellationToken cancellationToken = default)
