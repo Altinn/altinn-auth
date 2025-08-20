@@ -5,7 +5,7 @@ namespace Altinn.AccessMgmt.Core.Models;
 /// <summary>
 /// Permission
 /// </summary>
-public class Permission
+public class PermissionDto
 {
     /// <summary>
     /// From party

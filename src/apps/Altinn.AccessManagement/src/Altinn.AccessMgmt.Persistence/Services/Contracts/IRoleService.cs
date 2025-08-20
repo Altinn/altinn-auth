@@ -1,5 +1,4 @@
-﻿using Altinn.AccessMgmt.Core.Models;
-using Altinn.AccessMgmt.Persistence.Services.Models;
+﻿using Altinn.AccessMgmt.Persistence.Services.Models;
 
 namespace Altinn.AccessMgmt.Persistence.Services.Contracts;
 

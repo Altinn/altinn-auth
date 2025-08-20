@@ -1,13 +1,12 @@
 ﻿using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 
-namespace Altinn.AccessMgmt.Core;
+namespace Altinn.AccessMgmt.Core.Utils;
 
-/*
-ConnectionService => Deprecated 
-*/
-
-public class DtoConverter
+/// <summary>
+/// Dto Mapping
+/// </summary>
+public partial class DtoMapper
 {
     public IEnumerable<RelationPackageDto> ExtractRelationPackageDtoToOthers(IEnumerable<Relation> res, bool includeSubConnections = false)
     {
@@ -40,8 +39,6 @@ public class DtoConverter
             Connections = new()
         });
     }
-
-
 
     public IEnumerable<RelationDto> ExtractRelationDtoToOthers(IEnumerable<Relation> res, bool includeSubConnections = false)
     {
@@ -99,8 +96,6 @@ public class DtoConverter
         });
     }
 
-
-
     public CompactPermission ConvertToCompactPermission(Relation connection)
     {
         return new CompactPermission()
@@ -110,9 +105,9 @@ public class DtoConverter
         };
     }
 
-    public Permission ConvertToPermission(Relation connection)
+    public PermissionDto ConvertToPermission(Relation connection)
     {
-        return new Permission()
+        return new PermissionDto()
         {
             From = connection.From,
             To = connection.To,

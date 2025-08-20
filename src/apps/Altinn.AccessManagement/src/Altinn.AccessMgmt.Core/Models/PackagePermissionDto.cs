@@ -5,7 +5,7 @@ namespace Altinn.AccessMgmt.Core.Models;
 /// <summary>
 /// Package permissions
 /// </summary>
-public class PackagePermission
+public class PackagePermissionDto
 {
     /// <summary>
     /// Package the permissions are for
@@ -15,5 +15,5 @@ public class PackagePermission
     /// <summary>
     /// Parties with permissions
     /// </summary>
-    public IEnumerable<Permission> Permissions { get; set; }
+    public IEnumerable<PermissionDto> Permissions { get; set; }
 }

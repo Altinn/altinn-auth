@@ -1,5 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Api.Contracts\src\Altinn.Authorization.Api.Contracts\Altinn.Authorization.Api.Contracts.csproj" />
     <ProjectReference Include="..\Altinn.AccessMgmt.PersistenceEF\Altinn.AccessMgmt.PersistenceEF.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Altinn.Authorization.ProblemDetails" />
   </ItemGroup>
 </Project>
