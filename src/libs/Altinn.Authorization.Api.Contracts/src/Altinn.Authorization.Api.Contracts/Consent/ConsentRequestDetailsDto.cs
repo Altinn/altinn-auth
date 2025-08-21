@@ -46,6 +46,11 @@
         public Dictionary<string, string>? RequestMessage { get; set; }
 
         /// <summary>
+        /// Defines the status of the consent request.
+        /// </summary>
+        public ConsentRequestStatusType Status { get; set; }
+
+        /// <summary>
         /// Defines when the consent was given.
         /// </summary>
         public DateTimeOffset? Consented { get; set; }

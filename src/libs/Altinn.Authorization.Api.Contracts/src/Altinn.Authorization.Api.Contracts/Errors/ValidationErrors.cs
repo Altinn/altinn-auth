@@ -91,4 +91,10 @@ public static class ValidationErrors
     
     public static ValidationErrorDescriptor UserNotAuthorized { get; }
     = _factory.Create(26, $"User not authorized for operation.");
+
+    /// <summary>
+    /// Gets a validation error descriptor
+    /// </summary>
+    public static ValidationErrorDescriptor InvalidRedirectUrl { get; internal set; }
+        = _factory.Create(27, $"Redirect URL is not a valid URL");
 }

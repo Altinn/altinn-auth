@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace Altinn.Authorization.Api.Contracts.Consent
 {
     /// <summary>
-    /// Enum for the status of a consent request
+    /// Enum for the type of consent event that has occurred.
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ConsentRequestEventType

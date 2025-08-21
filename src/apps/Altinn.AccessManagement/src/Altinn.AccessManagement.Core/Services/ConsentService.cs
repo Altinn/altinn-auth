@@ -682,6 +682,11 @@ namespace Altinn.AccessManagement.Core.Services
                 }
             }
 
+            if (consentRequest.RedirectUrl != null && !IsValidUrl(consentRequest.RedirectUrl))
+            {
+                validationErrorsBuilder.Add(ValidationErrors.InvalidRedirectUrl, "RedirectUrl");
+            }
+
             if (validationErrorsBuilder.TryBuild(out var errorResult))
             {
                 problemsBuilder.Add(errorResult);
@@ -831,6 +836,12 @@ namespace Altinn.AccessManagement.Core.Services
         private string GetConsentViewUri(Guid requesteId)
         {
             return $"https://am.ui.{_generalSettings.Hostname}/accessmanagement/ui/consent/request?id={requesteId}";
+        }
+
+        public static bool IsValidUrl(string url)
+        {
+            return Uri.TryCreate(url, UriKind.Absolute, out Uri? uriResult)
+                   && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
         }
     }
 }

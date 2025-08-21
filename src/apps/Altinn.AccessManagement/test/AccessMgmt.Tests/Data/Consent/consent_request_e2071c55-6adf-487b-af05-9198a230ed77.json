@@ -1,0 +1,46 @@
+{
+  "iD": "e2071c55-6adf-487b-af05-9198a230ed77",
+  "from": "urn:altinn:party:uuid:00000000-0000-0000-0005-000000006078",
+  "to": "urn:altinn:party:uuid:8ef5e5fa-94e1-4869-8635-df86b6219181",
+  "validTo": "2019-09-30T10:30:00.000",
+  "requestMessage": {
+    "nb": "Ved å samtykke, gir du Skatteetaten rett til å utlevere opplysninger om deg direkte til DNB BANK ASA. Banken får opplysningene for å behandle søknad om finansiering.",
+    "nn": "Ved å samtykke, gir du Skatteetaten rett til å utlevere opplysningar om deg direkte til DNB BANK ASA. Banken får opplysningane for å behandle søknad om finansiering.",
+    "en": "By consenting, you give the Tax Administration the right to disclose information about you directly to DNB BANK ASA. The bank receives the information to process the financing application."
+  },
+  "consentRights": [
+    {
+      "action": [
+        "read"
+      ],
+      "resource": [
+        {
+          "type": "urn:altinn:resource",
+          "value": "ttd_skattegrunnlag"
+        }
+      ],
+      "metadata": {
+        "fraOgMed": "2017-06",
+        "tilOgMed": "2017-08"
+      }
+    },
+    {
+      "action": [
+        "read"
+      ],
+      "resource": [
+        {
+          "type": "urn:altinn:resource",
+          "value": "ttd_inntektsopplysninger"
+        }
+      ],
+      "metadata": {
+        "inntektsaar": "2016"
+      }
+    }
+  ],
+  "portalViewMode": "Hide",
+  "redirectUrl": "https:///www.urlfromsavedreqest.com",
+  "templateId": "sblanesoknad",
+  "templateVersion": 1
+}
