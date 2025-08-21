@@ -212,19 +212,25 @@ module "appsettings" {
   feature_flags = [
     {
       name        = "AccessManagement.HostedServices.ResourceRegistrySync"
-      description = "Specifies if the resource register data should streamed from resource register service to access management database"
+      description = "Specifies if the resource register data should streamed from resource register service to access management database."
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },
     {
       name        = "AccessManagement.HostedServices.RegisterSync"
-      description = "Specifies if the register data should streamed from register service to access management database"
+      description = "Specifies if the register data should streamed from register service to access management database."
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },
     {
       name        = "AccessManagement.MigrationDb"
-      description = "Specifies if database should be migrated"
+      description = "Specifies if database should be migrated using custom framework."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessManagement.MigrationDbEf"
+      description = "Specifies if database should be migrating using Entity Framework."
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },

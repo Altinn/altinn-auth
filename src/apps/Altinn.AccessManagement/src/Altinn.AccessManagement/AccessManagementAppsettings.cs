@@ -48,4 +48,9 @@ public class AccessManagementAppsettings
     /// Gets or sets the current environment (e.g., at22, at23, tt02, prod).
     /// </summary>
     public string Environment { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Runs Init Only.
+    /// </summary>
+    public bool RunInitOnly { get; set; } = false;
 }
