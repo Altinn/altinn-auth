@@ -20,4 +20,7 @@
   <ItemGroup>
     <Folder Include="Migrations\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Host\src\Altinn.Authorization.Host.Database\Altinn.Authorization.Host.Database.csproj" />
+  </ItemGroup>
 </Project>
