@@ -18,7 +18,7 @@ public class AccessPackageDto
         /// <summary>
         /// Package Urn
         /// </summary>
-        public string Urn { get; set; }
+        public required string Urn { get; set; }
 
         /// <summary>
         /// Package AreaId
@@ -31,7 +31,7 @@ public class AccessPackageDto
         /// <summary>
         /// Package the delegation check is regarding
         /// </summary>
-        public Compact Package { get; set; }
+        public required Compact Package { get; set; }
 
         /// <summary>
         /// Result of the delegation check.
@@ -52,7 +52,7 @@ public class AccessPackageDto
             /// <summary>
             /// Description of the reason.
             /// </summary>
-            public string Description { get; set; }
+            public required string Description { get; set; }
 
             /// <summary>
             /// Role ID of the role providing access

@@ -1,4 +1,5 @@
-﻿using Altinn.AccessManagement.Api.Internal.Extensions;
+﻿using System.Security.Claims;
+using Altinn.AccessManagement.Api.Internal.Extensions;
 using Altinn.AccessManagement.Api.Internal.Utils;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
@@ -11,8 +12,6 @@ using Altinn.Common.PEP.Helpers;
 using Altinn.Common.PEP.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
 {

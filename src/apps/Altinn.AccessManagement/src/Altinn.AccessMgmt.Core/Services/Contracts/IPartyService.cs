@@ -1,5 +1,5 @@
 using Altinn.AccessMgmt.Core.Models;
-using Altinn.Authorization.Api.Contracts.Party; //AddPartyResultDto.cs
+using Altinn.Authorization.Api.Contracts.Party; // AddPartyResultDto.cs
 using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.AccessMgmt.Core.Services.Contracts;

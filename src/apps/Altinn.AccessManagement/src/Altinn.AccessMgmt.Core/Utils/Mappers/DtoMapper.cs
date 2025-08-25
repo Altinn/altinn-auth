@@ -71,10 +71,6 @@ public partial class DtoMapper
         });
     }
 
-
-
-
-
     public IEnumerable<RelationDto> ExtractRelationDtoFromOthers(IEnumerable<Relation> res, bool includeSubConnections = false)
     {
         return res.DistinctBy(t => t.From.Id).Select(relation => new RelationDto()

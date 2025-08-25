@@ -4,6 +4,9 @@ using Altinn.Authorization.Api.Contracts.AccessManagement;
 
 namespace Altinn.AccessMgmt.Core.Utils;
 
+/// <summary>
+/// Utility for mapping of entity models to DTOs, related to delegation checks.
+/// </summary>
 public partial class DtoMapper
 {
     public IEnumerable<AccessPackageDto.Check> Convert(IEnumerable<PackageDelegationCheck> packageDelegationCheck)

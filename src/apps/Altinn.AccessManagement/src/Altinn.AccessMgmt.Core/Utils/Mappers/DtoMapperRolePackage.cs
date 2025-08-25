@@ -3,6 +3,9 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 
 namespace Altinn.AccessMgmt.Core.Utils;
 
+/// <summary>
+/// Utility for mapping of entity models to DTOs, related to roles and packages.
+/// </summary>
 public partial class DtoMapper
 {
     public static PackageDto Convert(Package obj)
@@ -74,6 +77,7 @@ public partial class DtoMapper
             Areas = new List<AreaDto>()
         };
     }
+
     public static AreaGroupDto Convert(AreaGroup areaGroup, List<Area> areas)
     {
         return new AreaGroupDto()

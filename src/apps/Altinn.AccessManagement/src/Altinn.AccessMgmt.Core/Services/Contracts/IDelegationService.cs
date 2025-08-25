@@ -14,6 +14,7 @@ public interface IDelegationService
     /// <param name="userId">User</param>
     /// <param name="fromAssignmentId">From</param>
     /// <param name="toAssignmentId">To</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns></returns>
     Task<Delegation> CreateDelgation(Guid userId, Guid fromAssignmentId, Guid toAssignmentId, CancellationToken cancellationToken);
 

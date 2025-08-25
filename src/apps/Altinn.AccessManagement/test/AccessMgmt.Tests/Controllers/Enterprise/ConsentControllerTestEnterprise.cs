@@ -175,8 +175,6 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             Assert.Equal(ConsentRequestStatusType.Created, consentInfo.Status);
         }
 
-
-
         /// <summary>
         /// Test get consent. Expect a consent in response
         /// </summary>
@@ -378,7 +376,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             HttpResponseMessage response2 = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
             string responseContent2 = await response2.Content.ReadAsStringAsync();
 
-            /// TODO This need to ve created
+            // TODO This need to ve created
             Assert.Equal(HttpStatusCode.BadRequest, response2.StatusCode);
             Assert.NotNull(responseContent2);
             AltinnMultipleProblemDetails problemDetails = JsonSerializer.Deserialize<AltinnMultipleProblemDetails>(responseContent2, _jsonOptions);

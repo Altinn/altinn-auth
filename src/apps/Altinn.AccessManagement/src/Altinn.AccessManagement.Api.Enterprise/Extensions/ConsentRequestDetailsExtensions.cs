@@ -47,7 +47,7 @@ namespace Altinn.AccessManagement.Api.Enterprise.Extensions
                         _ => throw new ArgumentException("Unknown consent party urn")
                     }
                     : null,
-                Status = (Altinn.Authorization.Api.Contracts.Consent.ConsentRequestStatusType) details.ConsentRequestStatus,
+                Status = (Authorization.Api.Contracts.Consent.ConsentRequestStatusType)details.ConsentRequestStatus,
                 Consented = details.Consented,
                 ValidTo = details.ValidTo,
                 ConsentRights = [.. details.ConsentRights.Select(static x => x.ToConsentRightExternal())],

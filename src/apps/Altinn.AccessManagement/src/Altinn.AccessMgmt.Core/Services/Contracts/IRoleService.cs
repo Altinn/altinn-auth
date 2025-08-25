@@ -45,7 +45,7 @@ public interface IRoleService
     /// </summary>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    Task<IEnumerable<string>> GetLookupKeys( CancellationToken cancellationToken = default);
+    Task<IEnumerable<string>> GetLookupKeys(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get role for provider

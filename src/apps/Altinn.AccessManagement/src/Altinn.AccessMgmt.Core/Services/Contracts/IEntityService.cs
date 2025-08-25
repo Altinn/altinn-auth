@@ -9,11 +9,12 @@ public interface IEntityService
     Task<bool> CreateEntity(Entity entity, CancellationToken cancellationToken);
 
     ValueTask<Entity> GetOrCreateEntity(Guid id, string name, string refId, string type, string variant, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Get Entity based on OrgNo
     /// </summary>
     /// <param name="orgNo">Organization No</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns></returns>
     Task<Entity> GetByOrgNo(string orgNo, CancellationToken cancellationToken = default);
 
@@ -21,6 +22,7 @@ public interface IEntityService
     /// Get Entity based on PersNo
     /// </summary>
     /// <param name="persNo">persNo</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns></returns>
     Task<Entity> GetByPersNo(string persNo, CancellationToken cancellationToken = default);
 
@@ -28,6 +30,7 @@ public interface IEntityService
     /// Get Entity based on ProfileId
     /// </summary>
     /// <param name="profileId">profileId</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns></returns>
     Task<Entity> GetByProfile(string profileId, CancellationToken cancellationToken = default);
 
@@ -35,6 +38,7 @@ public interface IEntityService
     /// Get parent Entity based on parentId
     /// </summary>
     /// <param name="parentId">profileId</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns></returns>
     Task<Entity> GetParent(Guid parentId, CancellationToken cancellationToken = default);
 
@@ -42,6 +46,7 @@ public interface IEntityService
     /// Get all child entities based on parentId
     /// </summary>
     /// <param name="parentId">Parent entity identifier</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns></returns>
     Task<IEnumerable<Entity>> GetChildren(Guid parentId, CancellationToken cancellationToken = default);
 }
