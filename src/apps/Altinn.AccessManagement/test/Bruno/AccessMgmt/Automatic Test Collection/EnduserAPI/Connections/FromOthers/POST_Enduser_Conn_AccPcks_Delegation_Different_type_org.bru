@@ -47,7 +47,7 @@ script:pre-request {
 script:post-response {
   const data = res.getBody();
   const packageId = data.packageId;
-  bru.setEnvVar("packageId", packageId)
+  bru.setVar("packageId", packageId)
 }
 
 tests {

@@ -47,7 +47,7 @@ tests {
   test("GET access package which was delegated from Org1 to Org2 : FromOthers", function() {
     const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
      const data = res.getBody();
-      var packageId = bru.getEnvVar("packageId");
+      var packageId = bru.getVar("packageId");
       expect(res.status).to.equal(200);
       expect(data.data[0].package).to.have.property('id', packageId);
       expect(data.data[0].permissions[0].from).to.have.property('id', testdata.hovedorg_delegates_tilgangspakke.partyuuid.toLowerCase());

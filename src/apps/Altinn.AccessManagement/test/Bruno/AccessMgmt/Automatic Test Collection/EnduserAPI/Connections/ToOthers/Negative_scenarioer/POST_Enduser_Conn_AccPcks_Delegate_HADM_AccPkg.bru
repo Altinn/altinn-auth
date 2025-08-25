@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toOrg}}&package={{package}}
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toOrg}}&package=urn:altinn:accesspackage:hovedadministrator
   body: none
   auth: inherit
 }
@@ -14,7 +14,7 @@ params:query {
   party: {{party}}
   from: {{party}}
   to: {{toOrg}}
-  package: {{package}}
+  package: urn:altinn:accesspackage:hovedadministrator
   ~packageId: {{package}}
 }
 
@@ -28,7 +28,6 @@ script:pre-request {
   
   bru.setVar("party", testdata.org1_delegates_tilgangspakke.partyuuid);
   bru.setVar("toOrg", testdata.org2_delegates_tilgangspakke.partyuuid);
-  bru.setVar("package", testdata.org1_delegates_tilgangspakke.hadm_delegert_package);
   
   var getTokenParameters = {
     auth_userId: testdata.org1_delegates_tilgangspakke.dagligleder.userid,
@@ -56,6 +55,7 @@ tests {
     
     expect(res.status).to.equal(400);
     expect(data.validationErrors[0]).to.have.property('detail', "One or more query parameters are invalid.");
+    expect(data.validationErrors[0]).to.have.property('Packages', "urn:altinn:accesspackage:hovedadministrator are not assignable to an organization.");
     
   });
 }
