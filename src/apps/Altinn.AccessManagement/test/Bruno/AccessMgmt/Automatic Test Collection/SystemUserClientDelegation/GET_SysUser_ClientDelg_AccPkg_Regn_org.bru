@@ -46,7 +46,7 @@ tests {
   test("GET response for POST call where Client org has delegated to systembruker", function() {
   const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
       const data = res.getBody();
-      var delegationId = bru.getEnvVar("delegationId");
+      var delegationId = bru.getVar("delegationId");
       expect(res.status).to.equal(200);
     expect(data[0].role).to.have.property('code', "agent");
     expect(data[0].facilitator).to.have.property('name', "FRYKTLØS FIRKANTET TIGER AS");

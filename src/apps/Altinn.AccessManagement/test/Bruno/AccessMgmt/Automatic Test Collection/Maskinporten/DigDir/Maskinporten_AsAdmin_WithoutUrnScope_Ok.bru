@@ -69,7 +69,7 @@ tests {
     assert.strictEqual(k6nuf.consumer_org, "810414782");
     assert.strictEqual(k6nuf.supplier_org, "910049356");
     assert.sameMembers(k6nuf.scopes, ["test:am/k6nuf.read", "test:am/k6nuf.write"]);
-  
+    
     // Validate "ttd-am-k6"
     assert.property(resourceMap, 'ttd-am-k6');
     const k6 = resourceMap['ttd-am-k6'];

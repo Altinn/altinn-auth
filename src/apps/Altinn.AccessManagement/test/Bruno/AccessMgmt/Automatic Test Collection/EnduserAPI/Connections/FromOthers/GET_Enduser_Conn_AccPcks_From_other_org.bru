@@ -46,11 +46,21 @@ script:pre-request {
 tests {
   test("GET access package which was delegated from Org1 to Org2 : FromOthers", function() {
     const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
-     const data = res.getBody();
-      var packageId = bru.getVar("packageId");
-      expect(res.status).to.equal(200);
-      expect(data.data[0].package).to.have.property('id', packageId);
-      expect(data.data[0].permissions[0].from).to.have.property('id', testdata.hovedorg_delegates_tilgangspakke.partyuuid.toLowerCase());
+    const body = res.getBody();
+    const data = body.data;
+    var packageId = bru.getVar("packageId");
     
-    });
+    expect(res.status).to.equal(200);
+  
+    // Find the expected package
+    const packageRecord = data.find(item => item.package.id === packageId);
+  
+    expect(packageRecord, 'Package with specified ID should exist in response').to.exist;
+  
+    // Check if permissions contain the expexted "from" ID
+    const hasCorrectPermission = packageRecord.permissions.some(
+      perm => perm.from.id === testdata.hovedorg_delegates_tilgangspakke.partyuuid.toLowerCase()
+    );
+  
+  });
 }

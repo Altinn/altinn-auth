@@ -47,7 +47,7 @@ tests {
   const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
     
       const data = res.getBody();
-      var delegationId = bru.getEnvVar("delegationId");
+      var delegationId = bru.getVar("delegationId");
       expect(res.status).to.equal(200);
       
     });

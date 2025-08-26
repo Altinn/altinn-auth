@@ -53,7 +53,7 @@ script:post-response {
 tests {
   test("Delegate access package from org1 to org2 : FromOthers", function() {
     const data = res.getBody();
-    var packageId = bru.getEnvVar("packageId");
+    var packageId = bru.getVar("packageId");
     
     expect(res.status).to.equal(200);
     expect(data).to.have.property('packageId', packageId);
