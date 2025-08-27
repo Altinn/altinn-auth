@@ -293,6 +293,14 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Util
                 numberOfTimes);
         }
 
+        public static void CountAuthorizationEvent(Mock<IEventsQueueClient> eventQueue, Times numberOfTimes)
+        {
+            eventQueue.Verify(
+                e => e.EnqueueAuthorizationEvent(
+                    It.IsAny<string>(), It.IsAny<CancellationToken>()),
+                numberOfTimes);
+        }
+
         /// <summary>
         /// Assert that two <see cref="AccessListAuthorizationResponse"/> have the same property values.
         /// </summary>

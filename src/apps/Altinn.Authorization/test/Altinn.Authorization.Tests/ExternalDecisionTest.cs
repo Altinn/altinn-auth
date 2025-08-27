@@ -337,6 +337,146 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         }
 
         /// <summary>
+        /// Scenario where the request has no subject and should give Indeterminate result. This ended in null reference exception and gave a syntaxerror status should give processing error.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_ResourceRegistry_NoSubject_Indeterminate()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
+            string testCase = "ResourceRegistry_NoSubject_Indeterminate";
+
+            Mock<IFeatureManager> featureManageMock = new Mock<IFeatureManager>();
+            featureManageMock.Setup(m => m.IsEnabledAsync("DecisionRequestLogRequestOnError", It.IsAny<CancellationToken>())).Returns(Task.FromResult(true));
+            featureManageMock.Setup(m => m.IsEnabledAsync("AuditLog")).Returns(Task.FromResult(true));
+
+            Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            HttpClient client = GetTestClient(eventLog: eventQueue.Object, featureManager: featureManageMock.Object);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+            AssertionUtil.CountAuthorizationEvent(eventQueue, Times.Once());
+        }
+
+        /// <summary>
+        /// Scenario where the request has no resource and should give Indeterminate result. This ended in null reference exception and gave a syntaxerror status should give processing error.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_ResourceRegistry_NoResource_Indeterminate()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
+            string testCase = "ResourceRegistry_NoResource_Indeterminate";
+
+            Mock<IFeatureManager> featureManageMock = new Mock<IFeatureManager>();
+            featureManageMock.Setup(m => m.IsEnabledAsync("DecisionRequestLogRequestOnError", It.IsAny<CancellationToken>())).Returns(Task.FromResult(true));
+            featureManageMock.Setup(m => m.IsEnabledAsync("AuditLog")).Returns(Task.FromResult(true));
+
+            Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            HttpClient client = GetTestClient(eventLog: eventQueue.Object, featureManager: featureManageMock.Object);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+            AssertionUtil.CountAuthorizationEvent(eventQueue, Times.Once());
+        }
+
+        /// <summary>
+        /// Scenario where systemuser has received delegation from the resource party for two resources. Multirequest should give Permit result for both.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_NoSubject_MultiRequest_Indeterminate()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
+            string testCase = "ResourceRegistry_NoSubject_MultiRequest_Indeterminate";
+
+            Mock<IFeatureManager> featureManageMock = new Mock<IFeatureManager>();
+            featureManageMock.Setup(m => m.IsEnabledAsync("DecisionRequestLogRequestOnErrorMultiRequest", It.IsAny<CancellationToken>())).Returns(Task.FromResult(true));
+            featureManageMock.Setup(m => m.IsEnabledAsync("AuditLog")).Returns(Task.FromResult(true));
+
+            Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            HttpClient client = GetTestClient(eventLog: eventQueue.Object, featureManager: featureManageMock.Object);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+            AssertionUtil.CountAuthorizationEvent(eventQueue, Times.Exactly(2));
+        }
+
+        /// <summary>
+        /// Scenario where the request has no resource and should give Indeterminate result. This ended in null reference exception and gave a syntaxerror status should give processing error.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_ResourceRegistry_NoResource_NoLog_Indeterminate()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
+            string testCase = "ResourceRegistry_NoResource_Indeterminate";
+
+            Mock<IFeatureManager> featureManageMock = new Mock<IFeatureManager>();
+            featureManageMock.Setup(m => m.IsEnabledAsync("DecisionRequestLogRequestOnError", It.IsAny<CancellationToken>())).Returns(Task.FromResult(false));
+            featureManageMock.Setup(m => m.IsEnabledAsync("AuditLog")).Returns(Task.FromResult(true));
+
+            Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            HttpClient client = GetTestClient(eventLog: eventQueue.Object, featureManager: featureManageMock.Object);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+            AssertionUtil.CountAuthorizationEvent(eventQueue, Times.Never());
+        }
+
+        /// <summary>
+        /// Scenario where systemuser has received delegation from the resource party for two resources. Multirequest should give Permit result for both.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_NoSubject_MultiRequest_NoLog_Indeterminate()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
+            string testCase = "ResourceRegistry_NoSubject_MultiRequest_Indeterminate";
+
+            Mock<IFeatureManager> featureManageMock = new Mock<IFeatureManager>();
+            featureManageMock.Setup(m => m.IsEnabledAsync("DecisionRequestLogRequestOnErrorMultiRequest", It.IsAny<CancellationToken>())).Returns(Task.FromResult(false));
+            featureManageMock.Setup(m => m.IsEnabledAsync("AuditLog")).Returns(Task.FromResult(true));
+
+            Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            HttpClient client = GetTestClient(eventLog: eventQueue.Object, featureManager: featureManageMock.Object);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+            AssertionUtil.CountAuthorizationEvent(eventQueue, Times.Never());
+        }
+
+        /// <summary>
         /// Scenario where systemuser has received delegation from the resource party for two resources. Multirequest should give Permit result for both.
         /// </summary>
         [Fact]

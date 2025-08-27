@@ -1,0 +1,12 @@
+{
+	"Response": [
+		{
+			"Decision": "Indeterminate",
+			"Status": {
+				"StatusCode": {
+					"Value": "urn:oasis:names:tc:xacml:1.0:status:syntax-error",
+				}
+			},
+		}
+	]
+}

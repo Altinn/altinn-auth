@@ -17,6 +17,7 @@ using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Register.Models;
 using Altinn.Platform.Storage.Interface.Models;
 using Authorization.Platform.Authorization.Models;
+using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
@@ -238,6 +239,8 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <returns>XacmlResourceAttributes</returns>
         protected XacmlResourceAttributes GetResourceAttributeValues(XacmlContextAttributes resourceContextAttributes)
         {
+            Guard.IsNotNull(resourceContextAttributes);
+
             XacmlResourceAttributes resourceAttributes = new XacmlResourceAttributes();
 
             foreach (XacmlAttribute attribute in resourceContextAttributes.Attributes)
@@ -370,6 +373,8 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         protected async Task EnrichSubjectAttributes(XacmlContextRequest request, XacmlResourceAttributes resourceAttr, bool isExternalRequest)
         {
             XacmlContextAttributes subjectContextAttributes = request.GetSubjectAttributes();
+
+            Guard.IsNotNull(subjectContextAttributes);
 
             int subjectUserId = 0;
             int.TryParse(resourceAttr.ResourcePartyValue, out int resourcePartyId);

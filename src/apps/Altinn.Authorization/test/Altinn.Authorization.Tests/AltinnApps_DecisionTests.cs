@@ -301,6 +301,52 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         }
 
         [Fact]
+        public async Task PDP_Decision_AltinnApps0028()
+        {
+            string testCase = "AltinnApps0028"; 
+
+            Mock<IFeatureManager> featureManageMock = new Mock<IFeatureManager>();
+            featureManageMock.Setup(m => m.IsEnabledAsync("DecisionRequestLogRequestOnError", It.IsAny<CancellationToken>())).Returns(Task.FromResult(true));
+            featureManageMock.Setup(m => m.IsEnabledAsync("AuditLog")).Returns(Task.FromResult(true));
+
+            Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            HttpClient client = GetTestClient(eventLog: eventQueue.Object, featureManager: featureManageMock.Object);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+            AssertionUtil.CountAuthorizationEvent(eventQueue, Times.Once());
+        }
+
+        [Fact]
+        public async Task PDP_Decision_NoLog_AltinnApps0028()
+        {
+            string testCase = "AltinnApps0028";
+
+            Mock<IFeatureManager> featureManageMock = new Mock<IFeatureManager>();
+            featureManageMock.Setup(m => m.IsEnabledAsync("DecisionRequestLogRequestOnError", It.IsAny<CancellationToken>())).Returns(Task.FromResult(false));
+            featureManageMock.Setup(m => m.IsEnabledAsync("AuditLog")).Returns(Task.FromResult(true));
+
+            Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            HttpClient client = GetTestClient(eventLog: eventQueue.Object, featureManager: featureManageMock.Object);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+            AssertionUtil.CountAuthorizationEvent(eventQueue, Times.Never());
+        }
+
+        [Fact]
         public async Task PDP_Decision_AltinnApps0001_Delegation()
         {
             string testCase = "AltinnApps0001Delegation";
@@ -606,7 +652,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         {            
             featureManageMock
                 .Setup(m => m.IsEnabledAsync("AuditLog"))
-                .Returns(Task.FromResult(featureFlag));
+                .Returns(Task.FromResult(featureFlag));            
         }
 
         private void SetupDateTimeMock()
