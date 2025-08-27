@@ -15,7 +15,7 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
 
         builder.HasKey(p => p.Id);
 
-        builder.Property(t => t.Name).IsRequired().Translate();
+        builder.Property(t => t.Name).IsRequired();
         builder.Property(t => t.Code).IsRequired();
         builder.Property(t => t.Urn).IsRequired();
         builder.Property(t => t.Description).IsRequired();

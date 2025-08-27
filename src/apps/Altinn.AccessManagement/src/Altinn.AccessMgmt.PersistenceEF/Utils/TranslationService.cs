@@ -50,7 +50,7 @@ public class TranslationService : ITranslationService
         return source;
     }
 
-    public async Task UpsertTranslation(TranslationEntry translationEntry)
+    public async Task UpsertTranslationAsync(TranslationEntry translationEntry)
     {
         var entry = await _db.Set<TranslationEntry>().SingleOrDefaultAsync(t => t.Id == translationEntry.Id && t.LanguageCode == translationEntry.LanguageCode && t.FieldName == translationEntry.FieldName);
 
@@ -70,7 +70,7 @@ public class TranslationService : ITranslationService
 /// <summary>
 /// Translation service for EF model
 /// </summary>
-public interface ITranslationService
+public interface ITranslationService    
 {
     /// <summary>
     /// Translates the specified object to the target language asynchronously.
@@ -82,7 +82,7 @@ public interface ITranslationService
     /// of type <typeparamref name="T"/>.</returns>
     ValueTask<T> TranslateAsync<T>(T source, string languageCode);
 
-    Task UpsertTranslation(TranslationEntry translationEntry);
+    Task UpsertTranslationAsync(TranslationEntry translationEntry);
 }
 
 /// <summary>
@@ -101,14 +101,14 @@ public class TranslationEntry
     public string Type { get; set; } = default!;
 
     /// <summary>
-    /// Field
-    /// </summary>
-    public string FieldName { get; set; } = default!;
-
-    /// <summary>
     /// Language
     /// </summary>
     public string LanguageCode { get; set; } = default!;
+
+    /// <summary>
+    /// Field
+    /// </summary>
+    public string FieldName { get; set; } = default!;
 
     /// <summary>
     /// Translated value
@@ -144,4 +144,42 @@ public class AuditTranslationEntry : TranslationEntry, IAudit
 
     /// <inheritdoc />
     public string Audit_DeleteOperation { get; set; }
+}
+
+/// <summary>
+/// Translation entry
+/// </summary>
+public class TranslationEntryList
+{
+    /// <summary>
+    /// Identity
+    /// </summary>
+    public Guid Id { get; set; }
+
+    /// <summary>
+    /// Type
+    /// </summary>
+    public string Type { get; set; } = default!;
+
+    /// <summary>
+    /// Language
+    /// </summary>
+    public string LanguageCode { get; set; } = default!;
+
+    /// <summary>
+    /// Fileds and Values
+    /// </summary>
+    public Dictionary<string, string> Translations { get; set; }
+
+    public List<TranslationEntry> SingleEntries()
+    {
+        var result = new List<TranslationEntry>();
+
+        foreach (var field in Translations)
+        {
+            result.Add(new TranslationEntry() { Id = this.Id, Type = this.Type, LanguageCode = this.LanguageCode, FieldName = field.Key, Value = field.Value });
+        }
+
+        return result;
+    }
 }
