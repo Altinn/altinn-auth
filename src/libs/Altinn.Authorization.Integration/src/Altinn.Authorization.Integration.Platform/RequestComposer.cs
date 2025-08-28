@@ -137,6 +137,15 @@ internal static class RequestComposer
         }
     };
 
+    public static Action<HttpRequestMessage> WithPlatformAccessToken(Func<Task<string>> tokenRefresh) => request =>
+    {
+        var token = tokenRefresh().GetAwaiter().GetResult();
+        if (!string.IsNullOrEmpty(token))
+        {
+            request.Headers.Add("PlatformAccessToken", token);
+        }
+    };
+
     /// <summary>
     /// Adds a platform access token to the request headers.
     /// </summary>

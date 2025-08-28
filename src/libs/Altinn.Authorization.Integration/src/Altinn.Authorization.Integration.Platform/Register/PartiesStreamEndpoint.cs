@@ -36,7 +36,7 @@ public partial class AltinnRegisterClient
             RequestComposer.WithSetUri(RegisterOptions.Value.Endpoint, "/register/api/v2/internal/parties/stream"),
             RequestComposer.WithSetUri(nextPage),
             RequestComposer.WithAppendQueryParam("fields", fields),
-            RequestComposer.WithPlatformAccessToken(await TokenGenerator.CreatePlatformAccessToken(cancellationToken))
+            RequestComposer.WithPlatformAccessToken(async () => await TokenGenerator.CreatePlatformAccessToken(cancellationToken))
         ];
 
         var response = await HttpClient.SendAsync(RequestComposer.New([.. request]), cancellationToken);
