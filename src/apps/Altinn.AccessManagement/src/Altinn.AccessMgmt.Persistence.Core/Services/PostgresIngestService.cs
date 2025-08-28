@@ -108,6 +108,7 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
         var sb = new StringBuilder();
 
         sb.AppendLine(GetAuditVariables(options));
+        sb.AppendLine("SET LOCAL synchronous_commit = OFF;");
         sb.AppendLine($"MERGE INTO {tableName} AS target USING {ingestTableName} AS source ON {mergeMatchStatement}");
 
         if (type.Name != "Assignment")

@@ -61,6 +61,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
 
         OrgType = (await _entityTypeRepository.Get(t => t.Name, "Organisasjon")).FirstOrDefault();
         Provider = (await _providerRepository.Get(t => t.Code, "ccr")).FirstOrDefault();
+        Roles = (await _roleRepository.Get()).ToList();
 
         await foreach (var page in await _register.StreamRoles([], ls.Data?.RoleStreamNextPageLink, cancellationToken))
         {
@@ -124,7 +125,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
 
             await UpdateLease(ls, data => data.RoleStreamNextPageLink = page.Content.Links.Next, cancellationToken);
 
-            await Flush(batchId);
+            //// await Flush(batchId);
 
             async Task Flush(Guid batchId)
             {
