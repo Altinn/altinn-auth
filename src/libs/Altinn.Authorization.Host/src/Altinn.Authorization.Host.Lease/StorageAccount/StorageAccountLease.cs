@@ -114,7 +114,7 @@ public partial class StorageAccountLease(IAzureClientFactory<BlobServiceClient> 
         if (lease.HasLease && lease is StorageAccountLeaseResult<T> castedLease)
         {
             var leaseExpirationTime = castedLease.Acquired.AddSeconds(Convert.ToDouble(castedLease.Response.LeaseTime));
-            if (leaseExpirationTime < DateTime.UtcNow.AddSeconds(10))
+            if (leaseExpirationTime < DateTime.UtcNow.AddSeconds(20))
             {
                 try
                 {
