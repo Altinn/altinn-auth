@@ -2,6 +2,7 @@
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models.Audit;
+using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Contexts;
@@ -11,7 +12,9 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    public DbSet<Relation> Relations => Set<Relation>();
+    public DbSet<Connection> Connections => Set<Connection>();
+
+    public DbSet<TranslationEntry> TranslationEntries => Set<TranslationEntry>();
 
     #region DbSets
 
@@ -125,9 +128,12 @@ public class AppDbContext : DbContext
 
     private void ApplyViewConfiguration(ModelBuilder modelBuilder)
     {
-        // modelBuilder.ApplyConfiguration<Relation>(new RelationConfiguration());
-        // modelBuilder.ApplyConfiguration<CompactEntity>(new CompactEntityConfiguration());
-        
+        modelBuilder.ApplyConfiguration<Connection>(new ConnectionConfiguration());
+        //modelBuilder.ApplyConfiguration<CompactEntity>(new CompactEntityConfiguration());
+        //modelBuilder.ApplyConfiguration<CompactRole>(new CompactRoleConfiguration());
+        //modelBuilder.ApplyConfiguration<CompactPackage>(new CompactPackageConfiguration());
+        //modelBuilder.ApplyConfiguration<CompactResource>(new CompactResourceConfiguration());
+
         // modelBuilder.ApplyConfiguration<Relation>(new RelationConfiguration2());
     }
 
@@ -161,6 +167,8 @@ public class AppDbContext : DbContext
 
     private void ApplyConfiguration(ModelBuilder modelBuilder)
     {
+        modelBuilder.ApplyConfiguration<TranslationEntry>(new TranslationEntryConfiguration());
+
         modelBuilder.ApplyConfiguration<Area>(new AreaConfiguration());
         modelBuilder.ApplyConfiguration<AreaGroup>(new AreaGroupConfiguration());
         modelBuilder.ApplyConfiguration<Assignment>(new AssignmentConfiguration());

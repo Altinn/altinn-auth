@@ -22,17 +22,17 @@ public class BaseProvider : BaseAudit
     /// <summary>
     /// Refrence Identifier (e.g. OrgNo)
     /// </summary>
-    public string RefId { get; set; }
+    public string? RefId { get; set; }
 
     /// <summary>
     /// Logo url
     /// </summary>
-    public string LogoUrl { get; set; }
+    public string? LogoUrl { get; set; }
 
     /// <summary>
     /// Provider code (e.g ttd, brg, skd)
     /// </summary>
-    public string Code { get; set; }
+    public string? Code { get; set; }
 
     /// <summary>
     /// The type of provider

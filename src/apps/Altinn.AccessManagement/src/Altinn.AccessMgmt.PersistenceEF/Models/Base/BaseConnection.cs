@@ -1,18 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Models.Base;
 
 /// <summary>
-/// Generated view for assignments and delegations
+/// New Connection
 /// </summary>
 [NotMapped]
 public class BaseConnection
 {
-    /// <summary>
-    /// Identity, either assignment og delegation
-    /// </summary>
-    public Guid Id { get; set; } // AssignmentId or DelegationId
-
     /// <summary>
     /// The entity identity the connection is from (origin, client, source etc) 
     /// </summary>
@@ -24,80 +20,32 @@ public class BaseConnection
     public Guid RoleId { get; set; }
 
     /// <summary>
+    /// The entity betweeen from and to. When connection is delegated.
+    /// </summary>
+    public Guid? ViaId { get; set; }
+
+    /// <summary>
+    /// The role the facilitator has to the client
+    /// </summary>
+    public Guid? ViaRoleId { get; set; }
+
+    /// <summary>
     /// The entity identity the connection is to (destination, agent, etc)
     /// </summary>
     public Guid ToId { get; set; }
 
     /// <summary>
-    /// The entity betweeen from and to. When connection is delegated.
+    /// Package
     /// </summary>
-    public Guid? FacilitatorId { get; set; }
+    public Guid? PackageId { get; set; }
 
     /// <summary>
-    /// The role the facilitator has to the client
+    /// Resource
     /// </summary>
-    public Guid? FacilitatorRoleId { get; set; }
+    public Guid? ResourceId { get; set; }
 
     /// <summary>
-    /// Text hint for reason
+    /// Reason
     /// </summary>
-    public string Source { get; set; }
-
-    /// <summary>
-    /// Indicate that connection is a direct assignment
-    /// </summary>
-    public bool IsDirect { get; set; }
-
-    /// <summary>
-    /// Indicate that connection is from a parent/child relation
-    /// </summary>
-    public bool IsParent { get; set; }
-
-    /// <summary>
-    /// Indicate that connection is a result of a role to role mapping
-    /// </summary>
-    public bool IsRoleMap { get; set; }
-
-    /// <summary>
-    /// Indicate that connection is a inheirited with a keyrole
-    /// </summary>
-    public bool IsKeyRole { get; set; }
-}
-
-/// <summary>
-/// Extended Connection
-/// </summary>
-public class ExtConnection : BaseConnection
-{
-    /// <summary>
-    /// The delegation connecting the assignments
-    /// </summary>
-    public BaseDelegation Delegation { get; set; }
-
-    /// <summary>
-    /// The entity the connection is from (origin, client, source etc)
-    /// For Assignments this is From for Delegations this is From.From
-    /// </summary>
-    public BaseEntity From { get; set; }
-
-    /// <summary>
-    /// The role To identifies as either to From or to Facilitator
-    /// </summary>
-    public BaseRole Role { get; set; }
-
-    /// <summary>
-    /// The entity the connection is to (destination, agent, etc)
-    /// For Assignments this is To for Delegations this is To.To
-    /// </summary>
-    public BaseEntity To { get; set; }
-
-    /// <summary>
-    /// The entity betweeen from and to. When connection is delegated.
-    /// </summary>
-    public BaseEntity Facilitator { get; set; }
-
-    /// <summary>
-    /// The role the facilitator has to the client 
-    /// </summary>
-    public BaseRole FacilitatorRole { get; set; }
+    public string Reason { get; set; }
 }

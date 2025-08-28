@@ -350,7 +350,7 @@ public class InternalConnectionsService(
             var firstPackage = group.First();
             return new AccessPackageDto.Check
             {
-                Package = new AccessPackageDto.Compact
+                Package = new AccessPackageDto
                 {
                     Id = firstPackage.Package.Id,
                     Urn = firstPackage.Package.Urn,

@@ -18,7 +18,7 @@ public class AreaGroupConfiguration : IEntityTypeConfiguration<AreaGroup>
 
         builder.Property(t => t.Name).IsRequired();
         builder.Property(t => t.Description).IsRequired();
-        builder.Property(t => t.Urn).IsRequired();
+        builder.Property(t => t.Urn);
         builder.PropertyWithReference(navKey: t => t.EntityType, foreignKey: t => t.EntityTypeId, principalKey: t => t.Id);
 
         builder.HasIndex(t => t.Name).IsUnique();

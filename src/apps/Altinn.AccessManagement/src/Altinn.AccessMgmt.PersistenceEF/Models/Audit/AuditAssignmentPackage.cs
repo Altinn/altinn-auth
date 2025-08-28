@@ -7,10 +7,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Models.Audit;
 public class AuditAssignmentPackage : BaseAssignmentPackage, IAudit 
 {
     /// <inheritdoc />
-    public DateTime Audit_ValidFrom { get; set; }
+    public DateTimeOffset Audit_ValidFrom { get; set; }
 
     /// <inheritdoc />
-    public DateTime? Audit_ValidTo { get; set; }
+    public DateTimeOffset? Audit_ValidTo { get; set; }
 
     /// <inheritdoc />
     public Guid? Audit_ChangedBy { get; set; }

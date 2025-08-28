@@ -16,11 +16,11 @@ public partial class DtoMapper
             var firstPackage = group.First();
             return new AccessPackageDto.Check
             {
-                Package = new AccessPackageDto.Compact
+                Package = new AccessPackageDto
                 {
                     Id = firstPackage.Package.Id,
                     Urn = firstPackage.Package.Urn,
-                    AreaId = firstPackage.Package.AreaId
+                    AreaId = firstPackage.Package.Area.Id
                 },
                 Result = group.Any(p => p.Result),
                 Reasons = group.Select(p => new AccessPackageDto.Check.Reason

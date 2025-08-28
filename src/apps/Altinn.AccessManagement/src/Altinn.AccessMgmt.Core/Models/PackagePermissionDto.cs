@@ -10,7 +10,7 @@ public class PackagePermissionDto
     /// <summary>
     /// Package the permissions are for
     /// </summary>
-    public CompactPackage Package { get; set; }
+    public Package Package { get; set; }
 
     /// <summary>
     /// Parties with permissions

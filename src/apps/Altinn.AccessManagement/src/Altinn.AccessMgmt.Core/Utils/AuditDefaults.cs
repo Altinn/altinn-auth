@@ -1,4 +1,4 @@
-﻿namespace Altinn.AccessMgmt.Core.Utils.Models;
+﻿namespace Altinn.AccessMgmt.Core.Utils;
 
 /// <summary>
 /// Default values for Audit system entities

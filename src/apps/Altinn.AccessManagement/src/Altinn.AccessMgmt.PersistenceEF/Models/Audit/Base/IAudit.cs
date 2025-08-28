@@ -6,14 +6,19 @@
 public interface IAudit
 {
     /// <summary>
+    /// Identity
+    /// </summary>
+    public Guid Id { get; set; }
+
+    /// <summary>
     /// ValidFrom
     /// </summary>
-    public DateTime Audit_ValidFrom { get; set; }
+    public DateTimeOffset Audit_ValidFrom { get; set; }
 
     /// <summary>
     /// ValidTo
     /// </summary>
-    public DateTime? Audit_ValidTo { get; set; }
+    public DateTimeOffset? Audit_ValidTo { get; set; }
 
     /// <summary>
     /// ChangedBy

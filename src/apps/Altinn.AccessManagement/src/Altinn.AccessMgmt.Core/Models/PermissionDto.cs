@@ -10,25 +10,25 @@ public class PermissionDto
     /// <summary>
     /// From party
     /// </summary>
-    public CompactEntity From { get; set; }
+    public Entity From { get; set; }
 
     /// <summary>
     /// To party
     /// </summary>
-    public CompactEntity To { get; set; }
+    public Entity To { get; set; }
 
     /// <summary>
     /// Via party
     /// </summary>
-    public CompactEntity Via { get; set; }
+    public Entity Via { get; set; }
 
     /// <summary>
     /// Role
     /// </summary>
-    public CompactRole Role { get; set; }
+    public Role Role { get; set; }
 
     /// <summary>
     /// Via role
     /// </summary>
-    public CompactRole ViaRole { get; set; }
+    public Role ViaRole { get; set; }
 }

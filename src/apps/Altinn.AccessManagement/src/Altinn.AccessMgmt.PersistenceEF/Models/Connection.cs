@@ -3,26 +3,19 @@
 namespace Altinn.AccessMgmt.PersistenceEF.Models;
 
 /// <summary>
-/// Extended Connection
+/// New Connection
 /// </summary>
 public class Connection : BaseConnection
 {
     /// <summary>
-    /// The entity the connection is from (origin, client, source etc)
-    /// For Assignments this is From for Delegations this is From.From
+    /// The entity identity the connection is from (origin, client, source etc) 
     /// </summary>
     public Entity From { get; set; }
 
     /// <summary>
-    /// The role To identifies as either to From or to Facilitator
+    /// The role To identifies as
     /// </summary>
     public Role Role { get; set; }
-
-    /// <summary>
-    /// The entity the connection is to (destination, agent, etc)
-    /// For Assignments this is To for Delegations this is To.To
-    /// </summary>
-    public Entity To { get; set; }
 
     /// <summary>
     /// The entity betweeen from and to. When connection is delegated.
@@ -30,7 +23,22 @@ public class Connection : BaseConnection
     public Entity Via { get; set; }
 
     /// <summary>
-    /// The role the facilitator has to the client 
+    /// The role the facilitator has to the client
     /// </summary>
     public Role ViaRole { get; set; }
+
+    /// <summary>
+    /// The entity identity the connection is to (destination, agent, etc)
+    /// </summary>
+    public Entity To { get; set; }
+
+    /// <summary>
+    /// Package
+    /// </summary>
+    public Package Package { get; set; }
+
+    /// <summary>
+    /// Resource
+    /// </summary>
+    public Resource Resource { get; set; }
 }

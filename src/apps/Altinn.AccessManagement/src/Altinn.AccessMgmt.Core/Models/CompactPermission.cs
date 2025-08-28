@@ -10,10 +10,10 @@ public class CompactPermission
     /// <summary>
     /// From party
     /// </summary>
-    public CompactEntity From { get; set; }
+    public Entity From { get; set; }
 
     /// <summary>
     /// To party
     /// </summary>
-    public CompactEntity To { get; set; }
+    public Entity To { get; set; }
 }

@@ -37,12 +37,12 @@ public partial class DtoMapper
         };
     }
 
-    public static AccessPackageDto.Compact Convert(CompactPackage obj)
+    public static AccessPackageDto Convert(PackageDto obj)
     {
-        return new AccessPackageDto.Compact()
+        return new AccessPackageDto()
         {
             Id = obj.Id,
-            AreaId = obj.AreaId,
+            AreaId = obj.Area.Id,
             Urn = obj.Urn,
         };
     }

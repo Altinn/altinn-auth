@@ -8,91 +8,91 @@ namespace Altinn.AccessMgmt.Core.Utils;
 /// </summary>
 public partial class DtoMapper
 {
-    public IEnumerable<RelationPackageDto> ExtractRelationPackageDtoToOthers(IEnumerable<Relation> res, bool includeSubConnections = false)
+    public IEnumerable<ConnectionPackageDto> ExtractRelationPackageDtoToOthers(IEnumerable<Connection> res, bool includeSubConnections = false)
     {
-        return res.Where(t => t.Reason == "Direct").DistinctBy(t => t.To.Id).Select(relation => new RelationPackageDto()
+        return res.Where(t => t.Reason == "Direct").DistinctBy(t => t.ToId).Select(relation => new ConnectionPackageDto()
         {
             Party = relation.To,
-            Roles = res.Where(t => t.To.Id == relation.To.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
-            Packages = res.Where(t => t.To.Id == relation.To.Id && t.Package != null).Select(t => t.Package).DistinctBy(t => t.Id).ToList(),
-            Connections = includeSubConnections ? ExtractSubRelationDtoToOthers(res, relation.To.Id).ToList() : new()
+            Roles = res.Where(t => t.ToId == relation.ToId).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
+            Packages = res.Where(t => t.ToId == relation.ToId && t.Package != null).Select(t => t.Package).DistinctBy(t => t.Id).ToList(),
+            Connections = includeSubConnections ? ExtractSubRelationDtoToOthers(res, relation.ToId).ToList() : new()
         });
     }
     
-    public IEnumerable<RelationPackageDto> ExtractSubRelationPackageDtoFromOthers(IEnumerable<Relation> res, Guid party)
+    public IEnumerable<ConnectionPackageDto> ExtractSubRelationPackageDtoFromOthers(IEnumerable<Connection> res, Guid party)
     {
-        return res.Where(t => t.Reason != "Direct" && t.Via.Id == party).DistinctBy(t => t.From.Id).Select(relation => new RelationPackageDto()
+        return res.Where(t => t.Reason != "Direct" && t.ViaId == party).DistinctBy(t => t.FromId).Select(relation => new ConnectionPackageDto()
         {
             Party = relation.From,
-            Roles = res.Where(t => t.From.Id == relation.From.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
-            Packages = res.Where(t => t.From.Id == relation.From.Id && t.Package != null).Select(t => t.Package).DistinctBy(t => t.Id).ToList(),
+            Roles = res.Where(t => t.FromId == relation.FromId).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
+            Packages = res.Where(t => t.FromId == relation.FromId && t.Package != null).Select(t => t.Package).DistinctBy(t => t.Id).ToList(),
             Connections = new()
         });
     }
 
-    public IEnumerable<RelationDto> ExtractSubRelationDtoFromOthers(IEnumerable<Relation> res, Guid party)
+    public IEnumerable<ConnectionDto> ExtractSubRelationDtoFromOthers(IEnumerable<Connection> res, Guid party)
     {
-        return res.Where(t => t.Reason != "Direct" && t.Via.Id == party).DistinctBy(t => t.From.Id).Select(relation => new RelationDto()
+        return res.Where(t => t.Reason != "Direct" && t.ViaId == party).DistinctBy(t => t.FromId).Select(relation => new ConnectionDto()
         {
             Party = relation.From,
-            Roles = res.Where(t => t.From.Id == relation.From.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
+            Roles = res.Where(t => t.FromId == relation.FromId).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
             Connections = new()
         });
     }
 
-    public IEnumerable<RelationDto> ExtractRelationDtoToOthers(IEnumerable<Relation> res, bool includeSubConnections = false)
+    public IEnumerable<ConnectionDto> ExtractRelationDtoToOthers(IEnumerable<Connection> res, bool includeSubConnections = false)
     {
-        return res.Where(t => t.Reason == "Direct").DistinctBy(t => t.To.Id).Select(relation => new RelationDto()
+        return res.Where(t => t.Reason == "Direct").DistinctBy(t => t.ToId).Select(relation => new ConnectionDto()
         {
             Party = relation.To,
-            Roles = res.Where(t => t.To.Id == relation.To.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
-            Connections = includeSubConnections ? ExtractSubRelationDtoToOthers(res, relation.To.Id).ToList() : new()
+            Roles = res.Where(t => t.ToId == relation.ToId).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
+            Connections = includeSubConnections ? ExtractSubRelationDtoToOthers(res, relation.ToId).ToList() : new()
         });
     }
 
-    public IEnumerable<RelationDto> ExtractSubRelationDtoToOthers(IEnumerable<Relation> res, Guid party)
+    public IEnumerable<ConnectionDto> ExtractSubRelationDtoToOthers(IEnumerable<Connection> res, Guid party)
     {
-        return res.Where(t => t.Reason != "Direct" && t.Via.Id == party).DistinctBy(t => t.To.Id).Select(relation => new RelationDto()
+        return res.Where(t => t.Reason != "Direct" && t.ViaId == party).DistinctBy(t => t.To.Id).Select(relation => new ConnectionDto()
         {
             Party = relation.To,
-            Roles = res.Where(t => t.To.Id == relation.To.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
+            Roles = res.Where(t => t.ToId == relation.To.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
             Connections = new()
         });
     }
 
-    public IEnumerable<RelationPackageDto> ExtractSubRelationPackageDtoToOthers(IEnumerable<Relation> res, Guid party)
+    public IEnumerable<ConnectionPackageDto> ExtractSubRelationPackageDtoToOthers(IEnumerable<Connection> res, Guid party)
     {
-        return res.Where(t => t.Reason != "Direct" && t.Via.Id == party).DistinctBy(t => t.To.Id).Select(relation => new RelationPackageDto()
+        return res.Where(t => t.Reason != "Direct" && t.ViaId == party).DistinctBy(t => t.ToId).Select(relation => new ConnectionPackageDto()
         {
             Party = relation.To,
-            Roles = res.Where(t => t.To.Id == relation.To.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
-            Packages = res.Where(t => t.To.Id == relation.To.Id && t.Package != null).Select(t => t.Package).DistinctBy(t => t.Id).ToList(),
+            Roles = res.Where(t => t.ToId == relation.ToId).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
+            Packages = res.Where(t => t.ToId == relation.ToId && t.Package != null).Select(t => t.Package).DistinctBy(t => t.Id).ToList(),
             Connections = new()
         });
     }
 
-    public IEnumerable<RelationDto> ExtractRelationDtoFromOthers(IEnumerable<Relation> res, bool includeSubConnections = false)
+    public IEnumerable<ConnectionDto> ExtractRelationDtoFromOthers(IEnumerable<Connection> res, bool includeSubConnections = false)
     {
-        return res.DistinctBy(t => t.From.Id).Select(relation => new RelationDto()
+        return res.DistinctBy(t => t.FromId).Select(relation => new ConnectionDto()
         {
             Party = relation.From,
-            Roles = res.Where(t => t.From.Id == relation.From.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
-            Connections = includeSubConnections ? ExtractSubRelationDtoFromOthers(res, relation.From.Id).ToList() : new()
+            Roles = res.Where(t => t.FromId == relation.FromId).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
+            Connections = includeSubConnections ? ExtractSubRelationDtoFromOthers(res, relation.FromId).ToList() : new()
         });
     }
 
-    public IEnumerable<RelationPackageDto> ExtractRelationPackageDtoFromOthers(IEnumerable<Relation> res, bool includeSubConnections = false)
+    public IEnumerable<ConnectionPackageDto> ExtractRelationPackageDtoFromOthers(IEnumerable<Connection> res, bool includeSubConnections = false)
     {
-        return res.DistinctBy(t => t.From.Id).Select(relation => new RelationPackageDto()
+        return res.DistinctBy(t => t.FromId).Select(relation => new ConnectionPackageDto()
         {
             Party = relation.From,
-            Roles = res.Where(t => t.From.Id == relation.From.Id).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
-            Packages = res.Where(t => t.From.Id == relation.From.Id && t.Package != null).Select(t => t.Package).DistinctBy(t => t.Id).ToList(),
-            Connections = includeSubConnections ? ExtractSubRelationDtoFromOthers(res, relation.From.Id).ToList() : new()
+            Roles = res.Where(t => t.FromId == relation.FromId).Select(t => t.Role).DistinctBy(t => t.Id).ToList(),
+            Packages = res.Where(t => t.FromId == relation.FromId && t.Package != null).Select(t => t.Package).DistinctBy(t => t.Id).ToList(),
+            Connections = includeSubConnections ? ExtractSubRelationDtoFromOthers(res, relation.FromId).ToList() : new()
         });
     }
 
-    public CompactPermission ConvertToCompactPermission(Relation connection)
+    public CompactPermission ConvertToCompactPermission(Connection connection)
     {
         return new CompactPermission()
         {
@@ -101,7 +101,7 @@ public partial class DtoMapper
         };
     }
 
-    public PermissionDto ConvertToPermission(Relation connection)
+    public PermissionDto ConvertToPermission(Connection connection)
     {
         return new PermissionDto()
         {

@@ -10,7 +10,7 @@ public class PackageDelegationCheck
     /// <summary>
     /// Package the permissions are for
     /// </summary>
-    public CompactPackage Package { get; set; }
+    public PackageDto Package { get; set; }
 
     /// <summary>
     /// Result of the delegation check

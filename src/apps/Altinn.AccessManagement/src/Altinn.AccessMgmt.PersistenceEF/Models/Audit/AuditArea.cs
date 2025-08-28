@@ -7,7 +7,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Models.Audit;
 public class AuditArea : BaseArea, IAudit 
 {
     /// <inheritdoc />
-    public DateTime? Audit_ValidTo { get; set; }
+    public DateTimeOffset? Audit_ValidTo { get; set; }
 
     /// <inheritdoc />
     public Guid? Audit_DeletedBy { get; set; }
