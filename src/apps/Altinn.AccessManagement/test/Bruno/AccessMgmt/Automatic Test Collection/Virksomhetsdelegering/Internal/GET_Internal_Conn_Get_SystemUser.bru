@@ -1,0 +1,56 @@
+meta {
+  name: GET_Internal_Conn_Get_SystemUser
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/connections?party={{from}}&to={{to}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{from}}
+  to: {{to}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("from", testdata.internal_conn_org.partyuuid);
+  bru.setVar("to", testdata.internal_conn_org.systemuser.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.internal_conn_org.dagligleder.userid,
+    auth_partyId: testdata.internal_conn_org.dagligleder.partyid,
+    auth_partyUuid: testdata.internal_conn_org.dagligleder.partyuuid,
+    auth_ssn: testdata.internal_conn_org.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const body = res.getBody();
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  test("GET Internal Connections SystemUser: added", function() {
+    const role = body.data[0].roles.find(roles => roles.code === 'rettighetshaver');
+    assert.isOk(role, `Rettighetshaver`);
+    
+      var packageId = bru.getEnvVar("packageId");
+      expect(res.status).to.equal(200);
+      expect(body.data[0].party).to.have.property('id', testdata.internal_conn_org.systemuser.partyuuid);
+    });
+  
+}

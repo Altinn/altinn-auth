@@ -185,5 +185,22 @@
       "userid": 20372052,
       "partyuuid": "4C011031-9CB8-4821-9017-CF73939AFED5"
     }
-  }
+  },
+    "internal_conn_org" : {
+      "org_type": "AS",
+      "name": "PATENT BERØMT TIGER AS",
+      "orgno": "312162504",
+      "partyuuid": "5320479F-74F9-4C69-AB72-C85AF4861E15",
+      "dagligleder": {
+        "name": "REDELIG DIETT",
+        "pid": "27898999705",
+        "partyid": 50686182,
+        "userid": 20335408,
+        "partyuuid": "442D46F3-C52B-4004-8A0B-5CF06B2F1FA4"
+      },
+      "systemuser": {
+        "partyuuid": "f0ce7455-1cc0-495e-8667-bec248832dc4"
+      },
+      "package_to_delegate": "urn:altinn:accesspackage:skattegrunnlag"
+    }
 }
