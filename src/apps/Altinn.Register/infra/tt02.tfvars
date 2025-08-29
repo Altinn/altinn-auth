@@ -22,3 +22,9 @@ features = {
     user_ids = true
   }
 }
+
+config = {
+  a2_party_import = {
+    max_db_size_in_gib = 100
+  }
+}
