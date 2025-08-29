@@ -222,10 +222,10 @@ module "postgres_server" {
 
   hub_suffix = local.hub_suffix
 
-  subnet_id             = data.azurerm_subnet.postgres.id
-  private_dns_zone_id   = data.azurerm_private_dns_zone.postgres.id
-  postgres_version      = "16"
-  use_pgbouncer         = var.use_pgbouncer
+  subnet_id                = data.azurerm_subnet.postgres.id
+  private_dns_zone_id      = data.azurerm_private_dns_zone.postgres.id
+  postgres_version         = "16"
+  use_pgbouncer            = var.use_pgbouncer
   enable_high_availability = var.enable_high_availability
   configurations = {
     "azure.extensions" : "HSTORE"
