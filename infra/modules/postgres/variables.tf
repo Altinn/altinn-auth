@@ -48,6 +48,11 @@ variable "use_pgbouncer" {
   default = false
 }
 
+variable "enable_high_availability" {
+  type    = bool
+  default = false
+}
+
 variable "compute_sku" {
   type    = string
   default = "D2"

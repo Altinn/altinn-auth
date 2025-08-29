@@ -11,10 +11,11 @@ platform_workflow_principal_ids = [
   "e7e7ed66-8178-4737-8196-0b2604811939", # altinn-register-app-prod-aks01
   "8a86d76e-91b1-4e47-a411-e81f8e689882"  # altinn-register-app-prod-aks02
 ]
-db_max_pool_size = 10
-db_compute_sku   = "D8"
-db_storage_tier  = "P15"
-sbl_endpoint     = "https://ai-pr-vip-sblbridge.ai.basefarm.net/sblbridge/"
+db_max_pool_size      = 10
+db_compute_sku        = "D8"
+db_storage_tier       = "P15"
+sbl_endpoint          = "https://ai-pr-vip-sblbridge.ai.basefarm.net/sblbridge/"
+enable_high_availability = true
 
 features = {
   a2_party_import = {
