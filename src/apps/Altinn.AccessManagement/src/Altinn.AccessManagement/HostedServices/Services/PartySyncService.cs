@@ -84,22 +84,30 @@ public class PartySyncService : BaseSyncService, IPartySyncService
 
             foreach (var item in page?.Content.Data ?? [])
             {
-                if (item.PartyType.Equals("self-identified-user", StringComparison.OrdinalIgnoreCase))
+                try
                 {
-                    continue;
+                    if (item.PartyType.Equals("self-identified-user", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    var entity = ConvertPartyModel(item, options: options, cancellationToken: cancellationToken);
+
+                    if (bulk.Count(t => t.Id.Equals(entity.Id)) > 0)
+                    {
+                        await Flush(batchId);
+                    }
+
+                    // UpsertEntityLookup(model, options, cancellationToken: cancellationToken);
+
+                    bulk.Add(entity);
+                    bulkLookup.AddRange(ConvertPartyModelToLookup(item));
                 }
-
-                var entity = ConvertPartyModel(item, options: options, cancellationToken: cancellationToken);
-
-                if (bulk.Count(t => t.Id.Equals(entity.Id)) > 0)
+                catch (Exception ex)
                 {
-                    await Flush(batchId);
+                    _logger.LogError(ex, "failed to sync party {partyUuid}", item.PartyUuid);
+                    throw;
                 }
-
-                // UpsertEntityLookup(model, options, cancellationToken: cancellationToken);
-
-                bulk.Add(entity);
-                bulkLookup.AddRange(ConvertPartyModelToLookup(item));
             }
 
             await Flush(batchId);
@@ -291,13 +299,17 @@ public class PartySyncService : BaseSyncService, IPartySyncService
                 Value = model.PersonIdentifier,
                 IsProtected = true
             });
-            res.Add(new EntityLookup()
+            if (model.User is { UserId: > 0 })
             {
-                EntityId = Guid.Parse(model.PartyUuid),
-                Key = "UserId",
-                Value = model.User.UserId.ToString(),
-                IsProtected = false,
-            });
+                res.Add(new EntityLookup()
+                {
+                    EntityId = Guid.Parse(model.PartyUuid),
+                    Key = "UserId",
+                    Value = model.User.UserId.ToString(),
+                    IsProtected = false,
+                });
+            }
+
             if (model.IsDeleted)
             {
                 // DeletedAt missing in register. (18.juni. 2025)
