@@ -74,8 +74,9 @@ resource "azurerm_postgresql_flexible_server" "postgres_server" {
 
   dynamic "high_availability" {
     for_each = var.enable_high_availability ? ["enabled"] : []
+
     content {
-      mode                      = "ZoneRedundant"
+      mode = "ZoneRedundant"
     }
   }
 
@@ -98,7 +99,7 @@ resource "azurerm_postgresql_flexible_server" "postgres_server" {
   sku_name    = local.compute_sku.sku_name
 
   lifecycle {
-    ignore_changes  = [zone, storage_mb]
+    ignore_changes  = [zone, storage_mb, high_availability[0].standby_availability_zone]
     prevent_destroy = true
   }
 
