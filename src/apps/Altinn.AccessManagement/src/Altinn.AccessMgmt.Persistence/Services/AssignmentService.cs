@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Models;
@@ -8,6 +6,9 @@ using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Models;
 using Altinn.Authorization.ProblemDetails;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace Altinn.AccessMgmt.Persistence.Services;
 
@@ -180,6 +181,110 @@ public class AssignmentService(
         }
 
         return await GetAssignment(fromId, toId, roleResult.First().Id);
+    }
+
+    /// <inheritdoc/>
+    public async Task<int> ImportAdminAssignmentPackages(Guid toUuid, Guid fromUuid, IEnumerable<string> packages, ChangeRequestOptions options, CancellationToken cancellationToken = default)
+    {
+        int result = 0;
+
+        if (packages == null || !packages.Any())
+        {
+            throw new ArgumentException("Packages cannot be null or empty", nameof(packages));
+        }
+
+        List<Guid> packageList = [];
+
+        foreach (var package in packages)
+        {
+            var packageResult = await packageRepository.Get(t => t.Urn, package, cancellationToken: cancellationToken);
+            if (packageResult == null || !packageResult.Any())
+            {
+                throw new ArgumentException($"Package with URN '{package}' not found", nameof(packages));
+            }
+
+            packageList.Add(packageResult.First().Id);
+        }
+
+        var assignment = await GetOrCreateAssignmentInternal(fromUuid, toUuid, RETTIGHETSHAVER, options, cancellationToken);
+        if (assignment == null)
+        {
+            throw new Exception($"Assignment could not be created for fromUuid: {fromUuid} toUuid: {toUuid} roleCode: {RETTIGHETSHAVER}");
+        }
+
+        foreach (var packageId in packageList)
+        {
+            bool ok = await ImportAddPackageToAssignment(assignment.Id, packageId, options, cancellationToken);
+            if (ok)
+            {
+                result++;
+            }
+        }
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<int> RevokeAdminAssignmentPackages(Guid toUuid, Guid fromUuid, IEnumerable<string> packages, ChangeRequestOptions options, CancellationToken cancellationToken = default)
+    {
+        int result = 0;
+
+        if (packages == null || !packages.Any())
+        {
+            throw new ArgumentException("Packages cannot be null or empty", nameof(packages));
+        }
+
+        List<Guid> packageList = [];
+        foreach (var package in packages)
+        {
+            var packageResult = await packageRepository.Get(t => t.Urn, package, cancellationToken: cancellationToken);
+            if (packageResult == null || !packageResult.Any())
+            {
+                throw new ArgumentException($"Package with URN '{package}' not found", nameof(packages));
+            }
+
+            packageList.Add(packageResult.First().Id);
+        }
+
+        var assignment = await GetAssignment(fromUuid, toUuid, RETTIGHETSHAVER, cancellationToken) ?? throw new Exception($"Assignment could not be found for fromUuid: {fromUuid} toUuid: {toUuid} roleCode: {RETTIGHETSHAVER}");
+        foreach (var packageId in packageList)
+        {
+            var assignmentPackageFilter = assignmentPackageRepository.CreateFilterBuilder();
+            assignmentPackageFilter.Equal(t => t.AssignmentId, assignment.Id);
+            assignmentPackageFilter.Equal(t => t.PackageId, packageId);
+            var existingAssignmentPackage = await assignmentPackageRepository.Get(assignmentPackageFilter, cancellationToken: cancellationToken);
+            if (existingAssignmentPackage != null && existingAssignmentPackage.Any())
+            {
+                int deleteResult = await assignmentPackageRepository.Delete(existingAssignmentPackage.First().Id, options, cancellationToken: cancellationToken);
+                if (deleteResult > 0)
+                {
+                    result++;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private async Task<bool> ImportAddPackageToAssignment(Guid assignmentId, Guid packageId, ChangeRequestOptions options, CancellationToken cancellationToken = default)
+    {
+        var assignmentPackages = await assignmentPackageRepository.GetB(assignmentId, cancellationToken: cancellationToken);
+        if (assignmentPackages != null && assignmentPackages.Count(t => t.Id == packageId) > 0)
+        {
+            return false;
+        }
+
+        await assignmentPackageRepository.Create(
+            new AssignmentPackage()
+            {
+                AssignmentId = assignmentId,
+                PackageId = packageId
+            },
+            options: options,
+            cancellationToken: cancellationToken
+        );
+
+        return true;        
     }
 
     /// <inheritdoc/>

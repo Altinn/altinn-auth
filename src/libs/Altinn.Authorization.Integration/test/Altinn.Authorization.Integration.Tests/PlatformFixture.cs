@@ -55,7 +55,8 @@ public class PlatformFixture
             opts.PlatformAccessToken.TestTool.Endpoint = Appsettings.Platform.Token.TestTool.Endpoint;
         })
         .AddRegister(opts => opts.Endpoint = Appsettings.Platform.Register.Endpoint)
-        .AddResourceRegistry(opts => opts.Endpoint = Appsettings.Platform.ResourceRegistry.Endpoint);
+        .AddResourceRegistry(opts => opts.Endpoint = Appsettings.Platform.ResourceRegistry.Endpoint)
+        .AddSblBridge(opts => opts.Endpoint = Appsettings.Platform.SblBridge.Endpoint);
 
         ServiceProvider = Services.BuildServiceProvider();
     }

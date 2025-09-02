@@ -17,6 +17,11 @@ public class ChangeRequestOptions
     public Guid ChangedBySystem { get; set; }
 
     /// <summary>
+    /// The time when the data was changed if not provided the current time will be used
+    /// </summary>
+    public DateTimeOffset ChangedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    /// <summary>
     /// Identify operation spanning multiple tables and cascades
     /// </summary>
     public string ChangeOperationId { get; set; } = Guid.CreateVersion7().ToString();

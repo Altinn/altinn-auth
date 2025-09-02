@@ -1,10 +1,10 @@
 using Altinn.AccessManagement;
 using Altinn.AccessManagement.HostedServices.Contracts;
+using Altinn.AccessManagement.HostedServices.Leases;
 using Altinn.AccessManagement.HostedServices.Services;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Data;
 using Altinn.AccessMgmt.Persistence.Services;
-using Altinn.Authorization.AccessManagement.HostedServices;
 using Altinn.Authorization.Host.Lease;
 using Microsoft.FeatureManagement;
 

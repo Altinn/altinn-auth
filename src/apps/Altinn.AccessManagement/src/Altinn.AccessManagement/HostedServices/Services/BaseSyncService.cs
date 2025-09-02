@@ -1,7 +1,5 @@
 ﻿using System.Net;
-using Altinn.Authorization.AccessManagement.HostedServices;
 using Altinn.Authorization.Host.Lease;
-using Altinn.Authorization.Integration.Platform.Register;
 using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessManagement.HostedServices.Services;
@@ -9,7 +7,7 @@ namespace Altinn.AccessManagement.HostedServices.Services;
 /// <summary>
 /// Base
 /// </summary>
-public class BaseSyncService(IAltinnLease lease, IFeatureManager featureManager, IAltinnRegister register)
+public class BaseSyncService(IAltinnLease lease, IFeatureManager featureManager)
 {
     /// <summary>
     /// Lease
@@ -20,11 +18,6 @@ public class BaseSyncService(IAltinnLease lease, IFeatureManager featureManager,
     /// Features
     /// </summary>
     protected IFeatureManager FeatureManager { get; } = featureManager;
-
-    /// <summary>
-    /// Register
-    /// </summary>
-    public IAltinnRegister Register { get; } = register;
 
     /// <summary>
     /// Update lease
@@ -71,8 +64,14 @@ public static partial class Log
     [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Starting register hosted service")]
     internal static partial void StartRegisterSync(ILogger logger);
 
+    [LoggerMessage(EventId = 22, Level = LogLevel.Information, Message = "Starting altinnrole hosted service")]
+    internal static partial void StartAltinnRoleSync(ILogger logger);
+
     [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "Quit register hosted service")]
     internal static partial void QuitRegisterSync(ILogger logger);
+
+    [LoggerMessage(EventId = 23, Level = LogLevel.Information, Message = "Quit altinnrole hosted service")]
+    internal static partial void QuitAltinnRoleSync(ILogger logger);
 
     [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "Assignment {action} from '{from}' to '{to}' with role '{role}'")]
     internal static partial void AssignmentSuccess(ILogger logger, string action, string from, string to, string role);

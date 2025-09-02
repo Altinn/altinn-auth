@@ -44,4 +44,9 @@ public static class AuditDefaults
     /// EnduserApiStr
     /// </summary>
     public const string InternalApiStr = "B2B7DD36-8DE5-40FB-A6CE-C7A4020F9DDC";
+
+    /// <summary>
+    /// Altinn2ClientImportSystem
+    /// </summary>
+    public static readonly Guid Altinn2RoleImportSystem = Guid.Parse("46CFA478-971F-446E-9BC1-AF57469361D0");
 }

@@ -12,6 +12,28 @@ namespace Altinn.AccessMgmt.Persistence.Services.Contracts;
 public interface IAssignmentService
 {
     /// <summary>
+    /// Imports administrative packages to an existing assignment or creates a new assignment if non exists.
+    /// </summary>
+    /// <param name="toUuid">The unique identifier of the user getting the packages that are being added</param>
+    /// <param name="fromUuid">The unique identifier of the party from whom the packages are for</param>
+    /// <param name="packages">A collection of package identifiers to be imported.</param>
+    /// <param name="options">information on the change time and who</param>
+    /// <param name="cancellationToken">A token holding any cancelation requests</param>
+    /// <returns>returns the assignment the packages are added to.</returns>
+    Task<int> ImportAdminAssignmentPackages(Guid toUuid, Guid fromUuid, IEnumerable<string> packages, ChangeRequestOptions options, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Revokes administrative packages from a an assignment.
+    /// </summary>
+    /// <param name="toUuid">The unique identifier of the user having the packages that are being revoked.</param>
+    /// <param name="fromUuid">The unique identifier of the party from whom the packages are being revoked.</param>
+    /// <param name="packages">A collection of package urns to be revoked.</param>
+    /// <param name="options">information on the change time and who</param>
+    /// <param name="cancellationToken">A token holding any cancelation requests</param>
+    /// <returns>The assignment updated</returns>
+    Task<int> RevokeAdminAssignmentPackages(Guid toUuid, Guid fromUuid, IEnumerable<string> packages, ChangeRequestOptions options, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets assignment and creates if not exists.
     /// </summary>
     /// <returns></returns>

@@ -22,4 +22,12 @@ public partial class AltinnSblBridgeClient(
 /// </summary>
 public interface IAltinnSblBridge
 {
+    /// <summary>
+    /// Streams a paginated list of roles from the Altinn SBLBridge.
+    /// </summary>
+    /// <param name="subscriptionId">The subscriptionId for the actual role delegation events</param>
+    /// <param name="nextPage">The URL of the next page, if paginated.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>An asynchronous enumerable of paginated <see cref="RoleDelegationModel"/> items.</returns>
+    Task<IAsyncEnumerable<PlatformResponse<PageStream<RoleDelegationModel>>>> StreamRoles(string subscriptionId, string nextPage = null, CancellationToken cancellationToken = default);
 }
