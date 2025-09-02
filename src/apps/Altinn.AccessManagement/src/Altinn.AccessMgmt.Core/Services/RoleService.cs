@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc />
-public class RoleService(AppDbContext db, DtoMapper dtoConverter, AuditValues auditValues) : IRoleService
+public class RoleService(AppDbContext db) : IRoleService
 {
     /// <inheritdoc />
     public async Task<RoleDto> GetById(Guid id, CancellationToken cancellationToken = default)

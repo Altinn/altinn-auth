@@ -132,7 +132,7 @@ namespace Altinn.AccessMgmt.Core.Data
                 new TranslationEntryList { Id = Guid.Parse("0195efb8-7c80-76b3-bb86-ae9dfd74bca2"), LanguageCode = "nno", Type = nameof(Area), Translations = { { "Name", "Fullmakter for forretningsfører" }, { "Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytt til fullmakter for forretningsfører." } } }
             };
 
-            db.Database.SetAuditSession(auditValues);
+            db.Database.SetAuditSession(AuditValues);
 
             // Upsert Areas
             foreach (var area in data)

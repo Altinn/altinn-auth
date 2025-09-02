@@ -123,7 +123,7 @@ public static class FuzzySearch
 
             if (fieldHits.Any())
             {
-                double normalizedScore = totalWeight > 0 ? totalScore / totalWeight : totalScore; // Normaliserer scoren
+                double normalizedScore = totalWeight > 0 ? (totalScore / totalWeight) : totalScore; // Normaliserer scoren
                 double matchFactor = matchedTerms / (double)searchTerms.Length; // Hvor stor andel av søkeordene som traff
                 results.Add(new SearchObject<T>
                 {
@@ -144,7 +144,7 @@ public static class FuzzySearch
             return 1.0;
         }
 
-        int matchDistance = Math.Max(s1.Length, s2.Length) / 2 - 1;
+        int matchDistance = (Math.Max(s1.Length, s2.Length) / 2) - 1;
         bool[] s1Matches = new bool[s1.Length];
         bool[] s2Matches = new bool[s2.Length];
 
@@ -194,9 +194,9 @@ public static class FuzzySearch
             k++;
         }
 
-        double jaro = (matches / (double)s1.Length +
-                      matches / (double)s2.Length +
-                      (matches - transpositions / 2.0) / matches) / 3.0;
+        double jaro = ((matches / (double)s1.Length) +
+                      (matches / (double)s2.Length) +
+                      ((matches - (transpositions / 2.0)) / matches)) / 3.0;
 
         return jaro;
     }
@@ -262,7 +262,7 @@ public static class FuzzySearch
         int intersection = set1.Intersect(set2).Count();
         int union = set1.Count + set2.Count - intersection;
 
-        return union == 0 ? 0 : (double)intersection / union;
+        return union == 0 ? 0 : ((double)intersection / union);
     }
 
     private static HashSet<string> GenerateTrigrams(string input)

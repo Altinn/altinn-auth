@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc/>
-public class ResourceService(AppDbContext db, AuditValues auditValues) : IResourceService
+public class ResourceService(AppDbContext db) : IResourceService
 {
     public async ValueTask<Resource> GetResource(Guid id, CancellationToken cancellationToken = default)
     {

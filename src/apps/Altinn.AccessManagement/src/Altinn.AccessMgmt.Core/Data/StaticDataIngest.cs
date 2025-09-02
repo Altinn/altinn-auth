@@ -13,8 +13,7 @@ namespace Altinn.AccessMgmt.Core.Data;
 /// <param name="configuration">Configuration</param>
 public partial class StaticDataIngest(AppDbContext db, ITranslationService translationService, IConfiguration configuration)
 {
-    //, IIngestService ingestService
-    public AuditValues auditValues { get; set; } = new AuditValues(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid().ToString());
+    public AuditValues AuditValues { get; set; } = new AuditValues(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid().ToString());
 
     public async Task IngestAll(CancellationToken cancellationToken = default)
     {

@@ -1194,7 +1194,7 @@ public partial class StaticDataIngest
             new RolePackage() { RoleId = roles["urn:altinn:role:hovedadministrator"], PackageId = packages["urn:altinn:accesspackage:eksplisitt"], EntityVariantId = null, CanDelegate = true, HasAccess = false },
         };
 
-        db.Database.SetAuditSession(auditValues);
+        db.Database.SetAuditSession(AuditValues);
 
         foreach (var d in data)
         {

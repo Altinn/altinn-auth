@@ -150,9 +150,9 @@ public partial class StaticDataIngest
             new TranslationEntryList() { Id = Guid.Parse("66ad5542-4f4a-4606-996f-18690129ce00"), LanguageCode = "eng", Type = nameof(Role), Translations = { { "Name", "Administrative Unit - Public Sector" } , { "Description", "Administrative Unit - Public Sector" } } },
             new TranslationEntryList() { Id = Guid.Parse("29a24eab-a25f-445d-b56d-e3b914844853"), LanguageCode = "eng", Type = nameof(Role), Translations = { { "Name", "Deputy Leader" } , { "Description", "Board member who acts as chair in the absence of the leader" } } },
             new TranslationEntryList() { Id = Guid.Parse("8c1e91c2-a71c-4abf-a74e-a600a98be976"), LanguageCode = "eng", Type = nameof(Role), Translations = { { "Name", "Part of Office Community" } , { "Description", "Participates in office community" } } },
-            new TranslationEntryList() { Id = Guid.Parse("cfc41a92-2061-4ff4-97dc-658ffba2c00e"), LanguageCode = "eng", Type = nameof(Role), Translations = { { "Name", "Organizational Unit in the Public Sector" } , { "Description", "Organizational Unit in the Public Sector"  } } },
+            new TranslationEntryList() { Id = Guid.Parse("cfc41a92-2061-4ff4-97dc-658ffba2c00e"), LanguageCode = "eng", Type = nameof(Role), Translations = { { "Name", "Organizational Unit in the Public Sector" } , { "Description", "Organizational Unit in the Public Sector" } } },
             new TranslationEntryList() { Id = Guid.Parse("2fec6d4b-cead-419a-adf3-1bf482a3c9dc"), LanguageCode = "eng", Type = nameof(Role), Translations = { { "Name", "Distinct Subunit" } , { "Description", "Distinct Subunit" } } },
-            new TranslationEntryList() { Id = Guid.Parse("55bd7d4d-08dd-46ee-ac8e-3a44d800d752"), LanguageCode = "eng", Type = nameof(Role), Translations = { { "Name", "Managing Director" } , { "Description", "An individual or legal entity responsible for the daily operations of a business"  } } },
+            new TranslationEntryList() { Id = Guid.Parse("55bd7d4d-08dd-46ee-ac8e-3a44d800d752"), LanguageCode = "eng", Type = nameof(Role), Translations = { { "Name", "Managing Director" } , { "Description", "An individual or legal entity responsible for the daily operations of a business" } } },
             new TranslationEntryList() { Id = Guid.Parse("18baa914-ac43-4663-9fa4-6f5760dc68eb"), LanguageCode = "eng", Type = nameof(Role), Translations = { { "Name", "Participant with Shared Responsibility" } , { "Description", "An individual or legal entity who has personal responsibility for parts of the company's obligations" } } },
             new TranslationEntryList() { Id = Guid.Parse("2651ed07-f31b-4bc1-87bd-4d270742a19d"), LanguageCode = "eng", Type = nameof(Role), Translations = { { "Name", "Owner" } , { "Description", "An individual who is the owner of a sole proprietorship" } } },
             new TranslationEntryList() { Id = Guid.Parse("f1021b8c-9fbc-4296-bd17-a05d713037ef"), LanguageCode = "eng", Type = nameof(Role), Translations = { { "Name", "Participant with Full Responsibility" } , { "Description", "An individual or legal entity who has unlimited personal responsibility for the company's obligations" } } },
@@ -299,7 +299,7 @@ public partial class StaticDataIngest
             new TranslationEntryList() { Id = Guid.Parse("e16ab886-1e1e-4f45-8f79-46f06f720f3e"), LanguageCode = "nno", Type = nameof(Role), Translations = { { "Name" , "Sjølregistrert brukar" } ,                         { "Description" , "Sjølregistrert brukar" } } },
         };
 
-        db.Database.SetAuditSession(auditValues);
+        db.Database.SetAuditSession(AuditValues);
 
         foreach (var d in data)
         {

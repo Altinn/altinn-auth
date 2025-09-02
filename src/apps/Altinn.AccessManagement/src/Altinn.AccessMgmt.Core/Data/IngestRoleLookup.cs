@@ -1,8 +1,6 @@
 ﻿using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
-using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 
 namespace Altinn.AccessMgmt.Core.Data;
 
@@ -236,7 +234,7 @@ public partial class StaticDataIngest
             new RoleLookup() { RoleId = roles.First(t => t.Code == "SENS").Id, Key = "LegacyCode", Value = "SENS" }
         };
 
-        db.Database.SetAuditSession(auditValues);
+        db.Database.SetAuditSession(AuditValues);
 
         foreach (var d in data)
         {

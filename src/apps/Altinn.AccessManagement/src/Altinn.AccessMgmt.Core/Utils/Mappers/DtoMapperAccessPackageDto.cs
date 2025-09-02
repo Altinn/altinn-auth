@@ -4,10 +4,8 @@ using Altinn.Authorization.Api.Contracts.AccessManagement;
 
 namespace Altinn.AccessMgmt.Core.Utils;
 
-/// <summary>
-/// Dto Mapping
-/// </summary>
-public partial class DtoMapper
+/// <inheritdoc/>
+public partial class DtoMapper : IDtoMapper
 {
     public static AccessPackageDto.Check Convert(PackageDelegationCheck obj)
     {

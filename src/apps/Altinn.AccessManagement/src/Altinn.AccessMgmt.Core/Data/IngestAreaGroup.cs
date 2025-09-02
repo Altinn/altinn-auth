@@ -35,7 +35,7 @@ public partial class StaticDataIngest
             new TranslationEntry() { Id = Guid.Parse("554F0321-53B8-4D97-BE12-6A585C507159"), LanguageCode = "nno", Type = nameof(ProviderType), FieldName = "Name", Value = "Særskilt" },
         };
 
-        db.Database.SetAuditSession(auditValues);
+        db.Database.SetAuditSession(AuditValues);
 
         foreach (var d in data)
         {

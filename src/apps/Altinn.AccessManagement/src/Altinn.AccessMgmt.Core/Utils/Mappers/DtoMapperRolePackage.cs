@@ -3,10 +3,8 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 
 namespace Altinn.AccessMgmt.Core.Utils;
 
-/// <summary>
-/// Utility for mapping of entity models to DTOs, related to roles and packages.
-/// </summary>
-public partial class DtoMapper
+/// <inheritdoc/>
+public partial class DtoMapper : IDtoMapper
 {
     public static PackageDto Convert(Package obj)
     {

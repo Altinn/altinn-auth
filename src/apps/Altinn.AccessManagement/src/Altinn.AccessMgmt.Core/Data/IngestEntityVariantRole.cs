@@ -390,7 +390,7 @@ public partial class StaticDataIngest
             new EntityVariantRole() { Id = Guid.Parse("a3719e58-286d-4395-95b0-1a654f2eeafa"), VariantId = variants["VPFO"], RoleId = roles["urn:altinn:external-role:ccr:daglig-leder"] },
         };
 
-        db.Database.SetAuditSession(auditValues);
+        db.Database.SetAuditSession(AuditValues);
 
         foreach (var d in data)
         {

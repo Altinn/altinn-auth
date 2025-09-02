@@ -175,7 +175,7 @@ public partial class StaticDataIngest
             new Package() { Id = Guid.Parse("0195efb8-7c80-7cf2-bcc8-720a3fb39d44"), ProviderId = providerId, EntityTypeId = orgEntityTypeId, AreaId = area_fullmakter_for_forretningsforer, Urn = "urn:altinn:accesspackage:forretningsforer-eiendom", Name = "Forretningsforer eiendom", Description = "Denne fullmakten gir forretningsfører for Borettslag og Eierseksjonssameie tilgang til å opptre på vegne av kunde, og utføre alle tjenester som krever denne fullmakten. Dette er tjenester som tjenestetilbyder har vurdert det som naturlig at en forretningsfører utfører på vegne av sin kunde. Fullmakt hos forretningsfører oppstår når Borettslaget eller Eierseksjonssameiet registrerer forretningsfører i Enhetsregisteret. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.", IsDelegable = true, HasResources = true, IsAssignable = false },
         };
 
-        db.Database.SetAuditSession(auditValues);
+        db.Database.SetAuditSession(AuditValues);
 
         foreach (var package in packages)
         {

@@ -29,7 +29,7 @@ public partial class StaticDataIngest
             new Entity() { Id = AuditDefaults.InternalApiImportSystem, Name = nameof(AuditDefaults.InternalApiImportSystem), RefId = "sys-internal-api-import-system", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
         };
 
-        db.Database.SetAuditSession(auditValues);
+        db.Database.SetAuditSession(AuditValues);
 
         foreach (var d in data)
         {

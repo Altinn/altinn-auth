@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.Core.Data;
 
-public partial class StaticDataIngest
+public partial class StaticDataIngest 
 {
     /// <summary>
     /// Ingest RoleMap data
