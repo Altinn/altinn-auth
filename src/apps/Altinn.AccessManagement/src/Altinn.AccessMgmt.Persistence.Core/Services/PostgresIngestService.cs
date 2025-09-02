@@ -61,6 +61,23 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
     /// <inheritdoc />
     public async Task<int> MergeTempData<T>(Guid ingestId, ChangeRequestOptions options, IEnumerable<string> matchColumns = null, CancellationToken cancellationToken = default)
     {
+        var mergeStatement = GenerateMergeStatement<T>(ingestId, options, matchColumns);
+
+        Console.WriteLine("Starting MERGE");
+
+        var res = await dbExecutor.ExecuteMigrationCommand(mergeStatement.Query, null, cancellationToken: cancellationToken);
+
+        Console.WriteLine("Cleanup");
+        var dropIngestTable = $"DROP TABLE IF EXISTS {mergeStatement.IngestTableName};";
+        await dbExecutor.ExecuteMigrationCommand(dropIngestTable, null, cancellationToken: cancellationToken);
+
+        Console.WriteLine($"Merged {res}");
+
+        return res;
+    }
+
+    private (string Query, string IngestTableName) GenerateMergeStatement<T>(Guid ingestId, ChangeRequestOptions options, IEnumerable<string> matchColumns = null)
+    {
         if (matchColumns == null || matchColumns.Count() == 0)
         {
             matchColumns = ["id"];
@@ -81,14 +98,17 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
         var mergeUpdateUnMatchStatement = string.Join(
             " OR ",
             ingestColumns
-                .Where(t => matchColumns.Count(y => y.Equals(t.Name, StringComparison.OrdinalIgnoreCase)) == 0)
-                .Select(t =>
-                    $"(" +
-                    $"target.{t.Name} <> source.{t.Name} " +
-                    $"OR (target.{t.Name} IS NULL AND source.{t.Name} IS NOT NULL) " +
-                    $"OR (target.{t.Name} IS NOT NULL AND source.{t.Name} IS NULL)" +
-                    $")"
-                )
+                .Where(t => matchColumns.Count(y => y.Equals(t.Name, StringComparison.OrdinalIgnoreCase)) == 0).Select(t => $"(target.{t.Name} IS DISTINCT FROM source.{t.Name})")
+        /*
+        // MSSQL
+        .Select(t =>
+            $"(" +
+            $"target.{t.Name} <> source.{t.Name} " +
+            $"OR (target.{t.Name} IS NULL AND source.{t.Name} IS NOT NULL) " +
+            $"OR (target.{t.Name} IS NOT NULL AND source.{t.Name} IS NULL)" +
+            $")"
+        )
+        */
         );
 
         string mergeUpdateStatement;
@@ -120,19 +140,7 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
         sb.AppendLine($"WHEN NOT MATCHED THEN ");
         sb.AppendLine($"INSERT ({insertColumns}) VALUES ({insertValues});");
 
-        string mergeStatement = sb.ToString();
-
-        Console.WriteLine("Starting MERGE");
-
-        var res = await dbExecutor.ExecuteMigrationCommand(mergeStatement, null, cancellationToken: cancellationToken);
-
-        Console.WriteLine("Cleanup");
-        var dropIngestTable = $"DROP TABLE IF EXISTS {ingestTableName};";
-        await dbExecutor.ExecuteMigrationCommand(dropIngestTable, null, cancellationToken: cancellationToken);
-
-        Console.WriteLine($"Merged {res}");
-
-        return res;
+        return (sb.ToString(), ingestTableName);
     }
 
     /// <inheritdoc />
