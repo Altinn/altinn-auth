@@ -14,18 +14,16 @@ namespace Altinn.AccessManagement.HostedServices.Services
         /// <summary>
         /// Initializes a new instance of the <see cref="AltinnClientRoleSyncService"/> class.
         /// </summary>
-        /// <param name="lease">The lease service used for managing leases.</param>
         /// <param name="role">The role service used for streaming roles.</param>
         /// <param name="assignmentService">The delegation service used for managing delegations.</param>
         /// <param name="logger">The logger instance for logging information and errors.</param>
         /// <param name="featureManager">The feature manager for handling feature flags.</param>
         public AltinnAdminRoleSyncService(
-            IAltinnLease lease,
             IAltinnSblBridge role,
             IAssignmentService assignmentService,
             ILogger<AltinnClientRoleSyncService> logger,
             IFeatureManager featureManager
-        ) : base(lease, featureManager)
+        )
         {
             _role = role;
             _assignmentService = assignmentService;
@@ -37,9 +35,10 @@ namespace Altinn.AccessManagement.HostedServices.Services
         private readonly ILogger<AltinnClientRoleSyncService> _logger;
 
         /// <inheritdoc />
-        public async Task SyncAdminRoles(LeaseResult<AltinnAdminRoleLease> ls, CancellationToken cancellationToken)
+        public async Task SyncAdminRoles(ILease lease, CancellationToken cancellationToken)
         {
-            var adminDelegations = await _role.StreamRoles("11", ls.Data?.AltinnAdminRoleStreamNextPageLink, cancellationToken);
+            var leaseData = await lease.Get<AltinnAdminRoleLease>(cancellationToken);
+            var adminDelegations = await _role.StreamRoles("11", leaseData.AltinnAdminRoleStreamNextPageLink, cancellationToken);
 
             await foreach (var page in adminDelegations)
             {
@@ -131,7 +130,7 @@ namespace Altinn.AccessManagement.HostedServices.Services
                     return;
                 }
 
-                await UpdateLease(ls, data => data.AltinnAdminRoleStreamNextPageLink = page.Content.Links.Next, cancellationToken);
+                await lease.Update<AltinnAdminRoleLease>(d => d.AltinnAdminRoleStreamNextPageLink = page.Content.Links.Next, cancellationToken);
             }
         }
 

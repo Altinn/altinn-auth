@@ -23,12 +23,11 @@ namespace Altinn.AccessManagement.HostedServices.Services
         /// <param name="logger">The logger instance for logging information and errors.</param>
         /// <param name="featureManager">The feature manager for handling feature flags.</param>
         public AltinnClientRoleSyncService(
-            IAltinnLease lease,
             IAltinnSblBridge role,
             IDelegationService delegationService,
             ILogger<AltinnClientRoleSyncService> logger,
             IFeatureManager featureManager           
-        ) : base(lease, featureManager)
+        )
         {
             _role = role;
             _delegationService = delegationService;
@@ -40,9 +39,10 @@ namespace Altinn.AccessManagement.HostedServices.Services
         private readonly ILogger<AltinnClientRoleSyncService> _logger;
 
         /// <inheritdoc />
-        public async Task SyncClientRoles(LeaseResult<AltinnClientRoleLease> ls, CancellationToken cancellationToken)
+        public async Task SyncClientRoles(ILease lease, CancellationToken cancellationToken)
         {
-            var clientDelegations = await _role.StreamRoles("12", ls.Data?.AltinnClientRoleStreamNextPageLink, cancellationToken);
+            var leaseData = await lease.Get<AltinnClientRoleLease>(cancellationToken);
+            var clientDelegations = await _role.StreamRoles("12", leaseData.AltinnClientRoleStreamNextPageLink, cancellationToken);
 
             await foreach (var page in clientDelegations)
             {
@@ -82,7 +82,7 @@ namespace Altinn.AccessManagement.HostedServices.Services
                             if (deleted <= 0)
                             {
                                 _logger.LogWarning(
-                                    "Failed to delete delegation for FromParty: {FromParty}, ToParty: {ToParty}, Facilitator: {Facilitator}, PackageUrn: {packageUrn}", 
+                                    "Failed to delete delegation for FromParty: {FromParty}, ToParty: {ToParty}, Facilitator: {Facilitator}, PackageUrn: {packageUrn}",
                                     item.FromPartyUuid,
                                     item.ToUserPartyUuid,
                                     item.PerformedByPartyUuid,
@@ -104,7 +104,7 @@ namespace Altinn.AccessManagement.HostedServices.Services
 
                             IEnumerable<Delegation> delegations = await _delegationService.ImportClientDelegation(delegationData, options, cancellationToken);
                         }
-                            
+
                     }
                 }
 
@@ -113,7 +113,7 @@ namespace Altinn.AccessManagement.HostedServices.Services
                     return;
                 }
 
-                await UpdateLease(ls, data => data.AltinnClientRoleStreamNextPageLink = page.Content.Links.Next, cancellationToken);
+                await lease.Update<AltinnClientRoleLease>(data => data.AltinnClientRoleStreamNextPageLink = page.Content.Links.Next, cancellationToken);
             }
         }
 

@@ -1,44 +1,12 @@
 ﻿using System.Net;
-using Altinn.Authorization.Host.Lease;
-using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessManagement.HostedServices.Services;
 
 /// <summary>
 /// Base
 /// </summary>
-public class BaseSyncService(IAltinnLease lease, IFeatureManager featureManager)
+public class BaseSyncService
 {
-    /// <summary>
-    /// Lease
-    /// </summary>
-    public IAltinnLease Lease { get; } = lease;
-
-    /// <summary>
-    /// Features
-    /// </summary>
-    protected IFeatureManager FeatureManager { get; } = featureManager;
-
-    /// <summary>
-    /// Update lease
-    /// </summary>
-    protected async Task UpdateLease<T>(LeaseResult<T> ls, Action<T> configureLeaseContent, CancellationToken cancellationToken)
-        where T : class, new()
-    {
-        if (ls.Data is { })
-        {
-            configureLeaseContent(ls.Data);
-            await Lease.Put(ls, ls.Data, cancellationToken);
-        }
-        else
-        {
-            var content = new T();
-            configureLeaseContent(content);
-            await Lease.Put(ls, content, cancellationToken);
-        }
-
-        await Lease.RefreshLease(ls, cancellationToken);
-    }
 }
 
 /// <summary>

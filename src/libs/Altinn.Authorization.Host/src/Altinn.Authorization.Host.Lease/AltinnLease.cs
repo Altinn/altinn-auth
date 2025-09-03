@@ -1,12 +1,16 @@
 using Altinn.Authorization.Host.Identity;
-using Altinn.Authorization.Host.Lease.InMemory;
+using Altinn.Authorization.Host.Lease.Noop;
 using Altinn.Authorization.Host.Lease.StorageAccount;
+using Altinn.Authorization.Host.Lease.Telemetry;
 using Altinn.Authorization.Host.Startup;
 using Azure.Core;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Npgsql;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
 namespace Altinn.Authorization.Host.Lease;
 
@@ -55,7 +59,7 @@ public static partial class AltinnLease
     public static void ConfigureAltinnInMemoryLease(IServiceCollection services)
     {
         Log.AddAltinnLeaseInMemory(Logger);
-        services.AddSingleton<IAltinnLease, InMemoryLease>();
+        services.AddSingleton<ILeaseService, NoopLeaseService>();
     }
 
     /// <summary>
@@ -67,6 +71,8 @@ public static partial class AltinnLease
     public static void ConfigureAltinnLeaseAzureStorageAccount(IServiceCollection services, AltinnLeaseOptions options)
     {
         Log.AddAltinnLeaseStorageAccount(Logger);
+        services.ConfigureOpenTelemetryMeterProvider(provider => provider.AddMeter(LeaseTelemetry.Meter.Name));
+        services.ConfigureOpenTelemetryTracerProvider(provider => provider.AddSource(LeaseTelemetry.ActivitySource.Name));
         services.AddAzureClients(builder =>
         {
             builder.UseCredential(AzureToken.Default);
@@ -76,11 +82,11 @@ public static partial class AltinnLease
                 {
                     options.Retry.Mode = RetryMode.Exponential;
                     options.Retry.MaxDelay = TimeSpan.FromSeconds(3);
-                    options.Retry.MaxRetries = 5;
+                    options.Retry.MaxRetries = 3;
                 });
         });
 
-        services.AddSingleton<IAltinnLease, StorageAccountLease>();
+        services.AddSingleton<ILeaseService, StorageAccountLeaseService>();
     }
 
     static partial class Log

@@ -1,177 +1,211 @@
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
+using Altinn.Authorization.Host.Lease.Telemetry;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
-using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Logging;
 
 namespace Altinn.Authorization.Host.Lease.StorageAccount;
 
 /// <summary>
-/// Represents a lease management implementation for a storage account.
-/// Provides functionality for acquiring, releasing, and refreshing leases on blobs in a storage account.
+/// Represents the result of a lease acquisition operation for a blob in the storage account.
+/// Contains information about the lease, the associated blob, and the lease client.
 /// </summary>
-/// <param name="factory">The factory used to create <see cref="BlobServiceClient"/> instances.</param>
-/// <param name="logger">The logger used to log events related to lease operations.</param>
-/// <remarks>
-/// https://learn.microsoft.com/en-us/rest/api/storageservices/blob-service-error-codes
-/// </remarks>
-public partial class StorageAccountLease(IAzureClientFactory<BlobServiceClient> factory, ILogger<StorageAccountLease> logger) : IAltinnLease
+internal sealed class StorageAccountLease : ILease
 {
-    private ILogger<StorageAccountLease> Logger { get; } = logger;
+    internal StorageAccountLease(
+        ILogger logger,
+        BlobClient blobClient,
+        BlobLeaseClient blobLeaseClient,
+        BlobLease blobLease)
+    {
+        Logger = logger;
+        BlobClient = blobClient;
+        BlobLeaseClient = blobLeaseClient;
+        BlobLease = blobLease;
 
-    private IAzureClientFactory<BlobServiceClient> Factory { get; } = factory;
+        if (blobLease is { })
+        {
+            Stopwatch = Stopwatch.StartNew();
+            RenewalTask = LeaseRefresher();
+        }
+        else
+        {
+            Cancel();
+        }
+    }
+
+    private ILogger Logger { get; set; }
+
+    private BlobLease BlobLease { get; set; }
+
+    private BlobClient BlobClient { get; init; }
+
+    private BlobLeaseClient BlobLeaseClient { get; init; }
+
+    private SemaphoreSlim Semaphore { get; init; } = new(1, 1);
+
+    private Stopwatch Stopwatch { get; init; }
+
+    private CancellationTokenSource LeaseRefresherCancellation { get; init; } = new();
+
+    private Task? RenewalTask { get; init; }
+
+    private int _disposed = 0;
+
+    [DoesNotReturn]
+    private void Cancel()
+    {
+        LeaseRefresherCancellation.Cancel();
+        LeaseRefresherCancellation.Token.ThrowIfCancellationRequested();
+    }
 
     /// <inheritdoc/>
-    public async Task<LeaseResult<T>> TryAquireNonBlocking<T>(string leaseName, CancellationToken cancellationToken = default)
+    public async Task<T> Get<T>(CancellationToken cancellationToken = default)
         where T : class, new()
     {
-        var client = CreateClient(leaseName);
-        await CreateEmptyFileIfNotExists<T>(client, cancellationToken);
-        var leaseClient = client.GetBlobLeaseClient();
-        var content = await client.DownloadContentAsync(cancellationToken);
-        var data = content.Value.Content.ToObjectFromJson<T>();
-
+        await Semaphore.WaitAsync(cancellationToken);
         try
         {
-            var lease = await leaseClient.AcquireAsync(TimeSpan.FromSeconds(60), default, cancellationToken);
-            Log.AcquiredLease(Logger, lease.Value.LeaseId);
-            return new StorageAccountLeaseResult<T>()
-            {
-                LeaseName = leaseName,
-                BlobClient = client,
-                LeaseClient = leaseClient,
-                Data = data,
-                Response = lease.Value,
-                Implementation = this,
-            };
+            LeaseRefresherCancellation.Token.ThrowIfCancellationRequested();
+            var content = await BlobClient.DownloadContentAsync(cancellationToken);
+            return content.Value.Content.ToObjectFromJson<T>();
         }
-        catch (RequestFailedException ex) when (ex.ErrorCode == "LeaseAlreadyPresent")
+        finally
         {
-            Log.LeaseAlreadyTaken(Logger);
-            return new StorageAccountLeaseResult<T>()
-            {
-                LeaseName = leaseName,
-                BlobClient = client,
-                LeaseClient = leaseClient,
-                Data = data,
-                Response = default,
-                Implementation = this,
-            };
+            Semaphore.Release();
         }
     }
 
     /// <inheritdoc/>
-    public async Task<LeaseResult<T>> Put<T>(LeaseResult<T> lease, T data, CancellationToken cancellationToken = default)
-        where T : class
+    public async Task Update<T>(T data, CancellationToken cancellationToken = default)
+        where T : class, new()
     {
-        if (lease.HasLease && lease is StorageAccountLeaseResult<T> castedLease)
+        await Semaphore.WaitAsync(cancellationToken);
+        try
         {
+            LeaseRefresherCancellation.Token.ThrowIfCancellationRequested();
             var content = JsonSerializer.Serialize(data);
-            using var contentStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
-            await castedLease.BlobClient.UploadAsync(
-            contentStream,
-            new BlobUploadOptions()
+            var options = new BlobUploadOptions()
             {
                 Conditions = new()
                 {
-                    LeaseId = castedLease.Response.LeaseId,
+                    LeaseId = BlobLease.LeaseId,
                 },
-            },
-            cancellationToken);
+            };
 
-            lease.Data = data;
-            return lease;
+            await LeaseTelemetry.RecordLeaseUpdate(Logger, BlobClient.Name, async () =>
+            {
+                using var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                return await BlobClient.UploadAsync(stream, options, cancellationToken);
+            });
         }
-
-        return lease;
-    }
-
-    /// <inheritdoc/>
-    public async Task Release<T>(LeaseResult<T> lease, CancellationToken cancellationToken = default)
-          where T : class
-    {
-        if (lease.HasLease && lease is StorageAccountLeaseResult<T> castedLease)
+        catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.LeaseLost || ex.ErrorCode == BlobErrorCode.LeaseAlreadyPresent)
         {
-            try
-            {
-                await castedLease.BlobClient.GetBlobLeaseClient(castedLease.Response.LeaseId).ReleaseAsync(default, cancellationToken);
-                castedLease.Response = null;
-            }
-            catch (RequestFailedException ex) when (ex.ErrorCode == "LeaseLost" || ex.ErrorCode == "LeaseAlreadyPresent")
-            {
-                Log.FailedToReleaseLease(Logger, ex);
-            }
+            Cancel();
+        }
+        finally
+        {
+            Semaphore.Release();
         }
     }
 
     /// <inheritdoc/>
-    public async Task<LeaseResult<T>> RefreshLease<T>(LeaseResult<T> lease, CancellationToken cancellationToken = default)
-        where T : class
-    {
-        if (lease.HasLease && lease is StorageAccountLeaseResult<T> castedLease)
-        {
-            var leaseExpirationTime = castedLease.Acquired.AddSeconds(Convert.ToDouble(castedLease.Response.LeaseTime));
-            if (leaseExpirationTime < DateTime.UtcNow.AddSeconds(20))
-            {
-                try
-                {
-                    var result = await castedLease.LeaseClient.RenewAsync(default, cancellationToken);
-                    castedLease.Response = result;
-                    return castedLease;
-                }
-                catch (RequestFailedException ex) when (ex.ErrorCode == "LeaseLost" || ex.ErrorCode == "LeaseAlreadyPresent")
-                {
-                    Log.CantRefreshLease(Logger, ex);
-                    castedLease.Response = null;
-                    return castedLease;
-                }
-            }
-        }
-
-        return lease;
-    }
-
-    private async Task CreateEmptyFileIfNotExists<T>(BlobClient client, CancellationToken cancellationToken)
+    public async Task Update<T>(Action<T> configureData, CancellationToken cancellationToken = default)
         where T : class, new()
+    {
+        if (configureData is { })
+        {
+            var data = new T();
+            configureData(data);
+            await Update(data, cancellationToken);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask DisposeAsync()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) == 1)
+        {
+            return;
+        }
+
+        try
+        {
+            await LeaseRefresherCancellation.CancelAsync();
+            if (RenewalTask is { })
+            {
+                await RenewalTask.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+
+            var release = ReleaseLease(CancellationToken.None);
+            await release.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+        finally
+        {
+            Semaphore?.Dispose();
+            LeaseRefresherCancellation?.Dispose();
+            GC.SuppressFinalize(this);
+        }
+    }
+
+    private async Task ReleaseLease(CancellationToken cancellationToken = default)
+    {
+        await Semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            if (BlobLease is { })
+            {
+                await LeaseTelemetry.RecordReleaseLease(Logger, BlobClient.Name, async () => await BlobClient.GetBlobLeaseClient(BlobLease.LeaseId).ReleaseAsync(default, cancellationToken));
+            }
+        }
+        catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.LeaseLost || ex.ErrorCode == BlobErrorCode.LeaseAlreadyPresent)
+        {
+            Cancel();
+        }
+        finally
+        {
+            Semaphore.Release();
+        }
+    }
+
+    private async Task RefreshLease(CancellationToken cancellationToken = default)
+    {
+        await Semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            LeaseRefresherCancellation.Token.ThrowIfCancellationRequested();
+            BlobLease = await LeaseTelemetry.RecordRefreshLease(Logger, BlobClient.Name, async () => await BlobLeaseClient.RenewAsync(default, cancellationToken));
+        }
+        catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.LeaseLost || ex.ErrorCode == BlobErrorCode.LeaseAlreadyPresent)
+        {
+            Cancel();
+        }
+        finally
+        {
+            Semaphore.Release();
+        }
+    }
+
+    private async Task LeaseRefresher()
     {
         try
         {
-            var content = JsonSerializer.Serialize(new T());
-            if (!await client.ExistsAsync(cancellationToken))
+            var refreshDelay = TimeSpan.FromSeconds(30);
+            while (!LeaseRefresherCancellation.IsCancellationRequested)
             {
-                await client.UploadAsync(new MemoryStream(Encoding.UTF8.GetBytes(content)), cancellationToken);
+                await Task.Delay(refreshDelay, LeaseRefresherCancellation.Token);
+                await RefreshLease(LeaseRefresherCancellation.Token);
             }
         }
-        catch (RequestFailedException ex) when (ex.ErrorCode == "BlobAlreadyExists")
+        finally
         {
-            Log.BlobAlreadyExists(Logger, ex);
+            Stopwatch.Stop();
+            LeaseTelemetry.RecordLeaseDuration(BlobClient.Name, Stopwatch.Elapsed);
         }
-    }
-
-    /// <summary>
-    /// Creates a blob client
-    /// </summary>
-    private BlobClient CreateClient(string blobName) =>
-        Factory.CreateClient(AltinnLeaseOptions.StorageAccountLease.Name).GetBlobContainerClient(AltinnLeaseOptions.StorageAccountLease.Container).GetBlobClient(blobName);
-
-    static partial class Log
-    {
-        [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Can't refresh lease")]
-        internal static partial void CantRefreshLease(ILogger logger, RequestFailedException ex);
-
-        [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Failed to create blob")]
-        internal static partial void BlobAlreadyExists(ILogger logger, RequestFailedException ex);
-
-        [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Failed to release lease")]
-        internal static partial void FailedToReleaseLease(ILogger logger, RequestFailedException ex);
-
-        [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "Lease is already taken")]
-        internal static partial void LeaseAlreadyTaken(ILogger logger);
-
-        [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "Aquired lease with id {leaseId}")]
-        internal static partial void AcquiredLease(ILogger logger, string leaseId);
     }
 }

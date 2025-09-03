@@ -15,14 +15,13 @@ namespace Altinn.AccessManagement.HostedServices.Services
     public class AllAltinnRoleSyncService : BaseSyncService, IAllAltinnRoleSyncService
     {
         public AllAltinnRoleSyncService(
-            IAltinnLease lease,
             IAltinnSblBridge role,
             ILogger<RoleSyncService> logger,
             IFeatureManager featureManager,
             IIngestService ingestService,
             IRoleRepository roleRepository,
             IAssignmentRepository assignmentRepository
-        ) : base(lease, featureManager)
+        )
         {
             _role = role;
             _logger = logger;
@@ -38,12 +37,14 @@ namespace Altinn.AccessManagement.HostedServices.Services
         private readonly IIngestService _ingestService;
 
         /// <inheritdoc />
-        public async Task SyncAllAltinnRoles(LeaseResult<AllAltinnRoleLease> ls, CancellationToken cancellationToken)
+        public async Task SyncAllAltinnRoles(ILease lease, CancellationToken cancellationToken)
         {
             var batchData = new List<Assignment>();
             Guid batchId = Guid.CreateVersion7();
 
-            var allRoles = await _role.StreamRoles("10", ls.Data?.AllAltinnRoleStreamNextPageLink, cancellationToken);
+            var leaseData = await lease.Get<AllAltinnRoleLease>(cancellationToken);
+
+            var allRoles = await _role.StreamRoles("10", leaseData.AllAltinnRoleStreamNextPageLink, cancellationToken);
 
             await foreach (var page in allRoles)
             {
@@ -112,7 +113,7 @@ namespace Altinn.AccessManagement.HostedServices.Services
                     return;
                 }
 
-                await UpdateLease(ls, data => data.AllAltinnRoleStreamNextPageLink = page.Content.Links.Next, cancellationToken);
+                await lease.Update<AllAltinnRoleLease>(l => l.AllAltinnRoleStreamNextPageLink = page.Content.Links.Next, cancellationToken);
                 
                 async Task Flush(Guid batchId)
                 {

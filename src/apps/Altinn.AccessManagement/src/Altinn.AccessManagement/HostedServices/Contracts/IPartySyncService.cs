@@ -11,5 +11,5 @@ public interface IPartySyncService
     /// <summary>
     /// Sync parties
     /// </summary>
-    Task SyncParty(LeaseResult<RegisterLease> ls, CancellationToken cancellationToken);
+    Task SyncParty(ILease ls, CancellationToken cancellationToken);
 }

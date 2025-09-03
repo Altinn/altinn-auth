@@ -11,6 +11,6 @@ namespace Altinn.AccessManagement.HostedServices.Contracts
         /// <summary>
         /// Sync roles
         /// </summary>
-        Task SyncAllAltinnRoles(LeaseResult<AllAltinnRoleLease> ls, CancellationToken cancellationToken);
+        Task SyncAllAltinnRoles(ILease lease, CancellationToken cancellationToken);
     }
 }

@@ -31,13 +31,12 @@ namespace Altinn.AccessManagement.HostedServices.Services
         /// <param name="logger">The logger instance for logging information and errors.</param>
         /// <param name="featureManager">The feature manager for handling feature flags.</param>
         public AltinnBankruptcyEstateRoleSyncService(
-            IAltinnLease lease,
             IAltinnSblBridge role,
             IDelegationService delegationService,
             IConnectionService connectionService,
             ILogger<AltinnBankruptcyEstateRoleSyncService> logger,
             IFeatureManager featureManager           
-        ) : base(lease, featureManager)
+        )
         {
             _role = role;
             _delegationService = delegationService;
@@ -51,9 +50,10 @@ namespace Altinn.AccessManagement.HostedServices.Services
         private readonly ILogger<AltinnBankruptcyEstateRoleSyncService> _logger;
 
         /// <inheritdoc />
-        public async Task SyncBankruptcyEstateRoles(LeaseResult<AltinnBankruptcyEstateRoleLease> ls, CancellationToken cancellationToken)
+        public async Task SyncBankruptcyEstateRoles(ILease lease, CancellationToken cancellationToken)
         {
-            var clientDelegations = await _role.StreamRoles("14", ls.Data?.AltinnBankruptcyEstateRoleStreamNextPageLink, cancellationToken);
+            var leaseData = await lease.Get<AltinnBankruptcyEstateRoleLease>(cancellationToken);
+            var clientDelegations = await _role.StreamRoles("14", leaseData.AltinnBankruptcyEstateRoleStreamNextPageLink, cancellationToken);
 
             await foreach (var page in clientDelegations)
             {
@@ -119,7 +119,7 @@ namespace Altinn.AccessManagement.HostedServices.Services
 
                             IEnumerable<Delegation> delegations = await _delegationService.ImportClientDelegation(delegationData, options, cancellationToken);
                         }
-                        */                            
+                        */
                     }
                 }
 
@@ -128,7 +128,7 @@ namespace Altinn.AccessManagement.HostedServices.Services
                     return;
                 }
 
-                await UpdateLease(ls, data => data.AltinnBankruptcyEstateRoleStreamNextPageLink = page.Content.Links.Next, cancellationToken);
+                await lease.Update<AltinnBankruptcyEstateRoleLease>(data => data.AltinnBankruptcyEstateRoleStreamNextPageLink = page.Content.Links.Next, cancellationToken);
             }
         }        
     }
