@@ -1,0 +1,93 @@
+name: Create Deploy'n'Patch Issues
+
+on:
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch: {}
+
+jobs:
+  tilgangsinfo:
+    name: Create Deploy'n'Patch issue for tilgangsinfo
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@f2b2b233b538f500472c7274c7012f57857d8ce0
+        with:
+          version: 9
+          run_install: |
+            - cwd: .github/scripts
+              args: [--frozen-lockfile]
+            - args: [--global, tsx]
+
+      - id: create
+        name: Create issue
+        uses: JasonEtco/create-an-issue@56fdd2d6f960e970fa9d5ca3cf3884b6ba5af477
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          filename: .github/templates/tilgangsinfo-pnd.md
+
+      - name: Add issue to project
+        env:
+          GITHUB_TOKEN: ${{ secrets.ASSIGN_PROJECT_TOKEN }}
+          GITHUB_ISSUE_NUMBER: ${{ steps.create.outputs.number }}
+          GITHUB_PROJECT_NUMBER: 75
+          # set status = "In progress"
+          GITHUB_PROJECT_FIELDS: |
+            {
+              "PVTSSF_lADOAFrH7M4ALF9LzgHEmZw": { "singleSelectOptionId": "e4413b57" }
+            }
+        run: tsx ./.github/scripts/add-to-project.mts
+
+  tilgangsstyring:
+    name: Create Deploy'n'Patch issue for tilgangsstyring
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@f2b2b233b538f500472c7274c7012f57857d8ce0
+        with:
+          version: 9
+          run_install: |
+            - cwd: .github/scripts
+              args: [--frozen-lockfile]
+            - args: [--global, tsx]
+
+      - id: create
+        name: Create issue
+        uses: JasonEtco/create-an-issue@56fdd2d6f960e970fa9d5ca3cf3884b6ba5af477
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          filename: .github/templates/tilgangsstyring-pnd.md
+
+      - name: Add issue to project
+        env:
+          GITHUB_TOKEN: ${{ secrets.ASSIGN_PROJECT_TOKEN }}
+          GITHUB_ISSUE_NUMBER: ${{ steps.create.outputs.number }}
+          GITHUB_PROJECT_NUMBER: 50
+          # set status = "In progress"
+          GITHUB_PROJECT_FIELDS: |
+            {
+              "PVTSSF_lADOAFrH7M4AI9-nzgFibRI": { "singleSelectOptionId": "47fc9ee4" }
+            }
+        run: tsx ./.github/scripts/add-to-project.mts
