@@ -92,13 +92,13 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="9.0.8" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="9.0.8" />
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="9.8.0" />
-    <PackageVersion Include="Microsoft.FeatureManagement.AspNetCore" Version="4.2.1" />
+    <PackageVersion Include="Microsoft.FeatureManagement.AspNetCore" Version="4.3.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Logging" Version="8.14.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.14.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageVersion Include="Moq" Version="4.20.72" />
-    <PackageVersion Include="Nerdbank.Streams" Version="2.12.90" />
+    <PackageVersion Include="Nerdbank.Streams" Version="2.13.16" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
     <PackageVersion Include="Npgsql.OpenTelemetry" Version="9.0.3" />
     <PackageVersion Include="Npgsql.DependencyInjection" Version="9.0.3" />
@@ -116,7 +116,7 @@
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="8.1.4" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
     <PackageVersion Include="System.Linq.Async" Version="6.0.3" />
-    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.6.0" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.7.0" />
     <PackageVersion Include="xunit.v3.assert" Version="2.0.3" />
     <PackageVersion Include="xunit.v3.extensibility.core" Version="2.0.3" />
     <PackageVersion Include="xunit.v3" Version="2.0.3" />
