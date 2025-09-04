@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Net;
-using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Models.Register;
 using Altinn.Authorization.Models.ResourceRegistry;
@@ -17,10 +10,11 @@ using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Extensions;
 using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Services.Interface;
+using Altinn.ResourceRegistry.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
-namespace Altinn.Platform.Authorization.Services.Implementation
+namespace Altinn.Authorization.Services.Implementation
 {
     /// <summary>
     /// Wrapper for resource registry
@@ -83,7 +77,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     Stream policyBlob = await response.Content.ReadAsStreamAsync(cancellationToken);
                     using (policyBlob)
                     {
-                        policy = (policyBlob.Length > 0) ? PolicyHelper.ParsePolicy(policyBlob) : null;
+                        policy = policyBlob.Length > 0 ? PolicyHelper.ParsePolicy(policyBlob) : null;
                     }
 
                     PutInCache(cacheKey, _generalSettings.PolicyCacheTimeout, policy);
@@ -107,6 +101,26 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 {
                     ListObject<AccessListResourceMembershipWithActionFilterDto> result = await response.Content.ReadFromJsonAsync<ListObject<AccessListResourceMembershipWithActionFilterDto>>(_jsonOptions, cancellationToken);
                     memberships = result.Items;
+                    PutInCache(cacheKey, _generalSettings.PolicyCacheTimeout, memberships);
+                }
+            }
+
+            return memberships;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<AccessListInfoDto>> GetMembershipsForParty(PartyUrn.PartyUuid partyUrn, CancellationToken cancellationToken = default)
+        {
+            string cacheKey = $"AccListMemb|{partyUrn}";
+            if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<AccessListInfoDto> memberships))
+            {
+                string apiurl = $"access-lists/get-by-member?party={partyUrn}";
+                string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "authorization");
+                HttpResponseMessage response = await _resourceRegistry.Client.GetAsync(apiurl, platformAccessToken: accessToken, cancellationToken: cancellationToken);
+
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    memberships = await response.Content.ReadFromJsonAsync<IEnumerable<AccessListInfoDto>>(_jsonOptions, cancellationToken);
                     PutInCache(cacheKey, _generalSettings.PolicyCacheTimeout, memberships);
                 }
             }

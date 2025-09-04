@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Models.Register;
 using Altinn.Authorization.Models.ResourceRegistry;
+using Altinn.ResourceRegistry.Models;
 
 namespace Altinn.Platform.Authorization.Services.Interface;
 
@@ -36,4 +37,12 @@ public interface IResourceRegistry
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>List of memberships</returns>
     Task<IEnumerable<AccessListResourceMembershipWithActionFilterDto>> GetMembershipsForResourceForParty(PartyUrn partyUrn, ResourceIdUrn resourceIdUrn, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns a list of all memberships a given party has access to through access lists.
+    /// </summary>
+    /// <param name="partyUrn">Urn identifying the party</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns></returns>
+    Task<IEnumerable<AccessListInfoDto>> GetMembershipsForParty(PartyUrn.PartyUuid partyUrn, CancellationToken cancellationToken = default);
 }

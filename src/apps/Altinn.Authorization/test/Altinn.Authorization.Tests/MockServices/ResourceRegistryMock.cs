@@ -11,6 +11,7 @@ using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Models.Register;
 using Altinn.Authorization.Models.ResourceRegistry;
 using Altinn.Platform.Authorization.Services.Interface;
+using Altinn.ResourceRegistry.Models;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Altinn.Platform.Authorization.IntegrationTests.MockServices;
@@ -145,5 +146,24 @@ public class ResourceRegistryMock : IResourceRegistry
            .SetAbsoluteExpiration(new TimeSpan(0, cacheTimeout, 0));
 
         _memoryCache.Set(cachekey, cacheObject, cacheEntryOptions);
+    }
+
+    public Task<IEnumerable<AccessListInfoDto>> GetMembershipsForParty(PartyUrn.PartyUuid partyUrn, CancellationToken cancellationToken = default)
+    {
+        if (partyUrn.IsPartyUuid(out Guid partyUuid))
+        {
+            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(AltinnApps_DecisionTests).Assembly.Location).LocalPath);
+            string accessListfolder = Path.Combine(unitTestFolder, "..", "..", "..", "Data", "ResourceRegistry", "AccessLists");
+            string accessListPath = Path.Combine(accessListfolder, $"{partyUuid.ToString()}.json");
+
+            if (File.Exists(accessListPath))
+            {
+                string content = File.ReadAllText(accessListPath);
+                List<AccessListInfoDto> accessList = JsonSerializer.Deserialize<List<AccessListInfoDto>>(content, options);
+                return Task.FromResult(accessList.AsEnumerable());
+            }
+        }
+
+        return Task.FromResult(Enumerable.Empty<AccessListInfoDto>());
     }
 }

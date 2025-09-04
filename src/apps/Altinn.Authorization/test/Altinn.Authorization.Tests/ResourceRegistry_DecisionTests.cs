@@ -258,6 +258,59 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             AssertionUtil.AssertAuthorizationEvent(eventQueue, expectedAuthorizationEvent, Times.Once());
         }
 
+        [Fact]
+        public async Task PDP_Decision_ResourceRegistry_RequestConsent_ValidAccessList()
+        {
+            string testCase = "AltinnResourceRegistry_RequestConsent_ValidAccessList";
+            HttpClient client = GetTestClient();
+
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        [Fact]
+        public async Task PDP_Decision_ResourceRegistry_RequestConsent_InValidAccessList()
+        {
+            string testCase = "AltinnResourceRegistry_RequestConsent_InValidAccessList";
+            HttpClient client = GetTestClient();
+
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// This scenario uses a resource that only requires that it is an organization that is requesting consent.
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        [Fact]
+        public async Task PDP_Decision_ResourceRegistry_RequestConsent_ValidPartyType()
+        {
+            string testCase = "AltinnResourceRegistry_RequestConsent_ValidPartyType";
+            HttpClient client = GetTestClient();
+
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
         /// <summary>
         /// Tests the scenario where subject is a system user with resource delegation giving access the resource.
         /// </summary>

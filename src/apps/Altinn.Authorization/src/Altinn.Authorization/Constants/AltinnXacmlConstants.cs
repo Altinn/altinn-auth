@@ -77,6 +77,11 @@ namespace Altinn.Platform.Authorization.Constants
             public const string PartyAttribute = "urn:altinn:partyid";
 
             /// <summary>
+            /// Party type attribute match indentifier 
+            /// </summary>
+            public const string PartyTypeAttribute = "urn:altinn:partytype";
+
+            /// <summary>
             /// User Id attribute match indentifier 
             /// </summary>>
             public const string UserAttribute = "urn:altinn:userid";
@@ -105,6 +110,11 @@ namespace Altinn.Platform.Authorization.Constants
             /// SystemUserId Attribute match identifier
             /// </summary>
             public const string SystemUserIdAttribute = "urn:altinn:systemuser:uuid";
+
+            /// <summary>
+            /// AccessPackage Attribute match identifier
+            /// </summary>
+            public const string AccessListAttribute = "urn:altinn:access-list";
         }
 
         /// <summary>

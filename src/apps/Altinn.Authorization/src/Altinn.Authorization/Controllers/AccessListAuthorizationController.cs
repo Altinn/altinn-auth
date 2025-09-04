@@ -1,16 +1,9 @@
-using System.Linq;
 using System.Net.Mime;
-using System.Threading;
-using System.Threading.Tasks;
-using Altinn.Authorization.Errors;
-using Altinn.Authorization.Models.ResourceRegistry;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Services.Interface;
-using AltinnCore.Authentication.Constants;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Altinn.Platform.Authorization.Controllers;
