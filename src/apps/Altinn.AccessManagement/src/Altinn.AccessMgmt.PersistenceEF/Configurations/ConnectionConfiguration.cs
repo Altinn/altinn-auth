@@ -9,7 +9,7 @@ public class ConnectionConfiguration : IEntityTypeConfiguration<Connection>
 {
     public void Configure(EntityTypeBuilder<Connection> builder)
     {
-        builder.ToView("relation", "dbo");
+        builder.ToDefaultView();
         builder.HasKey(x => new { x.FromId, x.ToId, x.RoleId, x.Reason }); //// ? eller blank string ?
 
         builder.PropertyWithReference(navKey: t => t.From, foreignKey: t => t.FromId, principalKey: t => t.Id);

@@ -14,7 +14,6 @@ public class BaseArea : BaseAudit
     /// </summary>
     public Guid Id { get; set; }
 
-
     /// <summary>
     /// Name
     /// </summary>

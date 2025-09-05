@@ -12,7 +12,10 @@ public class ResourceTypeConfiguration : IEntityTypeConfiguration<ResourceType>
     public void Configure(EntityTypeBuilder<ResourceType> builder)
     {
         builder.ToDefaultTable();
+        builder.EnableAudit();
+
         builder.HasKey(p => p.Id);
+
         builder.Property(t => t.Name).IsRequired();
         builder.HasIndex(t => t.Name).IsUnique();
     }

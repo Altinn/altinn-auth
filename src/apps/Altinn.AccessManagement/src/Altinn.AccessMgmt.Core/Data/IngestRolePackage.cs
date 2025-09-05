@@ -1194,8 +1194,6 @@ public partial class StaticDataIngest
             new RolePackage() { RoleId = roles["urn:altinn:role:hovedadministrator"], PackageId = packages["urn:altinn:accesspackage:eksplisitt"], EntityVariantId = null, CanDelegate = true, HasAccess = false },
         };
 
-        db.Database.SetAuditSession(AuditValues);
-
         foreach (var d in data)
         {
             var obj = db.RolePackages.FirstOrDefault(t => t.RoleId == d.RoleId && t.PackageId == d.PackageId && t.EntityVariantId == d.EntityVariantId);
@@ -1214,6 +1212,6 @@ public partial class StaticDataIngest
             }
         }
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(AuditValues, cancellationToken);
     }
 }

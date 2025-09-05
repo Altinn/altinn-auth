@@ -35,8 +35,6 @@ public partial class StaticDataIngest
             new TranslationEntry() { Id = Guid.Parse("554F0321-53B8-4D97-BE12-6A585C507159"), LanguageCode = "nno", Type = nameof(ProviderType), FieldName = "Name", Value = "Særskilt" },
         };
 
-        db.Database.SetAuditSession(AuditValues);
-
         foreach (var d in data)
         {
             var obj = db.AreaGroups.FirstOrDefault(t => t.Id == d.Id);
@@ -59,6 +57,6 @@ public partial class StaticDataIngest
             await translationService.UpsertTranslationAsync(translation);
         }
 
-        var result = await db.SaveChangesAsync();
+        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
     }
 }

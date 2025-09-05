@@ -1,4 +1,5 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Contexts;
+﻿using Altinn.AccessMgmt.Core.Utils;
+using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.Extensions.Configuration;
@@ -13,7 +14,7 @@ namespace Altinn.AccessMgmt.Core.Data;
 /// <param name="configuration">Configuration</param>
 public partial class StaticDataIngest(AppDbContext db, ITranslationService translationService, IConfiguration configuration)
 {
-    public AuditValues AuditValues { get; set; } = new AuditValues(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid().ToString());
+    public AuditValues AuditValues { get; set; } = new AuditValues(AuditDefaults.StaticDataIngest, AuditDefaults.StaticDataIngest, Guid.NewGuid().ToString());
 
     public async Task IngestAll(CancellationToken cancellationToken = default)
     {
@@ -23,8 +24,11 @@ public partial class StaticDataIngest(AppDbContext db, ITranslationService trans
         await IngestEntityVariant(cancellationToken);
         await IngestSystemEntity(cancellationToken);
         await IngestAreaGroup(cancellationToken);
+        await IngestArea(cancellationToken);
         await IngestRole(cancellationToken);
         await IngestRoleLookup(cancellationToken);
+        await IngestRoleMap(cancellationToken);
+        await IngestPackage(cancellationToken);
         await IngestRolePackage(cancellationToken);
         await IngestEntityVariantRole(cancellationToken);
     }

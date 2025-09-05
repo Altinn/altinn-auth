@@ -234,8 +234,6 @@ public partial class StaticDataIngest
             new RoleLookup() { RoleId = roles.First(t => t.Code == "SENS").Id, Key = "LegacyCode", Value = "SENS" }
         };
 
-        db.Database.SetAuditSession(AuditValues);
-
         foreach (var d in data)
         {
             var obj = db.RoleLookups.FirstOrDefault(t => t.RoleId == d.RoleId && t.Key == d.Key);
@@ -252,6 +250,6 @@ public partial class StaticDataIngest
             }
         }
 
-        var result = await db.SaveChangesAsync();
+        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
     }
 }

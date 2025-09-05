@@ -58,9 +58,8 @@ public class PartyService(AppDbContext dbContext, AuditValues auditValues) : IPa
                 RefId = party.PartyUuid.ToString()
             };
 
-            dbContext.Database.SetAuditSession(auditValues);
             dbContext.Entities.Add(entity);
-            var res = await dbContext.SaveChangesAsync(cancellationToken);
+            var res = await dbContext.SaveChangesAsync(auditValues, cancellationToken);
 
             if (res > 0)
             {

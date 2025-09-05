@@ -23,8 +23,6 @@ public partial class StaticDataIngest
             new Provider() { Id = Guid.Parse("0195ea92-2080-758b-89db-7735c4f68320"), Name = "Enhetsregisteret", Code = "sys-ccr", TypeId = type.Id, RefId = string.Empty }
         };
 
-        db.Database.SetAuditSession(AuditValues);
-
         foreach (var d in data)
         {
             // Verify: Compare on Id or Code?
@@ -39,6 +37,6 @@ public partial class StaticDataIngest
             }
         }
         
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(AuditValues, cancellationToken);
     }
 }

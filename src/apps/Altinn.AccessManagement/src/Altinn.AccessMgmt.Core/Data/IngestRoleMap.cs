@@ -491,6 +491,6 @@ public partial class StaticDataIngest
             }
         }
 
-        await db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesAsync(AuditValues, cancellationToken);
     }
 }

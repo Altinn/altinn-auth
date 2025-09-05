@@ -22,15 +22,15 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 schema: "dbo_history",
                 columns: table => new
                 {
+                    audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_deletedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_deletedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_deleteoperation = table.Column<string>(type: "text", nullable: true),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
-                    audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     name = table.Column<string>(type: "text", nullable: true),
                     description = table.Column<string>(type: "text", nullable: true),
                     iconurl = table.Column<string>(type: "text", nullable: true),
@@ -39,7 +39,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditarea", x => x.id);
+                    table.PrimaryKey("pk_auditarea", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -49,7 +49,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -63,7 +63,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditareagroup", x => x.id);
+                    table.PrimaryKey("pk_auditareagroup", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -73,7 +73,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -86,7 +86,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditassignment", x => x.id);
+                    table.PrimaryKey("pk_auditassignment", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -96,7 +96,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -108,7 +108,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditassignmentpackage", x => x.id);
+                    table.PrimaryKey("pk_auditassignmentpackage", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -118,7 +118,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -130,7 +130,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditassignmentresource", x => x.id);
+                    table.PrimaryKey("pk_auditassignmentresource", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -140,7 +140,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -153,7 +153,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditdelegation", x => x.id);
+                    table.PrimaryKey("pk_auditdelegation", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -163,7 +163,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -177,7 +177,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditdelegationpackage", x => x.id);
+                    table.PrimaryKey("pk_auditdelegationpackage", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -187,7 +187,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -199,7 +199,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditdelegationresource", x => x.id);
+                    table.PrimaryKey("pk_auditdelegationresource", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -209,7 +209,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -224,7 +224,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditentity", x => x.id);
+                    table.PrimaryKey("pk_auditentity", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -234,7 +234,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -248,7 +248,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditentitylookup", x => x.id);
+                    table.PrimaryKey("pk_auditentitylookup", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -258,7 +258,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -270,7 +270,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditentitytype", x => x.id);
+                    table.PrimaryKey("pk_auditentitytype", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -280,7 +280,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -293,7 +293,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditentityvariant", x => x.id);
+                    table.PrimaryKey("pk_auditentityvariant", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -303,7 +303,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -315,7 +315,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditentityvariantrole", x => x.id);
+                    table.PrimaryKey("pk_auditentityvariantrole", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -325,7 +325,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -344,7 +344,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditpackage", x => x.id);
+                    table.PrimaryKey("pk_auditpackage", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -354,7 +354,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -366,7 +366,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditpackageresource", x => x.id);
+                    table.PrimaryKey("pk_auditpackageresource", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -376,7 +376,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -391,7 +391,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditprovider", x => x.id);
+                    table.PrimaryKey("pk_auditprovider", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -401,7 +401,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -412,7 +412,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditprovidertype", x => x.id);
+                    table.PrimaryKey("pk_auditprovidertype", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -422,7 +422,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -437,7 +437,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditresource", x => x.id);
+                    table.PrimaryKey("pk_auditresource", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -447,7 +447,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -458,7 +458,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditresourcetype", x => x.id);
+                    table.PrimaryKey("pk_auditresourcetype", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -468,7 +468,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -486,7 +486,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditrole", x => x.id);
+                    table.PrimaryKey("pk_auditrole", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -496,7 +496,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -509,7 +509,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditrolelookup", x => x.id);
+                    table.PrimaryKey("pk_auditrolelookup", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -519,7 +519,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -531,7 +531,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditrolemap", x => x.id);
+                    table.PrimaryKey("pk_auditrolemap", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -541,7 +541,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -557,7 +557,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditrolepackage", x => x.id);
+                    table.PrimaryKey("pk_auditrolepackage", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -567,7 +567,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    audit_validto = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     audit_changedby = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
@@ -579,7 +579,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_auditroleresource", x => x.id);
+                    table.PrimaryKey("pk_auditroleresource", x => new { x.id, x.audit_validfrom, x.audit_validto });
                 });
 
             migrationBuilder.CreateTable(
@@ -601,6 +601,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
             migrationBuilder.CreateTable(
                 name: "resourcetype",
+                schema: "dbo",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -608,7 +609,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    name = table.Column<string>(type: "text", nullable: true)
+                    name = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -713,6 +714,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     table.ForeignKey(
                         name: "fk_resource_resourcetype_typeid",
                         column: x => x.typeid,
+                        principalSchema: "dbo",
                         principalTable: "resourcetype",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -1771,6 +1773,13 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 column: "typeid");
 
             migrationBuilder.CreateIndex(
+                name: "ix_resourcetype_name",
+                schema: "dbo",
+                table: "resourcetype",
+                column: "name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "ix_role_entitytypeid",
                 schema: "dbo",
                 table: "role",
@@ -1855,12 +1864,11 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 column: "roleid");
 
             migrationBuilder.CreateIndex(
-                name: "ix_rolepackage_roleid_packageid",
+                name: "ix_rolepackage_roleid_packageid_entityvariantid",
                 schema: "dbo",
                 table: "rolepackage",
-                columns: new[] { "roleid", "packageid" },
-                unique: true)
-                .Annotation("Npgsql:IndexInclude", new[] { "entityvariantid" });
+                columns: new[] { "roleid", "packageid", "entityvariantid" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_roleresource_resourceid",
@@ -2053,7 +2061,8 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 schema: "dbo");
 
             migrationBuilder.DropTable(
-                name: "resourcetype");
+                name: "resourcetype",
+                schema: "dbo");
 
             migrationBuilder.DropTable(
                 name: "entity",

@@ -59,6 +59,17 @@ public static class BuilderExtensions
     }
 
     /// <summary>
+    /// Configure view to use default schema <see cref="BaseConfiguration.BaseSchema"/> and name of <typeparamref name="TEntity"/>
+    /// </summary>
+    public static EntityTypeBuilder<TEntity> ToDefaultView<TEntity>(this EntityTypeBuilder<TEntity> builder)
+        where TEntity : class
+    {
+        builder.ToView(typeof(TEntity).Name.ToLower(), BaseConfiguration.BaseSchema);
+
+        return builder;
+    }
+
+    /// <summary>
     /// Configure table to use default schema <see cref="BaseConfiguration.BaseSchema"/> and name of <typeparamref name="TEntity"/>
     /// </summary>
     public static EntityTypeBuilder<TEntity> ToDefaultAuditTable<TEntity>(this EntityTypeBuilder<TEntity> builder)

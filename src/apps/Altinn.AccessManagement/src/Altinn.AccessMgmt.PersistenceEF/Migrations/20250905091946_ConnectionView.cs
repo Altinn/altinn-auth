@@ -5,7 +5,7 @@
 namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 {
     /// <inheritdoc />
-    public partial class Connections : Migration
+    public partial class ConnectionView : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -90,7 +90,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql("DROP VIEW dbo.connection");
+            migrationBuilder.Sql("DROP VIEW dbo.connection;");
         }
     }
 }

@@ -89,12 +89,7 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
 
         sb.AppendLine($"CREATE OR REPLACE FUNCTION {schema}.audit_{name}_insert_fn()"); // Option if generic is problamatic
         sb.AppendLine("RETURNS TRIGGER AS $$");
-        // sb.AppendLine("DECLARE ctx RECORD;");
         sb.AppendLine("BEGIN");
-        // sb.AppendLine("SELECT * INTO ctx FROM session_audit_context LIMIT 1;");
-        // sb.AppendLine("NEW.audit_changedby := ctx.changed_by;");
-        // sb.AppendLine("NEW.audit_changedbysystem := ctx.changed_by_system;");
-        // sb.AppendLine("NEW.audit_changeoperation := ctx.change_operation_id;");
         sb.AppendLine("NEW.audit_validfrom := now();");
         sb.AppendLine("RETURN NEW;");
         sb.AppendLine("END;");
@@ -109,8 +104,7 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
     }
 
     private string GenerateAuditUpdateFunctionAndTrigger(string schema, string name, List<string> columns)
-    {
-        
+    {        
         var sb = new StringBuilder();
 
         sb.AppendLine($"CREATE OR REPLACE FUNCTION {schema}.audit_{name}_update_fn()");

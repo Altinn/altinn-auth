@@ -176,8 +176,6 @@ public partial class StaticDataIngest
             new TranslationEntryList() { Id = Guid.Parse("CBE2834D-3DB0-4A14-BAA2-D32DE004D6D7"), Type = nameof(EntityVariant), LanguageCode = "nno", Translations = { { "Name", "Standard" } , { "Description" , "Standard intern entitet" } } },
         };
 
-        db.Database.SetAuditSession(AuditValues);
-
         foreach (var d in data)
         {
             var obj = db.EntityVariants.FirstOrDefault(t => t.Id == d.Id);
@@ -196,6 +194,6 @@ public partial class StaticDataIngest
             await translationService.UpsertTranslationAsync(translation);
         }
 
-        var result = await db.SaveChangesAsync();
+        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
     }
 }

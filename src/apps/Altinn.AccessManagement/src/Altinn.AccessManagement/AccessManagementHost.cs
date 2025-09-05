@@ -131,9 +131,9 @@ internal static partial class AccessManagementHost
 
         //// builder.Services.AddScoped<IAuditContextProvider, HttpContextAuditContextProvider>();
         //// builder.Services.AddScoped<AuditConnectionInterceptor>();
+
         builder.Services.AddScoped<ReadOnlyInterceptor>();
-
-
+        builder.Services.AddScoped<IAuditContextAccessor, AuditContextAccessor>();
 
         return builder;
     }

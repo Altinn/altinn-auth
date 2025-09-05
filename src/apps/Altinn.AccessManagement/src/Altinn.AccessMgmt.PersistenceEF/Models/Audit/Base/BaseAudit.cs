@@ -1,4 +1,6 @@
-﻿namespace Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
+﻿using Altinn.AccessMgmt.PersistenceEF.Extensions;
+
+namespace Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
 
 public class BaseAudit
 {
@@ -8,7 +10,15 @@ public class BaseAudit
 
     public string Audit_ChangeOperation { get; set; } = Guid.NewGuid().ToString();
 
-    public DateTimeOffset Audit_ValidFrom { get; set; } = DateTimeOffset.Now;
+    public DateTimeOffset Audit_ValidFrom { get; set; } = DateTimeOffset.UtcNow;
+
+    public void SetAuditValues(AuditValues values)
+    {
+        Audit_ChangedBy = values.ChangedBy;
+        Audit_ChangedBySystem = values.ChangedBySystem;
+        Audit_ChangeOperation = values.OperationId;
+        Audit_ValidFrom = DateTimeOffset.UtcNow;
+    }
 
     public void SetAuditValues(Guid changedBy, Guid changedBySystem)
     {

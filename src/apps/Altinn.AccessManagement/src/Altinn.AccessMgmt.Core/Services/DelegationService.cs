@@ -1,5 +1,6 @@
 ﻿using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
@@ -9,8 +10,10 @@ using Microsoft.Extensions.Options;
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc/>
-public class DelegationService(AppDbContext db, AuditValues auditValues, IAssignmentService assignmentService, IRoleService roleService, IPackageService packageService, IResourceService resourceService, IEntityService entityService) : IDelegationService 
+public class DelegationService(AppDbContext db, IAssignmentService assignmentService, IRoleService roleService, IPackageService packageService, IResourceService resourceService, IEntityService entityService) : IDelegationService 
 {
+    public AuditValues AuditValues { get; set; } = new AuditValues(AuditDefaults.InternalApi, AuditDefaults.InternalApi, Guid.NewGuid().ToString());
+
     private async Task<bool> CheckIfEntityHasRole(string roleCode, Guid fromId, Guid toId, CancellationToken cancellationToken)
     {
         var assignment = await assignmentService.GetAssignment(fromId, toId, roleCode, cancellationToken);
@@ -42,8 +45,7 @@ public class DelegationService(AppDbContext db, AuditValues auditValues, IAssign
         };
 
         await db.Delegations.AddAsync(delegation, cancellationToken);
-        db.Database.SetAuditSession(auditValues);
-        var result = await db.SaveChangesAsync(cancellationToken);
+        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
 
         if (result == 0)
         {
@@ -90,8 +92,8 @@ public class DelegationService(AppDbContext db, AuditValues auditValues, IAssign
             DelegationId = delegationId,
             PackageId = packageId
         });
-        db.Database.SetAuditSession(auditValues);
-        var result = await db.SaveChangesAsync(cancellationToken);
+
+        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
 
         return result > 0;
     }
@@ -135,7 +137,6 @@ public class DelegationService(AppDbContext db, AuditValues auditValues, IAssign
             throw new Exception($"The source assignment does not have the resource '{resource.Name}'");
         }
 
-        db.Database.SetAuditSession(auditValues);
         await db.DelegationResources.AddAsync(
             new DelegationResource()
             {
@@ -144,7 +145,7 @@ public class DelegationService(AppDbContext db, AuditValues auditValues, IAssign
             }, 
             cancellationToken
         );
-        var result = await db.SaveChangesAsync();
+        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
         
         return result > 0;
     }
@@ -153,7 +154,7 @@ public class DelegationService(AppDbContext db, AuditValues auditValues, IAssign
     public async Task<IEnumerable<Delegation>> CreateClientDelegation(CreateSystemDelegationRequestDto request, Guid facilitatorPartyId, CancellationToken cancellationToken)
     {
         // Find User
-        var user = await entityService.GetEntity(auditValues.ChangedBy, cancellationToken) ?? throw new Exception(string.Format("Party not found '{0}' for user", auditValues.ChangedBy));
+        var user = await entityService.GetEntity(AuditValues.ChangedBy, cancellationToken) ?? throw new Exception(string.Format("Party not found '{0}' for user", AuditValues.ChangedBy));
 
         // Find Facilitator
         var facilitator = await entityService.GetEntity(facilitatorPartyId, cancellationToken) ?? throw new Exception(string.Format("Party not found '{0}' for facilitator", facilitatorPartyId));
@@ -262,7 +263,6 @@ public class DelegationService(AppDbContext db, AuditValues auditValues, IAssign
 
         if (delegationPackage == null)
         {
-            db.Database.SetAuditSession(auditValues);
             await db.DelegationPackages.AddAsync(
                 new DelegationPackage()
                 {
@@ -273,7 +273,7 @@ public class DelegationService(AppDbContext db, AuditValues auditValues, IAssign
                 },
                 cancellationToken
             );
-            var result = await db.SaveChangesAsync();
+            var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
 
             return await db.DelegationPackages
             .AsNoTracking()
@@ -297,7 +297,6 @@ public class DelegationService(AppDbContext db, AuditValues auditValues, IAssign
 
         if (delegation == null)
         {
-            db.Database.SetAuditSession(auditValues);
             await db.Delegations.AddAsync(
                 new Delegation()
                 {
@@ -307,7 +306,7 @@ public class DelegationService(AppDbContext db, AuditValues auditValues, IAssign
                 },
                 cancellationToken
             );
-            var result = await db.SaveChangesAsync();
+            var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
 
             return await db.Delegations
             .AsNoTracking()

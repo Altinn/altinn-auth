@@ -13,10 +13,12 @@ using Microsoft.EntityFrameworkCore;
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc/>
-public class AssignmentService(AppDbContext db, AuditValues auditValues) : IAssignmentService
+public class AssignmentService(AppDbContext db) : IAssignmentService
 {
     private static readonly string RETTIGHETSHAVER = "rettighetshaver";
     private static readonly Guid PartyTypeOrganizationUuid = new Guid("8c216e2f-afdd-4234-9ba2-691c727bb33d");
+
+    public AuditValues AuditValues { get; set; } = new AuditValues(AuditDefaults.InternalApi, AuditDefaults.InternalApi, Guid.NewGuid().ToString());
 
     /// <inheritdoc/>
     public async Task<IEnumerable<ClientDto>> GetClients(Guid toId, string[] roles, string[] packages, CancellationToken cancellationToken = default)
@@ -207,7 +209,6 @@ public class AssignmentService(AppDbContext db, AuditValues auditValues) : IAssi
             throw new Exception(string.Format("User '{0}' does not have package '{1}'", user.Name, package.Name));
         }
 
-        db.Database.SetAuditSession(auditValues);
         await db.AssignmentPackages.AddAsync(
             new AssignmentPackage()
             {
@@ -217,7 +218,7 @@ public class AssignmentService(AppDbContext db, AuditValues auditValues) : IAssi
             cancellationToken
             );
         
-        var result = await db.SaveChangesAsync();
+        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
         if (result == 0)
         {
             return false;
@@ -289,8 +290,7 @@ public class AssignmentService(AppDbContext db, AuditValues auditValues) : IAssi
 
         var assignment = await db.Assignments.SingleAsync(t => t.Id == existingAssignment.Id, cancellationToken);
         db.Assignments.Remove(assignment);
-        db.Database.SetAuditSession(auditValues);
-        var result = await db.SaveChangesAsync();
+        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
 
         if (result == 0)
         {
@@ -337,9 +337,8 @@ public class AssignmentService(AppDbContext db, AuditValues auditValues) : IAssi
             RoleId = roleId,
         };
 
-        db.Database.SetAuditSession(auditValues);
         await db.Assignments.AddAsync(assignment, cancellationToken);
-        var result = await db.SaveChangesAsync();
+        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
 
         if (result == 0)
         {
@@ -396,9 +395,8 @@ public class AssignmentService(AppDbContext db, AuditValues auditValues) : IAssi
             RoleId = role.Id
         };
 
-        db.Database.SetAuditSession(auditValues);
         await db.Assignments.AddAsync(assignment, cancellationToken);
-        var result = await db.SaveChangesAsync();
+        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
         
         if (result == 0)
         {

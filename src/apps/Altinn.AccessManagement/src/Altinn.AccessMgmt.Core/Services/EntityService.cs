@@ -1,4 +1,5 @@
 ﻿using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
@@ -6,8 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
-public class EntityService(AppDbContext db, AuditValues auditValues) : IEntityService
+public class EntityService(AppDbContext db) : IEntityService
 {
+    public AuditValues AuditValues { get; set; } = new AuditValues(AuditDefaults.InternalApi, AuditDefaults.InternalApi, Guid.NewGuid().ToString());
+
     public async ValueTask<Entity> GetEntity(Guid id, CancellationToken cancellationToken = default)
     {
         return await db.Entities.AsNoTracking().SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
@@ -15,9 +18,8 @@ public class EntityService(AppDbContext db, AuditValues auditValues) : IEntitySe
 
     public async Task<bool> CreateEntity(Entity entity, CancellationToken cancellationToken = default)
     {
-        db.Database.SetAuditSession(auditValues);
         db.Entities.Add(entity);
-        var result = await db.SaveChangesAsync();
+        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
         return result > 0;
     }
 

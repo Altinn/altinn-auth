@@ -49,9 +49,8 @@ public class BaseRepository<TBasic, TExtended, TAudit>(AppDbContext basicDb)
 
     public virtual async Task Create(TBasic obj, AuditValues audit)
     {
-        basicDb.Database.SetAuditSession(audit);
         await basicDb.AddAsync(obj);
-        await basicDb.SaveChangesAsync();
+        await basicDb.SaveChangesAsync(audit);
     }
 
     public virtual async Task Update(TBasic obj)

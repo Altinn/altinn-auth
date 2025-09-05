@@ -2,6 +2,7 @@
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models.Audit;
+using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +11,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Contexts;
 /// <inheritdoc />
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+    public AppDbContext(DbContextOptions<AppDbContext> options, IAuditContextAccessor auditContext) : base(options) 
+    { 
+        _auditAccessor = auditContext;
+    }
+
+    private readonly IAuditContextAccessor _auditAccessor;
 
     public DbSet<Connection> Connections => Set<Connection>();
 
@@ -164,7 +170,7 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration<AuditRolePackage>(new AuditRolePackageConfiguration());
         modelBuilder.ApplyConfiguration<AuditRoleResource>(new AuditRoleResourceConfiguration());
     }
-
+    
     private void ApplyConfiguration(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration<TranslationEntry>(new TranslationEntryConfiguration());
@@ -186,6 +192,7 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration<PackageResource>(new PackageResourceConfiguration());
         modelBuilder.ApplyConfiguration<Provider>(new ProviderConfiguration());
         modelBuilder.ApplyConfiguration<ProviderType>(new ProviderTypeConfiguration());
+        modelBuilder.ApplyConfiguration<ResourceType>(new ResourceTypeConfiguration());
         modelBuilder.ApplyConfiguration<Resource>(new ResourceConfiguration());
         modelBuilder.ApplyConfiguration<Role>(new RoleConfiguration());
         modelBuilder.ApplyConfiguration<RoleLookup>(new RoleLookupConfiguration());
@@ -193,4 +200,94 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration<RolePackage>(new RolePackageConfiguration());
         modelBuilder.ApplyConfiguration<RoleResource>(new RoleResourceConfiguration());
     }
+
+    #region Extensions
+
+    public override Task<int> SaveChangesAsync(CancellationToken ct = default) =>
+        SaveChangesAsync(_auditAccessor.Current ?? throw MissingAudit(), ct);
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken ct = default) =>
+        SaveChangesAsync(_auditAccessor.Current ?? throw MissingAudit(), acceptAllChangesOnSuccess, ct);
+
+    private static InvalidOperationException MissingAudit() =>
+        new("AuditContextAccessor.Current is null. Set it in your controller/service OR call SaveChangesAsync(BaseAudit audit, ...) explicitly.");
+
+    public async Task<int> SaveChangesAsync(AuditValues audit, CancellationToken ct = default) => 
+        await SaveChangesAsync(audit, acceptAllChangesOnSuccess: true, ct);
+
+    public async Task<int> SaveChangesAsync(AuditValues audit, bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        ValidateAuditValues(audit);
+
+        foreach (var entry in ChangeTracker.Entries().Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted))
+        {
+            if (entry.Entity is BaseAudit auditable)
+            {
+                auditable.SetAuditValues(audit);
+            }
+        }
+
+        var currentTransaction = Database.CurrentTransaction is not null;
+        using var transaction = currentTransaction ? null : await Database.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            await Database.ExecuteSqlInterpolatedAsync(AuditContextSql(audit), cancellationToken);
+            var affected = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+
+            if (transaction is not null)
+            {
+                await transaction.CommitAsync(cancellationToken);
+            }
+
+            return affected;
+        }
+        catch
+        {
+            if (transaction is not null)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+            }
+
+            throw;
+        }
+    }
+
+    private void ValidateAuditValues(AuditValues audit)
+    {
+        if (audit == null || audit.ChangedBy == Guid.Empty || audit.ChangedBySystem == Guid.Empty || string.IsNullOrWhiteSpace(audit.OperationId))
+        {
+            throw new InvalidOperationException("Audit fields are required.");
+        }
+    }
+
+    private static FormattableString AuditContextSql(AuditValues a) => $"""
+    -- SET LOCAL expects text
+    SET LOCAL app.changed_by = '{a.ChangedBy.ToString()}';
+    SET LOCAL app.changed_by_system = '{a.ChangedBySystem.ToString()}';
+    SET LOCAL app.change_operation_id = '{a.OperationId}';
+
+    -- Temp table to carry values through ON DELETE CASCADE
+    CREATE TEMP TABLE IF NOT EXISTS session_audit_context(
+        changed_by uuid,
+        changed_by_system uuid,
+        change_operation_id text
+    ) ON COMMIT DROP;
+
+    TRUNCATE session_audit_context;
+
+    INSERT INTO session_audit_context (changed_by, changed_by_system, change_operation_id)
+    VALUES ({a.ChangedBy}, {a.ChangedBySystem}, {a.OperationId});
+    """;
+    #endregion
+}
+
+public interface IAuditContextAccessor
+{
+    AuditValues? Current { get; set; }
+}
+
+public sealed class AuditContextAccessor : IAuditContextAccessor
+{
+    public AuditValues? Current { get; set; }
 }

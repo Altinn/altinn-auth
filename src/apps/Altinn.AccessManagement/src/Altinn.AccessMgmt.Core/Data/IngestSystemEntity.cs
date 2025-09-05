@@ -29,8 +29,6 @@ public partial class StaticDataIngest
             new Entity() { Id = AuditDefaults.InternalApiImportSystem, Name = nameof(AuditDefaults.InternalApiImportSystem), RefId = "sys-internal-api-import-system", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
         };
 
-        db.Database.SetAuditSession(AuditValues);
-
         foreach (var d in data)
         {
             var obj = db.Entities.FirstOrDefault(t => t.Id == d.Id);
@@ -44,6 +42,6 @@ public partial class StaticDataIngest
             }
         }
 
-        var result = await db.SaveChangesAsync();
+        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
     }
 }
