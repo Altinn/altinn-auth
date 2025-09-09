@@ -79,6 +79,9 @@ variable "features" {
       user_ids = optional(bool, false),
       profiles = optional(bool, false),
     }), {})
+    party_import = optional(object({
+      system_users = optional(bool, false),
+    }), {})
   })
   default = {}
 }
