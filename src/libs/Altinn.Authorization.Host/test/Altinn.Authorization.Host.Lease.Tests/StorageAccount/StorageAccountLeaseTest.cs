@@ -1,4 +1,7 @@
+using System.CodeDom.Compiler;
+using System.Diagnostics.Metrics;
 using Altinn.Authorization.Host.Lease.StorageAccount;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.Authorization.Host.Lease.Tests
@@ -51,5 +54,28 @@ namespace Altinn.Authorization.Host.Lease.Tests
         {
             await TestThreadAquireExplosion(numThreads);
         }
+
+        [Fact(Skip = "Need a valid storage account")]
+        public async Task TestLeaseAutoRefresh()
+        {
+            await using var lease = await Lease.TryAcquireNonBlocking("lease_test");
+
+            for (var i = 0; i < 100; i++)
+            {
+                await lease.Update(new LeaseData()
+                {
+                    Counter = i,
+                });
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(90), CancellationToken.None);
+            var result = await lease.Get<LeaseData>(default);
+            Assert.Equal(99, result.Counter);
+        }
+    }
+
+    public class LeaseData
+    {
+        public int Counter { get; set; }
     }
 }

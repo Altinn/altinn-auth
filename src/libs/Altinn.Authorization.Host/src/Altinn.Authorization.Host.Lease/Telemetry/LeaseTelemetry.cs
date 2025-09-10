@@ -58,7 +58,7 @@ internal static partial class LeaseTelemetry
         }
         catch (RequestFailedException ex)
         {
-            if (ex.ErrorCode.Equals(BlobErrorCode.LeaseAlreadyPresent))
+            if (ex.ErrorCode == BlobErrorCode.LeaseAlreadyPresent)
             {
                 status = StatusLeasePresent;
                 LeasePresent(logger, activity, lease);
