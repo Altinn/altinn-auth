@@ -7,19 +7,19 @@
   "private": true,
   "devDependencies": {
     "@actions/core": "^1.11.1",
-    "@octokit/action": "^8.0.0",
-    "@types/node": "^22.0.0",
-    "chalk": "^5.3.0",
-    "globby": "^14.0.2",
+    "@octokit/action": "^8.0.2",
+    "@types/node": "^22.18.1",
+    "chalk": "^5.6.2",
+    "globby": "^14.1.0",
     "slugify": "^1.6.6",
-    "tsx": "^4.19.1",
-    "typescript": "^5.6.3",
-    "ws": "^8.18.0",
-    "yaml": "^2.7.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "ws": "^8.18.3",
+    "yaml": "^2.8.1",
     "yargs": "^18.0.0",
-    "zod": "^4.0.0",
-    "zod-validation-error": "^3.4.0",
-    "zx": "^8.1.9"
+    "zod": "^4.1.5",
+    "zod-validation-error": "^3.5.3",
+    "zx": "^8.8.1"
   },
   "packageManager": "pnpm@9.15.9+sha512.68046141893c66fad01c079231128e9afb89ef87e2691d69e4d40eee228988295fd4682181bae55b58418c3a253bde65a505ec7c5f9403ece5cc3cd37dcf2531"
 }
