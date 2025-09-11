@@ -25,6 +25,8 @@ on:
 permissions:
   contents: read
   packages: write
+  pull-requests: write
+  id-token: write
 
 jobs:
   build-push:
