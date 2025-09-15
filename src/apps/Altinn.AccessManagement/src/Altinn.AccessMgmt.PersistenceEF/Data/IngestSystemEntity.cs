@@ -1,11 +1,8 @@
-﻿using Altinn.AccessMgmt.Core.Utils;
-using Altinn.AccessMgmt.Core.Utils.Models;
-using Altinn.AccessMgmt.PersistenceEF.Extensions;
-using Altinn.AccessMgmt.PersistenceEF.Models;
+﻿using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.EntityFrameworkCore;
 
-namespace Altinn.AccessMgmt.Core.Data;
+namespace Altinn.AccessMgmt.PersistenceEF.Data;
 
 public partial class StaticDataIngest
 {

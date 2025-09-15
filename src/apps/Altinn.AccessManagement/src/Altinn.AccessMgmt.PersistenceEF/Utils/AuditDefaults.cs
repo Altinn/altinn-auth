@@ -1,4 +1,4 @@
-﻿namespace Altinn.AccessMgmt.Core.Utils;
+﻿namespace Altinn.AccessMgmt.PersistenceEF.Utils;
 
 /// <summary>
 /// Default values for Audit system entities
