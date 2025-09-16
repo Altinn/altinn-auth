@@ -1,0 +1,36 @@
+{
+  "Request": {
+    "ReturnPolicyIdList": true,
+    "AccessSubject": [
+      {
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:party:uuid",
+            "Value": "b70b6862-870b-4e64-9f96-921f2b778ee1"
+          }
+        ]
+      }
+    ],
+    "Action": [
+      {
+        "Attribute": [
+          {
+            "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+            "Value": "requestconsent",
+            "DataType": "http://www.w3.org/2001/XMLSchema#string"
+          }
+        ]
+      }
+    ],
+    "Resource": [
+      {
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:resource",
+            "Value": "samtykkeressurs-med-tilgangsliste"
+          }
+        ]
+      }
+    ]
+  }
+}

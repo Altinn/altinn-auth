@@ -275,6 +275,22 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         }
 
         [Fact]
+        public async Task PDP_Decision_ResourceRegistry_RequestConsent_ValidAccessList_Ver2()
+        {
+            string testCase = "AltinnResourceRegistry_RequestConsent_ValidAccessList_Ver2";
+            HttpClient client = GetTestClient();
+
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        [Fact]
         public async Task PDP_Decision_ResourceRegistry_RequestConsent_InValidAccessList()
         {
             string testCase = "AltinnResourceRegistry_RequestConsent_InValidAccessList";

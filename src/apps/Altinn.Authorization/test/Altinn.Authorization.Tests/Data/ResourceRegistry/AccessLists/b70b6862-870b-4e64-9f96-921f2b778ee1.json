@@ -1,0 +1,10 @@
+[
+  {
+    "urn": "urn:altinn:access-list:ttd:martins-restriktive-liste",
+    "identifier": "martins-restriktive-liste",
+    "name": "martins restriktive liste",
+    "description": "Kun 313375048 kan bruke denne",
+    "createdAt": "2024-12-10T11:53:47.214155+00:00",
+    "updatedAt": "2024-12-10T11:56:59.295146+00:00"
+  }
+]

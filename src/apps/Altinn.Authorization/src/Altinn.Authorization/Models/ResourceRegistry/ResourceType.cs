@@ -30,4 +30,9 @@ public enum ResourceType
 
     [PgName("correspondenceservice")]
     CorrespondenceService = 1 << 6,
+
+    [PgName("consent")]
+    Consent = 1 << 7,
+
+    All = ~Default
 }
