@@ -18,6 +18,8 @@ help() {
     echo "  -p, --parallelism    Specify the level of parallelism"
     echo "  -b, --breakpoint     Flag to set breakpoint test or not"
     echo "  -a, --abort          Flag to specify whether to abort on fail or not, only used in breakpoint tests"
+    echo "  -i, --include-altinn2  Flag to include Altinn 2 in the test (default: true)"
+    echo "  -r, --randomize      Flag to randomize user input data (default: true)"
     echo "  -h, --help           Show this help message"
     exit 0
 }
@@ -50,6 +52,8 @@ print_logs() {
 
 breakpoint=false
 abort_on_fail=false
+include_altinn2=true
+randomize=true
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -86,6 +90,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         -a|--abort)
             abort_on_fail="$2"
+            shift 2
+            ;;
+        -i|--include-altinn2)
+            include_altinn2="$2"
+            shift 2
+            ;;
+        -r|--randomize)
+            randomize="$2"
             shift 2
             ;;
         *)
@@ -126,22 +138,26 @@ if ! k6 archive $filename \
      -e API_ENVIRONMENT="$API_ENVIRONMENT" \
      -e NUMBER_OF_ENDUSERS="$NUMBER_OF_ENDUSERS" \
      -e TESTID=$testid $archive_args \
+     -e INCLUDE_ALTINN2=$include_altinn2 \
+     -e RANDOMIZE=$randomize \
      --tag namespace=$namespace; then
     echo "Error: Failed to create k6 archive"
     exit 1
 fi
    
 # Create the configmap from the archive
-if ! kubectl create configmap $configmapname --from-file=archive.tar; then
-    echo "Error: Failed to create configmap"
-    rm archive.tar
-    exit 1
+if ! kubectl get configmap $configmapname &>/dev/null; then
+  if ! kubectl create configmap $configmapname --from-file=archive.tar; then
+      echo "Error: Failed to create configmap"
+      rm archive.tar
+      exit 1
+  fi
 fi
 
 # Create the config.yml file from a string
-arguments="--out experimental-prometheus-rw --vus=$vus --duration=$duration --tag testid=$testid --log-output=none"
+arguments="--out experimental-prometheus-rw --vus=$vus --duration=$duration --tag testid=$testid"
 if $breakpoint; then
-    arguments="--out experimental-prometheus-rw --tag testid=$testid --log-output=none"
+    arguments="--out experimental-prometheus-rw --tag testid=$testid"
 fi
 cat <<EOF > config.yml
 apiVersion: k6.io/v1alpha1

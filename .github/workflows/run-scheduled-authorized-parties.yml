@@ -1,0 +1,60 @@
+name: Test Performance (Weekly)
+
+on:
+  schedule:
+    - cron: '55 8 * * 1'
+  workflow_dispatch:
+  
+
+permissions:
+  id-token: write
+  contents: read
+
+run-name: "Weekly Performance ${{ github.ref_name }} #${{ github.run_number }} ${{ github.sha }}"
+
+jobs:
+  authorizedPartiesForUsers:
+    uses: ./.github/workflows/run-performance.yml
+    secrets: inherit
+    with:
+      apiVersion: v1
+      environment: yt01
+      tag: 'Weekly performance run - authorizedParties for users'
+      vus: 100
+      duration: 10m
+      parallelism: 4
+      breakpoint: true
+      abortOnFail: false
+      testSuitePath: 'src/apps/Altinn.Authorization/test/K6/performance/getAuthorizedPartiesForUser.js'
+
+  authorizedPartiesForOrganizations:
+    needs: authorizedPartiesForUsers
+    if: always()
+    uses: ./.github/workflows/run-performance.yml
+    secrets: inherit
+    with:
+      apiVersion: v1
+      environment: yt01
+      tag: 'Weekly performance run - authorizedParties for organizations'
+      vus: 100
+      duration: 10m
+      parallelism: 4
+      breakpoint: true
+      abortOnFail: false
+      testSuitePath: 'src/apps/Altinn.Authorization/test/K6/performance/getAuthorizedPartiesForOrganization.js'
+
+  authorizedPartiesForSystemUsers:
+    needs: authorizedPartiesForOrganizations
+    if: always()
+    uses: ./.github/workflows/run-performance.yml
+    secrets: inherit
+    with:
+      apiVersion: v1
+      environment: yt01
+      tag: 'Weekly performance run - authorizedParties for systemusers'
+      vus: 100
+      duration: 10m
+      parallelism: 4
+      breakpoint: true
+      abortOnFail: false
+      testSuitePath: 'src/apps/Altinn.Authorization/test/K6/performance/getAuthorizedPartiesForSystemUsers.js'

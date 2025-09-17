@@ -6,7 +6,7 @@ import { expect, describe, randomItem, URL, getPersonalToken, randomIntBetween }
 import { buildOptions, getParams, breakpoint, stages_target, readCsv } from "./commonFunctions.js";
 
 
-const orgsWithPartyUuidFilename = `./testData/orgsInYt01WithPartyUuid.csv`;
+const orgsWithPartyUuidFilename = `./testData/orgsIn-yt01-WithPartyUuid.csv`;
 
 const orgsWithPartyUuid = new SharedArray('orgs2', function () {
   return readCsv(orgsWithPartyUuidFilename);
