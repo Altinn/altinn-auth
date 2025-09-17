@@ -1,0 +1,6 @@
+{
+  "deps": [
+      "pkg:Altinn.Authorization.ABAC"
+    ]
+}  
+

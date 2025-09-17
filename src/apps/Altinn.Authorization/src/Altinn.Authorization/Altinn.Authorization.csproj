@@ -11,7 +11,6 @@
         <PackageReference Include="Altinn.Authorization.ProblemDetails.Abstractions" />
         <PackageReference Include="Altinn.Common.AccessToken" />
         <PackageReference Include="Altinn.Common.AccessTokenClient" />
-        <PackageReference Include="Altinn.Common.PEP" />
         <PackageReference Include="Altinn.Platform.Models" />
         <PackageReference Include="Altinn.Swashbuckle" />
         <PackageReference Include="Altinn.Urn" />
@@ -23,7 +22,6 @@
         <PackageReference Include="Azure.Storage.Blobs" />
         <PackageReference Include="IdentityModel" />
         <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" />
-        <PackageReference Include="Altinn.Authorization.ABAC" />
         <PackageReference Include="Altinn.Platform.Storage.Interface" />
         <PackageReference Include="JWTCookieAuthentication" />
         <PackageReference Include="Microsoft.Azure.Services.AppAuthentication" />
@@ -38,6 +36,11 @@
         <PackageReference Include="Swashbuckle.AspNetCore.Filters" />
         <PackageReference Include="Yuniql.AspNetCore" />
         <PackageReference Include="Yuniql.PostgreSql" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\..\pkgs\Altinn.Authorization.ABAC\src\Altinn.Authorization.ABAC\Altinn.Authorization.ABAC.csproj" />
+      <ProjectReference Include="..\..\..\..\pkgs\Altinn.Authorization.PEP\src\Altinn.Authorization.PEP\Altinn.Authorization.PEP.csproj" />
     </ItemGroup>
 
 </Project>

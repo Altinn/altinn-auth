@@ -14,7 +14,10 @@
         <PackageReference Include="Microsoft.AspNetCore.Routing.Abstractions" />
         <PackageReference Include="Microsoft.AspNetCore.Authorization" />
         <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" />
-        <PackageReference Include="Altinn.Authorization.ABAC" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\Altinn.Authorization.ABAC\src\Altinn.Authorization.ABAC\Altinn.Authorization.ABAC.csproj" />
     </ItemGroup>
 
 </Project>

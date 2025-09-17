@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
-        <PackageReference Include="Altinn.Authorization.ABAC" />
         <PackageReference Include="Altinn.Authorization.ProblemDetails" />
         <PackageReference Include="Altinn.Common.AccessTokenClient" />
         <PackageReference Include="Altinn.Platform.Models" />
@@ -20,6 +19,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Api.Contracts\src\Altinn.Authorization.Api.Contracts\Altinn.Authorization.Api.Contracts.csproj" />
+      <ProjectReference Include="..\..\..\..\pkgs\Altinn.Authorization.ABAC\src\Altinn.Authorization.ABAC\Altinn.Authorization.ABAC.csproj" />
     </ItemGroup>
 
 </Project>

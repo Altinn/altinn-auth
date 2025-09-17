@@ -7,7 +7,9 @@
   },
   "deps": [
     "lib:Altinn.Authorization.Host",
-    "lib:Altinn.Authorization.Integration"
+    "lib:Altinn.Authorization.Integration",
+    "pkg:Altinn.Authorization.ABAC",
+    "pkg:Altinn.Authorization.PEP"
   ],
   "sonarcloud": {
     "projectKey": "Authorization_Authorization"

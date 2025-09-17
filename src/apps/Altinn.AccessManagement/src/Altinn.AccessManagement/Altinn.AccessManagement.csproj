@@ -8,7 +8,6 @@
     <ItemGroup>
         <PackageReference Include="Altinn.Authorization.ProblemDetails" />
         <PackageReference Include="Altinn.Authorization.ServiceDefaults" />
-        <PackageReference Include="Altinn.Authorization.ABAC" />
         <PackageReference Include="Altinn.Common.AccessToken" />
         <PackageReference Include="Altinn.Urn.Swashbuckle" />
         <PackageReference Include="AutoMapper" />
@@ -50,6 +49,7 @@
         <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Host\src\Altinn.Authorization.Host\Altinn.Authorization.Host.csproj" />
         <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Integration\src\Altinn.Authorization.Integration.Platform\Altinn.Authorization.Integration.Platform.csproj" />
         <ProjectReference Include="..\Altinn.AccessMgmt.Persistence\Altinn.AccessMgmt.Persistence.csproj" />
+        <ProjectReference Include="..\..\..\..\pkgs\Altinn.Authorization.ABAC\src\Altinn.Authorization.ABAC\Altinn.Authorization.ABAC.csproj" />
     </ItemGroup>
 
     <ItemGroup>

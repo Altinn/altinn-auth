@@ -7,6 +7,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.PEP", "src\Altinn.Authorization.PEP\Altinn.Authorization.PEP.csproj", "{6AEF891C-76D6-4E04-A4BD-8EF5E0335E71}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pkgs", "pkgs", "{9D04EDA7-9286-9C38-2C42-87A0303CF8B9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Altinn.Authorization.ABAC", "Altinn.Authorization.ABAC", "{3DF2543F-0E0A-CACB-3E58-E620BFB1FC4C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.ABAC", "..\Altinn.Authorization.ABAC\src\Altinn.Authorization.ABAC\Altinn.Authorization.ABAC.csproj", "{A1395A34-CDF7-46CF-BEE9-FF075C11E44D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,11 +35,25 @@ Global
 		{6AEF891C-76D6-4E04-A4BD-8EF5E0335E71}.Release|x64.Build.0 = Release|Any CPU
 		{6AEF891C-76D6-4E04-A4BD-8EF5E0335E71}.Release|x86.ActiveCfg = Release|Any CPU
 		{6AEF891C-76D6-4E04-A4BD-8EF5E0335E71}.Release|x86.Build.0 = Release|Any CPU
+		{A1395A34-CDF7-46CF-BEE9-FF075C11E44D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1395A34-CDF7-46CF-BEE9-FF075C11E44D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1395A34-CDF7-46CF-BEE9-FF075C11E44D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A1395A34-CDF7-46CF-BEE9-FF075C11E44D}.Debug|x64.Build.0 = Debug|Any CPU
+		{A1395A34-CDF7-46CF-BEE9-FF075C11E44D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A1395A34-CDF7-46CF-BEE9-FF075C11E44D}.Debug|x86.Build.0 = Debug|Any CPU
+		{A1395A34-CDF7-46CF-BEE9-FF075C11E44D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1395A34-CDF7-46CF-BEE9-FF075C11E44D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1395A34-CDF7-46CF-BEE9-FF075C11E44D}.Release|x64.ActiveCfg = Release|Any CPU
+		{A1395A34-CDF7-46CF-BEE9-FF075C11E44D}.Release|x64.Build.0 = Release|Any CPU
+		{A1395A34-CDF7-46CF-BEE9-FF075C11E44D}.Release|x86.ActiveCfg = Release|Any CPU
+		{A1395A34-CDF7-46CF-BEE9-FF075C11E44D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{6AEF891C-76D6-4E04-A4BD-8EF5E0335E71} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{3DF2543F-0E0A-CACB-3E58-E620BFB1FC4C} = {9D04EDA7-9286-9C38-2C42-87A0303CF8B9}
+		{A1395A34-CDF7-46CF-BEE9-FF075C11E44D} = {3DF2543F-0E0A-CACB-3E58-E620BFB1FC4C}
 	EndGlobalSection
 EndGlobal
