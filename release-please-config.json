@@ -1,4 +1,6 @@
 {
+  "bootstrap-sha": "1e705b7d3d23204a89de5a38f3411be3198a4170",
+  "separate-pull-requests": true,
   "pull-request-title-pattern": "release${scope}:${component} ${version}",
   "release-type": "simple",
   "packages": {
