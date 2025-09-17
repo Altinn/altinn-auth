@@ -658,8 +658,15 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         {
             XacmlAttribute attribute = new XacmlAttribute(new Uri(XacmlRequestAttribute.PartyTypeAttribute), false);
            
-            attribute.AttributeValues.Add(new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), partyType.ToString().ToLowerInvariant()));
-           
+            if (partyType == PartyType.Organisation)
+            {
+                attribute.AttributeValues.Add(new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), XacmlRequestAttribute.PartyTypeOrganizationValue));
+            }
+            else if (partyType == PartyType.Person)
+            {
+                attribute.AttributeValues.Add(new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), XacmlRequestAttribute.PartyTypePersonValue));
+            }
+
             return attribute;
         }
 
