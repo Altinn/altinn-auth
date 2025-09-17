@@ -2,7 +2,7 @@ name: Test Performance (Weekly)
 
 on:
   schedule:
-    - cron: '55 8 * * 1'
+    - cron: '55 10 * * 3'
   workflow_dispatch:
   
 
