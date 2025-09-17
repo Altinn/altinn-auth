@@ -498,24 +498,41 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             }
 
             // Enrich with party type if rule defines that and request only contains resource id. This is special handling for consent. Before opening more widely this needs more consideration.
-            if (policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyTypeAttribute) && subjectPartyUuid != Guid.Empty
+            if (policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyTypeAttribute)
                 && resourceAttr.InstanceValue == null && resourceAttr.ResourceInstanceValue == null && resourceAttr.AppValue == null && !string.IsNullOrEmpty(resourceAttr.ResourceRegistryId)
                 && string.IsNullOrEmpty(resourceAttr.ResourcePartyValue))
             {
-                List<Party> partyList = await _registerService.GetPartiesAsync([subjectPartyUuid], false, cancellationToken);
-                subjectContextAttributes.Attributes.Add(GetPartyTypeAttribute(partyList[0].PartyTypeName));
+                if (subjectPartyUuid == Guid.Empty && !string.IsNullOrEmpty(subjectOrgnNo))
+                {
+                    Party party = await _registerService.PartyLookup(subjectOrgnNo, null);
+                    subjectContextAttributes.Attributes.Add(GetPartyTypeAttribute(party.PartyTypeName));
+                }
+                else if (subjectPartyUuid != Guid.Empty)
+                {
+                    List<Party> partyList = await _registerService.GetPartiesAsync([subjectPartyUuid], false, cancellationToken);
+                    subjectContextAttributes.Attributes.Add(GetPartyTypeAttribute(partyList[0].PartyTypeName));
+                }
             }
 
             // Enrich with access lists if rule defines that and request only contains resource id. Before opening more widely this needs more consideration.
-            if (policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.AccessListAttribute) && subjectPartyUuid != Guid.Empty
+            if (policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.AccessListAttribute)
                 && resourceAttr.InstanceValue == null && resourceAttr.ResourceInstanceValue == null && resourceAttr.AppValue == null && !string.IsNullOrEmpty(resourceAttr.ResourceRegistryId)
                 && string.IsNullOrEmpty(resourceAttr.ResourcePartyValue))
             {
-                PartyUrn.PartyUuid partyUrn = PartyUrn.PartyUuid.Create(subjectPartyUuid);
-                IEnumerable<AccessListInfoDto> memberShip = await _resourceRegistry.GetMembershipsForParty(partyUrn, cancellationToken);
-                if (memberShip != null && memberShip.Count() > 0)
+                if (subjectPartyUuid == Guid.Empty && !string.IsNullOrEmpty(subjectOrgnNo))
                 {
-                    subjectContextAttributes.Attributes.Add(GetAccessListAttributes(memberShip));
+                    Party party = await _registerService.PartyLookup(subjectOrgnNo, null);
+                    subjectPartyUuid = party.PartyUuid.HasValue ? party.PartyUuid.Value : Guid.Empty;
+                }
+
+                if (subjectPartyUuid != Guid.Empty)
+                {
+                    PartyUrn.PartyUuid partyUrn = PartyUrn.PartyUuid.Create(subjectPartyUuid);
+                    IEnumerable<AccessListInfoDto> memberShip = await _resourceRegistry.GetMembershipsForParty(partyUrn, cancellationToken);
+                    if (memberShip != null && memberShip.Count() > 0)
+                    {
+                        subjectContextAttributes.Attributes.Add(GetAccessListAttributes(memberShip));
+                    }
                 }
             }
 
