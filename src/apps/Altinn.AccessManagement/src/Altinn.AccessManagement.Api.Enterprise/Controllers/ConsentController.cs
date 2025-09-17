@@ -1,11 +1,15 @@
 ﻿using System.Net.Mime;
+using System.Security.Claims;
 using Altinn.AccessManagement.Api.Enterprise.Extensions;
 using Altinn.AccessManagement.Api.Enterprise.Utils;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Services.Interfaces;
+using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Authorization.Api.Contracts.Consent;
 using Altinn.Authorization.ProblemDetails;
+using Altinn.Common.PEP.Helpers;
+using Altinn.Common.PEP.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,9 +20,10 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
     /// </summary>
     [Route("accessmanagement/api/v1/enterprise")]
     [ApiController]
-    public class ConsentController(IConsent consentService) : ControllerBase
+    public class ConsentController(IConsent consentService, IPDP Pdp) : ControllerBase
     {
         private readonly IConsent _consentService = consentService;
+        private readonly IPDP _pdp = Pdp;
 
         private const string CreateRouteName = "enterprisecreateconsentrequest";
         private const string GetRouteName = "enterprisegetconsentrequest";
@@ -63,6 +68,15 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
                 }
 
                 consentRequestInternal.HandledBy = consentPartyUrn;
+            }
+
+            // Authorize that the enterprise is auhtorized to request consent for the resources in the consent request
+            foreach (ConsentRight right in consentRequestInternal.ConsentRights)
+            {
+                if (!await AuthorizeCreateConsentRequest(right.Resource[0].Value, User))
+                {
+                    return Forbid();
+                }
             }
 
             Result<ConsentRequestDetailsWrapper> consentRequestStatus = await _consentService.CreateRequest(consentRequestInternal, consentPartyUrn, cancellationToken);
@@ -111,6 +125,24 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
             }
 
             return Ok(consentRequestStatus.Value.ToConsentRequestDetailsExternal());
+        }
+
+        private async Task<bool> AuthorizeCreateConsentRequest(string consentResource, ClaimsPrincipal claimsPrincipal)
+        {
+            XacmlJsonRequestRoot request = DecisionHelper.CreateDecisionRequestForResourceRegistryResource(consentResource, null, claimsPrincipal, AltinnXacmlConstants.MatchAttributeIdentifiers.RequestconsentAction);
+            XacmlJsonResponse response = await _pdp.GetDecisionForRequest(request);
+
+            if (response?.Response == null)
+            {
+                throw new InvalidOperationException("response");
+            }
+
+            if (!DecisionHelper.ValidatePdpDecision(response.Response, claimsPrincipal))
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

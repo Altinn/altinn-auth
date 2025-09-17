@@ -12,6 +12,7 @@ using Altinn.Authorization.Api.Contracts.Consent;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.Common.AccessToken.Services;
+using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -35,6 +36,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
                 services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
                 services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
+                services.AddSingleton<IPDP, PdpPermitMock>();
             });
         });
 

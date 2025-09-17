@@ -98,7 +98,7 @@ namespace Altinn.Common.PEP.Helpers
         /// <param name="user">Claims principal user.</param>
         /// <param name="actionType">Policy action type i.e. read, write, delete, instantiate.</param>
         /// <returns>The decision request.</returns>
-        public static XacmlJsonRequestRoot CreateDecisionRequestForResourceRegistryResource(string resource, Guid resourcePartyUuid, ClaimsPrincipal user, string actionType)
+        public static XacmlJsonRequestRoot CreateDecisionRequestForResourceRegistryResource(string resource, Guid? resourcePartyUuid, ClaimsPrincipal user, string actionType)
         {
             XacmlJsonRequest request = new()
             {

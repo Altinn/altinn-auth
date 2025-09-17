@@ -175,6 +175,11 @@ namespace Altinn.AccessManagement.Core.Constants
             /// Get the value sessionid
             /// </summary>
             public const string SessionId = "urn:altinn:sessionid";
+
+            /// <summary>
+            /// Gets the value action id for request consent
+            /// </summary>
+            public const string RequestconsentAction = "requestconsent";
         }
 
         /// <summary>
