@@ -10,7 +10,7 @@ terraform {
     }
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "4.42.0"
+      version = "4.44.0"
     }
     static = {
       source  = "tiwood/static"
