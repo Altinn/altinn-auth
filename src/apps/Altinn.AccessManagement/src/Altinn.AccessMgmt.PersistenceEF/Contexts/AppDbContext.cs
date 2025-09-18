@@ -11,9 +11,8 @@ namespace Altinn.AccessMgmt.PersistenceEF.Contexts;
 /// <inheritdoc />
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options, IAuditContextAccessor auditContext) : base(options) 
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) 
     { 
-        _auditAccessor = auditContext;
     }
 
     private readonly IAuditContextAccessor _auditAccessor;

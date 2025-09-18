@@ -1,8 +1,10 @@
-using System.ComponentModel.Design;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.AccessMgmt.PersistenceEF.Data;
+using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Host.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 
@@ -14,6 +16,7 @@ public static class ServiceCollectionExtensions
     {
         var options = new AccessManagementDatabaseOptions(configureOptions);
         services.AddScoped<ReadOnlyInterceptor>();
+        services.AddScoped<ITranslationService, TranslationService>();
         return options.Source switch
         {
             SourceType.App => services.AddDbContextPool<AppDbContext>((sp, options) =>
@@ -26,6 +29,14 @@ public static class ServiceCollectionExtensions
             {
                 var db = sp.GetRequiredService<IAltinnDatabase>();
                 var connectionString = db.CreatePgsqlConnection(SourceType.Migration);
+                var configuration = sp.GetRequiredService<IConfiguration>();
+                options.UseAsyncSeeding(async (dbcontext, anyChanges, ct) =>
+                {
+                    var appDbContext = (AppDbContext)dbcontext;
+                    var ingest = new StaticDataIngest(appDbContext, new TranslationService(appDbContext), configuration);
+                    await ingest.IngestAll(ct);
+                });
+
                 options.UseNpgsql(connectionString, ConfigureNpgsql)
                     .ReplaceService<IMigrationsSqlGenerator, CustomMigrationsSqlGenerator>();
             }),
