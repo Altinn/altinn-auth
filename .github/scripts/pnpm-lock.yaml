@@ -16,7 +16,7 @@ importers:
         version: 8.0.2
       '@types/node':
         specifier: ^22.18.1
-        version: 22.18.1
+        version: 22.18.3
       chalk:
         specifier: ^5.6.2
         version: 5.6.2
@@ -43,10 +43,10 @@ importers:
         version: 18.0.0
       zod:
         specifier: ^4.1.5
-        version: 4.1.5
+        version: 4.1.8
       zod-validation-error:
         specifier: ^3.5.3
-        version: 3.5.3(zod@4.1.5)
+        version: 3.5.3(zod@4.1.8)
       zx:
         specifier: ^8.8.1
         version: 8.8.1
@@ -291,8 +291,8 @@ packages:
     resolution: {integrity: sha512-LtoMMhxAlorcGhmFYI+LhPgbPZCkgP6ra1YL604EeF6U98pLlQ3iWIGMdWSC+vWmPBWBNgmDBAhnAobLROJmwg==}
     engines: {node: '>=18'}
 
-  '@types/node@22.18.1':
-    resolution: {integrity: sha512-rzSDyhn4cYznVG+PCzGe1lwuMYJrcBS1fc3JqSa2PvtABwWo+dZ1ij5OVok3tqfpEBCBoaR4d7upFJk73HRJDw==}
+  '@types/node@22.18.3':
+    resolution: {integrity: sha512-gTVM8js2twdtqM+AE2PdGEe9zGQY4UvmFjan9rZcVb6FGdStfjWoWejdmy4CfWVO9rh5MiYQGZloKAGkJt8lMw==}
 
   ansi-regex@6.2.2:
     resolution: {integrity: sha512-Bq3SmSpyFHaWjPk8If9yc6svM8c56dB5BAtW4Qbw5jHTwwXXcTLoRMkpDJp6VL0XzlWaCHTXrkFURMYmD0sLqg==}
@@ -503,8 +503,8 @@ packages:
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
 
-  zod@4.1.5:
-    resolution: {integrity: sha512-rcUUZqlLJgBC33IT3PNMgsCq6TzLQEG/Ei/KTCU0PedSWRMAXoOUN+4t/0H+Q8bdnLPdqUYnvboJT0bn/229qg==}
+  zod@4.1.8:
+    resolution: {integrity: sha512-5R1P+WwQqmmMIEACyzSvo4JXHY5WiAFHRMg+zBZKgKS+Q1viRa0C1hmUKtHltoIFKtIdki3pRxkmpP74jnNYHQ==}
 
   zx@8.8.1:
     resolution: {integrity: sha512-qvsKBnvWHstHKCluKPlEgI/D3+mdiQyMoSSeFR8IX/aXzWIas5A297KxKgPJhuPXdrR6ma0Jzx43+GQ/8sqbrw==}
@@ -688,7 +688,7 @@ snapshots:
 
   '@sindresorhus/merge-streams@2.3.0': {}
 
-  '@types/node@22.18.1':
+  '@types/node@22.18.3':
     dependencies:
       undici-types: 6.21.0
 
@@ -880,10 +880,10 @@ snapshots:
       y18n: 5.0.8
       yargs-parser: 22.0.0
 
-  zod-validation-error@3.5.3(zod@4.1.5):
+  zod-validation-error@3.5.3(zod@4.1.8):
     dependencies:
-      zod: 4.1.5
+      zod: 4.1.8
 
-  zod@4.1.5: {}
+  zod@4.1.8: {}
 
   zx@8.8.1: {}
