@@ -619,7 +619,7 @@ namespace Altinn.AccessManagement.Core.Helpers
             {
                 foreach (XacmlAttributeAssignmentExpression attrExpr in oblExpr.AttributeAssignmentExpressions)
                 {
-                    if (attrExpr.Category.OriginalString == AltinnXacmlConstants.MatchAttributeCategory.MinimumAuthenticationLevel &&
+                    if (attrExpr.Category?.OriginalString == AltinnXacmlConstants.MatchAttributeCategory.MinimumAuthenticationLevel &&
                         attrExpr.Property is XacmlAttributeValue attrValue &&
                         int.TryParse(attrValue.Value, out int minAuthLevel))
                     {
