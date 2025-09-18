@@ -7,6 +7,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.ABAC", "src\Altinn.Authorization.ABAC\Altinn.Authorization.ABAC.csproj", "{EE7C217D-2AB9-4D05-A4E8-9CA6CDE9BF1C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{0C88DD14-F956-CE84-757C-A364CCF449FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.ABAC.Tests", "test\Altinn.Authorization.ABAC.Tests\Altinn.Authorization.ABAC.Tests.csproj", "{A106F1C7-F100-4C88-A18C-8370195DEFF7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,11 +33,24 @@ Global
 		{EE7C217D-2AB9-4D05-A4E8-9CA6CDE9BF1C}.Release|x64.Build.0 = Release|Any CPU
 		{EE7C217D-2AB9-4D05-A4E8-9CA6CDE9BF1C}.Release|x86.ActiveCfg = Release|Any CPU
 		{EE7C217D-2AB9-4D05-A4E8-9CA6CDE9BF1C}.Release|x86.Build.0 = Release|Any CPU
+		{A106F1C7-F100-4C88-A18C-8370195DEFF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A106F1C7-F100-4C88-A18C-8370195DEFF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A106F1C7-F100-4C88-A18C-8370195DEFF7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A106F1C7-F100-4C88-A18C-8370195DEFF7}.Debug|x64.Build.0 = Debug|Any CPU
+		{A106F1C7-F100-4C88-A18C-8370195DEFF7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A106F1C7-F100-4C88-A18C-8370195DEFF7}.Debug|x86.Build.0 = Debug|Any CPU
+		{A106F1C7-F100-4C88-A18C-8370195DEFF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A106F1C7-F100-4C88-A18C-8370195DEFF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A106F1C7-F100-4C88-A18C-8370195DEFF7}.Release|x64.ActiveCfg = Release|Any CPU
+		{A106F1C7-F100-4C88-A18C-8370195DEFF7}.Release|x64.Build.0 = Release|Any CPU
+		{A106F1C7-F100-4C88-A18C-8370195DEFF7}.Release|x86.ActiveCfg = Release|Any CPU
+		{A106F1C7-F100-4C88-A18C-8370195DEFF7}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{EE7C217D-2AB9-4D05-A4E8-9CA6CDE9BF1C} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{A106F1C7-F100-4C88-A18C-8370195DEFF7} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
 	EndGlobalSection
 EndGlobal
