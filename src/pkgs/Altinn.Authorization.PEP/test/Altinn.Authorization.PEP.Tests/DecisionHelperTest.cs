@@ -412,6 +412,40 @@ namespace UnitTests
             Assert.Null(result.FailedObligations);
         }
 
+        [Fact]
+        public void ValidateDecisionResult_UserHasNoClaims_ReturnsFalse()
+        {
+            // Arrange: Create a result with "Permit" decision and a minimum auth level obligation
+            var response = new XacmlJsonResult
+            {
+                Decision = "Permit",
+                Obligations = new List<XacmlJsonObligationOrAdvice>
+            {
+                new XacmlJsonObligationOrAdvice
+                {
+                    Id = "obligation1",
+                    AttributeAssignment = new List<XacmlJsonAttributeAssignment>
+                    {
+                        new XacmlJsonAttributeAssignment
+                        {
+                            Category = "urn:altinn:minimum-authenticationlevel",
+                            Value = "2"
+                        }
+                    }
+                }
+            }
+            };
+
+            // User with no claims
+            var user = new ClaimsPrincipal(new ClaimsIdentity());
+
+            // Act & Assert
+            var result = DecisionHelper.ValidateDecisionResult(response, user);
+
+            // Assert
+            Assert.False(result);
+        }
+
         private ClaimsPrincipal CreateUserClaims(bool addExtraClaim, string org = null)
         {
             // Create the user
