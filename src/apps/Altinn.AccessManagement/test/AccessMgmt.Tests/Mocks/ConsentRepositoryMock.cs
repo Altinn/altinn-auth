@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
+using Altinn.Authorization.ProblemDetails;
 
 namespace AccessMgmt.Tests.Mocks
 {
@@ -46,6 +47,11 @@ namespace AccessMgmt.Tests.Mocks
 
             ConsentRequestDetails result = JsonSerializer.Deserialize<ConsentRequestDetails>(dataStream, options);
             return Task.FromResult(result);
+        }
+
+        public Task<Result<List<ConsentRequestDetails>>> GetRequestsForParty(Guid offeredByParty, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
         }
 
         public Task RejectConsentRequest(Guid id, Guid performedByParty, CancellationToken cancellationToken = default)

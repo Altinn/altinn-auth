@@ -1,9 +1,9 @@
-﻿using Altinn.AccessManagement.Core.Models.Consent;
+﻿using System.Data;
+using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Persistence.Extensions;
 using Npgsql;
 using NpgsqlTypes;
-using System.Data;
 
 namespace Altinn.AccessManagement.Persistence.Consent
 {
@@ -405,6 +405,76 @@ namespace Altinn.AccessManagement.Persistence.Consent
             eventCommand.Parameters.AddWithValue(PARAM_PERFORMED_BY_PARTY, NpgsqlDbType.Uuid, performedByParty);
             await eventCommand.ExecuteNonQueryAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
+        }
+
+        public async Task<Authorization.ProblemDetails.Result<List<ConsentRequestDetails>>> GetRequestsForParty(Guid fromParty, CancellationToken cancellationToken)
+        {
+            string consentQuery = /*strpsql*/@$"
+            SELECT *
+            FROM consent.consentrequest 
+            WHERE fromPartyUuid = @id
+        ";
+
+            var results = new List<ConsentRequestDetails>();
+
+            await using var pgcom = _db.CreateCommand(consentQuery);
+            pgcom.Parameters.AddWithValue("id", fromParty);
+
+            await using NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync(cancellationToken);
+
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                Guid consentRequestId = await reader.GetFieldValueAsync<Guid>("consentRequestId", cancellationToken: cancellationToken);
+                Guid from = await reader.GetFieldValueAsync<Guid>("fromPartyUuid", cancellationToken: cancellationToken);
+                Guid to = await reader.GetFieldValueAsync<Guid>("toPartyUuid", cancellationToken: cancellationToken);
+                Guid? requiredDelegator = await reader.GetFieldValueAsync<Guid?>("requiredDelegatorUuid", cancellationToken: cancellationToken);
+                Guid? handledByParty = await reader.GetFieldValueAsync<Guid?>("handledByPartyUuid", cancellationToken: cancellationToken);
+
+                ConsentPartyUrn fromPartyUrn = ConsentPartyUrn.PartyUuid.Create(from);
+                ConsentPartyUrn toPartyUrn = ConsentPartyUrn.PartyUuid.Create(to);
+
+                ConsentPartyUrn requiredDelegatorUrn = null;
+                ConsentPartyUrn handledByPartyUrn = null;
+
+                if (requiredDelegator != null)
+                {
+                    requiredDelegatorUrn = ConsentPartyUrn.PartyUuid.Create(requiredDelegator.Value);
+                }
+
+                if (handledByParty != null)
+                {
+                    handledByPartyUrn = ConsentPartyUrn.PartyUuid.Create(handledByParty.Value);
+                }
+
+                if (fromPartyUrn == null || toPartyUrn == null)
+                {
+                    throw new InvalidDataException("Invalid party URN");
+                }
+
+                var item = new ConsentRequestDetails
+                {
+                    Id = consentRequestId,
+                    From = fromPartyUrn,
+                    To = toPartyUrn,
+                    HandledBy = handledByPartyUrn,
+                    RequiredDelegator = requiredDelegatorUrn,
+                    ValidTo = await reader.GetFieldValueAsync<DateTimeOffset>("validTo", cancellationToken: cancellationToken),
+                    ConsentRights = await GetConsentRights(consentRequestId, cancellationToken: cancellationToken),
+                    RequestMessage = await reader.IsDBNullAsync(reader.GetOrdinal("requestMessage"), cancellationToken)
+                        ? null
+                        : await reader.GetFieldValueAsync<Dictionary<string, string>>("requestMessage", cancellationToken: cancellationToken),
+                    ConsentRequestStatus = await reader.GetFieldValueAsync<ConsentRequestStatusType>("status", cancellationToken: cancellationToken),
+                    Consented = await reader.GetFieldValueAsync<DateTimeOffset?>("consented", cancellationToken: cancellationToken),
+                    RedirectUrl = await reader.GetFieldValueAsync<string>("redirectUrl", cancellationToken: cancellationToken),
+                    ConsentRequestEvents = await GetEvents(consentRequestId, cancellationToken: cancellationToken),
+                    TemplateId = await reader.GetFieldValueAsync<string>("templateId", cancellationToken: cancellationToken),
+                    TemplateVersion = await reader.GetFieldValueAsync<int?>("templateVersion", cancellationToken: cancellationToken),
+                };
+
+                results.Add(item);
+            }
+
+            return results;
         }
 
         /// <summary>

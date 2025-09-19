@@ -843,5 +843,28 @@ namespace Altinn.AccessManagement.Core.Services
             return Uri.TryCreate(url, UriKind.Absolute, out Uri? uriResult)
                    && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
         }
+
+        public async Task<Result<List<ConsentRequestDetails>>> GetRequestsForParty(Guid coveredByParty, bool useInternalIdenties, CancellationToken cancellationToken)
+        {
+            Result<List<ConsentRequestDetails>> requests = await _consentRepository.GetRequestsForParty(coveredByParty, cancellationToken);
+
+            if (requests.Value != null)
+            { 
+                foreach (var req in requests.Value)
+                {
+                    if (req.ValidTo < _timeProvider.GetUtcNow() && !req.ConsentRequestEvents.Exists(r => r.EventType.Equals(ConsentRequestEventType.Expired)))
+                    {
+                        req.ConsentRequestEvents.Add(new ConsentRequestEvent
+                        {
+                            EventType = ConsentRequestEventType.Expired,
+                            Created = req.ValidTo,
+                            PerformedBy = req.To
+                        });
+                    }
+                }
+            }
+
+            return requests;
+        }
     }
 }

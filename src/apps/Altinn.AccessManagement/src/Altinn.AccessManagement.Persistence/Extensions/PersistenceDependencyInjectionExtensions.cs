@@ -150,6 +150,7 @@ public static class PersistenceDependencyInjectionExtensions
                 ConsentRequestStatusType.Created => "created",
                 ConsentRequestStatusType.Revoked => "revoked",
                 ConsentRequestStatusType.Deleted => "deleted",
+                ConsentRequestStatusType.Expired => "expired",
                 _ => null,
             }))
             .MapEnum<ConsentRequestEventType>("consent.event_type", new EnumNameTranslator<ConsentRequestEventType>(static value => value switch
@@ -159,6 +160,8 @@ public static class PersistenceDependencyInjectionExtensions
                 ConsentRequestEventType.Created => "created",
                 ConsentRequestEventType.Revoked => "revoked",
                 ConsentRequestEventType.Deleted => "deleted",
+                ConsentRequestEventType.Expired => "expired",
+                ConsentRequestEventType.Used => "used",
                 _ => null,
             }))
             .AddYuniqlMigrations(cfg =>

@@ -3,7 +3,9 @@ using Altinn.AccessManagement.Api.Internal.Extensions;
 using Altinn.AccessManagement.Api.Internal.Utils;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
+using Altinn.AccessManagement.Core.Models.Register;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Authorization.Api.Contracts.Consent;
@@ -64,6 +66,35 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
             }
 
             return Forbid();
+        }
+
+        [HttpGet]
+        [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
+        [Route("consentrequests/list/{partyUuid}", Name = "requestlist")]
+        public async Task<IActionResult> RequestList([FromRoute] Guid partyUuid, CancellationToken cancellationToken = default)
+        {
+            Guid? performedBy = UserUtil.GetUserUuid(User);
+            if (performedBy == null)
+            {
+                return Unauthorized();
+            }
+
+            Core.Models.Consent.ConsentPartyUrn performedByParty = Core.Models.Consent.ConsentPartyUrn.PartyUuid.Create(performedBy.Value);
+
+            // Check if the user is authorized to view the consent request. Anyone with read access to access management can view the list of consent request details.
+            bool isAuthorized = await AuthorizeResourceAccess(accessManagementResource, partyUuid, User, "read");
+            if (!isAuthorized)
+            {
+                return Unauthorized();
+            }
+
+            Result<List<ConsentRequestDetails>> consentRequest = await ConsentService.GetRequestsForParty(partyUuid, true, cancellationToken);
+            if (consentRequest.IsProblem)
+            {
+                return consentRequest.Problem.ToActionResult();
+            }
+
+            return Ok(consentRequest.Value);
         }
 
         /// <summary>

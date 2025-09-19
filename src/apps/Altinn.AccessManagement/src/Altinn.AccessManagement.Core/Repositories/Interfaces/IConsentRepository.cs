@@ -1,4 +1,5 @@
 ﻿using Altinn.AccessManagement.Core.Models.Consent;
+using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.AccessManagement.Core.Repositories.Interfaces
 {
@@ -46,5 +47,10 @@ namespace Altinn.AccessManagement.Core.Repositories.Interfaces
         /// Gets the consent consenxt
         /// </summary>
         Task<ConsentContext> GetConsentContext(Guid consentRequestId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Returns a list over consent request for a specific party.
+        /// </summary>
+        Task<Result<List<ConsentRequestDetails>>> GetRequestsForParty(Guid consentParty, CancellationToken cancellationToken);
     }
 }
