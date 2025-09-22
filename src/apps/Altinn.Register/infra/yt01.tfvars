@@ -20,6 +20,7 @@ features = {
   a2_party_import = {
     parties  = true
     user_ids = true
+    profiles = true
   }
 }
 
