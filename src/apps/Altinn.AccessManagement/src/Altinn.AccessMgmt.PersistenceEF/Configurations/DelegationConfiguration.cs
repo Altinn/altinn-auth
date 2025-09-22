@@ -16,9 +16,9 @@ public class DelegationConfiguration : IEntityTypeConfiguration<Delegation>
 
         builder.HasKey(p => p.Id);
 
-        builder.PropertyWithReference(navKey: t => t.From, foreignKey: t => t.FromId, principalKey: t => t.Id);
-        builder.PropertyWithReference(navKey: t => t.To, foreignKey: t => t.ToId, principalKey: t => t.Id);
-        builder.PropertyWithReference(navKey: t => t.Facilitator, foreignKey: t => t.FacilitatorId, principalKey: t => t.Id);
+        builder.PropertyWithReference(navKey: t => t.From, foreignKey: t => t.FromId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
+        builder.PropertyWithReference(navKey: t => t.To, foreignKey: t => t.ToId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
+        builder.PropertyWithReference(navKey: t => t.Facilitator, foreignKey: t => t.FacilitatorId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
 
         builder.HasIndex(t => new { t.FromId, t.ToId, t.FacilitatorId }).IsUnique();
     }

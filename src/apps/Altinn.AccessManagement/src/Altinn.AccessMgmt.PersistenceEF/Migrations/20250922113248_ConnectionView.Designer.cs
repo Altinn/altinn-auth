@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250905091927_Init")]
-    partial class Init
+    [Migration("20250922113248_ConnectionView")]
+    partial class ConnectionView
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -192,6 +192,8 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasIndex("FromId", "ToId", "RoleId")
                         .IsUnique()
                         .HasDatabaseName("ix_assignment_fromid_toid_roleid");
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("FromId", "ToId", "RoleId"), new[] { "Id" });
 
                     b.ToTable("assignment", "dbo");
 
@@ -1913,6 +1915,8 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasDatabaseName("ix_delegationresource_delegationid_resourceid");
 
                     b.ToTable("delegationresource", "dbo");
+
+                    b.HasAnnotation("EnableAudit", true);
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Entity", b =>
@@ -1962,10 +1966,6 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasKey("Id")
                         .HasName("pk_entity");
 
-                    b.HasIndex("Name")
-                        .IsUnique()
-                        .HasDatabaseName("ix_entity_name");
-
                     b.HasIndex("ParentId")
                         .HasDatabaseName("ix_entity_parentid");
 
@@ -1975,7 +1975,13 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasIndex("VariantId")
                         .HasDatabaseName("ix_entity_variantid");
 
+                    b.HasIndex("Name", "RefId", "TypeId", "VariantId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_entity_name_refid_typeid_variantid");
+
                     b.ToTable("entity", "dbo");
+
+                    b.HasAnnotation("EnableAudit", true);
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.EntityLookup", b =>
@@ -2006,7 +2012,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnName("entityid");
 
                     b.Property<bool>("IsProtected")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
+                        .HasDefaultValue(false)
                         .HasColumnName("isprotected");
 
                     b.Property<string>("Key")
@@ -2071,12 +2079,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasKey("Id")
                         .HasName("pk_entitytype");
 
-                    b.HasIndex("Name")
-                        .IsUnique()
-                        .HasDatabaseName("ix_entitytype_name");
-
                     b.HasIndex("ProviderId")
                         .HasDatabaseName("ix_entitytype_providerid");
+
+                    b.HasIndex("Name", "ProviderId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_entitytype_name_providerid");
 
                     b.ToTable("entitytype", "dbo");
 
@@ -2123,12 +2131,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasKey("Id")
                         .HasName("pk_entityvariant");
 
-                    b.HasIndex("Name")
-                        .IsUnique()
-                        .HasDatabaseName("ix_entityvariant_name");
-
                     b.HasIndex("TypeId")
                         .HasDatabaseName("ix_entityvariant_typeid");
+
+                    b.HasIndex("Name", "TypeId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_entityvariant_name_typeid");
 
                     b.ToTable("entityvariant", "dbo");
 
@@ -2412,6 +2420,8 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasDatabaseName("ix_providertype_name");
 
                     b.ToTable("providertype", "dbo");
+
+                    b.HasAnnotation("EnableAudit", true);
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Resource", b =>
@@ -2546,7 +2556,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
-                    b.Property<Guid>("EntityTypeId")
+                    b.Property<Guid?>("EntityTypeId")
                         .HasColumnType("uuid")
                         .HasColumnName("entitytypeid");
 
@@ -2598,6 +2608,8 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasDatabaseName("ix_role_providerid_name");
 
                     b.ToTable("role", "dbo");
+
+                    b.HasAnnotation("EnableAudit", true);
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.RoleLookup", b =>
@@ -2766,9 +2778,15 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasIndex("RoleId")
                         .HasDatabaseName("ix_rolepackage_roleid");
 
+                    b.HasIndex("RoleId", "PackageId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_rolepackage_roleid_packageid")
+                        .HasFilter("entityvariantid IS NULL");
+
                     b.HasIndex("RoleId", "PackageId", "EntityVariantId")
                         .IsUnique()
-                        .HasDatabaseName("ix_rolepackage_roleid_packageid_entityvariantid");
+                        .HasDatabaseName("ix_rolepackage_roleid_packageid_entityvariantid")
+                        .HasFilter("entityvariantid IS NOT NULL");
 
                     b.ToTable("rolepackage", "dbo");
 
@@ -2869,7 +2887,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.EntityType", "EntityType")
                         .WithMany()
                         .HasForeignKey("EntityTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_areagroup_entitytype_entitytypeid");
 
@@ -2888,7 +2906,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Role", "Role")
                         .WithMany()
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_assignment_role_roleid");
 
@@ -2918,7 +2936,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Package", "Package")
                         .WithMany()
                         .HasForeignKey("PackageId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_assignmentpackage_package_packageid");
 
@@ -2939,7 +2957,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Resource", "Resource")
                         .WithMany()
                         .HasForeignKey("ResourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_assignmentresource_resource_resourceid");
 
@@ -2953,46 +2971,46 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Entity", "From")
                         .WithMany()
                         .HasForeignKey("FromId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_connections_entity_fromid");
 
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Package", "Package")
                         .WithMany()
                         .HasForeignKey("PackageId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_connections_package_packageid");
 
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Resource", "Resource")
                         .WithMany()
                         .HasForeignKey("ResourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_connections_resource_resourceid");
 
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Role", "Role")
                         .WithMany()
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_connections_role_roleid");
 
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Entity", "To")
                         .WithMany()
                         .HasForeignKey("ToId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_connections_entity_toid");
 
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Entity", "Via")
                         .WithMany()
                         .HasForeignKey("ViaId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_connections_entity_viaid");
 
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Role", "ViaRole")
                         .WithMany()
                         .HasForeignKey("ViaRoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_connections_role_viaroleid");
 
                     b.Navigation("From");
@@ -3052,7 +3070,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Package", "Package")
                         .WithMany()
                         .HasForeignKey("PackageId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_delegationpackage_package_packageid");
 
@@ -3073,7 +3091,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Resource", "Resource")
                         .WithMany()
                         .HasForeignKey("ResourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_delegationresource_resource_resourceid");
 
@@ -3087,20 +3105,20 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Entity", "Parent")
                         .WithMany()
                         .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_entity_entity_parentid");
 
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.EntityType", "Type")
                         .WithMany()
                         .HasForeignKey("TypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_entity_entitytype_typeid");
 
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.EntityVariant", "Variant")
                         .WithMany()
                         .HasForeignKey("VariantId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_entity_entityvariant_variantid");
 
@@ -3128,7 +3146,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Provider", "Provider")
                         .WithMany()
                         .HasForeignKey("ProviderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_entitytype_provider_providerid");
 
@@ -3152,7 +3170,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Role", "Role")
                         .WithMany()
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_entityvariantrole_role_roleid");
 
@@ -3173,21 +3191,21 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Area", "Area")
                         .WithMany()
                         .HasForeignKey("AreaId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_package_area_areaid");
 
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.EntityType", "EntityType")
                         .WithMany()
                         .HasForeignKey("EntityTypeId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_package_entitytype_entitytypeid");
 
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Provider", "Provider")
                         .WithMany()
                         .HasForeignKey("ProviderId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_package_provider_providerid");
 
@@ -3210,7 +3228,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Resource", "Resource")
                         .WithMany()
                         .HasForeignKey("ResourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_packageresource_resource_resourceid");
 
@@ -3224,7 +3242,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.ProviderType", "Type")
                         .WithMany()
                         .HasForeignKey("TypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_provider_providertype_typeid");
 
@@ -3236,14 +3254,14 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Provider", "Provider")
                         .WithMany()
                         .HasForeignKey("ProviderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_resource_provider_providerid");
 
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.ResourceType", "Type")
                         .WithMany()
                         .HasForeignKey("TypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_resource_resourcetype_typeid");
 
@@ -3257,14 +3275,13 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.EntityType", "EntityType")
                         .WithMany()
                         .HasForeignKey("EntityTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
+                        .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_role_entitytype_entitytypeid");
 
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Provider", "Provider")
                         .WithMany()
                         .HasForeignKey("ProviderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_role_provider_providerid");
 
@@ -3311,13 +3328,13 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.EntityVariant", "EntityVariant")
                         .WithMany()
                         .HasForeignKey("EntityVariantId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_rolepackage_entityvariant_entityvariantid");
 
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Package", "Package")
                         .WithMany()
                         .HasForeignKey("PackageId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_rolepackage_package_packageid");
 
@@ -3340,7 +3357,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Resource", "Resource")
                         .WithMany()
                         .HasForeignKey("ResourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_roleresource_resource_resourceid");
 

@@ -13,7 +13,7 @@ public class EntityService(AppDbContext db) : IEntityService
 
     public async ValueTask<Entity> GetEntity(Guid id, CancellationToken cancellationToken = default)
     {
-        return await db.Entities.AsNoTracking().SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
+        return await db.Entities.AsNoTracking().Include(t => t.Type).Include(t => t.Variant).SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
 
     public async Task<bool> CreateEntity(Entity entity, CancellationToken cancellationToken = default)

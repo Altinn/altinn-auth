@@ -16,8 +16,8 @@ public class RoleResourceConfiguration : IEntityTypeConfiguration<RoleResource>
 
         builder.HasKey(p => p.Id);
 
-        builder.PropertyWithReference(navKey: t => t.Role, foreignKey: t => t.RoleId, principalKey: t => t.Id);
-        builder.PropertyWithReference(navKey: t => t.Resource, foreignKey: t => t.ResourceId, principalKey: t => t.Id);
+        builder.PropertyWithReference(navKey: t => t.Role, foreignKey: t => t.RoleId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
+        builder.PropertyWithReference(navKey: t => t.Resource, foreignKey: t => t.ResourceId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
 
         builder.HasIndex(t => new { t.RoleId, t.ResourceId }).IsUnique();
     }

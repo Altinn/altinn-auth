@@ -16,9 +16,10 @@ public class EntityLookupConfiguration : IEntityTypeConfiguration<EntityLookup>
 
         builder.HasKey(p => p.Id);
 
-        builder.PropertyWithReference(navKey: t => t.Entity, foreignKey: t => t.EntityId, principalKey: t => t.Id);
+        builder.PropertyWithReference(navKey: t => t.Entity, foreignKey: t => t.EntityId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
         builder.Property(t => t.Key).IsRequired();
         builder.Property(t => t.Value).IsRequired();
+        builder.Property(t => t.IsProtected).IsRequired().HasDefaultValue<bool>(false);
 
         builder.HasIndex(t => new { t.EntityId, t.Key }).IncludeProperties(p => new { p.Value, p.Id }).IsUnique();
     }

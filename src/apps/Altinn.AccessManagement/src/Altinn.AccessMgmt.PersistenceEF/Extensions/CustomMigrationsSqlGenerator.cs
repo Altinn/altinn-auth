@@ -11,11 +11,11 @@ namespace Altinn.AccessMgmt.PersistenceEF.Extensions;
 public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
 {
     public CustomMigrationsSqlGenerator(
-        MigrationsSqlGeneratorDependencies dependencies, 
-        INpgsqlSingletonOptions annotations
-    ) : base(dependencies, annotations) { }
+        MigrationsSqlGeneratorDependencies dependencies,
+        INpgsqlSingletonOptions npgsqlOptions)
+        : base(dependencies, npgsqlOptions) { }
 
-    protected override void Generate(CreateTableOperation operation, IModel model, MigrationCommandListBuilder builder, bool terminate = true)
+    protected override void Generate(CreateTableOperation operation, IModel? model, MigrationCommandListBuilder builder, bool terminate = true)
     {
         base.Generate(operation, model, builder, terminate);
         builder.EndCommand();
@@ -23,7 +23,6 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
         var entityType = model?.GetEntityTypes().FirstOrDefault(et =>
             et.GetTableName() == operation.Name &&
             et.GetSchema() == operation.Schema);
-
 
         if (entityType?.FindAnnotation("EnableAudit")?.Value as bool? == true)
         {
@@ -162,4 +161,5 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
 
         return sb.ToString();
     }
+
 }

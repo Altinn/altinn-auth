@@ -41,8 +41,8 @@ public class DelegationResourceDefinition : BaseDbDefinition<DelegationResource>
             DROP TABLE IF EXISTS translation_history._DelegationResource;
             DROP TABLE IF EXISTS translation.DelegationResource;
 
-            drop function translation.audit_delegationresource_delete_fn();
-            drop function translation.audit_delegationresource_update_fn();
+            drop function IF EXISTS translation.audit_delegationresource_delete_fn();
+            drop function IF EXISTS translation.audit_delegationresource_update_fn();
             """;
     }
 }

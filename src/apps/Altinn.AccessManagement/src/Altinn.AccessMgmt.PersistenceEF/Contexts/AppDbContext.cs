@@ -5,14 +5,16 @@ using Altinn.AccessMgmt.PersistenceEF.Models.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Contexts;
 
 /// <inheritdoc />
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) 
-    { 
+    public AppDbContext(DbContextOptions<AppDbContext> options, IAuditContextAccessor auditContext) : base(options)
+    {
+        _auditAccessor = auditContext;
     }
 
     private readonly IAuditContextAccessor _auditAccessor;
@@ -289,4 +291,9 @@ public interface IAuditContextAccessor
 public sealed class AuditContextAccessor : IAuditContextAccessor
 {
     public AuditValues? Current { get; set; }
+}
+
+public sealed class DesignTimeAuditAccessor : IAuditContextAccessor
+{
+    public AuditValues? Current { get; set; } = new AuditValues(Guid.Empty, Guid.Empty, "design-time");
 }

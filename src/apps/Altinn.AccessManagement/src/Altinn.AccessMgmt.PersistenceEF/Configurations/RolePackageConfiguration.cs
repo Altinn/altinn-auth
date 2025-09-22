@@ -19,11 +19,12 @@ public class RolePackageConfiguration : IEntityTypeConfiguration<RolePackage>
         builder.Property(t => t.HasAccess).IsRequired().HasDefaultValue(false);
         builder.Property(t => t.CanDelegate).IsRequired().HasDefaultValue(false);
 
-        builder.PropertyWithReference(navKey: t => t.Role, foreignKey: t => t.RoleId, principalKey: t => t.Id);
-        builder.PropertyWithReference(navKey: t => t.Package, foreignKey: t => t.PackageId, principalKey: t => t.Id);
-        builder.PropertyWithReference(navKey: t => t.EntityVariant, foreignKey: t => t.EntityVariantId, principalKey: t => t.Id, required: false);
+        builder.PropertyWithReference(navKey: t => t.Role, foreignKey: t => t.RoleId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
+        builder.PropertyWithReference(navKey: t => t.Package, foreignKey: t => t.PackageId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
+        builder.PropertyWithReference(navKey: t => t.EntityVariant, foreignKey: t => t.EntityVariantId, principalKey: t => t.Id, required: false, deleteBehavior: DeleteBehavior.Restrict);
 
-        builder.HasIndex(t => new { t.RoleId, t.PackageId, t.EntityVariantId }).IsUnique();
+        builder.HasIndex(t => new { t.RoleId, t.PackageId }).HasFilter("entityvariantid IS NULL").IsUnique();
+        builder.HasIndex(t => new { t.RoleId, t.PackageId, t.EntityVariantId }).HasFilter("entityvariantid IS NOT NULL").IsUnique();
     }
 }
 

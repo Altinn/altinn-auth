@@ -16,8 +16,8 @@ public class PackageResourceConfiguration : IEntityTypeConfiguration<PackageReso
 
         builder.HasKey(p => p.Id);
 
-        builder.PropertyWithReference(navKey: t => t.Package, foreignKey: t => t.PackageId, principalKey: t => t.Id);
-        builder.PropertyWithReference(navKey: t => t.Resource, foreignKey: t => t.ResourceId, principalKey: t => t.Id);
+        builder.PropertyWithReference(navKey: t => t.Package, foreignKey: t => t.PackageId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
+        builder.PropertyWithReference(navKey: t => t.Resource, foreignKey: t => t.ResourceId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
 
         builder.HasIndex(t => new { t.PackageId, t.ResourceId }).IsUnique();
     }

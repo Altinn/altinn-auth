@@ -45,8 +45,8 @@ public class DelegationPackageDefinition : BaseDbDefinition<DelegationPackage>, 
             DROP TABLE IF EXISTS translation_history._DelegationPackage;
             DROP TABLE IF EXISTS translation.DelegationPackage;
 
-            drop function translation.audit_delegationpackage_delete_fn();
-            drop function translation.audit_delegationpackage_update_fn();
+            drop function IF EXISTS translation.audit_delegationpackage_delete_fn();
+            drop function IF EXISTS translation.audit_delegationpackage_update_fn();
             """;
     }
 }

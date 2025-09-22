@@ -1,5 +1,5 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Models.Base;
 
@@ -39,3 +39,4 @@ public class BaseArea : BaseAudit
     /// </summary>
     public string Urn { get; set; }
 }
+

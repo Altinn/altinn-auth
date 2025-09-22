@@ -19,8 +19,8 @@ public class RoleMapConfiguration : IEntityTypeConfiguration<RoleMap>
         builder.Property(t => t.HasRoleId).IsRequired();
         builder.Property(t => t.GetRoleId).IsRequired();
 
-        builder.PropertyWithReference(navKey: t => t.HasRole, foreignKey: t => t.HasRoleId, principalKey: t => t.Id);
-        builder.PropertyWithReference(navKey: t => t.GetRole, foreignKey: t => t.GetRoleId, principalKey: t => t.Id);
+        builder.PropertyWithReference(navKey: t => t.HasRole, foreignKey: t => t.HasRoleId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
+        builder.PropertyWithReference(navKey: t => t.GetRole, foreignKey: t => t.GetRoleId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
 
         builder.HasIndex(t => new { t.HasRoleId, t.GetRoleId }).IsUnique();
     }

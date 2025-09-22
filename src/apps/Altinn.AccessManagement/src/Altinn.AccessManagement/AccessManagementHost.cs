@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using Altinn.AccessManagement.Api.Enduser;
 using Altinn.AccessManagement.Api.Enduser.Authorization.AuthorizationHandler;
 using Altinn.AccessManagement.Api.Enduser.Authorization.AuthorizationRequirement;
@@ -15,7 +14,6 @@ using Altinn.AccessManagement.Integration.Extensions;
 using Altinn.AccessManagement.Persistence.Configuration;
 using Altinn.AccessManagement.Persistence.Extensions;
 using Altinn.AccessMgmt.Persistence.Extensions;
-using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.Authorization.AccessManagement;
 using Altinn.Authorization.Api.Contracts.Register;
@@ -37,9 +35,6 @@ using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.FeatureManagement;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -122,20 +117,6 @@ internal static partial class AccessManagementHost
         builder.AddAccessManagementInternal();
 
         return builder.Build();
-    }
-
-    private static WebApplicationBuilder ConfigureEF(this WebApplicationBuilder builder)
-    {
-        //// builder.Services.Replace(ServiceDescriptor.Singleton<IMigrationsSqlGenerator, CustomMigrationsSqlGenerator>());
-        //// builder.Services.AddSingleton<IMigrationsSqlGenerator, CustomMigrationsSqlGenerator>();
-
-        //// builder.Services.AddScoped<IAuditContextProvider, HttpContextAuditContextProvider>();
-        //// builder.Services.AddScoped<AuditConnectionInterceptor>();
-
-        builder.Services.AddScoped<ReadOnlyInterceptor>();
-        builder.Services.AddScoped<IAuditContextAccessor, AuditContextAccessor>();
-
-        return builder;
     }
 
     private static WebApplicationBuilder ConfigureAccessManagementPersistence(this WebApplicationBuilder builder)

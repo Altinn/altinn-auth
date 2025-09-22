@@ -120,7 +120,7 @@ public static class BuilderExtensions
         Expression<Func<TEntity, TReference>> navKey,
         Expression<Func<TEntity, object>> foreignKey,
         Expression<Func<TReference, object>> principalKey,
-        DeleteBehavior deleteBehavior = DeleteBehavior.Cascade,
+        DeleteBehavior deleteBehavior = DeleteBehavior.Restrict,
         bool hasIndex = true,
         bool required = true)
         where TEntity : class

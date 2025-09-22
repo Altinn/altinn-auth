@@ -16,11 +16,11 @@ public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
 
         builder.HasKey(p => p.Id);
 
-        builder.PropertyWithReference(navKey: t => t.From, foreignKey: t => t.FromId, principalKey: t => t.Id);
-        builder.PropertyWithReference(navKey: t => t.To, foreignKey: t => t.ToId, principalKey: t => t.Id);
-        builder.PropertyWithReference(navKey: t => t.Role, foreignKey: t => t.RoleId, principalKey: t => t.Id);
+        builder.PropertyWithReference(navKey: t => t.From, foreignKey: t => t.FromId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
+        builder.PropertyWithReference(navKey: t => t.To, foreignKey: t => t.ToId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
+        builder.PropertyWithReference(navKey: t => t.Role, foreignKey: t => t.RoleId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
 
-        builder.HasIndex(t => new { t.FromId, t.ToId, t.RoleId }).IsUnique();
+        builder.HasIndex(t => new { t.FromId, t.ToId, t.RoleId }).IsUnique().IncludeProperties(t => t.Id);
     }
 }
 

@@ -657,7 +657,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         principalSchema: "dbo",
                         principalTable: "providertype",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -682,7 +682,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         principalSchema: "dbo",
                         principalTable: "provider",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -710,14 +710,14 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         principalSchema: "dbo",
                         principalTable: "provider",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_resource_resourcetype_typeid",
                         column: x => x.typeid,
                         principalSchema: "dbo",
                         principalTable: "resourcetype",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -744,7 +744,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         principalSchema: "dbo",
                         principalTable: "entitytype",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -783,7 +783,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     audit_changedbysystem = table.Column<Guid>(type: "uuid", nullable: true),
                     audit_changeoperation = table.Column<string>(type: "text", nullable: true),
                     audit_validfrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    entitytypeid = table.Column<Guid>(type: "uuid", nullable: false),
+                    entitytypeid = table.Column<Guid>(type: "uuid", nullable: true),
                     providerid = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "text", nullable: false),
                     code = table.Column<string>(type: "text", nullable: false),
@@ -801,14 +801,14 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         principalSchema: "dbo",
                         principalTable: "entitytype",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_role_provider_providerid",
                         column: x => x.providerid,
                         principalSchema: "dbo",
                         principalTable: "provider",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -864,21 +864,21 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         principalSchema: "dbo",
                         principalTable: "entity",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_entity_entitytype_typeid",
                         column: x => x.typeid,
                         principalSchema: "dbo",
                         principalTable: "entitytype",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_entity_entityvariant_variantid",
                         column: x => x.variantid,
                         principalSchema: "dbo",
                         principalTable: "entityvariant",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -910,7 +910,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         principalSchema: "dbo",
                         principalTable: "role",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -993,7 +993,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         principalSchema: "dbo",
                         principalTable: "resource",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_roleresource_role_roleid",
                         column: x => x.roleid,
@@ -1031,19 +1031,22 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         column: x => x.areaid,
                         principalSchema: "dbo",
                         principalTable: "area",
-                        principalColumn: "id");
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_package_entitytype_entitytypeid",
                         column: x => x.entitytypeid,
                         principalSchema: "dbo",
                         principalTable: "entitytype",
-                        principalColumn: "id");
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_package_provider_providerid",
                         column: x => x.providerid,
                         principalSchema: "dbo",
                         principalTable: "provider",
-                        principalColumn: "id");
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -1083,7 +1086,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         principalSchema: "dbo",
                         principalTable: "role",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -1099,7 +1102,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     entityid = table.Column<Guid>(type: "uuid", nullable: false),
                     key = table.Column<string>(type: "text", nullable: false),
                     value = table.Column<string>(type: "text", nullable: false),
-                    isprotected = table.Column<bool>(type: "boolean", nullable: false)
+                    isprotected = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
@@ -1135,49 +1138,49 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         principalSchema: "dbo",
                         principalTable: "entity",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_connections_entity_toid",
                         column: x => x.toid,
                         principalSchema: "dbo",
                         principalTable: "entity",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_connections_entity_viaid",
                         column: x => x.viaid,
                         principalSchema: "dbo",
                         principalTable: "entity",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_connections_package_packageid",
                         column: x => x.packageid,
                         principalSchema: "dbo",
                         principalTable: "package",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_connections_resource_resourceid",
                         column: x => x.resourceid,
                         principalSchema: "dbo",
                         principalTable: "resource",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_connections_role_roleid",
                         column: x => x.roleid,
                         principalSchema: "dbo",
                         principalTable: "role",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_connections_role_viaroleid",
                         column: x => x.viaroleid,
                         principalSchema: "dbo",
                         principalTable: "role",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -1209,7 +1212,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         principalSchema: "dbo",
                         principalTable: "resource",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -1238,14 +1241,14 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         principalSchema: "dbo",
                         principalTable: "entityvariant",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_rolepackage_package_packageid",
                         column: x => x.packageid,
                         principalSchema: "dbo",
                         principalTable: "package",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_rolepackage_role_roleid",
                         column: x => x.roleid,
@@ -1284,7 +1287,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         principalSchema: "dbo",
                         principalTable: "package",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -1316,7 +1319,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         principalSchema: "dbo",
                         principalTable: "resource",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -1390,7 +1393,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         principalSchema: "dbo",
                         principalTable: "package",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -1422,7 +1425,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         principalSchema: "dbo",
                         principalTable: "resource",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
@@ -1462,7 +1465,8 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 schema: "dbo",
                 table: "assignment",
                 columns: new[] { "fromid", "toid", "roleid" },
-                unique: true);
+                unique: true)
+                .Annotation("Npgsql:IndexInclude", new[] { "id" });
 
             migrationBuilder.CreateIndex(
                 name: "ix_assignment_roleid",
@@ -1613,10 +1617,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 column: "resourceid");
 
             migrationBuilder.CreateIndex(
-                name: "ix_entity_name",
+                name: "ix_entity_name_refid_typeid_variantid",
                 schema: "dbo",
                 table: "entity",
-                column: "name",
+                columns: new[] { "name", "refid", "typeid", "variantid" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -1652,10 +1656,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 .Annotation("Npgsql:IndexInclude", new[] { "value", "id" });
 
             migrationBuilder.CreateIndex(
-                name: "ix_entitytype_name",
+                name: "ix_entitytype_name_providerid",
                 schema: "dbo",
                 table: "entitytype",
-                column: "name",
+                columns: new[] { "name", "providerid" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -1665,10 +1669,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 column: "providerid");
 
             migrationBuilder.CreateIndex(
-                name: "ix_entityvariant_name",
+                name: "ix_entityvariant_name_typeid",
                 schema: "dbo",
                 table: "entityvariant",
-                column: "name",
+                columns: new[] { "name", "typeid" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -1864,11 +1868,20 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 column: "roleid");
 
             migrationBuilder.CreateIndex(
+                name: "ix_rolepackage_roleid_packageid",
+                schema: "dbo",
+                table: "rolepackage",
+                columns: new[] { "roleid", "packageid" },
+                unique: true,
+                filter: "entityvariantid IS NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_rolepackage_roleid_packageid_entityvariantid",
                 schema: "dbo",
                 table: "rolepackage",
                 columns: new[] { "roleid", "packageid", "entityvariantid" },
-                unique: true);
+                unique: true,
+                filter: "entityvariantid IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "ix_roleresource_resourceid",

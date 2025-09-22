@@ -20,7 +20,7 @@ public class AreaConfiguration : IEntityTypeConfiguration<Area>
         builder.Property(t => t.Description).IsRequired();
         builder.Property(t => t.Urn).IsRequired();
         builder.Property(t => t.IconUrl);
-        builder.PropertyWithReference(navKey: t => t.Group, foreignKey: t => t.GroupId, principalKey: t => t.Id);
+        builder.PropertyWithReference(navKey: t => t.Group, foreignKey: t => t.GroupId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
 
         builder.HasIndex(t => t.Name).IsUnique();
     }

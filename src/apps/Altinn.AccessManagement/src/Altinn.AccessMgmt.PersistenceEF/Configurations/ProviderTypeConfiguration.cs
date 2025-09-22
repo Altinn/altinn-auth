@@ -12,6 +12,8 @@ public class ProviderTypeConfiguration : IEntityTypeConfiguration<ProviderType>
     public void Configure(EntityTypeBuilder<ProviderType> builder)
     {
         builder.ToDefaultTable();
+        builder.EnableAudit();
+
         builder.HasKey(p => p.Id);
         builder.Property(t => t.Name).IsRequired();
         builder.HasIndex(t => t.Name).IsUnique();

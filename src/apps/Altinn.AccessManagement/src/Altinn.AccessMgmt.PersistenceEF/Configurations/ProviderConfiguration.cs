@@ -20,7 +20,7 @@ public class ProviderConfiguration : IEntityTypeConfiguration<Provider>
         builder.Property(t => t.RefId);
         builder.Property(t => t.Code);
         builder.Property(t => t.LogoUrl);
-        builder.PropertyWithReference(navKey: t => t.Type, foreignKey: t => t.TypeId, principalKey: t => t.Id);
+        builder.PropertyWithReference(navKey: t => t.Type, foreignKey: t => t.TypeId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
 
         builder.HasIndex(t => t.Name).IsUnique();
     }

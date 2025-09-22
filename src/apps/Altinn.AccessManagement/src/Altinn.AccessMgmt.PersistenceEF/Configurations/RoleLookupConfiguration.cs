@@ -16,7 +16,7 @@ public class RoleLookupConfiguration : IEntityTypeConfiguration<RoleLookup>
 
         builder.HasKey(p => p.Id);
 
-        builder.PropertyWithReference(navKey: t => t.Role, foreignKey: t => t.RoleId, principalKey: t => t.Id);
+        builder.PropertyWithReference(navKey: t => t.Role, foreignKey: t => t.RoleId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
         builder.Property(t => t.Key).IsRequired();
         builder.Property(t => t.Value).IsRequired();
 
