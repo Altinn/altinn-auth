@@ -181,7 +181,7 @@ public class PackageDelegationCheckReason
 }
 
 /// <summary>
-/// Compact Package Model HELLO
+/// Compact Package Model
 /// </summary>
 public class CompactPackage
 {

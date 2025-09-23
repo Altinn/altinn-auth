@@ -1,7 +1,4 @@
-﻿using Altinn.AccessMgmt.Core.Utils;
-using Altinn.AccessMgmt.PersistenceEF.Models;
-
-namespace Altinn.AccessMgmt.Core.Models;
+﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 
 /// <summary>
 /// RolePackage
@@ -26,7 +23,7 @@ public class RolePackageDto
     /// <summary>
     /// EntityVariantId (optional)
     /// </summary>
-    public EntityVariant EntityVariant { get; set; }
+    public EntityVariantDto EntityVariant { get; set; }
 
     /// <summary>
     /// HasAccess

@@ -1,6 +1,4 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Models;
-
-namespace Altinn.AccessMgmt.Core.Models;
+﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 
 /// <summary>
 /// Package permissions
@@ -10,7 +8,7 @@ public class PackagePermissionDto
     /// <summary>
     /// Package the permissions are for
     /// </summary>
-    public Package Package { get; set; }
+    public CompactPackageDto Package { get; set; }
 
     /// <summary>
     /// Parties with permissions

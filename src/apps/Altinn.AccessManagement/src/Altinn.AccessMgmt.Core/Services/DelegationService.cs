@@ -1,8 +1,8 @@
-﻿using Altinn.AccessMgmt.Core.Models;
-using Altinn.AccessMgmt.Core.Services.Contracts;
+﻿using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;

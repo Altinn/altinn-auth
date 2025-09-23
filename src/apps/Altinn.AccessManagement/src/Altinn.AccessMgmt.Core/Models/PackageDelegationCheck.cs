@@ -10,7 +10,7 @@ public class PackageDelegationCheck
     /// <summary>
     /// Package the permissions are for
     /// </summary>
-    public PackageDto Package { get; set; }
+    public Authorization.Api.Contracts.AccessManagement.PackageDto Package { get; set; }
 
     /// <summary>
     /// Result of the delegation check
