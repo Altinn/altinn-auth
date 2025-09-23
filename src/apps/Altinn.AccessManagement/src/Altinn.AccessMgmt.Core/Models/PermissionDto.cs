@@ -1,4 +1,6 @@
-﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
+﻿using Altinn.AccessMgmt.PersistenceEF.Models;
+
+namespace Altinn.AccessMgmt.Core.Models;
 
 /// <summary>
 /// Permission
@@ -8,25 +10,25 @@ public class PermissionDto
     /// <summary>
     /// From party
     /// </summary>
-    public CompactEntityDto From { get; set; }
+    public Entity From { get; set; }
 
     /// <summary>
     /// To party
     /// </summary>
-    public CompactEntityDto To { get; set; }
+    public Entity To { get; set; }
 
     /// <summary>
     /// Via party
     /// </summary>
-    public CompactEntityDto Via { get; set; }
+    public Entity Via { get; set; }
 
     /// <summary>
     /// Role
     /// </summary>
-    public CompactRoleDto Role { get; set; }
+    public Role Role { get; set; }
 
     /// <summary>
     /// Via role
     /// </summary>
-    public CompactRoleDto ViaRole { get; set; }
+    public Role ViaRole { get; set; }
 }

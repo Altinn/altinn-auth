@@ -1,4 +1,4 @@
-﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
+﻿namespace Altinn.AccessMgmt.Core.Models;
 
 /// <summary>
 /// Represents a group of areas, categorized under a specific entity type.

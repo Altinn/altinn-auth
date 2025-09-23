@@ -1,4 +1,4 @@
-﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
+﻿namespace Altinn.AccessMgmt.Core.Models;
 
 /// <summary>
 /// Model representing a connected client party, meaning a party which has been authorized for one or more accesses, either directly or through role(s), access packages, resources or resource instances.

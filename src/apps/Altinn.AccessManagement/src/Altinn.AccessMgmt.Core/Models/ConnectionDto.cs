@@ -1,4 +1,6 @@
-﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
+﻿using Altinn.AccessMgmt.PersistenceEF.Models;
+
+namespace Altinn.AccessMgmt.Core.Models;
 
 /// <summary>
 /// Connection from one party to another
@@ -8,12 +10,12 @@ public class ConnectionDto
     /// <summary>
     /// Party
     /// </summary>
-    public CompactEntityDto Party { get; set; } = new();
+    public Entity Party { get; set; } = new();
 
     /// <summary>
     /// Roles the party has for given filter
     /// </summary>
-    public List<CompactRoleDto> Roles { get; set; } = new();
+    public List<Role> Roles { get; set; } = new();
 
     /// <summary>
     /// Connections the party has
@@ -29,12 +31,12 @@ public class ConnectionPackageDto
     /// <summary>
     /// Party
     /// </summary>
-    public CompactEntityDto Party { get; set; } = new();
+    public Entity Party { get; set; } = new();
 
     /// <summary>
     /// Roles the party has for given filter
     /// </summary>
-    public List<CompactRoleDto> Roles { get; set; } = new();
+    public List<Role> Roles { get; set; } = new();
 
     /// <summary>
     /// Connections the party has
@@ -44,5 +46,5 @@ public class ConnectionPackageDto
     /// <summary>
     /// Packages the party has
     /// </summary>
-    public List<CompactPackageDto> Packages { get; set; } = new();
+    public List<Package> Packages { get; set; } = new();
 }

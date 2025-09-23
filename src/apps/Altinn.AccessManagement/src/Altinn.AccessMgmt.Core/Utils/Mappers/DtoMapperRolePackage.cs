@@ -1,5 +1,5 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Models;
-using Altinn.Authorization.Api.Contracts.AccessManagement;
+﻿using Altinn.AccessMgmt.Core.Models;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 
 namespace Altinn.AccessMgmt.Core.Utils;
 
@@ -29,8 +29,8 @@ public partial class DtoMapper : IDtoMapper
             Description = obj.Description,
             IsDelegable = obj.IsDelegable,
             IsAssignable = obj.IsAssignable,
-            Area = Convert(area),
-            Resources = resources.Select(Convert).ToList()
+            Area = area,
+            Resources = resources
         };
     }
 
@@ -41,7 +41,7 @@ public partial class DtoMapper : IDtoMapper
             Id = obj.Id,
             Role = DtoMapper.Convert(obj.Role),
             Package = DtoMapper.Convert(obj.Package),
-            EntityVariant = Convert(obj.EntityVariant),
+            EntityVariant = obj.EntityVariant,
             HasAccess = obj.HasAccess,
             CanDelegate = obj.CanDelegate
         };
@@ -57,7 +57,7 @@ public partial class DtoMapper : IDtoMapper
             Code = obj.Code,
             IsKeyRole = obj.IsKeyRole,
             Urn = obj.Urn,
-            Provider = Convert(obj.Provider),
+            Provider = obj.Provider,
             LegacyRoleCode = null,
             LegacyUrn = null
         };
@@ -112,73 +112,6 @@ public partial class DtoMapper : IDtoMapper
             Description = area.Description,
             Icon = area.IconUrl,
             Packages = packages.Select(Convert).ToList()
-        };
-    }
-
-    public static EntityVariantDto Convert(EntityVariant entityVariant)
-    {
-        return new EntityVariantDto()
-        {
-            Id = entityVariant.Id,
-            Name = entityVariant.Name,
-            Description = entityVariant.Description,
-            TypeId = entityVariant.TypeId,
-            Type = Convert(entityVariant.Type)
-        };
-    }
-
-    public static EntityTypeDto Convert(EntityType entityType) {
-        return new EntityTypeDto()
-        {
-            Id = entityType.Id,
-            ProviderId = entityType.ProviderId,
-            Name = entityType.Name,
-            Provider = Convert(entityType.Provider)
-        };
-    }
-
-    public static ProviderDto Convert(Provider provider) {
-        return new ProviderDto()
-        {
-            Id = provider.Id,
-            Name = provider.Name,
-            RefId = provider.RefId,
-            LogoUrl = provider.LogoUrl,
-            Code = provider.Code,
-            TypeId = provider.TypeId,
-            Type = Convert(provider.Type)
-        };
-    }
-
-    public static ProviderTypeDto Convert(ProviderType entityType) {
-        return new ProviderTypeDto()
-        { 
-            Id = entityType.Id, 
-            Name = entityType.Name
-        };
-    }
-
-    public static ResourceTypeDto Convert(ResourceType resourceType)
-    {
-        return new ResourceTypeDto
-        {
-            Id = resourceType.Id,
-            Name = resourceType.Name,
-        };
-    }
-
-    public static ResourceDto Convert(Resource resource) 
-    {
-        return new ResourceDto()
-        {
-            Id = resource.Id,
-            Name = resource.Name,
-            Description= resource.Description,
-            TypeId = resource.TypeId,
-            Type = Convert(resource.Type),
-            ProviderId = resource.ProviderId,
-            Provider = Convert(resource.Provider),
-            RefId = resource.RefId
         };
     }
 }

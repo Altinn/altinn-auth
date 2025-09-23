@@ -1,4 +1,6 @@
-﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
+﻿using Altinn.AccessMgmt.PersistenceEF.Models;
+
+namespace Altinn.AccessMgmt.Core.Models;
 
 /// <summary>
 /// Represents a group of areas, categorized under a specific entity type.
@@ -53,5 +55,5 @@ public class RoleDto
     /// <summary>
     /// Provider
     /// </summary>
-    public ProviderDto Provider { get; set; }
+    public Provider Provider { get; set; }
 }
