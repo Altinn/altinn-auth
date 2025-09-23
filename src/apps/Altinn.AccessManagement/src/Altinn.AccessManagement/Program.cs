@@ -44,6 +44,9 @@ await app.RunAsync();
 
 async Task Init()
 {
+    // Add definitions to the database definition registry
+    await app.DefineAccessMgmtDbModels();
+
     if (await featureManager.IsEnabledAsync(AccessManagementFeatureFlags.MigrationDbEf))
     {
         await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
