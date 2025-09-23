@@ -86,9 +86,9 @@ alter table dbo_history.auditentity
     add constraint pk_auditentity
         primary key (id, audit_validfrom, audit_validto);
 
-alter table dbo_history.auditentitylookup
-    add constraint pk_auditentitylookup
-        primary key (id, audit_validfrom, audit_validto);
+--alter table dbo_history.auditentitylookup
+--    add constraint pk_auditentitylookup
+--        primary key (id, audit_validfrom, audit_validto);
 
 alter table dbo_history.auditentitytype
     add constraint pk_auditentitytype
@@ -180,15 +180,9 @@ alter table dbo_history.auditprovider
     alter column typeid set not null;
 
 alter table dbo_history.auditentitytype
-    alter column audit_changedby drop not null;
-
-alter table dbo_history.auditentitytype
-    alter column audit_changedbysystem drop not null;
-
-alter table dbo_history.auditentitytype
-    alter column audit_changeoperation drop not null;
-
-alter table dbo_history.auditentitytype
+    alter column audit_changedby drop not null,
+    alter column audit_changedbysystem drop not null,
+    alter column audit_changeoperation drop not null,
     alter column providerid set not null;
 
 alter table dbo_history.auditresource
@@ -207,15 +201,9 @@ alter table dbo_history.auditresource
     alter column typeid set not null;
 
 alter table dbo_history.auditentityvariant
-    alter column audit_changedby drop not null;
-
-alter table dbo_history.auditentityvariant
-    alter column audit_changedbysystem drop not null;
-
-alter table dbo_history.auditentityvariant
-    alter column audit_changeoperation drop not null;
-
-alter table dbo_history.auditentityvariant
+    alter column audit_changedby drop not null,
+    alter column audit_changedbysystem drop not null,
+    alter column audit_changeoperation drop not null,
     alter column typeid set not null;
 
 alter table dbo_history.auditareagroup
@@ -267,33 +255,19 @@ alter table dbo_history.auditrole
     alter column providerid set not null;
 
 alter table dbo_history.auditentityvariantrole
-    alter column audit_changedby drop not null;
-
-alter table dbo_history.auditentityvariantrole
-    alter column audit_changedbysystem drop not null;
-
-alter table dbo_history.auditentityvariantrole
+    alter column audit_changedby drop not null,
+    alter column audit_changedbysystem drop not null,
     alter column audit_changeoperation drop not null;
 
 alter table dbo_history.auditentityvariantrole
-    alter column variantid set not null;
-
-alter table dbo_history.auditentityvariantrole
+    alter column variantid set not null,
     alter column roleid set not null;
 
 alter table dbo_history.auditentity
-    alter column audit_changedby drop not null;
-
-alter table dbo_history.auditentity
-    alter column audit_changedbysystem drop not null;
-
-alter table dbo_history.auditentity
-    alter column audit_changeoperation drop not null;
-
-alter table dbo_history.auditentity
-    alter column typeid set not null;
-
-alter table dbo_history.auditentity
+    alter column audit_changedby drop not null,
+    alter column audit_changedbysystem drop not null,
+    alter column audit_changeoperation drop not null,
+    alter column typeid set not null,
     alter column variantid set not null;
 
 alter table dbo_history.auditpackage
@@ -306,91 +280,53 @@ alter table dbo_history.auditpackage
     alter column audit_changeoperation drop not null;
 
 alter table dbo_history.auditpackage
-    alter column isassignable set not null;
-
-alter table dbo_history.auditpackage
-    alter column isassignable drop default;
-
-alter table dbo_history.auditpackage
-    alter column isdelegable set not null;
-
-alter table dbo_history.auditpackage
-    alter column isdelegable drop default;
-
-alter table dbo_history.auditpackage
-    alter column hasresources set not null;
-
-alter table dbo_history.auditpackage
-    alter column providerid set not null;
-
-alter table dbo_history.auditpackage
-    alter column entitytypeid set not null;
-
-alter table dbo_history.auditpackage
+    alter column isassignable set not null,
+    alter column isassignable drop default,
+    alter column isdelegable set not null,
+    alter column isdelegable drop default,
+    alter column hasresources set not null,
+    alter column providerid set not null,
+    alter column entitytypeid set not null,
     alter column areaid set not null;
 
 alter table dbo_history.auditassignment
-    alter column audit_changedby drop not null;
-
-alter table dbo_history.auditassignment
-    alter column audit_changedbysystem drop not null;
-
-alter table dbo_history.auditassignment
-    alter column audit_changeoperation drop not null;
-
-alter table dbo_history.auditassignment
-    alter column roleid set not null;
-
-alter table dbo_history.auditassignment
-    alter column fromid set not null;
-
-alter table dbo_history.auditassignment
+    alter column audit_changedby drop not null,
+    alter column audit_changedbysystem drop not null,
+    alter column audit_changeoperation drop not null,
+    alter column roleid set not null,
+    alter column fromid set not null,
     alter column toid set not null;
 
 alter table dbo_history.auditrolelookup
-    alter column audit_changedby drop not null;
-
-alter table dbo_history.auditrolelookup
-    alter column audit_changedbysystem drop not null;
-
-alter table dbo_history.auditrolelookup
-    alter column audit_changeoperation drop not null;
-
-alter table dbo_history.auditrolelookup
+    alter column audit_changedby drop not null,
+    alter column audit_changedbysystem drop not null,
+    alter column audit_changeoperation drop not null,
     alter column roleid set not null;
 
 alter table dbo_history.auditrolemap
-    alter column audit_changedby drop not null;
-
-alter table dbo_history.auditrolemap
-    alter column audit_changedbysystem drop not null;
-
-alter table dbo_history.auditrolemap
-    alter column audit_changeoperation drop not null;
-
-alter table dbo_history.auditrolemap
-    alter column hasroleid set not null;
-
-alter table dbo_history.auditrolemap
+    alter column audit_changedby drop not null,
+    alter column audit_changedbysystem drop not null,
+    alter column audit_changeoperation drop not null,
+    alter column hasroleid set not null,
     alter column getroleid set not null;
 
-alter table dbo_history.auditentitylookup
-    alter column audit_changedby drop not null;
-
-alter table dbo_history.auditentitylookup
-    alter column audit_changedbysystem drop not null;
-
-alter table dbo_history.auditentitylookup
-    alter column audit_changeoperation drop not null;
-
-alter table dbo_history.auditentitylookup
-    alter column entityid set not null;
-
-alter table dbo_history.auditentitylookup
-    alter column isprotected set not null;
-
-alter table dbo_history.auditentitylookup
-    alter column isprotected drop default;
+--alter table dbo_history.auditentitylookup
+--    alter column audit_changedby drop not null;
+--
+--alter table dbo_history.auditentitylookup
+--    alter column audit_changedbysystem drop not null;
+--
+--alter table dbo_history.auditentitylookup
+--    alter column audit_changeoperation drop not null;
+--
+--alter table dbo_history.auditentitylookup
+--    alter column entityid set not null;
+--
+--alter table dbo_history.auditentitylookup
+--    alter column isprotected set not null;
+--
+--alter table dbo_history.auditentitylookup
+--    alter column isprotected drop default;
 
 alter table dbo_history.auditroleresource
     alter column audit_changedby drop not null;

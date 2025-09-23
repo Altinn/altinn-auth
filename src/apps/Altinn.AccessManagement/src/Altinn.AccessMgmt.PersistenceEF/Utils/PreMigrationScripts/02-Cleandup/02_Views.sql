@@ -7,8 +7,8 @@ SELECT a.fromid,
        ap.packageid,
        NULL::uuid     AS resourceid,
        'Direct'::text AS reason
-FROM assignment a
-         JOIN assignmentpackage ap ON ap.assignmentid = a.id
+FROM dbo.assignment a
+         JOIN dbo.assignmentpackage ap ON ap.assignmentid = a.id
 UNION ALL
 SELECT a.fromid,
        a.roleid,
@@ -18,8 +18,8 @@ SELECT a.fromid,
        rp.packageid,
        NULL::uuid     AS resourceid,
        'Direct'::text AS reason
-FROM assignment a
-         JOIN rolepackage rp ON rp.roleid = a.roleid AND rp.hasaccess = true
+FROM dbo.assignment a
+         JOIN dbo.rolepackage rp ON rp.roleid = a.roleid AND rp.hasaccess = true
 UNION ALL
 SELECT a.fromid,
        a.roleid,
@@ -29,9 +29,9 @@ SELECT a.fromid,
        rp.packageid,
        NULL::uuid     AS resourceid,
        'Direct'::text AS reason
-FROM assignment a
-         JOIN rolemap rm ON a.roleid = rm.hasroleid
-         JOIN rolepackage rp ON rp.roleid = rm.getroleid AND rp.hasaccess = true
+FROM dbo.assignment a
+         JOIN dbo.rolemap rm ON a.roleid = rm.hasroleid
+         JOIN dbo.rolepackage rp ON rp.roleid = rm.getroleid AND rp.hasaccess = true
 UNION ALL
 SELECT a.fromid,
        a.roleid,
@@ -41,10 +41,10 @@ SELECT a.fromid,
        ap.packageid,
        NULL::uuid      AS resourceid,
        'KeyRole'::text AS reason
-FROM assignment a
-         JOIN assignment a2 ON a.toid = a2.fromid
-         JOIN role r ON a2.roleid = r.id AND r.iskeyrole = true
-         JOIN assignmentpackage ap ON ap.assignmentid = a.id
+FROM dbo.assignment a
+         JOIN dbo.assignment a2 ON a.toid = a2.fromid
+         JOIN dbo.role r ON a2.roleid = r.id AND r.iskeyrole = true
+         JOIN dbo.assignmentpackage ap ON ap.assignmentid = a.id
 UNION ALL
 SELECT a.fromid,
        a.roleid,
@@ -54,10 +54,10 @@ SELECT a.fromid,
        rp.packageid,
        NULL::uuid      AS resourceid,
        'KeyRole'::text AS reason
-FROM assignment a
-         JOIN assignment a2 ON a.toid = a2.fromid
-         JOIN role r ON a2.roleid = r.id AND r.iskeyrole = true
-         JOIN rolepackage rp ON rp.roleid = a.roleid AND rp.hasaccess = true
+FROM dbo.assignment a
+         JOIN dbo.assignment a2 ON a.toid = a2.fromid
+         JOIN dbo.role r ON a2.roleid = r.id AND r.iskeyrole = true
+         JOIN dbo.rolepackage rp ON rp.roleid = a.roleid AND rp.hasaccess = true
 UNION ALL
 SELECT fa.fromid,
        fa.roleid,
@@ -67,8 +67,8 @@ SELECT fa.fromid,
        dp.packageid,
        NULL::uuid         AS resourceid,
        'Delegation'::text AS reason
-FROM delegation d
-         JOIN assignment fa ON fa.id = d.fromid
-         JOIN assignment ta ON ta.id = d.toid
-         JOIN delegationpackage dp ON dp.delegationid = d.id;
+FROM dbo.delegation d
+         JOIN dbo.assignment fa ON fa.id = d.fromid
+         JOIN dbo.assignment ta ON ta.id = d.toid
+         JOIN dbo.delegationpackage dp ON dp.delegationid = d.id;
 
