@@ -211,6 +211,18 @@ module "appsettings" {
 
   feature_flags = [
     {
+      name        = "AccessMgmt.Core.HostedServices.RegisterSync"
+      description = "(EF) Specifies if the resource register data should streamed from resource register service to access management database."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Core.HostedServices.ResourceRegistrySync"
+      description = "(EF) Specifies if the register data should streamed from register service to access management database."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
       name        = "AccessManagement.HostedServices.ResourceRegistrySync"
       description = "Specifies if the resource register data should streamed from resource register service to access management database."
       label       = "${lower(var.environment)}-access-management"

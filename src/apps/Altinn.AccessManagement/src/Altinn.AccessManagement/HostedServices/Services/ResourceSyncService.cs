@@ -1,7 +1,6 @@
 ﻿using System.Linq.Expressions;
 using Altinn.AccessManagement.HostedServices.Contracts;
 using Altinn.AccessManagement.HostedServices.Leases;
-using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Contracts;
 using Altinn.AccessMgmt.Persistence.Core.Helpers;
 using Altinn.AccessMgmt.Persistence.Core.Models;
@@ -9,9 +8,7 @@ using Altinn.AccessMgmt.Persistence.Data;
 using Altinn.AccessMgmt.Persistence.Models;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.Authorization.Host.Lease;
-using Altinn.Authorization.Integration.Platform.Register;
 using Altinn.Authorization.Integration.Platform.ResourceRegistry;
-using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessManagement.HostedServices.Services;
 
@@ -19,7 +16,6 @@ namespace Altinn.AccessManagement.HostedServices.Services;
 public partial class ResourceSyncService : IResourceSyncService
 {
     private readonly ILogger<ResourceSyncService> _logger;
-    private readonly IFeatureManager _featureManager;
     private readonly IAltinnResourceRegistry _resourceRegistry;
     private readonly IIngestService _ingestService;
     private readonly IResourceTypeRepository _resourceTypeRepository;

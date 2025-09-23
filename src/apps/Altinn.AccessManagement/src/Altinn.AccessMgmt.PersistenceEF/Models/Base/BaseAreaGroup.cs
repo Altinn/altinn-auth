@@ -1,4 +1,5 @@
 ﻿using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
+using Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Models.Base;
@@ -7,7 +8,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Models.Base;
 /// For grouping of Areas
 /// </summary>
 [NotMapped]
-public class BaseAreaGroup : BaseAudit
+public class BaseAreaGroup : BaseAudit, IEntityId, IEntityName
 {
     /// <summary>
     /// Id

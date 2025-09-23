@@ -16,10 +16,11 @@ public static class ServiceCollectionExtensions
     {
         var options = new AccessManagementDatabaseOptions(configureOptions);
         services.AddScoped<ReadOnlyInterceptor>();
+        services.AddScoped<IAuditContextAccessor, AuditContextAccessor>();
         services.AddScoped<ITranslationService, TranslationService>();
         return options.Source switch
         {
-            SourceType.App => services.AddDbContextPool<AppDbContext>((sp, options) =>
+            SourceType.App => services.AddDbContext<AppDbContext>((sp, options) =>
             {
                 var db = sp.GetRequiredService<IAltinnDatabase>();
                 var connectionString = db.CreatePgsqlConnection(SourceType.App);

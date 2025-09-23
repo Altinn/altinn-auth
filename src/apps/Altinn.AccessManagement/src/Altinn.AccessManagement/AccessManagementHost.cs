@@ -6,16 +6,16 @@ using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Extensions;
 using Altinn.AccessManagement.Health;
-using Altinn.AccessManagement.HostedServices;
 using Altinn.AccessManagement.HostedServices.Contracts;
 using Altinn.AccessManagement.HostedServices.Services;
 using Altinn.AccessManagement.Integration.Configuration;
 using Altinn.AccessManagement.Integration.Extensions;
 using Altinn.AccessManagement.Persistence.Configuration;
 using Altinn.AccessManagement.Persistence.Extensions;
+using Altinn.AccessMgmt.Core.Extensions;
+using Altinn.AccessMgmt.Core.HostedServices;
 using Altinn.AccessMgmt.Persistence.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
-using Altinn.Authorization.AccessManagement;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.Host;
 using Altinn.Authorization.Host.Database;
@@ -106,6 +106,8 @@ internal static partial class AccessManagementHost
             options.Source = appsettings.RunInitOnly ? SourceType.Migration : SourceType.App; 
         });
 
+        builder.Services.AddAccessMgmtCore();
+
         builder.ConfigurePostgreSqlConfiguration();
         builder.ConfigureAltinnPackages();
         builder.ConfigureInternals();
@@ -131,16 +133,16 @@ internal static partial class AccessManagementHost
 
     private static WebApplicationBuilder ConfigureHostedServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddHostedService<RegisterHostedService>();
+        builder.Services.AddHostedService<Authorization.AccessManagement.RegisterHostedService>();
         builder.Services.AddSingleton<IPartySyncService, PartySyncService>();
         builder.Services.AddSingleton<IRoleSyncService, RoleSyncService>();
         builder.Services.AddSingleton<IResourceSyncService, ResourceSyncService>();
 
-        builder.Services.AddHostedService<AltinnRoleHostedService>();
-        builder.Services.AddSingleton<IAllAltinnRoleSyncService, AllAltinnRoleSyncService>();
-        builder.Services.AddSingleton<IAltinnClientRoleSyncService, AltinnClientRoleSyncService>();
-        builder.Services.AddSingleton<IAltinnBankruptcyEstateRoleSyncService, AltinnBankruptcyEstateRoleSyncService>();
-        builder.Services.AddSingleton<IAltinnAdminRoleSyncService, AltinnAdminRoleSyncService>();
+        // builder.Services.AddHostedService<AltinnRoleHostedService>();
+        // builder.Services.AddSingleton<IAllAltinnRoleSyncService, AllAltinnRoleSyncService>();
+        // builder.Services.AddSingleton<IAltinnClientRoleSyncService, AltinnClientRoleSyncService>();
+        // builder.Services.AddSingleton<IAltinnBankruptcyEstateRoleSyncService, AltinnBankruptcyEstateRoleSyncService>();
+        // builder.Services.AddSingleton<IAltinnAdminRoleSyncService, AltinnAdminRoleSyncService>();
 
         return builder;
     }

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 
@@ -8,8 +9,32 @@ namespace Altinn.AccessMgmt.PersistenceEF.Constants;
 /// Each constant represents a type of provider (e.g., system provider or service owner)
 /// with a fixed unique identifier (GUID), name, and multilingual translations.
 /// </summary>
-public static class ProviderTypeConstants
+public static class ProviderTypeConstants 
 {
+    /// <summary>
+    /// Try to get <see cref="ProviderType"/> by name.
+    /// </summary>
+    public static bool TryGetByName(string name, [NotNullWhen(true)] out ConstantDefinition<ProviderType>? result)
+        => ConstantLookup.TryGetByName(typeof(ProviderTypeConstants), name, out result);
+
+    /// <summary>
+    /// Try to get <see cref="ProviderType"/> using Guid.
+    /// </summary>
+    public static bool TryGetById(Guid id, [NotNullWhen(true)] out ConstantDefinition<ProviderType>? result)
+        => ConstantLookup.TryGetById(typeof(ProviderTypeConstants), id, out result);
+
+    /// <summary>
+    /// Get all constants as a read-only collection.
+    /// </summary>
+    public static IReadOnlyCollection<ConstantDefinition<ProviderType>> AllEntities() 
+        => ConstantLookup.AllEntities<ProviderType>(typeof(ProviderTypeConstants));
+
+    /// <summary>
+    /// Get all translations as read-only collection.
+    /// </summary>
+    public static IReadOnlyCollection<TranslationEntry> AllTranslations() 
+        => ConstantLookup.AllTranslations<ProviderType>(typeof(ProviderTypeConstants));
+
     /// <summary>
     /// Represents a system provider type.
     /// </summary>

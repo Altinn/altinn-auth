@@ -1,4 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Utils;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Constants;
 
@@ -9,6 +11,30 @@ namespace Altinn.AccessMgmt.PersistenceEF.Constants;
 /// </summary>
 public static class ProviderConstants
 {
+    /// <summary>
+    /// Try to get <see cref="Provider"/> by name.
+    /// </summary>
+    public static bool TryGetByName(string name, [NotNullWhen(true)] out ConstantDefinition<Provider>? result)
+        => ConstantLookup.TryGetByName(typeof(ProviderConstants), name, out result);
+
+    /// <summary>
+    /// Try to get <see cref="Provider"/> using Guid.
+    /// </summary>
+    public static bool TryGetById(Guid id, [NotNullWhen(true)] out ConstantDefinition<Provider>? result)
+        => ConstantLookup.TryGetById(typeof(ProviderConstants), id, out result);
+
+    /// <summary>
+    /// Get all constants as a read-only collection.
+    /// </summary>
+    public static IReadOnlyCollection<ConstantDefinition<Provider>> AllEntities() 
+        => ConstantLookup.AllEntities<Provider>(typeof(ProviderConstants));
+
+    /// <summary>
+    /// Get all translations as read-only collection.
+    /// </summary>
+    public static IReadOnlyCollection<TranslationEntry> AllTranslations() 
+        => ConstantLookup.AllTranslations<Provider>(typeof(ProviderConstants));
+
     /// <summary>
     /// Represents the Altinn 2 system provider.
     /// </summary>
@@ -61,7 +87,7 @@ public static class ProviderConstants
     /// - <c>TypeId:</c> Set to <see cref="ProviderTypeConstants.System"/>
     /// - <c>RefId:</c> Empty string since this is a system provider.
     /// </remarks>
-    public static ConstantDefinition<Provider> ResourceRegistry { get; } = new ConstantDefinition<Provider>("0195ea92-2080-777d-8626-69c91ea2a05d")
+    public static ConstantDefinition<Provider> ResourceRegistry { get; } = new ConstantDefinition<Provider>("0195ea92-2080-777d-8626-69c91ea2a05e")
     {
         Entity = new()
         {
@@ -82,7 +108,7 @@ public static class ProviderConstants
     /// - <c>TypeId:</c> Set to <see cref="ProviderTypeConstants.System"/>
     /// - <c>RefId:</c> Empty string since this is a service owner.
     /// </remarks>
-    public static ConstantDefinition<Provider> CentralCoordinatingRegister { get; } = new ConstantDefinition<Provider>("0195ea92-2080-7e7c-bbe3-bb0521c1e51a")
+    public static ConstantDefinition<Provider> CentralCoordinatingRegister { get; } = new ConstantDefinition<Provider>("0195ea92-2080-7e7c-bbe3-bb0521c1e52a")
     {
         Entity = new()
         {

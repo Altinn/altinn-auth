@@ -26,101 +26,103 @@ public class AppDbContext : DbContext
     #region DbSets
 
     public DbSet<Area> Areas => Set<Area>();
-    
+
     public DbSet<AreaGroup> AreaGroups => Set<AreaGroup>();
-    
+
     public DbSet<Assignment> Assignments => Set<Assignment>();
-    
+
     public DbSet<AssignmentPackage> AssignmentPackages => Set<AssignmentPackage>();
-    
+
     public DbSet<AssignmentResource> AssignmentResources => Set<AssignmentResource>();
-    
+
     public DbSet<Delegation> Delegations => Set<Delegation>();
-    
+
     public DbSet<DelegationPackage> DelegationPackages => Set<DelegationPackage>();
-    
+
     public DbSet<DelegationResource> DelegationResources => Set<DelegationResource>();
-    
+
     public DbSet<Entity> Entities => Set<Entity>();
-    
+
     public DbSet<EntityLookup> EntityLookups => Set<EntityLookup>();
-    
+
     public DbSet<EntityType> EntityTypes => Set<EntityType>();
-    
+
     public DbSet<EntityVariant> EntityVariants => Set<EntityVariant>();
-    
+
     public DbSet<EntityVariantRole> EntityVariantRoles => Set<EntityVariantRole>();
-    
+
     public DbSet<Package> Packages => Set<Package>();
-    
+
     public DbSet<PackageResource> PackageResources => Set<PackageResource>();
-    
+
     public DbSet<Provider> Providers => Set<Provider>();
 
     public DbSet<ProviderType> ProviderTypes => Set<ProviderType>();
 
     public DbSet<Resource> Resources => Set<Resource>();
-    
+
+    public DbSet<ResourceType> ResourceTypes => Set<ResourceType>();
+
     public DbSet<Role> Roles => Set<Role>();
-    
+
     public DbSet<RoleLookup> RoleLookups => Set<RoleLookup>();
-    
+
     public DbSet<RoleMap> RoleMaps => Set<RoleMap>();
-    
+
     public DbSet<RolePackage> RolePackages => Set<RolePackage>();
-    
+
     public DbSet<RoleResource> RoleResources => Set<RoleResource>();
 
     #endregion
 
     #region Audit
-    
+
     public DbSet<AuditArea> AuditAreas => Set<AuditArea>();
-    
+
     public DbSet<AuditAreaGroup> AuditAreaGroups => Set<AuditAreaGroup>();
-    
+
     public DbSet<AuditAssignment> AuditAssignments => Set<AuditAssignment>();
-    
+
     public DbSet<AuditAssignmentPackage> AuditAssignmentPackages => Set<AuditAssignmentPackage>();
-    
+
     public DbSet<AuditAssignmentResource> AuditAssignmentResources => Set<AuditAssignmentResource>();
-    
+
     public DbSet<AuditDelegation> AuditDelegations => Set<AuditDelegation>();
-    
+
     public DbSet<AuditDelegationPackage> AuditDelegationPackages => Set<AuditDelegationPackage>();
-    
+
     public DbSet<AuditDelegationResource> AuditDelegationResources => Set<AuditDelegationResource>();
-    
+
     public DbSet<AuditEntity> AuditEntities => Set<AuditEntity>();
-    
+
     public DbSet<AuditEntityLookup> AuditEntityLookups => Set<AuditEntityLookup>();
-    
+
     public DbSet<AuditEntityType> AuditEntityTypes => Set<AuditEntityType>();
-    
+
     public DbSet<AuditEntityVariant> AuditEntityVariants => Set<AuditEntityVariant>();
-    
+
     public DbSet<AuditEntityVariantRole> AuditEntityVariantRoles => Set<AuditEntityVariantRole>();
-    
+
     public DbSet<AuditPackage> AuditPackages => Set<AuditPackage>();
-    
+
     public DbSet<AuditPackageResource> AuditPackageResources => Set<AuditPackageResource>();
-    
+
     public DbSet<AuditProvider> AuditProviders => Set<AuditProvider>();
-    
+
     public DbSet<AuditProviderType> AuditProviderTypes => Set<AuditProviderType>();
-    
+
     public DbSet<AuditResource> AuditResources => Set<AuditResource>();
-    
+
     public DbSet<AuditResourceType> AuditResourceTypes => Set<AuditResourceType>();
-    
+
     public DbSet<AuditRole> AuditRoles => Set<AuditRole>();
-    
+
     public DbSet<AuditRoleLookup> AuditRoleLookups => Set<AuditRoleLookup>();
-    
+
     public DbSet<AuditRoleMap> AuditRoleMaps => Set<AuditRoleMap>();
-    
+
     public DbSet<AuditRolePackage> AuditRolePackages => Set<AuditRolePackage>();
-    
+
     public DbSet<AuditRoleResource> AuditRoleResources => Set<AuditRoleResource>();
 
     #endregion
@@ -171,7 +173,7 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration<AuditRolePackage>(new AuditRolePackageConfiguration());
         modelBuilder.ApplyConfiguration<AuditRoleResource>(new AuditRoleResourceConfiguration());
     }
-    
+
     private void ApplyConfiguration(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration<TranslationEntry>(new TranslationEntryConfiguration());
@@ -195,6 +197,7 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration<ProviderType>(new ProviderTypeConfiguration());
         modelBuilder.ApplyConfiguration<ResourceType>(new ResourceTypeConfiguration());
         modelBuilder.ApplyConfiguration<Resource>(new ResourceConfiguration());
+        modelBuilder.ApplyConfiguration<ResourceType>(new ResourceTypeConfiguration());
         modelBuilder.ApplyConfiguration<Role>(new RoleConfiguration());
         modelBuilder.ApplyConfiguration<RoleLookup>(new RoleLookupConfiguration());
         modelBuilder.ApplyConfiguration<RoleMap>(new RoleMapConfiguration());
@@ -213,7 +216,7 @@ public class AppDbContext : DbContext
     private static InvalidOperationException MissingAudit() =>
         new("AuditContextAccessor.Current is null. Set it in your controller/service OR call SaveChangesAsync(BaseAudit audit, ...) explicitly.");
 
-    public async Task<int> SaveChangesAsync(AuditValues audit, CancellationToken ct = default) => 
+    public async Task<int> SaveChangesAsync(AuditValues audit, CancellationToken ct = default) =>
         await SaveChangesAsync(audit, acceptAllChangesOnSuccess: true, ct);
 
     public async Task<int> SaveChangesAsync(AuditValues audit, bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)

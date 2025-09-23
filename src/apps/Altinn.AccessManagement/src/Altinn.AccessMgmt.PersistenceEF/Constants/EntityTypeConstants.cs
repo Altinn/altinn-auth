@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 
@@ -10,6 +11,30 @@ namespace Altinn.AccessMgmt.PersistenceEF.Constants;
 /// </summary>
 public static class EntityTypeConstants
 {
+    /// <summary>
+    /// Try to get <see cref="EntityType"/> by name.
+    /// </summary>
+    public static bool TryGetByName(string name, [NotNullWhen(true)] out ConstantDefinition<EntityType>? result)
+        => ConstantLookup.TryGetByName(typeof(EntityTypeConstants), name, out result);
+
+    /// <summary>
+    /// Try to get <see cref="EntityType"/> using Guid.
+    /// </summary>
+    public static bool TryGetById(Guid id, [NotNullWhen(true)] out ConstantDefinition<EntityType>? result)
+        => ConstantLookup.TryGetById(typeof(EntityTypeConstants), id, out result);
+
+    /// <summary>
+    /// Get all constants as a read-only collection.
+    /// </summary>
+    public static IReadOnlyCollection<ConstantDefinition<EntityType>> AllEntities() 
+        => ConstantLookup.AllEntities<EntityType>(typeof(EntityTypeConstants));
+
+    /// <summary>
+    /// Get all translations as read-only collection.
+    /// </summary>
+    public static IReadOnlyCollection<TranslationEntry> AllTranslations() 
+        => ConstantLookup.AllTranslations<EntityType>(typeof(EntityTypeConstants));
+
     /// <summary>
     /// Represents the entity type for organizations ("Organisasjon").
     /// </summary>

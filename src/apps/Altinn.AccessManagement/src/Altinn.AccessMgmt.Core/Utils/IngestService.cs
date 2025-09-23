@@ -3,17 +3,14 @@ using System.Reflection;
 using System.Text;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
-using Altinn.Authorization.Host.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using NpgsqlTypes;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Utils;
 
-public class IngestService(IAltinnDatabase altinnDb, AppDbContext dbContext) : IIngestService
+public class IngestService(AppDbContext dbContext) : IIngestService
 {
-    public IAltinnDatabase DbConnection { get; set; } = altinnDb;
-
     public async Task<int> IngestData<T>(List<T> data, CancellationToken cancellationToken = default)
     {
         var model = dbContext.Model;
@@ -89,6 +86,12 @@ public class IngestService(IAltinnDatabase altinnDb, AppDbContext dbContext) : I
         */
 
         string mergeUpdateStatement = string.Join(", ", ingestColumns.Where(t => !t.IsPK && !matchColumns.Any(y => y.Equals(t.Name, StringComparison.OrdinalIgnoreCase))).Select(t => $"{t.Name} = source.{t.Name}"));
+        if (!string.IsNullOrEmpty(mergeUpdateStatement))
+        {
+            mergeUpdateStatement += ", ";
+        }
+
+        mergeUpdateStatement += $"audit_changedby = '{auditValues.ChangedBy}', audit_changedbysystem = '{auditValues.ChangedBySystem}', audit_changeoperation = '{auditValues.OperationId}'";
 
         var insertColumns = string.Join(", ", ingestColumns.Select(t => $"{t.Name}"));
         var insertValues = string.Join(", ", ingestColumns.Select(t => $"source.{t.Name}"));
@@ -100,7 +103,8 @@ public class IngestService(IAltinnDatabase altinnDb, AppDbContext dbContext) : I
         sb.AppendLine($"WHEN MATCHED AND ({mergeUpdateUnMatchStatement}) THEN ");
         sb.AppendLine($"UPDATE SET {mergeUpdateStatement}");
         sb.AppendLine($"WHEN NOT MATCHED THEN ");
-        sb.AppendLine($"INSERT ({insertColumns}) VALUES ({insertValues});");
+        // sb.AppendLine($"INSERT ({insertColumns}) VALUES ({insertValues});");
+        sb.AppendLine($"INSERT ({insertColumns},audit_changedby,audit_changedbysystem,audit_changeoperation) VALUES ({insertValues},'{auditValues.ChangedBy}','{auditValues.ChangedBySystem}','{auditValues.OperationId}');");
 
         string mergeStatement = sb.ToString();
 
@@ -129,10 +133,10 @@ public class IngestService(IAltinnDatabase altinnDb, AppDbContext dbContext) : I
 
     private async Task<int> WriteToIngest<T>(List<T> data, List<IngestColumnDefinition> ingestColumns, string tableName, CancellationToken cancellationToken = default)
     {
-        using var conn = DbConnection.CreatePgsqlConnection(SourceType.Migration);
+        var conn = (Npgsql.NpgsqlConnection)dbContext.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open)
         {
-            conn.Open();
+            await conn.OpenAsync(cancellationToken);
         }
 
         string columnStatement = string.Join(',', ingestColumns.Select(t => t.Name));
@@ -146,7 +150,7 @@ public class IngestService(IAltinnDatabase altinnDb, AppDbContext dbContext) : I
             {
                 try
                 {
-                    writer.Write(c.Property.GetValue(d), c.Type);
+                    writer.Write(c.Property.GetValue(d), c.DbTypeName);
                 }
                 catch (Exception ex)
                 {
@@ -159,7 +163,7 @@ public class IngestService(IAltinnDatabase altinnDb, AppDbContext dbContext) : I
                     catch
                     {
                         Console.WriteLine($"Failed to write null in column '{c.Name}' for '{tableName}'.");
-                        throw;
+                        //throw;
                     }
                 }
             }
@@ -182,7 +186,7 @@ public class IngestService(IAltinnDatabase altinnDb, AppDbContext dbContext) : I
 
     private List<IngestColumnDefinition> GetColumns<T>(IModel entityModel)
     {
-        var typeName = typeof(T).Name;
+        var table = GetTableName<T>(entityModel);
 
         var entityTypes = entityModel.GetEntityTypes();
         if (entityTypes is null || !entityTypes.Any()) 
@@ -190,8 +194,8 @@ public class IngestService(IAltinnDatabase altinnDb, AppDbContext dbContext) : I
             return null; 
         }
 
-        var et = entityTypes.FirstOrDefault(x => x.GetTableName() == typeName && x.GetSchema() == BaseConfiguration.BaseSchema);
-        var storeObject = StoreObjectIdentifier.Table(typeName, BaseConfiguration.BaseSchema);
+        var et = entityTypes.FirstOrDefault(x => x.GetTableName() == table.TableName && x.GetSchema() == BaseConfiguration.BaseSchema);
+        var storeObject = StoreObjectIdentifier.Table(table.TableName, BaseConfiguration.BaseSchema);
 
         if (et is null) 
         { 
@@ -258,11 +262,6 @@ internal class IngestColumnDefinition
     /// Column name
     /// </summary>
     internal string Name { get; set; }
-
-    /// <summary>
-    /// Db data type
-    /// </summary>
-    internal NpgsqlDbType Type { get; set; }
 
     /// <summary>
     /// Db data type
