@@ -59,7 +59,7 @@ public class PartyModel
     public string PartyUuid { get; set; }
 
     [JsonPropertyName("partyId")]
-    public int PartyId { get; set; }
+    public int? PartyId { get; set; }
 
     [JsonPropertyName("displayName")]
     public string DisplayName { get; set; }
