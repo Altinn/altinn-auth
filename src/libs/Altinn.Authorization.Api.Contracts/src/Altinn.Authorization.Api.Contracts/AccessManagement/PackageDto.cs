@@ -1,6 +1,4 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Models;
-
-namespace Altinn.AccessMgmt.Core.Models;
+﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 
 /// <summary>
 /// Represents a package with related metadata and associated resources.
@@ -38,12 +36,17 @@ public class PackageDto
     public bool IsAssignable { get; set; }
 
     /// <summary>
+    /// Indicates if the package can be used as subject for authorization in resource policy
+    /// </summary>
+    public bool IsResourcePolicyAvailable { get; set; }
+
+    /// <summary>
     /// Gets or sets the area associated with the package.
     /// </summary>
-    public Area Area { get; set; }
+    public AreaDto Area { get; set; }
 
     /// <summary>
     /// Gets or sets the collection of resources linked to the package.
     /// </summary>
-    public IEnumerable<Resource> Resources { get; set; }
+    public IEnumerable<ResourceDto> Resources { get; set; }
 }

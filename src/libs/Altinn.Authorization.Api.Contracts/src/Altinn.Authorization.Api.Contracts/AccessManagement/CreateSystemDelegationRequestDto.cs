@@ -1,4 +1,4 @@
-﻿namespace Altinn.AccessMgmt.Core.Models;
+﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 
 /// <summary>
 /// RequestDto to create Delegation and required assignments for System

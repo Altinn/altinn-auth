@@ -9,6 +9,7 @@ using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
+using CompactRelationDto = Altinn.AccessMgmt.Persistence.Services.Models.CompactRelationDto;
 
 namespace Altinn.AccessManagement.Enduser.Services;
 

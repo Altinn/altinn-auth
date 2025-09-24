@@ -13,6 +13,7 @@ using Altinn.Authorization.ProblemDetails;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.FeatureManagement.Mvc;
+using CompactRelationDto = Altinn.AccessMgmt.Persistence.Services.Models.CompactRelationDto;
 
 namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 
