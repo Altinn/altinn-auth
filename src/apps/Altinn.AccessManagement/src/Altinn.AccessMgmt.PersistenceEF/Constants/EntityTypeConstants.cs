@@ -32,8 +32,52 @@ public static class EntityTypeConstants
     /// <summary>
     /// Get all translations as read-only collection.
     /// </summary>
-    public static IReadOnlyCollection<TranslationEntry> AllTranslations() 
+    public static IReadOnlyCollection<TranslationEntry> AllTranslations()
         => ConstantLookup.AllTranslations<EntityType>(typeof(EntityTypeConstants));
+
+    /// <summary>
+    /// Represents the entity type for enterprise users ("Virksomhetbruker").
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> Unique identifier for the enterprise user entity type.  
+    /// - <c>Name:</c> "Virksomhetbruker"  
+    /// - <c>ProviderId:</c> References <see cref="ProviderConstants.Altinn3"/>  
+    /// - <c>Translations:</c>  
+    ///   - EN: "Enterprise user"  
+    ///   - NN: "Verksemdbrukar"  
+    /// </remarks>
+    public static ConstantDefinition<EntityType> EnterpriseUser { get; } = new ConstantDefinition<EntityType>("870be6c4-b68f-4918-b897-12cdeae246de")
+    {
+        Entity = new()
+        {
+            Name = "Virksomhetbruker",
+            ProviderId = ProviderConstants.Altinn3,
+        },
+        EN = TranslationEntryList.Create(KeyValuePair.Create("Name", "Enterprise user")),
+        NN = TranslationEntryList.Create(KeyValuePair.Create("Name", "Verksemdbrukar")),
+    };
+
+    /// <summary>
+    /// Represents the entity type for self-identified entities ("Selvidentifisert").
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> Unique identifier for the self-identified entity type.  
+    /// - <c>Name:</c> "Selvidentifisert"  
+    /// - <c>ProviderId:</c> References <see cref="ProviderConstants.Altinn3"/>  
+    /// - <c>Translations:</c>  
+    ///   - EN: "Self-identified"  
+    ///   - NN: "Sjølvidentifisert"  
+    /// </remarks>
+    public static ConstantDefinition<EntityType> SelfIdentified { get; } = new ConstantDefinition<EntityType>("fef80481-a798-4407-9e28-8fd167824434")
+    {
+        Entity = new()
+        {
+            Name = "Selvidentifisert",
+            ProviderId = ProviderConstants.Altinn3,
+        },
+        EN = TranslationEntryList.Create(KeyValuePair.Create("Name", "Self-identified")),
+        NN = TranslationEntryList.Create(KeyValuePair.Create("Name", "Sjølvidentifisert")),
+    };
 
     /// <summary>
     /// Represents the entity type for organizations ("Organisasjon").
