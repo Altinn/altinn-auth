@@ -16,7 +16,7 @@
     <PackageVersion Include="Altinn.Common.AccessToken" Version="5.0.5" />
     <PackageVersion Include="Altinn.Common.AccessTokenClient" Version="3.0.15" />
     <PackageVersion Include="Altinn.Platform.Models" Version="1.6.1" />
-    <PackageVersion Include="Altinn.Platform.Storage.Interface" Version="4.0.13" />
+    <PackageVersion Include="Altinn.Platform.Storage.Interface" Version="4.0.14" />
     <PackageVersion Include="Altinn.Swashbuckle.Abstractions" Version="2.4.1" />
     <PackageVersion Include="Altinn.Swashbuckle" Version="2.4.1" />
     <PackageVersion Include="Altinn.Urn.Swashbuckle" Version="2.7.0" />
@@ -57,7 +57,7 @@
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.9" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.9" />
     <PackageVersion Include="Microsoft.AspNetCore.Routing.Abstractions" Version="2.3.0" />
-    <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="8.3.0" />
+    <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="8.4.0" />
     <PackageVersion Include="Microsoft.Azure.DocumentDB.Core" Version="2.22.0" />
     <PackageVersion Include="Microsoft.Azure.Services.AppAuthentication" Version="1.6.2" />
     <PackageVersion Include="Microsoft.Build.Artifacts" Version="6.1.63" />
