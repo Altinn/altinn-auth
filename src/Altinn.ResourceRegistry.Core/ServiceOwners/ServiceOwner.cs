@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Register;
 using Altinn.ResourceRegistry.Extensions;
+using CommunityToolkit.Diagnostics;
 
 namespace Altinn.ResourceRegistry.Core.ServiceOwners;
 
@@ -20,8 +21,12 @@ public sealed record ServiceOwner
     /// <returns>A new <see cref="ServiceOwner"/>.</returns>
     internal static ServiceOwner Create(string orgCode, Org org)
     {
+        if (!OrganizationNumber.TryParse(org.Orgnr, provider: null, out var orgNumber))
+        {
+            ThrowHelper.ThrowArgumentException(nameof(org), $"Org with orgcode '{orgCode}' has invalid organization number '{org.Orgnr ?? "<null>"}'");
+        }
+
         var name = org.Name.ToImmutableDictionary();
-        var orgNumber = OrganizationNumber.Parse(org.Orgnr);
         var envs = org.Environments.ToImmutableHashSet();
 
         return new ServiceOwner(name, org.Logo, orgCode, orgNumber, org.Homepage, envs);
