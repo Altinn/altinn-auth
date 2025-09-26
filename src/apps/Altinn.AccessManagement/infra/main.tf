@@ -290,8 +290,8 @@ module "postgres_server" {
 
   hub_suffix = local.hub_suffix
 
-  subnet_id           = data.azurerm_subnet.postgres.id
-  postgres_version    = "17"
+  subnet_id        = data.azurerm_subnet.postgres.id
+  postgres_version = "17"
   configurations = {
     "azure.extensions" : "HSTORE"
   }
