@@ -169,9 +169,8 @@ public sealed class TableGraph
         // sort by deps, fewest first
         results.Sort((a, b) => a.Deps.Length.CompareTo(b.Deps.Length));
 
-        var lookup = new Dictionary<string, Node?>();
+        var lookup = new Dictionary<string, Node>();
         var builder = ImmutableArray.CreateBuilder<Node>(results.Count);
-        var depNodes = new HashSet<Node>(results.Count);
 
         while (builder.Count < results.Count)
         {
@@ -179,54 +178,33 @@ public sealed class TableGraph
             foreach (var (table, estRows, cols, deps) in results)
             {
                 ref var nodeRef = ref CollectionsMarshal.GetValueRefOrAddDefault(lookup, table, out var exists);
-                if (exists && nodeRef is not null)
+                if (exists)
                 {
                     // already added
                     continue;
                 }
 
-                depNodes.Clear();
-                foreach (var dep in deps)
+                if (deps.All(d => lookup.ContainsKey(d)))
                 {
-                    if (dep == table)
-                    {
-                        // self-reference, skip
-                        continue;
-                    }
+                    var node = new Node(
+                        schemaName,
+                        table,
+                        estRows,
+                        cols,
+                        deps.Select(d => lookup[d]));
 
-                    if (!Resolve(dep, lookup, out var depNode))
-                    {
-                        // dependency not yet resolved
-                        goto skip;
-                    }
-
-                    depNodes.Add(depNode);
+                    builder.Add(node);
+                    nodeRef = node;
+                    added = true;
                 }
-
-                var node = new Node(
-                    schemaName,
-                    table,
-                    estRows,
-                    cols,
-                    depNodes);
-
-                builder.Add(node);
-                nodeRef = node;
-                added = true;
-
-            skip:;
             }
 
             if (!added)
             {
-                var missing = results.Where(r => !Resolve(r.Name, lookup, out _)).Select(r => r.Name).ToList();
-                ThrowHelper.ThrowInvalidOperationException($"Failed to build table graph for schema \"{schemaName}\". Could not resolve tables: {string.Join(", ", missing)}");
+                ThrowHelper.ThrowInvalidOperationException($"Failed to build table graph for schema \"{schemaName}\".");
             }
         }
 
         return new TableGraph(builder.MoveToImmutable());
-
-        static bool Resolve(string table, Dictionary<string, Node?> lookup, [NotNullWhen(true)] out Node? node)
-            => lookup.TryGetValue(table, out node) && node is not null;
     }
 }

@@ -39,6 +39,30 @@
     "retry YT01 register import": {
       "commandName": "Project",
       "commandLineArgs": "register retry\r\n\"${REGISTER_SB_YT01}\"\r\n\"${REGISTER_DB_YT01}\""
+    },
+    "retry TT02 register import": {
+      "commandName": "Project",
+      "commandLineArgs": "register retry\r\n\"${REGISTER_SB_TT02}\"\r\n\"${REGISTER_DB_TT02}\""
+    },
+    "export AT22 errors": {
+      "commandName": "Project",
+      "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_AT22}\""
+    },
+    "export AT23 errors": {
+      "commandName": "Project",
+      "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_AT23}\""
+    },
+    "export AT24 errors": {
+      "commandName": "Project",
+      "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_AT24}\""
+    },
+    "export YT01 errors": {
+      "commandName": "Project",
+      "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_YT01}\""
+    },
+    "export TT02 errors": {
+      "commandName": "Project",
+      "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_TT02}\""
     }
   }
 }

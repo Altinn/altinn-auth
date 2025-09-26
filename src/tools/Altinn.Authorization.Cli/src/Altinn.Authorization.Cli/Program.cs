@@ -34,6 +34,7 @@ app.Configure(config =>
     {
         sb.SetDescription("Commands for working with service bus.");
         sb.AddCommand<ServiceBus.RetryCommand>("retry");
+        sb.AddCommand<ServiceBus.ExportErrorsCommand>("export-errors");
     });
 
     config.AddBranch("register", register =>

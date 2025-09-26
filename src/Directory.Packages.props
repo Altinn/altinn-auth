@@ -39,6 +39,7 @@
     <PackageVersion Include="Blazored.LocalStorage" Version="4.5.0" />
     <PackageVersion Include="CommunityToolkit.Diagnostics" Version="8.4.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="Docker.DotNet" Version="3.125.15" />
     <PackageVersion Include="IdentityModel" Version="7.0.0" />
     <PackageVersion Include="JWTCookieAuthentication" Version="4.0.4" />
     <PackageVersion Include="MassTransit" Version="8.5.2" />
@@ -96,6 +97,8 @@
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.14.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+    <PackageVersion Include="MongoDB.Driver" Version="3.4.3" />
+    <PackageVersion Include="MongoDB.Driver.Core" Version="2.30.0" />
     <PackageVersion Include="Moq" Version="4.20.72" />
     <PackageVersion Include="Nerdbank.Streams" Version="2.13.16" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />

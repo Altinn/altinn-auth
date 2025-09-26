@@ -607,6 +607,7 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
             [
                 new ImportA2PartyCommandHandler(),
                 new ImportA2CCRRolesCommandHandler(),
+                new ImportA2UserIdForPartyCommandHandler(),
             ])
     {
         public override bool GetHandler(ServiceBusReceivedMessage message, [NotNullWhen(true)] out ErrorQueueMessageHandler? handler)
@@ -635,6 +636,16 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
             : ErrorQueueMessageHandler<ImportA2CCRRolesCommand>
         {
             protected override async ValueTask<bool> Handle(ImportA2CCRRolesCommand message, Context sender, CancellationToken cancellationToken)
+            {
+                await sender.Send(message, cancellationToken);
+                return true;
+            }
+        }
+
+        private sealed class ImportA2UserIdForPartyCommandHandler
+            : ErrorQueueMessageHandler<ImportA2UserIdForPartyCommand>
+        {
+            protected override async ValueTask<bool> Handle(ImportA2UserIdForPartyCommand message, Context sender, CancellationToken cancellationToken)
             {
                 await sender.Send(message, cancellationToken);
                 return true;
@@ -739,6 +750,33 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
         public required DateTimeOffset ChangedTime { get; init; }
     }
 
+    private sealed record ImportA2UserIdForPartyCommand
+        : IFakeMassTransitMessage<ImportA2UserIdForPartyCommand>
+    {
+        static Utf8String IFakeMassTransitMessage<ImportA2UserIdForPartyCommand>.MessageUrn
+            => "urn:message:Altinn.Register.PartyImport.A2:ImportA2UserIdForPartyCommand"u8;
+
+        static Guid IFakeMassTransitMessage<ImportA2UserIdForPartyCommand>.MessageId(ImportA2UserIdForPartyCommand message)
+            => message.CommandId;
+
+        public Guid CommandId { get; } = Guid.CreateVersion7();
+
+        /// <summary>
+        /// Gets the party UUID.
+        /// </summary>
+        public required Guid PartyUuid { get; init; }
+
+        /// <summary>
+        /// Gets the party type.
+        /// </summary>
+        public required string PartyType { get; init; }
+
+        /// <summary>
+        /// Gets the tracking information for the upsert.
+        /// </summary>
+        public JobTrackig Tracking { get; init; }
+    }
+
     private sealed record JobTrackig
     {
         public string JobName { get; init; }
@@ -764,6 +802,14 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
         public async Task Send(ImportA2CCRRolesCommand command, CancellationToken cancellationToken)
         {
             var data = new BinaryData(FakeMassTransitEnvelope.Create(command), Options, typeof(FakeMassTransitEnvelope<ImportA2CCRRolesCommand>));
+            var message = new ServiceBusMessage(data);
+            message.ContentType = "application/vnd.masstransit+json";
+            await sender.SendMessageAsync(message, cancellationToken);
+        }
+
+        public async Task Send(ImportA2UserIdForPartyCommand command, CancellationToken cancellationToken)
+        {
+            var data = new BinaryData(FakeMassTransitEnvelope.Create(command), Options, typeof(FakeMassTransitEnvelope<ImportA2UserIdForPartyCommand>));
             var message = new ServiceBusMessage(data);
             message.ContentType = "application/vnd.masstransit+json";
             await sender.SendMessageAsync(message, cancellationToken);
