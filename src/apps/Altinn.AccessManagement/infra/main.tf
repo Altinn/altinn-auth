@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "4.45.0"
+      version = "4.46.0"
     }
     static = {
       source  = "tiwood/static"
@@ -58,12 +58,6 @@ resource "static_data" "static" {
   lifecycle {
     ignore_changes = [data]
   }
-}
-
-data "azurerm_private_dns_zone" "postgres" {
-  name                = "privatelink.postgres.database.azure.com"
-  resource_group_name = "rg${local.hub_suffix}"
-  provider            = azurerm.hub
 }
 
 data "azurerm_subnet" "postgres" {
@@ -297,8 +291,7 @@ module "postgres_server" {
   hub_suffix = local.hub_suffix
 
   subnet_id           = data.azurerm_subnet.postgres.id
-  private_dns_zone_id = data.azurerm_private_dns_zone.postgres.id
-  postgres_version    = "16"
+  postgres_version    = "17"
   configurations = {
     "azure.extensions" : "HSTORE"
   }

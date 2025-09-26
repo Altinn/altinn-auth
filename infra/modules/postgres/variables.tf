@@ -20,10 +20,6 @@ variable "location" {
   type = string
 }
 
-variable "private_dns_zone_id" {
-  type = string
-}
-
 variable "subnet_id" {
   type = string
 }
@@ -85,7 +81,7 @@ variable "entraid_admins" {
 
 variable "postgres_version" {
   type    = string
-  default = "16"
+  default = "17"
 }
 
 variable "storage_mb" {
