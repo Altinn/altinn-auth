@@ -1,5 +1,6 @@
 using Altinn.Authorization.ProblemDetails;
 using Altinn.Platform.Events.Formatters;
+using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Errors;
 using Altinn.ResourceRegistry.Core.Extensions;
@@ -10,6 +11,7 @@ using Altinn.ResourceRegistry.Extensions;
 using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Utils;
 using Altinn.Urn;
+using Azure.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -248,6 +250,27 @@ namespace Altinn.ResourceRegistry.Controllers
         public async Task<ActionResult> GetPolicy(string id, CancellationToken cancellationToken)
         {
             ServiceResource resource = await _resourceRegistry.GetResource(id, cancellationToken);
+            if (resource == null && id.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX))
+            {
+                string[] idParts = id.Split('_');
+
+                // Scenario for app imported in to resource registry
+                if (idParts.Length == 3)
+                {
+                    string org = idParts[1];
+                    string app = idParts[2];
+
+                    Stream appStream = await _resourceRegistry.GetAppPolicy(org, app, cancellationToken);
+
+                    if (appStream == null)
+                    {
+                        return NotFound("Unable to find requested policy");
+                    }
+
+                    return File(appStream, "text/xml", "policy.xml");
+                }
+            }
+
             if (resource == null)
             {
                 return NotFound("Unable to find resource");

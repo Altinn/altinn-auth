@@ -153,6 +153,12 @@ namespace Altinn.ResourceRegistry.Core.Services
             return await _policyRepository.GetPolicyAsync(resourceId, cancellationToken);
         }
 
+        /// <inheritdoc/>
+        public async Task<Stream> GetAppPolicy(string org, string app,CancellationToken cancellationToken = default)
+        {
+            return await _policyRepository.GetAppPolicyAsync(org, app, cancellationToken);
+        }
+
         /// <inheritdoc />
         public async Task<bool> UpdateResourceInAccessManagement(ServiceResource serviceResource, CancellationToken cancellationToken = default)
         {
