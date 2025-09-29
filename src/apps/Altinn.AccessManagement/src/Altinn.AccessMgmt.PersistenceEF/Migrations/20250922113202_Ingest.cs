@@ -13,7 +13,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
             migrationBuilder.Sql("""
                 CREATE SCHEMA ingest;
                 ALTER SCHEMA ingest OWNER TO platform_authorization_admin;
-                GRANT USAGE ON SCHEMA ingest TO platform_authorization;
+                GRANT USAGE, CREATE ON SCHEMA ingest TO platform_authorization;
                 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA ingest TO platform_authorization;
                 """);
         }

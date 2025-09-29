@@ -11,8 +11,8 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql("""
-                DROP TABLE IF EXISTS dbo.connection;
-                CREATE VIEW dbo.connection AS
+                DROP TABLE IF EXISTS dbo.connectionef;
+                CREATE VIEW dbo.connectionef AS
                 SELECT a.fromid,
                         a.roleid,
                         NULL::uuid     AS viaid,
@@ -93,7 +93,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql("""
-                DROP VIEW dbo.connection;
+                DROP VIEW dbo.connectionef;
                 """);
         }
     }

@@ -207,11 +207,11 @@ public class AppDbContext : DbContext
 
     #region Extensions
 
-    public override Task<int> SaveChangesAsync(CancellationToken ct = default) =>
-        SaveChangesAsync(_auditAccessor.Current ?? throw MissingAudit(), ct);
+    public async override Task<int> SaveChangesAsync(CancellationToken ct = default) =>
+        await SaveChangesAsync(_auditAccessor.Current ?? throw MissingAudit(), ct);
 
-    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken ct = default) =>
-        SaveChangesAsync(_auditAccessor.Current ?? throw MissingAudit(), acceptAllChangesOnSuccess, ct);
+    public async override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken ct = default) =>
+        await SaveChangesAsync(_auditAccessor.Current ?? throw MissingAudit(), acceptAllChangesOnSuccess, ct);
 
     private static InvalidOperationException MissingAudit() =>
         new("AuditContextAccessor.Current is null. Set it in your controller/service OR call SaveChangesAsync(BaseAudit audit, ...) explicitly.");
@@ -265,7 +265,24 @@ public class AppDbContext : DbContext
         }
     }
 
-    private static FormattableString AuditContextSql(AuditValues a) => $"""
+    private static FormattableString AuditContextSql(AuditValues a) => $@"
+    SELECT set_config('app.changed_by',        {a.ChangedBy.ToString()},        true);
+    SELECT set_config('app.changed_by_system', {a.ChangedBySystem.ToString()},  true);
+    SELECT set_config('app.change_operation_id', {a.OperationId},               true);
+
+    CREATE TEMP TABLE IF NOT EXISTS session_audit_context(
+        changed_by uuid,
+        changed_by_system uuid,
+        change_operation_id text
+    ) ON COMMIT DROP;
+
+    TRUNCATE session_audit_context;
+
+    INSERT INTO session_audit_context (changed_by, changed_by_system, change_operation_id)
+    VALUES ({a.ChangedBy}, {a.ChangedBySystem}, {a.OperationId});
+    ";
+
+    private static FormattableString AuditContextSqlOld(AuditValues a) => $"""
     -- SET LOCAL expects text
     SET LOCAL app.changed_by = '{a.ChangedBy.ToString()}';
     SET LOCAL app.changed_by_system = '{a.ChangedBySystem.ToString()}';

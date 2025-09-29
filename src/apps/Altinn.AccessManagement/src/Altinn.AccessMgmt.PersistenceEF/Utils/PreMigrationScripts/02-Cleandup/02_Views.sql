@@ -1,4 +1,4 @@
-create view dbo.connection(fromid, roleid, viaid, viaroleid, toid, packageid, resourceid, reason) as
+create view dbo.connectionef(fromid, roleid, viaid, viaroleid, toid, packageid, resourceid, reason) as
 SELECT a.fromid,
        a.roleid,
        NULL::uuid     AS viaid,

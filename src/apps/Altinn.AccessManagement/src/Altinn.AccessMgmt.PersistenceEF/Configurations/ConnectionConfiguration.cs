@@ -1,5 +1,6 @@
 ﻿using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -9,8 +10,10 @@ public class ConnectionConfiguration : IEntityTypeConfiguration<Connection>
 {
     public void Configure(EntityTypeBuilder<Connection> builder)
     {
-        builder.ToDefaultView();
-        builder.HasKey(x => new { x.FromId, x.ToId, x.RoleId, x.Reason }); //// ? eller blank string ?
+        //// builder.ToDefaultView();
+
+        builder.ToView("connectionef", BaseConfiguration.BaseSchema);
+        builder.HasKey(x => new { x.FromId, x.ToId, x.RoleId, x.Reason });
 
         builder.PropertyWithReference(navKey: t => t.From, foreignKey: t => t.FromId, principalKey: t => t.Id);
         builder.PropertyWithReference(navKey: t => t.To, foreignKey: t => t.ToId, principalKey: t => t.Id);
