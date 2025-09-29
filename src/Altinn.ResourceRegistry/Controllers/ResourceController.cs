@@ -1,6 +1,6 @@
 using Altinn.Authorization.ProblemDetails;
+using Altinn.Authorization.ServiceDefaults;
 using Altinn.Platform.Events.Formatters;
-using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Errors;
 using Altinn.ResourceRegistry.Core.Extensions;
@@ -10,8 +10,6 @@ using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Extensions;
 using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Utils;
-using Altinn.Urn;
-using Azure.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -26,20 +24,21 @@ namespace Altinn.ResourceRegistry.Controllers
     [ApiController]
     public class ResourceController : ControllerBase
     {
-        private IResourceRegistry _resourceRegistry;
+        private readonly IResourceRegistry _resourceRegistry;
         private readonly ILogger<ResourceController> _logger;
+        private readonly AltinnServiceDescriptor _serviceDescriptor;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceController"/> controller.
         /// </summary>
-        /// <param name="resourceRegistry">Service implementation for operations on resources in the resource registry</param>
-        /// <param name="logger">Logger</param>
         public ResourceController(
             IResourceRegistry resourceRegistry,
-            ILogger<ResourceController> logger)
+            ILogger<ResourceController> logger,
+            AltinnServiceDescriptor serviceDescriptor)
         {
             _resourceRegistry = resourceRegistry;
             _logger = logger;
+            _serviceDescriptor = serviceDescriptor;
         }
 
         /// <summary>
@@ -453,6 +452,15 @@ namespace Altinn.ResourceRegistry.Controllers
         [Authorize(Policy = AuthzConstants.POLICY_SCOPE_RESOURCEREGISTRY_WRITE)]
         public async Task<ActionResult> Delete(string id, CancellationToken cancellationToken)
         {
+            var env = _serviceDescriptor.Environment;
+            if (!env.IsLocalDev && !env.IsAT && !env.IsYT && !env.IsTT && env.ToString() != "TEST")
+            {
+                _logger.LogInformation("Delete operation is not allowed in environment {Environment}", _serviceDescriptor.Environment);
+                var result = Content("Delete operation is not allowed in this environment");
+                result.StatusCode = StatusCodes.Status403Forbidden;
+                return result;
+            }
+
             ServiceResource serviceResource = await _resourceRegistry.GetResource(id, cancellationToken);
             string orgClaim = User.GetOrgNumber();
             if (orgClaim != null)

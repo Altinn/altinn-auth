@@ -1683,7 +1683,7 @@ namespace Altinn.ResourceRegistry.Tests
         /// Expected result: Return httpStatus nocontent statuscode
         /// </summary>
         [Fact]
-        public async Task Delete_AdminScope_ValidResource_ReturnsForbidden()
+        public async Task Delete_AdminScope_ValidResource_ReturnsNoContent()
         {
             // Arrange
             var client = CreateClient();
