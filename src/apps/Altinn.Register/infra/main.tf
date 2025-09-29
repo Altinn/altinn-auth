@@ -218,7 +218,7 @@ module "postgres_server" {
   hub_suffix = local.hub_suffix
 
   subnet_id                = data.azurerm_subnet.postgres.id
-  postgres_version         = "17"
+  postgres_version         = "16"
   use_pgbouncer            = var.use_pgbouncer
   enable_high_availability = var.enable_high_availability
   configurations = {

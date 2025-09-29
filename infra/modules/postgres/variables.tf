@@ -80,8 +80,8 @@ variable "entraid_admins" {
 }
 
 variable "postgres_version" {
-  type    = string
-  default = "17"
+  # Don't set a default here, as we require this to be explicitly set for all databases
+  type = string
 }
 
 variable "storage_mb" {
