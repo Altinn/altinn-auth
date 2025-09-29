@@ -333,15 +333,6 @@ public class RelationService(IRelationRepository relationRepository, IRelationPe
         });
     }
 
-    private Models.CompactPermission ConvertToCompactPermission(ExtRelation connection)
-    {
-        return new Models.CompactPermission()
-        {
-            From = connection.From,
-            To = connection.To
-        };
-    }
-
     private Models.Permission ConvertToPermission(ExtRelation connection)
     {
         return new Models.Permission()

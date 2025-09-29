@@ -1,6 +1,5 @@
-﻿using Altinn.AccessMgmt.Persistence.Services.Contracts;
-using Altinn.AccessMgmt.Persistence.Services.Models;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
+﻿using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Altinn.AccessManagement.Api.Metadata.Controllers

@@ -31,7 +31,7 @@ public interface IPackageService
     /// </summary>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A list of area groups.</returns>
-    Task<IEnumerable<AreaGroup>> GetAreaGroups(CancellationToken cancellationToken = default);
+    Task<IEnumerable<AreaGroupDto>> GetAreaGroups(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves a specific area group by its unique identifier.
@@ -39,7 +39,7 @@ public interface IPackageService
     /// <param name="id">The unique identifier of the area group.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The area group with the specified ID.</returns>
-    Task<AreaGroup> GetAreaGroup(Guid id, CancellationToken cancellationToken = default);
+    Task<AreaGroupDto> GetAreaGroup(Guid id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves all areas within a specified area group.
@@ -47,7 +47,7 @@ public interface IPackageService
     /// <param name="groupId">The unique identifier of the area group.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A collection of areas associated with the specified group.</returns>
-    Task<IEnumerable<Area>> GetAreas(Guid groupId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<AreaDto>> GetAreas(Guid groupId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves a specific area by its unique identifier.
@@ -55,7 +55,7 @@ public interface IPackageService
     /// <param name="id">The unique identifier of the area.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The area with the specified ID.</returns>
-    Task<Area> GetArea(Guid id, CancellationToken cancellationToken = default);
+    Task<AreaDto> GetArea(Guid id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves all packages associated with a specific area.
@@ -88,5 +88,5 @@ public interface IPackageService
     /// <param name="packageId">The unique identifier of the package.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A collection of resources related to the specified package.</returns>
-    Task<IEnumerable<Resource>> GetPackageResources(Guid packageId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ResourceDto>> GetPackageResources(Guid packageId, CancellationToken cancellationToken = default);
 }

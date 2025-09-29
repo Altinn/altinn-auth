@@ -2,8 +2,6 @@
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.Core.Utils.Models;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
-using Altinn.AccessMgmt.PersistenceEF.Extensions;
-using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
 
@@ -152,32 +150,32 @@ public class PackageService(
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<AreaGroup>> GetAreaGroups(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<AreaGroupDto>> GetAreaGroups(CancellationToken cancellationToken = default)
     {
-        return await db.AreaGroups.AsNoTracking().ToListAsync(cancellationToken);
+        return (await db.AreaGroups.AsNoTracking().ToListAsync(cancellationToken)).Select(DtoMapper.Convert);
     }
 
     /// <inheritdoc/>
-    public async Task<AreaGroup> GetAreaGroup(Guid id, CancellationToken cancellationToken = default)
+    public async Task<AreaGroupDto> GetAreaGroup(Guid id, CancellationToken cancellationToken = default)
     {
-        return await db.AreaGroups.AsNoTracking().SingleAsync(t => t.Id == id, cancellationToken);
+        return DtoMapper.Convert(await db.AreaGroups.AsNoTracking().SingleAsync(t => t.Id == id, cancellationToken));
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<Area>> GetAreas(Guid groupId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<AreaDto>> GetAreas(Guid groupId, CancellationToken cancellationToken = default)
     {
-        return await db.Areas.AsNoTracking().ToListAsync(cancellationToken);
+        return (await db.Areas.AsNoTracking().ToListAsync(cancellationToken)).Select(DtoMapper.Convert);
     }
 
     /// <inheritdoc/>
-    public async Task<Area> GetArea(Guid id, CancellationToken cancellationToken = default)
+    public async Task<AreaDto> GetArea(Guid id, CancellationToken cancellationToken = default)
     {
-        return await db.Areas.AsNoTracking().SingleAsync(t => t.Id == id, cancellationToken);
+        return DtoMapper.Convert(await db.Areas.AsNoTracking().SingleAsync(t => t.Id == id, cancellationToken));
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<Resource>> GetPackageResources(Guid packageId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ResourceDto>> GetPackageResources(Guid packageId, CancellationToken cancellationToken = default)
     {
-        return await db.PackageResources.AsNoTracking().Where(t => t.PackageId == packageId).Select(t => t.Resource).ToListAsync();
+        return (await db.PackageResources.AsNoTracking().Where(t => t.PackageId == packageId).Select(t => t.Resource).ToListAsync()).Select(DtoMapper.Convert);
     }
 }

@@ -1,7 +1,6 @@
-﻿using Altinn.AccessMgmt.Persistence.Core.Utilities.Search;
-using Altinn.AccessMgmt.Persistence.Models;
-using Altinn.AccessMgmt.Persistence.Services.Contracts;
-using Altinn.AccessMgmt.Persistence.Services.Models;
+﻿using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.Core.Utils.Models;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Altinn.AccessManagement.Api.Metadata.Controllers;
@@ -66,7 +65,7 @@ public class PackagesController : ControllerBase
     /// <returns>Liste over area groups.</returns>
     [Route("group/")]
     [HttpGet]
-    public async Task<ActionResult<AreaGroup>> GetGroups()
+    public async Task<ActionResult<AreaGroupDto>> GetGroups()
     {
         var res = await packageService.GetAreaGroups();
         if (res == null || !res.Any())
@@ -84,7 +83,7 @@ public class PackagesController : ControllerBase
     /// <returns>Den spesifikke area group.</returns>
     [Route("group/{id}")]
     [HttpGet]
-    public async Task<ActionResult<AreaGroup>> GetGroup(Guid id)
+    public async Task<ActionResult<AreaGroupDto>> GetGroup(Guid id)
     {
         var res = await packageService.GetAreaGroup(id);
         if (res == null)
@@ -102,7 +101,7 @@ public class PackagesController : ControllerBase
     /// <returns>Liste over områder.</returns>
     [Route("group/{id}/areas")]
     [HttpGet]
-    public async Task<ActionResult<Area>> GetGroupAreas(Guid id)
+    public async Task<ActionResult<AreaDto>> GetGroupAreas(Guid id)
     {
         var res = await packageService.GetAreas(id);
         if (res == null || !res.Any())
@@ -128,7 +127,7 @@ public class PackagesController : ControllerBase
     /// <returns>Områdeobjekt.</returns>
     [Route("area/{id}")]
     [HttpGet]
-    public async Task<ActionResult<Area>> GetArea(Guid id)
+    public async Task<ActionResult<AreaDto>> GetArea(Guid id)
     {
         var res = await packageService.GetArea(id);
         if (res == null)
@@ -208,7 +207,7 @@ public class PackagesController : ControllerBase
     /// <returns>Liste over ressurser.</returns>
     [Route("package/{id}/resources")]
     [HttpGet]
-    public async Task<ActionResult<Resource>> GetPackageResources(Guid id)
+    public async Task<ActionResult<ResourceDto>> GetPackageResources(Guid id)
     {
         var res = await packageService.GetPackageResources(id);
         if (res == null || !res.Any())

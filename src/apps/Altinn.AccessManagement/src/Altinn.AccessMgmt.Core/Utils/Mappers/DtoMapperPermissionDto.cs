@@ -18,4 +18,13 @@ public partial class DtoMapper : IDtoMapper
             Role = ConvertCompactRole(connection.Role)
         };
     }
+
+    public CompactPermission ConvertToCompactPermission(Connection connection)
+    {
+        return new CompactPermission()
+        {
+            From = connection.From,
+            To = connection.To
+        };
+    }
 }

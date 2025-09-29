@@ -123,7 +123,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
         var roleResources = await roleService.GetRoleResources(fromAssignment.RoleId, cancellationToken);
         var rolePackages = await roleService.GetPackagesForRole(fromAssignment.RoleId, cancellationToken);
 
-        var rolePackageResources = new Dictionary<Guid, List<Resource>>();
+        var rolePackageResources = new Dictionary<Guid, List<ResourceDto>>();
         foreach (var package in rolePackages)
         {
             rolePackageResources.Add(package.Id, [.. await packageService.GetPackageResources(package.Id)]);
