@@ -77,6 +77,28 @@ namespace AccessMgmt.Tests.Controllers.Bff
             Assert.Equal("urn:altinn:resource", consentRequest.ConsentRights[0].Resource[0].Type);
         }
 
+        /// <summary>
+        /// Test case: Get consent request with expired event
+        /// Scenario: User is authenticated and is the same person that has been request to accept the request
+        /// User is authorized for all rights in the consent request
+        /// </summary>
+        [Fact]
+        public async Task GetConsentRequest_WithExpiredEvent()
+        {
+            Guid requestId = Guid.Parse("e2071c55-6adf-487b-af05-9198a230ed44");
+
+            IConsentRepository repositgo = Fixture.Services.GetRequiredService<IConsentRepository>();
+            await repositgo.CreateRequest(await GetRequest(requestId, DateTimeOffset.Now.AddDays(-1)), Altinn.AccessManagement.Core.Models.Consent.ConsentPartyUrn.PartyUuid.Create(Guid.Parse("8ef5e5fa-94e1-4869-8635-df86b6219181")), default);
+            HttpClient client = GetTestClient();
+            string token = PrincipalUtil.GetToken(20001337, 50003899, 2, Guid.Parse("d5b861c8-8e3b-44cd-9952-5315e5990cf5"), AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            HttpResponseMessage response = await client.GetAsync($"accessmanagement/api/v1/bff/consentrequests/{requestId.ToString()}");
+            ConsentRequestDetailsBffDto consentRequest = await response.Content.ReadFromJsonAsync<ConsentRequestDetailsBffDto>();
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(Altinn.Authorization.Api.Contracts.Consent.ConsentRequestEventType.Created, consentRequest.ConsentRequestEvents[0].EventType);
+            Assert.Equal(Altinn.Authorization.Api.Contracts.Consent.ConsentRequestEventType.Expired, consentRequest.ConsentRequestEvents[1].EventType);
+        }
+
         [Fact]
         public async Task GetConsentRequestWithoutMessagehandledby()
         {

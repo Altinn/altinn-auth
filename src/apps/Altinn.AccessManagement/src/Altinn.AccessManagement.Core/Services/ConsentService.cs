@@ -25,7 +25,7 @@ namespace Altinn.AccessManagement.Core.Services
     /// <remarks>
     /// Service responsible for consent functionality
     /// </remarks>
-    public class ConsentService(IConsentRepository consentRepository, IPartiesClient partiesClient, ISingleRightsService singleRightsService, 
+    public class ConsentService(IConsentRepository consentRepository, IPartiesClient partiesClient, ISingleRightsService singleRightsService,
         IResourceRegistryClient resourceRegistryClient, IAMPartyService ampartyService, IMemoryCache memoryCache, IProfileClient profileClient, TimeProvider timeProvider, IOptions<GeneralSettings> generalSettings) : IConsent
     {
         private readonly IConsentRepository _consentRepository = consentRepository;
@@ -57,8 +57,8 @@ namespace Altinn.AccessManagement.Core.Services
             {
                 // Need to verify if it is null because of duplicate
                 ConsentRequestDetails consentRequestDetails = await _consentRepository.GetRequest(consentRequest.Id, cancellationToken);
-                if (consentRequestDetails != null 
-                    && consentRequest.Id == consentRequestDetails.Id 
+                if (consentRequestDetails != null
+                    && consentRequest.Id == consentRequestDetails.Id
                     && consentRequest.From == consentRequestDetails.From
                     && consentRequest.To == consentRequestDetails.To)
                 {
@@ -88,7 +88,7 @@ namespace Altinn.AccessManagement.Core.Services
 
                 return Problems.ConsentWithIdAlreadyExist.Create([new("requestId", consentRequest.Id.ToString())]);
             }
-            
+
             requestDetails.From = await MapToExternalIdentity(requestDetails.From, cancellationToken);
             requestDetails.To = await MapToExternalIdentity(requestDetails.To, cancellationToken);
             if (requestDetails.HandledBy != null)
@@ -146,7 +146,7 @@ namespace Altinn.AccessManagement.Core.Services
 
                 if (details.ConsentRequestStatus != ConsentRequestStatusType.Created)
                 {
-                   return Problems.ConsentCantBeRejected;
+                    return Problems.ConsentCantBeRejected;
                 }
 
                 throw;
@@ -168,7 +168,7 @@ namespace Altinn.AccessManagement.Core.Services
 
             if (consentRequest == null)
             {
-                return Problems.ConsentNotFound;    
+                return Problems.ConsentNotFound;
             }
             else
             {
@@ -290,7 +290,7 @@ namespace Altinn.AccessManagement.Core.Services
                     consentRequestEvent.PerformedBy = await MapToExternalIdentity(consentRequestEvent.PerformedBy, cancellationToken);
                 }
             }
- 
+
             if (performedByParty.IsOrganizationId(out OrganizationNumber organizationNumber))
             {
                 if (details.To.IsOrganizationId(out OrganizationNumber toOrganizationNumber))
@@ -315,6 +315,8 @@ namespace Altinn.AccessManagement.Core.Services
             }
 
             details.ViewUri = GetConsentViewUri(details.Id);
+
+            AddExpiredEventIfConsentIsExpired(details);
 
             return details;
         }
@@ -820,7 +822,7 @@ namespace Altinn.AccessManagement.Core.Services
                     return Problems.InvalidPersonIdentifier.Create([new("fnumber", consentPartyUrn.ToString())]);
                 }
             }
-            
+
             return to;
         }
 
@@ -849,22 +851,27 @@ namespace Altinn.AccessManagement.Core.Services
             Result<List<ConsentRequestDetails>> requests = await _consentRepository.GetRequestsForParty(coveredByParty, cancellationToken);
 
             if (requests.Value != null)
-            { 
+            {
                 foreach (var req in requests.Value)
                 {
-                    if (req.ValidTo < _timeProvider.GetUtcNow() && !req.ConsentRequestEvents.Exists(r => r.EventType.Equals(ConsentRequestEventType.Expired)))
-                    {
-                        req.ConsentRequestEvents.Add(new ConsentRequestEvent
-                        {
-                            EventType = ConsentRequestEventType.Expired,
-                            Created = req.ValidTo,
-                            PerformedBy = req.To
-                        });
-                    }
+                    AddExpiredEventIfConsentIsExpired(req);
                 }
             }
 
             return requests;
+        }
+
+        private void AddExpiredEventIfConsentIsExpired(ConsentRequestDetails consentRequest)
+        {
+            if (consentRequest.ValidTo < _timeProvider.GetUtcNow() && !consentRequest.ConsentRequestEvents.Exists(r => r.EventType.Equals(ConsentRequestEventType.Expired)))
+            {
+                consentRequest.ConsentRequestEvents.Add(new ConsentRequestEvent
+                {
+                    EventType = ConsentRequestEventType.Expired,
+                    Created = consentRequest.ValidTo,
+                    PerformedBy = consentRequest.To
+                });
+            }
         }
     }
 }
