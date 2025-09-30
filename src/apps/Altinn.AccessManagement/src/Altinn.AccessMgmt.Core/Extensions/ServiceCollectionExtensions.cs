@@ -19,6 +19,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IRoleSyncService, RoleSyncService>();
         services.AddSingleton<IResourceSyncService, ResourceSyncService>();
 
+        services.AddScoped<IPartyService, PartyService>();
+
+
         services.AddScoped<IPackageService, PackageService>();
         services.AddScoped<IRoleService, RoleService>();
 

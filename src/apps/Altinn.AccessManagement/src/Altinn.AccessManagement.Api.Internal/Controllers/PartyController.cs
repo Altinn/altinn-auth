@@ -1,9 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
-using Altinn.AccessManagement.Api.Internal.Extensions;
 using Altinn.AccessManagement.Core.Constants;
-using Altinn.AccessMgmt.Persistence.Core.Models;
-using Altinn.AccessMgmt.Persistence.Data;
-using Altinn.AccessMgmt.Persistence.Services.Contracts;
+using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.Authorization.Api.Contracts.Party;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.AspNetCore.Authorization;
@@ -30,21 +27,21 @@ namespace Altinn.AccessManagement.Controllers
                 return Unauthorized("Invalid app claim in platform access token.");
             }
 
-            var options = new ChangeRequestOptions()
+            if (!ModelState.IsValid)
             {
-                ChangedBy = party.CreatedBy ?? AuditDefaults.InternalApiImportSystem,
-                ChangedBySystem = AuditDefaults.InternalApiImportSystem
-            };
+                return BadRequest(ModelState);
+            }
 
-            var res = await _partyService.AddParty(party.ToCore(), options, cancellationToken);
+            var res = await _partyService.AddParty(party, cancellationToken);
 
             if (res.IsProblem)
             {
                 return res.Problem.ToActionResult();
             }
 
-            var partyResultDto = res.Value.ToPartyResultDto();
-            return partyResultDto.PartyCreated ? CreatedAtAction(nameof(AddParty), new { id = partyResultDto.PartyUuid }, partyResultDto) : Ok(partyResultDto);
+            return res.Value.PartyCreated
+                ? CreatedAtAction(nameof(AddParty), new { id = res.Value.PartyUuid }, res.Value)
+                : Ok(res.Value);
         }
 
         /// <summary>
