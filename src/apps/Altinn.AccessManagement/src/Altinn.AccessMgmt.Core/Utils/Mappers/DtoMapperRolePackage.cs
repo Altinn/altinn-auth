@@ -93,7 +93,7 @@ public partial class DtoMapper : IDtoMapper
             Name = area.Name,
             Urn = area.Urn,
             Description = area.Description,
-            Icon = area.IconUrl,
+            IconUrl = area.IconUrl,
             Packages = new List<PackageDto>()
         };
 
@@ -105,7 +105,7 @@ public partial class DtoMapper : IDtoMapper
             Name = area.Name,
             Urn = area.Urn,
             Description = area.Description,
-            Icon = area.IconUrl,
+            IconUrl = area.IconUrl,
             Packages = packages?.Select(p => Convert(p)!).ToList() ?? new()
         };
 

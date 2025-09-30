@@ -28,7 +28,7 @@ public class AreaDto
     /// <summary>
     /// Gets or sets the icon representing the area.
     /// </summary>
-    public string Icon { get; set; }
+    public string IconUrl { get; set; }
 
     /// <summary>
     /// Gets or sets the list of packages available in this area.
