@@ -116,7 +116,6 @@ internal static partial class AccessManagementHost
         builder.ConfigureHostedServices();
         builder.AddAccessManagementEnduser();
         builder.AddAccessManagementInternal();
-        builder.AddEFCoreServices();
 
         return builder.Build();
     }
@@ -127,14 +126,6 @@ internal static partial class AccessManagementHost
         {
             builder.Configuration.GetSection("AccessMgmtPersistenceOptions").Bind(opts);
         });
-
-        return builder;
-    }
-
-    private static WebApplicationBuilder AddEFCoreServices(this WebApplicationBuilder builder)
-    {
-        builder.Services.AddScoped<Altinn.AccessMgmt.Core.Services.Contracts.IPackageService, Altinn.AccessMgmt.Core.Services.PackageService>();
-        builder.Services.AddScoped<Altinn.AccessMgmt.Core.Services.Contracts.IRoleService, Altinn.AccessMgmt.Core.Services.RoleService>();
 
         return builder;
     }
