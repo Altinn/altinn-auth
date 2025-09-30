@@ -150,16 +150,19 @@ public partial class DtoMapper : IDtoMapper
         };
     }
 
-    public static ProviderTypeDto Convert(ProviderType entityType) {
+    public static ProviderTypeDto Convert(ProviderType providerType) 
+    {
+        if (providerType == null) { return null; }
         return new ProviderTypeDto()
         { 
-            Id = entityType.Id, 
-            Name = entityType.Name
+            Id = providerType.Id, 
+            Name = providerType.Name
         };
     }
 
     public static ResourceTypeDto Convert(ResourceType resourceType)
     {
+        if (resourceType == null) { return null; }
         return new ResourceTypeDto
         {
             Id = resourceType.Id,

@@ -13,7 +13,6 @@ using Altinn.AccessManagement.Integration.Extensions;
 using Altinn.AccessManagement.Persistence.Configuration;
 using Altinn.AccessManagement.Persistence.Extensions;
 using Altinn.AccessMgmt.Core.Extensions;
-using Altinn.AccessMgmt.Core.HostedServices;
 using Altinn.AccessMgmt.Persistence.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.Authorization.Api.Contracts.Register;
@@ -117,6 +116,7 @@ internal static partial class AccessManagementHost
         builder.ConfigureHostedServices();
         builder.AddAccessManagementEnduser();
         builder.AddAccessManagementInternal();
+        builder.AddEFCoreServices();
 
         return builder.Build();
     }
@@ -127,6 +127,14 @@ internal static partial class AccessManagementHost
         {
             builder.Configuration.GetSection("AccessMgmtPersistenceOptions").Bind(opts);
         });
+
+        return builder;
+    }
+
+    private static WebApplicationBuilder AddEFCoreServices(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddScoped<Altinn.AccessMgmt.Core.Services.Contracts.IPackageService, Altinn.AccessMgmt.Core.Services.PackageService>();
+        builder.Services.AddScoped<Altinn.AccessMgmt.Core.Services.Contracts.IRoleService, Altinn.AccessMgmt.Core.Services.RoleService>();
 
         return builder;
     }
