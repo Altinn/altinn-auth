@@ -18,21 +18,22 @@ namespace Altinn.AccessMgmt.Core.Services;
 /// <inheritdoc />
 public partial class ConnectionService : IConnectionService
 {
-    private AppDbContext DbContext { get; set; }
+    public AppDbContextFactory DbContextFactory { get; }
 
     public IAuditAccessor AuditAccessor { get; }
 
     public ConnectionService(AppDbContextFactory dbContextFactory, IAuditAccessor auditAccessor)
     {
-        DbContext = dbContextFactory.CreateDbContext();
+        DbContextFactory = dbContextFactory;
         AuditAccessor = auditAccessor;
     }
 
     public async Task<Result<AssignmentDto>> AddAssignment(Guid fromId, Guid toId, Role role, Action<ConnectionOptions> configureOptions = null, CancellationToken cancellationToken = default)
     {
+        using var dbContext = DbContextFactory.CreateDbContext();
         ArgumentNullException.ThrowIfNull(role);
         var options = new ConnectionOptions(configureOptions);
-        var entities = await DbContext.Entities
+        var entities = await dbContext.Entities
             .AsNoTracking()
             .Where(e => e.Id == fromId || e.Id == toId)
             .Include(e => e.Type)
@@ -47,7 +48,7 @@ public partial class ConnectionService : IConnectionService
             return problem;
         }
 
-        var existingAssignment = await DbContext.Assignments
+        var existingAssignment = await dbContext.Assignments
             .AsNoTracking()
             .Where(e => e.FromId == fromId)
             .Where(e => e.ToId == toId)
@@ -66,8 +67,8 @@ public partial class ConnectionService : IConnectionService
             RoleId = role.Id,
         };
 
-        await DbContext.Assignments.AddAsync(assignment);
-        await DbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.Assignments.AddAsync(assignment);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return DtoMapper.Convert(assignment);
     }
@@ -75,8 +76,9 @@ public partial class ConnectionService : IConnectionService
     public async Task<ValidationProblemInstance> RemoveAssignment(Guid fromId, Guid toId, Role role, bool cascade = false, Action<ConnectionOptions> configureConnectionOptions = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(role);
+        using var dbContext = DbContextFactory.CreateDbContext();
         var options = new ConnectionOptions(configureConnectionOptions);
-        var entities = await DbContext.Entities
+        var entities = await dbContext.Entities
             .AsNoTracking()
             .Where(e => e.Id == fromId || e.Id == toId)
             .Include(e => e.Type)
@@ -91,7 +93,7 @@ public partial class ConnectionService : IConnectionService
             return problem;
         }
 
-        var existingAssignment = await DbContext.Assignments
+        var existingAssignment = await dbContext.Assignments
             .AsTracking()
             .Where(e => e.FromId == fromId)
             .Where(e => e.ToId == toId)
@@ -105,17 +107,17 @@ public partial class ConnectionService : IConnectionService
 
         if (!cascade)
         {
-            var assignedPackages = await DbContext.AssignmentPackages
+            var assignedPackages = await dbContext.AssignmentPackages
                 .AsNoTracking()
                 .Where(p => p.AssignmentId == existingAssignment.Id)
                 .ToListAsync(cancellationToken);
 
-            var delegationsFrom = await DbContext.Delegations
+            var delegationsFrom = await dbContext.Delegations
                 .AsNoTracking()
                 .Where(p => p.FromId == existingAssignment.Id)
                 .ToListAsync(cancellationToken);
 
-            var delegationsTo = await DbContext.Delegations
+            var delegationsTo = await dbContext.Delegations
                 .AsNoTracking()
                 .Where(p => p.ToId == toId)
                 .ToListAsync(cancellationToken);
@@ -132,8 +134,8 @@ public partial class ConnectionService : IConnectionService
             }
         }
 
-        DbContext.Remove(existingAssignment);
-        await DbContext.SaveChangesAsync(cancellationToken);
+        dbContext.Remove(existingAssignment);
+        await dbContext.SaveChangesAsync(cancellationToken);
         return null;
     }
 
@@ -145,7 +147,8 @@ public partial class ConnectionService : IConnectionService
     public async Task<Result<AssignmentPackageDto>> AddPackage(Guid fromId, Guid toId, Role role, string packageUrn, Action<ConnectionOptions> configureConnectionOptions = null, CancellationToken cancellationToken = default)
     {
         packageUrn = (packageUrn.StartsWith("urn:", StringComparison.Ordinal) || packageUrn.StartsWith(':')) ? packageUrn : ":" + packageUrn;
-        var package = await DbContext.Packages
+        using var dbContext = DbContextFactory.CreateDbContext();
+        var package = await dbContext.Packages
             .AsNoTracking()
             .Where(p => p.Urn.EndsWith(packageUrn))
             .FirstOrDefaultAsync(cancellationToken);
@@ -173,7 +176,8 @@ public partial class ConnectionService : IConnectionService
     public async Task<ValidationProblemInstance> RemovePackage(Guid fromId, Guid toId, Role role, Guid packageId, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(role);
-        var assignment = await DbContext.Assignments
+        using var dbContext = DbContextFactory.CreateDbContext();
+        var assignment = await dbContext.Assignments
             .AsNoTracking()
             .Where(a => a.FromId == fromId)
             .Where(a => a.ToId == toId)
@@ -185,7 +189,7 @@ public partial class ConnectionService : IConnectionService
             return null;
         }
 
-        var existingAssignmentPackages = await DbContext.AssignmentPackages
+        var existingAssignmentPackages = await dbContext.AssignmentPackages
             .AsTracking()
             .Where(a => a.AssignmentId == assignment.Id)
             .Where(a => a.PackageId == packageId)
@@ -196,8 +200,8 @@ public partial class ConnectionService : IConnectionService
             return null;
         }
 
-        DbContext.Remove(assignment);
-        await DbContext.SaveChangesAsync(cancellationToken);
+        dbContext.Remove(assignment);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return null;
     }
@@ -205,8 +209,9 @@ public partial class ConnectionService : IConnectionService
     private async Task<Result<AssignmentPackageDto>> AddPackage(Guid fromId, Guid toId, Role role, Guid packageId, string queryParamName, Action<ConnectionOptions> configureConnectionOptions = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(role);
+        using var dbContext = DbContextFactory.CreateDbContext();
         var options = new ConnectionOptions(configureConnectionOptions);
-        var entities = await DbContext.Entities
+        var entities = await dbContext.Entities
             .AsNoTracking()
             .Where(e => e.Id == fromId || e.Id == toId)
             .Include(e => e.Type)
@@ -221,7 +226,7 @@ public partial class ConnectionService : IConnectionService
             return problem;
         }
 
-        var assignment = await DbContext.Assignments
+        var assignment = await dbContext.Assignments
                 .AsNoTracking()
                 .Where(a => a.FromId == fromId)
                 .Where(a => a.ToId == toId)
@@ -249,7 +254,7 @@ public partial class ConnectionService : IConnectionService
             return problem;
         }
 
-        var existingAssignmentPackage = await DbContext.AssignmentPackages
+        var existingAssignmentPackage = await dbContext.AssignmentPackages
             .AsNoTracking()
             .Where(a => a.AssignmentId == assignment.Id)
             .Where(a => a.PackageId == packageId)
@@ -266,15 +271,16 @@ public partial class ConnectionService : IConnectionService
             PackageId = packageId,
         };
 
-        await DbContext.AssignmentPackages.AddAsync(existingAssignmentPackage);
-        await DbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.AssignmentPackages.AddAsync(existingAssignmentPackage);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return DtoMapper.Convert(existingAssignmentPackage);
     }
 
     public async Task<Result<IEnumerable<AccessPackageDto.Check>>> CheckPackage(Guid party, IEnumerable<Guid> packageIds = null, CancellationToken cancellationToken = default)
     {
-        var assignablePackages = await DbContext.GetAssignableAccessPackages(
+        using var dbContext = DbContextFactory.CreateDbContext();
+        var assignablePackages = await dbContext.GetAssignableAccessPackages(
             AuditAccessor.AuditValues.ChangedBy, 
             party,
             packageIds,
@@ -386,7 +392,8 @@ public partial class ConnectionService
     /// <inheritdoc />
     public async Task<IEnumerable<ConnectionPackageDto>> GetConnectionsToOthers(Guid partyId, Guid? toId = null, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.Connections.AsNoTracking()
+        using var dbContext = DbContextFactory.CreateDbContext();
+        var result = await dbContext.Connections.AsNoTracking()
             .Where(t => t.FromId == partyId)
             .WhereIf(toId.HasValue, t => t.ToId == toId.Value)
             .WhereIf(roleId.HasValue, t => t.RoleId == roleId.Value)
@@ -400,7 +407,8 @@ public partial class ConnectionService
     /// <inheritdoc />
     public async Task<IEnumerable<ConnectionDto>> GetConnectionsToOthers(Guid partyId, Guid? toId = null, Guid? roleId = null, CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.Connections.AsNoTracking()
+        using var dbContext = DbContextFactory.CreateDbContext();
+        var result = await dbContext.Connections.AsNoTracking()
             .Include(t => t.To)
             .ThenInclude(t => t.Variant)
             .Include(t => t.To)
@@ -416,7 +424,8 @@ public partial class ConnectionService
     /// <inheritdoc />
     public async Task<IEnumerable<ConnectionPackageDto>> GetConnectionsFromOthers(Guid partyId, Guid? fromId = null, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.Connections.AsNoTracking()
+        using var dbContext = DbContextFactory.CreateDbContext();
+        var result = await dbContext.Connections.AsNoTracking()
             .Where(t => t.ToId == partyId)
             .WhereIf(fromId.HasValue, t => t.FromId == fromId.Value)
             .WhereIf(roleId.HasValue, t => t.RoleId == roleId.Value)
@@ -430,7 +439,8 @@ public partial class ConnectionService
     /// <inheritdoc />
     public async Task<IEnumerable<ConnectionDto>> GetConnectionsFromOthers(Guid partyId, Guid? fromId = null, Guid? roleId = null, CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.Connections.AsNoTracking()
+        using var dbContext = DbContextFactory.CreateDbContext();
+        var result = await dbContext.Connections.AsNoTracking()
             .Include(c => c.From)
             .ThenInclude(c => c.Type)
             .Include(c => c.From)
@@ -447,7 +457,8 @@ public partial class ConnectionService
     /// <inheritdoc />
     public async Task<IEnumerable<PackagePermissionDto>> GetPackagePermissionsFromOthers(Guid partyId, Guid? fromId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.Connections
+         using var dbContext = DbContextFactory.CreateDbContext();
+        var result = await dbContext.Connections
             .AsNoTracking()
             .Include(t => t.Package)
             .Where(t => t.ToId == partyId)
@@ -470,7 +481,8 @@ public partial class ConnectionService
     /// <inheritdoc />
     public async Task<IEnumerable<PackagePermissionDto>> GetPackagePermissionsToOthers(Guid partyId, Guid? toId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.Connections
+        using var dbContext = DbContextFactory.CreateDbContext();
+        var result = await dbContext.Connections
             .AsNoTracking()
             .Include(t => t.Package)
             .Where(t => t.FromId == partyId)
@@ -493,7 +505,8 @@ public partial class ConnectionService
     /// <inheritdoc />
     public async Task<IEnumerable<ResourcePermission>> GetResourcePermissionsFromOthers(Guid partyId, Guid? fromId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.Connections
+        using var dbContext = DbContextFactory.CreateDbContext();
+        var result = await dbContext.Connections
             .AsNoTracking()
             .Include(t => t.Package)
             .Include(t => t.Resource)
@@ -518,7 +531,8 @@ public partial class ConnectionService
     /// <inheritdoc />
     public async Task<IEnumerable<ResourcePermission>> GetResourcePermissionsToOthers(Guid partyId, Guid? toId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.Connections
+        using var dbContext = DbContextFactory.CreateDbContext();
+        var result = await dbContext.Connections
             .AsNoTracking()
             .Include(t => t.Package)
             .Include(t => t.Resource)
