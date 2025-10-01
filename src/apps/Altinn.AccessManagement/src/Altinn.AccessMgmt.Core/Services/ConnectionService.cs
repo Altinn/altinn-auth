@@ -394,6 +394,9 @@ public partial class ConnectionService
         
         var result = await DbContext.Connections.AsNoTracking()
             .Include(t => t.To)
+            .ThenInclude(t => t.Variant)
+            .Include(t => t.To)
+            .ThenInclude(t => t.Type)
             .Include(t => t.Role)
             .Include(t => t.Package)
             .Where(t => t.FromId == partyId)
@@ -427,6 +430,9 @@ public partial class ConnectionService
     {
         var result = await DbContext.Connections.AsNoTracking()
             .Include(t => t.From)
+            .ThenInclude(t => t.Variant)
+            .Include(t => t.From)
+            .ThenInclude(t => t.Type)
             .Include(t => t.Role)
             .Include(t => t.Package)
             .Where(t => t.ToId == partyId)
