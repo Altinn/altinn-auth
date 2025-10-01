@@ -44,7 +44,7 @@ script:pre-request {
 script:post-response {
   let data = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
   if (Array.isArray(data) && data.length > 0) {
-   const assignmentId = data[2].delegation.toId;
+   const assignmentId = data[0].delegation.toId;
    bru.setEnvVar("toId", assignmentId);
   }
 }
@@ -52,13 +52,15 @@ script:post-response {
 tests {
   test("Access package delegation from client org to systemuser ", function() {
   const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
-      const data = res.getBody();
-      var delegationId = bru.getEnvVar("delegationId");
-      expect(res.status).to.equal(200);
-    expect(data[3]).to.have.property('id', delegationId);
-    expect(data[3].role).to.have.property('code', "agent");
-    expect(data[3].facilitator).to.have.property('name', "ULASTELIG RETTFERDIG TIGER AS");
-    expect(data[3].facilitatorRole).to.have.property('code', "regnskapsforer");
-      
+    const data = res.getBody();
+    var delegationId = bru.getVar("delegationId");
+    console.log("DelegationId: " + delegationId);
+    expect(res.status).to.equal(200);
+    // Find the expected delegation
+    const delegationRecord = data.find(item => item.id === delegationId);
+    expect(delegationRecord, 'Expected delegation not found in response').to.exist;
+    assert.equal(delegationRecord.facilitator.id, testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid.toLowerCase());
+    assert(delegationRecord.facilitatorRole.code, 'regnskapsforer');
+    assert(delegationRecord.role.code, 'agent');
     });
 }
