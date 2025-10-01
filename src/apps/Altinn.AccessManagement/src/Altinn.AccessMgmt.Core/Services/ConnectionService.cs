@@ -393,6 +393,9 @@ public partial class ConnectionService
     {
         
         var result = await DbContext.Connections.AsNoTracking()
+            .Include(t => t.To)
+            .Include(t => t.Role)
+            .Include(t => t.Package)
             .Where(t => t.FromId == partyId)
             .WhereIf(toId.HasValue, t => t.ToId == toId.Value)
             .WhereIf(roleId.HasValue, t => t.RoleId == roleId.Value)
@@ -423,6 +426,9 @@ public partial class ConnectionService
     public async Task<IEnumerable<ConnectionPackageDto>> GetConnectionsFromOthers(Guid partyId, Guid? fromId = null, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
         var result = await DbContext.Connections.AsNoTracking()
+            .Include(t => t.From)
+            .Include(t => t.Role)
+            .Include(t => t.Package)
             .Where(t => t.ToId == partyId)
             .WhereIf(fromId.HasValue, t => t.FromId == fromId.Value)
             .WhereIf(roleId.HasValue, t => t.RoleId == roleId.Value)
