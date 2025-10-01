@@ -4,6 +4,7 @@ using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
+using Altinn.AccessMgmt.PersistenceEF.Queries.Models;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.EntityFrameworkCore;
 
@@ -122,8 +123,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     #endregion
 
+    public DbSet<PackageDelegationCheckRow> PackageDelegationChecks { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+         modelBuilder.Entity<PackageDelegationCheckRow>().HasNoKey();
         ApplyAuditConfiguration(modelBuilder);
         ApplyConfiguration(modelBuilder);
         ApplyViewConfiguration(modelBuilder);
