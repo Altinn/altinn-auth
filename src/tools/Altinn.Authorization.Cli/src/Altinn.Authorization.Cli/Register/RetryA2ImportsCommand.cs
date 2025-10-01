@@ -1,15 +1,16 @@
 ﻿using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Data;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Channels;
 using Altinn.Authorization.Cli.Database;
 using Altinn.Authorization.Cli.ServiceBus.MassTransit;
 using Altinn.Authorization.Cli.ServiceBus.Utils;
 using Altinn.Authorization.Cli.Utils;
 using Azure.Messaging.ServiceBus;
+using MongoDB.Bson.Serialization.Serializers;
 using Npgsql;
 using NpgsqlTypes;
 using Spectre.Console;
@@ -33,6 +34,7 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
         new ImportValidationQueueHandler(),
         new ImportBatchErrorQueueHandler(),
         new A2ExternalRoleResolverErrorQueueHandler(),
+        new UpsertUserRecordQueueHandler(),
     ];
 
     /// <inheritdoc/>
@@ -61,8 +63,12 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
                         .LogOnFailure("Failed to get queues");
                 }
 
-                await using var sender = sb.Client.CreateSender("register-a2-party-import");
-                var context = new Context(sender, db);
+                await using var a2PartyImport = sb.Client.CreateSender("register-a2-party-import");
+                await using var a2ProfileImport = sb.Client.CreateSender("register-a2-profile-import");
+                var context = new Context(
+                    db: db,
+                    a2PartyImport: a2PartyImport,
+                    a2ProfileImport: a2ProfileImport);
 
                 foreach (var queue in ErrorQueues)
                 {
@@ -165,12 +171,14 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
             receiver,
             async (msg, cancellationToken) =>
             {
-                if (queue.GetHandler(msg, out var handler)
-                    && await handler.Handle(msg, context, cancellationToken))
+                foreach (var handler in queue.GetHandlers(msg))
                 {
-                    await receiver.CompleteMessageAsync(msg, cancellationToken);
-                    task.Increment(1);
-                    return;
+                    if (await handler.Handle(msg, context, cancellationToken))
+                    {
+                        await receiver.CompleteMessageAsync(msg, cancellationToken);
+                        task.Increment(1);
+                        return;
+                    }
                 }
 
                 task.Increment(1);
@@ -330,28 +338,26 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
         public string ErrorQueueName { get; } = $"{queueName}_error";
 
         public bool Handles(ServiceBusReceivedMessage message)
-            => GetHandler(message, out _);
+            => GetHandlers(message).Any();
 
-        public virtual bool GetHandler(ServiceBusReceivedMessage message, [NotNullWhen(true)] out ErrorQueueMessageHandler? handler)
+        public virtual IEnumerable<ErrorQueueMessageHandler> GetHandlers(ServiceBusReceivedMessage message)
         {
-            handler = null;
-
             if (message.ContentType != "application/vnd.masstransit+json")
             {
-                return false;
+                return [];
             }
 
             var reader = new Utf8JsonReader(message.Body.ToMemory().Span);
             if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
             {
-                return false;
+                return [];
             }
 
             while (reader.Read())
             {
                 if (reader.TokenType != JsonTokenType.PropertyName)
                 {
-                    return false;
+                    return [];
                 }
 
                 if (!reader.ValueTextEquals("messageType"u8))
@@ -362,26 +368,29 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
 
                 if (!reader.Read() || reader.TokenType != JsonTokenType.StartArray)
                 {
-                    return false;
+                    return [];
                 }
 
                 break;
             }
 
             // found messageType array
+            var handlers = new List<ErrorQueueMessageHandler>();
             while (reader.Read() && reader.TokenType == JsonTokenType.String)
             {
                 foreach (var h in _handlers)
                 {
                     if (reader.ValueTextEquals(h.MessageUrn))
                     {
-                        handler = h;
-                        return true;
+                        if (!handlers.Contains(h, ReferenceEqualityComparer.Instance))
+                        {
+                            handlers.Add(h);
+                        }
                     }
                 }
             }
 
-            return false;
+            return handlers;
         }
     }
 
@@ -435,15 +444,91 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
         }
     }
 
+    private sealed class UpsertUserRecordQueueHandler()
+        : ErrorQueueHandler(
+            "register-upsert-user-record",
+            [
+                new UpsertUserRecordCommandHandler(),
+            ])
+    {
+        private sealed class UpsertUserRecordCommandHandler
+            : ErrorQueueMessageHandler<UpsertUserRecordCommand>
+        {
+            protected override ValueTask<bool> Handle(UpsertUserRecordCommand message, Context sender, CancellationToken cancellationToken)
+            {
+                // we only handle imports from A2
+                if (message.Tracking.JobName != "a2-profile-import:profile-changes")
+                {
+                    return ValueTask.FromResult(false);
+                }
+
+                var command = new ImportA2UserProfileCommand
+                {
+                    UserId = message.UserId,
+                    OwnerPartyUuid = message.PartyUuid,
+                    IsDeleted = !message.IsActive,
+                    Tracking = message.Tracking,
+                };
+
+                return SendAndReturn(command, sender, cancellationToken);
+            }
+
+            private async ValueTask<bool> SendAndReturn(ImportA2UserProfileCommand command, Context sender, CancellationToken cancellationToken)
+            {
+                await sender.Send(command, cancellationToken);
+                return true;
+            }
+        }
+
+        private sealed class UpsertUserRecordCommand
+            : IFakeMassTransitMessage<UpsertUserRecordCommand>
+        {
+            static Utf8String IFakeMassTransitMessage<UpsertUserRecordCommand>.MessageUrn
+                => "urn:message:Altinn.Register.PartyImport:UpsertUserRecordCommand"u8;
+
+            static Guid IFakeMassTransitMessage<UpsertUserRecordCommand>.MessageId(UpsertUserRecordCommand message)
+                => message.CommandId;
+
+            public Guid CommandId { get; } = Guid.CreateVersion7();
+
+            /// <summary>
+            /// The owner party UUID.
+            /// </summary>
+            public required Guid PartyUuid { get; init; }
+
+            /// <summary>
+            /// Gets the user ID.
+            /// </summary>
+            public required ulong UserId { get; init; }
+
+            /// <summary>
+            /// Gets the username, if any.
+            /// </summary>
+            public required string? Username { get; init; }
+
+            /// <summary>
+            /// Gets whether the user is active.
+            /// </summary>
+            public required bool IsActive { get; init; }
+
+            /// <summary>
+            /// Gets the tracking information for the import.
+            /// </summary>
+            public JobTrackig Tracking { get; init; }
+        }
+    }
+
     private sealed class ImportBatchErrorQueueHandler()
         : ErrorQueueHandler(
             "register-party-import-batch",
             [
-                new UpsertValidatedPartyCommandHandler(),
+                new UpsertValidatedA2PartyCommandHandler(),
+                new UpsertValidatedA2ProfileCommandHandler(),
                 new UpsertExternalRoleAssignmentsCommandHandler(),
+                new UpsertPartyUserCommandHandler(),
             ])
     {
-        private sealed class UpsertValidatedPartyCommandHandler
+        private sealed class UpsertValidatedA2PartyCommandHandler
             : ErrorQueueMessageHandler<UpsertValidatedPartyCommand>
         {
             protected override ValueTask<bool> Handle(UpsertValidatedPartyCommand message, Context sender, CancellationToken cancellationToken)
@@ -465,6 +550,40 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
             }
 
             private async ValueTask<bool> SendAndReturn(ImportA2PartyCommand command, Context sender, CancellationToken cancellationToken)
+            {
+                await sender.Send(command, cancellationToken);
+                return true;
+            }
+        }
+
+        private sealed class UpsertValidatedA2ProfileCommandHandler
+            : ErrorQueueMessageHandler<UpsertValidatedPartyCommand>
+        {
+            protected override ValueTask<bool> Handle(UpsertValidatedPartyCommand message, Context sender, CancellationToken cancellationToken)
+            {
+                // we only handle imports from A2
+                if (message.Tracking.JobName != "a2-profile-import:profile-changes")
+                {
+                    return ValueTask.FromResult(false);
+                }
+
+                if (message.Party.User is null)
+                {
+                    return ValueTask.FromResult(false);
+                }
+
+                var command = new ImportA2UserProfileCommand
+                {
+                    UserId = message.Party.User.UserId,
+                    OwnerPartyUuid = message.Party.OwnerUuid ?? message.Party.PartyUuid,
+                    IsDeleted = message.Party.IsDeleted,
+                    Tracking = message.Tracking,
+                };
+
+                return SendAndReturn(command, sender, cancellationToken);
+            }
+
+            private async ValueTask<bool> SendAndReturn(ImportA2UserProfileCommand command, Context sender, CancellationToken cancellationToken)
             {
                 await sender.Send(command, cancellationToken);
                 return true;
@@ -495,6 +614,37 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
 
             private async ValueTask<bool> SendAndReturn(ImportA2CCRRolesCommand command, Context sender, CancellationToken cancellationToken)
             {
+                await sender.Send(command, cancellationToken);
+                return true;
+            }
+        }
+
+        private sealed class UpsertPartyUserCommandHandler
+            : ErrorQueueMessageHandler<UpsertPartyUserCommand>
+        {
+            protected override ValueTask<bool> Handle(UpsertPartyUserCommand message, Context sender, CancellationToken cancellationToken)
+            {
+                // we only handle imports from A2
+                if (message.Tracking.JobName != "a2-party-userid-import:userid")
+                {
+                    return ValueTask.FromResult(false);
+                }
+
+                return HandleInner(message, sender, cancellationToken);
+            }
+
+            private async ValueTask<bool> HandleInner(UpsertPartyUserCommand message, Context sender, CancellationToken cancellationToken)
+            {
+                var isDeleted = await sender.GetPartyIsDeleted(message.PartyUuid, cancellationToken);
+
+                var command = new ImportA2UserProfileCommand
+                {
+                    UserId = message.User.UserId,
+                    OwnerPartyUuid = message.PartyUuid,
+                    IsDeleted = isDeleted,
+                    Tracking = message.Tracking,
+                };
+
                 await sender.Send(command, cancellationToken);
                 return true;
             }
@@ -547,16 +697,44 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
             /// </summary>
             public JobTrackig Tracking { get; init; }
         }
+
+        private sealed record UpsertPartyUserCommand
+            : IFakeMassTransitMessage<UpsertPartyUserCommand>
+        {
+            static Utf8String IFakeMassTransitMessage<UpsertPartyUserCommand>.MessageUrn
+                => "urn:message:Altinn.Register.PartyImport:UpsertPartyUserCommand"u8;
+
+            static Guid IFakeMassTransitMessage<UpsertPartyUserCommand>.MessageId(UpsertPartyUserCommand message)
+                => message.CommandId;
+
+            public Guid CommandId { get; } = Guid.CreateVersion7();
+
+            /// <summary>
+            /// Gets the party UUID.
+            /// </summary>
+            public required Guid PartyUuid { get; init; }
+
+            /// <summary>
+            /// Gets the user record to upsert.
+            /// </summary>
+            public required PartialUser User { get; init; }
+
+            /// <summary>
+            /// Gets the tracking information for the import.
+            /// </summary>
+            public required JobTrackig Tracking { get; init; }
+        }
     }
 
     private sealed class ImportValidationQueueHandler()
         : ErrorQueueHandler(
             "register-party-import-validation",
             [
-                new UpsertPartyCommandHandler()
+                new UpsertPartyCommandFromA2PartyHandler(),
+                new UpsertPartyCommandFromA2ProfileHandler(),
             ])
     {
-        private sealed class UpsertPartyCommandHandler
+        private sealed class UpsertPartyCommandFromA2PartyHandler
             : ErrorQueueMessageHandler<UpsertPartyComand>
         {
             protected override ValueTask<bool> Handle(UpsertPartyComand message, Context sender, CancellationToken cancellationToken)
@@ -578,6 +756,40 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
             }
 
             private async ValueTask<bool> SendAndReturn(ImportA2PartyCommand command, Context sender, CancellationToken cancellationToken)
+            {
+                await sender.Send(command, cancellationToken);
+                return true;
+            }
+        }
+
+        private sealed class UpsertPartyCommandFromA2ProfileHandler
+            : ErrorQueueMessageHandler<UpsertPartyComand>
+        {
+            protected override ValueTask<bool> Handle(UpsertPartyComand message, Context sender, CancellationToken cancellationToken)
+            {
+                // we only handle imports from A2
+                if (message.Tracking.JobName != "a2-profile-import:profile-changes")
+                {
+                    return ValueTask.FromResult(false);
+                }
+
+                if (message.Party.User is null)
+                {
+                    return ValueTask.FromResult(false);
+                }
+
+                var command = new ImportA2UserProfileCommand
+                {
+                    UserId = message.Party.User.UserId,
+                    OwnerPartyUuid = message.Party.OwnerUuid ?? message.Party.PartyUuid,
+                    IsDeleted = message.Party.IsDeleted,
+                    Tracking = message.Tracking,
+                };
+
+                return SendAndReturn(command, sender, cancellationToken);
+            }
+
+            private async ValueTask<bool> SendAndReturn(ImportA2UserProfileCommand command, Context sender, CancellationToken cancellationToken)
             {
                 await sender.Send(command, cancellationToken);
                 return true;
@@ -610,18 +822,6 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
                 new ImportA2UserIdForPartyCommandHandler(),
             ])
     {
-        public override bool GetHandler(ServiceBusReceivedMessage message, [NotNullWhen(true)] out ErrorQueueMessageHandler? handler)
-        {
-            // TODO: remove after cleaning junk
-            if (string.IsNullOrEmpty(message.ContentType))
-            {
-                handler = JunkHandler.Instance;
-                return true;
-            }
-
-            return base.GetHandler(message, out handler);
-        }
-
         private sealed class ImportA2PartyCommandHandler
             : ErrorQueueMessageHandler<ImportA2PartyCommand>
         {
@@ -710,6 +910,38 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
         public required DateTimeOffset ChangedTime { get; init; }
     }
 
+    private sealed record ImportA2UserProfileCommand
+        : IFakeMassTransitMessage<ImportA2UserProfileCommand>
+    {
+        static Utf8String IFakeMassTransitMessage<ImportA2UserProfileCommand>.MessageUrn
+            => "urn:message:Altinn.Register.PartyImport.A2:ImportA2UserProfileCommand"u8;
+
+        static Guid IFakeMassTransitMessage<ImportA2UserProfileCommand>.MessageId(ImportA2UserProfileCommand message)
+            => message.CommandId;
+
+        public Guid CommandId { get; } = Guid.CreateVersion7();
+
+        /// <summary>
+        /// Gets the user ID.
+        /// </summary>
+        public required ulong UserId { get; init; }
+
+        /// <summary>
+        /// Gets the owner party UUID.
+        /// </summary>
+        public required Guid OwnerPartyUuid { get; init; }
+
+        /// <summary>
+        /// Gets whether the user profile was deleted at the update time.
+        /// </summary>
+        public required bool IsDeleted { get; init; }
+
+        /// <summary>
+        /// Gets tracking information for the import job.
+        /// </summary>
+        public required JobTrackig Tracking { get; init; }
+    }
+
     private sealed record ImportA2CCRRolesCommand
         : IFakeMassTransitMessage<ImportA2CCRRolesCommand>
     {
@@ -769,7 +1001,7 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
         /// <summary>
         /// Gets the party type.
         /// </summary>
-        public required string PartyType { get; init; }
+        public required PartyRecordType PartyType { get; init; }
 
         /// <summary>
         /// Gets the tracking information for the upsert.
@@ -787,16 +1019,30 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
     private sealed record PartialParty
     {
         public Guid PartyUuid { get; init; }
+
+        public Guid? OwnerUuid { get; init; }
+
+        public PartialUser? User { get; init; }
+
+        public bool IsDeleted { get; init; }
     }
 
-    private sealed class Context(ServiceBusSender sender, DbHelper db)
+    private sealed record PartialUser
+    {
+        public uint UserId { get; init; }
+    }
+
+    private sealed class Context(
+        DbHelper db,
+        ServiceBusSender a2PartyImport,
+        ServiceBusSender a2ProfileImport)
     {
         public async Task Send(ImportA2PartyCommand command, CancellationToken cancellationToken)
         {
             var data = new BinaryData(FakeMassTransitEnvelope.Create(command), Options, typeof(FakeMassTransitEnvelope<ImportA2PartyCommand>));
             var message = new ServiceBusMessage(data);
             message.ContentType = "application/vnd.masstransit+json";
-            await sender.SendMessageAsync(message, cancellationToken);
+            await a2PartyImport.SendMessageAsync(message, cancellationToken);
         }
 
         public async Task Send(ImportA2CCRRolesCommand command, CancellationToken cancellationToken)
@@ -804,7 +1050,7 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
             var data = new BinaryData(FakeMassTransitEnvelope.Create(command), Options, typeof(FakeMassTransitEnvelope<ImportA2CCRRolesCommand>));
             var message = new ServiceBusMessage(data);
             message.ContentType = "application/vnd.masstransit+json";
-            await sender.SendMessageAsync(message, cancellationToken);
+            await a2PartyImport.SendMessageAsync(message, cancellationToken);
         }
 
         public async Task Send(ImportA2UserIdForPartyCommand command, CancellationToken cancellationToken)
@@ -812,7 +1058,15 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
             var data = new BinaryData(FakeMassTransitEnvelope.Create(command), Options, typeof(FakeMassTransitEnvelope<ImportA2UserIdForPartyCommand>));
             var message = new ServiceBusMessage(data);
             message.ContentType = "application/vnd.masstransit+json";
-            await sender.SendMessageAsync(message, cancellationToken);
+            await a2PartyImport.SendMessageAsync(message, cancellationToken);
+        }
+
+        public async Task Send(ImportA2UserProfileCommand command, CancellationToken cancellationToken)
+        {
+            var data = new BinaryData(FakeMassTransitEnvelope.Create(command), Options, typeof(FakeMassTransitEnvelope<ImportA2UserProfileCommand>));
+            var message = new ServiceBusMessage(data);
+            message.ContentType = "application/vnd.masstransit+json";
+            await a2ProfileImport.SendMessageAsync(message, cancellationToken);
         }
 
         public async Task<int> GetPartyIdFromUuid(Guid partyUuid, CancellationToken cancellationToken)
@@ -842,6 +1096,64 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
 
             return reader.GetInt32(0);
         }
+
+        public async Task<PartyRecordType> GetPartyTypeFromUuid(Guid partyUuid, CancellationToken cancellationToken)
+        {
+            const string QUERY =
+                /*strpsql*/"""
+                SELECT p.party_type
+                FROM register.party p
+                WHERE p.uuid = @partyUuid
+                """;
+
+            await using var conn = await db.Source.OpenConnectionAsync(cancellationToken);
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = QUERY;
+
+            var parameter = new NpgsqlParameter<Guid>("partyUuid", NpgsqlDbType.Uuid);
+            parameter.TypedValue = partyUuid;
+            cmd.Parameters.Add(parameter);
+
+            await cmd.PrepareAsync(cancellationToken);
+            await using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult | CommandBehavior.SingleRow, cancellationToken);
+
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                throw new InvalidOperationException("Party not found");
+            }
+
+            var rawString = reader.GetString(0);
+            var jsonString = JsonSerializer.Serialize(rawString, Options);
+            return JsonSerializer.Deserialize<PartyRecordType>(jsonString, Options);
+        }
+
+        public async Task<bool> GetPartyIsDeleted(Guid partyUuid, CancellationToken cancellationToken)
+        {
+            const string QUERY =
+                /*strpsql*/"""
+                SELECT p.is_deleted
+                FROM register.party p
+                WHERE p.uuid = @partyUuid
+                """;
+
+            await using var conn = await db.Source.OpenConnectionAsync(cancellationToken);
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = QUERY;
+
+            var parameter = new NpgsqlParameter<Guid>("partyUuid", NpgsqlDbType.Uuid);
+            parameter.TypedValue = partyUuid;
+            cmd.Parameters.Add(parameter);
+
+            await cmd.PrepareAsync(cancellationToken);
+            await using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult | CommandBehavior.SingleRow, cancellationToken);
+
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                throw new InvalidOperationException("Party not found");
+            }
+
+            return reader.GetBoolean(0);
+        }
     }
 
     private sealed class SkippedColumn
@@ -855,6 +1167,43 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
 
             return Markup.FromInterpolated($"[green]{notSkipped:F0}[/]/[yellow]{skipped:F0}[/]/[blue]{task.MaxValue:F0}[/]");
         }
+    }
+
+    /// <summary>
+    /// Represents a party type.
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum PartyRecordType
+    {
+        /// <summary>
+        /// Person party type.
+        /// </summary>
+        [JsonStringEnumMemberName("person")]
+        Person = 1,
+
+        /// <summary>
+        /// Organization party type.
+        /// </summary>
+        [JsonStringEnumMemberName("organization")]
+        Organization,
+
+        /// <summary>
+        /// Self-identified user party type.
+        /// </summary>
+        [JsonStringEnumMemberName("self-identified-user")]
+        SelfIdentifiedUser,
+
+        /// <summary>
+        /// System user party type.
+        /// </summary>
+        [JsonStringEnumMemberName("system-user")]
+        SystemUser,
+
+        /// <summary>
+        /// Enterprise user party type.
+        /// </summary>
+        [JsonStringEnumMemberName("enterprise-user")]
+        EnterpriseUser,
     }
 
     /// <summary>
