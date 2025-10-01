@@ -22,6 +22,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuditAccessor, AuditAccessor>();
         services.AddScoped<ITranslationService, TranslationService>();
         services.AddScoped<AppDbContextFactory>();
+        services.AddScoped(sp => sp.GetRequiredService<AppDbContextFactory>().CreateDbContext());
         services.AddSingleton<AuditMiddleware>();
         
         return options.Source switch
