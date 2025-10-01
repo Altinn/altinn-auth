@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Altinn.AccessMgmt.Core.HostedServices.Contracts;
 using Altinn.AccessMgmt.Core.HostedServices.Leases;
+using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
@@ -27,8 +28,7 @@ public partial class ResourceSyncService : IResourceSyncService
     public ResourceSyncService(
         IAltinnResourceRegistry resourceRegistry,
         IServiceProvider serviceProvider,
-        ILogger<ResourceSyncService> logger
-        )
+        ILogger<ResourceSyncService> logger)
     {
         _logger = logger;
         _resourceRegistry = resourceRegistry;
@@ -45,14 +45,10 @@ public partial class ResourceSyncService : IResourceSyncService
             return false;
         }
 
-        var options = new AuditValues(
-            AuditDefaults.ResourceRegistryImportSystem,
-            AuditDefaults.ResourceRegistryImportSystem,
-            Activity.Current?.TraceId.ToString() ?? Guid.CreateVersion7().ToString()
-        );
+        var options = new AuditValues(SystemEntityConstants.ResourceRegistryImportSystem);
 
         using var scope = _serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContextFactory>().CreateDbContext();
         var ingestService = scope.ServiceProvider.GetRequiredService<IIngestService>();
 
         var resourceOwners = new List<Provider>();
@@ -79,16 +75,12 @@ public partial class ResourceSyncService : IResourceSyncService
     /// <inheritdoc />
     public async Task SyncResources(ILease lease, CancellationToken cancellationToken)
     {
-        using var scope = _serviceProvider.CreateScope();
+        var options = new AuditValues(SystemEntityConstants.ResourceRegistryImportSystem);
+        using var scope = _serviceProvider.CreateEFScope(options);
         var dbContext = scope.ServiceProvider.GetService<AppDbContext>();
 
         ResourceTypes = await dbContext.ResourceTypes.ToListAsync(cancellationToken);
         var leaseData = await lease.Get<ResourceRegistryLease>(cancellationToken);
-        var options = new AuditValues(
-            AuditDefaults.ResourceRegistryImportSystem,
-            AuditDefaults.ResourceRegistryImportSystem,
-            Activity.Current?.TraceId.ToString() ?? Guid.CreateVersion7().ToString()
-        );
 
         await foreach (var page in await _resourceRegistry.StreamResources(leaseData.Since, leaseData.ResourceNextPageLink, cancellationToken))
         {
@@ -103,7 +95,7 @@ public partial class ResourceSyncService : IResourceSyncService
                 leaseData.Since = updatedResource.UpdatedAt;
                 try
                 {
-                    var resource = await UpsertResource(dbContext, updatedResource, options, cancellationToken);
+                    var resource = await UpsertResource(dbContext, updatedResource, cancellationToken);
                     if (resource is null)
                     {
                         continue;
@@ -111,11 +103,11 @@ public partial class ResourceSyncService : IResourceSyncService
 
                     if (updatedResource.Deleted)
                     {
-                        await DeleteUpdatedSubject(dbContext, options, updatedResource, resource, cancellationToken);
+                        await DeleteUpdatedSubject(dbContext, updatedResource, resource, cancellationToken);
                     }
                     else
                     {
-                        await UpsertUpdatedSubject(dbContext, options, updatedResource, resource, cancellationToken);
+                        await UpsertUpdatedSubject(dbContext, updatedResource, resource, cancellationToken);
                     }
                 }
                 catch (Exception ex)
@@ -129,21 +121,21 @@ public partial class ResourceSyncService : IResourceSyncService
         }
     }
 
-    private Task UpsertUpdatedSubject(AppDbContext dbContext, AuditValues options, ResourceUpdatedModel updatedResource, Resource resource, CancellationToken cancellationToken) => updatedResource.SubjectUrn switch
+    private Task UpsertUpdatedSubject(AppDbContext dbContext, ResourceUpdatedModel updatedResource, Resource resource, CancellationToken cancellationToken) => updatedResource.SubjectUrn switch
     {
-        var s when s.StartsWith("urn:altinn:rolecode:", StringComparison.OrdinalIgnoreCase) => UpsertRoleCodeResource(dbContext, updatedResource, resource, options, cancellationToken),
-        var s when s.StartsWith("urn:altinn:accesspackage:", StringComparison.OrdinalIgnoreCase) => UpsertAccessPackageResource(dbContext, updatedResource, resource, options, cancellationToken),
+        var s when s.StartsWith("urn:altinn:rolecode:", StringComparison.OrdinalIgnoreCase) => UpsertRoleCodeResource(dbContext, updatedResource, resource, cancellationToken),
+        var s when s.StartsWith("urn:altinn:accesspackage:", StringComparison.OrdinalIgnoreCase) => UpsertAccessPackageResource(dbContext, updatedResource, resource, cancellationToken),
         _ => Task.CompletedTask,
     };
 
-    private Task DeleteUpdatedSubject(AppDbContext dbContext, AuditValues options, ResourceUpdatedModel updatedResource, Resource resource, CancellationToken cancellationToken) => updatedResource.SubjectUrn switch
+    private Task DeleteUpdatedSubject(AppDbContext dbContext, ResourceUpdatedModel updatedResource, Resource resource, CancellationToken cancellationToken) => updatedResource.SubjectUrn switch
     {
-        var s when s.StartsWith("urn:altinn:rolecode:", StringComparison.OrdinalIgnoreCase) => DeleteRoleCodeResource(dbContext, updatedResource, resource, options, cancellationToken),
-        var s when s.StartsWith("urn:altinn:accesspackage:", StringComparison.OrdinalIgnoreCase) => DeleteAccessPackageResource(dbContext, updatedResource, resource, options, cancellationToken),
+        var s when s.StartsWith("urn:altinn:rolecode:", StringComparison.OrdinalIgnoreCase) => DeleteRoleCodeResource(dbContext, updatedResource, resource, cancellationToken),
+        var s when s.StartsWith("urn:altinn:accesspackage:", StringComparison.OrdinalIgnoreCase) => DeleteAccessPackageResource(dbContext, updatedResource, resource, cancellationToken),
         _ => Task.CompletedTask,
     };
 
-    private async Task DeleteRoleCodeResource(AppDbContext dbContext, ResourceUpdatedModel updatedResource, Resource resource, AuditValues options, CancellationToken cancellationToken)
+    private async Task DeleteRoleCodeResource(AppDbContext dbContext, ResourceUpdatedModel updatedResource, Resource resource, CancellationToken cancellationToken)
     {
         var subjectUrnPart = updatedResource.SubjectUrn.Split(":").Last();
 
@@ -161,12 +153,12 @@ public partial class ResourceSyncService : IResourceSyncService
             if (roleResource is { })
             {
                 dbContext.RoleResources.Remove(roleResource);
-                await dbContext.SaveChangesAsync(options, cancellationToken);
+                await dbContext.SaveChangesAsync(cancellationToken);
             }
         }
     }
 
-    private async Task DeleteAccessPackageResource(AppDbContext dbContext, ResourceUpdatedModel updatedResource, Resource resource, AuditValues options, CancellationToken cancellationToken)
+    private async Task DeleteAccessPackageResource(AppDbContext dbContext, ResourceUpdatedModel updatedResource, Resource resource, CancellationToken cancellationToken)
     {
         var packageResource = await dbContext.PackageResources
             .AsTracking()
@@ -177,11 +169,11 @@ public partial class ResourceSyncService : IResourceSyncService
         if (packageResource is { })
         {
             dbContext.PackageResources.Remove(packageResource);
-            await dbContext.SaveChangesAsync(options, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
     }
 
-    private async Task UpsertAccessPackageResource(AppDbContext dbContext, ResourceUpdatedModel updatedResource, Resource resource, AuditValues options, CancellationToken cancellationToken)
+    private async Task UpsertAccessPackageResource(AppDbContext dbContext, ResourceUpdatedModel updatedResource, Resource resource, CancellationToken cancellationToken)
     {
         var package = await dbContext.Packages
             .AsNoTracking()
@@ -200,12 +192,12 @@ public partial class ResourceSyncService : IResourceSyncService
                 };
 
                 dbContext.PackageResources.Add(packageResource);
-                await dbContext.SaveChangesAsync(options, cancellationToken);
+                await dbContext.SaveChangesAsync(cancellationToken);
             }
         }
     }
 
-    private async Task UpsertRoleCodeResource(AppDbContext dbContext, ResourceUpdatedModel updatedResource, Resource resource, AuditValues options, CancellationToken cancellationToken)
+    private async Task UpsertRoleCodeResource(AppDbContext dbContext, ResourceUpdatedModel updatedResource, Resource resource, CancellationToken cancellationToken)
     {
         var subjectUrnPart = updatedResource.SubjectUrn.Split(":").Last();
 
@@ -224,11 +216,11 @@ public partial class ResourceSyncService : IResourceSyncService
             };
 
             dbContext.RoleResources.Add(roleResource);
-            await dbContext.SaveChangesAsync(options, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
     }
 
-    private async Task<Resource?> UpsertResource(AppDbContext dbContext, ResourceUpdatedModel resourceUpdated, AuditValues options, CancellationToken cancellationToken)
+    private async Task<Resource?> UpsertResource(AppDbContext dbContext, ResourceUpdatedModel resourceUpdated, CancellationToken cancellationToken)
     {
         var response = await _resourceRegistry.GetResource(resourceUpdated.ResourceUrn.Split(":").Last(), cancellationToken: cancellationToken);
         if (response.IsProblem)
@@ -237,7 +229,7 @@ public partial class ResourceSyncService : IResourceSyncService
             return null;
         }
 
-        var convertedResource = await ConvertToResource(dbContext, response.Content, options, cancellationToken);
+        var convertedResource = await ConvertToResource(dbContext, response.Content, cancellationToken);
         if (convertedResource is null)
         {
             return null;
@@ -247,7 +239,7 @@ public partial class ResourceSyncService : IResourceSyncService
         if (resource is null)
         {
             dbContext.Resources.Add(convertedResource);
-            await dbContext.SaveChangesAsync(options, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
             return convertedResource;
         }
 
@@ -255,14 +247,14 @@ public partial class ResourceSyncService : IResourceSyncService
         resource.Description = convertedResource.Description;
         resource.TypeId = convertedResource.TypeId;
 
-        await dbContext.SaveChangesAsync(options, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return resource;
     }
 
     public IEnumerable<ResourceType> ResourceTypes { get; set; }
 
-    private async Task<Resource> ConvertToResource(AppDbContext dbContext, ResourceModel model, AuditValues options, CancellationToken cancellationToken)
+    private async Task<Resource> ConvertToResource(AppDbContext dbContext, ResourceModel model, CancellationToken cancellationToken)
     {
         var provider = await dbContext.Providers
         .AsNoTracking()
@@ -273,7 +265,7 @@ public partial class ResourceSyncService : IResourceSyncService
             return null;
         }
 
-        var resourceType = await GetOrCreateResourceType(dbContext, model, options, cancellationToken) ?? throw new Exception("Unable to get or create resourcetype");
+        var resourceType = await GetOrCreateResourceType(dbContext, model, cancellationToken) ?? throw new Exception("Unable to get or create resourcetype");
         return new Resource()
         {
             Name = model.Title?.Nb ?? model.Identifier,
@@ -289,7 +281,7 @@ public partial class ResourceSyncService : IResourceSyncService
         ResourceTypes = await dbContext.ResourceTypes.ToListAsync(cancellationToken);
     }
 
-    private async Task<ResourceType> GetOrCreateResourceType(AppDbContext dbContext, ResourceModel model, AuditValues options, CancellationToken cancellationToken)
+    private async Task<ResourceType> GetOrCreateResourceType(AppDbContext dbContext, ResourceModel model, CancellationToken cancellationToken)
     {
         if (ResourceTypes == null || !ResourceTypes.Any())
         {
@@ -307,7 +299,7 @@ public partial class ResourceSyncService : IResourceSyncService
             };
 
             dbContext.ResourceTypes.Add(type);
-            await dbContext.SaveChangesAsync(options, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             await LoadResourceTypes(dbContext, cancellationToken);
         }

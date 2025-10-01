@@ -1,12 +1,19 @@
 ﻿using System.Data.Common;
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Npgsql;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Extensions;
 
-public record AuditValues(Guid ChangedBy, Guid ChangedBySystem, string OperationId);
+public record AuditValues(Guid ChangedBy, Guid ChangedBySystem, string OperationId = null)
+{
+    public AuditValues(Guid changedBy, Guid changedBySystem)
+        : this(changedBy, changedBySystem, Activity.Current?.TraceId.ToString() ?? Guid.CreateVersion7().ToString()) { }
+    
+    public AuditValues(Guid changedBy) 
+        : this(changedBy, changedBy, Activity.Current?.TraceId.ToString() ?? Guid.CreateVersion7().ToString()) { }
+}
 
 public interface IAuditContextProvider
 {

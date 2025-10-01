@@ -210,7 +210,7 @@ public static class InternalValidationRules
             if (packages.Any())
             {
                 return (ref ValidationErrorBuilder errors) =>
-                    errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, $"QUERY/{paramName}", [new("packages", $"following packages has active assignments [{string.Join(",", packages.Select(p => p.Id.ToString()))}].")]);
+                    errors.Add(ValidationErrors.AssignmentHasActiveConnections, $"QUERY/{paramName}", [new("packages", $"following packages has active assignments [{string.Join(",", packages.Select(p => p.Id.ToString()))}].")]);
             }
 
             return null;

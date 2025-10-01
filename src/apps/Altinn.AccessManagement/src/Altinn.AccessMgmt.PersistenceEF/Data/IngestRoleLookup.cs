@@ -1,18 +1,19 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Models;
+﻿using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Data;
 
-public partial class StaticDataIngest
+internal static partial class StaticDataIngest
 {
     /// <summary>
     /// Ingest RoleLookup
     /// </summary>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    public async Task IngestRoleLookup(CancellationToken cancellationToken = default)
+    internal static async Task IngestRoleLookup(AppDbContext dbContext, CancellationToken cancellationToken = default)
     {
-        var roles = await db.Roles.AsNoTracking().ToListAsync();
+        var roles = await dbContext.Roles.AsNoTracking().ToListAsync();
 
         var data = new List<RoleLookup>()
         {
@@ -235,10 +236,10 @@ public partial class StaticDataIngest
 
         foreach (var d in data)
         {
-            var obj = db.RoleLookups.FirstOrDefault(t => t.RoleId == d.RoleId && t.Key == d.Key);
+            var obj = dbContext.RoleLookups.FirstOrDefault(t => t.RoleId == d.RoleId && t.Key == d.Key);
             if (obj == null)
             {
-                db.RoleLookups.Add(d);
+                dbContext.RoleLookups.Add(d);
             }
             else
             {
@@ -249,6 +250,6 @@ public partial class StaticDataIngest
             }
         }
 
-        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
+        var result = await dbContext.SaveChangesAsync(AuditValues, cancellationToken);
     }
 }

@@ -400,13 +400,13 @@ public class AssignmentService(
                 var packages = await assignmentPackageRepository.Get(f => f.AssignmentId, existingAssignment.Id, cancellationToken: cancellationToken);
                 if (packages != null && packages.Any())
                 {
-                    errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("packages", string.Join(",", packages.Select(p => p.Id.ToString())))]);
+                    errors.Add(ValidationErrors.AssignmentHasActiveConnections, "$QUERY/cascade", [new("packages", string.Join(",", packages.Select(p => p.Id.ToString())))]);
                 }
 
                 var delegations = await delegationRepository.Get(f => f.FromId, existingAssignment.Id, cancellationToken: cancellationToken);
                 if (delegations != null && delegations.Any())
                 {
-                    errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("delegations", string.Join(",", delegations.Select(p => p.Id.ToString())))]);
+                    errors.Add(ValidationErrors.AssignmentHasActiveConnections, "$QUERY/cascade", [new("delegations", string.Join(",", delegations.Select(p => p.Id.ToString())))]);
                 }
             }
         }

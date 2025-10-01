@@ -90,4 +90,8 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor EntityVariantNotFoundOrInvalid { get; }
     = _factory.Create(19, HttpStatusCode.BadRequest, $"The EntityVariant is not found or not valid for the given EntityType");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor MissingRightHolder { get; }  
+    = _factory.Create(20, HttpStatusCode.BadRequest, "Missing rightholder");
 }

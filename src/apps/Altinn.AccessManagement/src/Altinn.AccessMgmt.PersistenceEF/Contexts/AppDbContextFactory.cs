@@ -1,24 +1,15 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Extensions;
+using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Contexts;
 
-/// <summary>
-/// Used by cli `dotnet ef migration`
-/// </summary>
-public sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
+/// <inheritdoc />
+public class AppDbContextFactory(IDbContextFactory<AppDbContext> factory, IAuditAccessor audit) : IDbContextFactory<AppDbContext>
 {
-    public AppDbContext CreateDbContext(string[] args)
+    public AppDbContext CreateDbContext()
     {
-        var cs = Environment.GetEnvironmentVariable("Database:Postgres:MigrationConnectionString") ?? "Database=accessmgmt_ef_02;Host=localhost;Username=platform_authorization_admin;Password=Password;Include Error Detail=true";
-
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(cs)
-            .ReplaceService<IMigrationsSqlGenerator, CustomMigrationsSqlGenerator>()
-            .Options;
-
-        return new AppDbContext(options, new DesignTimeAuditAccessor());
+        var dbContext = factory.CreateDbContext();
+        dbContext.AuditAccessor = audit;
+        return dbContext;
     }
 }

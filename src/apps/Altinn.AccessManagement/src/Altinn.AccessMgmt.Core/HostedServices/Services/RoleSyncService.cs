@@ -2,6 +2,7 @@
 using Altinn.AccessMgmt.Core.HostedServices.Contracts;
 using Altinn.AccessMgmt.Core.HostedServices.Leases;
 using Altinn.AccessMgmt.Core.Utils;
+using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
@@ -39,14 +40,10 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
         var batchData = new List<Assignment>();
         var seen = new HashSet<(Guid, Guid, Guid)>();
 
-        var options = new AuditValues(
-            AuditDefaults.RegisterImportSystem,
-            AuditDefaults.RegisterImportSystem,
-            Activity.Current?.TraceId.ToString() ?? Guid.CreateVersion7().ToString()
-        );
+        var options = new AuditValues(SystemEntityConstants.RegisterImportSystem);
 
-        using var scope = _serviceProvider.CreateScope();
-        var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        using var scope = _serviceProvider.CreateEFScope(options);
+        var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContextFactory>().CreateDbContext();
         var ingestService = scope.ServiceProvider.GetRequiredService<IIngestService>();
 
         OrgType = EntityTypeConstants.Organisation;
@@ -94,7 +91,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                         batchData.Add(assignment);
                         if (item.RoleIdentifier == "hovedenhet" || item.RoleIdentifier == "ikke-naeringsdrivende-hovedenhet")
                         {
-                            await SetParent(appDbContext, assignment.FromId, assignment.ToId, options: options, cancellationToken: cancellationToken);
+                            await SetParent(appDbContext, assignment.FromId, assignment.ToId, cancellationToken: cancellationToken);
                         }
                     }
                     else
@@ -107,12 +104,12 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                         if (deleteAssignment is { })
                         {
                             appDbContext.Remove(deleteAssignment);
-                            await appDbContext.SaveChangesAsync(options,  cancellationToken);
+                            await appDbContext.SaveChangesAsync(cancellationToken);
                         }
 
                         if (item.RoleIdentifier == "hovedenhet" || item.RoleIdentifier == "ikke-naeringsdrivende-hovedenhet")
                         {
-                            await RemoveParent(appDbContext, assignment.FromId, options: options, cancellationToken: cancellationToken);
+                            await RemoveParent(appDbContext, assignment.FromId, cancellationToken: cancellationToken);
                         }
                     }
                 }
@@ -161,7 +158,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
         }
     }
 
-    private async Task SetParent(AppDbContext dbContext, Guid childId, Guid parentId, AuditValues options, CancellationToken cancellationToken = default)
+    private async Task SetParent(AppDbContext dbContext, Guid childId, Guid parentId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -170,7 +167,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                 .FirstAsync(e => e.Id == childId, cancellationToken: cancellationToken);
 
             entity.ParentId = parentId;
-            await dbContext.SaveChangesAsync(options, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
         catch (Exception ex)
         {
@@ -178,7 +175,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
         }
     }
 
-    private async Task RemoveParent(AppDbContext dbContext, Guid childId, AuditValues options, CancellationToken cancellationToken = default)
+    private async Task RemoveParent(AppDbContext dbContext, Guid childId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -187,7 +184,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                 .FirstAsync(e => e.Id == childId, cancellationToken: cancellationToken);
 
             entity.ParentId = null;
-            await dbContext.SaveChangesAsync(options, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
         catch (Exception ex)
         {
@@ -201,7 +198,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
     {
         try
         {
-            var role = await GetOrCreateRole(dbContext, model.RoleIdentifier, model.RoleSource, options: options, cancellationToken);
+            var role = await GetOrCreateRole(dbContext, model.RoleIdentifier, model.RoleSource, cancellationToken);
             return new Assignment()
             {
                 FromId = Guid.Parse(model.FromParty),
@@ -215,7 +212,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
         }
     }
 
-    private async Task<Role> GetOrCreateRole(AppDbContext dbContext, string roleIdentifier, string roleSource, AuditValues options, CancellationToken cancellationToken)
+    private async Task<Role> GetOrCreateRole(AppDbContext dbContext, string roleIdentifier, string roleSource, CancellationToken cancellationToken)
     {
         if (Roles.TryGetValue(roleIdentifier, out var cached))
         {
@@ -237,7 +234,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
             };
 
             dbContext.Roles.Add(role);
-            await dbContext.SaveChangesAsync(options, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
 
         Roles.Add(role.Code, role);

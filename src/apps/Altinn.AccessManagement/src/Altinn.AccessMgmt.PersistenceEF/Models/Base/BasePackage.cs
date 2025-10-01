@@ -1,5 +1,6 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
+using Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Models.Base;
 
@@ -7,7 +8,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Models.Base;
 /// Package
 /// </summary>
 [NotMapped]
-public class BasePackage : BaseAudit
+public class BasePackage : BaseAudit, IEntityId, IEntityName, IEntityUrn
 {
     /// <summary>
     /// Id

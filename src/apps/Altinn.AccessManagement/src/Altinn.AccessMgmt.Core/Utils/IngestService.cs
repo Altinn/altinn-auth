@@ -5,20 +5,21 @@ using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using NpgsqlTypes;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Utils;
 
-public class IngestService(AppDbContext dbContext) : IIngestService
+public class IngestService : IIngestService
 {
+    public AppDbContext DbContext { get; set; }
+    
+    public IngestService(AppDbContextFactory dbContextFactory)
+    {
+        DbContext = dbContextFactory.CreateDbContext();
+    }
+
     public async Task<int> IngestData<T>(List<T> data, CancellationToken cancellationToken = default)
     {
-        var model = dbContext.Model;
-        if (model == null)
-        {
-            throw new ArgumentNullException(nameof(T));
-        }
-
+        var model = DbContext.Model ?? throw new ArgumentNullException(nameof(T));
         var tableName = GetTableName<T>(model);
         var ingestColumns = GetColumns<T>(model);
 
@@ -33,8 +34,8 @@ public class IngestService(AppDbContext dbContext) : IIngestService
             throw new Exception(string.Format("Ingest id '{0}' not valid", ingestId.ToString()));
         }
 
-        var table = GetTableName<T>(dbContext.Model);
-        var ingestColumns = GetColumns<T>(dbContext.Model);
+        var table = GetTableName<T>(DbContext.Model);
+        var ingestColumns = GetColumns<T>(DbContext.Model);
 
         string columnStatement = string.Join(',', ingestColumns.Select(t => t.Name));
 
@@ -43,7 +44,7 @@ public class IngestService(AppDbContext dbContext) : IIngestService
 
         var createIngestTable = $"CREATE UNLOGGED TABLE IF NOT EXISTS {ingestTableName} AS SELECT {columnStatement} FROM {table.SchemaName}.{table.TableName} WITH NO DATA;";
 
-        await dbContext.Database.ExecuteSqlRawAsync(createIngestTable, cancellationToken);
+        await DbContext.Database.ExecuteSqlRawAsync(createIngestTable, cancellationToken);
 
         var completed = await WriteToIngest(data, ingestColumns, ingestTableName, cancellationToken);
 
@@ -58,8 +59,8 @@ public class IngestService(AppDbContext dbContext) : IIngestService
             matchColumns = ["id"];
         }
 
-        var table = GetTableName<T>(dbContext.Model);
-        var ingestColumns = GetColumns<T>(dbContext.Model);
+        var table = GetTableName<T>(DbContext.Model);
+        var ingestColumns = GetColumns<T>(DbContext.Model);
 
         string columnStatement = string.Join(',', ingestColumns.Select(t => t.Name));
 
@@ -133,7 +134,7 @@ public class IngestService(AppDbContext dbContext) : IIngestService
 
     private async Task<int> WriteToIngest<T>(List<T> data, List<IngestColumnDefinition> ingestColumns, string tableName, CancellationToken cancellationToken = default)
     {
-        var conn = (Npgsql.NpgsqlConnection)dbContext.Database.GetDbConnection();
+        var conn = (Npgsql.NpgsqlConnection)DbContext.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open)
         {
             await conn.OpenAsync(cancellationToken);
@@ -179,7 +180,7 @@ public class IngestService(AppDbContext dbContext) : IIngestService
 
     private async Task<int> ExecuteMigrationCommand(string query, CancellationToken cancellationToken = default)
     {
-        return await dbContext.Database.ExecuteSqlRawAsync(query, cancellationToken);
+        return await DbContext.Database.ExecuteSqlRawAsync(query, cancellationToken);
     }
 
     private Dictionary<Type, List<IngestColumnDefinition>> TypedIngestColumnDefinitions { get; set; } = new Dictionary<Type, List<IngestColumnDefinition>>();

@@ -99,7 +99,7 @@ public sealed class ConstantDefinition<T>(Guid id)
     /// <param name="def">The constant definition.</param>
     public static implicit operator T(ConstantDefinition<T> def)
         => def._entity;
-
+    
     /// <summary>
     /// Implicitly converts a <see cref="ConstantDefinition{T}"/> to a list of <see cref="TranslationEntry"/> objects,
     /// combining entries from both <see cref="EN"/> and <see cref="NN"/> (if available).

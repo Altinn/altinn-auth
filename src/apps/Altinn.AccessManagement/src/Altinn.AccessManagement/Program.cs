@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessManagement;
 using Altinn.AccessMgmt.Persistence.Extensions;
+using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -36,6 +37,7 @@ if (app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseDbAudit();
+app.UseEfAudit();
 
 app.MapControllers();
 app.MapDefaultAltinnEndpoints();
@@ -49,7 +51,7 @@ async Task Init()
 
     if (await featureManager.IsEnabledAsync(AccessManagementFeatureFlags.MigrationDbEf))
     {
-        await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+        await scope.ServiceProvider.GetRequiredService<AppDbContextFactory>().CreateDbContext().Database.MigrateAsync();
     }
     else if (await featureManager.IsEnabledAsync(AccessManagementFeatureFlags.MigrationDb))
     {

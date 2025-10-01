@@ -1,19 +1,20 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Models;
+﻿using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Data;
 
-public partial class StaticDataIngest
+internal static partial class StaticDataIngest
 {
     /// <summary>
     /// Ingest EntityVariantRole
     /// </summary>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    public async Task IngestEntityVariantRole(CancellationToken cancellationToken = default)
+    internal static async Task IngestEntityVariantRole(AppDbContext dbContext, CancellationToken cancellationToken = default)
     {
-        var roles = (await db.Roles.ToListAsync()).ToDictionary(t => t.Urn, t => t.Id);
-        var variants = (await db.EntityVariants.ToListAsync()).ToDictionary(t => t.Name, t => t.Id);
+        var roles = (await dbContext.Roles.ToListAsync()).ToDictionary(t => t.Urn, t => t.Id);
+        var variants = (await dbContext.EntityVariants.ToListAsync()).ToDictionary(t => t.Name, t => t.Id);
 
         var data = new List<EntityVariantRole>()
         {
@@ -391,10 +392,10 @@ public partial class StaticDataIngest
         foreach (var d in data)
         {
             // Verify: Compare on Id or Code?
-            var obj = db.EntityVariantRoles.FirstOrDefault(t => t.Id == d.Id);
+            var obj = dbContext.EntityVariantRoles.FirstOrDefault(t => t.Id == d.Id);
             if (obj == null)
             {
-                db.EntityVariantRoles.Add(d);
+                dbContext.EntityVariantRoles.Add(d);
             }
             else
             {
@@ -403,6 +404,6 @@ public partial class StaticDataIngest
             }
         }
 
-        await db.SaveChangesAsync(AuditValues, cancellationToken);
+        await dbContext.SaveChangesAsync(AuditValues, cancellationToken);
     }
 }

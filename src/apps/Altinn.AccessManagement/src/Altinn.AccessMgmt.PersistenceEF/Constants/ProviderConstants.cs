@@ -87,7 +87,7 @@ public static class ProviderConstants
     /// - <c>TypeId:</c> Set to <see cref="ProviderTypeConstants.System"/>
     /// - <c>RefId:</c> Empty string since this is a system provider.
     /// </remarks>
-    public static ConstantDefinition<Provider> ResourceRegistry { get; } = new ConstantDefinition<Provider>("0195ea92-2080-777d-8626-69c91ea2a05e")
+    public static ConstantDefinition<Provider> ResourceRegistry { get; } = new ConstantDefinition<Provider>("0195ea92-2080-79d8-9859-0b26375f145e")
     {
         Entity = new()
         {
@@ -108,7 +108,7 @@ public static class ProviderConstants
     /// - <c>TypeId:</c> Set to <see cref="ProviderTypeConstants.System"/>
     /// - <c>RefId:</c> Empty string since this is a service owner.
     /// </remarks>
-    public static ConstantDefinition<Provider> CentralCoordinatingRegister { get; } = new ConstantDefinition<Provider>("0195ea92-2080-7e7c-bbe3-bb0521c1e52a")
+    public static ConstantDefinition<Provider> CentralCoordinatingRegister { get; } = new ConstantDefinition<Provider>("0195ea92-2080-758b-89db-7735c4f68320")
     {
         Entity = new()
         {

@@ -1,3 +1,4 @@
+using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Data;
@@ -18,28 +19,25 @@ public static class ServiceCollectionExtensions
         var options = new AccessManagementDatabaseOptions(configureOptions);
         ConstantGuard.ConstantIdsAreUnique();
         services.AddScoped<ReadOnlyInterceptor>();
-        services.AddScoped<IAuditContextAccessor, AuditContextAccessor>();
+        services.AddScoped<IAuditAccessor, AuditAccessor>();
         services.AddScoped<ITranslationService, TranslationService>();
+        services.AddScoped<AppDbContextFactory>();
+        services.AddSingleton<AuditMiddleware>();
+        
         return options.Source switch
         {
-            SourceType.App => services.AddDbContext<AppDbContext>((sp, options) =>
+            SourceType.App => services.AddPooledDbContextFactory<AppDbContext>((sp, options) =>
             {
                 var db = sp.GetRequiredService<IAltinnDatabase>();
                 var connectionString = db.CreatePgsqlConnection(SourceType.App);
                 options.UseNpgsql(connectionString, ConfigureNpgsql);
             }),
-            SourceType.Migration => services.AddDbContext<AppDbContext>((sp, options) =>
+            SourceType.Migration => services.AddPooledDbContextFactory<AppDbContext>((sp, options) =>
             {
                 var db = sp.GetRequiredService<IAltinnDatabase>();
                 var connectionString = db.CreatePgsqlConnection(SourceType.Migration);
                 var configuration = sp.GetRequiredService<IConfiguration>();
-                options.UseAsyncSeeding(async (dbcontext, anyChanges, ct) =>
-                {
-                    var appDbContext = (AppDbContext)dbcontext;
-                    var ingest = new StaticDataIngest(appDbContext, new TranslationService(appDbContext), configuration);
-                    await ingest.IngestAll(ct);
-                });
-
+                options.UseAsyncSeeding(async (dbcontext, anyChanges, ct) => await StaticDataIngest.IngestAll((AppDbContext)dbcontext, ct));
                 options.UseNpgsql(connectionString, ConfigureNpgsql)
                     .ReplaceService<IMigrationsSqlGenerator, CustomMigrationsSqlGenerator>();
             }),

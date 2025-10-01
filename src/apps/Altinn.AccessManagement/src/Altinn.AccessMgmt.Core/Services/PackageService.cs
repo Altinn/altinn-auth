@@ -8,10 +8,14 @@ using Microsoft.EntityFrameworkCore;
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc/>
-public class PackageService(
-    AppDbContext db
-    ) : IPackageService
+public class PackageService : IPackageService
 {
+    public AppDbContext DbContext { get; set; }
+
+    public PackageService(AppDbContextFactory dbContextFactory)
+    {
+        DbContext = dbContextFactory.CreateDbContext();
+    }
 
     /// <inheritdoc/>
     public async Task<IEnumerable<SearchObject<PackageDto>>> Search(string term, bool searchInResources = false, CancellationToken cancellationToken = default)
@@ -57,13 +61,13 @@ public class PackageService(
 
     private async Task<List<PackageDto>> GetSearchData(CancellationToken cancellationToken = default)
     {
-        var areas = await db.Areas.AsNoTracking().ToListAsync(cancellationToken);
-        var packages = await db.Packages.AsNoTracking().ToListAsync(cancellationToken);
+        var areas = await DbContext.Areas.AsNoTracking().ToListAsync(cancellationToken);
+        var packages = await DbContext.Packages.AsNoTracking().ToListAsync(cancellationToken);
 
         var result = new List<PackageDto>();
         foreach (var package in packages)
         {
-            result.Add(DtoMapper.Convert(package, areas.First(t => t.Id == package.AreaId), await db.PackageResources.AsNoTracking().Where(t => t.PackageId == package.Id).Include(t => t.Resource).Select(t => t.Resource).ToListAsync(cancellationToken)));
+            result.Add(DtoMapper.Convert(package, areas.First(t => t.Id == package.AreaId), await DbContext.PackageResources.AsNoTracking().Where(t => t.PackageId == package.Id).Include(t => t.Resource).Select(t => t.Resource).ToListAsync(cancellationToken)));
         }
 
         return result;
@@ -77,7 +81,7 @@ public class PackageService(
             urnValue = ":" + urnValue;
         }
 
-        var packages = await db.Packages.AsNoTracking().Where(t => t.Urn.EndsWith(urnValue)).Include(t => t.Area).ToListAsync(cancellationToken);
+        var packages = await DbContext.Packages.AsNoTracking().Where(t => t.Urn.EndsWith(urnValue)).Include(t => t.Area).ToListAsync(cancellationToken);
         if (packages == null || packages.Count() != 1)
         {
             return null;
@@ -85,7 +89,7 @@ public class PackageService(
 
         var package = packages.First();
 
-        var resources = await db.PackageResources.AsNoTracking().Where(t => t.PackageId == package.Id).Include(t => t.Resource).Select(t => t.Resource).ToListAsync(cancellationToken);
+        var resources = await DbContext.PackageResources.AsNoTracking().Where(t => t.PackageId == package.Id).Include(t => t.Resource).Select(t => t.Resource).ToListAsync(cancellationToken);
 
         return DtoMapper.Convert(package, package.Area, resources);
     }
@@ -93,14 +97,14 @@ public class PackageService(
     /// <inheritdoc/>
     public async Task<PackageDto> GetPackage(Guid id, CancellationToken cancellationToken = default)
     {
-        var package = await db.Packages.AsNoTracking().Include(t => t.Area).SingleAsync(t => t.Id == id, cancellationToken);
+        var package = await DbContext.Packages.AsNoTracking().Include(t => t.Area).SingleAsync(t => t.Id == id, cancellationToken);
 
         if (package == null)
         {
             return null;
         }
 
-        var resources = await db.PackageResources.AsNoTracking().Where(t => t.PackageId == package.Id).Include(t => t.Resource).Select(t => t.Resource).ToListAsync(cancellationToken);
+        var resources = await DbContext.PackageResources.AsNoTracking().Where(t => t.PackageId == package.Id).Include(t => t.Resource).Select(t => t.Resource).ToListAsync(cancellationToken);
 
         return DtoMapper.Convert(package, package.Area, resources);
     }
@@ -108,12 +112,12 @@ public class PackageService(
     /// <inheritdoc/>
     public async Task<IEnumerable<PackageDto>> GetPackagesByArea(Guid areaId, CancellationToken cancellationToken)
     {
-        var packages = await db.Packages.AsNoTracking().Include(t => t.Area).Include(t => t.Provider).Include(t => t.EntityType).Where(t => t.AreaId == areaId).Include(t => t.Area).ToListAsync(cancellationToken);
+        var packages = await DbContext.Packages.AsNoTracking().Include(t => t.Area).Include(t => t.Provider).Include(t => t.EntityType).Where(t => t.AreaId == areaId).Include(t => t.Area).ToListAsync(cancellationToken);
 
         var result = new List<PackageDto>();
         foreach (var package in packages)
         {
-            result.Add(DtoMapper.Convert(package, package.Area, await db.PackageResources.AsNoTracking().Where(t => t.PackageId == package.Id).Include(t => t.Resource).Select(t => t.Resource).ToListAsync(cancellationToken)));
+            result.Add(DtoMapper.Convert(package, package.Area, await DbContext.PackageResources.AsNoTracking().Where(t => t.PackageId == package.Id).Include(t => t.Resource).Select(t => t.Resource).ToListAsync(cancellationToken)));
         }
 
         return result;
@@ -122,9 +126,9 @@ public class PackageService(
     /// <inheritdoc/>
     public async Task<IEnumerable<AreaGroupDto>> GetHierarchy(CancellationToken cancellationToken = default)
     {
-        var groups = await db.AreaGroups.AsNoTracking().Include(t => t.EntityType).ToListAsync(cancellationToken);
-        var areas = await db.Areas.AsNoTracking().Include(t => t.Group).ToListAsync(cancellationToken);
-        var packages = await db.Packages.AsNoTracking().Include(t => t.Area).Include(t => t.Provider).Include(t => t.EntityType).ToListAsync(cancellationToken);
+        var groups = await DbContext.AreaGroups.AsNoTracking().Include(t => t.EntityType).ToListAsync(cancellationToken);
+        var areas = await DbContext.Areas.AsNoTracking().Include(t => t.Group).ToListAsync(cancellationToken);
+        var packages = await DbContext.Packages.AsNoTracking().Include(t => t.Area).Include(t => t.Provider).Include(t => t.EntityType).ToListAsync(cancellationToken);
 
         var result = groups.Select(DtoMapper.Convert).ToList();
         foreach (var grp in result)
@@ -142,30 +146,30 @@ public class PackageService(
     /// <inheritdoc/>
     public async Task<IEnumerable<AreaGroupDto>> GetAreaGroups(CancellationToken cancellationToken = default)
     {
-        return (await db.AreaGroups.AsNoTracking().Include(t => t.EntityType).ToListAsync(cancellationToken)).Select(DtoMapper.Convert);
+        return (await DbContext.AreaGroups.AsNoTracking().Include(t => t.EntityType).ToListAsync(cancellationToken)).Select(DtoMapper.Convert);
     }
 
     /// <inheritdoc/>
     public async Task<AreaGroupDto> GetAreaGroup(Guid id, CancellationToken cancellationToken = default)
     {
-        return DtoMapper.Convert(await db.AreaGroups.AsNoTracking().Include(t => t.EntityType).SingleAsync(t => t.Id == id, cancellationToken));
+        return DtoMapper.Convert(await DbContext.AreaGroups.AsNoTracking().Include(t => t.EntityType).SingleAsync(t => t.Id == id, cancellationToken));
     }
 
     /// <inheritdoc/>
     public async Task<IEnumerable<AreaDto>> GetAreas(Guid groupId, CancellationToken cancellationToken = default)
     {
-        return (await db.Areas.AsNoTracking().ToListAsync(cancellationToken)).Select(DtoMapper.Convert);
+        return (await DbContext.Areas.AsNoTracking().ToListAsync(cancellationToken)).Select(DtoMapper.Convert);
     }
 
     /// <inheritdoc/>
     public async Task<AreaDto> GetArea(Guid id, CancellationToken cancellationToken = default)
     {
-        return DtoMapper.Convert(await db.Areas.AsNoTracking().SingleAsync(t => t.Id == id, cancellationToken));
+        return DtoMapper.Convert(await DbContext.Areas.AsNoTracking().SingleAsync(t => t.Id == id, cancellationToken));
     }
 
     /// <inheritdoc/>
     public async Task<IEnumerable<ResourceDto>> GetPackageResources(Guid packageId, CancellationToken cancellationToken = default)
     {
-        return (await db.PackageResources.AsNoTracking().Where(t => t.PackageId == packageId).Select(t => t.Resource).ToListAsync()).Select(DtoMapper.Convert);
+        return (await DbContext.PackageResources.AsNoTracking().Where(t => t.PackageId == packageId).Select(t => t.Resource).ToListAsync()).Select(DtoMapper.Convert);
     }
 }

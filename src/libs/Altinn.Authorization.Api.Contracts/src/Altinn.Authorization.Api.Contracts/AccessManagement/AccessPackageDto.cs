@@ -5,20 +5,20 @@ namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 /// </summary>
 public class AccessPackageDto
 {
-        /// <summary>
-        /// Package Id
-        /// </summary>
-        public Guid Id { get; set; }
+    /// <summary>
+    /// Package Id
+    /// </summary>
+    public Guid Id { get; set; }
 
-        /// <summary>
-        /// Package Urn
-        /// </summary>
-        public required string Urn { get; set; }
+    /// <summary>
+    /// Package Urn
+    /// </summary>
+    public required string Urn { get; set; }
 
-        /// <summary>
-        /// Package AreaId
-        /// </summary>
-        public Guid AreaId { get; set; }
+    /// <summary>
+    /// Package AreaId
+    /// </summary>
+    public Guid AreaId { get; set; }
 
     public class Check
     {

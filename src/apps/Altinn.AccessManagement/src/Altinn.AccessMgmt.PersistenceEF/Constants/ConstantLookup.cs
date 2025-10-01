@@ -19,6 +19,7 @@ public static class ConstantLookup
 {
     private static readonly ConcurrentDictionary<(Type ConstantsClass, Type EntityType), Dictionary<Guid, object>> _byId = new();
     private static readonly ConcurrentDictionary<(Type ConstantsClass, Type EntityType), Dictionary<string, object>> _byName = new();
+    private static readonly ConcurrentDictionary<(Type ConstantsClass, Type EntityType), Dictionary<string, object>> _byUrn = new();
     private static readonly ConcurrentDictionary<(Type ConstantsClass, Type EntityType), List<object>> _constants = new();
 
     private static List<ConstantDefinition<TType>> GetConstants<TType>(Type constantsClass)
@@ -66,6 +67,20 @@ public static class ConstantLookup
         });
     }
 
+    private static Dictionary<string, object> GetByUrn<TType>(Type constantsClass)
+        where TType : IEntityId, IEntityUrn
+    {
+        var key = (constantsClass, typeof(TType));
+        return _byName.GetOrAdd(key, _ =>
+        {
+            var constants = GetConstants<TType>(constantsClass);
+            return constants.ToDictionary<ConstantDefinition<TType>, string, object>(
+                cd => cd.Entity.Urn,
+                cd => cd,
+                StringComparer.OrdinalIgnoreCase);
+        });
+    }
+
     private static List<object> GetAllEntities<TType>(Type constantsClass)
         where TType : IEntityId
     {
@@ -106,6 +121,23 @@ public static class ConstantLookup
         result = null;
         return false;
     }
+
+    /// <summary>
+    /// Try to get entity by ID for types that implement IEntityId.
+    /// </summary>
+    public static bool TryGetByUrn<TType>(Type constantsClass, string urn, [NotNullWhen(true)] out ConstantDefinition<TType>? result)
+        where TType : IEntityId, IEntityUrn
+    {
+        var byUrn = GetByUrn<TType>(constantsClass);
+        if (byUrn.TryGetValue(urn, out var value))
+        {
+            result = (ConstantDefinition<TType>)value;
+            return true;
+        }
+
+        result = null;
+        return false;
+    } 
 
     /// <summary>
     /// Get all constants as a read-only collection for types that implement IEntityId.

@@ -16,6 +16,7 @@ namespace Altinn.AccessManagement.Enduser.Services;
 /// <summary>
 /// Service for managing connections.
 /// </summary>
+[Obsolete("New Service in Access.Mgmt.Core")]
 public class EnduserConnectionService(
     IDbAudit DbAudit,
     IPackageRepository PackageRepository,
@@ -427,6 +428,7 @@ public class EnduserConnectionService(
 /// <summary>
 /// Interface for managing connections.
 /// </summary>
+[Obsolete("New Service in Access.Mgmt.Core")]
 public interface IEnduserConnectionService
 {
     /// <summary>

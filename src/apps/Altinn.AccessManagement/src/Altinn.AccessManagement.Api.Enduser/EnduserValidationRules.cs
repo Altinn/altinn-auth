@@ -9,6 +9,7 @@ namespace Altinn.AccessManagement.Core.Errors;
 /// <summary>
 /// A utility class that provides methods for validating data using a series of rules.
 /// </summary>
+[Obsolete("New Validation in Access.Mgmt.Core")]
 public static class EnduserValidationRules
 {
     /// <summary>
@@ -398,7 +399,7 @@ public static class EnduserValidationRules
             if (packages.Any())
             {
                 return (ref ValidationErrorBuilder errors) =>
-                    errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, $"QUERY/{paramName}", [new("packages", $"following packages has active assignments [{string.Join(",", packages.Select(p => p.Id.ToString()))}].")]);
+                    errors.Add(ValidationErrors.AssignmentHasActiveConnections, $"QUERY/{paramName}", [new("packages", $"following packages has active assignments [{string.Join(",", packages.Select(p => p.Id.ToString()))}].")]);
             }
 
             return null;

@@ -1,6 +1,8 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.Persistence.Data;
+using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.Authorization.Api.Contracts.Party;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.AspNetCore.Authorization;
@@ -20,6 +22,7 @@ namespace Altinn.AccessManagement.Controllers
         }
 
         [HttpPost]
+        [AuditStaticDb(ChangedBy = AuditDefaults.InternalApiStr, System = AuditDefaults.InternalApiStr)]
         public async Task<ActionResult<AddPartyResultDto>> AddParty([FromBody] PartyBaseDto party, [FromHeader(Name = "PlatformAccessToken")] string token, CancellationToken cancellationToken = default)
         {
             if (!CheckValidAppClaim(token))

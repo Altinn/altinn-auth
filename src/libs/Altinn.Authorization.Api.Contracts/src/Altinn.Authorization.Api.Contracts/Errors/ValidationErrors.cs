@@ -52,18 +52,36 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor EntityNotExists { get; }
         = _factory.Create(6, $"Entity do not exists.");
+    
+    /// <summary>
+    /// Role is missing.
+    /// </summary>
+    public static ValidationErrorDescriptor RoleNotExists { get; }
+        = _factory.Create(7, $"Role do not exsists.");
+
+    /// <summary>
+    /// EntityType.
+    /// </summary>
+    public static ValidationErrorDescriptor DisallowedEntityType { get; }
+        = _factory.Create(8, $"This entity type is not allowed here.");
 
     /// <summary>
     /// Invalid party type.
     /// </summary>
     public static ValidationErrorDescriptor InvalidQueryParameter { get; }
-        = _factory.Create(7, $"One or more query parameters are invalid.");
+        = _factory.Create(9, $"One or more query parameters are invalid.");
 
     /// <summary>
     /// Assignment is active in one or more delegations.
     /// </summary>
-    public static ValidationErrorDescriptor AssignmentIsActiveInOneOrMoreDelegations { get; }
-        = _factory.Create(10, $"Assignment is active in one or more delegations.");
+    public static ValidationErrorDescriptor AssignmentHasActiveConnections { get; }
+        = _factory.Create(10, $"Assignment is active in one or more connections.");
+
+    /// <summary>
+    /// Assignment is active in one or more delegations.
+    /// </summary>
+    public static ValidationErrorDescriptor PackageNotExists { get; }
+        = _factory.Create(11, $"Package do not exists.");
 
     /// <summary>
     /// Gets a validation error descriptor

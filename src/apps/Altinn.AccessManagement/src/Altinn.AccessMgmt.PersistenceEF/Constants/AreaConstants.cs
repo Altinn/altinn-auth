@@ -35,7 +35,7 @@ public static class AreaConstants
     public static IReadOnlyCollection<TranslationEntry> AllTranslations()
         => ConstantLookup.AllTranslations<Area>(typeof(AreaConstants));
 
-    private static Uri AltinnCDNPackageIcons { get; } = new Uri("https://altinncdn.no/authorization/accesspackageicons");
+    private static Uri AltinnCDNPackageIcons { get; } = new Uri("https://altinncdn.no/authorization/accesspackageicons/");
 
     /// <summary>
     /// Represents the Tax, Fees, Accounting and Customs area.

@@ -4,6 +4,7 @@ using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Core.Services;
 using Altinn.AccessMgmt.Persistence.Models;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Microsoft.Extensions.Configuration;
 
 namespace Altinn.AccessMgmt.Persistence.Data;
@@ -53,8 +54,8 @@ public class DbDataMigrationService(
 
         var options = new ChangeRequestOptions()
         {
-            ChangedBy = AuditDefaults.StaticDataIngest,
-            ChangedBySystem = AuditDefaults.StaticDataIngest
+            ChangedBy = SystemEntityConstants.StaticDataIngest,
+            ChangedBySystem = SystemEntityConstants.StaticDataIngest
         };
 
         await Cleanup(options, cancellationToken);
@@ -449,7 +450,7 @@ public class DbDataMigrationService(
         var systemEntities = new List<Entity>()
         {
             // Static data ingest
-            new Entity() { Id = AuditDefaults.StaticDataIngest, Name = "StaticDataIngest", RefId = "sys-static-data-ingest", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
+            new Entity() { Id = SystemEntityConstants.StaticDataIngest, Name = "StaticDataIngest", RefId = "sys-static-data-ingest", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
             new Entity() { Id = AuditDefaults.RegisterImportSystem, Name = "RegisterImportSystem", RefId = "sys-register-import-system", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
             new Entity() { Id = AuditDefaults.ResourceRegistryImportSystem, Name = nameof(AuditDefaults.ResourceRegistryImportSystem), RefId = "sys-resource-register-import-system", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
             new Entity() { Id = AuditDefaults.EnduserApi, Name = "EnduserApi", RefId = "accessmgmt-enduser-api", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },

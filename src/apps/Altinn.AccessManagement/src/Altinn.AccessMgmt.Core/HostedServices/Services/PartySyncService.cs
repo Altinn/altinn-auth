@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Altinn.AccessMgmt.Core.HostedServices.Contracts;
 using Altinn.AccessMgmt.Core.HostedServices.Leases;
+using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
@@ -43,19 +44,15 @@ public class PartySyncService : BaseSyncService, IPartySyncService
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     public async Task SyncParty(ILease lease, CancellationToken cancellationToken)
     {
-        var options = new AuditValues(
-            AuditDefaults.RegisterImportSystem,
-            AuditDefaults.RegisterImportSystem,
-            Activity.Current?.TraceId.ToString() ?? Guid.CreateVersion7().ToString()
-        );
+        var options = new AuditValues(SystemEntityConstants.RegisterImportSystem);
         var leaseData = await lease.Get<RegisterLease>(cancellationToken);
 
         var seen = new HashSet<Guid>();
         var bulk = new List<Entity>();
         var bulkLookup = new List<EntityLookup>();
 
-        using var scope = _serviceProvider.CreateScope();
-        var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        using var scope = _serviceProvider.CreateEFScope(options);
+        var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContextFactory>().CreateDbContext();
         var ingestService = scope.ServiceProvider.GetRequiredService<IIngestService>();
 
         await foreach (var page in await _register.StreamParties(AltinnRegisterClient.AvailableFields, leaseData?.PartyStreamNextPageLink, cancellationToken))

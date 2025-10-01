@@ -7,12 +7,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Utils;
 /// <inheritdoc />
 public class TranslationService : ITranslationService
 {
-    private readonly AppDbContext _db;
-
-    public TranslationService(AppDbContext db)
+    public TranslationService(AppDbContextFactory dbContextFactoryb)
     {
-        _db = db;
+        Db = dbContextFactoryb.CreateDbContext();
     }
+
+    private AppDbContext Db { get; }
 
     /// <inheritdoc />
     public async ValueTask<T> TranslateAsync<T>(T source, string languageCode)
@@ -34,7 +34,7 @@ public class TranslationService : ITranslationService
 
         //// Add support for history dbcontext
 
-        var transMap = await _db.TranslationEntries
+        var transMap = await Db.TranslationEntries
             .Where(t => t.Type == typeName &&
                         t.Id == entityId &&
                         t.LanguageCode == languageCode)
@@ -71,7 +71,7 @@ public class TranslationService : ITranslationService
 
         //// Add support for history dbcontext
 
-        var transMap = _db.TranslationEntries
+        var transMap = Db.TranslationEntries
             .Where(t => t.Type == typeName &&
                         t.Id == entityId &&
                         t.LanguageCode == languageCode)
@@ -88,21 +88,21 @@ public class TranslationService : ITranslationService
         return source;
     }
 
-    public async Task UpsertTranslationAsync(TranslationEntry translationEntry)
+    public async Task UpsertTranslationAsync(TranslationEntry translationEntry, CancellationToken cancellationToken = default)
     {
-        var entry = await _db.TranslationEntries.SingleOrDefaultAsync(t => t.Id == translationEntry.Id && t.Type == translationEntry.Type && t.LanguageCode == translationEntry.LanguageCode && t.FieldName == translationEntry.FieldName);
+        var entry = await Db.TranslationEntries.SingleOrDefaultAsync(t => t.Id == translationEntry.Id && t.Type == translationEntry.Type && t.LanguageCode == translationEntry.LanguageCode && t.FieldName == translationEntry.FieldName, cancellationToken);
 
         if (entry == null)
         {
-            _db.Add(translationEntry);
+            Db.Add(translationEntry);
         }
         else
         {
             entry.Value = translationEntry.Value;
-            _db.Update(entry);
+            Db.Update(entry);
         }
 
-        _db.SaveChanges();
+        Db.SaveChanges();
     }
 }
 
@@ -131,7 +131,7 @@ public interface ITranslationService
     /// of type <typeparamref name="T"/>.</returns>
     T Translate<T>(T source, string languageCode);
 
-    Task UpsertTranslationAsync(TranslationEntry translationEntry);
+    Task UpsertTranslationAsync(TranslationEntry translationEntry, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

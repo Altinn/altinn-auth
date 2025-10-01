@@ -1,18 +1,19 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Models;
+﻿using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Data;
 
-public partial class StaticDataIngest 
+internal static partial class StaticDataIngest 
 {
     /// <summary>
     /// Ingest RoleMap data
     /// </summary>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    public async Task IngestRoleMap(CancellationToken cancellationToken = default)
+    internal static async Task IngestRoleMap(AppDbContext dbContext, CancellationToken cancellationToken = default)
     {
-        var roles = (await db.Roles.ToListAsync()).ToDictionary(t => t.Urn, t => t.Id);
+        var roles = (await dbContext.Roles.ToListAsync()).ToDictionary(t => t.Urn, t => t.Id);
 
         Guid GetRoleId(string urn, string name) =>
             roles.TryGetValue(urn, out var id)
@@ -482,15 +483,15 @@ public partial class StaticDataIngest
         // Upsert RoleMap data
         foreach (var rm in roleMaps)
         {
-            var existing = await db.RoleMaps
+            var existing = await dbContext.RoleMaps
                 .FirstOrDefaultAsync(x => x.HasRoleId == rm.HasRoleId && x.GetRoleId == rm.GetRoleId, cancellationToken);
 
             if (existing == null)
             {
-                db.RoleMaps.Add(rm);
+                dbContext.RoleMaps.Add(rm);
             }
         }
 
-        await db.SaveChangesAsync(AuditValues, cancellationToken);
+        await dbContext.SaveChangesAsync(AuditValues, cancellationToken);
     }
 }

@@ -1,5 +1,4 @@
-﻿using Altinn.AccessMgmt.Core.Models;
-using Altinn.AccessMgmt.PersistenceEF.Models;
+﻿using Altinn.AccessMgmt.PersistenceEF.Queries.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 
 namespace Altinn.AccessMgmt.Core.Utils;
@@ -20,7 +19,7 @@ public partial class DtoMapper
                 {
                     Id = firstPackage.Package.Id,
                     Urn = firstPackage.Package.Urn,
-                    AreaId = firstPackage.Package.Area.Id
+                    AreaId = firstPackage.Package.AreaId
                 },
                 Result = group.Any(p => p.Result),
                 Reasons = group.Select(p => new AccessPackageDto.Check.Reason
