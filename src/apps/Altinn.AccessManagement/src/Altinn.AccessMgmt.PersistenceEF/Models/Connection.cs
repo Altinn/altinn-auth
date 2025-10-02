@@ -41,4 +41,9 @@ public class Connection : BaseConnection
     /// Resource
     /// </summary>
     public Resource Resource { get; set; }
+
+    /// <summary>
+    /// Delegation
+    /// </summary>
+    public Delegation Delegation { get; set; }
 }

@@ -6,7 +6,6 @@ using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.Core.Utils.Models;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
-using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
@@ -17,11 +16,6 @@ namespace Altinn.AccessMgmt.Core.Services;
 /// <inheritdoc/>
 public class AssignmentService(AppDbContext db) : IAssignmentService
 {
-    private static readonly string RETTIGHETSHAVER = "rettighetshaver";
-    private static readonly Guid PartyTypeOrganizationUuid = new Guid("8c216e2f-afdd-4234-9ba2-691c727bb33d");
-
-    public AuditValues AuditValues { get; set; } = new AuditValues(SystemEntityConstants.InternalApi, SystemEntityConstants.InternalApi, Guid.NewGuid().ToString());
-
     /// <inheritdoc/>
     public async Task<IEnumerable<ClientDto>> GetClients(Guid toId, string[] roles, string[] packages, CancellationToken cancellationToken = default)
     {
@@ -47,16 +41,20 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
         }
 
         // Fetch client assignments
-        var clientAssignmentResult = await db.Assignments.AsNoTracking().Where(t => t.ToId == toId && filterRoleIds.Contains(t.RoleId)).ToListAsync(cancellationToken);
+        var clientAssignmentResult = 
+            await db.Assignments.AsNoTracking()
+                .Include(t => t.From)
+                .Where(t => t.ToId == toId && filterRoleIds.Contains(t.RoleId))
+            .ToListAsync(cancellationToken);
 
         // Discard non-organization clients (for now). To be opened up for private individuals in the future.
-        var clients = clientAssignmentResult.Where(c => c.From.TypeId == PartyTypeOrganizationUuid);
+        var clients = clientAssignmentResult.Where(c => c.From.TypeId == EntityTypeConstants.Organisation.Entity.Id);
 
         // Fetch assignment packages
         QueryResponse<AssignmentPackage> assignmentPackageResult = null;
-        if (roles.Contains(RETTIGHETSHAVER))
+        if (roles.Contains(RoleConstants.Rightholder.Entity.Code))
         {
-            var rettighetshaverClients = clients.Where(c => c.RoleId == roleResult.First(r => r.Code == RETTIGHETSHAVER).Id);
+            var rettighetshaverClients = clients.Where(c => c.RoleId == roleResult.First(r => r.Code == RoleConstants.Rightholder.Entity.Code).Id);
             if (rettighetshaverClients.Any())
             {
                 assignmentPackageResult = QueryWrapper.WrapQueryResponse(await db.AssignmentPackages.AsNoTracking().Where(t => rettighetshaverClients.Select(p => p.Id).Contains(t.AssignmentId)).ToListAsync(cancellationToken));
@@ -142,7 +140,9 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
     /// <inheritdoc/>
     public async Task<Assignment> GetAssignment(Guid id, CancellationToken cancellationToken = default)
     {
-        return await db.Assignments.AsNoTracking().SingleOrDefaultAsync(t => t.Id == id, cancellationToken);
+        return await db.Assignments.AsNoTracking()
+            .Include(t => t.Role)
+            .SingleOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -182,7 +182,6 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
         */
 
         /* TODO: Future Sjekk om bruker er Tilgangsstyrer */
-        
         var user = await db.Entities.AsNoTracking().SingleAsync(t => t.Id == userId, cancellationToken);
         var assignment = await db.Assignments.SingleAsync(t => t.Id == assignmentId, cancellationToken);
         var package = await db.Packages.SingleAsync(t => t.Id == packageId, cancellationToken);
@@ -220,7 +219,7 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
             cancellationToken
             );
         
-        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
+        var result = await db.SaveChangesAsync(cancellationToken);
         if (result == 0)
         {
             return false;
@@ -251,18 +250,21 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
         var fromEntity = await db.Entities.SingleAsync(t => t.Id == fromEntityId, cancellationToken);
         var toEntity = await db.Entities.SingleAsync(t => t.Id == toEntityId, cancellationToken);
         ValidatePartyIsNotNull(fromEntityId, fromEntity, ref errors, "$QUERY/party");
-        ValidatePartyIsOrg(fromEntity, ref errors, "$QUERY/party");
         ValidatePartyIsNotNull(toEntityId, toEntity, ref errors, "$QUERY/to");
-        ValidatePartyIsOrg(toEntity, ref errors, "$QUERY/to");
 
         var roleResult = await db.Roles.AsNoTracking().Where(t => t.Code == roleCode).ToListAsync(cancellationToken);
-        if (roleResult == null || !roleResult.Any())
+        if (roleResult == null || !roleResult.Any() || roleResult.Count > 1)
         {
             Unreachable();
         }
 
-        var roleId = roleResult.First().Id;
-        var existingAssignment = await GetAssignment(fromEntityId, toEntityId, roleId, cancellationToken: cancellationToken);
+        var role = roleResult.First();
+        if (!role.IsAssignable)
+        {
+            errors.Add(ValidationErrors.UnableToRevokeRoleAssignment, "$QUERY/roleCode", [new("role", role.Code)]);
+        }
+        
+        var existingAssignment = await GetAssignment(fromEntityId, toEntityId, role.Id, cancellationToken: cancellationToken);
         if (existingAssignment == null)
         {
             return null;
@@ -277,10 +279,16 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
                     errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("packages", string.Join(",", packages.Select(p => p.Id.ToString())))]);
                 }
 
-                var delegations = await db.Delegations.AsNoTracking().Where(t => t.FromId == existingAssignment.Id).ToListAsync(cancellationToken);
-                if (delegations != null && delegations.Any())
+                var delegationsFromAssingment = await db.Delegations.AsNoTracking().Where(t => t.FromId == existingAssignment.Id).ToListAsync(cancellationToken);
+                if (delegationsFromAssingment != null && delegationsFromAssingment.Any())
                 {
-                    errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("delegations", string.Join(",", delegations.Select(p => p.Id.ToString())))]);
+                    errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("delegations", string.Join(",", delegationsFromAssingment.Select(p => p.Id.ToString())))]);
+                }
+
+                var delegationsToAssignment = await db.Delegations.AsNoTracking().Where(t => t.ToId == existingAssignment.Id).ToListAsync(cancellationToken);
+                if (delegationsToAssignment != null && delegationsToAssignment.Any())
+                {
+                    errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("delegations", string.Join(",", delegationsToAssignment.Select(p => p.Id.ToString())))]);
                 }
             }
         }
@@ -292,7 +300,62 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
 
         var assignment = await db.Assignments.SingleAsync(t => t.Id == existingAssignment.Id, cancellationToken);
         db.Assignments.Remove(assignment);
-        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
+        var result = await db.SaveChangesAsync(cancellationToken);
+
+        if (result == 0)
+        {
+            Unreachable();
+        }
+
+        return null;
+    }
+
+    /// <inheritdoc/>
+    public async Task<ProblemInstance> DeleteAssignment(Guid assignmentId, bool cascade = false, CancellationToken cancellationToken = default)
+    {
+        ValidationErrorBuilder errors = default;
+
+        var existingAssignment = await GetAssignment(assignmentId, cancellationToken: cancellationToken);
+        if (existingAssignment == null)
+        {
+            return null;
+        }
+        else
+        {
+            if (!existingAssignment.Role.IsAssignable)
+            {
+                errors.Add(ValidationErrors.UnableToRevokeRoleAssignment, "$QUERY/assignmentId", [new("role", existingAssignment.Role.Code)]);
+            }
+
+            if (!cascade)
+            {
+                var packages = await db.AssignmentPackages.AsNoTracking().Where(t => t.AssignmentId == existingAssignment.Id).ToListAsync(cancellationToken);
+                if (packages != null && packages.Any())
+                {
+                    errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("packages", string.Join(",", packages.Select(p => p.Id.ToString())))]);
+                }
+
+                var delegationsFromAssingment = await db.Delegations.AsNoTracking().Where(t => t.FromId == existingAssignment.Id).ToListAsync(cancellationToken);
+                if (delegationsFromAssingment != null && delegationsFromAssingment.Any())
+                {
+                    errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("delegations", string.Join(",", delegationsFromAssingment.Select(p => p.Id.ToString())))]);
+                }
+
+                var delegationsToAssignment = await db.Delegations.AsNoTracking().Where(t => t.ToId == existingAssignment.Id).ToListAsync(cancellationToken);
+                if (delegationsToAssignment != null && delegationsToAssignment.Any())
+                {
+                    errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("delegations", string.Join(",", delegationsFromAssingment.Select(p => p.Id.ToString())))]);
+                }
+            }
+        }
+
+        if (errors.TryBuild(out var errorResult))
+        {
+            return errorResult;
+        }
+
+        db.Assignments.Remove(existingAssignment);
+        var result = await db.SaveChangesAsync(cancellationToken);
 
         if (result == 0)
         {
@@ -340,7 +403,7 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
         };
 
         await db.Assignments.AddAsync(assignment, cancellationToken);
-        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
+        var result = await db.SaveChangesAsync(cancellationToken);
 
         if (result == 0)
         {
@@ -398,7 +461,7 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
         };
 
         await db.Assignments.AddAsync(assignment, cancellationToken);
-        var result = await db.SaveChangesAsync(AuditValues, cancellationToken);
+        var result = await db.SaveChangesAsync(cancellationToken);
         
         if (result == 0)
         {

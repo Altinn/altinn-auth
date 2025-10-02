@@ -106,6 +106,16 @@
         public const string SCOPE_PORTAL_ENDUSER = "altinn:portal/enduser";
 
         /// <summary>
+        /// ClientDelegation.Read enduser scope giving access to read operations on client delegations
+        /// </summary>
+        public const string SCOPE_ENDUSER_CLIENTDELEGATION_READ = "altinn:clientdelegations.read";
+
+        /// <summary>
+        /// ClientDelegation.Write enduser scope giving access to write operations on client delegations
+        /// </summary>
+        public const string SCOPE_ENDUSER_CLIENTDELEGATION_WRITE = "altinn:clientdelegations.write";
+
+        /// <summary>
         /// Scope giving access to getting authorized parties for a given subject.
         /// </summary>
         public const string SCOPE_AUTHORIZEDPARTIES_ENDUSERSYSTEM = "altinn:accessmanagement/authorizedparties";

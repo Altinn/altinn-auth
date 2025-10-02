@@ -45,6 +45,11 @@ public class BaseConnection
     public Guid? ResourceId { get; set; }
 
     /// <summary>
+    /// DelegationId
+    /// </summary>
+    public Guid? DelegationId { get; set; }
+
+    /// <summary>
     /// Reason
     /// </summary>
     public string Reason { get; set; }

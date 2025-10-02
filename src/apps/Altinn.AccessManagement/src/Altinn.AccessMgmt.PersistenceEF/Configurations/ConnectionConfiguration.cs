@@ -24,6 +24,7 @@ public class ConnectionConfiguration : IEntityTypeConfiguration<Connection>
 
         builder.PropertyWithReference(navKey: t => t.Package, foreignKey: t => t.PackageId, principalKey: t => t.Id, required: false);
         builder.PropertyWithReference(navKey: t => t.Resource, foreignKey: t => t.ResourceId, principalKey: t => t.Id, required: false);
+        builder.PropertyWithReference(navKey: t => t.Delegation, foreignKey: t => t.DelegationId, principalKey: t => t.Id, required: false);
         //builder.PropertyWithReference(navKey: t => t.Instance, foreignKey: t => t.InstanceId, principalKey: t => t.Id, required: false);
     }
 
@@ -37,6 +38,7 @@ public class ConnectionConfiguration : IEntityTypeConfiguration<Connection>
                a.toid,
                ap.packageid,
                NULL::uuid     AS resourceid,
+               NULL::uuid     AS delegationid,
                'Direct'::text AS reason
         FROM dbo.assignment a
                  JOIN dbo.assignmentpackage ap ON ap.assignmentid = a.id
@@ -48,6 +50,7 @@ public class ConnectionConfiguration : IEntityTypeConfiguration<Connection>
                a.toid,
                rp.packageid,
                NULL::uuid     AS resourceid,
+               NULL::uuid     AS delegationid,
                'Direct'::text AS reason
         FROM dbo.assignment a
                  JOIN dbo.rolepackage rp ON rp.roleid = a.roleid and rp.hasaccess = true
@@ -59,6 +62,7 @@ public class ConnectionConfiguration : IEntityTypeConfiguration<Connection>
                a.toid,
                rp.packageid,
                NULL::uuid     AS resourceid,
+               NULL::uuid     AS delegationid,
                'Direct'::text AS reason
         FROM dbo.assignment a
                  JOIN dbo.rolemap rm ON a.roleid = rm.hasroleid
@@ -71,6 +75,7 @@ public class ConnectionConfiguration : IEntityTypeConfiguration<Connection>
                a2.toid,
                ap.packageid,
                NULL::uuid      AS resourceid,
+               NULL::uuid      AS delegationid,
                'KeyRole'::text AS reason
         FROM dbo.assignment a
                  JOIN dbo.assignment a2 ON a.toid = a2.fromid
@@ -84,6 +89,7 @@ public class ConnectionConfiguration : IEntityTypeConfiguration<Connection>
                a2.toid,
                rp.packageid,
                NULL::uuid      AS resourceid,
+               NULL::uuid      AS delegationid,
                'KeyRole'::text AS reason
         FROM dbo.assignment a
                  JOIN dbo.assignment a2 ON a.toid = a2.fromid
@@ -91,12 +97,13 @@ public class ConnectionConfiguration : IEntityTypeConfiguration<Connection>
                  JOIN dbo.rolepackage rp ON rp.roleid = a.roleid AND rp.hasaccess = true
         UNION ALL
         SELECT fa.fromid,
-               fa.roleid,
+               ta.roleid,
                fa.toid            AS viaid,
-               ta.roleid          AS viaroleid,
+               fa.roleid          AS viaroleid,
                ta.toid,
                dp.packageid,
                NULL::uuid         AS resourceid,
+               d.id               AS delegationid,
                'Delegation'::text AS reason
         FROM dbo.delegation d
                  JOIN dbo.assignment fa ON fa.id = d.fromid
