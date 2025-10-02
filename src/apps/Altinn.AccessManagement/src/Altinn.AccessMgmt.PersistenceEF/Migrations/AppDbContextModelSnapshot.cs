@@ -1709,6 +1709,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("text")
                         .HasColumnName("reason");
 
+                    b.Property<Guid?>("DelegationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("delegationid");
+
                     b.Property<Guid?>("PackageId")
                         .HasColumnType("uuid")
                         .HasColumnName("packageid");
@@ -1727,6 +1731,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.HasKey("FromId", "ToId", "RoleId", "Reason")
                         .HasName("pk_connections");
+
+                    b.HasIndex("DelegationId")
+                        .HasDatabaseName("ix_connections_delegationid");
 
                     b.HasIndex("FromId")
                         .HasDatabaseName("ix_connections_fromid");
@@ -1751,7 +1758,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.ToTable("connections", (string)null);
 
-                    b.ToView("connection", "dbo");
+                    b.ToView("connectionef", "dbo");
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Delegation", b =>
@@ -2839,6 +2846,103 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasAnnotation("EnableAudit", true);
                 });
 
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Queries.Models.PackageDelegationCheckRow", b =>
+                {
+                    b.Property<Guid>("AreaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("areaid");
+
+                    b.Property<bool?>("CanDelegate")
+                        .HasColumnType("boolean")
+                        .HasColumnName("candelegate");
+
+                    b.Property<Guid?>("FromId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("fromid");
+
+                    b.Property<string>("FromName")
+                        .HasColumnType("text")
+                        .HasColumnName("fromname");
+
+                    b.Property<bool?>("HasAccess")
+                        .HasColumnType("boolean")
+                        .HasColumnName("hasaccess");
+
+                    b.Property<bool>("IsAssignable")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isassignable");
+
+                    b.Property<bool?>("IsAssignmentPackage")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isassignmentpackage");
+
+                    b.Property<bool>("IsDelegable")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isdelegable");
+
+                    b.Property<bool?>("IsKeyRolePackage")
+                        .HasColumnType("boolean")
+                        .HasColumnName("iskeyrolepackage");
+
+                    b.Property<bool?>("IsMainAdminPackage")
+                        .HasColumnType("boolean")
+                        .HasColumnName("ismainadminpackage");
+
+                    b.Property<bool?>("IsMainUnitPackage")
+                        .HasColumnType("boolean")
+                        .HasColumnName("ismainunitpackage");
+
+                    b.Property<bool?>("IsRolePackage")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isrolepackage");
+
+                    b.Property<Guid>("PackageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("packageid");
+
+                    b.Property<string>("PackageUrn")
+                        .HasColumnType("text")
+                        .HasColumnName("packageurn");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("text")
+                        .HasColumnName("reason");
+
+                    b.Property<Guid?>("RoleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("roleid");
+
+                    b.Property<string>("RoleUrn")
+                        .HasColumnType("text")
+                        .HasColumnName("roleurn");
+
+                    b.Property<Guid?>("ToId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("toid");
+
+                    b.Property<string>("ToName")
+                        .HasColumnType("text")
+                        .HasColumnName("toname");
+
+                    b.Property<Guid?>("ViaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("viaid");
+
+                    b.Property<string>("ViaName")
+                        .HasColumnType("text")
+                        .HasColumnName("vianame");
+
+                    b.Property<Guid?>("ViaRoleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("viaroleid");
+
+                    b.Property<string>("ViaRoleUrn")
+                        .HasColumnType("text")
+                        .HasColumnName("viaroleurn");
+
+                    b.ToTable("packagedelegationchecks", (string)null);
+                });
+
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Utils.TranslationEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2965,6 +3069,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Connection", b =>
                 {
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Delegation", "Delegation")
+                        .WithMany()
+                        .HasForeignKey("DelegationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_connections_delegation_delegationid");
+
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Entity", "From")
                         .WithMany()
                         .HasForeignKey("FromId")
@@ -3009,6 +3119,8 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasForeignKey("ViaRoleId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_connections_role_viaroleid");
+
+                    b.Navigation("Delegation");
 
                     b.Navigation("From");
 

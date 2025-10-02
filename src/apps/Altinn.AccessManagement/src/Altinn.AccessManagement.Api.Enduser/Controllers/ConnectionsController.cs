@@ -53,17 +53,17 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
             return problem.ToActionResult();
         }
 
-        Guid.TryParse(connection.From, out var fromUuid);
-        Guid.TryParse(connection.To, out var toUuid);
+        var isFromValidGuid = Guid.TryParse(connection.From, out var fromUuid);
+        var isToValidGuid = Guid.TryParse(connection.To, out var toUuid);
         if (connection.From == connection.Party)
         {
-            var result = await ConnectionService.GetConnectionsToOthers(fromUuid, toUuid, null, null, null, cancellationToken);
+            var result = await ConnectionService.GetConnectionsToOthers(fromUuid, isToValidGuid ? toUuid : null, null, null, null, cancellationToken);
             return Ok(PaginatedResult.Create(result, null));
         }
 
         if (connection.To == connection.Party)
         {
-            var result = await ConnectionService.GetConnectionsFromOthers(toUuid, fromUuid, null, null, null, cancellationToken);
+            var result = await ConnectionService.GetConnectionsFromOthers(toUuid, isFromValidGuid ? fromUuid : null, null, null, null, cancellationToken);
             return Ok(PaginatedResult.Create(result, null));
         }
 
@@ -146,17 +146,17 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
             return problem.ToActionResult();
         }
 
-        Guid.TryParse(connection.From, out var fromUuid);
-        Guid.TryParse(connection.To, out var toUuid);
+        var isFromValidGuid = Guid.TryParse(connection.From, out var fromUuid);
+        var isToValidGuid = Guid.TryParse(connection.To, out var toUuid);
         if (connection.From == connection.Party)
         {
-            var result = await ConnectionService.GetPackagePermissionsToOthers(fromUuid, toUuid, null, cancellationToken);
+            var result = await ConnectionService.GetPackagePermissionsToOthers(fromUuid, isToValidGuid ? toUuid : null, null, cancellationToken);
             return Ok(PaginatedResult.Create(result, null));
         }
 
         if (connection.To == connection.Party)
         {
-            var result = await ConnectionService.GetConnectionsFromOthers(toUuid, fromUuid, null, cancellationToken);
+            var result = await ConnectionService.GetConnectionsFromOthers(toUuid, isFromValidGuid ? fromUuid : null, null, cancellationToken);
             return Ok(PaginatedResult.Create(result, null));
         }
 

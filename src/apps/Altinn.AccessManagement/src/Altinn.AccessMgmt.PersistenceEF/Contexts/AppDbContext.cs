@@ -127,7 +127,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-         modelBuilder.Entity<PackageDelegationCheckRow>().HasNoKey();
+        modelBuilder.Entity<PackageDelegationCheckRow>(e =>
+        {
+            e.HasNoKey();
+        });
+        
         ApplyAuditConfiguration(modelBuilder);
         ApplyConfiguration(modelBuilder);
         ApplyViewConfiguration(modelBuilder);

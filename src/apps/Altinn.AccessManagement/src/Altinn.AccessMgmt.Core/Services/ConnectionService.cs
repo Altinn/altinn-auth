@@ -392,7 +392,6 @@ public partial class ConnectionService
     /// <inheritdoc />
     public async Task<IEnumerable<ConnectionPackageDto>> GetConnectionsToOthers(Guid partyId, Guid? toId = null, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
     {
-        
         var result = await DbContext.Connections.AsNoTracking()
             .Include(t => t.To)
             .ThenInclude(t => t.Variant)

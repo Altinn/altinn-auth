@@ -51,7 +51,7 @@ async Task Init()
 
     if (await featureManager.IsEnabledAsync(AccessManagementFeatureFlags.MigrationDbEf))
     {
-        await scope.ServiceProvider.GetRequiredService<AppDbContextFactory>().CreateDbContext().Database.MigrateAsync();
+        await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
     }
     else if (await featureManager.IsEnabledAsync(AccessManagementFeatureFlags.MigrationDb))
     {
