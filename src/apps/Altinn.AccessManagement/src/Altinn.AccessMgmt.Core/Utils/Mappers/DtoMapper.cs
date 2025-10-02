@@ -117,22 +117,32 @@ public partial class DtoMapper
 
     public static CompactRoleDto ConvertCompactRole(Role role)
     {
-        return new CompactRoleDto()
+        if (role is { })
         {
-            Id = role.Id,
-            Children = null,
-            Code = role.Code
-        };
+            return new CompactRoleDto()
+            {
+                Id = role.Id,
+                Children = null,
+                Code = role.Code
+            };
+        }
+
+        return null;
     }
 
     public static CompactPackageDto ConvertCompactPackage(Package package)
     {
-        return new CompactPackageDto()
+        if (package is { })
         {
-            Id = package.Id,
-            AreaId = package.AreaId,
-            Urn = package.Urn
-        };
+            return new CompactPackageDto()
+            {
+                Id = package.Id,
+                AreaId = package.AreaId,
+                Urn = package.Urn
+            };
+        }
+
+        return null;
     }
 }
 
