@@ -281,8 +281,8 @@ public partial class ConnectionService : IConnectionService
     {
         
         var assignablePackages = await DbContext.GetAssignableAccessPackages(
-            AuditAccessor.AuditValues.ChangedBy, 
             party,
+            AuditAccessor.AuditValues.ChangedBy, 
             packageIds,
             cancellationToken
         );
