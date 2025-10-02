@@ -63,7 +63,7 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
 
         if (connection.To == connection.Party)
         {
-            var result = await ConnectionService.GetConnectionsFromOthers(fromUuid, toUuid, null, null, null, cancellationToken);
+            var result = await ConnectionService.GetConnectionsFromOthers(toUuid, fromUuid, null, null, null, cancellationToken);
             return Ok(PaginatedResult.Create(result, null));
         }
 
@@ -156,7 +156,7 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
 
         if (connection.To == connection.Party)
         {
-            var result = await ConnectionService.GetConnectionsFromOthers(fromUuid, toUuid, null, cancellationToken);
+            var result = await ConnectionService.GetConnectionsFromOthers(toUuid, fromUuid, null, cancellationToken);
             return Ok(PaginatedResult.Create(result, null));
         }
 
