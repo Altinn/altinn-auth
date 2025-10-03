@@ -11,8 +11,6 @@ namespace Altinn.AccessMgmt.PersistenceEF.Constants;
 /// </summary>
 public static class PackageConstants
 {
-
-
     /// <summary>
     /// Try to get <see cref="Package"/> by name.
     /// </summary>
@@ -29,7 +27,38 @@ public static class PackageConstants
     /// Try to get <see cref="Role"/> by Urn.
     /// </summary>
     public static bool TryGetByUrn(string urn, [NotNullWhen(true)] out ConstantDefinition<Package>? result)
-        => ConstantLookup.TryGetByUrn(typeof(PackageConstants), urn, out result);
+    {
+        if (string.IsNullOrEmpty(urn))
+        {
+            result = null;
+            return false;
+        }
+
+        urn = urn.ToLowerInvariant();
+
+        // Case 1: already a full URN
+        if (ConstantLookup.TryGetByUrn(typeof(PackageConstants), urn, out result))
+        {
+            return true;
+        }
+
+        // Case 2: Suffix only with ':'
+        if (urn.StartsWith(':') && urn.Split(':').Length == 1)
+        {
+            if (ConstantLookup.TryGetByUrn(typeof(PackageConstants), $"urn:altinn:accesspackage{urn}", out result))
+            {
+                return true;
+            }
+        }
+
+        // Case 3: Suffix only without ':'
+        if (ConstantLookup.TryGetByUrn(typeof(PackageConstants), $"urn:altinn:accesspackage:{urn}", out result))
+        {
+            return true;
+        }
+
+        return false;
+    }
 
     /// <summary>
     /// Get all constants as a read-only collection.
