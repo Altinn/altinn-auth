@@ -16,10 +16,20 @@ params:path {
 
 tests {
   test("GET_accesspackage_packages_for_kultur_og_frivillighet", function() {
-    var body = res.getBody();  
+    var data = res.getBody();  
     expect(res.status).to.equal(200);
-    expect(body[0]).to.have.property('name', 'Kunst og underholdning');
-    expect(body[1]).to.have.property('name', 'Biblioteker, museer, arkiver og annen kultur');
-    expect(body[2]).to.have.property('name', 'Lotteri og spill');
+  
+    var package = data.find(item => item.name === 'Kunst og underholdning');
+    expect(package, 'Did not find "Kunst og underholdning"').to.exist;
+    package = data.find(item => item.name === 'Biblioteker, museer, arkiver og annen kultur');
+    expect(package, 'Did not find "Biblioteker, museer, arkiver og annen kultur"').to.exist;
+    package = data.find(item => item.name === 'Lotteri og spill');
+    expect(package, 'Did not find "Lotteri og spill"').to.exist;
+    package = data.find(item => item.name === 'Politikk');
+    expect(package, 'Did not find "Politikk"').to.exist;
+    package = data.find(item => item.name === 'Fornøyelser');
+    expect(package, 'Did not find "Fornøyelser"').to.exist;
+    package = data.find(item => item.name === 'Sport og fritid');
+    expect(package, 'Did not find "Sport og fritid"').to.exist;
   });
 }

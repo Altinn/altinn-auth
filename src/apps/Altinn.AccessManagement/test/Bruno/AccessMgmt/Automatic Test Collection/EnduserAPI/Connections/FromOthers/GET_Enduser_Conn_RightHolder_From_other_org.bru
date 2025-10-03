@@ -49,8 +49,11 @@ tests {
       const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
     var packageId = bru.getEnvVar("packageId");
      const data = res.getBody();
-      expect(data.data[0].roles[0]).to.have.property('code', "rettighetshaver");
-      expect(data.data[0].party).to.have.property('id', testdata.esek_type_org.partyuuid.toLowerCase());
+    
+     const conn = data.data.find(item => item.party.id === testdata.hovedorg_delegates_tilgangspakke.partyuuid.toLowerCase());
+     expect(conn).to.exist;
+     const role = conn.roles.find(item => item.code === "rettighetshaver");
+     expect(role).to.exist;
     
     });
 }

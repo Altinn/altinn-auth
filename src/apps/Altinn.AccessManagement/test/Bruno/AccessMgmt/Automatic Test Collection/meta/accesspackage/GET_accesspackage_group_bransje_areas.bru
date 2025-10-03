@@ -16,17 +16,29 @@ params:path {
 
 tests {
   test("GET_accesspackage_group_bransje_areas", function() {
-    var body = res.getBody();  
+    var data = res.getBody();  
     expect(res.status).to.equal(200);
-    expect(body[0]).to.have.property('name', 'Jordbruk, skogbruk, jakt, fiske og akvakultur');
-    expect(body[1]).to.have.property('name', 'Bygg, anlegg og eiendom');
-    expect(body[2]).to.have.property('name', 'Transport og lagring');
-    expect(body[3]).to.have.property('name', 'Helse, pleie, omsorg og vern');
-    expect(body[4]).to.have.property('name', 'Oppvekst og utdanning');
-    expect(body[5]).to.have.property('name', 'Energi, vann, avløp og avfall');
-    expect(body[6]).to.have.property('name', 'Industrier');
-    expect(body[7]).to.have.property('name', 'Kultur og frivillighet');
-    expect(body[8]).to.have.property('name', 'Handel, overnatting og servering');
-    expect(body[9]).to.have.property('name', 'Andre tjenesteytende næringer');
+      var area = data.find(item => item.name === 'Jordbruk, skogbruk, jakt, fiske og akvakultur');
+      expect(area, 'Did not find "Jordbruk, skogbruk, jakt, fiske og akvakultur"').to.exist;
+      area = data.find(item => item.name === 'Bygg, anlegg og eiendom');
+      expect(area, 'Did not find "Bygg, anlegg og eiendom"').to.exist;
+      area = data.find(item => item.name === 'Transport og lagring');
+      expect(area, 'Did not find "Transport og lagring"').to.exist;
+      area = data.find(item => item.name === 'Helse, pleie, omsorg og vern');
+      expect(area, 'Did not find "Helse, pleie, omsorg og vern"').to.exist;
+      area = data.find(item => item.name === 'Oppvekst og utdanning');
+      expect(area, 'Did not find "Oppvekst og utdanning"').to.exist;
+      area = data.find(item => item.name === 'Oppvekst og utdanning');
+      expect(area, 'Did not find "Oppvekst og utdanning"').to.exist;
+      area = data.find(item => item.name === 'Energi, vann, avløp og avfall');
+      expect(area, 'Did not find "Energi, vann, avløp og avfall"').to.exist;
+      area = data.find(item => item.name === 'Industrier');
+      expect(area, 'Did not find "Industrier"').to.exist;
+      area = data.find(item => item.name === 'Kultur og frivillighet');
+      expect(area, 'Did not find "Kultur og frivillighet"').to.exist;
+      area = data.find(item => item.name === 'Handel, overnatting og servering');
+      expect(area, 'Did not find "Handel, overnatting og servering"').to.exist;
+      area = data.find(item => item.name === 'Andre tjenesteytende næringer');
+      expect(area, 'Did not find "Andre tjenesteytende næringer"').to.exist;
   });
 }

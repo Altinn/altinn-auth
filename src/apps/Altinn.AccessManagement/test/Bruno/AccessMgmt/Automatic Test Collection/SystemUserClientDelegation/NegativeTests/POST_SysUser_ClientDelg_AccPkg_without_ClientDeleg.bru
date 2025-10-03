@@ -58,6 +58,6 @@ script:pre-request {
 
 tests {
   test("Access package delegation from client which is not connected to party regn org to systemuser ", function() {
-    expect(res.status).to.equal(500);
+    expect(res.status).to.equal(400);
   });
 }
