@@ -27,6 +27,22 @@ public interface IEntityService
     Task<Entity> GetByPersNo(string persNo, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Get Entity based on PersNo
+    /// </summary>
+    /// <param name="partyId">partyid</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns></returns>
+    Task<Entity> GetByPartyId(string partyId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get Entity based on PersNo
+    /// </summary>
+    /// <param name="userId">userId</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns></returns>
+    Task<Entity> GetByUserId(string userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Get Entity based on ProfileId
     /// </summary>
     /// <param name="profileId">profileId</param>

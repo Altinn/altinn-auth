@@ -1,3 +1,4 @@
+using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessMgmt.Core.HostedServices;
 using Altinn.AccessMgmt.Core.HostedServices.Contracts;
 using Altinn.AccessMgmt.Core.HostedServices.Services;
@@ -21,6 +22,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAssignmentService, AssignmentService>();
         services.AddScoped<IDelegationService, DelegationService>();
         services.AddScoped<IResourceService, ResourceService>();
+        services.AddScoped<IEntityService, EntityService>();
+
+        services.AddScoped<IAmPartyRepository, AMPartyService>();
         services.AddScoped<IEntityService, EntityService>();
 
         AddJobs(services);

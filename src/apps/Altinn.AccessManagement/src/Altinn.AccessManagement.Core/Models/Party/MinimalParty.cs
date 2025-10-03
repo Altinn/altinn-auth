@@ -29,5 +29,10 @@
         /// The person number of the party
         /// </summary>
         public string PersonId { get; set; }
+
+        /// <summary>
+        /// The partyType of the party
+        /// </summary>
+        public Guid PartyType { get; set; }
     }
 }
