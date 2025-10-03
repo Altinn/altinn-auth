@@ -156,7 +156,7 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
 
         if (connection.To == connection.Party)
         {
-            var result = await ConnectionService.GetConnectionsFromOthers(toUuid, isFromValidGuid ? fromUuid : null, null, cancellationToken);
+            var result = await ConnectionService.GetPackagePermissionsFromOthers(toUuid, isFromValidGuid ? fromUuid : null, null, cancellationToken);
             return Ok(PaginatedResult.Create(result, null));
         }
 
