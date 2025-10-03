@@ -1,9 +1,6 @@
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
-using Altinn.AccessManagement.Enduser.Services;
 using Altinn.AccessManagement.Models;
-using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
-using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.Authorization.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
@@ -19,19 +16,19 @@ public class PolicyInformationPointController : ControllerBase
 {
     private readonly IPolicyInformationPoint _pip;
     private readonly IMapper _mapper;
-    private readonly IRelationService _relationService;
+    private readonly AccessMgmt.Core.Services.Contracts.IConnectionService _connectionService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PolicyInformationPointController"/> class.
     /// </summary>
     /// <param name="pip">The policy information point</param>
     /// <param name="mapper">The mapper</param>
-    /// <param name="relationService">Relation Service</param>
-    public PolicyInformationPointController(IPolicyInformationPoint pip, IMapper mapper, IRelationService relationService)
+    /// <param name="connectionService">Connection Service</param>
+    public PolicyInformationPointController(IPolicyInformationPoint pip, IMapper mapper, AccessMgmt.Core.Services.Contracts.IConnectionService connectionService)
     {
         _pip = pip;
         _mapper = mapper;
-        _relationService = relationService;
+        _connectionService = connectionService;
     }
 
     /// <summary>
@@ -74,8 +71,7 @@ public class PolicyInformationPointController : ControllerBase
     {
         List<AccessPackageUrn> packages = new();
 
-        var connectionPackages = await _relationService.GetPackagePermissionsFromOthers(partyId: to, fromId: from, cancellationToken: cancellationToken);
-
+        var connectionPackages = await _connectionService.GetPackagePermissionsFromOthers(partyId: to, fromId: from, cancellationToken: cancellationToken);
         if (connectionPackages != null)
         {
             packages.AddRange(connectionPackages.Select(conPackage => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(conPackage.Package.Urn.Split(':').Last()))));
