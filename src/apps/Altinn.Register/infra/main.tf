@@ -195,6 +195,9 @@ module "appsettings" {
 
         // config
         "Altinn:register:PartyImport:A2:MaxDbSizeInGib" = { value = var.config.a2_party_import.max_db_size_in_gib }
+
+        // services
+        "Services:altinn-authentication:http" = { value = "http://altinn-authentication.default.svc.cluster.local/" }
       }
 
       vault_references = {
