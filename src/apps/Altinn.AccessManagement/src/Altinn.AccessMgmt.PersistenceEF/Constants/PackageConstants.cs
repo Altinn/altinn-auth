@@ -2893,6 +2893,31 @@ public static class PackageConstants
     };
 
     /// <summary>
+    /// Represents the 'Lønn med personopplysninger av særlig kategori' access package.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 7c6d02b0-e0e9-45d6-b357-f2e929995475
+    /// - <c>URN:</c> altinn:accesspackage:lonn-personopplysinger-saerlig-kategori
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Description:</c> DenneDenne tilgangspakken gir fullmakter til tjenester knyttet til lønn og refusjon som inkluderer personopplysninger av særlig kategori. Denne fullmakten kan gi bruker tilgang til sensitive personopplysninger om ansatte, for eksempel knyttet til informasjon om ansattes sykefravær, foreldrepenger, pleiepenger eller lignende opplysninger. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.
+    /// </remarks>
+    public static ConstantDefinition<Package> SalarySpecialCategory { get; } = new ConstantDefinition<Package>("7c6d02b0-e0e9-45d6-b357-f2e929995475")
+    {
+        Entity = new()
+        {
+            Name = "Lønn med personopplysninger av særlig kategori",
+            Description = "Denne tilgangspakken gir fullmakter til tjenester knyttet til lønn og refusjon som inkluderer personopplysninger av særlig kategori. Denne fullmakten kan gi bruker tilgang til sensitive personopplysninger om ansatte, for eksempel knyttet til informasjon om ansattes sykefravær, foreldrepenger, pleiepenger eller lignende opplysninger. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.",
+            Urn = "altinn:accesspackage:lonn-personopplysinger-saerlig-kategori",
+            IsDelegable = true,
+            HasResources = true,
+            IsAssignable = true,
+            EntityTypeId = EntityTypeConstants.Organisation,
+            ProviderId = ProviderConstants.Altinn3,
+            AreaId = AreaConstants.Personnel,
+        },
+    };
+
+    /// <summary>
     /// Represents the 'Sykefravær' access package.
     /// </summary>
     /// <remarks>
