@@ -192,7 +192,7 @@ public partial class ConnectionService : IConnectionService
             return null;
         }
 
-        DbContext.Remove(assignment);
+        DbContext.Remove(existingAssignmentPackages);
         await DbContext.SaveChangesAsync(cancellationToken);
 
         return null;
