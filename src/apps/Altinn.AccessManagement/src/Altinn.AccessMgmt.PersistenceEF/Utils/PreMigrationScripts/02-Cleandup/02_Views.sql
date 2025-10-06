@@ -1,80 +1,103 @@
 create view dbo.connectionef(fromid, roleid, viaid, viaroleid, toid, packageid, resourceid, reason) as
 SELECT a.fromid,
-        a.roleid,
-        NULL::uuid     AS viaid,
-        NULL::uuid     AS viaroleid,
-        a.toid,
-        ap.packageid,
-        NULL::uuid     AS resourceid,
-        NULL::uuid     AS delegationid,
-        'Direct'::text AS reason
+       a.roleid,
+       NULL::uuid     AS viaid,
+       NULL::uuid     AS viaroleid,
+       a.toid,
+       NULL::uuid     AS packageid,
+       NULL::uuid     AS resourceid,
+       NULL::uuid     AS delegationid,
+       'Direct'::text AS reason
 FROM dbo.assignment a
-    JOIN dbo.assignmentpackage ap ON ap.assignmentid = a.id
 UNION ALL
 SELECT a.fromid,
-        a.roleid,
-        NULL::uuid     AS viaid,
-        NULL::uuid     AS viaroleid,
-        a.toid,
-        rp.packageid,
-        NULL::uuid     AS resourceid,
-        NULL::uuid     AS delegationid,
-        'Direct'::text AS reason
+       a.roleid,
+       NULL::uuid     AS viaid,
+       NULL::uuid     AS viaroleid,
+       a.toid,
+       ap.packageid,
+       NULL::uuid     AS resourceid,
+       NULL::uuid     AS delegationid,
+       'Direct'::text AS reason
 FROM dbo.assignment a
-    JOIN dbo.rolepackage rp ON rp.roleid = a.roleid and rp.hasaccess = true
+         JOIN dbo.assignmentpackage ap ON ap.assignmentid = a.id
 UNION ALL
 SELECT a.fromid,
-        a.roleid,
-        NULL::uuid     AS viaid,
-        NULL::uuid     AS viaroleid,
-        a.toid,
-        rp.packageid,
-        NULL::uuid     AS resourceid,
-        NULL::uuid     AS delegationid,
-        'Direct'::text AS reason
+       a.roleid,
+       NULL::uuid     AS viaid,
+       NULL::uuid     AS viaroleid,
+       a.toid,
+       rp.packageid,
+       NULL::uuid     AS resourceid,
+       NULL::uuid     AS delegationid,
+       'Direct'::text AS reason
 FROM dbo.assignment a
-    JOIN dbo.rolemap rm ON a.roleid = rm.hasroleid
-    JOIN dbo.rolepackage rp ON rp.roleid = rm.getroleid AND rp.hasaccess = true
+         JOIN dbo.rolepackage rp ON rp.roleid = a.roleid AND rp.hasaccess = true
 UNION ALL
 SELECT a.fromid,
-        a.roleid,
-        a.toid          AS viaid,
-        a2.roleid       AS viaroleid,
-        a2.toid,
-        ap.packageid,
-        NULL::uuid      AS resourceid,
-        NULL::uuid      AS delegationid,
-        'KeyRole'::text AS reason
+       a.roleid,
+       NULL::uuid     AS viaid,
+       NULL::uuid     AS viaroleid,
+       a.toid,
+       rp.packageid,
+       NULL::uuid     AS resourceid,
+       NULL::uuid     AS delegationid,
+       'Direct'::text AS reason
 FROM dbo.assignment a
-    JOIN dbo.assignment a2 ON a.toid = a2.fromid
-    JOIN dbo.role r ON a2.roleid = r.id AND r.iskeyrole = true
-    JOIN dbo.assignmentpackage ap ON ap.assignmentid = a.id
+         JOIN dbo.rolemap rm ON a.roleid = rm.hasroleid
+         JOIN dbo.rolepackage rp ON rp.roleid = rm.getroleid AND rp.hasaccess = true
 UNION ALL
 SELECT a.fromid,
-        a.roleid,
-        a.toid          AS viaid,
-        a2.roleid       AS viaroleid,
-        a2.toid,
-        rp.packageid,
-        NULL::uuid      AS resourceid,
-        NULL::uuid      AS delegationid,
-        'KeyRole'::text AS reason
+       a.roleid,
+       a.toid          AS viaid,
+       a2.roleid       AS viaroleid,
+       a2.toid,
+       ap.packageid,
+       NULL::uuid      AS resourceid,
+       NULL::uuid      AS delegationid,
+       'KeyRole'::text AS reason
 FROM dbo.assignment a
-    JOIN dbo.assignment a2 ON a.toid = a2.fromid
-    JOIN dbo.role r ON a2.roleid = r.id AND r.iskeyrole = true
-    JOIN dbo.rolepackage rp ON rp.roleid = a.roleid AND rp.hasaccess = true
+         JOIN dbo.assignment a2 ON a.toid = a2.fromid
+         JOIN dbo.role r ON a2.roleid = r.id AND r.iskeyrole = true
+         JOIN dbo.assignmentpackage ap ON ap.assignmentid = a.id
+UNION ALL
+SELECT a.fromid,
+       a.roleid,
+       a.toid          AS viaid,
+       a2.roleid       AS viaroleid,
+       a2.toid,
+       rp.packageid,
+       NULL::uuid      AS resourceid,
+       NULL::uuid      AS delegationid,
+       'KeyRole'::text AS reason
+FROM dbo.assignment a
+         JOIN dbo.assignment a2 ON a.toid = a2.fromid
+         JOIN dbo.role r ON a2.roleid = r.id AND r.iskeyrole = true
+         JOIN dbo.rolepackage rp ON rp.roleid = a.roleid AND rp.hasaccess = true
 UNION ALL
 SELECT fa.fromid,
-        ta.roleid,
-        fa.toid            AS viaid,
-        fa.roleid          AS viaroleid,
-        ta.toid,
-        dp.packageid,
-        NULL::uuid         AS resourceid,
-        d.id               AS delegationid,
-        'Delegation'::text AS reason
+       ta.roleid,
+       fa.toid            AS viaid,
+       fa.roleid          AS viaroleid,
+       ta.toid,
+       NULL::uuid         AS packageid,
+       NULL::uuid         AS resourceid,
+       d.id               AS delegationid,
+       'Delegation'::text AS reason
 FROM dbo.delegation d
-    JOIN dbo.assignment fa ON fa.id = d.fromid
-    JOIN dbo.assignment ta ON ta.id = d.toid
-    JOIN dbo.delegationpackage dp ON dp.delegationid = d.id
-
+         JOIN dbo.assignment fa ON fa.id = d.fromid
+         JOIN dbo.assignment ta ON ta.id = d.toid
+UNION ALL
+SELECT fa.fromid,
+       ta.roleid,
+       fa.toid            AS viaid,
+       fa.roleid          AS viaroleid,
+       ta.toid,
+       dp.packageid,
+       NULL::uuid         AS resourceid,
+       d.id               AS delegationid,
+       'Delegation'::text AS reason
+FROM dbo.delegation d
+         JOIN dbo.assignment fa ON fa.id = d.fromid
+         JOIN dbo.assignment ta ON ta.id = d.toid
+         JOIN dbo.delegationpackage dp ON dp.delegationid = d.id

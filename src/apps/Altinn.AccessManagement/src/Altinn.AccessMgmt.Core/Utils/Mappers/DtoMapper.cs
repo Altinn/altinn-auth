@@ -1,4 +1,4 @@
-﻿using Altinn.AccessMgmt.Core.Models;
+﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 
@@ -107,12 +107,34 @@ public partial class DtoMapper
                 Name = compactEntity?.Name,
                 Type = compactEntity?.Type?.Name,
                 Variant = compactEntity?.Variant?.Name,
+                KeyValues = GetFakeKeyValues(compactEntity),
                 Parent = isConvertingParent ? null : Convert(compactEntity.Parent, true),
                 Children = null
             };
         }
 
         return null;
+    }
+
+    private static Dictionary<string, string> GetFakeKeyValues(Entity entity)
+    {
+        var result = new Dictionary<string, string>();
+
+        if (entity.TypeId.Equals(EntityTypeConstants.Organisation))
+        {
+            result.Add("OrganizationIdentifier", entity.RefId);
+        }
+
+        if (entity.TypeId.Equals(EntityTypeConstants.Person))
+        {
+            result.Add("PersonIdentifier", entity.RefId);
+            if (!string.IsNullOrEmpty(entity.RefId) && entity.RefId.Length >= 6)
+            {
+                result.Add("DateOfBirth", $"{entity.RefId[..2]}-{entity.RefId.Substring(2, 2)}-{entity.RefId.Substring(4, 2)}");
+            }
+        }
+
+        return result;
     }
 
     public static CompactRoleDto ConvertCompactRole(Role role)

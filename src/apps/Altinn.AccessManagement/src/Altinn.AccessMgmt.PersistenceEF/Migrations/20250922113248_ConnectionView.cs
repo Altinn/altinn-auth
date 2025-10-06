@@ -18,6 +18,17 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                        NULL::uuid     AS viaid,
                        NULL::uuid     AS viaroleid,
                        a.toid,
+                       NULL::uuid     AS packageid,
+                       NULL::uuid     AS resourceid,
+                       NULL::uuid     AS delegationid,
+                       'Direct'::text AS reason
+                FROM dbo.assignment a
+                UNION ALL
+                SELECT a.fromid,
+                       a.roleid,
+                       NULL::uuid     AS viaid,
+                       NULL::uuid     AS viaroleid,
+                       a.toid,
                        ap.packageid,
                        NULL::uuid     AS resourceid,
                        NULL::uuid     AS delegationid,
@@ -35,7 +46,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                        NULL::uuid     AS delegationid,
                        'Direct'::text AS reason
                 FROM dbo.assignment a
-                         JOIN dbo.rolepackage rp ON rp.roleid = a.roleid and rp.hasaccess = true
+                         JOIN dbo.rolepackage rp ON rp.roleid = a.roleid AND rp.hasaccess = true
                 UNION ALL
                 SELECT a.fromid,
                        a.roleid,
@@ -83,6 +94,19 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                        fa.toid            AS viaid,
                        fa.roleid          AS viaroleid,
                        ta.toid,
+                       NULL::uuid         AS packageid,
+                       NULL::uuid         AS resourceid,
+                       d.id               AS delegationid,
+                       'Delegation'::text AS reason
+                FROM dbo.delegation d
+                         JOIN dbo.assignment fa ON fa.id = d.fromid
+                         JOIN dbo.assignment ta ON ta.id = d.toid
+                UNION ALL
+                SELECT fa.fromid,
+                       ta.roleid,
+                       fa.toid            AS viaid,
+                       fa.roleid          AS viaroleid,
+                       ta.toid,
                        dp.packageid,
                        NULL::uuid         AS resourceid,
                        d.id               AS delegationid,
@@ -91,7 +115,6 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                          JOIN dbo.assignment fa ON fa.id = d.fromid
                          JOIN dbo.assignment ta ON ta.id = d.toid
                          JOIN dbo.delegationpackage dp ON dp.delegationid = d.id
-                
                 """);
         }
 
