@@ -97,17 +97,17 @@ public partial class DtoMapper
         });
     }
 
-    public static CompactEntityDto Convert(Entity compactEntity)
+    public static CompactEntityDto Convert(Entity compactEntity, bool isConvertingParent = false)
     {
         if (compactEntity is { })
         {
             return new CompactEntityDto()
             {
                 Id = compactEntity.Id,
-                Name = compactEntity.Name,
-                Type = compactEntity.Type.Name,
-                Variant = compactEntity.Variant.Name,
-                Parent = Convert(compactEntity.Parent),
+                Name = compactEntity?.Name,
+                Type = compactEntity?.Type?.Name,
+                Variant = compactEntity?.Variant?.Name,
+                Parent = isConvertingParent ? null : Convert(compactEntity.Parent, true),
                 Children = null
             };
         }
