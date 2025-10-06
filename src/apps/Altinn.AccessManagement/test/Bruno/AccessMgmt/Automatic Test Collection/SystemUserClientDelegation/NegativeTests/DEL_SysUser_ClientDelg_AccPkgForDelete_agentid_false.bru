@@ -46,7 +46,7 @@ tests {
     expect(res.status).to.equal(400);
     
     const data = res.getBody();
-    assert.equal(data.validationErrors.detail, "Assignment is active in one or more delegations.");
+    assert.equal(data.validationErrors[0].detail, "Assignment is active in one or more delegations.");
     
   });
 }
