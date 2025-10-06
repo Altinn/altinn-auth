@@ -448,7 +448,10 @@ public partial class ConnectionService
         var result = await DbContext.Connections
             .AsNoTracking()
             .IncludeExtendedEntities()
-            .Include(c => c.Package)
+            .Include(t => t.Package)
+            .Include(t => t.Via)
+            .Include(t => t.ViaRole)
+            .Include(t => t.Role)
             .Where(c => c.ToId == partyId)
             .WhereIf(fromId.HasValue, c => c.FromId == fromId.Value)
             .WhereIf(packageId.HasValue, c => c.PackageId == packageId.Value)
