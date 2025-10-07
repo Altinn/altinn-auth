@@ -425,7 +425,7 @@ public partial class ConnectionService(AppDbContext dbContext, IAuditAccessor au
         if (to is { })
         {
             var problem = ValidationComposer.Validate(
-                EntityTypeValidation.ToIsOfType(to.TypeId, [.. options.AllowedWriteToEntityTypes])
+                EntityTypeValidation.ToIsOfType(to.TypeId, [.. options.AllowedReadToEntityTypes])
             );
 
             if (problem is { })
