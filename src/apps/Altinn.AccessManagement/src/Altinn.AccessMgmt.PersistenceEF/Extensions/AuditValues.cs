@@ -112,22 +112,30 @@ public class AuditConnectionInterceptor : DbConnectionInterceptor
     {
         var audit = _context.Current;
 
-        using var cmd = connection.CreateCommand();
-        cmd.CommandText = """
-            CREATE TEMP TABLE IF NOT EXISTS session_audit_context (
-                changed_by UUID,
-                changed_by_system UUID,
-                change_operation_id TEXT
-            ) ON COMMIT DROP;
-            TRUNCATE session_audit_context;
-            INSERT INTO session_audit_context (changed_by, changed_by_system, change_operation_id)
-            VALUES (@user, @system, @op);
-        """;
+        var hasModifications = eventData.Context.ChangeTracker.Entries()
+            .Any(e => e.State == EntityState.Added
+                   || e.State == EntityState.Modified
+                   || e.State == EntityState.Deleted);
 
-        cmd.Parameters.Add(new NpgsqlParameter("user", audit.ChangedBy));
-        cmd.Parameters.Add(new NpgsqlParameter("system", audit.ChangedBySystem));
-        cmd.Parameters.Add(new NpgsqlParameter("op", audit.OperationId));
-        cmd.ExecuteNonQuery();
+        if (hasModifications)
+        {
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = """
+                CREATE TEMP TABLE IF NOT EXISTS session_audit_context (
+                    changed_by UUID,
+                    changed_by_system UUID,
+                    change_operation_id TEXT
+                ) ON COMMIT DROP;
+                TRUNCATE session_audit_context;
+                INSERT INTO session_audit_context (changed_by, changed_by_system, change_operation_id)
+                VALUES (@user, @system, @op);
+            """;
+
+            cmd.Parameters.Add(new NpgsqlParameter("user", audit.ChangedBy));
+            cmd.Parameters.Add(new NpgsqlParameter("system", audit.ChangedBySystem));
+            cmd.Parameters.Add(new NpgsqlParameter("op", audit.OperationId));
+            cmd.ExecuteNonQuery();
+        }
     }
 }
 

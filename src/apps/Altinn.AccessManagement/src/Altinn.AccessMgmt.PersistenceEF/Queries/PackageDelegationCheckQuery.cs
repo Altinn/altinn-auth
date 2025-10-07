@@ -31,6 +31,7 @@ public static class PackageDelegationCheckQuery
                 {
                     Value = (ids != null && ids.Length > 0) ? ids : DBNull.Value
                 })
+            .AsNoTracking()
             .ToListAsync(cancellationToken);
 
         // Project rows back into your nested model

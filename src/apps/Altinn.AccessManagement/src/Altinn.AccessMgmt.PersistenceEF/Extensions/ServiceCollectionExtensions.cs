@@ -25,25 +25,39 @@ public static class ServiceCollectionExtensions
         services.AddScoped(sp => sp.GetRequiredService<AppDbContextFactory>().CreateDbContext());
         services.AddSingleton<AuditMiddleware>();
         
+        if (options.EnableEFPooling)
+        {
+            return options.Source switch
+            {
+                SourceType.App => services.AddPooledDbContextFactory<AppDbContext>(AddAppDbContext),
+                SourceType.Migration => services.AddPooledDbContextFactory<AppDbContext>(AddMigrationDbContext),
+                _ => throw new ArgumentException("Invalid configured source must be either <App, Migration>", nameof(configureOptions)),
+            };
+        }
+
         return options.Source switch
         {
-            SourceType.App => services.AddPooledDbContextFactory<AppDbContext>((sp, options) =>
-            {
-                var db = sp.GetRequiredService<IAltinnDatabase>();
-                var connectionString = db.CreatePgsqlConnection(SourceType.App);
-                options.UseNpgsql(connectionString, ConfigureNpgsql);
-            }),
-            SourceType.Migration => services.AddPooledDbContextFactory<AppDbContext>((sp, options) =>
-            {
-                var db = sp.GetRequiredService<IAltinnDatabase>();
-                var connectionString = db.CreatePgsqlConnection(SourceType.Migration);
-                var configuration = sp.GetRequiredService<IConfiguration>();
-                options.UseAsyncSeeding(async (dbcontext, anyChanges, ct) => await StaticDataIngest.IngestAll((AppDbContext)dbcontext, ct));
-                options.UseNpgsql(connectionString, ConfigureNpgsql)
-                    .ReplaceService<IMigrationsSqlGenerator, CustomMigrationsSqlGenerator>();
-            }),
+            SourceType.App => services.AddDbContextFactory<AppDbContext>(AddAppDbContext),
+            SourceType.Migration => services.AddDbContextFactory<AppDbContext>(AddMigrationDbContext),
             _ => throw new ArgumentException("Invalid configured source must be either <App, Migration>", nameof(configureOptions)),
         };
+    }
+
+    private static void AddMigrationDbContext(IServiceProvider sp, DbContextOptionsBuilder options)
+    {
+        var db = sp.GetRequiredService<IAltinnDatabase>();
+        var connectionString = db.CreatePgsqlConnection(SourceType.Migration);
+        var configuration = sp.GetRequiredService<IConfiguration>();
+        options.UseAsyncSeeding(async (dbcontext, anyChanges, ct) => await StaticDataIngest.IngestAll((AppDbContext)dbcontext, ct));
+        options.UseNpgsql(connectionString, ConfigureNpgsql)
+            .ReplaceService<IMigrationsSqlGenerator, CustomMigrationsSqlGenerator>();
+    }
+
+    private static void AddAppDbContext(IServiceProvider sp, DbContextOptionsBuilder options)
+    {
+        var db = sp.GetRequiredService<IAltinnDatabase>();
+        var connectionString = db.CreatePgsqlConnection(SourceType.App);
+        options.UseNpgsql(connectionString, ConfigureNpgsql);
     }
 
     private static void ConfigureNpgsql(NpgsqlDbContextOptionsBuilder builder) { }
@@ -56,5 +70,6 @@ public static class ServiceCollectionExtensions
         }
 
         public SourceType Source { get; set; } = SourceType.App;
+        public bool EnableEFPooling { get; set; } = false;
     }
 }
