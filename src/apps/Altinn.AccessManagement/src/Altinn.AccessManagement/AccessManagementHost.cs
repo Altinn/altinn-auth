@@ -70,22 +70,6 @@ internal static partial class AccessManagementHost
 
         builder.ConfigureLibsIntegrations();
         builder.ConfigureAppsettings();
-        builder.AddAltinnDatabase(opt =>
-        {
-            var adminConnectionStringFmt = builder.Configuration.GetValue<string>("PostgreSQLSettings:AdminConnectionString");
-            var adminConnectionStringPwd = builder.Configuration.GetValue<string>("PostgreSQLSettings:AuthorizationDbAdminPwd");
-            var connectionStringFmt = builder.Configuration.GetValue<string>("PostgreSQLSettings:ConnectionString");
-            var connectionStringPwd = builder.Configuration.GetValue<string>("PostgreSQLSettings:AuthorizationDbPwd");
-            var appsettings = new AccessManagementAppsettings(builder.Configuration);
-            if (string.IsNullOrEmpty(connectionStringFmt) || string.IsNullOrEmpty(adminConnectionStringFmt))
-            {
-                Log.PgsqlMissingConnectionString(Logger);
-                opt.Enabled = false;
-            }
-
-            opt.AppSource = new(string.Format(connectionStringFmt, connectionStringPwd));
-            opt.MigrationSource = new(string.Format(adminConnectionStringFmt, adminConnectionStringPwd));
-        });
 
         if (!builder.Environment.IsDevelopment())
         {
@@ -99,11 +83,20 @@ internal static partial class AccessManagementHost
             }
         }
 
+        var connectionStrings = GetConnectionStrings(builder.Configuration);
+
+        builder.AddAltinnDatabase(opt =>
+        {
+            opt.Enabled = connectionStrings.Valid;
+            opt.AppSource = new(connectionStrings.AppSource);
+            opt.MigrationSource = new(connectionStrings.MigrationSource);
+        });
+
         builder.Services.AddAccessManagementDatabase(options =>
         {
             var appsettings = new AccessManagementAppsettings(builder.Configuration);
-            options.AppConnectionString = appsettings.Database.Postgres.AppConnectionString;
-            options.MigrationConnectionString = appsettings.Database.Postgres.MigrationConnectionString;
+            options.AppConnectionString = connectionStrings.AppSource;
+            options.MigrationConnectionString = connectionStrings.MigrationSource;
             options.Source = appsettings.RunInitOnly ? SourceType.Migration : SourceType.App; 
         });
 
@@ -120,6 +113,24 @@ internal static partial class AccessManagementHost
         builder.AddAccessManagementInternal();
 
         return builder.Build();
+    }
+
+    private static (string AppSource, string MigrationSource, bool Valid) GetConnectionStrings(ConfigurationManager configuration)
+    {
+        var adminConnectionStringFmt = configuration.GetValue<string>("PostgreSQLSettings:AdminConnectionString");
+        var connectionStringFmt = configuration.GetValue<string>("PostgreSQLSettings:ConnectionString");
+
+        if (string.IsNullOrEmpty(connectionStringFmt) || string.IsNullOrEmpty(adminConnectionStringFmt))
+        {
+            Log.PgsqlMissingConnectionString(Logger);
+            return (connectionStringFmt, adminConnectionStringFmt, false);
+        }
+        else
+        {
+            var adminConnectionStringPwd = configuration.GetValue<string>("PostgreSQLSettings:AuthorizationDbAdminPwd");
+            var connectionStringPwd = configuration.GetValue<string>("PostgreSQLSettings:AuthorizationDbPwd");
+            return (string.Format(connectionStringFmt, connectionStringPwd), string.Format(adminConnectionStringFmt, adminConnectionStringPwd), true);
+        }
     }
 
     private static WebApplicationBuilder ConfigureAccessManagementPersistence(this WebApplicationBuilder builder)

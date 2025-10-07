@@ -20,13 +20,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ReadOnlyInterceptor>();
         services.AddScoped<IAuditAccessor, AuditAccessor>();
         services.AddScoped<ITranslationService, TranslationService>();
-        services.AddSingleton<AuditMiddleware>();
         
-        /*
-        // Skal ikke være nødvendig
         services.AddScoped<AppDbContextFactory>();
         services.AddScoped(sp => sp.GetRequiredService<AppDbContextFactory>().CreateDbContext());
-        */
+
+        services.AddSingleton<AuditMiddleware>();
 
         if (options.EnableEFPooling)
         {
