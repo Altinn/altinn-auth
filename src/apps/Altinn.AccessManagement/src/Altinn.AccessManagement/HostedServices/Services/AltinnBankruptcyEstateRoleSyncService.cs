@@ -1,19 +1,10 @@
-﻿using Altinn.AccessManagement.Core.Models.Authentication;
-using Altinn.AccessManagement.Enduser.Services;
-using Altinn.AccessManagement.HostedServices.Contracts;
+﻿using Altinn.AccessManagement.HostedServices.Contracts;
 using Altinn.AccessManagement.HostedServices.Leases;
-using Altinn.AccessMgmt.Core.Models;
-using Altinn.AccessMgmt.Persistence.Core.Contracts;
 using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Data;
-using Altinn.AccessMgmt.Persistence.Repositories;
-using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
-using Altinn.AccessMgmt.Persistence.Services;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
-using Altinn.AccessMgmt.Persistence.Services.Models;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Integration.Platform.SblBridge;
-using Altinn.Platform.Register.Models;
 using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessManagement.HostedServices.Services

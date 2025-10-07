@@ -52,7 +52,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
         var bulkLookup = new List<EntityLookup>();
 
         using var scope = _serviceProvider.CreateEFScope(options);
-        var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContextFactory>().CreateDbContext();
+        var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var ingestService = scope.ServiceProvider.GetRequiredService<IIngestService>();
 
         await foreach (var page in await _register.StreamParties(AltinnRegisterClient.AvailableFields, leaseData?.PartyStreamNextPageLink, cancellationToken))

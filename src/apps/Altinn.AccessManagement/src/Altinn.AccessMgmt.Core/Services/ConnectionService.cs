@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Altinn.AccessManagement.Core.Errors;
+﻿using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -18,42 +17,48 @@ using Microsoft.EntityFrameworkCore;
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc />
-public partial class ConnectionService : IConnectionService
+public partial class ConnectionService(AppDbContext dbContext, IAuditAccessor auditAccessor) : IConnectionService
 {
-    public AppDbContext DbContext { get; }
-
-    public IAuditAccessor AuditAccessor { get; }
-
-    public ConnectionService(AppDbContext dbContext, IAuditAccessor auditAccessor)
+    public async Task<Result<IEnumerable<ConnectionPackageDto>>> GetAssignments(Guid party, Guid? fromId, Guid? toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
     {
-        DbContext = dbContext;
-        AuditAccessor = auditAccessor;
-    }
-
-    public async Task<Result<AssignmentDto>> AddAssignment(Guid fromId, Guid toId, Role role, Action<ConnectionOptions> configureOptions = null, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(role);
-        var options = new ConnectionOptions(configureOptions);
-        var entities = await DbContext.Entities
-            .AsNoTracking()
-            .Where(e => e.Id == fromId || e.Id == toId)
-            .Include(e => e.Type)
-            .ToListAsync(cancellationToken);
-
-        var fromEntity = entities.FirstOrDefault(e => e.Id == fromId);
-        var toEntity = entities.FirstOrDefault(e => e.Id == toId);
-
-        var problem = ValidateEntities(fromEntity, toEntity, options);
+        var options = new ConnectionOptions(configureConnections);
+        var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
+        var problem = ValidateReadOpInput(from, to, options);
         if (problem is { })
         {
             return problem;
         }
 
-        var existingAssignment = await DbContext.Assignments
+        if (party == from?.Id)
+        {
+            var result = await GetConnectionsToOthers(party, to?.Id, null, null, null, configureConnections, cancellationToken);
+            return result.ToList();
+        }
+
+        if (party == to?.Id)
+        {
+            var result = await GetConnectionsFromOthers(party, from?.Id, null, null, null, configureConnections, cancellationToken);
+            return result.ToList();
+        }
+
+        return new List<ConnectionPackageDto>();
+    }
+
+    public async Task<Result<AssignmentDto>> AddAssignment(Guid fromId, Guid toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
+    {
+        var options = new ConnectionOptions(configureConnections);
+        var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
+        var problem = ValidateWriteOpInput(from, to, options);
+        if (problem is { })
+        {
+            return problem;
+        }
+
+        var existingAssignment = await dbContext.Assignments
             .AsNoTracking()
-            .Where(e => e.FromId == fromId)
-            .Where(e => e.ToId == toId)
-            .Where(e => e.RoleId == role.Id)
+            .Where(e => e.FromId == from.Id)
+            .Where(e => e.ToId == to.Id)
+            .Where(e => e.RoleId == RoleConstants.Rightholder)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (existingAssignment is { })
@@ -65,40 +70,30 @@ public partial class ConnectionService : IConnectionService
         {
             FromId = fromId,
             ToId = toId,
-            RoleId = role.Id,
+            RoleId = RoleConstants.Rightholder,
         };
 
-        await DbContext.Assignments.AddAsync(assignment);
-        await DbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.Assignments.AddAsync(assignment, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return DtoMapper.Convert(assignment);
     }
 
-    public async Task<ValidationProblemInstance> RemoveAssignment(Guid fromId, Guid toId, Role role, bool cascade = false, Action<ConnectionOptions> configureConnectionOptions = null, CancellationToken cancellationToken = default)
+    public async Task<ValidationProblemInstance> RemoveAssignment(Guid fromId, Guid toId, bool cascade = false, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(role);
-
-        var options = new ConnectionOptions(configureConnectionOptions);
-        var entities = await DbContext.Entities
-            .AsNoTracking()
-            .Where(e => e.Id == fromId || e.Id == toId)
-            .Include(e => e.Type)
-            .ToListAsync(cancellationToken);
-
-        var fromEntity = entities.FirstOrDefault(e => e.Id == fromId);
-        var toEntity = entities.FirstOrDefault(e => e.Id == toId);
-
-        var problem = ValidateEntities(fromEntity, toEntity, options);
+        var options = new ConnectionOptions(configureConnections);
+        var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
+        var problem = ValidateWriteOpInput(from, to, options);
         if (problem is { })
         {
             return problem;
         }
 
-        var existingAssignment = await DbContext.Assignments
+        var existingAssignment = await dbContext.Assignments
             .AsTracking()
             .Where(e => e.FromId == fromId)
             .Where(e => e.ToId == toId)
-            .Where(e => e.RoleId == role.Id)
+            .Where(e => e.RoleId == RoleConstants.Rightholder)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (existingAssignment is null)
@@ -108,17 +103,17 @@ public partial class ConnectionService : IConnectionService
 
         if (!cascade)
         {
-            var assignedPackages = await DbContext.AssignmentPackages
+            var assignedPackages = await dbContext.AssignmentPackages
                 .AsNoTracking()
                 .Where(p => p.AssignmentId == existingAssignment.Id)
                 .ToListAsync(cancellationToken);
 
-            var delegationsFrom = await DbContext.Delegations
+            var delegationsFrom = await dbContext.Delegations
                 .AsNoTracking()
                 .Where(p => p.FromId == existingAssignment.Id)
                 .ToListAsync(cancellationToken);
 
-            var delegationsTo = await DbContext.Delegations
+            var delegationsTo = await dbContext.Delegations
                 .AsNoTracking()
                 .Where(p => p.ToId == toId)
                 .ToListAsync(cancellationToken);
@@ -135,45 +130,78 @@ public partial class ConnectionService : IConnectionService
             }
         }
 
-        DbContext.Remove(existingAssignment);
-        await DbContext.SaveChangesAsync(cancellationToken);
+        dbContext.Remove(existingAssignment);
+        await dbContext.SaveChangesAsync(cancellationToken);
         return null;
     }
 
-    public async Task<Result<AssignmentPackageDto>> AddPackage(Guid fromId, Guid toId, Role role, Guid packageId, Action<ConnectionOptions> configureConnectionOptions = null, CancellationToken cancellationToken = default)
+    public async Task<Result<IEnumerable<PackagePermissionDto>>> GetPackages(Guid party, Guid? fromId, Guid? toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
     {
-        return await AddPackage(fromId, toId, role, packageId, "packageId", configureConnectionOptions, cancellationToken);
+        var options = new ConnectionOptions(configureConnections);
+        var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
+        var problem = ValidateReadOpInput(from, to, options);
+        if (problem is { })
+        {
+            return problem;
+        }
+
+        if (party == from?.Id)
+        {
+            var result = await GetPackagePermissionsToOthers(party, to?.Id, null, configureConnections, cancellationToken);
+            return result.ToList();
+        }
+
+        if (party == from?.Id)
+        {
+            var result = await GetPackagePermissionsFromOthers(party, from?.Id, null, configureConnections, cancellationToken);
+            return result.ToList();
+        }
+
+        return new List<PackagePermissionDto>();
     }
 
-    public async Task<Result<AssignmentPackageDto>> AddPackage(Guid fromId, Guid toId, Role role, string packageUrn, Action<ConnectionOptions> configureConnectionOptions = null, CancellationToken cancellationToken = default)
+    public async Task<Result<AssignmentPackageDto>> AddPackage(Guid fromId, Guid toId, Guid packageId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
+    {
+        return await AddPackage(fromId, toId, packageId, "packageId", configureConnection, cancellationToken);
+    }
+
+    public async Task<Result<AssignmentPackageDto>> AddPackage(Guid fromId, Guid toId, string packageUrn, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
         if (PackageConstants.TryGetByUrn(packageUrn, out var package))
         {
-            return await AddPackage(fromId, toId, role, package.Id, "package", configureConnectionOptions, cancellationToken);
+            return await AddPackage(fromId, toId, package.Id, "package", configureConnection, cancellationToken);
         }
 
         return ValidationComposer.Validate(PackageValidation.PackageExists(package, packageUrn));
     }
 
-    public async Task<ValidationProblemInstance> RemovePackage(Guid fromId, Guid toId, Role role, string packageUrn, CancellationToken cancellationToken = default)
+    public async Task<ValidationProblemInstance> RemovePackage(Guid fromId, Guid toId, string packageUrn, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
         if (PackageConstants.TryGetByUrn(packageUrn, out var package))
         {
-            return await RemovePackage(fromId, toId, role, package, cancellationToken);
+            return await RemovePackage(fromId, toId, package, configureConnection, cancellationToken);
         }
 
         return ValidationComposer.Validate(PackageValidation.PackageExists(package, packageUrn));
     }
 
-    public async Task<ValidationProblemInstance> RemovePackage(Guid fromId, Guid toId, Role role, Guid packageId, CancellationToken cancellationToken = default)
+    public async Task<ValidationProblemInstance> RemovePackage(Guid fromId, Guid toId, Guid packageId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(role);
+        var options = new ConnectionOptions(configureConnection);
+        var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
+        var problem = ValidateWriteOpInput(from, to, options);
+        if (problem is { })
+        {
+            return problem;
+        }
 
-        var assignment = await DbContext.Assignments
+        var assignment = await dbContext.Assignments
             .AsNoTracking()
+            .Include(a => a.From)
+            .Include(a => a.To)
             .Where(a => a.FromId == fromId)
             .Where(a => a.ToId == toId)
-            .Where(a => a.RoleId == role.Id)
+            .Where(a => a.RoleId == RoleConstants.Rightholder)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (assignment is null)
@@ -181,7 +209,13 @@ public partial class ConnectionService : IConnectionService
             return null;
         }
 
-        var existingAssignmentPackages = await DbContext.AssignmentPackages
+        problem = ValidateWriteOpInput(assignment.From, assignment.To, options);
+        if (problem is { })
+        {
+            return problem;
+        }
+
+        var existingAssignmentPackages = await dbContext.AssignmentPackages
             .AsTracking()
             .Where(a => a.AssignmentId == assignment.Id)
             .Where(a => a.PackageId == packageId)
@@ -192,45 +226,35 @@ public partial class ConnectionService : IConnectionService
             return null;
         }
 
-        DbContext.Remove(existingAssignmentPackages);
-        await DbContext.SaveChangesAsync(cancellationToken);
+        dbContext.Remove(existingAssignmentPackages);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return null;
     }
 
-    private async Task<Result<AssignmentPackageDto>> AddPackage(Guid fromId, Guid toId, Role role, Guid packageId, string queryParamName, Action<ConnectionOptions> configureConnectionOptions = null, CancellationToken cancellationToken = default)
+    private async Task<Result<AssignmentPackageDto>> AddPackage(Guid fromId, Guid toId, Guid packageId, string queryParamName, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(role);
-
-        var options = new ConnectionOptions(configureConnectionOptions);
-        var entities = await DbContext.Entities
-            .AsNoTracking()
-            .Where(e => e.Id == fromId || e.Id == toId)
-            .Include(e => e.Type)
-            .ToListAsync(cancellationToken);
-
-        var fromEntity = entities.FirstOrDefault(e => e.Id == fromId);
-        var toEntity = entities.FirstOrDefault(e => e.Id == toId);
-
-        var problem = ValidateEntities(fromEntity, toEntity, options);
+        var options = new ConnectionOptions(configureConnection);
+        var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
+        var problem = ValidateWriteOpInput(from, to, options);
         if (problem is { })
         {
             return problem;
         }
 
-        var assignment = await DbContext.Assignments
-                .AsNoTracking()
-                .Where(a => a.FromId == fromId)
-                .Where(a => a.ToId == toId)
-                .Where(a => a.RoleId == role.Id)
-                .FirstOrDefaultAsync(cancellationToken);
+        var assignment = await dbContext.Assignments
+            .AsNoTracking()
+            .Where(a => a.FromId == fromId)
+            .Where(a => a.ToId == toId)
+            .Where(a => a.RoleId == RoleConstants.Rightholder)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (assignment is null)
         {
             return Problems.MissingRightHolder;
         }
 
-        var check = await CheckPackage(fromId, packageIds: [packageId], cancellationToken);
+        var check = await CheckPackage(fromId, packageIds: [packageId], configureConnection, cancellationToken);
         if (check.IsProblem)
         {
             return check.Problem;
@@ -238,7 +262,7 @@ public partial class ConnectionService : IConnectionService
 
         problem = ValidationComposer.Validate(
             PackageValidation.AuthorizePackageAssignment(check.Value),
-            PackageValidation.PackageIsAssignableToRecipient(check.Value.Select(p => p.Package.Urn), toEntity.Type, queryParamName)
+            PackageValidation.PackageIsAssignableToRecipient(check.Value.Select(p => p.Package.Urn), to.Type, queryParamName)
         );
 
         if (problem is { })
@@ -246,7 +270,7 @@ public partial class ConnectionService : IConnectionService
             return problem;
         }
 
-        var existingAssignmentPackage = await DbContext.AssignmentPackages
+        var existingAssignmentPackage = await dbContext.AssignmentPackages
             .AsNoTracking()
             .Where(a => a.AssignmentId == assignment.Id)
             .Where(a => a.PackageId == packageId)
@@ -263,17 +287,17 @@ public partial class ConnectionService : IConnectionService
             PackageId = packageId,
         };
 
-        await DbContext.AssignmentPackages.AddAsync(existingAssignmentPackage);
-        await DbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.AssignmentPackages.AddAsync(existingAssignmentPackage, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return DtoMapper.Convert(existingAssignmentPackage);
     }
 
-    public async Task<Result<IEnumerable<AccessPackageDto.Check>>> CheckPackage(Guid party, IEnumerable<Guid> packageIds = null, CancellationToken cancellationToken = default)
+    public async Task<Result<IEnumerable<AccessPackageDto.Check>>> CheckPackage(Guid party, IEnumerable<Guid> packageIds = null, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
-        var assignablePackages = await DbContext.GetAssignableAccessPackages(
+        var assignablePackages = await dbContext.GetAssignableAccessPackages(
             party,
-            AuditAccessor.AuditValues.ChangedBy,
+            auditAccessor.AuditValues.ChangedBy,
             packageIds,
             cancellationToken
         );
@@ -308,15 +332,8 @@ public partial class ConnectionService : IConnectionService
         }).ToList();
     }
 
-    public async Task<Result<IEnumerable<AccessPackageDto.Check>>> CheckPackage(Guid party, IEnumerable<string> packages, IEnumerable<Guid> packageIds = null, CancellationToken cancellationToken = default)
+    public async Task<Result<IEnumerable<AccessPackageDto.Check>>> CheckPackage(Guid party, IEnumerable<string> packages, IEnumerable<Guid> packageIds = null, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
-        packages = packages.Select(p =>
-        p.StartsWith("urn:", StringComparison.Ordinal)
-            ? p
-            : (p.StartsWith(':')
-                ? $"urn:altinn:accesspackage{p}"
-                : $"urn:altinn:accesspackage:{p}"));
-
         var packagesFound = packages.Select(p =>
         {
             if (PackageConstants.TryGetByUrn(p, out var package))
@@ -333,61 +350,112 @@ public partial class ConnectionService : IConnectionService
             return problem;
         }
 
-        return await CheckPackage(party, [.. packageIds, .. packagesFound.Select(p => p.Id)], cancellationToken);
+        return await CheckPackage(party, [.. packageIds, .. packagesFound.Select(p => p.Id)], configureConnection, cancellationToken);
     }
 
-    private ValidationProblemInstance? ValidateEntities(Entity from, Entity to, ConnectionOptions options)
+    private async Task<(Entity From, Entity To)> GetFromAndToEntities(Guid? fromId, Guid? toId, CancellationToken cancellationToken)
     {
-        var entityExists = ValidationComposer.Validate(
+        var entities = await dbContext.Entities
+            .AsNoTracking()
+            .WhereIf(fromId.HasValue && toId.HasValue, e => e.Id == fromId || e.Id == toId)
+            .WhereIf(fromId.HasValue && !toId.HasValue, e => e.Id == fromId)
+            .WhereIf(!fromId.HasValue && !toId.HasValue, e => e.Id == toId)
+            .Include(e => e.Type)
+            .ToListAsync(cancellationToken);
+
+        var fromEntity = entities.FirstOrDefault(e => e.Id == fromId);
+        var toEntity = entities.FirstOrDefault(e => e.Id == toId);
+
+        return (fromEntity, toEntity);
+    }
+
+    private ValidationProblemInstance? ValidateWriteOpInput(Entity from, Entity to, ConnectionOptions options)
+    {
+        var problem = ValidationComposer.Validate(
             EntityValidation.FromExists(from),
             EntityValidation.ToExists(to)
         );
 
-        if (entityExists is { })
+        if (problem is { })
         {
-            return entityExists;
+            return problem;
         }
 
-        var entitiesIsOfRightType = ValidationComposer.Validate(
-            EntityTypeValidation.FromIsOfType(from.TypeId, [.. options.SupportedFromEntityTypes]),
-            EntityTypeValidation.ToIsOfType(to.TypeId, [.. options.SupportedToEntityTypes])
-        );
-
-        if (entitiesIsOfRightType is { })
+        if (options.AllowedWriteFromEntityTypes.Any() && options.AllowedWriteToEntityTypes.Any())
         {
-            return entitiesIsOfRightType;
+            problem = ValidationComposer.Validate(
+                EntityTypeValidation.FromIsOfType(from.TypeId, [.. options.AllowedWriteFromEntityTypes]),
+                EntityTypeValidation.ToIsOfType(to.TypeId, [.. options.AllowedWriteToEntityTypes])
+            );
+        }
+        else if (options.AllowedWriteFromEntityTypes.Any())
+        {
+            problem = ValidationComposer.Validate(
+                EntityTypeValidation.FromIsOfType(from.TypeId, [.. options.AllowedWriteFromEntityTypes])
+            );
+        }
+        else if (options.AllowedWriteToEntityTypes.Any())
+        {
+            problem = ValidationComposer.Validate(
+                EntityTypeValidation.ToIsOfType(to.TypeId, [.. options.AllowedWriteToEntityTypes])
+            );
         }
 
-        return null;
+        return problem;
     }
-}
 
-public sealed class ConnectionOptions
-{
-    internal ConnectionOptions(Action<ConnectionOptions> configureConnectionService)
+    private ProblemInstance ValidateReadOpInput(Entity? from, Entity? to, ConnectionOptions options)
     {
-        if (configureConnectionService is { })
+        if (from is { })
         {
-            configureConnectionService(this);
+            var problem = ValidationComposer.Validate(
+                EntityTypeValidation.FromIsOfType(from.TypeId, [.. options.AllowedReadFromEntityTypes])
+            );
+
+            if (problem is { })
+            {
+                return problem;
+            }
         }
+
+        if (to is { })
+        {
+            var problem = ValidationComposer.Validate(
+                EntityTypeValidation.ToIsOfType(to.TypeId, [.. options.AllowedWriteToEntityTypes])
+            );
+
+            if (problem is { })
+            {
+                return problem;
+            }
+        }
+
+        return Problems.ConnectionEntitiesDoNotExist;
     }
-
-    public IEnumerable<Guid> SupportedFromEntityTypes { get; set; } = [];
-
-    public IEnumerable<Guid> SupportedToEntityTypes { get; set; } = [];
 }
 
 /// <inheritdoc />
 public partial class ConnectionService
 {
     /// <inheritdoc />
-    public async Task<IEnumerable<ConnectionPackageDto>> GetConnectionsToOthers(Guid partyId, Guid? toId = null, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ConnectionPackageDto>> GetConnectionsToOthers(
+        Guid partyId,
+        Guid? toId = null,
+        Guid? roleId = null,
+        Guid? packageId = null,
+        Guid? resourceId = null,
+        Action<ConnectionOptions> configureConnections = null,
+        CancellationToken cancellationToken = default
+    )
     {
-        var result = await DbContext.Connections.AsNoTracking()
+        var options = new ConnectionOptions(configureConnections);
+        var result = await dbContext.Connections.AsNoTracking()
             .IncludeExtendedEntities()
             .Include(t => t.Role)
             .Include(t => t.Package)
             .Where(t => t.FromId == partyId)
+            .WhereIf(options.FilterFromEntityTypes.Any(), c => options.FilterFromEntityTypes.Contains(c.FromId))
+            .WhereIf(options.FilterToEntityTypes.Any(), c => options.FilterToEntityTypes.Contains(c.ToId))
             .WhereIf(toId.HasValue, t => t.ToId == toId.Value)
             .WhereIf(roleId.HasValue, t => t.RoleId == roleId.Value)
             .WhereIf(packageId.HasValue, t => t.PackageId == packageId.Value)
@@ -398,11 +466,19 @@ public partial class ConnectionService
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ConnectionDto>> GetConnectionsToOthers(Guid partyId, Guid? toId = null, Guid? roleId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ConnectionDto>> GetConnectionsToOthers(
+        Guid partyId,
+        Guid? toId = null,
+        Guid? roleId = null,
+        Action<ConnectionOptions> configureConnections = null,
+        CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.Connections.AsNoTracking()
+        var options = new ConnectionOptions(configureConnections);
+        var result = await dbContext.Connections.AsNoTracking()
             .IncludeExtendedEntities()
             .Include(t => t.Role)
+            .WhereIf(options.FilterFromEntityTypes.Any(), c => options.FilterFromEntityTypes.Contains(c.FromId))
+            .WhereIf(options.FilterToEntityTypes.Any(), c => options.FilterToEntityTypes.Contains(c.ToId))
             .Where(t => t.FromId == partyId)
             .WhereIf(toId.HasValue, t => t.ToId == toId.Value)
             .WhereIf(roleId.HasValue, t => t.RoleId == roleId.Value)
@@ -412,13 +488,23 @@ public partial class ConnectionService
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ConnectionPackageDto>> GetConnectionsFromOthers(Guid partyId, Guid? fromId = null, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ConnectionPackageDto>> GetConnectionsFromOthers(
+        Guid partyId,
+        Guid? fromId = null,
+        Guid? roleId = null,
+        Guid? packageId = null,
+        Guid? resourceId = null,
+        Action<ConnectionOptions> configureConnections = null,
+        CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.Connections.AsNoTracking()
+        var options = new ConnectionOptions(configureConnections);
+        var result = await dbContext.Connections.AsNoTracking()
             .IncludeExtendedEntities()
             .Include(t => t.Role)
             .Include(t => t.Package)
             .Where(t => t.ToId == partyId)
+            .WhereIf(options.FilterFromEntityTypes.Any(), c => options.FilterFromEntityTypes.Contains(c.FromId))
+            .WhereIf(options.FilterToEntityTypes.Any(), c => options.FilterToEntityTypes.Contains(c.ToId))
             .WhereIf(fromId.HasValue, t => t.FromId == fromId.Value)
             .WhereIf(roleId.HasValue, t => t.RoleId == roleId.Value)
             .WhereIf(packageId.HasValue, t => t.PackageId == packageId.Value)
@@ -429,12 +515,20 @@ public partial class ConnectionService
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ConnectionDto>> GetConnectionsFromOthers(Guid partyId, Guid? fromId = null, Guid? roleId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ConnectionDto>> GetConnectionsFromOthers(
+        Guid partyId,
+        Guid? fromId = null,
+        Guid? roleId = null,
+        Action<ConnectionOptions> configureConnections = null,
+        CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.Connections.AsNoTracking()
+        var options = new ConnectionOptions(configureConnections);
+        var result = await dbContext.Connections.AsNoTracking()
             .IncludeExtendedEntities()
             .Include(c => c.Role)
             .Where(t => t.ToId == partyId)
+            .WhereIf(options.FilterFromEntityTypes.Any(), c => options.FilterFromEntityTypes.Contains(c.FromId))
+            .WhereIf(options.FilterToEntityTypes.Any(), c => options.FilterToEntityTypes.Contains(c.ToId))
             .WhereIf(fromId.HasValue, t => t.FromId == fromId.Value)
             .WhereIf(roleId.HasValue, t => t.RoleId == roleId.Value)
             .ToListAsync(cancellationToken);
@@ -443,9 +537,15 @@ public partial class ConnectionService
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<PackagePermissionDto>> GetPackagePermissionsFromOthers(Guid partyId, Guid? fromId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<PackagePermissionDto>> GetPackagePermissionsFromOthers(
+        Guid partyId,
+        Guid? fromId = null,
+        Guid? packageId = null,
+        Action<ConnectionOptions> configureConnections = null,
+        CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.Connections
+        var options = new ConnectionOptions(configureConnections);
+        var result = await dbContext.Connections
             .AsNoTracking()
             .IncludeExtendedEntities()
             .Include(t => t.Package)
@@ -453,6 +553,8 @@ public partial class ConnectionService
             .Include(t => t.ViaRole)
             .Include(t => t.Role)
             .Where(c => c.ToId == partyId)
+            .WhereIf(options.FilterFromEntityTypes.Any(), c => options.FilterFromEntityTypes.Contains(c.FromId))
+            .WhereIf(options.FilterToEntityTypes.Any(), c => options.FilterToEntityTypes.Contains(c.ToId))
             .WhereIf(fromId.HasValue, c => c.FromId == fromId.Value)
             .WhereIf(packageId.HasValue, c => c.PackageId == packageId.Value)
             .ToListAsync(cancellationToken);
@@ -470,9 +572,15 @@ public partial class ConnectionService
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<PackagePermissionDto>> GetPackagePermissionsToOthers(Guid partyId, Guid? toId = null, Guid? packageId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<PackagePermissionDto>> GetPackagePermissionsToOthers(
+        Guid partyId,
+        Guid? toId = null,
+        Guid? packageId = null,
+        Action<ConnectionOptions> configureConnections = null,
+        CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.Connections
+        var options = new ConnectionOptions(configureConnections);
+        var result = await dbContext.Connections
             .AsNoTracking()
             .IncludeExtendedEntities()
             .Include(t => t.Package)
@@ -480,6 +588,8 @@ public partial class ConnectionService
             .Include(t => t.ViaRole)
             .Include(t => t.Role)
             .Where(t => t.FromId == partyId)
+            .WhereIf(options.FilterFromEntityTypes.Any(), c => options.FilterFromEntityTypes.Contains(c.FromId))
+            .WhereIf(options.FilterToEntityTypes.Any(), c => options.FilterToEntityTypes.Contains(c.ToId))
             .WhereIf(toId.HasValue, t => t.ToId == toId.Value)
             .WhereIf(packageId.HasValue, t => t.PackageId == packageId.Value)
             .ToListAsync(cancellationToken);
@@ -497,15 +607,24 @@ public partial class ConnectionService
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ResourcePermission>> GetResourcePermissionsFromOthers(Guid partyId, Guid? fromId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ResourcePermission>> GetResourcePermissionsFromOthers(
+        Guid partyId,
+        Guid? fromId = null,
+        Guid? packageId = null,
+        Guid? resourceId = null,
+        Action<ConnectionOptions> configureConnections = null,
+        CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.Connections
+        var options = new ConnectionOptions(configureConnections);
+        var result = await dbContext.Connections
             .AsNoTracking()
             .IncludeExtendedEntities()
             .Include(t => t.Package)
             .Include(t => t.Role)
             .Include(t => t.Resource)
             .Where(t => t.ToId == partyId)
+            .WhereIf(options.FilterFromEntityTypes.Any(), c => options.FilterFromEntityTypes.Contains(c.FromId))
+            .WhereIf(options.FilterToEntityTypes.Any(), c => options.FilterToEntityTypes.Contains(c.ToId))
             .WhereIf(fromId.HasValue, t => t.FromId == fromId.Value)
             .WhereIf(packageId.HasValue, t => t.PackageId == packageId.Value)
             .WhereIf(resourceId.HasValue, t => t.ResourceId == resourceId.Value)
@@ -524,15 +643,24 @@ public partial class ConnectionService
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ResourcePermission>> GetResourcePermissionsToOthers(Guid partyId, Guid? toId = null, Guid? packageId = null, Guid? resourceId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ResourcePermission>> GetResourcePermissionsToOthers(
+        Guid partyId,
+        Guid? toId = null,
+        Guid? packageId = null,
+        Guid? resourceId = null,
+        Action<ConnectionOptions> configureConnections = null,
+        CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.Connections
+        var options = new ConnectionOptions(configureConnections);
+        var result = await dbContext.Connections
             .AsNoTracking()
             .IncludeExtendedEntities()
             .Include(t => t.Package)
             .Include(t => t.Resource)
             .Include(t => t.Role)
             .Where(t => t.FromId == partyId)
+            .WhereIf(options.FilterFromEntityTypes.Any(), c => options.FilterFromEntityTypes.Contains(c.FromId))
+            .WhereIf(options.FilterToEntityTypes.Any(), c => options.FilterToEntityTypes.Contains(c.ToId))
             .WhereIf(toId.HasValue, t => t.ToId == toId.Value)
             .WhereIf(packageId.HasValue, t => t.PackageId == packageId.Value)
             .WhereIf(resourceId.HasValue, t => t.ResourceId == resourceId.Value)
@@ -553,7 +681,7 @@ public partial class ConnectionService
     /// <inheritdoc />
     public async Task<IEnumerable<SystemUserClientConnectionDto>> GetConnectionsToAgent(Guid viaId, Guid toId, CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.Connections
+        var result = await dbContext.Connections
             .AsNoTracking()
             .IncludeExtendedEntities()
             .Include(t => t.Delegation)
@@ -715,4 +843,30 @@ public partial class ConnectionService
         });
     }
     #endregion
+}
+
+/// <summary>
+/// Configures Logic for Connection Services
+/// </summary>
+public sealed class ConnectionOptions
+{
+    internal ConnectionOptions(Action<ConnectionOptions> configureConnectionService)
+    {
+        if (configureConnectionService is { })
+        {
+            configureConnectionService(this);
+        }
+    }
+
+    public IEnumerable<Guid> AllowedWriteFromEntityTypes { get; set; } = [];
+
+    public IEnumerable<Guid> AllowedWriteToEntityTypes { get; set; } = [];
+
+    public IEnumerable<Guid> AllowedReadFromEntityTypes { get; set; } = [];
+
+    public IEnumerable<Guid> AllowedReadToEntityTypes { get; set; } = [];
+
+    public IEnumerable<Guid> FilterToEntityTypes { get; set; } = [];
+
+    public IEnumerable<Guid> FilterFromEntityTypes { get; set; } = [];
 }

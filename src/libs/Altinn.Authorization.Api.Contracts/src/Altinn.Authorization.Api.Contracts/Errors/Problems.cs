@@ -20,7 +20,7 @@ public static class Problems
     = _factory.Create(1, HttpStatusCode.NotFound, "Consent not found");
 
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
-    public static ProblemDescriptor ConsentCantBeAccepted { get; }  
+    public static ProblemDescriptor ConsentCantBeAccepted { get; }
     = _factory.Create(2, HttpStatusCode.BadRequest, "Consent have wrong status to be consented");
 
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
@@ -73,7 +73,7 @@ public static class Problems
 
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor ConsentCantBeRejected { get; }
-    = _factory.Create(15, HttpStatusCode.BadRequest,  $"Consent cant be rejected. Wrong status");
+    = _factory.Create(15, HttpStatusCode.BadRequest, $"Consent cant be rejected. Wrong status");
 
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor ConsentWithIdAlreadyExist { get; }
@@ -92,6 +92,10 @@ public static class Problems
     = _factory.Create(19, HttpStatusCode.BadRequest, $"The EntityVariant is not found or not valid for the given EntityType");
 
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
-    public static ProblemDescriptor MissingRightHolder { get; }  
+    public static ProblemDescriptor MissingRightHolder { get; }
     = _factory.Create(20, HttpStatusCode.BadRequest, "Missing rightholder");
+    
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor ConnectionEntitiesDoNotExist { get; }  
+    = _factory.Create(21, HttpStatusCode.BadRequest, "Entities from and to do not exists.");
 }

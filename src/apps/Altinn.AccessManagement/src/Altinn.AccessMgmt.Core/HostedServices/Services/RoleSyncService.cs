@@ -43,7 +43,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
         var options = new AuditValues(SystemEntityConstants.RegisterImportSystem);
 
         using var scope = _serviceProvider.CreateEFScope(options);
-        var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContextFactory>().CreateDbContext();
+        var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var ingestService = scope.ServiceProvider.GetRequiredService<IIngestService>();
 
         OrgType = EntityTypeConstants.Organisation;

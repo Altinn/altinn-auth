@@ -13,9 +13,9 @@ public class PackageService : IPackageService
 {
     public AppDbContext DbContext { get; set; }
 
-    public PackageService(AppDbContextFactory dbContextFactory)
+    public PackageService(AppDbContext appDbContext)
     {
-        DbContext = dbContextFactory.CreateDbContext();
+        DbContext = appDbContext;
     }
 
     /// <inheritdoc/>

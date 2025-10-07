@@ -48,7 +48,7 @@ public partial class ResourceSyncService : IResourceSyncService
         var options = new AuditValues(SystemEntityConstants.ResourceRegistryImportSystem);
 
         using var scope = _serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContextFactory>().CreateDbContext();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var ingestService = scope.ServiceProvider.GetRequiredService<IIngestService>();
 
         var resourceOwners = new List<Provider>();

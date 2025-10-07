@@ -10,9 +10,9 @@ namespace Altinn.AccessMgmt.Core.Services;
 /// <inheritdoc />
 public class RoleService: IRoleService
 {
-    public RoleService(AppDbContextFactory appDbContextFactory)
+    public RoleService(AppDbContext appDbContext)
     {
-        Db = appDbContextFactory.CreateDbContext();
+        Db = appDbContext;
     }
 
     public AppDbContext Db { get; }

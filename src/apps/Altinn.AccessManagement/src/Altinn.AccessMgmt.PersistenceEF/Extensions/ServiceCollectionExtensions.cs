@@ -43,6 +43,11 @@ public static class ServiceCollectionExtensions
         };
     }
 
+    private static void ConfigureNpgsql(NpgsqlDbContextOptionsBuilder builder)
+    {
+        builder.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+    }
+
     private static void AddMigrationDbContext(IServiceProvider sp, DbContextOptionsBuilder options)
     {
         var db = sp.GetRequiredService<IAltinnDatabase>();
@@ -60,8 +65,6 @@ public static class ServiceCollectionExtensions
         options.UseNpgsql(connectionString, ConfigureNpgsql);
     }
 
-    private static void ConfigureNpgsql(NpgsqlDbContextOptionsBuilder builder) { }
-
     public class AccessManagementDatabaseOptions
     {
         public AccessManagementDatabaseOptions(Action<AccessManagementDatabaseOptions> configureOptions)
@@ -70,6 +73,7 @@ public static class ServiceCollectionExtensions
         }
 
         public SourceType Source { get; set; } = SourceType.App;
+
         public bool EnableEFPooling { get; set; } = false;
     }
 }

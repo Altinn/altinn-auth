@@ -48,12 +48,12 @@ public class AMPartyService(IEntityService entityService) : IAmPartyRepository
             PartyType = entity.TypeId
         };
 
-        if (entity.Type.Id == EntityTypeConstants.Organisation.Id)
+        if (entity.Type.Id == EntityTypeConstants.Organisation)
         {
             party.OrganizationId = entity.RefId;
         }
 
-        if (entity.Type.Id == EntityTypeConstants.Person.Id)
+        if (entity.Type.Id == EntityTypeConstants.Person)
         {
             party.PersonId = entity.RefId;
         }
@@ -121,12 +121,12 @@ public class AMPartyService(IEntityService entityService) : IAmPartyRepository
             PartyType = entity.TypeId
         };
 
-        if (entity.Type.Id == EntityTypeConstants.Organisation.Id)
+        if (entity.Type.Id == EntityTypeConstants.Organisation)
         {
             party.OrganizationId = entity.RefId;
         }
 
-        if (entity.Type.Id == EntityTypeConstants.Person.Id)
+        if (entity.Type.Id == EntityTypeConstants.Person)
         {
             party.PersonId = entity.RefId;
         }

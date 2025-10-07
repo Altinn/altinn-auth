@@ -12,9 +12,9 @@ public class IngestService : IIngestService
 {
     public AppDbContext DbContext { get; set; }
     
-    public IngestService(AppDbContextFactory dbContextFactory)
+    public IngestService(AppDbContext dbContext)
     {
-        DbContext = dbContextFactory.CreateDbContext();
+        DbContext = dbContext;
     }
 
     public async Task<int> IngestData<T>(List<T> data, CancellationToken cancellationToken = default)

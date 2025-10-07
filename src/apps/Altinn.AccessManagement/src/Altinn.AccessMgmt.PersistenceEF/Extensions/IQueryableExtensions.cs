@@ -12,6 +12,8 @@ public static class IQueryableExtensions
             .ThenInclude(c => c.Variant)
             .Include(c => c.From)
             .ThenInclude(c => c.Type)
+            .Include(c => c.From)
+            .ThenInclude(c => c.Parent)
 
             .Include(c => c.From)
             .ThenInclude(c => c.Parent)

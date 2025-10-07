@@ -7,9 +7,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Utils;
 /// <inheritdoc />
 public class TranslationService : ITranslationService
 {
-    public TranslationService(AppDbContextFactory dbContextFactoryb)
+    public TranslationService(AppDbContext dbContext)
     {
-        Db = dbContextFactoryb.CreateDbContext();
+        Db = dbContext;
     }
 
     private AppDbContext Db { get; }

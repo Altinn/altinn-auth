@@ -9,9 +9,9 @@ namespace Altinn.AccessMgmt.Core.Services;
 
 public class EntityService : IEntityService
 {
-    public EntityService(AppDbContextFactory dbContextFactory)
+    public EntityService(AppDbContext appDbContext)
     {
-        Db = dbContextFactory.CreateDbContext();
+        Db = appDbContext;
     }
 
     private AuditValues AuditValues { get; set; } = new AuditValues(SystemEntityConstants.InternalApi, SystemEntityConstants.InternalApi, Guid.NewGuid().ToString());
@@ -20,7 +20,10 @@ public class EntityService : IEntityService
 
     public async ValueTask<Entity> GetEntity(Guid id, CancellationToken cancellationToken = default)
     {
-        return await Db.Entities.AsNoTracking().Include(t => t.Type).Include(t => t.Variant).SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
+        return await Db.Entities.AsNoTracking()
+            .Include(t => t.Type)
+            .Include(t => t.Variant)
+            .SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
 
     public async Task<bool> CreateEntity(Entity entity, CancellationToken cancellationToken = default)
@@ -32,8 +35,10 @@ public class EntityService : IEntityService
 
     public async ValueTask<Entity> GetOrCreateEntity(Guid id, string name, string refId, string type, string variant, CancellationToken cancellationToken = default)
     {
-        var et = await Db.EntityTypes.FirstOrDefaultAsync(t => t.Name == type);
-        var ev = await Db.EntityVariants.FirstOrDefaultAsync(t => t.Name == variant && t.TypeId == et.Id);
+        var et = await Db.EntityTypes
+            .FirstOrDefaultAsync(t => t.Name == type);
+        var ev = await Db.EntityVariants
+            .FirstOrDefaultAsync(t => t.Name == variant && t.TypeId == et.Id);
 
         var entity = await GetEntity(id);
 

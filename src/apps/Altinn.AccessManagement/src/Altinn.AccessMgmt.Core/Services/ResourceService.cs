@@ -9,19 +9,18 @@ namespace Altinn.AccessMgmt.Core.Services;
 /// <inheritdoc/>
 public class ResourceService : IResourceService
 {
-    public AppDbContextFactory DbContextFactory { get; }
+    public AppDbContext Db { get; }
 
     public IAuditAccessor AuditAccessor { get; }
 
-    public ResourceService(AppDbContextFactory dbContextFactory, IAuditAccessor auditAccessor)
+    public ResourceService(AppDbContext appDbContext, IAuditAccessor auditAccessor)
     {
-        DbContextFactory = dbContextFactory;
+        Db = appDbContext;
         AuditAccessor = auditAccessor;
     }
 
     public async ValueTask<Resource> GetResource(Guid id, CancellationToken cancellationToken = default)
     {
-        using var db = DbContextFactory.CreateDbContext();
-        return await db.Resources.AsNoTracking().SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
+        return await Db.Resources.AsNoTracking().SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
 }

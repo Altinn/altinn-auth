@@ -1,7 +1,6 @@
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
-using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.Party;
 using Altinn.Authorization.ProblemDetails;
@@ -10,21 +9,14 @@ using Microsoft.EntityFrameworkCore;
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc />
-public class PartyService : IPartyService
+public class PartyService(AppDbContext db) : IPartyService
 {
-    public PartyService(AppDbContextFactory appDbContextFactory)
-    {
-        Db = appDbContextFactory.CreateDbContext();
-    }
-
-    public AppDbContext Db { get; }
-
     /// <inheritdoc />
     public async Task<Result<AddPartyResultDto>> AddParty(PartyBaseDto party, CancellationToken cancellationToken = default)
     {
         AddPartyResultDto result = new() { PartyUuid = party.PartyUuid, PartyCreated = false };
 
-        var exists = await Db.Entities
+        var exists = await db.Entities
             .AnyAsync(e => e.Id == party.PartyUuid, cancellationToken);
 
         if (!exists)
@@ -38,7 +30,7 @@ public class PartyService : IPartyService
                 return Problems.UnsuportedEntityType.Create([new("entityType", party.EntityType.ToString())]);
             }
 
-            var entityType = await Db.EntityTypes
+            var entityType = await db.EntityTypes
                 .FirstOrDefaultAsync(t => t.Name == party.EntityType, cancellationToken);
 
             if (entityType == null)
@@ -46,7 +38,7 @@ public class PartyService : IPartyService
                 return Problems.EntityTypeNotFound.Create([new("entityType", party.EntityType)]);
             }
 
-            var entityVariant = await Db.EntityVariants
+            var entityVariant = await db.EntityVariants
                 .Where(t => t.TypeId == entityType.Id && t.Name.ToUpper() == party.EntityVariantType.ToUpper())
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -64,8 +56,8 @@ public class PartyService : IPartyService
                 RefId = party.PartyUuid.ToString()
             };
 
-            Db.Entities.Add(entity);
-            var res = await Db.SaveChangesAsync(cancellationToken);
+            db.Entities.Add(entity);
+            var res = await db.SaveChangesAsync(cancellationToken);
 
             if (res > 0)
             {
