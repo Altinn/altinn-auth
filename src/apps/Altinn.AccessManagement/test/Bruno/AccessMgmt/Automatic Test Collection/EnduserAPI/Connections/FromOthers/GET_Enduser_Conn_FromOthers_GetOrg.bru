@@ -49,7 +49,7 @@ tests {
   const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
      const data = res.getBody();
       expect(data.data[0].roles[0]).to.have.property('code', "rettighetshaver");
-     expect(data.data[0].party).to.have.property('id', testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.partyUuid.toLowerCase());
+     expect(data.data[0].party).to.have.property('id', testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid.toLowerCase());
   
     
   });
