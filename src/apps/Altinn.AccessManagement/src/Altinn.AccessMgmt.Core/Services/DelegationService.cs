@@ -228,10 +228,10 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
                         // Find or Create Agent Entity
                         var agent = await entityService.GetOrCreateEntity(request.AgentId, request.AgentName, request.AgentId.ToString(), EntityTypeConstants.SystemUser.Entity.Name, EntityVariantConstants.AgentSystem.Entity.Name, cancellationToken) ?? throw new Exception(string.Format("Could not find or create party '{0}' for agent", request.AgentId));
 
-                        // Handle existing agent entity found with different name/type
-                        if (agent.Name != request.AgentName || agent.Type.Id != EntityTypeConstants.SystemUser.Id)
+                        // Handle existing agent entity found with different type or variant
+                        if (agent.TypeId != EntityTypeConstants.SystemUser.Id || agent.VariantId != EntityVariantConstants.AgentSystem.Id)
                         {
-                            throw new Exception(string.Format("An entity with id '{0}' already exists with different name or type", request.AgentId));
+                            throw new Exception(string.Format("An entity with id '{0}' already exists and is not a valid agent SystemUser", request.AgentId));
                         }
 
                         // Find or Create Agent Assignment
