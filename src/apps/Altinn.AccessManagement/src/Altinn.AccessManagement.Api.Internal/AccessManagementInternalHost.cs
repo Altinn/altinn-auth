@@ -1,4 +1,3 @@
-using Altinn.AccessManagement.Internal.Services;
 using Altinn.Authorization.Host.Startup;
 
 namespace Altinn.AccessManagement.Api.Internal;
@@ -20,7 +19,6 @@ public static partial class AccessManagementInternalHost
     public static IHostApplicationBuilder AddAccessManagementInternal(this IHostApplicationBuilder builder)
     {
         Log.AddHost(Logger);
-        builder.Services.AddSingleton<IInternalConnectionService, InternalConnectionsService>();
         return builder;
     }
 
