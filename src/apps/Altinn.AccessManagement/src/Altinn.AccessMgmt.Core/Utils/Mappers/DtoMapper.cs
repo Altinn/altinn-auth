@@ -130,11 +130,60 @@ public partial class DtoMapper
             result.Add("PersonIdentifier", entity.RefId);
             if (!string.IsNullOrEmpty(entity.RefId) && entity.RefId.Length >= 6)
             {
-                result.Add("DateOfBirth", $"{entity.RefId[..2]}-{entity.RefId.Substring(2, 2)}-{entity.RefId.Substring(4, 2)}");
+                result.Add("DateOfBirth", CalculateDateOfBirth(entity.RefId).Value.ToString("yyyy-MM-dd"));
             }
         }
 
         return result;
+    }
+
+    private static DateOnly? CalculateDateOfBirth(string personIdentifier)
+    {
+        var s = personIdentifier.AsSpan();
+        var d1 = s[0] - '0';
+        var d2 = s[1] - '0';
+        var m1 = s[2] - '0';
+        var m2 = s[3] - '0';
+        var y1 = s[4] - '0';
+        var y2 = s[5] - '0';
+        var i1 = s[6] - '0';
+        var i2 = s[7] - '0';
+        var i3 = s[8] - '0';
+
+        var dayComponent = (d1 * 10) + d2;
+        var monthComponent = (m1 * 10) + m2;
+        var yearComponent = (y1 * 10) + y2;
+        var individualComponent = (i1 * 100) + (i2 * 10) + i3;
+
+        if (monthComponent >= 80)
+        {
+            // Test person
+            monthComponent -= 80;
+        }
+
+        if (dayComponent >= 40)
+        {
+            // D-number
+            dayComponent -= 40;
+        }
+
+        var year = individualComponent switch
+        {
+            >= 500 and < 750 when yearComponent > 54 => 1800 + yearComponent,
+            >= 900 when yearComponent > 39 => 1900 + yearComponent,
+            >= 500 when yearComponent < 40 => 2000 + yearComponent,
+            _ => 1900 + yearComponent,
+        };
+
+        try
+        {
+            return new DateOnly(year, monthComponent, dayComponent);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            // Invalid date of birth
+            return null;
+        }
     }
 
     public static CompactRoleDto ConvertCompactRole(Role role)
