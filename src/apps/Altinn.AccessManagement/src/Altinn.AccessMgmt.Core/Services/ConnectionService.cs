@@ -1,4 +1,5 @@
-﻿using Altinn.AccessManagement.Core.Errors;
+﻿using System.Diagnostics;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -151,7 +152,7 @@ public partial class ConnectionService(AppDbContext dbContext, IAuditAccessor au
             return result.ToList();
         }
 
-        if (party == from?.Id)
+        if (party == to?.Id)
         {
             var result = await GetPackagePermissionsFromOthers(party, from?.Id, null, configureConnections, cancellationToken);
             return result.ToList();
@@ -355,11 +356,16 @@ public partial class ConnectionService(AppDbContext dbContext, IAuditAccessor au
 
     private async Task<(Entity From, Entity To)> GetFromAndToEntities(Guid? fromId, Guid? toId, CancellationToken cancellationToken)
     {
+        if (fromId is null && toId is null)
+        {
+            throw new UnreachableException();
+        }
+
         var entities = await dbContext.Entities
             .AsNoTracking()
             .WhereIf(fromId.HasValue && toId.HasValue, e => e.Id == fromId || e.Id == toId)
-            .WhereIf(fromId.HasValue && !toId.HasValue, e => e.Id == fromId)
-            .WhereIf(!fromId.HasValue && !toId.HasValue, e => e.Id == toId)
+            .WhereIf(fromId.HasValue, e => e.Id == fromId)
+            .WhereIf(toId.HasValue, e => e.Id == toId)
             .Include(e => e.Type)
             .ToListAsync(cancellationToken);
 
