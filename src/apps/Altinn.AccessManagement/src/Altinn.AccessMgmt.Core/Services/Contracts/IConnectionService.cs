@@ -11,7 +11,16 @@ namespace Altinn.AccessMgmt.Core.Services.Contracts;
 /// </summary>
 public interface IConnectionService
 {
-    Task<Result<IEnumerable<ConnectionPackageDto>>> GetAssignments(Guid party, Guid? fromId, Guid? toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="party"></param>
+    /// <param name="fromId"></param>
+    /// <param name="toId"></param>
+    /// <param name="configureConnections"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Creates a role assignment between two entities.

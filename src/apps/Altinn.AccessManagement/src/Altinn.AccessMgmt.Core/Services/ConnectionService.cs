@@ -20,7 +20,7 @@ namespace Altinn.AccessMgmt.Core.Services;
 /// <inheritdoc />
 public partial class ConnectionService(AppDbContext dbContext, IAuditAccessor auditAccessor) : IConnectionService
 {
-    public async Task<Result<IEnumerable<ConnectionPackageDto>>> GetAssignments(Guid party, Guid? fromId, Guid? toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
+    public async Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
     {
         var options = new ConnectionOptions(configureConnections);
         var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
@@ -32,17 +32,17 @@ public partial class ConnectionService(AppDbContext dbContext, IAuditAccessor au
 
         if (party == from?.Id)
         {
-            var result = await GetConnectionsToOthers(party, to?.Id, null, null, null, configureConnections, cancellationToken);
+            var result = await GetConnectionsToOthers(party, to?.Id, null, configureConnections, cancellationToken);
             return result.ToList();
         }
 
         if (party == to?.Id)
         {
-            var result = await GetConnectionsFromOthers(party, from?.Id, null, null, null, configureConnections, cancellationToken);
+            var result = await GetConnectionsFromOthers(party, from?.Id, null, configureConnections, cancellationToken);
             return result.ToList();
         }
 
-        return new List<ConnectionPackageDto>();
+        return new List<ConnectionDto>();
     }
 
     public async Task<Result<AssignmentDto>> AddAssignment(Guid fromId, Guid toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
