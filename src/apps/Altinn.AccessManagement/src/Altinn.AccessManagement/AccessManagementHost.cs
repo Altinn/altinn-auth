@@ -102,6 +102,8 @@ internal static partial class AccessManagementHost
         builder.Services.AddAccessManagementDatabase(options =>
         {
             var appsettings = new AccessManagementAppsettings(builder.Configuration);
+            options.AppConnectionString = appsettings.Database.Postgres.AppConnectionString;
+            options.MigrationConnectionString = appsettings.Database.Postgres.MigrationConnectionString;
             options.Source = appsettings.RunInitOnly ? SourceType.Migration : SourceType.App; 
         });
 
