@@ -246,6 +246,7 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
     /// API for delegation check of access packages, for which packages the authenticated user has permission to assign to others on behalf of the specified party.
     /// </summary>
     [HttpGet("accesspackages/delegationcheck")]
+    [FeatureGate("AccessManagement.Enduser.Connections.DelegationCheck")] // Temporary feature flag for debugging of bug #1427
     // [DbAudit(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApiStr)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApiStr)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
