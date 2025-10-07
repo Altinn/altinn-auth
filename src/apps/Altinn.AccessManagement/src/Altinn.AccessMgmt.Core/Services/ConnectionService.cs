@@ -430,7 +430,12 @@ public partial class ConnectionService(AppDbContext dbContext, IAuditAccessor au
             }
         }
 
-        return Problems.ConnectionEntitiesDoNotExist;
+        if (to is null && from is null)
+        {
+            return Problems.ConnectionEntitiesDoNotExist;
+        }
+
+        return null;
     }
 }
 
