@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages/delegationcheck?party={{party}}&packages=hovedadministrator&packages=:barnehageleder&packages=urn:altinn:accesspackage:eksplisitt&packages=urn:altinn:accesspackage:forretningsforer-eiendom
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages/delegationcheck?party={{party}}&packages=hovedadministrator&packages=barnehageleder&packages=urn:altinn:accesspackage:eksplisitt&packages=urn:altinn:accesspackage:forretningsforer-eiendom
   body: json
   auth: inherit
 }
@@ -13,7 +13,7 @@ get {
 params:query {
   party: {{party}}
   packages: hovedadministrator
-  packages: :barnehageleder
+  packages: barnehageleder
   packages: urn:altinn:accesspackage:eksplisitt
   packages: urn:altinn:accesspackage:forretningsforer-eiendom
 }
