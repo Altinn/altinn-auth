@@ -363,9 +363,7 @@ public partial class ConnectionService(AppDbContext dbContext, IAuditAccessor au
 
         var entities = await dbContext.Entities
             .AsNoTracking()
-            .WhereIf(fromId.HasValue && toId.HasValue, e => e.Id == fromId || e.Id == toId)
-            .WhereIf(fromId.HasValue, e => e.Id == fromId)
-            .WhereIf(toId.HasValue, e => e.Id == toId)
+            .Where(e => e.Id == fromId || e.Id == toId)
             .Include(e => e.Type)
             .ToListAsync(cancellationToken);
 
