@@ -62,7 +62,7 @@ script:pre-request {
     auth_ssn: testdata.org_system.dagl.pid,
     scope: sharedtestdata.scopes.read,
     auth_tokenType: sharedtestdata.authTokenType.personal,
-    auth_scopes: sharedtestdata.auth_scopes.read
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
   }
     const token = await testTokenGenerator.getToken(getTokenParameters);
   
