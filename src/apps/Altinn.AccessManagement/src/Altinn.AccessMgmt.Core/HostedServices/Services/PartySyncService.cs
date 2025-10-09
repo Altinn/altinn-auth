@@ -21,6 +21,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
     private readonly IAltinnRegister _register;
     private readonly IServiceProvider _serviceProvider;
     private readonly int _bulkSize = 10_000;
+    private readonly List<string> _supportedEntityTypes = ["person", "organization"];
 
     /// <summary>
     /// PartySyncService Constructor
@@ -74,7 +75,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
             {
                 try
                 {
-                    if (item.PartyType.Equals("self-identified-user", StringComparison.OrdinalIgnoreCase))
+                    if (!_supportedEntityTypes.Any(e => e.Equals(item.PartyType, StringComparison.InvariantCultureIgnoreCase)))
                     {
                         continue;
                     }

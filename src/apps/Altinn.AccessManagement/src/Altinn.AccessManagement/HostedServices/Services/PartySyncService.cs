@@ -21,6 +21,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
     private readonly IEntityTypeRepository _entityTypeRepository;
     private readonly IEntityVariantRepository _entityVariantRepository;
     private readonly IEntityLookupRepository _lookupRepository;
+    private readonly List<string> _supportedEntityTypes = ["person", "organization"];
 
     /// <summary>
     /// PartySyncService Constructor
@@ -86,7 +87,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
             {
                 try
                 {
-                    if (item.PartyType.Equals("self-identified-user", StringComparison.OrdinalIgnoreCase))
+                    if (!_supportedEntityTypes.Any(e => e.Equals(item.PartyType, StringComparison.InvariantCultureIgnoreCase)))
                     {
                         continue;
                     }
