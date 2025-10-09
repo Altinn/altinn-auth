@@ -80,7 +80,7 @@ public class PartyModel
     public bool IsDeleted { get; set; }
 
     [JsonPropertyName("versionId")]
-    public int VersionId { get; set; }
+    public ulong VersionId { get; set; }
 
     [JsonPropertyName("unitStatus")]
     public string UnitStatus { get; set; }
