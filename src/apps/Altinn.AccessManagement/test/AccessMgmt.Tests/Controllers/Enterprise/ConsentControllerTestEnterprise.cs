@@ -88,7 +88,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             HttpClient client = GetTestClient();
             string url = $"/accessmanagement/api/v1/enterprise/consentrequests/";
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.write");
+            string token = PrincipalUtil.GetMaskinportenToken("810419512", "altinn:consentrequests.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             StringContent stringContent = new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json");
             HttpResponseMessage response = await client.PostAsync(url, stringContent);

@@ -137,7 +137,7 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
                 throw new InvalidOperationException("response");
             }
 
-            if (!DecisionHelper.ValidatePdpDecision(response.Response, claimsPrincipal))
+            if (!DecisionHelper.ValidatePdpDecisionWithoutObligationCheck(response.Response, claimsPrincipal))
             {
                 return false;
             }
