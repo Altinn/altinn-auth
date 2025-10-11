@@ -66,9 +66,15 @@ public class PackageService : IPackageService
         var packages = await DbContext.Packages.AsNoTracking().ToListAsync(cancellationToken);
 
         var result = new List<PackageDto>();
+        var packageResources = await DbContext.PackageResources.AsNoTracking()
+            .Include(t => t.Resource)
+            .Include(t => t.Resource).ThenInclude(t => t.Provider)
+            .Include(t => t.Resource).ThenInclude(t => t.Type)
+            .ToListAsync(cancellationToken);
+
         foreach (var package in packages)
         {
-            result.Add(DtoMapper.Convert(package, areas.First(t => t.Id == package.AreaId), await GetDbPackageResources(package.Id, cancellationToken)));
+            result.Add(DtoMapper.Convert(package, areas.First(t => t.Id == package.AreaId), packageResources.Where(t => t.PackageId == package.Id).Select(t => t.Resource)));
         }
 
         return result;
