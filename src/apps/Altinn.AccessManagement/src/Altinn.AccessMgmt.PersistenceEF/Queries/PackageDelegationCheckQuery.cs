@@ -22,8 +22,8 @@ public static class PackageDelegationCheckQuery
     {
         var ids = packageIds?.ToArray();
 
-        var rows = await dbContext.PackageDelegationChecks
-            .FromSqlRaw(
+        var rows = await dbContext.Database
+            .SqlQueryRaw<PackageDelegationCheckRow>(
                 QUERY,
                 new NpgsqlParameter("fromId", fromId),
                 new NpgsqlParameter("toId", toId),

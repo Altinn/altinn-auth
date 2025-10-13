@@ -123,15 +123,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     #endregion
 
-    public DbSet<PackageDelegationCheckRow> PackageDelegationChecks { get; set; } = null!;
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<PackageDelegationCheckRow>(e =>
-        {
-            e.HasNoKey();
-        });
-        
         ApplyAuditConfiguration(modelBuilder);
         ApplyConfiguration(modelBuilder);
         ApplyViewConfiguration(modelBuilder);
