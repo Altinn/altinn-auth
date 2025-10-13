@@ -19,6 +19,7 @@ var featureManager = scope.ServiceProvider.GetRequiredService<FeatureManager>();
 if (appsettings.RunInitOnly)
 {
     await Init();
+    return;
 }
 
 app.AddDefaultAltinnMiddleware(errorHandlingPath: "/accessmanagement/api/v1/error");
