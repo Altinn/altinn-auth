@@ -15,11 +15,10 @@ WebApplication app = AccessManagementHost.Create(args);
 using var scope = app.Services.CreateScope();
 var appsettings = scope.ServiceProvider.GetRequiredService<IOptions<AccessManagementAppsettings>>().Value;
 var featureManager = scope.ServiceProvider.GetRequiredService<FeatureManager>();
-await Init();
 
 if (appsettings.RunInitOnly)
 {
-    return;
+    await Init();
 }
 
 app.AddDefaultAltinnMiddleware(errorHandlingPath: "/accessmanagement/api/v1/error");
