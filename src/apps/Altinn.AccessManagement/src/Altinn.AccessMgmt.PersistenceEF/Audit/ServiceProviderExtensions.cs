@@ -15,6 +15,11 @@ public static class ServiceProviderExtensions
         return scope;
     }
 
+    public static IServiceScope CreateEFScope(this IServiceProvider provider, Guid systemEntity)
+    {
+        return provider.CreateEFScope(new AuditValues(systemEntity));
+    }
+
     public static IApplicationBuilder UseEfAudit(this IApplicationBuilder builder)
     {
         builder.UseMiddleware<AuditMiddleware>();
