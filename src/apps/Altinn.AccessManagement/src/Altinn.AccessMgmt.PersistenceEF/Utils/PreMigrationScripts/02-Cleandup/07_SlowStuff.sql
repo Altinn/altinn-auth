@@ -1,3 +1,12 @@
+alter table dbo_history.auditentity
+    add constraint pk_auditentity
+        primary key (id, audit_validfrom, audit_validto);
+
+alter table dbo.entity
+    add constraint fk_entity_entity_parentid
+        foreign key (parentid) references dbo.entity
+            on delete restrict;
+
 alter table dbo_history.auditentitylookup
     add constraint pk_auditentitylookup
         primary key (id, audit_validfrom, audit_validto);
@@ -9,3 +18,6 @@ alter table dbo_history.auditentitylookup
     alter column entityid set not null,
     alter column isprotected set not null,
     alter column isprotected drop default;
+
+alter table dbo_history.auditrolepackage
+    add canassign boolean not null;

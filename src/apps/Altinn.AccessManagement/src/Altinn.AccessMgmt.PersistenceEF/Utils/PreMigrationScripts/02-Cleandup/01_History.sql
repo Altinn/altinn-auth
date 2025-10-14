@@ -82,9 +82,9 @@ alter table dbo_history.auditdelegationresource
     add constraint pk_auditdelegationresource
         primary key (id, audit_validfrom, audit_validto);
 
-alter table dbo_history.auditentity
-    add constraint pk_auditentity
-        primary key (id, audit_validfrom, audit_validto);
+--alter table dbo_history.auditentity
+--    add constraint pk_auditentity
+--        primary key (id, audit_validfrom, audit_validto);
 
 --alter table dbo_history.auditentitylookup
 --    add constraint pk_auditentitylookup
@@ -137,9 +137,6 @@ alter table dbo_history.auditrolelookup
 alter table dbo_history.auditrolemap
     add constraint pk_auditrolemap
         primary key (id, audit_validfrom, audit_validto);
-
-alter table dbo_history.auditrolepackage
-    add canassign boolean not null;
 
 alter table dbo_history.auditrolepackage
     add constraint pk_auditrolepackage
