@@ -22,6 +22,10 @@ if (appsettings.RunInitOnly)
     await Init();
     return;
 }
+else if (appsettings.RunIntegrationTests)
+{
+    await Init();
+}
 
 app.AddDefaultAltinnMiddleware(errorHandlingPath: "/accessmanagement/api/v1/error");
 

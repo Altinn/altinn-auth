@@ -53,4 +53,9 @@ public class AccessManagementAppsettings
     /// Runs Init Only.
     /// </summary>
     public bool RunInitOnly { get; set; } = false;
+
+    /// <summary>
+    /// Runs correct Init logic when running tests.
+    /// </summary>
+    public bool RunIntegrationTests { get; set; } = false;
 }
