@@ -48,7 +48,7 @@ tests {
     expect(res.status).to.equal(200);
     assert.isNotEmpty(data, "Expected data in response body to NOT be empty array");
     
-    const expectedNumPackages = 128;
+    const expectedNumPackages = 129;
     assert.lengthOf(data, expectedNumPackages, `Expected response data to contain all ${expectedNumPackages} available packages`);
     
   });
