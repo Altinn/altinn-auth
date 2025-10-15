@@ -263,10 +263,13 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
     {
         ValidationErrorBuilder errors = default;
 
-        var fromEntity = await db.Entities.SingleAsync(t => t.Id == fromEntityId, cancellationToken);
-        var toEntity = await db.Entities.SingleAsync(t => t.Id == toEntityId, cancellationToken);
-        ValidatePartyIsNotNull(fromEntityId, fromEntity, ref errors, "$QUERY/party");
-        ValidatePartyIsNotNull(toEntityId, toEntity, ref errors, "$QUERY/to");
+        var fromEntity = await db.Entities.FirstOrDefaultAsync(t => t.Id == fromEntityId, cancellationToken);
+        var toEntity = await db.Entities.FirstOrDefaultAsync(t => t.Id == toEntityId, cancellationToken);
+        
+        if (toEntity is null || fromEntity is null)
+        {
+            return null;
+        }
 
         var roleResult = await db.Roles.AsNoTracking().Where(t => t.Code == roleCode).ToListAsync(cancellationToken);
         if (roleResult == null || !roleResult.Any() || roleResult.Count > 1)
