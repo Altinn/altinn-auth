@@ -105,6 +105,13 @@
       "partyId": 50382857,
       "partyUuid": "f489878a-927f-4789-9dab-ff73c36c2f26"
     },
+    "revisor": {
+      "name": "OVERFLADISK LANG TIGER AS",
+      "orgno": "310267511",
+      "partyId": 51235849,
+      "partyUuid": "037a33d1-af1c-4156-9506-86d63a09f6a6",
+      "directPackageToDelegate": "revisorattesterer"
+    },
     "systemuser": {
       "name": "Fiken",
       "partyUuid": "e2eba2c3-b369-4ff9-8418-99a810d6bb58",

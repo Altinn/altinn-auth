@@ -98,4 +98,8 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor ConnectionEntitiesDoNotExist { get; }  
     = _factory.Create(21, HttpStatusCode.BadRequest, "Entities from and to do not exists.");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor MissingConnection { get; }
+    = _factory.Create(22, HttpStatusCode.BadRequest, "Operation can not be completed, because it requires an existing connection between the parties.");
 }

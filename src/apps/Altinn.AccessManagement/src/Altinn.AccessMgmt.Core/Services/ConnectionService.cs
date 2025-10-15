@@ -243,16 +243,15 @@ public partial class ConnectionService(AppDbContext dbContext, IAuditAccessor au
             return problem;
         }
 
-        var assignment = await dbContext.Assignments
+        var assignments = await dbContext.Assignments
             .AsNoTracking()
             .Where(a => a.FromId == fromId)
             .Where(a => a.ToId == toId)
-            .Where(a => a.RoleId == RoleConstants.Rightholder)
-            .FirstOrDefaultAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
 
-        if (assignment is null)
+        if (assignments.Count() == 0)
         {
-            return Problems.MissingRightHolder;
+            return Problems.MissingConnection;
         }
 
         var check = await CheckPackage(fromId, packageIds: [packageId], configureConnection, cancellationToken);
@@ -271,27 +270,42 @@ public partial class ConnectionService(AppDbContext dbContext, IAuditAccessor au
             return problem;
         }
 
-        var existingAssignmentPackage = await dbContext.AssignmentPackages
-            .AsNoTracking()
-            .Where(a => a.AssignmentId == assignment.Id)
-            .Where(a => a.PackageId == packageId)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (existingAssignmentPackage is { })
+        var assignment = assignments.FirstOrDefault(a => a.RoleId == RoleConstants.Rightholder);
+        if (assignment == null)
         {
-            return DtoMapper.Convert(existingAssignmentPackage);
+            assignment = new Assignment()
+            {
+                FromId = fromId,
+                ToId = toId,
+                RoleId = RoleConstants.Rightholder
+            };
+
+            await dbContext.Assignments.AddAsync(assignment, cancellationToken);
+        }
+        else
+        {
+            var existingAssignmentPackage = await dbContext.AssignmentPackages
+                .AsNoTracking()
+                .Where(a => a.AssignmentId == assignment.Id)
+                .Where(a => a.PackageId == packageId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (existingAssignmentPackage is { })
+            {
+                return DtoMapper.Convert(existingAssignmentPackage);
+            }
         }
 
-        existingAssignmentPackage = new AssignmentPackage()
+        var newAssignmentPackage = new AssignmentPackage()
         {
             AssignmentId = assignment.Id,
             PackageId = packageId,
         };
 
-        await dbContext.AssignmentPackages.AddAsync(existingAssignmentPackage, cancellationToken);
+        await dbContext.AssignmentPackages.AddAsync(newAssignmentPackage, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return DtoMapper.Convert(existingAssignmentPackage);
+        return DtoMapper.Convert(newAssignmentPackage);
     }
 
     public async Task<Result<IEnumerable<AccessPackageDto.Check>>> CheckPackage(Guid party, IEnumerable<Guid> packageIds = null, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
