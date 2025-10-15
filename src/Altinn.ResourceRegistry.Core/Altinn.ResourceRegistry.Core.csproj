@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Altinn.Authorization.ModelUtils" />
     <PackageReference Include="CommunityToolkit.Diagnostics" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
     <PackageReference Include="Altinn.Authorization.ABAC" />
@@ -26,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-		<InternalsVisibleTo Include="Altinn.ResourceRegistry.Tests"/>
+		<InternalsVisibleTo Include="Altinn.ResourceRegistry.Tests" />
 	</ItemGroup>
 
 </Project>
