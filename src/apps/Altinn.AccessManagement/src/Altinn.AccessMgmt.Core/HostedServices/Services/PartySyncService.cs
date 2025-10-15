@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Altinn.AccessMgmt.Core.HostedServices.Contracts;
+﻿using Altinn.AccessMgmt.Core.HostedServices.Contracts;
 using Altinn.AccessMgmt.Core.HostedServices.Leases;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -161,6 +160,11 @@ public class PartySyncService : BaseSyncService, IPartySyncService
                 RefId = model.PersonIdentifier,
                 TypeId = EntityTypeConstants.Person,
                 VariantId = EntityVariantConstants.Person,
+                DateOfBirth = DateOnly.Parse(model.DateOfBirth),
+                PartyId = model.PartyId,
+                PersonIdentifier = model.PersonIdentifier,
+                UserId = model.User.UserId,
+                OrganizationIdentifier = model.OrganizationIdentifier,
             };
         }
         else if (model.PartyType.Equals("organization", StringComparison.OrdinalIgnoreCase))

@@ -101,15 +101,25 @@ public partial class DtoMapper
     {
         if (compactEntity is { })
         {
+            EntityTypeConstants.TryGetById(compactEntity.TypeId, out var type);
+            EntityVariantConstants.TryGetById(compactEntity.VariantId, out var variant);
+
             return new CompactEntityDto()
             {
                 Id = compactEntity.Id,
                 Name = compactEntity?.Name,
-                Type = compactEntity?.Type?.Name,
-                Variant = compactEntity?.Variant?.Name,
-                KeyValues = GetFakeKeyValues(compactEntity),
+                Type = type.Entity.Name,
+                Variant = variant.Entity.Name,
                 Parent = isConvertingParent ? null : Convert(compactEntity.Parent, true),
-                Children = null
+                Children = null,
+                KeyValues = GetFakeKeyValues(compactEntity),
+                DateOfBirth = compactEntity.DateOfBirth,
+                DeletedAt = compactEntity.DeletedAt,
+                OrganizationIdentifier = compactEntity.OrganizationIdentifier,
+                PartyId = compactEntity.PartyId,
+                PersonIdentifier = compactEntity.PersonIdentifier,
+                UserId = compactEntity.UserId, 
+                Username = compactEntity.Username
             };
         }
 

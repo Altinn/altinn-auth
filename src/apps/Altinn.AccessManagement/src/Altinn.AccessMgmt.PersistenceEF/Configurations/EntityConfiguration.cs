@@ -17,7 +17,14 @@ public class EntityConfiguration : IEntityTypeConfiguration<Entity>
         builder.HasKey(p => p.Id);
 
         builder.Property(t => t.Name).IsRequired();
-        builder.Property(t => t.RefId);
+        builder.Property(t => t.RefId).IsRequired(false);
+
+        builder.Property(t => t.PartyId).IsRequired(false);
+        builder.Property(t => t.UserId).IsRequired(false);
+        builder.Property(t => t.OrganizationIdentifier).IsRequired(false);
+        builder.Property(t => t.PersonIdentifier).IsRequired(false);
+        builder.Property(t => t.DateOfBirth).IsRequired(false);
+        builder.Property(t => t.DeletedAt).IsRequired(false);
 
         builder.PropertyWithReference(navKey: t => t.Type, foreignKey: t => t.TypeId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
         builder.PropertyWithReference(navKey: t => t.Variant, foreignKey: t => t.VariantId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);

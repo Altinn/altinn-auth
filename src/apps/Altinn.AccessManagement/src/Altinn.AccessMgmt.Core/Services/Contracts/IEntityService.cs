@@ -37,10 +37,26 @@ public interface IEntityService
     /// <summary>
     /// Get Entity based on PersNo
     /// </summary>
+    /// <param name="partyId">partyid</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns></returns>
+    Task<Entity> GetByPartyId(int partyId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get Entity based on PersNo
+    /// </summary>
     /// <param name="userId">userId</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns></returns>
     Task<Entity> GetByUserId(string userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get Entity based on PersNo
+    /// </summary>
+    /// <param name="userId">userId</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns></returns>
+    Task<Entity> GetByUserId(int userId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get Entity based on ProfileId
@@ -48,7 +64,15 @@ public interface IEntityService
     /// <param name="profileId">profileId</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns></returns>
-    Task<Entity> GetByProfile(string profileId, CancellationToken cancellationToken = default);
+    Task<Entity> GetByProfileId(string profileId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get Entity based on ProfileId
+    /// </summary>
+    /// <param name="profileId">profileId</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns></returns>
+    Task<Entity> GetByProfileId(int profileId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get parent Entity based on parentId

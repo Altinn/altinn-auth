@@ -39,4 +39,18 @@ public class BaseEntity : BaseAudit, IEntityId, IEntityName
     /// Parent identifier
     /// </summary>
     public Guid? ParentId { get; set; }
+
+    public int? PartyId { get; set; }
+
+    public int? UserId { get; set; }
+
+    public string? Username { get; set; }
+
+    public string? OrganizationIdentifier { get; set; }
+
+    public string? PersonIdentifier { get; set; }
+
+    public DateOnly? DateOfBirth { get; set; }
+
+    public DateTimeOffset? DeletedAt { get; set; }
 }

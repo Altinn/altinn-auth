@@ -5,6 +5,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Models;
 /// <summary>
 /// Extended Entity Lookup
 /// </summary>
+[Obsolete]
 public class EntityLookup : BaseEntityLookup
 {
     /// <summary>

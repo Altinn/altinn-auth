@@ -3,7 +3,10 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.Authorization.ProblemDetails;
+using Altinn.Platform.Register.Models;
 using Microsoft.EntityFrameworkCore;
+using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
@@ -73,38 +76,80 @@ public class EntityService : IEntityService
     }
 
     /// <inheritdoc/>
-    public async Task<Entity> GetByOrgNo(string orgNo, CancellationToken cancellationToken = default)
-    {
-        var entityId = await Db.EntityLookups.AsNoTracking().Where(t => t.Key == "OrganizationIdentifier" && t.Value == orgNo).Select(t => t.EntityId).FirstOrDefaultAsync();
-        return await GetEntity(entityId, cancellationToken);
-    }
+    public async Task<Entity> GetByOrgNo(string orgNo, CancellationToken cancellationToken = default) => await
+        Db.Entities
+            .AsNoTracking()
+            .Include(t => t.Type)
+            .Include(t => t.Variant)
+            .Where(e => e.OrganizationIdentifier == orgNo
+                   || Db.EntityLookups.Any(l => l.EntityId == e.Id
+                                              && l.Key == "OrganizationIdentifier"
+                                              && l.Value == orgNo))
+            .FirstOrDefaultAsync(cancellationToken);
 
     /// <inheritdoc/>
-    public async Task<Entity> GetByPersNo(string persNo, CancellationToken cancellationToken = default)
-    {
-        var entityId = await Db.EntityLookups.AsNoTracking().Where(t => t.Key == "PersonIdentifier" && t.Value == persNo).Select(t => t.EntityId).FirstOrDefaultAsync();
-        return await GetEntity(entityId, cancellationToken);
-    }
+    public async Task<Entity> GetByPersNo(string persNo, CancellationToken cancellationToken = default) => await 
+        Db.Entities
+            .AsNoTracking()
+            .Include(t => t.Type)
+            .Include(t => t.Variant)
+            .Where(e => e.PersonIdentifier == persNo
+                   || Db.EntityLookups.Any(l => l.EntityId == e.Id
+                                              && l.Key == "PersonIdentifier"
+                                              && l.Value == persNo))
+            .FirstOrDefaultAsync(cancellationToken);
 
+    /// <inheritdoc/>
+    public async Task<Entity?> GetByPartyId(int partyId, CancellationToken ct = default) => await
+       Db.Entities
+            .AsNoTracking()
+            .Include(t => t.Type)
+            .Include(t => t.Variant)
+            .Where(e => e.PartyId == partyId
+                   || Db.EntityLookups.Any(l => l.EntityId == e.Id
+                                              && l.Key == "PartyId"
+                                              && l.Value == partyId.ToString()))
+            .FirstOrDefaultAsync(ct);
+    
     /// <inheritdoc/>
     public async Task<Entity> GetByPartyId(string partyId, CancellationToken cancellationToken = default)
     {
-        var entityId = await Db.EntityLookups.AsNoTracking().Where(t => t.Key == "PartyId" && t.Value == partyId).Select(t => t.EntityId).FirstOrDefaultAsync();
-        return await GetEntity(entityId, cancellationToken);
+        return await GetByPartyId(int.Parse(partyId), cancellationToken);
     }
+
+    /// <inheritdoc/>
+    public async Task<Entity?> GetByUserId(int userId, CancellationToken ct = default) => await
+        Db.Entities
+            .AsNoTracking()
+            .Include(t => t.Type)
+            .Include(t => t.Variant)
+            .Where(e => e.UserId == userId
+                   || Db.EntityLookups.Any(l => l.EntityId == e.Id
+                                              && l.Key == "UserId"
+                                              && l.Value == userId.ToString()))
+            .FirstOrDefaultAsync(ct);
 
     /// <inheritdoc/>
     public async Task<Entity> GetByUserId(string userId, CancellationToken cancellationToken = default)
     {
-        var entityId = await Db.EntityLookups.AsNoTracking().Where(t => t.Key == "UserId" && t.Value == userId).Select(t => t.EntityId).FirstOrDefaultAsync();
-        return await GetEntity(entityId, cancellationToken);
+        return await GetByUserId(int.Parse(userId), cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<Entity> GetByProfile(string profileId, CancellationToken cancellationToken = default)
+    public async Task<Entity?> GetByProfileId(int profileId, CancellationToken ct = default) => await
+        Db.Entities
+            .AsNoTracking()
+            .Include(t => t.Type)
+            .Include(t => t.Variant)
+            .Where(e => Db.EntityLookups.Any(l => l.EntityId == e.Id
+                                              && l.Key == "ProfileId"
+                                              && l.Value == profileId.ToString()))
+            .FirstOrDefaultAsync(ct);
+
+    /// <inheritdoc/>
+    public async Task<Entity> GetByProfileId(string profileId, CancellationToken cancellationToken = default)
     {
-        var entityId = await Db.EntityLookups.AsNoTracking().Where(t => t.Key == "ProfileId" && t.Value == profileId).Select(t => t.EntityId).FirstOrDefaultAsync();
-        return await GetEntity(entityId, cancellationToken);
+        return await GetByUserId(int.Parse(profileId), cancellationToken);
     }
 
     /// <inheritdoc/>
