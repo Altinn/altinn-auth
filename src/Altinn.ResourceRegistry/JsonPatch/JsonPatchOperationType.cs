@@ -4,6 +4,12 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Altinn.ResourceRegistry.Extensions;
+using Altinn.ResourceRegistry.Models.ApiDescriptions;
+using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Annotations;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Altinn.ResourceRegistry.JsonPatch;
 
@@ -11,6 +17,7 @@ namespace Altinn.ResourceRegistry.JsonPatch;
 /// JSON Patch operation types.
 /// </summary>
 [JsonConverter(typeof(JsonPatchOperationTypeConverter))]
+[SwaggerSchemaFilter(typeof(JsonPatchOperationTypeSchemaFilter))]
 public enum JsonPatchOperationType
 {
     /// <summary>
@@ -59,7 +66,8 @@ public enum JsonPatchOperationType
 /// JSON converter for <see cref="JsonPatchOperationType"/>.
 /// </summary>
 [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1649:File name should match first type name", Justification = "https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/2223")]
-internal class JsonPatchOperationTypeConverter : JsonConverter<JsonPatchOperationType>
+internal class JsonPatchOperationTypeConverter 
+    : JsonConverter<JsonPatchOperationType>
 {
     private static readonly JsonEncodedText Add = JsonEncodedText.Encode("add");
     private static readonly JsonEncodedText Remove = JsonEncodedText.Encode("remove");
@@ -153,6 +161,39 @@ internal class JsonPatchOperationTypeConverter : JsonConverter<JsonPatchOperatio
             case JsonPatchOperationType.Copy: writer.WriteStringValue(Copy); break;
             case JsonPatchOperationType.Test: writer.WriteStringValue(Test); break;
             default: writer.WriteNullValue(); break;
+        }
+    }
+}
+
+/// <summary>
+/// Swagger schema filter for <see cref="JsonPatchOperationType"/>.
+/// </summary>
+internal class JsonPatchOperationTypeSchemaFilter
+    : SchemaFilter<JsonPatchOperationType>
+{
+    /// <inheritdoc/>
+    protected override void Apply(OpenApiSchema schema, SchemaFilterContext context)
+    {
+        schema.Type = "string";
+        schema.Format = null;
+
+        while (TryFind(schema.Enum, static v => v is OpenApiNull, out var index))
+        {
+            schema.Enum.SwapRemoveAt(index);
+        }
+        
+        static bool TryFind(IList<IOpenApiAny> list, Predicate<IOpenApiAny> predicate, out int index)
+        {
+            for (index = 0; index < list.Count; index++)
+            {
+                if (predicate(list[index]))
+                {
+                    return true;
+                }
+            }
+
+            index = -1;
+            return false;
         }
     }
 }
