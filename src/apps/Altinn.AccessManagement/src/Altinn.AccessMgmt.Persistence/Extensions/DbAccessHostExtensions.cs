@@ -82,7 +82,6 @@ public static partial class DbAccessHostExtensions
         builder.Services.AddSingleton<IRoleService, RoleService>();
         builder.Services.AddSingleton<IPartyService, PartyService>();
         builder.Services.AddSingleton<IStatusService, StatusService>();
-        builder.Services.AddSingleton<IAuthorizedPartyRepoService, AuthorizedPartyRepoService>();
 
         builder.Services.AddSingleton<IIngestService, PostgresIngestService>();
         builder.Services.AddSingleton<IDbExecutor, PostgresDbExecutor>();

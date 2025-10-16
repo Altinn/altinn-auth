@@ -1,5 +1,4 @@
 ﻿using Altinn.AccessManagement.Core.Enums;
-using Altinn.Platform.Register.Models;
 
 namespace Altinn.AccessManagement.Core.Models;
 
@@ -117,7 +116,18 @@ public class AuthorizedParty
     /// <summary>
     /// Gets or sets a collection of all accesspackage identifiers the authorized subject has some access to on behalf of this party
     /// </summary>
-    public List<string> AuthorizedAccessPackages { get; set; } = [];
+    private SortedList<string, string> SortedAuthorizedAccessPackages { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets a collection of all accesspackage identifiers the authorized subject has some access to on behalf of this party
+    /// </summary>
+    public List<string> AuthorizedAccessPackages
+    {
+        get
+        {
+            return SortedAuthorizedAccessPackages?.Values.ToList() ?? [];
+        }
+    }
 
     /// <summary>
     /// Gets or sets a collection of all resource identifier the authorized subject has some access to on behalf of this party
@@ -151,7 +161,14 @@ public class AuthorizedParty
         }
 
         OnlyHierarchyElementWithNoAccess = false;
-        AuthorizedAccessPackages.AddRange(accessPackages);
+
+        foreach (var package in accessPackages)
+        {
+            if (!SortedAuthorizedAccessPackages.ContainsKey(package))
+            {
+                SortedAuthorizedAccessPackages.Add(package, package);
+            }
+        }
 
         if (Subunits != null)
         {
