@@ -11,7 +11,7 @@ platform_workflow_principal_ids = [
   "b367c518-e46e-4dba-bd16-458eb1334163", # altinn-register-app-yt01-aks01
   "14e02a1e-3292-430e-ae4f-855ed40847fd"  # altinn-register-app-yt01-aks02
 ]
-db_max_pool_size = 10
+db_max_pool_size = 100
 db_compute_sku   = "D4"
 db_storage_tier  = "P40"
 sbl_endpoint     = "https://ai-yt01-vip-sblbridge.ai.basefarm.net/sblbridge/"

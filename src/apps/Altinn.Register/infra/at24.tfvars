@@ -11,7 +11,7 @@ platform_workflow_principal_ids = [
   "3c6f503e-1dd3-4db2-bbf0-6264dd0390f9", # altinn-register-app-at24-aks01
   "3e2be4e1-e4ea-4cdd-8e3e-62fc06f2eca1"  # altinn-register-app-at24-aks02
 ]
-db_max_pool_size = 4
+db_max_pool_size = 50
 db_compute_sku   = "D2"
 sbl_endpoint     = "https://at24.altinn.cloud/sblbridge/"
 use_pgbouncer    = true
