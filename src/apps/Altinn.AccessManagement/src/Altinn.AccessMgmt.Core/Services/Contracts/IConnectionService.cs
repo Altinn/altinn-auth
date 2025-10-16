@@ -152,32 +152,6 @@ public interface IConnectionService
     Task<Result<IEnumerable<AccessPackageDto.Check>>> CheckPackage(Guid party, IEnumerable<string> packages, IEnumerable<Guid> packageIds = null, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Get Connections given from party
-    /// </summary>
-    /// <param name="partyId">Filter for party</param>
-    /// <param name="toId">to party</param>
-    /// <param name="roleId">Filter for role</param>
-    /// <param name="packageId">Filter for package</param>
-    /// <param name="resourceId">Filter for resource</param>
-    /// <param name="configureConnection"></param>
-    /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns></returns>
-    Task<IEnumerable<ConnectionPackageDto>> GetConnectionsToOthers(Guid partyId, Guid? toId = null, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get Connections recived from party
-    /// </summary>
-    /// <param name="partyId">Filter for party</param>
-    /// <param name="fromId">to party</param>
-    /// <param name="roleId">Filter for role</param>
-    /// <param name="packageId">Filter for package</param>
-    /// <param name="resourceId">Filter for resource</param>
-    /// <param name="configureConnection"></param>
-    /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns></returns>
-    Task<IEnumerable<ConnectionPackageDto>> GetConnectionsFromOthers(Guid partyId, Guid? fromId = null, Guid? roleId = null, Guid? packageId = null, Guid? resourceId = null, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Get connections given from party
     /// </summary>
     /// <param name="partyId">Filter for party</param>

@@ -97,9 +97,13 @@ public static class Problems
     
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor ConnectionEntitiesDoNotExist { get; }  
-    = _factory.Create(21, HttpStatusCode.BadRequest, "Entities from and to do not exists.");
+    = _factory.Create(21, HttpStatusCode.BadRequest, "From and to parties do not exists.");
 
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor MissingConnection { get; }
     = _factory.Create(22, HttpStatusCode.BadRequest, "Operation can not be completed, because it requires an existing connection between the parties.");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor PartyNotFound { get; }
+    = _factory.Create(23, HttpStatusCode.BadRequest, $"The provided identifier cannot be found as a valid party for the operation.");
 }
