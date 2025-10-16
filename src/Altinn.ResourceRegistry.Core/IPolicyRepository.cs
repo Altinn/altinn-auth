@@ -1,3 +1,4 @@
+using Altinn.Authorization.ProblemDetails;
 using Azure;
 using Azure.Storage.Blobs.Models;
 
@@ -54,13 +55,21 @@ namespace Altinn.ResourceRegistry.Core
         Task<Response<BlobContentInfo>> WritePolicyConditionallyAsync(string resourceId, Stream fileStream, string blobLeaseId, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Deletes a specific version of a blob storage file if it exits on the specified path.
+        /// Deletes a specific version of a blob storage file of a resource policy file if it exists
         /// </summary>
         /// <param name="resourceId">The resourceId</param> 
         /// <param name="version">The blob storage version</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns>The delete response</returns>
         Task<Response> DeletePolicyVersionAsync(string resourceId, string version, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Deletes a blob storage file and all its snapshots of a resource policy file if it exists
+        /// </summary>
+        /// <param name="resourceId">The resourceId</param> 
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>The delete response</returns>
+        Task<bool> TryDeletePolicyAsync(string resourceId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Tries to acquire a blob lease on the base blob for the provided filepath.

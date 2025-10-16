@@ -177,6 +177,61 @@ internal class PolicyRepository : IPolicyRepository
         }
     }
 
+    /// <inheritdoc/>
+    public async Task<bool> TryDeletePolicyAsync(string resourceId, CancellationToken cancellationToken = default)
+    {
+        string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
+        try
+        {
+            BlobClient blockBlob = CreateBlobClient(filePath);
+
+            // Delete current version and all snapshots
+            bool currentDeleted = await blockBlob.DeleteIfExistsAsync(snapshotsOption: DeleteSnapshotsOption.IncludeSnapshots, cancellationToken: cancellationToken);
+
+            if (!currentDeleted)
+            {
+                _logger.LogWarning("No policy file existed at {FilePath}.", filePath);
+            }
+
+            // Enumerate versions and delete each, even if current did not exist
+            await foreach (BlobItem item in _resourceRegisterContainerClient
+               .GetBlobsAsync(
+                   traits: BlobTraits.None,
+                   states: BlobStates.Version,
+                   prefix: filePath,
+                   cancellationToken: cancellationToken)
+               .Where(b => b.VersionId is not null))
+            {
+                BlobClient versionClient = blockBlob.WithVersion(item.VersionId);
+                try
+                {
+                    await versionClient.DeleteAsync(cancellationToken: cancellationToken);
+                }
+                catch (RequestFailedException ex) when (ex.Status == 404)
+                {
+                    /* already gone */
+                }
+            }
+
+            return true;
+        }
+        catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Forbidden && ex.ErrorCode == "OperationNotAllowedOnRootBlob")
+        {
+            _logger.LogError(ex, "Failed to delete policy file at {FilePath}. Not allowed to delete.", filePath);
+            throw;
+        }        
+        catch (RequestFailedException ex)
+        {
+            _logger.LogError(ex, "Failed to delete policy file at {FilePath}. RequestFailedException", filePath);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete policy file at {FilePath}. Unexpected error", filePath);
+            throw;
+        }
+    }
+
     private BlobClient CreateBlobClient(string blobName)
     {
         return _resourceRegisterContainerClient.GetBlobClient(blobName);

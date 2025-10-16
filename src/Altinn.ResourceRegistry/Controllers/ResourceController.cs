@@ -462,6 +462,12 @@ namespace Altinn.ResourceRegistry.Controllers
             }
 
             ServiceResource serviceResource = await _resourceRegistry.GetResource(id, cancellationToken);
+
+            if (serviceResource == null)
+            {
+                return NotFound();
+            }
+
             string orgClaim = User.GetOrgNumber();
             if (orgClaim != null)
             {

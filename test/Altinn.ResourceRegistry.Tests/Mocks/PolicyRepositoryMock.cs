@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using Altinn.Authorization.ProblemDetails;
 using Altinn.ResourceRegistry.Core;
 using Azure;
 using Azure.Storage.Blobs.Models;
@@ -8,9 +9,15 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
 {
     public class PolicyRepositoryMock : IPolicyRepository
     {
-        public Task<Response> DeletePolicyVersionAsync(string filepath, string version, CancellationToken cancellationToken)
+        public Task<Response> DeletePolicyVersionAsync(string resourceId, string version, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
+        }
+
+        public Task<bool> TryDeletePolicyAsync(string resourceId, CancellationToken cancellationToken)
+        {
+            // Don't actually delete anything, just return a successful response
+            return Task.FromResult(true);
         }
 
         public async Task<Stream?> GetPolicyAsync(string resourceId, CancellationToken cancellationToken)
@@ -48,9 +55,16 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             throw new NotImplementedException();
         }
 
-        public Task<bool> PolicyExistsAsync(string filepath, CancellationToken cancellationToken)
+        public Task<bool> PolicyExistsAsync(string resourceId, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            string? containerPath = GetPolicyContainerPath();
+            if (containerPath != null)
+            {
+                containerPath = Path.Combine(containerPath, resourceId, "resourcepolicy.xml");
+                return Task.FromResult(File.Exists(containerPath));
+            }
+
+            return Task.FromResult(false);
         }
 
         public Task ReleaseBlobLease(string filepath, string leaseId, CancellationToken cancellationToken)
