@@ -10,6 +10,7 @@ using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Extensions;
 using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Utils;
+using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -455,9 +456,17 @@ namespace Altinn.ResourceRegistry.Controllers
             var env = _serviceDescriptor.Environment;
             if (!env.IsLocalDev && !env.IsAT && !env.IsYT && !env.IsTT && env.ToString() != "TEST")
             {
-                _logger.LogInformation("Delete operation is not allowed in environment {Environment}", _serviceDescriptor.Environment);
-                var result = Content("Delete operation is not allowed in this environment");
+                _logger.LogInformation("Delete operation is not allowed in environment {Environment}", env);
+
+                Response.Headers.Append("x-altinn-environment", env.ToString());
+                Response.Headers.Append("x-altinn-environment-is-localdev", env.IsLocalDev.ToString());
+                Response.Headers.Append("x-altinn-environment-is-at", env.IsAT.ToString());
+                Response.Headers.Append("x-altinn-environment-is-yt", env.IsYT.ToString());
+                Response.Headers.Append("x-altinn-environment-is-tt", env.IsTT.ToString());
+
+                var result = Content($"Delete operation is not allowed in {env} environment");
                 result.StatusCode = StatusCodes.Status403Forbidden;
+                
                 return result;
             }
 
