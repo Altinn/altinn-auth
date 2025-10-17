@@ -203,6 +203,27 @@ namespace Altinn.ResourceRegistry.Tests
         }
 
         [Fact]
+        public async Task ResourceList_IncludeMigratedApps()
+        {
+            var client = CreateClient();
+            string requestUri = "resourceregistry/api/v1/Resource/resourcelist?includeAltinn2=false&includeApps=true&includeMigratedApps=true";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
+            {
+            };
+
+            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+            List<ServiceResource>? resource = JsonSerializer.Deserialize<List<ServiceResource>>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
+
+            Assert.NotNull(resource);
+            Assert.Equal(135, resource.Count);
+            Assert.Contains(resource, r => r.Identifier == "app_ssb_a1-1021-7048:1");
+            Assert.Contains(resource, r => r.Identifier == "app_skd_a2-4223-160201");
+        }
+
+        [Fact]
         public async Task CreateResource_WithErrors()
         {
             var client = CreateClient();

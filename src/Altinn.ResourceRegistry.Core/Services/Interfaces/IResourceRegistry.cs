@@ -31,9 +31,10 @@ namespace Altinn.ResourceRegistry.Core.Services.Interfaces
         /// <param name="includeApps">Wheather or not to include apps</param>
         /// <param name="includeAltinn2">Wheather or not to include altinn 2 resources</param>
         /// <param name="includeExpired">Defines if expired Altinn 2 serviices should be include</param>
+        /// <param name="includeMigratedApps">Whether or not to include migrated apps from A1/A2</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns></returns>
-        Task<List<ServiceResource>> GetResourceList(bool includeApps, bool includeAltinn2, bool includeExpired, CancellationToken cancellationToken = default);
+        Task<List<ServiceResource>> GetResourceList(bool includeApps, bool includeAltinn2, bool includeExpired, bool includeMigratedApps, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Creates a service resource in the resource registry if it pass all validation checks

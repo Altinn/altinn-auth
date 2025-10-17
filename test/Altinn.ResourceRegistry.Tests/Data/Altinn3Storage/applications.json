@@ -9990,6 +9990,368 @@
       "autoDeleteOnProcessEnd": false,
       "created": "2023-03-01T14:07:25.160335Z",
       "lastChanged": "2023-03-02T13:02:17.7953132Z"
+    },
+    {
+      "id": "ssb/a1-1021-7048:1",
+      "org": "ssb",
+      "title": {
+        "en": "RA-0627 Verdipapirstatistikk",
+        "nb": "RA-0627 Verdipapirstatistikk",
+        "nn": "RA-0627 Verdipapirstatistikk"
+      },
+      "dataTypes": [
+        {
+          "id": "formdata-xml",
+          "allowedContentTypes": [
+            "application/xml"
+          ],
+          "maxCount": 0,
+          "minCount": 1,
+          "grouping": "group.formdatasource",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "ref-data-as-pdf",
+          "allowedContentTypes": [
+            "application/pdf"
+          ],
+          "maxCount": 0,
+          "minCount": 1,
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "ref-data-as-html",
+          "allowedContentTypes": [
+            "text/html"
+          ],
+          "maxCount": 0,
+          "minCount": 1,
+          "grouping": "group.formdatahtml",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "ref-summary-data-as-html",
+          "allowedContentTypes": [
+            "text/html"
+          ],
+          "maxCount": 0,
+          "minCount": 0,
+          "grouping": "group.wrapup",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "signature-data",
+          "allowedContentTypes": [
+            "application/json"
+          ],
+          "maxCount": 1,
+          "minCount": 0,
+          "grouping": "group.signaturesource",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "signature-presentation",
+          "allowedContentTypes": [
+            "application/pdf"
+          ],
+          "maxCount": 1,
+          "minCount": 0,
+          "grouping": "group.signature",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "invoiceInformation",
+          "allowedContentTypes": [
+            "application/xml"
+          ],
+          "maxCount": 1,
+          "minCount": 0,
+          "grouping": "group.invoicesource",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "invoiceInformation-presentation",
+          "allowedContentTypes": [
+            "text/html"
+          ],
+          "maxCount": 1,
+          "minCount": 0,
+          "grouping": "group.invoice",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "payment-data",
+          "allowedContentTypes": [
+            "application/json"
+          ],
+          "maxCount": 1,
+          "minCount": 0,
+          "grouping": "group.paymentsource",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "payment-presentation",
+          "allowedContentTypes": [
+            "application/pdf"
+          ],
+          "maxCount": 1,
+          "minCount": 0,
+          "grouping": "group.payment",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "binary-data",
+          "allowedContentTypes": [
+            "application/octet-stream"
+          ],
+          "maxCount": 0,
+          "minCount": 0,
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "activities",
+          "allowedContentTypes": [
+            "application/json"
+          ],
+          "maxCount": 1,
+          "minCount": 0,
+          "grouping": "group.activities",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        }
+      ],
+      "autoDeleteOnProcessEnd": false,
+      "storageAccountNumber": 2,
+      "disallowUserInstantiation": false,
+      "created": "2024-12-06T12:48:08.7077605Z"
+    },
+    {
+      "id": "skd/a2-4223-160201",
+      "org": "skd",
+      "title": {
+        "en": "RF-0005 Value Added Tax return - reverse tax liability",
+        "nb": "RF-0005 Skattemelding for merverdiavgift - omvendt avgiftsplikt",
+        "nn": "RF-0005 Skattemelding for meirverdiavgift – omvend avgiftsplikt"
+      },
+      "dataTypes": [
+        {
+          "id": "formdata-xml",
+          "allowedContentTypes": [
+            "application/xml"
+          ],
+          "maxCount": 0,
+          "minCount": 1,
+          "grouping": "group.formdatasource",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "ref-data-as-pdf",
+          "allowedContentTypes": [
+            "application/pdf"
+          ],
+          "maxCount": 0,
+          "minCount": 1,
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "ref-data-as-html",
+          "allowedContentTypes": [
+            "text/html"
+          ],
+          "maxCount": 0,
+          "minCount": 1,
+          "grouping": "group.formdatahtml",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "ref-summary-data-as-html",
+          "allowedContentTypes": [
+            "text/html"
+          ],
+          "maxCount": 0,
+          "minCount": 0,
+          "grouping": "group.wrapup",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "signature-data",
+          "allowedContentTypes": [
+            "application/json"
+          ],
+          "maxCount": 1,
+          "minCount": 0,
+          "grouping": "group.signaturesource",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "signature-presentation",
+          "allowedContentTypes": [
+            "application/pdf"
+          ],
+          "maxCount": 1,
+          "minCount": 0,
+          "grouping": "group.signature",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "invoiceInformation",
+          "allowedContentTypes": [
+            "application/xml"
+          ],
+          "maxCount": 1,
+          "minCount": 0,
+          "grouping": "group.invoicesource",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "invoiceInformation-presentation",
+          "allowedContentTypes": [
+            "text/html"
+          ],
+          "maxCount": 1,
+          "minCount": 0,
+          "grouping": "group.invoice",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "payment-data",
+          "allowedContentTypes": [
+            "application/json"
+          ],
+          "maxCount": 1,
+          "minCount": 0,
+          "grouping": "group.paymentsource",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "payment-presentation",
+          "allowedContentTypes": [
+            "application/pdf"
+          ],
+          "maxCount": 1,
+          "minCount": 0,
+          "grouping": "group.payment",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "binary-data",
+          "allowedContentTypes": [
+            "application/octet-stream"
+          ],
+          "maxCount": 0,
+          "minCount": 0,
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        },
+        {
+          "id": "activities",
+          "allowedContentTypes": [
+            "application/json"
+          ],
+          "maxCount": 1,
+          "minCount": 0,
+          "grouping": "group.activities",
+          "enablePdfCreation": true,
+          "enableFileScan": false,
+          "validationErrorOnPendingFileScan": false,
+          "enabledFileAnalysers": [],
+          "enabledFileValidators": []
+        }
+      ],
+      "autoDeleteOnProcessEnd": false,
+      "storageAccountNumber": 2,
+      "disallowUserInstantiation": false,
+      "created": "2024-11-28T22:03:05.8628176Z"
     }
   ]
 }

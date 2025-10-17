@@ -5,7 +5,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
 {
     public class ApplicationsClientMock : IApplications
     {
-        public async Task<ApplicationList> GetApplicationList(CancellationToken cancellationToken)
+        public async Task<ApplicationList> GetApplicationList(bool includeMigratedApps, CancellationToken cancellationToken)
         {
             string? testdataFolder = GetAltinn2TestDatafolder();
             if(testdataFolder != null)
@@ -22,12 +22,25 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
                         applicationList = System.Text.Json.JsonSerializer.Deserialize<ApplicationList>(content, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
                     }
                 
-                    if(applicationList == null)
+                    if (applicationList == null)
                     {
                         applicationList = new ApplicationList();
                     }
 
-                    return applicationList;
+                    if (includeMigratedApps)
+                    {
+                        return applicationList;
+                    }
+                    else
+                    {
+                        return applicationList != null
+                            ? new()
+                            {
+                                Applications = applicationList.Applications
+                                .Where(a => !a.Id.Contains("/a2-") && !a.Id.Contains("/a1-")).ToList()
+                            }
+                            : null;
+                    }
                 }
 
                 throw new FileNotFoundException("Could not find " + applicationsFilePath);

@@ -109,7 +109,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         /// <inheritdoc/>
         public async Task<List<ServiceResource>> GetSearchResults(ResourceSearch resourceSearch, CancellationToken cancellationToken = default)
         {
-            List<ServiceResource> resourceList = await GetResourceList(includeApps: false, includeAltinn2: false, includeExpired: false, cancellationToken);
+            List<ServiceResource> resourceList = await GetResourceList(includeApps: false, includeAltinn2: false, includeExpired: false, includeMigratedApps: false, cancellationToken);
             return ServiceResourceHelper.GetSearchResultsFromResourceList(resourceList, resourceSearch);
         }
 
@@ -176,7 +176,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         }
 
         /// <inheritdoc />
-        public async Task<List<ServiceResource>> GetResourceList(bool includeApps, bool includeAltinn2, bool includeExpired, CancellationToken cancellationToken = default)
+        public async Task<List<ServiceResource>> GetResourceList(bool includeApps, bool includeAltinn2, bool includeExpired, bool includeMigratedApps, CancellationToken cancellationToken = default)
         {
             var tasks = new List<Task<List<ServiceResource>>>(3)
             {
@@ -192,7 +192,7 @@ namespace Altinn.ResourceRegistry.Core.Services
 
                 if (includeApps)
                 {
-                    tasks.Add(GetAltinn3Applications(cancellationToken));
+                    tasks.Add(GetAltinn3Applications(includeMigratedApps, cancellationToken));
                 }
             }
 
@@ -223,9 +223,9 @@ namespace Altinn.ResourceRegistry.Core.Services
                 return resources;
             }
 
-            async Task<List<ServiceResource>> GetAltinn3Applications(CancellationToken cancellationToken = default)
+            async Task<List<ServiceResource>> GetAltinn3Applications(bool includeMigratedApps, CancellationToken cancellationToken = default)
             {
-                ApplicationList applicationList = await _applicationsClient.GetApplicationList(cancellationToken);
+                ApplicationList applicationList = await _applicationsClient.GetApplicationList(includeMigratedApps, cancellationToken);
                 var serviceOwners = await _serviceOwnerService.GetServiceOwners(cancellationToken);
 
                 return applicationList.Applications.Select(application => MapApplicationToApplicationResource(application, serviceOwners)).ToList();

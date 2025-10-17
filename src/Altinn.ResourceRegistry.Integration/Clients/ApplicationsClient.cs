@@ -30,7 +30,7 @@ namespace Altinn.ResourceRegistry.Integration.Clients
         }
 
         /// <inheritdoc/>
-        public async Task<ApplicationList?> GetApplicationList(CancellationToken cancellationToken = default)
+        public async Task<ApplicationList?> GetApplicationList(bool includeMigratedApps , CancellationToken cancellationToken = default)
         {
             string availabbleServicePath = _settings.StorageApiEndpoint + $"applications";
 
@@ -39,13 +39,21 @@ namespace Altinn.ResourceRegistry.Integration.Clients
                 HttpResponseMessage response = await _client.GetAsync(availabbleServicePath, cancellationToken);
 
                 ApplicationList? applications = await response.Content.ReadFromJsonAsync<ApplicationList>(SerializerOptions, cancellationToken);
-                return applications != null
-                    ? new()
-                    {
-                        Applications = applications.Applications
+                
+                if (includeMigratedApps)
+                {
+                    return applications;
+                }
+                else
+                {
+                    return applications != null
+                        ? new()
+                        {
+                            Applications = applications.Applications
                             .Where(a => !a.Id.Contains("/a2-") && !a.Id.Contains("/a1-")).ToList()
-                    }
-                    : null;
+                        }
+                        : null;
+                }
             }
             catch (Exception ex)
             {
