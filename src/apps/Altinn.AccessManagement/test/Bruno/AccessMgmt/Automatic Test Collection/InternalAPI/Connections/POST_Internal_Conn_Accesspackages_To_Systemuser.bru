@@ -1,11 +1,11 @@
 meta {
-  name: POST_Internal_Conn_Add_SystemUser_Negative_test
+  name: POST_Internal_Conn_Accesspackages_To_Systemuser
   type: http
-  seq: 1
+  seq: 7
 }
 
 post {
-  url: {{baseUrl}}/accessmanagement/api/v1/internal/connections?party={{from}}&to={{to}}
+  url: {{baseUrl}}/accessmanagement/api/v1/Internal/connections/accesspackages?party={{from}}&to={{to}}&package={{package}}
   body: none
   auth: inherit
 }
@@ -13,6 +13,7 @@ post {
 params:query {
   party: {{from}}
   to: {{to}}
+  package: {{package}}
 }
 
 headers {
@@ -25,6 +26,7 @@ script:pre-request {
   
   bru.setVar("from", testdata.internal_conn_org.partyuuid);
   bru.setVar("to", testdata.internal_conn_org.systemuser.partyuuid);
+  bru.setVar("package", testdata.internal_conn_org.package_to_delegate);
   
   var getTokenParameters = {
     auth_userId: testdata.internal_conn_org.dagligleder.userid,
@@ -37,4 +39,13 @@ script:pre-request {
   
   const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("POST internal connections accesspackages to systemuser", function() {
+    
+    const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`); 
+    const data = res.getBody();
+    expect(res.status).to.equal(200);
+  });
 }

@@ -187,8 +187,8 @@
       "partyuuid": "34bfda6b-75b9-40e2-8ab9-ab8a7d958db1"
     },
     "systemuser": {
-      "partyuuid": "f0ce7455-1cc0-495e-8667-bec248832dc4"
+      "partyuuid": "184e508f-5e7f-4765-8bcb-66ccdbb72b16"
     },
-    "package_to_delegate": "urn:altinn:accesspackage:skattegrunnlag"
+    "package_to_delegate": "urn:altinn:accesspackage:byggesoknad"
   }
 }

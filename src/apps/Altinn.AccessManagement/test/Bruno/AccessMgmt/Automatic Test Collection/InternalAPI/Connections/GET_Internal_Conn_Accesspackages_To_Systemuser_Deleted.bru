@@ -1,19 +1,18 @@
 meta {
-  name: POST_Internal_Conn_Accesspackages_To_Systemuser
+  name: GET_Internal_Conn_Accesspackages_To_Systemuser_Deleted
   type: http
-  seq: 3
+  seq: 10
 }
 
-post {
-  url: {{baseUrl}}/accessmanagement/api/v1/Internal/connections/accesspackages?party={{from}}&to={{to}}&package={{package}}
-  body: none
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/connections/accesspackages?party={{from}}&to={{to}}
+  body: json
   auth: inherit
 }
 
 params:query {
   party: {{from}}
   to: {{to}}
-  package: {{package}}
 }
 
 headers {
@@ -37,15 +36,16 @@ script:pre-request {
     auth_scopes: sharedtestdata.auth_scopes.portalEnduser
   }
   
+  
   const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken",  token);
 }
 
 tests {
-  test("POST internal connections accesspackages to systemuser", function() {
-    
-    const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`); 
-    const data = res.getBody();
+  test("GET internal connections accesspackage to systemuser: rettighetshaver deleted", function() {
+    const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
+     const body = res.getBody();
     expect(res.status).to.equal(200);
-  });
+    expect(body.data).to.be.empty;
+    });
 }

@@ -1,19 +1,18 @@
 meta {
-  name: DELETE_Internal_Conn_Accesspackages_To_Systemuser
+  name: GET_Internal_Conn_Get_SystemUser_deleted
   type: http
-  seq: 5
+  seq: 12
 }
 
-delete {
-  url: {{baseUrl}}/accessmanagement/api/v1/Internal/connections/accesspackages?party={{from}}&to={{to}}&package={{package}}
-  body: none
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/connections?party={{from}}&to={{to}}
+  body: json
   auth: inherit
 }
 
 params:query {
   party: {{from}}
   to: {{to}}
-  package: {{package}}
 }
 
 headers {
@@ -26,7 +25,6 @@ script:pre-request {
   
   bru.setVar("from", testdata.internal_conn_org.partyuuid);
   bru.setVar("to", testdata.internal_conn_org.systemuser.partyuuid);
-  bru.setVar("package", testdata.internal_conn_org.package_to_delegate);
   
   var getTokenParameters = {
     auth_userId: testdata.internal_conn_org.dagligleder.userid,
@@ -42,10 +40,12 @@ script:pre-request {
 }
 
 tests {
-  test("DELETE internal connections accesspackage to systemuser", function() {
-    
-    const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`); 
-    const data = res.getBody();
-    expect(res.status).to.equal(204);
-  });
+  const body = res.getBody();
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  test("GET Internal Connections SystemUser: deleted", function() {
+      expect(res.status).to.equal(200);
+      expect(body.data).to.be.empty;
+    });
+  
 }
