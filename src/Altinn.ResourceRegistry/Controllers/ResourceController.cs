@@ -454,15 +454,9 @@ namespace Altinn.ResourceRegistry.Controllers
         public async Task<ActionResult> Delete(string id, CancellationToken cancellationToken)
         {
             var env = _serviceDescriptor.Environment;
-            if (!env.IsLocalDev && !env.IsAT && !env.IsYT && !env.IsTT && env.ToString() != "TEST")
+            if (!EnvironmentAllowsDeletingOfResources(env))
             {
                 _logger.LogInformation("Delete operation is not allowed in environment {Environment}", env);
-
-                Response.Headers.Append("x-altinn-environment", env.ToString());
-                Response.Headers.Append("x-altinn-environment-is-localdev", env.IsLocalDev.ToString());
-                Response.Headers.Append("x-altinn-environment-is-at", env.IsAT.ToString());
-                Response.Headers.Append("x-altinn-environment-is-yt", env.IsYT.ToString());
-                Response.Headers.Append("x-altinn-environment-is-tt", env.IsTT.ToString());
 
                 var result = Content($"Delete operation is not allowed in {env} environment");
                 result.StatusCode = StatusCodes.Status403Forbidden;
@@ -488,6 +482,21 @@ namespace Altinn.ResourceRegistry.Controllers
 
             await _resourceRegistry.Delete(id, cancellationToken);
             return NoContent();
+
+            static bool EnvironmentAllowsDeletingOfResources(AltinnEnvironment env)
+            {
+                if (env.IsLocalDev || env.IsAT || env.IsYT || env.IsTT)
+                {
+                    return true;
+                }
+
+                if (env.ToString() == "TEST")
+                {
+                    return true;
+                }
+
+                return false;
+            }
         }
 
         /// <summary>
