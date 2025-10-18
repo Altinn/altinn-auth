@@ -65,6 +65,26 @@
       "groupName": "Digdir Designsystemet",
       "groupSlug": "digdir-designsystemet",
       "matchUpdateTypes": ["major"]
+    },
+    {
+      "matchManagers": ["nuget"],
+      "matchPackageNames": [
+        "Altinn.Urn",
+        "Altinn.Urn.*"
+      ],
+      "groupName": "Altinn.Urn",
+      "groupSlug": "altinn-urn",
+      "matchUpdateTypes": ["major"]
+    },
+    {
+      "matchManagers": ["nuget"],
+      "matchPackageNames": [
+        "Altinn.Authorization.ServiceDefaults",
+        "Altinn.Authorization.ServiceDefaults.*"
+      ],
+      "groupName": "Altinn.Authorization.ServiceDefaults",
+      "groupSlug": "altinn-authorization-servicedefaults",
+      "matchUpdateTypes": ["major"]
     }
   ]
 }
