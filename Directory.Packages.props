@@ -14,7 +14,7 @@
     <PackageVersion Include="Altinn.Common.AccessTokenClient" Version="3.0.15" />
     <PackageVersion Include="Altinn.Common.PEP" Version="4.2.1" />
     <PackageVersion Include="Altinn.Platform.Storage.Interface" Version="4.0.14" />
-    <PackageVersion Include="Altinn.Swashbuckle.Abstractions" Version="2.4.1" />
+    <PackageVersion Include="Altinn.Swashbuckle.Abstractions" Version="3.0.0" />
     <PackageVersion Include="Altinn.Urn.Swashbuckle" Version="2.7.0" />
     <PackageVersion Include="Altinn.Urn" Version="2.7.0" />
     <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
