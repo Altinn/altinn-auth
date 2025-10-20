@@ -25,6 +25,7 @@ public class AMPartyService(IEntityService entityService) : IAmPartyRepository
         {
             Name = entity.Name,
             PartyUuid = entity.Id,
+            PartyId = entity.PartyId ?? 0,
             OrganizationId = entity.RefId,
             PartyType = entity.TypeId
         };
@@ -75,6 +76,7 @@ public class AMPartyService(IEntityService entityService) : IAmPartyRepository
         {
             Name = entity.Name,
             PartyUuid = entity.Id,
+            PartyId = entity.PartyId ?? 0,
             PersonId = entity.RefId,
             PartyType = entity.TypeId
         };
@@ -93,6 +95,7 @@ public class AMPartyService(IEntityService entityService) : IAmPartyRepository
         {
             Name = entity.Name,
             PartyUuid = entity.Id,
+            PartyId = entity.PartyId ?? 0,
             PartyType = entity.TypeId
         };
 
@@ -118,6 +121,7 @@ public class AMPartyService(IEntityService entityService) : IAmPartyRepository
         {
             Name = entity.Name,
             PartyUuid = entity.Id,
+            PartyId = entity.PartyId ?? 0,
             PartyType = entity.TypeId
         };
 
