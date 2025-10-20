@@ -4,7 +4,6 @@ alter table dbo.resourcetype alter column audit_changeoperation drop not null;
 alter table dbo.resourcetype alter column audit_validfrom drop default;
 
 alter table dbo.resourcetype drop constraint uc_resourcetype_name;
---ALTER INDEX dbo.uc_resourcetype_name_idx RENAME TO ix_resourcetype_name;
 DROP INDEX dbo.uc_resourcetype_name_idx;
 CREATE UNIQUE INDEX ix_resourcetype_name ON dbo.resourcetype (name);
 

@@ -12,21 +12,6 @@ alter table dbo.entity drop constraint fk_entity_type_entitytype;
 alter table dbo.entity drop constraint fk_entity_variant_entityvariant;
 alter table dbo.entity drop constraint fk_entity_parent_entity;
 
-alter table dbo.entity
-    add constraint fk_entity_entity_parentid
-        foreign key (parentid) references dbo.entity
-            on delete restrict;
-
-alter table dbo.entity
-    add constraint fk_entity_entitytype_typeid
-        foreign key (typeid) references dbo.entitytype
-            on delete restrict;
-
-alter table dbo.entity
-    add constraint fk_entity_entityvariant_variantid
-        foreign key (variantid) references dbo.entityvariant
-            on delete restrict;
-
 ALTER TRIGGER entity_audit_update ON dbo.entity RENAME TO audit_entity_update_trg;
 ALTER TRIGGER entity_audit_delete ON dbo.entity RENAME TO audit_entity_delete_trg;
 drop trigger entity_meta on dbo.entity;
