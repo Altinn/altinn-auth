@@ -4,10 +4,12 @@ using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Authentication;
+using Altinn.AccessManagement.Core.Models.Party;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Enums;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
+using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
 using Altinn.Urn.Json;
@@ -799,6 +801,13 @@ namespace Altinn.AccessManagement.Core.Helpers
                 return true;
             }
 
+            if (org == null && app == null && person == null && organization == null && enterpriseUser == null && systemUser == null && partyuuid != null && user != null && counter == 2)
+            {
+                id = partyuuid;
+                type = UuidType.Party;
+                return true;
+            }
+
             return false;
         }
 
@@ -851,17 +860,22 @@ namespace Altinn.AccessManagement.Core.Helpers
         /// <summary>
         /// Builds a RequestToDelete request model for revoking all delegated rules for a resource registry service
         /// </summary>
-        public static List<RequestToDelete> GetRequestToDeleteResourceRegistryService(int authenticatedUserId, string resourceRegistryId, int fromPartyId, int toPartyId)
+        public static List<RequestToDelete> GetRequestToDeleteResourceRegistryService(int authenticatedUserId, Guid authenticatedUserPartyUuid, string resourceRegistryId, Party fromParty, Party toParty)
         {
+            List<AttributeMatch> coveredBy = [new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, Value = toParty.PartyId.ToString() }, new AttributeMatch { Id = toParty.Person != null ? AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid : AltinnXacmlConstants.MatchAttributeIdentifiers.OrganizationUuid, Value = toParty.PartyUuid.ToString() }];
+
             return new List<RequestToDelete>
             {
                 new RequestToDelete
                 {
                     DeletedByUserId = authenticatedUserId,
+                    PerformedBy = [new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.PartyUuidAttribute, Value = authenticatedUserPartyUuid.ToString() }],
                     PolicyMatch = new PolicyMatch
                     {
-                        OfferedByPartyId = fromPartyId,
-                        CoveredBy = new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, Value = toPartyId.ToString() }.SingleToList(),
+                        OfferedByPartyId = fromParty.PartyId,
+                        FromUuid = fromParty.PartyUuid.Value,
+                        FromUuidType = fromParty.Person != null ? UuidType.Person : UuidType.Organization,
+                        CoveredBy = coveredBy,
                         Resource = new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, Value = resourceRegistryId }.SingleToList()
                     }
                 }
@@ -1017,6 +1031,34 @@ namespace Altinn.AccessManagement.Core.Helpers
             }
 
             return false;
+        }
+
+        public static (UuidType Type, Guid Uuid) GetUserUuidFromUserProfile(MinimalParty party)
+        {
+            UuidType type = UuidType.NotSpecified;
+            type = GetUuidTypeFromPartyType(party.PartyType);
+
+            return (type, party.PartyUuid);
+        }
+
+        /// <summary>
+        /// Map uuids for PArty types to urn enum for storing as single rights in db.
+        /// </summary>
+        /// <param name="partyType">the uuid for the partytype</param>
+        /// <returns>enum containing urn as member variable</returns>
+        public static UuidType GetUuidTypeFromPartyType(Guid partyType)
+        {
+            switch (partyType.ToString())
+            {
+                case "bfe09e70-e868-44b3-8d81-dfe0e13e058a":
+                    return UuidType.Person;
+                case "8c216e2f-afdd-4234-9ba2-691c727bb33d":
+                    return UuidType.Organization;
+                case "fe643898-2f47-4080-85e3-86bf6fe39630":
+                    return UuidType.SystemUser;
+                default:
+                    return UuidType.Party;
+            }
         }
 
         private static void SetTypeForSingleRule(List<int> keyRolePartyIds, int offeredByPartyId, List<AttributeMatch> coveredBy, int parentPartyId, Rule rule, int? coveredByPartyId, int? coveredByUserId)

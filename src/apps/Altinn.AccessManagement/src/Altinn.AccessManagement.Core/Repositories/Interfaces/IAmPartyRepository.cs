@@ -30,7 +30,7 @@ namespace Altinn.AccessManagement.Core.Repositories.Interfaces
         public Task<MinimalParty> GetByPersonNo(PersonIdentifier personNo, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Get by party id
+        /// Get by user id
         /// </summary>
         public Task<MinimalParty> GetByUserId(int userId, CancellationToken cancellationToken = default);
     }

@@ -17,22 +17,22 @@ namespace Altinn.AccessManagement.Controllers
     {
         private readonly ILogger _logger;
         private readonly IPolicyInformationPoint _pip;
-        private readonly IPolicyAdministrationPoint _pap;
+        private readonly ISingleRightsService _rights;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DelegationsController"/> class.
         /// </summary>
         /// <param name="logger">the logger.</param>
         /// <param name="policyInformationPoint">The policy information point</param>
-        /// <param name="policyAdministrationPoint">The policy administration point</param>
+        /// <param name="rights">Singlerights service to enrich and call PolicyAdministrationpoint for storing the changed rights</param>
         public DelegationsController(
             ILogger<DelegationsController> logger,
             IPolicyInformationPoint policyInformationPoint,
-            IPolicyAdministrationPoint policyAdministrationPoint)
+            ISingleRightsService rights)
         {
             _logger = logger;
-            _pap = policyAdministrationPoint;
             _pip = policyInformationPoint;
+            _rights = rights;
         }
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace Altinn.AccessManagement.Controllers
                 return BadRequest("Invalid model");
             }
 
-            List<Rule> delegationResults = await _pap.TryWriteDelegationPolicyRules(rules, cancellationToken);
+            List<Rule> delegationResults = await _rights.EnrichAndTryWriteDelegationPolicyRules(rules, cancellationToken);
 
             if (delegationResults.All(r => r.CreatedSuccessfully))
             {
@@ -155,7 +155,7 @@ namespace Altinn.AccessManagement.Controllers
                 return BadRequest(ModelState);
             }
 
-            List<Rule> deletionResults = await _pap.TryDeleteDelegationPolicyRules(rulesToDelete, cancellationToken);
+            List<Rule> deletionResults = await _rights.EnrichAndTryDeleteDelegationPolicyRules(rulesToDelete, cancellationToken);
             int ruleCountToDelete = DelegationHelper.GetRulesCountToDeleteFromRequestToDelete(rulesToDelete);
             int deletionResultsCount = deletionResults.Count;
 
@@ -193,7 +193,7 @@ namespace Altinn.AccessManagement.Controllers
                 return BadRequest(ModelState);
             }
 
-            List<Rule> deletionResults = await _pap.TryDeleteDelegationPolicies(policiesToDelete, cancellationToken);
+            List<Rule> deletionResults = await _rights.EnrichAndTryDeleteDelegationPolicies(policiesToDelete, cancellationToken);
             int countPolicies = DelegationHelper.GetPolicyCount(deletionResults);
             int policiesToDeleteCount = policiesToDelete.Count;
 

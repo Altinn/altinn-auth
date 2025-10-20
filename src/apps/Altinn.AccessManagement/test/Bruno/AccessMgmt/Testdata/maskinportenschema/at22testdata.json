@@ -8,7 +8,8 @@
         "dagl": {
             "pid":"21025400167",
             "userid": 20004896,
-            "partyid": 50020295
+            "partyid": 50020295,
+            "useruuid": "5DD2FD6D-35A7-431B-8F88-BA5D25702F74"
         },
         "hadm": {
             "pid": "17048001742",
@@ -32,7 +33,8 @@
         "dagl": {
             "pid": "26013000394",
             "userid": 20004270,
-            "partyid": 50019590
+            "partyid": 50019590,
+            "useruuid": "3C7FA62F-0E9A-4AD9-9A32-67B184792389"
         }
     },
     "org3": {

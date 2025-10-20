@@ -37,7 +37,7 @@ namespace Altinn.AccessManagement.Tests.Utils
         /// <param name="resourceRegistryId">resourceregistry id.</param>
         /// <param name="delegatedByParty">Value indicating delegatedBy is party</param>
         /// <returns>Rule model</returns>
-        public static Rule GetRuleModel(int delegatedBy, int offeredByPartyId, string coveredBy, string coveredByAttributeType, string action, string org, string app, string task = null, string appresource = null, bool createdSuccessfully = false, RuleType ruleType = RuleType.None, string resourceRegistryId = null, bool delegatedByParty = false)
+        public static Rule GetRuleModel(int delegatedBy, int offeredByPartyId, string coveredBy, string coveredByAttributeType, string action, string org, string app, string task = null, string appresource = null, bool createdSuccessfully = false, RuleType ruleType = RuleType.None, string resourceRegistryId = null, bool delegatedByParty = false, string coveredByUuid = null, string coveredByUuidType = null)
         {
             Rule rule;
 
@@ -78,6 +78,11 @@ namespace Altinn.AccessManagement.Tests.Utils
             if (appresource != null)
             {
                 rule.Resource.Add(new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.AppResourceAttribute, Value = appresource });
+            }
+
+            if (coveredByUuid != null)
+            {
+                rule.CoveredBy.Add(new AttributeMatch { Id = coveredByUuidType, Value = coveredByUuid });
             }
 
             return rule;

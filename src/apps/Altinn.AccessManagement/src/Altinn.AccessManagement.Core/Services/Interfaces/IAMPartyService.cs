@@ -28,5 +28,10 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         /// Get Party by person number
         /// </summary>
         public Task<MinimalParty> GetByPersonNo(PersonIdentifier personNo, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Get by user id
+        /// </summary>
+        public Task<MinimalParty> GetByUserId(int userId, CancellationToken cancellationToken = default);
     }
 }

@@ -89,6 +89,22 @@ namespace Altinn.AccessMgmt.Persistence.Services
             };
         }
 
+            if (res.Count() > 1)
+            {
+                throw new InvalidOperationException("Multiple matches found for the given criteria.Should never happen.");
+            }
+
+            ExtEntityLookup extEntityLookup = res.First();
+            
+            return new MinimalParty()
+            {
+                Name = extEntityLookup.Entity.Name,
+                PartyUuid = extEntityLookup.Entity.Id,
+                PartyId = partyId,
+                PartyType = extEntityLookup.Entity.TypeId
+            };
+        }
+
         /// <inheritdoc />
         public async Task<MinimalParty> GetByPersonNo(PersonIdentifier personNo, CancellationToken cancellationToken = default)
         {
@@ -114,7 +130,7 @@ namespace Altinn.AccessMgmt.Persistence.Services
             {
                 Name = extEntityLookup.Entity.Name,
                 PartyUuid = extEntityLookup.Entity.Id,
-                OrganizationId = extEntityLookup.Value,
+                PersonId = extEntityLookup.Value,
                 PartyType = extEntityLookup.Entity.TypeId
             };
         }

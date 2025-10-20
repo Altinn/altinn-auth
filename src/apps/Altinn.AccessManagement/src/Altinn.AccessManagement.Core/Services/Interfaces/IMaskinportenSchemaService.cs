@@ -47,19 +47,21 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         /// Performs the delegation on behalf of the from party
         /// </summary>
         /// <param name="authenticatedUserId">The user id of the authenticated user performing the delegation</param>
+        /// <param name="authenticatedUserPartyUuid">The user uuid of the authenticated user performing the delegation</param>
         /// <param name="authenticatedUserAuthlevel">The authentication level of the authenticated user performing the delegation</param>
         /// <param name="delegation">The delegation</param>
         /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>The result of the delegation</returns>
-        public Task<DelegationActionResult> DelegateMaskinportenSchema(int authenticatedUserId, int authenticatedUserAuthlevel, DelegationLookup delegation, CancellationToken cancellationToken = default);
+        public Task<DelegationActionResult> DelegateMaskinportenSchema(int authenticatedUserId, Guid authenticatedUserPartyUuid, int authenticatedUserAuthlevel, DelegationLookup delegation, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Operation to revoke a maskinporten schema delegation
         /// </summary>
         /// <param name="authenticatedUserId">The user id of the authenticated user deleting the delegation</param>
+        /// <param name="authenticatedUserPartyUuid">The user uuid of the authenticated user deleting the delegation</param>
         /// <param name="delegation">The delegation lookup model</param>
         /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>The result of the deletion</returns>
-        public Task<DelegationActionResult> RevokeMaskinportenSchemaDelegation(int authenticatedUserId, DelegationLookup delegation, CancellationToken cancellationToken = default);
+        public Task<DelegationActionResult> RevokeMaskinportenSchemaDelegation(int authenticatedUserId, Guid authenticatedUserPartyUuid, DelegationLookup delegation, CancellationToken cancellationToken = default);
     }
 }

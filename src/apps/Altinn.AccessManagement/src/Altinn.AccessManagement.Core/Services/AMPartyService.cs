@@ -36,5 +36,10 @@ namespace Altinn.AccessManagement.Core.Services
         {
             return await _amPartyRepository.GetByUuid(partyUuid, cancellationToken);
         }
+
+        public async Task<MinimalParty> GetByUserId(int userId, CancellationToken cancellationToken)
+        {
+            return await _amPartyRepository.GetByUserId(userId, cancellationToken);
+        }
     }
 }

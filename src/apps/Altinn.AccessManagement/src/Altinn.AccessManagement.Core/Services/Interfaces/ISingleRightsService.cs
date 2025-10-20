@@ -18,6 +18,30 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         public Task<DelegationCheckResponse> RightsDelegationCheck(int authenticatedUserId, int authenticatedUserAuthlevel, RightsDelegationCheckRequest request);
 
         /// <summary>
+        /// Takes a List of rules and enrich it with uuids and try to write the rules as delegation policy rules
+        /// </summary>
+        /// <param name="rules">Listy of rules</param>
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <returns>The stored rules</returns>
+        public Task<List<Rule>> EnrichAndTryWriteDelegationPolicyRules(List<Rule> rules, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Enrich delete request with Performed by uuid and call PAP to delete rules
+        /// </summary>
+        /// <param name="rulesToDelete">Entity to define which rules to be deleted</param>
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <returns>The list of rules with created Id and result status</returns>
+        Task<List<Rule>> EnrichAndTryDeleteDelegationPolicyRules(List<RequestToDelete> rulesToDelete, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Enrich delete request with Performed by uuid and call PAP to delete policies
+        /// </summary>
+        /// <param name="policiesToDelete">entity containing match for all the policies to delete</param>
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <returns>A list containing all the policies that is deleted</returns>
+        Task<List<Rule>> EnrichAndTryDeleteDelegationPolicies(List<RequestToDelete> policiesToDelete, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Performs the delegation on behalf of the from party
         /// </summary>
         /// <param name="authenticatedUserId">The user id of the authenticated user performing the delegation</param>

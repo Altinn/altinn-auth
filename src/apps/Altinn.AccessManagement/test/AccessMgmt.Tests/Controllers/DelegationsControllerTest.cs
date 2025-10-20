@@ -81,7 +81,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
 
             List<Rule> expected = new List<Rule>
             {
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app3", createdSuccessfully: true),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app3", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
             };
 
             // Act
@@ -120,7 +120,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
 
             List<Rule> expected = new List<Rule>
             {
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", null, null, createdSuccessfully: true, resourceRegistryId: "resource2"),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", null, null, createdSuccessfully: true, resourceRegistryId: "resource2", coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
             };
 
             string expectedRuleId = "99e5cced-3bcb-42b6-9089-63c834f89e77";
@@ -162,7 +162,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
 
             List<Rule> expected = new List<Rule>
             {
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app3", createdSuccessfully: true),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app3", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
             };
 
             // Act
@@ -230,9 +230,9 @@ namespace Altinn.AccessManagement.Tests.Controllers
 
             List<Rule> expected = new List<Rule>
             {
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app3", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app4", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", "org1", "app4", createdSuccessfully: true),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app3", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app4", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", "org1", "app4", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
             };
 
             // Act
@@ -455,10 +455,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
 
             List<Rule> expected = new List<Rule>
             {
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app3", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", "org1", "app3", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app4", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", "org1", "app4", createdSuccessfully: true),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app3", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", "org1", "app3", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app4", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", "org1", "app4", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
             };
 
             // Act
@@ -497,10 +497,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
 
             List<Rule> expected = new List<Rule>
             {
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", null, null, createdSuccessfully: true, resourceRegistryId: "resource1"),
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", null, null, createdSuccessfully: true, resourceRegistryId: "resource1"),
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", null, null, createdSuccessfully: true, resourceRegistryId: "resource2"),
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", null, null, createdSuccessfully: true, resourceRegistryId: "resource2"),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", null, null, createdSuccessfully: true, resourceRegistryId: "resource1", coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", null, null, createdSuccessfully: true, resourceRegistryId: "resource1", coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", null, null, createdSuccessfully: true, resourceRegistryId: "resource2", coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", null, null, createdSuccessfully: true, resourceRegistryId: "resource2", coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
             };
 
             // Act
@@ -601,10 +601,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
 
             List<Rule> expected = new List<Rule>
             {
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app3", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", "org1", "app3", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app4", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", "org1", "app4", createdSuccessfully: true),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app3", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", "org1", "app3", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app4", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", "org1", "app4", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
             };
 
             // Act
@@ -809,8 +809,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
 
             List<Rule> expected = new List<Rule>
             {
-                TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app1", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", "org1", "app1", createdSuccessfully: true),
+                TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app1", createdSuccessfully: true, coveredByUuid: "58241333-3438-4652-8750-4faff77f6046", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", "org1", "app1", createdSuccessfully: true, coveredByUuid: "58241333-3438-4652-8750-4faff77f6046", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
             };
 
             // Act
@@ -850,7 +850,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
 
             List<Rule> expected = new List<Rule>
             {
-                TestDataUtil.GetRuleModel(50001337, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "scopeaccess", null, null, createdSuccessfully: true, resourceRegistryId: "resource2", delegatedByParty: true),
+                TestDataUtil.GetRuleModel(50001337, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "scopeaccess", null, null, createdSuccessfully: true, resourceRegistryId: "resource2", delegatedByParty: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
             };
 
             // Act
@@ -890,8 +890,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
 
             List<Rule> expected = new List<Rule>
             {
-                TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", null, null, createdSuccessfully: true, resourceRegistryId: "resource1"),
-                TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", null, null, createdSuccessfully: true, resourceRegistryId: "resource1"),
+                TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", null, null, createdSuccessfully: true, resourceRegistryId: "resource1", coveredByUuid: "58241333-3438-4652-8750-4faff77f6046", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", null, null, createdSuccessfully: true, resourceRegistryId: "resource1", coveredByUuid: "58241333-3438-4652-8750-4faff77f6046", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
             };
 
             // Act
@@ -929,10 +929,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent content = new StreamContent(dataStream);
             content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-            Rule rule1 = TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app3", createdSuccessfully: true);
+            Rule rule1 = TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app3", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid);
             rule1.RuleId = "0d0c8570-64fb-49f9-9f7d-45c057fddf94";
             rule1.Type = RuleType.DirectlyDelegated;
-            Rule rule2 = TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", "org1", "app3", createdSuccessfully: true);
+            Rule rule2 = TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", "org1", "app3", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid);
             rule2.RuleId = "6f11dd0b-5e5d-4bd1-85f0-9796300dfded";
             rule2.Type = RuleType.DirectlyDelegated;
 
@@ -969,10 +969,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent content = new StreamContent(dataStream);
             content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-            Rule rule1 = TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", null, null, createdSuccessfully: true, resourceRegistryId: "resource1");
+            Rule rule1 = TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", null, null, createdSuccessfully: true, resourceRegistryId: "resource1", coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid);
             rule1.RuleId = "57b3ee85-f932-42c6-9ab0-941eb6c96eb0";
             rule1.Type = RuleType.DirectlyDelegated;
-            Rule rule2 = TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", null, null, createdSuccessfully: true, resourceRegistryId: "resource1");
+            Rule rule2 = TestDataUtil.GetRuleModel(20001336, 50001337, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", null, null, createdSuccessfully: true, resourceRegistryId: "resource1", coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid);
             rule2.RuleId = "99e5cced-3bcb-42b6-9089-63c834f89e77";
             rule2.Type = RuleType.DirectlyDelegated;
 
@@ -1011,10 +1011,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
 
             List<Rule> expected = new List<Rule>
             {
-                TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app1", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(20001337, 50001337, "50001336", AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, "write", "org1", "app2", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(20001336, 50001336, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org2", "app1", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(20001336, 50001336, "50001337", AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, "write", "org2", "app2", createdSuccessfully: true),
+                TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app1", createdSuccessfully: true, coveredByUuid: "58241333-3438-4652-8750-4faff77f6046", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001337, 50001337, "50001336", AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, "write", "org1", "app2", createdSuccessfully: true, coveredByUuid: "7a07a73e-f0ff-432f-8275-b660f591dc26", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.OrganizationUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001336, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org2", "app1", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001336, "50001337", AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, "write", "org2", "app2", createdSuccessfully: true, coveredByUuid: "26de0d55-3b52-4703-9a4d-78cd60353daa", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.OrganizationUuid),
             };
 
             // Act
@@ -1051,10 +1051,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
 
             List<Rule> expected = new List<Rule>
             {
-                TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app1", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(20001337, 50001337, "50001336", AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, "write", "org1", "INVALIDAPPNAME", createdSuccessfully: false),
-                TestDataUtil.GetRuleModel(20001336, 50001336, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org2", "app1", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(20001336, 50001336, "50001337", AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, "write", "org2", "app2", createdSuccessfully: true),
+                TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app1", createdSuccessfully: true, coveredByUuid: "58241333-3438-4652-8750-4faff77f6046", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001337, 50001337, "50001336", AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, "write", "org1", "INVALIDAPPNAME", createdSuccessfully: false, coveredByUuid: "7a07a73e-f0ff-432f-8275-b660f591dc26", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.OrganizationUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001336, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org2", "app1", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001336, "50001337", AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, "write", "org2", "app2", createdSuccessfully: true, coveredByUuid: "26de0d55-3b52-4703-9a4d-78cd60353daa", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.OrganizationUuid),
             };
 
             // Act
@@ -1091,13 +1091,13 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent content = new StreamContent(dataStream);
             content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-            Rule invalidRule = TestDataUtil.GetRuleModel(20001337, 50001337, "50001336", AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, "write", null, null, createdSuccessfully: false);
+            Rule invalidRule = TestDataUtil.GetRuleModel(20001337, 50001337, "50001336", AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, "write", null, null, createdSuccessfully: false, coveredByUuid: "7a07a73e-f0ff-432f-8275-b660f591dc26", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.OrganizationUuid);
             invalidRule.Resource = new List<AttributeMatch>();
             List<Rule> expected = new List<Rule>
             {
-                TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app1", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(20001336, 50001336, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org2", "app1", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(20001336, 50001336, "50001337", AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, "write", "org2", "app2", createdSuccessfully: true),
+                TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "app1", createdSuccessfully: true, coveredByUuid: "58241333-3438-4652-8750-4faff77f6046", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001336, "20001337", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org2", "app1", createdSuccessfully: true, coveredByUuid: "9c257fa7-0daa-4f69-be17-fd6805b15484", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid),
+                TestDataUtil.GetRuleModel(20001336, 50001336, "50001337", AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, "write", "org2", "app2", createdSuccessfully: true, coveredByUuid: "26de0d55-3b52-4703-9a4d-78cd60353daa", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.OrganizationUuid),
                 invalidRule,
             };
 
@@ -1136,7 +1136,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
 
             List<Rule> expected = new List<Rule>
             {
-                TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "error", "delegationeventfail", createdSuccessfully: true)
+                TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "error", "delegationeventfail", createdSuccessfully: true, coveredByUuid: "58241333-3438-4652-8750-4faff77f6046", coveredByUuidType: AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid)
             };
 
             // Act
@@ -1606,11 +1606,12 @@ namespace Altinn.AccessManagement.Tests.Controllers
             return delegations;
         }
 
-        private HttpClient GetTestClient(IPDP pdpMock = null, IHttpContextAccessor httpContextAccessor = null, IDelegationMetadataRepository delegationMetadataRepositoryMock = null)
+        private HttpClient GetTestClient(IPDP pdpMock = null, IHttpContextAccessor httpContextAccessor = null, IDelegationMetadataRepository delegationMetadataRepositoryMock = null, IAMPartyService partyService = null)
         {
             pdpMock ??= new PepWithPDPAuthorizationMock();
             httpContextAccessor ??= new HttpContextAccessor();
             delegationMetadataRepositoryMock ??= new DelegationMetadataRepositoryMock();
+            partyService ??= new AMPartyServiceMock();
 
             HttpClient client = _factory.WithWebHostBuilder(builder =>
             {
@@ -1625,6 +1626,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
                     services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
                     services.AddSingleton(pdpMock);
                     services.AddSingleton(httpContextAccessor);
+                    services.AddSingleton(partyService);
                     services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
                     services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
                 });

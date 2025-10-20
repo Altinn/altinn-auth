@@ -8,7 +8,8 @@
         "dagl": {
             "pid":"21025400167",
             "userid": 20014526,
-            "partyid": 50012796
+            "partyid": 50012796,
+            "useruuid": "3536151C-5075-4208-B8FE-4C92E5FDD0EB"
         },
         "hadm": {
             "pid": "17048001742",
@@ -27,8 +28,9 @@
         "dagl": {
             "pid": "26013000394",
             "userid": 20013938,
-            "partyid": 50012091
-        }
+            "partyid": 50012091,
+            "useruuid": "09FDBB92-BD32-41E1-932D-BFBAF4C2E568"
+      }
     },
     "digdir": {
         "orgno": "991825827",
