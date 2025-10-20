@@ -20,10 +20,11 @@ public static class ConstantLookup
     private static readonly ConcurrentDictionary<(Type ConstantsClass, Type EntityType), Dictionary<Guid, object>> _byId = new();
     private static readonly ConcurrentDictionary<(Type ConstantsClass, Type EntityType), Dictionary<string, object>> _byName = new();
     private static readonly ConcurrentDictionary<(Type ConstantsClass, Type EntityType), Dictionary<string, object>> _byUrn = new();
+    private static readonly ConcurrentDictionary<(Type ConstantsClass, Type EntityType), Dictionary<string, object>> _byCode = new();
     private static readonly ConcurrentDictionary<(Type ConstantsClass, Type EntityType), List<object>> _constants = new();
 
     private static List<ConstantDefinition<TType>> GetConstants<TType>(Type constantsClass)
-        where TType : IEntityId
+        where TType : class, IEntityId
     {
         var key = (constantsClass, typeof(TType));
         var cachedConstants = _constants.GetOrAdd(key, _ =>
@@ -41,7 +42,7 @@ public static class ConstantLookup
     }
 
     private static Dictionary<Guid, object> GetById<TType>(Type constantsClass)
-        where TType : IEntityId
+        where TType : class, IEntityId
     {
         var key = (constantsClass, typeof(TType));
         return _byId.GetOrAdd(key, _ =>
@@ -54,7 +55,7 @@ public static class ConstantLookup
     }
 
     private static Dictionary<string, object> GetByName<TType>(Type constantsClass)
-        where TType : IEntityId, IEntityName
+        where TType : class, IEntityId, IEntityName
     {
         var key = (constantsClass, typeof(TType));
         return _byName.GetOrAdd(key, _ =>
@@ -68,10 +69,10 @@ public static class ConstantLookup
     }
 
     private static Dictionary<string, object> GetByUrn<TType>(Type constantsClass)
-        where TType : IEntityId, IEntityUrn
+        where TType : class, IEntityId, IEntityUrn
     {
         var key = (constantsClass, typeof(TType));
-        return _byName.GetOrAdd(key, _ =>
+        return _byUrn.GetOrAdd(key, _ =>
         {
             var constants = GetConstants<TType>(constantsClass);
             return constants.ToDictionary<ConstantDefinition<TType>, string, object>(
@@ -81,8 +82,22 @@ public static class ConstantLookup
         });
     }
 
+    private static Dictionary<string, object> GetByCode<TType>(Type constantsClass)
+        where TType : class, IEntityId, IEntityCode
+    {
+        var key = (constantsClass, typeof(TType));
+        return _byCode.GetOrAdd(key, _ =>
+        {
+            var constants = GetConstants<TType>(constantsClass);
+            return constants.ToDictionary<ConstantDefinition<TType>, string, object>(
+                cd => cd.Entity.Code,
+                cd => cd,
+                StringComparer.OrdinalIgnoreCase);
+        });
+    }
+
     private static List<object> GetAllEntities<TType>(Type constantsClass)
-        where TType : IEntityId
+        where TType : class, IEntityId
     {
         var constants = GetConstants<TType>(constantsClass);
         return [.. constants.Cast<object>()];
@@ -92,7 +107,7 @@ public static class ConstantLookup
     /// Try to get entity by ID for types that implement IEntityId.
     /// </summary>
     public static bool TryGetById<TType>(Type constantsClass, Guid id, [NotNullWhen(true)] out ConstantDefinition<TType>? result)
-        where TType : IEntityId
+        where TType : class, IEntityId
     {
         var byId = GetById<TType>(constantsClass);
         if (byId.TryGetValue(id, out var value))
@@ -109,7 +124,7 @@ public static class ConstantLookup
     /// Try to get entity by name for types that implement both IEntityId and IEntityName.
     /// </summary>
     public static bool TryGetByName<TType>(Type constantsClass, string name, [NotNullWhen(true)] out ConstantDefinition<TType>? result)
-        where TType : IEntityId, IEntityName
+        where TType : class, IEntityId, IEntityName
     {
         var byName = GetByName<TType>(constantsClass);
         if (byName.TryGetValue(name, out var value))
@@ -126,7 +141,7 @@ public static class ConstantLookup
     /// Try to get entity by ID for types that implement IEntityId.
     /// </summary>
     public static bool TryGetByUrn<TType>(Type constantsClass, string urn, [NotNullWhen(true)] out ConstantDefinition<TType>? result)
-        where TType : IEntityId, IEntityUrn
+        where TType : class, IEntityId, IEntityUrn
     {
         var byUrn = GetByUrn<TType>(constantsClass);
         if (byUrn.TryGetValue(urn, out var value))
@@ -137,13 +152,30 @@ public static class ConstantLookup
 
         result = null;
         return false;
-    } 
+    }
+
+    /// <summary>
+    /// Try to get entity by ID for types that implement IEntityId.
+    /// </summary>
+    public static bool TryGetByCode<TType>(Type constantsClass, string code, [NotNullWhen(true)] out ConstantDefinition<TType>? result)
+        where TType : class, IEntityId, IEntityCode
+    {
+        var byUrn = GetByCode<TType>(constantsClass);
+        if (byUrn.TryGetValue(code, out var value))
+        {
+            result = (ConstantDefinition<TType>)value;
+            return true;
+        }
+
+        result = null;
+        return false;
+    }
 
     /// <summary>
     /// Get all constants as a read-only collection for types that implement IEntityId.
     /// </summary>
     public static IReadOnlyCollection<ConstantDefinition<TType>> AllEntities<TType>(Type constantsClass)
-        where TType : IEntityId
+        where TType : class, IEntityId
     {
         var all = GetAllEntities<TType>(constantsClass);
         return [.. all.Cast<ConstantDefinition<TType>>()];
@@ -153,7 +185,7 @@ public static class ConstantLookup
     /// Get all translations as read-only collection for types that implement IEntityId.
     /// </summary>
     public static IReadOnlyCollection<TranslationEntry> AllTranslations<TType>(Type constantsClass)
-        where TType : IEntityId
+        where TType : class, IEntityId
     {
         return [.. AllEntities<TType>(constantsClass).SelectMany(t => (List<TranslationEntry>)t)];
     }

@@ -4,6 +4,7 @@
         <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
         <PackageReference Include="Microsoft.Extensions.Http" />
         <PackageReference Include="Altinn.Common.AccessTokenClient" />
+        <PackageReference Include="Altinn.Register.Contracts" />
         <PackageReference Include="Altinn.Authorization.ProblemDetails" />
         <PackageReference Include="Azure.Security.KeyVault.Certificates" />
         <PackageReference Include="Microsoft.Extensions.Azure" />

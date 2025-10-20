@@ -39,7 +39,7 @@ public class RoleStreamEndpointTest : IClassFixture<PlatformFixture>
         Assert.NotEqual(firstPage?.Content?.Links?.Next, secondPage?.Content?.Links?.Next);
     }
 
-    private async Task<PlatformResponse<PageStream<RoleModel>>> GetPage(string nextPage = null, CancellationToken cancellationToken = default)
+    private async Task<PlatformResponse<PageStream<ExternalRoleAssignmentEvent>>> GetPage(string nextPage = null, CancellationToken cancellationToken = default)
     {
         await foreach (var role in await Register.StreamRoles([], nextPage, cancellationToken))
         {

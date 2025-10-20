@@ -1,7 +1,5 @@
-﻿using System.Diagnostics;
-using Altinn.AccessMgmt.Core.HostedServices.Contracts;
+﻿using Altinn.AccessMgmt.Core.HostedServices.Contracts;
 using Altinn.AccessMgmt.Core.HostedServices.Leases;
-using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
@@ -37,35 +35,21 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
     /// <inheritdoc />
     public async Task SyncRoles(ILease lease, CancellationToken cancellationToken)
     {
-        var batchData = new List<Assignment>();
-        var seen = new HashSet<(Guid, Guid, Guid)>();
-
+        var seen = new HashSet<(Guid From, Guid To, Guid Role)>();
+        var addParent = new Dictionary<Guid, Guid>();
+        var removeParent = new List<Guid>();
+        var addAssignments = new List<Assignment>();
+        var removeAssignments = new List<Assignment>();
         var options = new AuditValues(SystemEntityConstants.RegisterImportSystem);
 
         using var scope = _serviceProvider.CreateEFScope(options);
-        var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var appDbContextFactory = scope.ServiceProvider.GetRequiredService<AppDbContextFactory>();
         var ingestService = scope.ServiceProvider.GetRequiredService<IIngestService>();
-
-        OrgType = EntityTypeConstants.Organisation;
-
-        Provider = await appDbContext.Providers
-            .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Code == "ccr", cancellationToken);
-
-        Roles = (await appDbContext.Roles
-            .AsNoTracking()
-            .ToListAsync(cancellationToken)).ToDictionary(t => t.Code, t => t);
-
         var leaseData = await lease.Get<RegisterLease>(cancellationToken);
 
         await foreach (var page in await _register.StreamRoles([], leaseData.RoleStreamNextPageLink, cancellationToken))
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return;
-            }
-
-            if (!page.IsSuccessful)
+            if (page.IsProblem)
             {
                 Log.ResponseError(_logger, page.StatusCode);
                 throw new Exception("Stream page is not successful");
@@ -73,44 +57,42 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
 
             _logger.LogInformation("Starting proccessing party page ({0}-{1})", page.Content.Stats.PageStart, page.Content.Stats.PageEnd);
 
-            if (page.Content != null)
+            foreach (var item in page.Content.Data)
             {
-                foreach (var item in page.Content.Data)
+                var assignment = MapToAssignment(item);
+                if (ShouldSetParent(item))
                 {
-                    var assignment = await ConvertRoleModel(appDbContext, item, options: options, cancellationToken) ?? throw new Exception("Failed to convert RoleModel to Assignment");
-
-                    var key = (assignment.FromId, assignment.ToId, assignment.RoleId);
-                    if (!seen.Add(key))
+                    if (!seen.Add((From: assignment.FromId, To: assignment.ToId, Role: RoleConstants.HasAsRegistrationUnitBEDR)))
                     {
-                        // If changes on same assignment then execute as-is before continuing.
                         await Flush();
                     }
-
-                    if (item.Type == "Added")
+                    else if (!seen.Add((From: assignment.FromId, To: assignment.ToId, Role: RoleConstants.HasAsRegistrationUnitAAFY)))
                     {
-                        batchData.Add(assignment);
-                        if (item.RoleIdentifier == "hovedenhet" || item.RoleIdentifier == "ikke-naeringsdrivende-hovedenhet")
-                        {
-                            await SetParent(appDbContext, assignment.FromId, assignment.ToId, cancellationToken: cancellationToken);
-                        }
+                        await Flush();
                     }
-                    else
+                }
+                else
+                {
+                    if (!seen.Add((From: assignment.FromId, To: assignment.ToId, Role: assignment.RoleId)))
                     {
-                        var deleteAssignment = await appDbContext.Assignments
-                            .AsTracking()
-                            .Where(a => a.FromId == assignment.FromId && a.ToId == assignment.ToId && a.RoleId == assignment.RoleId)
-                            .FirstOrDefaultAsync(cancellationToken);
+                        await Flush();
+                    }
+                }
 
-                        if (deleteAssignment is { })
-                        {
-                            appDbContext.Remove(deleteAssignment);
-                            await appDbContext.SaveChangesAsync(cancellationToken);
-                        }
-
-                        if (item.RoleIdentifier == "hovedenhet" || item.RoleIdentifier == "ikke-naeringsdrivende-hovedenhet")
-                        {
-                            await RemoveParent(appDbContext, assignment.FromId, cancellationToken: cancellationToken);
-                        }
+                if (item.Type == ExternalRoleAssignmentEvent.EventType.Added)
+                {
+                    addAssignments.Add(assignment);
+                    if (ShouldSetParent(item))
+                    {
+                        addParent[assignment.FromId] = assignment.ToId;
+                    }
+                }
+                else if (item.Type == ExternalRoleAssignmentEvent.EventType.Removed)
+                {
+                    removeAssignments.Add(assignment);
+                    if (ShouldSetParent(item))
+                    {
+                        removeParent.Add(assignment.FromId);
                     }
                 }
             }
@@ -127,121 +109,118 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
 
             async Task Flush()
             {
-                var batchId = Guid.CreateVersion7();
-                var batchName = batchId.ToString("N");
+                await Task.WhenAll(
+                    RemoveParents(appDbContextFactory, removeParent, cancellationToken),
+                    SetParents(appDbContextFactory, addParent, cancellationToken),
+                    RemoveAssignments(appDbContextFactory, removeAssignments, cancellationToken), 
+                    IngestAssigments(ingestService, addAssignments, options, cancellationToken)
+                );
 
-                try
-                {
-                    _logger.LogInformation("Ingest and Merge Assignment batch '{0}' to db", batchId.ToString());
-                    var ingested = await ingestService.IngestTempData<Assignment>(batchData, batchId, cancellationToken);
-
-                    if (ingested != batchData.Count)
-                     {
-                        _logger.LogWarning("Ingest partial complete: Assignment ({0}/{1})", ingested, batchData.Count);
-                    }
-
-                    var merged = await ingestService.MergeTempData<Assignment>(batchId, options, ["fromid", "roleid", "toid"], cancellationToken: cancellationToken);
-
-                    _logger.LogInformation("Merge complete: Assignment ({0}/{1})", merged, ingested);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to ingest and/or merge Assignment and EntityLookup batch {0} to db", batchId.ToString());
-                    throw new Exception(string.Format("Failed to ingest and/or merge Assignment and EntityLookup batch {0} to db", batchId.ToString()), ex);
-                }
-                finally
-                {
-                    batchData.Clear();
-                    seen.Clear();
-                }
+                seen.Clear();
+                addParent.Clear();
+                removeParent.Clear();
+                addAssignments.Clear();
+                removeAssignments.Clear();
             }
         }
     }
 
-    private async Task SetParent(AppDbContext dbContext, Guid childId, Guid parentId, CancellationToken cancellationToken = default)
+    private async Task RemoveAssignments(AppDbContextFactory dbContextFactory, List<Assignment> relations, CancellationToken cancellationToken = default)
     {
+        using var dbContext = dbContextFactory.CreateDbContext();
+        var relationsFrom = relations
+            .Select(r => r.FromId)
+            .ToList();
+
+        var entities = await dbContext.Assignments
+            .AsTracking()
+            .Where(e => relationsFrom.Contains(e.FromId))
+            .ToListAsync(cancellationToken: cancellationToken);
+
+        var relationSet = relations
+            .Select(r => (r.FromId, r.ToId, r.RoleId))
+            .ToHashSet();
+
+        entities = entities
+            .Where(e => relationSet.Contains((e.FromId, e.ToId, e.RoleId)))
+            .ToList();
+
+        dbContext.RemoveRange(entities);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task IngestAssigments(IIngestService ingestService, List<Assignment> assignments, AuditValues options, CancellationToken cancellationToken)
+    {
+        var batchId = Guid.CreateVersion7();
         try
         {
-            var entity = await dbContext.Entities
-                .AsTracking()
-                .FirstAsync(e => e.Id == childId, cancellationToken: cancellationToken);
+            _logger.LogInformation("Ingest and Merge Assignment batch '{0}' to db", batchId.ToString());
+            var ingested = await ingestService.IngestTempData<Assignment>(assignments, batchId, cancellationToken);
 
-            entity.ParentId = parentId;
-            await dbContext.SaveChangesAsync(cancellationToken);
+            if (ingested != assignments.Count)
+            {
+                _logger.LogWarning("Ingest partial complete: Assignment ({0}/{1})", ingested, assignments.Count);
+            }
+
+            var merged = await ingestService.MergeTempData<Assignment>(batchId, options, ["fromid", "roleid", "toid"], cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Merge complete: Assignment ({0}/{1})", merged, ingested);
         }
         catch (Exception ex)
         {
-            throw new Exception(string.Format("Unable to set '{1}' as parent to '{0}'", childId, parentId), ex);
+            _logger.LogError(ex, "Failed to ingest and/or merge Assignment and EntityLookup batch {0} to db", batchId.ToString());
+            throw new Exception(string.Format("Failed to ingest and/or merge Assignment and EntityLookup batch {0} to db", batchId.ToString()), ex);
         }
     }
 
-    private async Task RemoveParent(AppDbContext dbContext, Guid childId, CancellationToken cancellationToken = default)
+    private async Task RemoveParents(AppDbContextFactory dbContextFactory, List<Guid> relations, CancellationToken cancellationToken = default)
     {
-        try
-        {
-            var entity = await dbContext.Entities
-                .AsTracking()
-                .FirstAsync(e => e.Id == childId, cancellationToken: cancellationToken);
+        using var dbContext = dbContextFactory.CreateDbContext();
+        var entities = await dbContext.Entities
+            .AsTracking()
+            .Where(e => relations.Contains(e.Id))
+            .ToListAsync(cancellationToken);
 
+        foreach (var entity in entities)
+        {
             entity.ParentId = null;
-            await dbContext.SaveChangesAsync(cancellationToken);
         }
-        catch (Exception ex)
-        {
-            throw new Exception(string.Format("Unable to remove parent for '{0}'", childId), ex);
-        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private Dictionary<string, Role> Roles { get; set; } = new Dictionary<string, Role>(StringComparer.OrdinalIgnoreCase);
-
-    private async Task<Assignment> ConvertRoleModel(AppDbContext dbContext, RoleModel model, AuditValues options, CancellationToken cancellationToken)
+    private async Task SetParents(AppDbContextFactory dbContextFactory, Dictionary<Guid, Guid> relations, CancellationToken cancellationToken = default)
     {
-        try
+        using var dbContext = dbContextFactory.CreateDbContext();
+        var fields = relations.Keys.ToList();
+        var entities = await dbContext.Entities
+            .AsTracking()
+            .Where(e => fields.Contains(e.Id))
+            .ToListAsync(cancellationToken);
+
+        foreach (var entity in entities)
         {
-            var role = await GetOrCreateRole(dbContext, model.RoleIdentifier, model.RoleSource, cancellationToken);
+            entity.ParentId = relations[entity.Id];
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private bool ShouldSetParent(ExternalRoleAssignmentEvent item) =>
+        item.RoleIdentifier == RoleConstants.HasAsRegistrationUnitBEDR.Entity.Code || item.RoleIdentifier == RoleConstants.HasAsRegistrationUnitAAFY.Entity.Code;
+
+    private Assignment MapToAssignment(ExternalRoleAssignmentEvent model)
+    {
+        if (RoleConstants.TryGetByCode(model.RoleIdentifier, out var role))
+        {
             return new Assignment()
             {
-                FromId = Guid.Parse(model.FromParty),
-                ToId = Guid.Parse(model.ToParty),
+                FromId = model.FromParty,
+                ToId = model.ToParty,
                 RoleId = role.Id
             };
         }
-        catch
-        {
-            throw new Exception(string.Format("Failed to convert model to Assignment. From:{0} To:{1} Role:{2}", model.FromParty, model.ToParty, model.RoleIdentifier));
-        }
+
+        throw new Exception(string.Format("Failed to convert model to Assignment. From:{0} To:{1} Role:{2}", model.FromParty, model.ToParty, model.RoleIdentifier));
     }
-
-    private async Task<Role> GetOrCreateRole(AppDbContext dbContext, string roleIdentifier, string roleSource, CancellationToken cancellationToken)
-    {
-        if (Roles.TryGetValue(roleIdentifier, out var cached))
-        {
-            return cached;
-        }
-
-        var role = await dbContext.Roles.AsNoTracking().FirstOrDefaultAsync(r => r.Code == roleIdentifier, cancellationToken);
-        if (role is null)
-        {
-            role = new Role()
-            {
-                Id = Guid.CreateVersion7(),
-                Name = roleIdentifier,
-                Description = roleIdentifier,
-                Code = roleIdentifier,
-                Urn = roleIdentifier,
-                EntityTypeId = OrgType.Id,
-                ProviderId = Provider.Id,
-            };
-
-            dbContext.Roles.Add(role);
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-
-        Roles.Add(role.Code, role);
-        return role;
-    }
-
-    private EntityType OrgType { get; set; }
-
-    private Provider Provider { get; set; }
 }

@@ -24,7 +24,9 @@ public class EntityConfiguration : IEntityTypeConfiguration<Entity>
         builder.Property(t => t.OrganizationIdentifier).IsRequired(false);
         builder.Property(t => t.PersonIdentifier).IsRequired(false);
         builder.Property(t => t.DateOfBirth).IsRequired(false);
+        builder.Property(t => t.DateOfDeath).IsRequired(false);
         builder.Property(t => t.DeletedAt).IsRequired(false);
+        builder.Property(t => t.IsDeleted).IsRequired(true);
 
         builder.PropertyWithReference(navKey: t => t.Type, foreignKey: t => t.TypeId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
         builder.PropertyWithReference(navKey: t => t.Variant, foreignKey: t => t.VariantId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);

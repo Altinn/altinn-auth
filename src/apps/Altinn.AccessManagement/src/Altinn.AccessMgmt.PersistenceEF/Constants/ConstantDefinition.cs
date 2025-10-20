@@ -12,7 +12,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Constants;
 /// The entity type this constant definition represents. Must implement <see cref="IEntityId"/>.
 /// </typeparam>
 public sealed class ConstantDefinition<T>(Guid id)
-    where T : IEntityId
+    where T : class, IEntityId
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ConstantDefinition{T}"/> class from a string identifier.
@@ -98,8 +98,8 @@ public sealed class ConstantDefinition<T>(Guid id)
     /// </summary>
     /// <param name="def">The constant definition.</param>
     public static implicit operator T(ConstantDefinition<T> def)
-        => def._entity;
-    
+        => def?._entity;
+
     /// <summary>
     /// Implicitly converts a <see cref="ConstantDefinition{T}"/> to a list of <see cref="TranslationEntry"/> objects,
     /// combining entries from both <see cref="EN"/> and <see cref="NN"/> (if available).

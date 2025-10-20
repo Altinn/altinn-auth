@@ -16,7 +16,7 @@ namespace Altinn.AccessManagement.HostedServices.Services
     {
         public AllAltinnRoleSyncService(
             IAltinnSblBridge role,
-            ILogger<RoleSyncService> logger,
+            ILogger<AllAltinnRoleSyncService> logger,
             IFeatureManager featureManager,
             IIngestService ingestService,
             IRoleRepository roleRepository,
@@ -31,7 +31,7 @@ namespace Altinn.AccessManagement.HostedServices.Services
         }
 
         private readonly IAltinnSblBridge _role;
-        private readonly ILogger<RoleSyncService> _logger;
+        private readonly ILogger<AllAltinnRoleSyncService> _logger;
         private readonly IRoleRepository _roleRepository;
         private readonly IAssignmentRepository _assignmentRepository;
         private readonly IIngestService _ingestService;

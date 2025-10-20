@@ -10,7 +10,7 @@ namespace Altinn.Authorization.Integration.Platform;
 /// <param name="currentResponse">The current HTTP response message.</param>
 /// <param name="newRequest">The request actions for fetching the next page.</param>
 public class PaginatorStream<T>(HttpClient httpClient, HttpResponseMessage currentResponse, IEnumerable<Action<HttpRequestMessage>> newRequest) : IAsyncEnumerable<PlatformResponse<PageStream<T>>>
-    where T : class, new()
+    where T : class
 {
     private HttpClient HttpClient { get; } = httpClient;
 

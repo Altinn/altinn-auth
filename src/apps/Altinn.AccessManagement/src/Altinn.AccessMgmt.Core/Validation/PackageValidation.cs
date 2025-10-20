@@ -11,7 +11,7 @@ namespace Altinn.AccessMgmt.Core.Validation;
 /// </summary>
 public static class PackageValidation
 {
-    internal static RuleExpression PackageExists(Package package, string paramName = "package") => () =>
+    internal static RuleExpression PackageExists(Package package, string packageName, string paramName = "package") => () =>
     {
         if (package is { })
         {
@@ -19,7 +19,7 @@ public static class PackageValidation
         }
 
         return (ref ValidationErrorBuilder errors) =>
-            errors.Add(ValidationErrors.PackageNotExists, $"QUERY/{paramName}", [new("packages", $"No packages are found with given name.")]
+            errors.Add(ValidationErrors.PackageNotExists, $"QUERY/{paramName}", [new("packages", $"No packages with name '{packageName}' do not exists.")]
         );
     };
 

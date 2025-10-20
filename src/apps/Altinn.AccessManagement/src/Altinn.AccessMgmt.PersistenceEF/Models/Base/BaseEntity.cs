@@ -52,5 +52,9 @@ public class BaseEntity : BaseAudit, IEntityId, IEntityName
 
     public DateOnly? DateOfBirth { get; set; }
 
+    public DateOnly? DateOfDeath { get; set; }
+
     public DateTimeOffset? DeletedAt { get; set; }
+
+    public bool IsDeleted { get; set; } 
 }

@@ -8,7 +8,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Models.Base;
 /// Role
 /// </summary>
 [NotMapped]
-public class BaseRole : BaseAudit, IEntityId, IEntityName, IEntityUrn
+public class BaseRole : BaseAudit, IEntityId, IEntityName, IEntityUrn, IEntityCode
 {
     /// <summary>
     /// Id

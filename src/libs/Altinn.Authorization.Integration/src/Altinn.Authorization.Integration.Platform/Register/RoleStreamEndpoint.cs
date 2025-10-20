@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
+using Altinn.Register.Contracts;
 
 namespace Altinn.Authorization.Integration.Platform.Register;
 
@@ -9,7 +11,7 @@ namespace Altinn.Authorization.Integration.Platform.Register;
 public partial class AltinnRegisterClient
 {
     /// <inheritdoc/>
-    public async Task<IAsyncEnumerable<PlatformResponse<PageStream<RoleModel>>>> StreamRoles(IEnumerable<string> fields, string nextPage = null, CancellationToken cancellationToken = default)
+    public async Task<IAsyncEnumerable<PlatformResponse<PageStream<ExternalRoleAssignmentEvent>>>> StreamRoles(IEnumerable<string> fields, string nextPage = null, CancellationToken cancellationToken = default)
     {
         List<Action<HttpRequestMessage>> request = [
             RequestComposer.WithHttpVerb(HttpMethod.Get),
@@ -21,7 +23,7 @@ public partial class AltinnRegisterClient
 
         var response = await HttpClient.SendAsync(RequestComposer.New([.. request]), cancellationToken);
 
-        return new PaginatorStream<RoleModel>(HttpClient, response, request);
+        return new PaginatorStream<ExternalRoleAssignmentEvent>(HttpClient, response, request);
     }
 }
 
@@ -29,42 +31,63 @@ public partial class AltinnRegisterClient
 /// Represents a party with various personal and organizational details.
 /// This model is used to deserialize JSON responses containing party information.
 /// </summary>
+/// <summary>
+/// Represents an external role assignment event.
+/// </summary>
+[DebuggerDisplay("{Type,nq} {RoleIdentifier,nq} ({RoleSource,nq}) from {FromParty} to {ToParty}")]
 [ExcludeFromCodeCoverage]
-public class RoleModel
+public sealed record ExternalRoleAssignmentEvent
 {
     /// <summary>
-    /// Gets or sets the version ID of the role.
+    /// Gets the version ID of the event.
     /// </summary>
     [JsonPropertyName("versionId")]
-    public int VersionId { get; set; }
+    public required ulong VersionId { get; init; }
 
     /// <summary>
-    /// Gets or sets the type of the role.
+    /// Gets the type of the event.
     /// </summary>
     [JsonPropertyName("type")]
-    public string Type { get; set; }
+    public required EventType Type { get; init; }
 
     /// <summary>
-    /// Gets or sets the source of the role.
+    /// Gets the role source of the event.
     /// </summary>
     [JsonPropertyName("roleSource")]
-    public string RoleSource { get; set; }
+    public required ExternalRoleSource RoleSource { get; init; }
 
     /// <summary>
-    /// Gets or sets the unique identifier of the role.
+    /// Gets the role identifier of the event.
     /// </summary>
     [JsonPropertyName("roleIdentifier")]
-    public string RoleIdentifier { get; set; }
+    public required string RoleIdentifier { get; init; }
 
     /// <summary>
-    /// Gets or sets the party that this role is associated with (recipient).
+    /// Gets the party the role is assigned to.
     /// </summary>
     [JsonPropertyName("toParty")]
-    public string ToParty { get; set; }
+    public required Guid ToParty { get; init; }
 
     /// <summary>
-    /// Gets or sets the party that assigned this role (source).
+    /// Gets the party the role is assigned from.
     /// </summary>
     [JsonPropertyName("fromParty")]
-    public string FromParty { get; set; }
+    public required Guid FromParty { get; init; }
+
+    /// <summary>
+    /// Role-assignment event type.
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<EventType>))]
+    public enum EventType
+    {
+        /// <summary>
+        /// The role-assignment was added.
+        /// </summary>
+        Added,
+
+        /// <summary>
+        /// The role-assignment was removed.
+        /// </summary>
+        Removed,
+    }
 }

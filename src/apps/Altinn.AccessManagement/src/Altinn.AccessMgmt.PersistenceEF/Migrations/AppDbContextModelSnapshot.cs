@@ -17,7 +17,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.9")
+                .HasAnnotation("ProductVersion", "9.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -789,9 +789,17 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("date")
                         .HasColumnName("dateofbirth");
 
+                    b.Property<DateOnly?>("DateOfDeath")
+                        .HasColumnType("date")
+                        .HasColumnName("dateofdeath");
+
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deletedat");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isdeleted");
 
                     b.Property<string>("Name")
                         .HasColumnType("text")
@@ -1978,9 +1986,17 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("date")
                         .HasColumnName("dateofbirth");
 
+                    b.Property<DateOnly?>("DateOfDeath")
+                        .HasColumnType("date")
+                        .HasColumnName("dateofdeath");
+
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deletedat");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isdeleted");
 
                     b.Property<string>("Name")
                         .IsRequired()
