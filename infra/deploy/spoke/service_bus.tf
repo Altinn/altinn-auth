@@ -89,6 +89,5 @@ resource "azurerm_monitor_diagnostic_setting" "service_bus_diagnostics" {
 
   enabled_metric {
     category = "AllMetrics"
-    
   }
 }

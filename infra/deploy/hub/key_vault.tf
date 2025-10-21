@@ -6,7 +6,7 @@ resource "azurerm_key_vault" "key_vault" {
   public_network_access_enabled = true
   purge_protection_enabled      = false
   tenant_id                     = data.azurerm_client_config.current.tenant_id
-  enable_rbac_authorization     = true
+  rbac_authorization_enabled    = true
   sku_name                      = "standard"
 
   tags = merge({}, local.default_tags)
