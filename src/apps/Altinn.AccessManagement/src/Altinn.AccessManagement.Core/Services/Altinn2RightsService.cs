@@ -31,10 +31,15 @@ public class Altinn2RightsService : IAltinn2RightsService
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<RightDelegation>> GetOfferedRights(int partyId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<RightDelegation>> GetOfferedRights(int partyId, Guid? to, CancellationToken cancellationToken = default)
     {
         var delegations = await _pip.GetOfferedDelegationsFromRepository(partyId, cancellationToken);
-        return await MapDelegationResponse(delegations);
+        delegations = to.HasValue
+            ? delegations.Where(d => d.ToUuid == to.Value)
+            : delegations;
+        return to.HasValue
+            ? await MapDelegationResponseUsingUuids(delegations)
+            : await MapDelegationResponse(delegations);
     }
 
     /// <inheritdoc/>
@@ -128,4 +133,50 @@ public class Altinn2RightsService : IAltinn2RightsService
 
         return result;
     }
+
+    private async Task<List<RightDelegation>> MapDelegationResponseUsingUuids(IEnumerable<DelegationChange> delegations)
+    {
+        var result = new List<RightDelegation>();
+
+        foreach (var delegation in delegations)
+        {
+            var entry = new RightDelegation();
+
+            if (delegation.FromUuidType == AccessManagement.Enums.UuidType.NotSpecified || delegation.FromUuid == null || delegation.ToUuidType == AccessManagement.Enums.UuidType.NotSpecified || delegation.ToUuid == null)
+            {
+                // This is a temporary fix just to remove delegations not yet populated with uuids
+                continue;
+            }
+
+            entry.From.Add(new(GetUuidTypeAsUrn(delegation.FromUuidType), delegation.FromUuid));
+            entry.To.Add(new(GetUuidTypeAsUrn(delegation.ToUuidType), delegation.ToUuid));
+
+            if (delegation.ResourceType.Contains("AltinnApp", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var app = delegation.ResourceId.Split("/");
+                entry.Resource.AddRange([
+                    new(AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute, app[0]),
+                    new(AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute, app[1])
+                ]);
+            }
+            else
+            {
+                var resources = await _contextRetrievalService.GetResourceList();
+                entry.Resource.AddRange(resources.Find(r => r.Identifier == delegation.ResourceId).AuthorizationReference ?? []);
+            }
+
+            result.Add(entry);
+        }
+
+        return result;
+    }
+
+    private static string GetUuidTypeAsUrn(AccessManagement.Enums.UuidType uuidType) => uuidType switch
+    {
+        AccessManagement.Enums.UuidType.SystemUser => AltinnXacmlConstants.MatchAttributeIdentifiers.SystemUserUuid,
+        AccessManagement.Enums.UuidType.Person => AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid,
+        AccessManagement.Enums.UuidType.Organization => AltinnXacmlConstants.MatchAttributeIdentifiers.OrganizationUuid,
+        AccessManagement.Enums.UuidType.EnterpriseUser => AltinnXacmlConstants.MatchAttributeIdentifiers.EnterpriseUserUuid,
+        _ => throw new ArgumentException(message: $"Unknown uuid type: {uuidType}", paramName: nameof(uuidType))
+    };
 }

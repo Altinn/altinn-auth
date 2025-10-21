@@ -242,6 +242,7 @@ namespace Altinn.AccessManagement.Controllers
         /// Gets a list of all recipients having received right delegations from the reportee party including the resource/app/service info, but not specific rights
         /// </summary>
         /// <param name="party">reportee acting on behalf of</param>
+        /// <param name="to">to party</param>
         /// <param name="cancellationToken">Cancellation token used for cancelling the inbound HTTP</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
         [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_READ)]
@@ -252,9 +253,9 @@ namespace Altinn.AccessManagement.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         [FeatureGate(FeatureFlags.RightsDelegationApi)]
-        public async Task<IActionResult> GetOfferedRights([FromRoute] int party, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetOfferedRights([FromRoute] int party, [FromQuery] Guid? to, CancellationToken cancellationToken)
         {
-            var delegations = await _rightsForAltinn2.GetOfferedRights(party, cancellationToken);
+            var delegations = await _rightsForAltinn2.GetOfferedRights(party, to, cancellationToken);
             var response = _mapper.Map<IEnumerable<RightDelegationExternal>>(delegations);
             return Ok(response);
         }

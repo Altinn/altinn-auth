@@ -1,0 +1,73 @@
+meta {
+  name: o2s get org2systemuser
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/{{party}}/rights/delegation/offered?to={{to_systemuser}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  to: {{to_systemuser}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+vars:pre-request {
+  toSsn: 
+  toLastName: 
+  org: 
+  app: 
+  auth_tokenType: Personal
+  auth_userId: 
+  auth_partyId: 
+  auth_ssn: 
+  party: 
+}
+
+script:pre-request {
+  const testdata = require(`./Testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.json`);
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  bru.setVar("party", testdata.org_system.partyid);
+  bru.setVar("to_systemuser", testdata.org_system.systems[0]);
+  bru.setVar("resource", testdata.resource_system);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.org_system.dagl.userid,
+    auth_partyId: testdata.org_system.dagl.partyid,
+    auth_ssn: testdata.org_system.dagl.pid,
+    scope: sharedtestdata.scopes.read,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+  
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("get systemuser single rights delegations", function() {
+    const testdata = require(`./Testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.json`);
+    const body = res.getBody();  
+    expect(res.status).to.equal(200);
+    
+    body.forEach((entry, index) => {
+      entry.from.forEach(from => {
+        expect(from.id, `from.id mismatch at index ${index}`).to.equal("urn:altinn:organization:uuid");
+        expect(from.value, `from.value mismatch at index ${index}`).to.equal(testdata.org_system.partyuuid.toLowerCase());
+      });
+  
+      entry.to.forEach(to => {
+        expect(to.id, `to.id mismatch at index ${index}`).to.equal("urn:altinn:systemuser:uuid");
+        expect(to.value, `to.value mismatch at index ${index}`).to.equal(testdata.org_system.systems[0].toLowerCase());
+      });
+    });
+  });
+  
+}

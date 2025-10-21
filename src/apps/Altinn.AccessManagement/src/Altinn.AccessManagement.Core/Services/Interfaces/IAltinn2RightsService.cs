@@ -11,9 +11,10 @@ public interface IAltinn2RightsService
     /// Gets all offered single rights delegations for a reportee
     /// </summary>
     /// <param name="partyId">reportee</param>
+    /// <param name="to">optional to party filter</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>list of delgations</returns>
-    Task<IEnumerable<RightDelegation>> GetOfferedRights(int partyId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<RightDelegation>> GetOfferedRights(int partyId, Guid? to, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all received single rights delegations for a reportee
