@@ -62,10 +62,6 @@ public partial class RegisterHostedService(
                     {
                         if (!data.IsDbIngested)
                         {
-                            data.PartyStreamNextPageLink = null;
-                            data.RoleStreamNextPageLink = null;
-                            await lease.Update(data, cancellationToken);
-
                             await partySyncService.SyncParty(lease, true, cancellationToken);
                             await roleSyncService.SyncRoles(lease, true, cancellationToken);
 
@@ -76,6 +72,10 @@ public partial class RegisterHostedService(
 
                         isDbIngested = data.IsDbIngested;
                     }
+                }
+                else
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
                 }
             }
             else
