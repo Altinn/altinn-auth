@@ -35,16 +35,15 @@ public class PartySyncService : BaseSyncService, IPartySyncService
         _serviceProvider = serviceProvider;
     }
 
-    /// <summary>
-    /// Synchronizes register data by first acquiring a remote lease and streaming register entries.
-    /// Returns if lease is already taken.
-    /// </summary>
-    /// <param name="lease">The lease result containing the lease data and status.</param>
-    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
-    public async Task SyncParty(ILease lease, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task SyncParty(ILease lease, bool isInit = false,  CancellationToken cancellationToken = default)
     {
         var options = new AuditValues(SystemEntityConstants.RegisterImportSystem);
         var leaseData = await lease.Get<RegisterLease>(cancellationToken);
+        if (isInit == false && leaseData.IsDbIngested == false)
+        {
+            return;
+        }
 
         var seen = new HashSet<string>();
         var ingestEntities = new List<Entity>();

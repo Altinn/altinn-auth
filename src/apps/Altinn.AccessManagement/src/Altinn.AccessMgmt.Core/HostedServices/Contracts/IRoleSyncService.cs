@@ -10,5 +10,5 @@ public interface IRoleSyncService
     /// <summary>
     /// Sync roles
     /// </summary>
-    Task SyncRoles(ILease ls, CancellationToken cancellationToken);
+    Task SyncRoles(ILease ls, bool isInit = false, CancellationToken cancellationToken = default);
 }

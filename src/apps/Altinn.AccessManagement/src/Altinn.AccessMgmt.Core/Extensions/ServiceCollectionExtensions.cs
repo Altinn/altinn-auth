@@ -15,6 +15,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddAccessMgmtCore(this IServiceCollection services)
     {
         services.AddHostedService<RegisterHostedService>();
+        services.AddScoped<RegisterHostedService>();
         services.AddScoped<IIngestService, IngestService>();
         services.AddScoped<IConnectionService, ConnectionService>();
         services.AddScoped<IPartyService, PartyService>();

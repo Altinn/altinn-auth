@@ -1,6 +1,8 @@
 using Altinn.AccessMgmt.Core.HostedServices.Contracts;
+using Altinn.AccessMgmt.Core.HostedServices.Leases;
 using Altinn.AccessMgmt.Core.HostedServices.Services;
 using Altinn.Authorization.Host.Lease;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
@@ -43,6 +45,45 @@ public partial class RegisterHostedService(
         _timer = new Timer(async state => await SyncRegisterDispatcher(state), _stop.Token, TimeSpan.Zero, TimeSpan.FromMinutes(2));
 
         return Task.CompletedTask;
+    }
+
+    public async Task EnsureDbIsIngestWithRegisterData(CancellationToken cancellationToken)
+    {
+        var isDbIngested = false;
+        do
+        {
+            if (await _featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.HostedServicesRegisterSync, cancellationToken))
+            {
+                await using var lease = await _leaseService.TryAcquireNonBlocking("access_management_register_sync", cancellationToken);
+                if (lease is { })
+                {
+                    var data = await lease.Get<RegisterLease>(cancellationToken);
+                    if (data is { })
+                    {
+                        if (!data.IsDbIngested)
+                        {
+                            data.PartyStreamNextPageLink = null;
+                            data.RoleStreamNextPageLink = null;
+                            await lease.Update(data, cancellationToken);
+
+                            await partySyncService.SyncParty(lease, true, cancellationToken);
+                            await roleSyncService.SyncRoles(lease, true, cancellationToken);
+
+                            data = await lease.Get<RegisterLease>(cancellationToken);
+                            data.IsDbIngested = true;
+                            await lease.Update(data, cancellationToken);
+                        }
+
+                        isDbIngested = data.IsDbIngested;
+                    }
+                }
+            }
+            else
+            {
+                isDbIngested = true;
+            }
+        }
+        while (!isDbIngested);
     }
 
     /// <summary>
@@ -94,7 +135,7 @@ public partial class RegisterHostedService(
     {
         try
         {
-            await roleSyncService.SyncRoles(lease, cancellationToken);
+            await roleSyncService.SyncRoles(lease, false, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -119,11 +160,11 @@ public partial class RegisterHostedService(
     {
         try
         {
-            await partySyncService.SyncParty(lease, cancellationToken);
+            await partySyncService.SyncParty(lease, false, cancellationToken);
         }
         catch (Exception ex)
         {
-            Log.SyncError(_logger, ex);   
+            Log.SyncError(_logger, ex);
         }
     }
 

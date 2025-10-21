@@ -33,7 +33,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
     private readonly IServiceProvider _serviceProvider;
 
     /// <inheritdoc />
-    public async Task SyncRoles(ILease lease, CancellationToken cancellationToken)
+    public async Task SyncRoles(ILease lease, bool isInit = false, CancellationToken cancellationToken = default)
     {
         var seen = new HashSet<(Guid From, Guid To, Guid Role)>();
         var addParent = new Dictionary<Guid, Guid>();
@@ -46,6 +46,11 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
         var appDbContextFactory = scope.ServiceProvider.GetRequiredService<AppDbContextFactory>();
         var ingestService = scope.ServiceProvider.GetRequiredService<IIngestService>();
         var leaseData = await lease.Get<RegisterLease>(cancellationToken);
+
+        if (isInit == false && leaseData.IsDbIngested == false)
+        {
+            return;
+        }
 
         await foreach (var page in await _register.StreamRoles([], leaseData.RoleStreamNextPageLink, cancellationToken))
         {
@@ -112,7 +117,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                 await Task.WhenAll(
                     RemoveParents(appDbContextFactory, removeParent, cancellationToken),
                     SetParents(appDbContextFactory, addParent, cancellationToken),
-                    RemoveAssignments(appDbContextFactory, removeAssignments, cancellationToken), 
+                    RemoveAssignments(appDbContextFactory, removeAssignments, cancellationToken),
                     IngestAssigments(ingestService, addAssignments, options, cancellationToken)
                 );
 

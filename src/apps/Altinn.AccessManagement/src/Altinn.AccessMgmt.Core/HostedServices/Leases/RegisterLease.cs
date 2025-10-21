@@ -14,4 +14,9 @@ internal class RegisterLease()
     /// The URL of the next page of AssignmentSuccess data.
     /// </summary>
     public string RoleStreamNextPageLink { get; set; }
+
+    /// <summary>
+    /// Specifies if current newest data has been written.
+    /// </summary>
+    public bool IsDbIngested { get; set; }
 }
