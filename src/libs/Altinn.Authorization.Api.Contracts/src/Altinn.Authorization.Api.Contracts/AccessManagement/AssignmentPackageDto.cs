@@ -14,4 +14,3 @@ public class AssignmentPackageDto
     /// </summary>
     public Guid PackageId { get; set; }
 }
-

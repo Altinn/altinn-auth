@@ -17,7 +17,7 @@ using Microsoft.FeatureManagement.Mvc;
 namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 
 /// <summary>
-/// Controller for en user api operations for connections
+/// Controller for enduser api operations for connections
 /// </summary>
 [ApiController]
 [Route("accessmanagement/api/v1/enduser/connections")]
@@ -46,7 +46,10 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetConnections([FromQuery] ConnectionInput connection, [FromQuery, FromHeader] PagingInput paging, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetConnections(
+        [FromQuery] ConnectionInput connection,
+        [FromQuery, FromHeader] PagingInput paging,
+        CancellationToken cancellationToken = default)
     {
         if (EnduserValidationRules.EnduserReadConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
         {
@@ -67,7 +70,7 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
     }
 
     /// <summary>
-    /// Add package to connection (assignment or delegation)
+    /// Add a new rightholder connection
     /// </summary>
     [HttpPost]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
@@ -76,7 +79,7 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> AddAssignment([FromQuery] ConnectionInput connection, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> AddAssignment([FromQuery] ConnectionInput connection, [FromBody] PersonInput person, CancellationToken cancellationToken = default)
     {
         if (EnduserValidationRules.EnduserAddConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
         {
@@ -84,7 +87,9 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
         }
 
         Guid.TryParse(connection.From, out var fromUuid);
-        Guid.TryParse(connection.To, out var toUuid);
+        Guid.TryParse(connection.To, out var toUuid); // ToDo: to-uuid param only to be allowed when not adding a person
+
+        // ToDo: Implement adding by person details when person input is provided
         var result = await ConnectionService.AddAssignment(fromUuid, toUuid, ConfigureConnections, cancellationToken);
         if (result.IsProblem)
         {
@@ -95,7 +100,7 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
     }
 
     /// <summary>
-    /// Remove package from connection (assignment or delegation)
+    /// Remove an existing rightholder connection with option to cascade delete any assignments tied to the connection
     /// </summary>
     [HttpDelete]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
@@ -123,7 +128,7 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
     }
 
     /// <summary>
-    /// Creates an assignment between the authenticated user's selected party and the specified target party.
+    /// Gets all access packages between the authenticated user's selected party and the specified target party.
     /// </summary>
     [HttpGet("accesspackages")]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
@@ -153,7 +158,7 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
     }
 
     /// <summary>
-    /// Add package to connection (assignment or delegation)
+    /// Add package to an existing rightholder connection
     /// </summary>
     [HttpPost("accesspackages")]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
@@ -191,7 +196,7 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
     }
 
     /// <summary>
-    /// Remove package from connection (assignment or delegation)
+    /// Remove package from rightholder connection
     /// </summary>
     [HttpDelete("accesspackages")]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
@@ -230,7 +235,7 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
     }
 
     /// <summary>
-    /// API for delegation check of access packages, for which packages the authenticated user has permission to assign to others on behalf of the specified party.
+    /// Delegation check of access packages, for which packages the authenticated user has permission to assign to others on behalf of the specified party.
     /// </summary>
     [HttpGet("accesspackages/delegationcheck")]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
@@ -252,6 +257,179 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
         }
 
         var result = await CheckPackage();
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok(PaginatedResult.Create(result.Value, null));
+    }
+
+    /// <summary>
+    /// Gets all roles between the authenticated user's selected party and the specified target party.
+    /// </summary>
+    [HttpGet("roles")]
+    [FeatureGate("connections/roles")]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType<PaginatedResult<RolePermissionDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetRoles([FromQuery] ConnectionInput connection, [FromQuery, FromHeader] PagingInput paging, CancellationToken cancellationToken = default)
+    {
+        var validFromUuid = Guid.TryParse(connection.From, out var fromUuid);
+        var validToUuid = Guid.TryParse(connection.To, out var toUuid);
+        _ = Guid.TryParse(connection.Party, out var partyUuid);
+
+        ////var result = await ConnectionService.GetRoles(partyUuid, validFromUuid ? fromUuid : null, validToUuid ? toUuid : null, ConfigureConnections, cancellationToken); ToDo: Implement when role service is ready
+
+        var result = await Task.FromResult(new Result<IEnumerable<RolePermissionDto>>(Enumerable.Empty<RolePermissionDto>()));
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok(PaginatedResult.Create(result.Value, null));
+    }
+
+    /// <summary>
+    /// Remove Altinn 2 role from connection
+    /// </summary>
+    [HttpDelete("roles")]
+    [FeatureGate("connections/roles")]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> RemoveRole([FromQuery] ConnectionInput connection, [FromQuery] string roleCode, CancellationToken cancellationToken = default)
+    {
+        Guid.TryParse(connection.From, out var fromUuid);
+        Guid.TryParse(connection.To, out var toUuid);
+        async Task<ValidationProblemInstance> RemoveRole()
+        {
+            return await Task.FromResult<ValidationProblemInstance>(null); // ToDo: Implement when role service is ready
+        }
+
+        var problem = await RemoveRole();
+
+        if (problem is { })
+        {
+            return problem.ToActionResult();
+        }
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Gets all resources between the authenticated user's selected party and the specified target party.
+    /// </summary>
+    [HttpGet("resources")]
+    [FeatureGate("connections/resources")]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType<PaginatedResult<ResourcePermissionDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetResources([FromQuery] ConnectionInput connection, [FromQuery, FromHeader] PagingInput paging, CancellationToken cancellationToken = default)
+    {
+        var validFromUuid = Guid.TryParse(connection.From, out var fromUuid);
+        var validToUuid = Guid.TryParse(connection.To, out var toUuid);
+        _ = Guid.TryParse(connection.Party, out var partyUuid);
+
+        ////var result = await ConnectionService.GetResources(partyUuid, validFromUuid ? fromUuid : null, validToUuid ? toUuid : null, ConfigureConnections, cancellationToken); ToDo: Implement when resource service is ready
+
+        var result = await Task.FromResult(new Result<IEnumerable<ResourcePermissionDto>>(Enumerable.Empty<ResourcePermissionDto>()));
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok(PaginatedResult.Create(result.Value, null));
+    }
+
+    /// <summary>
+    /// Add resource to an existing rightholder connection
+    /// </summary>
+    [HttpPost("resources")]
+    [FeatureGate("connections/resources")]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [ProducesResponseType<AssignmentResourceDto>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> AddResource([FromQuery] ConnectionInput connection, [FromQuery] string resourceId, CancellationToken cancellationToken = default)
+    {
+        Guid.TryParse(connection.From, out var fromUuid);
+        Guid.TryParse(connection.To, out var toUuid);
+
+        async Task<Result<AssignmentResourceDto>> AddResource()
+        {
+            return await Task.FromResult(new Result<AssignmentResourceDto>(new AssignmentResourceDto())); // ToDo: Implement when resource service is ready
+        }
+
+        var result = await AddResource();
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Remove resource from rightholder connection
+    /// </summary>
+    [HttpDelete("resources")]
+    [FeatureGate("connections/resources")]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> RemoveResource([FromQuery] ConnectionInput connection, [FromQuery] string resourceId, CancellationToken cancellationToken = default)
+    {
+        Guid.TryParse(connection.From, out var fromUuid);
+        Guid.TryParse(connection.To, out var toUuid);
+        async Task<ValidationProblemInstance> RemovePackage()
+        {
+            return await Task.FromResult<ValidationProblemInstance>(null); // ToDo: Implement when resource service is ready
+        }
+
+        var problem = await RemovePackage();
+
+        if (problem is { })
+        {
+            return problem.ToActionResult();
+        }
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Delegation check of resources, for which resources the authenticated user has permission to assign to others on behalf of the specified party.
+    /// </summary>
+    [HttpGet("resources/delegationcheck")]
+    [FeatureGate("connections/resources")]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [ProducesResponseType<PaginatedResult<ResourceCheckDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> CheckResource([FromQuery] Guid party, [FromQuery] string resourceId, CancellationToken cancellationToken = default)
+    {
+        async Task<Result<IEnumerable<ResourceCheckDto>>> CheckResource()
+        {
+            return await Task.FromResult(new Result<IEnumerable<ResourceCheckDto>>(Enumerable.Empty<ResourceCheckDto>())); // ToDo: Implement when resource service is ready
+        }
+
+        var result = await CheckResource();
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();

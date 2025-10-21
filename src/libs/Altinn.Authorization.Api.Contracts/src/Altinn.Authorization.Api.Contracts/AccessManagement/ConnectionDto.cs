@@ -6,17 +6,27 @@
 public class ConnectionDto
 {
     /// <summary>
-    /// Party
+    /// The party for which the connection and access applies
     /// </summary>
     public CompactEntityDto Party { get; set; } = new();
 
     /// <summary>
-    /// Roles the party has for given filter
+    /// Role accesses for the given party
     /// </summary>
     public List<CompactRoleDto> Roles { get; set; } = new();
 
     /// <summary>
-    /// Connections the party has
+    /// Access packages for the given party
+    /// </summary>
+    public List<AccessPackageDto> Packages { get; set; } = new();
+
+    /// <summary>
+    /// Direct resource accesses for the given party
+    /// </summary>
+    public List<ResourceDto> Resources { get; set; } = new();
+
+    /// <summary>
+    /// Sub-connections of the party where the same access applies
     /// </summary>
     public List<ConnectionDto> Connections { get; set; } = new();
 }
