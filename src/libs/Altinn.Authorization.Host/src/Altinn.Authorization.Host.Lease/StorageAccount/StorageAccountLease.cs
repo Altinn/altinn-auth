@@ -93,7 +93,6 @@ internal sealed partial class StorageAccountLease : ILease
             var content = JsonSerializer.Serialize(data);
             var options = new BlobUploadOptions()
             {
-                AccessTier = AccessTier.Hot,
                 HttpHeaders = new BlobHttpHeaders
                 {
                     ContentType = MediaTypeNames.Application.Json,
