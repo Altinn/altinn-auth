@@ -62,6 +62,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
 
             _logger.LogInformation("Starting proccessing party page ({0}-{1})", page.Content.Stats.PageStart, page.Content.Stats.PageEnd);
 
+            var flushed = 0;
             foreach (var item in page.Content.Data)
             {
                 var assignment = MapToAssignment(item);
@@ -69,18 +70,18 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                 {
                     if (!seen.Add((From: assignment.FromId, To: assignment.ToId, Role: RoleConstants.HasAsRegistrationUnitBEDR)))
                     {
-                        await Flush();
+                        flushed += await Flush();
                     }
                     else if (!seen.Add((From: assignment.FromId, To: assignment.ToId, Role: RoleConstants.HasAsRegistrationUnitAAFY)))
                     {
-                        await Flush();
+                        flushed += await Flush();
                     }
                 }
                 else
                 {
                     if (!seen.Add((From: assignment.FromId, To: assignment.ToId, Role: assignment.RoleId)))
                     {
-                        await Flush();
+                        flushed += await Flush();
                     }
                 }
 
@@ -102,19 +103,22 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                 }
             }
 
-            await Flush();
+            flushed += await Flush();
 
             if (string.IsNullOrEmpty(page?.Content?.Links?.Next))
             {
                 return;
             }
 
-            leaseData.RoleStreamNextPageLink = page.Content.Links.Next;
-            await lease.Update(leaseData, cancellationToken);
-
-            async Task Flush()
+            if (flushed > 0)
             {
-                await Task.WhenAll(
+                leaseData.RoleStreamNextPageLink = page.Content.Links.Next;
+                await lease.Update(leaseData, cancellationToken);
+            }
+
+            async Task<int> Flush()
+            {
+                var results = await Task.WhenAll(
                     RemoveParents(appDbContextFactory, removeParent, cancellationToken),
                     SetParents(appDbContextFactory, addParent, cancellationToken),
                     RemoveAssignments(appDbContextFactory, removeAssignments, cancellationToken),
@@ -126,11 +130,13 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                 removeParent.Clear();
                 addAssignments.Clear();
                 removeAssignments.Clear();
+
+                return results.Sum();
             }
         }
     }
 
-    private async Task RemoveAssignments(AppDbContextFactory dbContextFactory, List<Assignment> relations, CancellationToken cancellationToken = default)
+    private async Task<int> RemoveAssignments(AppDbContextFactory dbContextFactory, List<Assignment> relations, CancellationToken cancellationToken = default)
     {
         using var dbContext = dbContextFactory.CreateDbContext();
         var relationsFrom = relations
@@ -151,10 +157,10 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
             .ToList();
 
         dbContext.RemoveRange(entities);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        return await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task IngestAssigments(IIngestService ingestService, List<Assignment> assignments, AuditValues options, CancellationToken cancellationToken)
+    private async Task<int> IngestAssigments(IIngestService ingestService, List<Assignment> assignments, AuditValues options, CancellationToken cancellationToken)
     {
         var batchId = Guid.CreateVersion7();
         try
@@ -170,6 +176,8 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
             var merged = await ingestService.MergeTempData<Assignment>(batchId, options, ["fromid", "roleid", "toid"], cancellationToken: cancellationToken);
 
             _logger.LogInformation("Merge complete: Assignment ({0}/{1})", merged, ingested);
+
+            return merged;
         }
         catch (Exception ex)
         {
@@ -178,7 +186,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
         }
     }
 
-    private async Task RemoveParents(AppDbContextFactory dbContextFactory, List<Guid> relations, CancellationToken cancellationToken = default)
+    private async Task<int> RemoveParents(AppDbContextFactory dbContextFactory, List<Guid> relations, CancellationToken cancellationToken = default)
     {
         using var dbContext = dbContextFactory.CreateDbContext();
         var entities = await dbContext.Entities
@@ -191,10 +199,10 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
             entity.ParentId = null;
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        return await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task SetParents(AppDbContextFactory dbContextFactory, Dictionary<Guid, Guid> relations, CancellationToken cancellationToken = default)
+    private async Task<int> SetParents(AppDbContextFactory dbContextFactory, Dictionary<Guid, Guid> relations, CancellationToken cancellationToken = default)
     {
         using var dbContext = dbContextFactory.CreateDbContext();
         var fields = relations.Keys.ToList();
@@ -208,7 +216,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
             entity.ParentId = relations[entity.Id];
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        return await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private bool ShouldSetParent(ExternalRoleAssignmentEvent item) =>

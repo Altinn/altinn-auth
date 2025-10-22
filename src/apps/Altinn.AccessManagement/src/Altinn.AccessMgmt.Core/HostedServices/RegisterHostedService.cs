@@ -52,7 +52,7 @@ public partial class RegisterHostedService(
         var isDbIngested = false;
         do
         {
-            if (await _featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.HostedServicesRegisterSync, cancellationToken))
+            if (await _featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.HostedServicesRegisterSyncImport, cancellationToken))
             {
                 await using var lease = await _leaseService.TryAcquireNonBlocking("access_management_register_sync", cancellationToken);
                 if (lease is { })

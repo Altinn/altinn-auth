@@ -121,7 +121,7 @@ public static class PostgresServer
                 	IF NOT EXISTS (SELECT * FROM pg_user WHERE usename IN ('{DbUserName}', '{DbAdminName}')) THEN
                 		CREATE USER {DbUserName} WITH PASSWORD '{DbPassword}';
                 		CREATE USER {DbAdminName} WITH PASSWORD '{DbPassword}';
-                		ALTER ROLE {DbUserName} LOGIN INHERIT;
+                		ALTER ROLE {DbUserName} LOGIN SUPERUSER INHERIT;
                 		ALTER ROLE {DbAdminName} LOGIN SUPERUSER INHERIT;
                 	END IF;
                 END

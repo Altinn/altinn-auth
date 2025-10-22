@@ -1,4 +1,5 @@
-﻿using Altinn.AccessMgmt.Core.HostedServices.Contracts;
+﻿using System.Net.Http.Headers;
+using Altinn.AccessMgmt.Core.HostedServices.Contracts;
 using Altinn.AccessMgmt.Core.HostedServices.Leases;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -36,7 +37,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
     }
 
     /// <inheritdoc/>
-    public async Task SyncParty(ILease lease, bool isInit = false,  CancellationToken cancellationToken = default)
+    public async Task SyncParty(ILease lease, bool isInit = false, CancellationToken cancellationToken = default)
     {
         var options = new AuditValues(SystemEntityConstants.RegisterImportSystem);
         var leaseData = await lease.Get<RegisterLease>(cancellationToken);
@@ -84,25 +85,28 @@ public class PartySyncService : BaseSyncService, IPartySyncService
                 ingestEntitiesLookup.AddRange(data.EntityLookups);
             }
 
-            await Flush();
+            var flushed = await Flush();
 
             if (string.IsNullOrEmpty(page?.Content?.Links?.Next))
             {
                 return;
             }
 
-            leaseData.PartyStreamNextPageLink = page.Content.Links.Next;
-            await lease.Update(leaseData, cancellationToken);
+            if (flushed > 0)
+            {
+                leaseData.PartyStreamNextPageLink = page.Content.Links.Next;
+                await lease.Update(leaseData, cancellationToken);
+            }
         }
 
-        async Task Flush()
+        async Task<int> Flush()
         {
             var batchId = Guid.CreateVersion7();
             var batchName = batchId.ToString("N");
 
             if (ingestEntities.Count == 0 && ingestEntitiesLookup.Count == 0)
             {
-                return;
+                return 0;
             }
 
             try
@@ -121,6 +125,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
                 var mergedLookups = await ingestService.MergeTempData<EntityLookup>(batchId, options, ["entityid", "key"], cancellationToken);
 
                 _logger.LogInformation("Merge complete: Entity ({0}/{1}) EntityLookup ({2}/{3})", mergedEntities, ingestedEntities, mergedLookups, ingestedLookups);
+                return mergedEntities + mergedLookups;
             }
             catch (Exception ex)
             {
@@ -133,6 +138,8 @@ public class PartySyncService : BaseSyncService, IPartySyncService
                 ingestEntitiesLookup.Clear();
                 seen.Clear();
             }
+
+            return 0;
         }
     }
 
