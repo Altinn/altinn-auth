@@ -103,7 +103,7 @@ public partial class RegisterHostedService(
             if (await _featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.HostedServicesResourceRegistrySync, cancellationToken))
             {
                 await using var lease = await _leaseService.TryAcquireNonBlocking("access_management_resource_registry_sync", cancellationToken);
-                if (cancellationToken.IsCancellationRequested)
+                if (lease is null || cancellationToken.IsCancellationRequested)
                 {
                     return;
                 }
@@ -114,6 +114,11 @@ public partial class RegisterHostedService(
             if (await _featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.HostedServicesRegisterSync))
             {
                 await using var lease = await _leaseService.TryAcquireNonBlocking("access_management_register_sync", cancellationToken);
+
+                if (lease is null || cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
 
                 await SyncRegisterParty(lease, cancellationToken);
                 await SyncRegisterRoles(lease, cancellationToken);
