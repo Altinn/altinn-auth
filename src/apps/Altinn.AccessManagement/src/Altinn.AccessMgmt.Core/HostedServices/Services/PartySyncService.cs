@@ -48,7 +48,6 @@ public class PartySyncService : BaseSyncService, IPartySyncService
 
         var seen = new HashSet<string>();
         var ingestEntities = new List<Entity>();
-        var ingestEntitiesLookup = new List<EntityLookup>();
 
         using var scope = _serviceProvider.CreateEFScope(options);
         var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -66,7 +65,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
 
             foreach (var item in page?.Content.Data ?? [])
             {
-                var data = item switch
+                var entity = item switch
                 {
                     Person person => MapPerson(person),
                     Organization organization => MapOrganization(organization),
@@ -76,13 +75,12 @@ public class PartySyncService : BaseSyncService, IPartySyncService
                     _ => throw new InvalidDataException($"Unkown Party type {item.Type}"),
                 };
 
-                if (!seen.Add(data.Entity.RefId))
+                if (!seen.Add(entity.RefId))
                 {
                     await Flush();
                 }
 
-                ingestEntities.Add(data.Entity);
-                ingestEntitiesLookup.AddRange(data.EntityLookups);
+                ingestEntities.Add(entity);
             }
 
             var flushed = await Flush();
@@ -104,38 +102,35 @@ public class PartySyncService : BaseSyncService, IPartySyncService
             var batchId = Guid.CreateVersion7();
             var batchName = batchId.ToString("N");
 
-            if (ingestEntities.Count == 0 && ingestEntitiesLookup.Count == 0)
+            if (ingestEntities.Count == 0)
             {
                 return 0;
             }
 
             try
             {
-                _logger.LogInformation("Ingest and Merge Entity and EntityLookup batch '{0}' to db", batchName);
+                _logger.LogInformation("Ingest and Merge Entity batch '{0}' to db", batchName);
 
                 var ingestedEntities = await ingestService.IngestTempData(ingestEntities, batchId, cancellationToken);
-                var ingestedLookups = await ingestService.IngestTempData(ingestEntitiesLookup, batchId, cancellationToken);
 
-                if (ingestedEntities != ingestEntities.Count || ingestedLookups != ingestEntitiesLookup.Count)
+                if (ingestedEntities != ingestEntities.Count)
                 {
-                    _logger.LogWarning("Ingest partial complete: Entity ({0}/{1}) EntityLookup ({2}/{3})", ingestedEntities, ingestEntities.Count, ingestedLookups, ingestEntitiesLookup.Count);
+                    _logger.LogWarning("Ingest partial complete: Entity ({0}/{1})", ingestedEntities, ingestEntities.Count);
                 }
 
                 var mergedEntities = await ingestService.MergeTempData<Entity>(batchId, options, ["id"], cancellationToken);
-                var mergedLookups = await ingestService.MergeTempData<EntityLookup>(batchId, options, ["entityid", "key"], cancellationToken);
 
-                _logger.LogInformation("Merge complete: Entity ({0}/{1}) EntityLookup ({2}/{3})", mergedEntities, ingestedEntities, mergedLookups, ingestedLookups);
-                return mergedEntities + mergedLookups;
+                _logger.LogInformation("Merge complete: Entity ({0}/{1})", mergedEntities, ingestedEntities);
+                return mergedEntities;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to ingest and/or merge Entity and EntityLookup batch {0} to db", batchName);
+                _logger.LogError(ex, "Failed to ingest and/or merge Entity batch {0} to db", batchName);
                 await Task.Delay(2000, cancellationToken);
             }
             finally
             {
                 ingestEntities.Clear();
-                ingestEntitiesLookup.Clear();
                 seen.Clear();
             }
 
@@ -143,44 +138,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
         }
     }
 
-    private List<EntityLookup> AddDefaultEntityLookups(Party party)
-    {
-        var result = new List<EntityLookup>();
-        if (party.PartyId.HasValue && party.PartyId.Value > 0)
-        {
-            result.Add(NewEntityLookup("PartyId", party.PartyId.ToString()));
-        }
-
-        if (party.User.Value?.UserId.Value is { } userId)
-        {
-            result.Add(NewEntityLookup("UserId", userId.ToString()));
-        }
-
-        if (party.User.Value?.Username.Value is { } username && !string.IsNullOrEmpty(username))
-        {
-            result.Add(NewEntityLookup("Username", username));
-        }
-
-        if (party.DeletedAt.HasValue)
-        {
-            result.Add(NewEntityLookup("DeletedAt", party.DeletedAt.Value.UtcDateTime.ToString()));
-        }
-
-        return result;
-
-        EntityLookup NewEntityLookup(string key, string value)
-        {
-            return new EntityLookup()
-            {
-                EntityId = party.Uuid,
-                Key = key,
-                Value = value,
-                IsProtected = false,
-            };
-        }
-    }
-
-    private (Entity Entity, IEnumerable<EntityLookup> EntityLookups) MapPerson(Person person)
+    private Entity MapPerson(Person person)
     {
         var entity = CreateEntity(person, e =>
         {
@@ -192,27 +150,10 @@ public class PartySyncService : BaseSyncService, IPartySyncService
             e.VariantId = EntityVariantConstants.Person;
         });
 
-        List<EntityLookup> entityLookups = [
-            new()
-            {
-                EntityId = person.Uuid,
-                Key = "DateOfBirth",
-                Value = person.DateOfBirth.ToString()
-            },
-            new()
-            {
-                EntityId = person.Uuid,
-                Key = "PersonIdentifier",
-                Value = person.PersonIdentifier.ToString(),
-            },
-        ];
-
-        entityLookups.AddRange(AddDefaultEntityLookups(person));
-
-        return (entity, entityLookups);
+        return entity;
     }
 
-    private (Entity Entity, IEnumerable<EntityLookup> EntityLookups) MapOrganization(Organization organization)
+    private Entity MapOrganization(Organization organization)
     {
         if (!EntityVariantConstants.TryGetByName(organization.UnitType.Value, out var variant))
         {
@@ -227,21 +168,10 @@ public class PartySyncService : BaseSyncService, IPartySyncService
             o.TypeId = EntityTypeConstants.Organisation;
         });
 
-        List<EntityLookup> entityLookups = [
-            new EntityLookup()
-            {
-                EntityId = organization.Uuid,
-                Key = "OrganizationIdentifier",
-                Value = organization.OrganizationIdentifier.ToString(),
-            },
-        ];
-
-        entityLookups.AddRange(AddDefaultEntityLookups(organization));
-
-        return (entity, entityLookups);
+        return entity;
     }
 
-    private (Entity Entity, IEnumerable<EntityLookup> EntityLookups) MapSelfIdentifiedUser(SelfIdentifiedUser selfIdentifiedUser)
+    private Entity MapSelfIdentifiedUser(SelfIdentifiedUser selfIdentifiedUser)
     {
         var entity = CreateEntity(selfIdentifiedUser, s =>
         {
@@ -250,13 +180,10 @@ public class PartySyncService : BaseSyncService, IPartySyncService
             s.VariantId = EntityVariantConstants.SI;
         });
 
-        List<EntityLookup> entityLookups = [];
-        entityLookups.AddRange(AddDefaultEntityLookups(selfIdentifiedUser));
-
-        return (entity, entityLookups);
+        return entity;
     }
 
-    private (Entity Entity, IEnumerable<EntityLookup> EntityLookups) MapSystemUser(SystemUser systemUser)
+    private Entity MapSystemUser(SystemUser systemUser)
     {
         var systemTypeVariant = systemUser.SystemUserType.Value.Value switch
         {
@@ -271,10 +198,11 @@ public class PartySyncService : BaseSyncService, IPartySyncService
             s.TypeId = EntityTypeConstants.SystemUser;
             s.VariantId = systemTypeVariant;
         });
-        return (entity, []);
+
+        return entity;
     }
 
-    private (Entity Entity, IEnumerable<EntityLookup> EntityLookups) MapEnterpriseUser(EnterpriseUser enterpriseUser)
+    private Entity MapEnterpriseUser(EnterpriseUser enterpriseUser)
     {
         var entity = CreateEntity(enterpriseUser, e =>
         {
@@ -283,9 +211,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
             e.VariantId = EntityVariantConstants.EnterpriseUser;
         });
 
-        List<EntityLookup> entityLookups = [];
-        entityLookups.AddRange(AddDefaultEntityLookups(enterpriseUser));
-        return (entity, entityLookups);
+        return entity;
     }
 
     private Entity CreateEntity(Party party, Action<Entity> configureEntity)
