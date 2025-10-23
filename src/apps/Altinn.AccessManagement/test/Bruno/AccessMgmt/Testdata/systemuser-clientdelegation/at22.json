@@ -114,7 +114,7 @@
     },
     "systemuser": {
       "name": "Fiken",
-      "partyUuid": "e2eba2c3-b369-4ff9-8418-99a810d6bb58",
+      "partyUuid": "aae74f4e-cae4-4237-a1da-c1b62a61fe4b",
       "directPackageToDelegate": "urn:altinn:accesspackage:ansettelsesforhold",
       "clientPackageToDelegate": "urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet",
       "clientEnkPackageToDelegate": "urn:altinn:accesspackage:regnskapsforer-lonn",
