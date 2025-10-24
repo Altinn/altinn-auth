@@ -4,12 +4,12 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Altinn.Authorization.ABAC" Version="0.1.0" />
-    <PackageVersion Include="Altinn.Authorization.ModelUtils" Version="3.0.0" />
+    <PackageVersion Include="Altinn.Authorization.ModelUtils" Version="3.1.0" />
     <PackageVersion Include="Altinn.Authorization.ProblemDetails.Abstractions" Version="4.0.0" />
     <PackageVersion Include="Altinn.Authorization.ProblemDetails" Version="4.0.0" />
-    <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql.Yuniql" Version="4.3.0" />
-    <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql" Version="4.3.0" />
-    <PackageVersion Include="Altinn.Authorization.ServiceDefaults" Version="4.3.0" />
+    <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql.Yuniql" Version="4.4.0" />
+    <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql" Version="4.4.0" />
+    <PackageVersion Include="Altinn.Authorization.ServiceDefaults" Version="4.4.0" />
     <PackageVersion Include="Altinn.Common.AccessToken" Version="5.0.5" />
     <PackageVersion Include="Altinn.Common.AccessTokenClient" Version="3.0.15" />
     <PackageVersion Include="Altinn.Common.PEP" Version="4.2.1" />
@@ -51,7 +51,7 @@
     <PackageVersion Include="Swashbuckle.AspNetCore.Filters" Version="8.0.3" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.3.2" />
     <PackageVersion Include="System.Linq.Async" Version="6.0.3" />
-    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.7.0" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.8.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="Yuniql.AspNetCore" Version="1.2.25" />
