@@ -3,10 +3,7 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
-using Altinn.Authorization.ProblemDetails;
-using Altinn.Platform.Register.Models;
 using Microsoft.EntityFrameworkCore;
-using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
@@ -136,21 +133,11 @@ public class EntityService : IEntityService
     }
 
     /// <inheritdoc/>
-    public async Task<Entity?> GetByProfileId(int profileId, CancellationToken ct = default) => await
+    public async Task<Entity?> GetByUsername(string username, CancellationToken ct = default) => await
         Db.Entities
             .AsNoTracking()
-            .Include(t => t.Type)
-            .Include(t => t.Variant)
-            .Where(e => Db.EntityLookups.Any(l => l.EntityId == e.Id
-                                              && l.Key == "ProfileId"
-                                              && l.Value == profileId.ToString()))
+            .Where(e => e.Username == username)
             .FirstOrDefaultAsync(ct);
-
-    /// <inheritdoc/>
-    public async Task<Entity> GetByProfileId(string profileId, CancellationToken cancellationToken = default)
-    {
-        return await GetByUserId(int.Parse(profileId), cancellationToken);
-    }
 
     /// <inheritdoc/>
     public async Task<IEnumerable<Entity>> GetChildren(Guid parentId, CancellationToken cancellationToken = default)
@@ -159,8 +146,35 @@ public class EntityService : IEntityService
     }
 
     /// <inheritdoc/>
+    public async Task<IEnumerable<Entity>> GetChildren(IEnumerable<Guid> parentIds, CancellationToken cancellationToken = default)
+    {
+        return await Db.Entities
+            .AsNoTracking()
+            .Where(t => t.ParentId.HasValue && parentIds.Contains(t.ParentId.Value))
+            .Include(t => t.Parent)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async Task<Entity> GetParent(Guid parentId, CancellationToken cancellationToken = default)
     {
         return await GetEntity(parentId, cancellationToken);
-    }    
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<Entity>> GetEntities(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        return await Db.Entities.AsNoTracking()
+            .Where(r => ids.Contains(r.Id))
+            .Include(t => t.Parent)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<Entity>> GetEntitiesByPartyIds(IEnumerable<int> partyIds, CancellationToken cancellationToken = default)
+    {
+        return await Db.Entities.AsNoTracking()
+            .Where(r => r.PartyId.HasValue && partyIds.Contains(r.PartyId.Value))
+            .ToListAsync(cancellationToken);
+    }
 }

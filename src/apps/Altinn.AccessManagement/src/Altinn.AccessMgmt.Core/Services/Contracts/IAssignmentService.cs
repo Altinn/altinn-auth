@@ -69,6 +69,14 @@ public interface IAssignmentService
     Task<Assignment> GetAssignment(Guid fromId, Guid toId, string roleCode, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets all key role assignments for a given to entity.
+    /// </summary>
+    /// <param name="toId">The to party</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns></returns>
+    Task<IEnumerable<Assignment>> GetKeyRoleAssignments(Guid toId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Fetches Client assignments.
     /// </summary>
     /// <returns></returns>

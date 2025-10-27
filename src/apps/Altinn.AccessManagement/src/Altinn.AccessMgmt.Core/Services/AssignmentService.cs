@@ -175,6 +175,17 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
     }
 
     /// <inheritdoc/>
+    public async Task<IEnumerable<Assignment>> GetKeyRoleAssignments(Guid toId, CancellationToken cancellationToken = default)
+    {
+        return await db.Assignments.AsNoTracking()
+            .Where(t => t.ToId == toId)
+            .Include(t => t.Role)
+            .Where(t => t.Role.IsKeyRole)
+            .Include(t => t.From)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async Task<bool> AddPackageToAssignment(Guid userId, Guid assignmentId, Guid packageId, CancellationToken cancellationToken = default)
     {
         /*

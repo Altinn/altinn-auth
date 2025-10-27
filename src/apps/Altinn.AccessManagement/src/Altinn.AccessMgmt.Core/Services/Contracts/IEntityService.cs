@@ -59,20 +59,12 @@ public interface IEntityService
     Task<Entity> GetByUserId(int userId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Get Entity based on ProfileId
+    /// Get Entity based on Username
     /// </summary>
-    /// <param name="profileId">profileId</param>
+    /// <param name="username">username</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns></returns>
-    Task<Entity> GetByProfileId(string profileId, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get Entity based on ProfileId
-    /// </summary>
-    /// <param name="profileId">profileId</param>
-    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-    /// <returns></returns>
-    Task<Entity> GetByProfileId(int profileId, CancellationToken cancellationToken = default);
+    Task<Entity> GetByUsername(string username, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get parent Entity based on parentId
@@ -89,4 +81,28 @@ public interface IEntityService
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns></returns>
     Task<IEnumerable<Entity>> GetChildren(Guid parentId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get all child entities based on a list of parentIds
+    /// </summary>
+    /// <param name="parentIds">List of parent ids</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns></returns>
+    Task<IEnumerable<Entity>> GetChildren(IEnumerable<Guid> parentIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get all entities based on a list of ids
+    /// </summary>
+    /// <param name="ids">All party uuids to get</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns></returns>
+    Task<IEnumerable<Entity>> GetEntities(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get all entities based on a list of partyids
+    /// </summary>
+    /// <param name="partyIds">All party ids to get</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns></returns>
+    Task<IEnumerable<Entity>> GetEntitiesByPartyIds(IEnumerable<int> partyIds, CancellationToken cancellationToken = default);
 }

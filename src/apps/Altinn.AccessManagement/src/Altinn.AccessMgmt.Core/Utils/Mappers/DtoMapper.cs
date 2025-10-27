@@ -97,29 +97,31 @@ public partial class DtoMapper
         });
     }
 
-    public static CompactEntityDto Convert(Entity compactEntity, bool isConvertingParent = false)
+    public static CompactEntityDto Convert(Entity entity, bool isConvertingParent = false)
     {
-        if (compactEntity is { })
+        if (entity is { })
         {
-            EntityTypeConstants.TryGetById(compactEntity.TypeId, out var type);
-            EntityVariantConstants.TryGetById(compactEntity.VariantId, out var variant);
+            EntityTypeConstants.TryGetById(entity.TypeId, out var type);
+            EntityVariantConstants.TryGetById(entity.VariantId, out var variant);
 
             return new CompactEntityDto()
             {
-                Id = compactEntity.Id,
-                Name = compactEntity?.Name,
+                Id = entity.Id,
+                Name = entity?.Name,
                 Type = type.Entity.Name,
                 Variant = variant.Entity.Name,
-                Parent = isConvertingParent ? null : Convert(compactEntity.Parent, true),
+                Parent = isConvertingParent ? null : Convert(entity.Parent, true),
                 Children = null,
-                KeyValues = GetFakeKeyValues(compactEntity),
-                DateOfBirth = compactEntity.DateOfBirth,
-                DeletedAt = compactEntity.DeletedAt,
-                OrganizationIdentifier = compactEntity.OrganizationIdentifier,
-                PartyId = compactEntity.PartyId,
-                PersonIdentifier = compactEntity.PersonIdentifier,
-                UserId = compactEntity.UserId, 
-                Username = compactEntity.Username
+                KeyValues = GetFakeKeyValues(entity),
+                DateOfBirth = entity.DateOfBirth,
+                DateOfDeath = entity.DateOfDeath,
+                IsDeleted = entity.IsDeleted,
+                DeletedAt = entity.DeletedAt,
+                OrganizationIdentifier = entity.OrganizationIdentifier,
+                PartyId = entity.PartyId,
+                PersonIdentifier = entity.PersonIdentifier,
+                UserId = entity.UserId, 
+                Username = entity.Username
             };
         }
 

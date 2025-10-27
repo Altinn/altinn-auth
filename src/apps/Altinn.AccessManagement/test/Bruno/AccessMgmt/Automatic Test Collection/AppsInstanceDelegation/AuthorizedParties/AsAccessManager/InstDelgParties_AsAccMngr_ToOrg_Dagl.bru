@@ -72,4 +72,33 @@ tests {
     const personDelegation_2 = person.authorizedInstances.find(delegation => delegation.instanceId === instanceId_2);
     assert.isOk(personDelegation_2, `InstanceId ${instanceId_1} not found in AuthorizedInstances on Person having delegated the instance`);
   });
+  
+  test(requestName + "|Mainunit_AuthorizedInstances_not_inherited_to_subunits", function() {  
+    // Test that any authorized instances on main units does not exist on any subunits
+    body.forEach((party, partyIndex) => {
+      const parentInstances = party.authorizedInstances || [];
+  
+      if (party.subunits && party.subunits.length > 0 && parentInstances.length > 0) {
+        party.subunits.forEach((subunit, subunitIndex) => {
+          const subunitInstances = subunit.authorizedInstances || [];
+  
+          const overlappingInstances = parentInstances.filter(instance =>
+            subunitInstances.includes(instance)
+          );
+  
+          try {
+            assert.strictEqual(
+              overlappingInstances.length,
+              0,
+              `Subunit ${subunitIndex} of party ${partyIndex} contains one or more parent authorizedInstances: ${overlappingInstances.join(', ')}`
+            );
+          } catch (error) {
+            console.error(error.message);
+            throw error;
+          }
+        });
+      }
+    });
+  
+  });
 }

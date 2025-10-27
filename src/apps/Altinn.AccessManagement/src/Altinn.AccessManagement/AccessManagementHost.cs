@@ -100,7 +100,7 @@ internal static partial class AccessManagementHost
             options.Source = appsettings.RunInitOnly ? SourceType.Migration : SourceType.App; 
         });
 
-        builder.Services.AddAccessMgmtCore();
+        builder.Services.AddAccessMgmtCore(builder.Configuration);
 
         builder.ConfigurePostgreSqlConfiguration();
         builder.ConfigureAltinnPackages();

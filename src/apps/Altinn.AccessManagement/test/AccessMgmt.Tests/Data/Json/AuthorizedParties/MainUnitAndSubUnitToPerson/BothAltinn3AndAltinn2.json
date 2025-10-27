@@ -43,8 +43,8 @@
         "isDeleted": false,
         "onlyHierarchyElementWithNoAccess": false,
         "authorizedResources": [
-          "devtest_gar_authparties-main-to-person",
-          "app_ttd_am-devtest-sub-to-person"
+          "app_ttd_am-devtest-sub-to-person",
+          "devtest_gar_authparties-main-to-person"
         ],
         "authorizedRoles": [
           "REGNA",

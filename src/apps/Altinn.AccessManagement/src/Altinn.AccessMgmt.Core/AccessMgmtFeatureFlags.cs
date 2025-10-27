@@ -16,4 +16,9 @@ public static class AccessMgmtFeatureFlags
     /// Specifies if the register data should streamed from register service to access management database
     /// </summary>
     public const string HostedServicesResourceRegistrySync = $"AccessMgmt.Core.HostedServices.ResourceRegistrySync";
+
+    /// <summary>
+    /// Specifies if the AuthorizedParties service should use entity framework services for lookup of accesspackages.
+    /// </summary>
+    public const string AuthorizedPartiesEntityFrameworkEnabled = $"AccessMgmt.Core.Services.AuthorizedParties.EfEnabled";
 }

@@ -71,6 +71,16 @@ public class CompactEntityDto
     public DateOnly? DateOfBirth { get; set; }
 
     /// <summary>
+    /// DateOfDeath
+    /// </summary>
+    public DateOnly? DateOfDeath { get; set; }
+
+    /// <summary>
+    /// IsDeleted
+    /// </summary>
+    public bool IsDeleted { get; set; }
+
+    /// <summary>
     /// DeletedAt
     /// </summary>
     public DateTimeOffset? DeletedAt { get; set; }

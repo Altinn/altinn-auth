@@ -48,6 +48,7 @@ public class AuthorizedPartiesController : ControllerBase
     /// Endpoint for retrieving all authorized parties (with option to include Authorized Parties, aka Reportees, from Altinn 2) for the authenticated user
     /// </summary>
     /// <param name="includeAltinn2">Optional (Default: False): Whether Authorized Parties from Altinn 2 should be included in the result set, and if access to Altinn 3 resources through having Altinn 2 roles should be included.</param>
+    /// <param name="includeAltinn3">Optional (Default: True): Whether Authorized Parties from Altinn 3 should be included in the underlying result set.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <response code="200" cref="List{AuthorizedParty}">Ok</response>
     /// <response code="401">Unauthorized</response>
@@ -62,20 +63,20 @@ public class AuthorizedPartiesController : ControllerBase
     [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     [FeatureGate(FeatureFlags.RightsDelegationApi)]
-    public async Task<ActionResult<List<AuthorizedPartyExternal>>> GetAuthorizedParties(bool includeAltinn2 = false, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<List<AuthorizedPartyExternal>>> GetAuthorizedParties(bool includeAltinn2 = false, bool includeAltinn3 = true, CancellationToken cancellationToken = default)
     {
         try
         {
             int userId = AuthenticationHelper.GetUserId(HttpContext);
             if (userId != 0)
             {
-                return _mapper.Map<List<AuthorizedPartyExternal>>(await _authorizedPartiesService.GetAuthorizedPartiesForUser(userId, includeAltinn2, includeAuthorizedResourcesThroughRoles: false, cancellationToken));
+                return _mapper.Map<List<AuthorizedPartyExternal>>(await _authorizedPartiesService.GetAuthorizedPartiesByUserId(userId, includeAltinn2, includeAltinn3, cancellationToken));
             }
 
-            string systemUserId = AuthenticationHelper.GetSystemUserUuid(HttpContext);
-            if (!string.IsNullOrWhiteSpace(systemUserId))
+            string systemUserUuid = AuthenticationHelper.GetSystemUserUuid(HttpContext);
+            if (!string.IsNullOrWhiteSpace(systemUserUuid))
             {
-                return _mapper.Map<List<AuthorizedPartyExternal>>(await _authorizedPartiesService.GetAuthorizedPartiesForSystemUser(systemUserId, cancellationToken));
+                return _mapper.Map<List<AuthorizedPartyExternal>>(await _authorizedPartiesService.GetAuthorizedPartiesBySystemUserUuid(systemUserUuid, cancellationToken));
             }
 
             return Unauthorized();
@@ -92,6 +93,7 @@ public class AuthorizedPartiesController : ControllerBase
     /// </summary>
     /// <param name="partyId">The partyId to get if exists in the authenticated user's list of authorized parties</param>
     /// <param name="includeAltinn2">Optional (Default: False): Whether Authorized Parties from Altinn 2 should be included in the underlying result set, and if access to Altinn 3 resources through having Altinn 2 roles should be included.</param>
+    /// <param name="includeAltinn3">Optional (Default: True): Whether Authorized Parties from Altinn 3 should be included in the underlying result set.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <response code="200" cref="List{AuthorizedParty}">Ok</response>
     /// <response code="401">Unauthorized</response>
@@ -106,7 +108,7 @@ public class AuthorizedPartiesController : ControllerBase
     [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     [FeatureGate(FeatureFlags.RightsDelegationApi)]
-    public async Task<ActionResult<AuthorizedPartyExternal>> GetAuthorizedParty([FromRoute] int partyId, bool includeAltinn2 = false, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<AuthorizedPartyExternal>> GetAuthorizedParty([FromRoute] int partyId, bool includeAltinn2 = false, bool includeAltinn3 = true, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -116,7 +118,7 @@ public class AuthorizedPartiesController : ControllerBase
                 return Unauthorized();
             }
 
-            List<AuthorizedParty> authorizedParties = await _authorizedPartiesService.GetAuthorizedPartiesForUser(userId, includeAltinn2, includeAuthorizedResourcesThroughRoles: false, cancellationToken);
+            List<AuthorizedParty> authorizedParties = await _authorizedPartiesService.GetAuthorizedPartiesByUserId(userId, includeAltinn2, includeAltinn3, cancellationToken);
             AuthorizedParty authorizedParty = authorizedParties.Find(ap => ap.PartyId == partyId && !ap.OnlyHierarchyElementWithNoAccess)
                 ?? authorizedParties.SelectMany(ap => ap.Subunits).FirstOrDefault(subunit => subunit.PartyId == partyId);
 
@@ -140,6 +142,7 @@ public class AuthorizedPartiesController : ControllerBase
     /// </summary>
     /// <param name="party">The party to retrieve the list of authorized parties for</param>
     /// <param name="includeAltinn2">Optional (Default: False): Whether Authorized Parties from Altinn 2 should be included in the result set, and if access to Altinn 3 resources through having Altinn 2 roles should be included.</param>
+    /// <param name="includeAltinn3">Optional (Default: True): Whether Authorized Parties from Altinn 3 should be included in the underlying result set.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <response code="200" cref="List{AuthorizedParty}">Ok</response>
     /// <response code="401">Unauthorized</response>
@@ -154,7 +157,7 @@ public class AuthorizedPartiesController : ControllerBase
     [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     [FeatureGate(FeatureFlags.RightsDelegationApi)]
-    public async Task<ActionResult<List<AuthorizedPartyExternal>>> GetAuthorizedPartiesAsAccessManager([FromRoute] int party, bool includeAltinn2 = false, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<List<AuthorizedPartyExternal>>> GetAuthorizedPartiesAsAccessManager([FromRoute] int party, bool includeAltinn2 = false, bool includeAltinn3 = true, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -166,7 +169,7 @@ public class AuthorizedPartiesController : ControllerBase
                 return Forbid();
             }
 
-            List<AuthorizedParty> authorizedParties = await _authorizedPartiesService.GetAuthorizedPartiesForParty(subject.PartyId, includeAltinn2, includeAuthorizedResourcesThroughRoles: false, cancellationToken);
+            List<AuthorizedParty> authorizedParties = await _authorizedPartiesService.GetAuthorizedPartiesByPartyId(subject.PartyId, includeAltinn2, includeAltinn3, cancellationToken);
 
             return _mapper.Map<List<AuthorizedPartyExternal>>(authorizedParties);
         }

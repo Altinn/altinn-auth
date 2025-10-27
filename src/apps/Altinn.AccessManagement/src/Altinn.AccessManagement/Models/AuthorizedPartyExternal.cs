@@ -24,9 +24,19 @@ public class AuthorizedPartyExternal
     public string OrganizationNumber { get; set; }
 
     /// <summary>
+    /// Gets the party id of the parent/main unit if the party is a subunit
+    /// </summary>
+    public Guid? ParentId { get; set; }
+
+    /// <summary>
     /// Gets the national identity number if the party is a person
     /// </summary>
     public string PersonId { get; set; }
+
+    /// <summary>
+    /// Gets or sets date of birth if the party is a person
+    /// </summary>
+    public DateOnly? DateOfBirth { get; set; }
 
     /// <summary>
     /// Gets or sets the party id
@@ -71,7 +81,7 @@ public class AuthorizedPartyExternal
     /// <summary>
     /// Gets or sets a collection of all Authorized Instances 
     /// </summary>
-    public List<AuthorizedResource> AuthorizedInstances { get; set; } = [];
+    public List<AuthorizedResourceInstance> AuthorizedInstances { get; set; } = [];
 
     /// <summary>
     /// Gets or sets a set of subunits of this party, which the authorized subject also has some access to.
@@ -81,7 +91,7 @@ public class AuthorizedPartyExternal
     /// <summary>
     /// Composite Key instances
     /// </summary>
-    public class AuthorizedResource
+    public class AuthorizedResourceInstance
     {
         /// <summary>
         /// Resource ID

@@ -84,9 +84,19 @@ public class AuthorizedParty
     public string OrganizationNumber { get; set; }
 
     /// <summary>
+    /// Gets the party id of the parent/main unit if the party is a subunit
+    /// </summary>
+    public Guid? ParentId { get; set; }
+
+    /// <summary>
     /// Gets the national identity number if the party is a person
     /// </summary>
     public string PersonId { get; set; }
+
+    /// <summary>
+    /// Gets or sets date of birth if the party is a person
+    /// </summary>
+    public DateOnly? DateOfBirth { get; set; }
 
     /// <summary>
     /// Gets or sets the party id
@@ -114,9 +124,14 @@ public class AuthorizedParty
     public bool OnlyHierarchyElementWithNoAccess { get; set; }
 
     /// <summary>
+    /// Gets or sets a collection of all rolecodes for roles from either Enhetsregisteret or Altinn 2 which the authorized subject has been authorized for on behalf of this party
+    /// </summary>
+    public List<string> AuthorizedRoles { get; set; } = [];
+
+    /// <summary>
     /// Gets or sets a collection of all accesspackage identifiers the authorized subject has some access to on behalf of this party
     /// </summary>
-    private SortedList<string, string> SortedAuthorizedAccessPackages { get; set; } = [];
+    public SortedList<string, string> SortedAuthorizedAccessPackages { get; set; } = [];
 
     /// <summary>
     /// Gets or sets a collection of all accesspackage identifiers the authorized subject has some access to on behalf of this party
@@ -130,24 +145,41 @@ public class AuthorizedParty
     }
 
     /// <summary>
-    /// Gets or sets a collection of all resource identifier the authorized subject has some access to on behalf of this party
+    /// Gets or sets a collection of all resource identifiers the authorized subject has some access to on behalf of this party
     /// </summary>
-    public List<string> AuthorizedResources { get; set; } = [];
+    public SortedList<string, string> SortedAuthorizedResources { get; set; } = [];
 
     /// <summary>
-    /// Gets or sets a collection of all rolecodes for roles from either Enhetsregisteret or Altinn 2 which the authorized subject has been authorized for on behalf of this party
+    /// Gets or sets a collection of all resource identifier the authorized subject has some access to on behalf of this party
     /// </summary>
-    public List<string> AuthorizedRoles { get; set; } = [];
+    public List<string> AuthorizedResources
+    {
+        get
+        {
+            return SortedAuthorizedResources?.Values.ToList() ?? [];
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a collection of all resource instances identifiers the authorized subject has some access to on behalf of this party
+    /// </summary>
+    public SortedList<string, AuthorizedResourceInstance> SortedAuthorizedInstances { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets a collection of all Authorized Instances 
+    /// </summary>
+    public List<AuthorizedResourceInstance> AuthorizedInstances
+    {
+        get
+        {
+            return SortedAuthorizedInstances?.Values.ToList() ?? [];
+        }
+    }
 
     /// <summary>
     /// Gets or sets a set of subunits of this party, which the authorized subject also has some access to.
     /// </summary>
     public List<AuthorizedParty> Subunits { get; set; } = [];
-
-    /// <summary>
-    /// Gets or sets a collection of all Authorized Instances 
-    /// </summary>
-    public List<AuthorizedResource> AuthorizedInstances { get; set; } = [];
 
     /// <summary>
     /// Enriches this authorized party and any subunits with a resource access
@@ -185,9 +217,18 @@ public class AuthorizedParty
     /// <param name="resourceId">The resource ID to add to the authorized party (and any subunits) list of authorized resources</param>
     public void EnrichWithResourceAccess(string resourceId)
     {
+        if (string.IsNullOrWhiteSpace(resourceId))
+        {
+            return;
+        }
+
         resourceId = MapAppIdToResourceId(resourceId);
         OnlyHierarchyElementWithNoAccess = false;
-        AuthorizedResources.Add(resourceId);
+
+        if (!SortedAuthorizedResources.ContainsKey(resourceId))
+        {
+            SortedAuthorizedResources.Add(resourceId, resourceId);
+        }
 
         if (Subunits != null)
         {
@@ -205,18 +246,21 @@ public class AuthorizedParty
     /// <param name="instanceId">The instance ID of the instance delegation to add to the authorized party</param>
     public void EnrichWithResourceInstanceAccess(string resourceId, string instanceId)
     {
-        // Ensure that we dont't add duplicates
-        if (AuthorizedInstances.Exists(instance => instance.InstanceId == instanceId && instance.ResourceId == resourceId))
+        if (string.IsNullOrWhiteSpace(resourceId) || string.IsNullOrWhiteSpace(instanceId))
         {
             return;
         }
 
         OnlyHierarchyElementWithNoAccess = false;
-        AuthorizedInstances.Add(new()
+        var key = $"{resourceId},{instanceId}";
+        if (!SortedAuthorizedInstances.ContainsKey(key))
         {
-            ResourceId = resourceId,
-            InstanceId = instanceId
-        });
+            SortedAuthorizedInstances.Add(key, new()
+            {
+                ResourceId = resourceId,
+                InstanceId = instanceId
+            });
+        }
     }
 
     private static string MapAppIdToResourceId(string altinnAppId)
@@ -233,7 +277,7 @@ public class AuthorizedParty
     /// <summary>
     /// Composite Key instances
     /// </summary>
-    public class AuthorizedResource
+    public class AuthorizedResourceInstance
     {
         /// <summary>
         /// Resource ID
