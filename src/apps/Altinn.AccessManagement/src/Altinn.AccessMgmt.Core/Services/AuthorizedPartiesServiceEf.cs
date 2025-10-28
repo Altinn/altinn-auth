@@ -189,13 +189,23 @@ public class AuthorizedPartiesServiceEf(
     private async Task<List<AuthorizedParty>> GetAuthorizedParties(Entity userSubject, IEnumerable<Entity> orgSubjectParties = null, bool includeAltinn2 = true, bool includeAltinn3 = true, CancellationToken cancellationToken = default)
     {
         IEnumerable<AuthorizedParty> a2AuthorizedParties = [];
+        Dictionary<Guid, Entity> allA2Parties = [];
         if (includeAltinn2 && userSubject.UserId.HasValue)
         {
             a2AuthorizedParties = await altinnRolesClient.GetAuthorizedPartiesWithRoles(userSubject.UserId.Value, cancellationToken);
 
+            // Get A3 party info for all Altinn 2 authorized parties and their subunits
+            List<Guid> a2PartyUuids = a2AuthorizedParties.Select(p => p.PartyUuid).Distinct().ToList();
+            a2PartyUuids.AddRange(a2AuthorizedParties.SelectMany(p => p.Subunits).Select(su => su.PartyUuid).Distinct());
+            var a2Parties = await entityService.GetEntities(a2PartyUuids, cancellationToken);
+            foreach (var a2Party in a2Parties)
+            {
+                allA2Parties.Add(a2Party.Id, a2Party);
+            }
+
             if (!includeAltinn3)
             {
-                return a2AuthorizedParties.ToList();
+                return MergeAuthorizePartyLists(a2AuthorizedParties, allA2Parties, [], new()).ToList();
             }
         }
 
@@ -211,10 +221,10 @@ public class AuthorizedPartiesServiceEf(
             }
         }
 
-        return MergeAuthorizePartyLists(a2AuthorizedParties, a3AuthorizedParties, allA3Parties).ToList();
+        return MergeAuthorizePartyLists(a2AuthorizedParties, allA2Parties, a3AuthorizedParties, allA3Parties).ToList();
     }
 
-    private IEnumerable<AuthorizedParty> MergeAuthorizePartyLists(IEnumerable<AuthorizedParty> a2AuthorizedParties, IEnumerable<AuthorizedParty> a3AuthorizedParties, Dictionary<Guid, AuthorizedParty> allParties)
+    private IEnumerable<AuthorizedParty> MergeAuthorizePartyLists(IEnumerable<AuthorizedParty> a2AuthorizedParties, Dictionary<Guid, Entity> allA2Parties, IEnumerable<AuthorizedParty> a3AuthorizedParties, Dictionary<Guid, AuthorizedParty> allParties)
     {
         List<AuthorizedParty> result = a3AuthorizedParties.ToList();
 
@@ -237,48 +247,34 @@ public class AuthorizedPartiesServiceEf(
                     else
                     {
                         // Add new Altinn 2 subunit
-                        existingA3Party.Subunits.Add(a2SubUnit);
-                        allParties.Add(a2SubUnit.PartyUuid, a2SubUnit);
+                        var enhancedA2SubUnit = BuildAuthorizedPartyFromEntity(allA2Parties[a2SubUnit.PartyUuid]);
+                        enhancedA2SubUnit.AuthorizedRoles = a2SubUnit.AuthorizedRoles;
+
+                        existingA3Party.Subunits.Add(enhancedA2SubUnit);
+                        allParties.Add(enhancedA2SubUnit.PartyUuid, enhancedA2SubUnit);
                     }
                 }
             }
             else
             {
                 // Add new Altinn 2 party and its subunits
-                allParties.Add(a2Party.PartyUuid, a2Party);
+                var enhancedA2Party = BuildAuthorizedPartyFromEntity(allA2Parties[a2Party.PartyUuid], onlyHierarchyElement: a2Party.OnlyHierarchyElementWithNoAccess);
+                enhancedA2Party.AuthorizedRoles = a2Party.AuthorizedRoles;
+
+                allParties.Add(a2Party.PartyUuid, enhancedA2Party);
                 foreach (AuthorizedParty a2SubUnit in a2Party.Subunits)
                 {
-                    allParties.Add(a2SubUnit.PartyUuid, a2SubUnit);
+                    var enhancedA2SubUnit = BuildAuthorizedPartyFromEntity(allA2Parties[a2SubUnit.PartyUuid]);
+                    enhancedA2SubUnit.AuthorizedRoles = a2SubUnit.AuthorizedRoles;
+
+                    allParties.Add(enhancedA2SubUnit.PartyUuid, enhancedA2SubUnit);
                 }
 
-                result.Add(a2Party);
+                result.Add(enhancedA2Party);
             }
         }
 
         return result;
-    }
-
-    // ToDo: Can be removed if A2 is merged into A3, instead of A3 into A2
-    private Dictionary<Guid, AuthorizedParty> GetDictionaryFromList(IEnumerable<AuthorizedParty> authorizedParties)
-    {
-        Dictionary<Guid, AuthorizedParty> authorizedPartyDict = [];
-        foreach (AuthorizedParty authParty in authorizedParties)
-        {
-            authorizedPartyDict.Add(authParty.PartyUuid, authParty);
-            if (authParty.Subunits != null)
-            {
-                foreach (AuthorizedParty subunit in authParty.Subunits)
-                {
-                    // Some bad ER-data exists from A2 where a subunit have multiple parents. Ignore duplicates.
-                    if (!authorizedPartyDict.ContainsKey(subunit.PartyUuid))
-                    {
-                        authorizedPartyDict.Add(subunit.PartyUuid, subunit);
-                    }
-                }
-            }
-        }
-
-        return authorizedPartyDict;
     }
 
     private async Task<Tuple<Dictionary<Guid, AuthorizedParty>, IEnumerable<AuthorizedParty>>> GetAltinn3AuthorizedParties(Guid toId, List<Guid> toOrgs = null, CancellationToken cancellationToken = default)
