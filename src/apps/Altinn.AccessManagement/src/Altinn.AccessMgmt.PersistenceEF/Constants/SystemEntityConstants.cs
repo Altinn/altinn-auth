@@ -141,6 +141,32 @@ public static class SystemEntityConstants
             KeyValuePair.Create("Name", "Internt API-importsystem")),
     };
 
+    /// <summary>
+    /// Represents the InternalApiImportSystem system entity.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> b96cda05-c0e0-4c59-b4b8-f15a7dff9590
+    /// - <c>Name:</c> InternalApiImportSystem
+    /// - <c>RefId:</c> sys-internal-api-import-system
+    /// - <c>TypeId:</c> Internal entity type
+    /// - <c>VariantId:</c> Standard variant
+    /// </remarks>
+    public static ConstantDefinition<Entity> Altinn2RoleImportSystem { get; } = new ConstantDefinition<Entity>(AuditDefaults.Altinn2RoleImportSystem)
+    {
+        Entity = new()
+        {
+            Name = nameof(AuditDefaults.Altinn2RoleImportSystem),
+            RefId = "sys-altinn2-role-import-system",
+            ParentId = null,
+            TypeId = EntityTypeConstants.Internal,
+            VariantId = EntityVariantConstants.Standard,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Altinn2 Role Import System")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Altinn2 Role-importsystem")),
+    };
+
     #endregion
 
     #region API Systems

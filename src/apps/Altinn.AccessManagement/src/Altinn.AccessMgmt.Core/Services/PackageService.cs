@@ -100,7 +100,7 @@ public class PackageService : IPackageService
             urnValue = ":" + urnValue;
         }
 
-        var packages = await DbContext.Packages.AsNoTracking().Where(t => t.Urn.EndsWith(urnValue)).Include(t => t.Area).ToListAsync(cancellationToken);
+        var packages = await DbContext.Packages.AsNoTracking().Where(t => t.Urn.EndsWith(urnValue, StringComparison.InvariantCultureIgnoreCase)).Include(t => t.Area).ToListAsync(cancellationToken);
         if (packages == null || packages.Count() != 1)
         {
             return null;

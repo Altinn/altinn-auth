@@ -1,44 +1,47 @@
-﻿using Altinn.AccessManagement.HostedServices.Contracts;
-using Altinn.AccessManagement.HostedServices.Leases;
-using Altinn.AccessMgmt.Persistence.Core.Models;
-using Altinn.AccessMgmt.Persistence.Data;
-using Altinn.AccessMgmt.Persistence.Services.Contracts;
+﻿using Altinn.AccessMgmt.Core.HostedServices.Contracts;
+using Altinn.AccessMgmt.Core.HostedServices.Leases;
+using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Extensions;
+using Altinn.AccessMgmt.PersistenceEF.Utils;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Integration.Platform.SblBridge;
-using Microsoft.FeatureManagement;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
-namespace Altinn.AccessManagement.HostedServices.Services
+namespace Altinn.AccessMgmt.Core.HostedServices.Services
 {
     public class AltinnAdminRoleSyncService : BaseSyncService, IAltinnAdminRoleSyncService
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="AltinnClientRoleSyncService"/> class.
+        /// Initializes a new instance of the <see cref="AltinnAdminRoleSyncService"/> class.
         /// </summary>
         /// <param name="role">The role service used for streaming roles.</param>
-        /// <param name="assignmentService">The delegation service used for managing delegations.</param>
+        /// <param name="serviceProvider">object used for creating a scope and fetching a scoped service (IDelegationService) based on this scope</param>
         /// <param name="logger">The logger instance for logging information and errors.</param>
-        /// <param name="featureManager">The feature manager for handling feature flags.</param>
         public AltinnAdminRoleSyncService(
             IAltinnSblBridge role,
-            IAssignmentService assignmentService,
-            ILogger<AltinnClientRoleSyncService> logger,
-            IFeatureManager featureManager
+            IServiceProvider serviceProvider,
+            ILogger<AltinnClientRoleSyncService> logger
         )
         {
             _role = role;
-            _assignmentService = assignmentService;
+            _serviceProivider = serviceProvider;
             _logger = logger;
         }
 
         private readonly IAltinnSblBridge _role;
-        private readonly IAssignmentService _assignmentService;
         private readonly ILogger<AltinnClientRoleSyncService> _logger;
+        private readonly IServiceProvider _serviceProivider;
 
-        /// <inheritdoc />
         public async Task SyncAdminRoles(ILease lease, CancellationToken cancellationToken)
         {
             var leaseData = await lease.Get<AltinnAdminRoleLease>(cancellationToken);
             var adminDelegations = await _role.StreamRoles("11", leaseData.AltinnAdminRoleStreamNextPageLink, cancellationToken);
+
+            using var scope = _serviceProivider.CreateScope();
+            IAssignmentService assignmentService = scope.ServiceProvider.GetRequiredService<IAssignmentService>();
 
             await foreach (var page in adminDelegations)
             {
@@ -53,7 +56,7 @@ namespace Altinn.AccessManagement.HostedServices.Services
                     throw new Exception("Stream page is not successful");
                 }
 
-                Guid batchId = Guid.NewGuid();
+                Guid batchId = Guid.CreateVersion7();
                 var batchName = batchId.ToString().ToLower().Replace("-", string.Empty);
                 _logger.LogInformation("Starting proccessing role page '{0}'", batchName);
 
@@ -61,12 +64,11 @@ namespace Altinn.AccessManagement.HostedServices.Services
                 {
                     foreach (var item in page.Content.Data)
                     {
-                        ChangeRequestOptions options = new ChangeRequestOptions()
-                        {
-                            ChangedBy = item.PerformedByUserUuid ?? AuditDefaults.Altinn2RoleImportSystem,
-                            ChangedBySystem = AuditDefaults.Altinn2RoleImportSystem,
-                            ChangedAt = item.DelegationChangeDateTime ?? DateTime.UtcNow,
-                        };
+                        AuditValues values = new AuditValues(
+                            item.PerformedByUserUuid ?? SystemEntityConstants.Altinn2RoleImportSystem,
+                            SystemEntityConstants.Altinn2RoleImportSystem,
+                            batchId.ToString(),
+                            item.DelegationChangeDateTime?.ToUniversalTime() ?? DateTime.UtcNow);
 
                         List<string> packageUrns = GetAdminPackageFromRoleTypeCode(item.RoleTypeCode, cancellationToken);
 
@@ -82,14 +84,15 @@ namespace Altinn.AccessManagement.HostedServices.Services
                                     string.Join(", ", packageUrns));
                                 continue;
                             }
-                            
-                            int revokes = await _assignmentService.RevokeAdminAssignmentPackages(
+
+                            int revokes = await assignmentService.RevokeAssignmentPackages(
                                 item.ToUserPartyUuid.Value,
                                 item.FromPartyUuid,
                                 packageUrns,
-                                options,
+                                values,
+                                true,
                                 cancellationToken);
-                            
+
                             if (revokes == 0)
                             {
                                 _logger.LogWarning(
@@ -111,8 +114,8 @@ namespace Altinn.AccessManagement.HostedServices.Services
                                 continue;
                             }
 
-                            int adds = await _assignmentService.ImportAdminAssignmentPackages(item.ToUserPartyUuid.Value, item.FromPartyUuid, packageUrns, options, cancellationToken);
-                            if (adds == 0)
+                            List<AssignmentPackageDto> adds = await assignmentService.ImportAssignmentPackagesPackages(item.ToUserPartyUuid.Value, item.FromPartyUuid, packageUrns, values, cancellationToken);
+                            if (adds.Count == 0)
                             {
                                 _logger.LogWarning(
                                     "Failed to delete delegation for FromParty: {FromParty}, ToParty: {ToParty}, PackageUrns: {packageUrn}",
@@ -137,8 +140,8 @@ namespace Altinn.AccessManagement.HostedServices.Services
         private List<string> GetAdminPackageFromRoleTypeCode(string roleTypeCode, CancellationToken cancellationToken = default)
         {
             List<string> packages = new List<string>();
-            
-            switch (roleTypeCode)
+
+            switch (roleTypeCode.ToUpper())
             {
                 case "ADMAI":
                     packages.Add("urn:altinn:accesspackage:tilgangsstyrer");

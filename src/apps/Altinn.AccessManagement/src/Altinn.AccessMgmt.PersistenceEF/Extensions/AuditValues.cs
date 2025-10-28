@@ -6,7 +6,7 @@ using Npgsql;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Extensions;
 
-public record AuditValues(Guid ChangedBy, Guid ChangedBySystem, string OperationId = null)
+public record AuditValues(Guid ChangedBy, Guid ChangedBySystem, string OperationId = null, DateTimeOffset? ValidFrom = null)
 {
     public AuditValues(Guid changedBy, Guid changedBySystem)
         : this(changedBy, changedBySystem, Activity.Current?.TraceId.ToString() ?? Guid.CreateVersion7().ToString()) { }

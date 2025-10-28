@@ -204,7 +204,7 @@ public class IngestService : IIngestService
         }
 
         return et.GetProperties()
-            .Where(n => !n.Name.StartsWith("audit_", StringComparison.OrdinalIgnoreCase))
+            .Where(n => (!n.Name.StartsWith("audit_", StringComparison.OrdinalIgnoreCase)) || n.Name.Equals("audit_validfrom", StringComparison.OrdinalIgnoreCase))
             .Select(p => new IngestColumnDefinition() 
             { 
                 Name = p.GetColumnName(storeObject), 

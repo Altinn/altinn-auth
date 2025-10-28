@@ -456,7 +456,7 @@ public class DbDataMigrationService(
             new Entity() { Id = AuditDefaults.EnduserApi, Name = "EnduserApi", RefId = "accessmgmt-enduser-api", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
             new Entity() { Id = AuditDefaults.InternalApi, Name = "InternalApi", RefId = "accessmgmt-internal-api", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
             new Entity() { Id = AuditDefaults.InternalApiImportSystem, Name = nameof(AuditDefaults.InternalApiImportSystem), RefId = "sys-internal-api-import-system", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
-            new Entity() { Id = AuditDefaults.Altinn2RoleImportSystem, Name = "Altinn2ClientImportSystem", RefId = "sys-altinn2-client-import-system", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
+            new Entity() { Id = AuditDefaults.Altinn2RoleImportSystem, Name = "Altinn2RoleImportSystem", RefId = "sys-altinn2-role-import-system", ParentId = null, TypeId = internalTypeId, VariantId = internalVariantId },
         };
 
         foreach (var item in systemEntities)

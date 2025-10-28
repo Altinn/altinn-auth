@@ -6,7 +6,9 @@ using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.Core.Utils.Models;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +18,114 @@ namespace Altinn.AccessMgmt.Core.Services;
 /// <inheritdoc/>
 public class AssignmentService(AppDbContext db) : IAssignmentService
 {
+    /// <inheritdoc/>
+    public async Task<List<AssignmentPackageDto>> ImportAssignmentPackagesPackages(Guid fromId, Guid toId, List<string> packageUrns, AuditValues values = null, CancellationToken cancellationToken = default)
+    {
+        var packageIds = await db.Packages
+            .AsNoTracking()
+            .Where(p => packageUrns.Contains(p.Urn, StringComparer.InvariantCultureIgnoreCase))
+            .Select(p => p.Id)
+            .ToListAsync(cancellationToken);
+
+        var assignment = await db.Assignments
+            .AsNoTracking()
+            .Where(a => a.FromId == fromId)
+            .Where(a => a.ToId == toId)
+            .Where(a => a.RoleId == RoleConstants.Rightholder)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (assignment is null)
+        {
+            assignment = new Assignment()
+            {
+                FromId = fromId,
+                ToId = toId,
+                RoleId = RoleConstants.Rightholder,
+                Audit_ValidFrom = values?.ValidFrom ?? DateTimeOffset.UtcNow,
+            };
+            await db.Assignments.AddAsync(assignment, cancellationToken);
+            await db.SaveChangesAsync(values, cancellationToken);
+        }
+
+        var existingAssignmentPackages = await db.AssignmentPackages
+            .AsNoTracking()
+            .Where(a => a.AssignmentId == assignment.Id)
+            .Where(a => packageIds.Contains(a.PackageId))
+            .ToListAsync(cancellationToken);
+
+        List<AssignmentPackageDto> result = new();
+
+        foreach (var existing in existingAssignmentPackages)
+        {
+            result.Add(DtoMapper.Convert(existing));
+        }
+
+        if (result.Count == packageIds.Count)
+        {
+            return result;
+        }
+
+        foreach (var packageId in packageIds.Except(existingAssignmentPackages.Select(p => p.PackageId)))
+        {
+            AssignmentPackage newAssignmentPackage = new AssignmentPackage()
+            {
+                AssignmentId = assignment.Id,
+                PackageId = packageId,
+                Audit_ValidFrom = values?.ValidFrom ?? DateTimeOffset.UtcNow,
+            };
+
+            await db.AssignmentPackages.AddAsync(newAssignmentPackage, cancellationToken);
+            result.Add(DtoMapper.Convert(newAssignmentPackage));
+        }
+
+        await db.SaveChangesAsync(values, cancellationToken);
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<int> RevokeAssignmentPackages(Guid fromId, Guid toId, List<string> packageUrns, AuditValues values = null, bool onlyRemoveA2Packages = true, CancellationToken cancellationToken = default)
+    {
+        var packageIds = await db.Packages
+            .AsNoTracking()
+            .Where(p => packageUrns.Contains(p.Urn, StringComparer.InvariantCultureIgnoreCase))
+            .Select(p => p.Id)
+            .ToListAsync(cancellationToken);
+
+        var assignment = await db.Assignments
+            .AsNoTracking()
+            .Include(a => a.From)
+            .Include(a => a.To)
+            .Where(a => a.FromId == fromId)
+            .Where(a => a.ToId == toId)
+            .Where(a => a.RoleId == RoleConstants.Rightholder)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (assignment is null)
+        {
+            return 0;
+        }
+
+        var existingAssignmentPackages = await db.AssignmentPackages
+            .AsTracking()
+            .Where(a => a.AssignmentId == assignment.Id)
+            .Where(a => packageIds.Contains(a.PackageId))
+            .Where(a => !onlyRemoveA2Packages || a.Package.Audit_ChangedBySystem.Equals(AuditDefaults.Altinn2RoleImportSystem))
+            .ToListAsync(cancellationToken);
+
+        if (existingAssignmentPackages.Count == 0)
+        {
+            return 0;
+        }
+
+        foreach (var item in existingAssignmentPackages)
+        {
+            db.Remove(item);
+        }
+        
+        return await db.SaveChangesAsync(values, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public async Task<IEnumerable<ClientDto>> GetClients(Guid toId, string[] roles, string[] packages, CancellationToken cancellationToken = default)
     {
@@ -463,7 +573,7 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
     }
 
     /// <inheritdoc/>
-    public async Task<Assignment> GetOrCreateAssignment(Guid fromEntityId, Guid toEntityId, Guid roleId, CancellationToken cancellationToken = default)
+    public async Task<Assignment> GetOrCreateAssignment(Guid fromEntityId, Guid toEntityId, Guid roleId, AuditValues audit = null, CancellationToken cancellationToken = default)
     {
         var assignment = await GetAssignment(fromEntityId, toEntityId, roleId, cancellationToken: cancellationToken);
         if (assignment != null)
@@ -494,12 +604,22 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
         {
             FromId = fromEntityId,
             ToId = toEntityId,
-            RoleId = role.Id
+            RoleId = role.Id,
+            Audit_ValidFrom = audit?.ValidFrom ?? DateTimeOffset.UtcNow,
         };
-
-        await db.Assignments.AddAsync(assignment, cancellationToken);
-        var result = await db.SaveChangesAsync(cancellationToken);
         
+        await db.Assignments.AddAsync(assignment, cancellationToken);
+        int result;
+
+        if (audit == null)
+        {
+            result = await db.SaveChangesAsync(cancellationToken);
+        }
+        else
+        {
+            result = await db.SaveChangesAsync(audit, cancellationToken);
+        }
+
         if (result == 0)
         {
             Unreachable();

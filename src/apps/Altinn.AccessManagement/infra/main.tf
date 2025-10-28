@@ -229,6 +229,24 @@ module "appsettings" {
       value       = false
     },
     {
+      name        = "AccessMgmt.Core.HostedServices.AllAltinnRoleSync"
+      description = "Specifies if the Altinn II roles should streamed from SBLBridge service to access management database"
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Core.HostedServices.AltinnClientRoleSync"
+      description = "Specifies if the Altinn II roles should streamed from SBLBridge service to access management database"
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Core.HostedServices.AltinnAdminRoleSync"
+      description = "Specifies if the Altinn II roles should streamed from SBLBridge service to access management database"
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
       name        = "AccessManagement.HostedServices.ResourceRegistrySync"
       description = "Specifies if the resource register data should streamed from resource register service to access management database."
       label       = "${lower(var.environment)}-access-management"
@@ -237,30 +255,6 @@ module "appsettings" {
     {
       name        = "AccessManagement.HostedServices.RegisterSync"
       description = "Specifies if the register data should streamed from register service to access management database."
-      label       = "${lower(var.environment)}-access-management"
-      value       = false
-    },
-    {
-      name        = "AccessManagement.HostedServices.AllAltinnRoleSync"
-      description = "Specifies if the Altinn II roles should streamed from SBLBridge service to access management database"
-      label       = "${lower(var.environment)}-access-management"
-      value       = false
-    },
-    {
-      name        = "AccessManagement.HostedServices.AltinnClientRoleSync"
-      description = "Specifies if the Altinn II roles should streamed from SBLBridge service to access management database"
-      label       = "${lower(var.environment)}-access-management"
-      value       = false
-    },
-    {
-      name        = "AccessManagement.HostedServices.AltinnAdminRoleSync"
-      description = "Specifies if the Altinn II roles should streamed from SBLBridge service to access management database"
-      label       = "${lower(var.environment)}-access-management"
-      value       = false
-    },
-    {
-      name        = "AccessManagement.HostedServices.AltinnBancruptcyEstateRoleSync"
-      description = "Specifies if the Altinn II roles should streamed from SBLBridge service to access management database"
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },
