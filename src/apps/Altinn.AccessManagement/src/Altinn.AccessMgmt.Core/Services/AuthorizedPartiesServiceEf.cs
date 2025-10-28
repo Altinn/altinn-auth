@@ -348,18 +348,22 @@ public class AuthorizedPartiesServiceEf(
         // Add all subunits to their top-level organization and to the dictionary
         foreach (var subunit in subunits)
         {
-            var subunitAuthParty = BuildAuthorizedPartyFromEntity(subunit);
-            if (allPartiesDict.TryGetValue(subunit.ParentId.Value, out AuthorizedParty parent))
+            // Need to check whether subunit already exists (may have been added through a direct subunit access). If exists, just continue.
+            if (!allPartiesDict.TryGetValue(subunit.Id, out AuthorizedParty _))
             {
-                allPartiesDict[subunit.ParentId.Value].Subunits.Add(subunitAuthParty);
-            }
-            else
-            {
-                // This should not happen as all subunits are retrieved based on the from parties above.
-                Unreachable();
-            }
+                var subunitAuthParty = BuildAuthorizedPartyFromEntity(subunit);
+                if (allPartiesDict.TryGetValue(subunit.ParentId.Value, out AuthorizedParty parent))
+                {
+                    allPartiesDict[subunit.ParentId.Value].Subunits.Add(subunitAuthParty);
+                }
+                else
+                {
+                    // This should not happen as all subunits are retrieved based on the from parties above.
+                    Unreachable();
+                }
 
-            allPartiesDict[subunit.Id] = subunitAuthParty;
+                allPartiesDict[subunit.Id] = subunitAuthParty;
+            }            
         }
 
         return Tuple.Create(allPartiesDict, authorizedParties.AsEnumerable());
