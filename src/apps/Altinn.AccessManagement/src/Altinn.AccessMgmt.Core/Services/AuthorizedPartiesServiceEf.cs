@@ -335,9 +335,13 @@ public class AuthorizedPartiesServiceEf(
             }
             else
             {
-                // Either person or top-level organization
-                allPartiesDict[party.Id] = BuildAuthorizedPartyFromEntity(party);
-                authorizedParties.Add(allPartiesDict[party.Id]);
+                // Either person or top-level organization.
+                // Still need to check whether already exists (may have been added as parent (with onlyHierarchyElement = true) through a subunit access). If exists, just continue.
+                if (!allPartiesDict.TryGetValue(party.Id, out AuthorizedParty _))
+                {
+                    allPartiesDict[party.Id] = BuildAuthorizedPartyFromEntity(party);
+                    authorizedParties.Add(allPartiesDict[party.Id]);
+                }
             }
         }
 
