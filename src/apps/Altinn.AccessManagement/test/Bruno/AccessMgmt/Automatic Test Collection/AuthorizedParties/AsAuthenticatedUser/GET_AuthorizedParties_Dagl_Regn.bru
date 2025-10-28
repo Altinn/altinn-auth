@@ -1,7 +1,7 @@
 meta {
   name: GET_AuthorizedParties_Dagl_Regn
   type: http
-  seq: 18
+  seq: 1
 }
 
 get {
@@ -107,6 +107,35 @@ tests {
         });
       }
     });
+  
+  });
+  
+  test(requestName + "|Check for duplicate parties in the response", function() {  
+    // Step 1: Collect all partyUuids
+    const allPartyUuids = [];
+  
+    body.forEach(party => {
+      allPartyUuids.push(party.partyUuid);
+      if (party.subunits && party.subunits.length > 0) {
+        party.subunits.forEach(subunit => {
+          allPartyUuids.push(subunit.partyUuid);
+        });
+      }
+    });
+  
+    // Step 2: Find duplicates
+    const uuidCount = {};
+    const duplicates = [];
+  
+    allPartyUuids.forEach(uuid => {
+      uuidCount[uuid] = (uuidCount[uuid] || 0) + 1;
+      if (uuidCount[uuid] === 2) {
+        duplicates.push(uuid); // only push once when it becomes a duplicate
+      }
+    });
+  
+    // Step 3: Assert no duplicates
+    expect(duplicates.length, `Duplicate partyUuid(s) found: ${duplicates.join(', ')}`).to.equal(0);
   
   });
 }
