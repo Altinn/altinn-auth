@@ -76,36 +76,21 @@ public class EntityService : IEntityService
     public async Task<Entity> GetByOrgNo(string orgNo, CancellationToken cancellationToken = default) => await
         Db.Entities
             .AsNoTracking()
-            .Include(t => t.Type)
-            .Include(t => t.Variant)
-            .Where(e => e.OrganizationIdentifier == orgNo
-                   || Db.EntityLookups.Any(l => l.EntityId == e.Id
-                                              && l.Key == "OrganizationIdentifier"
-                                              && l.Value == orgNo))
+            .Where(e => e.OrganizationIdentifier == orgNo)
             .FirstOrDefaultAsync(cancellationToken);
 
     /// <inheritdoc/>
     public async Task<Entity> GetByPersNo(string persNo, CancellationToken cancellationToken = default) => await 
         Db.Entities
             .AsNoTracking()
-            .Include(t => t.Type)
-            .Include(t => t.Variant)
-            .Where(e => e.PersonIdentifier == persNo
-                   || Db.EntityLookups.Any(l => l.EntityId == e.Id
-                                              && l.Key == "PersonIdentifier"
-                                              && l.Value == persNo))
+            .Where(e => e.PersonIdentifier == persNo)
             .FirstOrDefaultAsync(cancellationToken);
 
     /// <inheritdoc/>
     public async Task<Entity?> GetByPartyId(int partyId, CancellationToken ct = default) => await
        Db.Entities
             .AsNoTracking()
-            .Include(t => t.Type)
-            .Include(t => t.Variant)
-            .Where(e => e.PartyId == partyId
-                   || Db.EntityLookups.Any(l => l.EntityId == e.Id
-                                              && l.Key == "PartyId"
-                                              && l.Value == partyId.ToString()))
+            .Where(e => e.PartyId == partyId)
             .FirstOrDefaultAsync(ct);
     
     /// <inheritdoc/>
@@ -118,12 +103,7 @@ public class EntityService : IEntityService
     public async Task<Entity?> GetByUserId(int userId, CancellationToken ct = default) => await
         Db.Entities
             .AsNoTracking()
-            .Include(t => t.Type)
-            .Include(t => t.Variant)
-            .Where(e => e.UserId == userId
-                   || Db.EntityLookups.Any(l => l.EntityId == e.Id
-                                              && l.Key == "UserId"
-                                              && l.Value == userId.ToString()))
+            .Where(e => e.UserId == userId)
             .FirstOrDefaultAsync(ct);
 
     /// <inheritdoc/>
