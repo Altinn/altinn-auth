@@ -11,6 +11,7 @@ using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries;
+using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,10 @@ using Microsoft.EntityFrameworkCore;
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc />
-public partial class ConnectionService(AppDbContext dbContext, IAuditAccessor auditAccessor) : IConnectionService
+public partial class ConnectionService(
+    AppDbContext dbContext,
+    ConnectionQuery connectionQuery,
+    IAuditAccessor auditAccessor) : IConnectionService
 {
     public async Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
     {
@@ -474,6 +478,39 @@ public partial class ConnectionService(AppDbContext dbContext, IAuditAccessor au
         }
 
         return null;
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<IEnumerable<RolePermissionDto>>> GetRoles(Guid party, Guid? fromId, Guid? toId, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken)
+    {
+        if (!fromId.HasValue && !toId.HasValue)
+        {
+            return Problems.PartyNotFound;
+        }
+
+        var filter = new ConnectionQueryFilter()
+        {
+            FromIds = fromId.HasValue ? [fromId.Value] : null,
+            ToIds = toId.HasValue ? [toId.Value] : null,
+            EnrichEntities = true,
+            IncludeKeyRole = true,
+            IncludePackages = false,
+            IncludeResource = false,
+            EnrichPackageResources = false,
+            ExcludeDeleted = false,
+            IncludeDelegation = false,
+        };
+
+        var connections = await connectionQuery.GetConnectionsAsync(filter, cancellationToken);
+        return connections.GroupBy(r => r.RoleId).Select(connection =>
+        {
+            var role = connection.First().Role;
+            return new RolePermissionDto
+            {
+                Role = DtoMapper.Convert(role),
+                Permissions = connection.Select(connection => DtoMapper.ConvertToPermission(connection)),
+            };
+        }).ToList();
     }
 }
 

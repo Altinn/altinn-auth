@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,7 +21,7 @@ public class ConnectionQuery(AppDbContext db)
         {
             var baseQuery = BuildBaseQuery(db, filter);
             List<ConnectionQueryExtendedRecord> result;
-            
+
             if (filter.EnrichEntities || filter.ExcludeDeleted)
             {
                 var query = EnrichEntities(filter, baseQuery);
@@ -65,13 +66,13 @@ public class ConnectionQuery(AppDbContext db)
             }
 
             return result;
-        } 
+        }
         catch (Exception ex)
         {
             throw new Exception($"Failed to get connections with filter: {JsonSerializer.Serialize(filter)}", ex);
         }
     }
-    
+
     private IQueryable<ConnectionQueryBaseRecord> BuildBaseQuery(AppDbContext db, ConnectionQueryFilter filter)
     {
         var fromSet = filter.FromIds?.Count > 0 ? new HashSet<Guid>(filter.FromIds) : null;
@@ -94,7 +95,7 @@ public class ConnectionQuery(AppDbContext db)
             });
 
         var queries = new List<IQueryable<ConnectionQueryBaseRecord>> { direct };
-        
+
         if (filter.IncludeKeyRole)
         {
             var directKeyRoles = db.Assignments
@@ -276,7 +277,7 @@ public class ConnectionQuery(AppDbContext db)
         var query = allKeys
             .Join(entities, c => c.FromId, e => e.Id, (c, f) => new { c, f })
             .Join(entities, x => x.c.ToId, t => t.Id, (x, t) => new { x.c, x.f, t })
-            .SelectMany(x => db.Roles.Where(r => r.Id == x.c.RoleId).DefaultIfEmpty(), (x, r) => new { x.c, x.f, x.t, r })
+            .SelectMany(x => db.Roles.Include(r => r.Provider).ThenInclude(p => p.Type).Where(r => r.Id == x.c.RoleId).DefaultIfEmpty(), (x, r) => new { x.c, x.f, x.t, r })
             .SelectMany(x => db.Entities.Where(v => v.Id == x.c.ViaId).DefaultIfEmpty(), (x, via) => new { x.c, x.f, x.t, x.r, via })
             .SelectMany(x => db.Roles.Where(vr => vr.Id == x.c.ViaRoleId).DefaultIfEmpty(), (x, viaRole) => new { x.c, x.f, x.t, x.r, x.via, viaRole })
             .WhereIf(filter.ExcludeDeleted, x => !x.f.IsDeleted)
@@ -295,7 +296,7 @@ public class ConnectionQuery(AppDbContext db)
                 To = x.t,
                 Role = x.r,
                 Via = x.via,
-                ViaRole = x.viaRole
+                ViaRole = x.viaRole,
             });
 
         return query;

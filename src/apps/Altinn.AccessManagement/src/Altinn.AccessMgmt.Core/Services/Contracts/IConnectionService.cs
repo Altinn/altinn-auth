@@ -49,6 +49,17 @@ public interface IConnectionService
     Task<ValidationProblemInstance> RemoveAssignment(Guid fromId, Guid toId, bool cascade = false, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves the roles associated with a given entity.
+    /// </summary>
+    /// <param name="party">The user is operating on behalf of.</param>
+    /// <param name="fromId">ID of the entity from which the assignment originates.</param>
+    /// <param name="toId">ID of the entity to which the assignment was made.</param>
+    /// <param name="configureConnections">A delegate used to configure connection behavior.</param>
+    /// <param name="cancellationToken">A token used to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a collection of role permissions.</returns>
+    Task<Result<IEnumerable<RolePermissionDto>>> GetRoles(Guid party, Guid? fromId, Guid? toId, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken);
+
+    /// <summary>
     /// 
     /// </summary>
     /// <param name="party"></param>

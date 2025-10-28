@@ -269,7 +269,6 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
     /// Gets all roles between the authenticated user's selected party and the specified target party.
     /// </summary>
     [HttpGet("roles")]
-    [FeatureGate("connections/roles")]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
     [ProducesResponseType<PaginatedResult<RolePermissionDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
@@ -282,9 +281,7 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
         var validToUuid = Guid.TryParse(connection.To, out var toUuid);
         _ = Guid.TryParse(connection.Party, out var partyUuid);
 
-        ////var result = await ConnectionService.GetRoles(partyUuid, validFromUuid ? fromUuid : null, validToUuid ? toUuid : null, ConfigureConnections, cancellationToken); ToDo: Implement when role service is ready
-
-        var result = await Task.FromResult(new Result<IEnumerable<RolePermissionDto>>(Enumerable.Empty<RolePermissionDto>()));
+        var result = await ConnectionService.GetRoles(partyUuid, validFromUuid ? fromUuid : null, validToUuid ? toUuid : null, ConfigureConnections, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();
@@ -297,7 +294,6 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
     /// Remove Altinn 2 role from connection
     /// </summary>
     [HttpDelete("roles")]
-    [FeatureGate("connections/roles")]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
