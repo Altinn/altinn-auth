@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-using System.Reflection;
 using Altinn.AccessManagement.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
@@ -8,8 +6,13 @@ using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Persistence;
 using Altinn.AccessManagement.Persistence.Configuration;
 using Altinn.AccessManagement.Tests.Seeds;
+using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Npgsql;
+using System.Collections.Concurrent;
+using System.Reflection;
 using Testcontainers.PostgreSql;
 using Xunit.Sdk;
 using Yuniql.Core;
@@ -51,6 +54,8 @@ public class PostgresFixture : IAsyncLifetime
         return db;
     }
 
+    public PostgresDatabase SharedDb { get; private set; }
+
     /// <inheritdoc/>
     public Task DisposeAsync()
     {
@@ -62,6 +67,16 @@ public class PostgresFixture : IAsyncLifetime
     public Task InitializeAsync()
     {
         PostgresServer.StartUsing(this);
+
+        SharedDb = PostgresServer.NewEFDatabase();
+
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(SharedDb.Admin.ToString())
+            .Options;
+
+        using var db = new AppDbContext(options);
+        db.Database.MigrateAsync().Wait();
+
         return Task.CompletedTask;
     }
 }
@@ -184,6 +199,42 @@ public static class PostgresServer
         {
             Mutex.ReleaseMutex();
         }
+    }
+
+    /// <summary>
+    /// Creates a new database and connection string
+    /// </summary>
+    public static PostgresDatabase NewEFDatabase()
+    {
+
+        Mutex.WaitOne();
+        try
+        {
+            var dbname = $"ef_{DatabaseInstance++}";
+            Server.ExecScriptAsync($"CREATE DATABASE {dbname};").Wait();
+
+            var connectionString = Server.GetConnectionString();
+            var adminConn = new NpgsqlConnectionStringBuilder(connectionString)
+            {
+                Database = dbname,
+                Username = DbAdminName,
+                Password = DbPassword
+            };
+
+            var grantSql = $@"
+            CREATE SCHEMA IF NOT EXISTS dbo;
+            CREATE SCHEMA IF NOT EXISTS dbo_history;
+            ";
+
+            Server.ExecScriptAsync(grantSql).Wait();
+
+            return new(dbname, connectionString);
+        }
+        finally
+        {
+            Mutex.ReleaseMutex();
+        }
+
     }
 }
 
