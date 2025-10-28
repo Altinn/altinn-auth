@@ -80,7 +80,7 @@ public class ConnectionConfiguration : IEntityTypeConfiguration<Connection>
         FROM dbo.assignment a
                  JOIN dbo.assignment a2 ON a.toid = a2.fromid
                  JOIN dbo.role r ON a2.roleid = r.id AND r.iskeyrole = true
-                 JOIN dbo.assignmentpackage ap ON ap.assignmentid = a.id
+                 LEFT JOIN dbo.assignmentpackage ap ON ap.assignmentid = a.id
         UNION ALL
         SELECT a.fromid,
                a.roleid,
@@ -94,7 +94,7 @@ public class ConnectionConfiguration : IEntityTypeConfiguration<Connection>
         FROM dbo.assignment a
                  JOIN dbo.assignment a2 ON a.toid = a2.fromid
                  JOIN dbo.role r ON a2.roleid = r.id AND r.iskeyrole = true
-                 JOIN dbo.rolepackage rp ON rp.roleid = a.roleid AND rp.hasaccess = true
+                 LEFT JOIN dbo.rolepackage rp ON rp.roleid = a.roleid AND rp.hasaccess = true
         UNION ALL
         SELECT fa.fromid,
                ta.roleid,
