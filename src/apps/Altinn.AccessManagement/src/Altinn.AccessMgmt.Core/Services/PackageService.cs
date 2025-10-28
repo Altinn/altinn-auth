@@ -2,9 +2,11 @@
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.Core.Utils.Models;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
+using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
@@ -19,9 +21,9 @@ public class PackageService : IPackageService
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<SearchObject<PackageDto>>> Search(string term, bool searchInResources = false, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<SearchObject<PackageDto>>> Search(string term, List<string> resourceProviderCodes = null, bool searchInResources = false, CancellationToken cancellationToken = default)
     {
-        var data = await GetSearchData();
+        var data = await GetSearchData(resourceProviderCodes: resourceProviderCodes);
 
         if (string.IsNullOrEmpty(term))
         {
@@ -34,13 +36,13 @@ public class PackageService : IPackageService
             .Add(pkg => pkg.Name, 2.0, FuzzynessLevel.High)
             .Add(pkg => pkg.Description, 0.8, FuzzynessLevel.Low)
             .Add(pkg => pkg.Area.Name, 1.5, FuzzynessLevel.Medium);
-            //.Add(pkg => pkg.Area.Group.Name, 1.3, FuzzynessLevel.Medium);
+            ////.Add(pkg => pkg.Area.Group.Name, 1.3, FuzzynessLevel.Medium);
 
         if (searchInResources)
         {
             builder
                 .AddCollection(pkg => pkg.Resources, r => r.Name, 1.2, FuzzynessLevel.High, detailed);
-            //// .AddCollection(pkg => pkg.Resources, r => r.Description, 0.7, FuzzynessLevel.Low, detailed);
+                ////.AddCollection(pkg => pkg.Resources, r => r.Description, 0.7, FuzzynessLevel.Low, detailed);
         }
 
         var results = FuzzySearch.PerformFuzzySearch(data, term, builder);
@@ -60,20 +62,30 @@ public class PackageService : IPackageService
         return results.OrderByDescending(t => t.Score).ToList();
     }
 
-    private async Task<List<PackageDto>> GetSearchData(CancellationToken cancellationToken = default)
+    private async Task<List<PackageDto>> GetSearchData(List<string> resourceProviderCodes = null, CancellationToken cancellationToken = default)
     {
+        bool filterResourceProviders = resourceProviderCodes != null && resourceProviderCodes.Any();
+
         var areas = await DbContext.Areas.AsNoTracking().ToListAsync(cancellationToken);
         var packages = await DbContext.Packages.AsNoTracking().ToListAsync(cancellationToken);
 
         var result = new List<PackageDto>();
+
         var packageResources = await DbContext.PackageResources.AsNoTracking()
             .Include(t => t.Resource)
             .Include(t => t.Resource).ThenInclude(t => t.Provider)
             .Include(t => t.Resource).ThenInclude(t => t.Type)
+            .WhereIf(filterResourceProviders, t => resourceProviderCodes.Any(code => EF.Functions.ILike(t.Resource.Provider.Code, "%" + code + "%")))
             .ToListAsync(cancellationToken);
 
         foreach (var package in packages)
         {
+            // Skip package if the package does not have a valid filtered resource
+            if (filterResourceProviders == true && packageResources.Any(t => t.PackageId == package.Id) == false)
+            {
+                continue;
+            }
+
             result.Add(DtoMapper.Convert(package, areas.First(t => t.Id == package.AreaId), packageResources.Where(t => t.PackageId == package.Id).Select(t => t.Resource)));
         }
 
