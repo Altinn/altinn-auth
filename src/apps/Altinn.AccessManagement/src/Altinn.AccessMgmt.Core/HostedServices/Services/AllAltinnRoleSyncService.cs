@@ -193,7 +193,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
             }
 
             var role = await dbContext.Roles.AsNoTracking()
-                .FirstOrDefaultAsync(r => string.Equals(r.Urn, roleIdentifier, StringComparison.InvariantCultureIgnoreCase), cancellationToken);
+                .FirstOrDefaultAsync(r => string.Equals(r.Urn.ToLower(), roleIdentifier), cancellationToken);
 
             if (role == null)
             {

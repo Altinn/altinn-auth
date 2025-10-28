@@ -189,7 +189,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
         try
         {
             // Find Agent Role
-            var agentRole = await db.Roles.AsNoTracking().FirstOrDefaultAsync(t => string.Equals(t.Code, request.AgentRole, StringComparison.InvariantCultureIgnoreCase), cancellationToken) ?? throw new Exception(string.Format("Role not found '{0}'", request.AgentRole));
+            var agentRole = await db.Roles.AsNoTracking().FirstOrDefaultAsync(t => string.Equals(t.Code.ToLower(), request.AgentRole.ToLower()), cancellationToken) ?? throw new Exception(string.Format("Role not found '{0}'", request.AgentRole));
 
             // Verify Delegation Packages
             Dictionary<string, List<PackageDto>> rolepacks = await VerifyDelegationPackages(request);
