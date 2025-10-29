@@ -35,6 +35,7 @@ public class EntityConfiguration : IEntityTypeConfiguration<Entity>
 
         builder.HasIndex(["Name", "RefId", "TypeId", "VariantId"]).IsUnique();
 
+        builder.HasIndex(e => e.PartyId).HasFilter("PartyId IS NOT NULL").IncludeProperties(["Id"]).IsUnique().IsCreatedConcurrently();
         builder.HasIndex(e => e.UserId).HasFilter("UserId IS NOT NULL").IncludeProperties(["Id"]).IsUnique().IsCreatedConcurrently();
         builder.HasIndex(e => e.Username).HasFilter("Username IS NOT NULL").IncludeProperties(["Id"]).IsUnique().IsCreatedConcurrently();
         builder.HasIndex(e => e.OrganizationIdentifier).HasFilter("OrganizationIdentifier IS NOT NULL").IncludeProperties(["Id"]).IsUnique().IsCreatedConcurrently();

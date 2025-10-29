@@ -2053,6 +2053,14 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasIndex("ParentId")
                         .HasDatabaseName("ix_entity_parentid");
 
+                    b.HasIndex("PartyId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_entity_partyid")
+                        .HasFilter("PartyId IS NOT NULL")
+                        .HasAnnotation("Npgsql:CreatedConcurrently", true);
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("PartyId"), new[] { "Id" });
+
                     b.HasIndex("PersonIdentifier")
                         .IsUnique()
                         .HasDatabaseName("ix_entity_personidentifier")
