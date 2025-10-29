@@ -86,8 +86,8 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                             }
 
                             int revokes = await assignmentService.RevokeAssignmentPackages(
-                                item.ToUserPartyUuid.Value,
                                 item.FromPartyUuid,
+                                item.ToUserPartyUuid.Value,
                                 packageUrns,
                                 values,
                                 true,
@@ -114,7 +114,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                                 continue;
                             }
 
-                            List<AssignmentPackageDto> adds = await assignmentService.ImportAssignmentPackagesPackages(item.ToUserPartyUuid.Value, item.FromPartyUuid, packageUrns, values, cancellationToken);
+                            List<AssignmentPackageDto> adds = await assignmentService.ImportAssignmentPackages(item.FromPartyUuid, item.ToUserPartyUuid.Value, packageUrns, values, cancellationToken);
                             if (adds.Count == 0)
                             {
                                 _logger.LogWarning(

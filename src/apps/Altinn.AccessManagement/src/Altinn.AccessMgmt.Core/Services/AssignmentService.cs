@@ -19,7 +19,7 @@ namespace Altinn.AccessMgmt.Core.Services;
 public class AssignmentService(AppDbContext db) : IAssignmentService
 {
     /// <inheritdoc/>
-    public async Task<List<AssignmentPackageDto>> ImportAssignmentPackagesPackages(Guid fromId, Guid toId, List<string> packageUrns, AuditValues values = null, CancellationToken cancellationToken = default)
+    public async Task<List<AssignmentPackageDto>> ImportAssignmentPackages(Guid fromId, Guid toId, List<string> packageUrns, AuditValues values = null, CancellationToken cancellationToken = default)
     {
         var packageIds = await db.Packages
             .AsNoTracking()
