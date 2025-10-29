@@ -2042,11 +2042,43 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasKey("Id")
                         .HasName("pk_entity");
 
+                    b.HasIndex("OrganizationIdentifier")
+                        .IsUnique()
+                        .HasDatabaseName("ix_entity_organizationidentifier")
+                        .HasFilter("OrganizationIdentifier IS NOT NULL")
+                        .HasAnnotation("Npgsql:CreatedConcurrently", true);
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("OrganizationIdentifier"), new[] { "Id" });
+
                     b.HasIndex("ParentId")
                         .HasDatabaseName("ix_entity_parentid");
 
+                    b.HasIndex("PersonIdentifier")
+                        .IsUnique()
+                        .HasDatabaseName("ix_entity_personidentifier")
+                        .HasFilter("PersonIdentifier IS NOT NULL")
+                        .HasAnnotation("Npgsql:CreatedConcurrently", true);
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("PersonIdentifier"), new[] { "Id" });
+
                     b.HasIndex("TypeId")
                         .HasDatabaseName("ix_entity_typeid");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_entity_userid")
+                        .HasFilter("UserId IS NOT NULL")
+                        .HasAnnotation("Npgsql:CreatedConcurrently", true);
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("UserId"), new[] { "Id" });
+
+                    b.HasIndex("Username")
+                        .IsUnique()
+                        .HasDatabaseName("ix_entity_username")
+                        .HasFilter("Username IS NOT NULL")
+                        .HasAnnotation("Npgsql:CreatedConcurrently", true);
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("Username"), new[] { "Id" });
 
                     b.HasIndex("VariantId")
                         .HasDatabaseName("ix_entity_variantid");

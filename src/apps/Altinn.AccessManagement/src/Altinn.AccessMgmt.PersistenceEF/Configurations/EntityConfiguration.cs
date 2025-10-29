@@ -21,6 +21,7 @@ public class EntityConfiguration : IEntityTypeConfiguration<Entity>
 
         builder.Property(t => t.PartyId).IsRequired(false);
         builder.Property(t => t.UserId).IsRequired(false);
+        builder.Property(t => t.Username).IsRequired(false);
         builder.Property(t => t.OrganizationIdentifier).IsRequired(false);
         builder.Property(t => t.PersonIdentifier).IsRequired(false);
         builder.Property(t => t.DateOfBirth).IsRequired(false);
@@ -33,6 +34,11 @@ public class EntityConfiguration : IEntityTypeConfiguration<Entity>
         builder.PropertyWithReference(navKey: t => t.Parent, foreignKey: t => t.ParentId, principalKey: t => t.Id, required: false, deleteBehavior: DeleteBehavior.Restrict);
 
         builder.HasIndex(["Name", "RefId", "TypeId", "VariantId"]).IsUnique();
+
+        builder.HasIndex(e => e.UserId).HasFilter("UserId IS NOT NULL").IncludeProperties(["Id"]).IsUnique().IsCreatedConcurrently();
+        builder.HasIndex(e => e.Username).HasFilter("Username IS NOT NULL").IncludeProperties(["Id"]).IsUnique().IsCreatedConcurrently();
+        builder.HasIndex(e => e.OrganizationIdentifier).HasFilter("OrganizationIdentifier IS NOT NULL").IncludeProperties(["Id"]).IsUnique().IsCreatedConcurrently();
+        builder.HasIndex(e => e.PersonIdentifier).HasFilter("PersonIdentifier IS NOT NULL").IncludeProperties(["Id"]).IsUnique().IsCreatedConcurrently();
     }
 }
 
