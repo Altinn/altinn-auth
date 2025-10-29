@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Altinn.AccessManagement.Utilities;
 using Microsoft.AspNetCore.Mvc;
 

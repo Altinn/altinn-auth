@@ -5,7 +5,7 @@ namespace Altinn.AccessManagement.Core.Errors;
 /// <summary>
 /// A utility class that provides methods for validating data using a series of rules.
 /// </summary>
-[Obsolete("New Validation in Access.Mgmt.Core")]
+[Obsolete("New Validation in Altinn.AccessMgmt.Core/Services/Validation")]
 public static class EnduserValidationRules
 {
     /// <summary>

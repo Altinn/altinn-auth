@@ -80,7 +80,7 @@ public static class Problems
     = _factory.Create(16, HttpStatusCode.BadRequest, $"Consent with id already exist");
 
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
-    public static ProblemDescriptor UnsuportedEntityType { get; }
+    public static ProblemDescriptor UnsupportedEntityType { get; }
     = _factory.Create(17, HttpStatusCode.BadRequest, $"The Entitytype is not supported");
 
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
@@ -106,4 +106,8 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor PartyNotFound { get; }
     = _factory.Create(23, HttpStatusCode.BadRequest, $"The provided identifier cannot be found as a valid party for the operation.");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor PersonInputRequiredForPersonAssignment { get; }
+    = _factory.Create(24, HttpStatusCode.BadRequest, "Target party is a person. Use the PersonInput request body with personIdentifier and lastName instead of a 'to' party id in ConnectionInput to add the assignment.");
 }

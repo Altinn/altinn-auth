@@ -27,7 +27,7 @@ public class PartyService(AppDbContext db) : IPartyService
              */
             if (!party.EntityType.Equals("Systembruker", StringComparison.InvariantCultureIgnoreCase))
             {
-                return Problems.UnsuportedEntityType.Create([new("entityType", party.EntityType.ToString())]);
+                return Problems.UnsupportedEntityType.Create([new("entityType", party.EntityType.ToString())]);
             }
 
             var entityType = await db.EntityTypes

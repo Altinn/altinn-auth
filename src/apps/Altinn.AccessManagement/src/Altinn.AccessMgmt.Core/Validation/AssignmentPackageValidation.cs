@@ -7,7 +7,7 @@ namespace Altinn.AccessMgmt.Core.Validation;
 /// <summary>
 /// A utility class that provides methods for validating data using a series of rules.
 /// </summary>
-public static class AssignementPackageValidation
+public static class AssignmentPackageValidation
 {
     internal static RuleExpression HasAssignedPackages(IEnumerable<AssignmentPackage> packages, string paramName = "cascade") => () =>
     {

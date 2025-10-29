@@ -129,7 +129,7 @@ public partial class ConnectionService(
                 .ToListAsync(cancellationToken);
 
             problem = ValidationComposer.Validate(
-                AssignementPackageValidation.HasAssignedPackages(assignedPackages),
+                AssignmentPackageValidation.HasAssignedPackages(assignedPackages),
                 DelegationValidation.HasDelegationsAssigned(delegationsFrom),
                 DelegationValidation.HasDelegationsAssigned(delegationsTo)
             );

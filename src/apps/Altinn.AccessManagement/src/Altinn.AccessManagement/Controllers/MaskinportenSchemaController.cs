@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System.ComponentModel.DataAnnotations;
-using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Helpers.Extensions;
@@ -8,10 +7,10 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Utilities;
+using Altinn.AccessMgmt.Core.Utils;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.FeatureManagement.Mvc;
 
 namespace Altinn.AccessManagement.Controllers
 {

@@ -1,10 +1,14 @@
 using System.Net.Mime;
 using Altinn.AccessManagement.Api.Enduser.Models;
+using Altinn.AccessManagement.Api.Enduser.Utils;
+using Altinn.AccessManagement.Api.Enduser.Validation;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.Core.Validation;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
@@ -23,9 +27,13 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 [Route("accessmanagement/api/v1/enduser/connections")]
 [FeatureGate(AccessManagementEnduserFeatureFlags.ControllerConnections)]
 [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
-public class ConnectionsController(IConnectionService connectionService) : ControllerBase
+public class ConnectionsController(IConnectionService connectionService, IUserProfileLookupService userProfileLookupService, IEntityService entityService) : ControllerBase
 {
     private IConnectionService ConnectionService { get; } = connectionService;
+
+    private IUserProfileLookupService UserProfileLookupService { get; } = userProfileLookupService;
+
+    private IEntityService EntityService { get; } = entityService;
 
     private Action<ConnectionOptions> ConfigureConnections { get; } = options =>
     {
@@ -79,17 +87,37 @@ public class ConnectionsController(IConnectionService connectionService) : Contr
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> AddAssignment([FromQuery] ConnectionInput connection, [FromBody] PersonInput? person = null, CancellationToken cancellationToken = default)
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    public async Task<IActionResult> AddAssignment([FromQuery] ConnectionInput connection, [FromBody] PersonInput person, CancellationToken cancellationToken = default)
     {
-        if (EnduserValidationRules.EnduserAddConnection(connection.Party, connection.From, connection.To) is var problem && problem is { })
+        bool hasPersonInputIdentifiers = person is { } &&
+                                         !string.IsNullOrWhiteSpace(person.PersonIdentifier) &&
+                                         !string.IsNullOrWhiteSpace(person.LastName);
+
+        var validationErrors = hasPersonInputIdentifiers
+            ? ValidationComposer.Validate(
+                AddAssignmentValidation.ValidateConnectionInputIfPersonInputPresent(connection.Party, connection.From, connection.To),
+                AddAssignmentValidation.ValidatePersonInput(person.PersonIdentifier, person.LastName))
+            : ValidationComposer.Validate(
+                AddAssignmentValidation.ValidateConnectionInputIfPersonInputNotPresent(connection.Party, connection.From, connection.To));
+
+        if (validationErrors is { })
         {
-            return problem.ToActionResult();
+            return validationErrors.ToActionResult();
         }
 
         Guid.TryParse(connection.From, out var fromUuid);
-        Guid.TryParse(connection.To, out var toUuid); // ToDo: to-uuid param only to be allowed when not adding a person
+        Guid.TryParse(connection.To, out var connectionInputToUuid);
 
-        // ToDo: Implement adding by person details when person input is provided
+        var resolver = new AddAssignmentToUuidResolver(EntityService, UserProfileLookupService);
+        var resolveResult = await resolver.ResolveAsync(connectionInputToUuid, person, HttpContext, cancellationToken);
+        if (!resolveResult.Success)
+        {
+            return resolveResult.ErrorResult!;
+        }
+
+        Guid toUuid = resolveResult.ToUuid;
+
         var result = await ConnectionService.AddAssignment(fromUuid, toUuid, ConfigureConnections, cancellationToken);
         if (result.IsProblem)
         {
