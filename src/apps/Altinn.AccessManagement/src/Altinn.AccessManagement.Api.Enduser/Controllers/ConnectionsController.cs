@@ -88,7 +88,7 @@ public class ConnectionsController(IConnectionService connectionService, IUserPr
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-    public async Task<IActionResult> AddAssignment([FromQuery] ConnectionInput connection, [FromBody] PersonInput person, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> AddAssignment([FromQuery] ConnectionInput connection, [FromBody] PersonInput? person, CancellationToken cancellationToken = default)
     {
         bool hasPersonInputIdentifiers = person is { } &&
                                          !string.IsNullOrWhiteSpace(person.PersonIdentifier) &&
