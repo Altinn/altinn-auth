@@ -5,13 +5,13 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAltinn2=false&includeAltinn3=true
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAltinn2=true&includeAltinn3=true
   body: json
   auth: inherit
 }
 
 params:query {
-  includeAltinn2: false
+  includeAltinn2: true
   includeAltinn3: true
 }
 
