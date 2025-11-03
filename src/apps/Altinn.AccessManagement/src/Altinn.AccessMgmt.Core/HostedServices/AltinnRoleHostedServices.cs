@@ -92,6 +92,10 @@ namespace Altinn.AccessMgmt.Core.HostedServices
             {
                 Log.SyncError(_logger, ex);
             }
+            finally
+            {
+                _isRunning = 0;
+            }
         }
 
         private async Task SyncAllAltinnRoles(ILease lease, CancellationToken cancellationToken)
