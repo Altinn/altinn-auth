@@ -11,6 +11,7 @@ exports.getToken = async function (getTokenParameters) {
   const tokenEnv = bru.getEnvVar("tokenEnv");
   const tokenType = getTokenParameters.auth_tokenType;
   const tokenScopes = getTokenParameters.auth_scopes;
+  const tokenAuthLvl = getTokenParameters.auth_tokenLvl ?? 3;
 
   let tokenUrl;
 
@@ -21,7 +22,7 @@ exports.getToken = async function (getTokenParameters) {
     const tokenPid = getTokenParameters.auth_ssn;
     const tokenUsername = getTokenParameters.auth_username;
 
-    tokenUrl = `${tokenBaseUrl}/api/Get${tokenType}Token?env=${tokenEnv}&scopes=${tokenScopes}&pid=${tokenPid}&userid=${tokenUser}&partyid=${tokenParty}&partyuuid=${tokenPartyUuid}&userName=${tokenUsername}&authLvl=3&ttl=3000`;
+    tokenUrl = `${tokenBaseUrl}/api/Get${tokenType}Token?env=${tokenEnv}&scopes=${tokenScopes}&pid=${tokenPid}&userid=${tokenUser}&partyid=${tokenParty}&partyuuid=${tokenPartyUuid}&userName=${tokenUsername}&authLvl=${tokenAuthLvl}&ttl=3000`;
   }
 
   else if (tokenType == "Enterprise") {
@@ -61,6 +62,7 @@ exports.getToken = async function (getTokenParameters) {
     tokenUrl = `${tokenBaseUrl}/api/Get${tokenType}Token?env=${tokenEnv}&scopes=${tokenScopes}&systemUserId=${tokenSystemUser}&orgNo=${tokenOrgNo}&clientId=${tokenClientId}&ttl=30`;
   }
   
+  console.log("tokenurl: " + tokenUrl);
   const response = await axios.get(tokenUrl, {
     headers: { Authorization }
   });

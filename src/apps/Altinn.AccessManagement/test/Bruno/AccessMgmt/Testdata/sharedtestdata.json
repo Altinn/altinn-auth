@@ -25,6 +25,11 @@
     {
       "org": "ttd",
       "orgno": "991825827"
+    },
+    "digdir":
+    {
+      "org": "digdir",
+      "orgno": "991825827"
     }
   }
 }

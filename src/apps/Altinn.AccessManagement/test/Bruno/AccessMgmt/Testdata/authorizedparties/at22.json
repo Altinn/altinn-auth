@@ -1,0 +1,155 @@
+{
+  "env": "at22",
+  "resources": {
+    "clientDelgResourceId": "devtest_gar_bruno_client_resource"
+  },
+  "REGN_ULASTELIG_RETTFERDIG_TIGER": {
+    "name": "ULASTELIG RETTFERDIG TIGER AS",
+    "orgno": "314242726",
+    "partyId": 51235100,
+    "partyUuid": "066148fe-7077-4484-b7ea-44b5ede0014e",
+    "dagligleder": {
+      "name": "OPPRIKTIG KAMEL",
+      "pid": "30856499983",
+      "userId": 20013154,
+      "partyId": 51181765,
+      "partyUuid": "a5eb95db-97fc-4bd4-a6f6-b9214bc24549"
+    },
+    "client_USENSUELL_UVIRKSOM_TIGER": {
+      "name": "USENSUELL UVIRKSOM TIGER AS",
+      "orgno": "312714051",
+      "partyId": 51581690,
+      "partyUuid": "c12f8f37-391b-4651-be09-05665f5acdb6",
+      "dagligleder": {
+        "name": "PRATSOM BRUKSRETT",
+        "pid": "21835298350",
+        "userId": 20013153,
+        "partyId": 50183755,
+        "partyUuid": "4d2a7c10-e7c7-4685-8485-c211246db5d3"
+      },
+      "subunit": {
+        "name": "USENSUELL UVIRKSOM TIGER AS",
+        "orgno": "315556155",
+        "partyId": 51794395,
+        "partyUuid": "86ae6d6a-3545-4956-b395-c67ca0df4e51"
+      },
+      "directPackageToDelegate": "skatt-naering"
+    },
+    "client_ENK_HUMAN_TOPP_KATT_BIL": {
+      "name": "HUMAN TOPP KATT BIL",
+      "orgno": "310329495",
+      "partyId": 51340351,
+      "partyUuid": "ab07bec2-fcd0-4563-908a-d9f564724252",
+      "innehaver": {
+        "name": "EVENTYRLIG FALK",
+        "pid": "31886896576",
+        "userId": 20013167,
+        "partyId": 50175254,
+        "partyUuid": "00273506-3b4a-4e8e-a1f7-b7f28c4b411b"
+      }
+    },
+    "client_WITHOUT_CLIENTDELEGATION": {
+      "name": "UNYTTIG MANGE TIGER AS",
+      "orgno": "313750531",
+      "partyId": 51653860,
+      "partyUuid": "0fcdee75-036a-47d9-ab40-5e55509a5b26"
+    },
+    "client_rightholderOrg1": {
+      "name": "TOPP FIRKANTET TIGER AS",
+      "orgno": "311127845",
+      "partyId": 51410913,
+      "partyUuid": "703c2e1e-d27c-40a1-b138-46b4f1a01b33",
+      "dagligleder": {
+        "name": "SAMTIDIG MATEMATIKER",
+        "pid": "07888397161",
+        "userId": 20013287,
+        "partyId": 50784075,
+        "partyUuid": "f75f209d-ce25-413e-b635-54897dc8400e"
+      },
+      "directPackageToDelegate": "motorvognavgift",
+      "directPackageToDelegate2": "skatt-naering",
+      "directPackageTilgangsstyrer": "tilgangsstyrer"
+    },
+    "client_rightholderOrg2": {
+      "name": "STOLT BETYDELIG TIGER AS",
+      "orgno": "313816915",
+      "partyId": 51658393,
+      "partyUuid": "ffa48a06-6a01-4fc7-ae5e-8aaff6c1a850",
+      "dagligleder": {
+        "name": "SKRAVLETE KAMERA",
+        "pid": "05838299719",
+        "userId": 20016888,
+        "partyId": 50922937,
+        "partyUuid": "11e6a957-5a74-4a10-b89f-c557ccca5b34"
+      },
+      "directPackageToDelegate": "mobler-og-annen-industri"
+    },
+    "a2_klientadministrator": {
+      "name": "RUSTEN AKVARELL",
+      "pid": "11860198721",
+      "userId": 20013151,
+      "partyId": 50395759,
+      "partyUuid": "5d4119c2-6a3a-4aec-ac72-7b78ad456d12"
+    },
+    "a2_hovedadministrator": {
+      "name": "MATEMATISK UNIVERSITET",
+      "pid": "03899798324",
+      "userId": 20013152,
+      "partyId": 50345170,
+      "partyUuid": "15977366-d191-4762-bb53-562461cab5c5"
+    },
+    "a2_tilgangsstyrer": {
+      "name": "GLEMSOM GREND",
+      "pid": "27920898721",
+      "userId": 20013157,
+      "partyId": 50382857,
+      "partyUuid": "f489878a-927f-4789-9dab-ff73c36c2f26"
+    },
+    "revisor": {
+      "name": "OVERFLADISK LANG TIGER AS",
+      "orgno": "310267511",
+      "partyId": 51235849,
+      "partyUuid": "037a33d1-af1c-4156-9506-86d63a09f6a6",
+      "directPackageToDelegate": "revisorattesterer"
+    },
+    "systemuser": {
+      "name": "Fiken",
+      "partyUuid": "aae74f4e-cae4-4237-a1da-c1b62a61fe4b",
+      "directPackageToDelegate": "urn:altinn:accesspackage:ansettelsesforhold",
+      "clientPackageToDelegate": "urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet",
+      "clientEnkPackageToDelegate": "urn:altinn:accesspackage:regnskapsforer-lonn",
+      "clientPackageForDelete": "urn:altinn:accesspackage:regnskapsforer-uten-signeringsrettighet"
+    },
+    "subunit": {
+      "name": "ULASTELIG RETTFERDIG TIGER AS",
+      "orgno": "314613155",
+      "partyId": 51708660,
+      "partyUuid": "825d14bf-b3f3-4d68-ae33-0994febf8a43"
+    },
+    "employee_rightholderWithoutPackages": {
+      "name": "MOBIL LAMA",
+      "lastname": "LAMA",
+      "pid": "31858374521",
+      "userId": 20429745,
+      "partyId": 50427753,
+      "partyUuid": "582591cd-b618-4c6f-a0e2-b2c6fe70eb70"
+    },
+    "employee_rightholderWithPackages": {
+      "name": "STOR UTHOLDEN AUTORITET ANSIKTSKREM",
+      "lastname": "ANSIKTSKREM",
+      "pid": "27877695722",
+      "userId": 20962455,
+      "partyId": 51233907,
+      "partyUuid": "c8ded0aa-60b5-4007-9429-6acca2f88031",
+      "directPackageToDelegate": "revisorattesterer",
+      "directPackageTilgangsstyrer": "tilgangsstyrer"
+    }
+  },
+  "a2BrunoSIUser": {
+    "name": "A2BrunoSIUser",
+    "username": "a2brunosiuser",
+    "userId": 21226088,
+    "partyId": 51842409,
+    "partyUuid": "2c496351-cdc6-402a-b4f8-2b1145bb626e"
+  }
+}

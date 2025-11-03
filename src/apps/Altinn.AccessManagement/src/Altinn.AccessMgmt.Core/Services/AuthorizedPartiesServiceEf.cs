@@ -462,8 +462,11 @@ public class AuthorizedPartiesServiceEf(
                 party.Type = AuthorizedPartyType.Person;
                 party.DateOfBirth = entity.DateOfBirth;
                 break;
+            case var siUserType when siUserType == EntityTypeConstants.SelfIdentified.Id:
+                party.Type = AuthorizedPartyType.SelfIdentified;
+                break;
             default:
-                // Only Organizations and Persons can be represented by others.
+                // Only Organizations and Persons can be represented by others. SIUsers can represent themselves.
                 Unreachable();
                 break;
         }
