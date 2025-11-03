@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
-using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -73,192 +72,221 @@ public class ConnectionQuery(AppDbContext db)
         }
     }
 
-    private IQueryable<ConnectionQueryBaseRecord> BuildBaseQuery(AppDbContext db, ConnectionQueryFilter filter)
+    public IQueryable<ConnectionQueryBaseRecord> BuildBaseQuery(AppDbContext db, ConnectionQueryFilter filter)
     {
         var fromSet = filter.FromIds?.Count > 0 ? new HashSet<Guid>(filter.FromIds) : null;
         var toSet = filter.ToIds?.Count > 0 ? new HashSet<Guid>(filter.ToIds) : null;
         var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
 
-        var direct = db.Assignments
-            .WhereMatchIfSet(toSet, x => x.ToId)
-            .WhereMatchIfSet(fromSet, x => x.FromId)
-            .WhereMatchIfSet(roleSet, x => x.RoleId)
-            .Select(a => new ConnectionQueryBaseRecord
+        var queries = new List<IQueryable<ConnectionQueryBaseRecord>>();
+
+        #region Direct
+        var direct = 
+            from assignment in db.Assignments
+            select new ConnectionQueryBaseRecord()
             {
-                FromId = a.FromId,
-                ToId = a.ToId,
-                RoleId = a.RoleId,
-                AssignmentId = a.Id,
-                DelegationId = null,
+                AssignmentId = assignment.Id,
+                FromId = assignment.FromId,
+                ToId = assignment.ToId,
+                RoleId = assignment.RoleId,
                 ViaId = null,
                 ViaRoleId = null,
-            });
+                DelegationId = null,
+                Reason = ConnectionReason.Assignment,
+            };
 
-        var queries = new List<IQueryable<ConnectionQueryBaseRecord>> { direct };
+        direct = direct.AsNoTracking()
+            .ToIdContains(toSet)
+            .FromIdContains(fromSet)
+            .RoleIdContains(roleSet);
+
+        queries.Add(direct);
 
         if (filter.IncludeKeyRole)
         {
-            var directKeyRoles = db.Assignments
-                .Join(db.Roles, a => a.RoleId, r => r.Id, (a, r) => new { a, r })
-                .Where(x => x.r.IsKeyRole)
-                .Join(db.Assignments, x => x.a.FromId, a => a.ToId, (x, fromAss) => new ConnectionQueryBaseRecord
+            var directKeyRole = 
+                from assignment in db.Assignments
+                join role in db.Roles on assignment.RoleId equals role.Id
+                join keyRoleAssignment in db.Assignments on assignment.FromId equals keyRoleAssignment.ToId
+                where role.IsKeyRole
+                select new ConnectionQueryBaseRecord()
                 {
-                    FromId = fromAss.FromId,
-                    ToId = x.a.ToId,
-                    RoleId = x.r.Id,
-                    AssignmentId = fromAss.Id,
+                    AssignmentId = keyRoleAssignment.Id,
+                    FromId = keyRoleAssignment.FromId,
+                    ToId = assignment.ToId,
+                    ViaId = keyRoleAssignment.ToId,
+                    RoleId = assignment.RoleId,
+                    ViaRoleId = null,
                     DelegationId = null,
-                    ViaId = null,
-                    ViaRoleId = null
-                })
-                .WhereMatchIfSet(toSet, x => x.ToId)
-                .WhereMatchIfSet(fromSet, x => x.FromId)
-                .WhereMatchIfSet(roleSet, x => x.RoleId);
+                    Reason = ConnectionReason.KeyRole,
+                };
 
-            queries.Add(directKeyRoles);
+            directKeyRole = directKeyRole.AsNoTracking()
+                .ToIdContains(toSet)
+                .FromIdContains(fromSet)
+                .RoleIdContains(roleSet);
+
+            queries.Add(directKeyRole);
         }
+        
+        #endregion
 
-        var children = db.Assignments
-            .Join(db.Entities, a => a.FromId, e => e.ParentId, (a, e) => new ConnectionQueryBaseRecord
+        #region Children
+
+        var children =
+            from assignment in db.Assignments
+            join child in db.Entities on assignment.FromId equals child.ParentId
+            select new ConnectionQueryBaseRecord()
             {
-                FromId = e.Id,
-                ToId = a.ToId,
-                RoleId = a.RoleId,
-                AssignmentId = a.Id,
-                DelegationId = null,
-            })
-            .WhereMatchIfSet(toSet, x => x.ToId)
-            .WhereMatchIfSet(fromSet, x => x.FromId)
-            .WhereMatchIfSet(roleSet, x => x.RoleId)
-            .Select(result => new ConnectionQueryBaseRecord
-            {
-                FromId = result.FromId,
-                ToId = result.ToId,
-                RoleId = result.RoleId,
-                AssignmentId = result.AssignmentId,
-                DelegationId = result.DelegationId,
-                ViaId = null,
+                AssignmentId = assignment.Id,
+                FromId = child.Id,
+                ToId = assignment.ToId,
+                RoleId = assignment.RoleId,
+                ViaId = assignment.FromId,
                 ViaRoleId = null,
-            });
+                DelegationId = null,
+                Reason = ConnectionReason.Hierarchy,
+            };
+
+        children = children
+            .ToIdContains(toSet)
+            .FromIdContains(fromSet)
+            .RoleIdContains(roleSet);
 
         queries.Add(children);
 
         if (filter.IncludeKeyRole)
         {
-            var childrenKeyRoles = db.Assignments
-                .Join(db.Entities, a => a.FromId, e => e.ParentId, (a, e) => new { a, e })
-                .Join(db.Roles, x => x.a.RoleId, r => r.Id, (x, r) => new { x.a, x.e, r })
-                .Where(x => x.r.IsKeyRole)
-                .Join(db.Assignments, x => x.e.Id, a => a.ToId, (x, fromAss) => new ConnectionQueryBaseRecord
+            var childrenKeyRole =
+                from assignment in db.Assignments
+                join role in db.Roles on assignment.RoleId equals role.Id
+                join keyRoleAssignment in db.Assignments on assignment.FromId equals keyRoleAssignment.ToId
+                where role.IsKeyRole
+                join child in db.Entities on assignment.FromId equals child.ParentId
+                select new ConnectionQueryBaseRecord()
                 {
-                    FromId = fromAss.FromId,
-                    ToId = x.a.ToId,
-                    RoleId = x.r.Id,
-                    AssignmentId = fromAss.Id,
+                    AssignmentId = assignment.Id,
+                    FromId = child.Id,
+                    ToId = keyRoleAssignment.ToId,
+                    RoleId = assignment.RoleId,
+                    ViaId = assignment.FromId,
+                    ViaRoleId = null,
                     DelegationId = null,
-                    ViaId = null,
-                    ViaRoleId = null
-                })
-                .WhereMatchIfSet(toSet, x => x.ToId)
-                .WhereMatchIfSet(fromSet, x => x.FromId)
-                .WhereMatchIfSet(roleSet, x => x.RoleId);
+                    Reason = ConnectionReason.KeyRole,
+                };
 
-            queries.Add(childrenKeyRoles);
+            childrenKeyRole = childrenKeyRole
+                .ToIdContains(toSet)
+                .FromIdContains(fromSet)
+                .RoleIdContains(roleSet);
+
+            queries.Add(childrenKeyRole);
         }
 
-        var roleMaps = db.Assignments
-            .Join(db.RoleMaps, a => a.RoleId, rm => rm.HasRoleId, (a, rm) => new ConnectionQueryBaseRecord
+        #endregion
+
+        #region RoleMap
+
+        var roleMaps =
+            from assignment in db.Assignments
+            join rolemap in db.RoleMaps on assignment.RoleId equals rolemap.HasRoleId
+            select new ConnectionQueryBaseRecord()
             {
-                FromId = a.FromId,
-                ToId = a.ToId,
-                RoleId = rm.GetRoleId,   // NB: filtrer på GetRoleId
-                AssignmentId = a.Id,
-                DelegationId = null,
-            })
-            .WhereMatchIfSet(toSet, x => x.ToId)
-            .WhereMatchIfSet(fromSet, x => x.FromId)
-            .WhereMatchIfSet(roleSet, x => x.RoleId)
-            .Select(result => new ConnectionQueryBaseRecord
-            {
-                FromId = result.FromId,
-                ToId = result.ToId,
-                RoleId = result.RoleId,
-                AssignmentId = result.AssignmentId,
-                DelegationId = result.DelegationId,
+                AssignmentId = assignment.Id,
+                FromId = assignment.FromId,
+                ToId = assignment.ToId,
+                RoleId = rolemap.GetRoleId,
                 ViaId = null,
                 ViaRoleId = null,
-            });
+                DelegationId = null,
+                Reason = ConnectionReason.RoleMap,
+            };
+
+        roleMaps = roleMaps
+            .ToIdContains(toSet)
+            .FromIdContains(fromSet)
+            .RoleIdContains(roleSet);
 
         queries.Add(roleMaps);
 
         if (filter.IncludeKeyRole)
         {
-            var roleMapKeyRoles = db.Assignments
-             .Join(db.RoleMaps, a => a.RoleId, rm => rm.HasRoleId, (a, rm) => new { a, rm })
-             .Join(db.Roles, x => x.rm.GetRoleId, r => r.Id, (x, r) => new { x.a, r })
-             .Where(x => x.r.IsKeyRole)
-             .Join(db.Assignments, x => x.a.FromId, a => a.ToId, (x, fromAss) => new ConnectionQueryBaseRecord
-             {
-                 FromId = fromAss.FromId,
-                 ToId = x.a.ToId,
-                 RoleId = x.r.Id,
-                 AssignmentId = fromAss.Id,
-                 DelegationId = null,
-                 ViaId = null,
-                 ViaRoleId = null
-             })
-            .WhereMatchIfSet(toSet, x => x.ToId)
-            .WhereMatchIfSet(fromSet, x => x.FromId)
-            .WhereMatchIfSet(roleSet, x => x.RoleId);
+            var roleMapKeyRoles =
+                from assignment in db.Assignments
+                join role in db.Roles on assignment.RoleId equals role.Id
+                where role.IsKeyRole
+                join keyRoleAssignment in db.Assignments on assignment.FromId equals keyRoleAssignment.ToId
+                join rolemap in db.RoleMaps on assignment.RoleId equals rolemap.HasRoleId
+                select new ConnectionQueryBaseRecord()
+                {
+                    AssignmentId = assignment.Id,
+                    FromId = assignment.FromId,
+                    ToId = keyRoleAssignment.ToId,
+                    RoleId = rolemap.GetRoleId,
+                    ViaId = null,
+                    ViaRoleId = null,
+                    DelegationId = null,
+                    Reason = ConnectionReason.KeyRole,
+                };
 
             queries.Add(roleMapKeyRoles);
         }
 
+        #endregion
+
+        #region Delegation
+
         if (filter.IncludeDelegation)
         {
-            var delegation = db.Delegations
-                .Join(db.Assignments, d => d.FromId, a => a.Id, (d, fromAss) => new { d, fromAss })
-                .Join(db.Assignments, x => x.d.ToId, a => a.Id, (x, toAss) => new { x.d, x.fromAss, toAss })
-                .WhereMatchIfSet(toSet, x => x.toAss.ToId)
-                .WhereMatchIfSet(fromSet, x => x.fromAss.FromId)
-                //// Filter for Roles ??
-                .Select(x => new ConnectionQueryBaseRecord
+            var delegations = 
+                from delgation in db.Delegations
+                join fromAssignment in db.Assignments on delgation.FromId equals fromAssignment.Id
+                join toAssignment in db.Assignments on delgation.ToId equals toAssignment.Id
+                select new ConnectionQueryBaseRecord()
                 {
-                    FromId = x.fromAss.FromId,
-                    ToId = x.toAss.ToId,
-                    RoleId = Guid.Empty, // delegasjoner har ikke direkte rolle
+                    DelegationId = delgation.Id,
+                    FromId = fromAssignment.FromId,
+                    ToId = toAssignment.ToId,
+                    ViaId = fromAssignment.ToId,
+                    ViaRoleId = null,
                     AssignmentId = null,
-                    DelegationId = x.d.Id,
-                    ViaId = x.d.FacilitatorId,
-                    ViaRoleId = null
-                });
+                    RoleId = Guid.Empty,
+                    Reason = ConnectionReason.Delegation,
+                };
 
-            queries.Add(delegation);
+            delegations = delegations
+                .ToIdContains(toSet)
+                .FromIdContains(fromSet)
+                .RoleIdContains(roleSet);
+
+            queries.Add(delegations);
 
             if (filter.IncludeKeyRole)
             {
-                var delegationKeyRoles = db.Delegations
-                    .Join(db.Assignments, d => d.FromId, a => a.Id, (d, fromAss) => new { d, fromAss })
-                    .Join(db.Assignments, x => x.d.ToId, a => a.Id, (x, toAss) => new { x.d, x.fromAss, toAss })
-                    .Join(db.Roles, _ => true, r => r.IsKeyRole, (x, r) => new { x.fromAss, x.toAss, r }) // matcher alle key roles
-                    .Join(db.Assignments, x => x.fromAss.FromId, a => a.ToId, (x, fromAss) => new { x, fromAss })
-                    .WhereMatchIfSet(toSet, x => x.x.toAss.ToId)
-                    .WhereMatchIfSet(fromSet, x => x.fromAss.FromId)
-                    .WhereMatchIfSet(roleSet, x => x.x.r.Id)
-                    .Select(x => new ConnectionQueryBaseRecord
+                var delegationKeyRoles =
+                    from delgation in db.Delegations
+                    join fromAssignment in db.Assignments on delgation.FromId equals fromAssignment.Id
+                    join toAssignment in db.Assignments on delgation.ToId equals toAssignment.Id
+                    join role in db.Roles on toAssignment.RoleId equals role.Id
+                    join keyRoleAssignment in db.Assignments on toAssignment.FromId equals keyRoleAssignment.ToId
+                    where role.IsKeyRole
+                    select new ConnectionQueryBaseRecord()
                     {
-                        FromId = x.fromAss.FromId,
-                        ToId = x.x.toAss.ToId,
-                        RoleId = x.x.r.Id,
-                        AssignmentId = x.fromAss.Id,
-                        DelegationId = x.x.fromAss.Id,
-                        ViaId = null,
-                        ViaRoleId = null
-                    });
+                        DelegationId = delgation.Id,
+                        FromId = fromAssignment.FromId,
+                        ToId = toAssignment.ToId,
+                        ViaId = fromAssignment.ToId,
+                        ViaRoleId = null,
+                        AssignmentId = null,
+                        RoleId = Guid.Empty,
+                        Reason = ConnectionReason.KeyRole,
+                    };
 
                 queries.Add(delegationKeyRoles);
             }
         }
+
+        #endregion
 
         if (filter.OnlyUniqueResults)
         {
@@ -297,6 +325,7 @@ public class ConnectionQuery(AppDbContext db)
                 Role = x.r,
                 Via = x.via,
                 ViaRole = x.viaRole,
+                Reason = x.c.Reason,
             });
 
         return query;
@@ -344,7 +373,9 @@ public class ConnectionQuery(AppDbContext db)
             var mapped = g.Select(z => new ConnectionQueryPackage
             {
                 Id = z.Package.Id,
-                Name = z.Package.Name
+                Name = z.Package.Name,
+                AreaId = z.Package.AreaId,
+                Urn = z.Package.Urn
             }).DistinctBy(p => p.Id);
 
             index.AddRange(g.Key, mapped);
@@ -398,7 +429,8 @@ public class ConnectionQuery(AppDbContext db)
             var mapped = g.Select(z => new ConnectionQueryResource
             {
                 Id = z.Resource.Id,
-                Name = z.Resource.Name
+                Name = z.Resource.Name,
+                RefId = z.Resource.RefId,
             }).DistinctBy(p => p.Id);
 
             index.AddRange(g.Key, mapped);
@@ -490,7 +522,8 @@ public class ConnectionQuery(AppDbContext db)
         To = x.To,
         Role = x.Role,
         Via = x.Via,
-        ViaRole = x.ViaRole
+        ViaRole = x.ViaRole,
+        Reason = x.Reason,
     };
 
     private static ConnectionQueryExtendedRecord ToDtoEmpty(ConnectionQueryBaseRecord x) => new()
@@ -501,7 +534,8 @@ public class ConnectionQuery(AppDbContext db)
         AssignmentId = x.AssignmentId,
         DelegationId = x.DelegationId,
         ViaId = x.ViaId,
-        ViaRoleId = x.ViaRoleId
+        ViaRoleId = x.ViaRoleId,
+        Reason = x.Reason
     };
 }
 
@@ -533,4 +567,56 @@ internal sealed class ConnectionIndex<T>
         map.TryGetValue(key, out var list) ? list : Array.Empty<T>();
 
     public IEnumerable<KeyValuePair<ConnectionCompositeKey, List<T>>> Pairs => map;
+}
+
+internal static class ConnectionQueryExtensions
+{
+    internal static IQueryable<ConnectionQueryBaseRecord> ToIdContains(this IQueryable<ConnectionQueryBaseRecord> query, HashSet<Guid> ids)
+    {
+        if (ids is null || ids.Count == 0)
+        {
+            return query;
+        }
+
+        if (ids.Count == 1)
+        {
+            var id = ids.First();
+            return query.Where(t => t.ToId == id);
+        }
+
+        return query.Where(t => ids.Contains(t.ToId));
+    }
+
+    internal static IQueryable<ConnectionQueryBaseRecord> FromIdContains(this IQueryable<ConnectionQueryBaseRecord> query, HashSet<Guid> ids)
+    {
+        if (ids is null || ids.Count == 0)
+        {
+            return query;
+        }
+
+        if (ids.Count == 1)
+        {
+            var id = ids.First();
+            return query.Where(t => t.FromId == id);
+        }
+
+        return query.Where(t => ids.Contains(t.FromId));
+    }
+
+    internal static IQueryable<ConnectionQueryBaseRecord> RoleIdContains(this IQueryable<ConnectionQueryBaseRecord> query, HashSet<Guid> ids)
+    {
+        if (ids is null || ids.Count == 0)
+        {
+            return query;
+        }
+
+        if (ids.Count == 1)
+        {
+            var id = ids.First();
+            return query.Where(t => t.RoleId == id);
+        }
+
+        return query.Where(t => ids.Contains(t.RoleId));
+    }
+
 }

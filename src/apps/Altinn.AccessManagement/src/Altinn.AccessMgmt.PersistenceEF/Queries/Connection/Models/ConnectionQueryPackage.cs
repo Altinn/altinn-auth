@@ -16,6 +16,16 @@ public sealed class ConnectionQueryPackage
     public string Name { get; init; } = string.Empty;
 
     /// <summary>
+    /// Area ID
+    /// </summary>
+    public Guid AreaId { get; init; }
+
+    /// <summary>
+    /// Urn
+    /// </summary>
+    public string Urn { get; init; } = string.Empty;
+
+    /// <summary>
     /// Package resources
     /// </summary>
     public List<ConnectionQueryResource> Resources { get; set; }

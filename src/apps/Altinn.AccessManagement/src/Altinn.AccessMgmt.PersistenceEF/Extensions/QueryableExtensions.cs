@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Extensions;
 
@@ -12,25 +13,40 @@ public static class QueryableExtensions
         return condition ? source.Where(predicate) : source;
     }
 
-    public static IQueryable<T> WhereEqualsIfSet<T>(
+    public static IQueryable<T> WhereMatchIfSet<T>(
     this IQueryable<T> query,
-    Guid? id,
+    HashSet<Guid>? ids,
     Expression<Func<T, Guid>> selector)
     {
-        if (id is null)
+        if (ids is null || ids.Count == 0)
         {
             return query;
         }
 
-        var equalExpr = Expression.Equal(selector.Body, Expression.Constant(id.Value));
-        var lambda = Expression.Lambda<Func<T, bool>>(equalExpr, selector.Parameters);
-        return query.Where(lambda);
+        return ids.Count == 1
+            ? query.Where(x => EF.Property<Guid>(x, ((MemberExpression)selector.Body).Member.Name) == ids.First())
+            : query.Where(x => ids.Contains(EF.Property<Guid>(x, ((MemberExpression)selector.Body).Member.Name)));
     }
 
-    public static IQueryable<T> WhereInIfSet<T>(
-        this IQueryable<T> query,
-        IReadOnlyCollection<Guid>? ids,
-        Expression<Func<T, Guid>> selector)
+    public static IQueryable<T> WhereMatchIfSet<T>(
+    this IQueryable<T> query,
+    HashSet<Guid>? ids,
+    string columnName)
+    {
+        if (ids is null || ids.Count == 0)
+        {
+            return query;
+        }
+
+        return ids.Count == 1
+            ? query.Where(e => EF.Property<Guid>(e, columnName) == ids.First())
+            : query.Where(e => ids.Contains(EF.Property<Guid>(e, columnName)));
+    }
+
+    public static IQueryable<T> WhereMatchIfSetExpressionCall<T>(
+    this IQueryable<T> query,
+    HashSet<Guid>? ids,
+    Expression<Func<T, Guid>> selector)
     {
         if (ids is null || ids.Count == 0)
         {
@@ -38,38 +54,20 @@ public static class QueryableExtensions
         }
 
         var parameter = selector.Parameters[0];
+        var invokedSelector = Expression.Invoke(selector, parameter);
+
+        var containsMethod = typeof(Enumerable)
+            .GetMethods()
+            .First(m => m.Name == nameof(Enumerable.Contains) && m.GetParameters().Length == 2)
+            .MakeGenericMethod(typeof(Guid));
+
         var body = Expression.Call(
-            typeof(Enumerable),
-            nameof(Enumerable.Contains),
-            new[] { typeof(Guid) },
+            containsMethod,
             Expression.Constant(ids),
-            selector.Body
+            invokedSelector
         );
 
         var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
         return query.Where(lambda);
-    }
-
-    /// <summary>
-    /// If ids are null or empty do nothing. 
-    /// If ids contains single element use Equals. 
-    /// If ids contains multiple use In.
-    /// </summary>
-    public static IQueryable<T> WhereMatchIfSet<T>(
-     this IQueryable<T> query,
-     IReadOnlyCollection<Guid>? ids,
-     Expression<Func<T, Guid>> selector)
-    {
-        if (ids is null || ids.Count == 0)
-        {
-            return query;
-        }
-
-        if (ids.Count == 1)
-        {
-            return query.WhereEqualsIfSet(ids.First(), selector);
-        }
-
-        return query.WhereInIfSet(ids, selector);
     }
 }

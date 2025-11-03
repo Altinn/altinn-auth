@@ -76,6 +76,7 @@ public class PostgresFixture : IAsyncLifetime
 
         using var db = new AppDbContext(options);
         db.Database.MigrateAsync().Wait();
+        AccessMgmt.PersistenceEF.Data.StaticDataIngest.IngestAll(db).Wait();
 
         return Task.CompletedTask;
     }

@@ -14,4 +14,9 @@ public sealed class ConnectionQueryResource
     /// Resource name
     /// </summary>
     public string Name { get; init; } = string.Empty;
+
+    /// <summary>
+    /// RefId
+    /// </summary>
+    public string RefId { get; init; } = string.Empty;
 }

@@ -4,14 +4,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Data;
 
-internal static partial class StaticDataIngest
+public static partial class StaticDataIngest
 {
     /// <summary>
     /// Ingest RoleLookup
     /// </summary>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    internal static async Task IngestRoleLookup(AppDbContext dbContext, CancellationToken cancellationToken = default)
+    public static async Task IngestRoleLookup(AppDbContext dbContext, CancellationToken cancellationToken = default)
     {
         var roles = await dbContext.Roles.AsNoTracking().ToListAsync();
 

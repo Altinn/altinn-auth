@@ -4,14 +4,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Data;
 
-internal static partial class StaticDataIngest
+public static partial class StaticDataIngest
 {
     /// <summary>
     /// Ingest EntityVariantRole
     /// </summary>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    internal static async Task IngestEntityVariantRole(AppDbContext dbContext, CancellationToken cancellationToken = default)
+    public static async Task IngestEntityVariantRole(AppDbContext dbContext, CancellationToken cancellationToken = default)
     {
         var roles = (await dbContext.Roles.ToListAsync()).ToDictionary(t => t.Urn, t => t.Id);
         var variants = (await dbContext.EntityVariants.ToListAsync()).ToDictionary(t => t.Name, t => t.Id);

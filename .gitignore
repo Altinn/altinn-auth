@@ -49,3 +49,4 @@ src/apps/Altinn.AccessMgmt.Worker.ER/allunits
 
 # sonarcube
 .sonarqube/
+/src/apps/Altinn.AccessManagement/test/AccessMgmt.Tests/coverage-report

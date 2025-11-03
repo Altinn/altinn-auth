@@ -11,11 +11,11 @@ namespace Altinn.AccessMgmt.PersistenceEF.Data;
 /// <summary>
 /// Ingest static data into the database
 /// </summary>
-internal static partial class StaticDataIngest
+public static partial class StaticDataIngest
 {
     private static AuditValues AuditValues { get; set; } = new(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest, Guid.NewGuid().ToString());
 
-    internal static async Task IngestAll(AppDbContext dbContext, CancellationToken cancellationToken = default)
+    public static async Task IngestAll(AppDbContext dbContext, CancellationToken cancellationToken = default)
     {
         /* ProviderType */
         await AutoIngest(

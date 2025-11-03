@@ -41,9 +41,45 @@ public class ConnectionQueryBaseRecord
     public Guid? ViaRoleId { get; init; }
 
     /// <summary>
+    /// Reason for connection
+    /// </summary>
+    public ConnectionReason Reason { get; set; }
+
+    /// <summary>
     /// Connection Composite Key
     /// </summary>
     public ConnectionCompositeKey CompositeKey() => new(FromId, ToId, RoleId, AssignmentId, DelegationId, ViaId, ViaRoleId);
+}
+
+/// <summary>
+/// Describes the reason for a connection
+/// </summary>
+public enum ConnectionReason
+{
+    /// <summary>
+    /// Connection originates from an Assignment
+    /// </summary>
+    Assignment,
+
+    /// <summary>
+    /// Connection originates from a Delegation
+    /// </summary>
+    Delegation,
+
+    /// <summary>
+    /// Connection originates from a parent/child hierarchy
+    /// </summary>
+    Hierarchy,
+
+    /// <summary>
+    /// Connection originates from a RoleMap
+    /// </summary>
+    RoleMap,
+
+    /// <summary>
+    /// Connection originates from a key role (Role.IsKeyRole)
+    /// </summary>
+    KeyRole
 }
 
 /// <summary>
