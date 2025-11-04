@@ -110,7 +110,7 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
             .AsTracking()
             .Where(a => a.AssignmentId == assignment.Id)
             .Where(a => packageIds.Contains(a.PackageId))
-            .Where(a => !onlyRemoveA2Packages || a.Package.Audit_ChangedBySystem.Equals(AuditDefaults.Altinn2RoleImportSystem))
+            .Where(a => !onlyRemoveA2Packages || a.Package.Audit_ChangedBySystem == SystemEntityConstants.Altinn2RoleImportSystem.Id)
             .ToListAsync(cancellationToken);
 
         if (existingAssignmentPackages.Count == 0)
@@ -267,6 +267,30 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
         }
 
         return result.First();
+    }
+
+    /// <inheritdoc/>
+    public async Task<List<Assignment>> GetFacilitatorAssignments(Guid fromId, string roleCode, CancellationToken cancellationToken = default)
+    {
+        var roleResult = await db.Roles.AsNoTracking()
+            .Where(t => t.Code == roleCode)
+            .ToListAsync(cancellationToken);
+
+        if (roleResult == null || !roleResult.Any())
+        {
+            return new List<Assignment>();
+        }
+
+        var result = await db.Assignments.AsNoTracking()
+            .Where(t => t.FromId == fromId && t.RoleId == roleResult.First().Id)
+            .ToListAsync(cancellationToken);
+        
+        if (result == null)
+        {
+            return new List<Assignment>();
+        }
+
+        return result;
     }
 
     /// <inheritdoc/>
