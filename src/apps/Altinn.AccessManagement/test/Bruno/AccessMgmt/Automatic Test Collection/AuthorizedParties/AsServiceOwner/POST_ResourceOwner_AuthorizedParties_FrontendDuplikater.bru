@@ -28,21 +28,19 @@ body:json {
 }
 
 script:pre-request {
-  const testdata = require(`./Testdata/maskinportenschema/${bru.getEnvVar("tokenEnv")}testdata.json`);
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
   
   bru.setVar("requestName", "POST_ResourceOwner_AuthorizedParties_FrontendDuplikater");
   
   var getTokenParameters = {
-    auth_org: testdata.digdir.partyid,
-    auth_orgNo: testdata.digdir.orgno,
-    scope: sharedtestdata.scopes.k6Read,
+    auth_org: sharedtestdata.serviceOwners.digdir.org,
+    auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
     auth_tokenType: sharedtestdata.authTokenType.enterprise,
     auth_scopes: sharedtestdata.auth_scopes.authorizedPartiesResourceOwner
   }
   
   const token = await testTokenGenerator.getToken(getTokenParameters);
-  bru.setVar("bearerToken",  token);
+  bru.setVar("bearerToken", token);
 }
 
 tests {

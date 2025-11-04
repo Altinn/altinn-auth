@@ -22,7 +22,7 @@ headers {
 
 script:pre-request {
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
-  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
+  const testdata = require(`./Testdata/authorizedparties/${bru.getEnvVar("tokenEnv")}.json`);
   
   bru.setVar("requestName", "GET_AuthorizedParties_Dagl_Regn");
   
@@ -36,7 +36,7 @@ script:pre-request {
   }
   
   const token = await testTokenGenerator.getToken(getTokenParameters);
-  bru.setVar("bearerToken",  token);
+  bru.setVar("bearerToken", token);
 }
 
 tests {

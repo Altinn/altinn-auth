@@ -153,6 +153,13 @@
         "userId": 2672541,
         "partyId": 53429341,
         "partyUuid": "d9eed4e0-69e5-47da-8b7e-16713af25c67"
+    },
+    "a2BrunoECUser": {
+        "name": "bruno_ec_digdir",
+        "username": "bruno_ec_digdir",
+        "userId": 2672640,
+        "partyId": 50167512,
+        "partyUuid": "0B88A017-0683-46F9-8771-7FB0EC4EA424"
     }
 }
 

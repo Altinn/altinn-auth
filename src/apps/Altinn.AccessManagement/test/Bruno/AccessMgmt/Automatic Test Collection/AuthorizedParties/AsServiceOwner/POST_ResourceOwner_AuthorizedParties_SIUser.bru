@@ -31,7 +31,7 @@ script:pre-request {
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
   const testdata = require(`./Testdata/authorizedparties/${bru.getEnvVar("tokenEnv")}.json`);
   
-  bru.setVar("requestName", "POST_ResourceOwner_AuthorizedParties_RightholderWithPackages");
+  bru.setVar("requestName", "POST_ResourceOwner_AuthorizedParties_SIUser");
   bru.setVar("partyUuid", testdata.a2BrunoSIUser.partyUuid);
   
   var getTokenParameters = {
