@@ -72,7 +72,24 @@ public class ConnectionQuery(AppDbContext db)
         }
     }
 
-    public IQueryable<ConnectionQueryBaseRecord> BuildBaseQuery(AppDbContext db, ConnectionQueryFilter filter)
+    /// <summary>
+    /// Returns connections between to entities based on assignments and delegations
+    /// </summary>
+    public string GenerateDebugQuery(ConnectionQueryFilter filter)
+    {
+
+        if (filter.EnrichEntities || filter.ExcludeDeleted)
+        {
+            var baseQuery = BuildBaseQuery(db, filter);
+            return EnrichEntities(filter, baseQuery).ToQueryString();
+        }
+        else
+        {
+            return BuildBaseQuery(db, filter).ToQueryString();
+        }
+    }
+
+    private IQueryable<ConnectionQueryBaseRecord> BuildBaseQuery(AppDbContext db, ConnectionQueryFilter filter)
     {
         var fromSet = filter.FromIds?.Count > 0 ? new HashSet<Guid>(filter.FromIds) : null;
         var toSet = filter.ToIds?.Count > 0 ? new HashSet<Guid>(filter.ToIds) : null;
@@ -229,6 +246,11 @@ public class ConnectionQuery(AppDbContext db)
                     Reason = ConnectionReason.KeyRole,
                 };
 
+            roleMapKeyRoles = roleMapKeyRoles
+            .ToIdContains(toSet)
+            .FromIdContains(fromSet)
+            .RoleIdContains(roleSet);
+
             queries.Add(roleMapKeyRoles);
         }
 
@@ -281,6 +303,11 @@ public class ConnectionQuery(AppDbContext db)
                         RoleId = Guid.Empty,
                         Reason = ConnectionReason.KeyRole,
                     };
+
+                delegationKeyRoles = delegationKeyRoles
+               .ToIdContains(toSet)
+               .FromIdContains(fromSet)
+               .RoleIdContains(roleSet);
 
                 queries.Add(delegationKeyRoles);
             }

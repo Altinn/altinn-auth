@@ -47,7 +47,7 @@ public static class ServiceCollectionExtensions
 
     private static void ConfigureNpgsql(NpgsqlDbContextOptionsBuilder builder)
     {
-        builder.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+        builder.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
     }
 
     private static void AddMigrationDbContext(IServiceProvider sp, DbContextOptionsBuilder options, AccessManagementDatabaseOptions databaseOptions)
