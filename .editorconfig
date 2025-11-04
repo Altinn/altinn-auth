@@ -5,6 +5,7 @@ root = true
 [*]
 insert_final_newline = true
 tab_width = 2
+charset = utf-8-bom
 
 [*.{props,targets,csproj}]
 tab_width = 4
