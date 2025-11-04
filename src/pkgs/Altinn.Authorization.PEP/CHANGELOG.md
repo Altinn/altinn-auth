@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.2.2](https://github.com/Altinn/altinn-authorization-tmp/compare/Altinn.Authorization.PEP-v4.2.1...Altinn.Authorization.PEP-v4.2.2) (2025-11-04)
+
+
+### Bug Fixes
+
+* use framework reference in PEP ([#1636](https://github.com/Altinn/altinn-authorization-tmp/issues/1636)) ([0253f2b](https://github.com/Altinn/altinn-authorization-tmp/commit/0253f2b2ff5b6e0b081ec368a5613d7ef67158d0))
+
 ## [4.2.1](https://github.com/Altinn/altinn-authorization-tmp/compare/Altinn.Authorization.PEP-v4.2.0...Altinn.Authorization.PEP-v4.2.1) (2025-09-18)
 
 
