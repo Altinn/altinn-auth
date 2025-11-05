@@ -117,9 +117,15 @@ public class RoleService: IRoleService
             .Include(t => t.EntityVariant)
             .ToListAsync(cancellationToken);
 
-        if (rolePackages == null)
+        if (rolePackages == null || rolePackages.Count == 0)
         {
-            return null;
+            var role = await Db.Roles.AsNoTracking().SingleAsync(t => t.Id == id, cancellationToken);
+            if (role == null)
+            {
+                return null;
+            }
+
+            return [];
         }
 
         var roleDto = DtoMapper.Convert(rolePackages.First().Role);

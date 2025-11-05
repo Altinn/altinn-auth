@@ -108,9 +108,15 @@ public class RoleService(IRoleRepository roleRepository, IRoleLookupRepository r
     public async Task<IEnumerable<RolePackageDto>> GetPackagesForRole(Guid id)
     {
         var rolePackages = await rolePackageRepository.GetExtended(t => t.RoleId, id);
-        if (rolePackages == null)
+        if (rolePackages == null || !rolePackages.Any())
         {
-            return null;
+            var role = await roleRepository.Get(id);
+            if (role == null)
+            {
+                return null;
+            }
+
+            return [];
         }
 
         var roleDto = new RoleDto(rolePackages.First().Role);
