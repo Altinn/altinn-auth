@@ -276,7 +276,6 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
                 var remainingPackages = await db.DelegationPackages.AsNoTracking().Where(t => t.DelegationId == delegation.Id).ToListAsync(cancellationToken);
                 if (remainingPackages.Count == 0)
                 {
-                    db.Delegations.Attach(delegation);
                     db.Delegations.Remove(delegation);
                     await db.SaveChangesAsync(audit, cancellationToken);
                 }
