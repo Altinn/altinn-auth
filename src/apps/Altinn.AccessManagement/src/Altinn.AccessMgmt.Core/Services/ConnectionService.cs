@@ -39,19 +39,25 @@ public partial class ConnectionService(
             return problem;
         }
 
-        if (party == from?.Id)
+        var connections = await connectionQuery.GetConnectionsAsync(
+        new ConnectionQueryFilter()
         {
-            var result = await GetConnectionsToOthers(party, to?.Id, null, configureConnections, cancellationToken);
-            return result.ToList();
-        }
+            FromIds = fromId.HasValue ? [fromId.Value] : null,
+            ToIds = toId.HasValue ? [toId.Value] : null,
+            EnrichEntities = true,
+            IncludeKeyRole = true,
+            IncludePackages = true,
+            IncludeResource = true,
+            EnrichPackageResources = false,
+            ExcludeDeleted = false,
+            IncludeDelegation = true,
+        },
+        cancellationToken
+        );
 
-        if (party == to?.Id)
-        {
-            var result = await GetConnectionsFromOthers(party, from?.Id, null, configureConnections, cancellationToken);
-            return result.ToList();
-        }
-
-        return new List<ConnectionDto>();
+        return party == fromId ?
+            DtoMapper.ConvertToOthers(connections) :
+            DtoMapper.ConvertFromOthers(connections);
     }
 
     public async Task<Result<AssignmentDto>> AddAssignment(Guid fromId, Guid toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
@@ -160,19 +166,23 @@ public partial class ConnectionService(
             return problem;
         }
 
-        if (party == from?.Id)
+        var connections = await connectionQuery.GetConnectionsAsync(
+        new ConnectionQueryFilter()
         {
-            var result = await GetPackagePermissionsToOthers(party, to?.Id, null, configureConnections, cancellationToken);
-            return result.ToList();
-        }
+            FromIds = fromId.HasValue ? [fromId.Value] : null,
+            ToIds = toId.HasValue ? [toId.Value] : null,
+            EnrichEntities = true,
+            IncludeKeyRole = true,
+            IncludePackages = true,
+            IncludeResource = false,
+            EnrichPackageResources = false,
+            ExcludeDeleted = false,
+            IncludeDelegation = true,
+        },
+        cancellationToken
+        );
 
-        if (party == to?.Id)
-        {
-            var result = await GetPackagePermissionsFromOthers(party, from?.Id, null, configureConnections, cancellationToken);
-            return result.ToList();
-        }
-
-        return new List<PackagePermissionDto>();
+        return DtoMapper.ConvertPackages(connections);
     }
 
     public async Task<Result<AssignmentPackageDto>> AddPackage(Guid fromId, Guid toId, Guid packageId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
