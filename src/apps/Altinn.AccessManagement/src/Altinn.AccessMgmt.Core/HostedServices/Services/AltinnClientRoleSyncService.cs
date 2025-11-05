@@ -67,6 +67,12 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                 {
                     foreach (var item in page.Content.Data)
                     {
+                        // Do not process client roles for EC-Users
+                        if (item.ToUserType == UserType.EnterpriseIdentified)
+                        {
+                           continue;
+                        }
+
                         AuditValues audit = new AuditValues(
                             item.PerformedByUserUuid ?? SystemEntityConstants.Altinn2RoleImportSystem,
                             SystemEntityConstants.Altinn2RoleImportSystem,

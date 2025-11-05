@@ -64,6 +64,12 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                 {
                     foreach (var item in page.Content.Data)
                     {
+                        // Do not process admin roles for EC-Users
+                        if (item.ToUserType == UserType.EnterpriseIdentified)
+                        {
+                            continue;
+                        }
+
                         AuditValues values = new AuditValues(
                             item.PerformedByUserUuid ?? SystemEntityConstants.Altinn2RoleImportSystem,
                             SystemEntityConstants.Altinn2RoleImportSystem,
@@ -118,7 +124,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                             if (adds.Count == 0)
                             {
                                 _logger.LogWarning(
-                                    "Failed to delete delegation for FromParty: {FromParty}, ToParty: {ToParty}, PackageUrns: {packageUrn}",
+                                    "Failed to import delegation for FromParty: {FromParty}, ToParty: {ToParty}, PackageUrns: {packageUrn}",
                                     item.FromPartyUuid,
                                     item.ToUserPartyUuid,
                                     string.Join(", ", packageUrns));
