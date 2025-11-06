@@ -47,7 +47,7 @@ public partial class ConnectionService(
             EnrichEntities = true,
             IncludeKeyRole = true,
             IncludePackages = true,
-            IncludeResource = true,
+            IncludeResource = false,
             EnrichPackageResources = false,
             ExcludeDeleted = false,
             IncludeDelegation = true,
