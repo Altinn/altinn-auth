@@ -51,6 +51,7 @@ public partial class ConnectionService(
             EnrichPackageResources = false,
             ExcludeDeleted = false,
             IncludeDelegation = true,
+            OnlyUniqueResults = true,
         },
         cancellationToken
         );
@@ -178,6 +179,7 @@ public partial class ConnectionService(
             EnrichPackageResources = false,
             ExcludeDeleted = false,
             IncludeDelegation = true,
+            OnlyUniqueResults = true,
         },
         cancellationToken
         );
@@ -508,6 +510,7 @@ public partial class ConnectionService(
             IncludeResource = false,
             EnrichPackageResources = false,
             ExcludeDeleted = false,
+            OnlyUniqueResults = true,
             IncludeDelegation = false,
         };
 
