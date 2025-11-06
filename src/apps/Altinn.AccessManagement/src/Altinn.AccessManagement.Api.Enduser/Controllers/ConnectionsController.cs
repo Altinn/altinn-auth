@@ -1,4 +1,4 @@
-using System.Net.Mime;
+﻿using System.Net.Mime;
 using Altinn.AccessManagement.Api.Enduser.Models;
 using Altinn.AccessManagement.Api.Enduser.Utils;
 using Altinn.AccessManagement.Api.Enduser.Validation;
