@@ -186,21 +186,55 @@
       "partyuuid": "4C011031-9CB8-4821-9017-CF73939AFED5"
     }
   },
-    "internal_conn_org" : {
-      "org_type": "AS",
-      "name": "PATENT BERØMT TIGER AS",
-      "orgno": "312162504",
-      "partyuuid": "5320479F-74F9-4C69-AB72-C85AF4861E15",
-      "dagligleder": {
-        "name": "REDELIG DIETT",
-        "pid": "27898999705",
-        "partyid": 50686182,
-        "userid": 20335408,
-        "partyuuid": "442D46F3-C52B-4004-8A0B-5CF06B2F1FA4"
-      },
-      "systemuser": {
-        "partyuuid": "f00788ff-cdd1-448a-a3f2-de8dd44e1f23"
-      },
-      "package_to_delegate": "urn:altinn:accesspackage:byggesoknad"
+  "internal_conn_org": {
+    "org_type": "AS",
+    "name": "PATENT BERØMT TIGER AS",
+    "orgno": "312162504",
+    "partyuuid": "5320479F-74F9-4C69-AB72-C85AF4861E15",
+    "dagligleder": {
+      "name": "REDELIG DIETT",
+      "pid": "27898999705",
+      "partyid": 50686182,
+      "userid": 20335408,
+      "partyuuid": "442D46F3-C52B-4004-8A0B-5CF06B2F1FA4"
+    },
+    "systemuser": {
+      "partyuuid": "f00788ff-cdd1-448a-a3f2-de8dd44e1f23"
+    },
+    "package_to_delegate": "urn:altinn:accesspackage:byggesoknad"
+  },
+
+  "hente_A2_roller_from_org": {
+    "org_type": "AS",
+    "name": "SUBJEKTIV AKTVERDIG TIGER AS",
+    "orgno": "310294675",
+    "partyuuid": "84089a8b-2381-4ddd-8b16-f18d76341c40",
+    "dagligleder": {
+      "name": "NATURSTRIDIG BARISTA",
+      "pid": "20839098201",
+      "partyid": 50894626,
+      "userid": 20027900,
+      "partyuuid": "0316DA69-4CF9-43C9-A8C0-0FA7B0FD7F11"
     }
+  },
+  "to_bruker_fikk_rolle": {
+    "name": "VÅRLIG BAND",
+    "pid": "56918600286",
+    "partyid": 51041673,
+    "userid": 20613482,
+    "partyuuid": "7F17A2DA-707D-4092-94B8-504E8DDAB55D"
+  },
+  "to_org_bruker" : {
+    "org_type": "AS",
+    "name": "TAKTFULL LYDIG TIGER AS",
+    "orgno": "310771481",
+    "partyuuid": "B7187432-8D5F-4B01-9CEC-0A82348ED80C",
+    "dagligleder": {
+      "name": "KURSIV DAL",
+      "pid": "03840199109",
+      "partyid": 50886398,
+      "userid": 20348120,
+      "partyuuid": "46E5FFB8-F1D0-43E9-84BA-8B5E70050F54"
+    }
+  }
 }

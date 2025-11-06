@@ -190,5 +190,40 @@
       "partyuuid": "184e508f-5e7f-4765-8bcb-66ccdbb72b16"
     },
     "package_to_delegate": "urn:altinn:accesspackage:byggesoknad"
+  },
+
+  "hente_A2_roller_from_org": {
+    "org_type": "AS",
+    "name": "SUBJEKTIV AKTVERDIG TIGER AS",
+    "orgno": "310294675",
+    "partyuuid": "5D2082AC-C014-4F04-97EF-ABC374ABE810",
+    "dagligleder": {
+      "name": "NATURSTRIDIG BARISTA",
+      "pid": "20839098201",
+      "partyid": 51118920,
+      "userid": 1942198,
+      "partyuuid": "6E0E33F6-72DF-46AC-A327-A04B1047313C"
+    }
+  },
+  "to_bruker_fikk_rolle": {
+    "name": "VÅRLIG BAND",
+    "pid": "56918600286",
+    "partyid": 51291929,
+    "userid": 1897247,
+    "partyuuid": "63E2B07A-77C0-44D8-B774-4B7003A88778"
+  },
+  "to_org_bruker" : {
+    "org_type": "AS",
+    "name": "TAKTFULL LYDIG TIGER AS",
+    "orgno": "310771481",
+    "partyuuid": "902859CA-1E4B-4E4A-A936-CC4E9FB66F85",
+    "dagligleder": {
+      "name": "KURSIV DAL",
+      "pid": "03840199109",
+      "partyid": 51103380,
+      "userid": 2149325,
+      "partyuuid": "9CBF966C-0467-497A-AE8F-DA6ADB915D20"
+    }
   }
 }
+
