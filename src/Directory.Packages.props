@@ -9,7 +9,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageVersion Include="Altinn.ApiClients.Maskinporten" Version="9.2.1" />
-    <PackageVersion Include="Altinn.Authorization.ProblemDetails.Abstractions" Version="3.3.0" />
+    <PackageVersion Include="Altinn.Authorization.ProblemDetails.Abstractions" Version="4.0.0" />
     <PackageVersion Include="Altinn.Authorization.ProblemDetails" Version="3.3.0" />
     <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql.Yuniql" Version="3.3.1" />
     <PackageVersion Include="Altinn.Authorization.ServiceDefaults" Version="3.3.1" />
