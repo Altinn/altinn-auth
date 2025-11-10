@@ -41,6 +41,21 @@ public class ConnectionQueryBaseRecord
     public Guid? ViaRoleId { get; init; }
 
     /// <summary>
+    /// Indicates if the connection is through key role access
+    /// </summary>
+    public bool IsKeyRoleAccess { get; set; }
+
+    /// <summary>
+    /// Indicates if the connection is through access for the main unit
+    /// </summary>
+    public bool IsMainUnitAccess { get; set; }
+
+    /// <summary>
+    /// Indicates if the connection is through another role (RoleMap)
+    /// </summary>
+    public bool IsRoleMap { get; set; }
+
+    /// <summary>
     /// Reason for connection
     /// </summary>
     public ConnectionReason Reason { get; set; }

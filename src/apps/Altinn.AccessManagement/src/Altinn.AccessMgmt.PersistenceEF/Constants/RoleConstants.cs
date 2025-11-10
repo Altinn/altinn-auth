@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 
@@ -393,7 +393,7 @@ public static class RoleConstants
     /// - <c>Code:</c> innehaver
     /// - <c>Description:</c> Fysisk person som er eier av et enkeltpersonforetak
     /// </remarks>
-    public static ConstantDefinition<Role> Owner { get; } = new ConstantDefinition<Role>("2651ed07-f31b-4bc1-87bd-4d270742a19d")
+    public static ConstantDefinition<Role> Innehaver { get; } = new ConstantDefinition<Role>("2651ed07-f31b-4bc1-87bd-4d270742a19d")
     {
         Entity = new()
         {

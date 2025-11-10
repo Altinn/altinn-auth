@@ -114,7 +114,7 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
             IncludeKeyRole = true
         };
 
-        var result = await _query.GetConnectionsAsync(filter);
+        var result = await _query.GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers);
 
         Assert.NotNull(result);
         Assert.True(result.Any(), "Expected a connections, but none were found.");
@@ -130,7 +130,7 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
             IncludeKeyRole = false
         };
 
-        var result = await _query.GetConnectionsAsync(filter);
+        var result = await _query.GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers);
 
         Assert.NotNull(result);
         Assert.False(result.Any(), "Expected no connections, but some were found.");
@@ -175,7 +175,7 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
             OnlyUniqueResults = flags[7]
         };
 
-        await _query.GetConnectionsAsync(filter);
+        await _query.GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers);
     }
 
     public static IEnumerable<object[]> GetFilterCombinations()
