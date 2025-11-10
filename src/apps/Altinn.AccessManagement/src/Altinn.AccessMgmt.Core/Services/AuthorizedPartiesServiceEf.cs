@@ -211,7 +211,7 @@ public class AuthorizedPartiesServiceEf(
         Dictionary<Guid, AuthorizedParty> allA3Parties = null;
         if (includeAltinn3)
         {
-            (allA3Parties, a3AuthorizedParties) = await GetAltinn3AuthorizedParties(userSubject.Id, orgSubjectParties.ToList(), cancellationToken);
+            (allA3Parties, a3AuthorizedParties) = await GetAltinn3AuthorizedParties(userSubject.Id, orgSubjectParties?.ToList(), cancellationToken);
 
             if (!includeAltinn2)
             {
