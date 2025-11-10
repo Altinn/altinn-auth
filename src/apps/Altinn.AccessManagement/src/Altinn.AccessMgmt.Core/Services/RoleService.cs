@@ -1,7 +1,7 @@
 ﻿using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
-using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
 
@@ -97,51 +97,6 @@ public class RoleService: IRoleService
         return await Db.RoleLookups.AsNoTracking().Select(t => t.Key).Distinct().ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<Resource>> GetRoleResources(Guid id, CancellationToken cancellationToken)
-    {
-        return await Db.RoleResources.AsNoTracking().Where(t => t.RoleId == id).Include(t => t.Resource).Select(t => t.Resource).Distinct().ToListAsync(cancellationToken);
-    }
-
-    public async Task<IEnumerable<Resource>> GetRolePackageResources(Guid id, CancellationToken cancellationToken)
-    {
-        var packages = await GetPackagesForRole(id, cancellationToken);
-        return await Db.PackageResources.AsNoTracking().Where(t => packages.Select(p => p.Id).Contains(t.PackageId)).Select(r => r.Resource).ToListAsync(cancellationToken);
-    }
-
-    /// <inheritdoc/>
-    public async Task<IEnumerable<RolePackageDto>> GetPackagesForRole(Guid id, CancellationToken cancellationToken = default)
-    {
-        var rolePackages = await Db.RolePackages.AsNoTracking().Where(t => t.RoleId == id)
-            .Include(t => t.Role)
-            .Include(t => t.Package)
-            .Include(t => t.EntityVariant)
-            .ToListAsync(cancellationToken);
-
-        if (rolePackages == null || rolePackages.Count == 0)
-        {
-            var role = await Db.Roles.AsNoTracking().SingleAsync(t => t.Id == id, cancellationToken);
-            if (role == null)
-            {
-                return null;
-            }
-
-            return [];
-        }
-
-        var roleDto = DtoMapper.Convert(rolePackages.First().Role);
-        await GetSingleLegacyRoleCodeAndUrn(roleDto, cancellationToken);
-
-        var rolePackageDtos = new List<RolePackageDto>();
-        foreach (var rolePackage in rolePackages)
-        {
-            var rolePackageDto = DtoMapper.Convert(rolePackage);
-            rolePackageDto.Role = roleDto;
-            rolePackageDtos.Add(rolePackageDto);
-        }
-
-        return rolePackageDtos;
-    }
-
     private async Task<IEnumerable<RoleDto>> GetLegacyRoleCodeAndUrn(IEnumerable<RoleDto> roles, CancellationToken cancellationToken = default)
     {
         var roleLookup = await Db.RoleLookups.AsNoTracking().ToListAsync();
@@ -170,5 +125,81 @@ public class RoleService: IRoleService
             extRole.LegacyRoleCode = legacyRoleCode.Value;
             extRole.LegacyUrn = $"urn:altinn:rolecode:{legacyRoleCode.Value}";
         }
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<PackageDto>> GetRolePackages(Guid id, Guid? variantId = null, bool includeResources = false, CancellationToken cancellationToken = default)
+    {
+        return await GetRolePackagesQuery(id, variantId, includeResources).ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<ResourceDto>> GetRoleResources(Guid id, Guid? variantId = null, bool includePackageResources = false, CancellationToken cancellationToken = default)
+    {
+        var roleResources = await Db.RoleResources.AsNoTracking()
+            .Where(rr => rr.RoleId == id)
+            .Join(
+                Db.Resources,
+                rr => rr.ResourceId,
+                r => r.Id,
+                (rr, r) => DtoMapper.Convert(r))
+            .ToListAsync(cancellationToken);
+
+        if (!includePackageResources)
+        {
+            return roleResources;
+        }
+
+        var packageResources = await GetRolePackagesQuery(id, variantId, true)
+            .SelectMany(p => p.Resources)
+            .ToListAsync(cancellationToken);
+
+        return roleResources.Concat(packageResources).DistinctBy(r => r.Id);
+    }
+    
+    private IQueryable<PackageDto> GetRolePackagesQuery(Guid roleId, Guid? variantId = null, bool includeResources = false)
+    {
+        var rolePackages = Db.RolePackages.AsNoTracking()
+            .Where(rp => rp.RoleId == roleId)
+            .WhereIf(!variantId.HasValue, rp => rp.EntityVariantId == null)
+            .WhereIf(variantId.HasValue, rp => (rp.EntityVariantId == null || rp.EntityVariantId == variantId.Value))
+            .Join(Db.Packages, rp => rp.PackageId, p => p.Id, (rp, p) => p);
+
+        if (!includeResources)
+        {
+            return rolePackages.Select(p => new PackageDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                IsDelegable = p.IsDelegable,
+                IsAssignable = p.IsAssignable,
+                Urn = p.Urn
+            });
+        }
+
+        // Når vi skal ha med ressurser:
+        return rolePackages
+            .GroupJoin(
+                Db.PackageResources, 
+                package => package.Id, 
+                pr => pr.PackageId,
+                (package, packageResources) => new PackageDto
+                {
+                    Id = package.Id,
+                    Name = package.Name,
+                    Description = package.Description,
+                    IsDelegable = package.IsDelegable,
+                    IsAssignable = package.IsAssignable,
+                    Urn = package.Urn,
+                    Resources = packageResources
+                        .Join(
+                            Db.Resources,
+                            pr => pr.ResourceId,
+                            r => r.Id,
+                            (pr, r) => DtoMapper.Convert(r))
+                        .DistinctBy(r => r.Id)
+                        .ToList()
+                });
     }
 }

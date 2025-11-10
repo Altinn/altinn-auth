@@ -56,26 +56,22 @@ public interface IRoleService
     Task<IEnumerable<RoleDto>> GetByProvider(Guid providerId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Get packages for role
+    /// Get role resources
     /// </summary>
     /// <param name="id">Role identity</param>
+    /// <param name="variantId">Variant to check packages for</param>
+    /// <param name="includePackageResoures">Include packages and resources in them</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    Task<IEnumerable<RolePackageDto>> GetPackagesForRole(Guid id, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ResourceDto>> GetRoleResources(Guid id, Guid? variantId = null, bool includePackageResoures = false, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Get resources for role
+    /// Get role packages
     /// </summary>
     /// <param name="id">Role identity</param>
+    /// <param name="variantId">Variant to check packages for</param>
+    /// <param name="includeResources">Include resources in packages</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    Task<IEnumerable<Resource>> GetRoleResources(Guid id, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get resources for role from packages
-    /// </summary>
-    /// <param name="id">Role identity</param>
-    /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns></returns>
-    Task<IEnumerable<Resource>> GetRolePackageResources(Guid id, CancellationToken cancellationToken = default);
+    Task<IEnumerable<PackageDto>> GetRolePackages(Guid id, Guid? variantId = null, bool includeResources = false, CancellationToken cancellationToken = default);
 }
