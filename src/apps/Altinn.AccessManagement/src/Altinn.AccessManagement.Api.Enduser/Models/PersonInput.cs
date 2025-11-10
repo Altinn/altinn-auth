@@ -11,7 +11,7 @@ public class PersonInput
     /// <summary>
     /// The person identifier.
     /// </summary>
-    [SwaggerSchema(Description = "Person identifier", Format = "string")]
+    [SwaggerSchema(Description = "Person identifier. Either 11-digit national identity number or username", Format = "string")]
     public string PersonIdentifier { get; set; }
 
     /// <summary>

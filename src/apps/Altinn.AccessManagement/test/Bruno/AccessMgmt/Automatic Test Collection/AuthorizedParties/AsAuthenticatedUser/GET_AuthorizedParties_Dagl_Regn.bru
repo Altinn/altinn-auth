@@ -138,4 +138,30 @@ tests {
     expect(duplicates.length, `Duplicate partyUuid(s) found: ${duplicates.join(', ')}`).to.equal(0);
   
   });
+  
+  test(requestName + "|Find expected Client AuthorizedParty and AuthorizedAccessPackages", function() {  
+    // Test that the expected client party exists in the response with the expected packages
+    
+    const allParties = body.flatMap(party => [party, ...(party.subunits || [])]);
+    const targetParty = allParties.find(party => party.partyUuid === testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_USENSUELL_UVIRKSOM_TIGER.partyUuid);
+  
+    assert.exists(targetParty, 'Expected ClientParty: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_USENSUELL_UVIRKSOM_TIGER.name+' to exist');
+    assert.includeMembers(targetParty.authorizedAccessPackages, ["regnskapsforer-lonn", "regnskapsforer-med-signeringsrettighet", "regnskapsforer-uten-signeringsrettighet"]);
+    expect(targetParty.authorizedAccessPackages.length, `authorizedAccessPackages for Client contains unexpected packages`).to.equal(3);
+    
+  });
+  
+  test(requestName + "|Find expected Innehaver of ENK Client AuthorizedParty and AuthorizedAccessPackages", function() {  
+    // Test that the expected client party exists in the response with the expected packages
+    
+    const allParties = body.flatMap(party => [party, ...(party.subunits || [])]);
+    const targetParty = allParties.find(party => party.partyUuid === testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.partyUuid);
+  
+    assert.exists(targetParty, 'Expected Innehaver of Enk-ClientParty: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.name+' to exist');
+    assert.includeMembers(targetParty.authorizedAccessPackages, ["regnskapsforer-lonn", "regnskapsforer-med-signeringsrettighet", "regnskapsforer-uten-signeringsrettighet"]);
+    expect(targetParty.authorizedAccessPackages.length, `authorizedAccessPackages for Client contains unexpected packages`).to.equal(3);
+    
+  });
+  
+  
 }

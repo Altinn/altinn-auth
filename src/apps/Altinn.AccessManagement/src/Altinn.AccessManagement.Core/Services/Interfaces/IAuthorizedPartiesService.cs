@@ -40,12 +40,12 @@ public interface IAuthorizedPartiesService
     /// <summary>
     /// Gets the full unfiltered list of authorized parties the given person can represent in Altinn
     /// </summary>
-    /// <param name="subjectNationalId">The national identity number of the person to retrieve the authorized party list for</param>
+    /// <param name="subjectPersonId">The national identity number of the person to retrieve the authorized party list for</param>
     /// <param name="includeAltinn2">Whether Authorized Parties from Altinn 2 should be included in the result set</param>
     /// <param name="includeAltinn3">Whether Authorized Parties from Altinn 3 should be included in the result set</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The unfiltered party list</returns>
-    Task<List<AuthorizedParty>> GetAuthorizedPartiesByPersonId(string subjectNationalId, bool includeAltinn2, bool includeAltinn3 = true, CancellationToken cancellationToken = default);
+    Task<List<AuthorizedParty>> GetAuthorizedPartiesByPersonId(string subjectPersonId, bool includeAltinn2, bool includeAltinn3 = true, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the full unfiltered list of authorized parties the given person can represent in Altinn

@@ -16,12 +16,10 @@ namespace Altinn.AccessManagement.Core.Services;
 
 /// <inheritdoc/>
 public class AuthorizedPartiesServiceEf(
-    IEntityService entityService,
-    IConnectionService connectionService,
-    IAssignmentService assignmentService,
     IAltinnRolesClient altinnRolesClient,
     IDelegationMetadataRepository resourceDelegationRepository,
-    IContextRetrievalService contextRetrievalService) : IAuthorizedPartiesService
+    IContextRetrievalService contextRetrievalService,
+    IAuthorizedPartyRepoServiceEf repoService) : IAuthorizedPartiesService
 {
     /// <inheritdoc/>
     public async Task<List<AuthorizedParty>> GetAuthorizedParties(BaseAttribute subjectAttribute, bool includeAltinn2, bool includeAltinn3 = true, CancellationToken cancellationToken = default) => subjectAttribute.Type switch
@@ -51,14 +49,14 @@ public class AuthorizedPartiesServiceEf(
             case var id when id == EntityTypeConstants.Person.Id:
 
                 // Persons can have key roles for other parties, meaning they inherit access to others via these parties.
-                var keyRoleAssignments = await assignmentService.GetKeyRoleAssignments(subject.Id, cancellationToken);
-                List<Entity> keyRoleEntities = keyRoleAssignments.Select(t => t.From).GroupBy(e => e.Id).Select(g => g.First()).ToList();
+                var keyRoleAssignments = await repoService.GetKeyRoleAssignments(subject.Id, cancellationToken);
+                List<Guid> keyRoleEntities = keyRoleAssignments.Select(t => t.FromId).Distinct().ToList();
 
                 // Also get any sub-units of key role entities
                 if (keyRoleEntities.Count > 0)
                 {
-                    var subUnits = await entityService.GetChildren(keyRoleAssignments.Select(t => t.From.Id), cancellationToken);
-                    keyRoleEntities.AddRange(subUnits);
+                    var subUnits = await repoService.GetSubunits(keyRoleEntities, cancellationToken);
+                    keyRoleEntities.AddRange(subUnits.Select(t => t.Id));
                 }
 
                 return await GetAuthorizedParties(subject, keyRoleEntities, includeAltinn2, includeAltinn3, cancellationToken);
@@ -71,10 +69,10 @@ public class AuthorizedPartiesServiceEf(
                 {
                     // A2 lookup of key role parties includes subunits by default
                     List<int> keyRolePartyIds = await contextRetrievalService.GetKeyRolePartyIds(subject.UserId.Value, cancellationToken);
-                    ecKeyRoleEntities = await entityService.GetEntitiesByPartyIds(keyRolePartyIds, cancellationToken);
+                    ecKeyRoleEntities = await repoService.GetEntitiesByPartyIds(keyRolePartyIds, cancellationToken);
                 }
 
-                return await GetAuthorizedParties(subject, ecKeyRoleEntities, includeAltinn2, includeAltinn3, cancellationToken);
+                return await GetAuthorizedParties(subject, ecKeyRoleEntities.Select(t => t.Id), includeAltinn2, includeAltinn3, cancellationToken);
 
             case var id when id == EntityTypeConstants.Organisation.Id:
 
@@ -103,14 +101,14 @@ public class AuthorizedPartiesServiceEf(
             throw new ArgumentException(message: $"Not a well-formed uuid: {subjectPartyUuid}", paramName: nameof(subjectPartyUuid));
         }
 
-        var subject = await entityService.GetEntity(partyUuid, cancellationToken);
+        var subject = await repoService.GetEntity(partyUuid, cancellationToken);
         return await GetAuthorizedParties(subject, includeAltinn2, includeAltinn3, cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<List<AuthorizedParty>> GetAuthorizedPartiesByPartyId(int subjectPartyId, bool includeAltinn2, bool includeAltinn3, CancellationToken cancellationToken)
     {
-        var subject = await entityService.GetByPartyId(subjectPartyId, cancellationToken);
+        var subject = await repoService.GetEntityByPartyId(subjectPartyId, cancellationToken);
         return await GetAuthorizedParties(subject, includeAltinn2, includeAltinn3: true, cancellationToken);
     }
 
@@ -137,14 +135,14 @@ public class AuthorizedPartiesServiceEf(
     /// <inheritdoc/>
     public async Task<List<AuthorizedParty>> GetAuthorizedPartiesByUserId(int subjectUserId, bool includeAltinn2, bool includeAltinn3, CancellationToken cancellationToken)
     {
-        var subject = await entityService.GetByUserId(subjectUserId, cancellationToken);
+        var subject = await repoService.GetEntityByUserId(subjectUserId, cancellationToken);
         return await GetAuthorizedParties(subject, includeAltinn2, includeAltinn3, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<List<AuthorizedParty>> GetAuthorizedPartiesByPersonId(string subjectNationalId, bool includeAltinn2, bool includeAltinn3, CancellationToken cancellationToken)
+    public async Task<List<AuthorizedParty>> GetAuthorizedPartiesByPersonId(string subjectPersonId, bool includeAltinn2, bool includeAltinn3, CancellationToken cancellationToken)
     {
-        var subject = await entityService.GetByPersNo(subjectNationalId, cancellationToken);
+        var subject = await repoService.GetEntityByPersonId(subjectPersonId, cancellationToken);
         return await GetAuthorizedParties(subject, includeAltinn2, includeAltinn3, cancellationToken);
     }
 
@@ -157,7 +155,7 @@ public class AuthorizedPartiesServiceEf(
     /// <inheritdoc/>
     public async Task<List<AuthorizedParty>> GetAuthorizedPartiesByOrganizationId(string subjectOrganizationNumber, bool includeAltinn2, bool includeAltinn3, CancellationToken cancellationToken)
     {
-        var subject = await entityService.GetByOrgNo(subjectOrganizationNumber, cancellationToken);
+        var subject = await repoService.GetEntityByOrganizationId(subjectOrganizationNumber, cancellationToken);
         return await GetAuthorizedParties(subject, includeAltinn2, includeAltinn3, cancellationToken);
     }
 
@@ -170,7 +168,7 @@ public class AuthorizedPartiesServiceEf(
     /// <inheritdoc/>
     public async Task<List<AuthorizedParty>> GetAuthorizedPartiesByEnterpriseUsername(string subjectEnterpriseUsername, bool includeAltinn2, bool includeAltinn3, CancellationToken cancellationToken)
     {
-        var subject = await entityService.GetByUsername(subjectEnterpriseUsername, cancellationToken);
+        var subject = await repoService.GetEntityByUsername(subjectEnterpriseUsername, cancellationToken);
         return await GetAuthorizedParties(subject, includeAltinn2, includeAltinn3, cancellationToken);
     }
 
@@ -186,7 +184,7 @@ public class AuthorizedPartiesServiceEf(
         return await GetAuthorizedPartiesByPartyUuid(subjectSystemUserUuid, includeAltinn2: false, includeAltinn3: true, cancellationToken);
     }
 
-    private async Task<List<AuthorizedParty>> GetAuthorizedParties(Entity userSubject, IEnumerable<Entity> orgSubjectParties = null, bool includeAltinn2 = true, bool includeAltinn3 = true, CancellationToken cancellationToken = default)
+    private async Task<List<AuthorizedParty>> GetAuthorizedParties(Entity userSubject, IEnumerable<Guid> orgSubjectParties = null, bool includeAltinn2 = true, bool includeAltinn3 = true, CancellationToken cancellationToken = default)
     {
         IEnumerable<AuthorizedParty> a2AuthorizedParties = [];
         Dictionary<Guid, Entity> allA2Parties = [];
@@ -197,7 +195,7 @@ public class AuthorizedPartiesServiceEf(
             // Get A3 party info for all Altinn 2 authorized parties and their subunits
             List<Guid> a2PartyUuids = a2AuthorizedParties.Select(p => p.PartyUuid).Distinct().ToList();
             a2PartyUuids.AddRange(a2AuthorizedParties.SelectMany(p => p.Subunits).Select(su => su.PartyUuid).Distinct());
-            var a2Parties = await entityService.GetEntities(a2PartyUuids, cancellationToken);
+            var a2Parties = await repoService.GetEntities(a2PartyUuids, cancellationToken);
             foreach (var a2Party in a2Parties)
             {
                 allA2Parties.Add(a2Party.Id, a2Party);
@@ -213,7 +211,7 @@ public class AuthorizedPartiesServiceEf(
         Dictionary<Guid, AuthorizedParty> allA3Parties = null;
         if (includeAltinn3)
         {
-            (allA3Parties, a3AuthorizedParties) = await GetAltinn3AuthorizedParties(userSubject.Id, orgSubjectParties?.Select(p => p.Id).ToList(), cancellationToken);
+            (allA3Parties, a3AuthorizedParties) = await GetAltinn3AuthorizedParties(userSubject.Id, orgSubjectParties.ToList(), cancellationToken);
 
             if (!includeAltinn2)
             {
@@ -280,7 +278,7 @@ public class AuthorizedPartiesServiceEf(
     private async Task<Tuple<Dictionary<Guid, AuthorizedParty>, IEnumerable<AuthorizedParty>>> GetAltinn3AuthorizedParties(Guid toId, List<Guid> toOrgs = null, CancellationToken cancellationToken = default)
     {
         // Get AccessPackage Delegations
-        var packagePermissions = await connectionService.GetPackagePermissionsFromOthers(toId, null, null, null, cancellationToken: cancellationToken);
+        var packagePermissions = await repoService.GetPackagesFromOthers(toId, cancellationToken);
 
         // Get App, Resource and Instance delegations
         List<Guid> allToParties = toOrgs ?? new List<Guid>();
@@ -292,8 +290,8 @@ public class AuthorizedPartiesServiceEf(
         // Get Party info for all from-uuids
         var fromUuids = resourceDelegations.Where(d => d.FromUuid.HasValue).Select(d => d.FromUuid.Value).ToList();
         fromUuids.AddRange(packagePermissions.SelectMany(p => p.Permissions).Select(p => p.From.Id));
-        var fromParties = await entityService.GetEntities(fromUuids.Distinct(), cancellationToken);
-        var fromSubUnits = await entityService.GetChildren(fromUuids.Distinct(), cancellationToken);
+        var fromParties = await repoService.GetEntities(fromUuids.Distinct(), cancellationToken);
+        var fromSubUnits = await repoService.GetSubunits(fromUuids.Distinct(), cancellationToken);
 
         (Dictionary<Guid, AuthorizedParty> parties, IEnumerable<AuthorizedParty> authorizedParties) = BuildDictionaryFromEntities(fromParties, fromSubUnits);
 
@@ -359,7 +357,7 @@ public class AuthorizedPartiesServiceEf(
                 }
 
                 allPartiesDict[subunit.Id] = subunitAuthParty;
-            }            
+            }
         }
 
         return Tuple.Create(allPartiesDict, authorizedParties.AsEnumerable());

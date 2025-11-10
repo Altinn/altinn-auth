@@ -23,14 +23,16 @@ headers {
 body:json {
   {
     "type": "urn:altinn:person:identifier-no",
-    "value": "14877296726"
+    "value": "{{personId}}"
   }
 }
 
 script:pre-request {
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/authorizedparties/${bru.getEnvVar("tokenEnv")}.json`);
   
   bru.setVar("requestName", "POST_ResourceOwner_AuthorizedParties_Dagl_Regn");
+  bru.setVar("personId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
   
   var getTokenParameters = {
     auth_org: sharedtestdata.serviceOwners.digdir.org,
@@ -141,5 +143,29 @@ tests {
     // Step 3: Assert no duplicates
     expect(duplicates.length, `Duplicate partyUuid(s) found: ${duplicates.join(', ')}`).to.equal(0);
   
+  });
+  
+  test(requestName + "|Find expected Client AuthorizedParty and AuthorizedAccessPackages", function() {  
+    // Test that the expected client party exists in the response with the expected packages
+    
+    const allParties = body.flatMap(party => [party, ...(party.subunits || [])]);
+    const targetParty = allParties.find(party => party.partyUuid === testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_USENSUELL_UVIRKSOM_TIGER.partyUuid);
+  
+    assert.exists(targetParty, 'Expected ClientParty: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_USENSUELL_UVIRKSOM_TIGER.name+' to exist');
+    assert.includeMembers(targetParty.authorizedAccessPackages, ["regnskapsforer-lonn", "regnskapsforer-med-signeringsrettighet", "regnskapsforer-uten-signeringsrettighet"]);
+    expect(targetParty.authorizedAccessPackages.length, `authorizedAccessPackages for Client contains unexpected packages`).to.equal(3);
+    
+  });
+  
+  test(requestName + "|Find expected Innehaver of ENK Client AuthorizedParty and AuthorizedAccessPackages", function() {  
+    // Test that the expected client party exists in the response with the expected packages
+    
+    const allParties = body.flatMap(party => [party, ...(party.subunits || [])]);
+    const targetParty = allParties.find(party => party.partyUuid === testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.partyUuid);
+  
+    assert.exists(targetParty, 'Expected Innehaver of Enk-ClientParty: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.name+' to exist');
+    assert.includeMembers(targetParty.authorizedAccessPackages, ["regnskapsforer-lonn", "regnskapsforer-med-signeringsrettighet", "regnskapsforer-uten-signeringsrettighet"]);
+    expect(targetParty.authorizedAccessPackages.length, `authorizedAccessPackages for Client contains unexpected packages`).to.equal(3);
+    
   });
 }
