@@ -17,7 +17,7 @@ public sealed class ExportDatabaseCommand(CancellationToken cancellationToken)
     : BaseCommand<ExportDatabaseCommand.Settings>(cancellationToken)
 {
     /// <inheritdoc/>
-    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         await using var source = await DbHelper.Create(settings.SourceConnectionString!, cancellationToken)
             .LogOnFailure("[bold red]Failed to connect to the source database[/]");

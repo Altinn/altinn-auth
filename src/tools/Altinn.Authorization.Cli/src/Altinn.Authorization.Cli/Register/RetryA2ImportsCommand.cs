@@ -38,7 +38,7 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
     ];
 
     /// <inheritdoc/>
-    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         await using var db = await DbHelper.Create(settings.Database, cancellationToken);
         var sb = ServiceBusHandle.Create(settings.ServiceBus);

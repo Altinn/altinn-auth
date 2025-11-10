@@ -28,7 +28,7 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
     : BaseCommand<BootstapCommand.Settings>(cancellationToken)
 {
     /// <inheritdoc/>
-    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         await AnsiConsole.Status().AutoRefresh(true).Spinner(Spinner.Known.Default).StartAsync("[yellow]Bootstrapping Postgres Flex server[/]", async ctx =>
         {

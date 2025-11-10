@@ -17,7 +17,7 @@ public sealed class CredentialsCommand(CancellationToken cancellationToken)
     : BaseCommand<CredentialsCommand.Settings>(cancellationToken)
 {
     /// <inheritdoc/>
-    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var result = await GetToken(settings.Interactive, cancellationToken);
 
