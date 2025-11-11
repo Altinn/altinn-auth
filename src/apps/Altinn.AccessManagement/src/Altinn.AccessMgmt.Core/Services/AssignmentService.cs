@@ -110,7 +110,7 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
             .AsTracking()
             .Where(a => a.AssignmentId == assignment.Id)
             .Where(a => packageIds.Contains(a.PackageId))
-            .Where(a => !onlyRemoveA2Packages || a.Package.Audit_ChangedBySystem == SystemEntityConstants.Altinn2RoleImportSystem.Id)
+            .Where(a => !onlyRemoveA2Packages || a.Audit_ChangedBySystem == SystemEntityConstants.Altinn2RoleImportSystem.Id)
             .ToListAsync(cancellationToken);
 
         if (existingAssignmentPackages.Count == 0)
