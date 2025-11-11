@@ -3,7 +3,9 @@ using Altinn.AccessManagement.Core;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models.Profile;
+using Altinn.AccessManagement.Core.Services;
 using Altinn.AccessManagement.Core.Services.Interfaces;
+using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.Authorization.ProblemDetails;
@@ -13,16 +15,16 @@ namespace Altinn.AccessManagement.Api.Enduser.Utils;
 
 /// <summary>
 /// Resolves the target (to) UUID for AddAssignment based on either:
-/// - Provided 'to' UUID referencing a non-person entity
-/// - PersonInput (identifier + last name) resolved via profile lookup
+/// - Provided 'to' UUID referencing a non-person entity resolved via <see cref="IEntityService"/>
+/// - PersonInput (identifier + last name) resolved via <see cref="IUserProfileLookupService"/>
 /// Internal implementation detail of the Enduser API.
 /// </summary>
-internal sealed class AddAssignmentToUuidResolver
+internal sealed class ToUuidResolver
 {
     private readonly IEntityService _entityService;
     private readonly IUserProfileLookupService _userProfileLookupService;
 
-    internal AddAssignmentToUuidResolver(IEntityService entityService, IUserProfileLookupService userProfileLookupService)
+    internal ToUuidResolver(IEntityService entityService, IUserProfileLookupService userProfileLookupService)
     {
         _entityService = entityService;
         _userProfileLookupService = userProfileLookupService;
@@ -34,37 +36,33 @@ internal sealed class AddAssignmentToUuidResolver
     }
 
     /// <summary>
-    /// Resolve the UUID of the assignment target.
-    /// Returns an error IActionResult when resolution fails.
+    /// Resolve target UUID for a non-person entity from <see cref="ConnectionInput"/> via <see cref="EntityService"/>.
     /// </summary>
-    internal async Task<ResolveToUuidResult> ResolveAsync(Guid connectionInputToUuid, PersonInput? person, HttpContext httpContext, CancellationToken cancellationToken)
+    internal async Task<ResolveToUuidResult> ResolveWithConnectionInputAsync(Guid connectionInputToUuid, CancellationToken cancellationToken)
     {
-        bool hasPersonInputIdentifiers = person is { } &&
-                                         !string.IsNullOrWhiteSpace(person.PersonIdentifier) &&
-                                         !string.IsNullOrWhiteSpace(person.LastName);
-
-        // Path: If PersonInput is not provided, resolve directly to ConnectionInput 'to' UUID
-        if (!hasPersonInputIdentifiers)
+        var entity = await _entityService.GetEntity(connectionInputToUuid, cancellationToken);
+        if (entity == null)
         {
-            var entity = await _entityService.GetEntity(connectionInputToUuid, cancellationToken);
-            if (entity == null)
-            {
-                return new ResolveToUuidResult(Guid.Empty, Problems.PartyNotFound.ToActionResult());
-            }
-
-            if (entity.TypeId == EntityTypeConstants.Person.Id)
-            {
-                return new ResolveToUuidResult(Guid.Empty, Problems.PersonInputRequiredForPersonAssignment.ToActionResult());
-            }
-
-            return new ResolveToUuidResult(connectionInputToUuid, null);
+            return new ResolveToUuidResult(Guid.Empty, Problems.PartyNotFound.ToActionResult());
         }
 
-        // Path: If PersonInput is not provided, resolve 'to' UUID via profile lookup service
+        if (entity.TypeId == EntityTypeConstants.Person.Id)
+        {
+            return new ResolveToUuidResult(Guid.Empty, Problems.PersonInputRequiredForPersonAssignment.ToActionResult());
+        }
+
+        return new ResolveToUuidResult(connectionInputToUuid, null);
+    }
+
+    /// <summary>
+    /// Resolve target UUID for a person entity from <see cref="PersonInput"/> via <see cref="UserProfileLookupService"/>.
+    /// </summary>
+    internal async Task<ResolveToUuidResult> ResolveWithPersonInputAsync(PersonInput person, HttpContext httpContext, CancellationToken cancellationToken)
+    {
         int authUserId = AuthenticationHelper.GetUserId(httpContext);
 
-        string identifier = person!.PersonIdentifier.Trim();
-        string lastName = person.LastName.Trim();
+        string identifier = person.PersonIdentifier;
+        string lastName = person.LastName;
 
         bool treatAsSsn = identifier.Length == 11 && identifier.All(char.IsDigit);
 
@@ -73,10 +71,10 @@ internal sealed class AddAssignmentToUuidResolver
         {
             lookup.Ssn = identifier;
         }
-            else
+        else
         {
-                lookup.Username = identifier;
-            }
+            lookup.Username = identifier;
+        }
 
         try
         {

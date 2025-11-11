@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Errors;
+﻿using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Validation;
 using Altinn.Authorization.ProblemDetails;
 
@@ -29,7 +29,7 @@ internal static class ConnectionCombinationRules
         if (partyId != fromId)
         {
             return (ref ValidationErrorBuilder errors) =>
-                errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/from", [new("from", ValidationMessageTexts.PartyMustMatchFrom)]);
+                errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/from", [new("from", ValidationErrorMessageTexts.PartyMustMatchFrom)]);
         }
 
         return null;
@@ -61,12 +61,12 @@ internal static class ConnectionCombinationRules
         {
             if (fromValid)
             {
-                errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/from", [new("from", ValidationMessageTexts.FromOrToMustMatchParty)]);
+                errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/from", [new("from", ValidationErrorMessageTexts.FromOrToMustMatchParty)]);
             }
 
             if (toValid)
             {
-                errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/to", [new("to", ValidationMessageTexts.FromOrToMustMatchParty)]);
+                errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/to", [new("to", ValidationErrorMessageTexts.FromOrToMustMatchParty)]);
             }
         };
     };
@@ -98,8 +98,8 @@ internal static class ConnectionCombinationRules
 
         return (ref ValidationErrorBuilder errors) =>
         {
-            errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/from", [new("from", ValidationMessageTexts.FromOrToMustMatchParty)]);
-            errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/to", [new("to", ValidationMessageTexts.FromOrToMustMatchParty)]);
+            errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/from", [new("from", ValidationErrorMessageTexts.FromOrToMustMatchParty)]);
+            errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/to", [new("to", ValidationErrorMessageTexts.FromOrToMustMatchParty)]);
         };
     };
 
@@ -119,21 +119,21 @@ internal static class ConnectionCombinationRules
         {
             return (ref ValidationErrorBuilder errors) =>
             {
-                errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{idName}", [new(idName, ValidationMessageTexts.ProvideEitherPackageRef)]);
-                errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{urnName}", [new(urnName, ValidationMessageTexts.ProvideEitherPackageRef)]);
+                errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{idName}", [new(idName, ValidationErrorMessageTexts.ProvideEitherPackageRef)]);
+                errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{urnName}", [new(urnName, ValidationErrorMessageTexts.ProvideEitherPackageRef)]);
             };
         }
 
         if (packageId.HasValue && packageId.Value == Guid.Empty)
         {
             return (ref ValidationErrorBuilder errors) =>
-                errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{idName}", [new(idName, ValidationMessageTexts.PackageIdMustNotBeEmpty)]);
+                errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{idName}", [new(idName, ValidationErrorMessageTexts.PackageIdMustNotBeEmpty)]);
         }
 
         return (ref ValidationErrorBuilder errors) =>
         {
-            errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{idName}", [new(idName, ValidationMessageTexts.RequireOnePackageRef)]);
-            errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{urnName}", [new(urnName, ValidationMessageTexts.RequireOnePackageRef)]);
+            errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{idName}", [new(idName, ValidationErrorMessageTexts.RequireOnePackageRef)]);
+            errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{urnName}", [new(urnName, ValidationErrorMessageTexts.RequireOnePackageRef)]);
         };
     };
 }

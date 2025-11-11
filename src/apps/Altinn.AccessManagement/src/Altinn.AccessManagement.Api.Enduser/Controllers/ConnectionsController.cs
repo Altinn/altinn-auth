@@ -66,9 +66,9 @@ public class ConnectionsController(IConnectionService connectionService, IUserPr
             return validationErrors.ToActionResult();
         }
 
+        var partyUuid = Guid.Parse(connection.Party);
         var validFromUuid = Guid.TryParse(connection.From, out var fromUuid);
         var validToUuid = Guid.TryParse(connection.To, out var toUuid);
-        _ = Guid.TryParse(connection.Party, out var partyUuid);
 
         var result = await ConnectionService.Get(partyUuid, validFromUuid ? fromUuid : null, validToUuid ? toUuid : null, ConfigureConnections, cancellationToken);
         if (result.IsProblem)
@@ -92,34 +92,32 @@ public class ConnectionsController(IConnectionService connectionService, IUserPr
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> AddAssignment([FromQuery] ConnectionInput connection, [FromBody] PersonInput? person, CancellationToken cancellationToken = default)
     {
-        bool hasPersonInputIdentifiers = person is { } &&
-                                         !string.IsNullOrWhiteSpace(person.PersonIdentifier) &&
-                                         !string.IsNullOrWhiteSpace(person.LastName);
+        bool hasPersonInputParameter = person is { };
 
-        var validationErrors = hasPersonInputIdentifiers
+        var validationErrors = hasPersonInputParameter
             ? ValidationComposer.Validate(
-                AddAssignmentValidation.ValidateAddAssignmentWithPersonInput(
-                    connection.Party, connection.From, connection.To, person.PersonIdentifier, person.LastName))
+                ConnectionValidation.ValidateAddAssignmentWithPersonInput(connection.Party, connection.From, person.PersonIdentifier, person.LastName))
             : ValidationComposer.Validate(
-                AddAssignmentValidation.ValidateAddAssignmentWithoutPersonInput(
-                    connection.Party, connection.From, connection.To));
+                ConnectionValidation.ValidateAddAssignmentWithConnectionInput(connection.Party, connection.From, connection.To));
 
         if (validationErrors is { })
         {
             return validationErrors.ToActionResult();
         }
 
-        Guid.TryParse(connection.From, out var fromUuid);
-        Guid.TryParse(connection.To, out var connectionInputToUuid);
+        var fromUuid = Guid.Parse(connection.From);
 
-        var resolver = new AddAssignmentToUuidResolver(EntityService, UserProfileLookupService);
-        var resolveResult = await resolver.ResolveAsync(connectionInputToUuid, person, HttpContext, cancellationToken);
+        var resolver = new ToUuidResolver(EntityService, UserProfileLookupService);
+        var resolveResult = hasPersonInputParameter
+            ? await resolver.ResolveWithPersonInputAsync(person, HttpContext, cancellationToken)
+            : await resolver.ResolveWithConnectionInputAsync(Guid.Parse(connection.To), cancellationToken);
+
         if (!resolveResult.Success)
         {
             return resolveResult.ErrorResult!;
         }
 
-        Guid toUuid = resolveResult.ToUuid;
+        var toUuid = resolveResult.ToUuid;
 
         var result = await ConnectionService.AddAssignment(fromUuid, toUuid, ConfigureConnections, cancellationToken);
         if (result.IsProblem)
@@ -150,8 +148,9 @@ public class ConnectionsController(IConnectionService connectionService, IUserPr
             return validationErrors.ToActionResult();
         }
 
-        Guid.TryParse(connection.From, out var fromUuid);
-        Guid.TryParse(connection.To, out var toUuid);
+        var fromUuid = Guid.Parse(connection.From);
+        var toUuid = Guid.Parse(connection.To);
+
         var problem = await ConnectionService.RemoveAssignment(fromUuid, toUuid, cascade, ConfigureConnections, cancellationToken);
         if (problem is { })
         {
@@ -181,9 +180,9 @@ public class ConnectionsController(IConnectionService connectionService, IUserPr
             return validationErrors.ToActionResult();
         }
 
+        var partyUuid = Guid.Parse(connection.Party);
         var validFromUuid = Guid.TryParse(connection.From, out var fromUuid);
         var validToUuid = Guid.TryParse(connection.To, out var toUuid);
-        _ = Guid.TryParse(connection.Party, out var partyUuid);
 
         var result = await ConnectionService.GetPackages(partyUuid, validFromUuid ? fromUuid : null, validToUuid ? toUuid : null, ConfigureConnections, cancellationToken);
         if (result.IsProblem)
@@ -204,18 +203,35 @@ public class ConnectionsController(IConnectionService connectionService, IUserPr
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> AddPackages([FromQuery] ConnectionInput connection, [FromQuery] Guid? packageId, [FromQuery] string package, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> AddPackages([FromQuery] ConnectionInput connection, [FromBody] PersonInput? person, [FromQuery] Guid? packageId, [FromQuery] string package, CancellationToken cancellationToken = default)
     {
-        var validationErrors = ValidationComposer.Validate(
-            ConnectionValidation.ValidateAddConnectionWithPackage(connection.Party, connection.From, connection.To, packageId, package));
+        bool hasPersonInputParameter = person is { };
+
+        var validationErrors = hasPersonInputParameter
+            ? ValidationComposer.Validate(
+                ConnectionValidation.ValidateAddPackageToConnectionWithPersonInput(connection.Party, connection.From, person.PersonIdentifier, person.LastName, packageId, package))
+            : ValidationComposer.Validate(
+                ConnectionValidation.ValidateAddPackageToConnectionWithConnectionInput(connection.Party, connection.From, connection.To, packageId, package));
 
         if (validationErrors is { })
         {
             return validationErrors.ToActionResult();
         }
 
-        Guid.TryParse(connection.From, out var fromUuid);
-        Guid.TryParse(connection.To, out var toUuid);
+        var fromUuid = Guid.Parse(connection.From);
+
+        var resolver = new ToUuidResolver(EntityService, UserProfileLookupService);
+        var resolveResult = hasPersonInputParameter
+            ? await resolver.ResolveWithPersonInputAsync(person, HttpContext, cancellationToken)
+            : await resolver.ResolveWithConnectionInputAsync(Guid.Parse(connection.To), cancellationToken);
+
+        if (!resolveResult.Success)
+        {
+            return resolveResult.ErrorResult!;
+        }
+
+        var toUuid = resolveResult.ToUuid;
+
         async Task<Result<AssignmentPackageDto>> AddPackage()
         {
             if (packageId.HasValue)
@@ -248,15 +264,16 @@ public class ConnectionsController(IConnectionService connectionService, IUserPr
     public async Task<IActionResult> RemovePackages([FromQuery] ConnectionInput connection, [FromQuery] Guid? packageId, [FromQuery] string package, CancellationToken cancellationToken = default)
     {
         var validationErrors = ValidationComposer.Validate(
-            ConnectionValidation.ValidateRemoveConnectionWithPackage(connection.Party, connection.From, connection.To, packageId, package));
+            ConnectionValidation.ValidateRemovePackageFromConnection(connection.Party, connection.From, connection.To, packageId, package));
 
         if (validationErrors is { })
         {
             return validationErrors.ToActionResult();
         }
 
-        Guid.TryParse(connection.From, out var fromUuid);
-        Guid.TryParse(connection.To, out var toUuid);
+        var fromUuid = Guid.Parse(connection.From);
+        var toUuid = Guid.Parse(connection.To);
+
         async Task<ValidationProblemInstance> RemovePackage()
         {
             if (packageId.HasValue)
@@ -328,9 +345,9 @@ public class ConnectionsController(IConnectionService connectionService, IUserPr
             return validationErrors.ToActionResult();
         }
 
+        var partyUuid = Guid.Parse(connection.Party);
         var validFromUuid = Guid.TryParse(connection.From, out var fromUuid);
         var validToUuid = Guid.TryParse(connection.To, out var toUuid);
-        _ = Guid.TryParse(connection.Party, out var partyUuid);
 
         var result = await ConnectionService.GetRoles(partyUuid, validFromUuid ? fromUuid : null, validToUuid ? toUuid : null, ConfigureConnections, cancellationToken);
         if (result.IsProblem)
@@ -355,6 +372,7 @@ public class ConnectionsController(IConnectionService connectionService, IUserPr
     {
         Guid.TryParse(connection.From, out var fromUuid);
         Guid.TryParse(connection.To, out var toUuid);
+
         async Task<ValidationProblemInstance> RemoveRole()
         {
             return await Task.FromResult<ValidationProblemInstance>(null); // ToDo: Implement when role service is ready
