@@ -76,6 +76,12 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                 {
                     foreach (var item in page.Content.Data)
                     {
+                        if (item.ToUserType != UserType.EnterpriseIdentified && item.RoleTypeCode == RoleConstants.Eckeyrole.Entity.Code)
+                        {                             
+                            // Skip ECKEYROLE for non-enterprise users
+                            continue;
+                        }
+
                         var assignment = await ConvertRoleDelegationModelToAssignment(appDbContext, item, batchId.ToString(), cancellationToken);
                         if (assignment.Assignment == null)
                         {
