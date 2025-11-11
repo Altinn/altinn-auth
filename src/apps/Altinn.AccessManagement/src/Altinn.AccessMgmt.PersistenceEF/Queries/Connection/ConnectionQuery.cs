@@ -193,7 +193,7 @@ public class ConnectionQuery(AppDbContext db)
             join inheritedAssignment in db.Assignments on keyRoleAssignment.FromId equals inheritedAssignment.ToId
             select new ConnectionQueryBaseRecord()
             {
-                AssignmentId = keyRoleAssignment.AssignmentId,
+                AssignmentId = inheritedAssignment.Id,
                 DelegationId = null,
                 FromId = inheritedAssignment.FromId,
                 ToId = keyRoleAssignment.ToId,
