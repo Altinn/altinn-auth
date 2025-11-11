@@ -63,29 +63,32 @@ public partial class DtoMapper : IDtoMapper
 
     public static List<ConnectionDto> ConvertSubConnectionsFromOthers(IEnumerable<ConnectionQueryExtendedRecord> res)
     {
-        var result = res
-            .Select(relation => new ConnectionDto()
+        var result = res.GroupBy(res => res.FromId).Select(c =>
+        {
+            var connection = c.First();
+            return new ConnectionDto()
             {
-                Party = Convert(relation.From),
+                Party = Convert(connection.From),
                 Roles = res
-                    .Where(t => t.FromId == relation.FromId)
+                    .Where(t => t.FromId == connection.FromId)
                     .Select(t => ConvertCompactRole(t.Role))
                     .DistinctBy(t => t.Id).ToList(),
                 Packages = res
-                    .Where(t => t.FromId == relation.FromId && t.Packages != null)
+                    .Where(t => t.FromId == connection.FromId && t.Packages != null)
                     .SelectMany(t => t.Packages)
                     .Select(p => Convert(p))
                     .DistinctBy(t => t.Id)
                     .ToList(),
                 Resources = res
-                    .Where(t => t.FromId == relation.FromId && t.Resources != null)
+                    .Where(t => t.FromId == connection.FromId && t.Resources != null)
                     .SelectMany(t => t.Resources)
                     .Select(r => Convert(r))
                     .DistinctBy(t => t.Id)
                     .ToList(),
 
                 Connections = new()
-            });
+            };
+        });
 
         return result.ToList();
     }
