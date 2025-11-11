@@ -1,0 +1,88 @@
+meta {
+  name: Person_Dagl_WithPackage_ForMainUnit_ViaKeyRole_Pid_ReporteeOrganizationId
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/authorization/api/v1/authorize
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+body:json {
+  {
+      "Request": {
+          "ReturnPolicyIdList": false,
+          "AccessSubject": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:altinn:person:identifier-no",
+                          "Value": "{{subjectPersonId}}"
+                      }
+                  ]
+              }
+          ],
+          "Action": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+                          "Value": "read",
+                          "DataType": "http://www.w3.org/2001/XMLSchema#string"
+                      }
+                  ]
+              }
+          ],
+          "Resource": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:altinn:resource",
+                          "Value": "{{resourceId}}"
+                      },
+                      {
+                          "AttributeId": "urn:altinn:organization:identifier-no",
+                          "Value": "{{resourceOrganizationId}}",
+                          "DataType": "http://www.w3.org/2001/XMLSchema#string"
+                      }
+                  ]
+              }
+          ]
+      }
+  }
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/accesspackage-resource-auth/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("requestName", "Person_Dagl_WithPackage_ForMainUnit_ViaKeyRole_Pid_ReporteeOrganizationId");
+  
+  bru.setVar("resourceId", testdata.resources.revisorattestererPckgResourceId);
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+  bru.setVar("resourceOrganizationId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.subunit.orgno);
+  
+  var getTokenParameters = {
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.authorize,
+    auth_org: sharedtestdata.serviceOwners.ttd.org,
+    auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Decision_" + bru.getVar("requestName"), function() {
+    const data = res.getBody();
+    expect(res.status).to.equal(200);
+    expect(data.response[0]).to.have.property('decision', "Permit");
+  });
+}

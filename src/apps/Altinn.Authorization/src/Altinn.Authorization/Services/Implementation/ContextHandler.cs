@@ -595,11 +595,11 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// Enriches the context with all access package attributes the given subject has access to on behalf of the party
         /// </summary>
         /// <param name="subjectContextAttributes">The subject attribute collection to enrich with access packages (if any) the subject user has for the party</param>
-        /// <param name="subjectSystemUser">The system user to check if has any access packages for the party</param>
-        /// <param name="resourceParty">The party to check if system user has any access packages for.</param>
-        protected async Task AddAccessPackageAttributes(XacmlContextAttributes subjectContextAttributes, Guid subjectSystemUser, Guid resourceParty)
+        /// <param name="toSubjectPartyUuid">The subject party uuid to check if has any access packages for the party</param>
+        /// <param name="resourceParty">The party to check if subject party has any access packages for.</param>
+        protected async Task AddAccessPackageAttributes(XacmlContextAttributes subjectContextAttributes, Guid toSubjectPartyUuid, Guid resourceParty)
         {
-            IEnumerable<AccessPackageUrn> accessPackages = await _accessManagementWrapper.GetAccessPackages(subjectSystemUser, resourceParty);
+            IEnumerable<AccessPackageUrn> accessPackages = await _accessManagementWrapper.GetAccessPackages(toSubjectPartyUuid, resourceParty);
             foreach (AccessPackageUrn accessPackage in accessPackages)
             {
                 subjectContextAttributes.Attributes.Add(GetStringAttribute(accessPackage.PrefixSpan.ToString(), accessPackage.ValueSpan.ToString()));

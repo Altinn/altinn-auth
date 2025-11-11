@@ -1,6 +1,7 @@
-using Altinn.AccessManagement.Core.Models;
+﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
+using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.Authorization.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
@@ -16,19 +17,19 @@ public class PolicyInformationPointController : ControllerBase
 {
     private readonly IPolicyInformationPoint _pip;
     private readonly IMapper _mapper;
-    private readonly AccessMgmt.Core.Services.Contracts.IConnectionService _connectionService;
+    private readonly IAuthorizedPartyRepoServiceEf _authorizedPartyRepoService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PolicyInformationPointController"/> class.
     /// </summary>
     /// <param name="pip">The policy information point</param>
     /// <param name="mapper">The mapper</param>
-    /// <param name="connectionService">Connection Service</param>
-    public PolicyInformationPointController(IPolicyInformationPoint pip, IMapper mapper, AccessMgmt.Core.Services.Contracts.IConnectionService connectionService)
+    /// <param name="authorizedPartyRepoService">AuthorizedParties service</param>
+    public PolicyInformationPointController(IPolicyInformationPoint pip, IMapper mapper, IAuthorizedPartyRepoServiceEf authorizedPartyRepoService)
     {
         _pip = pip;
         _mapper = mapper;
-        _connectionService = connectionService;
+        _authorizedPartyRepoService = authorizedPartyRepoService;
     }
 
     /// <summary>
@@ -71,7 +72,7 @@ public class PolicyInformationPointController : ControllerBase
     {
         List<AccessPackageUrn> packages = new();
 
-        var connectionPackages = await _connectionService.GetPackagePermissionsFromOthers(partyId: to, fromId: from, cancellationToken: cancellationToken);
+        var connectionPackages = await _authorizedPartyRepoService.GetPackagesFromOthers(to, from, cancellationToken);
         if (connectionPackages != null)
         {
             packages.AddRange(connectionPackages.Select(conPackage => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(conPackage.Package.Urn.Split(':').Last()))));

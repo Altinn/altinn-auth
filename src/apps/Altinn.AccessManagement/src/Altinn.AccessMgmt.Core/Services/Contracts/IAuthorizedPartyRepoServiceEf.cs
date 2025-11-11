@@ -92,5 +92,5 @@ public interface IAuthorizedPartyRepoServiceEf
     /// Get list of packages the to party has access to, on behalf of the from party
     /// </summary>
     /// <returns>Enumerable of package permissions</returns>
-    Task<IEnumerable<PackagePermissionDto>> GetPackagesFromOthers(Guid toId, CancellationToken ct = default);
+    Task<IEnumerable<PackagePermissionDto>> GetPackagesFromOthers(Guid toId, Guid? fromId = null, CancellationToken ct = default);
 }

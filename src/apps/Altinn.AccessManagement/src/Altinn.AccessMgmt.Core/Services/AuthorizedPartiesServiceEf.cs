@@ -278,7 +278,7 @@ public class AuthorizedPartiesServiceEf(
     private async Task<Tuple<Dictionary<Guid, AuthorizedParty>, IEnumerable<AuthorizedParty>>> GetAltinn3AuthorizedParties(Guid toId, List<Guid> toOrgs = null, CancellationToken cancellationToken = default)
     {
         // Get AccessPackage Delegations
-        var packagePermissions = await repoService.GetPackagesFromOthers(toId, cancellationToken);
+        var packagePermissions = await repoService.GetPackagesFromOthers(toId, ct: cancellationToken);
 
         // Get App, Resource and Instance delegations
         List<Guid> allToParties = toOrgs ?? new List<Guid>();

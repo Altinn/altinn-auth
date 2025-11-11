@@ -82,7 +82,14 @@
                 "partyId": 51171325,
                 "partyUuid": "fb7a622c-4d16-41eb-ad9d-5024bfd8ebe5"
             },
-            "directPackageToDelegate": "mobler-og-annen-industri"
+            "subunit": {
+                "name": "STOLT BETYDELIG TIGER AS",
+                "orgno": "315043336",
+                "partyId": 51961130,
+                "partyUuid": "2230cded-a253-4b44-a01c-5d2f3125e038"
+            },
+            "directPackageToDelegate": "mobler-og-annen-industri",
+            "directPackageToDelegate2": "revisorattesterer"
         },
         "a2_klientadministrator": {
             "name": "RUSTEN AKVARELL",
@@ -132,9 +139,7 @@
             "pid": "31858374521",
             "userId": 20429745,
             "partyId": 50384219,
-            "partyUuid": "650cbe81-7fb7-4671-842e-350ab9cf57d1",
-            "directPackageToDelegate": "motorvognavgift",
-            "directPackageTilgangsstyrer": "tilgangsstyrer"
+            "partyUuid": "650cbe81-7fb7-4671-842e-350ab9cf57d1"
         },
         "employee_rightholderWithPackages": {
             "name": "STOR UTHOLDEN AUTORITET ANSIKTSKREM",
