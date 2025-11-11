@@ -1,0 +1,74 @@
+meta {
+  name: POST_Enduser_Conn_AccPcks_ToPerson_Again
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toPersonPartyUuid}}&packageId&package={{package}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toPersonPartyUuid}}
+  packageId: 
+  package: {{package}}
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+   {
+    "personidentifier": "{{toPerson}}", // fnr or username
+    "lastName": "{{toPersonLastName}}"
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("party", testdata.vassen_riktig_tiger_as.partyuuid);
+  bru.setVar("toPerson", testdata.vassen_riktig_tiger_as.person1.pid);
+  bru.setVar("toPersonLastName", testdata.vassen_riktig_tiger_as.person1.lastname);
+  bru.setVar("toPersonPartyUuid", testdata.vassen_riktig_tiger_as.person1.partyuuid);
+  bru.setVar("package", testdata.package_to_delegate.package_urn);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.vassen_riktig_tiger_as.dagl.userid,
+    auth_partyId: testdata.vassen_riktig_tiger_as.dagl.partyid,
+    auth_partyUuid: testdata.vassen_riktig_tiger_as.dagl.partyuuid,
+    auth_ssn: testdata.vassen_riktig_tiger_as.dagl.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+script:post-response {
+  const data = res.getBody();
+  const packageId = data.packageId;
+  bru.setEnvVar("packageId", packageId);
+}
+
+tests {
+  
+  test("POST_Enduser_Conn_AccPcks_ToPerson_Again", function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(200);
+    assert.isOk(data, "Expected response body to return created assignment package");
+    
+  });
+}
+
+docs {
+  Gir tilgangspakke til person
+}

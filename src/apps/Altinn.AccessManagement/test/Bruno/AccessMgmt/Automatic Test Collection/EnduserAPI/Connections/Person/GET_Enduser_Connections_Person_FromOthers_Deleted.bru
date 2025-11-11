@@ -1,0 +1,56 @@
+meta {
+  name: GET_Enduser_Connections_Person_FromOthers_Deleted
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&to={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{party}}
+  ~to: {{toPerson}}
+}
+
+body:json {
+   {
+    "personidentifier": "{{toPerson}}", // fnr or username
+    "lastName": "{{toPersonLastName}}"
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("party", testdata.vassen_riktig_tiger_as.person1.partyuuid);
+  bru.setVar("toPerson", testdata.vassen_riktig_tiger_as.person1.pid);
+  bru.setVar("toPersonLastName", testdata.vassen_riktig_tiger_as.person1.lastname);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.vassen_riktig_tiger_as.person1.userid,
+    auth_partyId: testdata.vassen_riktig_tiger_as.person1.partyid,
+    auth_partyUuid: testdata.vassen_riktig_tiger_as.person1.partyuuid,
+    auth_ssn: testdata.vassen_riktig_tiger_as.person1.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const testdata = require(`./Testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.json`);
+  test("GET_Enduser_Connections_Person_FromOthers_Deleted", function() {
+  
+     const data = res.getBody();
+    
+     const conn = data.data.find(item => item.roles[0].code === "rettighetshaver");
+     expect(conn).to.not.exist;
+  });
+}
