@@ -6,9 +6,9 @@ namespace Altinn.AccessMgmt.Core.Utils;
 /// <inheritdoc/>
 public partial class DtoMapper : IDtoMapper
 {
-    public static List<ConnectionDto> ConvertToOthers(IEnumerable<ConnectionQueryExtendedRecord> connections)
+    public static List<ConnectionDto> ConvertToOthers(IEnumerable<ConnectionQueryExtendedRecord> connections, bool getSingle = false)
     {
-        var result = connections.Where(t => t.Reason != ConnectionReason.KeyRole && t.Reason != ConnectionReason.Delegation).GroupBy(res => res.ToId).Select(c =>
+        var result = connections.Where(t => getSingle || (t.Reason != ConnectionReason.KeyRole && t.Reason != ConnectionReason.Delegation)).GroupBy(res => res.ToId).Select(c =>
         {
             var connection = c.First();
             var subconnections = connections.Where(c => c.ViaId == connection.ToId && (c.Reason == ConnectionReason.KeyRole || c.Reason == ConnectionReason.Delegation));
@@ -25,9 +25,9 @@ public partial class DtoMapper : IDtoMapper
         return result.ToList();
     }
 
-    public static List<ConnectionDto> ConvertFromOthers(IEnumerable<ConnectionQueryExtendedRecord> connections)
+    public static List<ConnectionDto> ConvertFromOthers(IEnumerable<ConnectionQueryExtendedRecord> connections, bool getSingle = false)
     {
-        var result = connections.Where(t => t.Reason != ConnectionReason.Hierarchy).GroupBy(res => res.FromId).Select(c =>
+        var result = connections.Where(t => getSingle || (t.Reason != ConnectionReason.Hierarchy)).GroupBy(res => res.FromId).Select(c =>
         {
             var connection = c.First();
             var subconnections = connections.Where(c => c.ViaId == connection.FromId && c.Reason == ConnectionReason.Hierarchy);

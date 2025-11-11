@@ -57,15 +57,15 @@ public partial class ConnectionService(
                 IncludeResource = false,
                 EnrichPackageResources = false,
                 ExcludeDeleted = false,
-                OnlyUniqueResults = true,
+                OnlyUniqueResults = true
             },
             direction,
             cancellationToken
         );
 
         return direction == ConnectionQueryDirection.FromOthers
-            ? DtoMapper.ConvertFromOthers(connections)
-            : DtoMapper.ConvertToOthers(connections);
+            ? DtoMapper.ConvertFromOthers(connections, getSingle: fromId.HasValue)
+            : DtoMapper.ConvertToOthers(connections, getSingle: toId.HasValue);
     }
 
     public async Task<Result<AssignmentDto>> AddAssignment(Guid fromId, Guid toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
