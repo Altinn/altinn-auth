@@ -110,7 +110,7 @@ public class ConnectionsController(IConnectionService connectionService, IUserPr
         var resolver = new ToUuidResolver(EntityService, UserProfileLookupService);
         var resolveResult = hasPersonInputParameter
             ? await resolver.ResolveWithPersonInputAsync(person, HttpContext, cancellationToken)
-            : await resolver.ResolveWithConnectionInputAsync(Guid.Parse(connection.To), cancellationToken);
+            : await resolver.ResolveWithConnectionInputAsync(Guid.Parse(connection.To), false, cancellationToken);
 
         if (!resolveResult.Success)
         {
@@ -223,7 +223,7 @@ public class ConnectionsController(IConnectionService connectionService, IUserPr
         var resolver = new ToUuidResolver(EntityService, UserProfileLookupService);
         var resolveResult = hasPersonInputParameter
             ? await resolver.ResolveWithPersonInputAsync(person, HttpContext, cancellationToken)
-            : await resolver.ResolveWithConnectionInputAsync(Guid.Parse(connection.To), cancellationToken);
+            : await resolver.ResolveWithConnectionInputAsync(Guid.Parse(connection.To), true, cancellationToken);
 
         if (!resolveResult.Success)
         {

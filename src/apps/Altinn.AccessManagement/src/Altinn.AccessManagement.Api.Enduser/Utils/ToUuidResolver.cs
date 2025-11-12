@@ -38,7 +38,7 @@ internal sealed class ToUuidResolver
     /// <summary>
     /// Resolve target UUID for a non-person entity from <see cref="ConnectionInput"/> via <see cref="EntityService"/>.
     /// </summary>
-    internal async Task<ResolveToUuidResult> ResolveWithConnectionInputAsync(Guid connectionInputToUuid, CancellationToken cancellationToken)
+    internal async Task<ResolveToUuidResult> ResolveWithConnectionInputAsync(Guid connectionInputToUuid, bool allowConnectionInputForPersonEntity, CancellationToken cancellationToken)
     {
         var entity = await _entityService.GetEntity(connectionInputToUuid, cancellationToken);
         if (entity == null)
@@ -46,7 +46,7 @@ internal sealed class ToUuidResolver
             return new ResolveToUuidResult(Guid.Empty, Problems.PartyNotFound.ToActionResult());
         }
 
-        if (entity.TypeId == EntityTypeConstants.Person.Id)
+        if (!allowConnectionInputForPersonEntity && entity.TypeId == EntityTypeConstants.Person.Id)
         {
             return new ResolveToUuidResult(Guid.Empty, Problems.PersonInputRequiredForPersonAssignment.ToActionResult());
         }
