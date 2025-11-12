@@ -15,9 +15,9 @@ public partial class DtoMapper : IDtoMapper
             return new ConnectionDto()
             {
                 Party = Convert(connection.To),
-                Roles = [.. c.Select(c => ConvertCompactRole(c.Role)).DistinctBy(t => t.Id)],
-                Resources = [.. c.SelectMany(c => c.Resources).Select(r => Convert(r)).DistinctBy(t => t.Id)],
-                Packages = [.. c.SelectMany(c => c.Packages).Select(p => Convert(p)).DistinctBy(t => t.Id)],
+                Roles = [.. c.Select(c => ConvertCompactRole(c.Role)).Where(ro => ro is not null).DistinctBy(t => t.Id)],
+                Resources = [.. c.SelectMany(c => c.Resources).Select(r => Convert(r)).Where(re => re is not null).DistinctBy(t => t.Id)],
+                Packages = [.. c.SelectMany(c => c.Packages).Select(p => Convert(p)).Where(pa => pa is not null).DistinctBy(t => t.Id)],
                 Connections = ConvertSubConnectionsToOthers(subconnections),
             };
         });
@@ -34,9 +34,9 @@ public partial class DtoMapper : IDtoMapper
             return new ConnectionDto()
             {
                 Party = Convert(connection.From),
-                Roles = [.. c.Select(c => ConvertCompactRole(c.Role)).DistinctBy(t => t.Id)],
-                Resources = [.. c.SelectMany(c => c.Resources).Select(r => Convert(r)).DistinctBy(t => t.Id)],
-                Packages = [.. c.SelectMany(c => c.Packages).Select(p => Convert(p)).DistinctBy(t => t.Id)],
+                Roles = [.. c.Select(c => ConvertCompactRole(c.Role)).Where(ro => ro is not null).DistinctBy(t => t.Id)],
+                Resources = [.. c.SelectMany(c => c.Resources).Select(r => Convert(r)).Where(re => re is not null).DistinctBy(t => t.Id)],
+                Packages = [.. c.SelectMany(c => c.Packages).Select(p => Convert(p)).Where(pa => pa is not null).DistinctBy(t => t.Id)],
                 Connections = ConvertSubConnectionsFromOthers(subconnections),
             };
         });
@@ -72,17 +72,20 @@ public partial class DtoMapper : IDtoMapper
                 Roles = res
                     .Where(t => t.FromId == connection.FromId)
                     .Select(t => ConvertCompactRole(t.Role))
+                    .Where(ro => ro is not null)
                     .DistinctBy(t => t.Id).ToList(),
                 Packages = res
                     .Where(t => t.FromId == connection.FromId && t.Packages != null)
                     .SelectMany(t => t.Packages)
                     .Select(p => Convert(p))
+                    .Where(pa => pa is not null)
                     .DistinctBy(t => t.Id)
                     .ToList(),
                 Resources = res
                     .Where(t => t.FromId == connection.FromId && t.Resources != null)
                     .SelectMany(t => t.Resources)
                     .Select(r => Convert(r))
+                    .Where(re => re is not null)
                     .DistinctBy(t => t.Id)
                     .ToList(),
 
