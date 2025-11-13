@@ -33,8 +33,8 @@ public static class FuzzySearch
     /// </summary>
     private static readonly Dictionary<FuzzynessLevel, (double Threshold, int MaxDistance)> FuzzynessSettings = new()
     {
-        { FuzzynessLevel.High, (0.65, 3) }, // High tolerance, allows up to 3 character differences
-        { FuzzynessLevel.Medium, (0.75, 2) }, // Medium tolerance, allows up to 2 character differences
+        { FuzzynessLevel.High, (0.55, 5) }, // High tolerance, allows up to 5 character differences
+        { FuzzynessLevel.Medium, (0.75, 3) }, // Medium tolerance, allows up to 3 character differences
         { FuzzynessLevel.Low, (0.85, 1) } // Low tolerance, requires near-exact match
     };
 
