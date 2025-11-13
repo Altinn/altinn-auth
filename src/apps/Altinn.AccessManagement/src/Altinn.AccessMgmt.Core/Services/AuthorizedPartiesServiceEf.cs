@@ -264,6 +264,7 @@ public class AuthorizedPartiesServiceEf(
                 {
                     var enhancedA2SubUnit = BuildAuthorizedPartyFromEntity(allA2Parties[a2SubUnit.PartyUuid]);
                     enhancedA2SubUnit.AuthorizedRoles = a2SubUnit.AuthorizedRoles;
+                    enhancedA2Party.Subunits.Add(enhancedA2SubUnit);
 
                     allParties.Add(enhancedA2SubUnit.PartyUuid, enhancedA2SubUnit);
                 }
