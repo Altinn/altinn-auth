@@ -283,13 +283,8 @@ public partial class ConnectionService(
             return problem;
         }
 
-        var assignments = await dbContext.Assignments
-            .AsNoTracking()
-            .Where(a => a.FromId == fromId)
-            .Where(a => a.ToId == toId)
-            .ToListAsync(cancellationToken);
-
-        if (assignments.Count() == 0)
+        var connection = await Get(fromId, fromId, toId, configureConnection, cancellationToken: cancellationToken);
+        if (!connection.IsSuccess || connection.Value.Count() == 0)
         {
             return Problems.MissingConnection;
         }
@@ -310,7 +305,13 @@ public partial class ConnectionService(
             return problem;
         }
 
-        var assignment = assignments.FirstOrDefault(a => a.RoleId == RoleConstants.Rightholder);
+        // Look for existing direct rightholder assignment
+        var assignment = await dbContext.Assignments
+            .AsNoTracking()
+            .Where(a => a.FromId == fromId)
+            .Where(a => a.ToId == toId)
+            .Where(a => a.RoleId == RoleConstants.Rightholder.Id)
+            .FirstOrDefaultAsync(cancellationToken);
         if (assignment == null)
         {
             assignment = new Assignment()
