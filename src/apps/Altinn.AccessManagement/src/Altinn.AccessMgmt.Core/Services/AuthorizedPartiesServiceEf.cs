@@ -233,7 +233,11 @@ public class AuthorizedPartiesServiceEf(
             {
                 // Merge roles from Altinn 2 into existing Altinn 3 party
                 existingA3Party.AuthorizedRoles = a2Party.AuthorizedRoles;
-                existingA3Party.OnlyHierarchyElementWithNoAccess = false;
+                if (!a2Party.OnlyHierarchyElementWithNoAccess)
+                {
+                    // Only set to false if Altinn 2 party has actual access
+                    existingA3Party.OnlyHierarchyElementWithNoAccess = false;
+                }
 
                 foreach (AuthorizedParty a2SubUnit in a2Party.Subunits)
                 {
