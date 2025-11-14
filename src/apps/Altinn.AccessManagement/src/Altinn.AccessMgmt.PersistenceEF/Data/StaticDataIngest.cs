@@ -13,7 +13,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Data;
 /// </summary>
 public static partial class StaticDataIngest
 {
-    private static AuditValues AuditValues { get; set; } = new(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest, Guid.NewGuid().ToString());
+    private static AuditValues AuditValues { get; set; } = new(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest, Guid.NewGuid().ToString(), DateTimeOffset.UtcNow);
 
     public static async Task IngestAll(AppDbContext dbContext, CancellationToken cancellationToken = default)
     {

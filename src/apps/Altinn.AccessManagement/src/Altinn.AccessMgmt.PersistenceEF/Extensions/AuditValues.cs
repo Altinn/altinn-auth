@@ -6,13 +6,13 @@ using Npgsql;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Extensions;
 
-public record AuditValues(Guid ChangedBy, Guid ChangedBySystem, string OperationId = null, DateTimeOffset? ValidFrom = null)
+public record AuditValues(Guid ChangedBy, Guid ChangedBySystem, string OperationId, DateTimeOffset ValidFrom)
 {
     public AuditValues(Guid changedBy, Guid changedBySystem)
-        : this(changedBy, changedBySystem, Activity.Current?.TraceId.ToString() ?? Guid.CreateVersion7().ToString()) { }
+        : this(changedBy, changedBySystem, Activity.Current?.TraceId.ToString() ?? Guid.CreateVersion7().ToString(), DateTimeOffset.UtcNow) { }
     
     public AuditValues(Guid changedBy) 
-        : this(changedBy, changedBy, Activity.Current?.TraceId.ToString() ?? Guid.CreateVersion7().ToString()) { }
+        : this(changedBy, changedBy, Activity.Current?.TraceId.ToString() ?? Guid.CreateVersion7().ToString(), DateTimeOffset.UtcNow) { }
 }
 
 public interface IAuditContextProvider

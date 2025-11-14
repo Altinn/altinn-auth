@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.PersistenceEF.Audit;
+﻿using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
@@ -24,7 +24,7 @@ public sealed class AppDbDesignTimeContextFactory : IDesignTimeDbContextFactory<
         {
             AuditAccessor = new AuditAccessor()
             {
-                AuditValues = new AuditValues(Guid.Empty, Guid.Empty, "design-time"),
+                AuditValues = new AuditValues(Guid.Empty, Guid.Empty, "design-time", DateTimeOffset.UtcNow),
             }
         };
     }

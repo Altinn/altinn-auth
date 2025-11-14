@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,13 +18,13 @@ public class AuditMiddleware : IMiddleware
 
                 if (claim != null && Guid.TryParse(claim.Value, out var uuid))
                 {
-                    auditContextAccessor.AuditValues = new(uuid, Guid.Parse(jwtClaimToDb.System), Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier);
+                    auditContextAccessor.AuditValues = new(uuid, Guid.Parse(jwtClaimToDb.System), Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier, DateTimeOffset.UtcNow);
                 }
             }
 
             if (endpoint.Metadata.GetMetadata<AuditStaticDbAttribute>() is var staticDb && staticDb != null)
             {
-                auditContextAccessor.AuditValues = new(Guid.Parse(staticDb.ChangedBy), Guid.Parse(staticDb.System), Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier);
+                auditContextAccessor.AuditValues = new(Guid.Parse(staticDb.ChangedBy), Guid.Parse(staticDb.System), Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier, DateTimeOffset.UtcNow);
             }
         }
 
