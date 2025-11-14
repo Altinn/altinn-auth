@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
@@ -22,7 +23,8 @@ namespace Altinn.AccessMgmt.Core.Services;
 public partial class ConnectionService(
     AppDbContext dbContext,
     ConnectionQuery connectionQuery,
-    IAuditAccessor auditAccessor) : IConnectionService
+    IAuditAccessor auditAccessor,
+    IAltinn2RightsClient altinn2Client) : IConnectionService
 {
     public async Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
     {
@@ -156,6 +158,12 @@ public partial class ConnectionService(
 
         dbContext.Remove(existingAssignment);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (from.PartyId.HasValue && to.PartyId.HasValue)
+        {
+            await altinn2Client.ClearReporteeRights(from.PartyId.Value, to.PartyId.Value, to.UserId.HasValue ? to.UserId.Value : 0, cancellationToken: cancellationToken);
+        }
+
         return null;
     }
 
@@ -345,6 +353,11 @@ public partial class ConnectionService(
 
         await dbContext.AssignmentPackages.AddAsync(newAssignmentPackage, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (from.PartyId.HasValue && to.PartyId.HasValue)
+        {
+            await altinn2Client.ClearReporteeRights(from.PartyId.Value, to.PartyId.Value, to.UserId.HasValue ? to.UserId.Value : 0, cancellationToken: cancellationToken);
+        }
 
         return DtoMapper.Convert(newAssignmentPackage);
     }
