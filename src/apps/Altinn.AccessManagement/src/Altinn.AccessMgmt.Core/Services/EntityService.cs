@@ -14,7 +14,7 @@ public class EntityService : IEntityService
         Db = appDbContext;
     }
 
-    private AuditValues AuditValues { get; set; } = new AuditValues(SystemEntityConstants.InternalApi, SystemEntityConstants.InternalApi, Guid.NewGuid().ToString());
+    private AuditValues AuditValues { get; set; } = new AuditValues(SystemEntityConstants.InternalApi, SystemEntityConstants.InternalApi, Guid.NewGuid().ToString(), DateTimeOffset.UtcNow);
 
     private AppDbContext Db { get; }
 

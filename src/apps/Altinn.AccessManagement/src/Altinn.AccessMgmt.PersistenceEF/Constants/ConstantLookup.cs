@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
@@ -160,8 +160,8 @@ public static class ConstantLookup
     public static bool TryGetByCode<TType>(Type constantsClass, string code, [NotNullWhen(true)] out ConstantDefinition<TType>? result)
         where TType : class, IEntityId, IEntityCode
     {
-        var byUrn = GetByCode<TType>(constantsClass);
-        if (byUrn.TryGetValue(code, out var value))
+        var byCode = GetByCode<TType>(constantsClass);
+        if (byCode.TryGetValue(code, out var value))
         {
             result = (ConstantDefinition<TType>)value;
             return true;

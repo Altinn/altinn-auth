@@ -1,9 +1,11 @@
 ﻿using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.FeatureManagement.Telemetry;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
@@ -130,7 +132,15 @@ public class RoleService: IRoleService
     /// <inheritdoc/>
     public async Task<IEnumerable<PackageDto>> GetRolePackages(Guid id, Guid? variantId = null, bool includeResources = false, CancellationToken cancellationToken = default)
     {
-        return await GetRolePackagesQuery(id, variantId, includeResources).ToListAsync(cancellationToken);
+        var result = await GetRolePackagesQuery(id, variantId, includeResources).ToListAsync(cancellationToken);
+
+        // Todo: Fix til å være GroupJoin Query istedet
+        if (includeResources)
+        {
+            return await EnrichWithResources(result);
+        }
+
+        return result;
     }
 
     /// <inheritdoc/>
@@ -150,24 +160,50 @@ public class RoleService: IRoleService
             return roleResources;
         }
 
-        var packageResources = await GetRolePackagesQuery(id, variantId, true)
-            .SelectMany(p => p.Resources)
+        var packageResources = (await GetRolePackagesQuery(id, variantId, true).ToListAsync()).SelectMany(p => p.Resources);
+
+        roleResources.Concat(packageResources);
+
+        return roleResources.DistinctBy(t => t.Id);
+    }
+
+    private async Task<List<PackageDto>> EnrichWithResources(List<PackageDto> packages, CancellationToken cancellationToken = default)
+    {
+        if (packages == null || packages.Count == 0)
+        {
+            return packages;
+        }
+
+        var packageIds = packages.Select(p => p.Id).ToList();
+
+        var resources = await Db.PackageResources
+            .Where(pr => packageIds.Contains(pr.PackageId))
+            .Join(Db.Resources,
+                pr => pr.ResourceId,
+                r => r.Id,
+                (pr, r) => new { pr.PackageId, Resource = DtoMapper.Convert(r) })
             .ToListAsync(cancellationToken);
 
-        return roleResources.Concat(packageResources).DistinctBy(r => r.Id);
+        foreach (var package in packages)
+        {
+            package.Resources = resources
+                .Where(r => r.PackageId == package.Id)
+                .Select(r => r.Resource)
+                .DistinctBy(r => r.Id)
+                .ToList();
+        }
+
+        return packages;
     }
-    
+
     private IQueryable<PackageDto> GetRolePackagesQuery(Guid roleId, Guid? variantId = null, bool includeResources = false)
     {
-        var rolePackages = Db.RolePackages.AsNoTracking()
+        return Db.RolePackages.AsNoTracking()
             .Where(rp => rp.RoleId == roleId)
             .WhereIf(!variantId.HasValue, rp => rp.EntityVariantId == null)
             .WhereIf(variantId.HasValue, rp => (rp.EntityVariantId == null || rp.EntityVariantId == variantId.Value))
-            .Join(Db.Packages, rp => rp.PackageId, p => p.Id, (rp, p) => p);
-
-        if (!includeResources)
-        {
-            return rolePackages.Select(p => new PackageDto
+            .Join(Db.Packages, rp => rp.PackageId, p => p.Id, (rp, p) => p)
+            .Select(p => new PackageDto
             {
                 Id = p.Id,
                 Name = p.Name,
@@ -176,30 +212,5 @@ public class RoleService: IRoleService
                 IsAssignable = p.IsAssignable,
                 Urn = p.Urn
             });
-        }
-
-        // Når vi skal ha med ressurser:
-        return rolePackages
-            .GroupJoin(
-                Db.PackageResources, 
-                package => package.Id, 
-                pr => pr.PackageId,
-                (package, packageResources) => new PackageDto
-                {
-                    Id = package.Id,
-                    Name = package.Name,
-                    Description = package.Description,
-                    IsDelegable = package.IsDelegable,
-                    IsAssignable = package.IsAssignable,
-                    Urn = package.Urn,
-                    Resources = packageResources
-                        .Join(
-                            Db.Resources,
-                            pr => pr.ResourceId,
-                            r => r.Id,
-                            (pr, r) => DtoMapper.Convert(r))
-                        .DistinctBy(r => r.Id)
-                        .ToList()
-                });
     }
 }
