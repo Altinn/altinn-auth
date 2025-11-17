@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -57,28 +57,37 @@ namespace Altinn.Common.PEP.Clients
         /// </summary>
         /// <param name="xacmlJsonRequest">An authorization request.</param>
         /// <returns>The result of the authorization request.</returns>
-        public async Task<XacmlJsonResponse> AuthorizeRequest(XacmlJsonRequestRoot xacmlJsonRequest)
+        public Task<XacmlJsonResponse> AuthorizeRequest(XacmlJsonRequestRoot xacmlJsonRequest)
+            => AuthorizeRequest(xacmlJsonRequest, CancellationToken.None);
+
+        /// <summary>
+        /// Method for performing authorization.
+        /// </summary>
+        /// <param name="xacmlJsonRequest">An authorization request.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/>.</param>
+        /// <returns>The result of the authorization request.</returns>
+        public async Task<XacmlJsonResponse> AuthorizeRequest(XacmlJsonRequestRoot xacmlJsonRequest, CancellationToken cancellationToken)
         {
             XacmlJsonResponse xacmlJsonResponse = null;
             string apiUrl = $"decision";
             string requestJson = JsonSerializer.Serialize(xacmlJsonRequest, jsonOptions);
-            StringContent httpContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
+            using StringContent httpContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
 
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
-            HttpResponseMessage response = await _httpClient.PostAsync(apiUrl, httpContent);
+            using HttpResponseMessage response = await _httpClient.PostAsync(apiUrl, httpContent, cancellationToken);
             stopWatch.Stop();
             TimeSpan ts = stopWatch.Elapsed;
             _logger.LogInformation("Authorization PDP time elapsed: " + ts.TotalMilliseconds);
 
             if (response.StatusCode == HttpStatusCode.OK)
             {
-                xacmlJsonResponse = await response.Content.ReadFromJsonAsync<XacmlJsonResponse>(jsonOptions);
+                xacmlJsonResponse = await response.Content.ReadFromJsonAsync<XacmlJsonResponse>(jsonOptions, cancellationToken);
             }
             else
             {
                 _logger.LogInformation($"// PDPAppSI // GetDecisionForRequest // Non-zero status code: {response.StatusCode}");
-                _logger.LogInformation($"// PDPAppSI // GetDecisionForRequest // Response: {await response.Content.ReadAsStringAsync()}");
+                _logger.LogInformation($"// PDPAppSI // GetDecisionForRequest // Response: {await response.Content.ReadAsStringAsync(cancellationToken)}");
             }
 
             return xacmlJsonResponse;

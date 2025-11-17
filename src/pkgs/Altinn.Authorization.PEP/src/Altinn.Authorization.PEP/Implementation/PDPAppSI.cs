@@ -1,5 +1,4 @@
-using System.Security.Claims;
-using System.Text.Json;
+﻿using System.Security.Claims;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Clients;
 using Altinn.Common.PEP.Helpers;
@@ -29,12 +28,20 @@ namespace Altinn.Common.PEP.Implementation
 
         /// <inheritdoc/>
         public async Task<XacmlJsonResponse> GetDecisionForRequest(XacmlJsonRequestRoot xacmlJsonRequest)
+            => await GetDecisionForRequest(xacmlJsonRequest, CancellationToken.None);
+
+        /// <inheritdoc/>
+        public async Task<XacmlJsonResponse> GetDecisionForRequest(XacmlJsonRequestRoot xacmlJsonRequest, CancellationToken cancellationToken)
         {
             XacmlJsonResponse xacmlJsonResponse = null;
 
             try
             {
-                xacmlJsonResponse = await _authorizationApiClient.AuthorizeRequest(xacmlJsonRequest);
+                xacmlJsonResponse = await _authorizationApiClient.AuthorizeRequest(xacmlJsonRequest, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception e)
             {
@@ -46,8 +53,12 @@ namespace Altinn.Common.PEP.Implementation
 
         /// <inheritdoc/>
         public async Task<bool> GetDecisionForUnvalidateRequest(XacmlJsonRequestRoot xacmlJsonRequest, ClaimsPrincipal user)
+            => await GetDecisionForUnvalidateRequest(xacmlJsonRequest, user, CancellationToken.None);
+
+        /// <inheritdoc/>
+        public async Task<bool> GetDecisionForUnvalidateRequest(XacmlJsonRequestRoot xacmlJsonRequest, ClaimsPrincipal user, CancellationToken cancellationToken)
         {
-            XacmlJsonResponse response = await GetDecisionForRequest(xacmlJsonRequest);
+            XacmlJsonResponse response = await GetDecisionForRequest(xacmlJsonRequest, cancellationToken);
 
             if (response?.Response == null)
             {

@@ -1,4 +1,4 @@
-using Altinn.Authorization.ABAC.Xacml.JsonProfile;
+﻿using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Helpers;
 using Altinn.Common.PEP.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -49,11 +49,11 @@ namespace Altinn.Common.PEP.Authorization
 
             XacmlJsonRequestRoot request = DecisionHelper.CreateDecisionRequest(context, requirement, _httpContextAccessor.HttpContext.GetRouteData());
 
-            XacmlJsonResponse response = await _pdp.GetDecisionForRequest(request);
+            XacmlJsonResponse response = await _pdp.GetDecisionForRequest(request, httpContext.RequestAborted);
 
             if (response?.Response == null)
             {
-                throw new ArgumentNullException("response");
+                throw new InvalidOperationException("PDP returned null-response");
             }
 
             if (!DecisionHelper.ValidatePdpDecision(response.Response, context.User))
@@ -62,7 +62,6 @@ namespace Altinn.Common.PEP.Authorization
             }
 
             context.Succeed(requirement);
-            await Task.CompletedTask;
         }
     }
 }
