@@ -11,7 +11,13 @@ namespace Altinn.AccessManagement.Tests.Mocks
     {
         /// <inheritdoc/>
         public Task<XacmlJsonResponse> GetDecisionForRequest(XacmlJsonRequestRoot xacmlJsonRequest)
+            => GetDecisionForRequest(xacmlJsonRequest, CancellationToken.None);
+
+        /// <inheritdoc/>
+        public Task<XacmlJsonResponse> GetDecisionForRequest(XacmlJsonRequestRoot xacmlJsonRequest, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var response = new XacmlJsonResponse
             {
                 Response = new List<XacmlJsonResult>(new[] { new XacmlJsonResult { Decision = "Indeterminate" } })
@@ -22,7 +28,13 @@ namespace Altinn.AccessManagement.Tests.Mocks
 
         /// <inheritdoc/>
         public Task<bool> GetDecisionForUnvalidateRequest(XacmlJsonRequestRoot xacmlJsonRequest, ClaimsPrincipal user)
+            => GetDecisionForUnvalidateRequest(xacmlJsonRequest, user, CancellationToken.None);
+
+        /// <inheritdoc/>
+        public Task<bool> GetDecisionForUnvalidateRequest(XacmlJsonRequestRoot xacmlJsonRequest, ClaimsPrincipal user, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             return Task.FromResult(false);
         }
     }

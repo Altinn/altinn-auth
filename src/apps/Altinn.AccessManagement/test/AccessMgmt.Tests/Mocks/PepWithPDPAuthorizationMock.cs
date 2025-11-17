@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
+﻿using System.Security.Claims;
 using System.Xml;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Tests.Models;
@@ -37,18 +32,24 @@ namespace Altinn.AccessManagement.Tests.Mocks
         private const string PartyAttributeId = "urn:altinn:partyid";
 
         /// <inheritdoc />
-        public async Task<XacmlJsonResponse> GetDecisionForRequest(XacmlJsonRequestRoot xacmlJsonRequest)
+        public Task<XacmlJsonResponse> GetDecisionForRequest(XacmlJsonRequestRoot xacmlJsonRequest)
+            => GetDecisionForRequest(xacmlJsonRequest, CancellationToken.None);
+
+        /// <inheritdoc />
+        public async Task<XacmlJsonResponse> GetDecisionForRequest(XacmlJsonRequestRoot xacmlJsonRequest, CancellationToken cancellationToken)
         {
-            return await Authorize(xacmlJsonRequest.Request);
+            cancellationToken.ThrowIfCancellationRequested();
+            
+            return await Authorize(xacmlJsonRequest.Request, cancellationToken);
         }
 
-        private async Task<XacmlJsonResponse> Authorize(XacmlJsonRequest decisionRequest)
+        private async Task<XacmlJsonResponse> Authorize(XacmlJsonRequest decisionRequest, CancellationToken cancellationToken)
         {
             if (decisionRequest.MultiRequests == null || decisionRequest.MultiRequests.RequestReference == null
                 || decisionRequest.MultiRequests.RequestReference.Count < 2)
             {
                 XacmlContextRequest request = XacmlJsonXmlConverter.ConvertRequest(decisionRequest);
-                XacmlContextResponse xmlResponse = await Authorize(request);
+                XacmlContextResponse xmlResponse = await Authorize(request, cancellationToken);
                 return XacmlJsonXmlConverter.ConvertResponse(xmlResponse);
             }
             else
@@ -97,7 +98,7 @@ namespace Altinn.AccessManagement.Tests.Mocks
                         }
                     }
 
-                    XacmlContextResponse partResponse = await Authorize(XacmlJsonXmlConverter.ConvertRequest(jsonMultiRequestPart));
+                    XacmlContextResponse partResponse = await Authorize(XacmlJsonXmlConverter.ConvertRequest(jsonMultiRequestPart), cancellationToken);
                     XacmlJsonResponse xacmlJsonResponsePart = XacmlJsonXmlConverter.ConvertResponse(partResponse);
 
                     if (multiResponse.Response == null)
@@ -112,11 +113,11 @@ namespace Altinn.AccessManagement.Tests.Mocks
             }
         }
 
-        private async Task<XacmlContextResponse> Authorize(XacmlContextRequest decisionRequest)
+        private async Task<XacmlContextResponse> Authorize(XacmlContextRequest decisionRequest, CancellationToken cancellationToken)
         {
-            decisionRequest = await Enrich(decisionRequest);
+            decisionRequest = await Enrich(decisionRequest, cancellationToken);
 
-            XacmlPolicy policy = await GetPolicyAsync(decisionRequest);
+            XacmlPolicy policy = await GetPolicyAsync(decisionRequest, cancellationToken);
 
             PolicyDecisionPoint pdp = new PolicyDecisionPoint();
             XacmlContextResponse xacmlContextResponse = pdp.Authorize(decisionRequest, policy);
@@ -125,20 +126,24 @@ namespace Altinn.AccessManagement.Tests.Mocks
         }
 
         /// <inheritdoc/>
-        public async Task<bool> GetDecisionForUnvalidateRequest(XacmlJsonRequestRoot xacmlJsonRequest, ClaimsPrincipal user)
+        public Task<bool> GetDecisionForUnvalidateRequest(XacmlJsonRequestRoot xacmlJsonRequest, ClaimsPrincipal user)
+            => GetDecisionForUnvalidateRequest(xacmlJsonRequest, user, CancellationToken.None);
+
+        /// <inheritdoc/>
+        public async Task<bool> GetDecisionForUnvalidateRequest(XacmlJsonRequestRoot xacmlJsonRequest, ClaimsPrincipal user, CancellationToken cancellationToken)
         {
-            XacmlJsonResponse response = await GetDecisionForRequest(xacmlJsonRequest);
+            XacmlJsonResponse response = await GetDecisionForRequest(xacmlJsonRequest, cancellationToken);
             return DecisionHelper.ValidatePdpDecision(response.Response, user);
         }
 
-        private async Task<XacmlContextRequest> Enrich(XacmlContextRequest request)
+        private async Task<XacmlContextRequest> Enrich(XacmlContextRequest request, CancellationToken cancellationToken)
         {
-            await EnrichResourceAttributes(request);
+            await EnrichResourceAttributes(request, cancellationToken);
 
             return request;
         }
 
-        private async Task EnrichResourceAttributes(XacmlContextRequest request)
+        private async Task EnrichResourceAttributes(XacmlContextRequest request, CancellationToken cancellationToken)
         {
             XacmlContextAttributes resourceContextAttributes = request.GetResourceAttributes();
             XacmlResourceAttributes resourceAttributes = GetResourceAttributeValues(resourceContextAttributes);
@@ -207,7 +212,7 @@ namespace Altinn.AccessManagement.Tests.Mocks
                 resourceAttributes.ResourcePartyValue = instanceData.InstanceOwner.PartyId;
             }
 
-            await EnrichSubjectAttributes(request, resourceAttributes.ResourcePartyValue);
+            await EnrichSubjectAttributes(request, resourceAttributes.ResourcePartyValue, cancellationToken);
         }
 
         private static XacmlAttribute GetOrgAttribute(Instance instance)
@@ -273,7 +278,7 @@ namespace Altinn.AccessManagement.Tests.Mocks
             return attribute;
         }
 
-        private async Task EnrichSubjectAttributes(XacmlContextRequest request, string resourceParty)
+        private async Task EnrichSubjectAttributes(XacmlContextRequest request, string resourceParty, CancellationToken cancellationToken)
         {
             // If there is no resource party then it is impossible to enrich roles
             if (string.IsNullOrEmpty(resourceParty))
@@ -299,7 +304,7 @@ namespace Altinn.AccessManagement.Tests.Mocks
                 return;
             }
 
-            List<Role> roleList = await GetDecisionPointRolesForUser(subjectUserId, resourcePartyId) ?? new List<Role>();
+            List<Role> roleList = await GetDecisionPointRolesForUser(subjectUserId, resourcePartyId, cancellationToken) ?? new List<Role>();
 
             subjectContextAttributes.Attributes.Add(GetRoleAttribute(roleList));
         }
@@ -354,8 +359,10 @@ namespace Altinn.AccessManagement.Tests.Mocks
             return resourceAttributes;
         }
 
-        private static Task<List<Role>> GetDecisionPointRolesForUser(int coveredByUserId, int offeredByPartyId)
+        private static Task<List<Role>> GetDecisionPointRolesForUser(int coveredByUserId, int offeredByPartyId, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             string rolesPath = GetRolesPath(coveredByUserId, offeredByPartyId);
 
             List<Role> roles = new List<Role>();
@@ -375,10 +382,12 @@ namespace Altinn.AccessManagement.Tests.Mocks
             return fullRolePath;
         }
 
-        private async Task<XacmlPolicy> GetPolicyAsync(XacmlContextRequest request)
+        private Task<XacmlPolicy> GetPolicyAsync(XacmlContextRequest request, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             XacmlPolicy xacmlPolicy = ParsePolicy("policy.xml", GetPolicyPath(request));
-            return await Task.FromResult(xacmlPolicy);
+            return Task.FromResult(xacmlPolicy);
         }
 
         private static string GetPolicyPath(XacmlContextRequest request)
