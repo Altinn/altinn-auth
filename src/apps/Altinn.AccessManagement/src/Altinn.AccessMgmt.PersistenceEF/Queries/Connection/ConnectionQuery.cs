@@ -38,34 +38,34 @@ public class ConnectionQuery(AppDbContext db)
 
             List<ConnectionQueryExtendedRecord> result;
 
-            if (filter.EnrichEntities || filter.ExcludeDeleted)
+            if (filter.EnrichEntities || filter.ExcludeDeleted || filter.IncludePackages || filter.EnrichPackageResources)
             {
                 var query = EnrichEntities(filter, baseQuery);
                 var data = await query.AsNoTracking().ToListAsync(ct);
                 result = data.Select(ToDtoEmpty).ToList();
+
+                try
+                {
+                    if (filter.IncludePackages || filter.EnrichPackageResources)
+                    {
+                        var pkgs = await LoadPackagesByKeyAsync(query, filter, ct);
+                        if (filter.EnrichPackageResources)
+                        {
+                            await EnrichPackageResourcesAsync(pkgs, filter, ct);
+                        }
+
+                        result = Attach(result, pkgs, p => p.Id, (dto, list) => dto.Packages = list);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Failed to include packages", ex);
+                }
             }
             else
             {
                 var data = await baseQuery.AsNoTracking().ToListAsync(ct);
                 result = data.Select(ToDtoEmpty).ToList();
-            }
-
-            try
-            {
-                if (filter.IncludePackages || filter.EnrichPackageResources)
-                {
-                    var pkgs = await LoadPackagesByKeyAsync(baseQuery, filter, ct);
-                    if (filter.EnrichPackageResources)
-                    {
-                        await EnrichPackageResourcesAsync(pkgs, filter, ct);
-                    }
-
-                    result = Attach(result, pkgs, p => p.Id, (dto, list) => dto.Packages = list);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Failed to include packages", ex);
             }
 
             try
@@ -523,7 +523,7 @@ public class ConnectionQuery(AppDbContext db)
         return query;
     }
 
-    private async Task<ConnectionIndex<ConnectionQueryPackage>> LoadPackagesByKeyAsync(IQueryable<ConnectionQueryBaseRecord> allKeys, ConnectionQueryFilter filter, CancellationToken ct)
+    private async Task<ConnectionIndex<ConnectionQueryPackage>> LoadPackagesByKeyAsync(IQueryable<ConnectionQueryRecord> allKeys, ConnectionQueryFilter filter, CancellationToken ct)
     {
         var packageSet = filter.PackageIds?.Count > 0 ? new HashSet<Guid>(filter.PackageIds) : null;
 
@@ -533,6 +533,7 @@ public class ConnectionQuery(AppDbContext db)
 
         var rolePackages = allKeys
             .Join(db.RolePackages, c => c.RoleId, rp => rp.RoleId, (c, rp) => new { c, rp })
+            .Where(t => t.rp.HasAccess && (t.rp.EntityVariantId == null || t.rp.EntityVariantId == t.c.From.VariantId))
             .WhereIf(packageSet is not null, x => packageSet!.Contains(x.rp.PackageId));
 
         var delegationPackages = allKeys
