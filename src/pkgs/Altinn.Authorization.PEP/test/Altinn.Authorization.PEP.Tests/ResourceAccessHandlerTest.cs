@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Security.Claims;
@@ -44,7 +44,7 @@ namespace Altinn.Common.PEP.Authorization
             AuthorizationHandlerContext context = CreateAuthorizationHandlerContext();
             _httpContextAccessorMock.Setup(h => h.HttpContext).Returns(CreateHttpContext("23453546", null, null));
             XacmlJsonResponse response = CreateResponse(XacmlContextDecision.Permit.ToString());
-            _pdpMock.Setup(a => a.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>())).Returns(Task.FromResult(response));
+            _pdpMock.Setup(a => a.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(response));
 
             // Act
             await _rah.HandleAsync(context);
@@ -65,7 +65,7 @@ namespace Altinn.Common.PEP.Authorization
             AuthorizationHandlerContext context = CreateAuthorizationHandlerContext();
             _httpContextAccessorMock.Setup(h => h.HttpContext).Returns(CreateHttpContext("organization", "991825827", null));
             XacmlJsonResponse response = CreateResponse(XacmlContextDecision.Permit.ToString());
-            _pdpMock.Setup(a => a.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>())).Returns(Task.FromResult(response));
+            _pdpMock.Setup(a => a.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(response));
 
             // Act
             await _rah.HandleAsync(context);
@@ -91,7 +91,7 @@ namespace Altinn.Common.PEP.Authorization
             AuthorizationHandlerContext context = CreateAuthorizationHandlerContext();
             _httpContextAccessorMock.Setup(h => h.HttpContext).Returns(CreateHttpContext("organization", "991825827M", null));
             XacmlJsonResponse response = CreateResponse(XacmlContextDecision.Permit.ToString());
-            _pdpMock.Setup(a => a.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>())).Returns(Task.FromResult(response));
+            _pdpMock.Setup(a => a.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(response));
 
             // Act
             Task Act() => _rah.HandleAsync(context);
@@ -113,7 +113,7 @@ namespace Altinn.Common.PEP.Authorization
             AuthorizationHandlerContext context = CreateAuthorizationHandlerContext();
             _httpContextAccessorMock.Setup(h => h.HttpContext).Returns(CreateHttpContext("person", null, "01014922047"));
             XacmlJsonResponse response = CreateResponse(XacmlContextDecision.Permit.ToString());
-            _pdpMock.Setup(a => a.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>())).Returns(Task.FromResult(response));
+            _pdpMock.Setup(a => a.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(response));
 
             // Act
             await _rah.HandleAsync(context);
@@ -139,7 +139,7 @@ namespace Altinn.Common.PEP.Authorization
             AuthorizationHandlerContext context = CreateAuthorizationHandlerContext();
             _httpContextAccessorMock.Setup(h => h.HttpContext).Returns(CreateHttpContext("person", null, "a01014922047"));
             XacmlJsonResponse response = CreateResponse(XacmlContextDecision.Permit.ToString());
-            _pdpMock.Setup(a => a.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>())).Returns(Task.FromResult(response));
+            _pdpMock.Setup(a => a.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(response));
 
             // Act
             Task Act() => _rah.HandleAsync(context);
@@ -162,7 +162,7 @@ namespace Altinn.Common.PEP.Authorization
             XacmlJsonResponse response = CreateResponse(XacmlContextDecision.Permit.ToString());
 
             // Verify
-            _pdpMock.Setup(a => a.GetDecisionForRequest(It.Is<XacmlJsonRequestRoot>(xr => xr.Request.XForwardedForHeader == null))).Returns(Task.FromResult(response));
+            _pdpMock.Setup(a => a.GetDecisionForRequest(It.Is<XacmlJsonRequestRoot>(xr => xr.Request.XForwardedForHeader == null), It.IsAny<CancellationToken>())).Returns(Task.FromResult(response));
 
             // Act
             await _rah.HandleAsync(context);
@@ -182,7 +182,7 @@ namespace Altinn.Common.PEP.Authorization
             XacmlJsonResponse response = CreateResponse(XacmlContextDecision.Permit.ToString());
 
             // verify
-            _pdpMock.Setup(a => a.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>())).Returns(Task.FromResult(response));
+            _pdpMock.Setup(a => a.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(response));
 
             // Act
             await _rah.HandleAsync(context);
