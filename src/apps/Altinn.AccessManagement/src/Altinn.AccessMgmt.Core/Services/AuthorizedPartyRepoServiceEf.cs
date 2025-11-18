@@ -114,6 +114,7 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
             ExcludeDeleted = false
         },
         ConnectionQueryDirection.FromOthers,
+        true,
         ct);
 
         return DtoMapper.ConvertPackages(connections);

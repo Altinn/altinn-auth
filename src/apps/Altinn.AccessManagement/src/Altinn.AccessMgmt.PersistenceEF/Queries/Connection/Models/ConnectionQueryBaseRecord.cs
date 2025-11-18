@@ -110,3 +110,63 @@ public readonly record struct ConnectionCompositeKey(
     Guid? ViaRoleId
 )
 { }
+
+public sealed class ConnectionCoreComparer : IEqualityComparer<ConnectionQueryBaseRecord>
+{
+    public bool Equals(ConnectionQueryBaseRecord? x, ConnectionQueryBaseRecord? y)
+    {
+        if (ReferenceEquals(x, y))
+        {
+            return true;
+        }
+
+        if (x is null || y is null)
+        {
+            return false;
+        }
+
+        return x.FromId == y.FromId
+            && x.ToId == y.ToId
+            && x.RoleId == y.RoleId
+            && Nullable.Equals(x.ViaId, y.ViaId)
+            && Nullable.Equals(x.ViaRoleId, y.ViaRoleId);
+    }
+
+    public int GetHashCode(ConnectionQueryBaseRecord? obj)
+    {
+        if (obj is null)
+        {
+            return 0;
+        }
+
+        unchecked
+        {
+            int hash = 17;
+            hash = (hash * 23) + obj.FromId.GetHashCode();
+            hash = (hash * 23) + obj.ToId.GetHashCode();
+            hash = (hash * 23) + obj.RoleId.GetHashCode();
+            hash = (hash * 23) + (obj.ViaId?.GetHashCode() ?? 0);
+            hash = (hash * 23) + (obj.ViaRoleId?.GetHashCode() ?? 0);
+            return hash;
+        }
+    }
+}
+
+public static class ConnectionDiffHelper
+{
+    private static readonly ConnectionCoreComparer Comparer = new();
+
+    public static (
+        List<ConnectionQueryBaseRecord> OnlyInA, 
+        List<ConnectionQueryBaseRecord> OnlyInB
+        ) 
+            Diff(
+                IEnumerable<ConnectionQueryBaseRecord> a, 
+                IEnumerable<ConnectionQueryBaseRecord> b
+            )
+    {
+        var onlyA = a.Except(b, Comparer).ToList();
+        var onlyB = b.Except(a, Comparer).ToList();
+        return (onlyA, onlyB);
+    }
+}

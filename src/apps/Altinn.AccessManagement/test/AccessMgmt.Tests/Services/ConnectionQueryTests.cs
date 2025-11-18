@@ -1,8 +1,11 @@
-﻿using Altinn.AccessManagement.Tests.Fixtures;
+﻿using System.Text.Json;
+using Altinn.AccessManagement.Tests.Fixtures;
+using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
+using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace AccessMgmt.Tests.Services;
@@ -105,6 +108,51 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
     }
 
     [Fact]
+    public async Task Petter()
+    {
+        // Daglig leder i BDO
+
+        var orgId = _data.Entities["bdo"].Id;
+        var personId = _data.Entities["petter"].Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            EnrichEntities = true,
+            IncludeDelegation = true,
+            OnlyUniqueResults = true,
+            IncludeMainUnitConnections = true,
+            IncludeSubConnections = true,
+            ExcludeDeleted = false,
+            EnrichPackageResources = false
+        };
+
+        var resNew = await _query.GetConnectionsFromOthersAsync(filter, true);
+        var dtosNew = DtoMapper.ConvertFromOthers(resNew, false);
+
+        var resOld = await _query.GetConnectionsFromOthersAsync(filter, false);
+        var dtosOld = DtoMapper.ConvertFromOthers(resOld, false);
+
+        var (onlyInA, onlyInB) = ConnectionDiffHelper.Diff(resOld, resNew);
+
+        if (onlyInA.Any())
+        {
+            var msg = "Rows missing from B:\n" + JsonSerializer.Serialize(onlyInA);
+            Console.WriteLine(msg);
+        }
+
+        if (onlyInB.Any())
+        {
+            var msg = "Rows missing from A:\n" + JsonSerializer.Serialize(onlyInB);
+            Console.WriteLine(msg);
+        }
+
+        Assert.Equal(resOld.Count, resNew.Count);
+        Assert.Equal(dtosOld.Count, dtosNew.Count);
+    }
+
+    [Fact]
     public async Task Petter_ShouldGetConnection_To_Baker_Via_BDO_When_KeyRoleIsEnabled()
     {
         var filter = new ConnectionQueryFilter
@@ -114,7 +162,7 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
             IncludeKeyRole = true
         };
 
-        var result = await _query.GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers);
+        var result = await _query.GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers, true);
 
         Assert.NotNull(result);
         Assert.True(result.Any(), "Expected a connections, but none were found.");

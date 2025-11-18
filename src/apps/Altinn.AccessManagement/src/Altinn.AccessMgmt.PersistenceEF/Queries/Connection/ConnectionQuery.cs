@@ -15,26 +15,28 @@ public enum ConnectionQueryDirection { FromOthers, ToOthers }
 public class ConnectionQuery(AppDbContext db)
 {
 
-    public async Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthersAsync(ConnectionQueryFilter filter, CancellationToken ct = default)
+    public async Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthersAsync(ConnectionQueryFilter filter, bool useNewQuery = true, CancellationToken ct = default)
     {
-        return await GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers, ct);
+        return await GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers, useNewQuery, ct);
     }
 
-    public async Task<List<ConnectionQueryExtendedRecord>> GetConnectionsToOthersAsync(ConnectionQueryFilter filter, CancellationToken ct = default)
+    public async Task<List<ConnectionQueryExtendedRecord>> GetConnectionsToOthersAsync(ConnectionQueryFilter filter, bool useNewQuery = true, CancellationToken ct = default)
     {
-        return await GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers, ct);
+        return await GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers, useNewQuery, ct);
     }
 
     /// <summary>
     /// Returns connections between to entities based on assignments and delegations
     /// </summary>
-    public async Task<List<ConnectionQueryExtendedRecord>> GetConnectionsAsync(ConnectionQueryFilter filter, ConnectionQueryDirection direction, CancellationToken ct = default)
+    public async Task<List<ConnectionQueryExtendedRecord>> GetConnectionsAsync(ConnectionQueryFilter filter, ConnectionQueryDirection direction, bool useNewQuery = true, CancellationToken ct = default)
     {
         try
         {
             var baseQuery = direction == ConnectionQueryDirection.FromOthers 
-                ? BuildBaseQueryFromOthers(db, filter) 
+                ? useNewQuery ? BuildBaseQueryFromOthersNew(db, filter) : BuildBaseQueryFromOthers(db, filter)
                 : BuildBaseQueryToOthers(db, filter);
+
+            var queryString = baseQuery.ToQueryString();
 
             List<ConnectionQueryExtendedRecord> result;
 
@@ -92,10 +94,10 @@ public class ConnectionQuery(AppDbContext db)
     /// <summary>
     /// Returns connections between to entities based on assignments and delegations
     /// </summary>
-    public string GenerateDebugQuery(ConnectionQueryFilter filter, ConnectionQueryDirection direction)
+    public string GenerateDebugQuery(ConnectionQueryFilter filter, ConnectionQueryDirection direction, bool useNewQuery = true)
     {
         var baseQuery = direction == ConnectionQueryDirection.FromOthers
-                ? BuildBaseQueryFromOthers(db, filter)
+                ? useNewQuery ? BuildBaseQueryFromOthersNew(db, filter) : BuildBaseQueryFromOthers(db, filter)
                 : BuildBaseQueryToOthers(db, filter);
 
         if (filter.EnrichEntities || filter.ExcludeDeleted)
@@ -106,6 +108,168 @@ public class ConnectionQuery(AppDbContext db)
         {
             return baseQuery.ToQueryString();
         }
+    }
+
+    private IQueryable<ConnectionQueryBaseRecord> BuildBaseQueryFromOthersNew(AppDbContext db, ConnectionQueryFilter filter)
+    {
+        var toId = filter.ToIds.First();
+        var fromSet = filter.FromIds?.Count > 0 ? new HashSet<Guid>(filter.FromIds) : null;
+        var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
+
+        var direct =
+            db.Assignments
+                .Where(a1 => a1.ToId == toId)
+                .Select(a1 => new ConnectionQueryBaseRecord
+                {
+                    AssignmentId = a1.Id,
+                    DelegationId = null,
+                    FromId = a1.FromId,
+                    ToId = a1.ToId,
+                    RoleId = a1.RoleId,
+                    ViaId = null,
+                    ViaRoleId = null,
+                    Reason = ConnectionReason.Assignment,
+                    IsKeyRoleAccess = false,
+                    IsMainUnitAccess = false,
+                    IsRoleMap = false
+                });
+
+        var keyrole =
+            direct
+                .Join(
+                    db.Roles,
+                    d => d.RoleId,
+                    r => r.Id,
+                    (d, r) => new { d, r }
+                )
+                .Where(x => x.r.IsKeyRole)
+                .Join(
+                    db.Assignments,
+                    x => x.d.FromId,
+                    a2 => a2.ToId,
+                    (x, a2) => new ConnectionQueryBaseRecord
+                    {
+                        AssignmentId = a2.Id,
+                        DelegationId = null,
+                        FromId = a2.FromId,
+                        ToId = x.d.ToId,
+                        RoleId = a2.RoleId,
+                        ViaId = x.d.FromId,
+                        ViaRoleId = x.d.RoleId,
+                        Reason = ConnectionReason.KeyRole,
+                        IsKeyRoleAccess = true,
+                        IsMainUnitAccess = false,
+                        IsRoleMap = false
+                    });
+
+        var directKeyRole = direct.Concat(keyrole);
+
+        var rolemap =
+            directKeyRole
+                .Join(
+                    db.RoleMaps,
+                    dkr => dkr.RoleId,
+                    rm => rm.HasRoleId,
+                    (dkr, rm) => new ConnectionQueryBaseRecord
+                    {
+                        AssignmentId = dkr.AssignmentId,
+                        DelegationId = null,
+                        FromId = dkr.FromId,
+                        ToId = dkr.ToId,
+                        RoleId = rm.GetRoleId,
+                        ViaId = dkr.ViaId,
+                        ViaRoleId = null,
+                        Reason = ConnectionReason.RoleMap,
+                        IsKeyRoleAccess = dkr.IsKeyRoleAccess,
+                        IsMainUnitAccess = false,
+                        IsRoleMap = true
+                    });
+
+        var delegations =
+            directKeyRole
+                .Join(
+                    db.Delegations,
+                    dkr => dkr.AssignmentId,
+                    d => d.ToId,
+                    (dkr, d) => new { dkr, d }
+                )
+                .Join(
+                    db.Assignments,
+                    x => x.d.FromId,
+                    fa => fa.Id,
+                    (x, fa) => new ConnectionQueryBaseRecord
+                    {
+                        AssignmentId = null,
+                        DelegationId = x.d.Id,
+                        FromId = fa.FromId,
+                        ToId = x.dkr.ToId,
+                        RoleId = x.dkr.RoleId,
+                        ViaId = fa.ToId,
+                        ViaRoleId = fa.RoleId,
+                        Reason = ConnectionReason.Delegation,
+                        IsKeyRoleAccess = false,
+                        IsMainUnitAccess = false,
+                        IsRoleMap = false
+                    });
+
+        var complete =
+            directKeyRole
+                .Concat(rolemap)
+                .Concat(delegations);
+
+        var fromComplete = complete;
+
+        var fromChildren =
+            complete
+                .Join(
+                    db.Entities,
+                    c => c.FromId,
+                    e => e.ParentId,
+                    (c, e) => new ConnectionQueryBaseRecord
+                    {
+                        AssignmentId = c.AssignmentId,
+                        DelegationId = c.DelegationId,
+                        FromId = e.Id,
+                        ToId = c.ToId,
+                        RoleId = c.RoleId,
+                        ViaId = c.FromId,
+                        ViaRoleId = c.ViaRoleId,
+                        Reason = ConnectionReason.Hierarchy,
+                        IsKeyRoleAccess = c.IsKeyRoleAccess,
+                        IsMainUnitAccess = true,
+                        IsRoleMap = c.IsRoleMap
+                    });
+
+        var innehaverConnections =
+            from reviRegnConnection in complete
+            join innehaverConnection in db.Assignments on reviRegnConnection.FromId equals innehaverConnection.FromId
+            join innehaver in db.Entities on innehaverConnection.ToId equals innehaver.Id
+            join enk in db.Entities on innehaverConnection.FromId equals enk.Id
+            where (reviRegnConnection.RoleId == RoleConstants.Accountant.Id || reviRegnConnection.RoleId == RoleConstants.Auditor.Id)
+               && innehaverConnection.RoleId == RoleConstants.Innehaver.Id
+               && innehaver.DateOfDeath == null
+               && (!enk.IsDeleted || (enk.DeletedAt != null && enk.DeletedAt.Value.AddYears(2) < DateTime.UtcNow))
+            select new ConnectionQueryBaseRecord()
+            {
+                AssignmentId = reviRegnConnection.AssignmentId,
+                DelegationId = reviRegnConnection.DelegationId,
+                FromId = innehaverConnection.ToId,
+                ToId = reviRegnConnection.ToId,
+                RoleId = reviRegnConnection.RoleId,
+                ViaId = innehaverConnection.FromId,
+                ViaRoleId = innehaverConnection.RoleId,
+                IsKeyRoleAccess = reviRegnConnection.IsKeyRoleAccess,
+                IsRoleMap = reviRegnConnection.IsRoleMap,
+                IsMainUnitAccess = reviRegnConnection.IsMainUnitAccess,
+                Reason = ConnectionReason.Hierarchy
+            };
+
+        var query = fromComplete.Concat(fromChildren).Concat(innehaverConnections);
+
+        return
+            query
+            .FromIdContains(fromSet)
+            .RoleIdContains(roleSet);
     }
 
     private IQueryable<ConnectionQueryBaseRecord> BuildBaseQueryFromOthers(AppDbContext db, ConnectionQueryFilter filter)
