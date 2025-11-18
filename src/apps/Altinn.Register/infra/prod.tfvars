@@ -24,7 +24,7 @@ features = {
     profiles = true
   }
   party_import = {
-    system_users = false
+    system_users = true
   }
 }
 
