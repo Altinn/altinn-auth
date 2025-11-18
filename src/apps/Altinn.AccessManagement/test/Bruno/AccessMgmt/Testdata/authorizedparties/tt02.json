@@ -165,6 +165,51 @@
         "userId": 2672640,
         "partyId": 50167512,
         "partyUuid": "0B88A017-0683-46F9-8771-7FB0EC4EA424"
+    },
+    "forretningsforerNonfigurativEmosjonellPuma": {
+        "name": "NONFIGURATIV EMOSJONELL PUMA",
+        "orgno": "313760243",
+        "partyId": 51530933,
+        "partyUuid": "039807e3-dbe7-411d-adb5-e0f690978a5c",
+        "dagligleder": {
+            "name": "SPETTETE DALSIDE",
+            "pid": "08817696563",
+            "userId": 163200,
+            "partyId": 50637525,
+            "partyUuid": "e022d039-6da8-401b-9250-ef7d5c37ea03"
+        },
+        "subunit": {
+            "name": "NONFIGURATIV EMOSJONELL PUMA",
+            "orgno": "312145529",
+            "partyId": 51748748,
+            "partyUuid": "94f8cbc3-2197-4f92-99aa-6f4059601f3f"
+        },
+        "esekClient": {
+            "name": "LETT SLEM LØVE SAMEIE",
+            "orgno": "313184390",
+            "partyId": 51828102,
+            "partyUuid": "ac3b6fc1-0126-4a2b-8b6f-61db143c5aa1",
+            "dagligleder": {
+                "name": "??",
+                "pid": "??",
+                "userId": 0,
+                "partyId": 0,
+                "partyUuid": "??"
+            },
+            "clientPackage": "forretningsforer-eiendom"
+        },
+        "nonBrlEsekClient": {
+            "name": "SKEPTISK LILLA HEST BORETTSLAG",
+            "orgno": "311115057",
+            "partyId": 51623312,
+            "partyUuid": "8b8ae7e6-6982-408e-b9bc-9f800081512c",
+            "dagligleder": {
+                "name": "??",
+                "pid": "??",
+                "userId": 0,
+                "partyId": 0,
+                "partyUuid": "??"
+            }
+        }
     }
 }
-

@@ -1,7 +1,10 @@
 {
   "env": "at22",
   "resources": {
-    "revisorattestererPckgResourceId": "devtest_gar_bruno_direct_resource"
+    "revisorattestererPckgResourceId": "devtest_gar_bruno_direct_resource",
+    "eksplisittResource": "devtest_gar_bruno_eksplisitt_resource",
+    "forretningsforerResource": "devtest_gar_bruno_forretningsforer_eiendom",
+    "regnskapsforerResource": "devtest_gar_bruno_client_resource"
   },
   "REGN_ULASTELIG_RETTFERDIG_TIGER": {
     "name": "ULASTELIG RETTFERDIG TIGER AS",
@@ -165,5 +168,51 @@
     "userId": 21226091,
     "partyId": 50088610,
     "partyUuid": "B2139D9E-811B-48BD-81A7-7EDD79A84D69"
+  },
+  "forretningsforerNonfigurativEmosjonellPuma": {
+    "name": "NONFIGURATIV EMOSJONELL PUMA",
+    "orgno": "313760243",
+    "partyId": 51317416,
+    "partyUuid": "a3846553-4f56-4dd3-addc-d2a79b663b51",
+    "dagligleder": {
+      "name": "SPETTETE DALSIDE",
+      "pid": "08817696563",
+      "userId": 21129089,
+      "partyId": 50639183,
+      "partyUuid": "ec30c235-d7f6-432b-b060-bdbbe9cdd8ec"
+    },
+    "subunit": {
+      "name": "NONFIGURATIV EMOSJONELL PUMA",
+      "orgno": "312145529",
+      "partyId": 51535215,
+      "partyUuid": "480c7f77-4ca2-4467-aff2-c358d8288f6e"
+    },
+    "esekClient": {
+      "name": "LETT SLEM LØVE SAMEIE",
+      "orgno": "313184390",
+      "partyId": 51614735,
+      "partyUuid": "1d53cb86-18e0-45d7-b777-8a06c3d55fc3",
+      "dagligleder": {
+        "name": "??",
+        "pid": "??",
+        "userId": 0,
+        "partyId": 0,
+        "partyUuid": "??"
+      },
+      "clientPackage": "forretningsforer-eiendom"
+    },
+    "nonBrlEsekClient": {
+      "name": "SKEPTISK LILLA HEST BORETTSLAG",
+      "orgno": "311115057",
+      "partyId": 51409777,
+      "partyUuid": "02f2e6c8-b67e-4ee7-b98d-8c6541eb0bfa",
+      "dagligleder": {
+        "name": "??",
+        "pid": "??",
+        "userId": 0,
+        "partyId": 0,
+        "partyUuid": "??"
+      }
+    }
   }
 }
