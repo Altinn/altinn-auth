@@ -6,6 +6,7 @@ using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
 
 namespace AccessMgmt.Tests.Services;
@@ -14,7 +15,6 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
 {
     private readonly AppDbContext _db;
     private readonly ConnectionQuery _query;
-    private EFTestData _data;
 
     public ConnectionQueryTests(PostgresFixture fixture)
     {
@@ -25,95 +25,30 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
         _db = new AppDbContext(options);
         _query = new ConnectionQuery(_db);
 
-        _data = SeedTestData(_db).GetAwaiter().GetResult();
+        SeedTestData(_db).GetAwaiter().GetResult();
     }
 
-    private async Task<EFTestData> SeedTestData(AppDbContext db)
+    private async Task SeedTestData(AppDbContext db)
     {
-        var testData = new EFTestData();
-
-        var baker = new Entity() { Id = Guid.NewGuid(), Name = "Baker", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "ORG-01", ParentId = null, RefId = "ORG-01" };
-        var org01U1 = new Entity() { Id = Guid.NewGuid(), Name = baker.Name + " - Oslo", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = baker.OrganizationIdentifier + "01", ParentId = baker.Id, RefId = baker.OrganizationIdentifier + "01" };
-        var org01U2 = new Entity() { Id = Guid.NewGuid(), Name = baker.Name + " - Bergen", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = baker.OrganizationIdentifier + "02", ParentId = baker.Id, RefId = baker.OrganizationIdentifier + "02" };
-        var org01U3 = new Entity() { Id = Guid.NewGuid(), Name = baker.Name + " - Kristiansand", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = baker.OrganizationIdentifier + "03", ParentId = baker.Id, RefId = baker.OrganizationIdentifier + "03" };
-        var bdo = new Entity() { Id = Guid.NewGuid(), Name = "BDO", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "ORG-02", ParentId = null, RefId = "ORG-02" };
-        var org02U1 = new Entity() { Id = Guid.NewGuid(), Name = bdo.Name + " - Oslo", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = bdo.OrganizationIdentifier + "01", ParentId = bdo.Id, RefId = bdo.OrganizationIdentifier + "01" };
-        var skrik = new Entity() { Id = Guid.NewGuid(), Name = "Skrik Frisør", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "ORG-03", ParentId = null, RefId = "ORG-03" };
-        var org03U1 = new Entity() { Id = Guid.NewGuid(), Name = skrik.Name + " - Byporten", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = skrik.OrganizationIdentifier + "01", ParentId = skrik.Id, RefId = skrik.OrganizationIdentifier + "01" };
-        var org03U2 = new Entity() { Id = Guid.NewGuid(), Name = skrik.Name + " - CC Vest", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = skrik.OrganizationIdentifier + "02", ParentId = skrik.Id, RefId = skrik.OrganizationIdentifier + "02" };
-        var pwc = new Entity() { Id = Guid.NewGuid(), Name = "PwC", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "ORG-04", ParentId = null, RefId = "ORG-04" };
-        var org04U1 = new Entity() { Id = Guid.NewGuid(), Name = pwc.Name + " - Stavanger", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = pwc.OrganizationIdentifier + "01", ParentId = pwc.Id, RefId = pwc.OrganizationIdentifier + "01" };
-        var petter = new Entity() { Id = Guid.NewGuid(), Name = "Petter", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "01018412345", RefId = "01018412345", DateOfBirth = DateOnly.Parse("1984-01-01") };
-        var gunnar = new Entity() { Id = Guid.NewGuid(), Name = "Gunnar", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "02018412345", RefId = "02018412345", DateOfBirth = DateOnly.Parse("1984-01-02") };
-        var nina = new Entity() { Id = Guid.NewGuid(), Name = "Nina", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "03018412345", RefId = "03018412345", DateOfBirth = DateOnly.Parse("1984-01-03") };
-        var kari = new Entity() { Id = Guid.NewGuid(), Name = "Kari", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "04018412345", RefId = "04018412345", DateOfBirth = DateOnly.Parse("1984-01-04") };
-        var william = new Entity() { Id = Guid.NewGuid(), Name = "William", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "05018412345", RefId = "05018412345", DateOfBirth = DateOnly.Parse("1984-01-05") };
-        var terje = new Entity() { Id = Guid.NewGuid(), Name = "Terje", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "06018412345", RefId = "06018412345", DateOfBirth = DateOnly.Parse("1984-01-06") };
-
-        var bakerRegn = new Assignment() { FromId = baker.Id, ToId = bdo.Id, RoleId = RoleConstants.Accountant }; // Regnskapsfører
-        var bdoDagl = new Assignment() { FromId = bdo.Id, ToId = petter.Id, RoleId = RoleConstants.ManagingDirector }; // Daglig leder
-        var bdoAgent = new Assignment() { FromId = bdo.Id, ToId = gunnar.Id, RoleId = RoleConstants.Agent }; // Agent
-        var skrikDagl = new Assignment() { FromId = skrik.Id, ToId = nina.Id, RoleId = RoleConstants.ManagingDirector }; // Daglig leder
-        var skrikRight = new Assignment() { FromId = skrik.Id, ToId = nina.Id, RoleId = RoleConstants.Rightholder }; // Rettighetsholder
-        var bdoRevi = new Assignment() { FromId = bdo.Id, ToId = pwc.Id, RoleId = RoleConstants.Auditor }; // Revisor 
-        var pwcDagl = new Assignment() { FromId = pwc.Id, ToId = william.Id, RoleId = RoleConstants.ManagingDirector }; // Daglig leder
-        var pwcStyr = new Assignment() { FromId = pwc.Id, ToId = terje.Id, RoleId = RoleConstants.ChairOfTheBoard }; // Styreleder
-
-        var delegation01 = new Delegation() { FromId = bakerRegn.Id, ToId = bdoAgent.Id, FacilitatorId = bdo.Id };
-        var delegation02 = new Delegation() { FromId = bakerRegn.Id, ToId = bdoRevi.Id, FacilitatorId = bdo.Id };
-
-        testData.Entities.Add("baker", baker);
-        testData.Entities.Add("org01U1", org01U1);
-        testData.Entities.Add("org01U2", org01U2);
-        testData.Entities.Add("org01U3", org01U3);
-        testData.Entities.Add("bdo", bdo);
-        testData.Entities.Add("org02U1", org02U1);
-        testData.Entities.Add("skrik", skrik);
-        testData.Entities.Add("org03U1", org03U1);
-        testData.Entities.Add("org03U2", org03U2);
-        testData.Entities.Add("pwc", pwc);
-        testData.Entities.Add("org04U1", org04U1);
-        testData.Entities.Add("petter", petter);
-        testData.Entities.Add("gunnar", gunnar);
-        testData.Entities.Add("nina", nina);
-        testData.Entities.Add("kari", kari);
-        testData.Entities.Add("william", william);
-        testData.Entities.Add("terje", terje);
-
-        testData.Assignments.Add("bakerRegn", bakerRegn);
-        testData.Assignments.Add("bdoDagl", bdoDagl);
-        testData.Assignments.Add("bdoAgent", bdoAgent);
-        testData.Assignments.Add("skrikDagl", skrikDagl);
-        testData.Assignments.Add("skrikRight", skrikRight);
-        testData.Assignments.Add("bdoRevi", bdoRevi);
-        testData.Assignments.Add("pwcDagl", pwcDagl);
-        testData.Assignments.Add("pwcStyr", pwcStyr);
-
-        testData.Delegations.Add("delegation01", delegation01);
-        testData.Delegations.Add("delegation02", delegation02);
-
-        db.Entities.AddRange(testData.Entities.Values);
-        db.Assignments.AddRange(testData.Assignments.Values);
-        db.Delegations.AddRange(testData.Delegations.Values);
+        db.Entities.AddRange(TestDataSet.Entities);
+        db.Assignments.AddRange(TestDataSet.Assignments);
+        db.Delegations.AddRange(TestDataSet.Delegations);
 
         try
         {
             await db.SaveChangesAsync(new Altinn.AccessMgmt.PersistenceEF.Extensions.AuditValues(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest));
         }
-        catch 
+        catch (Exception ex) 
         {
+            Console.WriteLine(ex.ToString());
         }
-
-        return testData;
     }
 
     [Fact]
     public async Task Petter()
     {
-        // Daglig leder i BDO
-
-        var orgId = _data.Entities["bdo"].Id;
-        var personId = _data.Entities["petter"].Id;
+        var orgId = TestDataSet.GetEntity("Regnskaperne").Id;
+        var personId = TestDataSet.GetEntity("Petter").Id;
 
         var filter = new ConnectionQueryFilter
         {
@@ -128,28 +63,134 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
             EnrichPackageResources = false
         };
 
-        var resNew = await _query.GetConnectionsFromOthersAsync(filter, true);
-        var dtosNew = DtoMapper.ConvertFromOthers(resNew, false);
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true);
+        var connections = DtoMapper.ConvertFromOthers(dbResult, false);
 
-        var resOld = await _query.GetConnectionsFromOthersAsync(filter, false);
-        var dtosOld = DtoMapper.ConvertFromOthers(resOld, false);
+        Assert.Single<ConnectionDto>(connections, t => t.Party.Id == orgId);
+        
+        Assert.Single<ConnectionDto>(connections, t => t.Party.Id == TestDataSet.GetEntity("Baker Johnsen").Id);
 
-        var (onlyInA, onlyInB) = ConnectionDiffHelper.Diff(resOld, resNew);
+        var baker = connections.Single(t => t.Party.Id == TestDataSet.GetEntity("Baker Johnsen").Id);
+        Assert.Contains(baker.Connections, t => t.Party.Id == TestDataSet.GetEntity("Baker Johnsen - Oslo").Id);
+        Assert.Contains(baker.Connections, t => t.Party.Id == TestDataSet.GetEntity("Baker Johnsen - Bergen").Id);
+        Assert.Contains(baker.Connections, t => t.Party.Id == TestDataSet.GetEntity("Baker Johnsen - Kristiansand").Id);
+    }
 
-        if (onlyInA.Any())
+    [Fact]
+    public async Task Gunnar()
+    {
+        var orgId = TestDataSet.GetEntity("Regnskaperne").Id;
+        var personId = TestDataSet.GetEntity("Gunnar").Id;
+
+        var filter = new ConnectionQueryFilter
         {
-            var msg = "Rows missing from B:\n" + JsonSerializer.Serialize(onlyInA);
-            Console.WriteLine(msg);
-        }
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            EnrichEntities = true,
+            IncludeDelegation = true,
+            OnlyUniqueResults = true,
+            IncludeMainUnitConnections = true,
+            IncludeSubConnections = true,
+            ExcludeDeleted = false,
+            EnrichPackageResources = false
+        };
 
-        if (onlyInB.Any())
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true);
+        var connections = DtoMapper.ConvertFromOthers(dbResult, false);
+
+        Assert.Single<ConnectionDto>(connections, t => t.Party.Id == orgId);
+
+        Assert.Single<ConnectionDto>(connections, t => t.Party.Id == TestDataSet.GetEntity("Baker Johnsen").Id);
+
+        var baker = connections.Single(t => t.Party.Id == TestDataSet.GetEntity("Baker Johnsen").Id);
+        Assert.Contains(baker.Connections, t => t.Party.Id == TestDataSet.GetEntity("Baker Johnsen - Oslo").Id);
+        Assert.Contains(baker.Connections, t => t.Party.Id == TestDataSet.GetEntity("Baker Johnsen - Bergen").Id);
+        Assert.Contains(baker.Connections, t => t.Party.Id == TestDataSet.GetEntity("Baker Johnsen - Kristiansand").Id);
+    }
+
+    [Fact]
+    public async Task Nina()
+    {
+        var orgId = TestDataSet.GetEntity("Skrik Frisør").Id;
+        var personId = TestDataSet.GetEntity("Nina").Id;
+
+        var filter = new ConnectionQueryFilter
         {
-            var msg = "Rows missing from A:\n" + JsonSerializer.Serialize(onlyInB);
-            Console.WriteLine(msg);
-        }
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            EnrichEntities = true,
+            IncludeDelegation = true,
+            OnlyUniqueResults = true,
+            IncludeMainUnitConnections = true,
+            IncludeSubConnections = true,
+            ExcludeDeleted = false,
+            EnrichPackageResources = false
+        };
 
-        Assert.Equal(resOld.Count, resNew.Count);
-        Assert.Equal(dtosOld.Count, dtosNew.Count);
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true);
+        var connections = DtoMapper.ConvertFromOthers(dbResult, false);
+
+        Assert.Single<ConnectionDto>(connections, t => t.Party.Id == orgId);
+    }
+
+    [Fact]
+    public async Task William()
+    {
+        var orgId = TestDataSet.GetEntity("Revi").Id;
+        var personId = TestDataSet.GetEntity("William").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            EnrichEntities = true,
+            IncludeDelegation = true,
+            OnlyUniqueResults = true,
+            IncludeMainUnitConnections = true,
+            IncludeSubConnections = true,
+            ExcludeDeleted = false,
+            EnrichPackageResources = false
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true);
+        var connections = DtoMapper.ConvertFromOthers(dbResult, false);
+
+        Assert.Single<ConnectionDto>(connections, t => t.Party.Id == orgId);
+
+        Assert.Single<ConnectionDto>(connections, t => t.Party.Id == TestDataSet.GetEntity("Regnskaperne").Id);
+
+        var main = connections.Single(t => t.Party.Id == TestDataSet.GetEntity("Regnskaperne").Id);
+        Assert.Contains(main.Connections, t => t.Party.Id == TestDataSet.GetEntity("Regnskaperne - Oslo").Id);
+    }
+
+    [Fact]
+    public async Task Terje()
+    {
+        var orgId = TestDataSet.GetEntity("Revi").Id;
+        var personId = TestDataSet.GetEntity("Terje").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            EnrichEntities = true,
+            IncludeDelegation = true,
+            OnlyUniqueResults = true,
+            IncludeMainUnitConnections = true,
+            IncludeSubConnections = true,
+            ExcludeDeleted = false,
+            EnrichPackageResources = false
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true);
+        var connections = DtoMapper.ConvertFromOthers(dbResult, false);
+
+        Assert.Single<ConnectionDto>(connections, t => t.Party.Id == orgId);
+
+        Assert.Single<ConnectionDto>(connections, t => t.Party.Id == TestDataSet.GetEntity("Regnskaperne").Id);
+
+        var baker = connections.Single(t => t.Party.Id == TestDataSet.GetEntity("Regnskaperne").Id);
+        Assert.Contains(baker.Connections, t => t.Party.Id == TestDataSet.GetEntity("Regnskaperne - Oslo").Id);
     }
 
     [Fact]
@@ -157,8 +198,8 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
     {
         var filter = new ConnectionQueryFilter
         {
-            FromIds = new[] { _data.Entities["baker"].Id },
-            ToIds = new[] { _data.Entities["petter"].Id },
+            FromIds = new[] { TestDataSet.GetEntity("Baker Johnsen").Id },
+            ToIds = new[] { TestDataSet.GetEntity("Petter").Id },
             IncludeKeyRole = true
         };
 
@@ -173,8 +214,8 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
     {
         var filter = new ConnectionQueryFilter
         {
-            FromIds = new[] { _data.Entities["baker"].Id },
-            ToIds = new[] { _data.Entities["petter"].Id },
+            FromIds = new[] { TestDataSet.GetEntity("Baker Johnsen").Id },
+            ToIds = new[] { TestDataSet.GetEntity("Petter").Id },
             IncludeKeyRole = false
         };
 
@@ -190,7 +231,7 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
         var petter = await _db.Entities.AsNoTracking().SingleAsync(t => t.RefId == "ORG-01");
 
         Assert.NotNull(petter);
-        Assert.Equal("Baker", petter.Name);
+        Assert.Equal("Baker Johnsen", petter.Name);
     }
 
     [Fact]
@@ -249,11 +290,90 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
     }
 }
 
-internal class EFTestData
+internal static class TestDataSet
 {
-    internal Dictionary<string, Entity> Entities { get; } = new();
+    internal static Entity GetEntity(string name)
+    {
+        return Entities.First(x => x.Name == name);
+    }
 
-    internal Dictionary<string, Assignment> Assignments { get; } = new();
+    internal static List<Entity> Entities = new()
+    {
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-773a-ba5c-d81b5345f4fa"), Name = "Baker Johnsen", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "ORG-01", ParentId = null, RefId = "ORG-01" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7006-8da4-55c17e07f4d6"), Name = "Baker Johnsen - Oslo", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = "ORG-01-01", ParentId = Guid.Parse("0195efb8-7c80-773a-ba5c-d81b5345f4fa"), RefId = "ORG-01-01" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7fb8-915b-c13b5c1c5264"), Name = "Baker Johnsen - Bergen", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = "ORG-01-02", ParentId = Guid.Parse("0195efb8-7c80-773a-ba5c-d81b5345f4fa"), RefId = "ORG-01-02" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-72da-afe2-daa4fe116965"), Name = "Baker Johnsen - Kristiansand", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = "ORG-01-03", ParentId = Guid.Parse("0195efb8-7c80-773a-ba5c-d81b5345f4fa"), RefId = "ORG-01-03" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-71fa-9a7e-624ca11ebaf7"), Name = "Regnskaperne", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "ORG-02", ParentId = null, RefId = "ORG-02" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7127-8101-095fd6ffe7bf"), Name = "Regnskaperne - Oslo", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = "ORG-02-01", ParentId = Guid.Parse("0195efb8-7c80-71fa-9a7e-624ca11ebaf7"), RefId = "ORG-02-01" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7fac-9944-8a51f26c2633"), Name = "Skrik Frisør", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "ORG-03", ParentId = null, RefId = "ORG-03" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7225-bf3e-0aab8e9f59c3"), Name = "Skrik Frisør - Byporten", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = "ORG-03-01", ParentId = Guid.Parse("0195efb8-7c80-7fac-9944-8a51f26c2633"), RefId = "ORG-03-01" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7b40-8415-0c0fe952dd2f"), Name = "Skrik Frisør - CC Vest", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = "ORG-03-02", ParentId = Guid.Parse("0195efb8-7c80-7fac-9944-8a51f26c2633"), RefId = "ORG-03-02" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7c46-96b3-b2b1b0b51895"), Name = "Revi", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "ORG-04", ParentId = null, RefId = "ORG-04" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-713c-b504-84984779378c"), Name = "Revi - Stavanger", TypeId = EntityTypeConstants.Organisation, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = "ORG-04-01", ParentId = Guid.Parse("0195efb8-7c80-7c46-96b3-b2b1b0b51895"), RefId = "ORG-04-01" },
 
-    internal Dictionary<string, Delegation> Delegations { get; } = new();
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7d22-b320-2eed10bc8a84"), Name = "Petter", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "01018412345", RefId = "01018412345", DateOfBirth = DateOnly.Parse("1984-01-01") },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7414-87e1-3b3b9799161d"), Name = "Gunnar", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "02018412345", RefId = "02018412345", DateOfBirth = DateOnly.Parse("1984-01-02") },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-77d3-b35b-4bbf7d207dc2"), Name = "Nina", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "03018412345", RefId = "03018412345", DateOfBirth = DateOnly.Parse("1984-01-03") },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7d2c-b030-1d1c205d5400"), Name = "Kari", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "04018412345", RefId = "04018412345", DateOfBirth = DateOnly.Parse("1984-01-04") },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7911-bf6c-67713e9fe4f8"), Name = "William", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "05018412345", RefId = "05018412345", DateOfBirth = DateOnly.Parse("1984-01-05") },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-706b-9e0e-87f73c5b3ed0"), Name = "Terje", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "06018412345", RefId = "06018412345", DateOfBirth = DateOnly.Parse("1984-01-06") },
+
+    };
+
+    internal static List<Assignment> Assignments = new()
+    {
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7f47-9046-14e33e571f55"), FromId = Entities.First(t => t.Name == "Baker Johnsen").Id, ToId = Entities.First(t => t.Name == "Regnskaperne").Id, RoleId = RoleConstants.Accountant }, // Regnskapsfører
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7c9d-9191-9e6c04c4683c"), FromId = Entities.First(t => t.Name == "Regnskaperne").Id, ToId = Entities.First(t => t.Name == "Petter").Id, RoleId = RoleConstants.ManagingDirector }, // Daglig leder
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7f16-b2b7-b539522eeddb"), FromId = Entities.First(t => t.Name == "Regnskaperne").Id, ToId = Entities.First(t => t.Name == "Gunnar").Id, RoleId = RoleConstants.Agent }, // Agent
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7129-b367-cab290cc6e11"), FromId = Entities.First(t => t.Name == "Skrik Frisør").Id, ToId = Entities.First(t => t.Name == "Nina").Id, RoleId = RoleConstants.ManagingDirector }, // Daglig leder
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a3c-8f8b-f97e069f6aa0"), FromId = Entities.First(t => t.Name == "Skrik Frisør").Id, ToId = Entities.First(t => t.Name == "Nina").Id, RoleId = RoleConstants.Rightholder }, // Rettighetsholder
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-717a-85a5-0e127816ed69"), FromId = Entities.First(t => t.Name == "Regnskaperne").Id, ToId = Entities.First(t => t.Name == "Revi").Id, RoleId = RoleConstants.Auditor }, // Revisor 
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-708d-beec-13141fd0fae3"), FromId = Entities.First(t => t.Name == "Revi").Id, ToId = Entities.First(t => t.Name == "William").Id, RoleId = RoleConstants.ManagingDirector }, // Daglig leder
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-759a-8a59-ce8abd161c1b"), FromId = Entities.First(t => t.Name == "Revi").Id, ToId = Entities.First(t => t.Name == "Terje").Id, RoleId = RoleConstants.ChairOfTheBoard }, // Styreleder
+    };
+
+    internal static Assignment GetAssignment(string fromName, string toName, Guid roleId)
+    {
+        var fromEntity = Entities.First(t => t.Name == fromName);
+        var toEntity = Entities.First(t => t.Name == toName);
+        
+        return Assignments.First(t => t.FromId == fromEntity.Id && t.ToId == toEntity.Id);
+    }
+
+    internal static List<Delegation> Delegations = new()
+    {
+        new Delegation() { FromId = GetAssignment("Baker Johnsen", "Regnskaperne", RoleConstants.Accountant).Id, ToId = GetAssignment("Regnskaperne", "Gunnar", RoleConstants.Agent).Id, FacilitatorId = GetEntity("Regnskaperne").Id },
+        new Delegation() { FromId = GetAssignment("Baker Johnsen", "Regnskaperne", RoleConstants.Accountant).Id, ToId = GetAssignment("Regnskaperne", "Revi", RoleConstants.Auditor).Id, FacilitatorId = GetEntity("Regnskaperne").Id },
+    };
 }
+
+/*
+
+
+
+0195efb8-7c80-7bda-9f72-4ef5c897f619
+0195efb8-7c80-7743-b054-e946a946c44a
+0195efb8-7c80-7311-a2df-21bd3352ba24
+0195efb8-7c80-7839-8b2a-8794bf7a929d
+0195efb8-7c80-7e40-9ea1-4362ea2aefa5
+0195efb8-7c80-76ee-a7d9-f2d76ac7187b
+0195efb8-7c80-7a77-8203-e7ca159053d0
+0195efb8-7c80-7b15-bfc8-4d596bc18d01
+0195efb8-7c80-7604-8518-2ddb45c89645
+0195efb8-7c80-7532-9427-433385e63908
+0195efb8-7c80-7d79-87ce-f1dcdf1bba79
+0195efb8-7c80-73a9-a8e4-78615f974d92
+0195efb8-7c80-7d62-920b-051135c76e45
+0195efb8-7c80-7fbc-aa99-25524087073b
+0195efb8-7c80-7293-b522-68cf3998f2ee
+0195efb8-7c80-79b4-ae6e-32ffcf783b5e
+0195efb8-7c80-7eca-85f2-434a235c966f
+0195efb8-7c80-7f61-9aa2-4fbe5e208795
+0195efb8-7c80-71b9-a6ea-d4bc8f68d681
+0195efb8-7c80-7fd5-9676-2eb0d1b62c8e
+0195efb8-7c80-7dfa-aaab-2c1023643bba
+0195efb8-7c80-71b4-8ddb-cb457780038a
+0195efb8-7c80-79ea-8db3-56ef39cbef4f
+0195efb8-7c80-7c54-b2e9-5e219227c565
+0195efb8-7c80-70b0-8731-671de4b2eeef
+*/

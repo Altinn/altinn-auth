@@ -133,7 +133,7 @@ public class ConnectionQuery(AppDbContext db)
                     IsMainUnitAccess = false,
                     IsRoleMap = false
                 });
-
+        
         var keyrole =
             direct
                 .Join(
@@ -162,10 +162,12 @@ public class ConnectionQuery(AppDbContext db)
                         IsRoleMap = false
                     });
 
-        var directKeyRole = direct.Concat(keyrole);
-
+        var a1 = filter.IncludeKeyRole
+            ? direct.Concat(keyrole)
+            : direct;
+        
         var rolemap =
-            directKeyRole
+            a1
                 .Join(
                     db.RoleMaps,
                     dkr => dkr.RoleId,
@@ -186,7 +188,7 @@ public class ConnectionQuery(AppDbContext db)
                     });
 
         var delegations =
-            directKeyRole
+            a1
                 .Join(
                     db.Delegations,
                     dkr => dkr.AssignmentId,
@@ -212,15 +214,12 @@ public class ConnectionQuery(AppDbContext db)
                         IsRoleMap = false
                     });
 
-        var complete =
-            directKeyRole
-                .Concat(rolemap)
-                .Concat(delegations);
-
-        var fromComplete = complete;
+        var a2 = filter.IncludeDelegation
+            ? a1.Concat(rolemap).Concat(delegations)
+            : a1.Concat(rolemap);
 
         var fromChildren =
-            complete
+            a2
                 .Join(
                     db.Entities,
                     c => c.FromId,
@@ -241,7 +240,7 @@ public class ConnectionQuery(AppDbContext db)
                     });
 
         var innehaverConnections =
-            from reviRegnConnection in complete
+            from reviRegnConnection in a2
             join innehaverConnection in db.Assignments on reviRegnConnection.FromId equals innehaverConnection.FromId
             join innehaver in db.Entities on innehaverConnection.ToId equals innehaver.Id
             join enk in db.Entities on innehaverConnection.FromId equals enk.Id
@@ -264,7 +263,9 @@ public class ConnectionQuery(AppDbContext db)
                 Reason = ConnectionReason.Hierarchy
             };
 
-        var query = fromComplete.Concat(fromChildren).Concat(innehaverConnections);
+        var query = filter.OnlyUniqueResults
+            ? a2.Union(fromChildren).Union(innehaverConnections)
+            : a2.Concat(fromChildren).Concat(innehaverConnections);
 
         return
             query
