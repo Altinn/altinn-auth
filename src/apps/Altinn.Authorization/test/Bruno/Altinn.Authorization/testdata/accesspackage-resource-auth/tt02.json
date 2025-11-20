@@ -148,9 +148,9 @@
             "name": "STOR UTHOLDEN AUTORITET ANSIKTSKREM",
             "lastname": "ANSIKTSKREM",
             "pid": "27877695722",
-            "userId": 20962455,
-            "partyId": 51233907,
-            "partyUuid": "c8ded0aa-60b5-4007-9429-6acca2f88031",
+            "userId": 1791828,
+            "partyId": 53148036,
+            "partyUuid": "4c03fda4-d742-4616-9d06-719939d6d70e",
             "directPackageToDelegate": "revisorattesterer",
             "directPackageTilgangsstyrer": "tilgangsstyrer"
         }
