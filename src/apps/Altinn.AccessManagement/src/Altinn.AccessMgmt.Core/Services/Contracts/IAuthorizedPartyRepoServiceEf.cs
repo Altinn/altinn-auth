@@ -1,8 +1,7 @@
-﻿using Altinn.AccessMgmt.Core.Models;
-using Altinn.AccessMgmt.Persistence.Services.Models;
+﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
-using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.AccessMgmt.Core.Services.Contracts;
 
@@ -92,5 +91,38 @@ public interface IAuthorizedPartyRepoServiceEf
     /// Get list of packages the to party has access to, on behalf of the from party
     /// </summary>
     /// <returns>Enumerable of package permissions</returns>
-    Task<IEnumerable<PackagePermissionDto>> GetPackagesFromOthers(Guid toId, Guid? fromId = null, CancellationToken ct = default);
+    Task<IEnumerable<PackagePermissionDto>> GetPackagesFromOthers(Guid toId, IEnumerable<Guid>? fromIds = null, IEnumerable<Guid>? packageIds = null, AuthorizedPartiesFilters filters = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Get list of packages the to party has access to, on behalf of the from party
+    /// </summary>
+    /// <returns>Enumerable of package permissions</returns>
+    Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthers(Guid toId, AuthorizedPartiesFilters filters = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Get resources by provider code and/or resource ids
+    /// </summary>
+    /// <param name="providerCode">Provider code</param>
+    /// <param name="resourceIds">Resource ids</param>
+    /// <param name="ct">The <see cref="CancellationToken"/></param>
+    /// <returns>Enumerable of resources</returns>
+    Task<Dictionary<string, Resource>> GetResourcesByProvider(string? providerCode = null, IEnumerable<string>? resourceIds = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Get role resources by provider code and/or resource ids
+    /// </summary>
+    /// <param name="providerCode">Provider code</param>
+    /// <param name="resourceIds">Resource ids</param>
+    /// <param name="ct">The <see cref="CancellationToken"/></param>
+    /// <returns>Enumerable of role resources</returns>
+    Task<Dictionary<Guid, IEnumerable<RoleResource>>> GetRoleResourcesByProvider(string? providerCode = null, IEnumerable<string>? resourceIds = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Get package resources by provider code and/or resource ids
+    /// </summary>
+    /// <param name="providerCode">Provider code</param>
+    /// <param name="resourceIds">Resource ids</param>
+    /// <param name="ct">The <see cref="CancellationToken"/></param>
+    /// <returns>Enumerable of package resources</returns>
+    Task<Dictionary<Guid, IEnumerable<PackageResource>>> GetPackageResourcesByProvider(string? providerCode = null, IEnumerable<string>? resourceIds = null, CancellationToken ct = default);
 }

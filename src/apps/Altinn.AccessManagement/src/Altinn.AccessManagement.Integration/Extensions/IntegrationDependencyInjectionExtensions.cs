@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Clients.Interfaces;
+﻿using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Integration.Clients;
 using Altinn.AccessManagement.Integration.Services;
@@ -6,6 +6,7 @@ using Altinn.AccessManagement.Integration.Services.Interfaces;
 using Altinn.AccessManagement.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
 
 namespace Altinn.AccessManagement.Integration.Extensions;
 
@@ -29,10 +30,40 @@ public static class IntegrationDependencyInjectionExtensions
         builder.Services.AddHttpClient<IPartiesClient, PartiesClient>();
         builder.Services.AddHttpClient<IProfileClient, ProfileClient>();
         builder.Services.AddHttpClient<IAccessListsAuthorizationClient, AccessListAuthorizationClient>();
-        builder.Services.AddHttpClient<IAltinnRolesClient, AltinnRolesClient>();
         builder.Services.AddHttpClient<IAltinn2RightsClient, Altinn2RightsClient>();
         builder.Services.AddHttpClient<IAuthenticationClient, AuthenticationClient>();
         builder.Services.AddSingleton<IResourceRegistryClient, ResourceRegistryClient>();
+
+        builder.Services.AddHttpClient<IAltinnRolesClient, AltinnRolesClient>()
+            .ReplaceResilienceHandler(static c =>
+            {
+                c.Retry.ShouldHandle = static _ => ValueTask.FromResult(false);
+                c.AttemptTimeout.Timeout = TimeSpan.FromSeconds(15);
+            });
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Configures the standard resilience handler for the HTTP client.
+    /// </summary>
+    /// <param name="builder">A <see cref="IHttpClientBuilder"/>.</param>
+    /// <param name="configure">A configuration delegate.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    private static IHttpClientBuilder ReplaceResilienceHandler(this IHttpClientBuilder builder, Action<HttpStandardResilienceOptions> configure)
+    {
+        builder.ConfigureAdditionalHttpMessageHandlers((handlers, _) =>
+        {
+            for (int i = handlers.Count - 1; i >= 0; i--)
+            {
+                if (handlers[i] is ResilienceHandler)
+                {
+                    handlers.RemoveAt(i);
+                }
+            }
+        });
+
+        builder.AddStandardResilienceHandler(configure);
 
         return builder;
     }

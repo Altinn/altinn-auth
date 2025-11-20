@@ -11,97 +11,97 @@ public interface IAuthorizedPartiesService
     /// Gets the full unfiltered list of all authorized parties a party have some access for in Altinn
     /// </summary>
     /// <param name="subjectAttribute">Attribute identifying the party retrieve the authorized party list for</param>
-    /// <param name="includeAltinn2">Whether Authorized Parties from Altinn 2 should be included in the result set</param>
-    /// <param name="includeAltinn3">Whether Authorized Parties from Altinn 3 should be included in the result set</param>
+    /// <param name="filter">Filters to apply when retrieving authorized parties</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The unfiltered party list</returns>
-    Task<List<AuthorizedParty>> GetAuthorizedParties(BaseAttribute subjectAttribute, bool includeAltinn2, bool includeAltinn3 = true, CancellationToken cancellationToken = default);
+    Task<List<AuthorizedParty>> GetAuthorizedParties(BaseAttribute subjectAttribute, AuthorizedPartiesFilters filter, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the full unfiltered list of authorized parties the given user can represent in Altinn
     /// </summary>
     /// <param name="subjectUserId">The user id of the user to retrieve the authorized party list for</param>
-    /// <param name="includeAltinn2">Whether Authorized Parties from Altinn 2 should be included in the result set</param>
-    /// <param name="includeAltinn3">Whether Authorized Parties from Altinn 3 should be included in the result set</param>
+    /// <param name="filter">Filters to apply when retrieving authorized parties</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The unfiltered party list</returns>
-    Task<List<AuthorizedParty>> GetAuthorizedPartiesByUserId(int subjectUserId, bool includeAltinn2, bool includeAltinn3 = true, CancellationToken cancellationToken = default);
+    Task<List<AuthorizedParty>> GetAuthorizedPartiesByUserId(int subjectUserId, AuthorizedPartiesFilters filter, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the full unfiltered list of authorized parties the given user or organization have some access for in Altinn
     /// </summary>
     /// <param name="subjectPartyId">The party id of the user or organization to retrieve the authorized party list for</param>
-    /// <param name="includeAltinn2">Whether Authorized Parties from Altinn 2 should be included in the result set</param>
-    /// <param name="includeAltinn3">Whether Authorized Parties from Altinn 3 should be included in the result set</param>
+    /// <param name="filter">Filters to apply when retrieving authorized parties</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The unfiltered party list</returns>
-    Task<List<AuthorizedParty>> GetAuthorizedPartiesByPartyId(int subjectPartyId, bool includeAltinn2, bool includeAltinn3 = true, CancellationToken cancellationToken = default);
+    Task<List<AuthorizedParty>> GetAuthorizedPartiesByPartyId(int subjectPartyId, AuthorizedPartiesFilters filter, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the full unfiltered list of authorized parties the given person can represent in Altinn
     /// </summary>
     /// <param name="subjectPersonId">The national identity number of the person to retrieve the authorized party list for</param>
-    /// <param name="includeAltinn2">Whether Authorized Parties from Altinn 2 should be included in the result set</param>
-    /// <param name="includeAltinn3">Whether Authorized Parties from Altinn 3 should be included in the result set</param>
+    /// <param name="filter">Filters to apply when retrieving authorized parties</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The unfiltered party list</returns>
-    Task<List<AuthorizedParty>> GetAuthorizedPartiesByPersonId(string subjectPersonId, bool includeAltinn2, bool includeAltinn3 = true, CancellationToken cancellationToken = default);
+    Task<List<AuthorizedParty>> GetAuthorizedPartiesByPersonId(string subjectPersonId, AuthorizedPartiesFilters filter, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the full unfiltered list of authorized parties the given person can represent in Altinn
     /// </summary>
     /// <param name="subjectPersonUuid">The uuid of the person to retrieve the authorized party list for</param>
-    /// <param name="includeAltinn2">Whether Authorized Parties from Altinn 2 should be included in the result set</param>
-    /// <param name="includeAltinn3">Whether Authorized Parties from Altinn 3 should be included in the result set</param>
+    /// <param name="filter">Filters to apply when retrieving authorized parties</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The unfiltered party list</returns>
-    Task<List<AuthorizedParty>> GetAuthorizedPartiesByPersonUuid(string subjectPersonUuid, bool includeAltinn2, bool includeAltinn3 = true, CancellationToken cancellationToken = default);
+    Task<List<AuthorizedParty>> GetAuthorizedPartiesByPersonUuid(string subjectPersonUuid, AuthorizedPartiesFilters filter, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the full unfiltered list of authorized parties the given organization can represent in Altinn
     /// </summary>
     /// <param name="subjectOrganizationNumber">The organization number of the organization to retrieve the authorized party list for</param>
-    /// <param name="includeAltinn2">Whether Authorized Parties from Altinn 2 should be included in the result set</param>
-    /// <param name="includeAltinn3">Whether Authorized Parties from Altinn 3 should be included in the result set</param>
+    /// <param name="filter">Filters to apply when retrieving authorized parties</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The unfiltered party list</returns>
-    Task<List<AuthorizedParty>> GetAuthorizedPartiesByOrganizationId(string subjectOrganizationNumber, bool includeAltinn2, bool includeAltinn3 = true, CancellationToken cancellationToken = default);
+    Task<List<AuthorizedParty>> GetAuthorizedPartiesByOrganizationId(string subjectOrganizationNumber, AuthorizedPartiesFilters filter, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the full unfiltered list of authorized parties the given organization can represent in Altinn
     /// </summary>
     /// <param name="subjectOrganizationUuid">The organization uuid of the organization to retrieve the authorized party list for</param>
-    /// <param name="includeAltinn2">Whether Authorized Parties from Altinn 2 should be included in the result set</param>
-    /// <param name="includeAltinn3">Whether Authorized Parties from Altinn 3 should be included in the result set</param>
+    /// <param name="filter">Filters to apply when retrieving authorized parties</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The unfiltered party list</returns>
-    Task<List<AuthorizedParty>> GetAuthorizedPartiesByOrganizationUuid(string subjectOrganizationUuid, bool includeAltinn2, bool includeAltinn3 = true, CancellationToken cancellationToken = default);
+    Task<List<AuthorizedParty>> GetAuthorizedPartiesByOrganizationUuid(string subjectOrganizationUuid, AuthorizedPartiesFilters filter, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the full unfiltered list of authorized parties the given enterprise user can represent in Altinn
     /// </summary>
     /// <param name="subjectEnterpriseUsername">The username of the enterprise user to retrieve the authorized party list for</param>
-    /// <param name="includeAltinn2">Whether Authorized Parties from Altinn 2 should be included in the result set</param>
-    /// <param name="includeAltinn3">Whether Authorized Parties from Altinn 3 should be included in the result set</param>
+    /// <param name="filter">Filters to apply when retrieving authorized parties</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The unfiltered party list</returns>
-    Task<List<AuthorizedParty>> GetAuthorizedPartiesByEnterpriseUsername(string subjectEnterpriseUsername, bool includeAltinn2, bool includeAltinn3 = true, CancellationToken cancellationToken = default);
+    Task<List<AuthorizedParty>> GetAuthorizedPartiesByEnterpriseUsername(string subjectEnterpriseUsername, AuthorizedPartiesFilters filter, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the full unfiltered list of authorized parties the given enterprise user can represent in Altinn
     /// </summary>
     /// <param name="subjectEnterpriseUserUuid">The uuid of the enterprise user to retrieve the authorized party list for</param>
-    /// <param name="includeAltinn2">Whether Authorized Parties from Altinn 2 should be included in the result set</param>
-    /// <param name="includeAltinn3">Whether Authorized Parties from Altinn 3 should be included in the result set</param>
+    /// <param name="filter">Filters to apply when retrieving authorized parties</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The unfiltered party list</returns>
-    Task<List<AuthorizedParty>> GetAuthorizedPartiesByEnterpriseUserUuid(string subjectEnterpriseUserUuid, bool includeAltinn2, bool includeAltinn3 = true, CancellationToken cancellationToken = default);
+    Task<List<AuthorizedParty>> GetAuthorizedPartiesByEnterpriseUserUuid(string subjectEnterpriseUserUuid, AuthorizedPartiesFilters filter, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the full unfiltered list of authorized parties the given system user can represent in Altinn
     /// </summary>
     /// <param name="subjectSystemUserUuid">The uuid of the system user to retrieve the authorized party list for</param>
+    /// <param name="filter">Filters to apply when retrieving authorized parties</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The unfiltered party list</returns>
-    Task<List<AuthorizedParty>> GetAuthorizedPartiesBySystemUserUuid(string subjectSystemUserUuid, CancellationToken cancellationToken);
+    Task<List<AuthorizedParty>> GetAuthorizedPartiesBySystemUserUuid(string subjectSystemUserUuid, AuthorizedPartiesFilters filter, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Gets the party UUIDs matching the provided party attributes
+    /// </summary>
+    /// <param name="partyAttributes">The party attributes to lookup party uuids</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns></returns>
+    Task<IEnumerable<Guid>> GetPartyFilterUuids(IEnumerable<BaseAttribute> partyAttributes, CancellationToken cancellationToken = default);
 }

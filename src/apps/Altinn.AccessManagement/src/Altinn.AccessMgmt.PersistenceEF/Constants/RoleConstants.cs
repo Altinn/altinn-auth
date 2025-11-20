@@ -16,7 +16,7 @@ public static class RoleConstants
     /// </summary>
     public static bool TryGetByName(string name, [NotNullWhen(true)] out ConstantDefinition<Role>? result)
         => ConstantLookup.TryGetByName(typeof(RoleConstants), name, out result);
-    
+
     /// <summary>
     /// Try to get <see cref="Role"/> using Guid.
     /// </summary>
@@ -28,7 +28,7 @@ public static class RoleConstants
     /// </summary>
     public static bool TryGetByUrn(string urn, [NotNullWhen(true)] out ConstantDefinition<Role>? result)
         => ConstantLookup.TryGetByUrn(typeof(RoleConstants), urn, out result);
-    
+
     /// <summary>
     /// Try to get <see cref="Role"/> by Urn.
     /// </summary>
