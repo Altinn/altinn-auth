@@ -59,7 +59,7 @@ public partial class ConnectionService(
                 IncludeResource = false,
                 EnrichPackageResources = false,
                 ExcludeDeleted = false,
-                OnlyUniqueResults = true
+                OnlyUniqueResults = false
             },
             direction,
             true,
@@ -201,7 +201,7 @@ public partial class ConnectionService(
             IncludeResource = false,
             EnrichPackageResources = false,
             ExcludeDeleted = false,
-            OnlyUniqueResults = true
+            OnlyUniqueResults = false
         },
         direction,
         true,

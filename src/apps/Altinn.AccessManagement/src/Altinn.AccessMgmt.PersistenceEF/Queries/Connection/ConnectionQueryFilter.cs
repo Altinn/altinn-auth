@@ -36,7 +36,7 @@ public sealed class ConnectionQueryFilter
     /// <summary>
     /// Gets or sets a value indicating whether only unique results should be returned.
     /// </summary>
-    public bool OnlyUniqueResults { get; set; } = true;
+    public bool OnlyUniqueResults { get; set; } = false;
 
     /// <summary>
     /// Gets or sets a value indicating whether to enrich entities with more details.
