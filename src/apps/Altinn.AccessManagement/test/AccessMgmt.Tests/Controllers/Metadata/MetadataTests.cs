@@ -137,6 +137,10 @@ public class MetadataTests : IClassFixture<PostgresFixture>
 
         var res = await controller.GetResources(RoleConstants.ManagingDirector.Id, "AS", includePackageResources: false);
         Assert.NotNull(res.Value);
+        foreach (var resource in res.Value)
+        {
+            Assert.NotNull(resource.Provider);
+        }
     }
 
     [Fact]
@@ -147,6 +151,10 @@ public class MetadataTests : IClassFixture<PostgresFixture>
         var res = await controller.GetResources(RoleConstants.ManagingDirector.Id, "AS", includePackageResources: true);
         Assert.NotNull(res.Value);
         Assert.True(res.Value.Count(t => t.RefId == "T-05") > 0);
+        foreach (var resource in res.Value)
+        {
+            Assert.NotNull(resource.Provider);
+        }
     }
     #endregion
 }

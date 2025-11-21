@@ -1,0 +1,34 @@
+meta {
+  name: GET_resources_for_role
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/resources?role={{role}}&variant={{variant}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  role: {{role}}
+  variant: {{variant}}
+}
+
+vars:pre-request {
+  role: daglig-leder
+  variant: AS
+}
+
+tests {
+  test("GET_roles_rolerecorces", function() {
+    const data = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(data.length >= 1);
+    expect(data[0].provider).to.have.property('id');
+    expect(data[0].provider.type).to.have.property('id');
+    expect(data[0].type).to.have.property('id');
+    
+  });
+  
+}
