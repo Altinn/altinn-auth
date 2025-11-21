@@ -78,6 +78,7 @@ tests {
   
     assert.exists(targetParty, 'Expected MainUnit Party: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.name+' to exist');
     assert.exists(targetSubUnit, 'Expected SubUnit Party: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.subunit.name+' to exist');
+    assert.isNotOk(targetParty.onlyHierarchyElementWithNoAccess, 'Expected MainUnit '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.name+' to have onlyHierarchyElementWithNoAccess false');
   
   });
   

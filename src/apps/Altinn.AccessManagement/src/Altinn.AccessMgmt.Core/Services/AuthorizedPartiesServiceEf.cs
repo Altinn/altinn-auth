@@ -269,8 +269,8 @@ public class AuthorizedPartiesServiceEf(
 
     private async Task<List<AuthorizedParty>> GetAuthorizedParties(AuthorizedPartiesFilters filter, Entity userSubject, IEnumerable<Guid> orgSubjectParties = null, CancellationToken cancellationToken = default)
     {
-        Task<(IEnumerable<AuthorizedParty> a2AuthorizedParties, Dictionary<Guid, Entity> allA2Parties)> a2Task = Task.FromResult((Enumerable.Empty<AuthorizedParty>(), new Dictionary<Guid, Entity>()));
-        Task<(IEnumerable<AuthorizedParty> a3AuthorizedParties, Dictionary<Guid, AuthorizedParty> allA3Parties)> a3Task = Task.FromResult((Enumerable.Empty<AuthorizedParty>(), new Dictionary<Guid, AuthorizedParty>()));
+        Task<(IEnumerable<AuthorizedParty> A2AuthorizedParties, Dictionary<Guid, Entity> AllA2Parties)> a2Task = Task.FromResult((Enumerable.Empty<AuthorizedParty>(), new Dictionary<Guid, Entity>()));
+        Task<(IEnumerable<AuthorizedParty> A3AuthorizedParties, Dictionary<Guid, AuthorizedParty> AllA3Parties)> a3Task = Task.FromResult((Enumerable.Empty<AuthorizedParty>(), new Dictionary<Guid, AuthorizedParty>()));
 
         if (filter.IncludeAltinn2 && userSubject.UserId.HasValue)
         {
@@ -302,23 +302,23 @@ public class AuthorizedPartiesServiceEf(
         var a3Result = await a3Task;
 
         // Since EF does not support parallel use of DbContexts, we need to fetch the Altinn 2 parties separately here
-        if (a2Result.a2AuthorizedParties.Count() > 0)
+        if (a2Result.A2AuthorizedParties.Count() > 0)
         {
-            List<Guid> a2PartyUuids = a2Result.a2AuthorizedParties.Select(p => p.PartyUuid).Distinct().ToList();
-            a2PartyUuids.AddRange(a2Result.a2AuthorizedParties.SelectMany(p => p.Subunits).Select(su => su.PartyUuid).Distinct());
+            List<Guid> a2PartyUuids = a2Result.A2AuthorizedParties.Select(p => p.PartyUuid).Distinct().ToList();
+            a2PartyUuids.AddRange(a2Result.A2AuthorizedParties.SelectMany(p => p.Subunits).Select(su => su.PartyUuid).Distinct());
             var a2Parties = await repoService.GetEntities(a2PartyUuids, cancellationToken);
 
             foreach (var a2Party in a2Parties)
             {
-                a2Result.allA2Parties[a2Party.Id] = a2Party;
+                a2Result.AllA2Parties[a2Party.Id] = a2Party;
             }
         }
 
         return MergeAuthorizePartyLists(
-            a2Result.a2AuthorizedParties,
-            a2Result.allA2Parties,
-            a3Result.a3AuthorizedParties,
-            a3Result.allA3Parties,
+            a2Result.A2AuthorizedParties,
+            a2Result.AllA2Parties,
+            a3Result.A3AuthorizedParties,
+            a3Result.AllA3Parties,
             filter
         ).ToList();
     }
@@ -450,8 +450,12 @@ public class AuthorizedPartiesServiceEf(
             else
             {
                 // Either person or top-level organization.
-                // Still need to check whether already exists (may have been added as parent (with onlyHierarchyElement = true) through a subunit access). If exists, just continue.
-                if (!allPartiesDict.TryGetValue(party.Id, out AuthorizedParty _))
+                // Still need to check whether already exists (may have been added as parent (with onlyHierarchyElement = true) through a subunit access). If exists, reset onlyHierarchyElement to false.
+                if (allPartiesDict.TryGetValue(party.Id, out AuthorizedParty existingParty))
+                {
+                    existingParty.OnlyHierarchyElementWithNoAccess = false;
+                }
+                else
                 {
                     allPartiesDict[party.Id] = BuildAuthorizedPartyFromEntity(party);
                     authorizedParties.Add(allPartiesDict[party.Id]);
