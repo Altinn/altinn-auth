@@ -138,6 +138,11 @@ public partial class DtoMapper
             result.Add("OrganizationIdentifier", entity.RefId);
         }
 
+        if (entity.PartyId.HasValue && entity.PartyId > 0)
+        {
+            result.Add("PartyId", entity.PartyId.ToString());
+        }
+
         if (entity.TypeId.Equals(EntityTypeConstants.Person))
         {
             result.Add("PersonIdentifier", entity.RefId);
