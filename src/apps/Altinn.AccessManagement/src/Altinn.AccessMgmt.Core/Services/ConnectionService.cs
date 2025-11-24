@@ -546,8 +546,7 @@ public partial class ConnectionService(
             IncludePackages = false,
             IncludeResource = false,
             EnrichPackageResources = false,
-            ExcludeDeleted = false,
-            OnlyUniqueResults = true
+            ExcludeDeleted = false
         };
 
         var connections = await connectionQuery.GetConnectionsAsync(filter, direction, true, cancellationToken);

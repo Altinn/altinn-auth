@@ -1,0 +1,97 @@
+meta {
+  name: GET_Enduser_Conn_Roles_AsDaglRegn_FromEnk_ToRegn
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/roles?party={{party}}&to={{toParty}}&from={{fromParty}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{toParty}}
+  from: {{fromParty}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
+  
+  bru.setVar("requestName", "GET_Enduser_Conn_Roles_AsDaglRegn_FromEnk_ToRegn");
+  
+  bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+  bru.setVar("toParty", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+  bru.setVar("fromParty", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.partyUuid);
+  
+  
+  var getTokenParameters = {
+    auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.userId,
+    auth_partyId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.partyId,
+    auth_partyUuid: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.partyUuid,
+    auth_ssn: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
+  const body = res.getBody();
+  const data = body.data;
+  const requestName = bru.getVar("requestName");
+  
+  test(requestName + "|HttpStatus.OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  // Expected results
+  const expectedRoles = ["A0239", "A0240", "A0241", "regnskapsforer", "rettighetshaver"];
+  const expectedFrom = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL;
+  const expectedTo = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+  
+  // Check that all expected roles exist
+  expectedRoles.forEach(roleCode => {
+      test(requestName + `|Role with code ${roleCode} exists`, () => {
+          const roleExists = data.some(item => item.role.code === roleCode);
+          assert.isTrue(roleExists, `Role ${roleCode} should exist in response`);
+      });
+  });
+  
+  // Validate permissions for each role
+  expectedRoles.forEach(roleCode => {
+      test(requestName + `|Permissions for role ${roleCode} have correct 'from' and 'to'`, () => {
+          const roleItem = data.find(item => item.role.code === roleCode);
+          assert.isDefined(roleItem, `Role ${roleCode} should exist`);
+  
+          const permissions = roleItem.permissions;
+          assert.isArray(permissions, `Permissions should be an array for role ${roleCode}`);
+          assert.isNotEmpty(permissions, `Permissions should not be empty for role ${roleCode}`);
+  
+          permissions.forEach(permission => {
+              assertParty(expectedFrom, permission.from, `'from'`);
+              assertParty(expectedTo, permission.to, `'to'`);
+          });
+      });
+  });
+  
+  function assertParty(expected, actual, label) {
+      if (expected) {
+          assert.isDefined(actual, `${label} should be defined`);
+          assert.equal(actual.id, expected.partyUuid, `${label}.id should match`);
+          assert.equal(actual.name, expected.name, `${label}.name should match`);
+      } else {
+          // If expected is null, ensure actual is also null
+          assert.isNull(actual, `${label} should be null`);
+      }
+  }
+}

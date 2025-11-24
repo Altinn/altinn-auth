@@ -46,6 +46,12 @@
         "userId": 20013167,
         "partyId": 50175254,
         "partyUuid": "00273506-3b4a-4e8e-a1f7-b7f28c4b411b"
+      },
+      "subunit": {
+        "name": "HUMAN TOPP KATT BIL",
+        "orgno": "315821525",
+        "partyId": 51818525,
+        "partyUuid": "ae9e37d4-0818-4c9f-9869-45e8049b64e0"
       }
     },
     "client_WITHOUT_CLIENTDELEGATION": {
