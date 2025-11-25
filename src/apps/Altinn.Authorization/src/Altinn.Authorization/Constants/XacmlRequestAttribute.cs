@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Constants
+﻿namespace Altinn.Platform.Authorization.Constants
 {
     /// <summary>
     /// Attribute representations in XACML
@@ -119,5 +119,10 @@ namespace Altinn.Platform.Authorization.Constants
         /// xacml attribute urn prefix that represents the access list
         /// </summary>
         public const string AccessListAttribute = "urn:altinn:access-list";
+
+        /// <summary>
+        /// SessionId Attribute match identifier
+        /// </summary>
+        public const string SessionIdAttribute = "urn:altinn:sessionid";
     }
 }

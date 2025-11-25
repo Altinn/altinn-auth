@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Constants
+﻿namespace Altinn.Platform.Authorization.Constants
 {
     /// <summary>
     /// Altinn specific XACML constants used for urn identifiers and attributes
@@ -92,7 +92,7 @@ namespace Altinn.Platform.Authorization.Constants
             public const string RoleAttribute = "urn:altinn:rolecode";
 
             /// <summary>
-            /// Digitalt D�dsbo Role Code Attribute match identifier
+            /// Digitalt Dødsbo Role Code Attribute match identifier
             /// </summary>
             public const string OedRoleAttribute = "urn:digitaltdodsbo:rolecode";
 
@@ -115,6 +115,11 @@ namespace Altinn.Platform.Authorization.Constants
             /// AccessPackage Attribute match identifier
             /// </summary>
             public const string AccessListAttribute = "urn:altinn:access-list";
+
+            /// <summary>
+            /// Party Id attribute match indentifier 
+            /// </summary>
+            public const string PartyUUIdAttribute = "urn:altinn:party:uuid";
         }
 
         /// <summary>
