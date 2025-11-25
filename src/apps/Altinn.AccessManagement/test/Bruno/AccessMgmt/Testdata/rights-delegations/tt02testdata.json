@@ -3,8 +3,8 @@
     "org": "ttd",
     "app": "apps-test-undeploy",
 	"resource_system": "ske-krav-og-betalinger",
-    "servicecode": "2802",
-    "serviceeditioncode": "2203",
+    "servicecode": "5998",
+    "serviceeditioncode": "200",
     "resource": "devtest_gar_bruno-gar",
     "org1": {
         "orgno": "310438707",

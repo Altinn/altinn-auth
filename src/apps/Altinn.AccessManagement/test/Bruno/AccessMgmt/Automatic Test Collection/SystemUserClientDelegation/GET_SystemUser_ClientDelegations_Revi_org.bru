@@ -46,13 +46,13 @@ tests {
   const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
       const data = res.getBody();
       var delegationId = bru.getEnvVar("delegationId");
-      expect(res.status).to.equal(200);
-      expect(data[1]).to.have.property('id', delegationId);
-      expect(data[1].from).to.have.property('id', testdata.revisor.client_org.partyuuid.toLowerCase());
-      expect(data[1].to).to.have.property('id', testdata.revisor.systemuser.id.toLowerCase());
-    expect(data[1].role).to.have.property('code', "agent");
-    expect(data[1].facilitator).to.have.property('name', "FINTFØLENDE FRISK TIGER AS");
-    expect(data[1].facilitatorRole).to.have.property('code', "revisor");
-      
+    
+     const conn = data.find(item => item.id === delegationId);
+    expect(conn).to.have.property('id', delegationId);
+    expect(conn.from).to.have.property('id', testdata.revisor.client_org.partyuuid.toLowerCase());
+    expect(conn.to).to.have.property('id', testdata.revisor.systemuser.id.toLowerCase());
+    expect(conn.role).to.have.property('code', "agent");
+    expect(conn.facilitator).to.have.property('name', "FINTFØLENDE FRISK TIGER AS");
+    expect(conn.facilitatorRole).to.have.property('code', "revisor");
     });
 }
