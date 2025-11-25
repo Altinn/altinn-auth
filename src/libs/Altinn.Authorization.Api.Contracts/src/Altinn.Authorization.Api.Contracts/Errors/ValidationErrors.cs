@@ -115,4 +115,10 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor InvalidRedirectUrl { get; internal set; }
         = _factory.Create(27, $"Redirect URL is not a valid URL");
+
+    /// <summary>
+    /// Invalid party type.
+    /// </summary>
+    public static ValidationErrorDescriptor PackageIsNotAssignableToRecipient { get; }
+        = _factory.Create(28, $"One or more packages is not assignable to receipient.");
 }
