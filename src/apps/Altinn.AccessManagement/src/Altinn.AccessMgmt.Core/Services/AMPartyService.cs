@@ -26,7 +26,7 @@ public class AMPartyService(IEntityService entityService) : IAmPartyRepository
             Name = entity.Name,
             PartyUuid = entity.Id,
             PartyId = entity.PartyId ?? 0,
-            OrganizationId = entity.RefId,
+            OrganizationId = entity.OrganizationIdentifier,
             PartyType = entity.TypeId
         };
     }
@@ -49,14 +49,14 @@ public class AMPartyService(IEntityService entityService) : IAmPartyRepository
             PartyType = entity.TypeId
         };
 
-        if (entity.Type.Id == EntityTypeConstants.Organisation)
+        if (entity.TypeId == EntityTypeConstants.Organisation.Id)
         {
-            party.OrganizationId = entity.RefId;
+            party.OrganizationId = entity.OrganizationIdentifier;
         }
 
-        if (entity.Type.Id == EntityTypeConstants.Person)
+        if (entity.TypeId == EntityTypeConstants.Person.Id)
         {
-            party.PersonId = entity.RefId;
+            party.PersonId = entity.PersonIdentifier;
         }
 
         return party;
@@ -77,7 +77,7 @@ public class AMPartyService(IEntityService entityService) : IAmPartyRepository
             Name = entity.Name,
             PartyUuid = entity.Id,
             PartyId = entity.PartyId ?? 0,
-            PersonId = entity.RefId,
+            PersonId = entity.PersonIdentifier,
             PartyType = entity.TypeId
         };
     }
@@ -99,9 +99,9 @@ public class AMPartyService(IEntityService entityService) : IAmPartyRepository
             PartyType = entity.TypeId
         };
 
-        if (entity.Type.Id == EntityTypeConstants.Person.Id)
+        if (entity.TypeId == EntityTypeConstants.Person.Id)
         {
-            party.PersonId = entity.RefId;
+            party.PersonId = entity.PersonIdentifier;
         }
 
         return party;
@@ -125,14 +125,14 @@ public class AMPartyService(IEntityService entityService) : IAmPartyRepository
             PartyType = entity.TypeId
         };
 
-        if (entity.Type.Id == EntityTypeConstants.Organisation)
+        if (entity.TypeId == EntityTypeConstants.Organisation.Id)
         {
-            party.OrganizationId = entity.RefId;
+            party.OrganizationId = entity.OrganizationIdentifier;
         }
 
-        if (entity.Type.Id == EntityTypeConstants.Person)
+        if (entity.TypeId == EntityTypeConstants.Person.Id)
         {
-            party.PersonId = entity.RefId;
+            party.PersonId = entity.PersonIdentifier;
         }
 
         return party;
