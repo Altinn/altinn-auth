@@ -257,7 +257,7 @@ public class ConnectionQuery(AppDbContext db)
             where reviRegnRoleSet.Contains(reviRegnConnection.RoleId)
                && innehaverConnection.RoleId == RoleConstants.Innehaver.Id
                && innehaver.DateOfDeath == null
-               && (!enk.IsDeleted || (enk.DeletedAt != null && enk.DeletedAt.Value.AddYears(2) < DateTime.UtcNow))
+               && (!enk.IsDeleted || (enk.DeletedAt != null && enk.DeletedAt.Value.AddYears(2) > DateTime.UtcNow))
             select new ConnectionQueryBaseRecord()
             {
                 AssignmentId = reviRegnConnection.AssignmentId,
@@ -492,7 +492,7 @@ public class ConnectionQuery(AppDbContext db)
             where (reviRegnConnection.RoleId == RoleConstants.Accountant.Id || reviRegnConnection.RoleId == RoleConstants.Auditor.Id)
                && innehaverConnection.RoleId == RoleConstants.Innehaver.Id
                && innehaver.DateOfDeath == null
-               && (!enk.IsDeleted || (enk.DeletedAt != null && enk.DeletedAt.Value.AddYears(2) < DateTime.UtcNow))
+               && (!enk.IsDeleted || (enk.DeletedAt != null && enk.DeletedAt.Value.AddYears(2) > DateTime.UtcNow))
             select new ConnectionQueryBaseRecord()
             {
                 AssignmentId = reviRegnConnection.AssignmentId,
