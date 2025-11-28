@@ -105,6 +105,8 @@ public class AccessManagementWrapper : IAccessManagementWrapper
                 .SetAbsoluteExpiration(new TimeSpan(0, 0, _generalSettings.RoleCacheTimeout, 0));
 
                 _memoryCache.Set(cacheKey, result, cacheEntryOptions);
+
+                return result;
             }
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
