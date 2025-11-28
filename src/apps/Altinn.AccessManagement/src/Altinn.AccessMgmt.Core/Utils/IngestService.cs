@@ -133,7 +133,7 @@ public class IngestService : IIngestService
     {
         var ingestId = Guid.CreateVersion7();
         await IngestTempData(data, ingestId, cancellationToken);
-        var res = await MergeTempData<T>(ingestId, auditValues, matchColumns, cancellationToken);
+        var res = await MergeTempData<T>(ingestId, auditValues, matchColumns, null, cancellationToken);
 
         return res;
     }
