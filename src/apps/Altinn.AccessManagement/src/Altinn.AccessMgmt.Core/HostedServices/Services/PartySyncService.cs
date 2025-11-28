@@ -118,7 +118,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
                     _logger.LogWarning("Ingest partial complete: Entity ({0}/{1})", ingestedEntities, ingestEntities.Count);
                 }
 
-                var mergedEntities = await ingestService.MergeTempData<Entity>(batchId, options, ["id"], cancellationToken);
+                var mergedEntities = await ingestService.MergeTempData<Entity>(batchId, options, matchColumns: ["id"], ignoreColumns: ["parentid"], cancellationToken);
 
                 _logger.LogInformation("Merge complete: Entity ({0}/{1})", mergedEntities, ingestedEntities);
                 return mergedEntities;

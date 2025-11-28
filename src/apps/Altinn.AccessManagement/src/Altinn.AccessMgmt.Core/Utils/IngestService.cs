@@ -52,7 +52,7 @@ public class IngestService : IIngestService
     }
 
     /// <inheritdoc />
-    public async Task<int> MergeTempData<T>(Guid ingestId, AuditValues auditValues, IEnumerable<string> matchColumns = null, CancellationToken cancellationToken = default)
+    public async Task<int> MergeTempData<T>(Guid ingestId, AuditValues auditValues, IEnumerable<string> matchColumns = null, IEnumerable<string> ignoreColumns = null, CancellationToken cancellationToken = default)
     {
         if (matchColumns == null || matchColumns.Count() == 0)
         {
@@ -61,6 +61,11 @@ public class IngestService : IIngestService
 
         var table = GetTableName<T>(DbContext.Model);
         var ingestColumns = GetColumns<T>(DbContext.Model);
+
+        if (ignoreColumns != null && ignoreColumns.Count() > 0)
+        {
+            ingestColumns.RemoveAll(t => ignoreColumns.Contains(t.Name));
+        }
 
         string columnStatement = string.Join(',', ingestColumns.Select(t => t.Name));
 
@@ -121,6 +126,7 @@ public class IngestService : IIngestService
 
         return res;
     }
+
 
     /// <inheritdoc />
     public async Task<int> IngestAndMergeData<T>(List<T> data, AuditValues auditValues, IEnumerable<string> matchColumns = null, CancellationToken cancellationToken = default)
@@ -246,7 +252,7 @@ public interface IIngestService
     /// <summary>
     /// Merge data from temp table to original
     /// </summary>
-    Task<int> MergeTempData<T>(Guid ingestId, AuditValues auditValues, IEnumerable<string> matchColumns = null, CancellationToken cancellationToken = default);
+    Task<int> MergeTempData<T>(Guid ingestId, AuditValues auditValues, IEnumerable<string> matchColumns = null, IEnumerable<string> ignoreColumns = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Ingest data to temp table, using original table as template

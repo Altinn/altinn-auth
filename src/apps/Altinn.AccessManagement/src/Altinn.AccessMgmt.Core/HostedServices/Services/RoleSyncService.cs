@@ -173,7 +173,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                 _logger.LogWarning("Ingest partial complete: Assignment ({0}/{1})", ingested, assignments.Count);
             }
 
-            var merged = await ingestService.MergeTempData<Assignment>(batchId, options, ["fromid", "roleid", "toid"], cancellationToken: cancellationToken);
+            var merged = await ingestService.MergeTempData<Assignment>(batchId, options, matchColumns: ["fromid", "roleid", "toid"], cancellationToken: cancellationToken);
 
             _logger.LogInformation("Merge complete: Assignment ({0}/{1})", merged, ingested);
 

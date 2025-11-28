@@ -142,7 +142,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                             _logger.LogWarning("Ingest partial complete: Assignment ({0}/{1})", ingested, batchData.Count);
                         }
 
-                        var merged = await ingestService.MergeTempData<Assignment>(batchId, previousOptions, GetAssignmentMergeMatchFilter, cancellationToken: cancellationToken);
+                        var merged = await ingestService.MergeTempData<Assignment>(batchId, previousOptions, matchColumns: GetAssignmentMergeMatchFilter, cancellationToken: cancellationToken);
 
                         _logger.LogInformation("Merge complete: Assignment ({0}/{1})", merged, ingested);
                     }
