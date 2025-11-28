@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 
@@ -223,5 +223,34 @@ public static class SystemEntityConstants
             KeyValuePair.Create("Name", "Internt API")),
     };
 
+    #endregion
+
+    #region Internal
+
+    /// <summary>
+    /// Represents the DBA system entity.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 0195efb8-7c80-7262-b616-7d9eb843bcaa
+    /// - <c>Name:</c> DBA
+    /// - <c>RefId:</c> sys-dba
+    /// - <c>TypeId:</c> Internal entity type
+    /// - <c>VariantId:</c> Standard variant
+    /// </remarks>
+    public static ConstantDefinition<Entity> DBA { get; } = new ConstantDefinition<Entity>(AuditDefaults.DBA)
+    {
+        Entity = new()
+        {
+            Name = nameof(AuditDefaults.DBA),
+            RefId = "sys-dba",
+            ParentId = null,
+            TypeId = EntityTypeConstants.Internal,
+            VariantId = EntityVariantConstants.Standard,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "DBA")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "DBA")),
+    };
     #endregion
 }

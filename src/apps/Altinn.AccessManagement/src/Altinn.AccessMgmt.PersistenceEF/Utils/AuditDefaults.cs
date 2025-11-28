@@ -39,4 +39,9 @@ public static class AuditDefaults
     /// Altinn2ClientImportSystem
     /// </summary>
     public const string Altinn2RoleImportSystem = "46cfa478-971f-446e-9bc1-af57469361d0";
+
+    /// <summary>
+    /// DBA
+    /// </summary>
+    public const string DBA = "0195efb8-7c80-7262-b616-7d9eb843bcaa";
 }
