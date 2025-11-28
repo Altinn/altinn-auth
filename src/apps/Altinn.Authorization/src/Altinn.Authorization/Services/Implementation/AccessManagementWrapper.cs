@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
@@ -9,6 +9,7 @@ using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Models.AccessManagement;
 using Altinn.Platform.Authorization.Services.Interface;
 using AltinnCore.Authentication.Utils;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Authorization.Services.Implementation;
@@ -22,16 +23,18 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     private readonly GeneralSettings _generalSettings;
     private readonly AccessManagementClient _client;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IMemoryCache _memoryCache;
     private readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AccessManagementWrapper"/> class.
     /// </summary>
-    public AccessManagementWrapper(IOptions<GeneralSettings> generalSettings, AccessManagementClient client, IHttpContextAccessor httpContextAccessor)
+    public AccessManagementWrapper(IOptions<GeneralSettings> generalSettings, AccessManagementClient client, IHttpContextAccessor httpContextAccessor, IMemoryCache memoryCache)
     {
         _client = client;
         _generalSettings = generalSettings.Value;
         _httpContextAccessor = httpContextAccessor;
+        _memoryCache = memoryCache;
     }
 
     /// <inheritdoc/>
@@ -85,16 +88,29 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     /// <inheritdoc/>
     public async Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
     {
-        var response = await _client.Client.SendAsync(
-            new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/accesspackages?to={to}&from={from}")),
-            cancellationToken);
+        var cacheKey = $"AccPkgs|f:{from}|t:{to}";
 
-        if (response.IsSuccessStatusCode)
+        if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<AccessPackageUrn> result))
         {
-            return await response.Content.ReadFromJsonAsync<IEnumerable<AccessPackageUrn>>(_serializerOptions, cancellationToken);
+            var response = await _client.Client.SendAsync(
+                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/accesspackages?to={to}&from={from}")),
+                cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                result = await response.Content.ReadFromJsonAsync<IEnumerable<AccessPackageUrn>>(_serializerOptions, cancellationToken);
+
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                .SetPriority(CacheItemPriority.High)
+                .SetAbsoluteExpiration(new TimeSpan(0, 0, _generalSettings.RoleCacheTimeout, 0));
+
+                _memoryCache.Set(cacheKey, result, cacheEntryOptions);
+            }
+
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException(content == string.Empty ? $"received status code {response.StatusCode}" : content);
         }
 
-        var content = await response.Content.ReadAsStringAsync(cancellationToken);
-        throw new HttpRequestException(content == string.Empty ? $"received status code {response.StatusCode}" : content);
+        return result;
     }
 }

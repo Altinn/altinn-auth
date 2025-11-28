@@ -1,13 +1,16 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Altinn.Authorization.Enums;
 using Altinn.Authorization.Models;
 using Altinn.Platform.Authenticaiton.Extensions;
+using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.IntegrationTests.Data;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Models.AccessManagement;
 using Altinn.Platform.Authorization.Services.Interface;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using Microsoft.VisualBasic;
 
 namespace Altinn.Platform.Authorization.IntegrationTests.MockServices;
@@ -16,14 +19,16 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
 {
     private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IMemoryCache _memoryCache;
 
     /// <summary>
     /// Constructor setting up dependencies
     /// </summary>
     /// <param name="httpContextAccessor">httpContextAccessor</param>
-    public AccessManagementWrapperMock(IHttpContextAccessor httpContextAccessor)
+    public AccessManagementWrapperMock(IHttpContextAccessor httpContextAccessor, IMemoryCache memoryCache)
     {
         _httpContextAccessor = httpContextAccessor;
+        _memoryCache = memoryCache;
     }
 
     public Task<IEnumerable<DelegationChangeExternal>> GetAllDelegationChanges(DelegationChangeInput input, CancellationToken cancellationToken = default)
@@ -143,18 +148,31 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
 
     public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
     {
-        List<AccessPackageUrn> accessPackages = new();
-        if (from.ToString() == "066148fe-7077-4484-b7ea-44b5ede0014e" && to.ToString() == "e2eba2c3-b369-4ff9-8418-99a810d6bb58")
+        var cacheKey = $"AccPkgs|f:{from}|t:{to}";
+
+        if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<AccessPackageUrn> result))
         {
-            accessPackages.AddRange(new List<AccessPackageUrn>
+            List<AccessPackageUrn> accessPackages = new();
+            if (from.ToString() == "066148fe-7077-4484-b7ea-44b5ede0014e" && to.ToString() == "e2eba2c3-b369-4ff9-8418-99a810d6bb58")
             {
-                AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("skatt-naering")),
-                AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("ansettelsesforhold")),
-                AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("maskinporten-scopes"))
-            });
+                accessPackages.AddRange(new List<AccessPackageUrn>
+                {
+                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("skatt-naering")),
+                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("ansettelsesforhold")),
+                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("maskinporten-scopes"))
+                });
+            }
+
+            result = accessPackages;
+
+            var cacheEntryOptions = new MemoryCacheEntryOptions()
+            .SetPriority(CacheItemPriority.High)
+            .SetAbsoluteExpiration(new TimeSpan(0, 0, 5, 0));
+
+            _memoryCache.Set(cacheKey, result, cacheEntryOptions);
         }
 
-        return Task.FromResult(accessPackages as IEnumerable<AccessPackageUrn>);
+        return Task.FromResult(result);
     }
 
     private static string GetAuthorizedPartiesPath(int userId)

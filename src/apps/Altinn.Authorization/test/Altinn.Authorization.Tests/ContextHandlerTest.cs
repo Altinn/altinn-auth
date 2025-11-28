@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Platform.Authorization.Configuration;
@@ -40,11 +40,11 @@ namespace Altinn.Platform.Authorization.IntegrationTests
                 new OedRoleAssignmentWrapperMock(),
                 new PartiesMock(),
                 new ProfileMock(),
-                new MemoryCache(new MemoryCacheOptions()),
+                memoryCache,
                 Options.Create(new GeneralSettings { RoleCacheTimeout = 5 }),
                 new RegisterServiceMock(),
                 new PolicyRetrievalPointMock(memoryCache, httpContextAccessorMock.Object, null),
-                new AccessManagementWrapperMock(httpContextAccessorMock.Object),
+                new AccessManagementWrapperMock(httpContextAccessorMock.Object, memoryCache),
                 featureManageMock.Object,
                 new ResourceRegistryMock());
         }
