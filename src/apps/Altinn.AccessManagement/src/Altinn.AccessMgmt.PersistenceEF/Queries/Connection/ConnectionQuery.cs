@@ -198,10 +198,12 @@ public class ConnectionQuery(AppDbContext db)
                     });
 
         var delegations =
-            a1
+            db.Assignments
+                .Where(t => t.ToId == toId)   
+                .Where(t => t.RoleId == RoleConstants.Agent.Id)
                 .Join(
                     db.Delegations,
-                    dkr => dkr.AssignmentId,
+                    dkr => dkr.Id,
                     d => d.ToId,
                     (dkr, d) => new { dkr, d }
                 )
