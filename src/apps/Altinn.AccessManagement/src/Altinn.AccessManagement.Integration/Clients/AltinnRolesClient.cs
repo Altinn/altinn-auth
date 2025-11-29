@@ -84,11 +84,11 @@ public class AltinnRolesClient : IAltinnRolesClient
     }
 
     /// <inheritdoc />
-    public async Task<List<AuthorizedParty>> GetAuthorizedPartiesWithRoles(int userId, CancellationToken cancellationToken = default)
+    public async Task<List<AuthorizedParty>> GetAuthorizedPartiesWithRoles(int userId, bool includePartiesViaKeyRoles, CancellationToken cancellationToken = default)
     {
         try
         {
-            UriBuilder uriBuilder = new UriBuilder($"{_sblBridgeSettings.BaseApiUrl}authorization/api/parties?userid={userId}");
+            UriBuilder uriBuilder = new UriBuilder($"{_sblBridgeSettings.BaseApiUrl}authorization/api/parties?userid={userId}&includeKeyRoleUnits={includePartiesViaKeyRoles}");
 
             HttpResponseMessage response = await _client.GetAsync(uriBuilder.Uri, cancellationToken);
             string content = await response.Content.ReadAsStringAsync(cancellationToken);

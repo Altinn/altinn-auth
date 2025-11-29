@@ -242,7 +242,7 @@ public class AuthorizedPartiesService : IAuthorizedPartiesService
 
         if (includeAltinn2 && subjectUserId != 0)
         {
-            List<AuthorizedParty> a2AuthParties = await _altinnRolesClient.GetAuthorizedPartiesWithRoles(subjectUserId, cancellationToken);
+            List<AuthorizedParty> a2AuthParties = await _altinnRolesClient.GetAuthorizedPartiesWithRoles(subjectUserId, true, cancellationToken);
             foreach (AuthorizedParty a2AuthParty in a2AuthParties)
             {
                 authorizedPartyDict.Add(a2AuthParty.PartyId, a2AuthParty);

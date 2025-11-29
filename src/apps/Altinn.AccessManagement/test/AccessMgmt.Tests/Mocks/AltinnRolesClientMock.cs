@@ -54,7 +54,7 @@ public class AltinnRolesClientMock : IAltinnRolesClient
     }
 
     /// <inheritdoc/>
-    public async Task<List<AuthorizedParty>> GetAuthorizedPartiesWithRoles(int userId, CancellationToken cancellationToken = default)
+    public async Task<List<AuthorizedParty>> GetAuthorizedPartiesWithRoles(int userId, bool includePartiesViaKeyRoles, CancellationToken cancellationToken = default)
     {
         string authorizedPartiesPath = GetAltinn2AuthorizedPartiesWithRolesPath(userId);
         if (File.Exists(authorizedPartiesPath))

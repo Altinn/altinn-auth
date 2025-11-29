@@ -31,7 +31,8 @@ public interface IAltinnRolesClient
     /// Get the list of authorized parties from Altinn 2 that a given user have one or more accesses for, including 
     /// </summary>
     /// <param name="userId">The user to get the list of AuthorizedParties for</param>
+    /// <param name="includePartiesViaKeyRoles">Whether to include parties that are accessible via key roles</param>
     /// <param name="cancellationToken">Cancellation token for the request</param>
     /// <returns></returns>
-    Task<List<AuthorizedParty>> GetAuthorizedPartiesWithRoles(int userId, CancellationToken cancellationToken = default);
+    Task<List<AuthorizedParty>> GetAuthorizedPartiesWithRoles(int userId, bool includePartiesViaKeyRoles, CancellationToken cancellationToken = default);
 }

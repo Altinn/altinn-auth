@@ -48,16 +48,19 @@ public class AuthorizedPartiesServiceEf(
         switch (subject.TypeId)
         {
             case var id when id == EntityTypeConstants.Person.Id:
-
-                // Persons can have key roles for other parties, meaning they inherit access to others via these parties.
-                var keyRoleAssignments = await repoService.GetKeyRoleAssignments(subject.Id, cancellationToken);
-                List<Guid> keyRoleEntities = keyRoleAssignments.Select(t => t.FromId).Distinct().ToList();
-
-                // Also get any sub-units of key role entities
-                if (keyRoleEntities.Count > 0)
+                List<Guid> keyRoleEntities = [];
+                if (filter.IncludePartiesViaKeyRoles)
                 {
-                    var subUnits = await repoService.GetSubunits(keyRoleEntities, cancellationToken);
-                    keyRoleEntities.AddRange(subUnits.Select(t => t.Id));
+                    // Persons can have key roles for other parties, meaning they inherit access to others via these parties.
+                    var keyRoleAssignments = await repoService.GetKeyRoleAssignments(subject.Id, cancellationToken);
+                    keyRoleEntities = keyRoleAssignments.Select(t => t.FromId).Distinct().ToList();
+
+                    // Also get any sub-units of key role entities
+                    if (keyRoleEntities.Count > 0)
+                    {
+                        var subUnits = await repoService.GetSubunits(keyRoleEntities, cancellationToken);
+                        keyRoleEntities.AddRange(subUnits.Select(t => t.Id));
+                    }
                 }
 
                 return await GetAuthorizedParties(filter, subject, keyRoleEntities, cancellationToken);
@@ -66,7 +69,7 @@ public class AuthorizedPartiesServiceEf(
 
                 // Enterprise user can also have key role (ECKeyRole) for their organization. Will still need to get these via SBL Bridge until A2-role import is complete.
                 IEnumerable<Entity> ecKeyRoleEntities = [];
-                if (subject.UserId.HasValue)
+                if (filter.IncludePartiesViaKeyRoles && subject.UserId.HasValue)
                 {
                     // A2 lookup of key role parties includes subunits by default
                     List<int> keyRolePartyIds = await contextRetrievalService.GetKeyRolePartyIds(subject.UserId.Value, cancellationToken);
@@ -276,7 +279,7 @@ public class AuthorizedPartiesServiceEf(
         {
             a2Task = Task.Run(async () =>
             {
-                var a2AuthorizedParties = await altinnRolesClient.GetAuthorizedPartiesWithRoles(userSubject.UserId.Value, cancellationToken);
+                var a2AuthorizedParties = await altinnRolesClient.GetAuthorizedPartiesWithRoles(userSubject.UserId.Value, filter.IncludePartiesViaKeyRoles, cancellationToken);
 
                 if (filter.PartyFilter?.Count() > 0)
                 {
