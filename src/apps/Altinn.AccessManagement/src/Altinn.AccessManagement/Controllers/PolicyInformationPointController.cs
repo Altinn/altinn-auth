@@ -3,7 +3,6 @@ using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Services.Contracts;
-using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
@@ -64,20 +63,22 @@ public class PolicyInformationPointController(
     {
         List<AccessPackageUrn> packages = new();
 
-        IEnumerable<PackagePermissionDto> connectionPackages = null;
         if (await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.AuthorizedPartiesEfEnabled))
         {
-            var filter = new AuthorizedPartiesFilters { IncludeAccessPackages = true, IncludePartiesViaKeyRoles = true };
-            connectionPackages = await authorizedPartyRepoService.GetPackagesFromOthers(to, [from], filters: filter, ct: cancellationToken);
+            var filter = new AuthorizedPartiesFilters { IncludeAccessPackages = true, IncludePartiesViaKeyRoles = true, PartyFilter = new Dictionary<Guid, Guid> { { from, from } } };
+            var connectionPackages = await authorizedPartyRepoService.GetPipConnectionsFromOthers(to, filters: filter, ct: cancellationToken);
+            if (connectionPackages != null)
+            {
+                packages.AddRange(connectionPackages.SelectMany(conPackage => conPackage.Packages.Select(pkg => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(pkg.Urn.Split(':').Last())))));
+            }
         }
         else
         {
-            connectionPackages = await connectionService.GetPackagePermissionsFromOthers(partyId: to, fromId: from, cancellationToken: cancellationToken);
-        }
-
-        if (connectionPackages != null)
-        {
-            packages.AddRange(connectionPackages.Select(conPackage => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(conPackage.Package.Urn.Split(':').Last()))));
+            var connectionPackages = await connectionService.GetPackagePermissionsFromOthers(partyId: to, fromId: from, cancellationToken: cancellationToken);
+            if (connectionPackages != null)
+            {
+                packages.AddRange(connectionPackages.Select(conPackage => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(conPackage.Package.Urn.Split(':').Last()))));
+            }
         }
 
         return Ok(packages);

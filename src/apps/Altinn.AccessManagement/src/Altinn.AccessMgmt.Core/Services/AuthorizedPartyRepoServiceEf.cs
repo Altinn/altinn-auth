@@ -153,6 +153,31 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
         ct);
     }
 
+    /// <inheritdoc />
+    public async Task<List<ConnectionQueryExtendedRecord>> GetPipConnectionsFromOthers(
+        Guid toId,
+        AuthorizedPartiesFilters filters = null,
+        CancellationToken ct = default)
+    {
+        return await connectionQuery.GetPipConnectionPackagesAsync(
+        new ConnectionQueryFilter()
+        {
+            ToIds = [toId],
+            FromIds = filters?.PartyFilter?.Keys.ToList(),
+            PackageIds = null,
+            EnrichEntities = false,
+            IncludeSubConnections = true,
+            IncludeKeyRole = filters?.IncludePartiesViaKeyRoles ?? true,
+            IncludeMainUnitConnections = true,
+            IncludeDelegation = true,
+            IncludePackages = filters?.IncludeAccessPackages ?? true,
+            IncludeResource = false,
+            EnrichPackageResources = false,
+            ExcludeDeleted = false
+        },
+        ct);
+    }
+
     public async Task<Dictionary<string, Resource>> GetResourcesByProvider(string? providerCode = null, IEnumerable<string>? resourceIds = null, CancellationToken ct = default)
     {
         return await db.Resources
