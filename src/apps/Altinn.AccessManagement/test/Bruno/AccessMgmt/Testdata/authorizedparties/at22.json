@@ -97,6 +97,44 @@
       "directPackageToDelegate": "mobler-og-annen-industri",
       "directPackageToDelegate2": "revisorattesterer"
     },
+    "client_ENK_DELETED_2025_11_27_InnehaverAccess": {
+      "name": "SJELDEN REN KATT KONJAKK",
+      "orgno": "313744019",
+      "partyId": 51653406,
+      "partyUuid": "1fbd06a3-3654-460b-8917-d9f4f9664625",
+      "innehaver": {
+        "name": "PRATSOM SKOLE",
+        "pid": "19846999968",
+        "userId": 20820830,
+        "partyId": 51175128,
+        "partyUuid": "ab0e4f41-4dbe-4198-bc69-6429cbfb6989"
+      },
+      "subunit": {
+        "name": "SJELDEN REN KATT KONJAKK",
+        "orgno": "314964055",
+        "partyId": 51740562,
+        "partyUuid": "ce662cb7-f781-4771-bbd3-2cbb291e523f"
+      }
+    },
+    "client_ENK_DELETED_2023_11_01_NoInnehaverAccess": {
+      "name": "OMSORGSFULL KUL KATT SKATOLL",
+      "orgno": "312282054",
+      "partyId": 51545196,
+      "partyUuid": "2c3b1064-2289-4217-b5de-41038ea86158",
+      "innehaver": {
+        "name": "SYMPATISK LINJE",
+        "pid": "24887299168",
+        "userId": 20946709,
+        "partyId": 50218861,
+        "partyUuid": "c5950a52-d4b4-454d-8cdf-a9c78bda6ff8"
+      },
+      "subunit": {
+        "name": "OMSORGSFULL KUL KATT SKATOLL",
+        "orgno": "315252946",
+        "partyId": 51766826,
+        "partyUuid": "893c7aae-e228-4e64-9643-38116d67eb39"
+      }
+    },
     "a2_klientadministrator": {
       "name": "RUSTEN AKVARELL",
       "pid": "11860198721",

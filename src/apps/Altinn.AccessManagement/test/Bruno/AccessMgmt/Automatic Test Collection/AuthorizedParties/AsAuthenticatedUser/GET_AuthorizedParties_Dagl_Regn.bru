@@ -41,7 +41,7 @@ script:pre-request {
 }
 
 tests {
-  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.json`);
+  const testdata = require(`./Testdata/authorizedparties/${bru.getEnvVar("tokenEnv")}.json`);
   const body = res.getBody();
   const requestName = bru.getVar("requestName");
   
@@ -156,11 +156,19 @@ tests {
     // Test that the expected client party exists in the response with the expected packages
     
     const allParties = body.flatMap(party => [party, ...(party.subunits || [])]);
-    const targetParty = allParties.find(party => party.partyUuid === testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.partyUuid);
+    const innehaverOfActiveEnk = allParties.find(party => party.partyUuid === testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.partyUuid);
+    const innehaverOfDeletedEnkLessThanTwoYears = allParties.find(party => party.partyUuid === testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_DELETED_2025_11_27_InnehaverAccess.innehaver.partyUuid);
+    const innehaverOfDeletedEnkMoreThanTwoYears = allParties.find(party => party.partyUuid === testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_DELETED_2023_11_01_NoInnehaverAccess.innehaver.partyUuid);
   
-    assert.exists(targetParty, 'Expected Innehaver of Enk-ClientParty: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.name+' to exist');
-    assert.includeMembers(targetParty.authorizedAccessPackages, ["regnskapsforer-lonn", "regnskapsforer-med-signeringsrettighet", "regnskapsforer-uten-signeringsrettighet"]);
-    expect(targetParty.authorizedAccessPackages.length, `authorizedAccessPackages for Client contains unexpected packages`).to.equal(3);
+    assert.exists(innehaverOfActiveEnk, 'Expected Innehaver of Enk-ClientParty: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.name+' to exist');
+    assert.includeMembers(innehaverOfActiveEnk.authorizedAccessPackages, ["regnskapsforer-lonn", "regnskapsforer-med-signeringsrettighet", "regnskapsforer-uten-signeringsrettighet"]);
+    expect(innehaverOfActiveEnk.authorizedAccessPackages.length, `authorizedAccessPackages for Client contains unexpected packages`).to.equal(3);
+    
+    assert.exists(innehaverOfDeletedEnkLessThanTwoYears, 'Expected Innehaver of Enk-ClientParty: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_DELETED_2025_11_27_InnehaverAccess.innehaver.name+' to exist');
+    assert.includeMembers(innehaverOfDeletedEnkLessThanTwoYears.authorizedAccessPackages, ["regnskapsforer-lonn", "regnskapsforer-med-signeringsrettighet", "regnskapsforer-uten-signeringsrettighet"]);
+    expect(innehaverOfDeletedEnkLessThanTwoYears.authorizedAccessPackages.length, `authorizedAccessPackages for Client contains unexpected packages`).to.equal(3);
+    
+    assert.strictEqual(innehaverOfDeletedEnkMoreThanTwoYears, undefined, 'Expected Innehaver of Enk-ClientParty: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_DELETED_2023_11_01_NoInnehaverAccess.innehaver.name+' to NOT exist');
     
   });
   
