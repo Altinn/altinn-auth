@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading;
@@ -45,7 +45,24 @@ namespace Altinn.Platform.Authorization.Clients
             {
                 QueueClient client = await GetAuthorizationEventQueueClient();
                 TimeSpan timeToLive = TimeSpan.FromDays(_settings.TimeToLive);
-                await client.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(content)), null, timeToLive, cancellationToken);      
+
+                // Prepare the message as UTF-8 bytes and Base64 encode (if you must keep Base64)
+                byte[] utf8Bytes = Encoding.UTF8.GetBytes(content);
+                string base64Content = Convert.ToBase64String(utf8Bytes);
+
+                // Azure Storage Queue message size limit is 64 KB (65536 bytes)
+                if (base64Content.Length > 64 * 1024)
+                {
+                    // Replace with a small JSON message and a GitHub link
+                    var fallbackJson = System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        message = "ContextRequestJson is not available due to size limitations.",
+                        info = "See the following link for more details https://github.com/Altinn/altinn-authorization-tmp/issues/1858",
+                    });
+                    base64Content = Convert.ToBase64String(Encoding.UTF8.GetBytes(fallbackJson));
+                }
+
+                await client.SendMessageAsync(base64Content, null, timeToLive, cancellationToken);      
             }
             catch (OperationCanceledException ex)
             {

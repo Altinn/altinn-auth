@@ -23,6 +23,8 @@ namespace Altinn.Platform.Authorization.Helpers
         /// <returns></returns>
         public static AuthorizationEvent MapAuthorizationEventFromContextRequest(XacmlContextRequest contextRequest, HttpContext context, XacmlContextResponse contextRespsonse, DateTimeOffset currentDateTime)
         {
+            const string githubLink = "https://github.com/Altinn/altinn-authorization-tmp/issues/1858";
+
             (string resource, string instanceId, int? resourcePartyId) = GetResourceAttributes(contextRequest);
             (int? userId, int? partyId, string org, int? orgNumber, string? sessionId, string? partyUuid) = GetSubjectInformation(contextRequest);
             AuthorizationEvent authorizationEvent = new AuthorizationEvent
@@ -38,7 +40,7 @@ namespace Altinn.Platform.Authorization.Helpers
                 ResourcePartyId = resourcePartyId,
                 Operation = GetActionInformation(contextRequest),
                 IpAdress = GetClientIpAddress(context),
-                ContextRequestJson = JsonSerializer.Serialize(contextRequest),
+                ContextRequestJson = JsonSerializer.Serialize(contextRequest), // TODO: Enriching of accesspackage increases size significantly, New implementation needed if we want to store this
                 Decision = contextRespsonse.Results?.FirstOrDefault()?.Decision,
                 SubjectPartyUuid = partyUuid,
             };
