@@ -72,7 +72,7 @@ namespace Altinn.Platform.Authorization.Clients
 
                     authorizationEvent.ContextRequestJson = fallbackJson;
 
-                    base64Content = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(authorizationEvent)));
+                    base64Content = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(authorizationEvent, options)));
                 }
 
                 await client.SendMessageAsync(base64Content, null, timeToLive, cancellationToken);      
