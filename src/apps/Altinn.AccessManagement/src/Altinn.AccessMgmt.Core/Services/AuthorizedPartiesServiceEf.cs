@@ -199,9 +199,7 @@ public class AuthorizedPartiesServiceEf(
         {
             switch (partyAttribute.Type)
             {
-                case AltinnXacmlConstants.MatchAttributeIdentifiers.PartyUuidAttribute:
                 case AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid:
-                case AltinnXacmlConstants.MatchAttributeIdentifiers.OrganizationUuid:
                 case AltinnXacmlConstants.MatchAttributeIdentifiers.EnterpriseUserUuid:
                 case AltinnXacmlConstants.MatchAttributeIdentifiers.SystemUserUuid:
                     if (!Guid.TryParse(partyAttribute.Value, out Guid partyUuid))
@@ -211,6 +209,27 @@ public class AuthorizedPartiesServiceEf(
 
                     // Directly adds the uuid we don't bother checking existence here
                     partyUuids.Add(partyUuid);
+
+                    break;
+                case AltinnXacmlConstants.MatchAttributeIdentifiers.PartyUuidAttribute:
+                case AltinnXacmlConstants.MatchAttributeIdentifiers.OrganizationUuid:
+                    if (!Guid.TryParse(partyAttribute.Value, out partyUuid))
+                    {
+                        throw new ArgumentException(message: $"Not a well-formed uuid: {partyAttribute.Value}", paramName: nameof(partyAttributes));
+                    }
+
+                    var uuidEntity = await repoService.GetEntity(partyUuid, cancellationToken);
+                    if (uuidEntity != null)
+                    {
+                        partyUuids.Add(uuidEntity.Id);
+
+                        if (uuidEntity.ParentId.HasValue)
+                        {
+                            // Also add parent uuid to cover subunit filters
+                            partyUuids.Add(uuidEntity.ParentId.Value);
+                        }
+                    }
+
                     break;
                 case AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute:
                     if (!int.TryParse(partyAttribute.Value, out int partyId))
@@ -218,10 +237,16 @@ public class AuthorizedPartiesServiceEf(
                         throw new ArgumentException(message: $"Not a valid integer: {partyAttribute.Value}", paramName: nameof(partyAttributes));
                     }
 
-                    var entity = await repoService.GetEntityByPartyId(partyId, cancellationToken);
-                    if (entity != null)
+                    var partyIdEntity = await repoService.GetEntityByPartyId(partyId, cancellationToken);
+                    if (partyIdEntity != null)
                     {
-                        partyUuids.Add(entity.Id);
+                        partyUuids.Add(partyIdEntity.Id);
+
+                        if (partyIdEntity.ParentId.HasValue)
+                        {
+                            // Also add parent uuid to cover subunit filters
+                            partyUuids.Add(partyIdEntity.ParentId.Value);
+                        }
                     }
 
                     break;
@@ -251,19 +276,43 @@ public class AuthorizedPartiesServiceEf(
                     if (orgEntity != null)
                     {
                         partyUuids.Add(orgEntity.Id);
+
+                        if (orgEntity.ParentId.HasValue)
+                        {
+                            // Also add parent uuid to cover subunit filters
+                            partyUuids.Add(orgEntity.ParentId.Value);
+                        }
                     }
 
                     break;
                 case AltinnXacmlConstants.MatchAttributeIdentifiers.EnterpriseUserName:
-                    var entEntity = await repoService.GetEntityByUsername(partyAttribute.Value, cancellationToken);
-                    if (entEntity != null)
+                    var enterpriseUserEntity = await repoService.GetEntityByUsername(partyAttribute.Value, cancellationToken);
+                    if (enterpriseUserEntity != null)
                     {
-                        partyUuids.Add(entEntity.Id);
+                        partyUuids.Add(enterpriseUserEntity.Id);
                     }
 
                     break;
                 default:
                     throw new ArgumentException(message: $"Unknown attribute type: {partyAttribute.Type}", paramName: nameof(partyAttributes));
+            }
+        }
+
+        return partyUuids;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<Guid>> GetPartyFilterUuids(IEnumerable<Guid> filterUuids, CancellationToken cancellationToken = default)
+    {
+        List<Guid> partyUuids = new();
+        var entities = await repoService.GetEntities(filterUuids, cancellationToken);
+        foreach (var entity in entities)
+        {
+            partyUuids.Add(entity.Id);
+            if (entity.ParentId.HasValue)
+            {
+                // Also add parent uuid to cover subunit filters
+                partyUuids.Add(entity.ParentId.Value);
             }
         }
 

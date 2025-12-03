@@ -1,7 +1,12 @@
 {
     "env": "tt02",
     "resources": {
-        "clientDelgResourceId": "devtest_gar_bruno_client_resource"
+        "clientDelgResourceId": "devtest_gar_bruno_client_resource",
+        "appInstanceDelegation": {
+            "resourceId": "app_ttd_authz-bruno-instancedelegation",
+            "org": "ttd",
+            "app":  "authz-bruno-instancedelegation"
+        }
     },
     "REGN_ULASTELIG_RETTFERDIG_TIGER": {
         "name": "ULASTELIG RETTFERDIG TIGER AS",
@@ -92,10 +97,27 @@
                 "name": "STOLT BETYDELIG TIGER AS",
                 "orgno": "315043336",
                 "partyId": 51961130,
-                "partyUuid": "2230cded-a253-4b44-a01c-5d2f3125e038"
+                "partyUuid": "2230cded-a253-4b44-a01c-5d2f3125e038",
+                "packageDelegatedToPerson": "skatt-naering",
+                "packageDelegatedToKeyRoleUnit": "kjop-og-salg-eiendom",
+                "roleDelegatedToPerson": "HVASK",
+                "roleDelegatedToKeyRoleUnit": "LOPER",
+                "resourceIdDelegatedToPerson": "devtest_gar_authparties-sub-to-person",
+                "resourceIdDelegatedToKeyRoleUnit": "devtest_gar_authparties-sub-to-org",
+                "instanceIdDelegatedToPerson": "de5d0a27-3a5f-4c04-951e-70581c5b29d8",
+                "instanceIdDelegatedToKeyRoleUnit": "7d79836f-cee4-48ec-ad7e-caa198a1923d"                
             },
             "directPackageToDelegate": "mobler-og-annen-industri",
-            "directPackageToDelegate2": "revisorattesterer"
+            "directPackageToDelegate2": "revisorattesterer",
+            "packageDelegatedToPerson": "lonn",
+            "roleDelegatedToPerson": "UTINN",
+            "roleDelegatedToKeyRoleUnit": "REGNA",
+            "resourceIdDelegatedToPerson": "devtest_gar_authparties-main-to-person",
+            "resourceIdDelegatedToKeyRoleUnit": "devtest_gar_authparties-main-to-org",
+            "appIdDelegatedToPerson": "app_ttd_authz-bruno-testapp1",
+            "appIdDelegatedToKeyRoleUnit": "app_ttd_authz-bruno-testapp2",
+            "instanceIdDelegatedToPerson": "74638d4c-275f-4568-8040-af6979246694",
+            "instanceIdDelegatedToKeyRoleUnit": "b9468899-35b9-4956-99ab-2dcb0cc065fb"
         },
         "client_ENK_DELETED_2025_11_27_InnehaverAccess": {
             "name": "SJELDEN REN KATT KONJAKK",

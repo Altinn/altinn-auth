@@ -98,10 +98,18 @@ public interface IAuthorizedPartiesService
     Task<List<AuthorizedParty>> GetAuthorizedPartiesBySystemUserUuid(string subjectSystemUserUuid, AuthorizedPartiesFilters filter, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Gets the party UUIDs matching the provided party attributes
+    /// Gets all relevant filter party UUIDs for the provided party attributes
     /// </summary>
     /// <param name="partyAttributes">The party attributes to lookup party uuids</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-    /// <returns></returns>
+    /// <returns>All identified uuids and any parent/mainunit party uuids</returns>
     Task<IEnumerable<Guid>> GetPartyFilterUuids(IEnumerable<BaseAttribute> partyAttributes, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets all relevant filter party UUIDs for the provided input of party uuids
+    /// </summary>
+    /// <param name="filterUuids">The input filter party uuids</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns>All identified uuids and any parent/mainunit party uuids</returns>
+    Task<IEnumerable<Guid>> GetPartyFilterUuids(IEnumerable<Guid> filterUuids, CancellationToken cancellationToken = default);
 }
