@@ -37,7 +37,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
     {
         var seen = new HashSet<(Guid From, Guid To, Guid Role)>();
         var addParent = new Dictionary<Guid, Guid>();
-        var removeParent = new List<Guid>();
+        var removeParent = new Dictionary<Guid, Guid>();
         var addAssignments = new List<Assignment>();
         var removeAssignments = new List<Assignment>();
         var options = new AuditValues(SystemEntityConstants.RegisterImportSystem);
@@ -98,8 +98,10 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                     removeAssignments.Add(assignment);
                     if (ShouldSetParent(item))
                     {
-                        removeParent.Add(assignment.FromId);
+                        removeParent[assignment.FromId] = assignment.ToId;
                     }
+
+                    flushed += await Flush();
                 }
             }
 
@@ -118,12 +120,12 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
 
             async Task<int> Flush()
             {
-                var results = await Task.WhenAll(
-                    RemoveParents(appDbContextFactory, removeParent, cancellationToken),
-                    SetParents(appDbContextFactory, addParent, cancellationToken),
-                    RemoveAssignments(appDbContextFactory, removeAssignments, cancellationToken),
-                    IngestAssigments(ingestService, addAssignments, options, cancellationToken)
-                );
+                var result = 0;
+                result += await SetParents(appDbContextFactory, addParent, cancellationToken);
+                result += await IngestAssigments(ingestService, addAssignments, options, cancellationToken);
+                
+                result += await RemoveParents(appDbContextFactory, removeParent, cancellationToken);
+                result += await RemoveAssignments(appDbContextFactory, removeAssignments, cancellationToken);
 
                 seen.Clear();
                 addParent.Clear();
@@ -131,7 +133,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                 addAssignments.Clear();
                 removeAssignments.Clear();
 
-                return results.Sum();
+                return result;
             }
         }
     }
@@ -186,17 +188,22 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
         }
     }
 
-    private async Task<int> RemoveParents(AppDbContextFactory dbContextFactory, List<Guid> relations, CancellationToken cancellationToken = default)
+    private async Task<int> RemoveParents(AppDbContextFactory dbContextFactory, Dictionary<Guid, Guid> relations, CancellationToken cancellationToken = default)
     {
         using var dbContext = dbContextFactory.CreateDbContext();
+        var subunitIds = relations.Keys.ToList();
         var entities = await dbContext.Entities
             .AsTracking()
-            .Where(e => relations.Contains(e.Id))
+            .Where(e => subunitIds.Contains(e.Id))
             .ToListAsync(cancellationToken);
 
         foreach (var entity in entities)
         {
-            entity.ParentId = null;
+            // Checks that we only remove the parent if it matches the one we intend to remove
+            if (entity.ParentId == relations[entity.Id])
+            {
+                entity.ParentId = null;
+            }
         }
 
         return await dbContext.SaveChangesAsync(cancellationToken);
@@ -205,10 +212,10 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
     private async Task<int> SetParents(AppDbContextFactory dbContextFactory, Dictionary<Guid, Guid> relations, CancellationToken cancellationToken = default)
     {
         using var dbContext = dbContextFactory.CreateDbContext();
-        var fields = relations.Keys.ToList();
+        var subunitIds = relations.Keys.ToList();
         var entities = await dbContext.Entities
             .AsTracking()
-            .Where(e => fields.Contains(e.Id))
+            .Where(e => subunitIds.Contains(e.Id))
             .ToListAsync(cancellationToken);
 
         foreach (var entity in entities)
