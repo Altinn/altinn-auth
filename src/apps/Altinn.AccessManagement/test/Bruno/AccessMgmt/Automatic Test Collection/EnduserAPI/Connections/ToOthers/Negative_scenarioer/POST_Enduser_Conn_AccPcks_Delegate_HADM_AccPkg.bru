@@ -54,7 +54,7 @@ tests {
     var packageId = bru.getEnvVar("packageId");
     
     expect(res.status).to.equal(400);
-    expect(data.validationErrors[0]).to.have.property('detail', "One or more query parameters are invalid.");
+    expect(data.validationErrors[0]).to.have.property('detail', "One or more packages is not assignable to receipient.");
     expect(data.validationErrors[0]).to.have.property('Packages', "urn:altinn:accesspackage:hovedadministrator are not assignable to an organization.");
     
   });

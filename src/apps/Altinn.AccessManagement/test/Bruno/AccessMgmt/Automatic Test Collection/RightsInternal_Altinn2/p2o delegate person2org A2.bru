@@ -54,7 +54,6 @@ vars:pre-request {
 }
 
 script:pre-request {
-  bru.runner.skipRequest();
   const testdata = require(`./Testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.json`);
   const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
   bru.setVar("party", testdata.org1.dagl.partyid);
