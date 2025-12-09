@@ -1,137 +1,237 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Contexts;
+﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Utils;
 
 /// <inheritdoc />
 public class TranslationService : ITranslationService
 {
-    public TranslationService(AppDbContext dbContext)
+    private readonly AppDbContext _db;
+    private readonly IMemoryCache _cache;
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(30);
+
+    public TranslationService(AppDbContext dbContext, IMemoryCache memoryCache)
     {
-        Db = dbContext;
+        _db = dbContext;
+        _cache = memoryCache;
     }
 
-    private AppDbContext Db { get; }
+    /// <inheritdoc />
+    public async ValueTask<T> TranslateAsync<T>(T source, string languageCode, bool allowPartial = true)
+    {
+        var (success, result) = await TryTranslateAsync(source, languageCode);
+        
+        if (!success && !allowPartial)
+        {
+            return source;
+        }
+
+        return result;
+    }
 
     /// <inheritdoc />
-    public async ValueTask<T> TranslateAsync<T>(T source, string languageCode)
+    public T Translate<T>(T source, string languageCode, bool allowPartial = true)
     {
+        return TranslateAsync(source, languageCode, allowPartial).AsTask().GetAwaiter().GetResult();
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<(bool Success, T Result)> TryTranslateAsync<T>(T source, string languageCode)
+    {
+        if (source == null)
+        {
+            return (false, source);
+        }
+
         var type = typeof(T);
         var typeName = type.Name;
 
         var idProp = type.GetProperty("Id");
         if (idProp == null)
         {
-            return source;
+            return (false, source);
         }
 
         var id = idProp.GetValue(source);
         if (id is not Guid entityId)
         {
-            return source;
+            return (false, source);
         }
 
-        //// Add support for history dbcontext
+        // Normalize language code (handle different formats)
+        var normalizedLanguageCode = NormalizeLanguageCode(languageCode);
 
-        var transMap = await Db.TranslationEntries
-            .Where(t => t.Type == typeName &&
-                        t.Id == entityId &&
-                        t.LanguageCode == languageCode)
-            .ToDictionaryAsync(t => t.FieldName, t => t.Value);
-
-        foreach (var prop in type.GetProperties().Where(p => p.PropertyType == typeof(string)))
+        // Norwegian Bokmål is the base language - entities are already in Bokmål
+        // Constants only provide translations for English (eng) and Norwegian Nynorsk (nno)
+        if (normalizedLanguageCode == "nob")
         {
-            if (transMap.TryGetValue(prop.Name, out var val) && val is not null)
+            return (true, source); // Return original, it's already in Norwegian Bokmål
+        }
+
+        // Try to get translations from Constants first (for eng and nno only)
+        var constantTranslations = TryGetConstantTranslations(typeName, entityId, normalizedLanguageCode);
+
+        Dictionary<string, string> transMap;
+
+        if (constantTranslations != null && constantTranslations.Any())
+        {
+            transMap = constantTranslations;
+        }
+        else
+        {
+            // Fall back to database with caching
+            var cacheKey = $"translation_{typeName}_{entityId}_{normalizedLanguageCode}";
+            
+            transMap = await _cache.GetOrCreateAsync(cacheKey, async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = CacheDuration;
+                
+                return await _db.TranslationEntries
+                    .Where(t => t.Type == typeName &&
+                                t.Id == entityId &&
+                                t.LanguageCode == normalizedLanguageCode)
+                    .ToDictionaryAsync(t => t.FieldName, t => t.Value ?? string.Empty);
+            });
+        }
+
+        if (transMap == null || !transMap.Any())
+        {
+            return (false, source);
+        }
+
+        // Create a new instance or clone to avoid modifying the original
+        var translatedFields = 0;
+        var stringProperties = type.GetProperties().Where(p => p.PropertyType == typeof(string) && p.CanWrite).ToList();
+
+        foreach (var prop in stringProperties)
+        {
+            if (transMap.TryGetValue(prop.Name, out var val) && !string.IsNullOrEmpty(val))
             {
                 prop.SetValue(source, val);
+                translatedFields++;
             }
         }
 
-        return source;
+        // Consider it a success if at least one field was translated
+        return (translatedFields > 0, source);
     }
 
     /// <inheritdoc />
-    public T Translate<T>(T source, string languageCode)
+    public async ValueTask<IEnumerable<T>> TranslateCollectionAsync<T>(IEnumerable<T> sources, string languageCode, bool allowPartial = true)
     {
-        var type = typeof(T);
-        var typeName = type.Name;
-
-        var idProp = type.GetProperty("Id");
-        if (idProp == null)
+        var result = new List<T>();
+        
+        foreach (var source in sources)
         {
-            return source;
+            var translated = await TranslateAsync(source, languageCode, allowPartial);
+            result.Add(translated);
         }
 
-        var id = idProp.GetValue(source);
-        if (id is not Guid entityId)
-        {
-            return source;
-        }
-
-        //// Add support for history dbcontext
-
-        var transMap = Db.TranslationEntries
-            .Where(t => t.Type == typeName &&
-                        t.Id == entityId &&
-                        t.LanguageCode == languageCode)
-            .ToDictionary(t => t.FieldName, t => t.Value);
-
-        foreach (var prop in type.GetProperties().Where(p => p.PropertyType == typeof(string)))
-        {
-            if (transMap.TryGetValue(prop.Name, out var val) && val is not null)
-            {
-                prop.SetValue(source, val);
-            }
-        }
-
-        return source;
+        return result;
     }
 
+    /// <inheritdoc />
     public async Task UpsertTranslationAsync(TranslationEntry translationEntry, CancellationToken cancellationToken = default)
     {
-        var entry = await Db.TranslationEntries.SingleOrDefaultAsync(t => t.Id == translationEntry.Id && t.Type == translationEntry.Type && t.LanguageCode == translationEntry.LanguageCode && t.FieldName == translationEntry.FieldName, cancellationToken);
+        var entry = await _db.TranslationEntries.SingleOrDefaultAsync(
+            t => t.Id == translationEntry.Id && 
+                 t.Type == translationEntry.Type && 
+                 t.LanguageCode == translationEntry.LanguageCode && 
+                 t.FieldName == translationEntry.FieldName, 
+            cancellationToken);
 
         if (entry == null)
         {
-            Db.Add(translationEntry);
+            _db.Add(translationEntry);
         }
         else
         {
             entry.Value = translationEntry.Value;
-            Db.Update(entry);
+            _db.Update(entry);
         }
 
-        Db.SaveChanges();
+        await _db.SaveChangesAsync(cancellationToken);
+
+        // Invalidate cache
+        var cacheKey = $"translation_{translationEntry.Type}_{translationEntry.Id}_{translationEntry.LanguageCode}";
+        _cache.Remove(cacheKey);
     }
-}
-
-/// <summary>
-/// Translation service for EF model
-/// </summary>
-public interface ITranslationService
-{
-    /// <summary>
-    /// Translates the specified object to the target language asynchronously.
-    /// </summary>
-    /// <typeparam name="T">The type of the object to be translated. The type must support translation or serialization.</typeparam>
-    /// <param name="source">The object to be translated. Cannot be <see langword="null"/>.</param>
-    /// <param name="languageCode">The language code representing the target language for translation. Must be a valid ISO 639-1 code.</param>
-    /// <returns>A <see cref="ValueTask{T}"/> representing the asynchronous operation. The result contains the translated object
-    /// of type <typeparamref name="T"/>.</returns>
-    ValueTask<T> TranslateAsync<T>(T source, string languageCode);
 
     /// <summary>
-    /// Translates the specified object to the target language synchronously.
+    /// Normalizes language codes to a consistent format.
+    /// Note: Norwegian Bokmål (nob) is the base language for all entities.
+    /// ConstantDefinition only provides translations for English (eng) and Norwegian Nynorsk (nno).
+    /// Handles: en, eng, en-US, en-GB → eng
+    ///          nb, nob, nb-NO, no → nob (base language, no translation needed)
+    ///          nn, nno, nn-NO → nno
     /// </summary>
-    /// <typeparam name="T">The type of the object to be translated. The type must support translation or serialization.</typeparam>
-    /// <param name="source">The object to be translated. Cannot be <see langword="null"/>.</param>
-    /// <param name="languageCode">The language code representing the target language for translation. Must be a valid ISO 639-1 code.</param>
-    /// <returns>A <see name="T"/> representing the operation. The result contains the translated object
-    /// of type <typeparamref name="T"/>.</returns>
-    T Translate<T>(T source, string languageCode);
+    private static string NormalizeLanguageCode(string languageCode)
+    {
+        if (string.IsNullOrWhiteSpace(languageCode))
+        {
+            return "nob"; // Default to Norwegian Bokmål (base language)
+        }
 
-    Task UpsertTranslationAsync(TranslationEntry translationEntry, CancellationToken cancellationToken = default);
+        var normalized = languageCode.ToLowerInvariant().Split('-')[0];
+
+        return normalized switch
+        {
+            "en" or "eng" => "eng",
+            "nb" or "nob" or "no" => "nob",  // Base language - no translation needed
+            "nn" or "nno" => "nno",
+            _ => "nob" // Unknown languages default to Norwegian Bokmål
+        };
+    }
+
+    /// <summary>
+    /// Attempts to retrieve translations from Constants classes (RoleConstants, PackageConstants, etc.)
+    /// </summary>
+    private static Dictionary<string, string>? TryGetConstantTranslations(string typeName, Guid entityId, string languageCode)
+    {
+        try
+        {
+            // Check if we have Constants for this type
+            var constantsType = typeName switch
+            {
+                "Role" or "RoleDto" or "ExtRole" => typeof(RoleConstants),
+                "Package" or "PackageDto" or "ExtPackage" => typeof(PackageConstants),
+                _ => null
+            };
+
+            if (constantsType == null)
+            {
+                return null;
+            }
+
+            // Get all translations from the Constants class
+            var allTranslationsMethod = constantsType.GetMethod("AllTranslations");
+            if (allTranslationsMethod == null)
+            {
+                return null;
+            }
+
+            var allTranslations = allTranslationsMethod.Invoke(null, null) as IEnumerable<TranslationEntry>;
+            if (allTranslations == null)
+            {
+                return null;
+            }
+
+            // Filter to the specific entity and language
+            var relevantTranslations = allTranslations
+                .Where(t => t.Id == entityId && t.LanguageCode == languageCode)
+                .ToDictionary(t => t.FieldName, t => t.Value ?? string.Empty);
+
+            return relevantTranslations.Any() ? relevantTranslations : null;
+        }
+        catch
+        {
+            // If anything fails, fall back to database
+            return null;
+        }
+    }
 }
 
 /// <summary>
