@@ -281,6 +281,7 @@ public class ConnectionQuery(AppDbContext db)
             join enk in db.Entities on innehaverConnection.FromId equals enk.Id
             where reviRegnRoleSet.Contains(reviRegnConnection.RoleId)
                && innehaverConnection.RoleId == RoleConstants.Innehaver.Id
+               && enk.VariantId == EntityVariantConstants.ENK.Id
                && innehaver.DateOfDeath == null
                && (!enk.IsDeleted || (enk.DeletedAt != null && enk.DeletedAt.Value.AddYears(2) > DateTime.UtcNow))
             select new ConnectionQueryBaseRecord()
@@ -516,6 +517,7 @@ public class ConnectionQuery(AppDbContext db)
             join enk in db.Entities on innehaverConnection.FromId equals enk.Id
             where (reviRegnConnection.RoleId == RoleConstants.Accountant.Id || reviRegnConnection.RoleId == RoleConstants.Auditor.Id)
                && innehaverConnection.RoleId == RoleConstants.Innehaver.Id
+               && enk.VariantId == EntityVariantConstants.ENK.Id
                && innehaver.DateOfDeath == null
                && (!enk.IsDeleted || (enk.DeletedAt != null && enk.DeletedAt.Value.AddYears(2) > DateTime.UtcNow))
             select new ConnectionQueryBaseRecord()
