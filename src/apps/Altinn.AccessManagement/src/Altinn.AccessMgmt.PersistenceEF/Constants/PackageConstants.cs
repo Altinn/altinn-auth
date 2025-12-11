@@ -1019,6 +1019,39 @@ public static class PackageConstants
     };
 
     /// <summary>
+    /// Represents the 'Offentlige anskaffelser' access package.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 58c282e4-4505-4411-8d8d-62fdaee7f7ed
+    /// - <c>URN:</c> urn: urn:altinn:accesspackage:offentlige-anskaffelser
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Description:</c> Denne tilgangspakken gir fullmakter til å dele data om virksomheten i forbindelse med offentlige anskaffelser. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.
+    /// </remarks>
+    public static ConstantDefinition<Package> PublicProcurement { get; } = new ConstantDefinition<Package>("58c282e4-4505-4411-8d8d-62fdaee7f7ed")
+    {
+        Entity = new()
+        {
+            Name = "Offentlige anskaffelser",
+            Description = "Denne tilgangspakken gir fullmakter til å dele data om virksomheten i forbindelse med offentlige anskaffelser. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.",
+            Urn = "urn: urn:altinn:accesspackage:offentlige-anskaffelser",
+            IsDelegable = true,
+            HasResources = true,
+            IsAssignable = true,
+            EntityTypeId = EntityTypeConstants.Organisation,
+            ProviderId = ProviderConstants.Altinn3,
+            AreaId = AreaConstants.BusinessAffairs,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Public procurement"),
+            KeyValuePair.Create("Description", "This access package gives authorization to share data about the business in connection with public procurement. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Offentlege anskaffingar"),
+            KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til å dela data om verksemda i samband med offentlege anskaffingar. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
+        ),
+    };
+
+    /// <summary>
     /// Represents the 'Forskning' access package.
     /// </summary>
     /// <remarks>
