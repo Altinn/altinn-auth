@@ -1,11 +1,11 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
 using Altinn.AccessMgmt.PersistenceEF.Models.Extensions;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Models.Base;
 
 /// <summary>
-/// Packages added to an assignment
+/// Resources added to an assignment
 /// </summary>
 [NotMapped]
 public class BaseAssignmentResource : BaseAudit
@@ -46,4 +46,19 @@ public class BaseAssignmentResource : BaseAudit
     /// Resource identifier
     /// </summary>
     public Guid ResourceId { get; set; }
+
+    /// <summary>
+    /// Path for policy file
+    /// </summary>
+    public string PolicyPath { get; set; }
+
+    /// <summary>
+    /// Policy version
+    /// </summary>
+    public string PolicyVersion { get; set; }
+
+    /// <summary>
+    /// Legacy DelegationChangeId
+    /// </summary>
+    public long DelegationChangeId { get; set; }
 }

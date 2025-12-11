@@ -197,6 +197,71 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasAnnotation("EnableAudit", true);
                 });
 
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.AssignmentInstance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AssignmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assignmentid");
+
+                    b.Property<string>("Audit_ChangeOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_changeoperation");
+
+                    b.Property<Guid?>("Audit_ChangedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedby");
+
+                    b.Property<Guid?>("Audit_ChangedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedbysystem");
+
+                    b.Property<DateTimeOffset>("Audit_ValidFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validfrom");
+
+                    b.Property<long>("DelegationChangeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("delegationchangeid");
+
+                    b.Property<string>("InstanceId")
+                        .HasColumnType("text")
+                        .HasColumnName("instanceid");
+
+                    b.Property<string>("PolicyPath")
+                        .HasColumnType("text")
+                        .HasColumnName("policypath");
+
+                    b.Property<string>("PolicyVersion")
+                        .HasColumnType("text")
+                        .HasColumnName("policyversion");
+
+                    b.Property<Guid>("ResourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resourceid");
+
+                    b.HasKey("Id")
+                        .HasName("pk_assignmentinstance");
+
+                    b.HasIndex("AssignmentId")
+                        .HasDatabaseName("ix_assignmentinstance_assignmentid");
+
+                    b.HasIndex("ResourceId")
+                        .HasDatabaseName("ix_assignmentinstance_resourceid");
+
+                    b.HasIndex("AssignmentId", "ResourceId", "InstanceId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_assignmentinstance_assignmentid_resourceid_instanceid");
+
+                    b.ToTable("assignmentinstance", "dbo");
+
+                    b.HasAnnotation("EnableAudit", true);
+                });
+
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.AssignmentPackage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -272,6 +337,18 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.Property<DateTimeOffset>("Audit_ValidFrom")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("audit_validfrom");
+
+                    b.Property<long>("DelegationChangeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("delegationchangeid");
+
+                    b.Property<string>("PolicyPath")
+                        .HasColumnType("text")
+                        .HasColumnName("policypath");
+
+                    b.Property<string>("PolicyVersion")
+                        .HasColumnType("text")
+                        .HasColumnName("policyversion");
 
                     b.Property<Guid>("ResourceId")
                         .HasColumnType("uuid")
@@ -475,6 +552,74 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.ToTable("auditassignment", "dbo_history");
                 });
 
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Audit.AuditAssignmentInstance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("Audit_ValidFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validfrom");
+
+                    b.Property<DateTimeOffset>("Audit_ValidTo")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validto");
+
+                    b.Property<Guid>("AssignmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assignmentid");
+
+                    b.Property<string>("Audit_ChangeOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_changeoperation");
+
+                    b.Property<Guid?>("Audit_ChangedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedby");
+
+                    b.Property<Guid?>("Audit_ChangedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedbysystem");
+
+                    b.Property<string>("Audit_DeleteOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_deleteoperation");
+
+                    b.Property<Guid?>("Audit_DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_deletedby");
+
+                    b.Property<Guid?>("Audit_DeletedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_deletedbysystem");
+
+                    b.Property<long>("DelegationChangeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("delegationchangeid");
+
+                    b.Property<string>("InstanceId")
+                        .HasColumnType("text")
+                        .HasColumnName("instanceid");
+
+                    b.Property<string>("PolicyPath")
+                        .HasColumnType("text")
+                        .HasColumnName("policypath");
+
+                    b.Property<string>("PolicyVersion")
+                        .HasColumnType("text")
+                        .HasColumnName("policyversion");
+
+                    b.Property<Guid>("ResourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resourceid");
+
+                    b.HasKey("Id", "Audit_ValidFrom", "Audit_ValidTo")
+                        .HasName("pk_auditassignmentinstance");
+
+                    b.ToTable("auditassignmentinstance", "dbo_history");
+                });
+
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Audit.AuditAssignmentPackage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -568,6 +713,18 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.Property<Guid?>("Audit_DeletedBySystem")
                         .HasColumnType("uuid")
                         .HasColumnName("audit_deletedbysystem");
+
+                    b.Property<long>("DelegationChangeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("delegationchangeid");
+
+                    b.Property<string>("PolicyPath")
+                        .HasColumnType("text")
+                        .HasColumnName("policypath");
+
+                    b.Property<string>("PolicyVersion")
+                        .HasColumnType("text")
+                        .HasColumnName("policyversion");
 
                     b.Property<Guid>("ResourceId")
                         .HasColumnType("uuid")
@@ -3038,6 +3195,27 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.Navigation("Role");
 
                     b.Navigation("To");
+                });
+
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.AssignmentInstance", b =>
+                {
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Assignment", "Assignment")
+                        .WithMany()
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignmentinstance_assignment_assignmentid");
+
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Resource", "Resource")
+                        .WithMany()
+                        .HasForeignKey("ResourceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignmentinstance_resource_resourceid");
+
+                    b.Navigation("Assignment");
+
+                    b.Navigation("Resource");
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.AssignmentPackage", b =>

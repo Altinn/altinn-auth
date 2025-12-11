@@ -46,6 +46,4 @@ public class BaseDelegationResource : BaseAudit
     /// Resource identifier
     /// </summary>
     public Guid ResourceId { get; set; }
-
-    //// public Guid DependencyId { get; set; }
 }

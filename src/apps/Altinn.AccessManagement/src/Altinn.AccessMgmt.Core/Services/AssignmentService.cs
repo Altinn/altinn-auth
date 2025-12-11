@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -8,18 +9,17 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
-using Altinn.AccessMgmt.PersistenceEF.Utils;
-using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc/>
-public class AssignmentService(AppDbContext db) : IAssignmentService
+public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery) : IAssignmentService
 {
     /// <inheritdoc/>
-    public async Task<List<AssignmentPackageDto>> ImportAssignmentPackages(Guid fromId, Guid toId, List<string> packageUrns, AuditValues values = null, CancellationToken cancellationToken = default)
+    public async Task<List<Authorization.Api.Contracts.AccessManagement.AssignmentPackageDto>> ImportAssignmentPackages(Guid fromId, Guid toId, List<string> packageUrns, AuditValues values = null, CancellationToken cancellationToken = default)
     {
         var packageIds = await db.Packages
             .AsNoTracking()
@@ -53,7 +53,7 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
             .Where(a => packageIds.Contains(a.PackageId))
             .ToListAsync(cancellationToken);
 
-        List<AssignmentPackageDto> result = new();
+        List<Authorization.Api.Contracts.AccessManagement.AssignmentPackageDto> result = new();
 
         foreach (var existing in existingAssignmentPackages)
         {
@@ -319,8 +319,34 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
             .ToListAsync(cancellationToken);
     }
 
+    #region Packages, Resources and Instances
+
     /// <inheritdoc/>
-    public async Task<bool> AddPackageToAssignment(Guid userId, Guid assignmentId, Guid packageId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<AssignmentPackage>> GetAssignmentPackages(Guid assignmentId, CancellationToken cancellationToken = default)
+    {
+        return await db.AssignmentPackages.AsNoTracking().Where(t => t.AssignmentId == assignmentId).Include(t => t.Package).ToListAsync();
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<AssignmentResource>> GetAssignmentResources(Guid assignmentId, CancellationToken cancellationToken = default)
+    {
+        return await db.AssignmentResources.AsNoTracking().Where(t => t.AssignmentId == assignmentId).Include(t => t.Resource).ToListAsync();
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<AssignmentInstance>> GetAssignmentInstances(Guid assignmentId, CancellationToken cancellationToken = default)
+    {
+        return await db.AssignmentInstances.AsNoTracking().Where(t => t.AssignmentId == assignmentId).Include(t => t.Resource).Include(t => t.Assignment).ToListAsync();
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<AssignmentInstance>> GetAssignmentInstances(Guid assignmentId, Guid resourceId, CancellationToken cancellationToken = default)
+    {
+        return await db.AssignmentInstances.AsNoTracking().Where(t => t.AssignmentId == assignmentId && t.ResourceId == resourceId).Include(t => t.Resource).Include(t => t.Assignment).ToListAsync();
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> AddAssignmentPackage(Guid userId, Guid assignmentId, Guid packageId, CancellationToken cancellationToken = default)
     {
         /*
         [X] Check if user is TS
@@ -340,33 +366,7 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
             .Where(t => t.FromId == assignment.FromId && t.ToId == userId)
             .ToListAsync(cancellationToken);
 
-        bool hasPackage = false;
-
-        var assignmentMatches = await db.AssignmentPackages.AsNoTracking()
-            .Where(t => t.PackageId == packageId && userAssignments.Select(t => t.Id)
-            .Contains(t.AssignmentId))
-            .ToListAsync(cancellationToken);
-
-        if (assignmentMatches != null && assignmentMatches.Any())
-        {
-            hasPackage = true;
-        }
-
-        if (!hasPackage)
-        {
-            var roleMatches = await db.RolePackages.AsNoTracking()
-                .Where(t => t.PackageId == packageId && userAssignments.Select(t => t.RoleId)
-                .Distinct()
-                .Contains(t.RoleId))
-                .ToListAsync(cancellationToken);
-
-            if (roleMatches != null && roleMatches.Any())
-            {
-                hasPackage = true;
-            }
-        }
-
-        if (!hasPackage)
+        if (!await HasPackage(assignment.FromId, userId, package.Id, cancellationToken))
         {
             throw new Exception(string.Format("User '{0}' does not have package '{1}'", user.Name, package.Name));
         }
@@ -390,18 +390,246 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
     }
 
     /// <inheritdoc/>
-    public Task<bool> AddResourceToAssignment(Guid userId, Guid assignmentId, Guid resourceId, CancellationToken cancellationToken = default)
+    public async Task<bool> AddAssignmentResource(Guid userId, Guid assignmentId, Guid resourceId, string policyPath, string policyVersion, CancellationToken cancellationToken = default)
     {
-        /*
-        [ ] Check if user is TS
-        [ ] Check if resource can be delegated
-        [ ] Check if user assignment.assignmentpackages has resources
-        [ ] Check if user assignment.roles has packages
-        [ ] Check if users has packages delegated?
-        */
+        var user = await db.Entities.AsNoTracking().SingleAsync(t => t.Id == userId, cancellationToken);
+        var assignment = await db.Assignments.AsNoTracking().SingleAsync(t => t.Id == assignmentId, cancellationToken);
+        var resource = await db.Resources.AsNoTracking().SingleAsync(t => t.Id == resourceId, cancellationToken);
 
-        throw new NotImplementedException();
+        // Check if user has AccessManager (Tilgangsstyrer) role
+        if (await HasRole(assignment.Id, user.Id, RoleConstants.AccessManager, cancellationToken))
+        {
+            throw new Exception("User does not have permission to add resource to assignment");
+        }
+
+        // Check if user has access to the resource
+        if (await HasResource(assignment.Id, user.Id, resource.Id, cancellationToken))
+        {
+            throw new Exception(string.Format("User '{0}' does not have resource '{1}' for '{2}'", user.Name, resource.Name, assignment.FromId));
+        }
+       
+        db.AssignmentResources.Add(new AssignmentResource()
+        {
+            Id = Guid.CreateVersion7(),
+            AssignmentId = assignment.Id,
+            ResourceId = resource.Id,
+            PolicyPath = policyPath,
+            PolicyVersion = policyVersion,
+        });
+
+        var result = await db.SaveChangesAsync(cancellationToken);
+
+        return result > 0;
     }
+
+    /// <inheritdoc />
+    public async Task<bool> AddAssignmentInstance(Guid userId, Guid assignmentId, Guid resourceId, string instanceId, string policyPath, string policyVersion, CancellationToken cancellationToken = default)
+    {
+        var user = await db.Entities.AsNoTracking().SingleAsync(t => t.Id == userId, cancellationToken);
+        var assignment = await db.Assignments.AsNoTracking().SingleAsync(t => t.Id == assignmentId, cancellationToken);
+        var resource = await db.Resources.AsNoTracking().SingleAsync(t => t.Id == resourceId, cancellationToken);
+
+        // Check if user has AccessManager (Tilgangsstyrer) role
+        if (await HasRole(assignment.Id, user.Id, RoleConstants.AccessManager, cancellationToken))
+        {
+            throw new Exception("User does not have permission to add resource to assignment");
+        }
+
+        // Check if user has access to the resource
+        if (await HasResource(assignment.Id, user.Id, resource.Id, cancellationToken))
+        {
+            throw new Exception(string.Format("User '{0}' does not have resource '{1}' for '{2}'", user.Name, resource.Name, assignment.FromId));
+        }
+
+        db.AssignmentInstances.Add(new AssignmentInstance()
+        {
+            Id = Guid.CreateVersion7(),
+            AssignmentId = assignment.Id,
+            ResourceId = resource.Id,
+            InstanceId = instanceId,
+            PolicyPath = policyPath,
+            PolicyVersion = policyVersion,
+        });
+
+
+        var result = await db.SaveChangesAsync(cancellationToken);
+
+        return result > 0;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> UpdateAssignmentResource(Guid userId, Guid assignmentId, Guid resourceId, string policyPath, string policyVersion, CancellationToken cancellationToken = default)
+    {
+        var user = await db.Entities.AsNoTracking().SingleAsync(t => t.Id == userId, cancellationToken);
+        var assignment = await db.Assignments.AsNoTracking().SingleAsync(t => t.Id == assignmentId, cancellationToken);
+        var resource = await db.Resources.AsNoTracking().SingleAsync(t => t.Id == resourceId, cancellationToken);
+
+        // Check if user has AccessManager (Tilgangsstyrer) role
+        if (await HasRole(assignment.Id, user.Id, RoleConstants.AccessManager, cancellationToken))
+        {
+            throw new Exception("User does not have permission to add resource to assignment");
+        }
+
+        // Check if user has access to the resource
+        if (await HasResource(assignment.Id, user.Id, resource.Id, cancellationToken))
+        {
+            throw new Exception(string.Format("User '{0}' does not have resource '{1}' for '{2}'", user.Name, resource.Name, assignment.FromId));
+        }
+
+        var res = await db.AssignmentResources.AsTracking().SingleAsync(t => t.AssignmentId == assignmentId && t.ResourceId == resource.Id, cancellationToken);
+
+        res.PolicyPath = policyPath;
+        res.PolicyVersion = policyVersion;
+
+        var result = await db.SaveChangesAsync(cancellationToken);
+
+        return result > 0;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> UpdateAssignmentInstance(Guid userId, Guid assignmentId, Guid resourceId, string instanceId, string policyPath, string policyVersion, CancellationToken cancellationToken = default)
+    {
+        var user = await db.Entities.AsNoTracking().SingleAsync(t => t.Id == userId, cancellationToken);
+        var assignment = await db.Assignments.AsNoTracking().SingleAsync(t => t.Id == assignmentId, cancellationToken);
+        var resource = await db.Resources.AsNoTracking().SingleAsync(t => t.Id == resourceId, cancellationToken);
+
+        // Check if user has AccessManager (Tilgangsstyrer) role
+        if (await HasRole(assignment.Id, user.Id, RoleConstants.AccessManager, cancellationToken))
+        {
+            throw new Exception("User does not have permission to add resource to assignment");
+        }
+
+        // Check if user has access to the resource
+        if (await HasResource(assignment.Id, user.Id, resource.Id, cancellationToken))
+        {
+            throw new Exception(string.Format("User '{0}' does not have resource '{1}' for '{2}'", user.Name, resource.Name, assignment.FromId));
+        }
+
+        var res = await db.AssignmentInstances.AsTracking().SingleAsync(t => t.AssignmentId == assignmentId && t.ResourceId == resource.Id && t.InstanceId == instanceId, cancellationToken);
+
+        res.PolicyPath = policyPath;
+        res.PolicyVersion = policyVersion;
+
+        var result = await db.SaveChangesAsync(cancellationToken);
+
+        return result > 0;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> RemoveAssignmentPackage(Guid userId, Guid assignmentId, Guid packageId, CancellationToken cancellationToken = default)
+    {
+        var user = await db.Entities.AsNoTracking().SingleAsync(t => t.Id == userId, cancellationToken);
+        var assignment = await db.Assignments.AsNoTracking().SingleAsync(t => t.Id == assignmentId, cancellationToken);
+        var package = await db.Packages.AsNoTracking().SingleAsync(t => t.Id == packageId, cancellationToken);
+
+        // Check if user has AccessManager (Tilgangsstyrer) role
+        if (await HasRole(assignment.Id, user.Id, RoleConstants.AccessManager, cancellationToken))
+        {
+            throw new Exception("User does not have permission to add resource to assignment");
+        }
+
+        // Check if user has access to the package
+        if (await HasPackage(assignment.Id, user.Id, package.Id, cancellationToken))
+        {
+            throw new Exception(string.Format("User '{0}' does not have resource '{1}' for '{2}'", user.Name, package.Name, assignment.FromId));
+        }
+
+        var obj = await db.AssignmentPackages.SingleAsync(t => t.AssignmentId == assignment.Id && t.PackageId == package.Id, cancellationToken);
+        db.AssignmentPackages.Remove(obj);
+
+        var result = await db.SaveChangesAsync(cancellationToken);
+
+        return result > 0;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> RemoveAssignmentResource(Guid userId, Guid assignmentId, Guid resourceId, CancellationToken cancellationToken = default)
+    {
+        var user = await db.Entities.AsNoTracking().SingleAsync(t => t.Id == userId, cancellationToken);
+        var assignment = await db.Assignments.AsNoTracking().SingleAsync(t => t.Id == assignmentId, cancellationToken);
+        var resource = await db.Resources.AsNoTracking().SingleAsync(t => t.Id == resourceId, cancellationToken);
+
+        // Check if user has AccessManager (Tilgangsstyrer) role
+        if (await HasRole(assignment.Id, user.Id, RoleConstants.AccessManager, cancellationToken))
+        {
+            throw new Exception("User does not have permission to add resource to assignment");
+        }
+
+        // Check if user has access to the resource
+        if (await HasResource(assignment.Id, user.Id, resource.Id, cancellationToken))
+        {
+            throw new Exception(string.Format("User '{0}' does not have resource '{1}' for '{2}'", user.Name, resource.Name, assignment.FromId));
+        }
+
+        var obj = await db.AssignmentResources.SingleAsync(t => t.AssignmentId == assignment.Id && t.ResourceId == resource.Id, cancellationToken);
+        db.AssignmentResources.Remove(obj);
+
+        var result = await db.SaveChangesAsync(cancellationToken);
+
+        return result > 0;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> RemoveAssignmentInstance(Guid userId, Guid assignmentId, Guid resourceId, string instanceId, CancellationToken cancellationToken = default)
+    {
+        var user = await db.Entities.AsNoTracking().SingleAsync(t => t.Id == userId, cancellationToken);
+        var assignment = await db.Assignments.AsNoTracking().SingleAsync(t => t.Id == assignmentId, cancellationToken);
+        var resource = await db.Resources.AsNoTracking().SingleAsync(t => t.Id == resourceId, cancellationToken);
+
+        // Check if user has AccessManager (Tilgangsstyrer) role
+        if (await HasRole(assignment.Id, user.Id, RoleConstants.AccessManager, cancellationToken))
+        {
+            throw new Exception("User does not have permission to add resource to assignment");
+        }
+
+        // Check if user has access to the resource
+        if (await HasResource(assignment.Id, user.Id, resource.Id, cancellationToken))
+        {
+            throw new Exception(string.Format("User '{0}' does not have resource '{1}' for '{2}'", user.Name, resource.Name, assignment.FromId));
+        }
+
+        var obj = await db.AssignmentInstances.SingleAsync(t => t.AssignmentId == assignment.Id && t.ResourceId == resource.Id && t.InstanceId == instanceId, cancellationToken);
+        db.AssignmentInstances.Remove(obj);
+
+        var result = await db.SaveChangesAsync(cancellationToken);
+
+        return result > 0;
+    }
+
+    private async Task<bool> HasRole(Guid fromId, Guid toId, Guid roleId, CancellationToken cancellationToken)
+    {
+        return await db.Assignments.AsNoTracking().AnyAsync(t => t.FromId == fromId && t.ToId == toId && t.RoleId == roleId, cancellationToken);
+    }
+
+    private async Task<bool> HasPackage(Guid fromId, Guid toId, Guid packageId, CancellationToken cancellationToken)
+    {
+        // Filter needs to be tested
+        var result = await connectionQuery.GetConnectionsFromOthersAsync(new ConnectionQueryFilter()
+        {
+            FromIds = [fromId],
+            ToIds = [toId],
+            PackageIds = [packageId],
+            IncludePackages = true,
+        });
+
+        return result.Any();
+    }
+
+    private async Task<bool> HasResource(Guid fromId, Guid toId, Guid resourceId, CancellationToken cancellationToken)
+    {
+        // Filter needs to be tested
+        var result = await connectionQuery.GetConnectionsFromOthersAsync(new ConnectionQueryFilter()
+        {
+            FromIds = [fromId],
+            ToIds = [toId],
+            ResourceIds = [resourceId],
+            IncludeResource = true,
+        });
+
+        return result.Any();
+    }
+
+    #endregion
 
     /// <inheritdoc/>
     public async Task<ProblemInstance> DeleteAssignment(Guid fromEntityId, Guid toEntityId, string roleCode, bool cascade = false, CancellationToken cancellationToken = default)
@@ -678,10 +906,7 @@ public class AssignmentService(AppDbContext db) : IAssignmentService
     }
     */
 
-    public async Task<IEnumerable<Resource>> GetAssignmentResources(Guid assignmentId, CancellationToken cancellationToken = default)
-    {
-        return await db.AssignmentResources.AsNoTracking().Where(t => t.AssignmentId == assignmentId).Include(t => t.Resource).Select(t => t.Resource).ToListAsync();
-    }
+    
 
     /// <inheritdoc/>
     public async Task<IEnumerable<AssignmentOrRolePackageAccess>> GetPackagesForAssignment(Guid assignmentId, CancellationToken cancellationToken = default)
