@@ -104,6 +104,7 @@ public class IngestService : IIngestService
 
         var sb = new StringBuilder();
 
+        sb.AppendLine("BEGIN TRANSACTION;");
         sb.AppendLine(GetAuditVariables(auditValues));
         sb.AppendLine($"MERGE INTO {table.SchemaName}.{table.TableName} AS target USING {ingestTableName} AS source ON {mergeMatchStatement}");
         sb.AppendLine($"WHEN MATCHED AND ({mergeUpdateUnMatchStatement}) THEN ");
@@ -111,6 +112,7 @@ public class IngestService : IIngestService
         sb.AppendLine($"WHEN NOT MATCHED THEN ");
         // sb.AppendLine($"INSERT ({insertColumns}) VALUES ({insertValues});");
         sb.AppendLine($"INSERT ({insertColumns},audit_changedby,audit_changedbysystem,audit_changeoperation) VALUES ({insertValues},'{auditValues.ChangedBy}','{auditValues.ChangedBySystem}','{auditValues.OperationId}');");
+        sb.AppendLine("COMMIT TRANSACTION;");
 
         string mergeStatement = sb.ToString();
 
