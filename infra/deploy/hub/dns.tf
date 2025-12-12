@@ -3,7 +3,6 @@ locals {
   zones = [
     "privatelink.servicebus.windows.net",
     "privatelink.blob.core.windows.net",
-    "privatelink.postgres.database.azure.com",
     "privatelink.vaultcore.azure.net",
     "privatelink.azconfig.io"
   ]

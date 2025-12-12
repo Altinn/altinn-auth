@@ -47,6 +47,15 @@ vpn_routes = {
   AuthorizationInfrastructure = [
     "10.202.0.0/16"
   ],
+  AccesssManagementDb = [
+    "4.219.3.44" #at22
+  ],
+  AuditlogsDb = [
+    "20.251.213.147" #at22
+  ],
+  AuthenticationDb = [
+    "51.13.60.10" # at22
+  ],
 
   # Use  "name": "ServiceBus.NorwayEast"
   # https://www.microsoft.com/en-us/download/details.aspx?id=56519"
