@@ -662,14 +662,14 @@ public static class PackageConstants
     /// - <c>Id:</c> c0eb20c1-2268-48f5-88c5-f26cb47a6b1f
     /// - <c>URN:</c> urn:altinn:accesspackage:eksplisitt
     /// - <c>Provider:</c> Altinn3
-    /// - <c>Description:</c> Denne fullmakten er ikke delegerbar, og er ikke knyttet til noen roller i ENhetsregisteret. Tilgang til tjenester knyttet til denne pakken kan gis av Hovedadministrator gjennom enkeltrettighetsdelegering.
+    /// - <c>Description:</c> Denne fullmakten er ikke delegerbar, og er ikke knyttet til noen roller i Enhetsregisteret. Tilgang til tjenester knyttet til denne pakken kan gis av Hovedadministrator gjennom enkeltrettighetsdelegering.
     /// </remarks>
     public static ConstantDefinition<Package> ExplicitServiceDelegation { get; } = new ConstantDefinition<Package>("c0eb20c1-2268-48f5-88c5-f26cb47a6b1f")
     {
         Entity = new()
         {
             Name = "Eksplisitt tjenestedelegering",
-            Description = "Denne fullmakten er ikke delegerbar, og er ikke knyttet til noen roller i ENhetsregisteret. Tilgang til tjenester knyttet til denne pakken kan gis av Hovedadministrator gjennom enkeltrettighetsdelegering.",
+            Description = "Denne fullmakten er ikke delegerbar, og er ikke knyttet til noen roller i Enhetsregisteret. Tilgang til tjenester knyttet til denne pakken kan gis av Hovedadministrator gjennom enkeltrettighetsdelegering.",
             Urn = "urn:altinn:accesspackage:eksplisitt",
             IsDelegable = false,
             HasResources = true,
