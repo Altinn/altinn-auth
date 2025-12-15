@@ -304,8 +304,8 @@ namespace AccessMgmt.Tests.Controllers.Bff
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             List<ConsentRequestDetailsBffDto> consentRequestList = JsonSerializer.Deserialize<List<ConsentRequestDetailsBffDto>>(responseText, _jsonOptions);
             Assert.Single(consentRequestList);
-            Assert.True(consentRequestList[0].ConsentRequestEvents.Any(e => e.EventType == Altinn.Authorization.Api.Contracts.Consent.ConsentRequestEventType.Expired));
-            Assert.True(consentRequestList[0].ConsentRequestEvents.Any(e => e.EventType == Altinn.Authorization.Api.Contracts.Consent.ConsentRequestEventType.Accepted));
+            Assert.Contains(consentRequestList[0].ConsentRequestEvents, e => e.EventType == Altinn.Authorization.Api.Contracts.Consent.ConsentRequestEventType.Expired);
+            Assert.Contains(consentRequestList[0].ConsentRequestEvents, e => e.EventType == Altinn.Authorization.Api.Contracts.Consent.ConsentRequestEventType.Accepted);
         }
 
         [Fact]

@@ -467,7 +467,6 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             PolicyVersion = policyVersion,
         });
 
-
         var result = await db.SaveChangesAsync(cancellationToken);
 
         return result > 0;
@@ -942,8 +941,6 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         return await GetInheritedAssignment(fromId, toId, roleId, cancellationToken: cancellationToken);
     }
     */
-
-    
 
     /// <inheritdoc/>
     public async Task<IEnumerable<AssignmentOrRolePackageAccess>> GetPackagesForAssignment(Guid assignmentId, CancellationToken cancellationToken = default)

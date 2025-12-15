@@ -177,10 +177,12 @@ public static class BuilderExtensions
 
     public static EntityTypeBuilder EnableAudit(this EntityTypeBuilder builder)
     {
-        //builder.Property("ChangedBy").HasColumnName("audit_changedby");
-        //builder.Property("ChangedBySystem").HasColumnName("audit_changedbysystem");
-        //builder.Property("ChangeOperation").HasColumnName("audit_changeoperation");
-        //builder.Property("ValidFrom").HasColumnName("audit_validfrom");
+        /*
+        builder.Property("ChangedBy").HasColumnName("audit_changedby");
+        builder.Property("ChangedBySystem").HasColumnName("audit_changedbysystem");
+        builder.Property("ChangeOperation").HasColumnName("audit_changeoperation");
+        builder.Property("ValidFrom").HasColumnName("audit_validfrom");
+        */
 
         return builder.HasAnnotation("EnableAudit", true);
     }

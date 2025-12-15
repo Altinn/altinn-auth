@@ -1,3 +1,5 @@
+﻿using System.Collections.Concurrent;
+using System.Reflection;
 using Altinn.AccessManagement.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
@@ -7,12 +9,9 @@ using Altinn.AccessManagement.Persistence;
 using Altinn.AccessManagement.Persistence.Configuration;
 using Altinn.AccessManagement.Tests.Seeds;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
-using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Npgsql;
-using System.Collections.Concurrent;
-using System.Reflection;
 using Testcontainers.PostgreSql;
 using Xunit.Sdk;
 using Yuniql.Core;
@@ -207,7 +206,6 @@ public static class PostgresServer
     /// </summary>
     public static PostgresDatabase NewEFDatabase()
     {
-
         Mutex.WaitOne();
         try
         {
@@ -235,7 +233,6 @@ public static class PostgresServer
         {
             Mutex.ReleaseMutex();
         }
-
     }
 }
 
@@ -270,7 +267,7 @@ public class PostgresDatabase(string dbname, string connectionString) : IOptions
         Username = PostgresServer.DbAdminName,
         Password = PostgresServer.DbPassword,
         IncludeErrorDetail = true,
-        // Pooling enabled (remove previous Pooling = false)
+        //// Pooling enabled (remove previous Pooling = false)
         Pooling = true,
         ConnectionIdleLifetime = 30,
         MinPoolSize = 0,

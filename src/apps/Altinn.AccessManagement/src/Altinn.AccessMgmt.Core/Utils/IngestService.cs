@@ -110,7 +110,7 @@ public class IngestService : IIngestService
         sb.AppendLine($"WHEN MATCHED AND ({mergeUpdateUnMatchStatement}) THEN ");
         sb.AppendLine($"UPDATE SET {mergeUpdateStatement}");
         sb.AppendLine($"WHEN NOT MATCHED THEN ");
-        // sb.AppendLine($"INSERT ({insertColumns}) VALUES ({insertValues});");
+        //// sb.AppendLine($"INSERT ({insertColumns}) VALUES ({insertValues});");
         sb.AppendLine($"INSERT ({insertColumns},audit_changedby,audit_changedbysystem,audit_changeoperation) VALUES ({insertValues},'{auditValues.ChangedBy}','{auditValues.ChangedBySystem}','{auditValues.OperationId}');");
         sb.AppendLine("COMMIT TRANSACTION;");
 
@@ -128,7 +128,6 @@ public class IngestService : IIngestService
 
         return res;
     }
-
 
     /// <inheritdoc />
     public async Task<int> IngestAndMergeData<T>(List<T> data, AuditValues auditValues, IEnumerable<string> matchColumns = null, CancellationToken cancellationToken = default)
@@ -172,7 +171,6 @@ public class IngestService : IIngestService
                     catch
                     {
                         Console.WriteLine($"Failed to write null in column '{c.Name}' for '{tableName}'.");
-                        //throw;
                     }
                 }
             }

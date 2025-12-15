@@ -85,7 +85,6 @@ public interface IAssignmentService
     /// <returns></returns>
     Task<bool> UpdateAssignmentInstance(Guid userId, Guid assignmentId, Guid resourceId, string instanceId, string policyPath, string policyVersion, CancellationToken cancellationToken = default);
 
-
     /// <summary>
     /// Adds a package to the delegation
     /// </summary>
@@ -103,7 +102,6 @@ public interface IAssignmentService
     /// </summary>
     /// <returns></returns>
     Task<bool> RemoveAssignmentInstance(Guid userId, Guid assignmentId, Guid resourceId, string instanceId, CancellationToken cancellationToken = default);
-
 
     /// <summary>
     /// Fetches assignment.

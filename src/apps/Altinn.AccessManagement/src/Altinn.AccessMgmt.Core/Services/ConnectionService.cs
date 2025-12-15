@@ -562,7 +562,9 @@ public partial class ConnectionService(
     }
 }
 
-/// <inheritdoc />
+/// <summary>
+/// Partial ConnectionService
+/// </summary>
 public partial class ConnectionService
 {
     /// <inheritdoc />
@@ -867,7 +869,8 @@ public partial class ConnectionService
                 FromId = connection.FromId,
                 ToId = connection.ToId,
                 FacilitatorId = connection.ViaId ?? Guid.Empty
-            } : null,
+            } 
+            : null,
             From = new SystemUserClientConnectionDto.Client()
             {
                 Id = connection.From.Id,
@@ -903,7 +906,8 @@ public partial class ConnectionService
                 Name = connection.Via.Name,
                 RefId = connection.Via.RefId,
                 ParentId = connection.Via.ParentId.HasValue ? connection.Via.ParentId.Value : null
-            } : null,
+            } 
+            : null,
             FacilitatorRole = connection.ViaRoleId.HasValue ? new SystemUserClientConnectionDto.ServiceProviderRole()
             {
                 Id = connection.ViaRole.Id,
@@ -912,7 +916,8 @@ public partial class ConnectionService
                 Description = connection.ViaRole.Description,
                 IsKeyRole = connection.ViaRole.IsKeyRole,
                 Urn = connection.ViaRole.Urn
-            } : null
+            } 
+            : null
         });
     }
     #endregion

@@ -698,7 +698,7 @@ public static class PackageConstants
     /// - <c>Description:</c> Denne tilgangspakken gir fullmakter til tjenester for å forvalte og koordinere tekniske grensesnitt mot Skatteetaten. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.
     /// </remarks>
     public static ConstantDefinition<Package> TechnicalInteractionWithTheNorwegianTaxAgency { get; } = new ConstantDefinition<Package>("1e36b4e3-2eff-4613-9f52-52cde5c1c0f3")
-        {
+    {
             Entity = new()
             {
                 Name = "Teknisk samhandling med Skatteetaten",

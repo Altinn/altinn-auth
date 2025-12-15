@@ -37,7 +37,7 @@ public class DelegationPackageDefinition : BaseDbDefinition<DelegationPackage>, 
         });
     }
 
-    private string PreMigrationScript_RemoveTranslations()
+    private static string PreMigrationScript_RemoveTranslations()
     {
         return """
             DROP VIEW IF EXISTS translation_history.DelegationPackage;

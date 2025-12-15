@@ -1,10 +1,8 @@
 ﻿using Altinn.AccessMgmt.Persistence.Core.Models;
 using Altinn.AccessMgmt.Persistence.Models;
-using Altinn.AccessMgmt.Persistence.Repositories;
 using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Models;
-using System.Reflection.Metadata.Ecma335;
 
 namespace Altinn.AccessMgmt.Persistence.Services;
 
@@ -278,7 +276,6 @@ public class DelegationService(
                         packagesRevoked++;
                     }
                 }
-
             }
         }
         catch (Exception ex)

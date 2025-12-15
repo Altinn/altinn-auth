@@ -7,14 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 
-public enum ConnectionQueryDirection { FromOthers, ToOthers }
-
 /// <summary>
 /// A query based on assignments and delegations
 /// </summary>
 public class ConnectionQuery(AppDbContext db)
 {
-
     public async Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthersAsync(ConnectionQueryFilter filter, bool useNewQuery = true, CancellationToken ct = default)
     {
         return await GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers, useNewQuery, ct);
@@ -1041,5 +1038,10 @@ internal static class ConnectionQueryExtensions
 
         return query.Where(t => ids.Contains(t.RoleId));
     }
+}
 
+public enum ConnectionQueryDirection
+{
+    FromOthers,
+    ToOthers
 }

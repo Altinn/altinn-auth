@@ -11,7 +11,6 @@ using Altinn.Authorization.Integration.Platform.SblBridge;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Threading;
 
 namespace Altinn.AccessMgmt.Core.HostedServices.Services
 {
@@ -183,7 +182,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
             }
             catch (Exception ex)
             {
-                throw new Exception(string.Format("Failed to convert model to Assignment. From:{0} To:{1} Role:{2}", model.FromPartyUuid, model.ToUserPartyUuid, model.RoleTypeCode));
+                throw new Exception(string.Format("Failed to convert model to Assignment. From:{0} To:{1} Role:{2}", model.FromPartyUuid, model.ToUserPartyUuid, model.RoleTypeCode), ex);
             }
         }
 

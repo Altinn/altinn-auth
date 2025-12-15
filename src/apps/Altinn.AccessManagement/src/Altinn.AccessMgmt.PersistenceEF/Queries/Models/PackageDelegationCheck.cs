@@ -1,4 +1,4 @@
-namespace Altinn.AccessMgmt.PersistenceEF.Queries.Models;
+﻿namespace Altinn.AccessMgmt.PersistenceEF.Queries.Models;
 
 /// <summary>
 /// Package delegation check model.
@@ -90,4 +90,3 @@ public class PackageDelegationCheck
         public string? ViaRoleUrn { get; set; }
     }
 }
-

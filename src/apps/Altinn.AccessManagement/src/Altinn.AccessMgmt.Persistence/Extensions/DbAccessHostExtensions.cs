@@ -129,7 +129,6 @@ public static partial class DbAccessHostExtensions
     {
         // Add definitions to the database definition registry
         DefineAllModels(host.Services);
-
         return host;
     }
 

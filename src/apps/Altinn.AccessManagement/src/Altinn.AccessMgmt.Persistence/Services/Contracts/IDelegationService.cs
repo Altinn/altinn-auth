@@ -41,7 +41,7 @@ public interface IDelegationService
     /// </summary>
     /// <param name="request">The delegation to import</param>
     /// <param name="options">ChangeRequestOptions</param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
     Task<IEnumerable<Delegation>> ImportClientDelegation(ImportClientDelegationRequestDto request, ChangeRequestOptions options, CancellationToken cancellationToken = default);
 
@@ -52,6 +52,7 @@ public interface IDelegationService
     /// Ensure that the request and options are properly configured before calling this method.</remarks>
     /// <param name="request">The request containing details of the client delegation to be revoked. Cannot be null.</param>
     /// <param name="options">Options for processing the change request, such as validation and logging preferences. Cannot be null.</param>
+    /// <param name="cancellationToken">CancellationToken</param>
     /// <returns>An integer indicating the number of delegations successfully revoked.</returns>
     Task<int> RevokeClientDelegation(ImportClientDelegationRequestDto request, ChangeRequestOptions options, CancellationToken cancellationToken = default);
 }

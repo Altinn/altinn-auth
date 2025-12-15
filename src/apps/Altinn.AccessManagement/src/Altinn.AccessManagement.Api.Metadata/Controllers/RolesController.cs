@@ -6,7 +6,6 @@ using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.AspNetCore.Mvc;
 
-
 namespace Altinn.AccessManagement.Api.Metadata.Controllers
 {
     /// <summary>

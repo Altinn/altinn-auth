@@ -25,7 +25,7 @@ public class ConnectionConfiguration : IEntityTypeConfiguration<Connection>
         builder.PropertyWithReference(navKey: t => t.Package, foreignKey: t => t.PackageId, principalKey: t => t.Id, required: false);
         builder.PropertyWithReference(navKey: t => t.Resource, foreignKey: t => t.ResourceId, principalKey: t => t.Id, required: false);
         builder.PropertyWithReference(navKey: t => t.Delegation, foreignKey: t => t.DelegationId, principalKey: t => t.Id, required: false);
-        //builder.PropertyWithReference(navKey: t => t.Instance, foreignKey: t => t.InstanceId, principalKey: t => t.Id, required: false);
+        //// builder.PropertyWithReference(navKey: t => t.Instance, foreignKey: t => t.InstanceId, principalKey: t => t.Id, required: false);
     }
 
     private string ViewCode()

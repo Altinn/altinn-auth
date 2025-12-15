@@ -57,7 +57,6 @@ public class RoleDto
     /// </summary>
     public Provider Provider { get; set; }
 
-
     /// <summary>
     /// Construct from Role
     /// </summary>

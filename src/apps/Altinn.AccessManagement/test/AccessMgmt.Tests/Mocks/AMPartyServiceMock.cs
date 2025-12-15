@@ -1,11 +1,6 @@
 ﻿using Altinn.AccessManagement.Core.Models.Party;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.Authorization.Api.Contracts.Register;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Altinn.AccessManagement.Tests.Mocks
 {

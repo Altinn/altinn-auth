@@ -111,7 +111,6 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
 
                             IEnumerable<CreateDelegationResponseDto> delegations = await delegationService.ImportClientDelegation(delegationData, audit, cancellationToken);
                         }
-
                     }
                 }
 

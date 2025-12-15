@@ -130,7 +130,6 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                                     string.Join(", ", packageUrns));
                             }
                         }
-
                     }
                 }
 

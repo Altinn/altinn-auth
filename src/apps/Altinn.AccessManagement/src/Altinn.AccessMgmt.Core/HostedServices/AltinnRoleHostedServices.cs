@@ -1,6 +1,5 @@
 ﻿using Altinn.AccessMgmt.Core.HostedServices.Contracts;
 using Altinn.AccessMgmt.Core.HostedServices.Services;
-using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Host.Lease;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -108,7 +107,6 @@ namespace Altinn.AccessMgmt.Core.HostedServices
             {
                 Log.SyncError(_logger, ex);
             }
-
         }
 
         private async Task SyncAltinnClientRoles(ILease lease, CancellationToken cancellationToken)
@@ -157,7 +155,6 @@ namespace Altinn.AccessMgmt.Core.HostedServices
             GC.SuppressFinalize(this);
         }
 
-        /// <inheritdoc/>
         public void Dispose(bool disposing)
         {
             if (disposing)

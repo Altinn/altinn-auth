@@ -95,7 +95,7 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
         };
 
         // Act
-        var result = await _translationService.TranslateAsync(role, "");
+        var result = await _translationService.TranslateAsync(role, string.Empty);
 
         // Assert
         Assert.Equal("Daglig leder", result.Name);

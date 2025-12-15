@@ -136,12 +136,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     private void ApplyViewConfiguration(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration<Connection>(new ConnectionConfiguration());
-        //modelBuilder.ApplyConfiguration<CompactEntity>(new CompactEntityConfiguration());
-        //modelBuilder.ApplyConfiguration<CompactRole>(new CompactRoleConfiguration());
-        //modelBuilder.ApplyConfiguration<CompactPackage>(new CompactPackageConfiguration());
-        //modelBuilder.ApplyConfiguration<CompactResource>(new CompactResourceConfiguration());
-
-        // modelBuilder.ApplyConfiguration<Relation>(new RelationConfiguration2());
+        
+        /*
+        modelBuilder.ApplyConfiguration<CompactEntity>(new CompactEntityConfiguration());
+        modelBuilder.ApplyConfiguration<CompactRole>(new CompactRoleConfiguration());
+        modelBuilder.ApplyConfiguration<CompactPackage>(new CompactPackageConfiguration());
+        modelBuilder.ApplyConfiguration<CompactResource>(new CompactResourceConfiguration());
+        
+        modelBuilder.ApplyConfiguration<Relation>(new RelationConfiguration2());
+        */
     }
 
     private void ApplyAuditConfiguration(ModelBuilder modelBuilder)

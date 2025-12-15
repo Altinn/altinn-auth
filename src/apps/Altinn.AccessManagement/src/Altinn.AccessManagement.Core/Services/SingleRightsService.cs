@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using Altinn.AccessManagement.Core.Asserters;
+﻿using Altinn.AccessManagement.Core.Asserters;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums;
@@ -21,7 +20,6 @@ using Altinn.Platform.Profile.Enums;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
-using Altinn.Urn.Json;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Altinn.AccessManagement.Core.Services
@@ -52,7 +50,8 @@ namespace Altinn.AccessManagement.Core.Services
         /// <param name="accessListsAuthorizationClient">A client for access list authorization actions.</param>
         /// <param name="profile">Client implementation for getting user profile</param>
         /// <param name="profileLookup">Service implementation for lookup of userprofile with lastname verification</param>
-        public SingleRightsService(IAttributeResolver resolver, IAssert<AttributeMatch> asserter, IContextRetrievalService contextRetrievalService, IPolicyInformationPoint pip, IPolicyAdministrationPoint pap, IAltinn2RightsClient altinn2RightsClient, IAccessListsAuthorizationClient accessListsAuthorizationClient, IProfileClient profile, IUserProfileLookupService profileLookup, IAMPartyService aMParty)
+        /// <param name="AMParty">AMPartyService</param>
+        public SingleRightsService(IAttributeResolver resolver, IAssert<AttributeMatch> asserter, IContextRetrievalService contextRetrievalService, IPolicyInformationPoint pip, IPolicyAdministrationPoint pap, IAltinn2RightsClient altinn2RightsClient, IAccessListsAuthorizationClient accessListsAuthorizationClient, IProfileClient profile, IUserProfileLookupService profileLookup, IAMPartyService AMParty)
         {
             _resolver = resolver;
             _asserter = asserter;
@@ -63,7 +62,7 @@ namespace Altinn.AccessManagement.Core.Services
             _accessListsAuthorizationClient = accessListsAuthorizationClient;
             _profile = profile;
             _profileLookup = profileLookup;
-            _aMParty = aMParty;
+            _aMParty = AMParty;
         }
 
         /// <inheritdoc/>
@@ -264,7 +263,7 @@ namespace Altinn.AccessManagement.Core.Services
                     else
                     {
                         MinimalParty performedByParty = await _aMParty.GetByPartyId(rule.DelegatedByPartyId.Value, cancellationToken);
-                        if ( performedByParty != null)
+                        if (performedByParty != null)
                         {
                             partyIdentifier = (DelegationHelper.GetUuidTypeFromPartyType(performedByParty.PartyType), performedByParty.PartyUuid);
                             partyIds[rule.DelegatedByPartyId.Value] = partyIdentifier;
@@ -287,14 +286,13 @@ namespace Altinn.AccessManagement.Core.Services
                 else
                 {
                     MinimalParty fromParty = await _aMParty.GetByPartyId(rule.OfferedByPartyId, cancellationToken);
-                    if( fromParty != null)
+                    if (fromParty != null)
                     {
                         partyIdentifier = (DelegationHelper.GetUuidTypeFromPartyType(fromParty.PartyType), fromParty.PartyUuid);
                         partyIds[rule.OfferedByPartyId] = partyIdentifier;
                         rule.OfferedByPartyType = partyIdentifier.Type;
                         rule.OfferedByPartyUuid = partyIdentifier.Uuid;
-                    }
-                    
+                    }    
                 }                                
             }
 
@@ -357,7 +355,7 @@ namespace Altinn.AccessManagement.Core.Services
                     }
                     else
                     {
-                        MinimalParty userProfile = await _aMParty.GetByUserId( userId, cancellationToken);
+                        MinimalParty userProfile = await _aMParty.GetByUserId(userId, cancellationToken);
                         if (userProfile != null)
                         {
                             partyIdentifier = DelegationHelper.GetUserUuidFromUserProfile(userProfile);

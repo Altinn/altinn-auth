@@ -172,5 +172,4 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
 
         return sb.ToString();
     }
-
 }

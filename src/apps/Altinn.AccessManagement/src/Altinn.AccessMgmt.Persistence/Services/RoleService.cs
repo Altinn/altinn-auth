@@ -146,6 +146,7 @@ public class RoleService(IRoleRepository roleRepository, IRoleLookupRepository r
                 role.LegacyRoleCode = legacyRoleCode.Value;
                 role.LegacyUrn = $"urn:altinn:rolecode:{legacyRoleCode.Value}";
             }
+
             roleDtos.Add(role);
         }
 
