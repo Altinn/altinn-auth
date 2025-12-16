@@ -21,7 +21,8 @@ public class PackageConfiguration : IEntityTypeConfiguration<Package>
         builder.Property(t => t.Urn);
         builder.Property(t => t.IsAssignable).HasDefaultValue(false);
         builder.Property(t => t.IsDelegable).HasDefaultValue(false);
-        builder.Property(t => t.HasResources);
+        builder.Property(t => t.IsAvailableForServiceOwners).HasDefaultValue(false);
+        builder.Property(t => t.Code);
 
         builder.PropertyWithReference(navKey: t => t.Provider, foreignKey: t => t.ProviderId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
         builder.PropertyWithReference(navKey: t => t.EntityType, foreignKey: t => t.EntityTypeId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);

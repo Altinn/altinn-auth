@@ -22,6 +22,9 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
         builder.Property(t => t.Description).IsRequired();
         builder.Property(t => t.IsKeyRole).HasDefaultValue(false);
         builder.Property(t => t.IsAssignable).HasDefaultValue(false);
+        builder.Property(t => t.IsAvailableForServiceOwners).HasDefaultValue(false);
+        builder.Property(t => t.LegacyCode);
+        builder.Property(t => t.LegacyUrn);
         builder.PropertyWithReference(navKey: t => t.Provider, foreignKey: t => t.ProviderId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
         builder.PropertyWithReference(navKey: t => t.EntityType, foreignKey: t => t.EntityTypeId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict, required: false);
 

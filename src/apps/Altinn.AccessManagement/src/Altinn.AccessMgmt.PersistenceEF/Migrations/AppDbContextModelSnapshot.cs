@@ -1266,6 +1266,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("audit_deletedbysystem");
 
+                    b.Property<string>("Code")
+                        .HasColumnType("text")
+                        .HasColumnName("code");
+
                     b.Property<string>("Description")
                         .HasColumnType("text")
                         .HasColumnName("description");
@@ -1281,6 +1285,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.Property<bool>("IsAssignable")
                         .HasColumnType("boolean")
                         .HasColumnName("isassignable");
+
+                    b.Property<bool>("IsAvailableForServiceOwners")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isavailableforserviceowners");
 
                     b.Property<bool>("IsDelegable")
                         .HasColumnType("boolean")
@@ -1634,9 +1642,21 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("isassignable");
 
+                    b.Property<bool>("IsAvailableForServiceOwners")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isavailableforserviceowners");
+
                     b.Property<bool>("IsKeyRole")
                         .HasColumnType("boolean")
                         .HasColumnName("iskeyrole");
+
+                    b.Property<string>("LegacyCode")
+                        .HasColumnType("text")
+                        .HasColumnName("legacycode");
+
+                    b.Property<string>("LegacyUrn")
+                        .HasColumnType("text")
+                        .HasColumnName("legacyurn");
 
                     b.Property<string>("Name")
                         .HasColumnType("text")
@@ -1654,62 +1674,6 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasName("pk_auditrole");
 
                     b.ToTable("auditrole", "dbo_history");
-                });
-
-            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Audit.AuditRoleLookup", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTimeOffset>("Audit_ValidFrom")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("audit_validfrom");
-
-                    b.Property<DateTimeOffset>("Audit_ValidTo")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("audit_validto");
-
-                    b.Property<string>("Audit_ChangeOperation")
-                        .HasColumnType("text")
-                        .HasColumnName("audit_changeoperation");
-
-                    b.Property<Guid?>("Audit_ChangedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("audit_changedby");
-
-                    b.Property<Guid?>("Audit_ChangedBySystem")
-                        .HasColumnType("uuid")
-                        .HasColumnName("audit_changedbysystem");
-
-                    b.Property<string>("Audit_DeleteOperation")
-                        .HasColumnType("text")
-                        .HasColumnName("audit_deleteoperation");
-
-                    b.Property<Guid?>("Audit_DeletedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("audit_deletedby");
-
-                    b.Property<Guid?>("Audit_DeletedBySystem")
-                        .HasColumnType("uuid")
-                        .HasColumnName("audit_deletedbysystem");
-
-                    b.Property<string>("Key")
-                        .HasColumnType("text")
-                        .HasColumnName("key");
-
-                    b.Property<Guid>("RoleId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("roleid");
-
-                    b.Property<string>("Value")
-                        .HasColumnType("text")
-                        .HasColumnName("value");
-
-                    b.HasKey("Id", "Audit_ValidFrom", "Audit_ValidTo")
-                        .HasName("pk_auditrolelookup");
-
-                    b.ToTable("auditrolelookup", "dbo_history");
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Audit.AuditRoleMap", b =>
@@ -2492,6 +2456,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("audit_validfrom");
 
+                    b.Property<string>("Code")
+                        .HasColumnType("text")
+                        .HasColumnName("code");
+
                     b.Property<string>("Description")
                         .HasColumnType("text")
                         .HasColumnName("description");
@@ -2509,6 +2477,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("isassignable");
+
+                    b.Property<bool>("IsAvailableForServiceOwners")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("isavailableforserviceowners");
 
                     b.Property<bool>("IsDelegable")
                         .ValueGeneratedOnAdd()
@@ -2839,11 +2813,25 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("isassignable");
 
+                    b.Property<bool>("IsAvailableForServiceOwners")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("isavailableforserviceowners");
+
                     b.Property<bool>("IsKeyRole")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("iskeyrole");
+
+                    b.Property<string>("LegacyCode")
+                        .HasColumnType("text")
+                        .HasColumnName("legacycode");
+
+                    b.Property<string>("LegacyUrn")
+                        .HasColumnType("text")
+                        .HasColumnName("legacyurn");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -2881,60 +2869,6 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasDatabaseName("ix_role_providerid_name");
 
                     b.ToTable("role", "dbo");
-
-                    b.HasAnnotation("EnableAudit", true);
-                });
-
-            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.RoleLookup", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Audit_ChangeOperation")
-                        .HasColumnType("text")
-                        .HasColumnName("audit_changeoperation");
-
-                    b.Property<Guid?>("Audit_ChangedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("audit_changedby");
-
-                    b.Property<Guid?>("Audit_ChangedBySystem")
-                        .HasColumnType("uuid")
-                        .HasColumnName("audit_changedbysystem");
-
-                    b.Property<DateTimeOffset>("Audit_ValidFrom")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("audit_validfrom");
-
-                    b.Property<string>("Key")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("key");
-
-                    b.Property<Guid>("RoleId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("roleid");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("value");
-
-                    b.HasKey("Id")
-                        .HasName("pk_rolelookup");
-
-                    b.HasIndex("RoleId")
-                        .HasDatabaseName("ix_rolelookup_roleid");
-
-                    b.HasIndex("RoleId", "Key")
-                        .IsUnique()
-                        .HasDatabaseName("ix_rolelookup_roleid_key");
-
-                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("RoleId", "Key"), new[] { "Value", "Id" });
-
-                    b.ToTable("rolelookup", "dbo");
 
                     b.HasAnnotation("EnableAudit", true);
                 });
@@ -3590,18 +3524,6 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.Navigation("EntityType");
 
                     b.Navigation("Provider");
-                });
-
-            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.RoleLookup", b =>
-                {
-                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Role", "Role")
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_rolelookup_role_roleid");
-
-                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.RoleMap", b =>

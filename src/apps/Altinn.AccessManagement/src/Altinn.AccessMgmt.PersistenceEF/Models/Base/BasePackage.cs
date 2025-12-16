@@ -56,7 +56,17 @@ public class BasePackage : BaseAudit, IEntityId, IEntityName, IEntityUrn
     public bool HasResources { get; set; }
 
     /// <summary>
+    /// Is available for ServiceOwners
+    /// </summary>
+    public bool IsAvailableForServiceOwners { get; set; }
+
+    /// <summary>
     /// Urn
     /// </summary>
     public string Urn { get; set; }
+
+    /// <summary>
+    /// Code
+    /// </summary>
+    public string Code { get; set; }
 }

@@ -94,10 +94,11 @@ public static partial class StaticDataIngest
                 package.EntityTypeId = seed.Entity.EntityTypeId;
                 package.AreaId = seed.Entity.AreaId;
                 package.Urn = seed.Entity.Urn;
+                package.Code = seed.Entity.Code;
                 package.Name = seed.Entity.Name;
                 package.Description = seed.Entity.Description;
                 package.IsDelegable = seed.Entity.IsDelegable;
-                package.HasResources = seed.Entity.HasResources;
+                package.IsAvailableForServiceOwners = seed.Entity.IsAvailableForServiceOwners;
                 package.IsAssignable = seed.Entity.IsAssignable;
             },
             cancellationToken);
@@ -114,6 +115,9 @@ public static partial class StaticDataIngest
                 role.EntityTypeId = seed.Entity.EntityTypeId;
                 role.IsAssignable = seed.Entity.IsAssignable;
                 role.IsKeyRole = seed.Entity.IsKeyRole;
+                role.LegacyUrn = seed.Entity.LegacyUrn;
+                role.LegacyCode = seed.Entity.LegacyCode;
+                role.IsAvailableForServiceOwners = seed.Entity.IsAvailableForServiceOwners;
                 role.ProviderId = seed.Entity.ProviderId;
                 role.Urn = seed.Entity.Urn;
             },
@@ -133,7 +137,6 @@ public static partial class StaticDataIngest
             cancellationToken
         );
 
-        await IngestRoleLookup(dbContext, cancellationToken);
         await IngestRoleMap(dbContext, cancellationToken);
         await IngestRolePackage(dbContext, cancellationToken);
         await IngestEntityVariantRole(dbContext, cancellationToken);

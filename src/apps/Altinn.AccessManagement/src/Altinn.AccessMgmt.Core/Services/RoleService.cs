@@ -1,11 +1,9 @@
 ﻿using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
-using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.FeatureManagement.Telemetry;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
@@ -28,11 +26,7 @@ public class RoleService: IRoleService
             return null;
         }
 
-        var roleDto = DtoMapper.Convert(role);
-
-        await GetSingleLegacyRoleCodeAndUrn(roleDto, cancellationToken);
-
-        return roleDto;
+        return DtoMapper.Convert(role);
     }
 
     /// <inheritdoc/>
@@ -44,8 +38,7 @@ public class RoleService: IRoleService
             return null;
         }
 
-        var roleDtos = roles.Select(DtoMapper.Convert);
-        return await GetLegacyRoleCodeAndUrn(roleDtos, cancellationToken);
+        return roles.Select(DtoMapper.Convert);
     }
 
     /// <inheritdoc />
@@ -57,8 +50,7 @@ public class RoleService: IRoleService
             return null;
         }
 
-        var roleDtos = roles.Select(DtoMapper.Convert);
-        return await GetLegacyRoleCodeAndUrn(roleDtos, cancellationToken);
+        return roles.Select(DtoMapper.Convert);
     }
 
     /// <inheritdoc />
@@ -70,63 +62,7 @@ public class RoleService: IRoleService
             return null;
         }
 
-        var roleDtos = roles.Select(DtoMapper.Convert);
-        return await GetLegacyRoleCodeAndUrn(roleDtos, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public async Task<RoleDto> GetByKeyValue(string key, string value, CancellationToken cancellationToken = default)
-    {
-        var res = (await Db.RoleLookups.AsNoTracking()
-            .Include(t => t.Role).ThenInclude(t => t.Provider)
-            .Include(t => t.Role).ThenInclude(t => t.EntityType)
-            .ToListAsync(cancellationToken)
-            ).FirstOrDefault(t => t.Key.Contains(key, StringComparison.OrdinalIgnoreCase) && t.Value.Contains(value, StringComparison.OrdinalIgnoreCase));
-
-        if (res == null)
-        {
-            return null;
-        }
-
-        var roleDto = DtoMapper.Convert(res.Role);
-        await GetSingleLegacyRoleCodeAndUrn(roleDto, cancellationToken);
-        return roleDto;
-    }
-
-    /// <inheritdoc />
-    public async Task<IEnumerable<string>> GetLookupKeys(CancellationToken cancellationToken = default)
-    {
-        return await Db.RoleLookups.AsNoTracking().Select(t => t.Key).Distinct().ToListAsync(cancellationToken);
-    }
-
-    private async Task<IEnumerable<RoleDto>> GetLegacyRoleCodeAndUrn(IEnumerable<RoleDto> roles, CancellationToken cancellationToken = default)
-    {
-        var roleLookup = await Db.RoleLookups.AsNoTracking().ToListAsync();
-        var roleDtos = new List<RoleDto>();
-
-        foreach (var role in roles)
-        {
-            var legacyRoleCode = roleLookup.FirstOrDefault(x => x.RoleId == role.Id && x.Key == "LegacyCode");
-            if (legacyRoleCode != null)
-            {
-                role.LegacyRoleCode = legacyRoleCode.Value;
-                role.LegacyUrn = $"urn:altinn:rolecode:{legacyRoleCode.Value}";
-            }
-
-            roleDtos.Add(role);
-        }
-
-        return roleDtos;
-    }
-
-    private async Task GetSingleLegacyRoleCodeAndUrn(RoleDto extRole, CancellationToken cancellationToken = default)
-    {
-        var legacyRoleCode = await Db.RoleLookups.AsNoTracking().Where(t => t.RoleId == extRole.Id && t.Key == "LegacyCode").FirstOrDefaultAsync();
-        if (legacyRoleCode != null)
-        {
-            extRole.LegacyRoleCode = legacyRoleCode.Value;
-            extRole.LegacyUrn = $"urn:altinn:rolecode:{legacyRoleCode.Value}";
-        }
+        return roles.Select(DtoMapper.Convert);
     }
 
     /// <inheritdoc/>

@@ -32,22 +32,6 @@ public interface IRoleService
     Task<RoleDto> GetById(Guid id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Get role based on Lookup
-    /// </summary>
-    /// <param name="key">Key from lookup</param>
-    /// <param name="value">Value from lookup</param>
-    /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns></returns>
-    Task<RoleDto> GetByKeyValue(string key, string value, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get possible lookup keys
-    /// </summary>
-    /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns></returns>
-    Task<IEnumerable<string>> GetLookupKeys(CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Get role for provider
     /// </summary>
     /// <param name="providerId">Provider identity</param>

@@ -63,8 +63,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<Role> Roles => Set<Role>();
 
-    public DbSet<RoleLookup> RoleLookups => Set<RoleLookup>();
-
     public DbSet<RoleMap> RoleMaps => Set<RoleMap>();
 
     public DbSet<RolePackage> RolePackages => Set<RolePackage>();
@@ -114,8 +112,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<AuditResourceType> AuditResourceTypes => Set<AuditResourceType>();
 
     public DbSet<AuditRole> AuditRoles => Set<AuditRole>();
-
-    public DbSet<AuditRoleLookup> AuditRoleLookups => Set<AuditRoleLookup>();
 
     public DbSet<AuditRoleMap> AuditRoleMaps => Set<AuditRoleMap>();
 
@@ -170,7 +166,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<AuditResource>(new AuditResourceConfiguration());
         modelBuilder.ApplyConfiguration<AuditResourceType>(new AuditResourceTypeConfiguration());
         modelBuilder.ApplyConfiguration<AuditRole>(new AuditRoleConfiguration());
-        modelBuilder.ApplyConfiguration<AuditRoleLookup>(new AuditRoleLookupConfiguration());
         modelBuilder.ApplyConfiguration<AuditRoleMap>(new AuditRoleMapConfiguration());
         modelBuilder.ApplyConfiguration<AuditRolePackage>(new AuditRolePackageConfiguration());
         modelBuilder.ApplyConfiguration<AuditRoleResource>(new AuditRoleResourceConfiguration());
@@ -202,7 +197,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<Resource>(new ResourceConfiguration());
         modelBuilder.ApplyConfiguration<ResourceType>(new ResourceTypeConfiguration());
         modelBuilder.ApplyConfiguration<Role>(new RoleConfiguration());
-        modelBuilder.ApplyConfiguration<RoleLookup>(new RoleLookupConfiguration());
         modelBuilder.ApplyConfiguration<RoleMap>(new RoleMapConfiguration());
         modelBuilder.ApplyConfiguration<RolePackage>(new RolePackageConfiguration());
         modelBuilder.ApplyConfiguration<RoleResource>(new RoleResourceConfiguration());

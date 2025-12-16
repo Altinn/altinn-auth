@@ -57,8 +57,8 @@ public partial class DtoMapper : IDtoMapper
             IsKeyRole = obj.IsKeyRole,
             Urn = obj.Urn,
             Provider = Convert(obj.Provider),
-            LegacyRoleCode = null,
-            LegacyUrn = null
+            LegacyRoleCode = obj.LegacyCode,
+            LegacyUrn = obj.LegacyUrn
         };
 
     /// <summary>Convert AreaGroup to AreaGroupDto.</summary>

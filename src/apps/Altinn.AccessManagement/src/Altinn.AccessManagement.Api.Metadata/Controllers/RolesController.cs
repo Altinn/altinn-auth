@@ -76,47 +76,6 @@ namespace Altinn.AccessManagement.Api.Metadata.Controllers
         }
 
         /// <summary>
-        /// Gets <see cref="RoleDto"/> with a key/pair value
-        /// </summary>
-        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        [Route("lookup")]
-        [HttpGet]
-        public async Task<ActionResult<RoleDto>> GetKeyPairValue([FromQuery] string key, [FromQuery] string value)
-        {
-            var res = await roleService.GetByKeyValue(key, value);
-            if (res == null)
-            {
-                return NotFound();
-            }
-
-            // Translate the role
-            var translated = await res.TranslateAsync(
-                translationService,
-                this.GetLanguageCode(),
-                this.AllowPartialTranslation());
-
-            return Ok(translated);
-        }
-
-        /// <summary>
-        /// Gets possible lookup keys for roles
-        /// </summary>
-        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        [Route("lookup/keys")]
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<string>>> GetKeys()
-        {
-            var res = await roleService.GetLookupKeys();
-            if (res == null)
-            {
-                return NotFound();
-            }
-
-            // No translation needed for lookup keys
-            return Ok(res);
-        }
-
-        /// <summary>
         /// Gets role packages
         /// </summary>
         [HttpGet("packages")]
