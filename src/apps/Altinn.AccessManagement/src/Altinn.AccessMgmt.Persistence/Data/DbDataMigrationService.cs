@@ -117,10 +117,10 @@ public class DbDataMigrationService(
             await migrationService.LogMigration<Area>(dataKey, string.Empty, 6);
         }
 
-        if (migrationService.NeedMigration<Package>(dataKey, 11))
+        if (migrationService.NeedMigration<Package>(dataKey, 12))
         {
             await IngestPackage(options: options, cancellationToken: cancellationToken);
-            await migrationService.LogMigration<Package>(dataKey, string.Empty, 11);
+            await migrationService.LogMigration<Package>(dataKey, string.Empty, 12);
         }
 
         if (migrationService.NeedMigration<RolePackage>(dataKey, 10))
