@@ -178,7 +178,7 @@ public class SystemUserClientDelegationController(
             return Problem($"You cannot removed assignments with this role '{assignment.Role.Code}', only '{RoleConstants.Agent.Entity.Code}'");
         }
 
-        var result = await assignmentService.DeleteAssignment(assignment.Id, cascade, cancellationToken);
+        var result = await assignmentService.DeleteAssignment(assignment.Id, cascade, cancellationToken: cancellationToken);
         if (result != null)
         {
             return Problem("Assignment is active in one or more delegations and cascadeflag is false.");

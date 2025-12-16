@@ -138,7 +138,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
                 await db.SaveChangesAsync(values, cancellationToken);
             }
         }
-        
+
         return result;
     }
 
@@ -701,7 +701,6 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         if (!role.IsAssignable)
         {
             errors.Add(ValidationErrors.UnableToRevokeRoleAssignment, "$QUERY/roleCode", [new("role", role.Code)]);
-
             if (errors.TryBuild(out errorResult))
             {
                 return errorResult;
@@ -747,7 +746,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     /// <param name="assignmentId">The id of the assignment to delete</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>dependencies on the assignment taht will be revoked together with the assignment if it is removed</returns>
-    private async Task<ValidationErrorBuilder> CheckCascadingAssignmentRevoke(Guid assignmentId, CancellationToken cancellationToken)
+    public async Task<ValidationErrorBuilder> CheckCascadingAssignmentRevoke(Guid assignmentId, CancellationToken cancellationToken)
     {
         ValidationErrorBuilder errors = default;
 
@@ -787,7 +786,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     }
 
     /// <inheritdoc/>
-    public async Task<ProblemInstance> DeleteAssignment(Guid assignmentId, bool cascade = false, CancellationToken cancellationToken = default)
+    public async Task<ProblemInstance> DeleteAssignment(Guid assignmentId, bool cascade = false, AuditValues audit = null, CancellationToken cancellationToken = default)
     {
         ValidationErrorBuilder errors = default;
         ValidationProblemInstance errorResult = default;
@@ -821,7 +820,16 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
 
         db.Assignments.Remove(existingAssignment);
 
-        var result = await db.SaveChangesAsync(cancellationToken);
+        int result;
+
+        if (audit == null)
+        {
+            result = await db.SaveChangesAsync(cancellationToken);
+        }
+        else
+        {
+            result = await db.SaveChangesAsync(audit, cancellationToken);
+        }
 
         if (result == 0)
         {
