@@ -473,7 +473,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     }
 
     /// <inheritdoc/>
-    public async Task<bool> UpdateAssignmentResource(Guid userId, Guid assignmentId, Guid resourceId, string policyPath, string policyVersion, CancellationToken cancellationToken = default)
+    public async Task<bool> UpsertAssignmentResource(Guid userId, Guid assignmentId, Guid resourceId, string policyPath, string policyVersion, CancellationToken cancellationToken = default)
     {
         var user = await db.Entities.AsNoTracking().SingleAsync(t => t.Id == userId, cancellationToken);
         var assignment = await db.Assignments.AsNoTracking().SingleAsync(t => t.Id == assignmentId, cancellationToken);
@@ -491,10 +491,25 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             throw new Exception(string.Format("User '{0}' does not have resource '{1}' for '{2}'", user.Name, resource.Name, assignment.FromId));
         }
 
-        var res = await db.AssignmentResources.AsTracking().SingleAsync(t => t.AssignmentId == assignmentId && t.ResourceId == resource.Id, cancellationToken);
+        var res = await db.AssignmentResources.AsTracking().FirstOrDefaultAsync(t => t.AssignmentId == assignmentId && t.ResourceId == resource.Id, cancellationToken);
 
-        res.PolicyPath = policyPath;
-        res.PolicyVersion = policyVersion;
+        if (res != null)
+        {
+            res.PolicyPath = policyPath;
+            res.PolicyVersion = policyVersion;
+        }
+        else
+        {
+            res = new AssignmentResource()
+            {
+                Id = Guid.CreateVersion7(),
+                AssignmentId = assignment.Id,
+                ResourceId = resource.Id,
+                PolicyPath = policyPath,
+                PolicyVersion = policyVersion,
+            };
+            db.AssignmentResources.Add(res);
+        }
 
         var result = await db.SaveChangesAsync(cancellationToken);
 
@@ -502,7 +517,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     }
 
     /// <inheritdoc />
-    public async Task<bool> UpdateAssignmentInstance(Guid userId, Guid assignmentId, Guid resourceId, string instanceId, string policyPath, string policyVersion, CancellationToken cancellationToken = default)
+    public async Task<bool> UpsertAssignmentInstance(Guid userId, Guid assignmentId, Guid resourceId, string instanceId, string policyPath, string policyVersion, CancellationToken cancellationToken = default)
     {
         var user = await db.Entities.AsNoTracking().SingleAsync(t => t.Id == userId, cancellationToken);
         var assignment = await db.Assignments.AsNoTracking().SingleAsync(t => t.Id == assignmentId, cancellationToken);
@@ -520,10 +535,26 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             throw new Exception(string.Format("User '{0}' does not have resource '{1}' for '{2}'", user.Name, resource.Name, assignment.FromId));
         }
 
-        var res = await db.AssignmentInstances.AsTracking().SingleAsync(t => t.AssignmentId == assignmentId && t.ResourceId == resource.Id && t.InstanceId == instanceId, cancellationToken);
+        var res = await db.AssignmentInstances.AsTracking().FirstOrDefaultAsync(t => t.AssignmentId == assignmentId && t.ResourceId == resource.Id && t.InstanceId == instanceId, cancellationToken);
 
-        res.PolicyPath = policyPath;
-        res.PolicyVersion = policyVersion;
+        if (res != null)
+        {
+            res.PolicyPath = policyPath;
+            res.PolicyVersion = policyVersion;
+        }
+        else
+        {
+            res = new AssignmentInstance()
+            {
+                Id = Guid.CreateVersion7(),
+                AssignmentId = assignment.Id,
+                ResourceId = resource.Id,
+                InstanceId = instanceId,
+                PolicyPath = policyPath,
+                PolicyVersion = policyVersion,
+            };
+            db.AssignmentInstances.Add(res);
+        }
 
         var result = await db.SaveChangesAsync(cancellationToken);
 
