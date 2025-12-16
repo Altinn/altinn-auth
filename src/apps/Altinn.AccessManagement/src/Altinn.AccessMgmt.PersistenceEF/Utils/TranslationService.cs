@@ -6,7 +6,21 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Utils;
 
-/// <inheritdoc />
+/// <summary>
+/// Translation service implementation for entity framework models.
+/// 
+/// IMPORTANT: This service expects pre-normalized ISO 639-2 three-letter language codes:
+/// - "eng" for English
+/// - "nob" for Norwegian Bokmål (base language)
+/// - "nno" for Norwegian Nynorsk
+/// 
+/// In HTTP request contexts, language code normalization is handled by the TranslationMiddleware,
+/// which converts Accept-Language header values (e.g., "en-US", "nb-NO") to ISO 639-2 codes
+/// before they reach this service.
+/// 
+/// For direct service calls (e.g., in unit tests), callers are responsible for providing
+/// normalized language codes.
+/// </summary>
 public class TranslationService : ITranslationService
 {
     private readonly AppDbContext _db;
@@ -61,18 +75,18 @@ public class TranslationService : ITranslationService
             return (false, source);
         }
 
-        // Normalize language code (handle different formats)
-        var normalizedLanguageCode = NormalizeLanguageCode(languageCode);
+        // Ensure we have a valid language code, default to Norwegian Bokmål if empty
+        var effectiveLanguageCode = string.IsNullOrWhiteSpace(languageCode) ? "nob" : languageCode;
 
         // Norwegian Bokmål is the base language - entities are already in Bokmål
         // Constants only provide translations for English (eng) and Norwegian Nynorsk (nno)
-        if (normalizedLanguageCode == "nob")
+        if (effectiveLanguageCode == "nob")
         {
             return (true, source); // Return original, it's already in Norwegian Bokmål
         }
 
         // Try to get translations from Constants first (for eng and nno only)
-        var constantTranslations = TryGetConstantTranslations(typeName, entityId, normalizedLanguageCode);
+        var constantTranslations = TryGetConstantTranslations(typeName, entityId, effectiveLanguageCode);
 
         Dictionary<string, string> transMap;
 
@@ -83,7 +97,7 @@ public class TranslationService : ITranslationService
         else
         {
             // Fall back to database with caching
-            var cacheKey = $"translation_{typeName}_{entityId}_{normalizedLanguageCode}";
+            var cacheKey = $"translation_{typeName}_{entityId}_{effectiveLanguageCode}";
             
             transMap = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
@@ -92,7 +106,7 @@ public class TranslationService : ITranslationService
                 return await _db.TranslationEntries
                     .Where(t => t.Type == typeName &&
                                 t.Id == entityId &&
-                                t.LanguageCode == normalizedLanguageCode)
+                                t.LanguageCode == effectiveLanguageCode)
                     .ToDictionaryAsync(t => t.FieldName, t => t.Value ?? string.Empty);
             });
         }
@@ -158,32 +172,6 @@ public class TranslationService : ITranslationService
         // Invalidate cache
         var cacheKey = $"translation_{translationEntry.Type}_{translationEntry.Id}_{translationEntry.LanguageCode}";
         _cache.Remove(cacheKey);
-    }
-
-    /// <summary>
-    /// Normalizes language codes to a consistent format.
-    /// Note: Norwegian Bokmål (nob) is the base language for all entities.
-    /// ConstantDefinition only provides translations for English (eng) and Norwegian Nynorsk (nno).
-    /// Handles: en, eng, en-US, en-GB → eng
-    ///          nb, nob, nb-NO, no → nob (base language, no translation needed)
-    ///          nn, nno, nn-NO → nno
-    /// </summary>
-    private static string NormalizeLanguageCode(string languageCode)
-    {
-        if (string.IsNullOrWhiteSpace(languageCode))
-        {
-            return "nob"; // Default to Norwegian Bokmål (base language)
-        }
-
-        var normalized = languageCode.ToLowerInvariant().Split('-')[0];
-
-        return normalized switch
-        {
-            "en" or "eng" => "eng",
-            "nb" or "nob" or "no" => "nob",  // Base language - no translation needed
-            "nn" or "nno" => "nno",
-            _ => "nob" // Unknown languages default to Norwegian Bokmål
-        };
     }
 
     /// <summary>

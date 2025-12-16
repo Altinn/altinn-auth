@@ -9,7 +9,9 @@ using Microsoft.Extensions.Caching.Memory;
 namespace AccessMgmt.Tests.Services;
 
 /// <summary>
-/// Tests for the TranslationService to ensure proper translation behavior
+/// Tests for the TranslationService to ensure proper translation behavior.
+/// NOTE: All tests now use normalized ISO 639-2 language codes (eng, nob, nno).
+/// Language code normalization should happen in the middleware before reaching the service.
 /// </summary>
 public class TranslationServiceTests : IClassFixture<PostgresFixture>
 {
@@ -41,8 +43,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Description = "Fysisk- eller juridisk person som har ansvaret for den daglige driften i en virksomhet"
         };
 
-        // Act
-        var result = await _translationService.TranslateAsync(role, "nb");
+        // Act - Using normalized language code
+        var result = await _translationService.TranslateAsync(role, "nob");
 
         // Assert
         Assert.Equal("Daglig leder", result.Name);
@@ -60,25 +62,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Description = "Test description"
         };
 
-        // Act
+        // Act - Using normalized language code
         var result = await _translationService.TranslateAsync(role, "nob");
-
-        // Assert
-        Assert.Equal("Daglig leder", result.Name);
-    }
-
-    [Fact]
-    public async Task TranslateAsync_WithNorwegianBokmål_No_ReturnsOriginal()
-    {
-        // Arrange
-        var role = new RoleDto
-        {
-            Id = RoleConstants.ManagingDirector.Id,
-            Name = "Daglig leder"
-        };
-
-        // Act
-        var result = await _translationService.TranslateAsync(role, "no");
 
         // Assert
         Assert.Equal("Daglig leder", result.Name);
@@ -116,8 +101,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Description = "Fysisk- eller juridisk person som har ansvaret for den daglige driften i en virksomhet"
         };
 
-        // Act
-        var result = await _translationService.TranslateAsync(role, "en");
+        // Act - Using normalized language code
+        var result = await _translationService.TranslateAsync(role, "eng");
 
         // Assert
         Assert.Equal("Managing Director", result.Name);
@@ -134,25 +119,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Name = "Daglig leder"
         };
 
-        // Act
+        // Act - Using normalized language code
         var result = await _translationService.TranslateAsync(role, "eng");
-
-        // Assert
-        Assert.Equal("Managing Director", result.Name);
-    }
-
-    [Fact]
-    public async Task TranslateAsync_WithEnglish_EnUS_ReturnsEnglishTranslation()
-    {
-        // Arrange
-        var role = new RoleDto
-        {
-            Id = RoleConstants.ManagingDirector.Id,
-            Name = "Daglig leder"
-        };
-
-        // Act
-        var result = await _translationService.TranslateAsync(role, "en-US");
 
         // Assert
         Assert.Equal("Managing Director", result.Name);
@@ -169,8 +137,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Description = "Skjenkebevillinger og serveringstillatelser"
         };
 
-        // Act
-        var result = await _translationService.TranslateAsync(package, "en");
+        // Act - Using normalized language code
+        var result = await _translationService.TranslateAsync(package, "eng");
 
         // Assert
         Assert.Equal("Catering", result.Name);
@@ -192,8 +160,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Description = "Fysisk- eller juridisk person som har ansvaret for den daglige driften i en virksomhet"
         };
 
-        // Act
-        var result = await _translationService.TranslateAsync(role, "nn");
+        // Act - Using normalized language code
+        var result = await _translationService.TranslateAsync(role, "nno");
 
         // Assert
         Assert.Equal("Dagleg leiar", result.Name);
@@ -210,7 +178,7 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Name = "Daglig leder"
         };
 
-        // Act
+        // Act - Using normalized language code
         var result = await _translationService.TranslateAsync(role, "nno");
 
         // Assert
@@ -227,8 +195,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Name = "Servering"
         };
 
-        // Act
-        var result = await _translationService.TranslateAsync(package, "nn");
+        // Act - Using normalized language code
+        var result = await _translationService.TranslateAsync(package, "nno");
 
         // Assert
         Assert.Equal("Servering", result.Name);
@@ -248,8 +216,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             new() { Id = RoleConstants.Accountant.Id, Name = "Regnskapsfører" }
         };
 
-        // Act
-        var result = await _translationService.TranslateCollectionAsync(roles, "en");
+        // Act - Using normalized language code
+        var result = await _translationService.TranslateCollectionAsync(roles, "eng");
         var resultList = result.ToList();
 
         // Assert
@@ -264,8 +232,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
         // Arrange
         var roles = new List<RoleDto>();
 
-        // Act
-        var result = await _translationService.TranslateCollectionAsync(roles, "en");
+        // Act - Using normalized language code
+        var result = await _translationService.TranslateCollectionAsync(roles, "eng");
 
         // Assert
         Assert.Empty(result);
@@ -281,8 +249,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             new() { Id = RoleConstants.Accountant.Id, Name = "Regnskapsfører" }
         };
 
-        // Act
-        var result = await _translationService.TranslateCollectionAsync(roles, "nb");
+        // Act - Using normalized language code
+        var result = await _translationService.TranslateCollectionAsync(roles, "nob");
         var resultList = result.ToList();
 
         // Assert
@@ -306,8 +274,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Description = "Test"
         };
 
-        // Act
-        var result = await _translationService.TranslateAsync(role, "en", allowPartial: true);
+        // Act - Using normalized language code
+        var result = await _translationService.TranslateAsync(role, "eng", allowPartial: true);
 
         // Assert - Name should be translated, Description might not match exactly
         Assert.Equal("Managing Director", result.Name);
@@ -324,8 +292,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Description = "Test Description"
         };
 
-        // Act
-        var result = await _translationService.TranslateAsync(role, "en", allowPartial: false);
+        // Act - Using normalized language code
+        var result = await _translationService.TranslateAsync(role, "eng", allowPartial: false);
 
         // Assert - Should return original since translation failed
         Assert.Equal("Test Role", result.Name);
@@ -346,8 +314,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Name = "Daglig leder"
         };
 
-        // Act
-        var (success, result) = await _translationService.TryTranslateAsync(role, "en");
+        // Act - Using normalized language code
+        var (success, result) = await _translationService.TryTranslateAsync(role, "eng");
 
         // Assert
         Assert.True(success);
@@ -364,8 +332,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Name = "Daglig leder"
         };
 
-        // Act
-        var (success, result) = await _translationService.TryTranslateAsync(role, "nb");
+        // Act - Using normalized language code
+        var (success, result) = await _translationService.TryTranslateAsync(role, "nob");
 
         // Assert
         Assert.True(success);
@@ -382,8 +350,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Name = "Test"
         };
 
-        // Act
-        var (success, result) = await _translationService.TryTranslateAsync(role, "en");
+        // Act - Using normalized language code
+        var (success, result) = await _translationService.TryTranslateAsync(role, "eng");
 
         // Assert
         Assert.False(success);
@@ -393,8 +361,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task TryTranslateAsync_WithNullSource_ReturnsFalse()
     {
-        // Act
-        var (success, result) = await _translationService.TryTranslateAsync<RoleDto>(null, "en");
+        // Act - Using normalized language code
+        var (success, result) = await _translationService.TryTranslateAsync<RoleDto>(null, "eng");
 
         // Assert
         Assert.False(success);
@@ -406,7 +374,7 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
     #region Edge Cases
 
     [Fact]
-    public async Task TranslateAsync_WithUnknownLanguage_DefaultsToNorwegianBokmål()
+    public async Task TranslateAsync_WithUnknownLanguage_ReturnsOriginal()
     {
         // Arrange
         var role = new RoleDto
@@ -415,10 +383,10 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Name = "Daglig leder"
         };
 
-        // Act
+        // Act - Using an unsupported language code
         var result = await _translationService.TranslateAsync(role, "xyz");
 
-        // Assert
+        // Assert - Should return original since language is not supported
         Assert.Equal("Daglig leder", result.Name);
     }
 
@@ -428,8 +396,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
         // Arrange - Create an object type that doesn't have an Id property
         var obj = new { Name = "Test" };
 
-        // Act
-        var result = await _translationService.TranslateAsync(obj, "en");
+        // Act - Using normalized language code
+        var result = await _translationService.TranslateAsync(obj, "eng");
 
         // Assert
         Assert.Equal("Test", result.Name);
@@ -445,8 +413,8 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Name = "Daglig leder"
         };
 
-        // Act
-        var result = _translationService.Translate(role, "en");
+        // Act - Using normalized language code
+        var result = _translationService.Translate(role, "eng");
 
         // Assert
         Assert.Equal("Managing Director", result.Name);
@@ -534,14 +502,14 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Name = "Original"
         };
 
-        // Act - First call (should query database)
-        var result1 = await _translationService.TranslateAsync(role, "en");
+        // Act - First call (should query database) - Using normalized language code
+        var result1 = await _translationService.TranslateAsync(role, "eng");
         
         // Reset the object
         role.Name = "Original";
         
         // Second call (should use cache)
-        var result2 = await _translationService.TranslateAsync(role, "en");
+        var result2 = await _translationService.TranslateAsync(role, "eng");
 
         // Assert
         Assert.Equal("Cached Translation", result1.Name);
