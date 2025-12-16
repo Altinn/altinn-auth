@@ -146,6 +146,18 @@
         "userid": 1908613,
         "partyuuid": "666C7D37-A553-4CAE-8AAC-C7A6A5869A94"
       }
+    },
+    "klient_org_other": {
+      "name": "UTGÅTT DJERV TIGER AS",
+      "orgno": "311109243",
+      "partyuuid": "2577575B-D995-485F-9968-35EF0090B1EE",
+      "dagligleder": {
+        "name": "USANNFERDIG KULTURPLANTE",
+        "pid": "09877196396",
+        "partyid": 50655025,
+        "userid": 1992767,
+        "partyuuid": "79611D79-09CE-4415-8C25-112EE63270D9"
+      }
     }
   },
   "Konkursbo_type_org": {
