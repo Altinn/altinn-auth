@@ -67,7 +67,7 @@ public class PartiesClient : IPartiesClient
             string token = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _platformSettings.JwtCookieName);
             var accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "access-management");
 
-            HttpResponseMessage response = await _client.GetAsync(token, endpointUrl, accessToken, cancellationToken);
+            HttpResponseMessage response = await _client.GetAsync(endpointUrl, token, accessToken, cancellationToken);
             string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (response.StatusCode == HttpStatusCode.OK)
@@ -150,7 +150,7 @@ public class PartiesClient : IPartiesClient
             string token = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _platformSettings.JwtCookieName);
             var accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "access-management");
 
-            HttpResponseMessage response = await _client.GetAsync(token, endpointUrl, accessToken, cancellationToken);
+            HttpResponseMessage response = await _client.GetAsync(endpointUrl, token, accessToken, cancellationToken);
             string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (response.StatusCode == HttpStatusCode.OK)

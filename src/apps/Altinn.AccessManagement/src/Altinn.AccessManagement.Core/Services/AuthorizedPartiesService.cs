@@ -3,11 +3,11 @@ using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessManagement.Core.Models.Profile;
 using Altinn.AccessManagement.Core.Models.SblBridge;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Contracts;
 using Altinn.AccessManagement.Core.Services.Interfaces;
-using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
 
@@ -60,7 +60,7 @@ public class AuthorizedPartiesService : IAuthorizedPartiesService
         Party subject = await _contextRetrievalService.GetPartyAsync(subjectPartyId, cancellationToken);
         if (subject?.PartyTypeName == PartyType.Person)
         {
-            UserProfile user = await _profile.GetUser(new() { Ssn = subject.SSN }, cancellationToken);
+            NewUserProfile user = await _profile.GetUser(new() { Ssn = subject.SSN }, cancellationToken);
             if (user != null)
             {
                 return await GetAuthorizedPartiesByUserId(user.UserId, filter, cancellationToken: cancellationToken);
@@ -85,7 +85,7 @@ public class AuthorizedPartiesService : IAuthorizedPartiesService
     /// <inheritdoc/>
     public async Task<List<AuthorizedParty>> GetAuthorizedPartiesByPersonId(string subjectNationalId, AuthorizedPartiesFilters filter, CancellationToken cancellationToken = default)
     {
-        UserProfile user = await _profile.GetUser(new() { Ssn = subjectNationalId }, cancellationToken);
+        NewUserProfile user = await _profile.GetUser(new() { Ssn = subjectNationalId }, cancellationToken);
         if (user != null)
         {
             return await GetAuthorizedPartiesByUserId(user.UserId, filter, cancellationToken: cancellationToken);
@@ -102,7 +102,7 @@ public class AuthorizedPartiesService : IAuthorizedPartiesService
             throw new ArgumentException(message: $"Not a well-formed uuid: {subjectPersonUuid}", paramName: nameof(subjectPersonUuid));
         }
 
-        UserProfile user = await _profile.GetUser(new() { UserUuid = personUuid }, cancellationToken);
+        NewUserProfile user = await _profile.GetUser(new() { UserUuid = personUuid }, cancellationToken);
         if (user != null && user.Party.PartyTypeName == PartyType.Person)
         {
             return await GetAuthorizedPartiesByUserId(user.UserId, filter, cancellationToken: cancellationToken);
@@ -143,7 +143,7 @@ public class AuthorizedPartiesService : IAuthorizedPartiesService
     /// <inheritdoc/>
     public async Task<List<AuthorizedParty>> GetAuthorizedPartiesByEnterpriseUsername(string subjectEnterpriseUsername, AuthorizedPartiesFilters filter, CancellationToken cancellationToken = default)
     {
-        UserProfile user = await _profile.GetUser(new() { Username = subjectEnterpriseUsername }, cancellationToken);
+        NewUserProfile user = await _profile.GetUser(new() { Username = subjectEnterpriseUsername }, cancellationToken);
         if (user != null && user.Party.PartyTypeName == PartyType.Organisation)
         {
             return await GetAuthorizedPartiesByUserId(user.UserId, filter, cancellationToken: cancellationToken);
@@ -160,7 +160,7 @@ public class AuthorizedPartiesService : IAuthorizedPartiesService
             throw new ArgumentException(message: $"Not a well-formed uuid: {subjectEnterpriseUserUuid}", paramName: nameof(subjectEnterpriseUserUuid));
         }
 
-        UserProfile user = await _profile.GetUser(new() { UserUuid = enterpriseUserUuid }, cancellationToken);
+        NewUserProfile user = await _profile.GetUser(new() { UserUuid = enterpriseUserUuid }, cancellationToken);
         if (user != null && user.Party.PartyTypeName == PartyType.Organisation)
         {
             return await GetAuthorizedPartiesByUserId(user.UserId, filter, cancellationToken: cancellationToken);

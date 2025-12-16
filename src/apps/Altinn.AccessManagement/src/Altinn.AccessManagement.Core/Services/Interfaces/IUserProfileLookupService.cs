@@ -12,6 +12,6 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         /// Gets the UserProfile of a user if the provided identifier and lastname is matching last name from freg
         /// </summary>
         /// <returns>Party</returns>
-        Task<UserProfile> GetUserProfile(int authnUserId, UserProfileLookup lookupIdentifier, string lastName);
+        Task<NewUserProfile> GetUserProfile(int authnUserId, UserProfileLookup lookupIdentifier, string lastName);
     }
 }

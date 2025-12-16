@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Altinn.AccessManagement.Core.Models;
+﻿using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessManagement.Core.Models.Profile;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Models.SblBridge;
 using Altinn.AccessManagement.Tests.Fixtures;
-using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Register.Models;
 
 namespace Altinn.AccessManagement.Tests.Contexts;
@@ -44,7 +41,7 @@ public class MockContext
     /// <summary>
     /// List of mock user profiles
     /// </summary>
-    public List<UserProfile> UserProfiles { get; set; } = [];
+    public List<NewUserProfile> UserProfiles { get; set; } = [];
 
     /// <summary>
     /// Dictionary of mainunits. Where key is partyid of the subunit and values are the main units.

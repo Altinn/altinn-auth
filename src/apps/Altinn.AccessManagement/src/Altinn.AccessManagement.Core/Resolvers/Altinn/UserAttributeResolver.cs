@@ -1,9 +1,9 @@
-using Altinn.AccessManagement.Core.Clients.Interfaces;
+﻿using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Models.Profile;
 using Altinn.AccessManagement.Core.Resolvers;
 using Altinn.AccessManagement.Core.Resolvers.Extensions;
 using Altinn.AccessManagement.Core.Services.Interfaces;
-using Altinn.Platform.Profile.Models;
 
 namespace Altinn.AccessManagement.Resolvers;
 
@@ -34,7 +34,7 @@ public class UserAttributeResolver : AttributeResolver
     /// </summary>
     public LeafResolver ResolveFromUser() => async (attributes, cancellationToken) =>
     {
-        UserProfile user = await _profile.GetUser(
+        NewUserProfile user = await _profile.GetUser(
             new() { UserId = attributes.GetRequiredInt(AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute) },
             cancellationToken);
 

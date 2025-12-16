@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 
 namespace Altinn.AccessManagement.Core.Extensions;
 
@@ -57,15 +57,20 @@ public static class HttpClientExtension
     /// Extension that add authorization header to request
     /// </summary>
     /// <param name="httpClient">The HttpClient</param>
-    /// <param name="authorizationToken">the authorization token (jwt)</param>
     /// <param name="requestUri">The request Uri</param>
+    /// <param name="authorizationToken">the authorization token (jwt)</param>
     /// <param name="platformAccessToken">The platformAccess tokens</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A HttpResponseMessage</returns>
-    public static Task<HttpResponseMessage> GetAsync(this HttpClient httpClient, string authorizationToken, string requestUri, string? platformAccessToken = null, CancellationToken cancellationToken = default)
+    public static Task<HttpResponseMessage> GetAsync(this HttpClient httpClient, string requestUri, string authorizationToken, string? platformAccessToken = null, CancellationToken cancellationToken = default)
     {
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-        request.Headers.Add("Authorization", "Bearer " + authorizationToken);
+
+        if (!string.IsNullOrEmpty(authorizationToken))
+        {
+            request.Headers.Add("Authorization", "Bearer " + authorizationToken);
+        }
+
         if (!string.IsNullOrEmpty(platformAccessToken))
         {
             request.Headers.Add("PlatformAccessToken", platformAccessToken);

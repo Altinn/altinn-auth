@@ -1,5 +1,6 @@
-using Altinn.AccessManagement.Core.Clients.Interfaces;
+﻿using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Models.Profile;
 using Altinn.AccessManagement.Core.Resolvers;
 using Altinn.AccessManagement.Core.Resolvers.Extensions;
 using Altinn.AccessManagement.Core.Services.Interfaces;
@@ -34,7 +35,7 @@ public class PartyAttributeResolver : AttributeResolver
     /// </summary>
     public LeafResolver ResolvePartyIdPersonUuidFromUser() => async (attributes, cancellationToken) =>
     {
-        UserProfile user = await _profile.GetUser(
+        NewUserProfile user = await _profile.GetUser(
             new() { UserId = attributes.GetRequiredInt(AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute) },
             cancellationToken);
 

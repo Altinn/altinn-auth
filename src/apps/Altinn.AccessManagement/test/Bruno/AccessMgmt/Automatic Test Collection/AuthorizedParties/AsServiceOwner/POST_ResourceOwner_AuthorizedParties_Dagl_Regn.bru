@@ -1,11 +1,11 @@
 meta {
   name: POST_ResourceOwner_AuthorizedParties_Dagl_Regn
   type: http
-  seq: 2
+  seq: 1
 }
 
 post {
-  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAltinn2=true&includeAltinn3=true&includeAccessPackages=true
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAltinn2=true&includeAltinn3=true&includeAccessPackages=true&includePartiesViaKeyRoles=true&includeSubParties=true&includeInactiveParties=true
   body: json
   auth: inherit
 }
@@ -14,6 +14,9 @@ params:query {
   includeAltinn2: true
   includeAltinn3: true
   includeAccessPackages: true
+  includePartiesViaKeyRoles: true
+  includeSubParties: true
+  includeInactiveParties: true
 }
 
 headers {
@@ -24,7 +27,7 @@ headers {
 body:json {
   {
     "type": "urn:altinn:person:identifier-no",
-    "value": "{{personId}}"
+    "value": "30856499983"
   }
 }
 
@@ -184,7 +187,7 @@ tests {
   
     assert.exists(targetParty, 'Expected KeyRole-party: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.name+' to exist');
     assert.notIncludeMembers(targetParty.authorizedAccessPackages, ["eksplisitt", "maskinporten-scopes-nuf", "post-til-virksomheten-med-taushetsbelagt-innhold"]);
-    expect(targetParty.authorizedAccessPackages.length, `authorizedAccessPackages for Dagl-KeyRole-Party contains unexpected packages`).to.equal(117);
+    expect(targetParty.authorizedAccessPackages.length, `authorizedAccessPackages for Dagl-KeyRole-Party contains unexpected packages`).to.equal(124);
     
   });
   

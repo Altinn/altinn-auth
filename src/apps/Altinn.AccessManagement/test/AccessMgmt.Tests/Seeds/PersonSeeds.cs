@@ -1,5 +1,5 @@
-using System;
-using Altinn.Platform.Profile.Models;
+﻿using System;
+using Altinn.AccessManagement.Core.Models.Profile;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
 
@@ -7,9 +7,9 @@ namespace Altinn.AccessManagement.Tests.Seeds;
 
 public static class PersonSeeds
 {
-    public abstract class PersonBase : UserProfile, IParty, IUserProfile
+    public abstract class PersonBase : NewUserProfile, IParty, IUserProfile
     {
-        public UserProfile UserProfile => this;
+        public NewUserProfile UserProfile => this;
     }
 
     public class Paula : PersonBase
@@ -52,7 +52,7 @@ public static class PersonSeeds
 
         public static Paula Defaults { get; } = new Paula();
 
-        public Paula(params Action<UserProfile>[] modifiers)
+        public Paula(params Action<NewUserProfile>[] modifiers)
         {
             base.UserId = UserId;
             base.UserUuid = UserUuid;
@@ -102,12 +102,15 @@ public static class PersonSeeds
         {
             Language = "no",
             PreSelectedPartyId = 0,
-            DoNotPromptForParty = false
+            DoNotPromptForParty = false,
+            ShouldShowDeletedEntities = true,
+            ShouldShowSubEntities = true,
+            ShowClientUnits = true
         };
 
         public static Olav Defaults { get; } = new Olav();
 
-        public Olav(params Action<UserProfile>[] modifiers)
+        public Olav(params Action<NewUserProfile>[] modifiers)
         {
             base.UserId = UserId;
             base.UserUuid = UserUuid;
@@ -162,7 +165,7 @@ public static class PersonSeeds
 
         public static Kasper Defaults { get; } = new Kasper();
 
-        public Kasper(params Action<UserProfile>[] modifiers)
+        public Kasper(params Action<NewUserProfile>[] modifiers)
         {
             base.UserId = UserId;
             base.UserUuid = UserUuid;
@@ -186,5 +189,5 @@ public interface IUserProfile
     /// <summary>
     /// Get User profile from seed
     /// </summary>
-    UserProfile UserProfile { get; }
+    NewUserProfile UserProfile { get; }
 }

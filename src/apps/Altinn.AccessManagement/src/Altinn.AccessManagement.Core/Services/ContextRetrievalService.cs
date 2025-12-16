@@ -1,8 +1,9 @@
-using Altinn.AccessManagement.Core.Clients.Interfaces;
+﻿using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Authentication;
+using Altinn.AccessManagement.Core.Models.Profile;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Models.SblBridge;
 using Altinn.AccessManagement.Core.Services.Interfaces;
@@ -24,6 +25,7 @@ public class ContextRetrievalService : IContextRetrievalService
     private readonly IAltinnRolesClient _altinnRolesClient;
     private readonly IPartiesClient _partiesClient;
     private readonly IAuthenticationClient _authenticationClient;
+    private readonly IProfileClient _profileClient;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ContextRetrievalService"/> class
@@ -34,7 +36,7 @@ public class ContextRetrievalService : IContextRetrievalService
     /// <param name="altinnRolesClient">The client for integration with the SBL Bridge for role information</param>
     /// <param name="partiesClient">The client for integration </param>
     /// <param name="authenticationClient">The client for integration with authentication</param>
-    public ContextRetrievalService(IOptions<CacheConfig> cacheConfig, IMemoryCache memoryCache, IResourceRegistryClient resourceRegistryClient, IAltinnRolesClient altinnRolesClient, IPartiesClient partiesClient, IAuthenticationClient authenticationClient)
+    public ContextRetrievalService(IOptions<CacheConfig> cacheConfig, IMemoryCache memoryCache, IResourceRegistryClient resourceRegistryClient, IAltinnRolesClient altinnRolesClient, IPartiesClient partiesClient, IAuthenticationClient authenticationClient, IProfileClient profileClient)
     {
         _cacheConfig = cacheConfig.Value;
         _memoryCache = memoryCache;
@@ -42,6 +44,7 @@ public class ContextRetrievalService : IContextRetrievalService
         _altinnRolesClient = altinnRolesClient;
         _partiesClient = partiesClient;
         _authenticationClient = authenticationClient;
+        _profileClient = profileClient;
     }
 
     /// <inheritdoc/>
@@ -518,5 +521,29 @@ public class ContextRetrievalService : IContextRetrievalService
         _memoryCache.Set(cacheKey, partyList, cacheEntryOptions);
 
         return partyList;
+    }
+
+    /// <inheritdoc/>
+    public async Task<NewUserProfile> GetNewUserProfile(int userId, CancellationToken cancellationToken = default)
+    {
+        string cacheKey = $"NewUserProfile:{userId}";
+
+        if (_memoryCache.TryGetValue(cacheKey, out NewUserProfile userprofile))
+        {
+            return userprofile;
+        }
+
+        userprofile = await _profileClient.GetUser(new UserProfileLookup { UserId = userId }, cancellationToken);
+
+        if (userprofile != null)
+        {
+            var cacheEntryOptions = new MemoryCacheEntryOptions()
+                .SetPriority(CacheItemPriority.High)
+                .SetAbsoluteExpiration(new TimeSpan(0, _cacheConfig.PartyCacheTimeout, 0));
+
+            _memoryCache.Set(cacheKey, userprofile, cacheEntryOptions);
+        }
+
+        return userprofile;
     }
 }

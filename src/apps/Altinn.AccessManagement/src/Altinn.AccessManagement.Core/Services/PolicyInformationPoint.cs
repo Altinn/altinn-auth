@@ -407,7 +407,7 @@ namespace Altinn.AccessManagement.Core.Services
 
                 if (includeInstanceDelegations)
                 {
-                    UserProfile subjectUserProfile = await _profile.GetUser(new UserProfileLookup { UserId = subjectUserId }, cancellationToken: cancellationToken);
+                    NewUserProfile subjectUserProfile = await _profile.GetUser(new UserProfileLookup { UserId = subjectUserId }, cancellationToken: cancellationToken);
                     if (subjectUserProfile != null)
                     {
                         toParties.Add(subjectUserProfile.Party.PartyUuid.Value);

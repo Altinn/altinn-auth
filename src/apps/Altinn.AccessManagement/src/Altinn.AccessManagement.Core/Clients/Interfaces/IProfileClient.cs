@@ -1,5 +1,4 @@
 ﻿using Altinn.AccessManagement.Core.Models.Profile;
-using Altinn.Platform.Profile.Models;
 
 namespace Altinn.AccessManagement.Core.Clients.Interfaces
 {
@@ -18,6 +17,6 @@ namespace Altinn.AccessManagement.Core.Clients.Interfaces
         /// <param name="userProfileLookup">Model for specifying the user identifier to use for the UserProfile lookup</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns>The UserProfile for the given user</returns>
-        Task<UserProfile> GetUser(UserProfileLookup userProfileLookup, CancellationToken cancellationToken = default);
+        Task<NewUserProfile> GetUser(UserProfileLookup userProfileLookup, CancellationToken cancellationToken = default);
     }
 }

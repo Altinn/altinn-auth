@@ -1,6 +1,4 @@
-using System;
-using System.Data;
-using System.Linq;
+﻿using System.Data;
 using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
@@ -8,8 +6,6 @@ using Altinn.AccessManagement.Core.Models.SblBridge;
 using Altinn.AccessManagement.Tests.Contexts;
 using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.Tests.Seeds;
-using Altinn.Platform.Register.Models;
-using Microsoft.AspNetCore.Hosting;
 
 namespace Altinn.AccessManagement.Tests.Scenarios;
 

@@ -91,12 +91,6 @@ public interface IAuthorizedPartyRepoServiceEf
     /// Get list of packages the to party has access to, on behalf of the from party
     /// </summary>
     /// <returns>Enumerable of package permissions</returns>
-    Task<IEnumerable<PackagePermissionDto>> GetPackagesFromOthers(Guid toId, IEnumerable<Guid>? fromIds = null, IEnumerable<Guid>? packageIds = null, AuthorizedPartiesFilters filters = null, CancellationToken ct = default);
-
-    /// <summary>
-    /// Get list of packages the to party has access to, on behalf of the from party
-    /// </summary>
-    /// <returns>Enumerable of package permissions</returns>
     Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthers(Guid toId, AuthorizedPartiesFilters filters = null, CancellationToken ct = default);
 
     /// <summary>

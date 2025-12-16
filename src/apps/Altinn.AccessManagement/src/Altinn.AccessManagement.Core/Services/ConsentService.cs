@@ -7,6 +7,7 @@ using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Models.Party;
+using Altinn.AccessManagement.Core.Models.Profile;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
@@ -541,7 +542,7 @@ namespace Altinn.AccessManagement.Core.Services
             List<Party> parties = await _partiesClient.GetPartiesAsync([fromParty], cancellationToken: cancellationToken);
             Party party = parties[0];
 
-            UserProfile profile = await _profileClient.GetUser(new Models.Profile.UserProfileLookup() { UserUuid = userUuid }, cancellationToken);
+            NewUserProfile profile = await _profileClient.GetUser(new UserProfileLookup() { UserUuid = userUuid }, cancellationToken);
             if (profile == null)
             {
                 return false;
@@ -558,7 +559,7 @@ namespace Altinn.AccessManagement.Core.Services
             return true;
         }
 
-        private async Task<bool> AuthorizeForConsentRight(Party party, UserProfile profile, ConsentRight consentRight)
+        private async Task<bool> AuthorizeForConsentRight(Party party, NewUserProfile profile, ConsentRight consentRight)
         {
             DelegationCheckResponse response = await GetDelegatableRightsForConsentResource(party, profile, consentRight);
 
@@ -590,7 +591,7 @@ namespace Altinn.AccessManagement.Core.Services
             return true;
         }
 
-        private async Task<DelegationCheckResponse> GetDelegatableRightsForConsentResource(Party party, UserProfile profile, ConsentRight consentRight)
+        private async Task<DelegationCheckResponse> GetDelegatableRightsForConsentResource(Party party, NewUserProfile profile, ConsentRight consentRight)
         {
             RightsDelegationCheckRequest rightsDelegationCheckRequest = new()
             {

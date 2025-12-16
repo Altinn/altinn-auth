@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
@@ -13,7 +13,7 @@ public class ProfileClientMock(MockContext context) : IProfileClient
     private MockContext Context { get; } = context;
 
     /// <inheritdoc/>
-    public Task<UserProfile> GetUser(UserProfileLookup userProfileLookup, CancellationToken cancellationToken = default) =>
+    public Task<NewUserProfile> GetUser(UserProfileLookup userProfileLookup, CancellationToken cancellationToken = default) =>
         Task.FromResult(Context.UserProfiles.FirstOrDefault(profile =>
             profile.UserId == userProfileLookup.UserId ||
             profile.UserName == userProfileLookup.Username ||

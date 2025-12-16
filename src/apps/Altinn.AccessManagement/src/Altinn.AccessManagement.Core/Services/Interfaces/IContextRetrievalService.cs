@@ -1,5 +1,6 @@
 ﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Authentication;
+using Altinn.AccessManagement.Core.Models.Profile;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Models.SblBridge;
 using Altinn.Platform.Register.Models;
@@ -182,4 +183,12 @@ public interface IContextRetrievalService
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>Dictionary of all resources per subject, having policy rules with the subject</returns>
     Task<IDictionary<string, IEnumerable<BaseAttribute>>> GetSubjectResources(IEnumerable<string> subjects, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the user profile for a given user id
+    /// </summary>
+    /// <param name="userId">The id of the user to retrieve the profile for</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns>The user profile</returns>
+    Task<NewUserProfile> GetNewUserProfile(int userId, CancellationToken cancellationToken = default);
 }

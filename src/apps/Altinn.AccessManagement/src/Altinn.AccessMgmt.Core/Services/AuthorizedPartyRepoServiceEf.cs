@@ -1,12 +1,11 @@
 ﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
-using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
-using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.Core.Services;
@@ -96,37 +95,6 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<PackagePermissionDto>> GetPackagesFromOthers(
-        Guid toId,
-        IEnumerable<Guid>? fromIds = null,
-        IEnumerable<Guid>? packageIds = null,
-        AuthorizedPartiesFilters filters = null,
-        CancellationToken ct = default)
-    {
-        var connections = await connectionQuery.GetConnectionsAsync(
-        new ConnectionQueryFilter()
-        {
-            ToIds = [toId],
-            FromIds = fromIds != null ? fromIds.ToList() : null,
-            PackageIds = packageIds != null ? packageIds.ToList() : null,
-            EnrichEntities = true,
-            IncludeSubConnections = true,
-            IncludeKeyRole = filters?.IncludePartiesViaKeyRoles ?? true,
-            IncludeMainUnitConnections = true,
-            IncludeDelegation = true,
-            IncludePackages = filters?.IncludeAccessPackages ?? false,
-            IncludeResource = false,
-            EnrichPackageResources = false,
-            ExcludeDeleted = false
-        },
-        ConnectionQueryDirection.FromOthers,
-        useNewQuery: true,
-        ct);
-
-        return DtoMapper.ConvertPackages(connections);
-    }
-
-    /// <inheritdoc />
     public async Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthers(
         Guid toId,
         AuthorizedPartiesFilters filters = null,
@@ -140,7 +108,7 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
             PackageIds = null,
             EnrichEntities = true,
             IncludeSubConnections = true,
-            IncludeKeyRole = filters?.IncludePartiesViaKeyRoles ?? true,
+            IncludeKeyRole = filters?.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.True ? true : false,
             IncludeMainUnitConnections = true,
             IncludeDelegation = true,
             IncludePackages = filters?.IncludeAccessPackages ?? false,
@@ -167,7 +135,7 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
             PackageIds = null,
             EnrichEntities = false,
             IncludeSubConnections = true,
-            IncludeKeyRole = filters?.IncludePartiesViaKeyRoles ?? true,
+            IncludeKeyRole = filters?.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.True ? true : false,
             IncludeMainUnitConnections = true,
             IncludeDelegation = true,
             IncludePackages = filters?.IncludeAccessPackages ?? true,

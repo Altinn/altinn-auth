@@ -1,4 +1,7 @@
-﻿namespace Altinn.AccessManagement.Core.Models;
+﻿using Altinn.AccessManagement.Core.Enums;
+using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
+
+namespace Altinn.AccessManagement.Core.Models;
 
 /// <summary>
 /// Filter inputs for authorized parties controller.
@@ -19,7 +22,11 @@ public class AuthorizedPartiesFilters
 
     public bool IncludeInstances { get; set; } = true;
 
-    public bool IncludePartiesViaKeyRoles { get; set; } = true;
+    public AuthorizedPartiesIncludeFilter IncludePartiesViaKeyRoles { get; set; } = AuthorizedPartiesIncludeFilter.True;
+
+    public AuthorizedPartiesIncludeFilter IncludeSubParties { get; set; } = AuthorizedPartiesIncludeFilter.True;
+
+    public AuthorizedPartiesIncludeFilter IncludeInactiveParties { get; set; } = AuthorizedPartiesIncludeFilter.True;
 
     /* Future filters to implement
     public string ProviderCode { get; set; } = null;

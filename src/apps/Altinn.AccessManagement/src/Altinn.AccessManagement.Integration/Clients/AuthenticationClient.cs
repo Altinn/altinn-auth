@@ -59,7 +59,7 @@ namespace Altinn.AccessManagement.Integration.Clients
                 string endpointUrl = $"systemuser/{partyId}/{systemUserId}";
                 string token = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _platformSettings.JwtCookieName);
 
-                HttpResponseMessage response = await _client.GetAsync(token, endpointUrl, cancellationToken: cancellationToken);
+                HttpResponseMessage response = await _client.GetAsync(endpointUrl, token, cancellationToken: cancellationToken);
 
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
@@ -100,7 +100,7 @@ namespace Altinn.AccessManagement.Integration.Clients
                 string endpointUrl = $"systemregister/{systemId}/rights?useoldformatforapp=true";
                 string token = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _platformSettings.JwtCookieName);
 
-                HttpResponseMessage response = await _client.GetAsync(token, endpointUrl, cancellationToken: cancellationToken);
+                HttpResponseMessage response = await _client.GetAsync(endpointUrl, token, cancellationToken: cancellationToken);
 
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
