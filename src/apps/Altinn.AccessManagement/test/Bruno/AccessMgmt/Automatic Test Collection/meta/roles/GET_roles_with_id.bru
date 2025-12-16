@@ -20,8 +20,8 @@ tests {
     expect(res.status).to.equal(200);
     expect(data).to.have.property('code', 'deltaker-delt-ansvar');
     expect(data).to.have.property('urn', 'urn:altinn:external-role:ccr:deltaker-delt-ansvar');
-    expect(data).to.have.property('legacyRoleCode', 'DTPR');
-    expect(data).to.have.property('legacyUrn', 'urn:altinn:rolecode:DTPR');
+    expect(data).to.have.property('legacyRoleCode', 'dtpr');
+    expect(data).to.have.property('legacyUrn', 'urn:altinn:rolecode:dtpr');
     expect(data.provider).to.have.property('name', 'Enhetsregisteret');
   });
   

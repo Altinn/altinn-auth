@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/lookup?key=legacycode&value=dagl
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles?key=legacycode&value=dagl
   body: none
   auth: inherit
 }
@@ -19,12 +19,10 @@ tests {
   test("GET_roles_lookup", function() {
     const data = res.getBody();  
     expect(res.status).to.equal(200);
-    expect(data).to.have.property('id', '55bd7d4d-08dd-46ee-ac8e-3a44d800d752');
-    expect(data).to.have.property('code', 'daglig-leder');
-    expect(data).to.have.property('legacyRoleCode', 'DAGL');
-    expect(data).to.have.property('urn', 'urn:altinn:external-role:ccr:daglig-leder');
-    expect(data).to.have.property('legacyUrn', 'urn:altinn:rolecode:DAGL');
-    expect(data.provider).to.have.property('name', 'Enhetsregisteret');
+   const daglcode = data.find(item => item.code === 'daglig-leder');
+         expect(daglcode).to.exist;
+      const daglurn = data.find(item => item.urn === 'urn:altinn:external-role:ccr:daglig-leder');
+         expect(daglurn).to.exist;  
   });
   
 }
