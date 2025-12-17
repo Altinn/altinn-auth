@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -113,8 +113,8 @@ namespace Altinn.Platform.Authorization.Controllers
 
         private async Task<bool> ValidateSelectedAuthorizedParty(int partyId, CancellationToken cancellationToken)
         {
-            IEnumerable<AuthorizedPartyDto> authorizedParties = await _accessMgmt.GetAuthorizedParties(cancellationToken);
-            return authorizedParties.Any(p => p.PartyId == partyId) || authorizedParties.Any(p => p.Subunits != null && p.Subunits.Count > 0 && p.Subunits.Exists(su => su.PartyId == partyId));
+            AuthorizedPartyDto authorizedParty = await _accessMgmt.GetAuthorizedParty(partyId, cancellationToken);
+            return authorizedParty != null;
         }
     }
 }

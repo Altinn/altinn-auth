@@ -1,9 +1,6 @@
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Threading.Tasks;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Platform.Authorization.Controllers;
 using Altinn.Platform.Authorization.IntegrationTests.MockServices;
@@ -18,7 +15,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Moq;
-using Xunit;
 
 namespace Altinn.Platform.Authorization.IntegrationTests
 {

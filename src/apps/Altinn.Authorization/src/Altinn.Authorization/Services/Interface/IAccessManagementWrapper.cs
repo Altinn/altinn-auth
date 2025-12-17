@@ -1,4 +1,4 @@
-using Altinn.Authorization.Models;
+﻿using Altinn.Authorization.Models;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Models.AccessManagement;
 
@@ -26,6 +26,12 @@ public interface IAccessManagementWrapper
     /// </summary>
     /// <returns>Enumerable of all the parties the user have access to</returns>
     public Task<IEnumerable<AuthorizedPartyDto>> GetAuthorizedParties(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Endpoint to get the a specific authorized party for the authenticated user, if the user has access
+    /// </summary>
+    /// <returns>The party, if the user have access</returns>
+    public Task<AuthorizedPartyDto> GetAuthorizedParty(int partyId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Endpoint to find all access packages a given to-party has for a given from-party
