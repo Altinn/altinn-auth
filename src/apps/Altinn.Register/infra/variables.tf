@@ -72,6 +72,15 @@ variable "enable_high_availability" {
   default = false
 }
 
+variable "key_vault_rbac" {
+  type = list(object({
+    id     = string
+    rolename = string
+  }))
+
+  default = []
+}
+
 variable "features" {
   type = object({
     a2_party_import = optional(object({
