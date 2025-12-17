@@ -26,14 +26,11 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 [Route("accessmanagement/api/v1/enduser/connections")]
 [FeatureGate(AccessManagementEnduserFeatureFlags.ControllerConnections)]
 [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
-public class ConnectionsController(IConnectionService connectionService, IUserProfileLookupService userProfileLookupService, IEntityService entityService) : ControllerBase
+public class ConnectionsController(
+    IConnectionService ConnectionService,
+    IUserProfileLookupService UserProfileLookupService,
+    IEntityService EntityService) : ControllerBase
 {
-    private IConnectionService ConnectionService { get; } = connectionService;
-
-    private IUserProfileLookupService UserProfileLookupService { get; } = userProfileLookupService;
-
-    private IEntityService EntityService { get; } = entityService;
-
     private Action<ConnectionOptions> ConfigureConnections { get; } = options =>
     {
         options.AllowedWriteFromEntityTypes = [EntityTypeConstants.Organisation];

@@ -1,4 +1,4 @@
-﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
+namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 
 /// <summary>
 /// Model representing a connected client party, meaning a party which has been authorized for one or more accesses, either directly or through role(s), access packages, resources or resource instances.
@@ -7,85 +7,28 @@
 public class ClientDto
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="ClientDto"/> class.
-    /// </summary>
-    public ClientDto()
-    {
-    }
-
-    /// <summary>
     /// Gets or sets the party
     /// </summary>
-    public ClientParty Party { get; set; }
+    public CompactEntityDto Client { get; set; }
 
     /// <summary>
     /// Gets or sets a collection of all access information for the client 
     /// </summary>
-    public List<ClientRoleAccessPackages> Access { get; set; } = [];
+    public List<RoleAccessPackages> Access { get; set; } = [];
 
     /// <summary>
     /// Composite Key instances
     /// </summary>
-    public class ClientParty
+    public class RoleAccessPackages
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ClientParty"/> class.
+        /// Roles
         /// </summary>
-        public ClientParty()
-        {
-        }
-
-        /// <summary>
-        /// Gets or sets the universally unique identifier of the party
-        /// </summary>
-        public Guid Id { get; set; }
-
-        /// <summary>
-        /// Gets or sets the name of the party
-        /// </summary>
-        public string Name { get; set; }
-
-        /// <summary>
-        /// Gets the organization number if the party is an organization
-        /// </summary>
-        public string OrganizationNumber { get; set; }
-
-        /// <summary>
-        /// Gets or sets the unit type if the party is an organization
-        /// </summary>
-        public string UnitType { get; set; }
-
-        /* ToBe Added in the future maybe
-        /// <summary>
-        /// Gets or sets the type of party
-        /// </summary>
-        public string Type { get; set; }
-
-        /// <summary>
-        /// Gets or sets whether this party is marked as deleted in the Central Coordinating Register for Legal Entities
-        /// </summary>
-        public bool IsDeleted { get; set; }
-
-        /// <summary>
-        /// Gets or sets a set of subunits of this party, which the authorized subject also has some access to.
-        /// </summary>
-        public List<ClientParty> Subunits { get; set; } = [];
-        */
-    }
-
-    /// <summary>
-    /// Composite Key instances
-    /// </summary>
-    public class ClientRoleAccessPackages
-    {
-        /// <summary>
-        /// Role
-        /// </summary>
-        public string Role { get; set; }
+        public CompactRoleDto Role { get; set; }
 
         /// <summary>
         /// Packages
         /// </summary>
-        public string[] Packages { get; set; }
+        public CompactPackageDto[] Packages { get; set; }
     }
 }

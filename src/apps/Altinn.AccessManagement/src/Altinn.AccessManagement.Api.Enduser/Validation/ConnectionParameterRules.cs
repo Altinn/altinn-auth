@@ -13,6 +13,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Validation;
 internal static class ConnectionParameterRules
 {
     private static readonly string[] PartyKeywords = ["me"];
+
     private static readonly string[] FromToPartyKeywords = ["me", "all"];
 
     /// <summary>
@@ -36,6 +37,23 @@ internal static class ConnectionParameterRules
 
         return (ref ValidationErrorBuilder errors) =>
             errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/party", [new("party", ValidationErrorMessageTexts.InvalidPartyValue)]);
+    };
+
+    /// <summary>
+    /// <paramref name="value"/> has to be non-empty Guid if valueRequired is true.
+    /// </summary>
+    /// <param name="value">Raw query parameter value.</param>
+    /// <param name="paramName">Parameter name used in error path.</param>
+    /// <returns>A deferred rule expression that yields an error builder when invalid, otherwise null.</returns>
+    internal static RuleExpression ToIsGuid(Guid? value, string paramName = "to") => () =>
+    {
+        if (value is null || value == Guid.Empty)
+        {
+            return (ref ValidationErrorBuilder errors) =>
+                errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramName}", [new(paramName, ValidationErrorMessageTexts.InvalidPartyValue)]);
+        }
+
+        return null;
     };
 
     /// <summary>

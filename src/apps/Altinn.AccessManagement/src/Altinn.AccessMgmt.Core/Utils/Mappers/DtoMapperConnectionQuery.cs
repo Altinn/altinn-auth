@@ -1,4 +1,6 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
+﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 
 namespace Altinn.AccessMgmt.Core.Utils;
@@ -43,7 +45,7 @@ public partial class DtoMapper : IDtoMapper
 
         return result.ToList();
     }
-    
+
     public static List<PackagePermissionDto> ConvertPackages(IEnumerable<ConnectionQueryExtendedRecord> res)
     {
         var records = res.ToList();
@@ -152,5 +154,70 @@ public partial class DtoMapper : IDtoMapper
             Id = resource.Id,
             Name = resource.Name,
         };
+    }
+
+    public static List<AgentDto> ConvertToClientDelegationAgentDto(List<ConnectionQueryExtendedRecord> connections)
+    {
+        var agents = connections.GroupBy(c => c.ToId);
+        var result = new List<AgentDto>();
+
+        foreach (var agent in agents)
+        {
+            var entity = agent.First();
+            var party = Convert(entity.To);
+            var roles = agent.GroupBy(c => c.Role.Id);
+            var roleAccess = new List<AgentDto.AgentRoleAccessPackages>();
+
+            foreach (var role in roles)
+            {
+                var access = new AgentDto.AgentRoleAccessPackages
+                {
+                    Role = ConvertCompactRole(role.First().Role),
+                    Packages = role.SelectMany(r => r.Packages.Select(p => ConvertCompactPackage(p))).Distinct().ToArray(),
+                };
+
+                roleAccess.Add(access);
+            }
+
+            result.Add(new AgentDto
+            {
+                Agent = party,
+                Access = roleAccess,
+            });
+        }
+
+        return result;
+    }
+
+    public static List<ClientDto> ConvertToClientDto(List<ConnectionQueryExtendedRecord> connections)
+    {
+        var clients = connections.GroupBy(c => c.FromId);
+        var result = new List<ClientDto>();
+
+        foreach (var client in clients)
+        {
+            var entity = client.First().From;
+            var party = Convert(entity);
+            var roles = client.GroupBy(c => c.Role.Id);
+            var roleAccess = new List<ClientDto.RoleAccessPackages>();
+            foreach (var role in roles)
+            {
+                var access = new ClientDto.RoleAccessPackages
+                {
+                    Role = ConvertCompactRole(role.First().Role),
+                    Packages = role.SelectMany(r => r.Packages.Select(p => ConvertCompactPackage(p))).Distinct().ToArray(),
+                };
+
+                roleAccess.Add(access);
+            }
+
+            result.Add(new ClientDto
+            {
+                Client = party,
+                Access = roleAccess,
+            });
+        }
+
+        return result;
     }
 }

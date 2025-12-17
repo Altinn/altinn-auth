@@ -33,6 +33,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAmPartyRepository, AMPartyService>();
         services.AddScoped<IAuthorizedPartyRepoService, AuthorizedPartyRepoService>();
         services.AddScoped<IAuthorizedPartyRepoServiceEf, AuthorizedPartyRepoServiceEf>();
+        services.AddScoped<IClientDelegationService, ClientDelegationService>();
 
         if (configuration.GetValue<bool>("FeatureManagement:AccessMgmt.Core.Services.AuthorizedParties.EfEnabled"))
         {

@@ -30,6 +30,14 @@ internal static class ConnectionValidation
     /// <summary>
     /// Validation rule for adding an assignment with <see cref="PersonInput"/>.
     /// </summary>
+    internal static RuleExpression ValidateAddAssignmentWithPersonInput(string personIdentifier, string personLastName) =>
+        ValidationComposer.All(
+            ConnectionParameterRules.PersonInput(personIdentifier, personLastName)
+        );
+
+    /// <summary>
+    /// Validation rule for adding an assignment with <see cref="PersonInput"/>.
+    /// </summary>
     internal static RuleExpression ValidateAddAssignmentWithPersonInput(string party, string from, string personIdentifier, string personLastName) =>
         ValidationComposer.All(
             ConnectionParameterRules.Party(party),

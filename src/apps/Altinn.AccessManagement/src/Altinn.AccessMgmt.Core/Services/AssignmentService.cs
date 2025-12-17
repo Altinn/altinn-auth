@@ -11,6 +11,7 @@ using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 
@@ -143,7 +144,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<ClientDto>> GetClients(Guid toId, string[] roles, string[] packages, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<SystemuserClientDto>> GetClients(Guid toId, string[] roles, string[] packages, CancellationToken cancellationToken = default)
     {
         // Fetch role metadata
         var roleResult = QueryWrapper.WrapQueryResponse(await db.Roles.AsNoTracking().Where(t => roles.Contains(t.Code)).ToListAsync(cancellationToken));
@@ -190,9 +191,9 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         return await GetFilteredClientsFromAssignments(clients, assignmentPackageResult, roleResult, packageResult, rolePackageResult, packages, cancellationToken);
     }
 
-    private async Task<List<ClientDto>> GetFilteredClientsFromAssignments(IEnumerable<Assignment> assignments, IEnumerable<AssignmentPackage> assignmentPackages, QueryResponse<Role> roles, QueryResponse<Package> packages, QueryResponse<RolePackage> rolePackages, string[] filterPackages, CancellationToken cancellationToken)
+    private async Task<List<SystemuserClientDto>> GetFilteredClientsFromAssignments(IEnumerable<Assignment> assignments, IEnumerable<AssignmentPackage> assignmentPackages, QueryResponse<Role> roles, QueryResponse<Package> packages, QueryResponse<RolePackage> rolePackages, string[] filterPackages, CancellationToken cancellationToken)
     {
-        Dictionary<Guid, ClientDto> clients = new();
+        Dictionary<Guid, SystemuserClientDto> clients = new();
 
         // Fetch Entity metadata        
         var entityVariants = await db.EntityVariants.AsNoTracking().ToListAsync(cancellationToken);
@@ -212,11 +213,11 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             }
 
             // Add client to dictionary if not already present
-            if (!clients.TryGetValue(assignment.FromId, out ClientDto client))
+            if (!clients.TryGetValue(assignment.FromId, out SystemuserClientDto client))
             {
-                client = new ClientDto()
+                client = new SystemuserClientDto()
                 {
-                    Party = new ClientDto.ClientParty
+                    Party = new SystemuserClientDto.ClientParty
                     {
                         Id = assignment.FromId,
                         Name = assignment.From.Name,
@@ -231,7 +232,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             // Add packages client has been assigned
             if (assignmentPackageNames.Length > 0)
             {
-                client.Access.Add(new ClientDto.ClientRoleAccessPackages
+                client.Access.Add(new SystemuserClientDto.ClientRoleAccessPackages
                 {
                     Role = roleName,
                     Packages = assignmentPackageNames
@@ -241,7 +242,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             // Add packages client has through role
             if (rolePackageNames.Length > 0)
             {
-                client.Access.Add(new ClientDto.ClientRoleAccessPackages
+                client.Access.Add(new SystemuserClientDto.ClientRoleAccessPackages
                 {
                     Role = roleName,
                     Packages = rolePackageNames
@@ -250,7 +251,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         }
 
         // Return only clients having all required filterpackages
-        List<ClientDto> result = new();
+        List<SystemuserClientDto> result = new();
         foreach (var client in clients.Keys)
         {
             var allClientPackages = clients[client].Access.SelectMany(rp => rp.Packages).Distinct();
