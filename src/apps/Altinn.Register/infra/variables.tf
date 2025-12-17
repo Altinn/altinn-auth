@@ -74,7 +74,7 @@ variable "enable_high_availability" {
 
 variable "key_vault_rbac" {
   type = list(object({
-    id     = string
+    id       = string
     rolename = string
   }))
 
