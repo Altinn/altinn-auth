@@ -10,10 +10,24 @@ public partial class DtoMapper : IDtoMapper
 {
     public static List<ConnectionDto> ConvertToOthers(IEnumerable<ConnectionQueryExtendedRecord> connections, bool getSingle = false)
     {
+        SortedDictionary<Guid, List<ConnectionQueryExtendedRecord>> viaDict = [];
+        foreach (var connection in connections)
+        {
+            if (connection.ViaId != null && (connection.Reason == ConnectionReason.KeyRole || connection.Reason == ConnectionReason.Delegation))
+            {
+                if (!viaDict.ContainsKey(connection.ViaId.Value))
+                {
+                    viaDict[connection.ViaId.Value] = [];
+                }
+
+                viaDict[connection.ViaId.Value].Add(connection);
+            }
+        }
+
         var result = connections.Where(t => getSingle || (t.Reason != ConnectionReason.KeyRole && t.Reason != ConnectionReason.Delegation)).GroupBy(res => res.ToId).Select(c =>
         {
             var connection = c.First();
-            var subconnections = connections.Where(c => c.ViaId == connection.ToId && (c.Reason == ConnectionReason.KeyRole || c.Reason == ConnectionReason.Delegation));
+            var subconnections = viaDict.ContainsKey(connection.ToId) ? viaDict[connection.ToId] : Enumerable.Empty<ConnectionQueryExtendedRecord>();
             return new ConnectionDto()
             {
                 Party = Convert(connection.To),
@@ -29,10 +43,24 @@ public partial class DtoMapper : IDtoMapper
 
     public static List<ConnectionDto> ConvertFromOthers(IEnumerable<ConnectionQueryExtendedRecord> connections, bool getSingle = false)
     {
+        SortedDictionary<Guid, List<ConnectionQueryExtendedRecord>> viaDict = [];
+        foreach (var connection in connections)
+        {
+            if (connection.ViaId != null && connection.Reason == ConnectionReason.Hierarchy)
+            {
+                if (!viaDict.ContainsKey(connection.ViaId.Value))
+                {
+                    viaDict[connection.ViaId.Value] = [];
+                }
+
+                viaDict[connection.ViaId.Value].Add(connection);
+            }
+        }
+
         var result = connections.Where(t => getSingle || (t.Reason != ConnectionReason.Hierarchy)).GroupBy(res => res.FromId).Select(c =>
         {
             var connection = c.First();
-            var subconnections = connections.Where(c => c.ViaId == connection.FromId && c.Reason == ConnectionReason.Hierarchy);
+            var subconnections = viaDict.ContainsKey(connection.FromId) ? viaDict[connection.FromId] : Enumerable.Empty<ConnectionQueryExtendedRecord>();
             return new ConnectionDto()
             {
                 Party = Convert(connection.From),
