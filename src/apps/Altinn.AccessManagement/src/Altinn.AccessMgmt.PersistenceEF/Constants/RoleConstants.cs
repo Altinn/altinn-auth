@@ -1569,7 +1569,7 @@ public static class RoleConstants
     /// - <c>Code:</c> APIADM
     /// - <c>Description:</c> Delegerbar rolle som gir tilgang til å administrere tilgang til programmeringsgrensesnitt - API, på vegne av virksomheten.
     /// </remarks>
-    public static ConstantDefinition<Role> ApplicationProgrammingInterface { get; } = new ConstantDefinition<Role>("e078bb18-f55a-4a2d-8964-c599f41b29b5")
+    public static ConstantDefinition<Role> APIADM { get; } = new ConstantDefinition<Role>("e078bb18-f55a-4a2d-8964-c599f41b29b5")
     {
         Entity = new()
         {
@@ -2770,7 +2770,7 @@ public static class RoleConstants
     /// - <c>Code:</c> APIADMNUF
     /// - <c>Description:</c> Delegerbar rolle som gir kontaktperson for norskregistrert utenlandsk foretak (NUF) tilgang til å administrere tilgang til programmeringsgrensesnitt - API, på vegne av virksomheten.
     /// </remarks>
-    public static ConstantDefinition<Role> Apidfmnuf { get; } = new ConstantDefinition<Role>("0ea4e5de-3fb4-499e-b013-1e1b4459af24")
+    public static ConstantDefinition<Role> APIADMNUF { get; } = new ConstantDefinition<Role>("0ea4e5de-3fb4-499e-b013-1e1b4459af24")
     {
         Entity = new()
         {

@@ -176,9 +176,9 @@ public class MetadataTests : IClassFixture<PostgresFixture>
         var role = RoleConstants.Accountant;
         var variant = EntityVariantConstants.AS;
 
-        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.AuditorEmployee.Entity, true);
-        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.CentralCoordinationRegister.Entity, true);
-        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.PopulationRegistry.Entity, true);
+        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.AccountantWithSigningRights.Entity, true);
+        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.AccountantSalary.Entity, true);
+        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.AccountantWithoutSigningRights.Entity, true);
     }
 
     [Fact]
@@ -192,8 +192,8 @@ public class MetadataTests : IClassFixture<PostgresFixture>
         var role = RoleConstants.Auditor;
         var variant = EntityVariantConstants.AS;
 
-        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.EnforcementOfficer.Entity, true);
-        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.PersonalIdentityRegistry.Entity, true);
+        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.AssistantAuditor.Entity, true);
+        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.AuditorInCharge.Entity, true);
     }
 
     #endregion
@@ -274,9 +274,9 @@ public class MetadataTests : IClassFixture<PostgresFixture>
         var role = RoleConstants.ManagingDirector;
         var variant = EntityVariantConstants.AS;
 
-        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.AuditorEmployee.Entity, false);
-        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.CentralCoordinationRegister.Entity, false);
-        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.PopulationRegistry.Entity, false);
+        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.AccountantWithSigningRights.Entity, false);
+        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.AccountantSalary.Entity, false);
+        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.AccountantWithoutSigningRights.Entity, false);
     }
 
     [Fact]
@@ -290,8 +290,8 @@ public class MetadataTests : IClassFixture<PostgresFixture>
         var role = RoleConstants.ManagingDirector;
         var variant = EntityVariantConstants.AS;
 
-        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.EnforcementOfficer.Entity, false);
-        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.PersonalIdentityRegistry.Entity, false);
+        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.AssistantAuditor.Entity, false);
+        await AssertVariantRolePackage(role.Entity, variant.Entity, PackageConstants.AuditorInCharge.Entity, false);
     }
 
     private async Task AssertVariantRolePackage(
