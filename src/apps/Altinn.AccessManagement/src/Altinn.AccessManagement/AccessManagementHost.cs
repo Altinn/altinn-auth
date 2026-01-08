@@ -95,7 +95,7 @@ internal static partial class AccessManagementHost
             var appsettings = new AccessManagementAppsettings(builder.Configuration);
             options.AppConnectionString = connectionStrings.AppSource;
             options.MigrationConnectionString = connectionStrings.MigrationSource;
-            options.Source = appsettings.RunInitOnly ? SourceType.Migration : SourceType.App; 
+            options.Source = appsettings.RunInitOnly ? SourceType.Migration : SourceType.App;
         });
 
         builder.Services.AddAccessMgmtCore(builder.Configuration);

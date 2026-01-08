@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 
 /// <summary>
@@ -9,11 +11,13 @@ public class AgentDto
     /// <summary>
     /// Gets or sets the party
     /// </summary>
+    [JsonPropertyName("agent")]
     public CompactEntityDto Agent { get; set; }
 
     /// <summary>
     /// Gets or sets a collection of all access information for the client 
     /// </summary>
+    [JsonPropertyName("access")]
     public List<AgentRoleAccessPackages> Access { get; set; } = [];
 
     /// <summary>
@@ -24,11 +28,13 @@ public class AgentDto
         /// <summary>
         /// Roles
         /// </summary>
+        [JsonPropertyName("role")]
         public CompactRoleDto Role { get; set; }
 
         /// <summary>
         /// Packages
         /// </summary>
+        [JsonPropertyName("packages")]
         public CompactPackageDto[] Packages { get; set; }
     }
 }
