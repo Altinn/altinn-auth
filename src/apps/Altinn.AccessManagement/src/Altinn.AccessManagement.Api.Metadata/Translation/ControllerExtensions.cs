@@ -15,13 +15,21 @@ public static class ControllerExtensions
     /// <returns>The language code (e.g., "nob", "eng", "nno")</returns>
     public static string GetLanguageCode(this ControllerBase controller)
     {
-        if (controller.HttpContext.Items.TryGetValue(TranslationConstants.LanguageCodeKey, out var languageCode) &&
-            languageCode is string lang)
+        try
         {
-            return lang;
+            if (controller.HttpContext.Items.TryGetValue(TranslationConstants.LanguageCodeKey, out var languageCode) &&
+                languageCode is string lang)
+            {
+                return lang;
+            }
+
+            return TranslationConstants.DefaultLanguageCode;
+        }
+        catch
+        {
+            return TranslationConstants.DefaultLanguageCode;
         }
 
-        return TranslationConstants.DefaultLanguageCode;
     }
 
     /// <summary>
@@ -31,13 +39,19 @@ public static class ControllerExtensions
     /// <returns>True if partial translation is allowed, false otherwise</returns>
     public static bool AllowPartialTranslation(this ControllerBase controller)
     {
-        if (controller.HttpContext.Items.TryGetValue(TranslationConstants.AllowPartialKey, out var allowPartial) &&
-            allowPartial is bool allow)
+        try
         {
-            return allow;
-        }
+            if (controller.HttpContext.Items.TryGetValue(TranslationConstants.AllowPartialKey, out var allowPartial) && allowPartial is bool allow)
+            {
+                return allow;
+            }
 
-        return true; // Default to allowing partial translations
+            return true; // Default to allowing partial translations
+        } 
+        catch
+        {
+            return true;
+        }
     }
 
     /// <summary>
