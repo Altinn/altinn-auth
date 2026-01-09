@@ -64,7 +64,7 @@ body:json {
 script:pre-request {
   
   
-const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+const sharedtestdata = require(`./testdata/sharedtestdata.js`);
 const testdata = require(`./test/authorizedparties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("resourceId", testdata.resources.appInstanceDelegation.resourceId);
@@ -87,8 +87,8 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 tests {
   test("InstanceDelegation DelegateRightsAndRevoke post DelegateReadSign", function() {
       
-const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-      const testdata = require(`./Testdata/instance-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+      const testdata = require(`./testdata/instance-delegation/${bru.getEnvVar("tokenEnv")}.js`);
       const resource = "app_" + sharedtestdata.serviceOwners.ttd.org + "_" + testdata.app;
     
       const data = res.getBody();

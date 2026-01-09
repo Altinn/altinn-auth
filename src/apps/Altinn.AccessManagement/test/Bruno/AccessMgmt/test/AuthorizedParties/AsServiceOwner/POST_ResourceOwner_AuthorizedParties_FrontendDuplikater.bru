@@ -30,7 +30,7 @@ body:json {
 
 script:pre-request {
   
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   
   bru.setVar("requestName", "POST_ResourceOwner_AuthorizedParties_FrontendDuplikater");
   

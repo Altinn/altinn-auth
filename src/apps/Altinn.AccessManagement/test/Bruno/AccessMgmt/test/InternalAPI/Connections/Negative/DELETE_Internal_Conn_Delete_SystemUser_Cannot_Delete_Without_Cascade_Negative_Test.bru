@@ -21,8 +21,8 @@ headers {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("from", testdata.internal_conn_org.partyuuid);
   bru.setVar("to", testdata.internal_conn_org.systemuser.partyuuid);
@@ -45,7 +45,7 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 tests {
   test("DELETE Internal Connections SystemUser - Cannot delete without cascade:true", function() {
     
-    const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`); 
+    const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`); 
     const data = res.getBody();
     expect(res.status).to.equal(400);
     expect(data.validationErrors[0].detail).to.equal("Assignment is active in one or more connections.");

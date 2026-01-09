@@ -19,8 +19,8 @@ vars:pre-request {
 }
 
 script:pre-request {
-  const testdata = require(`./Testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.js`);
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   bru.setVar("party", testdata.org2.dagl.partyid);
   
   var getTokenParameters = {
@@ -40,7 +40,7 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 
 tests {
   test("person successfully delegated to a person", function() {
-    const testdata = require(`./Testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.js`);
+    const testdata = require(`./testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.js`);
     const data = res.getBody();   
     
     expect(res.status).to.equal(200);

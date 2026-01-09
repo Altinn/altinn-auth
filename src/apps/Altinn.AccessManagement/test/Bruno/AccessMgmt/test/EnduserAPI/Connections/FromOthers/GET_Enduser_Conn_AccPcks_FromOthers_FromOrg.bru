@@ -23,8 +23,8 @@ headers {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "GET_Enduser_Conn_AccPcks_FromOthers_FromOrg");
   
@@ -50,7 +50,7 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 tests {
   
   test(bru.getVar("requestName"), function() {
-    const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+    const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
      const data = res.getBody();
       expect(res.status).to.equal(200);
       expect(data.data[0].permissions[0].from).to.have.property('id', testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid.toLowerCase());

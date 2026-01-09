@@ -30,8 +30,8 @@ body:json {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("party", testdata.regn_type_org.partyuuid);
   bru.setVar("systemUser", testdata.regn_type_org.systemuser.partyuuid);
@@ -63,7 +63,7 @@ script:post-response {
 
 tests {
   test("Verify access package delegation from client org-1 to Org-2's-REGN systembruker should return 200 ok with", function() {
-    const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+    const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
     const data = res.getBody();
     expect(res.status).to.equal(200);
     expect(data[0]).to.have.property('fromEntityId', testdata.regn_type_org.klient_org.partyuuid.toLowerCase());

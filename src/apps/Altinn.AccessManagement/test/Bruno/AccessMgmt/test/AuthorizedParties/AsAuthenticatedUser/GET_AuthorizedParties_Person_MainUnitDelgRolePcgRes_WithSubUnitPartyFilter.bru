@@ -24,7 +24,7 @@ headers {
 
 script:pre-request {
   
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   const testdata = require(`./test/authorizedparties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "GET_AuthorizedParties_Person_MainUnitDelgRolePcgRes_WithSubUnitPartyFilter");

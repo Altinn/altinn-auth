@@ -23,8 +23,8 @@ headers {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "GET_Enduser_Connections_FromOthers");
   

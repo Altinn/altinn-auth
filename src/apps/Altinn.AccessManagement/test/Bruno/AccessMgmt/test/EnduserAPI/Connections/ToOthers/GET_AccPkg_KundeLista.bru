@@ -15,8 +15,8 @@ params:query {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("party", testdata.org2_delegates_tilgangspakke.partyuuid);
   
@@ -37,8 +37,8 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 
 tests {
   test("Verify that Org1 appears in the client list for Org2 after Org2 receives delegated access via the access package from Org1 : ToOthers", function() {
-    const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-      const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+    const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+      const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
       const data = res.getBody();
       expect(res.status).to.equal(200);
       expect(data[0].party).to.have.property('name', testdata.org1_delegates_tilgangspakke.name);

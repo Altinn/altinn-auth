@@ -22,8 +22,8 @@ headers {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "GET_SysUser_ClientDelg_GetForretningsforerClients");
   bru.setVar("party", "b5265db7-602f-4491-893e-bfeadf7944b9");

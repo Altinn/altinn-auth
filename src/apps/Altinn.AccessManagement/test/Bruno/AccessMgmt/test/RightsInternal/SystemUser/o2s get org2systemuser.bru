@@ -32,8 +32,8 @@ vars:pre-request {
 }
 
 script:pre-request {
-  const testdata = require(`./Testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.js`);
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   bru.setVar("party", testdata.org_system.partyid);
   bru.setVar("to_systemuser", testdata.org_system.systems[0]);
   bru.setVar("resource", testdata.resource_system);
@@ -55,7 +55,7 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 
 tests {
   test("get systemuser single rights delegations", function() {
-    const testdata = require(`./Testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.js`);
+    const testdata = require(`./testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.js`);
     const body = res.getBody();  
     expect(res.status).to.equal(200);
     

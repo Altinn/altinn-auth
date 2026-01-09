@@ -49,8 +49,8 @@ vars:pre-request {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "POST_ResourceDelegation_ToSystemUser");
   bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyId);

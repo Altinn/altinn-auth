@@ -21,8 +21,8 @@ headers {
 }
 
 script:pre-request {
-  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   
   bru.setVar("party", testdata.revisor.partyuuid);
   bru.setVar("systemUser", testdata.revisor.invalid_pkg_systemuser.id);
@@ -55,7 +55,7 @@ script:post-response {
 
 tests {
   test("Client org has delegated to systembruker", function() {
-  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
       const data = res.getBody();
       var delegationId = bru.getEnvVar("delegationId");
       expect(res.status).to.equal(200);

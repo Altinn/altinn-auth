@@ -15,8 +15,8 @@ headers {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/instance-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/instance-delegation/${bru.getEnvVar("tokenEnv")}.js`);
   const resource = "app_" + sharedtestdata.serviceOwners.ttd.org + "_NonExistingApp";
   
   bru.setVar("resourceId", resource);
@@ -38,8 +38,8 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 
 tests {
   test("InstanceDelegation GetNonExistingResource get NoResource", function() {
-      const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-      const testdata = require(`./Testdata/instance-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+      const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+      const testdata = require(`./testdata/instance-delegation/${bru.getEnvVar("tokenEnv")}.js`);
       const resource = "app_" + sharedtestdata.serviceOwners.ttd.org + "_" + "authz-bruno-testapp1";
     
       const data = res.getBody();

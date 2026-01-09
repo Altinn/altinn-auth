@@ -24,8 +24,8 @@ script:pre-request {
   // To be activated once lookup from users own access overview page is available
   bru.runner.skipRequest();
   
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "GET_Enduser_Conn_Roles_AsInnhEnk_FromEnkInnh_ToRegn");
   
@@ -49,7 +49,7 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 }
 
 tests {
-  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
   const body = res.getBody();
   const data = body.data;
   const requestName = bru.getVar("requestName");

@@ -21,8 +21,8 @@ headers {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("party", testdata.org1_delegates_tilgangspakke.partyuuid);
   bru.setVar("toOrg", testdata.org2_delegates_tilgangspakke.partyuuid);
@@ -47,7 +47,7 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 tests {
   test("To add hovedOrg og Org2 for access package delegation : ToOthers", function() {
     
-    const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`); 
+    const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`); 
     const data = res.getBody();
     expect(res.status).to.equal(200);
     

@@ -21,8 +21,8 @@ headers {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
   
   
   bru.setVar("party", testdata.hovedorg_delegates_tilgangspakke.partyuuid);
@@ -46,7 +46,7 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 tests {
   test("To add Org1 og Org2 for delegation", function() {
     
-   const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`); 
+   const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`); 
     const data = res.getBody();
     expect(res.status).to.equal(200);
     

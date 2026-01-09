@@ -49,8 +49,8 @@ assert {
 }
 
 script:pre-request {
-  const testdata = require(`./Testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.js`);
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   bru.setVar("party", testdata.randomUser.partyid);
   bru.setVar("fromPartyId", testdata.org3.partyid);
   

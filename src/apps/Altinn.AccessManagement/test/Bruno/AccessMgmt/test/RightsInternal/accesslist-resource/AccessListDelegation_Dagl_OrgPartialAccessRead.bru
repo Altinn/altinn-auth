@@ -46,8 +46,8 @@ body:json {
 }
 
 script:pre-request {
-  const testdata = require(`./Testdata/accesslist-delegation/${bru.getEnvVar("tokenEnv")}.js`);
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/accesslist-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   
   bru.setVar("party", testdata.OrdentligUlasteligStruts.partyid);
   bru.setVar("resource", testdata.resource);

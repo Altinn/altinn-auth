@@ -69,7 +69,7 @@ assert {
 
 script:pre-request {
   const sharedtestdata = require(`./testdata/shared.js`);
-  const testdata = require(`./Testdata/accesslist-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const testdata = require(`./testdata/accesslist-delegation/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("toSystemUser",  testdata.OrdentligUlasteligStruts.systemuser.partyUuid);
   bru.setVar("fromOrgNo",  testdata.OrdentligUlasteligStruts.orgno);

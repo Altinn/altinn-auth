@@ -15,8 +15,8 @@ params:query {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
   
   
   bru.setVar("party", testdata.regn_type_org.partyuuid);
@@ -39,8 +39,8 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 
 tests {
   test("GET accesspackage kundelista med både pakker : Virksomhetsdelegering", function() {
-    const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-      const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+    const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+      const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
       const data = res.getBody();
       expect(res.status).to.equal(200);
     

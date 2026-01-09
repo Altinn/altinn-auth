@@ -17,8 +17,8 @@ params:query {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("party", testdata.hente_A2_roller_from_org.partyuuid);
   bru.setVar("from", testdata.hente_A2_roller_from_org.partyuuid);
@@ -42,7 +42,7 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 tests {
   test("Verifisere A2 roller er importet i A3 for Org", function() {
     
-    const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`); 
+    const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`); 
      const data = res.getBody();
       expect(res.status).to.equal(200);
       expect(data.data[0].permissions[0].from).to.have.property('id', testdata.hente_A2_roller_from_org.partyuuid.toLowerCase());

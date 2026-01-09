@@ -27,8 +27,8 @@ body:json {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("party", testdata.vassen_riktig_tiger_as.person1.partyuuid);
   bru.setVar("toPerson", testdata.vassen_riktig_tiger_as.person1.pid);
@@ -53,7 +53,7 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 }
 
 tests {
-  const testdata = require(`./Testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
   test("GET_Enduser_Conn_AccPcks_Person_FromOthers", function() {
   
      const data = res.getBody();

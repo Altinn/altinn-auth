@@ -30,8 +30,8 @@ assert {
 }
 
 script:pre-request {
-  const testdata = require(`./Testdata/maskinportenschema/${bru.getEnvVar("tokenEnv")}testdata.js`);
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/maskinportenschema/${bru.getEnvVar("tokenEnv")}testdata.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   bru.setVar("party", testdata.org2.partyid)
   
   var getTokenParameters = {
@@ -52,7 +52,7 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 tests {
   
   test("get MaskinPortenSchema Offered - empty response body", function() {
-    const testdata = require(`./Testdata/maskinportenschema/${bru.getEnvVar("tokenEnv")}testdata.js`);
+    const testdata = require(`./testdata/maskinportenschema/${bru.getEnvVar("tokenEnv")}testdata.js`);
     const data = res.getBody();  
     expect(res.status).to.equal(200);
     expect(data).to.be.empty;

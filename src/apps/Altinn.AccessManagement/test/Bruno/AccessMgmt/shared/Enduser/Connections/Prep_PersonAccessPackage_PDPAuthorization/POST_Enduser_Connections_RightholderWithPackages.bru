@@ -28,8 +28,8 @@ body:json {
 
 script:pre-request {
   
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-const testdata = require(`./Testdata/authorizedparties/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+const testdata = require(`./testdata/authorizedparties/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "POST_Enduser_Connections_RightholderWithPackages");
   

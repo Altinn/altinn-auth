@@ -22,8 +22,8 @@ headers {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
   
   /* Cleanup of delegation made in POST_Enduser_Conn_AccPcks_ToOthers_ToExistingOrg */
   bru.setVar("requestName", "DEL_Enduser_Conn_ToOthers_RemoveExistingOrg");

@@ -22,8 +22,8 @@ headers {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/manualtests/systemuser-directdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/manualtests/systemuser-directdelegation/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "POST_Enduser_Conn_AccPcks_ToSysUsr");
   

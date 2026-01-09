@@ -21,8 +21,8 @@ headers {
 }
 
 script:pre-request {
-  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   
   bru.setVar("party", testdata.revisor.partyuuid);
   bru.setVar("systemUser", testdata.revisor.systemuser.id);
@@ -45,7 +45,7 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 
 tests {
   test("Access package delegation from Revisor-client org to systemuser ", function() {
-  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
       const data = res.getBody();
       var delegationId = bru.getEnvVar("delegationId");
     

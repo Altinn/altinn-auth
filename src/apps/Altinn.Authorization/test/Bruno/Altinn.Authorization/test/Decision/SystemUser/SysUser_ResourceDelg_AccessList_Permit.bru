@@ -63,7 +63,7 @@ body:json {
 }
 
 script:pre-request {
-  const testdata = require(`./Testdata/accesslist-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const testdata = require(`./testdata/accesslist-delegation/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "SysUser_ResourceDelg_AccessList_Permit");
   bru.setVar("subjectSystemUser",  testdata.OrdentligUlasteligStruts.systemuser.partyUuid);

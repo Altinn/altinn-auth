@@ -27,8 +27,8 @@ body:json {
 }
 
 script:pre-request {
-  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
-  const testdata = require(`./Testdata/instance-delegation-authorized-parties/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/instance-delegation-authorized-parties/${bru.getEnvVar("tokenEnv")}.js`);
   
   var getTokenParameters = {
     auth_tokenType: sharedtestdata.authTokenType.enterprise,
@@ -48,7 +48,7 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 tests {
   // Should be the same as the .bru request file. Used as prefix in test name which also shows in test result in pipeline.
   const requestName = "InstDelgParties_AsResOwner_ToPerson_InclA2";
-  const testdata = require(`./Testdata/instance-delegation-authorized-parties/${bru.getEnvVar("tokenEnv")}.js`);
+  const testdata = require(`./testdata/instance-delegation-authorized-parties/${bru.getEnvVar("tokenEnv")}.js`);
   const body = res.getBody();
   
   test(requestName + "|HttpStatus.OK", function() {
