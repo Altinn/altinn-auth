@@ -6,13 +6,13 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
-using Altinn.AccessMgmt.TestUtils;
-using Altinn.AccessMgmt.TestUtils.Data;
-using Altinn.AccessMgmt.TestUtils.Fixtures;
+using Altinn.AccessManagement.TestUtils;
+using Altinn.AccessManagement.TestUtils.Data;
+using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
 
-namespace Altinn.AccessMgmt.Enduser.Api.Tests.Controllers;
+namespace Altinn.AccessManagement.Enduser.Api.Tests.Controllers;
 
 public class ClientDelegationControllerTest
 {

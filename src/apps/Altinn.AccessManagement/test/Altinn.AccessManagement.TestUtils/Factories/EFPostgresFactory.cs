@@ -11,7 +11,7 @@ using Npgsql;
 using Testcontainers.PostgreSql;
 using Xunit.Sdk;
 
-namespace Altinn.AccessMgmt.TestUtils.Factories;
+namespace Altinn.AccessManagement.TestUtils.Factories;
 
 /// <summary>
 /// Test helper that provisions a PostgreSQL container and provides per-test

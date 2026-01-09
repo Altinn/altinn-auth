@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Altinn.AccessMgmt.TestUtils;
+namespace Altinn.AccessManagement.TestUtils;
 
 /// <summary>
 /// Utility helper that generates JWTs for tests. It provides a deterministic

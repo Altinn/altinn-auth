@@ -1,7 +1,7 @@
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
-using Altinn.AccessMgmt.TestUtils.Data;
+using Altinn.AccessManagement.TestUtils.Data;
 
-namespace Altinn.AccessMgmt.TestUtils;
+namespace Altinn.AccessManagement.TestUtils;
 
 /// <summary>
 /// Helper class that seeds deterministic test data into an

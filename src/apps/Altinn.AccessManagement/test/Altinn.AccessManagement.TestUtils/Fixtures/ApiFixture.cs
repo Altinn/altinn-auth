@@ -2,8 +2,8 @@ using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
-using Altinn.AccessMgmt.TestUtils.Factories;
-using Altinn.AccessMgmt.TestUtils.Mocks;
+using Altinn.AccessManagement.TestUtils.Factories;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
@@ -13,7 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace Altinn.AccessMgmt.TestUtils.Fixtures;
+namespace Altinn.AccessManagement.TestUtils.Fixtures;
 
 /// <summary>
 /// Fixture used to create an in-memory test server for API integration tests.

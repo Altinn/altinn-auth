@@ -24,6 +24,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 [Route("accessmanagement/api/v1/enduser/clientdelegations")]
 [FeatureGate(AccessMgmtFeatureFlags.EnduserControllerClientDelegation)]
 [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
+[Tags("Client Delegation")]
 public class ClientDelegationController(
     IClientDelegationService clientDelegationService,
     IUserProfileLookupService UserProfileLookupService,
@@ -133,19 +134,45 @@ public class ClientDelegationController(
     }
 
     [HttpGet("agents/accesspackages")]
-    public async Task<IActionResult> GetAgentAccessPackages()
+    public IActionResult GetDelegatedAccessPackagesToAgentsViaParty(
+        [FromQuery(Name = "party")][Required] Guid party,
+        [FromQuery(Name = "to")][Required] Guid to,
+        CancellationToken cancellationToken = default)
+    {
+        return StatusCode(StatusCodes.Status501NotImplemented);
+    }
+
+    [HttpGet("clients/accesspackages")]
+    public IActionResult GetDelegatedAccessPackagesFromClientsViaParty(
+        [FromQuery(Name = "party")][Required] Guid party,
+        [FromQuery(Name = "from")][Required] Guid from,
+        CancellationToken cancellationToken = default
+    )
     {
         return StatusCode(StatusCodes.Status501NotImplemented);
     }
 
     [HttpPost("agents/accesspackages")]
-    public async Task<IActionResult> AddAgentAccessPackage()
+    public IActionResult AddAgentAccessPackage(
+        [FromQuery(Name = "party")][Required] Guid party,
+        [FromQuery(Name = "from")][Required] Guid from,
+        [FromQuery(Name = "to")][Required] Guid to,
+        [FromQuery(Name = "packageId")] Guid? packageId,
+        [FromQuery(Name = "package")] string package,
+        CancellationToken cancellationToken = default)
     {
         return StatusCode(StatusCodes.Status501NotImplemented);
     }
 
     [HttpDelete("agents/accesspackages")]
-    public async Task<IActionResult> DeleteAgentAccessPackage()
+    public IActionResult DeleteAgentAccessPackage(
+        [FromQuery(Name = "party")][Required] Guid party,
+        [FromQuery(Name = "from")][Required] Guid from,
+        [FromQuery(Name = "to")][Required] Guid to,
+        [FromQuery(Name = "packageId")] Guid? packageId,
+        [FromQuery(Name = "package")] string package,
+        CancellationToken cancellationToken = default
+    )
     {
         return StatusCode(StatusCodes.Status501NotImplemented);
     }

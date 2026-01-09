@@ -2,7 +2,7 @@ using System.Security.Claims;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Interfaces;
 
-namespace Altinn.AccessMgmt.TestUtils.Mocks;
+namespace Altinn.AccessManagement.TestUtils.Mocks;
 
 /// <summary>
 /// Test double for <see cref="IPDP"/> that always returns a "Permit"

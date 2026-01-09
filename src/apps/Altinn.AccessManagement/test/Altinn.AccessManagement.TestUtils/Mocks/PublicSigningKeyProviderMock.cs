@@ -1,7 +1,7 @@
 using Altinn.Common.AccessToken.Services;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Altinn.AccessMgmt.TestUtils.Mocks;
+namespace Altinn.AccessManagement.TestUtils.Mocks;
 
 /// <summary>
 /// Test implementation of <see cref="IPublicSigningKeyProvider"/> that

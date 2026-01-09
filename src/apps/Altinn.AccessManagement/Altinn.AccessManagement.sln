@@ -69,9 +69,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.ABAC",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Authorization.Host.Pipeline", "..\..\libs\Altinn.Authorization.Host\src\Altinn.Authorization.Host.Pipeline\Altinn.Authorization.Host.Pipeline.csproj", "{5D61CF74-4E31-455F-83B7-4150CB9EDD24}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessMgmt.Enduser.Api.Tests", "test\Altinn.AccessMgmt.Enduser.Api.Tests\Altinn.AccessMgmt.Enduser.Api.Tests.csproj", "{D49D926C-E56C-40A5-8BD0-2E726D7A9000}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.Enduser.Api.Tests", "test\Altinn.AccessManagement.Enduser.Api.Tests\Altinn.AccessManagement.Enduser.Api.Tests.csproj", "{D49D926C-E56C-40A5-8BD0-2E726D7A9000}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessMgmt.TestUtils", "test\Altinn.AccessMgmt.TestUtils\Altinn.AccessMgmt.TestUtils.csproj", "{560D74B0-7640-4D6F-944D-1E6C5EA0FCBD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.TestUtils", "test\Altinn.AccessManagement.TestUtils\Altinn.AccessManagement.TestUtils.csproj", "{560D74B0-7640-4D6F-944D-1E6C5EA0FCBD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
