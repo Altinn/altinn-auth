@@ -1,0 +1,57 @@
+meta {
+  name: GET_Enduser_Conn_AccPcks_DelgCheck_BOBE_Role_idFilter
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages/delegationcheck?party={{party}}&packageIds=0e219609-02c6-44e6-9c80-fe2c1997940e&packageIds=5ef836c7-69cc-4ea8-84d6-fb933cc4fc5c
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  packageIds: 0e219609-02c6-44e6-9c80-fe2c1997940e
+  packageIds: 5ef836c7-69cc-4ea8-84d6-fb933cc4fc5c
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.Konkursbo_type_org.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.Konkursbo_type_org.bostyrer.userid,
+    auth_partyId: testdata.Konkursbo_type_org.bostyrer.partyid,
+    auth_partyUuid: testdata.Konkursbo_type_org.bostyrer.partyuuid,
+    auth_ssn: testdata.Konkursbo_type_org.bostyrer.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("DelegationCheck for Bostyrer with package filter", function() {
+    const body = res.getBody();
+    const data = body.data;
+    
+    expect(res.status).to.equal(200);
+    assert.isNotEmpty(data, "Expected data in response body to NOT be empty array");
+    
+    const expectedNumPackages = 2;
+    expect(data[0].result).to.equal(true)
+    expect(data[0].reasons[0].description).to.equal("Direct-RolePackage");
+    
+  });
+}

@@ -1,0 +1,56 @@
+meta {
+  name: DELETE_Enduser_Connections_Person_ToOthers
+  type: http
+  seq: 12
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{toPersonPartyUuid}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toPersonPartyUuid}}
+  cascade: true
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.vassen_riktig_tiger_as.partyuuid);
+  bru.setVar("toPerson", testdata.vassen_riktig_tiger_as.person1.pid);
+  bru.setVar("toPersonLastName", testdata.vassen_riktig_tiger_as.person1.lastname);
+  bru.setVar("toPersonPartyUuid", testdata.vassen_riktig_tiger_as.person1.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.vassen_riktig_tiger_as.dagl.userid,
+    auth_partyId: testdata.vassen_riktig_tiger_as.dagl.partyid,
+    auth_partyUuid: testdata.vassen_riktig_tiger_as.dagl.partyuuid,
+    auth_ssn: testdata.vassen_riktig_tiger_as.dagl.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("DELETE_Enduser_Connections_Person_ToOthers", function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(204);
+    assert.isNotOk(data, "Expected response body to be empty");
+    
+  });
+}
+
+docs {
+  Sletter connection til person
+}

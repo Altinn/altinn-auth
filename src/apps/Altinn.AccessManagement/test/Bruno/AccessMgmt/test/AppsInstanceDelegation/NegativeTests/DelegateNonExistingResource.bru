@@ -1,0 +1,100 @@
+meta {
+  name: DelegateNonExistingResource
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/app/delegations/resource/{{resourceId}}/instance/{{instanceId}}
+  body: json
+  auth: none
+}
+
+headers {
+  PlatformAccessToken: {{platformAccessToken}}
+}
+
+body:json {
+  {
+    "from": {
+      "type": "urn:altinn:party:uuid",
+      "value": "{{fromUuid}}"
+    },
+    "to": {
+      "type": "urn:altinn:party:uuid",
+      "value": "{{toUuid}}"
+    },
+    "rights": [
+      {
+        "resource": [
+          {
+            "type": "urn:altinn:resource",
+            "value": "{{resourceId}}"
+          },
+          {
+            "type": "urn:altinn:task",
+            "value": "task_1"
+          }
+        ],
+        "action": {
+          "type": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+          "value": "read"
+        }
+      },
+      {
+        "resource": [
+          {
+            "type": "urn:altinn:resource",
+            "value": "{{resourceId}}"
+          },
+          {
+            "type": "urn:altinn:task",
+            "value": "task_1"
+          }
+        ],
+        "action": {
+          "type": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+          "value": "sign"
+        }
+      }
+    ]
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/instance-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const resource = "app_" + sharedtestdata.serviceOwners.ttd.org + "_NonExistingApp";
+  
+  bru.setVar("resourceId", resource);
+  bru.setVar("instanceId", testdata.instanceid);
+  bru.setVar("fromUuid", testdata.org1.partyuuid);
+  bru.setVar("toUuid", testdata.person1.partyuuid);
+  
+  var getTokenParameters = {
+      auth_org: sharedtestdata.serviceOwners.ttd.org,
+      auth_app: testdata.app,
+      auth_tokenType: sharedtestdata.authTokenType.platformAccess
+    };
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("platformAccessToken",  token);
+}
+
+tests {
+  test("InstanceDelegation DelegateNonExistingResource post DelegateNoResource", function() {
+      const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+      const testdata = require(`./Testdata/instance-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+      const resource = "app_" + sharedtestdata.serviceOwners.ttd.org + "_NonExistingApp";
+    
+      const data = res.getBody();
+      assert.equal(res.status,400, 'httpstatus is incorect');
+    
+      assert.equal(data.status,400, 'error response httpstatus is incorect');
+    
+      assert.equal(data.validationErrors[0].code, 'AM.VLD-00002', 'Incorect error code');
+      assert.equal(data.validationErrors[0].paths[0], 'appInstanceDelegationRequest.Resource', 'Incorect path');
+    });
+}

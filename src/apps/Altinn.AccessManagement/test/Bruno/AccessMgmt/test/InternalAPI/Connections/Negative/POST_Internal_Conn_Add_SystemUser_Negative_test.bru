@@ -1,0 +1,55 @@
+meta {
+  name: POST_Internal_Conn_Add_SystemUser_Negative_test
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/connections?party={{from}}&to={{to}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{from}}
+  to: {{to}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("from", testdata.internal_conn_org.partyuuid);
+  bru.setVar("to", testdata.internal_conn_org.systemuser.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.internal_conn_org.dagligleder.userid,
+    auth_partyId: testdata.internal_conn_org.dagligleder.partyid,
+    auth_partyUuid: testdata.internal_conn_org.dagligleder.partyuuid,
+    auth_ssn: testdata.internal_conn_org.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Add systemuser as Rettighetshaver for direct delegation", function() {
+    
+    const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`); 
+    const data = res.getBody();
+    expect(res.status).to.equal(200);
+    
+    expect(data).to.have.property('fromId', testdata.internal_conn_org.partyuuid.toLowerCase());
+    expect(data).to.have.property('toId', testdata.internal_conn_org.systemuser.partyuuid);
+    
+  });
+}

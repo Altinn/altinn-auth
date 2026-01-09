@@ -68,6 +68,8 @@ script:pre-request {
     auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
   }
   
-  const token = await testTokenGenerator.getToken(getTokenParameters);
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken",  token);
 }

@@ -1,0 +1,57 @@
+meta {
+  name: GET_SysUser_ESEK_ClientDelg_FFØR_AccPkg
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation?party={{party}}&systemUser={{systemUser}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  systemUser: {{systemUser}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.regnskapsforer.partyuuid);
+  bru.setVar("systemUser", testdata.regnskapsforer.forretningsforer_systemuser.id);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.regnskapsforer.hovedadministrator.userid,
+    auth_partyId: testdata.regnskapsforer.hovedadministrator.partyid,
+    auth_partyUuid: testdata.regnskapsforer.hovedadministrator.partyuuid,
+    auth_ssn: testdata.regnskapsforer.hovedadministrator.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+  
+  
+}
+
+tests {
+  test("ESEK_Client org has delegated FFØR access package to systembruker", function() {
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+      const data = res.getBody();
+      expect(res.status).to.equal(200);
+      expect(data[0].facilitator).to.have.property('name', "FRYKTLØS FIRKANTET TIGER AS");
+    expect(data[0].role).to.have.property('code', "agent");
+    expect(data[0].facilitatorRole).to.have.property('code', "forretningsforer");
+      
+    });
+}

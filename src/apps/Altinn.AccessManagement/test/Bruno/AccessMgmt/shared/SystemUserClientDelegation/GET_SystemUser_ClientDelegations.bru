@@ -1,0 +1,49 @@
+meta {
+  name: GET_SystemUser_ClientDelegations
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation?party={{party}}&systemUser={{systemUser}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  systemUser: {{systemUser}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  const testdata = require(`./Testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.js`);
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  
+  bru.setVar("party", testdata.org_system.partyuuid);
+  bru.setVar("systemUser", testdata.org_system.systems[0]);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.org_system.dagl.userid,
+    auth_partyId: testdata.org_system.dagl.partyid,
+    auth_partyUuid: testdata.org_system.dagl.partyuuid,
+    auth_ssn: testdata.org_system.dagl.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+}

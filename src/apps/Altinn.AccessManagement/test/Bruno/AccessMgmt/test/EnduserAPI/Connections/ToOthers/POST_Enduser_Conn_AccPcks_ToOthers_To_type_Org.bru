@@ -1,0 +1,63 @@
+meta {
+  name: POST_Enduser_Conn_AccPcks_ToOthers_To_type_Org
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toOrg}}&package={{package}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toOrg}}
+  package: {{package}}
+  ~packageId: {{package}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.org1_delegates_tilgangspakke.partyuuid);
+  bru.setVar("toOrg", testdata.org2_delegates_tilgangspakke.partyuuid);
+  bru.setVar("package", testdata.package_to_delegate.package_urn);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.org1_delegates_tilgangspakke.styretsleder.userid,
+    auth_partyId: testdata.org1_delegates_tilgangspakke.styretsleder.partyid,
+    auth_partyUuid: testdata.org1_delegates_tilgangspakke.styretsleder.partyuuid,
+    auth_ssn: testdata.org1_delegates_tilgangspakke.styretsleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+script:post-response {
+  const data = res.getBody();
+  const packageId = data.packageId;
+  bru.setEnvVar("packageId", packageId)
+}
+
+tests {
+  test("Delegate access package from org1 to org2 : styrets leder", function() {
+    const data = res.getBody();
+    var packageId = bru.getEnvVar("packageId");
+    
+    expect(res.status).to.equal(200);
+    expect(data).to.have.property('packageId', packageId);
+    
+  });
+}

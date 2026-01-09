@@ -1,0 +1,68 @@
+meta {
+  name: p2o person2org delegation successful
+  type: http
+  seq: 30
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/{{party}}/rights/delegation/received
+  body: json
+  auth: inherit
+}
+
+vars:pre-request {
+  auth_tokenType: Personal
+  auth_userId: 
+  auth_partyId: 
+  auth_ssn: 
+  party: 
+}
+
+script:pre-request {
+  const testdata = require(`./Testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.js`);
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  bru.setVar("party", testdata.org2.partyid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.org2.dagl.userid,
+    auth_partyId: testdata.org2.dagl.partyid,
+    auth_ssn: testdata.org2.dagl.pid,
+    scope: sharedtestdata.scopes.read,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.read
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("person successfully delegated to an organization", function() {
+    const testdata = require(`./Testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.js`);
+    const data = res.getBody();   
+    
+    expect(res.status).to.equal(200);
+    
+    const expectedEntry = {
+      from: [{ id: 'urn:altinn:partyid', value: testdata.org1.dagl.partyid.toString() }],
+      to: [{ id: 'urn:altinn:partyid', value: testdata.org2.partyid.toString() }],
+      resource: [
+        { id: 'urn:altinn:org', value: bru.getVar('org') },
+        { id: 'urn:altinn:app', value: bru.getVar('app') }
+      ]
+    };
+  
+    // Check that at least one item in `data` matches the expected structure
+    const matchFound = data.some(entry => {
+      return JSON.stringify(entry.from) === JSON.stringify(expectedEntry.from) &&
+             JSON.stringify(entry.to) === JSON.stringify(expectedEntry.to) &&
+             JSON.stringify(entry.resource) === JSON.stringify(expectedEntry.resource);
+    });
+  
+    // Expect match to be found
+    expect(matchFound).to.be.true;
+      
+  });
+}

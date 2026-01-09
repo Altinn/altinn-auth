@@ -1,0 +1,113 @@
+meta {
+  name: DelegateInstanceRightsMainUnitToKeyRoleUnit
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/app/delegations/resource/{{resourceId}}/instance/{{instanceId}}
+  body: json
+  auth: none
+}
+
+headers {
+  PlatformAccessToken: {{platformAccessToken}}
+}
+
+body:json {
+  {
+    "from": {
+      "type": "urn:altinn:party:uuid",
+      "value": "{{fromUuid}}"
+    },
+    "to": {
+      "type": "urn:altinn:party:uuid",
+      "value": "{{toUuid}}"
+    },
+    "rights": [
+      {
+        "resource": [
+          {
+            "type": "urn:altinn:resource",
+            "value": "{{resourceId}}"
+          },
+          {
+            "type": "urn:altinn:task",
+            "value": "task_1"
+          }
+        ],
+        "action": {
+          "type": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+          "value": "read"
+        }
+      },
+      {
+        "resource": [
+          {
+            "type": "urn:altinn:resource",
+            "value": "{{resourceId}}"
+          },
+          {
+            "type": "urn:altinn:task",
+            "value": "task_1"
+          }
+        ],
+        "action": {
+          "type": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+          "value": "sign"
+        }
+      }
+    ]
+  }
+}
+
+script:pre-request {
+  
+  
+const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+const testdata = require(`./test/authorizedparties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("resourceId", testdata.resources.appInstanceDelegation.resourceId);
+  bru.setVar("instanceId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.instanceIdDelegatedToKeyRoleUnit);
+  bru.setVar("fromUuid", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.partyUuid);
+  bru.setVar("toUuid", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+  
+  var getTokenParameters = {
+      auth_org: testdata.resources.appInstanceDelegation.org,
+      auth_app: testdata.resources.appInstanceDelegation.app,
+      auth_tokenType: sharedtestdata.authTokenType.platformAccess
+    };
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("platformAccessToken",  token);
+}
+
+tests {
+  test("InstanceDelegation DelegateRightsAndRevoke post DelegateReadSign", function() {
+      
+const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+      const testdata = require(`./Testdata/instance-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+      const resource = "app_" + sharedtestdata.serviceOwners.ttd.org + "_" + testdata.app;
+    
+      const data = res.getBody();
+      expect(res.status).to.equal(200);
+    
+      expect(data.resourceId).to.equal(resource);
+      expect(data.instanceId).to.equal(testdata.instanceid);
+  
+      expect(data.from.value).to.equal(testdata.org1.partyuuid);
+      expect(data.to.value).to.equal(testdata.person1.partyuuid);
+    
+      expect(data.rights[0].status).to.equal('Delegated');
+      expect(data.rights[0].action.value).to.equal('read');  
+      expect(data.rights[0].resource[0].value).to.equal(resource);
+      expect(data.rights[0].resource[1].value).to.equal('task_1');
+      
+      expect(data.rights[1].status).to.equal('Delegated');
+      expect(data.rights[1].action.value).to.equal('sign');  
+      expect(data.rights[1].resource[0].value).to.equal(resource);
+      expect(data.rights[1].resource[1].value).to.equal('task_1');
+    });
+}

@@ -1,0 +1,54 @@
+meta {
+  name: GET_Enduser_Conn_AccPkg_After_Delet_AccPkg_delegation
+  type: http
+  seq: 20
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toOrg}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toOrg}}
+  ~package: {{package}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.org1_delegates_tilgangspakke.partyuuid);
+  bru.setVar("toOrg", testdata.org2_delegates_tilgangspakke.partyuuid);
+  bru.setVar("package", testdata.package_to_delegate.package_urn);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.org1_delegates_tilgangspakke.dagligleder.userid,
+    auth_partyId: testdata.org1_delegates_tilgangspakke.dagligleder.partyid,
+    auth_partyUuid: testdata.org1_delegates_tilgangspakke.dagligleder.partyuuid,
+    auth_ssn: testdata.org1_delegates_tilgangspakke.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Verify after deletin rightholder from list GET endpoint should return empty response : ToOthers", function() {
+     const data = res.getBody();
+      
+      expect(res.status).to.equal(200);
+    expect(data.data).to.empty
+    });
+}

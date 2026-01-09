@@ -1,0 +1,251 @@
+module.exports = 
+{
+  "env": "at22",
+  "resources": {
+    "clientDelgResourceId": "devtest_gar_bruno_client_resource"
+  },
+  "REGN_ULASTELIG_RETTFERDIG_TIGER": {
+    "name": "ULASTELIG RETTFERDIG TIGER AS",
+    "orgno": "314242726",
+    "partyId": 51235100,
+    "partyUuid": "066148fe-7077-4484-b7ea-44b5ede0014e",
+    "dagligleder": {
+      "name": "OPPRIKTIG KAMEL",
+      "pid": "30856499983",
+      "userId": 20013154,
+      "partyId": 51181765,
+      "partyUuid": "a5eb95db-97fc-4bd4-a6f6-b9214bc24549"
+    },
+    "client_USENSUELL_UVIRKSOM_TIGER": {
+      "name": "USENSUELL UVIRKSOM TIGER AS",
+      "orgno": "312714051",
+      "partyId": 51581690,
+      "partyUuid": "c12f8f37-391b-4651-be09-05665f5acdb6",
+      "dagligleder": {
+        "name": "PRATSOM BRUKSRETT",
+        "pid": "21835298350",
+        "userId": 20013153,
+        "partyId": 50183755,
+        "partyUuid": "4d2a7c10-e7c7-4685-8485-c211246db5d3"
+      },
+      "subunit": {
+        "name": "USENSUELL UVIRKSOM TIGER AS",
+        "orgno": "315556155",
+        "partyId": 51794395,
+        "partyUuid": "86ae6d6a-3545-4956-b395-c67ca0df4e51"
+      },
+      "directPackageToDelegate": "skatt-naering"
+    },
+    "client_ENK_HUMAN_TOPP_KATT_BIL": {
+      "name": "HUMAN TOPP KATT BIL",
+      "orgno": "310329495",
+      "partyId": 51340351,
+      "partyUuid": "ab07bec2-fcd0-4563-908a-d9f564724252",
+      "innehaver": {
+        "name": "EVENTYRLIG FALK",
+        "pid": "31886896576",
+        "userId": 20013167,
+        "partyId": 50175254,
+        "partyUuid": "00273506-3b4a-4e8e-a1f7-b7f28c4b411b"
+      },
+      "subunit": {
+        "name": "HUMAN TOPP KATT BIL",
+        "orgno": "315821525",
+        "partyId": 51818525,
+        "partyUuid": "ae9e37d4-0818-4c9f-9869-45e8049b64e0"
+      }
+    },
+    "client_WITHOUT_CLIENTDELEGATION": {
+      "name": "UNYTTIG MANGE TIGER AS",
+      "orgno": "313750531",
+      "partyId": 51653860,
+      "partyUuid": "0fcdee75-036a-47d9-ab40-5e55509a5b26"
+    },
+    "client_rightholderOrg1": {
+      "name": "TOPP FIRKANTET TIGER AS",
+      "orgno": "311127845",
+      "partyId": 51410913,
+      "partyUuid": "703c2e1e-d27c-40a1-b138-46b4f1a01b33",
+      "dagligleder": {
+        "name": "SAMTIDIG MATEMATIKER",
+        "pid": "07888397161",
+        "userId": 20013287,
+        "partyId": 50784075,
+        "partyUuid": "f75f209d-ce25-413e-b635-54897dc8400e"
+      },
+      "directPackageToDelegate": "motorvognavgift",
+      "directPackageToDelegate2": "skatt-naering",
+      "directPackageTilgangsstyrer": "tilgangsstyrer"
+    },
+    "client_rightholderOrg2": {
+      "name": "STOLT BETYDELIG TIGER AS",
+      "orgno": "313816915",
+      "partyId": 51658393,
+      "partyUuid": "ffa48a06-6a01-4fc7-ae5e-8aaff6c1a850",
+      "dagligleder": {
+        "name": "SKRAVLETE KAMERA",
+        "pid": "05838299719",
+        "userId": 20016888,
+        "partyId": 50922937,
+        "partyUuid": "11e6a957-5a74-4a10-b89f-c557ccca5b34"
+      },
+      "directPackageToDelegate": "mobler-og-annen-industri"
+    },
+    "a2_klientadministrator": {
+      "name": "RUSTEN AKVARELL",
+      "pid": "11860198721",
+      "userId": 20013151,
+      "partyId": 50395759,
+      "partyUuid": "5d4119c2-6a3a-4aec-ac72-7b78ad456d12"
+    },
+    "a2_hovedadministrator": {
+      "name": "MATEMATISK UNIVERSITET",
+      "pid": "03899798324",
+      "userId": 20013152,
+      "partyId": 50345170,
+      "partyUuid": "15977366-d191-4762-bb53-562461cab5c5"
+    },
+    "a2_tilgangsstyrer": {
+      "name": "GLEMSOM GREND",
+      "pid": "27920898721",
+      "userId": 20013157,
+      "partyId": 50382857,
+      "partyUuid": "f489878a-927f-4789-9dab-ff73c36c2f26"
+    },
+    "revisor": {
+      "name": "OVERFLADISK LANG TIGER AS",
+      "orgno": "310267511",
+      "partyId": 51235849,
+      "partyUuid": "037a33d1-af1c-4156-9506-86d63a09f6a6",
+      "directPackageToDelegate": "revisorattesterer"
+    },
+    "systemuser": {
+      "name": "Fiken",
+      "partyUuid": "aae74f4e-cae4-4237-a1da-c1b62a61fe4b",
+      "directPackageToDelegate": "urn:altinn:accesspackage:ansettelsesforhold",
+      "clientPackageToDelegate": "urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet",
+      "clientEnkPackageToDelegate": "urn:altinn:accesspackage:regnskapsforer-lonn",
+      "clientPackageForDelete": "urn:altinn:accesspackage:regnskapsforer-uten-signeringsrettighet"
+    },
+    "subunit": {
+      "name": "ULASTELIG RETTFERDIG TIGER AS",
+      "orgno": "314613155",
+      "partyId": 51708660,
+      "partyUuid": "825d14bf-b3f3-4d68-ae33-0994febf8a43"
+    }
+  },
+  "revisor": {
+    "name": "FINTFØLENDE FRISK TIGER AS",
+    "partyuuid": "4785CB1B-9DAF-4673-A724-14F9BAC06DF5",
+    "orgno": "310914231",
+    "dagl": {
+      "name": "DYR TRAPP",
+      "pid": "27912948957",
+      "userid": 20013237,
+      "partyid": 50708033,
+      "partyuuid": "9E5D8E64-132F-4B42-9C5F-C8122D4B65FD"
+    },
+    "klientadministrator": {
+      "name": "HØY SYKKEL",
+      "pid": "08864599150",
+      "userid": 20013239,
+      "partyid": 50257121,
+      "partyuuid": "E7B6D1C5-8425-4FEF-BFF1-7881421DAD68"
+    },
+    "hovedadministrator": {
+      "name": "USIKKER LYD",
+      "pid": "23898496708",
+      "userid": 20013247,
+      "partyid": 50878140,
+      "partyuuid": "F0EEAB79-1E87-4BE1-AF45-545FC9F0D1D4"
+    },
+    "systemuser": {
+      "name": "TEST_SBS_KLIENT",
+      "id": "ad98adff-ecf5-4d16-820b-965956da25cc"
+    },
+    "invalid_pkg_systemuser": {
+      "name": "TEST_SBS_KLIENT",
+      "id": "d0f19a13-55cc-450f-b837-fe1f066756de"
+    },
+    "client_org": {
+      "name": "BARMHJERTIG ESTETISK TIGER AS",
+      "partyuuid": "5786CF4B-7DE8-420E-8B59-1F803EBF42C8",
+      "orgno": "310454869",
+      "dagl": {
+        "name": "MOBIL PRESENTASJON",
+        "pid": "10818298426",
+        "userid": 20012847,
+        "partyid": 50726406,
+        "partyuuid": "703AC81D-9188-4384-8108-682A779B5BF7"
+      }
+    }
+  },
+  "regnskapsforer": {
+    "name": "FRYKTLØS FIRKANTET TIGER AS",
+    "partyuuid": "C689224E-5FC1-4B65-AF30-61F599F9B458",
+    "orgno": "314095693",
+    "dagl": {
+      "name": "SKÅNSOM PARYKK",
+      "pid": "20897496934",
+      "userid": 20013227,
+      "partyid": 51123394,
+      "partyuuid": "066E9A55-1668-4279-82E4-FA0492D4575D"
+    },
+    "hovedadministrator": {
+      "name": "LANG KAMERAT",
+      "pid": "09862449794",
+      "userid": 20013240,
+      "partyid": 50817574,
+      "partyuuid": "5C62777B-8457-42AA-A979-D871E891F331"
+    },
+    "systemuser": {
+      "name": "TEST_SBS_KLIENT",
+      "id": "a931f4fa-69ba-4f5b-bd3f-0fdb0fedcfed"
+    },
+    "forretningsforer_systemuser": {
+      "name": "Klient_delegation_FFØR",
+      "id": "120b03af-d7a9-44ae-9ad7-0e8854c55f47"
+    },
+    "client_org": {
+      "name": "SKRAVLETE PUSSIG KATT RETNINGSLINJE",
+      "partyuuid": "023AF04E-E43D-4EE5-8D01-08F41A44D02B",
+      "orgno": "310498394",
+      "dagl": {
+        "name": "SMIGRENDE ASSOSIASJON",
+        "pid": "04815098051"
+      }
+    },
+    "non_systemuser": {
+      "pid": "24856298961",
+      "name": "ULIK GLEDE",
+      "partyuuid": "8e06e704-b446-4e7f-9a32-3ee971e5ab0e"
+    },
+    "client_org_other_Regn": {
+      "name": "AKVATISK OVERBEVISENDE KATT ELEFANT",
+      "partyuuid": "3177BD2C-3AE1-4A36-8CE9-FBF6DB714E5B",
+      "orgno": "313628981",
+      "dagl": {
+        "name": "REDELIG HABITT",
+        "pid": "28835096523"
+      }
+    }
+  },
+  "brl_type_client_org": {
+    "name": "BORETTSLAGET SMART TØRR HEST",
+    "partyuuid": "D933E9AC-7B3E-473B-A121-8FFD65831521",
+    "orgno": "310104892",
+    "dagl": {
+      "name": "INNSIKTSFULL GJESTEROM",
+      "pid": "25815597829"
+    }
+  },
+  "esek_type_client_org": {
+    "name": "TALEFØR UGLESETT LØVE SAMEIE",
+    "partyuuid": "D103E1A0-39FD-40AE-8C81-1BCDC661BF29",
+    "orgno": "313239586",
+    "leder": {
+      "name": "TILBAKEHOLDEN ALGORITME",
+      "pid": "15828998770"
+    }
+  }
+};

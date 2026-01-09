@@ -1,0 +1,67 @@
+meta {
+  name: GET_AuthorizedParty_SIUser_GetSelf
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/authorizedparty/{{partyId}}?includeAltinn2=true&includeAltinn3=true&includeRoles=false&includeAccessPackages=false&includeResources=false&includeInstances=false
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAltinn2: true
+  includeAltinn3: true
+  includeRoles: false
+  includeAccessPackages: false
+  includeResources: false
+  includeInstances: false
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./test/authorizedparties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "GET_AuthorizedParty_SIUser_GetSelf");
+  bru.setVar("partyId", testdata.a2BrunoSIUser.partyId);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.a2BrunoSIUser.userId,
+    auth_partyId: testdata.a2BrunoSIUser.partyId,
+    auth_partyUuid: testdata.a2BrunoSIUser.partyUuid,
+    auth_username: testdata.a2BrunoSIUser.username,
+    auth_ssn: "",
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_tokenLvl: 1,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./test/authorizedparties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const requestName = bru.getVar("requestName");
+  
+  test(requestName + "|HttpStatus.OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test(requestName + "|Find and verify expected AuthorizedParty", function() {  
+    const actual = res.getBody();
+    
+    assert.equal(actual.partyUuid, testdata.a2BrunoSIUser.partyUuid, `partyUuid should match expected`);
+    assert.equal(actual.partyId, testdata.a2BrunoSIUser.partyId, `partyId should match expected`);
+  
+  });
+}

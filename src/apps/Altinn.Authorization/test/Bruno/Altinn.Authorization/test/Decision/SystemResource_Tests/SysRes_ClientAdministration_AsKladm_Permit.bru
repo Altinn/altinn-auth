@@ -63,7 +63,8 @@ body:json {
 }
 
 script:pre-request {
-  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.json`);
+  const sharedtestdata = require(`./testdata/shared.js`);
+  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "SysRes_ClientAdministration_AsKladm_Permit");
   bru.setVar("resourceId", sharedtestdata.systemResources.client_administration);

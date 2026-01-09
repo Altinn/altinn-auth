@@ -1,0 +1,74 @@
+meta {
+  name: o2s sending org revokes delegation to systemuser
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/{{party}}/rights/delegation/offered/revoke
+  body: json
+  auth: inherit
+}
+
+body:json {
+  
+    {
+      "to": [
+        {
+          "id": "urn:altinn:systemuser:uuid",
+          "value": "{{to_systemuser}}" 
+        }
+      ],
+      "rights": [
+      {
+        "resource": [
+          {
+            "id": "urn:altinn:resource",
+            "value": "{{resource}}"
+          }
+        ] 
+      }
+    ]
+  }
+  
+}
+
+vars:pre-request {
+  auth_tokenType: Personal
+  auth_userId: 
+  auth_partyId: 
+  auth_ssn: 
+  party: 
+  org: 
+  app: 
+  toUserId: 
+}
+
+script:pre-request {
+  const testdata = require(`./Testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.js`);
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  bru.setVar("party", testdata.org_system.partyid);
+  bru.setVar("to_systemuser", testdata.org_system.systems[0]);
+  bru.setVar("resource", testdata.resource_system);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.org_system.dagl.userid,
+    auth_partyId: testdata.org_system.dagl.partyid,
+    auth_ssn: testdata.org_system.dagl.pid,
+    scope: sharedtestdata.scopes.read,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.read
+  }
+    
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("organization to systemuser revoke", function() {
+    const data = res.getBody();  
+    expect(res.status).to.equal(204);  
+  });
+}

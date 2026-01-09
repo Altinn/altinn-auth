@@ -64,6 +64,7 @@ assert {
 }
 
 script:pre-request {
+  const sharedtestdata = require(`./testdata/shared.js`);
   var getTokenParameters = {
     auth_tokenType: sharedtestdata.authTokenType.enterprise,
     auth_scopes: sharedtestdata.auth_scopes.authorize,
@@ -71,6 +72,8 @@ script:pre-request {
     auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
   }
   
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
   const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken",  token);
 }

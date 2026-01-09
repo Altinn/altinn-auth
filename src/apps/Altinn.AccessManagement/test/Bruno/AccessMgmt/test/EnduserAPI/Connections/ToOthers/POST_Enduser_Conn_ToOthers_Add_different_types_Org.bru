@@ -1,0 +1,57 @@
+meta {
+  name: POST_Enduser_Conn_ToOthers_Add_different_types_Org
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{toOrg}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toOrg}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.org1_delegates_tilgangspakke.partyuuid);
+  bru.setVar("toOrg", testdata.org2_delegates_tilgangspakke.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.org1_delegates_tilgangspakke.dagligleder.userid,
+    auth_partyId: testdata.org1_delegates_tilgangspakke.dagligleder.partyid,
+    auth_partyUuid: testdata.org1_delegates_tilgangspakke.dagligleder.partyuuid,
+    auth_ssn: testdata.org1_delegates_tilgangspakke.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+  
+}
+
+tests {
+  test("To add Org1 og Org2 for access package delegation : dagl", function() {
+    
+    const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`); 
+    const data = res.getBody();
+    expect(res.status).to.equal(200);
+    
+    expect(data).to.have.property('fromId', testdata.org1_delegates_tilgangspakke.partyuuid.toLowerCase());
+    expect(data).to.have.property('toId', testdata.org2_delegates_tilgangspakke.partyuuid.toLowerCase());
+    
+  });
+}

@@ -1,0 +1,63 @@
+meta {
+  name: DeletePolicy (Resource)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/delegations/deletepolicy
+  body: json
+  auth: inherit
+}
+
+body:json {
+  [
+    {
+      "ruleIds": [],
+      "deletedByUserId": 20000012,
+      "performedBy": [
+        {
+          "id": "urn:altinn:person:uuid",
+          "value": "12029316-3fde-4de7-b002-384740637bc7"
+        },
+        {
+          "id": "urn:altinn:userid",
+          "value": "20000012"
+        }
+      ],
+      "policyMatch": {
+        "offeredByPartyId": 50002120,
+        "fromUuidType": "Person",
+        "fromUuid": "12029316-3fde-4de7-b002-384740637bc7",
+        "resource": [
+          {
+            "id": "urn:altinn:resource",
+            "value": "generic-access-resource"
+          }
+        ],
+        "coveredBy": [
+          {
+            "id": "urn:altinn:userid",
+            "value": "20000013"
+          },
+          {
+            "id": "urn:altinn:person:uuid",
+            "value": "2846f7ba-d86d-47a3-a857-d1d820128ade"
+          }
+        ]
+      }
+    }
+  ]
+}
+
+script:pre-request {
+  var getTokenParameters = {
+    auth_app: "sbl.authorization",
+    auth_tokenType: "PlatformToken"
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}

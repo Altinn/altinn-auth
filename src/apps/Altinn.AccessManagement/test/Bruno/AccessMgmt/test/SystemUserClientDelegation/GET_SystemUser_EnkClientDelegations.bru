@@ -1,0 +1,68 @@
+meta {
+  name: GET_SystemUser_EnkClientDelegations
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation?party={{party}}&systemUser={{systemUser}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  systemUser: {{systemUser}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  
+  bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+  bru.setVar("systemUser", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser.partyUuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.userId,
+    auth_partyId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.partyId,
+    auth_partyUuid: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.partyUuid,
+    auth_ssn: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+script:post-response {
+  let data = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
+  if (Array.isArray(data) && data.length > 0) {
+   const assignmentId = data[0].delegation.toId;
+   bru.setEnvVar("toId", assignmentId);
+  }
+}
+
+tests {
+  test("Access package delegation from client org to systemuser ", function() {
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+    const data = res.getBody();
+    var delegationId = bru.getVar("delegationId");
+    console.log("DelegationId: " + delegationId);
+    expect(res.status).to.equal(200);
+    // Find the expected delegation
+    const delegationRecord = data.find(item => item.id === delegationId);
+    expect(delegationRecord, 'Expected delegation not found in response').to.exist;
+    assert.equal(delegationRecord.facilitator.id, testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid.toLowerCase());
+    assert(delegationRecord.facilitatorRole.code, 'regnskapsforer');
+    assert(delegationRecord.role.code, 'agent');
+    });
+}

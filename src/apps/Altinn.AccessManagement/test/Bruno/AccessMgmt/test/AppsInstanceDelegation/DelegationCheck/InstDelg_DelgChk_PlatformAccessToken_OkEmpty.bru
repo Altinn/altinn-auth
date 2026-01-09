@@ -1,0 +1,56 @@
+meta {
+  name: InstDelg_DelgChk_PlatformAccessToken_OkEmpty
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/app/delegationcheck/resource/:resourceId/instance/:instanceId
+  body: json
+  auth: none
+}
+
+params:path {
+  resourceId: app_ttd_authz-bruno-instancedelegation
+  instanceId: {{instanceId}}
+}
+
+headers {
+  Accept: application/json
+  PlatformAccessToken: {{platformAccessToken}}
+  ~Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+script:pre-request {
+  const testdata = require(`./Testdata/maskinportenschema/${bru.getEnvVar("tokenEnv")}testdata.js`);
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  
+  const org = "ttd";
+  bru.setVar("org",  org);
+  const app = "some-random-app";
+  bru.setVar("app",  app);
+  
+  bru.setVar("instanceId",  "b39a2326-9fff-4414-a209-61e6f9835564");
+  
+  var getTokenParameters = {
+    auth_org: org,
+    auth_app: app,
+    auth_tokenType: sharedtestdata.authTokenType.platformAccess
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("platformAccessToken",  token);
+}
+
+tests {
+  // Should be the same as the .bru request file. Used as prefix in test name which also shows in test result in pipeline.
+  const requestName = "InstDelg_DelgChk_PlatformAccessToken_OkEmpty";
+  const body = res.getBody();
+  
+  test(requestName + "|HttpStatus.OK and Body.Data empty", function() {
+    expect(res.status).to.equal(200);
+    assert.isEmpty(body.data, `Expected data in body to be empty.`);
+  });
+}

@@ -63,7 +63,7 @@ body:json {
 }
 
 script:pre-request {
-  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.json`);
+  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "SysUser_ClientDelg_AccPkg_Subunit_Permit");
   bru.setVar("resourceId", testdata.resources.clientDelgResourceId);

@@ -72,20 +72,11 @@ assert {
 }
 
 script:pre-request {
-  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.json`);
+  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("auth_userId", testdata.org1.dagl.userid)
   bru.setVar("auth_partyId", testdata.org1.dagl.partyid)
   
-  var getTokenParameters = {
-    auth_tokenType: sharedtestdata.authTokenType.enterprise,
-    auth_scopes: sharedtestdata.auth_scopes.authorize,
-    auth_org: sharedtestdata.serviceOwners.ttd.org,
-    auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
-  }
-  
-  const token = await testTokenGenerator.getToken(getTokenParameters);
-  bru.setVar("bearerToken",  token);
 }
 
 script:post-response {

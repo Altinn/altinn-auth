@@ -1,0 +1,72 @@
+meta {
+  name: POST_SysUser_ClientDele_AccPkg_Vanlig_pakke_Delegering_HADM
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation?party={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+body:json {
+  {
+    "clientId": "{{clientId}}",
+    "agentId": "{{systemUser}}",
+    "agentName": "Bruno Test SystemUser",
+    "agentRole": "agent",
+    "rolePackages": [
+      {
+        "roleIdentifier": "rettighetshaver",
+        "packageUrn": "urn:altinn:accesspackage:skattegrunnlag"
+      }
+    ]
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.esek_type_org.partyuuid);
+  bru.setVar("systemUser", testdata.esek_type_org.systemuser.partyuuid);
+  bru.setVar("clientId", testdata.hovedorg_delegates_tilgangspakke.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.esek_type_org.hovedadministrator.userid,
+    auth_partyId: testdata.esek_type_org.hovedadministrator.partyid,
+    auth_partyUuid: testdata.esek_type_org.hovedadministrator.partyuuid,
+    auth_ssn: testdata.esek_type_org.hovedadministrator.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+  
+}
+
+script:post-response {
+  let data = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
+  if (Array.isArray(data) && data.length > 0) {
+   const delegationId = data[0].delegationId;
+   bru.setVar("delegationId", delegationId);
+  }
+}
+
+tests {
+  test("Verify access package delegation from client org-1 to Org-2's systembruker should return 200 ok with", function() {
+    const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+    const data = res.getBody();
+    expect(res.status).to.equal(200);
+    expect(data[0]).to.have.property('fromEntityId', testdata.hovedorg_delegates_tilgangspakke.partyuuid.toLowerCase());
+    
+  });
+}

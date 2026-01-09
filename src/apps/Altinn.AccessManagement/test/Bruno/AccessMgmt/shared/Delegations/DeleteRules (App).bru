@@ -1,0 +1,69 @@
+meta {
+  name: DeleteRules (App)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/delegations/deleterules
+  body: json
+  auth: inherit
+}
+
+body:json {
+  [
+    {
+      "ruleIds": [
+        "2935356f-ce5a-41da-afa9-884d18f61cde"
+      ],
+      "deletedByUserId": 20000012,
+      "performedBy": [
+        {
+          "id": "urn:altinn:person:uuid",
+          "value": "12029316-3fde-4de7-b002-384740637bc7"
+        },
+        {
+          "id": "urn:altinn:userid",
+          "value": "20000012"
+        }
+      ],
+      "policyMatch": {
+        "offeredByPartyId": 50002120,
+        "fromUuidType": "Person",
+        "fromUuid": "12029316-3fde-4de7-b002-384740637bc7",
+        "resource": [
+          {
+            "id": "urn:altinn:org",
+            "value": "ttd"
+          },
+          {
+            "id": "urn:altinn:app",
+            "value": "security-level3-app"
+          }
+        ],
+        "coveredBy": [
+          {
+            "id": "urn:altinn:userid",
+            "value": "20000013"
+          },
+          {
+            "id": "urn:altinn:person:uuid",
+            "value": "2846f7ba-d86d-47a3-a857-d1d820128ade"
+          }
+        ]
+      }
+    }
+  ]
+}
+
+script:pre-request {
+  var getTokenParameters = {
+    auth_app: "sbl.authorization",
+    auth_tokenType: "PlatformToken"
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}

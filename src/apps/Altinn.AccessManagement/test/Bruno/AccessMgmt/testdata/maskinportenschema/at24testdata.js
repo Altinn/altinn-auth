@@ -1,0 +1,40 @@
+module.exports = 
+{
+    "env": "at23",
+    "org": "ttd",
+    "app": "apps-test",
+    "org1": {
+        "orgno": "810414782",
+        "partyid": 50024756,
+        "dagl": {
+            "pid":"21025400167",
+            "userid": 20014526,
+            "partyid": 50012796,
+            "useruuid": "3536151C-5075-4208-B8FE-4C92E5FDD0EB"
+        },
+        "hadm": {
+            "pid": "17048001742",
+            "userid": 20013232,
+            "partyid": 50012941
+        },
+        "apiadm": {
+            "pid": "18036000194",
+            "userid": 20013942,
+            "partyid": 50009383
+        }
+    },
+    "org2": {
+        "orgno": "910049356",
+        "partyid": 50024778,
+        "dagl": {
+            "pid": "26013000394",
+            "userid": 20013938,
+            "partyid": 50012091,
+            "useruuid": "09FDBB92-BD32-41E1-932D-BFBAF4C2E568"
+      }
+    },
+    "digdir": {
+        "orgno": "991825827",
+        "partyid": 50040763
+    }
+};

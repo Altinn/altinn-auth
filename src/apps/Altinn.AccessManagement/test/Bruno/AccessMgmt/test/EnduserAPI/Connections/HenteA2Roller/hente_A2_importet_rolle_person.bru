@@ -1,0 +1,62 @@
+meta {
+  name: hente_A2_importet_rolle_person
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/roles?party={{party}}&from={{from}}&to={{to}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{from}}
+  to: {{to}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.hente_A2_roller_from_org.partyuuid);
+  bru.setVar("from", testdata.hente_A2_roller_from_org.partyuuid);
+  bru.setVar("to", testdata.to_bruker_fikk_rolle.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.hente_A2_roller_from_org.dagligleder.userid,
+    auth_partyId: testdata.hente_A2_roller_from_org.dagligleder.partyid,
+    auth_partyUuid: testdata.hente_A2_roller_from_org.dagligleder.partyuuid,
+    auth_ssn: testdata.hente_A2_roller_from_org.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Verifisere A2 roller er importet i A3 for privat person", function() {
+    
+    const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`); 
+     const data = res.getBody();
+      expect(res.status).to.equal(200);
+      expect(data.data[0].permissions[0].from).to.have.property('id', testdata.hente_A2_roller_from_org.partyuuid.toLowerCase());
+    expect(data.data[0].permissions[0].to).to.have.property('id', testdata.to_bruker_fikk_rolle.partyuuid.toLowerCase());
+    
+    
+  
+  
+    
+    
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

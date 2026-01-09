@@ -1,0 +1,65 @@
+meta {
+  name: GET_Enduser_Connections_Person_Added_ToOthers
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  ~to: {{toPerson}}
+  ~to: {{toPerson}}
+}
+
+body:json {
+  {
+    "personidentifier": "{{toPerson}}", // fnr or username
+    "lastName": "{{toPersonLastName}}"
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.vassen_riktig_tiger_as.partyuuid);
+  bru.setVar("toPerson", testdata.vassen_riktig_tiger_as.person1.pid);
+  bru.setVar("toPersonLastName", testdata.vassen_riktig_tiger_as.person1.lastname);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.vassen_riktig_tiger_as.dagl.userid,
+    auth_partyId: testdata.vassen_riktig_tiger_as.dagl.partyid,
+    auth_partyUuid: testdata.vassen_riktig_tiger_as.dagl.partyuuid,
+    auth_ssn: testdata.vassen_riktig_tiger_as.dagl.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const testdata = require(`./Testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  test("GET_Enduser_Connections_Person_Added_ToOthers", function() {
+  
+     const data = res.getBody();
+  
+     const conn = data.data.find(item => item.party.id === testdata.vassen_riktig_tiger_as.person1.partyuuid.toLowerCase());
+     expect(conn).to.exist;
+     const role = conn.roles.find(item => item.code === "rettighetshaver");
+     expect(role).to.exist;
+  });
+}
+
+docs {
+  Sjekker at connection til person har blitt opprettet
+}

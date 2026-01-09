@@ -1,0 +1,61 @@
+meta {
+  name: GET_Enduser_Conn_AccPcks_FromOthers_From_Regn_org
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{fromOrg}}&to={{party}}&packageId&package
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{fromOrg}}
+  to: {{party}}
+  packageId: 
+  package: 
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  
+  bru.setVar("party", testdata.regn_type_org.partyuuid);
+  bru.setVar("fromOrg", testdata.regn_type_org.klient_org.partyuuid);
+  
+  
+  var getTokenParameters = {
+    auth_userId: testdata.regn_type_org.dagligleder.userid,
+    auth_partyId: testdata.regn_type_org.dagligleder.partyid,
+    auth_partyUuid: testdata.regn_type_org.dagligleder.partyuuid,
+    auth_ssn: testdata.regn_type_org.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  test("GET Org1 as agiver for org2 who has delegeated tilgangspakke", function() {
+    const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+      const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+     const data = res.getBody();
+    var packageId = bru.getEnvVar("packageId");
+    const conn = data.data.find(item => item.package.id === packageId);
+    expect(conn).to.exist;
+      expect(res.status).to.equal(200);
+      expect(conn.package).to.have.property('id', packageId);
+     expect(conn.permissions[0].from).to.have.property('id', testdata.regn_type_org.klient_org.partyuuid.toLowerCase());   
+    });
+}

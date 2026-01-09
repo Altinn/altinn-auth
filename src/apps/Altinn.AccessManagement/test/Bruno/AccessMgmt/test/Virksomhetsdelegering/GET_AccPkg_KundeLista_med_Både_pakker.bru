@@ -1,0 +1,52 @@
+meta {
+  name: GET_AccPkg_KundeLista_med_Både_pakker
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/clients?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  
+  bru.setVar("party", testdata.regn_type_org.partyuuid);
+  
+  
+  var getTokenParameters = {
+    auth_userId: testdata.regn_type_org.dagligleder.userid,
+    auth_partyId: testdata.regn_type_org.dagligleder.partyid,
+    auth_partyUuid: testdata.regn_type_org.dagligleder.partyuuid,
+    auth_ssn: testdata.regn_type_org.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  test("GET accesspackage kundelista med både pakker : Virksomhetsdelegering", function() {
+    const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+      const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+      const data = res.getBody();
+      expect(res.status).to.equal(200);
+    
+    const delegationRecord = data.find(item => item.party.name == testdata.regn_type_org.klient_org.name);
+    expect(delegationRecord, 'Expected delegation not found in response').to.exist;
+    assert.equal(delegationRecord.party.organizationNumber, testdata.regn_type_org.klient_org.orgno);
+    
+    });
+}

@@ -1,0 +1,81 @@
+meta {
+  name: o2s delegate org2systemuser
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/{{party}}/rights/delegation/offered
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+      "to": [
+          {
+              "id": "urn:altinn:systemuser:uuid",
+              "value": "{{to_systemuser}}"
+          }
+      ],
+      "rights": [
+          {
+              "resource": [
+                  {
+                      "id": "urn:altinn:resource",
+                      "value": "{{resource}}"
+                  }
+              ],
+              "action": "read"
+          }
+      ]
+  }
+}
+
+vars:pre-request {
+  toSsn: 
+  toLastName: 
+  org: 
+  app: 
+  auth_tokenType: Personal
+  auth_userId: 
+  auth_partyId: 
+  auth_ssn: 
+  party: 
+}
+
+script:pre-request {
+  const testdata = require(`./Testdata/rights-delegations/${bru.getEnvVar("tokenEnv")}testdata.js`);
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  bru.setVar("party", testdata.org_system.partyid);
+  bru.setVar("to_systemuser", testdata.org_system.systems[0]);
+  bru.setVar("resource", testdata.resource_system);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.org_system.dagl.userid,
+    auth_partyId: testdata.org_system.dagl.partyid,
+    auth_ssn: testdata.org_system.dagl.pid,
+    scope: sharedtestdata.scopes.read,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+    
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("organization to systemuser delegation", function() {
+    const data = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(data.rightDelegationResults[0]).to.have.property('status', 'Delegated');
+  });
+  
+}

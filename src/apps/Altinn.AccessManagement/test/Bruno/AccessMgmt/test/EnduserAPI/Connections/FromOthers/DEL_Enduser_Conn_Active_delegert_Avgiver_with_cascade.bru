@@ -1,0 +1,55 @@
+meta {
+  name: DEL_Enduser_Conn_Active_delegert_Avgiver_with_cascade
+  type: http
+  seq: 16
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{fromOrg}}&to={{party}}&cascade=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{fromOrg}}
+  to: {{party}}
+  cascade: true
+  ~package: {{package}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.esek_type_org.partyuuid);
+  bru.setVar("fromOrg", testdata.hovedorg_delegates_tilgangspakke.partyuuid);
+  bru.setVar("package", testdata.direct_package_to_delegate);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.esek_type_org.styretsleder.userid,
+    auth_partyId: testdata.esek_type_org.styretsleder.partyid,
+    auth_partyUuid: testdata.esek_type_org.styretsleder.partyuuid,
+    auth_ssn: testdata.esek_type_org.styretsleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Verify deletion of rightholder gives 204 response : FromOthers", function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(204);
+    
+  });
+}

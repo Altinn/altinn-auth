@@ -1,0 +1,56 @@
+meta {
+  name: GET_SysUser_ClientDelg_Vanlig_AccPkg
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation?party={{party}}&systemUser={{systemUser}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  systemUser: {{systemUser}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.esek_type_org.partyuuid);
+  bru.setVar("systemUser", testdata.esek_type_org.systemuser.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.esek_type_org.hovedadministrator.userid,
+    auth_partyId: testdata.esek_type_org.hovedadministrator.partyid,
+    auth_partyUuid: testdata.esek_type_org.hovedadministrator.partyuuid,
+    auth_ssn: testdata.esek_type_org.hovedadministrator.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+  
+  
+}
+
+tests {
+  test("Client org-Avgiver has delegated to systembruker", function() {
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+    
+      const data = res.getBody();
+      var delegationId = bru.getVar("delegationId");
+      expect(res.status).to.equal(200);
+      
+    });
+}

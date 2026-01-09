@@ -1,0 +1,53 @@
+meta {
+  name: Maskinporten_AsAdmin_WithoutScopeOrOrgs_BadRequest
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/maskinporten/delegations
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~supplierOrg: {{supplierOrg}}
+  ~consumerOrg: {{consumerOrg}}
+  ~scope: {{scope}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const testdata = require(`./Testdata/maskinportenschema/${bru.getEnvVar("tokenEnv")}testdata.js`);
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  bru.setVar("supplierOrg", testdata.org1.orgno);
+  bru.setVar("consumerOrg", testdata.org2.orgno);
+  bru.setVar("scope", sharedtestdata.scopes.k6Read);
+  
+  var getTokenParameters = {
+    auth_org: testdata.digdir.partyid,
+    auth_orgNo: testdata.digdir.orgno,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.maskinportenAdmin
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  // Should be the same as the .bru request file. Used as prefix in test name which also shows in test result in pipeline.
+  const requestName = "Maskinporten_AsAdmin_WithoutScopeOrOrgs_BadRequest";
+  const body = res.getBody();
+  
+  test(requestName + "|HttpStatus.BadRequest and Body.Data with ProblemDetails", function() {
+    expect(res.status).to.equal(400);
+    assert.equal(body.status, "400");
+    assert.equal(body.title, "Query without parameter; scope, must provide at least one of; supplierOrg, consumerOrg");
+  });
+}

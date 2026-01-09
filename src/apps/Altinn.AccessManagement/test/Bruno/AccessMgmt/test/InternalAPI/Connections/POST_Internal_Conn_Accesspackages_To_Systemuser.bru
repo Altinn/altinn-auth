@@ -1,0 +1,53 @@
+meta {
+  name: POST_Internal_Conn_Accesspackages_To_Systemuser
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/Internal/connections/accesspackages?party={{from}}&to={{to}}&package={{package}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{from}}
+  to: {{to}}
+  package: {{package}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("from", testdata.internal_conn_org.partyuuid);
+  bru.setVar("to", testdata.internal_conn_org.systemuser.partyuuid);
+  bru.setVar("package", testdata.internal_conn_org.package_to_delegate);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.internal_conn_org.dagligleder.userid,
+    auth_partyId: testdata.internal_conn_org.dagligleder.partyid,
+    auth_partyUuid: testdata.internal_conn_org.dagligleder.partyuuid,
+    auth_ssn: testdata.internal_conn_org.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("POST internal connections accesspackages to systemuser", function() {
+    
+    const testdata = require(`./Testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`); 
+    const data = res.getBody();
+    expect(res.status).to.equal(200);
+  });
+}

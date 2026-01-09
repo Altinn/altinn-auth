@@ -63,7 +63,8 @@ body:json {
 }
 
 script:pre-request {
-  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.json`);
+  const sharedtestdata = require(`./testdata/shared.js`);
+  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "SysRes_EnduserAccMgmt_AsKladm_NotApplicable");
   bru.setVar("resourceId", sharedtestdata.systemResources.enduser_accessmanagment);

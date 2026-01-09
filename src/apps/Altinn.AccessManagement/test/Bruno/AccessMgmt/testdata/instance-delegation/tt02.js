@@ -1,0 +1,75 @@
+module.exports = 
+{
+  "env": "tt02",
+  "app": "authz-bruno-instancedelegation",
+  "instanceid": "1cc971b6-c518-43ab-9345-21daab7e919e",
+  "revokeallinstanceid": "1646867c-2394-4575-aad3-0507efabe436",
+  "revokeallbeyondlimitinstanceid": "d80b8481-0dfa-4125-ac0b-e33565b5cd74",
+  "org1": {
+    "orgno": "310438707",
+    "partyid": 51563583,
+    "partyuuid": "7df033f9-9d72-42c7-a2d8-9533d925ddc5",
+    "dagl": {
+      "pid": "22855296954",
+      "lastname": "LARM",
+      "userid": 1278314,
+      "partyid": 50783137,
+      "partyuuid": "a39359de-f1d2-4dc7-b2ba-f9841ea1a799"
+    }
+  },
+  "org2": {
+    "orgno": "405002701",
+    "partyuuid": "60610979-39fe-4997-90da-03069736d75d"
+  },
+  "org3": {
+    "orgno": "310001406",
+    "partyuuid": "22d673ed-0703-4eac-8790-fa8601361a35"
+  },
+  "org4": {
+    "orgno": "310014540",
+    "partyuuid": "ee5774c6-f2ee-407f-8685-a8ebbb27768c"
+  },
+  "org5": {
+    "orgno": "310014559",
+    "partyuuid": "412fd60c-80ae-43e1-b4e8-3c4eb572567b"
+  },
+  "org6": {
+    "orgno": "310014575",
+    "partyuuid": "2b59ce5b-e677-4110-94a1-9f65b15e3588"
+  },
+  "org7": {
+    "orgno": "310014613",
+    "partyuuid": "c4ba72b3-502e-4b49-9ca1-4ce5f6f767ef"
+  },
+  "org8": {
+    "orgno": "310014664",
+    "partyuuid": "ae45d226-4499-4ee0-8720-b8e390ffe74c"
+  },
+  "org9": {
+    "orgno": "310014702",
+    "partyuuid": "b9d146d4-e187-4074-8bd2-94d0e243e945"
+  },
+  "org10": {
+    "orgno": "310014745",
+    "partyuuid": "822a516c-1d38-4392-8369-cd6e86c764d1"
+  },
+  "org11": {
+    "orgno": "310014796",
+    "partyuuid": "12512dd4-82a7-4ddd-b202-b0bd3d9dcb2e"
+  },
+  "person1": {
+    "pid": "23862849957",
+    "userid": 91561,
+    "lastname": "FAKTURA",
+    "partyid": 50041694,
+    "partyuuid": "9e5eeb84-dd37-4d74-8862-27e96f58f29b"
+  },
+  "person2": {
+    "pid": "29917329042",
+    "partyuuid": "b35ba3e9-6c73-410c-abd8-4e0205837f88"
+  },
+  "person3": {
+    "pid": "08817498451",
+    "partyuuid": "dadb268b-f4a0-4ba2-8900-a8420b8f2bf8"
+  }
+};

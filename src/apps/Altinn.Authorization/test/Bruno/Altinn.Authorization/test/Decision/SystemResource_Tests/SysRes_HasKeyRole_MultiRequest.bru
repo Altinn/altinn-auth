@@ -126,7 +126,7 @@ body:json {
 }
 
 script:pre-request {
-  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.json`);
+  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "SysRes_HasKeyRole_MultiRequest");
   bru.setVar("subjectUserId", testdata.org1.dagl.userid);

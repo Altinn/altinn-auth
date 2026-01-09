@@ -248,6 +248,8 @@ script:pre-request {
     auth_app: sharedtestdata.auth_apps.studio
   }
   
-  const token = await testTokenGenerator.getToken(getTokenParameters);
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken",  token);
 }

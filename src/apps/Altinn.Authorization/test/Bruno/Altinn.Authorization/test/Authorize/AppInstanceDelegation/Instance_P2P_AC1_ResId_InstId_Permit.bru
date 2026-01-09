@@ -71,7 +71,8 @@ assert {
 }
 
 script:pre-request {
-  const testdata = require(`./testdata/InstanceDelegation/${bru.getEnvVar("tokenEnv")}.json`);
+  const sharedtestdata = require(`./testdata/shared.js`);
+  const testdata = require(`./testdata/InstanceDelegation/${bru.getEnvVar("tokenEnv")}.js`);
   
   // Should be the same as the .bru request file. Used as Test-name Tests tab and shows in test result.
   bru.setVar("requestName", "Instance_P2P_AC1_ResId_InstId_Permit");
@@ -88,6 +89,8 @@ script:pre-request {
     auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
   }
   
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
   const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken",  token);
 }

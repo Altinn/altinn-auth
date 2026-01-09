@@ -1,0 +1,61 @@
+module.exports = 
+{
+    "env": "at22",
+    "org": "ttd",
+    "app": "apps-test",
+    "org1": {
+        "orgno": "810414782",
+        "partyid": 50067258,
+        "dagl": {
+            "pid":"21025400167",
+            "userid": 20004896,
+            "partyid": 50020295,
+            "useruuid": "5DD2FD6D-35A7-431B-8F88-BA5D25702F74"
+        },
+        "hadm": {
+            "pid": "17048001742",
+            "userid": 20003595,
+            "partyid": 50020440
+        },
+        "apiadm": {
+            "pid": "18036000194",
+            "userid": 20004282,
+            "partyid": 50009383
+        },
+        "tilg": {
+            "pid": "19856499459",
+            "userid": 20012825,
+            "partyid": 50465571
+        }
+    },
+    "org2": {
+        "orgno": "910049356",
+        "partyid": 50066506,
+        "dagl": {
+            "pid": "26013000394",
+            "userid": 20004270,
+            "partyid": 50019590,
+            "useruuid": "3C7FA62F-0E9A-4AD9-9A32-67B184792389"
+        }
+    },
+    "org3": {
+        "orgno": "312822881",
+        "partyid": 51423446,
+        "dagl": {
+            "pid": "47827602783",
+            "lastname": "ELEV",
+            "userid": 20012697,
+            "partyid": 510247625
+        },
+        "tilg": {
+            "pid":"05859399586",
+            "lastname": "DESIMETER",
+            "userid": 20012650,
+            "partyid": 50592431
+        }
+    },
+    "digdir": {
+        "orgno": "991825827",
+        "partyid": 50088610
+    }
+};

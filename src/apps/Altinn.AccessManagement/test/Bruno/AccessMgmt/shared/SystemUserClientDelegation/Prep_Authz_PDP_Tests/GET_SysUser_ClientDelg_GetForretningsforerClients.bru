@@ -1,0 +1,50 @@
+meta {
+  name: GET_SysUser_ClientDelg_GetForretningsforerClients
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/clients?party={{party}}&roles=forretningsforer&packages=forretningsforer-eiendom
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  roles: forretningsforer
+  packages: forretningsforer-eiendom
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "GET_SysUser_ClientDelg_GetForretningsforerClients");
+  bru.setVar("party", "b5265db7-602f-4491-893e-bfeadf7944b9");
+  
+  var getTokenParameters = {
+    auth_userId: "20972169",
+    auth_partyId: "51127468",
+    auth_partyUuid: "caedecde-9939-4a0a-a20a-b3d2fd23672a",
+    auth_ssn: "10856598735",
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+}

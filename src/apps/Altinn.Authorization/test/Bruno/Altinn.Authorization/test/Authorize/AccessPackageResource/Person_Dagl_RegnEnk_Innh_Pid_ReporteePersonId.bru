@@ -60,7 +60,8 @@ body:json {
 }
 
 script:pre-request {
-  const testdata = require(`./testdata/accesspackage-resource-auth/${bru.getEnvVar("tokenEnv")}.json`);
+  const sharedtestdata = require(`./testdata/shared.js`);
+  const testdata = require(`./testdata/accesspackage-resource-auth/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "Person_Dagl_RegnEnk_Innh_Pid_ReporteePersonId");
   
@@ -75,6 +76,8 @@ script:pre-request {
     auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
   }
   
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
   const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken",  token);
 }

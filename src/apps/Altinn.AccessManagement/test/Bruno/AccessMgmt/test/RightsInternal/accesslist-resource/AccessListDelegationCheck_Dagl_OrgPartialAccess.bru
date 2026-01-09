@@ -1,0 +1,61 @@
+meta {
+  name: AccessListDelegationCheck_Dagl_OrgPartialAccess
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/{{party}}/rights/delegation/delegationcheck
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "resource": [
+      {
+        "id": "urn:altinn:resource",
+        "value": "{{resource}}"
+      }
+    ]
+  }
+}
+
+script:pre-request {
+  const testdata = require(`./Testdata/accesslist-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  bru.setVar("party", testdata.OrdentligUlasteligStruts.partyid);
+  bru.setVar("resource", testdata.resource);
+  
+  var getTokenParameters = {
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_userId: testdata.OrdentligUlasteligStruts.dagl.userid,
+    auth_partyId: testdata.OrdentligUlasteligStruts.dagl.partyid,
+    auth_ssn: testdata.OrdentligUlasteligStruts.dagl.pid
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  // Should be the same as the .bru request file. Used as prefix in test name which also shows in test result in pipeline.
+  const requestName = "AccessListDelegationCheck_Dagl_OrgPartialAccess";
+  const body = res.getBody();
+  
+  test(requestName + "|HttpStatus.OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test(requestName + "|Read_IsDelegable", function() {
+    const right = body.find(right => right.rightKey === "devtest_gar_bruno_accesslist_actionfilter:read");
+    assert.equal(right.status, "Delegable", `Expected read to be: Delegable`);
+  });
+  
+  test(requestName + "|Write_IsNotDelegable", function() {
+    const right = body.find(right => right.rightKey === "devtest_gar_bruno_accesslist_actionfilter:write");
+    assert.equal(right.status, "NotDelegable", `Expected write to be; NotDelegable`);
+  });
+}

@@ -6,10 +6,6 @@ auth:bearer {
   token: {{bearerToken}}
 }
 
-script:pre-request {
-  const testTokenGenerator = require("./TestToolsTokenGenerator.js");
-}
-
 script:post-response {
   // Reset request vars so auth token data does not bleed between requests.
   // Probably better ways of doing this?

@@ -20,7 +20,8 @@ assert {
 }
 
 script:pre-request {
-  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.json`);
+  const sharedtestdata = require(`./testdata/shared.js`);
+  const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("auth_userId", testdata.org1.dagl.userid)
   
@@ -32,6 +33,8 @@ script:pre-request {
     auth_ssn: testdata.org1.dagl.pid
   }
   
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
   const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken",  token);
 }

@@ -60,7 +60,7 @@ body:json {
 }
 
 script:pre-request {
-  const testdata = require(`./testdata/accesspackage-resource-auth/${bru.getEnvVar("tokenEnv")}.json`);
+  const testdata = require(`./testdata/accesspackage-resource-auth/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "Person_Dagl_WithPackage_ViaKeyRole_UserId_ReporteePartyId");
   

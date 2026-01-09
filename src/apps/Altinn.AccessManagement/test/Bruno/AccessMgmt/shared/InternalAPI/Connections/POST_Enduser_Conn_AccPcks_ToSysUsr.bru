@@ -1,0 +1,63 @@
+meta {
+  name: POST_Enduser_Conn_AccPcks_ToSysUsr
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/connections/accesspackages?party={{party}}&to={{to}}&packageId=&package=urn:altinn:accesspackage:ansettelsesforhold
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{to}}
+  packageId: 
+  package: urn:altinn:accesspackage:ansettelsesforhold
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/manualtests/systemuser-directdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "POST_Enduser_Conn_AccPcks_ToSysUsr");
+  
+  bru.setVar("party", testdata.Org_GraaPresisTigerAS.partyUuid);
+  bru.setVar("to", testdata.Org_GraaPresisTigerAS.partyinternal_systemuser.partyUuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.Org_GraaPresisTigerAS.dagligleder.userId,
+    auth_partyId: testdata.Org_GraaPresisTigerAS.dagligleder.partyId,
+    auth_partyUuid: testdata.Org_GraaPresisTigerAS.dagligleder.partyUuid,
+    auth_ssn: testdata.Org_GraaPresisTigerAS.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+script:post-response {
+  const data = res.getBody();
+  const packageId = data.packageId;
+  bru.setEnvVar("packageId", packageId)
+}
+
+tests {
+  
+  test(bru.getVar("requestName"), function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(200);
+    assert.isOk(data, "Expected response body to return created assignment package");
+    
+  });
+}

@@ -68,7 +68,8 @@ assert {
 }
 
 script:pre-request {
-  const testdata = require(`./testdata/accesslist-delegation/${bru.getEnvVar("tokenEnv")}.json`);
+  const sharedtestdata = require(`./testdata/shared.js`);
+  const testdata = require(`./Testdata/accesslist-delegation/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("toSystemUser",  testdata.OrdentligUlasteligStruts.systemuser.partyUuid);
   bru.setVar("fromOrgNo",  testdata.OrdentligUlasteligStruts.orgno);
@@ -81,6 +82,8 @@ script:pre-request {
     auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno
   }
   
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
   const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken",  token);
 }

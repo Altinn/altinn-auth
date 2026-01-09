@@ -1,0 +1,65 @@
+meta {
+  name: GET_Enduser_Conn_AccPcks_Person_FromOthers_Deleted
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&to={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{party}}
+  ~packageId: {{toPerson}}
+  ~package: 
+  ~to: {{toPerson}}
+  ~to: {{toPerson}}
+}
+
+body:json {
+   {
+    "personidentifier": "{{toPerson}}", // fnr or username
+    "lastName": "{{toPersonLastName}}"
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.vassen_riktig_tiger_as.person1.partyuuid);
+  bru.setVar("toPerson", testdata.vassen_riktig_tiger_as.person1.pid);
+  bru.setVar("toPersonLastName", testdata.vassen_riktig_tiger_as.person1.lastname);
+  bru.setVar("fromParty", testdata.vassen_riktig_tiger_as.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.vassen_riktig_tiger_as.person1.userid,
+    auth_partyId: testdata.vassen_riktig_tiger_as.person1.partyid,
+    auth_partyUuid: testdata.vassen_riktig_tiger_as.person1.partyuuid,
+    auth_ssn: testdata.vassen_riktig_tiger_as.person1.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const testdata = require(`./Testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  test("GET_Enduser_Conn_AccPcks_Person_FromOthers_Deleted", function() {
+  
+     const data = res.getBody();
+    
+    expect(data.data).to.be.empty;
+  });
+}
+
+docs {
+  Sjekker at tilgangspakke har blitt delegert til person
+}

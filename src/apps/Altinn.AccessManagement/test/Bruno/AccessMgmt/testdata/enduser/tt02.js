@@ -1,0 +1,241 @@
+module.exports = 
+{
+  "env": "tt02",
+  "package_to_delegate": {
+    "package_urn": "urn:altinn:accesspackage:skattegrunnlag",
+    "invalid_pkg": "12345"
+  },
+  "org1_delegates_tilgangspakke": {
+    "org_type": "AS",
+    "name": "GEOMETRISK VOKSENDE TIGER AS",
+    "orgno": "310757632",
+    "partyuuid": "E902B28D-BC80-4712-8CF4-438EF737F047",
+    "dagligleder": {
+      "name": "PARODISK BOKHANDEL",
+      "pid": "11874898327",
+      "partyid": 50947767,
+      "userid": 1709028,
+      "partyuuid": "3929DD88-8F56-46FC-919B-09554ADF7A1F"
+    },
+    "tilgangstyrrer": {
+      "name": "KRASS DYR LEGEVAKT TRANE",
+      "pid": "68867800674",
+      "partyid": 52108333,
+      "userid": 1942852,
+      "partyuuid": "6E3790C8-6FAA-4C11-AB5A-B24C7E96AB05"
+    },
+    "klientadministrator": {
+      "name": "KLOK BAKEPULVER",
+      "pid": "12816396962",
+      "partyid": 50851783,
+      "userid": 1826315,
+      "partyuuid": "53E3CA91-53F6-481A-A0B0-ABD96AE066B7"
+    },
+    "styretsleder": {
+      "name": "PARODISK BOKHANDEL",
+      "pid": "11874898327",
+      "partyid": 50947767,
+      "userid": 1709028,
+      "partyuuid": "3929DD88-8F56-46FC-919B-09554ADF7A1F"
+    },
+    "hovedadministrator": {
+      "name": "KONGE ALPAKKA",
+      "pid": "08881898315",
+      "partyid": 50712238,
+      "userid": 2514800,
+      "partyuuid": "EF968513-6B79-47FB-9A19-77B79A9C58D6"
+    },
+    "directdelegatedpackage_urn": "urn:altinn:accesspackage:toll",
+    "hadm_delegert_package": "urn:altinn:accesspackage:post-til-virksomheten-med-taushetsbelagt-innhold"
+  },
+  "org2_delegates_tilgangspakke": {
+    "org_type": "ENK",
+    "name": "ALLMEKTIG VERTIKAL KATT PIZZA",
+    "orgno": "311728482",
+    "partyuuid": "0DBDE1A0-0680-414F-9F2E-80CBA19C4407",
+    "innehaver": {
+      "name": "LOGISK ARKEOLOG",
+      "pid": "12827399513",
+      "partyid": 51211392,
+      "userid": 1862906,
+      "partyuuid": "5C18111A-BC92-4B76-80FC-540D5D0A862B"
+    }
+  },
+  "hovedorg_delegates_tilgangspakke": {
+    "org_type": "ANS",
+    "name": "DYKTIG UTSTRAKT MINK ANS",
+    "orgno": "310848212",
+    "partyuuid": "1DCF01FD-C849-4873-AAA4-AC5030453FA0",
+    "dagligleder": {
+      "name": "FATTIG DYNAMO",
+      "pid": "03917996902",
+      "partyid": 50659408,
+      "userid": 1492077,
+      "partyuuid": "07F469EB-6ABB-4C47-A49B-E9FE2F6D10CC"
+    },
+    "Deltaker_med_fullt_ansvar": {
+      "name": "BEVISST FELTSTOL",
+      "pid": "02928799754",
+      "partyid": 50660436,
+      "userid": 2085572,
+      "partyuuid": "8E49A6B5-726B-4492-9A46-3257FF87B76B"
+    },
+    "underenhet": {
+      "name": "DYKTIG UTSTRAKT MINK ANS",
+      "orgno": "314424034",
+      "partyuuid": "38088775-6FB7-4FA6-B4B4-14A3E1FBD2EF"
+    }
+  },
+  "direct_package_to_delegate": "urn:altinn:accesspackage:dyrehold",
+  "esek_type_org": {
+    "org_type": "ESEK",
+    "name": "SAMEIET AKADEMISK ELEGANT LØVE",
+    "orgno": "310621749",
+    "partyuuid": "0E02810E-7966-4AC7-A0F1-C871CC38DC90",
+    "styretsleder": {
+      "name": "ULYDIG COSINUS",
+      "pid": "18878398803",
+      "partyid": 51028625,
+      "userid": 1535998,
+      "partyuuid": "11FB5BD0-139A-4BDB-A7B8-0F18D30416C9"
+    },
+    "systemuser": {
+      "name": "Klient_delegation_VanligPakke",
+      "partyuuid": "51bddfdc-5f48-43f3-844e-f483ac5c6260",
+      "directPackageToDelegate": "urn:altinn:accesspackage:skattegrunnlag"
+    },
+    "hovedadministrator": {
+      "name": "KOMISK PARYKK",
+      "pid": "57929300523",
+      "partyid": 50496988,
+      "userid": 1678138,
+      "partyuuid": "321E74F5-855D-41D1-9FEB-C96C12AD974A"
+    }
+  },
+  "regn_type_org": {
+    "org_type": "REGN",
+    "name": "AKUSTISK VARM TIGER AS",
+    "orgno": "314260228",
+    "partyuuid": "C542D012-1151-4C3A-AC5E-6BC63F2B79B7",
+    "dagligleder": {
+      "name": "SANNSYNLIG FJORD",
+      "pid": "13908096791",
+      "partyid": 50694699,
+      "userid": 1923156,
+      "partyuuid": "69B56518-AEA1-4379-A339-D7611385F013"
+    },
+    "systemuser": {
+      "name": "Klient_delegation_VanligPakke",
+      "partyuuid": "202a58e7-fe16-4166-96b1-be3563692103",
+      "directPackageToDelegate": "urn:altinn:accesspackage:kjop-og-salg-eiendom"
+    },
+    "klientadministrator": {
+      "name": "MORSK KUTTE",
+      "pid": "01880349895",
+      "partyid": 50598014,
+      "userid": 1687756,
+      "partyuuid": "3449299D-C07A-4982-BFB3-04364FD9FD59"
+    },
+    "klient_org": {
+      "name": "MISFORNØYD VASSEN TIGER AS",
+      "orgno": "313157032",
+      "partyuuid": "39DE9E96-C5A3-46B8-833F-124BEF99863B",
+      "dagligleder": {
+        "name": "DYKTIG SERVITRISE",
+        "pid": "10866098145",
+        "partyid": 51200344,
+        "userid": 1908613,
+        "partyuuid": "666C7D37-A553-4CAE-8AAC-C7A6A5869A94"
+      }
+    },
+    "klient_org_other": {
+      "name": "UTGÅTT DJERV TIGER AS",
+      "orgno": "311109243",
+      "partyuuid": "2577575B-D995-485F-9968-35EF0090B1EE",
+      "dagligleder": {
+        "name": "USANNFERDIG KULTURPLANTE",
+        "pid": "09877196396",
+        "partyid": 50655025,
+        "userid": 1992767,
+        "partyuuid": "79611D79-09CE-4415-8C25-112EE63270D9"
+      }
+    }
+  },
+  "Konkursbo_type_org": {
+    "org_type": "KBO",
+    "name": "UPRESIS TØRR ØGLE KONKURSBO",
+    "orgno": "313569772",
+    "partyuuid": "70301174-BF96-4F9E-A741-3CAC10FD2B76",
+    "bostyrer": {
+      "name": "FYLDIG KIME",
+      "pid": "28835397965",
+      "partyid": 51100295,
+      "userid": 1908434,
+      "partyuuid": "6662CC3A-810B-4533-AE44-40D6C42CB8EA"
+    },
+    "pakketoDelegate": "urn:altinn:accesspackage:reviorattesterer"
+  },
+  "bestyrendeReder_role": {
+    "name": "PARTREDERIET UNORMAL REFLEKSIV MOSKUS",
+    "orgno": "313843645",
+    "partyuuid": "2578085D-03F5-407F-AE53-FBCB499FD78B",
+    "bestyrendeReder": {
+      "name": "LUN GALLERI",
+      "pid": "13906998542",
+      "partyid": 51404534,
+      "userid": 1878007,
+      "partyuuid": "5F8147F5-07E5-4890-B430-0A1A041E7BFB"
+    }
+  },
+  "internal_conn_org" : {
+    "org_type": "AS",
+    "name": "PATENT BERØMT TIGER AS",
+    "orgno": "312162504",
+    "partyuuid": "75cc82e3-3a75-462d-9e95-fa744518fd89",
+    "dagligleder": {
+      "name": "REDELIG DIETT",
+      "pid": "27898999705",
+      "partyid": 50725008,
+      "userid": 1689837,
+      "partyuuid": "34bfda6b-75b9-40e2-8ab9-ab8a7d958db1"
+    },
+    "systemuser": {
+      "partyuuid": "184e508f-5e7f-4765-8bcb-66ccdbb72b16"
+    },
+    "package_to_delegate": "urn:altinn:accesspackage:byggesoknad"
+  },
+
+  "hente_A2_roller_from_org": {
+    "org_type": "AS",
+    "name": "SUBJEKTIV AKTVERDIG TIGER AS",
+    "orgno": "310294675",
+    "partyuuid": "5D2082AC-C014-4F04-97EF-ABC374ABE810",
+    "dagligleder": {
+      "name": "NATURSTRIDIG BARISTA",
+      "pid": "20839098201",
+      "partyid": 51118920,
+      "userid": 1942198,
+      "partyuuid": "6E0E33F6-72DF-46AC-A327-A04B1047313C"
+    }
+  },
+  "to_bruker_fikk_rolle": {
+    "name": "VÅRLIG BAND",
+    "pid": "56918600286",
+    "partyid": 51291929,
+    "userid": 1897247,
+    "partyuuid": "63E2B07A-77C0-44D8-B774-4B7003A88778"
+  },
+  "to_org_bruker" : {
+    "org_type": "AS",
+    "name": "TAKTFULL LYDIG TIGER AS",
+    "orgno": "310771481",
+    "partyuuid": "902859CA-1E4B-4E4A-A936-CC4E9FB66F85",
+    "dagligleder": {
+      "name": "KURSIV DAL",
+      "pid": "03840199109",
+      "partyid": 51103380,
+      "userid": 2149325,
+      "partyuuid": "9CBF966C-0467-497A-AE8F-DA6ADB915D20"
+    }
+  }
+};

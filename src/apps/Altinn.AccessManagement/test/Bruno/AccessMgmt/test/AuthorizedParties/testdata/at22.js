@@ -1,0 +1,303 @@
+module.exports = 
+{
+  "env": "at22",
+  "resources": {
+    "clientDelgResourceId": "devtest_gar_bruno_client_resource",
+    "directDelgResourceId": "devtest_gar_bruno_direct_resource",
+    "appResourceId": "app_ttd_authz-bruno-testapp1",
+    "appInstanceDelegation": {
+            "resourceId": "app_ttd_authz-bruno-instancedelegation",
+            "org": "ttd",
+            "app":  "authz-bruno-instancedelegation"
+        }
+  },
+  "REGN_ULASTELIG_RETTFERDIG_TIGER": {
+    "name": "ULASTELIG RETTFERDIG TIGER AS",
+    "orgno": "314242726",
+    "partyId": 51235100,
+    "partyUuid": "066148fe-7077-4484-b7ea-44b5ede0014e",
+    "dagligleder": {
+      "name": "OPPRIKTIG KAMEL",
+      "pid": "30856499983",
+      "userId": 20013154,
+      "partyId": 51181765,
+      "partyUuid": "a5eb95db-97fc-4bd4-a6f6-b9214bc24549"
+    },
+    "client_USENSUELL_UVIRKSOM_TIGER": {
+      "name": "USENSUELL UVIRKSOM TIGER AS",
+      "orgno": "312714051",
+      "partyId": 51581690,
+      "partyUuid": "c12f8f37-391b-4651-be09-05665f5acdb6",
+      "dagligleder": {
+        "name": "PRATSOM BRUKSRETT",
+        "pid": "21835298350",
+        "userId": 20013153,
+        "partyId": 50183755,
+        "partyUuid": "4d2a7c10-e7c7-4685-8485-c211246db5d3"
+      },
+      "subunit": {
+        "name": "USENSUELL UVIRKSOM TIGER AS",
+        "orgno": "315556155",
+        "partyId": 51794395,
+        "partyUuid": "86ae6d6a-3545-4956-b395-c67ca0df4e51"
+      },
+      "directPackageToDelegate": "skatt-naering"
+    },
+    "client_ENK_HUMAN_TOPP_KATT_BIL": {
+      "name": "HUMAN TOPP KATT BIL",
+      "orgno": "310329495",
+      "partyId": 51340351,
+      "partyUuid": "ab07bec2-fcd0-4563-908a-d9f564724252",
+      "innehaver": {
+        "name": "EVENTYRLIG FALK",
+        "pid": "31886896576",
+        "userId": 20013167,
+        "partyId": 50175254,
+        "partyUuid": "00273506-3b4a-4e8e-a1f7-b7f28c4b411b"
+      },
+      "subunit": {
+        "name": "HUMAN TOPP KATT BIL",
+        "orgno": "315821525",
+        "partyId": 51818525,
+        "partyUuid": "ae9e37d4-0818-4c9f-9869-45e8049b64e0"
+      }
+    },
+    "client_WITHOUT_CLIENTDELEGATION": {
+      "name": "UNYTTIG MANGE TIGER AS",
+      "orgno": "313750531",
+      "partyId": 51653860,
+      "partyUuid": "0fcdee75-036a-47d9-ab40-5e55509a5b26"
+    },
+    "client_rightholderOrg1": {
+      "name": "TOPP FIRKANTET TIGER AS",
+      "orgno": "311127845",
+      "partyId": 51410913,
+      "partyUuid": "703c2e1e-d27c-40a1-b138-46b4f1a01b33",
+      "dagligleder": {
+        "name": "SAMTIDIG MATEMATIKER",
+        "pid": "07888397161",
+        "userId": 20013287,
+        "partyId": 50784075,
+        "partyUuid": "f75f209d-ce25-413e-b635-54897dc8400e"
+      },
+      "directPackageToDelegate": "motorvognavgift",
+      "directPackageToDelegate2": "skatt-naering",
+      "directPackageTilgangsstyrer": "tilgangsstyrer"
+    },
+    "client_rightholderOrg2": {
+      "name": "STOLT BETYDELIG TIGER AS",
+      "orgno": "313816915",
+      "partyId": 51658393,
+      "partyUuid": "ffa48a06-6a01-4fc7-ae5e-8aaff6c1a850",
+      "dagligleder": {
+        "name": "SKRAVLETE KAMERA",
+        "pid": "05838299719",
+        "userId": 20016888,
+        "partyId": 50922937,
+        "partyUuid": "11e6a957-5a74-4a10-b89f-c557ccca5b34"
+      },
+      "subunit": {
+        "name": "STOLT BETYDELIG TIGER AS",
+        "orgno": "315043336",
+        "partyId": 51747770,
+        "partyUuid": "1044638b-f6ad-4e6c-a341-11a6eac4d8b8",
+        "packageDelegatedToPerson": "skatt-naering",
+        "packageDelegatedToKeyRoleUnit": "kjop-og-salg-eiendom",
+        "roleDelegatedToPerson": "HVASK",
+        "roleDelegatedToKeyRoleUnit": "LOPER",
+        "resourceIdDelegatedToPerson": "devtest_gar_authparties-sub-to-person",
+        "resourceIdDelegatedToKeyRoleUnit": "devtest_gar_authparties-sub-to-org",
+        "instanceIdDelegatedToPerson": "9158bcbc-fca0-44d5-b049-93a78fce7a70",
+        "instanceIdDelegatedToKeyRoleUnit": "a8084cad-202d-4435-be49-8c4bffd48b0c"
+      },
+      "directPackageToDelegate": "mobler-og-annen-industri",
+      "directPackageToDelegate2": "revisorattesterer",
+      "packageDelegatedToPerson": "lonn",
+      "roleDelegatedToPerson": "UTINN",
+      "roleDelegatedToKeyRoleUnit": "REGNA",
+      "resourceIdDelegatedToPerson": "devtest_gar_authparties-main-to-person",
+      "resourceIdDelegatedToKeyRoleUnit": "devtest_gar_authparties-main-to-org",
+      "appIdDelegatedToPerson": "app_ttd_authz-bruno-testapp1",
+      "appIdDelegatedToKeyRoleUnit": "app_ttd_authz-bruno-testapp2",
+      "instanceIdDelegatedToPerson": "4d52d719-b48d-474f-ba5c-022e5f2704b9",
+      "instanceIdDelegatedToKeyRoleUnit": "f54e6f9c-f9cd-437e-9c75-8436252a2821"
+    },
+    "client_ENK_DELETED_2025_11_27_InnehaverAccess": {
+      "name": "SJELDEN REN KATT KONJAKK",
+      "orgno": "313744019",
+      "partyId": 51653406,
+      "partyUuid": "1fbd06a3-3654-460b-8917-d9f4f9664625",
+      "innehaver": {
+        "name": "PRATSOM SKOLE",
+        "pid": "19846999968",
+        "userId": 20820830,
+        "partyId": 51175128,
+        "partyUuid": "ab0e4f41-4dbe-4198-bc69-6429cbfb6989"
+      },
+      "subunit": {
+        "name": "SJELDEN REN KATT KONJAKK",
+        "orgno": "314964055",
+        "partyId": 51740562,
+        "partyUuid": "ce662cb7-f781-4771-bbd3-2cbb291e523f"
+      }
+    },
+    "client_ENK_DELETED_2023_11_01_NoInnehaverAccess": {
+      "name": "OMSORGSFULL KUL KATT SKATOLL",
+      "orgno": "312282054",
+      "partyId": 51545196,
+      "partyUuid": "2c3b1064-2289-4217-b5de-41038ea86158",
+      "innehaver": {
+        "name": "SYMPATISK LINJE",
+        "pid": "24887299168",
+        "userId": 20946709,
+        "partyId": 50218861,
+        "partyUuid": "c5950a52-d4b4-454d-8cdf-a9c78bda6ff8"
+      },
+      "subunit": {
+        "name": "OMSORGSFULL KUL KATT SKATOLL",
+        "orgno": "315252946",
+        "partyId": 51766826,
+        "partyUuid": "893c7aae-e228-4e64-9643-38116d67eb39"
+      }
+    },
+    "a2_klientadministrator": {
+      "name": "RUSTEN AKVARELL",
+      "pid": "11860198721",
+      "userId": 20013151,
+      "partyId": 50395759,
+      "partyUuid": "5d4119c2-6a3a-4aec-ac72-7b78ad456d12"
+    },
+    "a2_hovedadministrator": {
+      "name": "MATEMATISK UNIVERSITET",
+      "pid": "03899798324",
+      "userId": 20013152,
+      "partyId": 50345170,
+      "partyUuid": "15977366-d191-4762-bb53-562461cab5c5"
+    },
+    "a2_tilgangsstyrer": {
+      "name": "GLEMSOM GREND",
+      "pid": "27920898721",
+      "userId": 20013157,
+      "partyId": 50382857,
+      "partyUuid": "f489878a-927f-4789-9dab-ff73c36c2f26"
+    },
+    "revisor": {
+      "name": "OVERFLADISK LANG TIGER AS",
+      "orgno": "310267511",
+      "partyId": 51235849,
+      "partyUuid": "037a33d1-af1c-4156-9506-86d63a09f6a6",
+      "directPackageToDelegate": "revisorattesterer"
+    },
+    "systemuser": {
+      "name": "Fiken",
+      "partyUuid": "aae74f4e-cae4-4237-a1da-c1b62a61fe4b",
+      "directPackageToDelegate": "urn:altinn:accesspackage:ansettelsesforhold",
+      "clientPackageToDelegate": "urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet",
+      "clientEnkPackageToDelegate": "urn:altinn:accesspackage:regnskapsforer-lonn",
+      "clientPackageForDelete": "urn:altinn:accesspackage:regnskapsforer-uten-signeringsrettighet"
+    },
+    "subunit": {
+      "name": "ULASTELIG RETTFERDIG TIGER AS",
+      "orgno": "314613155",
+      "partyId": 51708660,
+      "partyUuid": "825d14bf-b3f3-4d68-ae33-0994febf8a43"
+    },
+    "employee_rightholderWithoutPackages": {
+      "name": "MOBIL LAMA",
+      "lastname": "LAMA",
+      "pid": "31858374521",
+      "userId": 20429745,
+      "partyId": 50427753,
+      "partyUuid": "582591cd-b618-4c6f-a0e2-b2c6fe70eb70"
+    },
+    "employee_rightholderWithPackages": {
+      "name": "STOR UTHOLDEN AUTORITET ANSIKTSKREM",
+      "lastname": "ANSIKTSKREM",
+      "pid": "27877695722",
+      "userId": 20962455,
+      "partyId": 51233907,
+      "partyUuid": "c8ded0aa-60b5-4007-9429-6acca2f88031",
+      "directPackageToDelegate": "revisorattesterer",
+      "directPackageTilgangsstyrer": "tilgangsstyrer"
+    }
+  },
+  "a2BrunoSIUser": {
+    "name": "A2BrunoSIUser",
+    "username": "a2brunosiuser",
+    "userId": 21226088,
+    "partyId": 51842409,
+    "partyUuid": "2c496351-cdc6-402a-b4f8-2b1145bb626e"
+  },
+  "a2BrunoECUser": {
+    "name": "bruno_ec_digdir",
+    "username": "bruno_ec_digdir",
+    "userId": 21226091,
+    "partyId": 50088610,
+    "partyUuid": "B2139D9E-811B-48BD-81A7-7EDD79A84D69"
+  },
+  "forretningsforerNonfigurativEmosjonellPuma": {
+    "name": "NONFIGURATIV EMOSJONELL PUMA",
+    "orgno": "313760243",
+    "partyId": 51317416,
+    "partyUuid": "a3846553-4f56-4dd3-addc-d2a79b663b51",
+    "dagligleder": {
+      "name": "SPETTETE DALSIDE",
+      "pid": "08817696563",
+      "userId": 21129089,
+      "partyId": 50639183,
+      "partyUuid": "ec30c235-d7f6-432b-b060-bdbbe9cdd8ec"
+    },
+    "subunit": {
+      "name": "NONFIGURATIV EMOSJONELL PUMA",
+      "orgno": "312145529",
+      "partyId": 51535215,
+      "partyUuid": "480c7f77-4ca2-4467-aff2-c358d8288f6e"
+    },
+    "esekClient": {
+      "name": "LETT SLEM LØVE SAMEIE",
+      "orgno": "313184390",
+      "partyId": 51614735,
+      "partyUuid": "1d53cb86-18e0-45d7-b777-8a06c3d55fc3",
+      "dagligleder": {
+        "name": "??",
+        "pid": "??",
+        "userId": 0,
+        "partyId": 0,
+        "partyUuid": "??"
+      },
+      "clientPackage": "forretningsforer-eiendom"
+    },
+    "nonBrlEsekClient": {
+      "name": "SKEPTISK LILLA HEST BORETTSLAG",
+      "orgno": "311115057",
+      "partyId": 51409777,
+      "partyUuid": "02f2e6c8-b67e-4ee7-b98d-8c6541eb0bfa",
+      "dagligleder": {
+        "name": "??",
+        "pid": "??",
+        "userId": 0,
+        "partyId": 0,
+        "partyUuid": "??"
+      }
+    }
+  },
+  "regnskapsforerShowClientUnitsFalse": {
+    "name": "FROM TYPISK TIGER AS",
+    "orgno": "310592676",
+    "partyId": 51235598,
+    "partyUuid": "0031ace1-895b-4b56-9820-1be22119a6b7",
+    "dagligleder": {
+      "name": "VIS DØR",
+      "pid": "02827399623",
+      "userId": 20480629,
+      "partyId": 50930332,
+      "partyUuid": "64aceb43-3ed5-46a3-bed4-bd35e212e50f"
+    },
+    "subunit": {
+      "name": "GYLDEN KNUSLETE FJELLREV",
+      "orgno": "212334782",
+      "partyId": 51265690,
+      "partyUuid": "4133091e-31c7-41b6-b7cb-251c44ff37e4"
+    }
+  }
+};

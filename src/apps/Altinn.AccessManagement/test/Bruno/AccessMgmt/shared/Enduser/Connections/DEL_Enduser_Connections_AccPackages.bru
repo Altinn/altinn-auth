@@ -1,0 +1,48 @@
+meta {
+  name: DEL_Enduser_Connections_AccPackages
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toOrg}}&package=&packageUrn={{packageUrn}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toOrg}}
+  package: 
+  packageUrn: {{packageUrn}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "DEL_Enduser_Connections_AccPackages");
+  
+  bru.setVar("party", );
+  bru.setVar("toOrg", );
+  bru.setVar("packageUrn", );
+  
+  var getTokenParameters = {
+    auth_userId: "",
+    auth_partyId: "",
+    auth_partyUuid: "",
+    auth_ssn: "",
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}

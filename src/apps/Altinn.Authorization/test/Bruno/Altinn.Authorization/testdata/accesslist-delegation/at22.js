@@ -1,0 +1,35 @@
+module.exports = 
+{
+  "env": "at22",
+  "resource": "devtest_gar_bruno_accesslist_actionfilter",
+  "OrdentligUlasteligStruts": {
+    "orgno": "313776735",
+    "name": "ORDENTLIG ULASTELIG STRUTS LTD",
+    "partyid": 51655628,
+    "partyuuid": "5d99cf7c-2cce-42f7-a07b-516e52ece2e9",
+    "dagl": {
+      "pid": "12819498464",
+      "name": "KRAMPE VEIK",
+      "userid": 20012620,
+      "partyid": 50656486,
+      "partyuuid": "a30eea39-348b-444b-9342-8172f756a6f8"
+    },
+    "systemuser": {
+      "name": "SystemWithAccessList_Bruno",
+      "partyUuid": "468f4355-4bfc-4f9f-a7c9-89dc47468295"
+    }
+  },
+  "SvenskGeniærklertTiger": {
+    "orgno": "313149293",
+    "name": "SVENSK GENIÆRKLERT TIGER AS",
+    "partyid": 51612302,
+    "partyuuid": "5d99cf7c-2cce-42f7-a07b-516e52ece2e9",
+    "dagl": {
+      "pid": "06886897918",
+      "name": "SYMPATISK KRYDDERMÅL",
+      "userid": 20012987,
+      "partyid": 50620007,
+      "partyuuid": "387734c6-6687-4493-8f72-e9dcc284242c"
+    }
+  }
+};

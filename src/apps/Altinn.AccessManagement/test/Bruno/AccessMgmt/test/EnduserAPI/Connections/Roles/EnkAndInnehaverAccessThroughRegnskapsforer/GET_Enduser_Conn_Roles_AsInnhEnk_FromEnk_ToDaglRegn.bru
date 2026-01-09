@@ -1,0 +1,120 @@
+meta {
+  name: GET_Enduser_Conn_Roles_AsInnhEnk_FromEnk_ToDaglRegn
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/roles?party={{party}}&to={{toParty}}&from={{fromParty}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{toParty}}
+  from: {{fromParty}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "GET_Enduser_Conn_Roles_AsInnhEnk_FromEnk_ToDaglRegn");
+  
+  bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.partyUuid);
+  bru.setVar("fromParty", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.partyUuid);
+  bru.setVar("toParty", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.partyUuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.userId,
+    auth_partyId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.partyId,
+    auth_partyUuid: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.partyUuid,
+    auth_ssn: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const body = res.getBody();
+  const data = body.data;
+  const requestName = bru.getVar("requestName");
+  
+  test(requestName + "|HttpStatus.OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  // Expected results
+  const expectedRoles = ["a0239", "a0240", "a0241", "regnskapsforer", "rettighetshaver"];
+  const expectedFrom = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL;
+  const expectedTo = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder;
+  const expectedVia = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+  
+  // Check that all expected roles exist
+  expectedRoles.forEach(roleCode => {
+      test(requestName + `|Role with code ${roleCode} exists`, () => {
+          const roleExists = data.some(item => item.role.code === roleCode);
+          assert.isTrue(roleExists, `Role ${roleCode} should exist in response`);
+      });
+  });
+  
+  // Validate permissions for each role
+  expectedRoles.forEach(roleCode => {
+      test(requestName + `|Permissions for role ${roleCode} have correct 'from', 'to' and 'via'`, () => {
+          const roleItem = data.find(item => item.role.code === roleCode);
+          assert.isDefined(roleItem, `Role ${roleCode} should exist`);
+  
+          const permissions = roleItem.permissions;
+          assert.isArray(permissions, `Permissions should be an array for role ${roleCode}`);
+          assert.isNotEmpty(permissions, `Permissions should not be empty for role ${roleCode}`);
+  
+          if (roleCode == "rettighetshaver")
+          {
+            const directAssignment = permissions.find(permission => permission.via === null);
+            assert.isDefined(directAssignment, `Direct permission of role ${roleCode} should exist`);
+            assertParty(expectedFrom, directAssignment.from, `'from'`);
+            assertParty(expectedTo, directAssignment.to, `'to'`);
+            
+            const viaDaglAssignment = permissions.find(permission => permission.viaRole !== null && permission.viaRole.code === "daglig-leder");
+            assert.isDefined(viaDaglAssignment, `Permission via 'daglig-leder' of role ${roleCode} should exist`);
+            assertParty(expectedFrom, viaDaglAssignment.from, `'from'`);
+            assertParty(expectedTo, viaDaglAssignment.to, `'to'`);
+            assertParty(expectedVia, viaDaglAssignment.via, `'via'`);
+            
+            const viaStyrelederAssignment = permissions.find(permission => permission.viaRole !== null && permission.viaRole.code === "styreleder");
+            assert.isDefined(viaStyrelederAssignment, `Permission via 'styreleder' of role ${roleCode} should exist`);
+            assertParty(expectedFrom, viaStyrelederAssignment.from, `'from'`);
+            assertParty(expectedTo, viaStyrelederAssignment.to, `'to'`);
+            assertParty(expectedVia, viaStyrelederAssignment.via, `'via'`);
+          } else {
+            permissions.forEach(permission => {
+              assertParty(expectedFrom, permission.from, `'from'`);
+              assertParty(expectedTo, permission.to, `'to'`);
+              assertParty(expectedVia, permission.via, `'via'`);
+            });
+          }
+      });
+  });
+  
+  function assertParty(expected, actual, label) {
+      if (expected) {
+          assert.isDefined(actual, `${label} should be defined`);
+          assert.equal(actual.id, expected.partyUuid, `${label}.id should match`);
+          assert.equal(actual.name, expected.name, `${label}.name should match`);
+      } else {
+          // If expected is null, ensure actual is also null
+          assert.isNull(actual, `${label} should be null`);
+      }
+  }
+}

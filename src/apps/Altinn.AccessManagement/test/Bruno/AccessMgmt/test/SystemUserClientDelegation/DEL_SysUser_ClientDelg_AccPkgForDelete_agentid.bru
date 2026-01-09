@@ -1,0 +1,50 @@
+meta {
+  name: DEL_SysUser_ClientDelg_AccPkgForDelete_agentid
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation/deleteagentassignment?party={{party}}&agentId={{systemUser}}&cascade=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  agentId: {{systemUser}}
+  cascade: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+  const testdata = require(`./Testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.regnskapsforer.partyuuid);
+  bru.setVar("systemUser", testdata.regnskapsforer.systemuser.id);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.regnskapsforer.hovedadministrator.userid,
+    auth_partyId: testdata.regnskapsforer.hovedadministrator.partyid,
+    auth_partyUuid: testdata.regnskapsforer.hovedadministrator.partyuuid,
+    auth_ssn: testdata.regnskapsforer.hovedadministrator.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+}

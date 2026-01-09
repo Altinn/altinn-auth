@@ -1,0 +1,360 @@
+meta {
+  name: AddRules (App)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/delegations/addrules
+  body: json
+  auth: inherit
+}
+
+body:json {
+  [
+    {
+      "RuleId": "",
+      "Type": 5,
+      "CreatedSuccessfully": false,
+      "DelegatedByUserId": 20000012,
+      "DelegatedByPartyId": null,
+      "PerformedBy": [
+        {
+          "id": "urn:altinn:person:uuid",
+          "value": "12029316-3fde-4de7-b002-384740637bc7"
+        },
+        {
+          "id": "urn:altinn:userid",
+          "value": "20000012"
+        }
+      ],
+      "DelegatedDateTime": null,
+      "OfferedByPartyId": 50002120,
+      "OfferedByPartyUuid": "12029316-3fde-4de7-b002-384740637bc7",
+      "OfferedByPartyType": "Person",
+      "CoveredBy": [
+        {
+          "id": "urn:altinn:userid",
+          "value": "20000013"
+        },
+        {
+          "id": "urn:altinn:person:uuid",
+          "value": "2846f7ba-d86d-47a3-a857-d1d820128ade"
+        }
+      ],
+      "Resource": [
+        {
+          "id": "urn:altinn:org",
+          "value": "ttd"
+        },
+        {
+          "id": "urn:altinn:app",
+          "value": "security-level3-app"
+        }
+      ],
+      "Action": {
+        "id": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+        "value": "instantiate"
+      }
+    },
+    {
+      "RuleId": "",
+      "Type": 5,
+      "CreatedSuccessfully": false,
+      "DelegatedByUserId": 20000012,
+      "DelegatedByPartyId": null,
+      "PerformedBy": [
+        {
+          "id": "urn:altinn:person:uuid",
+          "value": "12029316-3fde-4de7-b002-384740637bc7"
+        },
+        {
+          "id": "urn:altinn:userid",
+          "value": "20000012"
+        }
+      ],
+      "DelegatedDateTime": null,
+      "OfferedByPartyId": 50002120,
+      "OfferedByPartyUuid": "12029316-3fde-4de7-b002-384740637bc7",
+      "OfferedByPartyType": "Person",
+      "CoveredBy": [
+        {
+          "id": "urn:altinn:userid",
+          "value": "20000013"
+        },
+        {
+          "id": "urn:altinn:person:uuid",
+          "value": "2846f7ba-d86d-47a3-a857-d1d820128ade"
+        }
+      ],
+      "Resource": [
+        {
+          "id": "urn:altinn:org",
+          "value": "ttd"
+        },
+        {
+          "id": "urn:altinn:app",
+          "value": "security-level3-app"
+        }
+      ],
+      "Action": {
+        "id": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+        "value": "read"
+      }
+    },
+    {
+      "RuleId": "",
+      "Type": 5,
+      "CreatedSuccessfully": false,
+      "DelegatedByUserId": 20000012,
+      "DelegatedByPartyId": null,
+      "PerformedBy": [
+        {
+          "id": "urn:altinn:person:uuid",
+          "value": "12029316-3fde-4de7-b002-384740637bc7"
+        },
+        {
+          "id": "urn:altinn:userid",
+          "value": "20000012"
+        }
+      ],
+      "DelegatedDateTime": null,
+      "OfferedByPartyId": 50002120,
+      "OfferedByPartyUuid": "12029316-3fde-4de7-b002-384740637bc7",
+      "OfferedByPartyType": "Person",
+      "CoveredBy": [
+        {
+          "id": "urn:altinn:userid",
+          "value": "20000013"
+        },
+        {
+          "id": "urn:altinn:person:uuid",
+          "value": "2846f7ba-d86d-47a3-a857-d1d820128ade"
+        }
+      ],
+      "Resource": [
+        {
+          "id": "urn:altinn:org",
+          "value": "ttd"
+        },
+        {
+          "id": "urn:altinn:app",
+          "value": "security-level3-app"
+        }
+      ],
+      "Action": {
+        "id": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+        "value": "delete"
+      }
+    },
+    {
+      "RuleId": "",
+      "Type": 5,
+      "CreatedSuccessfully": false,
+      "DelegatedByUserId": 20000012,
+      "DelegatedByPartyId": null,
+      "PerformedBy": [
+        {
+          "id": "urn:altinn:person:uuid",
+          "value": "12029316-3fde-4de7-b002-384740637bc7"
+        },
+        {
+          "id": "urn:altinn:userid",
+          "value": "20000012"
+        }
+      ],
+      "DelegatedDateTime": null,
+      "OfferedByPartyId": 50002120,
+      "OfferedByPartyUuid": "12029316-3fde-4de7-b002-384740637bc7",
+      "OfferedByPartyType": "Person",
+      "CoveredBy": [
+        {
+          "id": "urn:altinn:userid",
+          "value": "20000013"
+        },
+        {
+          "id": "urn:altinn:person:uuid",
+          "value": "2846f7ba-d86d-47a3-a857-d1d820128ade"
+        }
+      ],
+      "Resource": [
+        {
+          "id": "urn:altinn:org",
+          "value": "ttd"
+        },
+        {
+          "id": "urn:altinn:app",
+          "value": "security-level3-app"
+        },
+        {
+          "id": "urn:altinn:task",
+          "value": "Task_1"
+        }
+      ],
+      "Action": {
+        "id": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+        "value": "read"
+      }
+    },
+    {
+      "RuleId": "",
+      "Type": 5,
+      "CreatedSuccessfully": false,
+      "DelegatedByUserId": 20000012,
+      "DelegatedByPartyId": null,
+      "PerformedBy": [
+        {
+          "id": "urn:altinn:person:uuid",
+          "value": "12029316-3fde-4de7-b002-384740637bc7"
+        },
+        {
+          "id": "urn:altinn:userid",
+          "value": "20000012"
+        }
+      ],
+      "DelegatedDateTime": null,
+      "OfferedByPartyId": 50002120,
+      "OfferedByPartyUuid": "12029316-3fde-4de7-b002-384740637bc7",
+      "OfferedByPartyType": "Person",
+      "CoveredBy": [
+        {
+          "id": "urn:altinn:userid",
+          "value": "20000013"
+        },
+        {
+          "id": "urn:altinn:person:uuid",
+          "value": "2846f7ba-d86d-47a3-a857-d1d820128ade"
+        }
+      ],
+      "Resource": [
+        {
+          "id": "urn:altinn:org",
+          "value": "ttd"
+        },
+        {
+          "id": "urn:altinn:app",
+          "value": "security-level3-app"
+        },
+        {
+          "id": "urn:altinn:task",
+          "value": "Task_1"
+        }
+      ],
+      "Action": {
+        "id": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+        "value": "write"
+      }
+    },
+    {
+      "RuleId": "",
+      "Type": 5,
+      "CreatedSuccessfully": false,
+      "DelegatedByUserId": 20000012,
+      "DelegatedByPartyId": null,
+      "PerformedBy": [
+        {
+          "id": "urn:altinn:person:uuid",
+          "value": "12029316-3fde-4de7-b002-384740637bc7"
+        },
+        {
+          "id": "urn:altinn:userid",
+          "value": "20000012"
+        }
+      ],
+      "DelegatedDateTime": null,
+      "OfferedByPartyId": 50002120,
+      "OfferedByPartyUuid": "12029316-3fde-4de7-b002-384740637bc7",
+      "OfferedByPartyType": "Person",
+      "CoveredBy": [
+        {
+          "id": "urn:altinn:userid",
+          "value": "20000013"
+        },
+        {
+          "id": "urn:altinn:person:uuid",
+          "value": "2846f7ba-d86d-47a3-a857-d1d820128ade"
+        }
+      ],
+      "Resource": [
+        {
+          "id": "urn:altinn:org",
+          "value": "ttd"
+        },
+        {
+          "id": "urn:altinn:app",
+          "value": "security-level3-app"
+        },
+        {
+          "id": "urn:altinn:end-event",
+          "value": "EndEvent_1"
+        }
+      ],
+      "Action": {
+        "id": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+        "value": "read"
+      }
+    },
+    {
+      "RuleId": "",
+      "Type": 5,
+      "CreatedSuccessfully": false,
+      "DelegatedByUserId": 20000012,
+      "DelegatedByPartyId": null,
+      "PerformedBy": [
+        {
+          "id": "urn:altinn:person:uuid",
+          "value": "12029316-3fde-4de7-b002-384740637bc7"
+        },
+        {
+          "id": "urn:altinn:userid",
+          "value": "20000012"
+        }
+      ],
+      "DelegatedDateTime": null,
+      "OfferedByPartyId": 50002120,
+      "OfferedByPartyUuid": "12029316-3fde-4de7-b002-384740637bc7",
+      "OfferedByPartyType": "Person",
+      "CoveredBy": [
+        {
+          "id": "urn:altinn:userid",
+          "value": "20000013"
+        },
+        {
+          "id": "urn:altinn:person:uuid",
+          "value": "2846f7ba-d86d-47a3-a857-d1d820128ade"
+        }
+      ],
+      "Resource": [
+        {
+          "id": "urn:altinn:org",
+          "value": "ttd"
+        },
+        {
+          "id": "urn:altinn:app",
+          "value": "security-level3-app"
+        },
+        {
+          "id": "urn:altinn:end-event",
+          "value": "EndEvent_1"
+        }
+      ],
+      "Action": {
+        "id": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+        "value": "write"
+      }
+    }
+  ]
+  
+}
+
+script:pre-request {
+  var getTokenParameters = {
+    auth_app: "sbl.authorization",
+    auth_tokenType: "PlatformToken"
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}

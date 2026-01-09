@@ -1,0 +1,33 @@
+module.exports = 
+{
+    "auth_scopes": {
+        "authorize": "altinn:authorization/authorize",
+        "authorizeAdmin": "altinn:authorization/authorize.admin"
+    },
+    "auth_apps": {
+        "studio": "studio.designer"
+    },
+    "authTokenType": {
+        "personal": "Personal",
+        "enterprise": "Enterprise",
+        "enterpriseUser": "EnterpriseUser",
+        "platformToken": "PlatformToken",
+        "platformAccessToken": "PlatformAccessToken"
+    },
+    "serviceOwners": {
+		"ttd":
+		{
+			"org": "ttd",
+			"orgno": "991825827"
+		},
+        "digdir":
+		{
+			"org": "digdir",
+			"orgno": "991825827"
+		}
+	},
+    "systemResources": {
+        "client_administration": "altinn_client_administration",
+        "enduser_accessmanagment": "altinn_enduser_access_management"
+    }
+};

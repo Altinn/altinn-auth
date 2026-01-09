@@ -1,0 +1,63 @@
+module.exports = 
+{
+    "env": "tt02",
+    "resources": {
+        "directDelgResourceId": "devtest_gar_bruno_direct_resource"
+    },
+    "Org_ReservertAllslagsApe": {
+        "name": "RESERVERT ALLSLAGS APE",
+        "orgno": "",
+        "partyId": 0,
+        "partyUuid": "",
+        "dagligleder": {
+            "name": "",
+            "pid": "",
+            "userId": 0,
+            "partyId": 0,
+            "partyUuid": ""
+        }
+    },
+    "Org_GraaPresisTigerAS": {
+        "name": "GRÅ PRESIS TIGER AS",
+        "orgno": "",
+        "partyId": 0,
+        "partyUuid": "",
+        "dagligleder": {
+            "name": "",
+            "pid": "",
+            "userId": 0,
+            "partyId": 0,
+            "partyUuid": ""
+        },
+        "partyinternal_systemuser": {
+            "name": "PartyInternal Test SystemUser",
+            "partyUuid": "ECEBDF0A-62B3-4A2A-A524-EA51B88C6178"
+        },
+        "Regnskapsforer": {
+            "name": "FANTASIFULL OPPRIKTIG TIGER AS",
+            "orgno": "",
+            "partyId": 0,
+            "partyUuid": "",
+            "dagligleder": {
+                "name": "",
+                "pid": "",
+                "userId": 0,
+                "partyId": 0,
+                "partyUuid": ""
+            }
+        },
+        "Revisor": {
+            "name": "BEVISST KNUSLETE TIGER AS",
+            "orgno": "",
+            "partyId": 0,
+            "partyUuid": "",
+            "dagligleder": {
+                "name": "",
+                "pid": "",
+                "userId": 0,
+                "partyId": 0,
+                "partyUuid": ""
+            }
+        }
+    }
+};
