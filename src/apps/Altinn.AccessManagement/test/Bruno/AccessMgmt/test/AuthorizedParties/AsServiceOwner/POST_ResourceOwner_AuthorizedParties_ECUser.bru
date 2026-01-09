@@ -30,7 +30,7 @@ body:json {
 script:pre-request {
   
   const sharedtestdata = require(`./testdata/sharedtestdata.js`);
-  const testdata = require(`./test/authorizedparties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "POST_ResourceOwner_AuthorizedParties_ECUser");
   bru.setVar("partyUuid", testdata.a2BrunoECUser.partyUuid);
@@ -50,7 +50,7 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 
 tests {
   const sharedtestdata = require(`./testdata/sharedtestdata.js`);
-  const testdata = require(`./test/authorizedparties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
   const body = res.getBody();
   const requestName = bru.getVar("requestName");
   

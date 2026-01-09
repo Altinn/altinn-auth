@@ -26,7 +26,7 @@ headers {
 script:pre-request {
   
   const sharedtestdata = require(`./testdata/sharedtestdata.js`);
-  const testdata = require(`./test/authorizedparties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "GET_AuthorizedParties_Dagl_Regn_WithPartyFilter");
   bru.setVar("partyFilter", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
@@ -48,7 +48,7 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 }
 
 tests {
-  const testdata = require(`./test/authorizedparties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
   const body = res.getBody();
   const requestName = bru.getVar("requestName");
   
