@@ -1,10 +1,11 @@
-﻿using System.Text.Json;
-using Altinn.AccessMgmt.PersistenceEF.Constants;
+﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Text.Json;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 
@@ -113,6 +114,9 @@ public class ConnectionQuery(AppDbContext db)
         var toId = filter.ToIds.First();
         var fromSet = filter.FromIds?.Count > 0 ? new HashSet<Guid>(filter.FromIds) : null;
         var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
+        var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
+        var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
+
         var reviRegnRoleSet = new HashSet<Guid>
         {
             RoleConstants.Accountant.Id,
@@ -286,6 +290,8 @@ public class ConnectionQuery(AppDbContext db)
         return
             query
             .FromIdContains(fromSet)
+            .ViaIdContains(viaSet)
+            .ViaRoleIdContains(viaRoleSet)
             .RoleIdContains(roleSet);
     }
 
@@ -315,6 +321,8 @@ public class ConnectionQuery(AppDbContext db)
         var toSet = new HashSet<Guid>(filter.ToIds);
         var fromSet = filter.FromIds?.Count > 0 ? new HashSet<Guid>(filter.FromIds) : null;
         var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
+        var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
+        var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
 
         var queries = new List<IQueryable<ConnectionQueryBaseRecord>>();
 
@@ -517,6 +525,8 @@ public class ConnectionQuery(AppDbContext db)
 
         return allConnections
             .FromIdContains(fromSet)
+            .ViaIdContains(viaSet)
+            .ViaRoleIdContains(viaRoleSet)
             .RoleIdContains(roleSet);
     }
 
@@ -546,6 +556,8 @@ public class ConnectionQuery(AppDbContext db)
         var fromId = filter.FromIds.First();
         var toSet = filter.ToIds?.Count > 0 ? new HashSet<Guid>(filter.ToIds) : null;
         var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
+        var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
+        var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
 
         /*
         Direct Assignments
@@ -669,6 +681,8 @@ public class ConnectionQuery(AppDbContext db)
             .Union(directDelegations)
             .Union(keyRoleAssignments)
             .ToIdContains(toSet)
+            .ViaIdContains(viaSet)
+            .ViaRoleIdContains(viaRoleSet)
             .RoleIdContains(roleSet);
     }
 
@@ -1066,6 +1080,22 @@ internal static class ConnectionQueryExtensions
         return query.Where(t => ids.Contains(t.FromId));
     }
 
+    internal static IQueryable<ConnectionQueryBaseRecord> ViaIdContains(this IQueryable<ConnectionQueryBaseRecord> query, HashSet<Guid> ids)
+    {
+        if (ids is null || ids.Count == 0)
+        {
+            return query;
+        }
+
+        if (ids.Count == 1)
+        {
+            var id = ids.First();
+            return query.Where(t => t.ViaId.HasValue && t.ViaId.Value == id);
+        }
+
+        return query.Where(t => t.ViaId.HasValue && ids.Contains(t.ViaId.Value));
+    }
+
     internal static IQueryable<ConnectionQueryBaseRecord> RoleIdContains(this IQueryable<ConnectionQueryBaseRecord> query, HashSet<Guid> ids)
     {
         if (ids is null || ids.Count == 0)
@@ -1080,6 +1110,22 @@ internal static class ConnectionQueryExtensions
         }
 
         return query.Where(t => ids.Contains(t.RoleId));
+    }
+
+    internal static IQueryable<ConnectionQueryBaseRecord> ViaRoleIdContains(this IQueryable<ConnectionQueryBaseRecord> query, HashSet<Guid> ids)
+    {
+        if (ids is null || ids.Count == 0)
+        {
+            return query;
+        }
+
+        if (ids.Count == 1)
+        {
+            var id = ids.First();
+            return query.Where(t => t.ViaRoleId.HasValue && t.ViaRoleId == id);
+        }
+
+        return query.Where(t => t.ViaRoleId.HasValue && ids.Contains(t.ViaRoleId.Value));
     }
 }
 

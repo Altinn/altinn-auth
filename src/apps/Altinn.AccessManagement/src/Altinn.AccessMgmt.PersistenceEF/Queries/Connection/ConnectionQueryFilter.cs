@@ -19,6 +19,17 @@ public sealed class ConnectionQueryFilter
     public IReadOnlyCollection<Guid> ToIds { get; init; }
 
     /// <summary>
+    /// Gets the collection of via identifiers.
+    /// </summary>
+    public IReadOnlyCollection<Guid> ViaIds { get; init; }
+
+    /// <summary>
+    /// Gets the collection of via role identifiers.
+    /// </summary>
+    public IReadOnlyCollection<Guid> ViaRoleIds { get; init; }
+
+
+    /// <summary>
     /// Gets the collection of role identifiers.
     /// </summary>
     public IReadOnlyCollection<Guid> RoleIds { get; init; }
