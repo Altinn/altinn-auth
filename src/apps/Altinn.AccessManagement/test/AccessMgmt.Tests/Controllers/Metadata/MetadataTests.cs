@@ -1,11 +1,13 @@
 ﻿using Altinn.AccessManagement.Api.Metadata.Controllers;
 using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessMgmt.Core.Services;
+using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -115,8 +117,6 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task RoleVariantPackage_BusinessManager_ESEK_BusinessManagerRealEstate_Have()
     {
-        var controller = new Altinn.AccessManagement.Api.Metadata.Controllers.RolesController(new RoleService(_db), _translationService);
-
         // Forretningsfører for ESEK skal ha Forretningsforer eiendom pakken
         var role = RoleConstants.BusinessManager;
         var variant = EntityVariantConstants.ESEK;
@@ -128,8 +128,6 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task RoleVariantPackage_BusinessManager_BRL_BusinessManagerRealEstate_Have()
     {
-        var controller = new Altinn.AccessManagement.Api.Metadata.Controllers.RolesController(new RoleService(_db), _translationService);
-
         // Forretningsfører for BRL skal ha Forretningsforer eiendom pakken
         var role = RoleConstants.BusinessManager;
         var variant = EntityVariantConstants.BRL;
@@ -141,8 +139,6 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task RoleVariantPackage_ContactPersonNUF_NUF_DelegableMaskinportenScopesNUF_Have()
     {
-        var controller = new Altinn.AccessManagement.Api.Metadata.Controllers.RolesController(new RoleService(_db), _translationService);
-
         // Forretningsfører for BRL skal ha Forretningsforer eiendom pakken
         var role = RoleConstants.ContactPersonNUF;
         var variant = EntityVariantConstants.NUF;
@@ -154,8 +150,6 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task RoleVariantPackage_MainAdministrator_NUF_DelegableMaskinportenScopesNUF_Have()
     {
-        var controller = new Altinn.AccessManagement.Api.Metadata.Controllers.RolesController(new RoleService(_db), _translationService);
-
         // Forretningsfører for BRL skal ha Forretningsforer eiendom pakken
         var role = RoleConstants.MainAdministrator;
         var variant = EntityVariantConstants.NUF;
@@ -201,7 +195,7 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task RoleVariantPackage_ManagingDirector_NUF_DelegableMaskinportenScopesNUF_Not_Have()
     {
-        var controller = new Altinn.AccessManagement.Api.Metadata.Controllers.RolesController(new RoleService(_db), _translationService);
+        var controller = CreateController(new RoleService(_db));
         var role = RoleConstants.ManagingDirector;
         var variant = EntityVariantConstants.NUF;
         var package = PackageConstants.DelegableMaskinportenScopesNUF;
@@ -212,7 +206,7 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task RoleVariantPackage_ManagingDirector_ESEK_BusinessManagerRealEstate_Not_Have()
     {
-        var controller = new Altinn.AccessManagement.Api.Metadata.Controllers.RolesController(new RoleService(_db), _translationService);
+        var controller = CreateController(new RoleService(_db));
         var role = RoleConstants.ManagingDirector;
         var variant = EntityVariantConstants.ESEK;
         var package = PackageConstants.BusinessManagerRealEstate;
@@ -223,7 +217,7 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task RoleVariantPackage_ManagingDirector_BRL_BusinessManagerRealEstate_Not_Have()
     {
-        var controller = new Altinn.AccessManagement.Api.Metadata.Controllers.RolesController(new RoleService(_db), _translationService);
+        var controller = CreateController(new RoleService(_db));
         var role = RoleConstants.ManagingDirector;
         var variant = EntityVariantConstants.BRL;
         var package = PackageConstants.BusinessManagerRealEstate;
@@ -244,7 +238,7 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task RoleVariantPackage_ManagingDirector_AS_ExplicitServiceDelegation_Not_Have()
     {
-        var controller = new Altinn.AccessManagement.Api.Metadata.Controllers.RolesController(new RoleService(_db), _translationService);
+        var controller = CreateController(new RoleService(_db));
         var role = RoleConstants.ManagingDirector;
         var variant = EntityVariantConstants.AS;
         var package = PackageConstants.ExplicitServiceDelegation;
@@ -300,7 +294,7 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     Package package,
     bool shouldExist)
     {
-        var controller = new RolesController(new RoleService(_db), _translationService);
+        var controller = CreateController(new RoleService(_db));
         var result = await controller.GetPackages(role.Id, variant.Name, includeResources: false);
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var value = Assert.IsAssignableFrom<IEnumerable<PackageDto>>(ok.Value);
@@ -321,7 +315,7 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task DagligLeder_Code_AS_Should_Have_Packages()
     {
-        var controller = new RolesController(new RoleService(_db), _translationService);
+        var controller = CreateController(new RoleService(_db));
 
         var result = await controller.GetPackages(RoleConstants.ManagingDirector.Entity.Code, "AS", includeResources: false);
         var ok = Assert.IsType<OkObjectResult>(result.Result);
@@ -331,7 +325,7 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task DagligLeder_Code_AS_Should_Have_PackageResources()
     {
-        var controller = new RolesController(new RoleService(_db), _translationService);
+        var controller = CreateController(new RoleService(_db));
         var result = await controller.GetPackages(RoleConstants.ManagingDirector.Entity.Code, "AS", includeResources: true);
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
@@ -343,7 +337,7 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task DagligLeder_Id_AS_Should_Have_Packages()
     {
-        var controller = new RolesController(new RoleService(_db), _translationService);
+        var controller = CreateController(new RoleService(_db));
         var result = await controller.GetPackages(RoleConstants.ManagingDirector.Id, "AS", includeResources: false);
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var value = Assert.IsAssignableFrom<IEnumerable<PackageDto>>(ok.Value);
@@ -352,7 +346,7 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task DagligLeder_Id_AS_Should_Have_PackageResources()
     {
-        var controller = new RolesController(new RoleService(_db), _translationService);
+        var controller = CreateController(new RoleService(_db));
 
         var result = await controller.GetPackages(RoleConstants.ManagingDirector.Id, "AS", includeResources: true);
         var ok = Assert.IsType<OkObjectResult>(result.Result);
@@ -366,7 +360,7 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task DagligLeder_Code_AS_Should_Have_Resources()
     {
-        var controller = new RolesController(new RoleService(_db), _translationService);
+        var controller = CreateController(new RoleService(_db));
 
         var result = await controller.GetResources(RoleConstants.ManagingDirector.Entity.Code, "AS");
         var ok = Assert.IsType<OkObjectResult>(result.Result);
@@ -378,7 +372,7 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task DagligLeder_Code_AS_Should_Have_Resources_FromPackages()
     {
-        var controller = new RolesController(new RoleService(_db), _translationService);
+        var controller = CreateController(new RoleService(_db));
         var result = await controller.GetResources(RoleConstants.ManagingDirector.Entity.Code, "AS", includePackageResources: true);
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var value = Assert.IsAssignableFrom<IEnumerable<ResourceDto>>(ok.Value);
@@ -388,7 +382,7 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task DagligLeder_Id_AS_Should_Have_Resources()
     {
-        var controller = new RolesController(new RoleService(_db), _translationService);
+        var controller = CreateController(new RoleService(_db));
 
         var result = await controller.GetResources(RoleConstants.ManagingDirector.Id, "AS", includePackageResources: false);
         var ok = Assert.IsType<OkObjectResult>(result.Result);
@@ -400,13 +394,32 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task DagligLeder_Id_AS_Should_Have_Resources_FromPackages()
     {
-        var controller = new RolesController(new RoleService(_db), _translationService);
+        var controller = CreateController(new RoleService(_db));
         var result = await controller.GetResources(RoleConstants.ManagingDirector.Id, "AS", includePackageResources: true);
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var value = Assert.IsAssignableFrom<IEnumerable<ResourceDto>>(ok.Value);
         Assert.True(value.Count(t => t.RefId == "T-05") > 0);
     }
     #endregion
+
+    /// <summary>
+    /// Helper method to create a controller with a mocked HTTP context that includes the Accept-Language header
+    /// </summary>
+    private RolesController CreateController(IRoleService roleService, string acceptLanguage = "nb-NO")
+    {
+        var controller = new RolesController(roleService, _translationService);
+        
+        // Create a mock HTTP context with Accept-Language header
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers["Accept-Language"] = acceptLanguage;
+        
+        controller.ControllerContext = new ControllerContext()
+        {
+            HttpContext = httpContext
+        };
+
+        return controller;
+    }
 }
 
 
