@@ -52,6 +52,7 @@ script:pre-request {
 }
 
 tests {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
   const body = res.getBody();
   const requestName = bru.getVar("requestName");
@@ -189,7 +190,7 @@ tests {
   
     assert.exists(targetParty, 'Expected KeyRole-party: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.name+' to exist');
     assert.notIncludeMembers(targetParty.authorizedAccessPackages, ["eksplisitt", "maskinporten-scopes-nuf", "post-til-virksomheten-med-taushetsbelagt-innhold"]);
-    expect(targetParty.authorizedAccessPackages.length, `authorizedAccessPackages for Dagl-KeyRole-Party contains unexpected packages`).to.equal(124);
+    expect(targetParty.authorizedAccessPackages.length, `authorizedAccessPackages for Dagl-KeyRole-Party contains unexpected packages`).to.equal(sharedtestdata.expectedDaglAccessPackageCount);
     
   });
   

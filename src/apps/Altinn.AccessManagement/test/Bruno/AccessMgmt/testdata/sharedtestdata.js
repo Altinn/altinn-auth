@@ -21,16 +21,15 @@ module.exports =
         "platformToken": "PlatformToken",
         "systemUser": "SystemUser"
     },
-  "serviceOwners": {
-    "ttd":
-    {
-      "org": "ttd",
-      "orgno": "991825827"
+    "serviceOwners": {
+        "ttd": {
+            "org": "ttd",
+            "orgno": "991825827"
+        },
+        "digdir": {
+            "org": "digdir",
+            "orgno": "991825827"
+        }
     },
-    "digdir":
-    {
-      "org": "digdir",
-      "orgno": "991825827"
-    }
-  }
+    "expectedDaglAccessPackageCount": 125
 };

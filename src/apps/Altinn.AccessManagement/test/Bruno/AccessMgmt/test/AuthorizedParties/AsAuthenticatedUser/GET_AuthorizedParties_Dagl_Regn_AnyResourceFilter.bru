@@ -176,13 +176,13 @@ tests {
     
   });
   
-  test(requestName + "|Find expected KeyRole AuthorizedParty and AuthorizedAccessPackages", function() {    
+  test(requestName + "|Find expected KeyRole AuthorizedParty and AuthorizedAccessPackages", function() {
     const allParties = body.flatMap(party => [party, ...(party.subunits || [])]);
     const targetParty = allParties.find(party => party.partyUuid === testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
   
     assert.exists(targetParty, 'Expected KeyRole-party: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.name+' to exist');
     assert.notIncludeMembers(targetParty.authorizedAccessPackages, ["eksplisitt", "maskinporten-scopes-nuf", "post-til-virksomheten-med-taushetsbelagt-innhold"]);
-    expect(targetParty.authorizedAccessPackages.length, `authorizedAccessPackages for Dagl-KeyRole-Party contains unexpected packages`).to.equal(124);
+    expect(targetParty.authorizedAccessPackages.length, `authorizedAccessPackages for Dagl-KeyRole-Party contains unexpected packages`).to.equal(sharedtestdata.expectedDaglAccessPackageCount);
     
   });
   
