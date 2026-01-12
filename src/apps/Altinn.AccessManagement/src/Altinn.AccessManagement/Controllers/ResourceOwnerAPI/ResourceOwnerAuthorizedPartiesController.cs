@@ -1,4 +1,5 @@
-﻿using Altinn.AccessManagement.Api.Enterprise.Utils;
+﻿using System.Net.Mime;
+using Altinn.AccessManagement.Api.Enterprise.Utils;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
@@ -13,8 +14,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.FeatureManagement;
 using Microsoft.FeatureManagement.Mvc;
-using System.Net.Mime;
-using System.Threading;
 
 namespace Altinn.AccessManagement.Controllers;
 
@@ -38,6 +37,7 @@ public class ResourceOwnerAuthorizedPartiesController(ILogger<ResourceOwnerAutho
     /// <param name="includePartiesViaKeyRoles">Optional (Default: True): Whether authorized parties via organizations the user has a key role for, should be included in the result set.</param>
     /// <param name="includeSubParties">Optional (Default: True): Whether sub-parties of authorized parties should be included in the result set.</param>
     /// <param name="includeInactiveParties">Optional (Default: True): Whether inactive authorized parties should be included in the result set.</param>
+    /// <param name="orgCode">Optional: Filter for only returning authorized parties where the subject has access to any resource owned by a specific service owner identified by the org code.</param>
     /// <param name="anyOfResourceIds">Optional: Filter for only returning authorized parties where the subject has access to any of the provided resource ids. Invalid resource ids are ignored.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <response code="200" cref="List{AuthorizedParty}">Ok</response>
@@ -102,6 +102,7 @@ public class ResourceOwnerAuthorizedPartiesController(ILogger<ResourceOwnerAutho
             {
                 var partyFilters = subject.PartyFilter.Select(attr => new BaseAttribute(attr.Type, attr.Value)).ToList();
                 var partyUuids = await authorizedPartiesService.GetPartyFilterUuids(partyFilters, cancellationToken);
+                filters.PartyFilter = new SortedDictionary<Guid, Guid>();
                 foreach (var partyUuid in partyUuids?.Distinct())
                 {
                     filters.PartyFilter[partyUuid] = partyUuid;
