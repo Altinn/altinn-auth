@@ -30,7 +30,7 @@ public class ConnectionQuery(AppDbContext db)
     {
         try
         {
-            var baseQuery = direction == ConnectionQueryDirection.FromOthers 
+            var baseQuery = direction == ConnectionQueryDirection.FromOthers
                 ? useNewQuery ? BuildBaseQueryFromOthersNew(db, filter) : BuildBaseQueryFromOthers(db, filter)
                 : BuildBaseQueryToOthers(db, filter);
 
@@ -46,6 +46,12 @@ public class ConnectionQuery(AppDbContext db)
                     }
 
                     result = Attach(result, pkgs, p => p.Id, (dto, list) => dto.Packages = list);
+
+                    // Remove connections where no packages were found if filtering on specific packages
+                    if (filter.PackageIds != null)
+                    {
+                        result.RemoveAll(t => t.Packages.Count == 0);
+                    }
                 }
                 catch (Exception ex)
                 {

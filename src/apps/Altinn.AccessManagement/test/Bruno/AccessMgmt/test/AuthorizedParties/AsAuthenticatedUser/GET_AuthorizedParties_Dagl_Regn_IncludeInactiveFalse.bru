@@ -23,7 +23,7 @@ headers {
 }
 
 script:pre-request {
-  bru.runner.skipRequest();
+  bru.runner.skipRequest(); // ToDo: Update/complete test after AT22 Deploy
   
   
   const sharedtestdata = require(`./testdata/sharedtestdata.js`);
@@ -41,8 +41,8 @@ script:pre-request {
   }
   
   
-const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
-const token = await testTokenGenerator.getToken(getTokenParameters);
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken", token);
 }
 

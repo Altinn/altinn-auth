@@ -1,5 +1,4 @@
-﻿using Altinn.AccessManagement.Core.Enums;
-using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
+﻿using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 
 namespace Altinn.AccessManagement.Core.Models;
 
@@ -11,8 +10,6 @@ public class AuthorizedPartiesFilters
     public bool IncludeAltinn2 { get; set; } = true;
 
     public bool IncludeAltinn3 { get; set; } = true;
-
-    public Dictionary<Guid, Guid>? PartyFilter { get; set; } = null;
 
     public bool IncludeRoles { get; set; } = true;
 
@@ -28,11 +25,29 @@ public class AuthorizedPartiesFilters
 
     public AuthorizedPartiesIncludeFilter IncludeInactiveParties { get; set; } = AuthorizedPartiesIncludeFilter.True;
 
-    /* Future filters to implement
+    public SortedDictionary<Guid, Guid>? PartyFilter { get; set; } = null;
+
+    public SortedDictionary<string, string>? RoleFilter { get; set; } = null;
+
+    public SortedDictionary<Guid, Guid>? PackageFilter { get; set; } = null;
+
+    public SortedDictionary<string, string> ResourceFilter { get; set; } = null;
+
     public string ProviderCode { get; set; } = null;
+
+    public string[] AnyOfRoleIds { get; set; } = null;
+
+    public string[] AllOfRoleIds { get; set; } = null;
+
+    public string[] AnyOfPackageIds { get; set; } = null;
+
+    public string[] AllOfPackageIds { get; set; } = null;
 
     public string[] AnyOfResourceIds { get; set; } = null;
 
     public string[] AllOfResourceIds { get; set; } = null;
-    */
+
+    public string[] AnyOfInstanceIds { get; set; } = null;
+
+    public string[] AllOfInstanceIds { get; set; } = null;
 }

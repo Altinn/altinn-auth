@@ -1,5 +1,5 @@
 meta {
-  name: POST_ResourceOwner_AuthorizedParties_Dagl_Forretningsforer
+  name: POST_Admin_AuthorizedParties_Dagl_Forretningsforer
   type: http
   seq: 7
 }
@@ -33,14 +33,14 @@ script:pre-request {
   const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
   
-  bru.setVar("requestName", "POST_ResourceOwner_AuthorizedParties_Dagl_Forretningsforer");
+  bru.setVar("requestName", "POST_Admin_AuthorizedParties_Dagl_Forretningsforer");
   bru.setVar("personId", testdata.forretningsforerNonfigurativEmosjonellPuma.dagligleder.pid);
   
   var getTokenParameters = {
     auth_org: sharedtestdata.serviceOwners.digdir.org,
     auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
     auth_tokenType: sharedtestdata.authTokenType.enterprise,
-    auth_scopes: sharedtestdata.auth_scopes.authorizedPartiesResourceOwner
+    auth_scopes: sharedtestdata.auth_scopes.authorizedPartiesAdmin
   }
   
   

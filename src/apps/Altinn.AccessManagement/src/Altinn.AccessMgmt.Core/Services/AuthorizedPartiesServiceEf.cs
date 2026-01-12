@@ -3,7 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums;
-using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
@@ -11,7 +10,6 @@ using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
-using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 
 namespace Altinn.AccessManagement.Core.Services;
@@ -44,6 +42,17 @@ public class AuthorizedPartiesServiceEf(
         if (subject == null)
         {
             return await Task.FromResult(new List<AuthorizedParty>());
+        }
+
+        if (filter.ProviderCode != null || filter.AnyOfResourceIds?.Count() > 0)
+        {
+            filter = await ProcessProviderAndResourceFilters(filter, cancellationToken);
+
+            if (filter.ResourceFilter?.Count() == 0)
+            {
+                // ServiceOwner or Resource filter specified, but no resources found matching.
+                return new List<AuthorizedParty>();
+            }
         }
 
         filter = await ProcessAutoFilters(filter, subject, cancellationToken);
@@ -332,10 +341,15 @@ public class AuthorizedPartiesServiceEf(
             a2Task = Task.Run(async () =>
             {
                 var a2AuthorizedParties = await altinnRolesClient.GetAuthorizedPartiesWithRoles(userSubject.UserId.Value, filter.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.True, cancellationToken);
-
-                if (filter.PartyFilter?.Count() > 0)
+                
+                if (filter.PartyFilter?.Count > 0)
                 {
                     a2AuthorizedParties = GetFilteredA2Parties(a2AuthorizedParties, filter);
+                }
+                
+                if (filter.ProviderCode != null || filter.AnyOfResourceIds?.Count() > 0)
+                {
+                    a2AuthorizedParties = FilterRoles(a2AuthorizedParties, filter);
                 }
 
                 return (a2AuthorizedParties.AsEnumerable(), new Dictionary<Guid, Entity>());
@@ -437,11 +451,22 @@ public class AuthorizedPartiesServiceEf(
         return result;
     }
 
-    private async Task<Tuple<Dictionary<Guid, AuthorizedParty>, IEnumerable<AuthorizedParty>>> GetAltinn3AuthorizedParties(AuthorizedPartiesFilters filter, Guid toId, List<Guid> toOrgs = null, CancellationToken cancellationToken = default)
+    private async Task<Tuple<Dictionary<Guid, AuthorizedParty>, IEnumerable<AuthorizedParty>>> GetAltinn3AuthorizedParties(
+        AuthorizedPartiesFilters filter,
+        Guid toId,
+        List<Guid> toOrgs = null,
+        CancellationToken cancellationToken = default)
     {
-        // Get AccessPackage Delegations
-        ////var packagePermissions = await repoService.GetPackagesFromOthers(toId, filters: filter, ct: cancellationToken);
-        var connections = await repoService.GetConnectionsFromOthers(toId, filters: filter, ct: cancellationToken);
+        /*
+         * Get AccessPackage connections but only if no resource filter is specified, or if both resource and package filters are specified.
+         * Note: will need updating when connection query are to be used for lookup and filters of roles and/or resource connections as well.
+         */
+        List<ConnectionQueryExtendedRecord> connections = [];
+        bool resourceFilterSpecified = filter.ProviderCode != null || filter.AnyOfResourceIds?.Count() > 0;
+        if (!resourceFilterSpecified || filter.PackageFilter?.Count > 0)
+        {
+            connections = await repoService.GetConnectionsFromOthers(toId, filters: filter, ct: cancellationToken);
+        }
 
         // Get App, Resource and Instance delegations
         List<Guid> allToParties = toOrgs ?? new List<Guid>();
@@ -450,19 +475,23 @@ public class AuthorizedPartiesServiceEf(
         var resourceDelegations = await resourceDelegationRepository.GetAllDelegationChangesForAuthorizedParties(allToParties, cancellationToken: cancellationToken);
         resourceDelegations = await AddInstanceDelegations(resourceDelegations, allToParties, cancellationToken);
 
-        if (filter.PartyFilter?.Count() > 0)
+        if (filter.PartyFilter?.Count > 0)
         {
             resourceDelegations = resourceDelegations.Where(d => filter.PartyFilter.ContainsKey(d.FromUuid.Value)).ToList();
         }
 
+        if (filter.ResourceFilter?.Count() > 0)
+        {
+            resourceDelegations = resourceDelegations.Where(d => d.ResourceId != null && filter.ResourceFilter.ContainsKey(d.ResourceId)).ToList();
+        }
+
         // Get Party info for all from-uuids
         var fromUuids = resourceDelegations.Where(d => d.FromUuid.HasValue).Select(d => d.FromUuid.Value).ToList();
-        ////fromUuids.AddRange(packagePermissions.SelectMany(p => p.Permissions).Select(p => p.From.Id));
         fromUuids.AddRange(connections.Select(c => c.FromId).Distinct());
         var fromParties = await repoService.GetEntities(fromUuids.Distinct(), cancellationToken);
         var fromSubUnits = await repoService.GetSubunits(fromUuids.Distinct(), cancellationToken);
 
-        if (filter.PartyFilter?.Count() > 0)
+        if (filter.PartyFilter?.Count > 0)
         {
             fromSubUnits = fromSubUnits.Where(su => filter.PartyFilter.ContainsKey(su.Id)).ToList();
         }
@@ -470,7 +499,6 @@ public class AuthorizedPartiesServiceEf(
         (Dictionary<Guid, AuthorizedParty> parties, IEnumerable<AuthorizedParty> authorizedParties) = BuildDictionaryFromEntities(fromParties, fromSubUnits);
 
         // Enrich AuthorizedParties with all authorized AccessPackages, Resources and Instances
-        ////EnrichWithAccessPackageParties(parties, packagePermissions, filter);
         EnrichWithAccessPackageParties(parties, connections, filter);
         EnrichWithResourceAndInstanceParties(parties, resourceDelegations, filter);
 
@@ -571,30 +599,6 @@ public class AuthorizedPartiesServiceEf(
         return delegations;
     }
 
-    private static void EnrichWithAccessPackageParties(Dictionary<Guid, AuthorizedParty> parties, IEnumerable<PackagePermissionDto> packagePermissions, AuthorizedPartiesFilters filters)
-    {
-        if (!filters.IncludeAccessPackages)
-        {
-            return;
-        }
-
-        foreach (var packagePermission in packagePermissions)
-        {
-            foreach (var permission in packagePermission.Permissions)
-            {
-                if (parties.TryGetValue(permission.From.Id, out AuthorizedParty party))
-                {
-                    party.EnrichWithAccessPackage(packagePermission.Package.Urn.Split(":").Last().SingleToList());
-                }
-                else
-                {
-                    // This should not happen as all parties are retrieved based on the from parties on the delegations
-                    Unreachable();
-                }
-            }
-        }
-    }
-
     private static void EnrichWithAccessPackageParties(Dictionary<Guid, AuthorizedParty> parties, List<ConnectionQueryExtendedRecord> packageConnections, AuthorizedPartiesFilters filters)
     {
         if (!filters.IncludeAccessPackages)
@@ -646,26 +650,62 @@ public class AuthorizedPartiesServiceEf(
 
     private List<AuthorizedParty> GetFilteredA2Parties(IEnumerable<AuthorizedParty> parties, AuthorizedPartiesFilters filters)
     {
+        bool filterParties = filters.PartyFilter?.Count > 0;
+
         List<AuthorizedParty> result = new();
         foreach (var party in parties)
         {
             List<AuthorizedParty> subunits = new();
             foreach (var subunit in party.Subunits)
             {
-                if (filters.PartyFilter.ContainsKey(subunit.PartyUuid))
+                if (filterParties && !filters.PartyFilter.ContainsKey(subunit.PartyUuid))
                 {
-                    subunits.Add(subunit);
+                    continue;
                 }
+                
+                subunits.Add(subunit);
             }
 
             party.Subunits = subunits;
-            if (filters.PartyFilter.ContainsKey(party.PartyUuid) || party.Subunits.Count > 0)
+            if (filterParties && !filters.PartyFilter.ContainsKey(party.PartyUuid) && party.Subunits.Count == 0)
             {
-                result.Add(party);
+                continue;
             }
+
+            result.Add(party);
         }
 
         return result;
+    }
+
+    private static List<AuthorizedParty> FilterRoles(IEnumerable<AuthorizedParty> authorizedParties, AuthorizedPartiesFilters filter)
+    {
+        List<AuthorizedParty> parties = new();
+        foreach (var party in authorizedParties)
+        {
+            party.AuthorizedRoles = party.AuthorizedRoles.Where(role => filter.RoleFilter.ContainsKey(role)).ToList();
+
+            // Reset subunits and re-add only those with roles after filtering
+            var subunits = party.Subunits;
+            party.Subunits = new List<AuthorizedParty>();
+            foreach (var subunit in subunits)
+            {
+                subunit.AuthorizedRoles = subunit.AuthorizedRoles.Where(role => filter.RoleFilter.ContainsKey(role)).ToList();
+
+                if (subunit.AuthorizedRoles.Any())
+                {
+                    party.Subunits.Add(subunit);
+                }
+            }
+
+            // Only add party if it has any roles or subunits with roles
+            if (party.AuthorizedRoles.Count > 0 || party.Subunits.Count > 0)
+            {
+                parties.Add(party);
+            }
+        }
+
+        return parties;
     }
 
     private static AuthorizedParty BuildAuthorizedPartyFromEntity(Entity entity, bool onlyHierarchyElement = false)
@@ -704,6 +744,74 @@ public class AuthorizedPartiesServiceEf(
         }
 
         return party;
+    }
+
+    private async Task<AuthorizedPartiesFilters> ProcessProviderAndResourceFilters(AuthorizedPartiesFilters filter, CancellationToken cancellationToken)
+    {
+        // Only build resource filters if providerCode or anyOfResourceIds filters are specified
+        if (filter.ProviderCode != null || filter.AnyOfResourceIds?.Count() > 0)
+        {
+            List<Resource> resources = await repoService.GetResources(filter.ProviderCode, filter.AnyOfResourceIds, ct: cancellationToken);
+
+            if (resources.Count == 0)
+            {
+                // ServiceOwner or Resource filter specified, but no resources found matching.
+                return filter;
+            }
+
+            filter.ResourceFilter = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var resource in resources)
+            {
+                filter.ResourceFilter[resource.RefId] = resource.RefId;
+            }
+
+            List<PackageResource> packageResources = await repoService.GetPackageResources(filter.ProviderCode, filter.ResourceFilter.Keys, ct: cancellationToken);
+
+            // Add packageIds from packageResources to filter.PackageFilter
+            filter.PackageFilter ??= new SortedDictionary<Guid, Guid>();
+            foreach (var package in packageResources)
+            {
+                if (!filter.PackageFilter.ContainsKey(package.Id))
+                {
+                    filter.PackageFilter[package.Id] = package.Id;
+                }
+            }
+
+            // Build filter.RoleFilter based on roleResources and packageRoles
+            filter.RoleFilter ??= new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            
+            List<RoleResource> roleResources = await repoService.GetRoleResources(filter.ProviderCode, filter.ResourceFilter.Keys, ct: cancellationToken);
+            foreach (var group in roleResources.GroupBy(rr => rr.RoleId))
+            {
+                Role role = group.First().Role;
+                filter.RoleFilter[role.Code] = role.Code;
+
+                if (role.LegacyCode != null)
+                {
+                    filter.RoleFilter[role.LegacyCode] = role.LegacyCode;
+                }
+            }
+
+            // Find all Roles for the PackageResources found above, as we need to include roles giving access via packages as well.
+            List<RolePackage> rolePackages = await repoService.GetRolePackages(packageIds: filter.PackageFilter.Keys, ct: cancellationToken);
+            foreach (var group in rolePackages.GroupBy(rp => rp.PackageId))
+            {
+                foreach (var role in group.Select(rp => rp.Role))
+                {
+                    if (!filter.RoleFilter.ContainsKey(role.Code))
+                    {
+                        filter.RoleFilter[role.Code] = role.Code;
+                    }
+
+                    if (role.LegacyCode != null && !filter.RoleFilter.ContainsKey(role.LegacyCode))
+                    {
+                        filter.RoleFilter[role.LegacyCode] = role.LegacyCode;
+                    }
+                }
+            }
+        }
+
+        return filter;
     }
 
     private async Task<AuthorizedPartiesFilters> ProcessAutoFilters(AuthorizedPartiesFilters filters, Entity subject, CancellationToken cancellationToken)

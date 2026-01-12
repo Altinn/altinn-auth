@@ -66,7 +66,7 @@ public class PolicyInformationPointController(
 
         if (await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.AuthorizedPartiesEfEnabled))
         {
-            var filter = new AuthorizedPartiesFilters { IncludeAccessPackages = true, IncludePartiesViaKeyRoles = AuthorizedPartiesIncludeFilter.True, PartyFilter = new Dictionary<Guid, Guid> { { from, from } } };
+            var filter = new AuthorizedPartiesFilters { IncludeAccessPackages = true, IncludePartiesViaKeyRoles = AuthorizedPartiesIncludeFilter.True, PartyFilter = new SortedDictionary<Guid, Guid> { { from, from } } };
             var connectionPackages = await authorizedPartyRepoService.GetPipConnectionsFromOthers(to, filters: filter, ct: cancellationToken);
             if (connectionPackages != null)
             {

@@ -1,7 +1,7 @@
 meta {
   name: GET_AuthorizedParties_SIUser
   type: http
-  seq: 4
+  seq: 3
 }
 
 get {
@@ -23,7 +23,7 @@ headers {
 script:pre-request {
   
   const sharedtestdata = require(`./testdata/sharedtestdata.js`);
-const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "GET_AuthorizedParties_SIUser");
   
@@ -39,13 +39,13 @@ const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tok
   }
   
   
-const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
-const token = await testTokenGenerator.getToken(getTokenParameters);
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken", token);
 }
 
 tests {
-const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
   const body = res.getBody();
   const requestName = bru.getVar("requestName");
   
