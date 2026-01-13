@@ -15,13 +15,6 @@ namespace Altinn.Platform.Authorization.Services.Interfaces
         /// <summary>
         /// Creates an authorization event in storage queue
         /// </summary>
-        /// <param name="authorizationEvent">authorization event</param>
-        /// <param name="cancellationToken">The cancellationToken</param>
-        public void CreateAuthorizationEvent(AuthorizationEvent authorizationEvent, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Creates an authorization event in storage queue
-        /// </summary>
         /// <param name="featureManager">the handler to manage feature management</param>
         /// <param name="contextRequest">the enriched context request</param>
         /// <param name="context">the http context</param>

@@ -1,4 +1,4 @@
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Altinn.Authorization.ABAC.Interface;
@@ -239,7 +239,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
                 .Setup(m => m.IsEnabledAsync("AuditLog"))
                 .Returns(Task.FromResult(true));
             Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
-            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()));
             AuthorizationEvent expectedAuthorizationEvent = TestSetupUtil.GetAuthorizationEvent(testCase);
 
             HttpClient client = GetTestClient(eventQueue.Object, featureManageMock.Object, timeProviderMock.Object);
@@ -350,7 +350,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             featureManageMock.Setup(m => m.IsEnabledAsync("AuditLog")).Returns(Task.FromResult(true));
 
             Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
-            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()));
             HttpClient client = GetTestClient(eventLog: eventQueue.Object, featureManager: featureManageMock.Object);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
@@ -378,7 +378,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             featureManageMock.Setup(m => m.IsEnabledAsync("AuditLog")).Returns(Task.FromResult(true));
 
             Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
-            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()));
             HttpClient client = GetTestClient(eventLog: eventQueue.Object, featureManager: featureManageMock.Object);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
@@ -406,7 +406,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             featureManageMock.Setup(m => m.IsEnabledAsync("AuditLog")).Returns(Task.FromResult(true));
 
             Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
-            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()));
             HttpClient client = GetTestClient(eventLog: eventQueue.Object, featureManager: featureManageMock.Object);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
@@ -434,7 +434,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             featureManageMock.Setup(m => m.IsEnabledAsync("AuditLog")).Returns(Task.FromResult(true));
 
             Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
-            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()));
             HttpClient client = GetTestClient(eventLog: eventQueue.Object, featureManager: featureManageMock.Object);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
@@ -462,7 +462,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             featureManageMock.Setup(m => m.IsEnabledAsync("AuditLog")).Returns(Task.FromResult(true));
 
             Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
-            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()));
             HttpClient client = GetTestClient(eventLog: eventQueue.Object, featureManager: featureManageMock.Object);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);

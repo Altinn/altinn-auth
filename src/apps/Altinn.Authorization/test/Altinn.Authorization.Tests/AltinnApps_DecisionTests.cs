@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -47,7 +47,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
                 .Setup(m => m.IsEnabledAsync("AuditLog"))
                 .Returns(Task.FromResult(true));
             Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
-            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()));
             AuthorizationEvent expectedAuthorizationEvent = TestSetupUtil.GetAuthorizationEvent(testCase);
 
             HttpClient client = GetTestClient(eventQueue.Object, featureManageMock.Object, timeProviderMock.Object);
@@ -74,7 +74,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
                 .Returns(Task.FromResult(false));
 
             Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
-            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()));
             AuthorizationEvent expectedAuthorizationEvent = TestSetupUtil.GetAuthorizationEvent(testCase);
 
             HttpClient client = GetTestClient(eventQueue.Object, featureManageMock.Object);
@@ -99,7 +99,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
                 .Setup(m => m.IsEnabledAsync("AuditLog"))
                 .Returns(Task.FromResult(true));
             Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
-            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()));
             AuthorizationEvent expectedAuthorizationEvent = TestSetupUtil.GetAuthorizationEvent(testCase);
 
             HttpClient client = GetTestClient(eventQueue.Object, featureManageMock.Object, timeProviderMock.Object);            
@@ -154,7 +154,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
                 .Setup(m => m.IsEnabledAsync("AuditLog"))
                 .Returns(Task.FromResult(true));
             Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
-            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()));
             AuthorizationEvent expectedAuthorizationEvent = TestSetupUtil.GetAuthorizationEvent(testCase);
 
             HttpClient client = GetTestClient(eventQueue.Object, featureManageMock.Object, timeProviderMock.Object);
@@ -240,7 +240,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
                 .Setup(m => m.IsEnabledAsync("AuditLog"))
                 .Returns(Task.FromResult(true));
             Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
-            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()));
             AuthorizationEvent expectedAuthorizationEvent = null;
 
             HttpClient client = GetTestClient();
@@ -310,7 +310,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             featureManageMock.Setup(m => m.IsEnabledAsync("AuditLog")).Returns(Task.FromResult(true));
 
             Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
-            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()));
             HttpClient client = GetTestClient(eventLog: eventQueue.Object, featureManager: featureManageMock.Object);
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
             XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
@@ -333,7 +333,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             featureManageMock.Setup(m => m.IsEnabledAsync("AuditLog")).Returns(Task.FromResult(true));
 
             Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
-            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()));
             HttpClient client = GetTestClient(eventLog: eventQueue.Object, featureManager: featureManageMock.Object);
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
             XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
@@ -445,7 +445,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
                 .Setup(m => m.IsEnabledAsync("AuditLog"))
                 .Returns(Task.FromResult(true));
             Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
-            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()));
             AuthorizationEvent expectedAuthorizationEvent = TestSetupUtil.GetAuthorizationEvent(testCase);
 
             HttpClient client = GetTestClient(eventQueue.Object, featureManageMock.Object, timeProviderMock.Object);

@@ -95,6 +95,7 @@
     <PackageVersion Include="Microsoft.FeatureManagement.AspNetCore" Version="4.3.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Logging" Version="8.14.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.14.0" />
+    <PackageVersion Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageVersion Include="MongoDB.Driver" Version="3.5.0" />

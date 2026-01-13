@@ -1,12 +1,13 @@
-using System.Text;
-using System.Xml;
-using Altinn.Authorization.ABAC.Utils;
+﻿using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Platform.Authorization.Models.EventLog;
 using Altinn.Platform.Storage.Interface.Models;
 using Authorization.Platform.Authorization.Models;
 using Newtonsoft.Json;
+using System.Text;
+using System.Text.Json;
+using System.Xml;
 
 namespace Altinn.Platform.Authorization.IntegrationTests.Util
 {
@@ -244,6 +245,11 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Util
         public static AuthorizationEvent GetAuthorizationEvent(string testCase)
         {
             string content = null;
+            var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+            {
+                Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+            };
+
             if (testCase.Contains("AltinnApps"))
             {
                 content = File.ReadAllText(Path.Combine(GetAltinnAppsPath(), "eventlog//" + testCase + "Event.json"));
@@ -257,7 +263,13 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Util
                 content = File.ReadAllText(Path.Combine(GetConformancePath(), testCase + "Event.json"));
             }
 
-            AuthorizationEvent authorizationEvennt = (AuthorizationEvent)JsonConvert.DeserializeObject(content, typeof(AuthorizationEvent));
+            AuthorizationEvent authorizationEvennt = System.Text.Json.JsonSerializer.Deserialize<AuthorizationEvent>(content, options);
+
+            if (authorizationEvennt.ContextRequestJson.ValueKind == JsonValueKind.String)
+            {
+                var json = authorizationEvennt.ContextRequestJson.GetString();
+                authorizationEvennt.ContextRequestJson = JsonDocument.Parse(json).RootElement;
+            }
 
             return authorizationEvennt;
         }

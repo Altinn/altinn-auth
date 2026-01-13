@@ -34,19 +34,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             _timeProvider = timeProvider;
         }
 
-        /// <summary>
-        /// Queues an authorization event to the logqueue
-        /// </summary>
-        /// <param name="authorizationEvent">authorization event</param>
-        /// <param name="cancellationToken">The cancellationToken</param>
-        public void CreateAuthorizationEvent(AuthorizationEvent authorizationEvent, CancellationToken cancellationToken = default)
-        {
-            if (authorizationEvent != null)
-            {
-                _queueClient.EnqueueAuthorizationEvent(JsonSerializer.Serialize(authorizationEvent), cancellationToken);
-            }
-        }
-
         /// <inheritdoc />
         public async Task CreateAuthorizationEvent(IFeatureManager featureManager, XacmlContextRequest contextRequest, HttpContext context, XacmlContextResponse contextResponse, CancellationToken cancellationToken = default)
         {
@@ -58,9 +45,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
                 if (authorizationEvent != null)
                 {
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-                    _queueClient.EnqueueAuthorizationEvent(JsonSerializer.Serialize(authorizationEvent, options), cancellationToken);
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                    _ = _queueClient.EnqueueAuthorizationEvent(authorizationEvent, cancellationToken);
                 }
             }
         }

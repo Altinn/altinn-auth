@@ -30,6 +30,7 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
         <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
         <PackageReference Include="Microsoft.FeatureManagement.AspNetCore" />
+        <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" />
         <PackageReference Include="Npgsql" />
         <PackageReference Include="Swashbuckle.AspNetCore" />
         <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />

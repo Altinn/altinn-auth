@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -284,12 +284,31 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Util
 
         public static void AssertAuthorizationEvent(Mock<IEventsQueueClient> eventQueue, AuthorizationEvent expectedAuthorizationEvent, Times numberOfTimes)
         {
-            var options = new JsonSerializerOptions();
-            options.Converters.Add(new JsonStringEnumConverter());
-            string serializedAuthorizationEvent = JsonSerializer.Serialize(expectedAuthorizationEvent, options);
+            foreach (var invocation in eventQueue.Invocations)
+            {
+                if (invocation.Arguments[0] is AuthorizationEvent evt)
+                {
+                    Console.WriteLine(evt.ContextRequestJson.GetRawText());
+                }
+            }
+
             eventQueue.Verify(
                 e => e.EnqueueAuthorizationEvent(
-                    It.Is<string>(q => q == serializedAuthorizationEvent), It.IsAny<CancellationToken>()), 
+                    It.Is<AuthorizationEvent>(q => JsonElement.DeepEquals(q.ContextRequestJson, expectedAuthorizationEvent.ContextRequestJson) &&
+                                                    q.Operation == expectedAuthorizationEvent.Operation &&
+                                                    q.Created == expectedAuthorizationEvent.Created &&
+                                                    q.InstanceId == expectedAuthorizationEvent.InstanceId &&
+                                                    q.SessionId == expectedAuthorizationEvent.SessionId &&
+                                                    q.IpAdress == expectedAuthorizationEvent.IpAdress &&
+                                                    q.Decision == expectedAuthorizationEvent.Decision &&
+                                                    q.Resource == expectedAuthorizationEvent.Resource &&
+                                                    q.SubjectParty == expectedAuthorizationEvent.SubjectParty &&
+                                                    q.SubjectPartyUuid == expectedAuthorizationEvent.SubjectPartyUuid &&
+                                                    q.ResourcePartyId == expectedAuthorizationEvent.ResourcePartyId &&
+                                                    q.SubjectOrgCode == expectedAuthorizationEvent.SubjectOrgCode &&
+                                                    q.SubjectOrgNumber == expectedAuthorizationEvent.SubjectOrgNumber &&
+                                                    q.SubjectUserId == expectedAuthorizationEvent.SubjectUserId),
+                    It.IsAny<CancellationToken>()), 
                 numberOfTimes);
         }
 
@@ -297,7 +316,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Util
         {
             eventQueue.Verify(
                 e => e.EnqueueAuthorizationEvent(
-                    It.IsAny<string>(), It.IsAny<CancellationToken>()),
+                    It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()),
                 numberOfTimes);
         }
 

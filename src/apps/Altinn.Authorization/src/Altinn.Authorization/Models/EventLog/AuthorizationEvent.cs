@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System;
+using System.Text.Json;
 using Altinn.Authorization.ABAC.Xacml;
 
 namespace Altinn.Platform.Authorization.Models.EventLog
@@ -68,7 +69,7 @@ namespace Altinn.Platform.Authorization.Models.EventLog
         /// <summary>
         /// The enriched context request
         /// </summary>
-        public required string ContextRequestJson { get; set; }
+        public required JsonElement ContextRequestJson { get; set; }
 
         /// <summary>
         /// Decision for the authorization request
