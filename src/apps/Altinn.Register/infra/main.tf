@@ -233,7 +233,7 @@ module "postgres_server" {
   use_pgbouncer            = var.use_pgbouncer
   enable_high_availability = var.enable_high_availability
   configurations = {
-    "azure.extensions" : "HSTORE"
+    "azure.extensions" : "HSTORE,CITEXT"
     "max_locks_per_transaction" : "4096"
   }
 
