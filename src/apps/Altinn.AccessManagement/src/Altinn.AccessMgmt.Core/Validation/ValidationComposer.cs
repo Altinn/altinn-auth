@@ -33,7 +33,11 @@ public static class ValidationComposer
     public static ValidationProblemInstance? Validate(params RuleExpression[] rules)
     {
         var builder = default(ValidationErrorBuilder);
-        All(rules)()(ref builder);
+        if (All(rules)() is var r && r is { })
+        {
+            r(ref builder);
+        }
+
         builder.TryBuild(out var result);
         return result;
     }
@@ -45,18 +49,23 @@ public static class ValidationComposer
     /// <returns>A combined validation rule that applies all the specified rules.</returns>
     public static RuleExpression All(params RuleExpression[] funcs) => () =>
     {
-        var results = new List<ValidationRule>();
+        var failures = new List<ValidationRule>();
         foreach (var func in funcs)
         {
             if (func() is var fn && fn is { })
             {
-                results.Add(fn);
+                failures.Add(fn);
             }
+        }
+
+        if (failures.Count == 0)
+        {
+            return null;
         }
 
         return (ref ValidationErrorBuilder errors) =>
         {
-            foreach (var result in results)
+            foreach (var result in failures)
             {
                 result(ref errors);
             }
