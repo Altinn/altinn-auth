@@ -48,7 +48,7 @@ public class AuthorizedPartiesServiceEf(
         {
             filter = await ProcessProviderAndResourceFilters(filter, cancellationToken);
 
-            if (filter.ResourceFilter?.Count() == 0)
+            if (filter.ResourceFilter == null || filter.ResourceFilter.Count() == 0)
             {
                 // ServiceOwner or Resource filter specified, but no resources found matching.
                 return new List<AuthorizedParty>();
