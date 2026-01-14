@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -95,45 +95,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 else if (subjectParty != null && subjectParty.PartyTypeName == PartyType.Organisation && subjectParty.PartyUuid.HasValue)
                 {
                     requestSubjectAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.OrganizationUuidAttribute, subjectParty.PartyUuid.Value.ToString()));
-                }
-            }
-        }
-
-        /// <summary>
-        /// Updates needed resource information for the Context Request for a specific delegation
-        /// </summary>
-        /// <param name="requestResourceAttributes">The current collection of resource attributes on the request to be enriched</param>
-        /// <param name="resourceAttributes">Preprocessed collection of resource attributes based on the input request <see cref="ContextHandler.GetResourceAttributeValues(XacmlContextAttributes)"/></param>
-        /// <param name="isInstanceAccessRequest">Whether the request is for a specific instance, which needs additional resource information</param>
-        public void EnrichRequestResourceAttributes(XacmlContextAttributes requestResourceAttributes, XacmlResourceAttributes resourceAttributes, bool isInstanceAccessRequest)
-        {
-            if (isInstanceAccessRequest)
-            {
-                XacmlAttribute resourceAttribute = requestResourceAttributes.Attributes.FirstOrDefault(a => a.AttributeId.OriginalString.Equals(XacmlRequestAttribute.ResourceRegistryAttribute));
-                XacmlAttribute resourceInstanceAttribute = requestResourceAttributes.Attributes.FirstOrDefault(a => a.AttributeId.OriginalString.Equals(XacmlRequestAttribute.ResourceRegistryInstanceAttribute));
-                XacmlAttribute orgAttribute = requestResourceAttributes.Attributes.FirstOrDefault(a => a.AttributeId.OriginalString.Equals(XacmlRequestAttribute.OrgAttribute));
-                XacmlAttribute appAttribute = requestResourceAttributes.Attributes.FirstOrDefault(a => a.AttributeId.OriginalString.Equals(XacmlRequestAttribute.AppAttribute));
-                if (resourceAttribute != null && orgAttribute == null && appAttribute == null)
-                {
-                    string resourceId = resourceAttribute.AttributeValues.FirstOrDefault()?.Value;
-                    if (resourceId != null && resourceId.StartsWith("app_"))
-                    {
-                        // Missing resource attribute for Altinn App
-                        requestResourceAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.OrgAttribute, resourceAttributes.OrgValue));
-                        requestResourceAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.AppAttribute, resourceAttributes.AppValue));
-                    }
-                }
-
-                if (resourceAttribute == null && orgAttribute != null && appAttribute != null)
-                {
-                    // Missing org and app attribute for Altinn App
-                    requestResourceAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.ResourceRegistryAttribute, $"app_{orgAttribute.AttributeValues.FirstOrDefault()?.Value}_{appAttribute.AttributeValues.FirstOrDefault()?.Value}"));
-                }
-
-                if (resourceInstanceAttribute == null)
-                {
-                    // Missing resource instanceId attribute
-                    requestResourceAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.ResourceRegistryInstanceAttribute, resourceAttributes.ResourceInstanceValue));
                 }
             }
         }

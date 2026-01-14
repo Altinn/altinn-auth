@@ -607,9 +607,7 @@ namespace Altinn.Platform.Authorization.Controllers
             }
 
             XacmlContextAttributes subjectContextAttributes = decisionRequest.GetSubjectAttributes();
-            XacmlContextAttributes resourceContextAttributes = decisionRequest.GetResourceAttributes();
             await _delegationContextHandler.EnrichRequestSubjectAttributes(subjectContextAttributes, isInstanceAccessRequest, cancellationToken);
-            _delegationContextHandler.EnrichRequestResourceAttributes(resourceContextAttributes, resourceAttributes, isInstanceAccessRequest);
 
             return await ProcessDelegationResult(decisionRequest, delegations, resourcePolicy, cancellationToken);
         }

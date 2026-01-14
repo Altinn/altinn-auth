@@ -1,7 +1,7 @@
 meta {
-  name: MultiReqAppDelegations
+  name: MultiReqResource_Delegations
   type: http
-  seq: 4
+  seq: 5
 }
 
 post {
@@ -18,15 +18,14 @@ headers {
 body:json {
   {
     "Request": {
-      "ReturnPolicyIdList": false,
+      "ReturnPolicyIdList": true,
       "AccessSubject": [
         {
           "Id": "s1",
           "Attribute": [
             {
               "AttributeId": "urn:altinn:person:identifier-no",
-              "Value": "24925798149",
-              "IncludeInResult": true
+              "Value": "01866696531"
             }
           ]
         }
@@ -49,22 +48,14 @@ body:json {
           "Id": "r1",
           "Attribute": [
             {
-              "AttributeId": "urn:altinn:org",
-              "Value": "ttd",
-              "DataType": "http://www.w3.org/2001/XMLSchema#string",
-              "IncludeInResult": true
-            },
-            {
-              "AttributeId": "urn:altinn:app",
-              "Value": "authz-bruno-testapp1",
-              "DataType": "http://www.w3.org/2001/XMLSchema#string",
-              "IncludeInResult": true
+              "AttributeId": "urn:altinn:resource",
+              "Value": "authz_bruno_gar_resource1",
+              "DataType": "http://www.w3.org/2001/XMLSchema#string"
             },
             {
               "AttributeId": "urn:altinn:organization:identifier-no",
-              "Value": "313332330",
-              "DataType": "http://www.w3.org/2001/XMLSchema#string",
-              "IncludeInResult": true
+              "Value": "311694936",
+              "DataType": "http://www.w3.org/2001/XMLSchema#string"
             }
           ]
         },
@@ -72,22 +63,14 @@ body:json {
           "Id": "r2",
           "Attribute": [
             {
-              "AttributeId": "urn:altinn:org",
-              "Value": "ttd",
-              "DataType": "http://www.w3.org/2001/XMLSchema#string",
-              "IncludeInResult": true
-            },
-            {
-              "AttributeId": "urn:altinn:app",
-              "Value": "authz-bruno-testapp2",
-              "DataType": "http://www.w3.org/2001/XMLSchema#string",
-              "IncludeInResult": true
+              "AttributeId": "urn:altinn:resource",
+              "Value": "authz_bruno_gar_resource2",
+              "DataType": "http://www.w3.org/2001/XMLSchema#string"
             },
             {
               "AttributeId": "urn:altinn:organization:identifier-no",
-              "Value": "313332330",
-              "DataType": "http://www.w3.org/2001/XMLSchema#string",
-              "IncludeInResult": true
+              "Value": "311694936",
+              "DataType": "http://www.w3.org/2001/XMLSchema#string"
             }
           ]
         }
@@ -135,7 +118,7 @@ script:pre-request {
 }
 
 tests {
-  test("MultiReqAppDelegations Decision result on read is permit", function() {
+  test("MultiReqResource_Delegations Decision result is Permit on all requests", function() {
     const data = res.getBody();  
     expect(res.status).to.equal(200);
     expect(data.response[0]).to.have.property('decision', "Permit");

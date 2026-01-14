@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Request xsi:schemaLocation="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17 http://docs.oasis-open.org/xacml/3.0/xacml-core-v3-schema-wd-17.xsd" ReturnPolicyIdList="false" CombinedDecision="false" xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Attributes Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject">
     <Attribute IncludeInResult="false" AttributeId="urn:altinn:userid">
@@ -15,7 +15,7 @@
       <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">1000/7dd3c208-0062-4ff6-9ef7-2384e9199a6c</AttributeValue>
     </Attribute>
     <Attribute IncludeInResult="false" AttributeId="urn:altinn:org">
-      <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">TDD</AttributeValue>
+      <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">tdd</AttributeValue>
     </Attribute>
     <Attribute IncludeInResult="false" AttributeId="urn:altinn:app">
       <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">taxreport</AttributeValue>
@@ -25,6 +25,12 @@
     </Attribute>
     <Attribute IncludeInResult="true" AttributeId="urn:altinn:partyid">
       <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#integer">1000</AttributeValue>
+    </Attribute>
+    <Attribute IncludeInResult="false" AttributeId="urn:altinn:resource">
+      <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">app_tdd_taxreport</AttributeValue>
+    </Attribute>
+    <Attribute IncludeInResult="false" AttributeId="urn:altinn:resource:instance-id">
+      <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">7dd3c208-0062-4ff6-9ef7-2384e9199a6c</AttributeValue>
     </Attribute>
   </Attributes>
   <Attributes Category="urn:oasis:names:tc:xacml:3.0:attribute-category:action">

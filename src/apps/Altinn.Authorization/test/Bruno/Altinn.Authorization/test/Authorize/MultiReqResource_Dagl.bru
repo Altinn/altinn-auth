@@ -1,7 +1,7 @@
 meta {
-  name: MultiReqResourceDelegations
+  name: MultiReqResource_Dagl
   type: http
-  seq: 3
+  seq: 6
 }
 
 post {
@@ -25,7 +25,7 @@ body:json {
           "Attribute": [
             {
               "AttributeId": "urn:altinn:person:identifier-no",
-              "Value": "01866696531"
+              "Value": "30856499983"
             }
           ]
         }
@@ -54,7 +54,7 @@ body:json {
             },
             {
               "AttributeId": "urn:altinn:organization:identifier-no",
-              "Value": "311694936",
+              "Value": "314242726",
               "DataType": "http://www.w3.org/2001/XMLSchema#string"
             }
           ]
@@ -69,7 +69,7 @@ body:json {
             },
             {
               "AttributeId": "urn:altinn:organization:identifier-no",
-              "Value": "311694936",
+              "Value": "314242726",
               "DataType": "http://www.w3.org/2001/XMLSchema#string"
             }
           ]
@@ -118,7 +118,7 @@ script:pre-request {
 }
 
 tests {
-  test("MultiReqResourceDelegations Decision result on read is permit", function() {
+  test("MultiReqResource_Dagl Decision result is Permit on all requests", function() {
     const data = res.getBody();  
     expect(res.status).to.equal(200);
     expect(data.response[0]).to.have.property('decision', "Permit");

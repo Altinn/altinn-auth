@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Authorization.ABAC.Xacml;
@@ -18,14 +18,6 @@ namespace Altinn.Platform.Authorization.Services.Interface
         /// <param name="isInstanceAccessRequest">Whether the request is for a specific instance, which needs additional uuid information</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         public Task EnrichRequestSubjectAttributes(XacmlContextAttributes requestSubjectAttributes, bool isInstanceAccessRequest, CancellationToken cancellationToken);
-
-        /// <summary>
-        /// Updates needed resource information for the Context Request for a specific delegation
-        /// </summary>
-        /// <param name="requestResourceAttributes">The current collection of resource attributes on the request to be enriched</param>
-        /// <param name="resourceAttributes">Preprocessed collection of resource attributes from the requests</param>
-        /// <param name="isInstanceAccessRequest">Whether the request is for a specific instance, which needs additional uuid information</param>
-        public void EnrichRequestResourceAttributes(XacmlContextAttributes requestResourceAttributes, XacmlResourceAttributes resourceAttributes, bool isInstanceAccessRequest);
 
         /// <summary>
         /// Gets the value of the first found attribute matching the prioritized order of xacmlRequestAttributes provided, from the XacmlContextRequest subjects.
