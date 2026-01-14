@@ -62,6 +62,7 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
             var appUser = await CreateDatabaseRole(conn, secretClient, $"{config.Database.Prefix}_app", connectionString.Username!, settings, cancellationToken);
             await GrantDatabasePrivileges(conn, config.Database.Name, migratorUser.RoleName, "CREATE, CONNECT", cancellationToken);
             await GrantDatabasePrivileges(conn, config.Database.Name, appUser.RoleName, "CONNECT", cancellationToken);
+            await GrantPrivilegesOnSchema(conn, migratorUser, "public", "CREATE", cancellationToken);
 
             foreach (var (schemaName, schemaCfg) in config.Database.Schemas)
             {
@@ -295,22 +296,25 @@ public sealed class BootstapCommand(CancellationToken cancellationToken)
         }
     }
 
-    private async Task GrantUsageOnSchema(NpgsqlConnection conn, Result appUser, string schemaName, CancellationToken cancellationToken)
+    private Task GrantUsageOnSchema(NpgsqlConnection conn, Result appUser, string schemaName, CancellationToken cancellationToken)
+        => GrantPrivilegesOnSchema(conn, appUser, schemaName, "USAGE", cancellationToken);
+
+    private async Task GrantPrivilegesOnSchema(NpgsqlConnection conn, Result appUser, string schemaName, string privileges, CancellationToken cancellationToken)
     {
         try
         {
             await using var cmd = conn.CreateCommand();
             cmd.CommandText =
                 /*strpsql*/$"""
-                GRANT USAGE ON SCHEMA {schemaName} TO {appUser.RoleName};
+                GRANT {privileges} ON SCHEMA "{schemaName}" TO "{appUser.RoleName}";
                 """;
 
             await cmd.ExecuteNonQueryAsync(cancellationToken);
-            WriteOperationSucceeded($"Grant privileges on '{schemaName}' in database for {appUser.RoleName}.");
+            WriteOperationSucceeded($"Grant {privileges} privileges on '{schemaName}' in database for {appUser.RoleName}.");
         }
         catch
         {
-            WriteOperationFailed($"Grant privileges on '{schemaName}' in database for {appUser.RoleName}.");
+            WriteOperationFailed($"Grant {privileges} privileges on '{schemaName}' in database for {appUser.RoleName}.");
             throw;
         }
     }
