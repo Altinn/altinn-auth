@@ -202,6 +202,12 @@ namespace Altinn.AccessManagement.Controllers
             int authenticationLevel = AuthenticationHelper.GetUserAuthenticationLevel(HttpContext);
             Guid authenticatedUserPartyUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
 
+            if (authenticatedUserPartyUuid == Guid.Empty)
+            {
+                ModelState.AddModelError("Unauthorized", "User Authentication token is missing uuid for the user");
+                return new ObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState, (int)HttpStatusCode.Unauthorized));
+            }
+
             try
             {
                 AttributeMatch reportee = IdentifierUtil.GetIdentifierAsAttributeMatch(party, HttpContext);
@@ -304,6 +310,13 @@ namespace Altinn.AccessManagement.Controllers
             {
                 int authenticatedUserId = AuthenticationHelper.GetUserId(HttpContext);
                 Guid authenticatedUserPartyUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
+                
+                if (authenticatedUserPartyUuid == Guid.Empty)
+                {
+                    ModelState.AddModelError("Unauthorized", "User Authentication token is missing uuid for the user");
+                    return new ObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState, (int)HttpStatusCode.Unauthorized));
+                }
+
                 AttributeMatch reportee = IdentifierUtil.GetIdentifierAsAttributeMatch(input.Party, HttpContext);
                 var delegation = _mapper.Map<DelegationLookup>(body);
 
@@ -362,6 +375,13 @@ namespace Altinn.AccessManagement.Controllers
             {
                 int authenticatedUserId = AuthenticationHelper.GetUserId(HttpContext);
                 Guid authenticatedUserPartyUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
+
+                if (authenticatedUserPartyUuid == Guid.Empty)
+                {
+                    ModelState.AddModelError("Unauthorized", "User Authentication token is missing uuid for the user");
+                    return new ObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState, (int)HttpStatusCode.Unauthorized));
+                }
+
                 AttributeMatch reportee = IdentifierUtil.GetIdentifierAsAttributeMatch(input.Party, HttpContext);
                 var delegation = _mapper.Map<DelegationLookup>(body);
 

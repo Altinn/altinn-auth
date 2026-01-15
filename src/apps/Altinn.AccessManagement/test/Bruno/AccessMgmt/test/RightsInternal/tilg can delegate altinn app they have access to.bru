@@ -69,12 +69,13 @@ script:pre-request {
   var getTokenParameters = {
     auth_userId: testdata.org3.tilg.userid,
     auth_partyId: testdata.org3.tilg.partyid,
+    auth_partyUuid: testdata.org3.tilg.partyuuid,
     auth_ssn: testdata.org3.tilg.pid,
     auth_tokenType: sharedtestdata.authTokenType.personal,
   }
     
-const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
-const token = await testTokenGenerator.getToken(getTokenParameters);
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
   
   bru.setVar("bearerToken",  token);
 }

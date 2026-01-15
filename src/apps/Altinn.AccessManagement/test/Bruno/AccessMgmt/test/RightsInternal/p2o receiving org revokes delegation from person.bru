@@ -59,14 +59,15 @@ script:pre-request {
   var getTokenParameters = {
     auth_userId: testdata.org2.dagl.userid,
     auth_partyId: testdata.org2.dagl.partyid,
+    auth_partyUuid: testdata.org2.dagl.partyuuid,
     auth_ssn: testdata.org2.dagl.pid,
     scope: sharedtestdata.scopes.read,
     auth_tokenType: sharedtestdata.authTokenType.personal,
     auth_scopes: sharedtestdata.auth_scopes.read
   }
     
-const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
-const token = await testTokenGenerator.getToken(getTokenParameters);
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
   
   bru.setVar("bearerToken",  token);
 }

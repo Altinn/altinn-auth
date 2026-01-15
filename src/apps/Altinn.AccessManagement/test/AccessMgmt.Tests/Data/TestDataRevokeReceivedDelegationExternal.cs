@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Altinn.AccessManagement.Core.Constants;
@@ -49,7 +49,7 @@ public static class TestDataRevokeReceivedDelegationExternal
     /// </summary>
     /// <returns></returns>
     public static IEnumerable<object[]> FromPersonToPerson() => [[
-        PrincipalUtil.GetToken(PersonOrjanUserId, PersonOrjanPartyId, 3),
+        PrincipalUtil.GetToken(PersonOrjanUserId, PersonOrjanPartyId, 3, new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")),
         NewRevokeReceivedModel(
             WithRevokeReceivedFrom(AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, PersonPaulaUserId),
             WithRevokeReceivedAction("read"),
@@ -63,7 +63,7 @@ public static class TestDataRevokeReceivedDelegationExternal
     /// </summary>
     /// <returns></returns>
     public static IEnumerable<object[]> FromPersonToOrganization() => [[
-        PrincipalUtil.GetToken(PersonOrjanUserId, PersonOrjanPartyId, 3),
+        PrincipalUtil.GetToken(PersonOrjanUserId, PersonOrjanPartyId, 3, new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")),
         NewRevokeReceivedModel(
             WithRevokeReceivedFrom(AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, PersonPaulaUserId),
             WithRevokeReceivedAction("read"),
@@ -77,7 +77,7 @@ public static class TestDataRevokeReceivedDelegationExternal
     /// </summary>
     /// <returns></returns>
     public static IEnumerable<object[]> FromOrganizationToOrganization() => [[
-        PrincipalUtil.GetToken(PersonOrjanUserId, PersonOrjanPartyId, 3),
+        PrincipalUtil.GetToken(PersonOrjanUserId, PersonOrjanPartyId, 3, new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")),
         NewRevokeReceivedModel(
             WithRevokeReceivedFrom(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, OrganizationOrstaPartyId),
             WithRevokeReceivedAction("read"),
@@ -91,7 +91,7 @@ public static class TestDataRevokeReceivedDelegationExternal
     /// </summary>
     /// <returns></returns>
     public static IEnumerable<object[]> FromOrganizationToPerson() => [[
-        PrincipalUtil.GetToken(PersonPaulaUserId, PersonPaulaPartyId, 3),
+        PrincipalUtil.GetToken(PersonPaulaUserId, PersonPaulaPartyId, 3, new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")),
         NewRevokeReceivedModel(
             WithRevokeReceivedFrom(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, OrganizationOrstaPartyId),
             WithRevokeReceivedAction("read"),

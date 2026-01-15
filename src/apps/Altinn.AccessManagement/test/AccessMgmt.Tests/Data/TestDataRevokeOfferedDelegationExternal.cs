@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Altinn.AccessManagement.Core.Constants;
@@ -51,7 +51,7 @@ public static class TestDataRevokeOfferedDelegationExternal
     /// </summary>
     /// <returns></returns>
     public static IEnumerable<object[]> FromPersonToPerson() => [[
-        PrincipalUtil.GetToken(PersonOrjanUserId, PersonOrjanPartyId, 3),
+        PrincipalUtil.GetToken(PersonOrjanUserId, PersonOrjanPartyId, 3, new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")),
         NewRevokeOfferedModel(
             WithRevokeOfferedTo(AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, PersonPaulaUserId),
             WithRevokeOfferedAction("read"),
@@ -65,7 +65,7 @@ public static class TestDataRevokeOfferedDelegationExternal
     /// </summary>
     /// <returns></returns>
     public static IEnumerable<object[]> FromPersonToOrganization() => [[
-        PrincipalUtil.GetToken(PersonPaulaUserId, PersonPaulaPartyId, 3),
+        PrincipalUtil.GetToken(PersonPaulaUserId, PersonPaulaPartyId, 3, new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")),
         NewRevokeOfferedModel(
             WithRevokeOfferedTo(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, OrganizationOrstaPartyId),
             WithRevokeOfferedAction("read"),
@@ -79,7 +79,7 @@ public static class TestDataRevokeOfferedDelegationExternal
     /// </summary>
     /// <returns></returns>
     public static IEnumerable<object[]> FromOrganizationToOrganization() => [[
-        PrincipalUtil.GetToken(PersonKasperUserId, PersonKasperPartyId, 3),
+        PrincipalUtil.GetToken(PersonKasperUserId, PersonKasperPartyId, 3, new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")),
         NewRevokeOfferedModel(
             WithRevokeOfferedTo(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, OrganizationKolbjornPartyId),
             WithRevokeOfferedAction("read"),
@@ -93,7 +93,7 @@ public static class TestDataRevokeOfferedDelegationExternal
     /// </summary>
     /// <returns></returns>
     public static IEnumerable<object[]> FromOrganizationToPerson() => [[
-        PrincipalUtil.GetToken(PersonKasperUserId, PersonKasperPartyId, 3),
+        PrincipalUtil.GetToken(PersonKasperUserId, PersonKasperPartyId, 3, new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")),
         NewRevokeOfferedModel(
             WithRevokeOfferedTo(AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, PersonPaulaUserId),
             WithRevokeOfferedAction("read"),
@@ -107,7 +107,7 @@ public static class TestDataRevokeOfferedDelegationExternal
     /// </summary>
     /// <returns></returns>
     public static IEnumerable<object[]> FromOrganizationToSystemUser() => [[
-        PrincipalUtil.GetToken(PersonKasperUserId, PersonKasperPartyId, 3),
+        PrincipalUtil.GetToken(PersonKasperUserId, PersonKasperPartyId, 3, new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")),
         NewRevokeOfferedModel(
             WithRevokeOfferedTo(AltinnXacmlConstants.MatchAttributeIdentifiers.SystemUserUuid, System1SystemUserId),
             WithRevokeOfferedAction("read"),

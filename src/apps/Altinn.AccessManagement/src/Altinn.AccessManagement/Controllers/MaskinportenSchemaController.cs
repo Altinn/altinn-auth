@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using System.ComponentModel.DataAnnotations;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Helpers.Extensions;
@@ -11,6 +10,8 @@ using Altinn.AccessMgmt.Core.Utils;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
+using System.Net;
 
 namespace Altinn.AccessManagement.Controllers
 {
@@ -186,6 +187,12 @@ namespace Altinn.AccessManagement.Controllers
             int authenticationLevel = AuthenticationHelper.GetUserAuthenticationLevel(HttpContext);
             Guid authenticatedUserPartyUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
 
+            if (authenticatedUserPartyUuid == Guid.Empty)
+            {
+                ModelState.AddModelError("Unauthorized", "User Authentication token is missing uuid for the user");
+                return new ObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState, (int)HttpStatusCode.Unauthorized));
+            }
+
             try
             {
                 AttributeMatch reportee = IdentifierUtil.GetIdentifierAsAttributeMatch(party, HttpContext);
@@ -273,6 +280,12 @@ namespace Altinn.AccessManagement.Controllers
             int authenticatedUserId = AuthenticationHelper.GetUserId(HttpContext);
             Guid authenticatedUserPartyUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
 
+            if (authenticatedUserPartyUuid == Guid.Empty)
+            {
+                ModelState.AddModelError("Unauthorized", "User Authentication token is missing uuid for the user");
+                return new ObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState, (int)HttpStatusCode.Unauthorized));
+            }
+
             try
             {
                 AttributeMatch reportee = IdentifierUtil.GetIdentifierAsAttributeMatch(party, HttpContext);
@@ -357,6 +370,12 @@ namespace Altinn.AccessManagement.Controllers
         {
             int authenticatedUserId = AuthenticationHelper.GetUserId(HttpContext);
             Guid authenticatedUserPartyUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
+
+            if (authenticatedUserPartyUuid == Guid.Empty)
+            {
+                ModelState.AddModelError("Unauthorized", "User Authentication token is missing uuid for the user");
+                return new ObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState, (int)HttpStatusCode.Unauthorized));
+            }
 
             try
             {

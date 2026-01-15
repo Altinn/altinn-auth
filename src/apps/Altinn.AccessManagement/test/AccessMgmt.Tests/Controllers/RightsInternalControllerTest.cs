@@ -1001,10 +1001,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string resourceId = "generic-access-resource";
             (string OrgNo, string Ssn, int PartyId, string Uuid, int UuidType) from = ("910459880", string.Empty, 50005545, string.Empty, 0);
             (string OrgNo, string Ssn, string Uuid, int UuidType) to = (string.Empty, "27099450067", string.Empty, 0);
-            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000490, 0, string.Empty, "07124912037", string.Empty, string.Empty, 0);
+            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000490, 0, string.Empty, "07124912037", string.Empty, "f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee", 0);
             string scenario = "success";
 
-            string token = PrincipalUtil.GetToken(by.UserId, 0, 3);
+            string token = PrincipalUtil.GetToken(by.UserId, 0, 3, new Guid(by.Uuid));
 
             RightsDelegationResponseExternal expectedResponse = GetExpectedRightsDelegationResponse(resourceId, from.OrgNo, to.Ssn, by.Ssn, scenario);
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Ssn, by.Ssn, scenario);
@@ -1038,10 +1038,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string resourceId = "generic-access-resource";
             (string OrgNo, string Ssn, int PartyId, string Uuid, int UuidType) from = ("910459880", string.Empty, 50005545, string.Empty, 0);
             (string OrgNo, string Ssn, string Uuid, int UuidType) to = (string.Empty, string.Empty, "16C1F2F6-9E00-4922-B16D-74C46D948E61", 0);
-            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000490, 0, string.Empty, "07124912037", string.Empty, string.Empty, 0);
+            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000490, 0, string.Empty, "07124912037", string.Empty, "f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee", 0);
             string scenario = "success";
 
-            string token = PrincipalUtil.GetToken(by.UserId, 0, 3);
+            string token = PrincipalUtil.GetToken(by.UserId, 0, 3, new Guid(by.Uuid));
 
             RightsDelegationResponseExternal expectedResponse = GetExpectedRightsDelegationResponse(resourceId, from.OrgNo, to.Uuid, by.Ssn, scenario);
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Uuid, by.Ssn, scenario);
@@ -1075,10 +1075,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string resourceId = "generic-access-resource2";
             (string OrgNo, string Ssn, int PartyId, string Uuid, int UuidType) from = ("910459880", string.Empty, 50005545, string.Empty, 0);
             (string OrgNo, string Ssn, string Uuid, int UuidType) to = (string.Empty, string.Empty, "16C1F2F6-9E00-4922-B16D-74C46D948E61", 0);
-            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000490, 0, string.Empty, "07124912037", string.Empty, string.Empty, 0);
+            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000490, 0, string.Empty, "07124912037", string.Empty, "f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee", 0);
             string scenario = "failure";
 
-            string token = PrincipalUtil.GetToken(by.UserId, 0, 3);
+            string token = PrincipalUtil.GetToken(by.UserId, 0, 3, new Guid(by.Uuid));
 
             ValidationProblemDetails expectedResponse = GetExpectedRightsDelegationError(resourceId, from.OrgNo, to.Uuid, by.Ssn, scenario);
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Uuid, by.Ssn, scenario);
@@ -1109,10 +1109,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string resourceId = "app_ttd_apps-test";
             (string OrgNo, string Ssn, int PartyId, string Uuid, int UuidType) from = ("910459880", string.Empty, 50005545, string.Empty, 0);
             (string OrgNo, string Ssn, string Uuid, int UuidType) to = (string.Empty, string.Empty, "9D569A55-D5CE-4914-BBF8-CA3474458604", 0);
-            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000490, 0, string.Empty, "07124912037", string.Empty, string.Empty, 0);
+            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000490, 0, string.Empty, "07124912037", string.Empty, "f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee", 0);
             string scenario = "success";
 
-            string token = PrincipalUtil.GetToken(by.UserId, 0, 3);
+            string token = PrincipalUtil.GetToken(by.UserId, 0, 3, new Guid(by.Uuid));
 
             RightsDelegationResponseExternal expectedResponse = GetExpectedRightsDelegationResponse(resourceId, from.OrgNo, to.Uuid, by.Ssn, scenario);
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Uuid, by.Ssn, scenario);
@@ -1144,10 +1144,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string resourceId = "generic-access-resource";
             (string OrgNo, string Ssn, int PartyId, string Uuid) from = ("910459880", string.Empty, 50005545, string.Empty);
             (string OrgNo, string Ssn, string Uuid) to = (string.Empty, string.Empty, "00000000-0000-0000-0005-000000003899");
-            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid) by = (20000490, 0, string.Empty, "07124912037", string.Empty, string.Empty);
+            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid) by = (20000490, 0, string.Empty, "07124912037", string.Empty, "f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee");
             string scenario = "success";
 
-            string token = PrincipalUtil.GetToken(by.UserId, 0, 3);
+            string token = PrincipalUtil.GetToken(by.UserId, 0, 3, new Guid(by.Uuid));
 
             RightsDelegationResponseExternal expectedResponse = GetExpectedRightsDelegationResponse(resourceId, from.OrgNo, to.Uuid, by.Ssn, scenario);
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Uuid, by.Ssn, scenario);
@@ -1174,10 +1174,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string resourceId = "generic-access-resource";
             (string OrgNo, string Ssn, int PartyId, string Uuid, int UuidType) from = ("910459880", string.Empty, 50005545, string.Empty, 0);
             (string OrgNo, string Ssn, string Uuid, int UuidType) to = (string.Empty, "27099450067", string.Empty, 0);
-            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000490, 0, string.Empty, "07124912037", string.Empty, string.Empty, 0);
+            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000490, 0, string.Empty, "07124912037", string.Empty, "f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee", 0);
             string scenario = "missing-to-lastname";
 
-            string token = PrincipalUtil.GetToken(by.UserId, 0, 3);
+            string token = PrincipalUtil.GetToken(by.UserId, 0, 3, new Guid(by.Uuid));
 
             ValidationProblemDetails expectedResponse = GetExpectedRightsDelegationError(resourceId, from.OrgNo, to.Ssn, by.Ssn, scenario);
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Ssn, by.Ssn, scenario);
@@ -1209,10 +1209,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string resourceId = "generic-access-resource";
             (string OrgNo, string Ssn, int PartyId, string Uuid, int UuidType) from = (string.Empty, "07124912037", 50002598, string.Empty, 0);
             (string OrgNo, string Ssn, string Uuid, int UuidType) to = (string.Empty, "27099450067", string.Empty, 0);
-            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000490, 0, string.Empty, "07124912037", string.Empty, string.Empty, 0);
+            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000490, 0, string.Empty, "07124912037", string.Empty, "f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee", 0);
             string scenario = "success";
 
-            var token = PrincipalUtil.GetToken(by.UserId, 0, 3);
+            var token = PrincipalUtil.GetToken(by.UserId, 0, 3, new Guid(by.Uuid));
 
             RightsDelegationResponseExternal expectedResponse = GetExpectedRightsDelegationResponse(resourceId, from.Ssn, to.Ssn, by.Ssn, scenario);
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.Ssn, to.Ssn, by.Ssn, scenario);
@@ -1245,10 +1245,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string resourceId = "generic-access-resource";
             (string OrgNo, string Ssn, int PartyId, string Uuid) from = (string.Empty, "07124912037", 50002598, string.Empty);
             (string OrgNo, string Ssn, string Uuid) to = (string.Empty, string.Empty, "00000000-0000-0000-0001-000000000004");
-            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid) by = (20000490, 0, string.Empty, "07124912037", string.Empty, string.Empty);
+            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid) by = (20000490, 0, string.Empty, "07124912037", string.Empty, "f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee");
             string scenario = "success";
 
-            var token = PrincipalUtil.GetToken(by.UserId, 0, 3);
+            var token = PrincipalUtil.GetToken(by.UserId, 0, 3, new Guid(by.Uuid));
 
             RightsDelegationResponseExternal expectedResponse = GetExpectedRightsDelegationResponse(resourceId, from.Ssn, to.Uuid, by.Ssn, scenario);
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.Ssn, to.Uuid, by.Ssn, scenario);
@@ -1284,10 +1284,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string resourceId = "generic-access-resource";
             (string OrgNo, string Ssn, int PartyId, string Uuid, int UuidType) from = ("910459880", string.Empty, 50005545, string.Empty, 0);
             (string OrgNo, string Ssn, string Uuid, int UuidType) to = (string.Empty, "27099450067", string.Empty, 0);
-            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20001337, 0, string.Empty, "27099450067", string.Empty, string.Empty, 0);
+            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20001337, 0, string.Empty, "27099450067", string.Empty, "f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee", 0);
             string scenario = "success";
 
-            var token = PrincipalUtil.GetToken(by.UserId, 0, 3);
+            var token = PrincipalUtil.GetToken(by.UserId, 0, 3, new Guid(by.Uuid));
 
             RightsDelegationResponseExternal expectedResponse = GetExpectedRightsDelegationResponse(resourceId, from.OrgNo, to.Ssn, by.Ssn, scenario);
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Ssn, by.Ssn, scenario);
@@ -1321,10 +1321,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string resourceId = "generic-access-resource";
             (string OrgNo, string Ssn, int PartyId, string Uuid, int UuidType) from = ("810418532", string.Empty, 50004221, string.Empty, 0);
             (string OrgNo, string Ssn, string Uuid, int UuidType) to = ("810418672", string.Empty, string.Empty, 0);
-            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000490, 0, string.Empty, "07124912037", string.Empty, string.Empty, 0);
+            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000490, 0, string.Empty, "07124912037", string.Empty, "f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee", 0);
             string scenario = "success";
 
-            var token = PrincipalUtil.GetToken(by.UserId, 0, 3);
+            var token = PrincipalUtil.GetToken(by.UserId, 0, 3, new Guid(by.Uuid));
 
             RightsDelegationResponseExternal expectedResponse = GetExpectedRightsDelegationResponse(resourceId, from.OrgNo, to.OrgNo, by.Ssn, scenario);
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.OrgNo, by.Ssn, scenario);
@@ -1355,10 +1355,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string resourceId = "generic-access-resource";
             (string OrgNo, string Ssn, int PartyId, string Uuid, int UuidType) from = ("910459880", string.Empty, 50005545, string.Empty, 0);
             (string OrgNo, string Ssn, string Username, string Uuid, int UuidType) to = (string.Empty, string.Empty, "OrstaECUser", string.Empty, 0);
-            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000095, 0, string.Empty, "02056260016", string.Empty, string.Empty, 0);
+            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000095, 0, string.Empty, "02056260016", string.Empty, "f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee", 0);
             string scenario = "success";
 
-            var token = PrincipalUtil.GetToken(by.UserId, 0, 3);
+            var token = PrincipalUtil.GetToken(by.UserId, 0, 3, new Guid(by.Uuid));
 
             RightsDelegationResponseExternal expectedResponse = GetExpectedRightsDelegationResponse(resourceId, from.OrgNo, to.Username, by.Ssn, scenario);
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Username, by.Ssn, scenario);
@@ -1390,10 +1390,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string resourceId = "generic-access-resource";
             (string OrgNo, string Ssn, int PartyId, string Uuid) from = ("910459880", string.Empty, 50005545, string.Empty);
             (string OrgNo, string Ssn, string Username, string Uuid) to = (string.Empty, string.Empty, string.Empty, "00000000-0000-0000-0002-000000010727");
-            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid) by = (20000095, 0, string.Empty, "02056260016", string.Empty, string.Empty);
+            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid) by = (20000095, 0, string.Empty, "02056260016", string.Empty, "f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee");
             string scenario = "success";
 
-            var token = PrincipalUtil.GetToken(by.UserId, 0, 3);
+            var token = PrincipalUtil.GetToken(by.UserId, 0, 3, new Guid(by.Uuid));
 
             RightsDelegationResponseExternal expectedResponse = GetExpectedRightsDelegationResponse(resourceId, from.OrgNo, to.Uuid, by.Ssn, scenario);
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Uuid, by.Ssn, scenario);
@@ -1427,10 +1427,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string resourceId = "app_org1_app1";
             (string OrgNo, string Ssn, int PartyId, string Uuid, int UuidType) from = ("910001337", string.Empty, 50001337, string.Empty, 0);
             (string OrgNo, string Ssn, string Uuid, int UuidType) to = ("810418672", string.Empty, string.Empty, 0);
-            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20001337, 0, string.Empty, "27099450067", string.Empty, string.Empty, 0);
+            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20001337, 0, string.Empty, "27099450067", string.Empty, "f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee", 0);
             string scenario = "success";
 
-            var token = PrincipalUtil.GetToken(by.UserId, 0, 3);
+            var token = PrincipalUtil.GetToken(by.UserId, 0, 3, new Guid(by.Uuid));
 
             RightsDelegationResponseExternal expectedResponse = GetExpectedRightsDelegationResponse(resourceId, from.OrgNo, to.OrgNo, by.Ssn, scenario);
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.OrgNo, by.Ssn, scenario);
@@ -1464,10 +1464,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string resourceId = "se_2802_2203";
             (string OrgNo, string Ssn, int PartyId, string Uuid, int UuidType) from = ("910459880", string.Empty, 50005545, string.Empty, 0);
             (string OrgNo, string Ssn, string Uuid, int UuidType) to = (string.Empty, "27099450067", string.Empty, 0);
-            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000490, 0, string.Empty, "07124912037", string.Empty, string.Empty, 0);
+            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20000490, 0, string.Empty, "07124912037", string.Empty, "f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee", 0);
             string scenario = "success";
 
-            var token = PrincipalUtil.GetToken(by.UserId, 0, 3);
+            var token = PrincipalUtil.GetToken(by.UserId, 0, 3, new Guid(by.Uuid));
 
             RightsDelegationResponseExternal expectedResponse = GetExpectedRightsDelegationResponse(resourceId, from.OrgNo, to.Ssn, by.Ssn, scenario);
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Ssn, by.Ssn, scenario);
@@ -1496,10 +1496,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string resourceId = "non_existing_id";
             (string OrgNo, string Ssn, int PartyId, string Uuid, int UuidType) from = ("910001337", string.Empty, 50001337, string.Empty, 0);
             (string OrgNo, string Ssn, string Uuid, int UuidType) to = ("810418672", string.Empty, string.Empty, 0);
-            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20001337, 0, string.Empty, "27099450067", string.Empty, string.Empty, 0);
+            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20001337, 0, string.Empty, "27099450067", string.Empty, "f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee", 0);
             string scenario = "invalid-resource";
 
-            var token = PrincipalUtil.GetToken(by.UserId, 0, 3);
+            var token = PrincipalUtil.GetToken(by.UserId, 0, 3, new Guid(by.Uuid));
 
             ValidationProblemDetails expectedResponse = GetExpectedRightsDelegationError(resourceId, from.OrgNo, to.OrgNo, by.Ssn, scenario);
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.OrgNo, by.Ssn, scenario);
@@ -1528,10 +1528,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string resourceId = "jks_audi_etron_gt";
             (string OrgNo, string Ssn, int PartyId, string Uuid, int UuidType) from = ("910001337", string.Empty, 50001337, string.Empty, 0);
             (string OrgNo, string Ssn, string Uuid, int UuidType) to = ("810418672", string.Empty, string.Empty, 0);
-            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20001337, 0, string.Empty, "27099450067", string.Empty, string.Empty, 0);
+            (int UserId, int PartyId, string OrgNo, string Ssn, string Username, string Uuid, int UuidType) by = (20001337, 0, string.Empty, "27099450067", string.Empty, "f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee", 0);
             string scenario = "invalid-resource-maskinportenschema";
 
-            var token = PrincipalUtil.GetToken(by.UserId, 0, 3);
+            var token = PrincipalUtil.GetToken(by.UserId, 0, 3, new Guid(by.Uuid));
 
             ValidationProblemDetails expectedResponse = GetExpectedRightsDelegationError(resourceId, from.OrgNo, to.OrgNo, by.Ssn, scenario);
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.OrgNo, by.Ssn, scenario);

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -807,7 +807,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         {
             // Arrange
             string fromParty = "50005545";
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             RightsDelegationResponseExternal expectedResponse = GetExpectedResponse("MaskinportenScopeDelegation", "jks_audi_etron_gt", $"p{fromParty}", "p50004222");
             StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "jks_audi_etron_gt", $"p{fromParty}", "p50004222");
@@ -835,7 +835,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
             // Arrange
             string fromParty = "50005545";
             _client = GetTestClient(httpContextAccessor: GetHttpContextAccessorMock("party", fromParty));
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
             _client.DefaultRequestHeaders.Add("Altinn-Party-OrganizationNumber", "910459880");
 
             RightsDelegationResponseExternal expectedResponse = GetExpectedResponse("MaskinportenScopeDelegation", "jks_audi_etron_gt", $"p{fromParty}", "p50004222");
@@ -864,7 +864,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         {
             // Arrange
             string fromParty = "50005545";
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             RightsDelegationResponseExternal expectedResponse = GetExpectedResponse("MaskinportenScopeDelegation", "jks_audi_etron_gt", $"p{fromParty}", "810418672");
             StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "jks_audi_etron_gt", $"p{fromParty}", "810418672");
@@ -910,7 +910,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         {
             // Arrange
             _client = GetTestClient(new PdpPermitMock(), GetHttpContextAccessorMock("party", "1"));
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "Input_SingleRightOnly");
             ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "ExpectedOutput_SingleRightOnly");
@@ -938,7 +938,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         {
             // Arrange
             _client = GetTestClient(new PdpPermitMock(), GetHttpContextAccessorMock("party", "1"));
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "Input_OrgAppResource");
             ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "ExpectedOutput_OrgAppResource");
@@ -966,7 +966,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         {
             // Arrange
             _client = GetTestClient(new PdpPermitMock(), GetHttpContextAccessorMock("party", "1"));
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "Input_InvalidResourceRegistryId");
             ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "ExpectedOutput_InvalidResourceRegistryId");
@@ -994,7 +994,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         {
             // Arrange
             _client = GetTestClient(new PdpPermitMock(), GetHttpContextAccessorMock("party", "1"));
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "Input_InvalidResourceType");
             ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "ExpectedOutput_InvalidResourceType");
@@ -1023,7 +1023,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         {
             // Arrange
             string fromParty = "50005545";
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p{fromParty}", "p2", "Input_Default");
             ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p{fromParty}", "p2", "ExpectedOutput_InvalidTo");
@@ -1052,7 +1052,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         {
             // Arrange
             string fromParty = "50005545";
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p{fromParty}", "u20001337", "Input_InvalidTo_UserId");
             ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p{fromParty}", "u20001337", "ExpectedOutput_InvalidTo_UserId");
@@ -1081,7 +1081,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         {
             // Arrange
             string fromParty = "50005545";
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p{fromParty}", "u20001337", "Input_InvalidTo_Ssn");
             ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p{fromParty}", "u20001337", "ExpectedOutput_InvalidTo_Ssn");
@@ -1111,7 +1111,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
             // Arrange
             string fromParty = "50002598";
             _client = GetTestClient(new PdpPermitMock(), GetHttpContextAccessorMock("party", "50002598"));
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
             _client.DefaultRequestHeaders.Add("Altinn-Party-SocialSecurityNumber", "07124912037");
 
             StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p{fromParty}", "p2", "Input_Default");
@@ -1141,7 +1141,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         {
             // Arrange
             string fromParty = "50005545";
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "non_delegable_maskinportenschema", $"p{fromParty}", "p50004222");
             ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "non_delegable_maskinportenschema", $"p{fromParty}", "p50004222");
@@ -1170,7 +1170,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         {
             // Arrange
             string fromParty = "50005545";
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "digdirs_company_car", $"p{fromParty}", "p50004222");
             StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "digdirs_company_car", $"p{fromParty}", "p50004222");
@@ -1200,7 +1200,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
             int fromParty = 50005545;
             DelegationMetadataRepositoryMock delegationMetadataRepositoryMock = new DelegationMetadataRepositoryMock { MetadataChanges = new Dictionary<string, List<DelegationChange>>() };
             HttpClient client = GetTestClient(delegationMetadataRepositoryMock: delegationMetadataRepositoryMock);
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             Dictionary<string, List<DelegationChange>> expectedDbUpdates = new Dictionary<string, List<DelegationChange>>
             {
@@ -1229,7 +1229,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         {
             // Arrange
             string fromParty = "50005545";
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             StreamContent requestContent = GetRequestContent("RevokeOfferedMaskinportenScopeDelegation", "jks_audi_etron_gt", $"p{fromParty}", "810418532");
 
@@ -1253,7 +1253,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
             // Arrange
             string fromParty = "50005545";
             _client = GetTestClient(httpContextAccessor: GetHttpContextAccessorMock("party", fromParty));
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
             _client.DefaultRequestHeaders.Add("Altinn-Party-OrganizationNumber", "910459880");
 
             StreamContent requestContent = GetRequestContent("RevokeOfferedMaskinportenScopeDelegation", "jks_audi_etron_gt", $"p{fromParty}", "810418532");
@@ -1301,7 +1301,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         {
             // Arrange
             string fromParty = "50005545";
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             StreamContent requestContent = GetRequestContent("RevokeOfferedMaskinportenScopeDelegation", "mp_validation_problem_details", $"p{fromParty}", "p2");
             ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("RevokeOfferedMaskinportenScopeDelegation", "mp_validation_problem_details", $"p{fromParty}", "p2", "ExpectedOutput_InvalidTo");
@@ -1331,7 +1331,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string toParty = "50004221";
             DelegationMetadataRepositoryMock delegationMetadataRepositoryMock = new DelegationMetadataRepositoryMock { MetadataChanges = new Dictionary<string, List<DelegationChange>>() };
             HttpClient client = GetTestClient(delegationMetadataRepositoryMock: delegationMetadataRepositoryMock);
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             Dictionary<string, List<DelegationChange>> expectedDbUpdates = new Dictionary<string, List<DelegationChange>>
             {
@@ -1362,7 +1362,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string toParty = "50004221";
             DelegationMetadataRepositoryMock delegationMetadataRepositoryMock = new DelegationMetadataRepositoryMock { MetadataChanges = new Dictionary<string, List<DelegationChange>>() };
             HttpClient client = GetTestClient(delegationMetadataRepositoryMock: delegationMetadataRepositoryMock);
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee") ));
 
             StreamContent requestContent = GetRequestContent("RevokeReceivedMaskinportenScopeDelegation", "jks_undelegable", $"p50005545", $"p{toParty}");
 
@@ -1386,7 +1386,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
             // Arrange
             string toParty = "50004221";
             _client = GetTestClient(httpContextAccessor: GetHttpContextAccessorMock("party", toParty));
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
             _client.DefaultRequestHeaders.Add("Altinn-Party-OrganizationNumber", "810418532");
 
             StreamContent requestContent = GetRequestContent("RevokeReceivedMaskinportenScopeDelegation", "jks_audi_etron_gt", $"p50005545", $"p{toParty}");
@@ -1411,7 +1411,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
             // Arrange
             string toParty = "50004221";
             _client = GetTestClient(httpContextAccessor: GetHttpContextAccessorMock("party", toParty));
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
             _client.DefaultRequestHeaders.Add("Altinn-Party-OrganizationNumber", "810418532");
 
             StreamContent requestContent = GetRequestContent("RevokeReceivedMaskinportenScopeDelegation", "jks_audi_etron_gt", $"910459880", $"810418532");
@@ -1459,7 +1459,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         {
             // Arrange
             string toParty = "50004221";
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             StreamContent requestContent = GetRequestContent("RevokeReceivedMaskinportenScopeDelegation", "mp_validation_problem_details", $"p2", $"p{toParty}");
             ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("RevokeReceivedMaskinportenScopeDelegation", "mp_validation_problem_details", $"p2", $"p{toParty}", "ExpectedOutput_InvalidFrom");
@@ -1486,7 +1486,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
         {
             // Arrange
             string fromParty = "50005545";
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "jks_audi_etron_gt", $"p{fromParty}", "p50005545");
             StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "jks_audi_etron_gt", $"p{fromParty}", "p50005545");
@@ -1515,7 +1515,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
             string fromParty = "50005545";
             string toOrg = "910459880";
 
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598));
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
 
             ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "jks_audi_etron_gt", $"p{fromParty}", toOrg);
             StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "jks_audi_etron_gt", $"p{fromParty}", toOrg);
