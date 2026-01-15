@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 
@@ -114,6 +114,27 @@ public static class ProviderConstants
         {
             Name = "Enhetsregisteret",
             Code = "sys-ccr",
+            TypeId = ProviderTypeConstants.System,
+            RefId = string.Empty
+        },
+    };
+
+    /// <summary>
+    /// Represents the Norwegian Civil Rights Authority (Sivilrettsforvaltningen).
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> Unique identifier for Civil Rights Authority (CRA).
+    /// - <c>Code:</c> "sys-cra"
+    /// - <c>Name:</c> "Sivilrettsforvaltningen"
+    /// - <c>TypeId:</c> Set to <see cref="ProviderTypeConstants.System"/>
+    /// - <c>RefId:</c> Empty string since this is a service owner.
+    /// </remarks>
+    public static ConstantDefinition<Provider> CivilRightsAuthority { get; } = new ConstantDefinition<Provider>("019bbcab-449f-749a-bc13-4218549b8e93")
+    {
+        Entity = new()
+        {
+            Name = "Sivilrettsforvaltningen",
+            Code = "sys-cra",
             TypeId = ProviderTypeConstants.System,
             RefId = string.Empty
         },
