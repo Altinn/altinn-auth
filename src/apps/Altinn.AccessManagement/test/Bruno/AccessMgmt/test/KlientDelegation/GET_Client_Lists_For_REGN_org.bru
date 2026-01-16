@@ -1,0 +1,72 @@
+meta {
+  name: GET_Client_Lists_For_REGN_org
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/clientdelegations/clients?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.REGN_Organisasjon.partyUuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.REGN_Organisasjon.dagligleder.userId,
+    auth_partyId: testdata.REGN_Organisasjon.dagligleder.partyId,
+    auth_partyUuid: testdata.REGN_Organisasjon.dagligleder.partyUuid,
+    auth_ssn: testdata.REGN_Organisasjon.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("GET client lists for REGN Organisasjon ", function() {
+    
+    const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`); 
+    
+    const body = res.getBody();
+    expect(res.status).to.equal(200);
+    
+   const client_A_PartyUuid =
+    testdata.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid;
+  
+  const expectedOrgNumber =
+    String(testdata.REGN_Organisasjon.REGN_Org_Clients.client_A.orgno);
+  
+  const expectedOrgName =
+    testdata.REGN_Organisasjon.REGN_Org_Clients.client_A.name.toLowerCase();
+  
+  // find the matching client in body.data by partyUuid (client.id)
+  const entry = body.data.find(item =>
+    (item.client.id || '').toLowerCase() === client_A_PartyUuid
+  );
+  
+  expect(entry, 'Client not found in response').to.exist;
+  
+  // verify fields
+  expect(String(entry.client.organizationIdentifier)).to.equal(expectedOrgNumber);
+  expect(entry.client.name.toLowerCase()).to.equal(expectedOrgName);
+    
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

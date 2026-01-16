@@ -1,0 +1,62 @@
+meta {
+  name: DELETE_New_Added_Agent_For_REGN_Org
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/clientdelegations/agents?party={{party}}&to={{to}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{to}}
+}
+
+body:json {
+  {
+    "personidentifier": "{{toPerson}}", // fnr or username
+    "lastName": "{{toPersonlastName}}"
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.REGN_Organisasjon.partyUuid);
+  bru.setVar("to", testdata.REGN_Organisasjon.REGN_Agent.partyUuid);
+  
+  
+  var getTokenParameters = {
+    auth_userId: testdata.REGN_Organisasjon.dagligleder.userId,
+    auth_partyId: testdata.REGN_Organisasjon.dagligleder.partyId,
+    auth_partyUuid: testdata.REGN_Organisasjon.dagligleder.partyUuid,
+    auth_ssn: testdata.REGN_Organisasjon.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  test("Add user as agent for client delegation ", function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(204);
+    
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
