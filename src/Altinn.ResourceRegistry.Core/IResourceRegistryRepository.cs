@@ -12,9 +12,10 @@ namespace Altinn.ResourceRegistry.Core
         /// Gets a single resource by its resource identifier if it exists in the resource registry
         /// </summary>
         /// <param name="id">The resource identifier to retrieve</param>
+        /// <param name="versionId">The version identifier to retrieve</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> for cancelling the async process.</param>
         /// <returns>ServiceResource</returns>
-        Task<ServiceResource> GetResource(string id, CancellationToken cancellationToken = default);
+        Task<ServiceResource> GetResource(string id, int? versionId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets the resource owner for a single resource by its resource identifier if it exists in the resource registry.
@@ -51,9 +52,10 @@ namespace Altinn.ResourceRegistry.Core
         /// Allows for searching for resources in the resource registry
         /// </summary>
         /// <param name="resourceSearch">The search model defining the search filter criterias</param>
+        /// <param name="includeAllVersions">If true, all versions of a resource are included in the search results. If false, only the latest version is included.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> for cancelling the async process.</param>
         /// <returns>A list of service resources found to match the search criterias</returns>
-        Task<List<ServiceResource>> Search(ResourceSearch resourceSearch, CancellationToken cancellationToken = default);
+        Task<List<ServiceResource>> Search(ResourceSearch resourceSearch, bool includeAllVersions, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Returns a list over resources for what each subject has access to

@@ -86,6 +86,13 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
             const string RESOURCE2_NAME = "test2";
 
             // Insert a fake resource (we have a foreign constraint on the party registry table)
+            await using var resourcemainCmd = DataSource.CreateCommand(/*strpsql*/"INSERT INTO resourceregistry.resource_identifier (identifier, created) VALUES (@name, NOW());");
+            var namemainParam = resourcemainCmd.Parameters.Add("name", NpgsqlTypes.NpgsqlDbType.Text);
+            namemainParam.Value = RESOURCE1_NAME;
+            await resourcemainCmd.ExecuteNonQueryAsync();
+            namemainParam.Value = RESOURCE2_NAME;
+            await resourcemainCmd.ExecuteNonQueryAsync();
+
             await using var resourceCmd = DataSource.CreateCommand(/*strpsql*/"INSERT INTO resourceregistry.resources (identifier, created, serviceresourcejson) VALUES (@name, NOW(), @json);");
             var nameParam = resourceCmd.Parameters.Add("name", NpgsqlTypes.NpgsqlDbType.Text);
             var jsonParam = resourceCmd.Parameters.Add("json", NpgsqlTypes.NpgsqlDbType.Jsonb);

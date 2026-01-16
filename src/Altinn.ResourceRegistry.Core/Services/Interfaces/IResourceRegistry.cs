@@ -13,9 +13,10 @@ namespace Altinn.ResourceRegistry.Core.Services.Interfaces
         /// Gets a single resource by its resource identifier if it exists in the resource registry
         /// </summary>
         /// <param name="id">The resource identifier to retrieve</param>
+        /// <param name="versionId">The version identifier to retrieve</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns>ServiceResource</returns>
-        Task<ServiceResource> GetResource(string id, CancellationToken cancellationToken = default);
+        Task<ServiceResource> GetResource(string id, int? versionId,  CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets the resource owner for a given resource, or <see langword="null"/> if it has no owner.
@@ -32,9 +33,10 @@ namespace Altinn.ResourceRegistry.Core.Services.Interfaces
         /// <param name="includeAltinn2">Wheather or not to include altinn 2 resources</param>
         /// <param name="includeExpired">Defines if expired Altinn 2 serviices should be include</param>
         /// <param name="includeMigratedApps">Whether or not to include migrated apps from A1/A2</param>
+        /// <param name="includeAllVersions">Include all versions of resources</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns></returns>
-        Task<List<ServiceResource>> GetResourceList(bool includeApps, bool includeAltinn2, bool includeExpired, bool includeMigratedApps, CancellationToken cancellationToken = default);
+        Task<List<ServiceResource>> GetResourceList(bool includeApps, bool includeAltinn2, bool includeExpired, bool includeMigratedApps, bool includeAllVersions, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Creates a service resource in the resource registry if it pass all validation checks
@@ -63,9 +65,10 @@ namespace Altinn.ResourceRegistry.Core.Services.Interfaces
         /// Allows for searching for resources in the resource registry
         /// </summary>
         /// <param name="resourceSearch">The search model defining the search filter criterias</param>
+        /// <param name="includeAllVersions">Whether to include all versions of resources in the search results</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns>A list of service resources found to match the search criterias</returns>
-        Task<List<ServiceResource>> Search(ResourceSearch resourceSearch, CancellationToken cancellationToken = default);
+        Task<List<ServiceResource>> Search(ResourceSearch resourceSearch, bool includeAllVersions, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Allows for searching for resources in the resource registry

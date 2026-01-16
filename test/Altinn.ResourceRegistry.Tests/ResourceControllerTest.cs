@@ -116,7 +116,7 @@ namespace Altinn.ResourceRegistry.Tests
             List<ServiceResource>? resource = JsonSerializer.Deserialize<List<ServiceResource>>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
 
             Assert.NotNull(resource);
-            Assert.Equal(4, resource.Count);
+            Assert.Equal(3, resource.Count);
         }
 
         [Fact]
@@ -135,7 +135,7 @@ namespace Altinn.ResourceRegistry.Tests
             List<ServiceResource>? resource = JsonSerializer.Deserialize<List<ServiceResource>>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
 
             Assert.NotNull(resource);
-            Assert.Equal(442, resource.Count);
+            Assert.Equal(450, resource.Count);
 
             ServiceResource? altinn2resourcewithdescription = resource.FirstOrDefault(r => r.ResourceReferences != null && r.ResourceReferences.Any(r => r.Reference != null && r.Reference.Contains("5563")));
             Assert.NotNull(altinn2resourcewithdescription);
@@ -161,7 +161,7 @@ namespace Altinn.ResourceRegistry.Tests
             List<ServiceResource>? resource = JsonSerializer.Deserialize<List<ServiceResource>>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
 
             Assert.NotNull(resource);
-            Assert.Equal(315, resource.Count);
+            Assert.Equal(323, resource.Count);
         }
 
         [Fact]
@@ -180,7 +180,7 @@ namespace Altinn.ResourceRegistry.Tests
             List<ServiceResource>? resource = JsonSerializer.Deserialize<List<ServiceResource>>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
 
             Assert.NotNull(resource);
-            Assert.Equal(133, resource.Count);
+            Assert.Equal(141, resource.Count);
         }
 
         [Fact]
@@ -199,7 +199,7 @@ namespace Altinn.ResourceRegistry.Tests
             List<ServiceResource>? resource = JsonSerializer.Deserialize<List<ServiceResource>>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
 
             Assert.NotNull(resource);
-            Assert.Equal(6, resource.Count);
+            Assert.Equal(14, resource.Count);
         }
 
         [Fact]
@@ -218,7 +218,7 @@ namespace Altinn.ResourceRegistry.Tests
             List<ServiceResource>? resource = JsonSerializer.Deserialize<List<ServiceResource>>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
 
             Assert.NotNull(resource);
-            Assert.Equal(135, resource.Count);
+            Assert.Equal(143, resource.Count);
             Assert.Contains(resource, r => r.Identifier == "app_ssb_a1-1021-7048:1");
             Assert.Contains(resource, r => r.Identifier == "app_skd_a2-4223-160201");
         }
@@ -1388,165 +1388,6 @@ namespace Altinn.ResourceRegistry.Tests
                   Orgcode = "skd",
               },
                 ResourceType = ResourceType.GenericAccessResource,
-            };
-
-            string requestUri = "resourceregistry/api/v1/Resource/";
-
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
-            };
-
-            httpRequestMessage.Headers.Add("Accept", "application/json");
-            httpRequestMessage.Headers.Add("ContentType", "application/json");
-
-            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        }
-
-        /// <summary>
-        /// ID Contains caps A
-        /// </summary>
-        /// <returns></returns>
-        [Fact]
-        public async Task CreateResource_InvalidId()
-        {
-            var client = CreateClient();
-            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            ServiceResource resource = new ServiceResource()
-            {
-                Identifier = "Asuperdupertjenestene",
-                Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                Status = "Completed",
-                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
-                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
-                {
-                    Organization = "974761076",
-                    Orgcode = "skd",
-                },
-                ResourceType = ResourceType.GenericAccessResource
-            };
-
-            string requestUri = "resourceregistry/api/v1/Resource/";
-
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
-            };
-
-            httpRequestMessage.Headers.Add("Accept", "application/json");
-            httpRequestMessage.Headers.Add("ContentType", "application/json");
-
-            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            string content = await response.Content.ReadAsStringAsync();
-            Assert.Contains("Invalid id. Only a-z and 0-9 is allowed", content);
-        }
-
-        [Fact]
-        public async Task CreateResource_ThoShortIdId()
-        {
-            var client = CreateClient();
-            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            ServiceResource resource = new ServiceResource()
-            {
-                Identifier = "a12",
-                Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                Status = "Completed",
-                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
-                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
-                {
-                    Organization = "974761076",
-                    Orgcode = "skd",
-                }
-            };
-
-            string requestUri = "resourceregistry/api/v1/Resource/";
-
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
-            };
-
-            httpRequestMessage.Headers.Add("Accept", "application/json");
-            httpRequestMessage.Headers.Add("ContentType", "application/json");
-
-            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            string content = await response.Content.ReadAsStringAsync();
-            Assert.Contains("Invalid id. Only a-z and 0-9 is allowed", content);
-        }
-
-        [Fact]
-        public async Task CreateResource_Forbidden_NotResourceOwner()
-        {
-            var client = CreateClient();
-            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            ServiceResource resource = new ServiceResource()
-            {
-                Identifier = "superdupertjenestene",
-                Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                Status = "Completed",
-                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
-                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
-                {
-                    Organization = "991825827",
-                    Orgcode = "digdir",
-                },
-                ResourceType = ResourceType.GenericAccessResource
-            };
-
-            string requestUri = "resourceregistry/api/v1/Resource/";
-
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
-            };
-
-            httpRequestMessage.Headers.Add("Accept", "application/json");
-            httpRequestMessage.Headers.Add("ContentType", "application/json");
-
-            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-        }
-
-        [Fact]
-        public async Task CreateResource_AdminScope_OK_NotResourceOwner()
-        {
-            var client = CreateClient();
-            string token = PrincipalUtil.GetOrgToken("digdir", "991825827", "altinn:resourceregistry/resource.admin");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            ServiceResource resource = new ServiceResource()
-            {
-                Identifier = "superdupertjenestene",
-                Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                Status = "Completed",
-                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
-                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
-                {
-                    Organization = "974761076",
-                    Orgcode = "skd",
-                },
-                ResourceType = ResourceType.GenericAccessResource
             };
 
             string requestUri = "resourceregistry/api/v1/Resource/";

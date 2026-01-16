@@ -58,7 +58,7 @@ namespace Altinn.ResourceRegistry.Controllers
             bool includeMigratedApps = false,
             CancellationToken cancellationToken = default)
         {
-            return await _resourceRegistry.GetResourceList(includeApps, includeAltinn2, includeExpired: false, includeMigratedApps, cancellationToken);
+            return await _resourceRegistry.GetResourceList(includeApps, includeAltinn2, includeExpired: false, includeMigratedApps, includeAllVersions: false, cancellationToken);
         }
 
         /// <summary>
@@ -71,7 +71,7 @@ namespace Altinn.ResourceRegistry.Controllers
         public async Task<string> Export(CancellationToken cancellationToken)
         {
             ResourceSearch search = new ResourceSearch();
-            List<ServiceResource> serviceResources = await _resourceRegistry.Search(search, cancellationToken);
+            List<ServiceResource> serviceResources = await _resourceRegistry.Search(search, false, cancellationToken);
             string rdfString = RdfUtil.CreateRdf(serviceResources);
             return rdfString;
         }
@@ -80,17 +80,18 @@ namespace Altinn.ResourceRegistry.Controllers
         /// Gets a single resource by its resource identifier if it exists in the resource registry
         /// </summary>
         /// <param name="id">The resource identifier to retrieve</param>
+        /// <param name="versionId">The version identifier to retrieve</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns>ServiceResource</returns>
         [HttpGet("{id}")]
         [Produces("application/json")]
-        public async Task<ActionResult<ServiceResource>> Get(string id, CancellationToken cancellationToken)
+        public async Task<ActionResult<ServiceResource>> Get(string id, int? versionId, CancellationToken cancellationToken)
         {
-            ServiceResource resource = await _resourceRegistry.GetResource(id, cancellationToken);
+            ServiceResource resource = await _resourceRegistry.GetResource(id, versionId, cancellationToken);
 
             if (resource == null && id.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX))
             {
-                List<ServiceResource> resourceList = await _resourceRegistry.GetResourceList(includeApps: true, includeAltinn2: false, includeExpired: false, includeMigratedApps: false, cancellationToken);
+                List<ServiceResource> resourceList = await _resourceRegistry.GetResourceList(includeApps: true, includeAltinn2: false, includeExpired: false, includeMigratedApps: false, includeAllVersions:false, cancellationToken);
                 ServiceResource appResource = resourceList.FirstOrDefault(r => r.Identifier == id);
                 if (appResource != null)
                 {
@@ -187,7 +188,7 @@ namespace Altinn.ResourceRegistry.Controllers
         [Consumes("application/json")]
         public async Task<ActionResult> Put(string id, ServiceResource serviceResource, CancellationToken cancellationToken)
         {
-            ServiceResource currentResource = await _resourceRegistry.GetResource(id, cancellationToken);
+            ServiceResource currentResource = await _resourceRegistry.GetResource(id, null, cancellationToken);
 
             if (currentResource == null)
             {
@@ -251,7 +252,7 @@ namespace Altinn.ResourceRegistry.Controllers
         [HttpGet("{id}/policy")]
         public async Task<ActionResult> GetPolicy(string id, CancellationToken cancellationToken)
         {
-            ServiceResource resource = await _resourceRegistry.GetResource(id, cancellationToken);
+            ServiceResource resource = await _resourceRegistry.GetResource(id, null, cancellationToken);
             if (resource == null && id.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX))
             {
                 string[] idParts = id.Split('_');
@@ -302,7 +303,7 @@ namespace Altinn.ResourceRegistry.Controllers
         {
             if (reloadFromXacml.HasValue && reloadFromXacml.Value)
             {
-                ServiceResource serviceResource = await _resourceRegistry.GetResource(id, cancellationToken);
+                ServiceResource serviceResource = await _resourceRegistry.GetResource(id, null, cancellationToken);
                 if (serviceResource != null)
                 {
                     await _resourceRegistry.UpdateResourceSubjectsFromResourcePolicy(serviceResource, cancellationToken);
@@ -411,7 +412,7 @@ namespace Altinn.ResourceRegistry.Controllers
                 return BadRequest("Unknown resource");
             }
 
-            ServiceResource resource = await _resourceRegistry.GetResource(id, cancellationToken);
+            ServiceResource resource = await _resourceRegistry.GetResource(id, null, cancellationToken);
             if (resource == null)
             {
                 return BadRequest("Unknown resource");
@@ -466,7 +467,7 @@ namespace Altinn.ResourceRegistry.Controllers
                 return result;
             }
 
-            ServiceResource serviceResource = await _resourceRegistry.GetResource(id, cancellationToken);
+            ServiceResource serviceResource = await _resourceRegistry.GetResource(id, null, cancellationToken);
 
             if (serviceResource == null)
             {

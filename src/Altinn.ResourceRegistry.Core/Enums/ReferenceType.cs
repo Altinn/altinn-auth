@@ -38,4 +38,8 @@ public enum ReferenceType
     [EnumMember(Value = "ApplicationId")]
     [JsonStringEnumMemberName("ApplicationId")]
     ApplicationId = 6,
+
+    [EnumMember(Value = "ServiceEditionVersion")]
+    [JsonStringEnumMemberName("ServiceEditionVersion")]
+    ServiceEditionVersion = 6,
 }

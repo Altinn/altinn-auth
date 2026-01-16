@@ -1,7 +1,8 @@
-﻿using Altinn.ResourceRegistry.Core.Models;
-using Altinn.Common.AccessToken.Services;
+﻿using Altinn.Common.AccessToken.Services;
+using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Register;
 using Altinn.ResourceRegistry.Core.Services;
+using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Tests.Mocks;
 using Altinn.ResourceRegistry.TestUtils;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -57,6 +58,7 @@ public abstract class WebApplicationTests
     protected virtual void ConfigureTestServices(IServiceCollection services)
     {
         services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProviderMock>();
+        services.AddSingleton<IApplications, ApplicationsClientMock>();
     }
 
     protected virtual void ConfigureTestConfiguration(IConfigurationBuilder builder)
@@ -102,6 +104,11 @@ public abstract class WebApplicationTests
     protected async Task AddResource(string name, CompetentAuthority? owner = null)
     {
         owner ??= DefaultAuthority;
+
+        await using var resourcemainCmd = DataSource.CreateCommand(/*strpsql*/"INSERT INTO resourceregistry.resource_identifier (identifier, created) VALUES (@name, NOW());");
+        var namemainParam = resourcemainCmd.Parameters.Add("name", NpgsqlTypes.NpgsqlDbType.Text);
+        namemainParam.Value = name;
+        resourcemainCmd.ExecuteNonQuery();
 
         await using var resourceCmd = DataSource.CreateCommand(/*strpsql*/"INSERT INTO resourceregistry.resources (identifier, created, serviceresourcejson) VALUES (@name, NOW(), @json);");
         var nameParam = resourceCmd.Parameters.Add("name", NpgsqlTypes.NpgsqlDbType.Text);

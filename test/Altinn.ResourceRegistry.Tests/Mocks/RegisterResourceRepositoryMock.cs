@@ -20,10 +20,10 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
 
         public async Task<ServiceResource?> DeleteResource(string id, CancellationToken cancellationToken = default)
         {
-            return await GetResource(id);
+            return await GetResource(id, null, cancellationToken);
         }
 
-        public async Task<ServiceResource?> GetResource(string id, CancellationToken cancellationToken = default)
+        public async Task<ServiceResource?> GetResource(string id, int? versionID, CancellationToken cancellationToken = default)
         {
             string? resourcePath = GetResourcePath(id);
             resourcePath.AsFilePath(true);
@@ -40,7 +40,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
 
         public async Task<Result<CompetentAuthorityReference>> GetResourceOwner(string id, CancellationToken cancellationToken = default)
         {
-            var resource = await GetResource(id, cancellationToken);
+            var resource = await GetResource(id, null, cancellationToken);
             if (resource is null)
             {
                 return Problems.ResourceReference_NotFound;
@@ -49,7 +49,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             return resource.HasCompetentAuthority!;
         }
 
-        public async Task<List<ServiceResource>> Search(ResourceSearch resourceSearch, CancellationToken cancellationToken = default)
+        public async Task<List<ServiceResource>> Search(ResourceSearch resourceSearch, bool includeAllVersions, CancellationToken cancellationToken = default)
         {
             List<ServiceResource> resources = new List<ServiceResource>();
             string? resourcePath = GetResourcePath();

@@ -89,9 +89,9 @@ namespace Altinn.ResourceRegistry.Core.Services
         }
 
         /// <inheritdoc/>
-        public async Task<ServiceResource> GetResource(string id, CancellationToken cancellationToken = default)
+        public async Task<ServiceResource> GetResource(string id, int? versionId, CancellationToken cancellationToken = default)
         {
-            return await _repository.GetResource(id, cancellationToken);
+            return await _repository.GetResource(id, versionId,  cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -101,15 +101,15 @@ namespace Altinn.ResourceRegistry.Core.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<ServiceResource>> Search(ResourceSearch resourceSearch, CancellationToken cancellationToken = default)
+        public async Task<List<ServiceResource>> Search(ResourceSearch resourceSearch, bool includeAllVersions, CancellationToken cancellationToken = default)
         {
-            return await _repository.Search(resourceSearch, cancellationToken);
+            return await _repository.Search(resourceSearch, includeAllVersions, cancellationToken);
         }
 
         /// <inheritdoc/>
         public async Task<List<ServiceResource>> GetSearchResults(ResourceSearch resourceSearch, CancellationToken cancellationToken = default)
         {
-            List<ServiceResource> resourceList = await GetResourceList(includeApps: false, includeAltinn2: false, includeExpired: false, includeMigratedApps: false, cancellationToken);
+            List<ServiceResource> resourceList = await GetResourceList(includeApps: false, includeAltinn2: false, includeExpired: false, includeMigratedApps: false, includeAllVersions: true, cancellationToken);
             return ServiceResourceHelper.GetSearchResultsFromResourceList(resourceList, resourceSearch);
         }
 
@@ -176,7 +176,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         }
 
         /// <inheritdoc />
-        public async Task<List<ServiceResource>> GetResourceList(bool includeApps, bool includeAltinn2, bool includeExpired, bool includeMigratedApps, CancellationToken cancellationToken = default)
+        public async Task<List<ServiceResource>> GetResourceList(bool includeApps, bool includeAltinn2, bool includeExpired, bool includeMigratedApps, bool includeAllVersions = false, CancellationToken cancellationToken = default)
         {
             var tasks = new List<Task<List<ServiceResource>>>(3)
             {
@@ -210,7 +210,7 @@ namespace Altinn.ResourceRegistry.Core.Services
             {
                 ResourceSearch resourceSearch = new ResourceSearch();
 
-                List<ServiceResource> resources = await Search(resourceSearch, cancellationToken);
+                List<ServiceResource> resources = await Search(resourceSearch, includeAllVersions, cancellationToken);
 
                 foreach (ServiceResource resource in resources)
                 {

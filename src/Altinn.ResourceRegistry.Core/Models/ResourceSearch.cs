@@ -32,5 +32,10 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// Keywords
         /// </summary>
         public string? Keyword { get; set; }
+
+        /// <summary>
+        /// To search for a specific reference
+        /// </summary>
+        public string? Reference { get; set; }
     }
 }

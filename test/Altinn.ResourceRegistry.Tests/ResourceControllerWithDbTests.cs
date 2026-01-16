@@ -1,17 +1,20 @@
-﻿using Altinn.ResourceRegistry.Core;
+﻿using Altinn.Platform.Storage.Interface.Models;
+using Altinn.ResourceRegistry.Controllers;
+using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.Constants;
+using Altinn.ResourceRegistry.Core.Enums;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Models;
+using Altinn.ResourceRegistry.Tests.Mocks;
 using Altinn.ResourceRegistry.Tests.Utils;
 using Altinn.ResourceRegistry.TestUtils;
+using AngleSharp.Text;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using Altinn.ResourceRegistry.Controllers;
-using AngleSharp.Text;
 using VDS.RDF;
 
 namespace Altinn.ResourceRegistry.Tests;
@@ -426,6 +429,486 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         Assert.Single(subjectMatch.Items);
     }
 
+    [Fact]
+    public async Task CreateResource_Ok()
+    {
+        var client = CreateClient();
+        string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        ServiceResource resource = new ServiceResource()
+        {
+            Identifier = "superdupertjenestene",
+            Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Status = "Completed",
+            ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+            HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+            {
+                Organization = "974761076",
+                Orgcode = "skd",
+            },
+            ResourceType = ResourceType.GenericAccessResource,
+        };
+
+        string requestUri = "resourceregistry/api/v1/Resource/";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+        };
+
+        httpRequestMessage.Headers.Add("Accept", "application/json");
+        httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task SearchResources_Ok()
+    {
+        await LoadTestData();
+
+        var client = CreateClient();
+        string requestUri = "resourceregistry/api/v1/Resource/Search?Id=korrespondanse-fra-sivilforsvaret";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
+        {
+        };
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        string responseContent = await response.Content.ReadAsStringAsync();
+        List<ServiceResource>? resource = JsonSerializer.Deserialize<List<ServiceResource>>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
+
+        Assert.NotNull(resource);
+        Assert.Single(resource);
+    }
+
+    /// <summary>
+    /// Scenario: Search for resources by ServiceEditionVersion reference
+    /// This is relevant when migrating consents from Altinn 2 to Altinn 3 where the consent is tied to a specific version of a service edition
+    /// The goal is to find the correct 
+    /// </summary>
+    /// <returns></returns>
+    [Fact]
+    public async Task SearchResources_ServiceEditionVersion_Ok()
+    {
+        await LoadTestDataWithUpdates();
+
+        var client = CreateClient();
+        string requestUri = "resourceregistry/api/v1/Resource/Search?reference=7846";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
+        {
+        };
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        string responseContent = await response.Content.ReadAsStringAsync();
+        List<ServiceResource>? matchingResources = JsonSerializer.Deserialize<List<ServiceResource>>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
+
+        Assert.NotNull(matchingResources);
+        Assert.Single(matchingResources);
+
+        Assert.Equal("skd-migrert-4628-1", matchingResources[0].Identifier);
+
+        ServiceResource resource = matchingResources[0];
+
+        Assert.NotNull(resource.ResourceReferences);
+        Assert.Equal(3, resource.ResourceReferences.Count);
+        Assert.Contains(resource.ResourceReferences, r => r.ReferenceType == ReferenceType.ServiceEditionVersion && r.Reference == "7846");
+        Assert.True(resource.VersionId > 1, "Expected resource to be an updated version");
+
+        string requestUriAllResources = "resourceregistry/api/v1/Resource/Search";
+        HttpRequestMessage httpRequestMessageAllResources = new HttpRequestMessage(HttpMethod.Get, requestUriAllResources)
+        {
+        };
+        HttpResponseMessage responseAllResources = await client.SendAsync(httpRequestMessageAllResources);
+        string responseContentAllResources = await responseAllResources.Content.ReadAsStringAsync();
+        List<ServiceResource>? allResources = JsonSerializer.Deserialize<List<ServiceResource>>(responseContentAllResources, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
+
+        Assert.NotNull(allResources);
+        Assert.True(allResources.Count > 1, "Expected multiple resources in test data");
+      
+        Assert.DoesNotContain(allResources, r => r.Identifier == "skd-migrert-4628-1" && r.VersionId == resource.VersionId);
+        Assert.Contains(allResources, r => r.Identifier == "skd-migrert-4628-1" && r.VersionId > resource.VersionId);
+    }
+
+    [Fact]
+    public async Task GetResource_skd_migrert_4628_1_OK()
+    {
+        await LoadTestDataWithUpdates();
+        var client = CreateClient();
+        string requestUriSearch = "resourceregistry/api/v1/Resource/Search?reference=7846";
+
+        HttpRequestMessage httpRequestMessageSearch = new HttpRequestMessage(HttpMethod.Get, requestUriSearch)
+        {
+        };
+
+        HttpResponseMessage responseSearch = await client.SendAsync(httpRequestMessageSearch);
+
+        string responseContentSearch = await responseSearch.Content.ReadAsStringAsync();
+        List<ServiceResource>? matchingResources = JsonSerializer.Deserialize<List<ServiceResource>>(responseContentSearch, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
+
+        Assert.NotNull(matchingResources);
+        Assert.Single(matchingResources);
+        Assert.Equal("skd-migrert-4628-1", matchingResources[0].Identifier);
+
+        ServiceResource oldVersion = matchingResources[0];
+
+        string requestUri = "resourceregistry/api/v1/Resource/skd-migrert-4628-1";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
+        {
+        };
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        string responseContent = await response.Content.ReadAsStringAsync();
+        ServiceResource? resource = JsonSerializer.Deserialize<ServiceResource>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as ServiceResource;
+
+        Assert.NotNull(resource);
+        Assert.Equal("skd-migrert-4628-1", resource.Identifier);
+        Assert.True(resource.VersionId > oldVersion.VersionId, "Expected resource to be an updated version");
+
+        // Try getting the resource again but now with the version id to get the old version
+
+        string requestUriWithVersion = $"resourceregistry/api/v1/Resource/skd-migrert-4628-1?versionId={oldVersion.VersionId}";
+        HttpRequestMessage httpRequestMessageWithVersion = new HttpRequestMessage(HttpMethod.Get, requestUriWithVersion)
+        {
+        };
+        HttpResponseMessage responseWithVersion = await client.SendAsync(httpRequestMessageWithVersion);
+        string responseContentWithVersion = await responseWithVersion.Content.ReadAsStringAsync();
+        ServiceResource? resourceWithVersion = JsonSerializer.Deserialize<ServiceResource>(responseContentWithVersion, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as ServiceResource;  
+        Assert.NotNull(resourceWithVersion);
+        Assert.Equal("skd-migrert-4628-1", resourceWithVersion.Identifier);
+        Assert.Equal(oldVersion.VersionId, resourceWithVersion.VersionId);
+
+        // Try getting a non existing version
+        string requestUriWithNonExistingVersion = $"resourceregistry/api/v1/Resource/skd-migrert-4628-1?versionId=9999";
+        HttpRequestMessage httpRequestMessageWithNonExistingVersion = new HttpRequestMessage(HttpMethod.Get, requestUriWithNonExistingVersion)
+        {
+        };
+        HttpResponseMessage responseWithNonExistingVersion = await client.SendAsync(httpRequestMessageWithNonExistingVersion);
+        Assert.Equal(HttpStatusCode.NotFound, responseWithNonExistingVersion.StatusCode);
+    }
+
+    /// <summary>
+    /// Scenario: Update existing resource
+    /// Expects: 200 OK and version incremented
+    /// </summary>
+    /// <returns></returns>
+    [Fact]
+    public async Task UpdateResource_Ok()
+    {
+        var client = CreateClient();
+        string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        ServiceResource resource = new ServiceResource()
+        {
+            Identifier = "superdupertjenestene",
+            Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Status = "Completed",
+            ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+            HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+            {
+                Organization = "974761076",
+                Orgcode = "skd",
+            },
+            ResourceType = ResourceType.GenericAccessResource,
+        };
+
+        string requestUri = "resourceregistry/api/v1/Resource/";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+        };
+
+        httpRequestMessage.Headers.Add("Accept", "application/json");
+        httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+
+        string getRequestUri = "resourceregistry/api/v1/Resource/superdupertjenestene";
+
+
+        HttpRequestMessage httpGetRequestMessage = new HttpRequestMessage(HttpMethod.Get, getRequestUri)
+        {
+        };
+
+        HttpResponseMessage responseGet = await client.SendAsync(httpGetRequestMessage);
+
+        Assert.Equal(HttpStatusCode.OK, responseGet.StatusCode);
+
+        ServiceResource? createdResource = JsonSerializer.Deserialize<ServiceResource>(await responseGet.Content.ReadAsStringAsync(), new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as ServiceResource;
+
+        Assert.NotNull(createdResource);
+
+        ServiceResource updatedresource = new ServiceResource()
+        {
+            Identifier = "superdupertjenestene",
+            Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Status = "Completed",
+            ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+            HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+            {
+                Organization = "974761076",
+                Orgcode = "skd",
+            },
+            ResourceType = ResourceType.GenericAccessResource
+        };
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        string updateRequestUri = "resourceregistry/api/v1/Resource/superdupertjenestene";
+
+        HttpRequestMessage httpupdateRequestMessage = new HttpRequestMessage(HttpMethod.Put, updateRequestUri)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(updatedresource), Encoding.UTF8, "application/json")
+        };
+
+        httpupdateRequestMessage.Headers.Add("Accept", "application/json");
+        httpupdateRequestMessage.Headers.Add("ContentType", "application/json");
+
+        HttpResponseMessage responseUpdate = await client.SendAsync(httpupdateRequestMessage);
+
+        Assert.Equal(HttpStatusCode.OK, responseUpdate.StatusCode);
+
+
+        HttpRequestMessage httpGetUpdatedResource = new HttpRequestMessage(HttpMethod.Get, getRequestUri)
+        {
+        };
+
+        HttpResponseMessage responseGetUpdated = await client.SendAsync(httpGetUpdatedResource);
+
+        Assert.Equal(HttpStatusCode.OK, responseGetUpdated.StatusCode);
+
+        ServiceResource? updatedResource = JsonSerializer.Deserialize<ServiceResource>(await responseGetUpdated.Content.ReadAsStringAsync(), new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as ServiceResource;
+
+        Assert.NotNull(updatedResource);
+
+        Assert.Equal(createdResource.VersionId + 1, updatedResource.VersionId);
+    }
+
+    [Fact]
+    public async Task ResourceListWithMultpleVersionsReturnCorrect()
+    {
+        await LoadTestDataWithUpdates();
+        var client = CreateClient();
+        string requestUri = "resourceregistry/api/v1/Resource/resourcelist?includeAltinn2=false&includeApps=false";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
+        {
+        };
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        string responseContent = await response.Content.ReadAsStringAsync();
+        List<ServiceResource>? resource = JsonSerializer.Deserialize<List<ServiceResource>>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
+
+        Assert.NotNull(resource);
+        Assert.Equal(6, resource.Count);
+
+        ServiceResource? skd_maskinportenSchema = resource.FirstOrDefault(r => r.ResourceReferences != null && r.ResourceReferences.Any(r => r.Reference != null && r.Reference.Contains("folkeregister:deling/finans")));
+        Assert.NotNull(skd_maskinportenSchema);
+        Assert.NotNull(skd_maskinportenSchema.RightDescription);
+        Assert.Equal("This service allows you to delegate your access to The national Population Register information to a provider. Once the delegation has been completed, the provider will be notified that they can use the services available within the rights", skd_maskinportenSchema.RightDescription["en"]);
+        Assert.Equal("Denne tjenesten gir deg mulighet for å delegere din tilgang til folkeregisteropplysninger til en  leverandør. Når delegeringen er utført, vil leverandøren motta melding om at de på vegne av din virksomhet kan benyttet de tjenester som er ti", skd_maskinportenSchema.RightDescription["nb"]);
+        Assert.Equal("Denne tenesta gir deg moglegheit for å delegera tilgangen din til folkeregisteropplysningar til ein leverandør. Når delegeringen er utførte, vil leverandøren få melding om at dei på vegner av verksemda di kan nytta dei tenestene som er tilg", skd_maskinportenSchema.RightDescription["nn"]);
+        Assert.True(skd_maskinportenSchema.VersionId > 4);
+    }
+
+    /// <summary>
+    /// ID Contains caps A
+    /// </summary>
+    /// <returns></returns>
+    [Fact]
+    public async Task CreateResource_InvalidId()
+    {
+        var client = CreateClient();
+        string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        ServiceResource resource = new ServiceResource()
+        {
+            Identifier = "Asuperdupertjenestene",
+            Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Status = "Completed",
+            ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+            HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+            {
+                Organization = "974761076",
+                Orgcode = "skd",
+            },
+            ResourceType = ResourceType.GenericAccessResource
+        };
+
+        string requestUri = "resourceregistry/api/v1/Resource/";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+        };
+
+        httpRequestMessage.Headers.Add("Accept", "application/json");
+        httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        string content = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Invalid id. Only a-z and 0-9 is allowed", content);
+    }
+
+    [Fact]
+    public async Task CreateResource_ThoShortIdId()
+    {
+        var client = CreateClient();
+        string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        ServiceResource resource = new ServiceResource()
+        {
+            Identifier = "a12",
+            Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Status = "Completed",
+            ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+            HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+            {
+                Organization = "974761076",
+                Orgcode = "skd",
+            }
+        };
+
+        string requestUri = "resourceregistry/api/v1/Resource/";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+        };
+
+        httpRequestMessage.Headers.Add("Accept", "application/json");
+        httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        string content = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Invalid id. Only a-z and 0-9 is allowed", content);
+    }
+
+    [Fact]
+    public async Task CreateResource_Forbidden_NotResourceOwner()
+    {
+        var client = CreateClient();
+        string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        ServiceResource resource = new ServiceResource()
+        {
+            Identifier = "superdupertjenestene",
+            Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Status = "Completed",
+            ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+            HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+            {
+                Organization = "991825827",
+                Orgcode = "digdir",
+            },
+            ResourceType = ResourceType.GenericAccessResource
+        };
+
+        string requestUri = "resourceregistry/api/v1/Resource/";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+        };
+
+        httpRequestMessage.Headers.Add("Accept", "application/json");
+        httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateResource_AdminScope_OK_NotResourceOwner()
+    {
+        var client = CreateClient();
+        string token = PrincipalUtil.GetOrgToken("digdir", "991825827", "altinn:resourceregistry/resource.admin");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        ServiceResource resource = new ServiceResource()
+        {
+            Identifier = "superdupertjenestene",
+            Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Status = "Completed",
+            ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+            HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+            {
+                Organization = "974761076",
+                Orgcode = "skd",
+            },
+            ResourceType = ResourceType.GenericAccessResource
+        };
+
+        string requestUri = "resourceregistry/api/v1/Resource/";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+        };
+
+        httpRequestMessage.Headers.Add("Accept", "application/json");
+        httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Export_OK()
+    {
+        await LoadTestDataWithUpdates();
+        var client = CreateClient();
+        string requestUri = "resourceregistry/api/v1/Resource/export";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
+        {
+        };
+
+        httpRequestMessage.Headers.Add("Accept", "application/text");
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        Assert.True(response.IsSuccessStatusCode);
+        string responseContent = await response.Content.ReadAsStringAsync();
+        Assert.NotNull(responseContent);
+        Assert.Contains("Skattegrunnlag latest version", responseContent);
+    }
+
     #region Utils
     private static ResourceSubjects CreateResourceSubjects(string resourceurn, List<string> subjecturns, string owner)
     {
@@ -456,5 +939,79 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
 
         return resourceSubjects;
     }
+
+
+    private async Task LoadTestData()
+    {
+        List<ServiceResource> testData = await GetTestData();
+        foreach (ServiceResource resource in testData)
+        {
+            await Repository.CreateResource(resource);
+        }
+    }
+
+    private async Task LoadTestDataWithUpdates()
+    {
+        List<ServiceResource> testData = await GetTestData();
+        foreach (ServiceResource resource in testData)
+        {
+            await Repository.CreateResource(resource);
+        }
+
+        foreach (ServiceResource resource in testData)
+        {
+            resource.Description = new Dictionary<string, string> { { "en", "Updated English" }, { "nb", "Updated Bokmal" }, { "nn", "Updated Nynorsk" } };
+            await Repository.UpdateResource(resource);
+        }
+
+        RegisterResourceRepositoryMock repositoryMock = new();
+        ServiceResource? version7658 = await repositoryMock.GetResource("skd-migrert-4628-1-7846", null);
+        if(version7658 != null)
+        {
+            await Repository.UpdateResource(version7658);   
+        }
+        
+        ServiceResource? version9546 = await repositoryMock.GetResource("skd-migrert-4628-1-9546", null);
+        if (version9546 != null)
+        {
+            await Repository.UpdateResource(version9546);
+        }
+    }
+
+
+    private async Task<List<ServiceResource>> GetTestData()
+    {
+        List<ServiceResource> resources = new List<ServiceResource>();  
+
+        RegisterResourceRepositoryMock repositoryMock = new RegisterResourceRepositoryMock();
+
+        string[] testResources = GetTestServices();
+
+        foreach (string testResource in testResources)
+        {
+            ServiceResource? resource = await repositoryMock.GetResource(testResource, null);
+            if (resource != null)
+            {
+                resources.Add(resource);
+            }
+        }
+
+        return resources;
+    }
+
+    private string[] GetTestServices()
+    {
+        return
+        [
+            "eformidling-dpo-meldingsutveksling",
+            "korrespondanse-fra-sivilforsvaret",
+            "skd-maskinportenschemaid-8",
+            "ske-innrapportering-boligsameie",
+            "stami-samtykke-must",
+            "skd-migrert-4628-1-7381"
+        ];
+
+    }
+
     #endregion
 }
