@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 
@@ -105,5 +105,29 @@ public static class AreaGroupConstants
             KeyValuePair.Create("Name", "Special")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Særskilt")),
+    };
+
+    /// <summary>
+    /// Represents the Inhabitant group.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 413f99ca-19ca-4124-8470-b0c1dba3d2ee
+    /// - <c>Name:</c> "inhabitant"
+    /// - <c>Description:</c> "For innbyggere"
+    /// - <c>EntityTypeId:</c> Person entity type
+    /// </remarks>
+    public static ConstantDefinition<AreaGroup> Inhabitant { get; } = new ConstantDefinition<AreaGroup>("413f99ca-19ca-4124-8470-b0c1dba3d2ee")
+    {
+        Entity = new()
+        {
+            Name = "Innbygger",
+            Description = "For innbyggere",
+            EntityTypeId = EntityTypeConstants.Person,
+            Urn = null,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Inhabitant")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "innbyggjar")),
     };
 }

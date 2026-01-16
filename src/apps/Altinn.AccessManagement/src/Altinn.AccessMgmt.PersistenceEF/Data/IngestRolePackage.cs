@@ -28,6 +28,7 @@ public static partial class StaticDataIngest
         var roleBobe = RoleConstants.EstateAdministrator.Id;
         var roleKnuf = RoleConstants.ContactPersonNUF.Id;
         var roleHadm = RoleConstants.MainAdministrator.Id;
+        var rolePriv = RoleConstants.PrivatePerson.Id;
 
         var roleRegn = RoleConstants.Accountant.Id;
         var roleRevi = RoleConstants.Auditor.Id;
@@ -1284,6 +1285,40 @@ public static partial class StaticDataIngest
             new RolePackage() { RoleId = roleBest, PackageId = PackageConstants.SickLeaveSpecialCategory.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleBobe, PackageId = PackageConstants.SickLeaveSpecialCategory.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleHadm, PackageId = PackageConstants.SickLeaveSpecialCategory.Id, EntityVariantId = null, CanDelegate = true, HasAccess = false },
+
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.AccessManagementPrivatePerson.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.LeaveAndDismissal.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.WorkingLife.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.InhabitantPension.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.Education.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.InhabitantSickLeave.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.ApplicationsAndCertification.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.ChildrenAndParents.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.KindergartenSFOAndSchool.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.Cohabitation.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.LeisureActivitiesAndOutdoorLife.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.ReliefAndSupport.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.Treatment.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.InhabitantHealthServices.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.CareAndNursing.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.Culture.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.Sports.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.InhabitantSports.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.Patent.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.Certification.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.DesignAndTrademark.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.CriminalCase.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.Weapon.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.InhabitantBuildingApplication.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.HousingAndProperty.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.License.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.Vehicle.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.DrivingLicense.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.BankingAndFinance.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.Insurance.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.TaxationForIndividuals.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.CustomsDutiesAndTaxes.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.SupportAndGrants.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
         };
 
         foreach (var d in data)
