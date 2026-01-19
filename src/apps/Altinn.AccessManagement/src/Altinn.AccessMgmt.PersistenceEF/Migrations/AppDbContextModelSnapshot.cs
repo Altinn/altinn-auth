@@ -2514,9 +2514,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasIndex("ProviderId")
                         .HasDatabaseName("ix_package_providerid");
 
-                    b.HasIndex("ProviderId", "Name")
+                    b.HasIndex("ProviderId", "Name", "EntityTypeId")
                         .IsUnique()
-                        .HasDatabaseName("ix_package_providerid_name");
+                        .HasDatabaseName("ix_package_providerid_name_entitytypeid");
 
                     b.ToTable("package", "dbo");
 

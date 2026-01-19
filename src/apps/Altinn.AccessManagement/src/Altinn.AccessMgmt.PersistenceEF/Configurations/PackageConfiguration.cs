@@ -28,7 +28,7 @@ public class PackageConfiguration : IEntityTypeConfiguration<Package>
         builder.PropertyWithReference(navKey: t => t.EntityType, foreignKey: t => t.EntityTypeId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
         builder.PropertyWithReference(navKey: t => t.Area, foreignKey: t => t.AreaId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
 
-        builder.HasIndex(t => new { t.ProviderId, t.Name }).IsUnique();
+        builder.HasIndex(t => new { t.ProviderId, t.Name, t.EntityTypeId }).IsUnique();
     }
 }
 
