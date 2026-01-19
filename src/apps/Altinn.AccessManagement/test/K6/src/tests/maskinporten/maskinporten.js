@@ -36,6 +36,7 @@ export function setup() {
     pid: testdata.org1.dagl.pid,
     userid: testdata.org1.dagl.userid,
     partyid: testdata.org1.dagl.partyid,
+    partyuuid: testdata.org1.dagl.partyuuid,
     authLvl: 3,
   };
   testdata.org1.dagl.token = generateToken('personal', tokenGeneratorUserName, tokenGeneratorUserPwd, tokenGenParams);
@@ -46,6 +47,7 @@ export function setup() {
     pid: testdata.org2.dagl.pid,
     userid: testdata.org2.dagl.userid,
     partyid: testdata.org2.dagl.partyid,
+    partyuuid: testdata.org2.dagl.partyuuid,
     authLvl: 3,
   };
   testdata.org2.dagl.token = generateToken('personal', tokenGeneratorUserName, tokenGeneratorUserPwd, tokenGenParams);
@@ -56,6 +58,7 @@ export function setup() {
     pid: testdata.org1.hadm.pid,
     userid: testdata.org1.hadm.userid,
     partyid: testdata.org1.hadm.partyid,
+    partyuuid: testdata.org1.hadm.partyuuid,
     authLvl: 3,
   };
   testdata.org1.hadm.token = generateToken('personal', tokenGeneratorUserName, tokenGeneratorUserPwd, tokenGenParams);
@@ -66,6 +69,7 @@ export function setup() {
     pid: testdata.org1.apiadm.pid,
     userid: testdata.org1.apiadm.userid,
     partyid: testdata.org1.apiadm.partyid,
+    partyuuid: testdata.org1.apiadm.partyuuid,
     authLvl: 3,
   };
   testdata.org1.apiadm.token = generateToken('personal', tokenGeneratorUserName, tokenGeneratorUserPwd, tokenGenParams);

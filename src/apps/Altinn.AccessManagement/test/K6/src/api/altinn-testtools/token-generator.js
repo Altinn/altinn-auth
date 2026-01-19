@@ -11,7 +11,7 @@ import { stopIterationOnFail } from '../../errorcounter.js';
  * @param {string} userName user name for basic authentication
  * @param {string} userPwd password for basic authentication
  * @param {JSON} queryParams for enterprise: { env: 'at22', scopes: 'altinn:serviceowner/instances.read', org: 'ttd', orgNo: '991825827', }
- * for personal: { env: 'at22', scopes: 'altinn:instances.read', userId: 123, partyId: 123, authLvl: 3, pid: '11 digit ssn', }
+ * for personal: { env: 'at22', scopes: 'altinn:instances.read', userId: 123, partyId: 123, partyuuid: ca742417-1829-4af7-aea3-077463697351, authLvl: 3, pid: '11 digit ssn', }
  * @returns jwt token for enterprise or person with supplied params
  */
 export function generateToken(tokenFor, userName, userPwd, queryParams) {

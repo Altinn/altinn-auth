@@ -5,29 +5,35 @@
     "org1": {
         "orgno": "810414782",
         "partyid": "50024759",
+        "partyuuid": "8fb8857f-5a9b-473d-9914-0cbc2e25fcc6",
         "dagl": {
             "pid":"21025400167",
             "userid": "20002359",
-            "partyid": "50012796"
+            "partyid": "50012796",
+            "partyuuid": "1b9d5b9a-eea0-4a8e-958b-287c1a04214c"
         },
         "hadm": {
             "pid": "17048001742",
             "userid": "20003618",
-            "partyid": "50012941"
+            "partyid": "50012941",
+            "partyuuid": "8cf98132-a5df-4c16-a4b4-339abcf70ac1"
         },
         "apiadm": {
             "pid": "18036000194",
             "userid": "20003412",
-            "partyid": "50009383"
+            "partyid": "50009383",
+            "partyuuid": "5a1f9ccb-f4c4-4d29-96c8-b3d3a881b7b4"
         }
     },
     "org2": {
         "orgno": "910049356",
         "partyid": "50024778",
+        "partyuuid": "f15ba7b7-846d-4745-bdbe-6eae23785e96",
         "dagl": {
             "pid": "26013000394",
             "userid": "20002644",
-            "partyid": "50012091"
+            "partyid": "50012091",
+            "partyuuid": "dbb0b9cc-92f7-44cf-b3c2-c315cd771a3f"
         }
     }
 }
