@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Models;
@@ -79,6 +79,8 @@ public static class PackageDelegationCheckQuery
                 p.isassignable,
                 p.isdelegable
             FROM dbo.package p
+                JOIN dbo.entity e ON p.entitytypeid = e.typeid
+            AND e.id = @fromId
         ),
         mainAdminPackages AS (
             -- Get all packages for main administrator
