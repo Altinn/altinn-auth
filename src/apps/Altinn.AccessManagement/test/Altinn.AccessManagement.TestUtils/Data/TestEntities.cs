@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.PersistenceEF.Constants;
+﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 
 namespace Altinn.AccessManagement.TestUtils.Data;
@@ -68,7 +68,7 @@ public static class TestEntities
             PartyId = 50068510,
             PersonIdentifier = null,
             RefId = "910411578",
-            TypeId = EntityTypeConstants.Organisation,
+            TypeId = EntityTypeConstants.Organization,
             UserId = null,
             Username = null,
             VariantId = EntityVariantConstants.AS,
@@ -90,7 +90,7 @@ public static class TestEntities
             PartyId = 50068535,
             PersonIdentifier = null,
             RefId = "910397087",
-            TypeId = EntityTypeConstants.Organisation,
+            TypeId = EntityTypeConstants.Organization,
             UserId = null,
             Username = null,
             VariantId = EntityVariantConstants.AS,

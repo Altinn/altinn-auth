@@ -46,6 +46,11 @@ public class PackageDto
     public AreaDto Area { get; set; }
 
     /// <summary>
+    /// The type of party the package is intended for
+    /// </summary>
+    public TypeDto Type { get; set; }
+
+    /// <summary>
     /// Gets or sets the collection of resources linked to the package.
     /// </summary>
     public IEnumerable<ResourceDto> Resources { get; set; }

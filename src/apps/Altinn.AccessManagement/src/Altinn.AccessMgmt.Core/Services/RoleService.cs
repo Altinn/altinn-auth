@@ -152,14 +152,8 @@ public class RoleService: IRoleService
             .WhereIf(!variantId.HasValue, rp => rp.EntityVariantId == null)
             .WhereIf(variantId.HasValue, rp => (rp.EntityVariantId == null || rp.EntityVariantId == variantId.Value))
             .Join(Db.Packages, rp => rp.PackageId, p => p.Id, (rp, p) => p)
-            .Select(p => new PackageDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Description = p.Description,
-                IsDelegable = p.IsDelegable,
-                IsAssignable = p.IsAssignable,
-                Urn = p.Urn
-            });
+            .Include(t => t.Area)
+            .Include(t => t.EntityType)
+            .Select(p => DtoMapper.Convert(p));
     }
 }

@@ -1,11 +1,13 @@
 ﻿using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.Core.Utils.Models;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
+using System;
 using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 
 namespace Altinn.AccessMgmt.Core.Services;
@@ -21,9 +23,12 @@ public class PackageService : IPackageService
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<SearchObject<PackageDto>>> Search(string term, List<string> resourceProviderCodes = null, bool searchInResources = false, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<SearchObject<PackageDto>>> Search(string term, List<string> resourceProviderCodes = null, bool searchInResources = false, string? typeName = null, CancellationToken cancellationToken = default)
     {
-        var data = await GetSearchData(resourceProviderCodes: resourceProviderCodes);
+        EntityTypeConstants.TryGetByName(typeName, out var type);
+        Guid? typeId = type is { } ? type.Id : null;
+
+        var data = await GetSearchData(resourceProviderCodes: resourceProviderCodes, typeId: typeId);
 
         if (string.IsNullOrEmpty(term))
         {
@@ -62,12 +67,12 @@ public class PackageService : IPackageService
         return results.OrderByDescending(t => t.Score).ToList();
     }
 
-    private async Task<List<PackageDto>> GetSearchData(List<string> resourceProviderCodes = null, CancellationToken cancellationToken = default)
+    private async Task<List<PackageDto>> GetSearchData(List<string> resourceProviderCodes = null, Guid? typeId = null, CancellationToken cancellationToken = default)
     {
         bool filterResourceProviders = resourceProviderCodes != null && resourceProviderCodes.Any();
 
         var areas = await DbContext.Areas.AsNoTracking().ToListAsync(cancellationToken);
-        var packages = await DbContext.Packages.AsNoTracking().ToListAsync(cancellationToken);
+        var packages = await DbContext.Packages.AsNoTracking().Include(t => t.EntityType).WhereIf(typeId.HasValue, t => t.EntityTypeId == typeId.Value).ToListAsync(cancellationToken);
 
         var result = new List<PackageDto>();
 
@@ -100,7 +105,7 @@ public class PackageService : IPackageService
             urnValue = ":" + urnValue;
         }
 
-        var packages = await DbContext.Packages.AsNoTracking().Where(t => t.Urn.ToLower().EndsWith(urnValue.ToLower())).Include(t => t.Area).ToListAsync(cancellationToken);
+        var packages = await DbContext.Packages.AsNoTracking().Where(t => t.Urn.ToLower().EndsWith(urnValue.ToLower())).Include(t => t.Area).Include(t => t.EntityType).ToListAsync(cancellationToken);
         if (packages == null || packages.Count() != 1)
         {
             return null;
@@ -116,7 +121,7 @@ public class PackageService : IPackageService
     /// <inheritdoc/>
     public async Task<PackageDto> GetPackage(Guid id, CancellationToken cancellationToken = default)
     {
-        var package = await DbContext.Packages.AsNoTracking().Include(t => t.Area).SingleAsync(t => t.Id == id, cancellationToken);
+        var package = await DbContext.Packages.AsNoTracking().Include(t => t.Area).Include(t => t.EntityType).SingleAsync(t => t.Id == id, cancellationToken);
 
         if (package == null)
         {

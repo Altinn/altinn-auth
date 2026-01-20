@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 
@@ -90,7 +90,7 @@ public static class EntityTypeConstants
     ///   - EN: "Organization"  
     ///   - NN: "Organisasjon"  
     /// </remarks>
-    public static ConstantDefinition<EntityType> Organisation { get; } = new ConstantDefinition<EntityType>("8c216e2f-afdd-4234-9ba2-691c727bb33d")
+    public static ConstantDefinition<EntityType> Organization { get; } = new ConstantDefinition<EntityType>("8c216e2f-afdd-4234-9ba2-691c727bb33d")
     {
         Entity = new()
         {

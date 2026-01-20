@@ -16,9 +16,10 @@ public interface IPackageService
     /// <param name="term">The search term to filter packages.</param>
     /// <param name="resourceProviderCodes">Resource.Provider.Code (brreg, digdir, skatt)</param>
     /// <param name="searchInResources">Indicate if term should filter on resource values</param>
+    /// <param name="typeName">Filter for entityType</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>A list of search results containing packages that match the term.</returns>
-    Task<IEnumerable<SearchObject<PackageDto>>> Search(string term, List<string> resourceProviderCodes = null, bool searchInResources = false, CancellationToken cancellationToken = default);
+    Task<IEnumerable<SearchObject<PackageDto>>> Search(string term, List<string> resourceProviderCodes = null, bool searchInResources = false, string? typeName = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves the hierarchical structure of area groups.

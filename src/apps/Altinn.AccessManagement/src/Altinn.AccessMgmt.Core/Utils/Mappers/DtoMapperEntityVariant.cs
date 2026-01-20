@@ -20,9 +20,9 @@ public partial class DtoMapperEntityVariant : IDtoMapper
         };
     }
 
-    public static EntityTypeDto Convert(EntityType obj)
+    public static TypeDto Convert(EntityType obj)
     {
-        return new EntityTypeDto()
+        return new TypeDto()
         {
             Id = obj.Id,
             Name = obj.Name,

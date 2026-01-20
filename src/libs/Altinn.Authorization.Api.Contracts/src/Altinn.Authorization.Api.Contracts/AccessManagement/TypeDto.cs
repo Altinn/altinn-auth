@@ -3,7 +3,7 @@
 /// <summary>
 /// Extended EntityType
 /// </summary>
-public class EntityTypeDto
+public class TypeDto
 {
     /// <summary>
     /// Id

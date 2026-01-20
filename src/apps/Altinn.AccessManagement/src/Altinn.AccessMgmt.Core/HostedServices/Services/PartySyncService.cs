@@ -165,7 +165,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
             o.RefId = organization.OrganizationIdentifier.ToString();
             o.OrganizationIdentifier = organization.OrganizationIdentifier.ToString();
             o.VariantId = variant;
-            o.TypeId = EntityTypeConstants.Organisation;
+            o.TypeId = EntityTypeConstants.Organization;
         });
 
         return entity;

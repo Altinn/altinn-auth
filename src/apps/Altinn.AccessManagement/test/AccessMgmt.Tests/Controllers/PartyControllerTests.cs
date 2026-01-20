@@ -5,6 +5,7 @@ using System.Text.Json;
 using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Util;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.Authorization.Api.Contracts.Party;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.Common.AccessToken.Services;
@@ -136,7 +137,7 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                 Content = JsonContent.Create(new PartyBaseDto
                 {
                     PartyUuid = Guid.NewGuid(),
-                    EntityType = "Systembruker",
+                    EntityType = EntityTypeConstants.SystemUser.Entity.Name,
                     EntityVariantType = "BEDR", // Invalid variant type for SystemUser
                     DisplayName = "Test User"
                 }),
@@ -162,8 +163,8 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                 Content = JsonContent.Create(new PartyBaseDto
                 {
                     PartyUuid = Guid.NewGuid(),
-                    EntityType = "Systembruker",
-                    EntityVariantType = "StandardSystem",
+                    EntityType = EntityTypeConstants.SystemUser.Entity.Name,
+                    EntityVariantType = EntityVariantConstants.StandardSystem.Entity.Name,
                     DisplayName = "Test User"
                 }),
                 Headers =
@@ -187,8 +188,8 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                 Content = JsonContent.Create(new PartyBaseDto
                 {
                     PartyUuid = Guid.NewGuid(),
-                    EntityType = "Systembruker",
-                    EntityVariantType = "AgentSystem",
+                    EntityType = EntityTypeConstants.SystemUser.Entity.Name,
+                    EntityVariantType = EntityVariantConstants.AgentSystem.Entity.Name,
                     DisplayName = "Test User"
                 }),
                 Headers =

@@ -175,7 +175,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             .ToListAsync(cancellationToken);
 
         // Discard non-organization clients (for now). To be opened up for private individuals in the future.
-        var clients = clientAssignmentResult.Where(c => c.From.TypeId == EntityTypeConstants.Organisation.Entity.Id);
+        var clients = clientAssignmentResult.Where(c => c.From.TypeId == EntityTypeConstants.Organization.Entity.Id);
 
         // Fetch assignment packages
         QueryResponse<AssignmentPackage> assignmentPackageResult = null;

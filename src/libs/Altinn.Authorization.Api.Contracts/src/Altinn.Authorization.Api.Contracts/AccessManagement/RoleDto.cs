@@ -51,6 +51,11 @@ public class RoleDto
     public string LegacyUrn { get; set; }
 
     /// <summary>
+    /// Indicates if the package can be used as subject for authorization in resource policy
+    /// </summary>
+    public bool IsResourcePolicyAvailable { get; set; }
+
+    /// <summary>
     /// Provider
     /// </summary>
     public ProviderDto Provider { get; set; }
