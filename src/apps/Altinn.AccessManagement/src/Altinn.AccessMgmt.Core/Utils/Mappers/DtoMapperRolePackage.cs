@@ -17,7 +17,10 @@ public partial class DtoMapper : IDtoMapper
             Urn = obj.Urn,
             Description = obj.Description,
             IsDelegable = obj.IsDelegable,
-            IsAssignable = obj.IsAssignable
+            IsAssignable = obj.IsAssignable,
+            IsResourcePolicyAvailable = obj.IsAvailableForServiceOwners,
+            Area = obj.Area is not null ? Convert(obj.Area) : null,
+            Type = obj.EntityType is not null ? Convert(obj.EntityType) : null
         };
 
     /// <summary>Convert Package (with Area and Resources) to PackageDto.</summary>
