@@ -26,6 +26,13 @@ namespace Altinn.AccessManagement.Api.Enterprise.Extensions
                 _ => throw new ArgumentException("Unknown consent party urn")
             };
 
+            Authorization.Api.Contracts.Consent.ConsentPortalViewMode portalViewMode = details.PortalViewMode switch
+            {
+                Core.Models.Consent.ConsentPortalViewMode.Hide => Authorization.Api.Contracts.Consent.ConsentPortalViewMode.Hide,
+                Core.Models.Consent.ConsentPortalViewMode.Show => Authorization.Api.Contracts.Consent.ConsentPortalViewMode.Show,
+                _ => throw new ArgumentException("Unknown consent portal view mode")
+            };
+
             return new ConsentRequestDetailsDto
             {
                 Id = details.Id,
@@ -54,6 +61,7 @@ namespace Altinn.AccessManagement.Api.Enterprise.Extensions
                 ConsentRequestEvents = [.. details.ConsentRequestEvents.Select(static x => x.ToConsentRequestEventExternal())],
                 RedirectUrl = details.RedirectUrl,
                 ViewUri = details.ViewUri,
+                PortalViewMode = portalViewMode,
                 RequestMessage = details.RequestMessage != null
                     ? new Dictionary<string, string>(details.RequestMessage)
                     : null

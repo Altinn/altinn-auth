@@ -96,7 +96,7 @@ namespace Altinn.AccessManagement.Persistence.Consent
             DateTimeOffset createdTime = DateTime.UtcNow;
 
             const string consentRquestQuery = /*strpsql*/@"
-                INSERT INTO consent.consentrequest (consentRequestId, fromPartyUuid, requiredDelegatorUuid, toPartyUuid, handledByPartyUuid, validTo, requestMessage, templateId, templateVersion, redirectUrl)
+                INSERT INTO consent.consentrequest (consentRequestId, fromPartyUuid, requiredDelegatorUuid, toPartyUuid, handledByPartyUuid, validTo, requestMessage, templateId, templateVersion, redirectUrl, portalviewmode)
                 VALUES (
                 @consentRequestId, 
                 @fromPartyUuid,
@@ -107,7 +107,8 @@ namespace Altinn.AccessManagement.Persistence.Consent
                 @requestMessage,
                 @templateId, 
                 @templateVersion, 
-                @redirectUrl)
+                @redirectUrl,
+                @portalViewMode)
                 RETURNING consentRequestId;
                 ";
 
@@ -162,6 +163,7 @@ namespace Altinn.AccessManagement.Persistence.Consent
             command.Parameters.Add<Dictionary<string,string>>("requestMessage", NpgsqlDbType.Hstore).TypedValue = consentRequest.RequestMessage;
             command.Parameters.Add<string>("redirectUrl", NpgsqlDbType.Text).TypedValue = consentRequest.RedirectUrl;
             command.Parameters.Add<DateTimeOffset>("validTo", NpgsqlDbType.TimestampTz).TypedValue = consentRequest.ValidTo.ToOffset(TimeSpan.Zero);
+            command.Parameters.Add(new NpgsqlParameter<ConsentPortalViewMode>("portalViewMode", consentRequest.PortalViewMode));
 
             await command.PrepareAsync(cancellationToken);
             try
@@ -331,6 +333,7 @@ namespace Altinn.AccessManagement.Persistence.Consent
                     ConsentRequestEvents = consentRequestEvents,
                     TemplateId = await reader.GetFieldValueAsync<string>("templateId", cancellationToken: cancellationToken),
                     TemplateVersion = await reader.GetFieldValueAsync<int?>("templateVersion", cancellationToken: cancellationToken),
+                    PortalViewMode = await reader.GetFieldValueAsync<ConsentPortalViewMode>("portalviewmode", cancellationToken: cancellationToken)
                 };
             }
 
@@ -469,6 +472,7 @@ namespace Altinn.AccessManagement.Persistence.Consent
                     ConsentRequestEvents = await GetEvents(consentRequestId, cancellationToken: cancellationToken),
                     TemplateId = await reader.GetFieldValueAsync<string>("templateId", cancellationToken: cancellationToken),
                     TemplateVersion = await reader.GetFieldValueAsync<int?>("templateVersion", cancellationToken: cancellationToken),
+                    PortalViewMode = await reader.GetFieldValueAsync<ConsentPortalViewMode>("portalviewmode", cancellationToken: cancellationToken)
                 };
 
                 results.Add(item);

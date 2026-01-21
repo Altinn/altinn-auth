@@ -69,5 +69,10 @@
         /// The URI for the view that should be shown to the user when requesting consent.
         /// </summary>
         public string ViewUri { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Defines if the consent request should be shown in a portal or not.
+        /// </summary>
+        public ConsentPortalViewMode PortalViewMode { get; set; }
     }
 }

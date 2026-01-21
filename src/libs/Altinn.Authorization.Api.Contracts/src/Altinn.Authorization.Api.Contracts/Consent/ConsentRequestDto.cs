@@ -44,5 +44,10 @@
         /// Redirect url for the user to be redirected after consent is given or denied.
         /// </summary>
         public required string RedirectUrl { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Defines the portal view mode for the consent request. Hide is default
+        /// </summary>
+        public ConsentPortalViewMode? PortalViewMode { get; set; } = ConsentPortalViewMode.Hide;
     }
 }

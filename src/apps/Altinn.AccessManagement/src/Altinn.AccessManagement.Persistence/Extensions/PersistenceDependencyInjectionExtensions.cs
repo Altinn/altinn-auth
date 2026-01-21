@@ -164,6 +164,12 @@ public static class PersistenceDependencyInjectionExtensions
                 ConsentRequestEventType.Used => "used",
                 _ => null,
             }))
+            .MapEnum<ConsentPortalViewMode>("consent.portal_view_mode", new EnumNameTranslator<ConsentPortalViewMode>(static value => value switch
+            {
+                ConsentPortalViewMode.Hide => "hide",
+                ConsentPortalViewMode.Show => "show",
+                _ => null,
+            }))
             .AddYuniqlMigrations(cfg =>
             {
                 cfg.Workspace = "/";

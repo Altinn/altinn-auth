@@ -26,7 +26,10 @@ namespace Altinn.AccessManagement.Api.Enterprise.Utils
                 ValidTo = consentRequestExternal.ValidTo,
                 ConsentRights = consentRequestExternal.ConsentRights.Select(static x => x.ToConsentRight()).ToList(),
                 RequestMessage = consentRequestExternal.RequestMessage,
-                RedirectUrl = consentRequestExternal.RedirectUrl
+                RedirectUrl = consentRequestExternal.RedirectUrl,
+                PortalViewMode = consentRequestExternal.PortalViewMode != null
+                    ? (Core.Models.Consent.ConsentPortalViewMode)consentRequestExternal.PortalViewMode
+                    : Core.Models.Consent.ConsentPortalViewMode.Hide
             };
         }
 

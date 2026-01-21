@@ -13,6 +13,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Altinn.AccessManagement.Api.Enduser\Altinn.AccessManagement.Api.Enduser.csproj" />
+        <ProjectReference Include="..\Altinn.AccessManagement.Api.Enterprise\Altinn.AccessManagement.Api.Enterprise.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Api.Internal\Altinn.AccessManagement.Api.Internal.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Api.Metadata\Altinn.AccessManagement.Api.Metadata.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Api.ServiceOwner\Altinn.AccessManagement.Api.ServiceOwner.csproj" />

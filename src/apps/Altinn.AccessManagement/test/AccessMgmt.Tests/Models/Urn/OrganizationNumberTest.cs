@@ -19,10 +19,10 @@ namespace Altinn.AccessManagement.Tests.Models.Urn
         [Fact]
         public void TestOrganizationNumberJson_DeSerializng_Success()
         {
-            string orgNumberString = @"""123456789""";
+            string orgNumberString = @"""923609016""";
             OrganizationNumber orgNr = JsonSerializer.Deserialize<OrganizationNumber>(orgNumberString, JsonOptions);
 
-            Assert.Equal("123456789", orgNr.ToString());
+            Assert.Equal("923609016", orgNr.ToString());
         }
 
         /// <summary>
@@ -60,10 +60,10 @@ namespace Altinn.AccessManagement.Tests.Models.Urn
         [Fact]
         public void TestOrganizationNumberJson_Serializng_Success()
         {
-            OrganizationNumber orgNr = OrganizationNumber.Parse("123456789");
+            OrganizationNumber orgNr = OrganizationNumber.Parse("923609016");
             string orgNrJson = JsonSerializer.Serialize(orgNr, JsonOptions);
 
-            Assert.Equal(@"""123456789""", orgNrJson);
+            Assert.Equal(@"""923609016""", orgNrJson);
         }
 
         /// <summary>
@@ -77,8 +77,8 @@ namespace Altinn.AccessManagement.Tests.Models.Urn
         [Fact]
         public void TestOrganizationNumberString_Parse_Success()
         {
-            OrganizationNumber orgNr = OrganizationNumber.Parse("123456789");
-            Assert.Equal("123456789", orgNr.ToString());
+            OrganizationNumber orgNr = OrganizationNumber.Parse("923609016");
+            Assert.Equal("923609016", orgNr.ToString());
         }
 
         /// <summary>
@@ -92,9 +92,9 @@ namespace Altinn.AccessManagement.Tests.Models.Urn
         [Fact]
         public void TestOrganizationNumberReadOnlyCharSpan_Parse_Success()
         {
-            ReadOnlySpan<char> orgNrSpan = "123456789";
+            ReadOnlySpan<char> orgNrSpan = "923609016";
             OrganizationNumber orgNr = OrganizationNumber.Parse(orgNrSpan);
-            Assert.Equal("123456789", orgNr.ToString());
+            Assert.Equal("923609016", orgNr.ToString());
         }
 
         /// <summary>
@@ -156,8 +156,8 @@ namespace Altinn.AccessManagement.Tests.Models.Urn
         public void TestOrganizationNumber_GetExample_Success()
         {
             List<OrganizationNumber> expected = new List<OrganizationNumber>();
-            expected.Add(OrganizationNumber.Parse("987654321"));
-            expected.Add(OrganizationNumber.Parse("123456789"));
+            expected.Add(OrganizationNumber.Parse("937884117"));
+            expected.Add(OrganizationNumber.Parse("923609016"));
 
             List<OrganizationNumber> actual = OrganizationNumber.GetExamples(new Swashbuckle.Examples.ExampleDataOptions()).ToList();
 
@@ -180,7 +180,7 @@ namespace Altinn.AccessManagement.Tests.Models.Urn
         [Fact]
         public void TestOrganizationNumber_TryFormat_Success()
         {
-            string expected = "987654321";
+            string expected = "923609016";
             OrganizationNumber organizationNumber = OrganizationNumber.Parse(expected);
             Span<char> result = new Span<char>(new char[expected.Length]);
             bool ok = organizationNumber.TryFormat(result, out int charsWritten, null, null);
@@ -200,7 +200,7 @@ namespace Altinn.AccessManagement.Tests.Models.Urn
         [Fact]
         public void TestOrganizationNumber_TryFormat_Fail()
         {
-            string input = "987654321";
+            string input = "923609016";
             OrganizationNumber organizationNumber = OrganizationNumber.Parse(input);
             Span<char> result = new Span<char>(new char[6]);
             Span<char> expected = new Span<char>(new char[6]);

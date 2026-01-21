@@ -48,6 +48,13 @@ namespace Altinn.AccessManagement.Api.Internal.Extensions
                 handledBy = Authorization.Api.Contracts.Consent.ConsentPartyUrn.PartyUuid.Create(handledByUuid);
             }
 
+            Altinn.Authorization.Api.Contracts.Consent.ConsentPortalViewMode? portalViewMode = details.PortalViewMode switch
+            {
+                Core.Models.Consent.ConsentPortalViewMode.Hide => Altinn.Authorization.Api.Contracts.Consent.ConsentPortalViewMode.Hide,
+                Core.Models.Consent.ConsentPortalViewMode.Show => Altinn.Authorization.Api.Contracts.Consent.ConsentPortalViewMode.Show,
+                _ => null
+            };
+
             return new ConsentRequestDetailsBffDto
             {
                 Id = details.Id,
@@ -63,7 +70,8 @@ namespace Altinn.AccessManagement.Api.Internal.Extensions
                 ViewUri = details.ViewUri,
                 TemplateId = details.TemplateId,
                 TemplateVersion = details.TemplateVersion,
-                Requestmessage = details.RequestMessage
+                Requestmessage = details.RequestMessage,
+                PortalViewMode = portalViewMode
             };
         }
     }

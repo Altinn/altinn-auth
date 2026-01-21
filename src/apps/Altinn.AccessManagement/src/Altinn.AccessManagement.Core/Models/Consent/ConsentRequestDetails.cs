@@ -79,5 +79,10 @@
         /// The version of the consent template.
         /// </summary>
         public int? TemplateVersion { get; set; }
+
+        /// <summary>
+        /// Defines the view mode for the consent portal.
+        /// </summary>
+        public ConsentPortalViewMode PortalViewMode { get; set; }
     }
 }
