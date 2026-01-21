@@ -11,8 +11,8 @@ internal static class ConnectionValidation
 {
     internal static RuleExpression ValidateReadConnection(string party, string from, string to) =>
         ValidationComposer.All(
-            ConnectionParameterRules.Party(party),
-            ValidationComposer.Any(ConnectionParameterRules.PartyFrom(from), ConnectionParameterRules.PartyTo(to)),
+            ParameterValidation.Party(party),
+            ValidationComposer.Any(ParameterValidation.PartyFrom(from), ParameterValidation.PartyTo(to)),
             ConnectionCombinationRules.PartyMatchesFromOrTo(party, from, to)
         );
 
@@ -21,9 +21,9 @@ internal static class ConnectionValidation
     /// </summary>
     internal static RuleExpression ValidateAddAssignmentWithConnectionInput(string party, string from, string to) =>
         ValidationComposer.All(
-            ConnectionParameterRules.Party(party),
-            ConnectionParameterRules.PartyFrom(from),
-            ConnectionParameterRules.PartyTo(to),
+            ParameterValidation.Party(party),
+            ParameterValidation.PartyFrom(from),
+            ParameterValidation.PartyTo(to),
             ConnectionCombinationRules.PartyEqualsFrom(party, from)
         );
 
@@ -32,7 +32,7 @@ internal static class ConnectionValidation
     /// </summary>
     internal static RuleExpression ValidateAddAssignmentWithPersonInput(string personIdentifier, string personLastName) =>
         ValidationComposer.All(
-            ConnectionParameterRules.PersonInput(personIdentifier, personLastName)
+            ParameterValidation.PersonInput(personIdentifier, personLastName)
         );
 
     /// <summary>
@@ -40,9 +40,9 @@ internal static class ConnectionValidation
     /// </summary>
     internal static RuleExpression ValidateAddAssignmentWithPersonInput(string party, string from, string personIdentifier, string personLastName) =>
         ValidationComposer.All(
-            ConnectionParameterRules.Party(party),
-            ConnectionParameterRules.PartyFrom(from),
-            ConnectionParameterRules.PersonInput(personIdentifier, personLastName),
+            ParameterValidation.Party(party),
+            ParameterValidation.PartyFrom(from),
+            ParameterValidation.PersonInput(personIdentifier, personLastName),
             ConnectionCombinationRules.PartyEqualsFrom(party, from)
         );
 
@@ -51,9 +51,9 @@ internal static class ConnectionValidation
     /// </summary>
     internal static RuleExpression ValidateAddPackageToConnectionWithConnectionInput(string party, string from, string to, Guid? packageId, string packageUrn) =>
         ValidationComposer.All(
-            ConnectionParameterRules.Party(party),
-            ConnectionParameterRules.PartyFrom(from),
-            ConnectionParameterRules.PartyTo(to),
+            ParameterValidation.Party(party),
+            ParameterValidation.PartyFrom(from),
+            ParameterValidation.PartyTo(to),
             ConnectionCombinationRules.ExclusivePackageReference(packageId, packageUrn),
             ConnectionCombinationRules.PartyEqualsFrom(party, from)
         );
@@ -63,9 +63,9 @@ internal static class ConnectionValidation
     /// </summary>
     internal static RuleExpression ValidateAddPackageToConnectionWithPersonInput(string party, string from, string personIdentifier, string personLastName, Guid? packageId, string packageUrn) =>
         ValidationComposer.All(
-            ConnectionParameterRules.Party(party),
-            ConnectionParameterRules.PartyFrom(from),
-            ConnectionParameterRules.PersonInput(personIdentifier, personLastName),
+            ParameterValidation.Party(party),
+            ParameterValidation.PartyFrom(from),
+            ParameterValidation.PersonInput(personIdentifier, personLastName),
             ConnectionCombinationRules.ExclusivePackageReference(packageId, packageUrn),
             ConnectionCombinationRules.PartyEqualsFrom(party, from)
         );
@@ -75,9 +75,9 @@ internal static class ConnectionValidation
     /// </summary>
     internal static RuleExpression ValidateRemoveConnection(string party, string from, string to) =>
         ValidationComposer.All(
-            ConnectionParameterRules.Party(party),
-            ConnectionParameterRules.PartyFrom(from),
-            ConnectionParameterRules.PartyTo(to),
+            ParameterValidation.Party(party),
+            ParameterValidation.PartyFrom(from),
+            ParameterValidation.PartyTo(to),
             ConnectionCombinationRules.RemovePartyMatchesFromOrTo(party, from, to)
         );
 
@@ -86,9 +86,9 @@ internal static class ConnectionValidation
     /// </summary>
     internal static RuleExpression ValidateRemovePackageFromConnection(string party, string from, string to, Guid? packageId, string packageUrn) =>
         ValidationComposer.All(
-            ConnectionParameterRules.Party(party),
-            ConnectionParameterRules.PartyFrom(from),
-            ConnectionParameterRules.PartyTo(to),
+            ParameterValidation.Party(party),
+            ParameterValidation.PartyFrom(from),
+            ParameterValidation.PartyTo(to),
             ConnectionCombinationRules.ExclusivePackageReference(packageId, packageUrn),
             ConnectionCombinationRules.RemovePartyMatchesFromOrTo(party, from, to)
         );

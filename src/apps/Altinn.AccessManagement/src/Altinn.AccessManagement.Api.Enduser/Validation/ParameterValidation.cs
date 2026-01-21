@@ -1,5 +1,6 @@
-﻿using Altinn.AccessMgmt.Core.Utils.Models;
+using Altinn.AccessMgmt.Core.Utils.Models;
 using Altinn.AccessMgmt.Core.Validation;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.ProblemDetails;
 
@@ -10,7 +11,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Validation;
 /// Keywords (e.g. 'me', 'all') are recognized for forward compatibility, but are not yet active.
 /// Clients should currently only send GUID values.
 /// </summary>
-internal static class ConnectionParameterRules
+internal static class ParameterValidation
 {
     private static readonly string[] PartyKeywords = ["me"];
 

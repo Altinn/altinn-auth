@@ -110,4 +110,7 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor PersonInputRequiredForPersonAssignment { get; }
     = _factory.Create(24, HttpStatusCode.BadRequest, "Target party is a person. Include a PersonInput object in the request body with both personIdentifier and lastName to perform this operation.");
+
+    public static ProblemDescriptor AgentHasExistingDelegations { get; }  
+        = _factory.Create(25, HttpStatusCode.BadRequest, "Agent has existing delegations.");
 }

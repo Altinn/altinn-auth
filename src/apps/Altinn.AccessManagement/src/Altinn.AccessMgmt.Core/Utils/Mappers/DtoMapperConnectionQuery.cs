@@ -184,7 +184,7 @@ public partial class DtoMapper : IDtoMapper
         };
     }
 
-    public static List<AgentDto> ConvertToClientDelegationAgentDto(List<ConnectionQueryExtendedRecord> connections)
+    public static List<AgentDto> ConvertToAgentDto(List<ConnectionQueryExtendedRecord> connections)
     {
         var agents = connections.GroupBy(c => c.ToId);
         var result = new List<AgentDto>();
