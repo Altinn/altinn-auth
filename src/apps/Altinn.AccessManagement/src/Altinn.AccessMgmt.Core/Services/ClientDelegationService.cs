@@ -282,7 +282,7 @@ public class ClientDelegationService(
             
             if (clientAssignment is null)
             {
-                errorBuilder.Add(ValidationErrors.AssignmentHasActiveConnections, $"BODY/values[{input.RoleIdx}]", [new($"{input.Role.Entity.Urn}", $"Role is not assigned to '{partyId}' from '{fromId}'.")]);
+                errorBuilder.Add(ValidationErrors.MissingAssignment, $"BODY/values[{input.RoleIdx}]", [new($"{input.Role.Entity.Urn}", $"Role is not assigned to '{partyId}' from '{fromId}'.")]);
                 continue;
             }
 
