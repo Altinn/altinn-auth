@@ -206,17 +206,15 @@ public class ClientDelegationService(
             .Select((r, idx) =>
             {
                 var roleExist = RoleConstants.TryGetByCode(r.Role, out var role);
-
-                var pkgs = new List<(bool PackageExist, Package Package, string InputPackage, int PackageIdx)>();
-                var pkg = r.Packages.Select((p, idx) =>
+                var pkgs = r.Packages.Select((p, idx) =>
                 {
                     var packageExist = PackageConstants.TryGetByUrn(p, out var package);
                     return new
                     {
-                        PackageIdx = idx,
-                        InputPackage = p,
-                        Package = package,
                         PackageExist = packageExist,
+                        Package = package,
+                        InputPackage = p,
+                        PackageIdx = idx,
                     };
                 });
 
@@ -269,7 +267,7 @@ public class ClientDelegationService(
         }
 
         var agentAssignment = await db.Assignments
-            .FirstOrDefaultAsync(a => a.FromId == partyId && a.ToId == toId && a.RoleId == RoleConstants.Agent, cancellationToken: cancellationToken);
+            .FirstOrDefaultAsync(a => a.FromId == partyId && a.ToId == toId && a.RoleId == RoleConstants.Agent.Id, cancellationToken: cancellationToken);
 
         if (agentAssignment is null)
         {
@@ -281,6 +279,12 @@ public class ClientDelegationService(
         {
             var pkgIds = input.Packages.Select(p => p.Package).Select(p => p.Id).Distinct();
             var clientAssignment = await db.Assignments.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == fromId && t.ToId == partyId && t.RoleId == input.Role.Id, cancellationToken);
+            
+            if (clientAssignment is null)
+            {
+                errorBuilder.Add(ValidationErrors.AssignmentHasActiveConnections, $"BODY/values[{input.RoleIdx}]", [new($"{input.Role.Entity.Urn}", $"Role is not assigned to '{partyId}' from '{fromId}'.")]);
+                continue;
+            }
 
             // check ass must exist
             var rolePackages = await db.RolePackages.AsNoTracking().Where(t => t.RoleId == input.Role.Id && pkgIds.Contains(t.PackageId)).ToListAsync(cancellationToken);
@@ -330,6 +334,11 @@ public class ClientDelegationService(
                     PackageId = pkgId,
                 });
             }
+        }
+
+        if (errorBuilder.TryBuild(out errorResult))
+        {
+            return errorResult;
         }
 
         await db.SaveChangesAsync(cancellationToken);

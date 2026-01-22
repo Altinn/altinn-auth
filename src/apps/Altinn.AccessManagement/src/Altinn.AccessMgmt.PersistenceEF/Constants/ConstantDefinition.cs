@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 
@@ -120,5 +121,10 @@ public sealed class ConstantDefinition<T>(Guid id)
         }
 
         return result;
+    }
+
+    public override string ToString()
+    {
+        return _id.ToString();
     }
 }

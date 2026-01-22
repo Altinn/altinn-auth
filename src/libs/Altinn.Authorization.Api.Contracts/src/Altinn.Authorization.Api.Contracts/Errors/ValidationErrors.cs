@@ -138,5 +138,11 @@ public static class ValidationErrors
     /// Delegation has active connections.
     /// </summary>
     public static ValidationErrorDescriptor DelegationHasActiveConnections { get; }
-        = _factory.Create(10, "The delegation has one or more active access packages associated with it. Set cascade to true to remove the delegation and its active access packages.");
+        = _factory.Create(31, "The delegation has one or more active access packages associated with it. Set cascade to true to remove the delegation and its active access packages.");
+    
+    /// <summary>
+    /// Delegation has active connections.
+    /// </summary>
+    public static ValidationErrorDescriptor MissingAssignment { get; }
+        = _factory.Create(32, "Assignment of role do not exist.");
 }
