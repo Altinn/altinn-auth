@@ -41,5 +41,5 @@ public enum ReferenceType
 
     [EnumMember(Value = "ServiceEditionVersion")]
     [JsonStringEnumMemberName("ServiceEditionVersion")]
-    ServiceEditionVersion = 6,
+    ServiceEditionVersion = 7,
 }
