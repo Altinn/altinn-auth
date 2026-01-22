@@ -187,6 +187,7 @@ public class ClientDelegationController(
     }
 
     [HttpPost("agents/accesspackages")]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
     [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE)]
     [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_WRITE)]
     [ProducesResponseType<List<DelegationDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
