@@ -1,6 +1,7 @@
 ﻿using Altinn.AccessManagement.Api.Metadata.Translation;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils.Models;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.AspNetCore.Mvc;
@@ -40,7 +41,18 @@ public class PackagesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<SearchObject<PackageDto>>>> Search([FromQuery] string term, [FromQuery] List<string> resourceProviderCode = null, [FromQuery] bool searchInResources = false, [FromQuery] string? typeName = null)
     {
-        var res = await packageService.Search(term, resourceProviderCode, searchInResources, typeName);
+        Guid? typeId = null;
+        if (string.IsNullOrEmpty(typeName))
+        {
+            if (!EntityTypeConstants.TryGetByName(typeName, out var type))
+            {
+                return Problem($"Type '{typeName}' not found. Try Organisasjon or Person");
+            }
+
+            typeId = type.Id;
+        }
+
+        var res = await packageService.Search(term, resourceProviderCode, searchInResources, typeId);
         if (res == null || !res.Any())
         {
             return NoContent();
