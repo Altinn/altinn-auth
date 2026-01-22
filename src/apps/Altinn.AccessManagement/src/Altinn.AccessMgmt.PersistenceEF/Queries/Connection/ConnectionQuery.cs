@@ -1,11 +1,10 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
+﻿using System.Text.Json;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Text.Json;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 
@@ -31,16 +30,16 @@ public class ConnectionQuery(AppDbContext db)
     {
         try
         {
-            var baseQuery = direction == ConnectionQueryDirection.FromOthers
-                ? useNewQuery ? BuildBaseQueryFromOthersNew(db, filter) : BuildBaseQueryFromOthers(db, filter)
+            var baseQuery = direction == ConnectionQueryDirection.FromOthers 
+                ? useNewQuery ? BuildBaseQueryFromOthersNew(db, filter, true) : BuildBaseQueryFromOthers(db, filter)
                 : BuildBaseQueryToOthers(db, filter);
 
-            var result = (await baseQuery.AsNoTracking().ToListAsync(ct)).Select(ToDtoEmpty).ToList();
+            var result = baseQuery.Select(ToDtoEmpty).ToList();
             if (filter.IncludePackages || filter.EnrichPackageResources)
             {
                 try
                 {
-                    var pkgs = await LoadPackagesByKeyAsync(baseQuery, filter, ct);
+                    var pkgs = await LoadPackagesByKeyAsync(result, filter, ct);
                     if (filter.EnrichPackageResources)
                     {
                         await EnrichPackageResourcesAsync(pkgs, filter, ct);
@@ -93,14 +92,14 @@ public class ConnectionQuery(AppDbContext db)
     {
         try
         {
-            var baseQuery = BuildBaseQueryFromOthersNew(db, filter);
+            var baseQuery = BuildBaseQueryFromOthersNew(db, filter, false);
             var queryString = baseQuery.ToQueryString();
 
             var query = EnrichFromEntities(filter, baseQuery);
             var data = await query.AsNoTracking().ToListAsync(ct);
             var result = data.Select(ToDtoEmpty).ToList();
 
-            var pkgs = await LoadPackagesByKeyAsync(baseQuery, filter, ct);
+            var pkgs = await LoadPackagesByKeyAsync(result, filter, ct);
             return Attach(result, pkgs, p => p.Id, (dto, list) => dto.Packages = list);
         }
         catch (Exception ex)
@@ -109,7 +108,7 @@ public class ConnectionQuery(AppDbContext db)
         }
     }
 
-    private IQueryable<ConnectionQueryBaseRecord> BuildBaseQueryFromOthersNew(AppDbContext db, ConnectionQueryFilter filter)
+    private IQueryable<ConnectionQueryBaseRecord> BuildBaseQueryFromOthersNew(AppDbContext db, ConnectionQueryFilter filter, bool delayChildNesting)
     {
         var toId = filter.ToIds.First();
         var fromSet = filter.FromIds?.Count > 0 ? new HashSet<Guid>(filter.FromIds) : null;
@@ -232,26 +231,27 @@ public class ConnectionQuery(AppDbContext db)
             ? a1.Concat(rolemap).Concat(delegations)
             : a1.Concat(rolemap);
 
-        var fromChildren =
-            a2
-                .Join(
-                    db.Entities,
-                    c => c.FromId,
-                    e => e.ParentId,
-                    (c, e) => new ConnectionQueryBaseRecord
-                    {
-                        AssignmentId = c.AssignmentId,
-                        DelegationId = c.DelegationId,
-                        FromId = e.Id,
-                        ToId = c.ToId,
-                        RoleId = c.RoleId,
-                        ViaId = c.FromId,
-                        ViaRoleId = c.ViaRoleId,
-                        Reason = ConnectionReason.Hierarchy,
-                        IsKeyRoleAccess = c.IsKeyRoleAccess,
-                        IsMainUnitAccess = true,
-                        IsRoleMap = c.IsRoleMap
-                    });
+        // Temporary until GetPipConnectionPackagesAsync is removed
+        var fromChildren = delayChildNesting ? a2 :
+        a2
+        .Join(
+            db.Entities,
+            c => c.FromId,
+            e => e.ParentId,
+            (c, e) => new ConnectionQueryBaseRecord
+            {
+                AssignmentId = c.AssignmentId,
+                DelegationId = c.DelegationId,
+                FromId = e.Id,
+                ToId = c.ToId,
+                RoleId = c.RoleId,
+                ViaId = c.FromId,
+                ViaRoleId = c.ViaRoleId,
+                Reason = ConnectionReason.Hierarchy,
+                IsKeyRoleAccess = c.IsKeyRoleAccess,
+                IsMainUnitAccess = true,
+                IsRoleMap = c.IsRoleMap
+            });
 
         var innehaverConnections =
             from reviRegnConnection in a2
@@ -259,10 +259,10 @@ public class ConnectionQuery(AppDbContext db)
             join innehaver in db.Entities on innehaverConnection.ToId equals innehaver.Id
             join enk in db.Entities on innehaverConnection.FromId equals enk.Id
             where reviRegnRoleSet.Contains(reviRegnConnection.RoleId)
-               && innehaverConnection.RoleId == RoleConstants.Innehaver.Id
-               && enk.VariantId == EntityVariantConstants.ENK.Id
-               && innehaver.DateOfDeath == null
-               && (!enk.IsDeleted || (enk.DeletedAt != null && enk.DeletedAt.Value.AddYears(2) > DateTime.UtcNow))
+                && innehaverConnection.RoleId == RoleConstants.Innehaver.Id
+                && enk.VariantId == EntityVariantConstants.ENK.Id
+                && innehaver.DateOfDeath == null
+                && (!enk.IsDeleted || (enk.DeletedAt != null && enk.DeletedAt.Value.AddYears(2) > DateTime.UtcNow))
             select new ConnectionQueryBaseRecord()
             {
                 AssignmentId = reviRegnConnection.AssignmentId,
@@ -285,7 +285,7 @@ public class ConnectionQuery(AppDbContext db)
             : a2.Concat(fromChildren).Concat(innehaverConnections);
         */
 
-        var query = a2.Concat(fromChildren).Concat(innehaverConnections);
+        var query = !delayChildNesting ? a2.Concat(fromChildren).Concat(innehaverConnections) : a2.Concat(innehaverConnections);
 
         return
             query
@@ -323,8 +323,6 @@ public class ConnectionQuery(AppDbContext db)
         var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
         var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
         var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
-
-        var queries = new List<IQueryable<ConnectionQueryBaseRecord>>();
 
         #region Find all direct KeyRole assignments
         var keyRoleAssignments =
@@ -707,7 +705,7 @@ public class ConnectionQuery(AppDbContext db)
             }
         }
 
-        SortedList<string, Entity> entityDict = [];
+        SortedList<Guid, Entity> entityDict = [];
         var entitites = await db
             .Entities
             .AsNoTracking()
@@ -754,34 +752,103 @@ public class ConnectionQuery(AppDbContext db)
 
         foreach (var entity in entitites)
         {
-            entityDict.Add(entity.Id.ToString(), entity);
+            entityDict.Add(entity.Id, entity);
+        }
+
+        SortedList<Guid, List<Entity>> childrenDict = [];
+        var allChildren = await db
+            .Entities
+            .AsNoTracking()
+            .Where(e => e.ParentId != null && entityDict.Keys.Contains((Guid)e.ParentId))
+            .Select(e => new Entity()
+            {
+                Id = e.Id,
+                Name = e.Name,
+                OrganizationIdentifier = e.OrganizationIdentifier,
+                ParentId = e.ParentId,
+                Parent = entityDict[(Guid)e.ParentId],
+                PersonIdentifier = e.PersonIdentifier,
+                DateOfBirth = e.DateOfBirth,
+                DateOfDeath = e.DateOfDeath,
+                PartyId = e.PartyId,
+                IsDeleted = e.IsDeleted,
+                DeletedAt = e.DeletedAt,
+                UserId = e.UserId,
+                Username = e.Username,
+                TypeId = e.TypeId,
+                VariantId = e.VariantId,
+            })
+            .Distinct()
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        foreach (var child in allChildren)
+        {
+            if (!childrenDict.ContainsKey((Guid)child.ParentId))
+            {
+                childrenDict.Add((Guid)child.ParentId, [child]);
+            }
+            else
+            {
+                childrenDict[(Guid)child.ParentId].Add(child);
+            }
         }
 
         // Could be cached
-        var roles = await db.Roles.Include(r => r.Provider).ThenInclude(p => p.Type).ToListAsync();
+        var roles = await db.Roles.Include(r => r.Provider).ThenInclude(p => p.Type).AsNoTracking().ToListAsync(ct);
         SortedList<string, Role> sortedRoles = [];
         foreach (var role in roles)
         {
             sortedRoles.Add(role.Id.ToString(), role);
         }
 
+        List<ConnectionQueryExtendedRecord> keysWithChildren = [];
         foreach (var c in allKeys)
         {
-            c.From = entityDict[c.FromId.ToString()];
-            c.To = entityDict[c.ToId.ToString()];
-            c.Via = c.ViaId != null ? entityDict[c.ViaId.ToString()] : null;
+            if (excludeDeleted && ((direction == ConnectionQueryDirection.FromOthers && c.From.IsDeleted) || (direction == ConnectionQueryDirection.ToOthers && c.To.IsDeleted)))
+            {
+                continue;
+            }
+
+            c.From = entityDict[c.FromId];
+            c.To = entityDict[c.ToId];
+            c.Via = c.ViaId != null ? entityDict[(Guid)c.ViaId] : null;
             c.Role = c.RoleId != Guid.Empty ? sortedRoles[c.RoleId.ToString()] : null;
             c.ViaRole = c.ViaRoleId != null && c?.ViaRoleId != Guid.Empty ? sortedRoles[c.ViaRoleId.ToString()] : null;
+            keysWithChildren.Add(c);
+
+            if (c.Reason != ConnectionReason.Hierarchy && childrenDict.TryGetValue(c.From.Id, out List<Entity> childrenForKey))
+            {
+                foreach (var child in childrenForKey)
+                {
+                    keysWithChildren.Add(new()
+                    {
+                        AssignmentId = c.AssignmentId,
+                        FromId = child.Id,
+                        From = child,
+                        To = c.To,
+                        ToId = c.ToId,
+                        ViaId = c.FromId,
+                        Via = c.From,
+                        RoleId = c.RoleId,
+                        Role = c.Role,
+                        ViaRoleId = c.ViaRoleId,
+                        ViaRole = c.ViaRole,
+
+                        DelegationId = c.DelegationId,
+                        IsKeyRoleAccess = c.IsKeyRoleAccess,
+                        IsMainUnitAccess = true,
+                        IsRoleMap = c.IsRoleMap,
+                        Reason = ConnectionReason.Hierarchy,
+
+                        Packages = c.Packages,
+                        Resources = c.Resources
+                    });
+                }
+            }
         }
 
-        if (excludeDeleted)
-        {
-            return direction == ConnectionQueryDirection.FromOthers
-                ? [.. allKeys.Where(k => !k.From.IsDeleted)]
-                : [.. allKeys.Where(k => !k.To.IsDeleted)];
-        }
-
-        return allKeys;
+        return keysWithChildren;
     }
 
     private IQueryable<ConnectionQueryRecord> EnrichFromEntities(ConnectionQueryFilter filter, IQueryable<ConnectionQueryBaseRecord> allKeys)
@@ -807,55 +874,145 @@ public class ConnectionQuery(AppDbContext db)
         return query;
     }
 
-    private async Task<ConnectionIndex<ConnectionQueryPackage>> LoadPackagesByKeyAsync(IQueryable<ConnectionQueryBaseRecord> allKeys, ConnectionQueryFilter filter, CancellationToken ct)
+    private async Task<ConnectionIndex<ConnectionQueryPackage>> LoadPackagesByKeyAsync(IEnumerable<ConnectionQueryExtendedRecord> keys, ConnectionQueryFilter filter, CancellationToken ct)
     {
         var packageSet = filter.PackageIds?.Count > 0 ? new HashSet<Guid>(filter.PackageIds) : null;
-
-        var assignmentPackages = allKeys
-            .Join(db.AssignmentPackages, c => c.AssignmentId, ap => ap.AssignmentId, (c, ap) => new { c, ap })
-            .WhereIf(packageSet is not null, x => packageSet!.Contains(x.ap.PackageId));
-
-        var rolePackages = allKeys
-            .Join(db.RolePackages, c => c.RoleId, rp => rp.RoleId, (c, rp) => new { c, rp })
-            .Where(t => t.rp.HasAccess && (t.rp.EntityVariantId == null || db.Entities.Any(e => t.c.FromId == e.Id && t.rp.EntityVariantId == e.VariantId)))
-            .WhereIf(packageSet is not null, x => packageSet!.Contains(x.rp.PackageId));
-
-        var delegationPackages = allKeys
-            .Join(db.DelegationPackages, c => c.DelegationId, dp => dp.DelegationId, (c, dp) => new { c, dp })
-            .WhereIf(packageSet is not null, x => packageSet!.Contains(x.dp.PackageId));
-
-        var flat = filter.OnlyUniqueResults
-            ? assignmentPackages
-                .Select(x => new { x.c, x.ap.PackageId })
-                .Union(rolePackages.Select(x => new { x.c, x.rp.PackageId }))
-                .Union(delegationPackages.Select(x => new { x.c, x.dp.PackageId }))
-            : assignmentPackages
-                .Select(x => new { x.c, x.ap.PackageId })
-                .Concat(rolePackages.Select(x => new { x.c, x.rp.PackageId }))
-                .Concat(delegationPackages.Select(x => new { x.c, x.dp.PackageId }));
-
-        var rows = await flat
-               .Join(db.Packages, x => x.PackageId, p => p.Id, (x, p) => new
-               {
-                   Key = new ConnectionCompositeKey(x.c.FromId, x.c.ToId, x.c.RoleId, x.c.AssignmentId, x.c.DelegationId, x.c.ViaId, x.c.ViaRoleId),
-                   Package = p
-               })
-               .AsNoTracking()
-               .ToListAsync(ct);
-
         var index = new ConnectionIndex<ConnectionQueryPackage>();
 
-        foreach (var g in rows.GroupBy(x => x.Key))
-        {
-            var mapped = g.Select(z => new ConnectionQueryPackage
-            {
-                Id = z.Package.Id,
-                Name = z.Package.Name,
-                AreaId = z.Package.AreaId,
-                Urn = z.Package.Urn
-            }).DistinctBy(p => p.Id);
+        var apKeys = keys.Where(k => k.RoleId == RoleConstants.Rightholder).Select(k => k.AssignmentId).Distinct().ToList();
+        var assignmentPackagesRaw = await db.AssignmentPackages.Where(a => apKeys.Contains(a.AssignmentId))
+            .WhereIf(packageSet is not null, p => packageSet!.Contains(p.PackageId))
+            .Select(ap => new { ap.PackageId, ap.AssignmentId })
+            .ToListAsync(ct);
 
-            index.AddRange(g.Key, mapped);
+        SortedList<Guid, List<Guid>> assignmentPackages = [];
+        SortedSet<Guid> apPackageIds = [];
+        foreach (var assignmentPackage in assignmentPackagesRaw)
+        {
+            apPackageIds.Add(assignmentPackage.PackageId);
+            if (assignmentPackages.TryGetValue(assignmentPackage.AssignmentId, out var ids))
+            {
+                ids.Add(assignmentPackage.PackageId);
+            }
+            else
+            {
+                assignmentPackages.Add(assignmentPackage.AssignmentId, [assignmentPackage.PackageId]);
+            }
+        }
+
+        var rolePackagesRaw = await db.RolePackages.Where(r => r.HasAccess && keys.Select(k => k.RoleId).Distinct().ToList().Contains(r.RoleId))
+            .WhereIf(packageSet is not null, p => packageSet!.Contains(p.PackageId))
+            .Select(rp => new { rp.PackageId, rp.RoleId, rp.EntityVariantId })
+            .ToListAsync(ct);
+        SortedList<Guid, List<Guid>> rolePackagesForAll = [];
+        SortedList<Guid, Dictionary<Guid, List<Guid>>> rolePackagesForEntity = [];
+        SortedSet<Guid> rolePackageIds = [];
+        foreach (var rolePackage in rolePackagesRaw)
+        {
+            rolePackageIds.Add(rolePackage.PackageId);
+            if (rolePackage.EntityVariantId == null)
+            {
+                if (rolePackagesForAll.TryGetValue(rolePackage.RoleId, out var ids))
+                {
+                    ids.Add(rolePackage.PackageId);
+                }
+                else
+                {
+                    rolePackagesForAll.Add(rolePackage.RoleId, [rolePackage.PackageId]);
+                }
+            }
+            else
+            {
+                if (rolePackagesForEntity.TryGetValue(rolePackage.RoleId, out var variantDict))
+                {
+                    if (variantDict.TryGetValue((Guid)rolePackage.EntityVariantId, out var ids))
+                    {
+                        ids.Add(rolePackage.PackageId);
+                    }
+                    else
+                    {
+                        variantDict.Add((Guid)rolePackage.EntityVariantId, [rolePackage.PackageId]);
+                    }
+                }
+                else
+                {
+                    rolePackagesForEntity.Add(rolePackage.RoleId, new() { { (Guid)rolePackage.EntityVariantId, [rolePackage.PackageId] } });
+                }
+            }
+        }
+
+        var entityKeys = keys.Where(k => rolePackagesForEntity.ContainsKey(k.RoleId)).Select(k => k.FromId).Distinct().ToList();
+        var entityVariantsRaw = await db.Entities.Where(e => entityKeys.Contains(e.Id))
+            .Select(e => new { e.Id, e.VariantId })
+            .ToListAsync(ct);
+        SortedList<Guid, Guid> entityVariants = [];
+        foreach (var entityVariant in entityVariantsRaw)
+        {
+            entityVariants[entityVariant.Id] = entityVariant.VariantId;
+        }
+
+        var delegationIds = keys.Select(k => k.DelegationId).Where(id => id != null).Distinct().ToList();
+        var delegationPackagesRaw = delegationIds.Count == 0 ? [] :
+            await db.DelegationPackages.Where(d => delegationIds.Contains(d.DelegationId))
+            .WhereIf(packageSet is not null, p => packageSet!.Contains(p.PackageId))
+            .Select(d => new { d.PackageId, d.DelegationId })
+            .ToListAsync(ct);
+        SortedList<Guid, List<Guid>> delegationPackages = [];
+        SortedSet<Guid> delegationPackageIds = [];
+        foreach (var delegationPackage in delegationPackagesRaw)
+        {
+            delegationPackageIds.Add(delegationPackage.PackageId);
+            if (delegationPackages.TryGetValue(delegationPackage.DelegationId, out var ids))
+            {
+                ids.Add(delegationPackage.PackageId);
+            }
+            else
+            {
+                delegationPackages.Add(delegationPackage.DelegationId, [delegationPackage.PackageId]);
+            }
+        }
+
+        var packageIds = apPackageIds
+            .Union(rolePackageIds)
+            .Union(delegationPackageIds)
+            .Distinct()
+            .ToList();
+
+        var packagesRaw = await db.Packages.Where(p => packageIds.Contains(p.Id)).Select(p => new { p.Id, p.Name, p.AreaId, p.Urn }).ToListAsync(ct);
+        SortedList<Guid, ConnectionQueryPackage> packages = [];
+        foreach (var package in packagesRaw)
+        {
+            packages[package.Id] = new() { Id = package.Id, Name = package.Name, AreaId = package.AreaId, Urn = package.Urn };
+        }
+
+        foreach (var key in keys)
+        {
+            List<Guid> rolePackagesForEntityForKey = [];
+            if (rolePackagesForEntity.TryGetValue(key.RoleId, out var entityDict)
+                && entityDict.TryGetValue(entityVariants[key.FromId], out var entityIds))
+            {
+                rolePackagesForEntityForKey = entityIds;
+            }
+
+            var rolePackages = (rolePackagesForAll.TryGetValue(key.RoleId, out List<Guid> packagesForAll) ? packagesForAll : [])
+                    .Union(rolePackagesForEntityForKey).ToList();
+            var keyPackageIds = (assignmentPackages.ContainsKey((Guid)key.AssignmentId) ? assignmentPackages[(Guid)key.AssignmentId] : [])
+                .Union(rolePackages)
+                .Union((key.DelegationId != null && delegationPackages.ContainsKey((Guid)key.DelegationId)) ? delegationPackages[(Guid)key.DelegationId] : [])
+                .Distinct();
+
+            if (!keyPackageIds.Any())
+            {
+                continue;
+            }
+
+            List<ConnectionQueryPackage> keyPackages = [];
+            foreach (var id in keyPackageIds)
+            {
+                keyPackages.Add(packages[id]);
+            }
+
+            index.AddRange(new(key.FromId, key.ToId, key.RoleId, key.AssignmentId, key.DelegationId, key.ViaId, key.ViaRoleId), keyPackages);
         }
 
         return index;
