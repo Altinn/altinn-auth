@@ -639,9 +639,9 @@ public class ConnectionQuery(AppDbContext db)
                DelegationId = delegation.Id,
                FromId = fromAssignment.FromId,
                ToId = toAssignment.ToId,
-               RoleId = Guid.Empty,
+               RoleId = fromAssignment.RoleId,
                ViaId = fromAssignment.ToId,
-               ViaRoleId = null,
+               ViaRoleId = toAssignment.RoleId,
                IsRoleMap = false,
                IsKeyRoleAccess = false,
                IsMainUnitAccess = false,
@@ -996,10 +996,16 @@ public class ConnectionQuery(AppDbContext db)
 
             var rolePackages = (rolePackagesForAll.TryGetValue(key.RoleId, out List<Guid> packagesForAll) ? packagesForAll : [])
                     .Union(rolePackagesForEntityForKey).ToList();
-            var keyPackageIds = (assignmentPackages.ContainsKey((Guid)key.AssignmentId) ? assignmentPackages[(Guid)key.AssignmentId] : [])
-                .Union(rolePackages)
-                .Union((key.DelegationId != null && delegationPackages.ContainsKey((Guid)key.DelegationId)) ? delegationPackages[(Guid)key.DelegationId] : [])
-                .Distinct();
+
+            var p1 = key.AssignmentId.HasValue
+                 ? assignmentPackages.ContainsKey((Guid)key.AssignmentId) ? assignmentPackages[(Guid)key.AssignmentId] : []
+                 : [];
+
+            var p2 = key.DelegationId.HasValue
+                 ? (key.DelegationId != null && delegationPackages.ContainsKey((Guid)key.DelegationId)) ? delegationPackages[(Guid)key.DelegationId] : []
+                 : [];
+
+            var keyPackageIds = rolePackages.Union(p1).Union(p2).Distinct();
 
             if (!keyPackageIds.Any())
             {

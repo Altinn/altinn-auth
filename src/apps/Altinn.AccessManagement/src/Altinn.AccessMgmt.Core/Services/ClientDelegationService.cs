@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Diagnostics;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Utils;
@@ -166,7 +166,7 @@ public class ClientDelegationService(
                 IncludeKeyRole = false,
                 IncludeResource = false,
                 IncludeMainUnitConnections = false,
-                EnrichEntities = false,
+                EnrichEntities = true,
             },
             true,
             cancellationToken);
@@ -183,7 +183,7 @@ public class ClientDelegationService(
             new()
             {
                 ViaIds = [partyId],
-                ViaRoleIds = [RoleConstants.Agent],
+                RoleIds = [RoleConstants.Agent],
                 ToIds = [toId],
                 OnlyUniqueResults = true,
                 IncludeDelegation = true,
@@ -193,12 +193,12 @@ public class ClientDelegationService(
                 IncludeKeyRole = false,
                 IncludeResource = false,
                 IncludeMainUnitConnections = false,
-                EnrichEntities = false,
+                EnrichEntities = true,
             },
             true,
             cancellationToken);
 
-        var result = DtoMapper.ConvertToClientDto(connections);
+        var result = DtoMapper.ConvertToClientDto(connections, true);
 
         return result;
     }
@@ -314,21 +314,26 @@ public class ClientDelegationService(
             }
 
             var existingDelegationPackages = db.DelegationPackages.Where(t => t.DelegationId == delegation.Id);
-            foreach (var pkgId in pkgIds)
+            foreach (var pkg in input.Packages)
             {
-                var rolePackageId = rolePackages.FirstOrDefault(r => r.PackageId == pkgId)?.Id;
-                var assignmentPackageId = assignmentPackages.FirstOrDefault(t => t.PackageId == pkgId)?.Id;
+                var rolePackageId = rolePackages.FirstOrDefault(r => r.PackageId == pkg.Package.Id)?.Id;
+                var assignmentPackageId = assignmentPackages.FirstOrDefault(t => t.PackageId == pkg.Package.Id)?.Id;
+                if (rolePackageId is null && assignmentPackageId is null)
+                {
+                    errorBuilder.Add(ValidationErrors.UserNotAuthorized, $"BODY/values[{input.RoleIdx}]/packages[{pkg.PackageIdx}]", [new($"{pkg.Package.Entity.Urn}", $"Can't delegate package from client '{fromId}' as they haven't been assigned to '{partyId}' through role '{input.Role.Entity.Urn}'.")]);
+                    continue;
+                }
 
                 if (!existingDelegationPackages.Any(
                     t =>
                     t.DelegationId == delegation.Id &&
-                    t.PackageId == pkgId &&
+                    t.PackageId == pkg.Package.Id &&
                     t.RolePackageId == rolePackageId &&
                     t.AssignmentPackageId == assignmentPackageId))
                 {
                     db.DelegationPackages.Add(new DelegationPackage()
                     {
-                        PackageId = pkgId,
+                        PackageId = pkg.Package.Id,
                         DelegationId = delegation.Id,
                         RolePackageId = rolePackageId,
                         AssignmentPackageId = assignmentPackageId,
@@ -341,7 +346,7 @@ public class ClientDelegationService(
                     ToId = toId,
                     ViaId = partyId,
                     RoleId = input.Role,
-                    PackageId = pkgId,
+                    PackageId = pkg.Package.Id,
                 });
             }
         }

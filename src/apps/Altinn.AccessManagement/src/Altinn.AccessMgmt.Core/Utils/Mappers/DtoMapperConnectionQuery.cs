@@ -217,7 +217,7 @@ public partial class DtoMapper : IDtoMapper
         return result;
     }
 
-    public static List<ClientDto> ConvertToClientDto(List<ConnectionQueryExtendedRecord> connections)
+    public static List<ClientDto> ConvertToClientDto(List<ConnectionQueryExtendedRecord> connections, bool useViaRole = false)
     {
         var clients = connections.GroupBy(c => c.FromId);
         var result = new List<ClientDto>();
@@ -232,7 +232,7 @@ public partial class DtoMapper : IDtoMapper
             {
                 var access = new ClientDto.RoleAccessPackages
                 {
-                    Role = ConvertCompactRole(role.First().Role),
+                    Role = ConvertCompactRole(useViaRole ? role.First().ViaRole : role.First().Role),
                     Packages = role.SelectMany(r => r.Packages.Select(p => ConvertCompactPackage(p))).Distinct().ToArray(),
                 };
 
