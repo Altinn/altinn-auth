@@ -1,4 +1,5 @@
-﻿using System.Runtime.Serialization;
+﻿using Newtonsoft.Json.Linq;
+using System.Runtime.Serialization;
 
 namespace Altinn.AccessManagement.Core.Models.ResourceRegistry
 {
@@ -26,6 +27,9 @@ namespace Altinn.AccessManagement.Core.Models.ResourceRegistry
         ServiceEditionCode = 5,
 
         [EnumMember(Value = "ApplicationId")]
-        ApplicationId = 6
+        ApplicationId = 6,
+
+        [EnumMember(Value = "ServiceEditionVersion")]
+        ServiceEditionVersion = 7
     }
 }
