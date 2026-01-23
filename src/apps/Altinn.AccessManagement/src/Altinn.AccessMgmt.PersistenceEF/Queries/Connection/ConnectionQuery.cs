@@ -74,7 +74,7 @@ public class ConnectionQuery(AppDbContext db)
 
             if (filter.EnrichEntities || filter.ExcludeDeleted)
             {
-                result = await EnrichEntities(result, filter.ExcludeDeleted, direction, ct);
+                result = await EnrichEntities(result, filter.ExcludeDeleted, direction, filter, ct);
             }
 
             return result;
@@ -684,7 +684,7 @@ public class ConnectionQuery(AppDbContext db)
             .RoleIdContains(roleSet);
     }
 
-    private async Task<List<ConnectionQueryExtendedRecord>> EnrichEntities(List<ConnectionQueryExtendedRecord> allKeys, bool excludeDeleted, ConnectionQueryDirection direction, CancellationToken ct)
+    private async Task<List<ConnectionQueryExtendedRecord>> EnrichEntities(List<ConnectionQueryExtendedRecord> allKeys, bool excludeDeleted, ConnectionQueryDirection direction, ConnectionQueryFilter filter, CancellationToken ct)
     {
         SortedSet<Guid> parties = [];
         foreach (var item in allKeys)
@@ -781,6 +781,11 @@ public class ConnectionQuery(AppDbContext db)
             .Distinct()
             .AsNoTracking()
             .ToListAsync(ct);
+
+        if (filter.FromIds != null && filter.FromIds.Count > 0)
+        {
+            allChildren = allChildren.Where(c => filter.FromIds.Contains(c.Id)).ToList();
+        }
 
         foreach (var child in allChildren)
         {
