@@ -111,7 +111,7 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
             IncludeKeyRole = filters?.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.True ? true : false,
             IncludeMainUnitConnections = true,
             IncludeDelegation = true,
-            IncludePackages = filters?.IncludeAccessPackages ?? false,
+            IncludePackages = filters?.IncludeAccessPackages == true || filters?.PackageFilter?.Keys?.Count > 0,
             IncludeResource = false,
             EnrichPackageResources = false,
             ExcludeDeleted = false
