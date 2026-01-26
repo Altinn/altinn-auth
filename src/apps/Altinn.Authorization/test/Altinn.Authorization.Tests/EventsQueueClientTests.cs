@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO.Compression;
-using System.Linq;
-using System.Reflection;
+﻿using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Altinn.Platform.Authorization.Clients;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Models.EventLog;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
@@ -42,7 +36,7 @@ namespace Altinn.Authorization.Tests
                     It.IsAny<TimeSpan?>(),
                     It.IsAny<TimeSpan?>(),
                     It.IsAny<CancellationToken>()))
-                .Callback<BinaryData, TimeSpan?, TimeSpan?, CancellationToken>((data, _, _, _) => sentData = data.ToArray())
+                .Callback<BinaryData, TimeSpan?, TimeSpan?, CancellationToken>((data, _, _, _) => sentData = RawData(data))
                 .Returns(Task.CompletedTask);
 
             var client = CreateClient();
@@ -88,7 +82,7 @@ namespace Altinn.Authorization.Tests
                     It.IsAny<TimeSpan?>(),
                     It.IsAny<TimeSpan?>(),
                     It.IsAny<CancellationToken>()))
-                .Callback<BinaryData, TimeSpan?, TimeSpan?, CancellationToken>((data, _, _, _) => sentData = data.ToArray())
+                .Callback<BinaryData, TimeSpan?, TimeSpan?, CancellationToken>((data, _, _, _) => sentData = RawData(data))
                 .Returns(Task.CompletedTask);
 
             var client = CreateClient();
@@ -135,7 +129,7 @@ namespace Altinn.Authorization.Tests
                     It.IsAny<TimeSpan?>(),
                     It.IsAny<TimeSpan?>(),
                     It.IsAny<CancellationToken>()))
-                .Callback<BinaryData, TimeSpan?, TimeSpan?, CancellationToken>((data, _, _, _) => sentData = data.ToArray())
+                .Callback<BinaryData, TimeSpan?, TimeSpan?, CancellationToken>((data, _, _, _) => sentData = RawData(data))
                 .Returns(Task.CompletedTask);
 
             var client = CreateClient();
@@ -167,7 +161,13 @@ namespace Altinn.Authorization.Tests
             
             // Ensure the original JSON is preserved (fallback was NOT triggered)
             Assert.True(JsonElement.DeepEquals(evt.ContextRequestJson, decompressed.ContextRequestJson));
+        }
 
+        private static byte[] RawData(BinaryData data)
+        {
+            var str = Encoding.UTF8.GetString(data.ToMemory().Span);
+            var decoded = Convert.FromBase64String(str);
+            return decoded;
         }
     }
 }

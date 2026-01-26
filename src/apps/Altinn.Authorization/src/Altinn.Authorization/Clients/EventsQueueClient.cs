@@ -1,4 +1,6 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Buffers;
+using System.Buffers.Text;
+using System.Diagnostics.CodeAnalysis;
 using System.IO.Compression;
 using System.Text.Json;
 using Altinn.Platform.Authorization.Clients.Interfaces;
@@ -17,6 +19,8 @@ namespace Altinn.Platform.Authorization.Clients
     [ExcludeFromCodeCoverage]
     public partial class EventsQueueClient : IEventsQueueClient
     {
+        private static readonly int MAX_MESSAGE_LENGTH = 64 * 1024;
+
         private static readonly JsonElement FallbackContextRequestJson = JsonSerializer.SerializeToElement(new
         {
             message = "ContextRequestJson is not available due to size limitations.",
@@ -57,7 +61,7 @@ namespace Altinn.Platform.Authorization.Clients
                 using var stream = _manager.GetStream();
                 CompressAuthorizationEvent(stream, authorizationEvent);
 
-                if (stream.Length > 64 * 1024)
+                if (stream.Length > MAX_MESSAGE_LENGTH)
                 {
                     Log.AuthorizationEventTooLarge(_logger, stream.Length);
                     authorizationEvent.ContextRequestJson = FallbackContextRequestJson;
@@ -67,8 +71,8 @@ namespace Altinn.Platform.Authorization.Clients
                 }
 
                 var buffer = stream.GetBuffer();
-                var data = BinaryData.FromBytes(buffer.AsMemory(0, checked((int)stream.Length)));
-
+                var encoded = Base64Encode(buffer, checked((int)stream.Length));
+                var data = BinaryData.FromBytes(encoded);
                 await client.SendMessageAsync(data, null, timeToLive, cancellationToken);
             }
             catch (OperationCanceledException ex)
@@ -108,6 +112,39 @@ namespace Altinn.Platform.Authorization.Clients
             }
 
             stream.Position = 0;
+        }
+
+        private static ReadOnlyMemory<byte> Base64Encode(byte[] buffer, int length)
+        {
+            int bytesWritten;
+            OperationStatus operationResult;
+            ReadOnlyMemory<byte> result;
+
+            var base64Length = Base64.GetMaxEncodedToUtf8Length(length);
+            if (buffer.Length < base64Length)
+            {
+                operationResult = Base64.EncodeToUtf8InPlace(buffer.AsSpan(0, length), length, out bytesWritten);
+                result = buffer.AsMemory(0, bytesWritten);
+            }
+            else
+            {
+                var rawData = buffer.AsMemory(0, length);
+                var base64Data = new byte[Base64.GetMaxEncodedToUtf8Length(rawData.Length)];
+                operationResult = Base64.EncodeToUtf8(rawData.Span, base64Data, out int bytesConsumed, out bytesWritten);
+                result = base64Data.AsMemory(0, bytesWritten);
+
+                if (bytesConsumed != rawData.Length)
+                {
+                    throw new InvalidOperationException("Not all data was consumed during Base64 encoding.");
+                }
+            }
+
+            if (operationResult != OperationStatus.Done)
+            {
+                throw new InvalidOperationException($"Base64 encoding failed with status {operationResult}");
+            }
+
+            return result;
         }
 
         private sealed class StorageQueueRawClient : IRawEventsQueueClient
