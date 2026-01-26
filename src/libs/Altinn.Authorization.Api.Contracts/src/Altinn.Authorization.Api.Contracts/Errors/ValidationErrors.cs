@@ -145,4 +145,10 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor MissingAssignment { get; }
         = _factory.Create(32, "Assignment of role do not exist.");
+    
+    /// <summary>
+    /// Delegation has active connections.
+    /// </summary>
+    public static ValidationErrorDescriptor PackageIsNotDelegable { get; }
+        = _factory.Create(33, "Package is not delegable.");
 }
