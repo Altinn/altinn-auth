@@ -1063,6 +1063,7 @@ public static class PackageConstants
             Code = "offentlige-anskaffelser",
             IsDelegable = true,
             IsAssignable = true,
+            IsAvailableForServiceOwners = true,
             EntityTypeId = EntityTypeConstants.Organization,
             ProviderId = ProviderConstants.Altinn3,
             AreaId = AreaConstants.BusinessAffairs,
