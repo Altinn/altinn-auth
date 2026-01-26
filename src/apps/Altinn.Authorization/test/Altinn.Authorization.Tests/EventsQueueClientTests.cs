@@ -1,4 +1,5 @@
-﻿using System.IO.Compression;
+﻿using System.Buffers.Text;
+using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 using Altinn.Platform.Authorization.Clients;
@@ -165,9 +166,11 @@ namespace Altinn.Authorization.Tests
 
         private static byte[] RawData(BinaryData data)
         {
-            var str = Encoding.UTF8.GetString(data.ToMemory().Span);
-            var decoded = Convert.FromBase64String(str);
-            return decoded;
+            var buffer = data.ToArray();
+            Base64.DecodeFromUtf8InPlace(buffer, out var written);
+            Base64.DecodeFromUtf8InPlace(buffer.AsSpan(0, written), out var finalWritten);
+            
+            return buffer.AsMemory(0, finalWritten).ToArray();
         }
     }
 }
