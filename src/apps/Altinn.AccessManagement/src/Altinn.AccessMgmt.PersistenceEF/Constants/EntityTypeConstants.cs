@@ -18,6 +18,12 @@ public static class EntityTypeConstants
         => ConstantLookup.TryGetByName(typeof(EntityTypeConstants), name, out result);
 
     /// <summary>
+    /// Try to get <see cref="EntityType"/> by name.
+    /// </summary>
+    public static bool TryGetByName(string name, bool includeTranslations, [NotNullWhen(true)] out ConstantDefinition<EntityType>? result)
+        => ConstantLookup.TryGetByName(typeof(EntityTypeConstants), name, includeTranslations, out result);
+
+    /// <summary>
     /// Try to get <see cref="EntityType"/> using Guid.
     /// </summary>
     public static bool TryGetById(Guid id, [NotNullWhen(true)] out ConstantDefinition<EntityType>? result)

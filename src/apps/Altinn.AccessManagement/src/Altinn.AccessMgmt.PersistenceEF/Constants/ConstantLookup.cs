@@ -138,6 +138,33 @@ public static class ConstantLookup
     }
 
     /// <summary>
+    /// Try to get entity by name for types that implement both IEntityId and IEntityName.
+    /// </summary>
+    public static bool TryGetByName<TType>(Type constantsClass, string name, bool includeTranslations, [NotNullWhen(true)] out ConstantDefinition<TType>? result)
+        where TType : class, IEntityId, IEntityName
+    {
+        var byName = GetByName<TType>(constantsClass);
+        if (byName.TryGetValue(name, out var value))
+        {
+            result = (ConstantDefinition<TType>)value;
+            return true;
+        }
+
+        if (includeTranslations)
+        {
+            var translations = AllTranslations<TType>(constantsClass);
+            var translatedEntry = translations.FirstOrDefault(t => t.FieldName == "Name" && string.Equals(t.Value, name, StringComparison.OrdinalIgnoreCase));
+            if (translatedEntry is { })
+            {
+                return TryGetById<TType>(constantsClass, translatedEntry.Id, out result);
+            }
+        }
+
+        result = null;
+        return false;
+    }
+
+    /// <summary>
     /// Try to get entity by ID for types that implement IEntityId.
     /// </summary>
     public static bool TryGetByUrn<TType>(Type constantsClass, string urn, [NotNullWhen(true)] out ConstantDefinition<TType>? result)

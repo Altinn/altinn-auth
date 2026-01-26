@@ -42,11 +42,11 @@ public class PackagesController : ControllerBase
     public async Task<ActionResult<IEnumerable<SearchObject<PackageDto>>>> Search([FromQuery] string term, [FromQuery] List<string> resourceProviderCode = null, [FromQuery] bool searchInResources = false, [FromQuery] string? typeName = null)
     {
         Guid? typeId = null;
-        if (string.IsNullOrEmpty(typeName))
+        if (!string.IsNullOrEmpty(typeName))
         {
-            if (!EntityTypeConstants.TryGetByName(typeName, out var type))
+            if (!EntityTypeConstants.TryGetByName(name: typeName, includeTranslations: true, out var type))
             {
-                return Problem($"Type '{typeName}' not found. Try Organisasjon or Person");
+                return Problem($"Type '{typeName}' not found. Try organization, organisasjon or person");
             }
 
             typeId = type.Id;

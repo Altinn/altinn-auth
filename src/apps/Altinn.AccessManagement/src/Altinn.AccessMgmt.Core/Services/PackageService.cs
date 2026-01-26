@@ -66,7 +66,7 @@ public class PackageService : IPackageService
         bool filterResourceProviders = resourceProviderCodes != null && resourceProviderCodes.Any();
 
         var areas = await DbContext.Areas.AsNoTracking().ToListAsync(cancellationToken);
-        var packages = await DbContext.Packages.AsNoTracking().Include(t => t.EntityType).WhereIf(typeId.HasValue, t => t.EntityTypeId == typeId.Value).ToListAsync(cancellationToken);
+        var packages = await DbContext.Packages.AsNoTracking().Include(t => t.EntityType).WhereIf(typeId.HasValue && typeId.Value != Guid.Empty, t => t.EntityTypeId == typeId.Value).ToListAsync(cancellationToken);
 
         var result = new List<PackageDto>();
 
