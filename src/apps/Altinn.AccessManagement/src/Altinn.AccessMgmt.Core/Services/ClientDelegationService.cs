@@ -26,10 +26,14 @@ public class ClientDelegationService(
                 ToIds = [],
                 FromIds = [partyId],
                 RoleIds = [RoleConstants.Agent],
-                IncludeResource = true,
                 OnlyUniqueResults = true,
-                IncludeSubConnections = false,
+                IncludeDelegation = true,
                 IncludePackages = true,
+
+                IncludeSubConnections = false,
+                IncludeKeyRole = false,
+                IncludeResource = false,
+                IncludeMainUnitConnections = false,
                 EnrichEntities = true,
             },
             ct: cancellationToken);
@@ -40,17 +44,42 @@ public class ClientDelegationService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<List<ClientDto>>> GetClients(Guid partyId, CancellationToken cancellationToken = default)
+    public async Task<Result<List<ClientDto>>> GetClients(Guid partyId, List<string>? roles, CancellationToken cancellationToken = default)
     {
+        roles ??= [];
+        var roleFilter = new List<Guid>();
+        foreach (var r in roles)
+        {
+            if (RoleConstants.TryGetByAllIdentifiers(r, out var role))
+            {
+                roleFilter.Add(role.Id);
+            }
+            else
+            {
+                roleFilter.Add(Guid.Empty);
+            }
+        }
+
+        if (roleFilter.Count > 0 && roleFilter.All(p => p == Guid.Empty))
+        {
+            return new List<ClientDto>();
+        }
+
         var connections = await connectionQuery.GetConnectionsFromOthersAsync(
             new ConnectionQueryFilter
             {
                 ToIds = [partyId],
                 FromIds = [],
+                RoleIds = roleFilter.Count > 0 ? roleFilter : null,
+
                 OnlyUniqueResults = true,
-                IncludeSubConnections = false,
-                IncludeResource = true,
+                IncludeDelegation = true,
                 IncludePackages = true,
+
+                IncludeSubConnections = false,
+                IncludeKeyRole = false,
+                IncludeResource = false,
+                IncludeMainUnitConnections = true,
                 EnrichEntities = true,
             },
             ct: cancellationToken);
@@ -518,7 +547,7 @@ public class ClientDelegationService(
 /// </summary>
 public interface IClientDelegationService
 {
-    Task<Result<List<ClientDto>>> GetClients(Guid partyId, CancellationToken cancellationToken = default);
+    Task<Result<List<ClientDto>>> GetClients(Guid partyId, List<string>? roles, CancellationToken cancellationToken = default);
 
     Task<Result<List<AgentDto>>> GetAgents(Guid partyId, CancellationToken cancellationToken = default);
 

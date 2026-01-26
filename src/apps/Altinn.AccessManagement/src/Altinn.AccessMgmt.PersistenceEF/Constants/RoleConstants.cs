@@ -12,10 +12,28 @@ namespace Altinn.AccessMgmt.PersistenceEF.Constants;
 public static class RoleConstants
 {
     /// <summary>
-    /// Try to get <see cref="Role"/> by name.
+    /// Try to get <see cref="Role"/> by any identifier: Code, Name, Urn or Guid.
     /// </summary>
-    public static bool TryGetByName(string name, [NotNullWhen(true)] out ConstantDefinition<Role>? result)
-        => ConstantLookup.TryGetByName(typeof(RoleConstants), name, out result);
+    /// <returns></returns>
+    public static bool TryGetByAllIdentifiers(string value, [NotNullWhen(true)] out ConstantDefinition<Role>? result)
+    {
+        if (TryGetByCode(value, out result))
+        {
+            return true;
+        }
+
+        if (TryGetByUrn(value, out result))
+        {
+            return true;
+        }
+
+        if (Guid.TryParse(value, out var roleGuid) && TryGetById(roleGuid, out result))
+        {
+            return true;
+        }
+
+        return false;
+    }
 
     /// <summary>
     /// Try to get <see cref="Role"/> using Guid.

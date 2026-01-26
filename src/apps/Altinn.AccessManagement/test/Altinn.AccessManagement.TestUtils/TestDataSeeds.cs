@@ -1,5 +1,6 @@
-using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessManagement.TestUtils.Data;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Contexts;
 
 namespace Altinn.AccessManagement.TestUtils;
 
@@ -22,8 +23,20 @@ public static class TestDataSeeds
         db.Entities.AddRange([
             TestEntities.PersonPaula,
             TestEntities.PersonOrjan,
+            TestEntities.MainUnitNordis,
             TestEntities.OrganizationNordisAS,
             TestEntities.OrganizationVerdiqAS,
+        ]);
+        #endregion
+        
+        #region Assignments
+        db.Assignments.AddRange([
+            new()
+            {
+                FromId = TestEntities.OrganizationNordisAS,
+                ToId = TestEntities.MainUnitNordis,
+                RoleId = RoleConstants.HasAsRegistrationUnitBEDR,
+            },
         ]);
         #endregion
 

@@ -123,6 +123,27 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
+        public async Task ListClient_ForOrganizationWithRightholderFilter_ReturnsOk()
+        {
+            var client = CreateClient();
+
+            var response = await client.GetAsync($"{Route}/clients?party={TestEntities.OrganizationVerdiqAS.Id}&roles=rettighetshaver", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            var result = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(data);
+            Assert.NotEmpty(result.Items);
+            foreach (var item in result.Items)
+            {
+                Assert.NotEmpty(item.Access);
+                foreach (var role in item.Access)
+                {
+                    Assert.Equal(RoleConstants.Rightholder.Id, role.Role.Id);
+                }
+            }
+        }
+
+        [Fact]
         public async Task ListClient_ForOrganizationWithRightholderAssignment_ReturnsOk()
         {
             var client = CreateClient();

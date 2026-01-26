@@ -53,6 +53,29 @@ public static class TestEntities
     #endregion
 
     #region Organizations
+    
+    public static ConstantDefinition<Entity> MainUnitNordis { get; } = new("8b8ab597-f0e6-47d8-8f3c-eaefd71c7049")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Main Unit Nordis",
+            OrganizationIdentifier = "910448471",
+            Parent = null,
+            ParentId = null,
+            PartyId = 50069468,
+            PersonIdentifier = null,
+            RefId = "910448471",
+            TypeId = EntityTypeConstants.Organization,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.BEDR,
+        }
+    };
+
     public static ConstantDefinition<Entity> OrganizationNordisAS { get; } = new("17edfbcd-34e0-4ce4-9f90-eff3747c1234")
     {
         Entity = new()
@@ -61,10 +84,10 @@ public static class TestEntities
             DateOfDeath = null,
             DeletedAt = null,
             IsDeleted = false,
-            Name = "Nordis AS",
+            Name = "Subunit Nordis AS",
             OrganizationIdentifier = "910411578",
             Parent = null,
-            ParentId = null,
+            ParentId = MainUnitNordis,
             PartyId = 50068510,
             PersonIdentifier = null,
             RefId = "910411578",

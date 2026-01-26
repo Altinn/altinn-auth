@@ -28,7 +28,6 @@ public sealed class ConnectionQueryFilter
     /// </summary>
     public IReadOnlyCollection<Guid> ViaRoleIds { get; init; }
 
-
     /// <summary>
     /// Gets the collection of role identifiers.
     /// </summary>

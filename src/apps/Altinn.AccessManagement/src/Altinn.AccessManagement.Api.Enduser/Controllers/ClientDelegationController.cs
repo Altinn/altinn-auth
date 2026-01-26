@@ -39,10 +39,11 @@ public class ClientDelegationController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetClients(
         [FromQuery(Name = "party")][Required] Guid party,
+        [FromQuery(Name ="roles")] List<string>? roles,
         [FromQuery, FromHeader] PagingInput paging,
         CancellationToken cancellationToken = default)
     {
-        var result = await clientDelegationService.GetClients(party, cancellationToken);
+        var result = await clientDelegationService.GetClients(party, roles, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();
