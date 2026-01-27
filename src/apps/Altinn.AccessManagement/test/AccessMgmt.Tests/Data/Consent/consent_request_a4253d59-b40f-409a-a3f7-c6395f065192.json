@@ -1,4 +1,4 @@
-{
+﻿{
   "iD": "a4253d59-b40f-409a-a3f7-c6395f065192",
   "from": "urn:altinn:party:uuid:d5b861c8-8e3b-44cd-9952-5315e5990cf5",
   "to": "urn:altinn:party:uuid:8ef5e5fa-94e1-4869-8635-df86b6219181",
@@ -17,7 +17,8 @@
       "resource": [
         {
           "type": "urn:altinn:resource",
-          "value": "ttd_skattegrunnlag"
+          "value": "ttd_skattegrunnlag",
+          "version":  "1"
         }
       ],
       "metadata": {
@@ -32,7 +33,8 @@
       "resource": [
         {
           "type": "urn:altinn:resource",
-          "value": "ttd_inntektsopplysninger"
+          "value": "ttd_inntektsopplysninger",
+          "version": "4"
         }
       ],
       "metadata": {

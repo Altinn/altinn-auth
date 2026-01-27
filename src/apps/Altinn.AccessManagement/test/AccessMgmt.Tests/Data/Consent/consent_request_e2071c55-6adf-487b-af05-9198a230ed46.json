@@ -16,7 +16,8 @@
       "resource": [
         {
           "type": "urn:altinn:resource",
-          "value": "ttd_skattegrunnlag"
+          "value": "ttd_skattegrunnlag",
+          "version": "1"
         }
       ],
       "metadata": {
@@ -31,7 +32,8 @@
       "resource": [
         {
           "type": "urn:altinn:resource",
-          "value": "ttd_inntektsopplysninger"
+          "value": "ttd_inntektsopplysninger",
+          "version": "4"
         }
       ],
       "metadata": {

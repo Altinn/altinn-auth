@@ -1,4 +1,4 @@
-{
+﻿{
   "identifier": "ttd_navnescore",
   "title": {
     "en": "Consent Income Resource ",
@@ -42,5 +42,6 @@
       "value": "ttd_skattegrunnlag"
     }
   ],
-  "consentTemplate": "default"
+  "consentTemplate": "default",
+  "versionId": 3
 }

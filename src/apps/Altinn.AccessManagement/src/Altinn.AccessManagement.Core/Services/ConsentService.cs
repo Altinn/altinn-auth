@@ -732,7 +732,8 @@ namespace Altinn.AccessManagement.Core.Services
             }
             else
             {
-                ServiceResource resourceDetails = await _resourceRegistryClient.GetResource(consentRight.Resource[0].Value, cancelactionToken);
+                ConsentResourceAttribute consentResourceAttribute = consentRight.Resource[0];
+                ServiceResource resourceDetails = await _resourceRegistryClient.GetResource(consentResourceAttribute.Value, cancelactionToken);
                 if (resourceDetails == null)
                 {
                     problemsBuilder.Add(Problems.InvalidConsentResource);
@@ -744,6 +745,7 @@ namespace Altinn.AccessManagement.Core.Services
                 else
                 {
                     ValidateConsentMetadata(ref problemsBuilder, rightIndex, consentRight, resourceDetails);
+                    consentResourceAttribute.Version = resourceDetails.VersionId.ToString();
                 }
 
                 if (resourceDetails != null && string.IsNullOrEmpty(templateId))

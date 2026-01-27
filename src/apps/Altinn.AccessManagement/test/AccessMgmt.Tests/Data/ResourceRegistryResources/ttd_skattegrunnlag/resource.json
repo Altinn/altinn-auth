@@ -1,4 +1,4 @@
-{
+﻿{
   "identifier": "ttd_skattegrunnlag",
   "title": {
     "en": "Consent Income Resource ",
@@ -46,5 +46,6 @@
       "value": "ttd_skattegrunnlag"
     }
   ],
-  "consentTemplate": "sblanesoknad"
+  "consentTemplate": "sblanesoknad",
+  "versionId":  1
 }

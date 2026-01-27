@@ -1,74 +1,84 @@
-﻿using System.Text.Json.Serialization;
-using Altinn.AccessManagement.Core.Enums;
+﻿#nullable enable
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
 
 namespace Altinn.AccessManagement.Core.Models.ResourceRegistry
 {
     /// <summary>
-    /// Model describing a complete resource from the resource registry.
+    /// Model describing a complete resource from the resrouce registry
     /// </summary>
     public class ServiceResource
     {
         /// <summary>
         /// The identifier of the resource
         /// </summary>
-        public string Identifier { get; set; }
+        [Required]
+        public string? Identifier { get; set; }
+
+        /// <summary>
+        /// The version of the resource
+        /// </summary>
+        public string? Version { get; set; }
 
         /// <summary>
         /// The title of service
         /// </summary>
-        public Dictionary<string, string> Title { get; set; }
+        [Required]
+        public Dictionary<string, string>? Title { get; set; }
 
         /// <summary>
         /// Description
         /// </summary>
-        public Dictionary<string, string> Description { get; set; }
+        [Required]
+        public Dictionary<string, string>? Description { get; set; }
 
         /// <summary>
         /// Description explaining the rights a recipient will receive if given access to the resource
         /// </summary>
-        public Dictionary<string, string> RightDescription { get; set; }
+        public Dictionary<string, string>? RightDescription { get; set; }
 
         /// <summary>
         /// The homepage
         /// </summary>
-        public string Homepage { get; set; }
+        public string? Homepage { get; set; }
 
         /// <summary>
         /// The status
         /// </summary>
-        public string Status { get; set; }
+        public string? Status { get; set; }
 
         /// <summary>
         /// spatial coverage
         /// This property represents that area(s) a Public Service is likely to be available only within, typically the area(s) covered by a particular public authority.
         /// </summary>
-        public List<string> Spatial { get; set; }
+        public List<string>? Spatial { get; set; }
 
         /// <summary>
         /// List of possible contact points
         /// </summary>
-        public List<ContactPoint> ContactPoints { get; set; }
+        [Required]
+        public List<ContactPoint>? ContactPoints { get; set; }
 
         /// <summary>
         /// Linkes to the outcome of a public service
         /// </summary>
-        public List<string> Produces { get; set; }
+        public List<string>? Produces { get; set; }
 
         /// <summary>
         /// IsPartOf
         /// </summary>
-        public string IsPartOf { get; set; }
+        public string? IsPartOf { get; set; }
 
         /// <summary>
         /// ThematicAreas
         /// </summary>
-        public List<string> ThematicAreas { get; set; }
+        public List<string>? ThematicAreas { get; set; }
 
         /// <summary>
         /// ResourceReference
         /// </summary>
-        public List<ResourceReference> ResourceReferences { get; set; }
+        public List<ResourceReference>? ResourceReferences { get; set; }
 
         /// <summary>
         /// Is this resource possible to delegate to others or not
@@ -83,12 +93,13 @@ namespace Altinn.AccessManagement.Core.Models.ResourceRegistry
         /// <summary>
         /// HasCompetentAuthority
         /// </summary>
-        public CompetentAuthority HasCompetentAuthority { get; set; }
+        [Required]
+        public CompetentAuthority? HasCompetentAuthority { get; set; }
 
         /// <summary>
         /// Keywords
         /// </summary>
-        public List<Keyword> Keywords { get; set; }
+        public List<Keyword>? Keywords { get; set; }
 
         /// <summary>
         /// Sets the access list mode for the resource
@@ -115,22 +126,37 @@ namespace Altinn.AccessManagement.Core.Models.ResourceRegistry
         /// <summary>
         /// Available for type defines which type of entity / person that resource targets
         /// </summary>
-        public List<ResourcePartyType> AvailableForType { get; set; }
+        public List<ResourcePartyType>? AvailableForType { get; set; }
 
         /// <summary>
         /// List of autorizationReference attributes to reference this resource in authorization API
         /// </summary>
-        public List<AttributeMatch> AuthorizationReference { get; set; }
+        public List<AttributeMatch>? AuthorizationReference { get; set; }
 
         /// <summary>
-        /// Defines consentmendtata for consent resources
+        /// Consent template defines which template to use if resource is a consent resource
         /// </summary>
-        public Dictionary<string,ConsentMetadata> ConsentMetadata { get; set; }
+        public string? ConsentTemplate { get; set; }
 
         /// <summary>
-        /// The consent template that is used for this resource.
+        /// Consent text is markdown text used if resource is a consent resource
         /// </summary>
-        public string ConsentTemplate { get; set; }
+        public Dictionary<string, string>? ConsentText { get; set; }
+
+        /// <summary>
+        /// Defines consentmetadata for consent resources
+        /// </summary>
+        public Dictionary<string, ConsentMetadata>? ConsentMetadata { get; set; }
+
+        /// <summary>
+        /// Defines if consent resource is used for one time consents, or consents with an expiry date
+        /// </summary>
+        public bool IsOneTimeConsent { get; set; }
+
+        /// <summary>
+        /// Gets or sets the unique identifier for the version of the entity.
+        /// </summary>
+        public int VersionId { get; set; }
 
         /// <summary>
         /// Writes key information when this object is written to Log.

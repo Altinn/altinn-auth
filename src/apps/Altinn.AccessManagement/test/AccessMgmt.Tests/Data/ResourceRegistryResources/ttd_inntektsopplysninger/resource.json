@@ -1,4 +1,4 @@
-{
+﻿{
   "identifier": "ttd_inntektsopplysninger",
   "title": {
     "en": "Consent Income Resource ",
@@ -45,5 +45,6 @@
       "value": "ttd_inntektsopplysninger"
     }
   ],
-  "consentTemplate": "sblanesoknad"
+  "consentTemplate": "sblanesoknad",
+  "versionId": 4
 }

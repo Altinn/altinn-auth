@@ -477,6 +477,8 @@ namespace AccessMgmt.Tests.Controllers.Bff
             Assert.Equal("d5b861c8-8e3b-44cd-9952-5315e5990cf5", consentRequest.From.ValueSpan);
             Assert.Equal("8ef5e5fa-94e1-4869-8635-df86b6219181", consentRequest.To.ValueSpan);  // TODO FIx
             Assert.Equal("urn:altinn:resource", consentRequest.ConsentRights[0].Resource[0].Type);
+            Assert.Equal("1", consentRequest.ConsentRights[0].Resource[0].Version);
+            Assert.Equal("4", consentRequest.ConsentRights[1].Resource[0].Version);
             Assert.Equal(consentContextExternal.Language, consentRequest.Context.Language);
         }
 
