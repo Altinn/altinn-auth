@@ -288,6 +288,18 @@ module "appsettings" {
       label       = "${lower(var.environment)}-access-management"
       value       = true
     },
+    {
+      name        = "AccessManagement.InstanceDelegation.EF"
+      description = "Specifies if singlerights instaince delegation should use ef."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessManagement.ResourceDelegation.EF"
+      description = "Specifies if singlerights resource delegation should use ef."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
   ]
   providers = {
     azurerm.hub = azurerm.hub

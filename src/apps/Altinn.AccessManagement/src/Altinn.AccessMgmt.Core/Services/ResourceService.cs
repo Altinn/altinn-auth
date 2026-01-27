@@ -21,6 +21,11 @@ public class ResourceService : IResourceService
 
     public async ValueTask<Resource> GetResource(Guid id, CancellationToken cancellationToken = default)
     {
-        return await Db.Resources.AsNoTracking().SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
+        return await Db.Resources.AsNoTracking().Include(t => t.Type).Include(t => t.Provider).SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
+    }
+
+    public async ValueTask<Resource> GetResource(string refId, CancellationToken cancellationToken = default)
+    {
+        return await Db.Resources.AsNoTracking().Include(t => t.Type).Include(t => t.Provider).SingleOrDefaultAsync(r => r.RefId == refId, cancellationToken);
     }
 }

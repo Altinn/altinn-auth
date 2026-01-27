@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.PersistenceEF.Models;
+﻿using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 
 namespace Altinn.AccessMgmt.Core.Utils;
@@ -13,6 +13,16 @@ public partial class DtoMapper : IDtoMapper
             Id = obj.Id,
             AssignmentId = obj.AssignmentId,
             PackageId = obj.PackageId,
+        };
+    }
+
+    public static AssignmentResourceDto Convert(AssignmentResource obj)
+    {
+        return new AssignmentResourceDto()
+        {
+            Id = obj.Id,
+            AssignmentId = obj.AssignmentId,
+            ResourceId = obj.ResourceId,
         };
     }
 }

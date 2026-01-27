@@ -54,6 +54,7 @@ public class InternalConnectionsController(IConnectionService connectionService)
         return Ok(PaginatedResult.Create(result.Value, null));
     }
 
+    #region Assignments
     /// <summary>
     /// Creates "rettighetshaver" relation between an organization and systemuser.
     /// </summary>
@@ -95,7 +96,10 @@ public class InternalConnectionsController(IConnectionService connectionService)
 
         return NoContent();
     }
+    #endregion
 
+    #region Packages
+    
     /// <summary>
     /// Lists all packages assigned from to / systemuser and organization. 
     /// </summary>
@@ -179,4 +183,6 @@ public class InternalConnectionsController(IConnectionService connectionService)
 
         return NoContent();
     }
+
+    #endregion
 }

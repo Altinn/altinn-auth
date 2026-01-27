@@ -167,6 +167,32 @@ public static class SystemEntityConstants
             KeyValuePair.Create("Name", "Altinn2 Role-importsystem")),
     };
 
+    /// <summary>
+    /// Represents the SingleRight import system entity.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> f1be3999-68f6-4757-92b4-d3f3d33345e1
+    /// - <c>Name:</c> SingleRightImportSystem
+    /// - <c>RefId:</c> sys-singleright-import-system
+    /// - <c>TypeId:</c> Internal entity type
+    /// - <c>VariantId:</c> Standard variant
+    /// </remarks>
+    public static ConstantDefinition<Entity> SingleRightImportSystem { get; } = new ConstantDefinition<Entity>(AuditDefaults.SingleRightImportSystem)
+    {
+        Entity = new()
+        {
+            Id = Guid.Parse("f1be3999-68f6-4757-92b4-d3f3d33345e1"),
+            Name = nameof(AuditDefaults.SingleRightImportSystem),
+            RefId = "sys-singleright-import-system",
+            ParentId = null,
+            TypeId = EntityTypeConstants.Internal,
+            VariantId = EntityVariantConstants.Standard,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Single Right Import System")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Single Right Import System")),
+    };
     #endregion
 
     #region API Systems

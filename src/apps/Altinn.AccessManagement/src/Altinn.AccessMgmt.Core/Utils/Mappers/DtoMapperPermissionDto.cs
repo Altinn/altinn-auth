@@ -40,4 +40,14 @@ public partial class DtoMapper : IDtoMapper
             To = connection.To
         };
     }
+
+    public static PermissionDto ConvertToPermission(Assignment assignment)
+    {
+        return new PermissionDto()
+        {
+            From = Convert(assignment.From),
+            To = Convert(assignment.To),
+            Role = ConvertCompactRole(assignment.Role)
+        };
+    }
 }

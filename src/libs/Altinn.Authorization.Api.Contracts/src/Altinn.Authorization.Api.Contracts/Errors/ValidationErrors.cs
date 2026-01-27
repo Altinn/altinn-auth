@@ -84,6 +84,12 @@ public static class ValidationErrors
         = _factory.Create(11, $"Package do not exists.");
 
     /// <summary>
+    /// Resource does not exist.
+    /// </summary>
+    public static ValidationErrorDescriptor ResourceNotExists { get; }
+        = _factory.Create(11, $"Resource do not exists.");
+
+    /// <summary>
     /// Gets a validation error descriptor
     /// </summary>
     public static ValidationErrorDescriptor TimeNotInFuture { get; }

@@ -60,5 +60,5 @@ public class BaseAssignmentResource : BaseAudit
     /// <summary>
     /// Legacy DelegationChangeId
     /// </summary>
-    public long DelegationChangeId { get; set; }
+    public int DelegationChangeId { get; set; }
 }

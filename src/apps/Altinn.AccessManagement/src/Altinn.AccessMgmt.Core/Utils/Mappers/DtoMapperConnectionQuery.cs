@@ -91,6 +91,49 @@ public partial class DtoMapper : IDtoMapper
             .ToList();
     }
 
+    public static List<ResourcePermissionDto> ConvertResources(IEnumerable<AssignmentResource> res)
+    {
+        return res
+        .GroupBy(t => t.Resource)
+        .Select(g => new ResourcePermissionDto
+        {
+            Resource = ConvertCompactResource(g.Key),
+            Permissions = g.Select(t => ConvertToPermission(t.Assignment))
+        })
+        .ToList();
+    }
+
+    public static List<ResourcePermissionDto> ConvertResources(IEnumerable<ConnectionQueryExtendedRecord> res)
+    {
+        var records = res.ToList();
+
+        var resources = records
+            .SelectMany(r => r.Resources)
+            .DistinctBy(p => p.Id)
+            .Select(res => new ResourcePermissionDto
+            {
+                Resource = ConvertCompactResource(res),
+                Permissions = records
+                    .Where(r => r.Resources.Any(p => p.Id == res.Id))
+                    .Select(ConvertToPermission)
+            })
+            .ToList();
+
+        resources.AddRange(records
+            .SelectMany(t => t.Packages)
+            .SelectMany(p => p.Resources)
+            .DistinctBy(r => r.Id)
+            .Select(res => new ResourcePermissionDto
+            {
+                Resource = ConvertCompactResource(res),
+                Permissions = records
+                    .Where(r => r.Resources.Any(p => p.Id == res.Id))
+                    .Select(ConvertToPermission)
+            }));
+
+        return resources;
+    }
+
     public static List<ConnectionDto> ConvertSubConnectionsFromOthers(IEnumerable<ConnectionQueryExtendedRecord> res)
     {
         var result = res.GroupBy(res => res.FromId).Select(c =>

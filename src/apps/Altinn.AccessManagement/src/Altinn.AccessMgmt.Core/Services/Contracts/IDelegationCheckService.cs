@@ -10,5 +10,5 @@ public interface IDelegationCheckService
     /// <summary>
     /// Performs delegation check of access packages. Gets a list of packages where the user have permission to assign the packages to others, on behalf of the specified party.
     /// </summary>
-    public Task<IEnumerable<AccessPackageDto.Check>> GetAssignableAccessPackages(Guid toId, Guid fromId, IEnumerable<Guid>? packageIds = null, CancellationToken cancellationToken = default);
+    public Task<IEnumerable<AccessPackageDto.AccessPackageDtoCheck>> GetAssignableAccessPackages(Guid toId, Guid fromId, IEnumerable<Guid>? packageIds = null, CancellationToken cancellationToken = default);
 }

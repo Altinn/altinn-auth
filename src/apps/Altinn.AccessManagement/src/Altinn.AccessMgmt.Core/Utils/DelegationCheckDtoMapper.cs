@@ -8,12 +8,12 @@ namespace Altinn.AccessMgmt.Core.Utils;
 /// </summary>
 public partial class DtoMapper
 {
-    public IEnumerable<AccessPackageDto.Check> Convert(IEnumerable<PackageDelegationCheck> packageDelegationCheck)
+    public IEnumerable<AccessPackageDto.AccessPackageDtoCheck> Convert(IEnumerable<PackageDelegationCheck> packageDelegationCheck)
     {
         return packageDelegationCheck.GroupBy(p => p.Package.Id).Select(group =>
         {
             var firstPackage = group.First();
-            return new AccessPackageDto.Check
+            return new AccessPackageDto.AccessPackageDtoCheck
             {
                 Package = new AccessPackageDto
                 {
@@ -22,7 +22,7 @@ public partial class DtoMapper
                     AreaId = firstPackage.Package.AreaId
                 },
                 Result = group.Any(p => p.Result),
-                Reasons = group.Select(p => new AccessPackageDto.Check.Reason
+                Reasons = group.Select(p => new AccessPackageDto.AccessPackageDtoCheck.Reason
                 {
                     Description = p.Reason.Description,
                     RoleId = p.Reason.RoleId,

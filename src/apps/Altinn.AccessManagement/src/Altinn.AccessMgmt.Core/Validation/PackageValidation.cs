@@ -23,7 +23,7 @@ public static class PackageValidation
         );
     };
 
-    internal static RuleExpression AuthorizePackageAssignment(IEnumerable<AccessPackageDto.Check> packages, string paramName = "packageId") => () =>
+    internal static RuleExpression AuthorizePackageAssignment(IEnumerable<AccessPackageDto.AccessPackageDtoCheck> packages, string paramName = "packageId") => () =>
     {
         if (packages.Any(p => !p.Result))
         {

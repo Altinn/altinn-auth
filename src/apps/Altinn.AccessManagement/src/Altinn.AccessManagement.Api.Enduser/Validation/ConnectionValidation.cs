@@ -69,7 +69,7 @@ internal static class ConnectionValidation
             ConnectionCombinationRules.ExclusivePackageReference(packageId, packageUrn),
             ConnectionCombinationRules.PartyEqualsFrom(party, from)
         );
-
+    
     /// <summary>
     /// Validation rule for removing an existing rightholder connection.
     /// </summary>
@@ -90,6 +90,39 @@ internal static class ConnectionValidation
             ParameterValidation.PartyFrom(from),
             ParameterValidation.PartyTo(to),
             ConnectionCombinationRules.ExclusivePackageReference(packageId, packageUrn),
+            ConnectionCombinationRules.RemovePartyMatchesFromOrTo(party, from, to)
+        );
+
+    /// <summary>
+    /// Validation rule for adding an resource to an existing rightholder connection with <see cref="ConnectionInput"/>.
+    /// </summary>
+    internal static RuleExpression ValidateAddResourceToConnectionWithConnectionInput(string party, string from, string to) =>
+        ValidationComposer.All(
+            ParameterValidation.Party(party),
+            ParameterValidation.PartyFrom(from),
+            ParameterValidation.PartyTo(to),
+            ConnectionCombinationRules.PartyEqualsFrom(party, from)
+        );
+
+    /// <summary>
+    /// Validation rule for adding an resource to an existing rightholder connection with  <see cref="PersonInput"/>.
+    /// </summary>
+    internal static RuleExpression ValidateAddResourceToConnectionWithPersonInput(string party, string from, string personIdentifier, string personLastName) =>
+        ValidationComposer.All(
+            ParameterValidation.Party(party),
+            ParameterValidation.PartyFrom(from),
+            ParameterValidation.PersonInput(personIdentifier, personLastName),
+            ConnectionCombinationRules.PartyEqualsFrom(party, from)
+        );
+
+    /// <summary>
+    /// Validation rule for removing package from existing rightholder connection.
+    /// </summary>
+    internal static RuleExpression ValidateRemoveResourceFromConnection(string party, string from, string to) =>
+        ValidationComposer.All(
+            ParameterValidation.Party(party),
+            ParameterValidation.PartyFrom(from),
+            ParameterValidation.PartyTo(to),
             ConnectionCombinationRules.RemovePartyMatchesFromOrTo(party, from, to)
         );
 }

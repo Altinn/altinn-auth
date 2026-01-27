@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Text;
 using System.Xml;
 using Altinn.AccessManagement.Core.Constants;
@@ -9,7 +9,6 @@ using Altinn.AccessManagement.Enums;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
-using Altinn.Urn.Json;
 
 namespace Altinn.AccessManagement.Core.Helpers
 {

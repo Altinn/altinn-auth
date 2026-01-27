@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Api.Contracts.AccessManagement;
+﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 
 /// <summary>
 /// Package delegation check response model
@@ -20,7 +20,7 @@ public class AccessPackageDto
     /// </summary>
     public Guid AreaId { get; set; }
 
-    public class Check
+    public class AccessPackageDtoCheck
     {
         /// <summary>
         /// Package the delegation check is regarding

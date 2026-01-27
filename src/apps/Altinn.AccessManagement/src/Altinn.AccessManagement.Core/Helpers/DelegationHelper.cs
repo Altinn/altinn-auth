@@ -7,9 +7,9 @@ using Altinn.AccessManagement.Core.Models.Authentication;
 using Altinn.AccessManagement.Core.Models.Party;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Enums;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
-using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
 using Altinn.Urn.Json;
@@ -1059,6 +1059,31 @@ namespace Altinn.AccessManagement.Core.Helpers
                 default:
                     return UuidType.Party;
             }
+        }
+            
+        public static UuidType GetUuidTypeFromEntityType(Guid entityType)
+        {
+            if (entityType == EntityTypeConstants.Person.Id)
+            {
+                return UuidType.Person;
+            }
+
+            if (entityType == EntityTypeConstants.Organization.Id)
+            {
+                return UuidType.Organization;
+            }
+
+            if (entityType == EntityTypeConstants.SystemUser.Id)
+            {
+                return UuidType.SystemUser;
+            }
+
+            if (entityType == EntityTypeConstants.EnterpriseUser.Id)
+            {
+                return UuidType.EnterpriseUser;
+            }
+
+            return UuidType.Party;
         }
 
         private static void SetTypeForSingleRule(List<int> keyRolePartyIds, int offeredByPartyId, List<AttributeMatch> coveredBy, int parentPartyId, Rule rule, int? coveredByPartyId, int? coveredByUserId)
