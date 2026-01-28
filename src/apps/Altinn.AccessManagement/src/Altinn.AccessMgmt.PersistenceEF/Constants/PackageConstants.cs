@@ -12,6 +12,29 @@ namespace Altinn.AccessMgmt.PersistenceEF.Constants;
 public static class PackageConstants
 {
     /// <summary>
+    /// Try to get <see cref="Package"/> by any identifier: Urn, Name or Guid.
+    /// </summary>
+    public static bool TryGetByAll(string value, [NotNullWhen(true)] out ConstantDefinition<Package>? result)
+    {
+        if (TryGetByUrn(value, out result))
+        {
+            return true;
+        }
+
+        if (TryGetByName(value, out result))
+        {
+            return true;
+        }
+
+        if (Guid.TryParse(value, out var packageGuid) && TryGetById(packageGuid, out result))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Try to get <see cref="Package"/> by name.
     /// </summary>
     public static bool TryGetByName(string name, [NotNullWhen(true)] out ConstantDefinition<Package>? result)
@@ -33,8 +56,6 @@ public static class PackageConstants
             result = null;
             return false;
         }
-
-        urn = urn.ToLowerInvariant();
 
         // Case 1: already a full URN
         if (ConstantLookup.TryGetByUrn(typeof(PackageConstants), urn, out result))

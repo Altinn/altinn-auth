@@ -12,10 +12,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Constants;
 public static class RoleConstants
 {
     /// <summary>
-    /// Try to get <see cref="Role"/> by any identifier: Code, Name, Urn or Guid.
+    /// Try to get <see cref="Role"/> by any identifier: Code, LegacyCode, Urn or Guid.
     /// </summary>
-    /// <returns></returns>
-    public static bool TryGetByAllIdentifiers(string value, [NotNullWhen(true)] out ConstantDefinition<Role>? result)
+    public static bool TryGetByAll(string value, [NotNullWhen(true)] out ConstantDefinition<Role>? result)
     {
         if (TryGetByCode(value, out result))
         {
@@ -48,10 +47,22 @@ public static class RoleConstants
         => ConstantLookup.TryGetByUrn(typeof(RoleConstants), urn, out result);
 
     /// <summary>
-    /// Try to get <see cref="Role"/> by Urn.
+    /// Try to get <see cref="Role"/> by code and then legacy code.
     /// </summary>
     public static bool TryGetByCode(string code, [NotNullWhen(true)] out ConstantDefinition<Role>? result)
-        => ConstantLookup.TryGetByCode(typeof(RoleConstants), code, out result);
+    {
+        if (ConstantLookup.TryGetByCode(typeof(RoleConstants), code, out result))
+        {
+            return true;
+        }
+
+        if (ConstantLookup.TryGetByLegacyCode(typeof(RoleConstants), code, out result))
+        {
+            return true;
+        }
+
+        return false;
+    }
 
     /// <summary>
     /// Get all constants as a read-only collection.

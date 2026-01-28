@@ -49,7 +49,7 @@ public class ClientDelegationService(
         var roleFilter = new List<Guid>();
         foreach (var r in roles)
         {
-            if (RoleConstants.TryGetByAllIdentifiers(r, out var role))
+            if (RoleConstants.TryGetByAll(r, out var role))
             {
                 roleFilter.Add(role.Id);
             }
@@ -243,7 +243,7 @@ public class ClientDelegationService(
         var inputs = payload.Values
             .Select((r, idx) =>
             {
-                var roleExist = RoleConstants.TryGetByAllIdentifiers(r.Role, out var role);
+                var roleExist = RoleConstants.TryGetByAll(r.Role, out var role);
                 var pkgs = r.Packages.Select((p, idx) =>
                 {
                     var packageExist = PackageConstants.TryGetByUrn(p, out var package);

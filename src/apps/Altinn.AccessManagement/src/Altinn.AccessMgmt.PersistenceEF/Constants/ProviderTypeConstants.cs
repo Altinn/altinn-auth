@@ -12,6 +12,24 @@ namespace Altinn.AccessMgmt.PersistenceEF.Constants;
 public static class ProviderTypeConstants 
 {
     /// <summary>
+    /// Try to get <see cref="ProviderType"/> by any identifier: Name or Guid.
+    /// </summary>
+    public static bool TryGetByAll(string value, [NotNullWhen(true)] out ConstantDefinition<ProviderType>? result)
+    {
+        if (TryGetByName(value, out result))
+        {
+            return true;
+        }
+
+        if (Guid.TryParse(value, out var providerTypeGuid) && TryGetById(providerTypeGuid, out result))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Try to get <see cref="ProviderType"/> by name.
     /// </summary>
     public static bool TryGetByName(string name, [NotNullWhen(true)] out ConstantDefinition<ProviderType>? result)

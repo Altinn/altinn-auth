@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 
@@ -21,6 +22,7 @@ public static class ConstantLookup
     private static readonly ConcurrentDictionary<(Type ConstantsClass, Type EntityType), Dictionary<string, object>> _byName = new();
     private static readonly ConcurrentDictionary<(Type ConstantsClass, Type EntityType), Dictionary<string, object>> _byUrn = new();
     private static readonly ConcurrentDictionary<(Type ConstantsClass, Type EntityType), Dictionary<string, object>> _byCode = new();
+    private static readonly ConcurrentDictionary<(Type ConstantsClass, Type EntityType), Dictionary<string, object>> _bylegacyCode = new();
     private static readonly ConcurrentDictionary<(Type ConstantsClass, Type EntityType), List<object>> _constants = new();
 
     private static List<ConstantDefinition<TType>> GetConstants<TType>(Type constantsClass)
@@ -96,6 +98,22 @@ public static class ConstantLookup
         });
     }
 
+    private static Dictionary<string, object> GetByLegacyCode(Type constantsClass)
+    {
+        var key = (constantsClass, typeof(Role));
+        return _bylegacyCode.GetOrAdd(key, _ =>
+        {
+            var constants = GetConstants<Role>(constantsClass)
+                .Where(c => !string.IsNullOrEmpty(c.Entity.LegacyCode))
+                .ToList();
+
+            return constants.ToDictionary<ConstantDefinition<Role>, string, object>(
+                cd => cd.Entity.LegacyCode,
+                cd => cd,
+                StringComparer.OrdinalIgnoreCase);
+        });
+    }
+
     private static List<object> GetAllEntities<TType>(Type constantsClass)
         where TType : class, IEntityId
     {
@@ -109,6 +127,12 @@ public static class ConstantLookup
     public static bool TryGetById<TType>(Type constantsClass, Guid id, [NotNullWhen(true)] out ConstantDefinition<TType>? result)
         where TType : class, IEntityId
     {
+        if (id == Guid.Empty)
+        {
+            result = null;
+            return false;
+        }
+
         var byId = GetById<TType>(constantsClass);
         if (byId.TryGetValue(id, out var value))
         {
@@ -126,6 +150,12 @@ public static class ConstantLookup
     public static bool TryGetByName<TType>(Type constantsClass, string name, [NotNullWhen(true)] out ConstantDefinition<TType>? result)
         where TType : class, IEntityId, IEntityName
     {
+        if (string.IsNullOrEmpty(name))
+        {
+            result = null;
+            return false;
+        }
+
         var byName = GetByName<TType>(constantsClass);
         if (byName.TryGetValue(name, out var value))
         {
@@ -143,6 +173,12 @@ public static class ConstantLookup
     public static bool TryGetByName<TType>(Type constantsClass, string name, bool includeTranslations, [NotNullWhen(true)] out ConstantDefinition<TType>? result)
         where TType : class, IEntityId, IEntityName
     {
+        if (string.IsNullOrEmpty(name))
+        {
+            result = null;
+            return false;
+        }
+
         var byName = GetByName<TType>(constantsClass);
         if (byName.TryGetValue(name, out var value))
         {
@@ -170,6 +206,12 @@ public static class ConstantLookup
     public static bool TryGetByUrn<TType>(Type constantsClass, string urn, [NotNullWhen(true)] out ConstantDefinition<TType>? result)
         where TType : class, IEntityId, IEntityUrn
     {
+        if (string.IsNullOrEmpty(urn))
+        {
+            result = null;
+            return false;
+        }
+
         var byUrn = GetByUrn<TType>(constantsClass);
         if (byUrn.TryGetValue(urn, out var value))
         {
@@ -187,10 +229,38 @@ public static class ConstantLookup
     public static bool TryGetByCode<TType>(Type constantsClass, string code, [NotNullWhen(true)] out ConstantDefinition<TType>? result)
         where TType : class, IEntityId, IEntityCode
     {
+        if (string.IsNullOrEmpty(code))
+        {
+            result = null;
+            return false;
+        }
+
         var byCode = GetByCode<TType>(constantsClass);
         if (byCode.TryGetValue(code, out var value))
         {
             result = (ConstantDefinition<TType>)value;
+            return true;
+        }
+
+        result = null;
+        return false;
+    }
+
+    /// <summary>
+    /// Try to get role by legacy code for roles.
+    /// </summary>
+    public static bool TryGetByLegacyCode(Type constantsClass, string legacyCode, [NotNullWhen(true)] out ConstantDefinition<Role>? result)
+    {
+        if (string.IsNullOrEmpty(legacyCode))
+        {
+            result = null;
+            return false;
+        }
+
+        var byCode = GetByLegacyCode(constantsClass);
+        if (byCode.TryGetValue(legacyCode, out var value))
+        {
+            result = (ConstantDefinition<Role>)value;
             return true;
         }
 

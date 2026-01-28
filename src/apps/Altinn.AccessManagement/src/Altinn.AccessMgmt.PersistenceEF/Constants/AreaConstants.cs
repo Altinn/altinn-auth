@@ -12,6 +12,25 @@ namespace Altinn.AccessMgmt.PersistenceEF.Constants;
 public static class AreaConstants
 {
     /// <summary>
+    /// Try to get <see cref="Area"/> by any identifier: Name or Guid.
+    /// </summary>
+    /// <returns></returns>
+    public static bool TryGetByAll(string value, [NotNullWhen(true)] out ConstantDefinition<Area>? result)
+    {
+        if (TryGetByName(value, out result))
+        {
+            return true;
+        }
+
+        if (Guid.TryParse(value, out var areaGuid) && TryGetById(areaGuid, out result))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Try to get <see cref="Area"/> by name.
     /// </summary>
     public static bool TryGetByName(string name, [NotNullWhen(true)] out ConstantDefinition<Area>? result)

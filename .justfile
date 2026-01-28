@@ -32,9 +32,10 @@ set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
   pnpm install --frozen-lockfile
 
 # Run the script to update solution files
+# Run the script to update solution files
 @update-sln-files *ARGS: install-script-packages-frozen
   #!{{shebang}}
-  node ./.github/scripts/update-sln-files.mts -- {{ARGS}}
+  node --import "./.github/scripts/node_modules/tsx/dist/esm/index.mjs" "./.github/scripts/update-sln-files.mts" -- {{ARGS}}
 
 @dotnet-reference-trimmer:
   dotnet build -p:EnableReferenceTrimmer=true

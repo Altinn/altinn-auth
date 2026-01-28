@@ -12,6 +12,24 @@ namespace Altinn.AccessMgmt.PersistenceEF.Constants;
 public static class SystemEntityConstants
 {
     /// <summary>
+    /// Try to get <see cref="Entity"/> by any identifier: Name or Guid.
+    /// </summary>
+    public static bool TryGetByAll(string value, [NotNullWhen(true)] out ConstantDefinition<Entity>? result)
+    {
+        if (TryGetByName(value, out result))
+        {
+            return true;
+        }
+
+        if (Guid.TryParse(value, out var entityGuid) && TryGetById(entityGuid, out result))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Try to get <see cref="Entity"/> by name.
     /// </summary>
     public static bool TryGetByName(string name, [NotNullWhen(true)] out ConstantDefinition<Entity>? result)
