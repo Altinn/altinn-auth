@@ -128,45 +128,48 @@ public class ClientDelegationService(
             .Where(p => p.FromId == partyId && p.ToId == toUuid && p.RoleId == RoleConstants.Agent)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (!cascade)
-        {
-            var existingDelegations = await db.Delegations.AsNoTracking()
-                .Where(p => p.ToId == toUuid)
-                .Include(p => p.To)
-                .Join(db.DelegationPackages, d => d.Id, dp => dp.DelegationId, (d, dp) => new
-                {
-                    Delegation = d,
-                    DelegationPackage = dp,
-                })
-                .GroupBy(d => d.Delegation.Id)
-                .ToListAsync(cancellationToken);
-
-            foreach (var existingDelegation in existingDelegations)
+        var existingDelegations = await db.Delegations.AsNoTracking()
+            .Where(p => p.ToId == toUuid)
+            .Include(p => p.To)
+            .Join(db.DelegationPackages, d => d.Id, dp => dp.DelegationId, (d, dp) => new
             {
-                var first = existingDelegation.FirstOrDefault();
-                if (first is null)
-                {
-                    continue;
-                }
+                Delegation = d,
+                DelegationPackage = dp,
+            })
+            .GroupBy(d => d.Delegation.Id)
+            .ToListAsync(cancellationToken);
 
-                var pkgs = string.Join(", ", existingDelegation.Select(p => p.DelegationPackage.PackageId));
-                var fromId = first.Delegation.FromId;
-                var delegationId = first.Delegation.Id;
+        if (errorBuilder.TryBuild(out var problem))
+        {
+            return problem;
+        }
 
-                if (fromId is { })
-                {
-                    errorBuilder.Add(
-                        ValidationErrors.DelegationHasActiveConnections,
-                        "QUERY/cascade",
-                        [
-                            new($"{delegationId}",$"Cannot remove delegation because party {toUuid} still has active delegated packages ({pkgs}) from party {fromId}.")
-                        ]
-                    );
-                }
+        foreach (var existingDelegation in existingDelegations)
+        {
+            var first = existingDelegation.FirstOrDefault();
+
+            if (first is null)
+            {
+                continue;
+            }
+
+            var pkgs = string.Join(", ", existingDelegation.Select(p => p.DelegationPackage.PackageId));
+            var fromId = first.Delegation.FromId;
+            var delegationId = first.Delegation.Id;
+
+            if (!cascade)
+            {
+                errorBuilder.Add(
+                    ValidationErrors.DelegationHasActiveConnections,
+                    "QUERY/cascade",
+                    [
+                        new($"{first.Delegation.Id}",$"Cannot remove delegation because party {toUuid} still has active delegated packages ({pkgs}) from party {fromId}.")
+                    ]
+                );
             }
         }
 
-        if (errorBuilder.TryBuild(out var problem))
+        if (errorBuilder.TryBuild(out problem))
         {
             return problem;
         }
@@ -240,7 +243,7 @@ public class ClientDelegationService(
         var inputs = payload.Values
             .Select((r, idx) =>
             {
-                var roleExist = RoleConstants.TryGetByCode(r.Role, out var role);
+                var roleExist = RoleConstants.TryGetByAllIdentifiers(r.Role, out var role);
                 var pkgs = r.Packages.Select((p, idx) =>
                 {
                     var packageExist = PackageConstants.TryGetByUrn(p, out var package);

@@ -233,7 +233,6 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
 
             if (delegation != null)
             {
-
                 foreach (var package in rp.Value)
                 {
                     // TODO: Add "&& t.CanAssign" when data is ready
