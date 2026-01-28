@@ -1,4 +1,4 @@
-environment = "at24"
+﻿environment = "at24"
 aks_federation = [
   {
     issuer_url      = "https://norwayeast.oic.prod-aks.azure.com/cd0026d8-283b-4a55-9bfa-d0ef4a8ba21c/4a142a74-1861-42c5-9014-36cc46ed71a0/"
@@ -17,6 +17,7 @@ sbl_endpoint     = "https://at24.altinn.cloud/sblbridge/"
 use_pgbouncer    = true
 
 features = {
+  maskinporten = true
   a2_party_import = {
     parties  = true
     user_ids = true
