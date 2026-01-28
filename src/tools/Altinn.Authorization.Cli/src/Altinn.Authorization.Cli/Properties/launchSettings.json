@@ -44,6 +44,10 @@
       "commandName": "Project",
       "commandLineArgs": "register retry\r\n\"${REGISTER_SB_TT02}\"\r\n\"${REGISTER_DB_TT02}\""
     },
+    "retry PROD register import": {
+      "commandName": "Project",
+      "commandLineArgs": "register retry\r\n\"${REGISTER_SB_PROD}\"\r\n\"${REGISTER_DB_PROD}\""
+    },
     "export AT22 errors": {
       "commandName": "Project",
       "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_AT22}\""
@@ -63,6 +67,10 @@
     "export TT02 errors": {
       "commandName": "Project",
       "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_TT02}\""
+    },
+    "export PROD errors": {
+      "commandName": "Project",
+      "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_PROD}\""
     }
   }
 }

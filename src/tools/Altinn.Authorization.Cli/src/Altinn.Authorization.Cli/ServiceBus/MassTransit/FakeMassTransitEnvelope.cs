@@ -24,11 +24,27 @@ public sealed record FakeMassTransitEnvelope<T>
     [JsonPropertyName("messageId")]
     public Guid MessageId => T.MessageId(Message);
 
+    [JsonPropertyName("correlationId")]
+    public Guid CorrelationId => T.CorrelationId(Message);
+
     [JsonPropertyName("messageType")]
     public IEnumerable<Utf8String> MessageType => [T.MessageUrn];
 
     [JsonPropertyName("message")]
     public T Message { get; }
+}
+
+[ExcludeFromCodeCoverage]
+public sealed record AnonymousFakeMessageEnvelope
+{
+    [JsonPropertyName("messageId")]
+    public required JsonElement MessageId { get; init; }
+
+    [JsonPropertyName("messageType")]
+    public required JsonElement MessageType { get; init; }
+
+    [JsonPropertyName("message")]
+    public required JsonElement Message { get; init; }
 }
 
 public interface IFakeMassTransitMessage<T>
@@ -37,6 +53,8 @@ public interface IFakeMassTransitMessage<T>
     public static abstract Utf8String MessageUrn { get; }
 
     public static abstract Guid MessageId(T message);
+
+    public static abstract Guid CorrelationId(T message);
 }
 
 [ExcludeFromCodeCoverage]
