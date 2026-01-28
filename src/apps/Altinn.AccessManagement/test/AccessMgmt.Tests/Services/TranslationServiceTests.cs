@@ -1,10 +1,13 @@
 ﻿using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessMgmt.Persistence.Services.Models;
+using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using AuditDefaults = Altinn.AccessMgmt.Persistence.Data.AuditDefaults;
 
 namespace AccessMgmt.Tests.Services;
 
@@ -26,6 +29,16 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             .Options;
 
         _db = new AppDbContext(options);
+        
+        // Set up audit accessor with test values
+        _db.AuditAccessor = new AuditAccessor
+        {
+            AuditValues = new AuditValues(
+                changedBy: Guid.NewGuid(),
+                changedBySystem: AuditDefaults.StaticDataIngest
+            )
+        };
+        
         _cache = new MemoryCache(new MemoryCacheOptions());
         _translationService = new TranslationService(_db, _cache);
     }

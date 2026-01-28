@@ -1,3 +1,5 @@
+﻿using System.Reflection;
+using Altinn.AccessManagement.Core.Clients.Interfaces;
 ﻿using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
@@ -23,7 +25,7 @@ public class WebApplicationFixture : WebApplicationFactory<Program>, IAsyncLifet
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        var db = PostgresServer.NewDatabase();
+        var db = PostgresServer.NewEFDatabase();
 
         var appsettings = new ConfigurationBuilder()
            .AddJsonFile("appsettings.test.json")
