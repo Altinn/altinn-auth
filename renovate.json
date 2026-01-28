@@ -85,6 +85,14 @@
       "groupName": "Altinn.Authorization.ServiceDefaults",
       "groupSlug": "altinn-authorization-servicedefaults",
       "matchUpdateTypes": ["major"]
+    },
+    {
+      "matchManagers": ["docker"],
+      "matchPackageNames": [
+        "mcr.microsoft.com/dotnet/*"
+      ],
+      "groupName": ".NET Images",
+      "groupSlug": "dotnet-images"
     }
   ]
 }
