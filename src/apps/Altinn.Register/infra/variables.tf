@@ -1,4 +1,4 @@
-﻿variable "organization" {
+variable "organization" {
   type    = string
   default = "altinn"
 }
