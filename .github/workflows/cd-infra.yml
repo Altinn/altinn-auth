@@ -43,6 +43,7 @@ jobs:
   staging-spoke:
     name: Spoke Staging
     needs: test-spoke
+    if: always() && (needs['test-spoke'].result == 'success')
     secrets: inherit
     uses: ./.github/workflows/_cd-infra-template.yml
     strategy:
@@ -57,6 +58,7 @@ jobs:
   prod-spoke:
     name: Spoke Prod
     needs: staging-spoke
+    if: always() && (needs['staging-spoke'].result == 'success')
     secrets: inherit
     uses: ./.github/workflows/_cd-infra-template.yml
     strategy:
