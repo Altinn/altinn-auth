@@ -129,8 +129,7 @@ public class ClientDelegationService(
             .FirstOrDefaultAsync(cancellationToken);
 
         var existingDelegations = await db.Delegations.AsNoTracking()
-            .Where(p => p.ToId == toUuid)
-            .Include(p => p.To)
+            .Where(p => p.ToId == existingAssignment.Id)
             .Join(db.DelegationPackages, d => d.Id, dp => dp.DelegationId, (d, dp) => new
             {
                 Delegation = d,
