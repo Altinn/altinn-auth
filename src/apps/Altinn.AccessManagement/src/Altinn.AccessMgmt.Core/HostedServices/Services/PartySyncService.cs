@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Diagnostics;
+using System.Net.Http.Headers;
 using Altinn.AccessMgmt.Core.HostedServices.Contracts;
 using Altinn.AccessMgmt.Core.HostedServices.Leases;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
@@ -9,6 +10,7 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Integration.Platform.Register;
+using Altinn.Authorization.ModelUtils;
 using Altinn.Register.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -173,11 +175,25 @@ public class PartySyncService : BaseSyncService, IPartySyncService
 
     private Entity MapSelfIdentifiedUser(SelfIdentifiedUser selfIdentifiedUser)
     {
+        FieldValue<NonExhaustiveEnum<SelfIdentifiedUserType>> userType = selfIdentifiedUser.SelfIdentifiedUserType;
         var entity = CreateEntity(selfIdentifiedUser, s =>
         {
             s.RefId = selfIdentifiedUser.User.Value.Username.Value;
             s.TypeId = EntityTypeConstants.SelfIdentified;
-            s.VariantId = EntityVariantConstants.SI;
+            s.EmailIdentifier = selfIdentifiedUser.Email.Value;
+            s.VariantId = userType switch
+            {
+                { IsNull: true } => EntityVariantConstants.SI,
+                { IsUnset: true } => throw new UnreachableException("Missing selfidentfiedUserType from register. Should never happen."),
+                { Value.IsUnknown: true } => throw new InvalidOperationException("..."),
+                { Value.Value: SelfIdentifiedUserType rrr } => rrr switch 
+                {
+                    SelfIdentifiedUserType.Legacy => EntityVariantConstants.SI,
+                    SelfIdentifiedUserType.Educational => EntityVariantConstants.SI_EDU,
+                    SelfIdentifiedUserType.IdPortenEmail => EntityVariantConstants.SI_EMAIL,
+                    _ => throw new InvalidDataException($"Missing mapping for SI user type {rrr}")
+                },
+            };
         });
 
         return entity;

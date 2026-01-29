@@ -22,6 +22,7 @@ public class EntityConfiguration : IEntityTypeConfiguration<Entity>
         builder.Property(t => t.PartyId).IsRequired(false);
         builder.Property(t => t.UserId).IsRequired(false);
         builder.Property(t => t.Username).IsRequired(false);
+        builder.Property(t => t.EmailIdentifier).IsRequired(false);
         builder.Property(t => t.OrganizationIdentifier).IsRequired(false);
         builder.Property(t => t.PersonIdentifier).IsRequired(false);
         builder.Property(t => t.DateOfBirth).IsRequired(false);

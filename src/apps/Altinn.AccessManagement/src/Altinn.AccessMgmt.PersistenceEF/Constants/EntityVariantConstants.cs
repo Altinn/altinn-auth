@@ -1074,9 +1074,29 @@ public static class EntityVariantConstants
     /// </remarks>
     public static ConstantDefinition<EntityVariant> SI { get; } = new ConstantDefinition<EntityVariant>("03d08113-40d0-48bd-85b6-bd4430ccc182")
     {
-        Entity = new() { TypeId = EntityTypeConstants.Person, Name = "SI", Description = "Selvidentifisert bruker" },
+        Entity = new() { TypeId = EntityTypeConstants.SelfIdentified, Name = "SI", Description = "Selvidentifisert bruker" },
         EN = TranslationEntryList.Create(KeyValuePair.Create("Name", "SI"), KeyValuePair.Create("Description", "Self-identified user")),
         NN = TranslationEntryList.Create(KeyValuePair.Create("Name", "SI"), KeyValuePair.Create("Description", "Sjølvidentifisert brukar"))
+    };
+
+    /// <summary>
+    /// Represents the entity variant for self-identified user from Feide/UIDP education login ("SIEDU").
+    /// </summary>
+    public static ConstantDefinition<EntityVariant> SI_EDU { get; } = new ConstantDefinition<EntityVariant>("019c0480-affc-7423-8fa6-41ddbde5f35b")
+    {
+        Entity = new() { TypeId = EntityTypeConstants.SelfIdentified, Name = "SI_EDU", Description = "Selvidentifisert bruker UDIR" },
+        EN = TranslationEntryList.Create(KeyValuePair.Create("Name", "SI_EDU"), KeyValuePair.Create("Description", "Self-identified user UDIR")),
+        NN = TranslationEntryList.Create(KeyValuePair.Create("Name", "SI_EDU"), KeyValuePair.Create("Description", "Sjølvidentifisert brukar UDIR"))
+    };
+
+    /// <summary>
+    /// Represents the entity variant for self-identified user from IDporten epost login ("SIEPOST").
+    /// </summary>
+    public static ConstantDefinition<EntityVariant> SI_EMAIL { get; } = new ConstantDefinition<EntityVariant>("019c0480-fab3-7f58-bc7d-0eeecafc846c")
+    {
+        Entity = new() { TypeId = EntityTypeConstants.SelfIdentified, Name = "SI_EMAIL", Description = "ID-porten epost bruker" },
+        EN = TranslationEntryList.Create(KeyValuePair.Create("Name", "SI_EMAIL"), KeyValuePair.Create("Description", "ID-porten email user")),
+        NN = TranslationEntryList.Create(KeyValuePair.Create("Name", "SI_EMAIL"), KeyValuePair.Create("Description", "ID-porten epost brukar"))
     };
 
     /// <summary>

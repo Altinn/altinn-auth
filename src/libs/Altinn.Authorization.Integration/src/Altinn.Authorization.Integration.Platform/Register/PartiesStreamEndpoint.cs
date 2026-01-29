@@ -1,4 +1,4 @@
-using Altinn.Register.Contracts;
+﻿using Altinn.Register.Contracts;
 
 namespace Altinn.Authorization.Integration.Platform.Register;
 
@@ -19,8 +19,10 @@ public partial class AltinnRegisterClient
         "user",
         "person.date-of-birth",
         "person.date-of-death",
-        "sysuser",
+        "sysuser.type",
         "org.type",
+        "si.type",
+        "si.email"
     ];
 
     /// <inheritdoc/>

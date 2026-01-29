@@ -36,6 +36,11 @@ public class BaseEntity : BaseAudit, IEntityId, IEntityName
     public string RefId { get; set; }
 
     /// <summary>
+    /// Email. Used for ID-porten email login identification
+    /// </summary>
+    public string EmailIdentifier { get; set; }
+
+    /// <summary>
     /// Parent identifier
     /// </summary>
     public Guid? ParentId { get; set; }
