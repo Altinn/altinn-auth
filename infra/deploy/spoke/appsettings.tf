@@ -22,3 +22,21 @@ module "app_configuration" {
     azurerm.hub = azurerm.hub
   }
 }
+
+module "services_configuration" {
+  source     = "../../modules/appsettings"
+  hub_suffix = local.hub_suffix
+
+  labels = {
+    lower(var.environment) = {
+      values = {
+        for service_name, service_config in var.services :
+        "Services:${service_name}:${service_config.protocol}" => { value = "${service_config.protocol}://${service_config.host}/" }
+      }
+    }
+  }
+
+  providers = {
+    azurerm.hub = azurerm.hub
+  }
+}

@@ -21,3 +21,24 @@ appconfiguration = {
   platform_register_endpoint          = "http://altinn-register.default.svc.cluster.local"
   platform_sbl_bridge_endpoint        = "https://ai-pr-vip-sblbridge.ai.basefarm.net/sblbridge/"
 }
+
+services = {
+  altinn-authentication = {
+    protocol = "http"
+    host     = "altinn-authentication.default.svc.cluster.local"
+  }
+
+  altinn-resource-registry = {
+    protocol = "http"
+    host     = "altinn-resource-registry.default.svc.cluster.local"
+  }
+
+  altinn-register = {
+    protocol = "http"
+    host     = "altinn-register.default.svc.cluster.local"
+  }
+
+  folkeregisteret = {
+    host = "folkeregisteret.api.skatteetaten.no"
+  }
+}

@@ -66,3 +66,10 @@ variable "appconfiguration" {
     platform_sbl_bridge_endpoint        = string
   })
 }
+
+variable "services" {
+  type = map(object({
+    protocol = optional(string, "https")
+    host     = string
+  }))
+}

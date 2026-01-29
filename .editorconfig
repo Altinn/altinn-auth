@@ -7,6 +7,9 @@ insert_final_newline = true
 tab_width = 2
 charset = utf-8-bom
 
+[*.{tf,tfvars}]
+charset = utf-8
+
 [*.{props,targets,csproj}]
 tab_width = 4
 
