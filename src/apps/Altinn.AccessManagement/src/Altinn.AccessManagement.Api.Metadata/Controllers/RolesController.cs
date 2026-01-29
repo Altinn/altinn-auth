@@ -43,8 +43,8 @@ namespace Altinn.AccessManagement.Api.Metadata.Controllers
                 return NotFound();
             }
 
-            // Translate the collection
-            var translated = await res.TranslateAsync(
+            // Translate the collection with deep translation for nested Provider
+            var translated = await res.TranslateDeepAsync(
                 translationService, 
                 this.GetLanguageCode(), 
                 this.AllowPartialTranslation());
@@ -66,8 +66,8 @@ namespace Altinn.AccessManagement.Api.Metadata.Controllers
                 return NotFound();
             }
 
-            // Translate the role
-            var translated = await res.TranslateAsync(
+            // Translate the role with deep translation for nested Provider
+            var translated = await res.TranslateDeepAsync(
                 translationService,
                 this.GetLanguageCode(),
                 this.AllowPartialTranslation());
@@ -94,8 +94,8 @@ namespace Altinn.AccessManagement.Api.Metadata.Controllers
 
             var packages = await roleService.GetRolePackages(roleDef.Id, variantDef.Id, includeResources);
             
-            // Translate the packages
-            var translated = await packages.TranslateAsync(
+            // Translate the packages with deep translation for nested Area and Resources
+            var translated = await packages.TranslateDeepAsync(
                 translationService,
                 this.GetLanguageCode(),
                 this.AllowPartialTranslation());
@@ -122,11 +122,12 @@ namespace Altinn.AccessManagement.Api.Metadata.Controllers
 
             var resources = await roleService.GetRoleResources(roleDef.Id, variantDef.Id, includePackageResources);
             
-            // Translate the resources
-            var translated = await resources.TranslateAsync(
+            // Translate the resources with deep translation for nested Provider and Type
+            var translated = await resources.TranslateDeepAsync(
                 translationService,
                 this.GetLanguageCode(),
                 this.AllowPartialTranslation());
+
 
             return Ok(translated);
         }
@@ -145,8 +146,8 @@ namespace Altinn.AccessManagement.Api.Metadata.Controllers
 
             var packages = await roleService.GetRolePackages(id, variantDef.Id, includeResources);
             
-            // Translate the packages
-            var translated = await packages.TranslateAsync(
+            // Translate the packages with deep translation for nested Area and Resources
+            var translated = await packages.TranslateDeepAsync(
                 translationService,
                 this.GetLanguageCode(),
                 this.AllowPartialTranslation());
@@ -168,8 +169,8 @@ namespace Altinn.AccessManagement.Api.Metadata.Controllers
 
             var resources = await roleService.GetRoleResources(id, variantDef.Id, includePackageResources);
             
-            // Translate the resources
-            var translated = await resources.TranslateAsync(
+            // Translate the resources with deep translation for nested Provider and Type
+            var translated = await resources.TranslateDeepAsync(
                 translationService,
                 this.GetLanguageCode(),
                 this.AllowPartialTranslation());

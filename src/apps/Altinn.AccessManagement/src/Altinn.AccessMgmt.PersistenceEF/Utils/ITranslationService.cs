@@ -56,7 +56,9 @@ public interface ITranslationService
     /// Inserts a new translation entry or updates an existing one in the database.
     /// </summary>
     /// <param name="translationEntry">The translation entry to insert or update.</param>
+    /// <param name="changedBy">The user or system that is making the change.</param>
+    /// <param name="changedBySystem">The system making the change (e.g., AuditDefaults.ResourceRegistryImportSystem).</param>
     /// <param name="cancellationToken">Cancellation token for the async operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task UpsertTranslationAsync(TranslationEntry translationEntry, CancellationToken cancellationToken = default);
+    Task UpsertTranslationAsync(TranslationEntry translationEntry, Guid changedBy, Guid changedBySystem, CancellationToken cancellationToken = default);
 }

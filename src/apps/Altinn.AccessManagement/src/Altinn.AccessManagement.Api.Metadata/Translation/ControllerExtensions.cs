@@ -8,12 +8,21 @@ namespace Altinn.AccessManagement.Api.Metadata.Translation;
 public static class ControllerExtensions
 {
     /// <summary>
-    /// Gets the language code from the Accept-Language header.
+    /// Gets the language code from HttpContext (set by TranslationMiddleware).
+    /// Falls back to parsing Accept-Language header if middleware hasn't run.
     /// </summary>
     /// <param name="controller">The controller instance</param>
     /// <returns>The language code (e.g., "nob", "eng", "nno")</returns>
     public static string GetLanguageCode(this ControllerBase controller)
     {
+        // First, try to get the language code set by TranslationMiddleware
+        if (controller.HttpContext.Items.TryGetValue(TranslationConstants.LanguageCodeKey, out var languageCode) 
+            && languageCode is string code && !string.IsNullOrEmpty(code))
+        {
+            return code;
+        }
+
+        // Fallback: Parse Accept-Language header directly (if middleware not configured)
         if (controller.Request.Headers.TryGetValue(TranslationConstants.AcceptLanguageHeader, out var acceptLanguage))
         {
             var languageHeader = acceptLanguage.ToString();

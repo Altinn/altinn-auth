@@ -8,6 +8,8 @@ using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using AuditDefaults = Altinn.AccessMgmt.Persistence.Data.AuditDefaults;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AccessMgmt.Tests.Services;
 
@@ -40,7 +42,7 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
         };
         
         _cache = new MemoryCache(new MemoryCacheOptions());
-        _translationService = new TranslationService(_db, _cache);
+        _translationService = new TranslationService(_db, _cache, NullLogger<TranslationService>.Instance);
     }
 
     #region Norwegian Bokmål (Base Language) Tests
@@ -452,7 +454,7 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
         };
 
         // Act
-        await _translationService.UpsertTranslationAsync(translationEntry);
+        await _translationService.UpsertTranslationAsync(translationEntry, AuditDefaults.StaticDataIngest, AuditDefaults.StaticDataIngest);
 
         // Assert
         var saved = await _db.TranslationEntries
@@ -475,13 +477,13 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Value = "Original"
         };
 
-        await _translationService.UpsertTranslationAsync(translationEntry);
+        await _translationService.UpsertTranslationAsync(translationEntry, AuditDefaults.StaticDataIngest, AuditDefaults.StaticDataIngest);
 
         // Update the value
         translationEntry.Value = "Updated";
 
         // Act
-        await _translationService.UpsertTranslationAsync(translationEntry);
+        await _translationService.UpsertTranslationAsync(translationEntry, AuditDefaults.StaticDataIngest, AuditDefaults.StaticDataIngest);
 
         // Assert
         var saved = await _db.TranslationEntries
@@ -489,10 +491,6 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
         Assert.NotNull(saved);
         Assert.Equal("Updated", saved.Value);
     }
-
-    #endregion
-
-    #region Performance Tests
 
     [Fact]
     public async Task TranslateAsync_SecondCall_UsesCachedData()
@@ -507,7 +505,7 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             FieldName = "Name",
             Value = "Cached Translation"
         };
-        await _translationService.UpsertTranslationAsync(translationEntry);
+        await _translationService.UpsertTranslationAsync(translationEntry, AuditDefaults.StaticDataIngest, AuditDefaults.StaticDataIngest);
 
         var role = new RoleDto
         {

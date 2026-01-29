@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AccessMgmt.Tests.Controllers.Metadata;
 
@@ -29,7 +31,7 @@ public class MetadataTests : IClassFixture<PostgresFixture>
 
         // Create a real translation service for tests
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
-        _translationService = new TranslationService(_db, memoryCache);
+        _translationService = new TranslationService(_db, memoryCache, NullLogger<TranslationService>.Instance);
 
         SeedTestData(_db).Wait();
     }
