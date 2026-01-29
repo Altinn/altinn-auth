@@ -18,7 +18,7 @@ jobs:
   hub:
     name: Hub
     secrets: inherit
-    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs['skip-hub'] != false }}
+    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs['skip-hub'] == false }}
     uses: ./.github/workflows/_cd-infra-template.yml
     with:
       environment: prod
