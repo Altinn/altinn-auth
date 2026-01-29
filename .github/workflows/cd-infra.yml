@@ -28,6 +28,7 @@ jobs:
   test-spoke:
     name: Spoke Test
     needs: hub
+    if: ${{ needs.hub.result == 'success' || needs.hub.result == 'skipped' }}
     secrets: inherit
     uses: ./.github/workflows/_cd-infra-template.yml
     strategy:
