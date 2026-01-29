@@ -388,7 +388,9 @@ public class ConnectionQuery(AppDbContext db)
             : a2.Concat(fromChildren).Concat(innehaverConnections);
         */
 
-        var query = doChildNesting ? a2.Concat(fromChildren).Concat(innehaverConnections) : a2.Concat(innehaverConnections);
+        var query = doChildNesting
+            ? filter.IncludeSubConnections ? a2.Concat(fromChildren).Concat(innehaverConnections) : a2.Concat(fromChildren)
+            : filter.IncludeSubConnections ? a2.Concat(innehaverConnections) : a2;
 
         return
             applyFromFilter
