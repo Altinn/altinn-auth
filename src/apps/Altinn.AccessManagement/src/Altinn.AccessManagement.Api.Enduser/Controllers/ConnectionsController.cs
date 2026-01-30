@@ -37,7 +37,7 @@ public class ConnectionsController(
 {
     private Action<ConnectionOptions> ConfigureConnections { get; } = options =>
     {
-        options.AllowedWriteFromEntityTypes = [EntityTypeConstants.Organization];
+        options.AllowedWriteFromEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
         options.AllowedWriteToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
         options.AllowedReadFromEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
         options.AllowedReadToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
