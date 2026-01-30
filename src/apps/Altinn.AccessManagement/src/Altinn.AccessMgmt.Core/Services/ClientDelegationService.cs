@@ -162,7 +162,7 @@ public class ClientDelegationService(
                     ValidationErrors.DelegationHasActiveConnections,
                     "QUERY/cascade",
                     [
-                        new($"{first.Delegation.Id}",$"Cannot remove delegation because party {toUuid} still has active delegated packages ({pkgs}) from party {fromId}.")
+                        new($"{first.Delegation.Id}", $"Cannot remove delegation '{first.Delegation.Id}' because party '{toUuid}' still has active delegated packages <{pkgs}> from party '{fromId}'.")
                     ]
                 );
             }

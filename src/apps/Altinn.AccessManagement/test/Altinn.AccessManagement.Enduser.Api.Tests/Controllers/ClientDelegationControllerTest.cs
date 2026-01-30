@@ -76,7 +76,7 @@ public class ClientDelegationControllerTest
             var client = Fixture.Server.CreateClient();
             var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
             {
-                claims.Add(new Claim("scope", $"{AuthzConstants.POLICY_CLIENTDELEGATION_READ} {AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ}"));
+                claims.Add(new Claim("scope", AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ));
             });
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
             return client;
@@ -307,13 +307,147 @@ public class ClientDelegationControllerTest
             var client = Fixture.Server.CreateClient();
             var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
             {
-                claims.Add(new Claim("scope", AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE));
-                claims.Add(new Claim("scope", AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ));
+                claims.Add(new Claim("scope", $"{AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE} {AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ}"));
             });
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
             return client;
         }
     }
+    #endregion
+
+    #region DELETE accessmanagement/api/v1/enduser/clientdelegations/agents
+
+    /// <summary>
+    /// <see cref="ClientDelegationController.RemoveAgent(Guid, Guid, bool, CancellationToken)"/>
+    /// </summary>
+    public class DeleteAgent : IClassFixture<ApiFixture>
+    {
+        public DeleteAgent(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnduserControllerClientDelegation);
+            Fixture.EnsureSeedOnce(db =>
+            {
+                var rightholderfromNordisToVerdiq = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationNordisAS.Id,
+                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+
+                var accountantFromNordisToVerdiq = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationNordisAS.Id,
+                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    RoleId = RoleConstants.Accountant,
+                };
+                var agentFromVerdiqToPaula = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationVerdiqAS.Id,
+                    ToId = TestEntities.PersonPaula,
+                    RoleId = RoleConstants.Agent,
+                };
+
+                db.Assignments.Add(rightholderfromNordisToVerdiq);
+                db.Assignments.Add(accountantFromNordisToVerdiq);
+                db.Assignments.Add(agentFromVerdiqToPaula);
+
+                db.AssignmentPackages.Add(new()
+                {
+                    AssignmentId = rightholderfromNordisToVerdiq.Id,
+                    PackageId = PackageConstants.Customs.Id,
+                });
+
+                db.AssignmentPackages.Add(new()
+                {
+                    AssignmentId = rightholderfromNordisToVerdiq.Id,
+                    PackageId = PackageConstants.ExplicitServiceDelegation.Id,
+                });
+
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private HttpClient CreateClient()
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestEntities.PersonPaula.Id.ToString()));
+                claims.Add(new Claim("scope", $"{AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE} {AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ}"));
+            });
+
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            return client;
+        }
+
+        [Fact]
+        public async Task RemoveAgentWithExistingDelegations_WithCascadeFalse_ReturnsBadRequest()
+        {
+            // Create Delegation
+            var client = CreateClient();
+            var response = await client.PostAsJsonAsync(
+                $"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&from={TestEntities.OrganizationNordisAS}&to={TestEntities.PersonPaula}",
+                new DelegationBatchInputDto()
+                {
+                    Values = [
+                        new()
+                        {
+                            Role = RoleConstants.Rightholder.Entity.Code,
+                            Packages = [PackageConstants.Customs.Entity.Urn]
+                        }
+                    ]
+                },
+                TestContext.Current.CancellationToken
+            );
+
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            // Verify Delegation exists
+            var getDelegationsToAgent = await client.GetAsync($"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&to={TestEntities.PersonPaula}", TestContext.Current.CancellationToken);
+            var delegationsToAgentPayload = await getDelegationsToAgent.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            var delegationToAgentResult = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(delegationsToAgentPayload);
+
+            Assert.NotEmpty(delegationToAgentResult.Items);
+
+            // Delete Delegation without cascade
+            var deleteResponse = await client.DeleteAsync($"{Route}/agents?party={TestEntities.OrganizationVerdiqAS}&to={TestEntities.PersonPaula}&cascade=false", TestContext.Current.CancellationToken);
+            var deleteResponsePayload = await deleteResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, deleteResponse.StatusCode);
+
+            // Ensure proper error returned
+            var problem = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(deleteResponsePayload);
+            Assert.Single(problem.Errors);
+            Assert.All(problem.Errors, error =>
+            {
+                Assert.Equal(ValidationErrors.DelegationHasActiveConnections.ErrorCode, error.ErrorCode);
+            });
+
+            // Delete with cascade true
+            deleteResponse = await client.DeleteAsync($"{Route}/agents?party={TestEntities.OrganizationVerdiqAS}&to={TestEntities.PersonPaula}&cascade=true", TestContext.Current.CancellationToken);
+            deleteResponsePayload = await deleteResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+
+            // Ensure Agent is deleted
+            var getAgents = await client.GetAsync($"{Route}/agents?party={TestEntities.OrganizationVerdiqAS}", TestContext.Current.CancellationToken);
+            var getAgentsPayload = await getAgents.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            var agentResult = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(getAgentsPayload);
+
+            Assert.Equal(HttpStatusCode.OK, getAgents.StatusCode);
+            Assert.Empty(agentResult.Items);
+        }
+    }
+    #endregion
+
+    #region GET accessmanagement/api/v1/enduser/clientdelegations/clients/accesspackages
+    #endregion
+
+    #region GET accessmanagement/api/v1/enduser/clientdelegations/agents/accesspackages
     #endregion
 
     #region POST accessmanagement/api/v1/enduser/clientdelegations/agents/accesspackages
@@ -626,36 +760,36 @@ public class ClientDelegationControllerTest
 
             Assert.Empty(delegationToAgentResult.Items.FirstOrDefault()?.Access.FirstOrDefault()?.Packages);
         }
-        #endregion
+    }
+    #endregion
 
-        #region Feature Flag Disabled Tests
-        public class FeatureFlagClientDelegationEnabledCollection : IClassFixture<ApiFixture>
+    #region Feature Flag Disabled Tests
+    public class FeatureFlagClientDelegationEnabledCollection : IClassFixture<ApiFixture>
+    {
+        public FeatureFlagClientDelegationEnabledCollection(ApiFixture fixture)
         {
-            public FeatureFlagClientDelegationEnabledCollection(ApiFixture fixture)
-            {
-                Fixture = fixture;
-                Fixture.WithDisabledFeatureFlag(AccessMgmtFeatureFlags.EnduserControllerClientDelegation);
-            }
-
-            [Fact]
-            public async Task ListClient_WithDisabledFeatureFlag_ReturnsNotFound()
-            {
-                Fixture.WithDisabledFeatureFlag(AccessMgmtFeatureFlags.EnduserControllerClientDelegation);
-                var client = Fixture.Server.CreateClient();
-                var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
-                {
-                    claims.Add(new Claim("scope", AuthzConstants.SCOPE_PORTAL_ENDUSER));
-                });
-                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
-
-                var result = await client.GetAsync($"{Route}/clients?party={Guid.NewGuid()}", TestContext.Current.CancellationToken);
-
-                Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
-            }
-
-            public ApiFixture Fixture { get; }
+            Fixture = fixture;
+            Fixture.WithDisabledFeatureFlag(AccessMgmtFeatureFlags.EnduserControllerClientDelegation);
         }
 
-        #endregion
+        [Fact]
+        public async Task ListClient_WithDisabledFeatureFlag_ReturnsNotFound()
+        {
+            Fixture.WithDisabledFeatureFlag(AccessMgmtFeatureFlags.EnduserControllerClientDelegation);
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim("scope", AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ));
+            });
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+
+            var result = await client.GetAsync($"{Route}/clients?party={Guid.NewGuid()}", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
+        }
+
+        public ApiFixture Fixture { get; }
     }
+
+    #endregion
 }
