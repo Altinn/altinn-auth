@@ -15,14 +15,15 @@ module.exports =
       "name": "OPPJAGET TEVLING",
       "userid": 20254339,
       "partyid": 50873382,
-      "partyuuid": "32F169FC-AECC-440D-8929-03C9ED12018C"
+      "partyuuid": "32F169FC-AECC-440D-8929-03C9ED12018C"      
     },
     "person1": {
       "pid": "11899497823",
       "lastname":"MUFFINS",
       "userid": 20120371,
       "partyid": 50846985,
-      "partyuuid": "16A6E0B2-B29E-4B96-AB24-4DDB00AD1156"
+      "partyuuid": "16A6E0B2-B29E-4B96-AB24-4DDB00AD1156",
+      "username": "sunn_muffins"
     }
   }
 };

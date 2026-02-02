@@ -18,4 +18,5 @@ internal static class ValidationErrorMessageTexts
     internal const string PersonIdentifierRequired = "Required when providing PersonInput details";
     internal const string PersonIdentifierInvalid = "Invalid national identity number";
     internal const string LastNameRequired = "Required when providing PersonInput details";
+    internal const string PersonIdentifierLastNameInvalid = "PersonInput details must match";
 }

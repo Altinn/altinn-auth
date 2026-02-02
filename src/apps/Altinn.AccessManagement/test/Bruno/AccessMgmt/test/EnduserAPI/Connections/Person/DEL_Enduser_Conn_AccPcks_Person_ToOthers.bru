@@ -1,7 +1,7 @@
 meta {
   name: DEL_Enduser_Conn_AccPcks_Person_ToOthers
   type: http
-  seq: 7
+  seq: 8
 }
 
 delete {
@@ -40,8 +40,8 @@ script:pre-request {
   }
   
   
-const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
-const token = await testTokenGenerator.getToken(getTokenParameters);
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken", token);
 }
 

@@ -113,4 +113,8 @@ public static class Problems
 
     public static ProblemDescriptor AgentHasExistingDelegations { get; }  
         = _factory.Create(25, HttpStatusCode.BadRequest, "Agent has existing delegations.");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor PersonLookupFailedToManyErrors { get; }
+    = _factory.Create(25, HttpStatusCode.TooManyRequests, "There has been to many failed lookups");
 }

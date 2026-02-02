@@ -1,7 +1,7 @@
 meta {
   name: POST_Enduser_Conn_AccPcks_ToPerson
   type: http
-  seq: 4
+  seq: 5
 }
 
 post {
@@ -49,8 +49,8 @@ script:pre-request {
   }
   
   
-const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
-const token = await testTokenGenerator.getToken(getTokenParameters);
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken",  token);
 }
 

@@ -1,4 +1,5 @@
 ﻿using Altinn.AccessManagement.Api.Enduser.Models;
+using Altinn.AccessManagement.Api.Enduser.Validation;
 using Altinn.AccessManagement.Core;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Helpers;
@@ -81,7 +82,10 @@ internal sealed class ToUuidResolver
             var profile = await _userProfileLookupService.GetUserProfile(authUserId, lookup, lastName);
             if (profile == null)
             {
-                return new ResolveToUuidResult(Guid.Empty, Problems.InvalidPersonIdentifier.ToActionResult());
+                ValidationErrorBuilder errors = default;
+                errors.Add(AccessMgmt.Core.Utils.Models.ValidationErrors.InvalidQueryParameter, ["/personIdentifier", "/lastName"], [new("personInput", ValidationErrorMessageTexts.PersonIdentifierLastNameInvalid)]);
+                errors.TryToActionResult(out ActionResult errorResult);
+                return new ResolveToUuidResult(Guid.Empty, errorResult);
             }
 
             Guid? resolvedUuid = profile.UserUuid != Guid.Empty ? profile.UserUuid : profile.Party?.PartyUuid;
@@ -94,7 +98,7 @@ internal sealed class ToUuidResolver
         }
         catch (TooManyFailedLookupsException)
         {
-            var problemDetails = Problems.InvalidPersonIdentifier.ToProblemDetails();
+            var problemDetails = Problems.PersonLookupFailedToManyErrors.ToProblemDetails();
             var result = new ObjectResult(problemDetails) { StatusCode = StatusCodes.Status429TooManyRequests };
             return new ResolveToUuidResult(Guid.Empty, result);
         }

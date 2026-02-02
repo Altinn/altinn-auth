@@ -1,7 +1,7 @@
 meta {
   name: GET_Enduser_Connections_Person_Added_ToOthers
   type: http
-  seq: 2
+  seq: 3
 }
 
 get {
@@ -42,8 +42,8 @@ script:pre-request {
   }
   
   
-const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
-const token = await testTokenGenerator.getToken(getTokenParameters);
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken",  token);
 }
 

@@ -22,7 +22,8 @@ module.exports =
       "lastname":"MUFFINS",
       "userid": 20197783,
       "partyid": 50109794,
-      "partyuuid": "278E6E41-367F-44C6-A695-62ADCB2A2B25"
+      "partyuuid": "278E6E41-367F-44C6-A695-62ADCB2A2B25",
+      "username": "sunn_muffins"
     }
   }
 };

@@ -1,7 +1,7 @@
 meta {
   name: GET_Enduser_Connections_Person_FromOthers_Deleted
   type: http
-  seq: 16
+  seq: 17
 }
 
 get {
@@ -41,8 +41,8 @@ script:pre-request {
   }
   
   
-const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
-const token = await testTokenGenerator.getToken(getTokenParameters);
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken",  token);
 }
 
