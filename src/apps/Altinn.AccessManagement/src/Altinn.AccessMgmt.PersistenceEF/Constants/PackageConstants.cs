@@ -6022,4 +6022,1478 @@ public static class PackageConstants
     };
 
     #endregion
+
+    #region Vergemal
+
+    /// <summary>
+    /// Represents the 'Bank - Representasjon dagligbank' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> bb1c97be-fb92-4e6f-9b81-5f76b2c105f7
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-bank-representasjon-dagligbank
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-bank-representasjon-dagligbank
+    /// - <c>Description:</c> Bank - Representasjon dagligbank
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalBankRepresentationDailyBanking { get; } = new ConstantDefinition<Package>("bb1c97be-fb92-4e6f-9b81-5f76b2c105f7")
+    {
+        Entity = new()
+        {
+            Name = "Bank - Representasjon dagligbank",
+            Code = "vergemal-bank-representasjon-dagligbank",
+            Description = "Omfatter oppgaver knyttet til å opprette kundeforhold, opprette/avslutte konto, disposisjonsrett, etablere/endre betalingsavtaler og forvalte låneavtaler",
+            Urn = "urn:altinn:accesspackage:vergemal-bank-representasjon-dagligbank",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalBank,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Bank - Representation daily banking"),
+            KeyValuePair.Create("Description", "Includes tasks related to establishing customer relationships, opening/closing accounts, rights of disposition, establishing/changing payment agreements, and managing loan agreements")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Bank - Representasjon daglegbank"),
+            KeyValuePair.Create("Description", "Omfattar oppgåver knytt til å opprette kundeforhold, opprette/avslutte konto, disposisjonsrett, etablere/endre betalingsavtalar og forvalte låneavtalar")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Bank - Ta opp lån/kreditter' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> a2fe71ee-b559-4a4c-8756-2e6766d41e4e
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-bank-ta-opp-lan-kreditter
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-bank-ta-opp-lan-kreditter
+    /// - <c>Description:</c> Bank - Ta opp lån/kreditter
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalBankTakingOutLoanscredits { get; } = new ConstantDefinition<Package>("a2fe71ee-b559-4a4c-8756-2e6766d41e4e")
+    {
+        Entity = new()
+        {
+            Name = "Bank - Ta opp lån/kreditter",
+            Code = "vergemal-bank-ta-opp-lan-kreditter",
+            Description = "Gjelder søknad om etablering av banklån - dette krever statsforvalterens samtykke",
+            Urn = "urn:altinn:accesspackage:vergemal-bank-ta-opp-lan-kreditter",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalBank,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Bank - Taking out loans/credits"),
+            KeyValuePair.Create("Description", "Applies to applications for establishing bank loans - this requires the consent of the county governor")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Bank - Ta opp lån/kredittar"),
+            KeyValuePair.Create("Description", "Gjeld søknad om etablering av banklån - dette krev samtykke frå statsforvaltaren")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Forsikringsselskap - Forvalte forsikringsavtaler' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> a10e0bbe-ed2f-4ce7-8e23-fe3760dc5f30
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-forsikringsselskap-forvalte-forsikringsavtaler
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-forsikringsselskap-forvalte-forsikringsavtaler
+    /// - <c>Description:</c> Forsikringsselskap - Forvalte forsikringsavtaler
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalInsuranceCompanyManagingInsuranceAgreements { get; } = new ConstantDefinition<Package>("a10e0bbe-ed2f-4ce7-8e23-fe3760dc5f30")
+    {
+        Entity = new()
+        {
+            Name = "Forsikringsselskap - Forvalte forsikringsavtaler",
+            Code = "vergemal-forsikringsselskap-forvalte-forsikringsavtaler",
+            Description = "Omfatter oppgaver knyttet til å etablere/endre/avslutte forsikringsavtaler og representasjon ved forsikringsoppgjør",
+            Urn = "urn:altinn:accesspackage:vergemal-forsikringsselskap-forvalte-forsikringsavtaler",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalInsuranceCompany,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Insurance company - Managing insurance agreements"),
+            KeyValuePair.Create("Description", "Includes tasks related to establishing/changing/terminating insurance agreements and representation in insurance settlements")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Forsikringsselskap - Forvalte forsikringsavtalar"),
+            KeyValuePair.Create("Description", "Omfattar oppgåver knytt til å etablere/endre/avslutte forsikringsavtalar og representasjon ved forsikringsoppgjer")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Helfo - Refusjon for privatpersoner' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 728a9189-7bcf-46b1-8be6-74d2d0100008
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-helfo-refusjon-privatpersoner
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-helfo-refusjon-privatpersoner
+    /// - <c>Description:</c> Helfo - Refusjon for privatpersoner
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalHelfoReimbursementForPrivateIndividuals { get; } = new ConstantDefinition<Package>("728a9189-7bcf-46b1-8be6-74d2d0100008")
+    {
+        Entity = new()
+        {
+            Name = "Helfo - Refusjon for privatpersoner",
+            Code = "vergemal-helfo-refusjon-privatpersoner",
+            Description = "Gjelder bistand til å søke om stønad til helsetjenester etter folketrygdloven, herunder innsyn i og håndtering av egenandel-/frikortordningen og helsetjenester gitt i utlandet. Gjelder også når en tredjepart sender søknad på vegne av en person (eks. lege, arbeidsgiver, forsikringsselskap)",
+            Urn = "urn:altinn:accesspackage:vergemal-helfo-refusjon-privatpersoner",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalHelfo,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Helfo - Reimbursement for private individuals"),
+            KeyValuePair.Create("Description", "Applies to assistance in applying for benefits for health services under the National Insurance Act, including access to and management of the co-payment/free card scheme and health services provided abroad. Also applies when a third party submits an application on behalf of a person (e.g., doctor, employer, insurance company)")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Helfo - Refusjon for privatpersonar"),
+            KeyValuePair.Create("Description", "Gjeld bistand til å søke om stønad til helsetenester etter folketrygdlova, herunder innsyn i og handtering av eigenandel-/frikortordninga og helsetenester gitt i utlandet. Gjeld òg når ein tredjepart sender søknad på vegne av ein person (eks. lege, arbeidsgjevar, forsikringsselskap)")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Helfo - Fastlege' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 7362452f-6321-4465-9f3d-134b037423c0
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-helfo-fastlege
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-helfo-fastlege
+    /// - <c>Description:</c> Helfo - Fastlege
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalHelfoGeneralPractitioner { get; } = new ConstantDefinition<Package>("7362452f-6321-4465-9f3d-134b037423c0")
+    {
+        Entity = new()
+        {
+            Name = "Helfo - Fastlege",
+            Code = "vergemal-helfo-fastlege",
+            Description = "Gjelder bistand til å bytte fastlege, samt å kunne se tidligere og nåværende fastlege",
+            Urn = "urn:altinn:accesspackage:vergemal-helfo-fastlege",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalHelfo,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Helfo - General practitioner"),
+            KeyValuePair.Create("Description", "Applies to assistance in changing general practitioners, as well as being able to see previous and current general practitioners")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Helfo - Fastlege"),
+            KeyValuePair.Create("Description", "Gjeld bistand til å byte fastlege, samt å kunne sjå tidlegare og noverande fastlege")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Husbanken - Bostøtte' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 5c0b9b72-4025-4a74-bd3a-aacf2c5c02de
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-husbanken-bostotte
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-husbanken-bostotte
+    /// - <c>Description:</c> Husbanken - Bostøtte
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheHousingBankHousingAllowance { get; } = new ConstantDefinition<Package>("5c0b9b72-4025-4a74-bd3a-aacf2c5c02de")
+    {
+        Entity = new()
+        {
+            Name = "Husbanken - Bostøtte",
+            Code = "vergemal-husbanken-bostotte",
+            Description = "Gjelder søknad om og/eller eventuelt klage på vedtak om statlig bostøtte hos Husbanken",
+            Urn = "urn:altinn:accesspackage:vergemal-husbanken-bostotte",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalTheHouseBank,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Housing Bank - Housing allowance"),
+            KeyValuePair.Create("Description", "Applies to applications for and/or possible appeals against decisions on state housing allowance at the Housing Bank")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Husbanken - Bustønad"),
+            KeyValuePair.Create("Description", "Gjeld søknad om og/eller eventuelt klage på vedtak om statleg bustønad hos Husbanken")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Husbanken - Startlån' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 77292f45-6064-47cd-a969-3b43702a06cb
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-husbanken-startlan
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-husbanken-startlan
+    /// - <c>Description:</c> Husbanken - Startlån
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheHousingBankStartupLoan { get; } = new ConstantDefinition<Package>("77292f45-6064-47cd-a969-3b43702a06cb")
+    {
+        Entity = new()
+        {
+            Name = "Husbanken - Startlån",
+            Code = "vergemal-husbanken-startlan",
+            Description = "Gjelder søknad om og/eller eventuelt klage på vedtak om startlån hos Husbanken",
+            Urn = "urn:altinn:accesspackage:vergemal-husbanken-startlan",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalTheHouseBank,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Housing Bank - Start-up loan"),
+            KeyValuePair.Create("Description", "Applies to applications for and/or possible appeals against decisions on start-up loans at the Housing Bank")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Husbanken - Startlån"),
+            KeyValuePair.Create("Description", "Gjeld søknad om og/eller eventuelt klage på vedtak om startlån hos Husbanken")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Inkassoselskap - Forhandle og inngå inkassoavtaler' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 0c46766f-5d04-4178-9ccd-ef9e3a7fdde0
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-inkassoselskap-inkassoavtaler
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-inkassoselskap-inkassoavtaler
+    /// - <c>Description:</c> Inkassoselskap - Forhandle og inngå inkassoavtaler
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalDebtCollectionCompaniesNegotiateAndConcludeDebtCollectionAgreements { get; } = new ConstantDefinition<Package>("0c46766f-5d04-4178-9ccd-ef9e3a7fdde0")
+    {
+        Entity = new()
+        {
+            Name = "Inkassoselskap - Forhandle og inngå inkassoavtaler",
+            Code = "vergemal-inkassoselskap-inkassoavtaler",
+            Description = "Gjelder avtaleinngåelse og forhandling med ulike inkassoselskaper",
+            Urn = "urn:altinn:accesspackage:vergemal-inkassoselskap-inkassoavtaler",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalDebtCollectionCompany,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Debt collection companies - Negotiate and conclude debt collection agreements"),
+            KeyValuePair.Create("Description", "Applies to contract conclusion and negotiation with various debt collection companies")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Inkassoselskap - Forhandle og inngå inkassoavtalar"),
+            KeyValuePair.Create("Description", "Gjeld avtaleinngåing og forhandling med ulike inkassoselskap")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Kartverket - Salg av fast eiendom/borettslagsandel' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> a866ea94-4935-41c6-8ffd-8850a5751659
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-kartverket-salg-fast-eiendom-borettslagsandel
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-kartverket-salg-fast-eiendom-borettslagsandel
+    /// - <c>Description:</c> Kartverket - Salg av fast eiendom/borettslagsandel
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheNorwegianMappingAuthoritySaleOfRealEstatecondominiumShare { get; } = new ConstantDefinition<Package>("a866ea94-4935-41c6-8ffd-8850a5751659")
+    {
+        Entity = new()
+        {
+            Name = "Kartverket - Salg av fast eiendom/borettslagsandel",
+            Code = "vergemal-kartverket-salg-fast-eiendom-borettslagsandel",
+            Description = "Omfatter emnene tinglyse eierskifte, sletting av rettighet/servitutt/heftelse, sikringspant. Tjenesteområdet vil også gjelde for overføring av fast eiendom/borettslagsandel mellom ektefeller/samboere - dette krever statsforvalterens samtykke",
+            Urn = "urn:altinn:accesspackage:vergemal-kartverket-salg-fast-eiendom-borettslagsandel",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalNorwegianMappingAuthority,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Norwegian Mapping Authority - Sale of real estate/condominium share"),
+            KeyValuePair.Create("Description", "Includes topics such as registering change of ownership, deletion of rights/servitudes/encumbrances, security interests. The service area will also apply to the transfer of real estate/condominium shares between spouses/cohabitants - this requires the consent of the county governor")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Kartverket - Sal av fast eigedom/del av burettslag"),
+            KeyValuePair.Create("Description", "Omfattar emna tinglyse eigarskifte, sletting av rettigheit/servitutt/heftelse, sikringspant. Tenesteområdet vil òg gjelde for overføring av fast eigedom/del av burettslag mellom ektefellar/sambuarar - dette krev samtykke frå statsforvaltaren")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Kartverket - Kjøp av eiendom' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> dceb5bae-8c42-48f0-a9cb-980e331d05f7
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-kartverket-kjop-eiendom
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-kartverket-kjop-eiendom
+    /// - <c>Description:</c> Kartverket - Kjøp av eiendom
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheNorwegianMappingAuthorityPurchaseOfProperty { get; } = new ConstantDefinition<Package>("dceb5bae-8c42-48f0-a9cb-980e331d05f7")
+    {
+        Entity = new()
+        {
+            Name = "Kartverket - Kjøp av eiendom",
+            Code = "vergemal-kartverket-kjop-eiendom",
+            Description = "Omfatter emnene tinglyse eierskifte, pantsette eiendom, tinglyse avtaler (rettighet/servitutt/heftelse) og festekontrakt - dette krever statsforvalterens samtykke",
+            Urn = "urn:altinn:accesspackage:vergemal-kartverket-kjop-eiendom",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalNorwegianMappingAuthority,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Norwegian Mapping Authority - Purchase of property"),
+            KeyValuePair.Create("Description", "Includes topics such as registering change of ownership, mortgaging property, registering agreements (rights/servitudes/encumbrances) and lease contracts - this requires the consent of the county governor")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Kartverket - Kjøp av eigedom"),
+            KeyValuePair.Create("Description", "Omfattar emna tinglyse eigarskifte, pantsetje eigedom, tinglyse avtalar (rettigheit/servitutt/heftelse) og festeavtale - dette krev samtykke frå statsforvaltaren")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Kartverket - Arv - privat skifte og uskifte' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 8860d351-074d-497e-bb7c-6f5cd1418ca2
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-kartverket-arv-privat-skifte-uskifte
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-kartverket-arv-privat-skifte-uskifte
+    /// - <c>Description:</c> Kartverket - Arv - privat skifte og uskifte
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheNorwegianMappingAuthorityInheritancePrivateSettlementAndUndividedEstate { get; } = new ConstantDefinition<Package>("8860d351-074d-497e-bb7c-6f5cd1418ca2")
+    {
+        Entity = new()
+        {
+            Name = "Kartverket - Arv - privat skifte og uskifte",
+            Code = "vergemal-kartverket-arv-privat-skifte-uskifte",
+            Description = "Omfatter emnene hjemmelserklæring og skjøte videre - dette krever statsforvalterens samtykke",
+            Urn = "urn:altinn:accesspackage:vergemal-kartverket-arv-privat-skifte-uskifte",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalNorwegianMappingAuthority,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Norwegian Mapping Authority - Inheritance - private settlement and undivided estate"),
+            KeyValuePair.Create("Description", "Includes topics such as declaration of title and deed transfer - this requires the consent of the county governor")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Kartverket - Arv - privat skifte og uskifte"),
+            KeyValuePair.Create("Description", "Omfattar emnene heimelserklæring og skjøte vidare - dette krev samtykke frå statsforvaltaren")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Kartverket - Endring av eiendom' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> d1119e2e-4353-4eb5-90b7-3aab6ac745ed
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-kartverket-endring-eiendom
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-kartverket-endring-eiendom
+    /// - <c>Description:</c> Kartverket - Endring av eiendom
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheNorwegianMappingAuthorityChangeOfProperty { get; } = new ConstantDefinition<Package>("d1119e2e-4353-4eb5-90b7-3aab6ac745ed")
+    {
+        Entity = new()
+        {
+            Name = "Kartverket - Endring av eiendom",
+            Code = "vergemal-kartverket-endring-eiendom",
+            Description = "Omfatter emnene seksjonering, reseksjonering, fradelinger, sammenslåinger, registreringer av festegrunn, endringer av festenummer til bruksnummer, arealoverføring - dette krever statsforvalterens samtykke",
+            Urn = "urn:altinn:accesspackage:vergemal-kartverket-endring-eiendom",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalNorwegianMappingAuthority,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Norwegian Mapping Authority - Change of property"),
+            KeyValuePair.Create("Description", "Includes topics such as sectioning, resectioning, subdivisions, mergers, registration of leased land, changes from lease number to usage number, area transfer - this requires the consent of the county governor")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Kartverket - Endring av eigedom"),
+            KeyValuePair.Create("Description", "Omfattar emnene seksjonering, reseksjonering, frådelingar, samanslåingar, registreringar av festegrunn, endringar av festenummer til bruksnummer, arealoverføring - dette krev samtykke frå statsforvaltaren")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Kartverket - Avtaler og rettigheter' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 4fdd58c3-efe9-4da9-8889-05e5873c3315
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-kartverket-avtaler-rettigheter
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-kartverket-avtaler-rettigheter
+    /// - <c>Description:</c> Kartverket - Avtaler og rettigheter
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheNorwegianMappingAuthorityAgreementsAndRights { get; } = new ConstantDefinition<Package>("4fdd58c3-efe9-4da9-8889-05e5873c3315")
+    {
+        Entity = new()
+        {
+            Name = "Kartverket - Avtaler og rettigheter",
+            Code = "vergemal-kartverket-avtaler-rettigheter",
+            Description = "Omfatter emnene tinglyse avtaler (rettighet/servitutt/heftelse) og festekontrakt, tinglysning av prioritetsbestemmelser, nedkvitteringer, tinglysing på ny, transport av frivillige heftelser og tvangsforretninger, massetransport - dette krever statsforvalterens samtykke",
+            Urn = "urn:altinn:accesspackage:vergemal-kartverket-avtaler-rettigheter",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalNorwegianMappingAuthority,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Norwegian Mapping Authority - Agreements and rights"),
+            KeyValuePair.Create("Description", "Includes topics such as registering agreements (rights/servitudes/encumbrances) and lease contracts, registration of priority provisions, discharges, re-registration, transfer of voluntary encumbrances and enforcement proceedings, mass transport - this requires the consent of the county governor")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Kartverket - Avtalar og rettar"),
+            KeyValuePair.Create("Description", "Omfattar emnene tinglyse avtalar (rettigheit/servitutt/heftelse) og festeavtale, tinglysing av prioriteringsbestemmelsar, nedkvitteringar, tinglysing på ny, transport av frivillige heftelser og tvangsforretningar, massetransport - dette krev samtykke frå statsforvaltaren")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Kartverket - Sletting' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 5627017e-4569-47c2-925d-bb49a1a12b8b
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-kartverket-sletting
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-kartverket-sletting
+    /// - <c>Description:</c> Kartverket - Sletting
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheNorwegianMappingAuthorityDeletion { get; } = new ConstantDefinition<Package>("5627017e-4569-47c2-925d-bb49a1a12b8b")
+    {
+        Entity = new()
+        {
+            Name = "Kartverket - Sletting",
+            Code = "vergemal-kartverket-sletting",
+            Description = "Gjelder sletting av rettigheter i fast eiendom - dette krever statsforvalterens samtykke",
+            Urn = "urn:altinn:accesspackage:vergemal-kartverket-sletting",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalNorwegianMappingAuthority,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Norwegian Mapping Authority - Deletion"),
+            KeyValuePair.Create("Description", "Applies to the deletion of rights in real estate - this requires the consent of the county governor")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Kartverket - Sletting"),
+            KeyValuePair.Create("Description", "Gjeld sletting av rettar i fast eigedom - dette krev samtykke frå statsforvaltaren")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Kartverket - Låneopptak' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> d35b3073-4e17-4705-aea2-7747b097d75a
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-kartverket-laneopptak
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-kartverket-laneopptak
+    /// - <c>Description:</c> Kartverket - Låneopptak
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheNorwegianMappingAuthorityLoanAcquisition { get; } = new ConstantDefinition<Package>("d35b3073-4e17-4705-aea2-7747b097d75a")
+    {
+        Entity = new()
+        {
+            Name = "Kartverket - Låneopptak",
+            Code = "vergemal-kartverket-laneopptak",
+            Description = "Omfatter emnene pantsette eiendom, refinansiering - dette krever statsforvalterens samtykke",
+            Urn = "urn:altinn:accesspackage:vergemal-kartverket-laneopptak",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalNorwegianMappingAuthority,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Norwegian Mapping Authority - Loan acquisition"),
+            KeyValuePair.Create("Description", "Includes topics such as mortgaging property, refinancing - this requires the consent of the county governor")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Kartverket - Låneopptak"),
+            KeyValuePair.Create("Description", "Omfattar emna pantsetje eigedom, refinansiering - dette krev samtykke frå statsforvaltaren")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Kommune - Bygg og eiendom' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 5d45cb4e-95cf-4640-862a-362a0c24eecd
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-kommune-bygg-eiendom
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-kommune-bygg-eiendom
+    /// - <c>Description:</c> Kommune - Bygg og eiendom
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalMunicipalityBuildingAndProperty { get; } = new ConstantDefinition<Package>("5d45cb4e-95cf-4640-862a-362a0c24eecd")
+    {
+        Entity = new()
+        {
+            Name = "Kommune - Bygg og eiendom",
+            Code = "vergemal-kommune-bygg-eiendom",
+            Description = "Omfatter oppgaver som hører inn under områdene bygging, eiendom, kjøp og salg, leie og utleie, samt priser og gebyr for bygg og eiendom",
+            Urn = "urn:altinn:accesspackage:vergemal-kommune-bygg-eiendom",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalMunicipality,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Municipality - Building and property"),
+            KeyValuePair.Create("Description", "Includes tasks that fall under the areas of construction, property, buying and selling, renting and leasing, as well as prices and fees for building and property")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Kommune - Bygg og eigedom"),
+            KeyValuePair.Create("Description", "Omfattar oppgåver som høyrer inn under områda bygging, eigedom, kjøp og sal, leige og utleige, samt prisar og gebyr for bygg og eigedom")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Kommune - Helse og omsorg' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> a009e60c-f65f-4145-a762-bf589c3048e6
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-kommune-helse-omsorg
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-kommune-helse-omsorg
+    /// - <c>Description:</c> Kommune - Helse og omsorg
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalMunicipalityHealthAndCare { get; } = new ConstantDefinition<Package>("a009e60c-f65f-4145-a762-bf589c3048e6")
+    {
+        Entity = new()
+        {
+            Name = "Kommune - Helse og omsorg",
+            Code = "vergemal-kommune-helse-omsorg",
+            Description = "Omfatter tilbud og støtteordninger som hører inn under områdene avlastning og støtte, helsetjenester, omsorgstjenester og velferdsstøtte",
+            Urn = "urn:altinn:accesspackage:vergemal-kommune-helse-omsorg",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalMunicipality,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Municipality - Health and care"),
+            KeyValuePair.Create("Description", "Includes services and support schemes that fall under the areas of relief and support, health services, care services, and welfare support")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Kommune - Helse og omsorg"),
+            KeyValuePair.Create("Description", "Omfattar tilbod og støtteordningar som høyrer inn under områda avlasting og støtte, helsetenester, omsorgstenester og velferdsstøtte")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Kommune - Skatt og avgift' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> bb32b662-6446-4a66-960c-40acb5a407c3
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-kommune-skatt-avgift
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-kommune-skatt-avgift
+    /// - <c>Description:</c> Kommune - Skatt og avgift
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalMunicipalityTaxAndDuty { get; } = new ConstantDefinition<Package>("bb32b662-6446-4a66-960c-40acb5a407c3")
+    {
+        Entity = new()
+        {
+            Name = "Kommune - Skatt og avgift",
+            Code = "vergemal-kommune-skatt-avgift",
+            Description = "Omfatter oppgaver som hører inn under områdene arbeidsgiveravgift, kommunale avgifter, eiendomsskatt og skatteattest",
+            Urn = "urn:altinn:accesspackage:vergemal-kommune-skatt-avgift",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalMunicipality,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Municipality - Tax and duty"),
+            KeyValuePair.Create("Description", "Includes tasks that fall under the areas of employers national insurance contributions, municipal fees, property tax, and tax certificates")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Kommune - Skatt og avgift"),
+            KeyValuePair.Create("Description", "Omfattar oppgåver som høyrer inn under områda arbeidsgivaravgift, kommunale avgifter, eigedomsskatt og skatteattest")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Kommune - Sosiale tjenester' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 8fc656a7-1f78-437b-9eb1-3525a729ea03
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-kommune-sosiale-tjenester
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-kommune-sosiale-tjenester
+    /// - <c>Description:</c> Kommune - Sosiale tjenester
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalMunicipalitySocialServices { get; } = new ConstantDefinition<Package>("8fc656a7-1f78-437b-9eb1-3525a729ea03")
+    {
+        Entity = new()
+        {
+            Name = "Kommune - Sosiale tjenester",
+            Code = "vergemal-kommune-sosiale-tjenester",
+            Description = "Omfatter tilbud og støtteordninger som hører inn under områdene botilbud, kvalifisering til arbeid, økonomiske ytelser og rådgivning",
+            Urn = "urn:altinn:accesspackage:vergemal-kommune-sosiale-tjenester",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalMunicipality,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Municipality - Social services"),
+            KeyValuePair.Create("Description", "Includes services and support schemes that fall under the areas of housing, qualification for work, financial benefits, and counseling")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Kommune - Sosiale tenester"),
+            KeyValuePair.Create("Description", "Omfattar tilbod og støtteordningar som høyrer inn under områda butilbod, kvalifisering til arbeid, økonomiske ytingar og rådgjeving")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Kommune - Skole og utdanning' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 84b0982a-04f1-4b34-852b-c26d2145bded
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-kommune-skole-utdanning
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-kommune-skole-utdanning
+    /// - <c>Description:</c> Kommune - Skole og utdanning
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalMunicipalitySchoolAndEducation { get; } = new ConstantDefinition<Package>("84b0982a-04f1-4b34-852b-c26d2145bded")
+    {
+        Entity = new()
+        {
+            Name = "Kommune - Skole og utdanning",
+            Code = "vergemal-kommune-skole-utdanning",
+            Description = "Omfatter tilbud og støtteordninger som hører inn under områdene grunnskole, videregående skole, høyere utdanning, voksenopplæring og skolehverdag",
+            Urn = "urn:altinn:accesspackage:vergemal-kommune-skole-utdanning",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalMunicipality,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Municipality - School and education"),
+            KeyValuePair.Create("Description", "Includes services and support schemes that fall under the areas of primary school, secondary school, higher education, adult education, and school everyday life")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Kommune - Skule og utdanning"),
+            KeyValuePair.Create("Description", "Omfattar tilbod og støtteordningar som høyrer inn under områda grunnskule, vidaregåande skule, høgare utdanning, vaksenopplæring og skulekvardag")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Kredittvurderingsselskap - Kredittsperre' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 593f609c-a3e0-42dd-80d1-d3e3468eabce
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-kredittvurderingsselskap-kredittsperre
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-kredittvurderingsselskap-kredittsperre
+    /// - <c>Description:</c> Kredittvurderingsselskap - Kredittsperre
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalCreditRatingAgencyCreditFreeze { get; } = new ConstantDefinition<Package>("593f609c-a3e0-42dd-80d1-d3e3468eabce")
+    {
+        Entity = new()
+        {
+            Name = "Kredittvurderingsselskap - Kredittsperre",
+            Code = "vergemal-kredittvurderingsselskap-kredittsperre",
+            Description = "Gjelder avtaleinngåelse om kredittsperre",
+            Urn = "urn:altinn:accesspackage:vergemal-kredittvurderingsselskap-kredittsperre",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalCreditRatingCompany,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Credit rating agency - Credit freeze"),
+            KeyValuePair.Create("Description", "Applies to contract conclusion regarding credit freeze")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Kredittvurderingsselskap - Kredittsperre"),
+            KeyValuePair.Create("Description", "Gjeld avtaleinngåing om kredittsperre")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Namsmannen - Gjeldsordning' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 5699a194-cd36-49e8-aec5-553de75e09bc
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-namsmannen-gjeldsordning
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-namsmannen-gjeldsordning
+    /// - <c>Description:</c> Namsmannen - Gjeldsordning
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheEnforcementOfficerDebtSettlement { get; } = new ConstantDefinition<Package>("5699a194-cd36-49e8-aec5-553de75e09bc")
+    {
+        Entity = new()
+        {
+            Name = "Namsmannen - Gjeldsordning",
+            Code = "vergemal-namsmannen-gjeldsordning",
+            Description = "Gjelder søknad om og/eller forvaltning av eksisterende gjeldsordninger",
+            Urn = "urn:altinn:accesspackage:vergemal-namsmannen-gjeldsordning",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalBailiff,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Enforcement Officer - Debt settlement"),
+            KeyValuePair.Create("Description", "Applies to applications for and/or management of existing debt settlements")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Namsmannen - Gjeldsordning"),
+            KeyValuePair.Create("Description", "Gjeld søknad om og/eller forvaltning av eksisterande gjeldsordningar")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Namsmannen - Tvangsfullbyrdelse' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 60a3b6f1-a864-44e2-995f-bb2adde2f31b
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-namsmannen-tvangsfullbyrdelse
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-namsmannen-tvangsfullbyrdelse
+    /// - <c>Description:</c> Namsmannen - Tvangsfullbyrdelse
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheEnforcementOfficerEnforcement { get; } = new ConstantDefinition<Package>("60a3b6f1-a864-44e2-995f-bb2adde2f31b")
+    {
+        Entity = new()
+        {
+            Name = "Namsmannen - Tvangsfullbyrdelse",
+            Code = "vergemal-namsmannen-tvangsfullbyrdelse",
+            Description = "Gjelder representasjon i saker om tvangsfullbyrdelse etter tvangsfullbyrdelsesloven",
+            Urn = "urn:altinn:accesspackage:vergemal-namsmannen-tvangsfullbyrdelse",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalBailiff,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Enforcement Officer - Enforcement"),
+            KeyValuePair.Create("Description", "Applies to representation in cases of enforcement under the Enforcement Act")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Namsmannen - Tvangsfullbyrding"),
+            KeyValuePair.Create("Description", "Gjeld representasjon i saker om tvangsfullbyrding etter tvangsfullbyrdingslova")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Nav - Arbeid' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> fdb07031-40cf-45be-9007-c2ba6dd4789a
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-nav-arbeid
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-nav-arbeid
+    /// - <c>Description:</c> Nav - Arbeid
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalNavWork { get; } = new ConstantDefinition<Package>("fdb07031-40cf-45be-9007-c2ba6dd4789a")
+    {
+        Entity = new()
+        {
+            Name = "Nav - Arbeid",
+            Code = "vergemal-nav-arbeid",
+            Description = "Omfatter tilbud og støtteordninger som hører inn under områdene forsikring/sykepenger (selvstendig næringsdrivende og frilansere), sykepenger, tilleggsstønad og yrkesskade/menerstatning og arbeidsavklaringspenger. Gjelder innsyn/saksbehandling og utbetaling",
+            Urn = "urn:altinn:accesspackage:vergemal-nav-arbeid",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalNav,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Nav - Work"),
+            KeyValuePair.Create("Description", "Includes services and support schemes that fall under the areas of insurance/sick pay (self-employed and freelancers), sick pay, additional benefits, occupational injury/compensation, and work assessment allowance. Applies to access/case processing and payment")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Nav - Arbeid"),
+            KeyValuePair.Create("Description", "Omfattar tilbod og støtteordningar som høyrer inn under områda forsikring/sjukepengar (sjålvstendig næringsdrivande og frilansarar), sjukepengar, tilleggstønad og yrkesskade/menerstatning og arbeidsavklaringspengar. Gjeld innsyn/saksbehandling og utbetaling")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Nav - Familie' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> bdc72a11-0af7-47f4-afbf-21cb9f11a152
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-nav-familie
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-nav-familie
+    /// - <c>Description:</c> Nav - Familie
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalNavFamily { get; } = new ConstantDefinition<Package>("bdc72a11-0af7-47f4-afbf-21cb9f11a152")
+    {
+        Entity = new()
+        {
+            Name = "Nav - Familie",
+            Code = "vergemal-nav-familie",
+            Description = "Omfatter tilbud og støtteordninger som hører inn under områdene barnebidrag, barnetrygd, enslig forsørger, foreldre- og svangerskapspenger, grunn- og hjelpestønad og kontantstøtte. Gjelder innsyn/saksbehandling og utbetaling",
+            Urn = "urn:altinn:accesspackage:vergemal-nav-familie",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalNav,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Nav - Family"),
+            KeyValuePair.Create("Description", "Includes services and support schemes that fall under the areas of child support, child benefit, single provider, parental and pregnancy benefits, basic and assistance benefits, and cash benefits. Applies to access/case processing and payment")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Nav - Familie"),
+            KeyValuePair.Create("Description", "Omfattar tilbod og støtteordningar som høyrer inn under områda barnebidrag, barnetrygd, einsleg forsørgjar, foreldre- og svangerskapspengar, grunn- og hjelpestønad og kontantstøtte. Gjeld innsyn/saksbehandling og utbetaling")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Nav - Hjelpemidler' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 3b2b86eb-3ddb-4656-aaec-9ab3d27c2623
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-nav-hjelpemidler
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-nav-hjelpemidler
+    /// - <c>Description:</c> Nav - Hjelpemidler
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalNavAssistiveDevices { get; } = new ConstantDefinition<Package>("3b2b86eb-3ddb-4656-aaec-9ab3d27c2623")
+    {
+        Entity = new()
+        {
+            Name = "Nav - Hjelpemidler",
+            Code = "vergemal-nav-hjelpemidler",
+            Description = "Omfatter emnene hjelpemidler, helsetjenester, ortopediske hjelpemidler og bil",
+            Urn = "urn:altinn:accesspackage:vergemal-nav-hjelpemidler",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalNav,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Nav - Assistive devices"),
+            KeyValuePair.Create("Description", "Includes the topics of assistive devices, health services, orthopedic aids, and cars")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Nav - Hjelpemiddel"),
+            KeyValuePair.Create("Description", "Omfattar emna hjelpemiddel, helsetenester, ortopediske hjelpemiddel og bil")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Nav - Pensjon' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 7a8e0aaa-459b-4cfb-9b24-7434a275650b
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-nav-pensjon
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-nav-pensjon
+    /// - <c>Description:</c> Nav - Pensjon
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalNavPension { get; } = new ConstantDefinition<Package>("7a8e0aaa-459b-4cfb-9b24-7434a275650b")
+    {
+        Entity = new()
+        {
+            Name = "Nav - Pensjon",
+            Code = "vergemal-nav-pensjon",
+            Description = "Omfatter tilbud og støtteordninger som hører inn under områdene alderspensjon, supplerende stønad, uførepensjon/-trygd, avtalefestet pensjon, ytelser for gjenlevende (alle typer pensjonsytelser). Gjelder innsyn/saksbehandling og utbetaling",
+            Urn = "urn:altinn:accesspackage:vergemal-nav-pensjon",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalNav,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Nav - Pension"),
+            KeyValuePair.Create("Description", "Includes services and support schemes that fall under the areas of old-age pension, supplementary benefits, disability pension/benefits, contractual pension, benefits for survivors (all types of pension benefits). Applies to access/case processing and payment")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Nav - Pensjon"),
+            KeyValuePair.Create("Description", "Omfattar tilbod og støtteordningar som høyrer inn under områda alderspensjon, supplerande stønad, uførepensjon/-trygd, avtalefesta pensjon, ytingar for gjenlevande (alle typar pensjonsytingar). Gjeld innsyn/saksbehandling og utbetaling")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Nav - Sosiale tjenester' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> d69d918e-eaa3-4dde-92c1-9c32c49776d8
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-nav-sosiale-tjenester
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-nav-sosiale-tjenester
+    /// - <c>Description:</c> Nav - Sosiale tjenester
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalNavSocialServices { get; } = new ConstantDefinition<Package>("d69d918e-eaa3-4dde-92c1-9c32c49776d8")
+    {
+        Entity = new()
+        {
+            Name = "Nav - Sosiale tjenester",
+            Code = "vergemal-nav-sosiale-tjenester",
+            Description = "Omfatter tilbud og støtteordninger som hører inn under områdene gjeldsrådgivning, kvalifiseringsprogrammet, midlertidig botilbud, økonomisk rådgivning, forsvarlig livsopphold, midlertidig inntektssikring og økonomisk stønad. Gjelder innsyn/saksbehandling og utbetaling",
+            Urn = "urn:altinn:accesspackage:vergemal-nav-sosiale-tjenester",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalNav,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Nav - Social services"),
+            KeyValuePair.Create("Description", "Includes services and support schemes that fall under the areas of debt counseling, qualification program, temporary housing, financial counseling, adequate livelihood, temporary income security, and financial assistance. Applies to access/case processing and payment")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Nav - Sosiale tenester"),
+            KeyValuePair.Create("Description", "Omfattar tilbod og støtteordningar som høyrer inn under områda gjeldsrådgjeving, kvalifiseringsprogrammet, midlertidig butilbod, økonomisk rådgjeving, forsvarleg livsopphald, midlertidig inntektssikring og økonomisk stønad. Gjeld innsyn/saksbehandling og utbetaling")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Pasientreiser - Refusjon av pasientreiser' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> eaf0814b-fee3-487e-888d-ed34c2f8e33e
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-pasientreiser-refusjon-pasientreiser
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-pasientreiser-refusjon-pasientreiser
+    /// - <c>Description:</c> Pasientreiser - Refusjon av pasientreiser
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalPatientTravelReimbursementOfPatientTravel { get; } = new ConstantDefinition<Package>("eaf0814b-fee3-487e-888d-ed34c2f8e33e")
+    {
+        Entity = new()
+        {
+            Name = "Pasientreiser - Refusjon av pasientreiser",
+            Code = "vergemal-pasientreiser-refusjon-pasientreiser",
+            Description = "Søknad om og/eller eventuell klage på vedtak om refusjon av reiseutgifter i forbindelse med behandlinger som dekkes av det offentlige",
+            Urn = "urn:altinn:accesspackage:vergemal-pasientreiser-refusjon-pasientreiser",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalPatientTravel,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Patient travel - Reimbursement of patient travel"),
+            KeyValuePair.Create("Description", "Application for and/or possible appeal against decisions on reimbursement of travel expenses in connection with treatments covered by the public sector")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Pasientreiser - Refusjon av pasientreiser"),
+            KeyValuePair.Create("Description", "Søknad om og/eller eventuell klage på vedtak om refusjon av reiseutgifter i samband med behandlingar som vert dekka av det offentlege")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Skatteetaten - Innkreving' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 98af22ae-2397-4aea-a600-f46894cda346
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-skatteetaten-innkreving
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-skatteetaten-innkreving
+    /// - <c>Description:</c> Skatteetaten - Innkreving
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheTaxAdministrationCollection { get; } = new ConstantDefinition<Package>("98af22ae-2397-4aea-a600-f46894cda346")
+    {
+        Entity = new()
+        {
+            Name = "Skatteetaten - Innkreving",
+            Code = "vergemal-skatteetaten-innkreving",
+            Description = "Gjelder oppfølging og behandling av krav fra Skatteetaten, for eksempel restskatt",
+            Urn = "urn:altinn:accesspackage:vergemal-skatteetaten-innkreving",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalTaxAuthority,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Tax Administration - Collection"),
+            KeyValuePair.Create("Description", "Applies to follow-up and processing of claims from the Tax Administration, for example, residual tax")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Skatteetaten - Innkrevjing"),
+            KeyValuePair.Create("Description", "Gjeld oppfølging og behandling av krav frå Skatteetaten, for eksempel restskatt")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Skatteetaten - Endre postadresse' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 42f4fe68-7f56-48d3-a9c8-60ad66acc3e2
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-skatteetaten-endre-postadresse
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-skatteetaten-endre-postadresse
+    /// - <c>Description:</c> Skatteetaten - Endre postadresse
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheTaxAdministrationChangePostalAddress { get; } = new ConstantDefinition<Package>("42f4fe68-7f56-48d3-a9c8-60ad66acc3e2")
+    {
+        Entity = new()
+        {
+            Name = "Skatteetaten - Endre postadresse",
+            Code = "vergemal-skatteetaten-endre-postadresse",
+            Description = "Gjelder endring av postadresse for person med verge",
+            Urn = "urn:altinn:accesspackage:vergemal-skatteetaten-endre-postadresse",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalTaxAuthority,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Tax Administration - Change postal address"),
+            KeyValuePair.Create("Description", "Applies to changing the postal address for a person with a guardian")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Skatteetaten - Endre postadresse"),
+            KeyValuePair.Create("Description", "Gjeld endring av postadresse for person med verge")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Skatteetaten - Melde flytting' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 264fa2d5-1438-415a-9cf0-277c5075c3d7
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-skatteetaten-melde-flytting
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-skatteetaten-melde-flytting
+    /// - <c>Description:</c> Skatteetaten - Melde flytting
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheTaxAdministrationReportMoving { get; } = new ConstantDefinition<Package>("264fa2d5-1438-415a-9cf0-277c5075c3d7")
+    {
+        Entity = new()
+        {
+            Name = "Skatteetaten - Melde flytting",
+            Code = "vergemal-skatteetaten-melde-flytting",
+            Description = "Gjelder endring av bostedsadresse",
+            Urn = "urn:altinn:accesspackage:vergemal-skatteetaten-melde-flytting",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalTaxAuthority,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Tax Administration - Report moving"),
+            KeyValuePair.Create("Description", "Applies to changing the residential address")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Skatteetaten - Melde flytting"),
+            KeyValuePair.Create("Description", "Gjeld endring av bustadsadresse")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Skatteetaten - Skatt' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 494275f4-0446-4864-82c8-d0d76f969715
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-skatteetaten-skatt
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-skatteetaten-skatt
+    /// - <c>Description:</c> Skatteetaten - Skatt
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheTaxAdministrationTax { get; } = new ConstantDefinition<Package>("494275f4-0446-4864-82c8-d0d76f969715")
+    {
+        Entity = new()
+        {
+            Name = "Skatteetaten - Skatt",
+            Code = "vergemal-skatteetaten-skatt",
+            Description = "Gjelder innsyn i skattedata, og representasjon overfor skattemyndighetene i alle saker om skatteforhold, herunder endring av skattekort, levering av skattemelding, skatteoppgjør og det ordinære løpet for restskatt eller penger til gode.",
+            Urn = "urn:altinn:accesspackage:vergemal-skatteetaten-skatt",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalTaxAuthority,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Tax Administration - Tax"),
+            KeyValuePair.Create("Description", "Applies to access to tax data and representation before the tax authorities in all matters concerning tax issues, including changing tax cards, submitting tax returns, tax settlements, and the ordinary course of residual tax or money owed.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Skatteetaten - Skatt"),
+            KeyValuePair.Create("Description", "Gjeld innsyn i skattedata, og representasjon overfor skattemyndigheitene i alle saker om skatteforhold, herunder endring av skattekort, levering av skattemelding, skatteoppgjer og det ordinære løpet for restskatt eller pengar til gode.")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Statens innkrevingssentral - Gjeldsordning og betalingsavtaler' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> fca1e7d4-46b4-4e82-b958-4ce159d69f22
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-statens-innkrevingssentral-gjeldsordning-betalingsavtaler
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-statens-innkrevingssentral-gjeldsordning-betalingsavtaler
+    /// - <c>Description:</c> Statens innkrevingssentral - Gjeldsordning og betalingsavtaler
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheNorwegianNationalCollectionAgencyDebtSettlementAndPaymentAgreements { get; } = new ConstantDefinition<Package>("fca1e7d4-46b4-4e82-b958-4ce159d69f22")
+    {
+        Entity = new()
+        {
+            Name = "Statens innkrevingssentral - Gjeldsordning og betalingsavtaler",
+            Code = "vergemal-statens-innkrevingssentral-gjeldsordning-betalingsavtaler",
+            Description = "Gjelder søknad om og forvaltning av gjeldsordning og betalingsavtaler",
+            Urn = "urn:altinn:accesspackage:vergemal-statens-innkrevingssentral-gjeldsordning-betalingsavtaler",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalNorwegianCollectionCenter,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Norwegian National Collection Agency - Debt settlement and payment agreements"),
+            KeyValuePair.Create("Description", "Applies to applications for and management of debt settlements and payment agreements")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Statens innkrevingssentral - Gjeldsordning og betalingsavtalar"),
+            KeyValuePair.Create("Description", "Gjeld søknad om og forvaltning av gjeldsordning og betalingsavtalar")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Statsforvalter - Søke om samtykke til disposisjon' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> a9d58895-2457-4898-812b-29bd7e27ec79
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-statsforvalter-soke-om-samtykke-disposisjon
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-statsforvalter-soke-om-samtykke-disposisjon
+    /// - <c>Description:</c> Statsforvalter - Søke om samtykke til disposisjon
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalCountyGovernorApplyForConsentToDisposition { get; } = new ConstantDefinition<Package>("a9d58895-2457-4898-812b-29bd7e27ec79")
+    {
+        Entity = new()
+        {
+            Name = "Statsforvalter - Søke om samtykke til disposisjon",
+            Code = "vergemal-statsforvalter-soke-om-samtykke-disposisjon",
+            Description = "Gjelder søknad om disposisjoner som krever statsforvalterens samtykke",
+            Urn = "urn:altinn:accesspackage:vergemal-statsforvalter-soke-om-samtykke-disposisjon",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalStateAdministrator,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "County Governor - Apply for consent to disposition"),
+            KeyValuePair.Create("Description", "Applies to applications for dispositions that require the consent of the county governor")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Statsforvalter - Søkje om samtykke til disposisjon"),
+            KeyValuePair.Create("Description", "Gjeld søknad om disposisjonar som krev samtykke frå statsforvaltaren")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Tingretten - Begjære uskifte' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 06021466-f474-4bdf-9c47-d1b44078a1fd
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-tingretten-begjaere-uskifte
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-tingretten-begjaere-uskifte
+    /// - <c>Description:</c> Tingretten - Begjære uskifte
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheDistrictCourtPetitionForUndividedEstate { get; } = new ConstantDefinition<Package>("06021466-f474-4bdf-9c47-d1b44078a1fd")
+    {
+        Entity = new()
+        {
+            Name = "Tingretten - Begjære uskifte",
+            Code = "vergemal-tingretten-begjaere-uskifte",
+            Description = "Gjelder melding om uskiftet bo jf. vgml. § 41 (3) og arvl. §§ 14 og 32 - dette krever statsforvalterens samtykke",
+            Urn = "urn:altinn:accesspackage:vergemal-tingretten-begjaere-uskifte",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalDistrictCourt,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The District Court - Petition for undivided estate"),
+            KeyValuePair.Create("Description", "Applies to notification of undivided estate pursuant to the vgml. § 41 (3) and arvl. §§ 14 and 32 - this requires the consent of the county governor")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Tingretten - Begjære uskifte"),
+            KeyValuePair.Create("Description", "Gjeld melding om uskifta bu jf. vgml. § 41 (3) og arvl. §§ 14 og 32 - dette krev samtykke frå statsforvaltaren")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Tingretten - Privat skifte av dødsbo' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 9724d626-d66d-4cdd-96c0-3931b4fee5fa
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-tingretten-privat-skifte-dodsbo
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-tingretten-privat-skifte-dodsbo
+    /// - <c>Description:</c> Tingretten - Privat skifte av dødsbo
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheDistrictCourtPrivateSettlementOfEstate { get; } = new ConstantDefinition<Package>("9724d626-d66d-4cdd-96c0-3931b4fee5fa")
+    {
+        Entity = new()
+        {
+            Name = "Tingretten - Privat skifte av dødsbo",
+            Code = "vergemal-tingretten-privat-skifte-dodsbo",
+            Description = "Omfatter tilfeller der vergen på vegne av vergehaveren overtar boet til privat skifte og ivaretakelse av andre rettigheter som arving",
+            Urn = "urn:altinn:accesspackage:vergemal-tingretten-privat-skifte-dodsbo",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalDistrictCourt,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The District Court - Private settlement of estate"),
+            KeyValuePair.Create("Description", "Includes cases where the guardian, on behalf of the ward, takes over the estate for private settlement and safeguarding of other rights as an heir")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Tingretten - Privat skifte av dødsbu"),
+            KeyValuePair.Create("Description", "Omfattar tilfelle der vergen på vegne av vergehavaren overtek buet til privat skifte og ivaretaking av andre rettar som arvigar")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Tingretten - Begjære skifte av uskiftebo' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> cac1cbc6-1ad3-449a-9dac-dfef86a0ab72
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-tingretten-begjaere-skifte-uskiftebo
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-tingretten-begjaere-skifte-uskiftebo
+    /// - <c>Description:</c> Tingretten - Begjære skifte av uskiftebo
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalTheDistrictCourtPetitionForSettlementOfUndividedEstate { get; } = new ConstantDefinition<Package>("cac1cbc6-1ad3-449a-9dac-dfef86a0ab72")
+    {
+        Entity = new()
+        {
+            Name = "Tingretten - Begjære skifte av uskiftebo",
+            Code = "vergemal-tingretten-begjaere-skifte-uskiftebo",
+            Description = "Gjelder skifte av uskiftebo jf. vgml. § 41 (3) og arvl. §§ 28 og 29 - dette krever statsforvalterens samtykke",
+            Urn = "urn:altinn:accesspackage:vergemal-tingretten-begjaere-skifte-uskiftebo",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalDistrictCourt,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The District Court - Petition for settlement of undivided estate"),
+            KeyValuePair.Create("Description", "Applies to settlement of undivided estate pursuant to the vgml. § 41 (3) and arvl. §§ 28 and 29 - this requires the consent of the county governor")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Tingretten - Begjære skifte av uskiftebu"),
+            KeyValuePair.Create("Description", "Gjeld skifte av uskiftebu jf. vgml. § 41 (3) og arvl. §§ 28 og 29 - dette krev samtykke frå statsforvaltaren")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Øvrige - Kjøp/leie av varer og tjenester' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> e8a3d0f9-ab53-40ad-8668-8ccbaedbbfb0
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-ovrige-kjop-leie-varer-tjenester
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-ovrige-kjop-leie-varer-tjenester
+    /// - <c>Description:</c> Øvrige - Kjøp/leie av varer og tjenester
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalOthersPurchaserentalOfGoodsAndServices { get; } = new ConstantDefinition<Package>("e8a3d0f9-ab53-40ad-8668-8ccbaedbbfb0")
+    {
+        Entity = new()
+        {
+            Name = "Øvrige - Kjøp/leie av varer og tjenester",
+            Code = "vergemal-ovrige-kjop-leie-varer-tjenester",
+            Description = "Gjelder i forbindelse med kjøp av varer og tjenester, omfatter også heving av avtaler, reklamasjon mm.",
+            Urn = "urn:altinn:accesspackage:vergemal-ovrige-kjop-leie-varer-tjenester",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalOtherPurchasesAndConclusionsOfAgreemets,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Others - Purchase/rental of goods and services"),
+            KeyValuePair.Create("Description", "Applies in connection with the purchase of goods and services, also includes termination of agreements, complaints, etc.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Øvrige - Kjøp/leige av varer og tenester"),
+            KeyValuePair.Create("Description", "Gjelder i samband med kjøp av varer og tenester, omfattar òg heving av avtalar, reklamasjon mm.")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Øvrige - Inngåelse av husleiekontrakter' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 18ffa412-173c-4a31-8526-bd6bc4c5d185
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-ovrige-inngaelse-husleiekontrakter
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-ovrige-inngaelse-husleiekontrakter
+    /// - <c>Description:</c> Øvrige - Inngåelse av husleiekontrakter
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalOthersConclusionOfLeaseAgreements { get; } = new ConstantDefinition<Package>("18ffa412-173c-4a31-8526-bd6bc4c5d185")
+    {
+        Entity = new()
+        {
+            Name = "Øvrige - Inngåelse av husleiekontrakter",
+            Code = "vergemal-ovrige-inngaelse-husleiekontrakter",
+            Description = "Gjelder i forbindelse med inngåelse av husleiekontrakter",
+            Urn = "urn:altinn:accesspackage:vergemal-ovrige-inngaelse-husleiekontrakter",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalOtherPurchasesAndConclusionsOfAgreemets,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Others - Conclusion of lease agreements"),
+            KeyValuePair.Create("Description", "Applies in connection with the conclusion of lease agreements")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Øvrige - Inngåing av husleigekontraktar"),
+            KeyValuePair.Create("Description", "Gjelder i samband med inngåing av husleigekontraktar")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Øvrige - Avslutning av husleiekontrakter' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 7e6688a6-a795-4f42-9ce5-c15fdfde0e4c
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-ovrige-avslutning-husleiekontrakter
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-ovrige-avslutning-husleiekontrakter
+    /// - <c>Description:</c> Øvrige - Avslutning av husleiekontrakter
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalOthersTerminationOfLeaseAgreements { get; } = new ConstantDefinition<Package>("7e6688a6-a795-4f42-9ce5-c15fdfde0e4c")
+    {
+        Entity = new()
+        {
+            Name = "Øvrige - Avslutning av husleiekontrakter",
+            Code = "vergemal-ovrige-avslutning-husleiekontrakter",
+            Description = "Gjelder i forbindelse med avslutning av husleiekontrakter",
+            Urn = "urn:altinn:accesspackage:vergemal-ovrige-avslutning-husleiekontrakter",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalOtherPurchasesAndConclusionsOfAgreemets,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Others - Termination of lease agreements"),
+            KeyValuePair.Create("Description", "Applies in connection with the termination of lease agreements")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Øvrige - Avslutting av husleigekontraktar"),
+            KeyValuePair.Create("Description", "Gjeld i samband med avslutting av husleigekontraktar")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Øvrige - Salg av løsøre av større verdi' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 5cc87c94-e0c0-46fe-a053-2a29081aef0f
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-ovrige-salg-losore-storre-verdi
+    /// - <c>Provider:</c> CivilRightsAuthority
+    /// - <c>Code:</c> vergemal-ovrige-salg-losore-storre-verdi
+    /// - <c>Description:</c> Øvrige - Salg av løsøre av større verdi
+    /// </remarks>
+    public static ConstantDefinition<Package> VergemalOthersSaleOfPersonalPropertyOfGreaterValue { get; } = new ConstantDefinition<Package>("5cc87c94-e0c0-46fe-a053-2a29081aef0f")
+    {
+        Entity = new()
+        {
+            Name = "Øvrige - Salg av løsøre av større verdi",
+            Code = "vergemal-ovrige-salg-losore-storre-verdi",
+            Description = "Gjelder salg av løsøre av større verdi (herunder bil), usedvanlig karakter eller av spesiell interesse for vergehaver eller dennes nærmeste familie - dette krever statsforvalterens samtykke",
+            Urn = "urn:altinn:accesspackage:vergemal-ovrige-salg-losore-storre-verdi",
+            IsDelegable = false,
+            IsAssignable = false,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.CivilRightsAuthority,
+            AreaId = AreaConstants.VergemalOtherPurchasesAndConclusionsOfAgreemets,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Others - Sale of personal property of greater value"),
+            KeyValuePair.Create("Description", "Applies to the sale of personal property of greater value (including cars), unusual character, or of special interest to the ward or their immediate family - this requires the consent of the county governor")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Øvrige - Sal av lausøyre av større verdi"),
+            KeyValuePair.Create("Description", "Gjeld sal av lausøyre av større verdi (herunder bil), usedvanleg karakter eller av spesiell interesse for vergehavar eller dennes næraste familie - dette krev samtykke frå statsforvaltaren")
+        ),
+    };
+
+    #endregion
 }

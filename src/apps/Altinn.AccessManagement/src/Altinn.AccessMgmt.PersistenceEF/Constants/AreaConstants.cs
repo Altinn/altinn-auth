@@ -983,4 +983,497 @@ public static class AreaConstants
             KeyValuePair.Create("Name", "Verjemål"),
             KeyValuePair.Create("Description", "Tilgangar knytte direkte til rolla som privatperson i Folkeregisteret. Denne rolla kan framleis gi tilgang til tenester som berre finst i den gamle løysinga. Sjå lista i den gamle løysinga.")),
     };
+
+    /// <summary>
+    /// Represents the Vergemål Bank area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 2b855fbf-0104-4c3c-a115-4e0dacfb0bf1
+    /// - <c>Name:</c> "Bank"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til banktjenester."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-bank"
+    /// - <c>IconUrl:</c> "ShieldLock.svg" 
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalBank { get; } = new ConstantDefinition<Area>("2b855fbf-0104-4c3c-a115-4e0dacfb0bf1")
+    {
+        Entity = new()
+        {
+            Name = "Bank",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til banktjenester.",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-bank"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Bank"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to Banks.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Bank"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til banktenester.")),
+    };
+
+    /// <summary>
+    /// Represents the Vergemål Insurance company area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> aa9b2a34-fdfd-4c3d-9894-06795f8a621f
+    /// - <c>Name:</c> "Forsikringsselskap"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til forsikring."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-forsikringsselskap"
+    /// - <c>IconUrl:</c> "ShieldLock.svg" 
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalInsuranceCompany { get; } = new ConstantDefinition<Area>("aa9b2a34-fdfd-4c3d-9894-06795f8a621f")
+    {
+        Entity = new()
+        {
+            Name = "Forsikringsselskap",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til forsikring.",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-forsikringsselskap"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Insurance company"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to Insurance companies.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Forsikringsselskap"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til forsikring.")),
+    };
+
+    /// <summary>
+    /// Represents the Vergemål The house bank area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 07524eb8-7db0-49ac-a34c-4cc56501f26f
+    /// - <c>Name:</c> "Husbanken"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til husbanken."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-husbanken"
+    /// - <c>IconUrl:</c> "ShieldLock.svg" 
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalTheHouseBank { get; } = new ConstantDefinition<Area>("07524eb8-7db0-49ac-a34c-4cc56501f26f")
+    {
+        Entity = new()
+        {
+            Name = "Husbanken",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til husbanken.",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-husbanken"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The house bank"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to The house bank.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Husbanken"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til Husbanken.")),
+    };
+
+    /// <summary>
+    /// Represents the Vergemål Debt collection company area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 8d4c94dc-bf59-4f3d-bf3f-c4915d582997
+    /// - <c>Name:</c> "Inkassoselskap"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til inkassoselskap."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-inkassoselskap"
+    /// - <c>IconUrl:</c> "ShieldLock.svg" 
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalDebtCollectionCompany { get; } = new ConstantDefinition<Area>("8d4c94dc-bf59-4f3d-bf3f-c4915d582997")
+    {
+        Entity = new()
+        {
+            Name = "Inkassoselskap",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til inkassoselskap.",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-inkassoselskap"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Debt collection company"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to debt collection companies.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Inkassoselskap"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til inkassoselskap.")),
+    };
+
+    /// <summary>
+    /// Represents the Vergemål Debt collection company area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 1096b041-b6cb-4e2e-94d8-55843148c4bf
+    /// - <c>Name:</c> "Kartverket"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Kartverket."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-kartverket"
+    /// - <c>IconUrl:</c> "ShieldLock.svg" 
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalNorwegianMappingAuthority { get; } = new ConstantDefinition<Area>("1096b041-b6cb-4e2e-94d8-55843148c4bf")
+    {
+        Entity = new()
+        {
+            Name = "Kartverket",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Kartverket.",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-kartverket"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Norwegian Mapping Authority"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to he Norwegian Mapping Authority.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Kartverket"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til Kartverket.")),
+    };
+
+    /// <summary>
+    /// Represents the Vergemål Credit rating company area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 217820cc-911d-416b-92f1-fb5dc0cc1f04
+    /// - <c>Name:</c> "Kredittvurderingsselskap"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Kredittvurderingsselskap."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-kredittvurderingsselskap"
+    /// - <c>IconUrl:</c> "ShieldLock.svg" 
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalCreditRatingCompany { get; } = new ConstantDefinition<Area>("217820cc-911d-416b-92f1-fb5dc0cc1f04")
+    {
+        Entity = new()
+        {
+            Name = "Kredittvurderingsselskap",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Kredittvurderingsselskap.",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-kredittvurderingsselskap"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Credit rating company"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to credit rating companies.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Kredittvurderingsselskap"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til Kredittvurderingsselskap.")),
+    };
+
+    /// <summary>
+    /// Represents the Vergemål Bailiff area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 46d7f172-caad-4494-9c6d-3add8d120920
+    /// - <c>Name:</c> "Namsmannen"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Namsmannen."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-namsmannen"
+    /// - <c>IconUrl:</c> "ShieldLock.svg" 
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalBailiff { get; } = new ConstantDefinition<Area>("46d7f172-caad-4494-9c6d-3add8d120920")
+    {
+        Entity = new()
+        {
+            Name = "Namsmannen",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Namsmannen.",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-namsmannen"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Bailiff"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to the Bailiff.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Namsmannen"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til Namsmannen.")),
+    };
+
+    /// <summary>
+    /// Represents the Vergemål Tax authority area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> a0d54306-9af8-48c3-beb4-e37085642c95
+    /// - <c>Name:</c> "Skatteetaten"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Skatteetaten."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-skatteetaten"
+    /// - <c>IconUrl:</c> "ShieldLock.svg" 
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalTaxAuthority { get; } = new ConstantDefinition<Area>("a0d54306-9af8-48c3-beb4-e37085642c95")
+    {
+        Entity = new()
+        {
+            Name = "Skatteetaten",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Skatteetaten.",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-skatteetaten"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The tax authority"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to the Tax Authority.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Skatteetaten"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til Skatteetaten.")),
+    };
+
+    /// <summary>
+    /// Represents the Vergemål Norwegian Collection Center area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 4a780efa-8609-43be-b059-6c59473c46dd
+    /// - <c>Name:</c> "Statens Innkrevingssentral"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Statens Innkrevingssentral."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-statens-innkrevingssentral"
+    /// - <c>IconUrl:</c> "ShieldLock.svg" 
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalNorwegianCollectionCenter { get; } = new ConstantDefinition<Area>("4a780efa-8609-43be-b059-6c59473c46dd")
+    {
+        Entity = new()
+        {
+            Name = "Statens Innkrevingssentral",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Statens Innkrevingssentral.",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-statens-innkrevingssentral"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The Norwegian Collection Center"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to the Norwegian Collection Center.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Statens innkrevjingssentral"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til Statens Innkrevjingssentral.")),
+    };
+
+    /// <summary>
+    /// Represents the Vergemål Tax authority area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 28920dfd-e934-4f47-929e-c32359c92896
+    /// - <c>Name:</c> "Statsforvalteren"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Statsforvelteren."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-statsforvalteren"
+    /// - <c>IconUrl:</c> "ShieldLock.svg" 
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalStateAdministrator { get; } = new ConstantDefinition<Area>("28920dfd-e934-4f47-929e-c32359c92896")
+    {
+        Entity = new()
+        {
+            Name = "Statsforvalteren",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Statsforvelteren.",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-statsforvalteren"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "The State Administrator"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to the State Administrator.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Statsforvaltaren"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til Statsforvaltaren.")),
+    };
+
+    /// <summary>
+    /// Represents the Vergemål District Court area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> b34f7595-498f-458c-8a18-06ca2e8d8918
+    /// - <c>Name:</c> "Tingretten"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Tingretten."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-tingretten"
+    /// - <c>IconUrl:</c> "ShieldLock.svg" 
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalDistrictCourt { get; } = new ConstantDefinition<Area>("b34f7595-498f-458c-8a18-06ca2e8d8918")
+    {
+        Entity = new()
+        {
+            Name = "Tingretten",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Tingretten.",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-tingretten"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "District Court"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to the District Court.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Tingretten"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til Tingretten.")),
+    };
+
+    /// <summary>
+    /// Represents the Vergemål Other purchases and conclusion of agreements area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 4cf6b40c-24f2-4006-b280-b73b06d23504
+    /// - <c>Name:</c> "Annen kjøp og avtaleinngåelse"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Annen kjøp og avtaleinngåelse."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-annen-kjop-avtaleinngaelse"
+    /// - <c>IconUrl:</c> "ShieldLock.svg" 
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalOtherPurchasesAndConclusionsOfAgreemets { get; } = new ConstantDefinition<Area>("4cf6b40c-24f2-4006-b280-b73b06d23504")
+    {
+        Entity = new()
+        {
+            Name = "Annen kjøp og avtaleinngåelse",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Annen kjøp og avtaleinngåelse.",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-annen-kjop-avtaleinngaelse"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Other purchases and conclusion of agreements"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to other purchases and conclusion of agreements.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Anna kjøp og avtaleinngåing"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til anna kjøp og avtaleinngåing.")),
+    };
+
+    /// <summary>
+    /// Represents the Vergemål Municipality area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 0c1c1143-5e8d-4979-aef8-7de61f05a467
+    /// - <c>Name:</c> "Kommune"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Kommune."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-kommune"
+    /// - <c>IconUrl:</c> "ShieldLock.svg" 
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalMunicipality { get; } = new ConstantDefinition<Area>("0c1c1143-5e8d-4979-aef8-7de61f05a467")
+    {
+        Entity = new()
+        {
+            Name = "Kommune",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Kommune.",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-kommune"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Municipality"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to municipalities.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Kommune"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til kommune.")),
+    };
+
+    /// <summary>
+    /// Represents the Vergemål NAV area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 1dfa599d-1ade-48bd-86b4-ac033027c3d5
+    /// - <c>Name:</c> "NAV"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til NAV."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-nav"
+    /// - <c>IconUrl:</c> "ShieldLock.svg" 
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalNav { get; } = new ConstantDefinition<Area>("1dfa599d-1ade-48bd-86b4-ac033027c3d5")
+    {
+        Entity = new()
+        {
+            Name = "NAV",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til NAV.",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-nav"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "NAV"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to NAV.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "NAV"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til NAV.")),
+    };
+
+    /// <summary>
+    /// Represents the Vergemål Patient travel area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> ad1e864d-5ad0-4063-aa70-f5b7d431da50
+    /// - <c>Name:</c> "Pasientreiser"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Pasientreiser."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-pasientreiser"
+    /// - <c>IconUrl:</c> "ShieldLock.svg" 
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalPatientTravel { get; } = new ConstantDefinition<Area>("ad1e864d-5ad0-4063-aa70-f5b7d431da50")
+    {
+        Entity = new()
+        {
+            Name = "Pasientreiser",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Pasientreiser.",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-pasientreiser"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Patient travel"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to patient travel.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Pasientreiser"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til Pasientreiser.")),
+    };
+
+    /// <summary>
+    /// Represents the Vergemål Helfo area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 0f1095a5-1e2b-4756-b376-bab8c36a89e4
+    /// - <c>Name:</c> "Helfo"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Helfo."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-helfo"
+    /// - <c>IconUrl:</c> "ShieldLock.svg"
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalHelfo { get; } = new ConstantDefinition<Area>("0f1095a5-1e2b-4756-b376-bab8c36a89e4")
+    {
+        Entity = new()
+        {
+            Name = "Helfo",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Helfo.",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-helfo"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Helfo"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to Helfo.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Helfo"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til Helfo.")),
+    };
+
+    /// <summary>
+    /// Represents the Vergemål Helfo area.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 43e8458d-4b88-49b6-b079-38dfa1ba663a
+    /// - <c>Name:</c> "Pasientopplysninger og -tjenester"
+    /// - <c>Description:</c> "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Pasientopplysninger og -tjenester."
+    /// - <c>Urn:</c> "accesspackage:area:vergemal-pasientopplysninger-tjenester"
+    /// - <c>IconUrl:</c> "ShieldLock.svg"
+    /// - <c>GroupId:</c> Guardianship (Vergemål)
+    /// </remarks>
+    public static ConstantDefinition<Area> VergemalPatientInformationAndServices { get; } = new ConstantDefinition<Area>("43e8458d-4b88-49b6-b079-38dfa1ba663a")
+    {
+        Entity = new()
+        {
+            Name = "Pasientopplysninger og -tjenester",
+            Description = "Dette fullmaktsområdet omfatter tilgangspakker knyttet til Pasientopplysninger og -tjenester",
+            IconUrl = new Uri(AltinnCDNPackageIcons, "ShieldLock.svg").ToString(),
+            GroupId = AreaGroupConstants.Guardianship,
+            Urn = "accesspackage:area:vergemal-pasientopplysninger-tjenester"
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Patient information and services"),
+            KeyValuePair.Create("Description", "This area of ​​authority includes access packages linked to patient information and services.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Pasientopplysningar og -tenester"),
+            KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytte til pasientopplysningar og -tenester.")),
+    };
 }
