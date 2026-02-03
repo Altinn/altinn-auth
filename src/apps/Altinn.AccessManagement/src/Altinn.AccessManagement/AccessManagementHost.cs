@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Api.Enduser;
+﻿using Altinn.AccessManagement.Api.Enduser;
 using Altinn.AccessManagement.Api.Enduser.Authorization.AuthorizationHandler;
 using Altinn.AccessManagement.Api.Enduser.Authorization.AuthorizationRequirement;
 using Altinn.AccessManagement.Api.Internal;

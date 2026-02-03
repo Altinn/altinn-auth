@@ -14,12 +14,8 @@ body:json {
   {
     "resource": [
       {
-        "id": "urn:altinn:org",
-        "value": "ttd"
-      },
-      {
-        "id": "urn:altinn:app",
-        "value": "authz-bruno-testapp1"
+        "id": "urn:altinn:resource",
+        "value": "tilgangspakke_delegering_ressurs"
       }
     ]
   }
@@ -55,8 +51,8 @@ script:pre-request {
     auth_scopes: sharedtestdata.auth_scopes.read
   }
     
-const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
-const token = await testTokenGenerator.getToken(getTokenParameters);
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
   
   bru.setVar("bearerToken",  token);
 }

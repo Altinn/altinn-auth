@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using Altinn.ApiClients.Maskinporten.Extensions;
 using Altinn.ApiClients.Maskinporten.Services;
 using Altinn.Authorization.Services.Implementation;

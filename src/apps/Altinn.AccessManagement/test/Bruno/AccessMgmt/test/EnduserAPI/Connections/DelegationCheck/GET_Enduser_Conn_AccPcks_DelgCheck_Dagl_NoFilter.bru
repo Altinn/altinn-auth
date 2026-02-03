@@ -36,8 +36,8 @@ script:pre-request {
   }
   
   
-const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
-const token = await testTokenGenerator.getToken(getTokenParameters);
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken", token);
 }
 
@@ -49,9 +49,35 @@ tests {
     
     expect(res.status).to.equal(200);
     assert.isNotEmpty(data, "Expected data in response body to NOT be empty array");
+  
+    const innbyggerAccessPackagePrefix = 'urn:altinn:accesspackage:innbygger-';
+    const vergemalAccessPackagePrefix = 'urn:altinn:accesspackage:vergemal-';
+  
+    // Find if innbygger or vergemål packages are returned
+    const offending = body.data
+      .map((item, idx) => ({
+        idx,
+        urn: item?.package?.urn
+      }))
+      .filter(x =>
+        typeof x.urn === 'string' && (
+          x.urn.startsWith(innbyggerAccessPackagePrefix) ||
+          x.urn.startsWith(vergemalAccessPackagePrefix)
+        )
+      );
+  
+    // Assert none found; include details if the assertion fails
+    expect(
+      offending,
+      `Response contains ${offending.length} illegal packages for organizations: ` + offending.map(o => `[${o.idx}] ${o.urn}`).join(', ')
+    ).to.be.empty;
+  
+    // ✅ Assert result values for specific packages
+    const resultByUrn = urn => data.find(p => p.package.urn === urn)?.result;
+  
+    expect(resultByUrn("urn:altinn:accesspackage:eksplisitt")).to.be.false;
+    expect(resultByUrn("urn:altinn:accesspackage:post-til-virksomheten-med-taushetsbelagt-innhold")).to.be.true;
     
-    const expectedNumPackages = 137;
-    assert.lengthOf(data, expectedNumPackages, `Expected response data to contain all ${expectedNumPackages} available packages`);
     
   });
 }

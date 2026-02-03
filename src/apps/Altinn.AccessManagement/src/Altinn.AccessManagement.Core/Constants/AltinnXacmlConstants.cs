@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Core.Constants
+﻿namespace Altinn.AccessManagement.Core.Constants
 {
     /// <summary>
     /// Altinn specific XACML constants used for urn identifiers and attributes
@@ -32,62 +32,77 @@ namespace Altinn.AccessManagement.Core.Constants
         public static class MatchAttributeIdentifiers
         {
             /// <summary>
-            /// Org attribute match indentifier 
+            /// Org attribute match identifier 
             /// </summary>
             public const string OrgAttribute = "urn:altinn:org";
 
             /// <summary>
-            /// App attribute match indentifier 
+            /// App attribute match identifier 
             /// </summary>
             public const string AppAttribute = "urn:altinn:app";
 
             /// <summary>
-            /// Instance attribute match indentifier 
+            /// Instance attribute match identifier 
             /// </summary>
             public const string InstanceAttribute = "urn:altinn:instance-id";
 
             /// <summary>
-            /// ResouceRegistry Instance attribute match indentifier
+            /// ResouceRegistry Instance attribute match identifier
             /// </summary>
             public const string ResourceInstanceAttribute = "urn:altinn:resource:instance-id";
 
             /// <summary>
-            /// App resource attribute match indentifier 
+            /// App resource attribute match identifier 
             /// </summary>
             public const string AppResourceAttribute = "urn:altinn:appresource";
 
             /// <summary>
-            /// Task attribute match indentifier 
+            /// Task attribute match identifier 
             /// </summary>
             public const string TaskAttribute = "urn:altinn:task";
 
             /// <summary>
-            /// End-event attribute match indentifier 
+            /// End-event attribute match identifier 
             /// </summary>
             public const string EndEventAttribute = "urn:altinn:end-event";
 
             /// <summary>
-            /// Party Id attribute match indentifier 
+            /// Party Id attribute match identifier 
             /// </summary>
             public const string PartyAttribute = "urn:altinn:partyid";
 
             /// <summary>
-            /// Party uuid attribute match indentifier 
+            /// Party uuid attribute match identifier 
             /// </summary>
             public const string PartyUuidAttribute = "urn:altinn:party:uuid";
 
             /// <summary>
-            /// User Id attribute match indentifier 
+            /// User Id attribute match identifier 
             /// </summary>>
             public const string UserAttribute = "urn:altinn:userid";
 
             /// <summary>
-            /// Role Code attribute match indentifier 
+            /// Role Code attribute match identifier 
             /// </summary>
             public const string RoleAttribute = "urn:altinn:rolecode";
 
             /// <summary>
-            /// Resource Registry attribute match indentifier 
+            /// External CCR Role Code attribute match identifier 
+            /// </summary>
+            public const string ExternalCcrRoleAttribute = "urn:altinn:external-role:ccr";
+
+            /// <summary>
+            /// External CRA Role Code attribute match identifier 
+            /// </summary>
+            public const string ExternalCraRoleAttribute = "urn:altinn:external-role:cra";
+
+            /// <summary>
+            /// Access package for organisations attribute match identifier 
+            /// </summary>
+            public const string AccessPackageAttribute = "urn:altinn:accesspackage";
+
+            /// <summary>
+            /// Resource Registry attribute match identifier 
             /// </summary>
             public const string ResourceRegistryAttribute = "urn:altinn:resource";
 
@@ -102,17 +117,17 @@ namespace Altinn.AccessManagement.Core.Constants
             public const string OrganizationName = "urn:altinn:organization:name";
 
             /// <summary>
-            /// Organization number attribute match indentifier 
+            /// Organization number attribute match identifier 
             /// </summary>
             public const string OrganizationNumberAttribute = "urn:altinn:organizationnumber";
 
             /// <summary>
-            /// Altinn 2 service code attribute match indentifier 
+            /// Altinn 2 service code attribute match identifier 
             /// </summary>
             public const string ServiceCodeAttribute = "urn:altinn:servicecode";
 
             /// <summary>
-            /// Altinn 2 service edition code attribute match indentifier 
+            /// Altinn 2 service edition code attribute match identifier 
             /// </summary>
             public const string ServiceEditionCodeAttribute = "urn:altinn:serviceeditioncode";
 

@@ -66,7 +66,7 @@ namespace Altinn.AccessManagement.Core.Services
         }
 
         /// <inheritdoc/>
-        public async Task<DelegationCheckResponse> RightsDelegationCheck(int authenticatedUserId, int authenticatedUserAuthlevel, RightsDelegationCheckRequest request)
+        public async Task<DelegationCheckResponse> RightsDelegationCheck(int authenticatedUserId, int authenticatedUserAuthlevel, RightsDelegationCheckRequest request, CancellationToken cancellationToken = default)
         {
             (DelegationCheckResponse result, ServiceResource resource, Party fromParty) = await ValidateRightDelegationCheckRequest(request);
             if (!result.IsValid)
@@ -83,7 +83,7 @@ namespace Altinn.AccessManagement.Core.Services
 
             rightsQuery = RightsHelper.GetRightsQuery(authenticatedUserId, fromParty.PartyId, resource);
 
-            List<Right> allDelegableRights = await _pip.GetRights(rightsQuery, getDelegableRights: true, returnAllPolicyRights: true);
+            List<Right> allDelegableRights = await _pip.GetRights(rightsQuery, getDelegableRights: true, returnAllPolicyRights: true, cancellationToken: cancellationToken);
             if (allDelegableRights == null || allDelegableRights.Count == 0)
             {
                 result.Errors.Add("right[0].Resource", $"No delegable rights could be found for the resource: {resource}");
@@ -109,7 +109,7 @@ namespace Altinn.AccessManagement.Core.Services
                         Action = ActionUrn.ActionId.Create(ActionIdentifier.CreateUnchecked(right.Action.Value))
                     };
 
-                    AccessListAuthorizationResponse accessListAuthorizationResponse = await _accessListsAuthorizationClient.AuthorizePartyForAccessList(accessListAuthorizationRequest);
+                    AccessListAuthorizationResponse accessListAuthorizationResponse = await _accessListsAuthorizationClient.AuthorizePartyForAccessList(accessListAuthorizationRequest, cancellationToken);
                     accessListAuthorizationResult = accessListAuthorizationResponse.Result;
                 }
 

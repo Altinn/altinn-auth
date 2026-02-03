@@ -15,8 +15,9 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         /// <param name="authenticatedUserId">The user id of the authenticated user performing the delegation</param>
         /// <param name="authenticatedUserAuthlevel">The authentication level of the authenticated user performing the delegation</param>
         /// <param name="request">The model describing the right delegation check to perform</param>
+        /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>The result of the delegation status check</returns>
-        public Task<DelegationCheckResponse> RightsDelegationCheck(int authenticatedUserId, int authenticatedUserAuthlevel, RightsDelegationCheckRequest request);
+        public Task<DelegationCheckResponse> RightsDelegationCheck(int authenticatedUserId, int authenticatedUserAuthlevel, RightsDelegationCheckRequest request, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Takes a List of rules and enrich it with uuids and try to write the rules as delegation policy rules
