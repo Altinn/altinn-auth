@@ -34,3 +34,10 @@ features = {
     }
   }
 }
+
+config = {
+  maskinporten = {
+    client_id = "6b3069e2-bc65-42ce-9aab-413e405dd5fe"
+    scope     = "folkeregister:deling/offentligmedhjemmel"
+  }
+}

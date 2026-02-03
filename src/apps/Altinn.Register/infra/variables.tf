@@ -102,8 +102,12 @@ variable "features" {
 variable "config" {
   type = object({
     a2_party_import = optional(object({
-      max_db_size_in_gib = optional(number, 20),
+      max_db_size_in_gib = optional(number, 20)
     }), {})
+    maskinporten = optional(object({
+      client_id = string
+      scope     = string
+    }))
   })
   default = {}
 }
