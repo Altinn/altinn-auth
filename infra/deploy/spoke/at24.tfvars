@@ -19,6 +19,7 @@ appconfiguration = {
   platform_resource_registry_endpoint = "http://altinn-resource-registry.default.svc.cluster.local"
   platform_register_endpoint          = "http://altinn-register.default.svc.cluster.local"
   platform_sbl_bridge_endpoint        = "https://at24.altinn.cloud/sblbridge/"
+  maskinporten_endpoint               = "https://test.maskinporten.no/"
 }
 
 services = {

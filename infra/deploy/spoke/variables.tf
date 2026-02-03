@@ -64,6 +64,7 @@ variable "appconfiguration" {
     platform_resource_registry_endpoint = string
     platform_register_endpoint          = string
     platform_sbl_bridge_endpoint        = string
+    maskinporten_endpoint               = string
   })
 }
 

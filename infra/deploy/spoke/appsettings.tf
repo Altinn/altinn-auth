@@ -4,6 +4,7 @@ locals {
     "Platform:ResourceRegistry:Endpoint" = var.appconfiguration.platform_resource_registry_endpoint
     "Platform:Register:Endpoint"         = var.appconfiguration.platform_register_endpoint
     "Lease:StorageAccount:BlobEndpoint"  = azurerm_storage_account.storage.primary_blob_endpoint
+    "Altinn:MaskinPorten:Endpoint"       = var.appconfiguration.maskinporten_endpoint
   }
 }
 
