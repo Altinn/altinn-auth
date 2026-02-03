@@ -64,9 +64,9 @@ public static partial class StaticDataIngest
         /*SREVA*/
         var roleSreva = RoleConstants.RegisteredAuditor.Id; // GetRoleId("urn:altinn:external-role:ccr:kontaktperson-revisor", "kontaktperson-revisor");
         /*A0212*/
-        var roleA0212 = RoleConstants.PrimaryIndustryAndFoodstuff.Id; // GetRoleId("urn:altinn:rolecode:A0212", "A0212");
+        var roleA0212 = RoleConstants.A0212.Id; // GetRoleId("urn:altinn:rolecode:A0212", "A0212");
         /*A0236*/
-        var roleA0236 = RoleConstants.MailArchive.Id; // GetRoleId("urn:altinn:rolecode:A0236", "A0236");
+        var roleA0236 = RoleConstants.A0236.Id; // GetRoleId("urn:altinn:rolecode:A0236", "A0236");
         /*A0237*/
         var roleA0237 = RoleConstants.A0237.Id; // GetRoleId("urn:altinn:rolecode:A0237", "A0237");
         /*A0238*/
@@ -78,7 +78,7 @@ public static partial class StaticDataIngest
         /*A0241*/
         var roleA0241 = RoleConstants.AccountantSalary.Id; // GetRoleId("urn:altinn:rolecode:A0241", "A0241");
         /*A0278*/
-        var roleA0278 = RoleConstants.PlanningAndConstruction.Id; // GetRoleId("urn:altinn:rolecode:A0278", "A0278");
+        var roleA0278 = RoleConstants.A0278.Id; // GetRoleId("urn:altinn:rolecode:A0278", "A0278");
         /*A0282*/
         var roleA0282 = RoleConstants.A0282.Id; // GetRoleId("urn:altinn:rolecode:A0282", "A0282");
         /*A0286*/
@@ -284,6 +284,7 @@ public static partial class StaticDataIngest
             new RoleMap() { HasRoleId = roleSreva, GetRoleId = roleECKEYROLE },
 
             new RoleMap() { HasRoleId = roleSens, GetRoleId = roleEKTJ },
+
             new RoleMap() { HasRoleId = roleBest, GetRoleId = roleHADM },
             new RoleMap() { HasRoleId = roleDagl, GetRoleId = roleHADM },
             new RoleMap() { HasRoleId = roleDtpr, GetRoleId = roleHADM },
@@ -471,7 +472,32 @@ public static partial class StaticDataIngest
             new RoleMap() { HasRoleId = roleNest, GetRoleId = roleUTOMR },
             new RoleMap() { HasRoleId = rolePriv, GetRoleId = roleUTOMR },
             new RoleMap() { HasRoleId = roleRepr, GetRoleId = roleUTOMR },
-            new RoleMap() { HasRoleId = roleSam,  GetRoleId = roleUTOMR }
+            new RoleMap() { HasRoleId = roleSam,  GetRoleId = roleUTOMR },
+
+            // Add delegable role mapping for Hovedadministrator
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.ManagingDirector.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Ektj.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.A0286.Id },
+
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Loper.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Regna.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Siskd.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Uiluf.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Utinn.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Utomr.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Attst.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Hvask.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Pavad.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Signe.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Uihtl.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Komab.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Pasig.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.A0278.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.A0236.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.A0212.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.A0293.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.A0294.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.A0298.Id }
         };
 
         // Upsert RoleMap data

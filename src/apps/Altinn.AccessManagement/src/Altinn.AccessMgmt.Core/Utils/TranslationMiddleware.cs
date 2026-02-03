@@ -1,9 +1,9 @@
-﻿using Altinn.AccessManagement.Api.Metadata.Translation;
+﻿using Altinn.AccessMgmt.Core.Constants.Translation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 
-namespace Altinn.AccessManagement.Api.Metadata.Middleware;
+namespace Altinn.AccessMgmt.Core.Utils;
 
 /// <summary>
 /// Middleware that extracts language preferences from HTTP headers and stores them in HttpContext.
@@ -85,7 +85,7 @@ public class TranslationMiddleware
                 var qpart = segments[1].Trim();
                 if (qpart.StartsWith("q=", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (double.TryParse(qpart.Substring(2), out var parsedQuality))
+                    if (double.TryParse(qpart.AsSpan(2), out var parsedQuality))
                     {
                         quality = parsedQuality;
                     }

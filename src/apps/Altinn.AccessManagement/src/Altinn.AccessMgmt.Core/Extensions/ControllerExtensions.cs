@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Altinn.AccessMgmt.Core.Constants.Translation;
+using Microsoft.AspNetCore.Mvc;
 
-namespace Altinn.AccessManagement.Api.Metadata.Translation;
+namespace Altinn.AccessMgmt.Core.Extensions;
 
 /// <summary>
 /// Extension methods for controllers to easily access translation context

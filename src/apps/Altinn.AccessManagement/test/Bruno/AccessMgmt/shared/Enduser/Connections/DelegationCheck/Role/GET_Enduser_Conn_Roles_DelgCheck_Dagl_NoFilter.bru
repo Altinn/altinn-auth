@@ -1,0 +1,83 @@
+meta {
+  name: GET_Enduser_Conn_Roles_DelgCheck_Dagl_NoFilter
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/roles/delegationcheck?party={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "GET_Enduser_Conn_Roles_DelgCheck_Dagl_NoFilter");
+  
+  bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.userId,
+    auth_partyId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.partyId,
+    auth_partyUuid: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.partyUuid,
+    auth_ssn: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  
+  test(bru.getVar("requestName"), function() {
+    const body = res.getBody();
+    const data = body.data;
+    
+    expect(res.status).to.equal(200);
+    assert.isNotEmpty(data, "Expected data in response body to NOT be empty array");
+  
+    const innbyggerAccessPackagePrefix = 'urn:altinn:accesspackage:innbygger-';
+    const vergemalAccessPackagePrefix = 'urn:altinn:accesspackage:vergemal-';
+  
+    // Find if innbygger or vergemål packages are returned
+    const offending = body.data
+      .map((item, idx) => ({
+        idx,
+        urn: item?.package?.urn
+      }))
+      .filter(x =>
+        typeof x.urn === 'string' && (
+          x.urn.startsWith(innbyggerAccessPackagePrefix) ||
+          x.urn.startsWith(vergemalAccessPackagePrefix)
+        )
+      );
+  
+    // Assert none found; include details if the assertion fails
+    expect(
+      offending,
+      `Response contains ${offending.length} illegal packages for organizations: ` + offending.map(o => `[${o.idx}] ${o.urn}`).join(', ')
+    ).to.be.empty;
+  
+    // ✅ Assert result values for specific packages
+    const resultByUrn = urn => data.find(p => p.package.urn === urn)?.result;
+  
+    expect(resultByUrn("urn:altinn:accesspackage:eksplisitt")).to.be.false;
+    expect(resultByUrn("urn:altinn:accesspackage:post-til-virksomheten-med-taushetsbelagt-innhold")).to.be.true;
+    
+    
+  });
+}

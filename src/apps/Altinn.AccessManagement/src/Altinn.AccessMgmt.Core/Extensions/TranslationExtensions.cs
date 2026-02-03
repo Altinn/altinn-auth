@@ -1,6 +1,6 @@
 ﻿using Altinn.AccessMgmt.PersistenceEF.Utils;
 
-namespace Altinn.AccessManagement.Api.Metadata.Translation;
+namespace Altinn.AccessMgmt.Core.Extensions;
 
 /// <summary>
 /// Extension methods for translating DTOs and collections
@@ -22,7 +22,7 @@ public static class TranslationExtensions
         string languageCode,
         bool allowPartial = true)
     {
-        if (dto == null)
+        if (object.Equals(dto, default(TDto)))
         {
             return dto;
         }
@@ -45,12 +45,36 @@ public static class TranslationExtensions
         string languageCode,
         bool allowPartial = true)
     {
-        if (dtos == null)
+        if (object.Equals(dtos, default(IEnumerable<TDto>)))
         {
             return dtos;
         }
 
         return await translationService.TranslateCollectionAsync(dtos, languageCode, allowPartial);
+    }
+
+    /// <summary>
+    /// Translates a Task result
+    /// </summary>
+    /// <typeparam name="TDto">The DTO type</typeparam>
+    /// <param name="dtoTask">The task returning the DTO</param>
+    /// <param name="translationService">The translation service</param>
+    /// <param name="languageCode">The target language code</param>
+    /// <param name="allowPartial">Whether to allow partial translation</param>
+    /// <returns>The translated DTO</returns>
+    public static async ValueTask<TDto> TranslateAsync<TDto>(
+        this Task<TDto> dtoTask,
+        ITranslationService translationService,
+        string languageCode,
+        bool allowPartial = true)
+    {
+        var dto = await dtoTask;
+        if (object.Equals(dto, default(TDto)))
+        {
+            return dto;
+        }
+
+        return await translationService.TranslateAsync(dto, languageCode, allowPartial);
     }
 
     /// <summary>
@@ -71,7 +95,7 @@ public static class TranslationExtensions
         string languageCode,
         bool allowPartial = true)
     {
-        if (source == null)
+        if (object.Equals(source, default(TSource)))
         {
             return default;
         }
@@ -98,36 +122,12 @@ public static class TranslationExtensions
         string languageCode,
         bool allowPartial = true)
     {
-        if (sources == null)
+        if (object.Equals(sources, default(IEnumerable<TSource>)))
         {
             return Enumerable.Empty<TDto>();
         }
 
         var dtos = sources.Select(mapper);
         return await translationService.TranslateCollectionAsync(dtos, languageCode, allowPartial);
-    }
-
-    /// <summary>
-    /// Translates a Task result
-    /// </summary>
-    /// <typeparam name="TDto">The DTO type</typeparam>
-    /// <param name="dtoTask">The task returning the DTO</param>
-    /// <param name="translationService">The translation service</param>
-    /// <param name="languageCode">The target language code</param>
-    /// <param name="allowPartial">Whether to allow partial translation</param>
-    /// <returns>The translated DTO</returns>
-    public static async ValueTask<TDto> TranslateAsync<TDto>(
-        this Task<TDto> dtoTask,
-        ITranslationService translationService,
-        string languageCode,
-        bool allowPartial = true)
-    {
-        var dto = await dtoTask;
-        if (dto == null)
-        {
-            return dto;
-        }
-
-        return await translationService.TranslateAsync(dto, languageCode, allowPartial);
     }
 }

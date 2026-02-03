@@ -1,5 +1,5 @@
-﻿using Altinn.AccessManagement.Api.Metadata.Translation;
-using Altinn.AccessManagement.Tests.Fixtures;
+﻿using Altinn.AccessManagement.Tests.Fixtures;
+using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Utils;

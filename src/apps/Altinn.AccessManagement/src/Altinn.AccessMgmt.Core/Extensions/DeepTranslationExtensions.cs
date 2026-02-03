@@ -1,7 +1,7 @@
 ﻿using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 
-namespace Altinn.AccessManagement.Api.Metadata.Translation;
+namespace Altinn.AccessMgmt.Core.Extensions;
 
 /// <summary>
 /// Extension methods for deep translation of DTOs with nested objects
@@ -94,7 +94,7 @@ public static class DeepTranslationExtensions
         }
 
         // Translate nested Packages (if present, avoiding circular translation)
-        if (area.Packages != null && area.Packages.Any())
+        if (area.Packages != null && area.Packages.Count > 0)
         {
             var translatedPackages = new List<PackageDto>();
             foreach (var package in area.Packages)

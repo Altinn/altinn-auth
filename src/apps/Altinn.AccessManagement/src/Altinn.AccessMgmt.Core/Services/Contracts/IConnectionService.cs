@@ -54,6 +54,19 @@ public interface IConnectionService
     Task<Result<IEnumerable<RolePermissionDto>>> GetRoles(Guid party, Guid? fromId, Guid? toId, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Checks for role delegation access for a specific user. 
+    /// Note:
+    ///     - This method assumes that the caller has already been authenticated and authorized as an access manager for the specified party.
+    ///     - Currently only usable for resource delegation checks.
+    /// </summary>
+    /// <param name="party">The party the user is operating on behalf of.</param>
+    /// <param name="toId">The user</param>
+    /// <param name="toIsMainAdminForFrom">Wether the toId user is authorized as main administrator for the party</param>
+    /// <param name="cancellationToken">A token used to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a collection of role delegations.</returns>
+    Task<Result<IEnumerable<RoleDtoCheck>>> RoleDelegationCheck(Guid party, Guid? toId = null, bool toIsMainAdminForFrom = false, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Get connection resources
     /// </summary>
     /// <returns></returns>

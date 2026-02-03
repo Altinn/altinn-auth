@@ -18,15 +18,21 @@ public class RoleService: IRoleService
     public AppDbContext Db { get; }
 
     /// <inheritdoc />
-    public async Task<RoleDto> GetById(Guid id, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<RoleDto>> GetById(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
     {
-        var role = await Db.Roles.AsNoTracking().Include(t => t.Provider).Include(t => t.EntityType).SingleAsync(t => t.Id == id, cancellationToken);
-        if (role == null)
+        var roles = await Db.Roles
+            .AsNoTracking()
+            .Include(t => t.Provider)
+            .Include(t => t.EntityType)
+            .Where(t => ids.Contains(t.Id))
+            .ToListAsync(cancellationToken);
+
+        if (roles == null || roles.Count == 0)
         {
             return null;
         }
 
-        return DtoMapper.Convert(role);
+        return roles.Select(DtoMapper.Convert);
     }
 
     /// <inheritdoc/>

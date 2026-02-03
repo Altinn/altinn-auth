@@ -24,12 +24,12 @@ public interface IRoleService
     Task<IEnumerable<RoleDto>> GetByCode(string code, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Get role based on id
+    /// Get role based on one or more ids
     /// </summary>
-    /// <param name="id">Role identity</param>
+    /// <param name="ids">Role identities</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns></returns>
-    Task<RoleDto> GetById(Guid id, CancellationToken cancellationToken = default);
+    Task<IEnumerable<RoleDto>> GetById(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get role for provider

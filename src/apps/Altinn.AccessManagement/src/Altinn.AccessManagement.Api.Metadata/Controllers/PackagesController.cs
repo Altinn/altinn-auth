@@ -1,4 +1,4 @@
-﻿using Altinn.AccessManagement.Api.Metadata.Translation;
+﻿using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils.Models;
 using Altinn.AccessMgmt.PersistenceEF.Constants;

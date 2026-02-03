@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Altinn.AccessManagement.Api.Metadata.Translation;
+using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
@@ -60,7 +60,7 @@ namespace Altinn.AccessManagement.Api.Metadata.Controllers
         [HttpGet]
         public async Task<ActionResult<RoleDto>> GetId(Guid id)
         {
-            var res = await roleService.GetById(id);
+            var res = await roleService.GetById([id]);
             if (res == null)
             {
                 return NotFound();

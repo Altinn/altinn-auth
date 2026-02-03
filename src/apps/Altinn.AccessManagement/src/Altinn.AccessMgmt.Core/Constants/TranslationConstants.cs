@@ -1,4 +1,4 @@
-﻿namespace Altinn.AccessManagement.Api.Metadata.Translation;
+﻿namespace Altinn.AccessMgmt.Core.Constants.Translation;
 
 /// <summary>
 /// Constants used for translation functionality in the API

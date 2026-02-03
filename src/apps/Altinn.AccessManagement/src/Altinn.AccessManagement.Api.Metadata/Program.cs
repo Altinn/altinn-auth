@@ -1,4 +1,4 @@
-﻿using Altinn.AccessManagement.Api.Metadata.Middleware;
+﻿using Altinn.AccessMgmt.Core.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -5,14 +5,14 @@ using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Helpers;
-using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models.AccessList;
 using Altinn.AccessManagement.Core.Models.Party;
 using Altinn.AccessManagement.Core.Models.Register;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Models.Rights;
-using Altinn.AccessManagement.Core.Services;
 using Altinn.AccessManagement.Core.Services.Interfaces;
+using Altinn.AccessMgmt.Core.Constants.Translation;
+using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -26,7 +26,7 @@ using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
-using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
+using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
@@ -44,7 +44,9 @@ public partial class ConnectionService(
     IAMPartyService partyService,
     IContextRetrievalService contextRetrievalService,
     IAccessListsAuthorizationClient accessListsAuthorizationClient,
-    IPolicyRetrievalPoint policyRetrievalPoint) : IConnectionService
+    IPolicyRetrievalPoint policyRetrievalPoint,
+    IRoleService roleService,
+    ITranslationService translationService) : IConnectionService
 {
     public async Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
     {
@@ -807,6 +809,50 @@ public partial class ConnectionService(
             {
                 Role = DtoMapper.Convert(role),
                 Permissions = connection.Select(connection => DtoMapper.ConvertToPermission(connection)),
+            };
+        }).ToList();
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<IEnumerable<RoleDtoCheck>>> RoleDelegationCheck(Guid party, Guid? toId = null, bool toIsMainAdminForFrom = false, CancellationToken cancellationToken = default)
+    {
+        toId = toId ?? auditAccessor.AuditValues.ChangedBy;
+
+        var results = await dbContext.GetRolesForResourceDelegationCheck(
+            fromId: party,
+            toId: toId.Value,
+            toIsMainAdminForFrom,
+            ct: cancellationToken
+        );
+
+        var roles = await roleService.GetById(results.Select(r => r.Role.Id), cancellationToken);
+
+        var translated = await roles.TranslateDeepAsync(
+            translationService,
+            TranslationConstants.DefaultLanguageCode,
+            true);
+
+        return results.GroupBy(p => p.Role.Id).Select(group =>
+        {
+            var firstRole = group.First();
+            return new RoleDtoCheck
+            {
+                Role = translated.FirstOrDefault(r => r.Id == firstRole.Role.Id),
+                Result = group.Any(p => p.Result),
+                Reasons = group.Select(p => new RoleDtoCheck.Reason
+                {
+                    Description = p.Reason.Description,
+                    RoleId = p.Reason.RoleId,
+                    RoleUrn = p.Reason.RoleUrn,
+                    FromId = p.Reason.FromId,
+                    FromName = p.Reason.FromName,
+                    ToId = p.Reason.ToId,
+                    ToName = p.Reason.ToName,
+                    ViaId = p.Reason.ViaId,
+                    ViaName = p.Reason.ViaName,
+                    ViaRoleId = p.Reason.ViaRoleId,
+                    ViaRoleUrn = p.Reason.ViaRoleUrn
+                })
             };
         }).ToList();
     }

@@ -2685,7 +2685,7 @@ public static class RoleConstants
     /// - <c>Code:</c> A0212
     /// - <c>Description:</c> Denne rollen gir rettighet til tjenester innen import, foredling, produksjon og/eller salg av primærnæringsprodukter og andre næringsmiddel, samt dyrehold, akvakultur, planter og kosmetikk. Ved regelverksendringer eller innføring av nye digitale tjenester
     /// </remarks>
-    public static ConstantDefinition<Role> PrimaryIndustryAndFoodstuff { get; } = new ConstantDefinition<Role>("c497b499-7e98-423d-9fe7-ad5a6c3b71ad")
+    public static ConstantDefinition<Role> A0212 { get; } = new ConstantDefinition<Role>("c497b499-7e98-423d-9fe7-ad5a6c3b71ad")
     {
         Entity = new()
         {
@@ -2719,7 +2719,7 @@ public static class RoleConstants
     /// - <c>Code:</c> A0236
     /// - <c>Description:</c> Denne rollen gir rettighet til å lese meldinger som blir sendt til brukerens meldingsboks. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som rollen gir.
     /// </remarks>
-    public static ConstantDefinition<Role> MailArchive { get; } = new ConstantDefinition<Role>("151955ec-d8aa-4c14-a435-ffa96b26a9fb")
+    public static ConstantDefinition<Role> A0236 { get; } = new ConstantDefinition<Role>("151955ec-d8aa-4c14-a435-ffa96b26a9fb")
     {
         Entity = new()
         {
@@ -2995,7 +2995,7 @@ public static class RoleConstants
     /// - <c>Code:</c> A0278
     /// - <c>Description:</c> Rollen er forbeholdt skjemaer og tjenester som er godkjent av Direktoratet for byggkvalitet (DiBK). Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som rollen gir.
     /// </remarks>
-    public static ConstantDefinition<Role> PlanningAndConstruction { get; } = new ConstantDefinition<Role>("6828080b-e846-4c51-b670-201af4917562")
+    public static ConstantDefinition<Role> A0278 { get; } = new ConstantDefinition<Role>("6828080b-e846-4c51-b670-201af4917562")
     {
         Entity = new()
         {
