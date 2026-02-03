@@ -219,16 +219,13 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     /// <param name="configureDb">One or more async delegates that receive an <see cref="AppDbContext"/>.</param>
     public async Task QueryDb(params Func<AppDbContext, Task>[] configureDb)
     {
-        if (Interlocked.Increment(ref _seedonce) == 1)
-        {
-            var audit = new AuditValues(SystemEntityConstants.StaticDataIngest);
-            using var scope = Services.CreateEFScope(audit);
-            using var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var audit = new AuditValues(SystemEntityConstants.StaticDataIngest);
+        using var scope = Services.CreateEFScope(audit);
+        using var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            foreach (var configure in configureDb)
-            {
-                await configure(db);
-            }
+        foreach (var configure in configureDb)
+        {
+            await configure(db);
         }
     }
 

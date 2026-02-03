@@ -852,9 +852,9 @@ public class ClientDelegationControllerTest
     /// <summary>
     /// <see cref="ClientDelegationController.DeleteAgentAccessPackage(Guid, Guid, Guid, DelegationBatchInputDto, CancellationToken)"/>
     /// </summary>
-    public class DeleteAgentAccessPackage : IClassFixture<ApiFixture>
+    public class DeleteAgentAccessPackageAndDelegation : IClassFixture<ApiFixture>
     {
-        public DeleteAgentAccessPackage(ApiFixture fixture)
+        public DeleteAgentAccessPackageAndDelegation(ApiFixture fixture)
         {
             Fixture = fixture;
             Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnduserControllerClientDelegation);
@@ -893,7 +893,13 @@ public class ClientDelegationControllerTest
                 db.AssignmentPackages.Add(new()
                 {
                     AssignmentId = rightholderfromNordisToVerdiq.Id,
-                    PackageId = PackageConstants.ExplicitServiceDelegation.Id,
+                    PackageId = PackageConstants.Aquaculture.Id,
+                });
+
+                db.AssignmentPackages.Add(new()
+                {
+                    AssignmentId = rightholderfromNordisToVerdiq.Id,
+                    PackageId = PackageConstants.TechnicalInteractionWithTheNorwegianTaxAgency.Id,
                 });
 
                 db.SaveChanges();
@@ -916,7 +922,260 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task DelegateAccessPackageToAgent_WithValidInput_ReturnsOk()
+        public async Task DelegateAccessPackageToAgent_DeleteAgentAccessPackageAndDelegation_ReturnsOk()
+        {
+            // Create Delegation
+            var client = CreateClient();
+            var response = await client.PostAsJsonAsync(
+                $"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&from={TestEntities.OrganizationNordisAS}&to={TestEntities.PersonPaula}",
+                new DelegationBatchInputDto()
+                {
+                    Values = [
+                        new()
+                        {
+                            Role = RoleConstants.Rightholder.Entity.Code,
+                            Packages = [
+                                PackageConstants.Customs.Entity.Urn,
+                                PackageConstants.Aquaculture.Entity.Urn,
+                                PackageConstants.TechnicalInteractionWithTheNorwegianTaxAgency.Entity.Urn,
+                            ]
+                        },
+                        new()
+                        {
+                            Role = RoleConstants.Accountant.Entity.Code,
+                            Packages = [
+                                PackageConstants.AccountantWithSigningRights.Entity.Urn
+                            ]
+                        }
+                    ]
+                },
+                TestContext.Current.CancellationToken
+            );
+
+            // 1. Verify that two delegations exists in DB
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            await Fixture.QueryDb(static async db =>
+            {
+                var delegation = await db.Delegations
+                    .GroupJoin(
+                        db.DelegationPackages,
+                        d => d.Id,
+                        dp => dp.DelegationId,
+                        (d, dp) =>
+                        new
+                        {
+                            d.From.Role,
+                            Delegation = d,
+                            DelegationPackages = dp,
+                        })
+                    .ToListAsync(TestContext.Current.CancellationToken);
+
+                Assert.NotNull(delegation);
+
+                // 1. Should be three package delegation for rightholder and one for accountant.
+                Assert.Equal(3, delegation.FirstOrDefault(d => d.Role.Id == RoleConstants.Rightholder).DelegationPackages.Count());
+                Assert.Single(delegation.FirstOrDefault(d => d.Role.Id == RoleConstants.Accountant).DelegationPackages);
+            });
+
+            // 2. Delete one package under rightholder role
+            var deleteResult = await ShouldDeleteSuccessfully(client, RoleConstants.Rightholder.Entity.Code, PackageConstants.TechnicalInteractionWithTheNorwegianTaxAgency.Entity.Urn);
+            Assert.NotEmpty(deleteResult);
+            Assert.True(deleteResult.All(d => d.Changed));
+            await Fixture.QueryDb(static async db =>
+            {
+                var delegation = await db.Delegations
+                    .GroupJoin(
+                        db.DelegationPackages,
+                        d => d.Id,
+                        dp => dp.DelegationId,
+                        (d, dp) =>
+                        new
+                        {
+                            d.From.Role,
+                            Delegation = d,
+                            DelegationPackages = dp,
+                        })
+                    .ToListAsync(TestContext.Current.CancellationToken);
+
+                Assert.NotNull(delegation);
+
+                // 2. two delegation should still be present.
+                Assert.Equal(2, delegation.FirstOrDefault(d => d.Role.Id == RoleConstants.Rightholder).DelegationPackages.Count());
+                Assert.Single(delegation.FirstOrDefault(d => d.Role.Id == RoleConstants.Accountant).DelegationPackages);
+            });
+
+            // 3. Delete another package under rightholder role.
+            deleteResult = await ShouldDeleteSuccessfully(client, RoleConstants.Rightholder.Entity.Code, PackageConstants.Customs.Entity.Urn, PackageConstants.TechnicalInteractionWithTheNorwegianTaxAgency.Entity.Urn);
+            Assert.NotEmpty(deleteResult);
+            Assert.Single(deleteResult, d => d.Changed);
+            Assert.Single(deleteResult, d => !d.Changed);
+            await Fixture.QueryDb(static async db =>
+            {
+                var delegation = await db.Delegations
+                    .GroupJoin(
+                        db.DelegationPackages,
+                        d => d.Id,
+                        dp => dp.DelegationId,
+                        (d, dp) =>
+                        new
+                        {
+                            d.From.Role,
+                            Delegation = d,
+                            DelegationPackages = dp,
+                        })
+                    .ToListAsync(TestContext.Current.CancellationToken);
+
+                // 3. one package delegation should still be present for each role.
+                Assert.NotNull(delegation);
+                
+                Assert.Single(delegation.FirstOrDefault(d => d.Role.Id == RoleConstants.Rightholder).DelegationPackages);
+                Assert.Single(delegation.FirstOrDefault(d => d.Role.Id == RoleConstants.Accountant).DelegationPackages);
+            });
+
+            // 5. delete all except packages except for accountant package. Delegation for rightholder should be gone.
+            deleteResult = await ShouldDeleteSuccessfully(client, RoleConstants.Rightholder.Entity.Code, PackageConstants.Aquaculture.Entity.Urn);
+            Assert.NotEmpty(deleteResult);
+            Assert.Single(deleteResult, d => d.Changed);
+            await Fixture.QueryDb(static async db =>
+            {
+                var delegation = await db.Delegations
+                    .GroupJoin(
+                        db.DelegationPackages,
+                        d => d.Id,
+                        dp => dp.DelegationId,
+                        (d, dp) =>
+                        new
+                        {
+                            d.From.Role,
+                            Delegation = d,
+                            DelegationPackages = dp,
+                        })
+                    .ToListAsync(TestContext.Current.CancellationToken);
+
+                // 5. all package delegations should be gone for rightholder thus it delegations should be gone as well.
+                Assert.NotNull(delegation);
+                
+                Assert.Null(delegation.FirstOrDefault(d => d.Role.Id == RoleConstants.Rightholder));
+                Assert.Single(delegation.FirstOrDefault(d => d.Role.Id == RoleConstants.Accountant).DelegationPackages);
+            });
+
+            // 6. Delete final package for accountant role.
+            deleteResult = await ShouldDeleteSuccessfully(client, RoleConstants.Accountant.Entity.Code, PackageConstants.AccountantWithSigningRights.Entity.Urn);
+            Assert.NotEmpty(deleteResult);
+            Assert.Single(deleteResult, d => d.Changed);
+            await Fixture.QueryDb(static async db =>
+            {
+                var delegation = await db.Delegations
+                    .GroupJoin(
+                        db.DelegationPackages,
+                        d => d.Id,
+                        dp => dp.DelegationId,
+                        (d, dp) =>
+                        new
+                        {
+                            d.From.Role,
+                            Delegation = d,
+                            DelegationPackages = dp,
+                        })
+                    .ToListAsync(TestContext.Current.CancellationToken);
+
+                // 6. There should be no package delegations left, thus both delegations should be null.
+                Assert.NotNull(delegation);
+                
+                Assert.Null(delegation.FirstOrDefault(d => d.Role.Id == RoleConstants.Rightholder));
+                Assert.Null(delegation.FirstOrDefault(d => d.Role.Id == RoleConstants.Accountant));
+            });
+
+            static async Task<List<DelegationDto>> ShouldDeleteSuccessfully(HttpClient client, string role, params string[] packages)
+            {
+                // Delete Delegation
+                using var request = new HttpRequestMessage(HttpMethod.Delete, $"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&from={TestEntities.OrganizationNordisAS}&to={TestEntities.PersonPaula}")
+                {
+                    Content = JsonContent.Create(new DelegationBatchInputDto()
+                    {
+                        Values = [
+                            new()
+                        {
+                            Role = role,
+                            Packages = packages.ToList(),
+                        }
+                        ]
+                    })
+                };
+
+                var deleteResponse = await client.SendAsync(request, TestContext.Current.CancellationToken);
+                var deleteResponsePayload = await deleteResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+                Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+                var deleteResult = JsonSerializer.Deserialize<List<DelegationDto>>(deleteResponsePayload);
+                return deleteResult;
+            }
+        }
+    }
+
+    /// <summary>
+    /// <see cref="ClientDelegationController.DeleteAgentAccessPackage(Guid, Guid, Guid, DelegationBatchInputDto, CancellationToken)"/>
+    /// </summary>
+    public class DeleteAgentAccessPackage : IClassFixture<ApiFixture>
+    {
+        public DeleteAgentAccessPackage(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnduserControllerClientDelegation);
+            Fixture.EnsureSeedOnce(db =>
+            {
+                var rightholderfromNordisToVerdiq = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationNordisAS.Id,
+                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+
+                var accountantFromNordisToVerdiq = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationNordisAS.Id,
+                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    RoleId = RoleConstants.Accountant,
+                };
+                var agentFromVerdiqToPaula = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationVerdiqAS.Id,
+                    ToId = TestEntities.PersonPaula,
+                    RoleId = RoleConstants.Agent,
+                };
+
+                db.Assignments.Add(rightholderfromNordisToVerdiq);
+                db.Assignments.Add(accountantFromNordisToVerdiq);
+                db.Assignments.Add(agentFromVerdiqToPaula);
+
+                db.AssignmentPackages.Add(new()
+                {
+                    AssignmentId = rightholderfromNordisToVerdiq.Id,
+                    PackageId = PackageConstants.Customs.Id,
+                });
+
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private HttpClient CreateClient()
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestEntities.PersonPaula.Id.ToString()));
+                claims.Add(new Claim("scope", $"{AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ} {AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE}"));
+            });
+
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            return client;
+        }
+
+        [Fact]
+        public async Task DeleteAccessPackageToAgent_WithValidInput_ReturnsOk()
         {
             // Create Delegation
             var client = CreateClient();

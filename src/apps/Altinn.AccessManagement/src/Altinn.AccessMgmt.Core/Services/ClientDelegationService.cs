@@ -307,7 +307,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                     Role = role,
                     Packages = pkgs,
                 };
-            });
+            }).ToList();
 
         foreach (var input in inputs)
         {
@@ -321,6 +321,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                 if (!inputPackage.PackageExist)
                 {
                     errorBuilder.Add(ValidationErrors.InvalidPackage, $"BODY/values[{input.RoleIdx}]/packages[{inputPackage.PackageIdx}]", [new($"{inputPackage.InputPackage}", "package do not exist.")]);
+                    continue;
                 }
 
                 if (!inputPackage.Package.Entity.IsDelegable)
@@ -452,7 +453,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
         var inputs = payload.Values
             .Select((r, idx) =>
             {
-                var roleExist = RoleConstants.TryGetByCode(r.Role, out var role);
+                var roleExist = RoleConstants.TryGetByAll(r.Role, out var role);
                 var pkgs = r.Packages.Select((p, idx) =>
                 {
                     var packageExist = PackageConstants.TryGetByUrn(p, out var package);
@@ -474,7 +475,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                     Role = role,
                     Packages = pkgs,
                 };
-            });
+            }).ToList();
 
         foreach (var input in inputs)
         {
@@ -488,11 +489,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                 if (!inputPackage.PackageExist)
                 {
                     errorBuilder.Add(ValidationErrors.InvalidPackage, $"BODY/values[{input.RoleIdx}]/packages[{inputPackage.PackageIdx}]", [new($"{inputPackage.InputPackage}", "package do not exist.")]);
-                }
-
-                if (!inputPackage.Package.Entity.IsDelegable)
-                {
-                    errorBuilder.Add(ValidationErrors.PackageIsNotDelegable, $"BODY/values[{input.RoleIdx}]/packages[{inputPackage.PackageIdx}]", [new($"{inputPackage.Package.Entity.Urn}", $"Package is not delegable and therefore cannot be deleted.")]);
+                    continue;
                 }
             }
         }
@@ -549,6 +546,16 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
             var delegation = await db.Delegations.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == clientAssignment.Id && t.ToId == agentAssignment.Id && t.FacilitatorId == partyId, cancellationToken);
             if (delegation is null)
             {
+                result.AddRange(pkgIds.Select(pkg => new DelegationDto()
+                {
+                    FromId = fromId,
+                    PackageId = pkg,
+                    RoleId = input.Role,
+                    ToId = toId,
+                    ViaId = partyId,
+                    Changed = false,
+                }));
+
                 continue;
             }
 
@@ -575,10 +582,45 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                     FromId = fromId,
                     ToId = toId,
                     ViaId = partyId,
+
                     RoleId = input.Role,
                     PackageId = pkgId,
                     Changed = toRemove is { }
                 });
+            }
+        }
+
+        var uniqueRoleIds = inputs.Select(p => p.Role.Id).Distinct();
+        var delegations = await db.Delegations
+            .Where(d => d.FacilitatorId == partyId)
+            .Include(d => d.From)
+            .Where(d => d.From.FromId == fromId && uniqueRoleIds.Contains(d.From.RoleId))
+            .GroupJoin(
+                db.DelegationPackages,
+                d => d.Id,
+                dp => dp.DelegationId,
+                (d, dp) => new
+                {
+                    Packages = dp,
+                    AnyPackages = dp.Any(),
+                    DelegationId = d.Id,
+                }
+            )
+            .ToListAsync(cancellationToken);
+
+        foreach (var delegation in delegations)
+        {
+            var scheduledDeletedPackages = result.Where(r => r.Changed).Select(p => p.PackageId).ToHashSet();
+            var currentPackages = delegation.Packages.Select(p => p.PackageId).ToHashSet() ?? [];
+            var shouldDeleteDelegation = scheduledDeletedPackages.SetEquals(currentPackages);
+
+            if (shouldDeleteDelegation)
+            {
+                var deleteDelegation = await db.Delegations
+                    .AsTracking()
+                    .FirstOrDefaultAsync(d => d.Id == delegation.DelegationId, cancellationToken);
+
+                db.Delegations.Remove(deleteDelegation);
             }
         }
 
@@ -589,7 +631,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
 }
 
 /// <summary>
-/// Delegation Service
+/// Client Delegation Service
 /// </summary>
 public interface IClientDelegationService
 {
