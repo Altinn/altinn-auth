@@ -13,6 +13,7 @@ delete {
 params:query {
   party: {{party}}
   to: {{to}}
+  ~cascade: false
 }
 
 body:json {
@@ -27,7 +28,7 @@ script:pre-request {
   const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("party", testdata.REGN_Organisasjon.partyUuid);
-  bru.setVar("to", testdata.REGN_Organisasjon.REGN_Agent.partyUuid);
+  bru.setVar("to", testdata.REGN_Organisasjon.REGN_Agent.userUuid);
   
   
   var getTokenParameters = {
@@ -48,7 +49,7 @@ script:pre-request {
 tests {
   const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
   
-  test("Add user as agent for client delegation ", function() {
+  test("Delete agent user which was added", function() {
     const data = res.getBody();
     
     expect(res.status).to.equal(204);

@@ -55,7 +55,7 @@ tests {
     assert.isOk(data, "Expected response body to return created assignment");
     
     assert.equal(data.fromId, testdata.REGN_Organisasjon.partyUuid);
-    assert.equal(data.toId, testdata.REGN_Organisasjon.REGN_Agent.partyUuid);
+    assert.equal(data.toId, testdata.REGN_Organisasjon.REGN_Agent.userUuid);
     
   });
 }

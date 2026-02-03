@@ -1,0 +1,78 @@
+meta {
+  name: GET_Agent_lists_for_delegert_AccPkg
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/clientdelegations/agents/accesspackages?party={{party}}&to={{to}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{to}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const testdata2 = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata2.org2_delegates_tilgangspakke.partyuuid);
+  bru.setVar("to", testdata.REGN_Organisasjon.REGN_Agent.userUuid);
+  
+  
+  var getTokenParameters = {
+    auth_userId: testdata2.org2_delegates_tilgangspakke.innehaver.userid,
+    auth_partyId: testdata2.org2_delegates_tilgangspakke.innehaver.partyid,
+    auth_partyUuid: testdata2.org2_delegates_tilgangspakke.innehaver.partyuuid,
+    auth_ssn: testdata2.org2_delegates_tilgangspakke.innehaver.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const testdata2 = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  test("GET agent lists for client org", function () {
+    expect(res.status).to.equal(200);
+  
+    const body = res.getBody();
+    const response = typeof body === "string" ? JSON.parse(body) : body;
+  
+    const entry = response.data[0];
+  
+    // --- Verify client ---
+    expect(entry).to.have.property("client");
+    const client = entry.client;
+  
+    expect(client.id.toLowerCase()).to.equal(
+      testdata2.org1_delegates_tilgangspakke.partyuuid.toLowerCase()
+    );
+  
+    expect(client.name).to.equal(testdata2.org1_delegates_tilgangspakke.name);
+    expect(client.organizationIdentifier).to.equal(testdata2.org1_delegates_tilgangspakke.orgno);
+  
+    const access = entry.access[0];
+  
+    // Role
+    expect(access).to.have.property("role");
+    expect(access.role.code).to.equal("rettighetshaver");
+  
+    const pkg = access.packages[0];
+    expect(pkg.urn).to.equal("urn:altinn:accesspackage:skattegrunnlag");
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

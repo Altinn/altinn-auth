@@ -1,0 +1,63 @@
+meta {
+  name: POST_Enduser_Conn_Delegate_AccPKG_fra_privatPerson
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toOrg}}&package={{package}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toOrg}}
+  package: {{package}}
+  ~packageId: {{package}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.privatPerson.partyUuid);
+  bru.setVar("toOrg", testdata.REVI_Organisasjon.partyUuid);
+  bru.setVar("package", testdata.innbygger_package_to_delegate.package_urn);
+  
+  var getTokenParameters = {
+     auth_userId: testdata.privatPerson.userId,
+    auth_partyId: testdata.privatPerson.partyId,
+    auth_partyUuid: testdata.privatPerson.partyUuid,
+    auth_ssn: testdata.privatPerson.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+script:post-response {
+  const data = res.getBody();
+  const packageId = data.packageId;
+  bru.setEnvVar("packageId", packageId)
+}
+
+tests {
+  test("Delegate access package from privat person to Org-B for klient-delegation", function() {
+    const data = res.getBody();
+    var packageId = bru.getEnvVar("packageId");
+    
+    expect(res.status).to.equal(200);
+    expect(data).to.have.property('packageId', packageId);
+    
+  });
+}

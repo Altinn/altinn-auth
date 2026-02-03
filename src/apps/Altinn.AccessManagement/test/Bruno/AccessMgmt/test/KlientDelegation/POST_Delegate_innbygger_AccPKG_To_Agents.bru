@@ -1,0 +1,95 @@
+meta {
+  name: POST_Delegate_innbygger_AccPKG_To_Agents
+  type: http
+  seq: 17
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/clientdelegations/agents/accesspackages?party={{party}}&from={{fromOrg}}&to={{to}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{fromOrg}}
+  to: {{to}}
+}
+
+body:json {
+  {
+    "values": [
+     {
+       "role": "rettighetshaver",
+       "packages" : [
+         "urn:altinn:accesspackage:innbygger-samliv"
+       ]
+     }
+    ]
+  }
+}
+
+vars:pre-request {
+  fromOrg: 7b7bc643-821f-4cb2-b874-9dc6eb58f5c5
+  to: 7c6617f7-71d2-4235-99bf-c35658ae5161
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.REVI_Organisasjon.partyUuid);
+  bru.setVar("fromOrg", testdata.privatPerson.partyUuid);
+  bru.setVar("to", testdata.REGN_Organisasjon.REGN_Agent.userUuid);
+  
+  
+  var getTokenParameters = {
+    auth_userId: testdata.REVI_Organisasjon.dagligleder.userId,
+    auth_partyId: testdata.REVI_Organisasjon.dagligleder.partyId,
+    auth_partyUuid: testdata.REVI_Organisasjon.dagligleder.partyUuid,
+    auth_ssn: testdata.REVI_Organisasjon.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  test("Delegate innbygger access pacakage to added agent in client delegation", function() {
+    
+    const body = res.getBody();
+    const data = typeof body === "string" ? JSON.parse(body) : body;
+  
+    expect(data).to.be.an("array");
+    expect(data.length).to.be.greaterThan(0);
+  
+    const item = data[0];
+  
+    expect(item).to.have.property("fromId");
+    expect(item).to.have.property("toId");
+    expect(item).to.have.property("viaId");
+  
+    expect(item.fromId.toLowerCase()).to.equal(
+      testdata.privatPerson.partyUuid.toLowerCase()
+    );
+  
+    expect(item.toId.toLowerCase()).to.equal(
+      testdata.REGN_Organisasjon.REGN_Agent.userUuid.toLowerCase()
+    );
+    
+    expect(item.viaId.toLowerCase()).to.equal(
+      testdata.REVI_Organisasjon.partyUuid.toLowerCase()
+    );
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

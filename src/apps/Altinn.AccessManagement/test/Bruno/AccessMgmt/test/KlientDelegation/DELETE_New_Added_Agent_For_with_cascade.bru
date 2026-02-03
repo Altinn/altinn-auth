@@ -1,0 +1,81 @@
+meta {
+  name: DELETE_New_Added_Agent_For_with_cascade
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/clientdelegations/agents?party={{party}}&to={{to}}&cascade=false
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{to}}
+  cascade: false
+}
+
+body:json {
+  {
+    "personidentifier": "{{toPerson}}", // fnr or username
+    "lastName": "{{toPersonlastName}}"
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const testdata2 = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata2.org2_delegates_tilgangspakke.partyuuid);
+  bru.setVar("to", testdata.REGN_Organisasjon.REGN_Agent.userUuid);
+  
+  
+  var getTokenParameters = {
+    auth_userId: testdata2.org2_delegates_tilgangspakke.innehaver.userid,
+    auth_partyId: testdata2.org2_delegates_tilgangspakke.innehaver.partyid,
+    auth_partyUuid: testdata2.org2_delegates_tilgangspakke.innehaver.partyuuid,
+    auth_ssn: testdata2.org2_delegates_tilgangspakke.innehaver.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  test("Delete agent without deleting delegated rights with cascade : false ", function() {
+    const data = res.getBody();
+    
+    expect(data).to.have.property("title", "Bad Request");
+    expect(data).to.have.property("status", 400);
+    
+     expect(data).to.have.property("detail");
+  
+    expect(data.detail).to.equal(
+      "One or more validation errors occurred."
+    );
+  
+    // Verify specific validation error message
+    expect(data).to.have.property("validationErrors");
+    expect(data.validationErrors).to.be.an("array").that.is.not.empty;
+  
+    const validationError = data.validationErrors[0];
+  
+    expect(validationError).to.have.property("detail");
+    expect(validationError.detail).to.equal(
+      "The delegation has one or more active access packages associated with it. Set cascade to true to remove the delegation and its active access packages."
+    );
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,4 +1,4 @@
-module.exports = {
+﻿module.exports = {
   env: "tt02",
   resources: {
     clientDelgResourceId: "devtest_gar_bruno_client_resource",
@@ -48,7 +48,7 @@ module.exports = {
       personidentity: "08919574934",
       userId: 1465828,
       partyId: 50441038,
-      partyUuid: "01f7a70d-2619-4c50-8ff4-efd7ae6c8960",
+      userUuid: "01f7a70d-2619-4c50-8ff4-efd7ae6c8960",
     },
   },
   REVI_Organisasjon: {
@@ -64,4 +64,14 @@ module.exports = {
       partyUuid: "998b0ee8-57d6-42c3-a36c-a775bbf93210",
     },
   },
+  innbygger_package_to_delegate: {
+      package_urn: "urn:altinn:accesspackage:innbygger-samliv",
+    },
+    privatPerson: {
+      name: "TRIST PAPPA",
+      pid: "18834599313",
+      userId: 2184955,
+      partyId: 51425503,
+      partyUuid: "a4c0369b-2261-4123-ac03-e0028a64d265",
+    },
 };

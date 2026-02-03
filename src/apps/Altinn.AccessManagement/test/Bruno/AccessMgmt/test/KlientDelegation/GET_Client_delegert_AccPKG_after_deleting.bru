@@ -1,0 +1,57 @@
+meta {
+  name: GET_Client_delegert_AccPKG_after_deleting
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/clientdelegations/clients/accesspackages?party={{party}}&from={{from}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{from}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const testdata2 = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("from", testdata2.org1_delegates_tilgangspakke.partyuuid);
+  bru.setVar("party", testdata2.org2_delegates_tilgangspakke.partyuuid);
+  
+  
+  var getTokenParameters = {
+     auth_userId: testdata2.org2_delegates_tilgangspakke.innehaver.userid,
+    auth_partyId: testdata2.org2_delegates_tilgangspakke.innehaver.partyid,
+    auth_partyUuid: testdata2.org2_delegates_tilgangspakke.innehaver.partyuuid,
+    auth_ssn: testdata2.org2_delegates_tilgangspakke.innehaver.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  test("GET klient list for agent after deleting agents", function() {
+    
+   const data = res.getBody(); 
+    
+  expect(res.status).to.equal(200);
+  assert.isOk(data, "Expected response body to be empty");
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

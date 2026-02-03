@@ -1,0 +1,72 @@
+meta {
+  name: Delete_delegated_AccessPkg_from_agents
+  type: http
+  seq: 20
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/clientdelegations/agents/accesspackages?party={{party}}&from={{from}}&to={{to}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{from}}
+  to: {{to}}
+}
+
+body:json {
+  {
+    "values": [
+     {
+       "role": "rettighetshaver",
+       "packages" : [
+         "urn:altinn:accesspackage:skattegrunnlag"
+       ]
+     }
+    ]
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  
+  bru.setVar("party", testdata.REVI_Organisasjon.partyUuid);
+  bru.setVar("from", testdata.privatPerson.partyUuid);
+  bru.setVar("to", testdata.REGN_Organisasjon.REGN_Agent.userUuid);
+  
+  
+  var getTokenParameters = {
+    auth_userId: testdata.REVI_Organisasjon.dagligleder.userId,
+    auth_partyId: testdata.REVI_Organisasjon.dagligleder.partyId,
+    auth_partyUuid: testdata.REVI_Organisasjon.dagligleder.partyUuid,
+    auth_ssn: testdata.REVI_Organisasjon.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Delete delegated innbygger access pacakage", function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(200);
+  
+    
+   
+    
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

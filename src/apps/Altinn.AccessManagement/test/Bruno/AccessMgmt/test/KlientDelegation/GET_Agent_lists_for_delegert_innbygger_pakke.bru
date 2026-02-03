@@ -1,0 +1,76 @@
+meta {
+  name: GET_Agent_lists_for_delegert_innbygger_pakke
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/clientdelegations/agents/accesspackages?party={{party}}&to={{to}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{to}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.REVI_Organisasjon.partyUuid);
+  bru.setVar("to", testdata.REGN_Organisasjon.REGN_Agent.userUuid);
+  
+  
+  var getTokenParameters = {
+    auth_userId: testdata.REVI_Organisasjon.dagligleder.userId,
+    auth_partyId: testdata.REVI_Organisasjon.dagligleder.partyId,
+    auth_partyUuid: testdata.REVI_Organisasjon.dagligleder.partyUuid,
+    auth_ssn: testdata.REVI_Organisasjon.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  test("GET agent lists for client privat person", function () {
+    expect(res.status).to.equal(200);
+  
+    const body = res.getBody();
+    const response = typeof body === "string" ? JSON.parse(body) : body;
+  
+    const entry = response.data[0];
+  
+    // --- Verify client ---
+    expect(entry).to.have.property("client");
+    const client = entry.client;
+  
+    expect(client.id.toLowerCase()).to.equal(
+      testdata.privatPerson.partyUuid.toLowerCase()
+    );
+  
+    expect(client.name).to.equal(testdata.privatPerson.name);
+  
+    const access = entry.access[0];
+  
+    // Role
+    expect(access).to.have.property("role");
+    expect(access.role.code).to.equal("rettighetshaver");
+  
+    const pkg = access.packages[0];
+    expect(pkg.urn).to.equal("urn:altinn:accesspackage:innbygger-samliv");
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

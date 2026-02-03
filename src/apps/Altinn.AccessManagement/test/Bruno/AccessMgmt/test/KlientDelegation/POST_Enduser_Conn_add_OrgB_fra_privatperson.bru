@@ -1,0 +1,58 @@
+meta {
+  name: POST_Enduser_Conn_add_OrgB_fra_privatperson
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{toOrg}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toOrg}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.privatPerson.partyUuid);
+  bru.setVar("toOrg", testdata.REVI_Organisasjon.partyUuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.privatPerson.userId,
+    auth_partyId: testdata.privatPerson.partyId,
+    auth_partyUuid: testdata.privatPerson.partyUuid,
+    auth_ssn: testdata.privatPerson.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+  
+}
+
+tests {
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  test("Add Org-B as rettighetshaver from privat person for klient-delegation", function() {
+    
+    const data = res.getBody();
+    expect(res.status).to.equal(200);
+    
+    expect(data).to.have.property('fromId', testdata.privatPerson.partyUuid);
+    expect(data).to.have.property('toId', testdata.REVI_Organisasjon.partyUuid);
+    
+  });
+}
