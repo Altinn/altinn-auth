@@ -20,6 +20,18 @@ public class CompactRoleDto
     public string Code { get; set; }
 
     /// <summary>
+    /// Value
+    /// </summary>
+    [JsonPropertyName("urn")]
+    public string Urn { get; set; }
+
+    /// <summary>
+    /// Value
+    /// </summary>
+    [JsonPropertyName("legacyurn ")]
+    public string LegacyUrn { get; set; }
+
+    /// <summary>
     /// Children
     /// </summary>
     [JsonPropertyName("children")]

@@ -212,7 +212,9 @@ public partial class DtoMapper
             {
                 Id = role.Id,
                 Children = null,
-                Code = role.Code
+                Code = role.Code,
+                Urn = role.Urn,
+                LegacyUrn = role.LegacyUrn
             };
         }
 
