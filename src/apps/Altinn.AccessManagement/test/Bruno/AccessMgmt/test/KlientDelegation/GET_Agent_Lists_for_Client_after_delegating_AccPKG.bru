@@ -1,7 +1,7 @@
 meta {
-  name: GET_Client_delegert_Innbygger_AccPKG
+  name: GET_Agent_Lists_for_Client_after_delegating_AccPKG
   type: http
-  seq: 18
+  seq: 10
 }
 
 get {
@@ -20,15 +20,15 @@ script:pre-request {
   const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
   const testdata2 = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
   
-  bru.setVar("from", testdata.privatPerson.partyUuid);
-  bru.setVar("party", testdata.REVI_Organisasjon.partyUuid);
+  bru.setVar("from", testdata2.org1_delegates_tilgangspakke.partyuuid);
+  bru.setVar("party", testdata2.org2_delegates_tilgangspakke.partyuuid);
   
   
   var getTokenParameters = {
-     auth_userId: testdata.REVI_Organisasjon.dagligleder.userId,
-    auth_partyId: testdata.REVI_Organisasjon.dagligleder.partyId,
-    auth_partyUuid: testdata.REVI_Organisasjon.dagligleder.partyUuid,
-    auth_ssn: testdata.REVI_Organisasjon.dagligleder.pid,
+     auth_userId: testdata2.org2_delegates_tilgangspakke.innehaver.userid,
+    auth_partyId: testdata2.org2_delegates_tilgangspakke.innehaver.partyid,
+    auth_partyUuid: testdata2.org2_delegates_tilgangspakke.innehaver.partyuuid,
+    auth_ssn: testdata2.org2_delegates_tilgangspakke.innehaver.pid,
     auth_tokenType: sharedtestdata.authTokenType.personal,
     auth_scopes: sharedtestdata.auth_scopes.portalEnduser
   }
@@ -42,7 +42,7 @@ script:pre-request {
 tests {
   const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
   
-  test("GET klient list for agent", function() {
+  test("GET Agent lists for client after client delegated access pacakages", function() {
     
     expect(res.status).to.equal(200);
   
@@ -75,7 +75,7 @@ tests {
   
     const pkg = access.packages[0];
   
-    expect(pkg.urn).to.equal("urn:altinn:accesspackage:innbygger-samliv");
+    expect(pkg.urn).to.equal("urn:altinn:accesspackage:skattegrunnlag");
   });
 }
 

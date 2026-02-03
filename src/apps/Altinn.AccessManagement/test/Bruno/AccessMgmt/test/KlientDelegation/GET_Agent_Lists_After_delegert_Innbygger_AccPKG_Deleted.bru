@@ -1,5 +1,5 @@
 meta {
-  name: GET_Client_delegert_Innbygger_AccPKG_after_deleting
+  name: GET_Agent_Lists_After_delegert_Innbygger_AccPKG_Deleted
   type: http
   seq: 21
 }
@@ -42,7 +42,7 @@ script:pre-request {
 tests {
   const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
   
-  test("GET klient list for agent after deleting delegated access pacakage", function() {
+  test("GET agent list after deleting delegated access pacakage", function() {
     
     expect(res.status).to.equal(200);
   
