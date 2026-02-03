@@ -181,25 +181,54 @@ public class ClientDelegationService(
     /// <inheritdoc/>
     public async Task<Result<List<AgentDto>>> GetDelegatedAccessPackagesFromClientsViaParty(Guid partyId, Guid fromId, CancellationToken cancellationToken = default)
     {
-        var connections = await connectionQuery.GetConnectionsToOthersAsync(
-            new()
+        var query = await db.Assignments
+            .AsNoTracking()
+            .Where(e => e.FromId == fromId)
+            .Join(
+                db.Entities,
+                a => a.FromId,
+                e => e.Id,
+                (a, e) => new { EntityFrom = a.From, Assignment = a, EntityVia = a.To })
+            .Join(
+                db.Delegations,
+                x => x.Assignment.Id,
+                d => d.FromId,
+                (x, d) => new { x.EntityFrom, x.EntityVia, x.Assignment, Delegation = d, EntityTo = d.To.To })
+            .Where(x => x.Delegation.FacilitatorId == partyId)
+            .Join(
+                db.DelegationPackages,
+                x => x.Delegation.Id,
+                dp => dp.DelegationId,
+                (x, dp) => new { x.EntityFrom, x.EntityVia, x.EntityTo, x.Assignment, x.Delegation, DelegationPackage = dp })
+            .Select(x => new
             {
-                FromIds = [fromId],
-                ViaIds = [partyId],
-                ViaRoleIds = [RoleConstants.Agent],
-                IncludeDelegation = true,
-                IncludePackages = true,
+                x.EntityFrom,
+                x.EntityVia,
+                x.EntityTo,
+                x.Assignment,
+                x.Assignment.Role,
+                x.Delegation,
+                x.DelegationPackage,
+                x.DelegationPackage.Package,
+                x.EntityFrom.Variant,
+                x.EntityFrom.Type,
+                x.EntityFrom.Type.Provider,
+                VariantType = x.EntityFrom.Variant.Type,
+            })
+            .ToListAsync(cancellationToken);
 
-                IncludeSubConnections = false,
-                IncludeKeyRole = false,
-                IncludeResource = false,
-                IncludeMainUnitConnections = false,
-                EnrichEntities = true,
-            },
-            true,
-            cancellationToken);
-
-        var result = DtoMapper.ConvertToAgentDto(connections);
+        var result = query
+            .GroupBy(r => r.EntityTo.Id)
+            .Select(e =>
+            new AgentDto()
+            {
+                Agent = DtoMapper.Convert(e.First().EntityTo),
+                Access = e.GroupBy(r => r.Role.Id).Select(r => new AgentDto.AgentRoleAccessPackages
+                {
+                    Role = DtoMapper.ConvertCompactRole(r.First().Role),
+                    Packages = r.Select(r => DtoMapper.ConvertCompactPackage(r.Package)).DistinctBy(p => p.Id).ToArray(),
+                }).ToList(),
+            }).ToList();
 
         return result;
     }
