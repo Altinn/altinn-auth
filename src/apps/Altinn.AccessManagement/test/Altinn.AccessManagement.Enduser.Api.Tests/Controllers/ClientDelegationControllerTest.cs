@@ -954,7 +954,7 @@ public class ClientDelegationControllerTest
             delegationsToAgentPayload = await getDelegationsToAgent.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             delegationToAgentResult = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(delegationsToAgentPayload);
 
-            Assert.Empty(delegationToAgentResult.Items.FirstOrDefault()?.Access.FirstOrDefault()?.Packages);
+            Assert.Empty(delegationToAgentResult.Items);
         }
     }
     #endregion

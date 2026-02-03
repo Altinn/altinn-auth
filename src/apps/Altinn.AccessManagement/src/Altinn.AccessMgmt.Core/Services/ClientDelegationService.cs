@@ -185,44 +185,33 @@ public class ClientDelegationService(
             .AsNoTracking()
             .Where(e => e.FromId == fromId)
             .Join(
-                db.Entities,
-                a => a.FromId,
-                e => e.Id,
-                (a, e) => new { EntityFrom = a.From, Assignment = a, EntityVia = a.To })
-            .Join(
                 db.Delegations,
-                x => x.Assignment.Id,
+                x => x.Id,
                 d => d.FromId,
-                (x, d) => new { x.EntityFrom, x.EntityVia, x.Assignment, Delegation = d, EntityTo = d.To.To })
+                (x, d) => new { Assignment = x, Delegation = d })
             .Where(x => x.Delegation.FacilitatorId == partyId)
             .Join(
                 db.DelegationPackages,
                 x => x.Delegation.Id,
                 dp => dp.DelegationId,
-                (x, dp) => new { x.EntityFrom, x.EntityVia, x.EntityTo, x.Assignment, x.Delegation, DelegationPackage = dp })
+                (x, dp) => new { x.Assignment, x.Delegation, DelegationPackage = dp })
             .Select(x => new
             {
-                x.EntityFrom,
-                x.EntityVia,
-                x.EntityTo,
-                x.Assignment,
-                x.Assignment.Role,
-                x.Delegation,
-                x.DelegationPackage,
+                x.Delegation.To.To,
+                x.Delegation.From.Role,
                 x.DelegationPackage.Package,
-                x.EntityFrom.Variant,
-                x.EntityFrom.Type,
-                x.EntityFrom.Type.Provider,
-                VariantType = x.EntityFrom.Variant.Type,
+
+                x.Delegation.To.To.Type.Provider,
+                x.Delegation.To.To.Variant.Type,
             })
+            .GroupBy(r => r.To.Id)
             .ToListAsync(cancellationToken);
 
         var result = query
-            .GroupBy(r => r.EntityTo.Id)
             .Select(e =>
             new AgentDto()
             {
-                Agent = DtoMapper.Convert(e.First().EntityTo),
+                Agent = DtoMapper.Convert(e.First().To),
                 Access = e.GroupBy(r => r.Role.Id).Select(r => new AgentDto.AgentRoleAccessPackages
                 {
                     Role = DtoMapper.ConvertCompactRole(r.First().Role),
@@ -236,25 +225,43 @@ public class ClientDelegationService(
     /// <inheritdoc/>
     public async Task<Result<List<ClientDto>>> GetDelegatedAccessPackagesToAgentsViaPartyAsync(Guid partyId, Guid toId, CancellationToken cancellationToken = default)
     {
-        var connections = await connectionQuery.GetConnectionsFromOthersAsync(
-            new()
+        var query = await db.Assignments
+            .AsNoTracking()
+            .Where(e => e.ToId == toId && e.RoleId == RoleConstants.Agent)
+            .Join(
+                db.Delegations,
+                x => x.Id,
+                d => d.ToId,
+                (x, d) => new { Assignment = x, Delegation = d })
+            .Where(x => x.Delegation.FacilitatorId == partyId)
+            .Join(
+                db.DelegationPackages,
+                x => x.Delegation.Id,
+                dp => dp.DelegationId,
+                (x, dp) => new { x.Assignment, x.Delegation, DelegationPackage = dp })
+            .Select(x => new
             {
-                ViaIds = [partyId],
-                RoleIds = [RoleConstants.Agent],
-                ToIds = [toId],
-                IncludeDelegation = true,
-                IncludePackages = true,
+                x.Delegation.From.From,
+                x.Delegation.From.Role,
+                x.DelegationPackage.Package,
 
-                IncludeSubConnections = false,
-                IncludeKeyRole = false,
-                IncludeResource = false,
-                IncludeMainUnitConnections = false,
-                EnrichEntities = true,
-            },
-            true,
-            cancellationToken);
+                x.Delegation.From.From.Type.Provider,
+                x.Delegation.From.From.Variant.Type,
+            })
+            .GroupBy(x => x.From.Id)
+            .ToListAsync(cancellationToken);
 
-        var result = DtoMapper.ConvertToClientDto(connections, true);
+        var result = query
+            .Select(e =>
+            new ClientDto()
+            {
+                Client = DtoMapper.Convert(e.First().From),
+                Access = e.GroupBy(r => r.Role.Id).Select(r => new ClientDto.RoleAccessPackages
+                {
+                    Role = DtoMapper.ConvertCompactRole(r.First().Role),
+                    Packages = r.Select(r => DtoMapper.ConvertCompactPackage(r.Package)).DistinctBy(p => p.Id).ToArray(),
+                }).ToList(),
+            }).ToList();
 
         return result;
     }
