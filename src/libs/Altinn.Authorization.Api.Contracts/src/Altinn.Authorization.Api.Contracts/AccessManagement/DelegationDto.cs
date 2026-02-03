@@ -34,4 +34,10 @@ public class DelegationDto
     /// </summary>
     [JsonPropertyName("toId")]
     public Guid ToId { get; set; }
+
+    /// <summary>
+    /// Indicates whether the request resulted in any state change.
+    /// </summary>
+    [JsonPropertyName("changed")]
+    public bool Changed { get; set; }
 }
