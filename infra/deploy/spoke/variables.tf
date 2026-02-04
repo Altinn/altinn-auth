@@ -74,3 +74,9 @@ variable "services" {
     host     = string
   }))
 }
+
+variable "logging" {
+  type = object({
+    min_level = map(string)
+  })
+}

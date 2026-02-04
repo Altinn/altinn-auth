@@ -41,3 +41,21 @@ module "services_configuration" {
     azurerm.hub = azurerm.hub
   }
 }
+
+module "logging_configuration" {
+  source     = "../../modules/appsettings"
+  hub_suffix = local.hub_suffix
+
+  labels = {
+    lower(var.environment) = {
+      values = {
+        for logger_name, log_level in var.logging.min_level :
+        "Logging:LogLevel:${logger_name}" => { value = log_level }
+      }
+    }
+  }
+
+  providers = {
+    azurerm.hub = azurerm.hub
+  }
+}

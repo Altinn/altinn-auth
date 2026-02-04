@@ -43,3 +43,12 @@ services = {
     host = "folkeregisteret.api.skatteetaten.no"
   }
 }
+
+logging = {
+  min_level = {
+    "Microsoft" = "Warning"
+    "System"    = "Warning"
+    "Polly"     = "Warning"
+    "Npgsql"    = "Warning"
+  }
+}

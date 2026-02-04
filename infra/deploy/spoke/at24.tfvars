@@ -42,3 +42,12 @@ services = {
     host = "folkeregisteret-api-konsument.sits.no"
   }
 }
+
+logging = {
+  min_level = {
+    "Microsoft" = "Warning"
+    "System"    = "Warning"
+    "Polly"     = "Warning"
+    "Npgsql"    = "Warning"
+  }
+}
