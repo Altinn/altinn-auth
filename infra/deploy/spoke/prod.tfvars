@@ -46,6 +46,8 @@ services = {
 
 logging = {
   min_level = {
+    "AltinnCore.Authentication" = "Warning"
+
     "Microsoft" = "Warning"
     "System"    = "Warning"
     "Polly"     = "Warning"
