@@ -19,7 +19,7 @@ namespace Altinn.AccessMgmt.Core.Models
 
         public HashSet<ActionDto.Reason> PackageDenyAccess { get; set; }
 
-        public List<string> RoleAllowAccess { get; set; }
+        public List<RoleDtoCheck> RoleAllowAccess { get; set; }
 
         public HashSet<ActionDto.Reason> RoleDenyAccess { get; set; }
 

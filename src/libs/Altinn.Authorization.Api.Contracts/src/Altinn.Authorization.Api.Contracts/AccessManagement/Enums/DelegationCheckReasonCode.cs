@@ -28,11 +28,6 @@
         MissingDelegationAccess = 5,
 
         /// <summary>
-        /// The service requires explicit authentication level and the reportee is missing this
-        /// </summary>
-        InsufficientAuthenticationLevel = 7,
-
-        /// <summary>
         ///  The receiver does not have the right based on Access List delegation
         /// </summary>
         AccessListValidationFail = 10,

@@ -91,14 +91,15 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
         /// Decompose a policyfile into a list of resource/action keys and a list of packages and roles giving acces to the actual key
         /// </summary>
         /// <param name="policy">the policy to process</param>
+        /// <param name="resourceId">the resource id the subjects must point to</param>
         /// <returns></returns>
-        public static List<ActionAccess> DecomposePolicy(XacmlPolicy policy)
+        public static List<ActionAccess> DecomposePolicy(XacmlPolicy policy, string resourceId)
         {
             Dictionary<string, List<string>> rules = new Dictionary<string, List<string>>();
 
             foreach (XacmlRule rule in policy.Rules)
             {
-                IEnumerable<string> keys = DelegationCheckHelper.CalculateActionKey(rule);
+                IEnumerable<string> keys = DelegationCheckHelper.CalculateActionKey(rule, resourceId);
                 IEnumerable<string> ruleSubjects = DelegationCheckHelper.GetFirstAccessorValuesFromPolicy(rule, XacmlConstants.MatchAttributeCategory.Subject);
                 ruleSubjects = RemoveNonUserRules(ruleSubjects);
 
@@ -155,8 +156,9 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
         /// Returns a list of resource/action keys based on a given policy rule
         /// </summary>
         /// <param name="rule">the rule to analyze</param>
+        /// <param name="resourceId">the resourceid subjects must contain</param>
         /// <returns>list of resource/action keys</returns>
-        public static IEnumerable<string> CalculateActionKey(XacmlRule rule)
+        public static IEnumerable<string> CalculateActionKey(XacmlRule rule, string resourceId)
         {
             List<string> result = [];
 
@@ -179,15 +181,21 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
                     resource.Add(new PolicyAttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, Value = resourceAppId });
                 }
 
+                // Just throw away resources not matching the resourceid we are looking for
+                if (resource.Any(r => r.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute) && r.Value.Equals(resourceId, StringComparison.OrdinalIgnoreCase)) == false)
+                {
+                    continue;
+                }
+
                 StringBuilder resourceKey = new();
 
                 resource.Sort((a, b) => string.Compare(a.Id, b.Id, StringComparison.InvariantCultureIgnoreCase));
                 foreach (var item in resource)
                 {
                     resourceKey.Append(item.Id);
-                    resourceKey.Append(":");
+                    resourceKey.Append(':');
                     resourceKey.Append(item.Value);
-                    resourceKey.Append(":");
+                    resourceKey.Append(':');
                 }
 
                 if (resourceKey.Length > 0)
@@ -206,9 +214,9 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
                 foreach (var item in action)
                 {
                     actionKey.Append(item.Id);
-                    actionKey.Append(":");
+                    actionKey.Append(':');
                     actionKey.Append(item.Value);
-                    actionKey.Append(":");
+                    actionKey.Append(':');
                 }
 
                 if (actionKey.Length > 0)
