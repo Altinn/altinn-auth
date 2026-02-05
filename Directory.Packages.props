@@ -4,7 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Altinn.Authorization.ABAC" Version="0.1.1" />
-    <PackageVersion Include="Altinn.Authorization.ModelUtils" Version="3.2.0" />
+    <PackageVersion Include="Altinn.Authorization.ModelUtils" Version="3.3.0" />
     <PackageVersion Include="Altinn.Authorization.ProblemDetails.Abstractions" Version="4.0.1" />
     <PackageVersion Include="Altinn.Authorization.ProblemDetails" Version="4.0.1" />
     <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql.Yuniql" Version="4.4.0" />
@@ -13,7 +13,7 @@
     <PackageVersion Include="Altinn.Common.AccessToken" Version="5.1.0" />
     <PackageVersion Include="Altinn.Common.AccessTokenClient" Version="3.2.0" />
     <PackageVersion Include="Altinn.Common.PEP" Version="4.2.2" />
-    <PackageVersion Include="Altinn.Platform.Storage.Interface" Version="4.2.1" />
+    <PackageVersion Include="Altinn.Platform.Storage.Interface" Version="4.3.0" />
     <PackageVersion Include="Altinn.Swashbuckle.Abstractions" Version="3.1.0" />
     <PackageVersion Include="Altinn.Urn.Swashbuckle" Version="3.0.0" />
     <PackageVersion Include="Altinn.Urn" Version="3.0.0" />
@@ -21,7 +21,7 @@
     <PackageVersion Include="Azure.Identity" Version="1.17.1" />
     <PackageVersion Include="Azure.Security.KeyVault.Certificates" Version="4.8.0" />
     <PackageVersion Include="Azure.Security.KeyVault.Secrets" Version="4.8.0" />
-    <PackageVersion Include="Azure.Storage.Blobs" Version="12.26.0" />
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.27.0" />
     <PackageVersion Include="CommunityToolkit.Diagnostics" Version="8.4.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="dotNetRdf" Version="3.4.1" />
@@ -30,18 +30,18 @@
     <PackageVersion Include="JWTCookieAuthentication" Version="4.0.4" />
     <PackageVersion Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.23.0" />
     <PackageVersion Include="Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel" Version="2.23.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.FileProviders.Embedded" Version="9.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.11" />
+    <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.FileProviders.Embedded" Version="9.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.23.0" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="9.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="9.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="9.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="9.0.11" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="9.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="9.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="9.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="9.0.12" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
     <PackageVersion Include="Moq" Version="4.20.72" />
     <PackageVersion Include="Nerdbank.Streams" Version="2.13.16" />
