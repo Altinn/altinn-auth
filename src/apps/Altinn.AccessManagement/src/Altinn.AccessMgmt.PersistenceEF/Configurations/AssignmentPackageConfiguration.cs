@@ -18,6 +18,13 @@ public class AssignmentPackageConfiguration : IEntityTypeConfiguration<Assignmen
 
         builder.PropertyWithReference(navKey: t => t.Assignment, foreignKey: t => t.AssignmentId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
         builder.PropertyWithReference(navKey: t => t.Package, foreignKey: t => t.PackageId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
+        
+        builder
+            .HasMany(b => b.DelegationPackages)
+            .WithOne(b => b.AssignmentPackage)
+            .HasForeignKey(b => b.AssignmentPackageId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(t => new { t.AssignmentId, t.PackageId }).IsUnique();
     }

@@ -16,4 +16,9 @@ public class AssignmentPackage : BaseAssignmentPackage
     /// Package
     /// </summary>
     public Package Package { get; set; }
+
+    /// <summary>
+    /// Lists of packages that are delegated further.
+    /// </summary>
+    public ICollection<DelegationPackage> DelegationPackages { get; set; } = [];
 }

@@ -1,4 +1,5 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Models.Base;
+﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Models.Base;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Models;
 
@@ -16,4 +17,9 @@ public class DelegationPackage : BaseDelegationPackage
     /// Package
     /// </summary>
     public Package Package { get; set; }
+
+    /// <summary>
+    /// Nav property for Assignmentpackage if delegation is thorugh role <see cref="RoleConstants.Rightholder"/>
+    /// </summary>
+    public AssignmentPackage? AssignmentPackage { get; set; }
 }

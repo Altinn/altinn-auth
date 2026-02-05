@@ -2020,6 +2020,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasKey("Id")
                         .HasName("pk_delegationpackage");
 
+                    b.HasIndex("AssignmentPackageId")
+                        .HasDatabaseName("ix_delegationpackage_assignmentpackageid");
+
                     b.HasIndex("DelegationId")
                         .HasDatabaseName("ix_delegationpackage_delegationid");
 
@@ -3304,6 +3307,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.DelegationPackage", b =>
                 {
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.AssignmentPackage", "AssignmentPackage")
+                        .WithMany("DelegationPackages")
+                        .HasForeignKey("AssignmentPackageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_delegationpackage_assignmentpackage_assignmentpackageid");
+
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Delegation", "Delegation")
                         .WithMany()
                         .HasForeignKey("DelegationId")
@@ -3317,6 +3326,8 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_delegationpackage_package_packageid");
+
+                    b.Navigation("AssignmentPackage");
 
                     b.Navigation("Delegation");
 
@@ -3603,6 +3614,11 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.Navigation("Resource");
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.AssignmentPackage", b =>
+                {
+                    b.Navigation("DelegationPackages");
                 });
 #pragma warning restore 612, 618
         }
