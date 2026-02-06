@@ -1,0 +1,60 @@
+meta {
+  name: GET_Enduser_Connections_PrivatPerson_removed_ToOthers
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{toPerson}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toPerson}}
+}
+
+body:json {
+   
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.privat_person_A.partyuuid);
+  bru.setVar("toPerson", testdata.privat_person_B.partyuuid);
+  
+  
+  var getTokenParameters = {
+    auth_userId: testdata.privat_person_A.userid,
+    auth_partyId: testdata.privat_person_A.partyid,
+    auth_partyUuid: testdata.privat_person_A.partyuuid,
+    auth_ssn: testdata.privat_person_A.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  test("GET Empty lists after deleting rettighetshaver from list", function() {
+  
+     const body = res.getBody();
+    const data = body.data;
+    
+    expect(res.status).to.equal(200);
+    assert.isEmpty(data, "Expected data in response body to be empty array");
+  });
+}
+
+docs {
+  Sjekker at connection til person har blitt opprettet
+}

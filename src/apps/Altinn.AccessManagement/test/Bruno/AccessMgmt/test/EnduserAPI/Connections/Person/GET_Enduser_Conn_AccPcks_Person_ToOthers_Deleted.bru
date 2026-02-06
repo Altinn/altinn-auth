@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toPerson}}&package={{package}}
   body: json
   auth: inherit
 }
@@ -13,17 +13,12 @@ get {
 params:query {
   party: {{party}}
   from: {{party}}
-  ~packageId: {{toPerson}}
-  ~package: 
-  ~to: {{toPerson}}
-  ~to: {{toPerson}}
+  to: {{toPerson}}
+  package: {{package}}
 }
 
 body:json {
-   {
-    "personidentifier": "{{toPerson}}", // fnr or username
-    "lastName": "{{toPersonLastName}}"
-  }
+   
 }
 
 script:pre-request {

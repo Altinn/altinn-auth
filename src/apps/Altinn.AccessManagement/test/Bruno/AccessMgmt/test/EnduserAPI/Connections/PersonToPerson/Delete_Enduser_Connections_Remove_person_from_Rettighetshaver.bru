@@ -1,0 +1,58 @@
+meta {
+  name: Delete_Enduser_Connections_Remove_person_from_Rettighetshaver
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{toPerson}}&package={{package}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toPerson}}
+  package: {{package}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.privat_person_A.partyuuid);
+  bru.setVar("toPerson", testdata.privat_person_B.partyuuid);
+  bru.setVar("package", testdata.package_to_delegate.innbygger_pacakage_urn);
+  
+  
+  var getTokenParameters = {
+    auth_userId: testdata.privat_person_A.userid,
+    auth_partyId: testdata.privat_person_A.partyid,
+    auth_partyUuid: testdata.privat_person_A.partyuuid,
+    auth_ssn: testdata.privat_person_A.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  test("GET delegated person in fullmakter hos andre list after delegating pacakage : FromOthers", function() {
+  
+     const data = res.getBody();
+    
+    expect(res.status).to.equal(204);
+    assert.isNotOk(data, "Expected response body to be empty");
+     
+  });
+}
+
+docs {
+  Sjekker at connection til person har blitt opprettet
+}

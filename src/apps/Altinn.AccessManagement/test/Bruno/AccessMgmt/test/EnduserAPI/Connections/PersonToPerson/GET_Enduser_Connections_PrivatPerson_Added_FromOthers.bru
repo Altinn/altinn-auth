@@ -1,0 +1,57 @@
+meta {
+  name: GET_Enduser_Connections_PrivatPerson_Added_FromOthers
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&to={{party}}&from={{toPerson}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{party}}
+  from: {{toPerson}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.privat_person_B.partyuuid);
+  bru.setVar("toPerson", testdata.privat_person_A.partyuuid);
+  
+  
+  var getTokenParameters = {
+    auth_userId: testdata.privat_person_B.userid,
+    auth_partyId: testdata.privat_person_B.partyid,
+    auth_partyUuid: testdata.privat_person_B.partyuuid,
+    auth_ssn: testdata.privat_person_B.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  test("GET added person in fullmakter hos andre : FromOthers", function() {
+  
+     const data = res.getBody();
+  
+     const conn = data.data.find(item => item.party.id === testdata.privat_person_A.partyuuid.toLowerCase());
+     expect(conn).to.exist;
+     const role = conn.roles.find(item => item.code === "rettighetshaver");
+     expect(role).to.exist;
+  });
+}
+
+docs {
+  Sjekker at connection til person har blitt opprettet
+}

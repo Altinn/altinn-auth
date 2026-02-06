@@ -18,11 +18,17 @@ tests {
   test("GET_roles_with_id", function() {
     const data = res.getBody();  
     expect(res.status).to.equal(200);
-    expect(data).to.have.property('code', 'deltaker-delt-ansvar');
-    expect(data).to.have.property('urn', 'urn:altinn:external-role:ccr:deltaker-delt-ansvar');
-    expect(data).to.have.property('legacyRoleCode', 'dtpr');
-    expect(data).to.have.property('legacyUrn', 'urn:altinn:rolecode:dtpr');
-    expect(data.provider).to.have.property('name', 'Enhetsregisteret');
+    const role = data.find(r => r.code === "deltaker-delt-ansvar");
+    expect(role, "Expected role deltaker-delt-ansvar").to.exist;
+  
+    expect(role.name).to.equal("Deltaker delt ansvar");
+    expect(role.isKeyRole).to.equal(true);
+    expect(role.urn).to.equal("urn:altinn:external-role:ccr:deltaker-delt-ansvar");
+    expect(role.legacyRoleCode).to.equal("dtpr");
+  
+    // Provider check (light but meaningful)
+    expect(role.provider.code).to.equal("sys-ccr");
+    expect(role.provider.name).to.equal("Enhetsregisteret");
   });
   
 }

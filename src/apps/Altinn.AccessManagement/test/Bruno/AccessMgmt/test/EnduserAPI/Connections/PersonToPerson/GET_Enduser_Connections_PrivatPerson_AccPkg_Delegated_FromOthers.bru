@@ -1,0 +1,65 @@
+meta {
+  name: GET_Enduser_Connections_PrivatPerson_AccPkg_Delegated_FromOthers
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&to={{party}}&from={{toPerson}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{party}}
+  from: {{toPerson}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.privat_person_B.partyuuid);
+  bru.setVar("toPerson", testdata.privat_person_A.partyuuid);
+  
+  
+  var getTokenParameters = {
+    auth_userId: testdata.privat_person_B.userid,
+    auth_partyId: testdata.privat_person_B.partyid,
+    auth_partyUuid: testdata.privat_person_B.partyuuid,
+    auth_ssn: testdata.privat_person_B.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  test("GET delegated person in fullmakter hos andre list after delegating pacakage : FromOthers", function() {
+  
+     const data = typeof res.getBody() === "string" ? JSON.parse(res.getBody()
+      ): res.getBody();
+  
+    const item = data.data[0];
+    const perm = item.permissions[0];
+  
+    expect(perm.from.id).to.equal(testdata.privat_person_A.partyuuid);
+    expect(perm.to.id).to.equal(testdata.privat_person_B.partyuuid);
+    expect(perm.role.code).to.equal("rettighetshaver");
+  
+    expect(item.package.urn).to.equal(
+      "urn:altinn:accesspackage:innbygger-straffesak"
+    );
+  });
+}
+
+docs {
+  Sjekker at connection til person har blitt opprettet
+}

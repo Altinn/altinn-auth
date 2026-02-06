@@ -5,16 +5,15 @@ meta {
 }
 
 delete {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{fromOrg}}&to={{party}}&packageId=&package={{package}}
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&to={{party}}&from={{FromOrg}}&package={{package}}
   body: json
   auth: inherit
 }
 
 params:query {
   party: {{party}}
-  from: {{fromOrg}}
   to: {{party}}
-  packageId: 
+  from: {{FromOrg}}
   package: {{package}}
 }
 

@@ -1,0 +1,75 @@
+meta {
+  name: POST_Enduser_Conn_AccPcks_Person_to_Person
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toPerson}}&package={{package}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toPerson}}
+  package: {{package}}
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+   {
+    "personidentifier": "{{toPersonpid}}", // fnr or username
+    "lastName": "{{toPersonLastName}}"
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.privat_person_A.partyuuid);
+  bru.setVar("toPerson", testdata.privat_person_B.partyuuid);
+  bru.setVar("toPersonLastName", testdata.privat_person_B.lastname);
+  bru.setVar("toPersonpid", testdata.privat_person_B.pid);
+  bru.setVar("package", testdata.package_to_delegate.innbygger_pacakage_urn);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.privat_person_A.userid,
+    auth_partyId: testdata.privat_person_A.partyid,
+    auth_partyUuid: testdata.privat_person_A.partyuuid,
+    auth_ssn: testdata.privat_person_A.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+script:post-response {
+  const data = res.getBody();
+  const packageId = data.packageId;
+  bru.setEnvVar("packageId", packageId);
+}
+
+tests {
+  
+  test("Delegate innbygger access pacakage to privat person", function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(200);
+    assert.isOk(data, "Expected response body to return created assignment package");
+    
+  });
+}
+
+docs {
+  Gir tilgangspakke til person
+}

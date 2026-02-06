@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toPerson}}
   body: json
   auth: inherit
 }
@@ -13,17 +13,11 @@ get {
 params:query {
   party: {{party}}
   from: {{party}}
-  ~packageId: {{toPerson}}
-  ~package: 
-  ~to: {{toPerson}}
-  ~to: {{toPerson}}
+  to: {{toPerson}}
 }
 
 body:json {
-   {
-    "personidentifier": "{{toPerson}}", // fnr or username
-    "lastName": "{{toPersonLastName}}"
-  }
+   
 }
 
 script:pre-request {
@@ -31,8 +25,9 @@ script:pre-request {
   const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("party", testdata.vassen_riktig_tiger_as.partyuuid);
-  bru.setVar("toPerson", testdata.vassen_riktig_tiger_as.person1.pid);
-  bru.setVar("toPersonLastName", testdata.vassen_riktig_tiger_as.person1.lastname);
+  bru.setVar("package", testdata.package_to_delegate.package_urn);
+  bru.setVar("toPerson", testdata.vassen_riktig_tiger_as.person1.partyuuid);
+  
   
   var getTokenParameters = {
     auth_userId: testdata.vassen_riktig_tiger_as.dagl.userid,
