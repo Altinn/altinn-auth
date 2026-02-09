@@ -257,7 +257,7 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
             IncludeDelegation = flags[0],
             IncludeKeyRole = flags[1],
             IncludePackages = flags[2],
-            IncludeResource = flags[3],
+            IncludeResources = flags[3],
             EnrichEntities = flags[4],
             EnrichPackageResources = flags[5],
             ExcludeDeleted = flags[6],

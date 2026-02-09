@@ -1,0 +1,59 @@
+meta {
+  name: GET_Enduser_Conn_Resources_ToOthers_Dagl_GetResource
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources?party={{party}}&from={{party}}&resource={{resource}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  resource: {{resource}}
+  ~to: {{party}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/resource-delegationcheck/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "GET_Enduser_Conn_Resources_ToOthers_Dagl_GetResource");
+  
+  bru.setVar("party", testdata.VOKSENDE_FRYKTLØS_TIGER.partyUuid);
+  bru.setVar("resource", testdata.resources.packageResourceId);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.VOKSENDE_FRYKTLØS_TIGER.dagligleder.userId,
+    auth_partyId: testdata.VOKSENDE_FRYKTLØS_TIGER.dagligleder.partyId,
+    auth_partyUuid: testdata.VOKSENDE_FRYKTLØS_TIGER.dagligleder.partyUuid,
+    auth_ssn: testdata.VOKSENDE_FRYKTLØS_TIGER.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  
+  test(bru.getVar("requestName"), function() {
+    const body = res.getBody();
+    const data = body.data;
+    
+    expect(res.status).to.equal(200);
+    
+    // ToDo: Actual test asserts  
+    
+  });
+}

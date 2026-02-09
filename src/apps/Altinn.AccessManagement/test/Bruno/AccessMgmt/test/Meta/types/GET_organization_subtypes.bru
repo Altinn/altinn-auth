@@ -1,0 +1,19 @@
+meta {
+  name: GET_organization_subtypes
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/types/organization/subtypes
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("GET_roles", function() {
+    const data = res.getBody();  
+    expect(res.status).to.equal(200);
+  });
+  
+}

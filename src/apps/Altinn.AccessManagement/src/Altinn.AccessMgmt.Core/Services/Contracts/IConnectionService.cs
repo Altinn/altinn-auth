@@ -70,7 +70,7 @@ public interface IConnectionService
     /// Get connection resources
     /// </summary>
     /// <returns></returns>
-    Task<Result<IEnumerable<ResourcePermissionDto>>> GetResources(Guid party, Guid? fromId, Guid? toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default);
+    Task<Result<IEnumerable<ResourcePermissionDto>>> GetResources(Guid party, Guid? fromId, Guid? toId, Guid? resourceId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a resource to an assignment (by resource ID) based on the role between two entities.

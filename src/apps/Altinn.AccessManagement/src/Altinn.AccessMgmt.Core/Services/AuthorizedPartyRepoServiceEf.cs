@@ -112,7 +112,7 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
             IncludeMainUnitConnections = true,
             IncludeDelegation = true,
             IncludePackages = filters?.IncludeAccessPackages == true || filters?.PackageFilter?.Keys?.Count > 0,
-            IncludeResource = false,
+            IncludeResources = false,
             EnrichPackageResources = false,
             ExcludeDeleted = false
         },
@@ -139,7 +139,7 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
             IncludeMainUnitConnections = true,
             IncludeDelegation = true,
             IncludePackages = filters?.IncludeAccessPackages ?? true,
-            IncludeResource = false,
+            IncludeResources = false,
             EnrichPackageResources = false,
             ExcludeDeleted = false
         },

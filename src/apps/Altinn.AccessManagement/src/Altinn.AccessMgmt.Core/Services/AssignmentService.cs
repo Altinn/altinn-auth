@@ -670,7 +670,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             FromIds = [fromId],
             ToIds = [toId],
             ResourceIds = [resourceId],
-            IncludeResource = true,
+            IncludeResources = true,
         });
 
         return result.Any();

@@ -155,7 +155,7 @@ public class ConnectionQuery(AppDbContext db)
 
             try
             {
-                if (filter.IncludeResource)
+                if (filter.IncludeResources)
                 {
                     var res = await LoadResourcesByKeyAsync(baseQuery, filter, ct);
                     result = Attach(result, res, r => r.Id, (dto, list) => dto.Resources = list);
@@ -1158,25 +1158,7 @@ public class ConnectionQuery(AppDbContext db)
             .Join(db.AssignmentResources, c => c.AssignmentId, ar => ar.AssignmentId, (c, ar) => new { c, ar })
             .WhereIf(resourceSet is not null, x => resourceSet!.Contains(x.ar.ResourceId));
 
-        // Role → Resource
-        var roleResources = allKeys
-            .Join(db.RoleResources, c => c.RoleId, rr => rr.RoleId, (c, rr) => new { c, rr })
-            .WhereIf(resourceSet is not null, x => resourceSet!.Contains(x.rr.ResourceId));
-
-        // Delegation → Resource
-        var delegationResources = allKeys
-            .Join(db.DelegationResources, c => c.DelegationId, dr => dr.DelegationId, (c, dr) => new { c, dr })
-            .WhereIf(resourceSet is not null, x => resourceSet!.Contains(x.dr.ResourceId));
-
-        var flat = filter.OnlyUniqueResults
-           ? assignmentResources
-            .Select(x => new { x.c, x.ar.ResourceId })
-            .Union(roleResources.Select(x => new { x.c, x.rr.ResourceId }))
-            .Union(delegationResources.Select(x => new { x.c, x.dr.ResourceId }))
-           : assignmentResources
-            .Select(x => new { x.c, x.ar.ResourceId })
-            .Concat(roleResources.Select(x => new { x.c, x.rr.ResourceId }))
-            .Concat(delegationResources.Select(x => new { x.c, x.dr.ResourceId }));
+        var flat = assignmentResources.Select(x => new { x.c, x.ar.ResourceId });
 
         var rows = await flat
             .Join(db.Resources, x => x.ResourceId, r => r.Id, (x, r) => new
@@ -1188,7 +1170,6 @@ public class ConnectionQuery(AppDbContext db)
             .ToListAsync(ct);
 
         var index = new ConnectionIndex<ConnectionQueryResource>();
-
         foreach (var g in rows.GroupBy(x => x.Key))
         {
             var mapped = g.Select(z => new ConnectionQueryResource

@@ -78,7 +78,7 @@ public partial class ConnectionService(
                 IncludeMainUnitConnections = true,
                 IncludeDelegation = true,
                 IncludePackages = true,
-                IncludeResource = false,
+                IncludeResources = false,
                 EnrichPackageResources = false,
                 ExcludeDeleted = false,
                 OnlyUniqueResults = false
@@ -192,7 +192,7 @@ public partial class ConnectionService(
 
     #region Resources
 
-    public async Task<Result<IEnumerable<ResourcePermissionDto>>> GetResources(Guid party, Guid? fromId, Guid? toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
+    public async Task<Result<IEnumerable<ResourcePermissionDto>>> GetResources(Guid party, Guid? fromId, Guid? toId, Guid? resourceId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
     {
         var options = new ConnectionOptions(configureConnections);
         var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
@@ -207,19 +207,29 @@ public partial class ConnectionService(
             return problem;
         }
 
-        var resources = await connectionQuery.GetConnectionsFromOthersAsync(
+        var direction = party == fromId
+            ? ConnectionQueryDirection.ToOthers
+            : ConnectionQueryDirection.FromOthers;
+
+        var resources = await connectionQuery.GetConnectionsAsync(
             new ConnectionQueryFilter()
             {
-                FromIds = [from.Id],
-                ToIds = [to.Id],
-                EnrichPackageResources = false,
-                IncludeDelegation = false,
+                RoleIds = [RoleConstants.Rightholder.Id],
+                ResourceIds = resourceId.HasValue ? [resourceId.Value] : null,
+                FromIds = from != null ? [from.Id] : null,
+                ToIds = to != null ? [to.Id] : null,
+                IncludeResources = true,
                 IncludeKeyRole = true,
                 IncludeMainUnitConnections = true,
-                IncludePackages = false,
-                IncludeResource = true,
                 IncludeSubConnections = true,
-            });
+                IncludePackages = false,
+                EnrichPackageResources = false,
+                IncludeDelegation = false,
+            },
+            direction,
+            true,
+            cancellationToken
+        );
 
         return DtoMapper.ConvertResources(resources);
     }
@@ -408,7 +418,7 @@ public partial class ConnectionService(
             IncludeMainUnitConnections = true,
             IncludeDelegation = true,
             IncludePackages = true,
-            IncludeResource = false,
+            IncludeResources = false,
             EnrichPackageResources = false,
             ExcludeDeleted = false,
             OnlyUniqueResults = false
@@ -796,7 +806,7 @@ public partial class ConnectionService(
             IncludeMainUnitConnections = true,
             IncludeDelegation = false,
             IncludePackages = false,
-            IncludeResource = false,
+            IncludeResources = false,
             EnrichPackageResources = false,
             ExcludeDeleted = false
         };

@@ -61,7 +61,7 @@ public sealed class ConnectionQueryFilter
     /// <summary>
     /// Gets or sets a value indicating whether to include resources.
     /// </summary>
-    public bool IncludeResource { get; init; } = false;
+    public bool IncludeResources { get; init; } = false;
 
     /// <summary>
     /// Gets or sets a value indicating whether to include resources connected to packages.
