@@ -1,4 +1,4 @@
-module.exports = 
+﻿module.exports = 
 {
     "scopes": {
         "read": "altinn:instances:read",
@@ -31,5 +31,5 @@ module.exports =
             "orgno": "991825827"
         }
     },
-    "expectedDaglAccessPackageCount": 125
+    "expectedDaglAccessPackageCount": 126
 };
