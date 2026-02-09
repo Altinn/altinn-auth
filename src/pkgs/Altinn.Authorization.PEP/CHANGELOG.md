@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.2.3](https://github.com/Altinn/altinn-authorization-tmp/compare/Altinn.Authorization.PEP-v4.2.2...Altinn.Authorization.PEP-v4.2.3) (2026-02-09)
+
+
+### Bug Fixes
+
+* improve cancellation handling ([#1754](https://github.com/Altinn/altinn-authorization-tmp/issues/1754)) ([1541df0](https://github.com/Altinn/altinn-authorization-tmp/commit/1541df02575c1b50111886bc26a2916a3f5d7fb5))
+
 ## [4.2.2](https://github.com/Altinn/altinn-authorization-tmp/compare/Altinn.Authorization.PEP-v4.2.1...Altinn.Authorization.PEP-v4.2.2) (2025-11-04)
 
 
