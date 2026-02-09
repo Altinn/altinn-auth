@@ -4552,6 +4552,41 @@ public static class PackageConstants
         ),
     };
 
+    /// <summary>
+    /// Represents the 'MVA-kompensasjon revisorattesterer' access package.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 8402518e-fc2d-4f16-8b67-299b98910ab3
+    /// - <c>URN:</c> urn:altinn:accesspackage:mva-kompensasjon-revisorattesterer
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Description:</c> Denne fullmakten gir statsautoriserte revisorer tilgang til å attestere "Kompensasjonsmelding for merverdiavgift". Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.
+
+    /// </remarks>
+    public static ConstantDefinition<Package> VATCompensationAuditorCertifies { get; } = new ConstantDefinition<Package>("8402518e-fc2d-4f16-8b67-299b98910ab3")
+    {
+        Entity = new()
+        {
+            Name = "MVA-kompensasjon revisorattesterer",
+            Description = "Denne fullmakten gir statsautoriserte revisorer tilgang til å attestere \"Kompensasjonsmelding for merverdiavgift\". Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.",
+            Urn = "urn:altinn:accesspackage:mva-kompensasjon-revisorattesterer",
+            Code = "mva-kompensasjon-revisorattesterer",
+            IsDelegable = true,
+            IsAvailableForServiceOwners = true,
+            IsAssignable = true,
+            EntityTypeId = EntityTypeConstants.Organization,
+            ProviderId = ProviderConstants.Altinn3,
+            AreaId = AreaConstants.TaxFeesAccountingAndCustoms,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "VAT compensation auditor certifies"),
+            KeyValuePair.Create("Description", "This authorization gives state-authorised auditors access to certify the \"VAT compensation notice\". In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "MVA-kompensasjon revisorattesterer"),
+            KeyValuePair.Create("Description", "Denne fullmakta gir statsautoriserte revisorar tilgang til å attestera \"Kompensasjonsmelding for meirverdiavgift\". Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
+        ),
+    };
+
     #endregion
 
     #region Transport og lagring
@@ -5980,6 +6015,40 @@ public static class PackageConstants
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Støtte og tilskot"),
             KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester og korrespondanse knytt til ulike støtte- og tilskotsordningar. Ved innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmaktene gir.")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Innkreving' access package.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> ede11283-7246-4e51-9600-5408bcd73e16
+    /// - <c>URN:</c> urn:altinn:accesspackage:innbygger-innkreving
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Description:</c> Denne tilgangspakken gir fullmakter til tjenester og korrespondanse knyttet til innkreving for privatpersoner. Tilgangspakken er forbeholdt Skatteetaten. Ved innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmaktene gir.
+    /// </remarks>
+    public static ConstantDefinition<Package> InnbyggerInnkreving { get; } = new ConstantDefinition<Package>("ede11283-7246-4e51-9600-5408bcd73e16")
+    {
+        Entity = new()
+        {
+            Name = "Innkreving",
+            Description = "Denne tilgangspakken gir fullmakter til tjenester og korrespondanse knyttet til innkreving for privatpersoner. Tilgangspakken er forbeholdt Skatteetaten. Ved innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmaktene gir.",
+            Urn = "urn:altinn:accesspackage:innbygger-innkreving",
+            Code = "innbygger-innkreving",
+            IsDelegable = true,
+            IsAvailableForServiceOwners = true,
+            IsAssignable = true,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.Altinn3,
+            AreaId = AreaConstants.TaxLevyBankAndInsurance,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Collection"),
+            KeyValuePair.Create("Description", "This access package gives authorizations for services and correspondence related to debt collection for private individuals. The access package is reserved for the Swedish Tax Agency. When new digital services are introduced, there may be changes in the access that the authorizations provide.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Innkrevjing"),
+            KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester og korrespondanse knytt til innkrevjing for privatpersonar. Tilgangspakken er reservert for Skatteetaten. Ved innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmaktene gir.")
         ),
     };
 
