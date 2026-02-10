@@ -80,6 +80,18 @@ namespace Altinn.ResourceRegistry.Core.Helpers
                 isValid = false;
             }
 
+            if (IsInvalidAppResourceReferences(serviceResource))
+            {
+                AddValidationMessage(validationMessages, "ResourceReferences", "Invalid app Resource. App resources needs to have a reference with ReferenceType ApplicationId");
+                isValid = false;
+            }
+
+            if (IsInvalidAppIdentifier(serviceResource))
+            {
+                AddValidationMessage(validationMessages, "Identifier", "Invalid identifier for app resource. App resources needs to have an identifier starting with app_<org>");
+                isValid = false;
+            }
+
             if (!ResourceIdentifierRegex().IsMatch(serviceResource.Identifier))
             {
                 AddValidationMessage(validationMessages, "Identifier", "Invalid id. Only a-z and 0-9 is allowed together with _ and -.  Minimum 4 characters");
@@ -171,6 +183,32 @@ namespace Altinn.ResourceRegistry.Core.Helpers
                     || !serviceResource.ResourceReferences.Exists(rf => rf.ReferenceType.HasValue && rf.ReferenceType.Equals(ReferenceType.ApplicationId))))
                 {
                     // Uses app prefix without it beeing a app resource
+                    return true;
+                }
+
+                return false;
+            }
+
+            static bool IsInvalidAppResourceReferences(ServiceResource serviceResource)
+            {
+                if (serviceResource.ResourceType == ResourceType.AltinnApp
+                    && (serviceResource.ResourceReferences == null
+                    || !serviceResource.ResourceReferences.Any()
+                    || !serviceResource.ResourceReferences.Exists(rf => rf.ReferenceType.HasValue && rf.ReferenceType.Equals(ReferenceType.ApplicationId))))
+                {
+                    // Uses app ResourceType without having correct ResourceReferences for app resource
+                    return true;
+                }
+
+                return false;
+            }
+
+            static bool IsInvalidAppIdentifier(ServiceResource serviceResource)
+            {
+                if (serviceResource.ResourceType == ResourceType.AltinnApp
+                    && !serviceResource.Identifier.StartsWith($"{ResourceConstants.APPLICATION_RESOURCE_PREFIX}_{serviceResource.HasCompetentAuthority.Orgcode}", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Uses app ResourceType without having correct identifier prefix for app resource
                     return true;
                 }
 
