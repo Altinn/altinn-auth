@@ -34,6 +34,11 @@ public sealed class ConnectionQueryFilter
     public IReadOnlyCollection<Guid> RoleIds { get; init; }
 
     /// <summary>
+    /// Gets the collection of role identifiers.
+    /// </summary>
+    public IReadOnlyCollection<Guid> ExcludeRoleIds { get; init; }
+
+    /// <summary>
     /// Gets the collection of package identifiers.
     /// </summary>
     public IReadOnlyCollection<Guid> PackageIds { get; init; }

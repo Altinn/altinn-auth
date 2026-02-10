@@ -214,6 +214,7 @@ public class ConnectionQuery(AppDbContext db)
         var toId = filter.ToIds.First();
         var fromSet = filter.FromIds?.Count > 0 ? new HashSet<Guid>(filter.FromIds) : null;
         var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
+        var roleSetExclude = filter.ExcludeRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ExcludeRoleIds) : null;
         var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
         var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
 
@@ -400,11 +401,13 @@ public class ConnectionQuery(AppDbContext db)
                 .ViaIdContains(viaSet)
                 .ViaRoleIdContains(viaRoleSet)
                 .RoleIdContains(roleSet)
+                .RoleIdExcludes(roleSetExclude)
             :
                 query
                 .ViaIdContains(viaSet)
                 .ViaRoleIdContains(viaRoleSet)
-                .RoleIdContains(roleSet);
+                .RoleIdContains(roleSet)
+                .RoleIdExcludes(roleSetExclude);
     }
 
     private IQueryable<ConnectionQueryBaseRecord> BuildBaseQueryFromOthers(AppDbContext db, ConnectionQueryFilter filter)
@@ -433,6 +436,7 @@ public class ConnectionQuery(AppDbContext db)
         var toSet = new HashSet<Guid>(filter.ToIds);
         var fromSet = filter.FromIds?.Count > 0 ? new HashSet<Guid>(filter.FromIds) : null;
         var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
+        var roleSetExclude = filter.ExcludeRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ExcludeRoleIds) : null; 
         var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
         var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
 
@@ -637,6 +641,7 @@ public class ConnectionQuery(AppDbContext db)
             .FromIdContains(fromSet)
             .ViaIdContains(viaSet)
             .ViaRoleIdContains(viaRoleSet)
+            .RoleIdExcludes(roleSetExclude)
             .RoleIdContains(roleSet);
     }
 
@@ -666,6 +671,7 @@ public class ConnectionQuery(AppDbContext db)
         var fromId = filter.FromIds.First();
         var toSet = filter.ToIds?.Count > 0 ? new HashSet<Guid>(filter.ToIds) : null;
         var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
+        var roleSetExclude = filter.ExcludeRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ExcludeRoleIds) : null;
         var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
         var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
 
@@ -793,7 +799,8 @@ public class ConnectionQuery(AppDbContext db)
             .ToIdContains(toSet)
             .ViaIdContains(viaSet)
             .ViaRoleIdContains(viaRoleSet)
-            .RoleIdContains(roleSet);
+            .RoleIdContains(roleSet)
+            .RoleIdExcludes(roleSetExclude);
     }
 
     private async Task<List<ConnectionQueryExtendedRecord>> EnrichEntities(List<ConnectionQueryExtendedRecord> allKeys, bool excludeDeleted, ConnectionQueryDirection direction, ConnectionQueryFilter filter, bool doChildNesting, bool applyFromFilter, CancellationToken ct)
@@ -1363,6 +1370,22 @@ internal static class ConnectionQueryExtensions
         }
 
         return query.Where(t => t.ViaId.HasValue && ids.Contains(t.ViaId.Value));
+    }
+
+    internal static IQueryable<ConnectionQueryBaseRecord> RoleIdExcludes(this IQueryable<ConnectionQueryBaseRecord> query, HashSet<Guid> ids)
+    {
+        if (ids is null || ids.Count == 0)
+        {
+            return query;
+        }
+
+        if (ids.Count == 1)
+        {
+            var id = ids.First();
+            return query.Where(t => t.RoleId != id);
+        }
+
+        return query.Where(t => !ids.Contains(t.RoleId));
     }
 
     internal static IQueryable<ConnectionQueryBaseRecord> RoleIdContains(this IQueryable<ConnectionQueryBaseRecord> query, HashSet<Guid> ids)
