@@ -5,12 +5,16 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?partyFilter={{partySubUnitFilter}}
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true&partyFilter={{partySubUnitFilter}}
   body: json
   auth: inherit
 }
 
 params:query {
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
   partyFilter: {{partySubUnitFilter}}
 }
 
