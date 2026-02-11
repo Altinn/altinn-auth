@@ -32,6 +32,7 @@ public partial class DtoMapper : IDtoMapper
                 ResourceId = instance.ResourceId,
                 InstanceId = instance.InstanceId
             }).ToList(),
+            Subunits = ConvertToAuthorizedPartiesDto(authorizedParty.Subunits).ToList()
         };
     }
 

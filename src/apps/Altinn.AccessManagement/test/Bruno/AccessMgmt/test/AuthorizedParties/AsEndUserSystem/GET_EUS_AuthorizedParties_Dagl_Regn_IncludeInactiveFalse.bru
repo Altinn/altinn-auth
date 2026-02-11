@@ -5,12 +5,13 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeInactiveParties=false
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true&includeInactiveParties=false
   body: json
   auth: inherit
 }
 
 params:query {
+  includeAccessPackages: true
   includeInactiveParties: false
 }
 

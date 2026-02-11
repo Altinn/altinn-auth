@@ -5,12 +5,13 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?anyOfResourceIds=altinn_access_management&anyOfResourceIds=authz_bruno_gar_resource1&anyOfResourceIds=app_ttd_authz-bruno-testapp1
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true&anyOfResourceIds=altinn_access_management&anyOfResourceIds=authz_bruno_gar_resource1&anyOfResourceIds=app_ttd_authz-bruno-testapp1
   body: json
   auth: inherit
 }
 
 params:query {
+  includeAccessPackages: true
   anyOfResourceIds: altinn_access_management
   anyOfResourceIds: authz_bruno_gar_resource1
   anyOfResourceIds: app_ttd_authz-bruno-testapp1
@@ -45,6 +46,7 @@ script:pre-request {
 
 tests {
   const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   const body = res.getBody().data;
   const requestName = bru.getVar("requestName");
   
