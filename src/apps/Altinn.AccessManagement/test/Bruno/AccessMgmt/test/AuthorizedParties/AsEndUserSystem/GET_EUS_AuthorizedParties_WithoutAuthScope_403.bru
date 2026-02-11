@@ -1,0 +1,48 @@
+meta {
+  name: GET_EUS_AuthorizedParties_WithoutAuthScope_403
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "GET_EUS_AuthorizedParties_RightholderWithoutPackages");
+  
+  var getTokenParameters = {
+    auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.employee_rightholderWithoutPackages.userId,
+    auth_partyId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.employee_rightholderWithoutPackages.partyId,
+    auth_partyUuid: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.employee_rightholderWithoutPackages.partyUuid,
+    auth_ssn: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.employee_rightholderWithoutPackages.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: ""
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const body = res.getBody().data;
+  const requestName = bru.getVar("requestName");
+  
+  test(requestName + "|HttpStatus.Forbidden", function() {
+    expect(res.status).to.equal(403);
+  });
+  
+}

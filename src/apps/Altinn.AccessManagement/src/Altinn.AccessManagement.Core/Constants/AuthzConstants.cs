@@ -76,6 +76,11 @@
         public const string POLICY_RESOURCEOWNER_AUTHORIZEDPARTIES = "ResourceOwnerAuthorizedParty";
 
         /// <summary>
+        /// Policy tag for scope authorization on the enduser API for getting the list of Authorized Parties for the authenticated user.
+        /// </summary>
+        public const string POLICY_ENDUSER_AUTHORIZEDPARTIES = "EnduserAuthorizedParty";
+
+        /// <summary>
         /// Policy tag for scope authorization on the instance delegation API for Apps
         /// </summary>
         public const string POLICY_APPS_INSTANCEDELEGATION = "AppsInstanceDelegation";
@@ -116,12 +121,12 @@
         public const string SCOPE_ENDUSER_CLIENTDELEGATION_MYCLIENTS_WRITE = "altinn:clientdelegations/myclients.write";
 
         /// <summary>
-        /// ClientDelegation.Read enduser scope giving access to read operations on client delegations
+        /// Client-Administration Read enduser scope giving access to read operations on behalf of Client-Administrators
         /// </summary>
         public const string SCOPE_ENDUSER_CLIENTDELEGATION_READ = "altinn:clientdelegations.read";
 
         /// <summary>
-        /// ClientDelegation.Write enduser scope giving access to write operations on client delegations
+        /// Client-Administration Write enduser scope giving access to write operations on behalf of Client-Administrators
         /// </summary>
         public const string SCOPE_ENDUSER_CLIENTDELEGATION_WRITE = "altinn:clientdelegations.write";
 

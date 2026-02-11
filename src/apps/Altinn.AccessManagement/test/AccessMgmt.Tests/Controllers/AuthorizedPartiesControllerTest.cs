@@ -24,16 +24,16 @@ namespace Altinn.AccessManagement.Tests.Controllers;
 /// Test class for <see cref="AuthorizedPartiesController"></see>
 /// </summary>
 [Collection("AuthorizedPartiesController Tests")]
-public class AuthorizedPartiesControllerTest : IClassFixture<CustomWebApplicationFactory<AuthorizedPartiesController>>
+public class AuthorizedPartiesControllerTest : IClassFixture<CustomWebApplicationFactory<InternalAuthorizedPartiesController>>
 {
-    private readonly CustomWebApplicationFactory<AuthorizedPartiesController> _factory;
+    private readonly CustomWebApplicationFactory<InternalAuthorizedPartiesController> _factory;
     private readonly JsonSerializerOptions options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
     /// <summary>
     /// Constructor setting up factory, test client and dependencies
     /// </summary>
     /// <param name="factory">CustomWebApplicationFactory</param>
-    public AuthorizedPartiesControllerTest(CustomWebApplicationFactory<AuthorizedPartiesController> factory)
+    public AuthorizedPartiesControllerTest(CustomWebApplicationFactory<InternalAuthorizedPartiesController> factory)
     {
         _factory = factory;
     }
