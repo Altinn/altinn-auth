@@ -45,7 +45,7 @@ public class InternalConnectionsController(IConnectionService connectionService)
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetConnections([FromQuery] ConnectionInput connection, [FromQuery, FromHeader] PagingInput paging, CancellationToken cancellationToken = default)
     {
-        var result = await connectionService.Get(connection.Party, connection.Party, connection.To, true, ConfigureConnections, cancellationToken: cancellationToken);
+        var result = await connectionService.Get(connection.Party, connection.Party, connection.To, configureConnections: ConfigureConnections, cancellationToken: cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();

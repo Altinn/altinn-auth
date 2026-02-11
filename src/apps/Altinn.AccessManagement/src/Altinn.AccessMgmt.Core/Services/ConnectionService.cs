@@ -47,7 +47,7 @@ public partial class ConnectionService(
     IRoleService roleService,
     ITranslationService translationService) : IConnectionService
 {
-    public async Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, bool includeClientDelegations = false, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
+    public async Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, bool includeClientDelegations = true, bool includeAgentConnections = true, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
     {
         var options = new ConnectionOptions(configureConnections);
         var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
@@ -80,6 +80,7 @@ public partial class ConnectionService(
                 IncludeResources = false,
                 EnrichPackageResources = false,
                 ExcludeDeleted = false,
+                ExcludeRoleIds = includeAgentConnections ? null : [RoleConstants.Agent.Id],
                 OnlyUniqueResults = false
             },
             direction,
@@ -249,7 +250,7 @@ public partial class ConnectionService(
             return problem;
         }
 
-        var connection = await Get(fromId, fromId, toId, true, configureConnection, cancellationToken: cancellationToken);
+        var connection = await Get(fromId, fromId, toId, configureConnections: configureConnection, cancellationToken: cancellationToken);
         if (!connection.IsSuccess || connection.Value.Count() == 0)
         {
             return Problems.MissingConnection;
@@ -512,7 +513,7 @@ public partial class ConnectionService(
             return problem;
         }
 
-        var connection = await Get(fromId, fromId, toId, true, configureConnection, cancellationToken: cancellationToken);
+        var connection = await Get(fromId, fromId, toId, configureConnections: configureConnection, cancellationToken: cancellationToken);
         if (!connection.IsSuccess || connection.Value.Count() == 0)
         {
             return Problems.MissingConnection;

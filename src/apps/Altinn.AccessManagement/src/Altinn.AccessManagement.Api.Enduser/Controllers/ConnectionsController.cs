@@ -57,7 +57,8 @@ public class ConnectionsController(
     public async Task<IActionResult> GetConnections(
         [FromQuery] ConnectionInput connection,
         [FromQuery, FromHeader] PagingInput paging,
-        [FromQuery] bool includeClientDelegations = false,
+        [FromQuery] bool includeClientDelegations = true,
+        [FromQuery] bool includeAgentConnections = true,
         CancellationToken cancellationToken = default)
     {
         var validationErrors = ValidationComposer.Validate(
@@ -77,6 +78,7 @@ public class ConnectionsController(
             validFromUuid ? fromUuid : null,
             validToUuid ? toUuid : null,
             includeClientDelegations,
+            includeAgentConnections,
             ConfigureConnections,
             cancellationToken
         );
