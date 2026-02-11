@@ -177,4 +177,10 @@ public interface IAssignmentService
     /// </summary>
     /// <returns></returns>
     Task<IEnumerable<AssignmentInstance>> GetAssignmentInstances(Guid assignmentId, Guid resourceId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Clears assignments for a dead person.
+    /// </summary>
+    /// <returns></returns>
+    Task ClearAssignmentsInAfterLife(Guid deadPerson, AuditValues audit = null, CancellationToken cancellationToken = default);
 }

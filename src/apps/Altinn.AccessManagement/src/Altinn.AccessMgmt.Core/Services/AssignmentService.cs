@@ -1,7 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-
-using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -1014,6 +1012,32 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Removes all assignments where the deadPerson is either a rightHolder or an agent.
+    /// </summary>
+    public async Task ClearAssignmentsInAfterLife(Guid deadPerson, AuditValues audit, CancellationToken cancellationToken)
+    {
+        // Find all assignments where toId is deadPerson
+        // Find all assigments where fromId is deadPerson
+        List<Assignment> rightHolderAssignments = await db.Assignments.AsNoTracking()
+           .Where(t => (t.ToId == deadPerson && t.RoleId == RoleConstants.Rightholder) || (t.FromId == deadPerson && t.RoleId == RoleConstants.Rightholder))
+           .ToListAsync(cancellationToken);
+
+        // All assignments where deadPerson is agent for a client
+        List<Assignment> accessManagerAssignments = await db.Assignments.AsNoTracking()
+           .Where(t => (t.ToId == deadPerson && t.RoleId == RoleConstants.Agent))
+           .ToListAsync(cancellationToken);
+
+        if (!rightHolderAssignments.Any() && !accessManagerAssignments.Any())
+        {
+            return;
+        }
+
+        db.Assignments.RemoveRange(rightHolderAssignments);
+        db.Assignments.RemoveRange(accessManagerAssignments);
+        db.SaveChanges(audit);
     }
 
     private static void ValidatePartyIsNotNull(Guid id, Entity entity, ref ValidationErrorBuilder errors, string param)
