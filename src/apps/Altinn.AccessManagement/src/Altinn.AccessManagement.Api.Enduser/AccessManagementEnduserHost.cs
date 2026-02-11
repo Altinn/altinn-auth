@@ -1,3 +1,4 @@
+using Altinn.AccessManagement.Api.Enduser.Validation;
 using Altinn.Authorization.Host.Startup;
 
 namespace Altinn.AccessManagement.Api.Enduser;
@@ -19,6 +20,7 @@ public static partial class AccessManagementEnduserHost
     public static IHostApplicationBuilder AddAccessManagementEnduser(this IHostApplicationBuilder builder)
     {
         Log.AddHost(Logger);
+        builder.Services.AddTransient<IInputValidation, InputValidation>();
         return builder;
     }
 

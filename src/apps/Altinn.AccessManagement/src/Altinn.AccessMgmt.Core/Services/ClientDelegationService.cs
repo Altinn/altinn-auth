@@ -219,11 +219,6 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
             .GroupBy(d => d.Delegation.Id)
             .ToListAsync(cancellationToken);
 
-        if (errorBuilder.TryBuild(out var problem))
-        {
-            return problem;
-        }
-
         foreach (var existingDelegation in existingDelegations)
         {
             var first = existingDelegation.FirstOrDefault();
@@ -249,7 +244,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
             }
         }
 
-        if (errorBuilder.TryBuild(out problem))
+        if (errorBuilder.TryBuild(out var problem))
         {
             return problem;
         }

@@ -6,12 +6,11 @@ using Altinn.AccessManagement.Api.Enduser.Validation;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Services;
-using Altinn.AccessMgmt.Core.Services.Contracts;
-using Altinn.AccessMgmt.Core.Validation;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
@@ -27,9 +26,8 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 [Tags("Client Delegation")]
 public class ClientDelegationController(
     IHttpContextAccessor httpContextAccessor,
-    IClientDelegationService clientDelegationService,
-    IUserProfileLookupService UserProfileLookupService,
-    IEntityService EntityService) : ControllerBase
+    IInputValidation inputValidation,
+    IClientDelegationService clientDelegationService) : ControllerBase
 {
     [HttpGet("my/clients")]
     [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_MYCLIENTS_READ)]
@@ -60,7 +58,7 @@ public class ClientDelegationController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetMyClientProviders(CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();   
+        throw new NotImplementedException();
     }
 
     [HttpDelete("my/clientproviders")]
@@ -73,7 +71,7 @@ public class ClientDelegationController(
         [FromQuery(Name = "provider")][Required] Guid provider,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();   
+        throw new NotImplementedException();
     }
 
     [HttpDelete("my/clients")]
@@ -88,7 +86,7 @@ public class ClientDelegationController(
         [FromBody][Required] DelegationBatchInputDto payload,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();   
+        throw new NotImplementedException();
     }
 
     [HttpGet("clients")]
@@ -148,32 +146,23 @@ public class ClientDelegationController(
         [FromBody] PersonInput? person,
         CancellationToken cancellationToken = default)
     {
-        bool hasPersonInputParameter = person is { };
+        var entity = await inputValidation.SanitizeToInput(
+            party,
+            to,
+            person,
+            options =>
+            {
+                options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.SystemUser];
+                options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
+            },
+            cancellationToken);
 
-        var validationErrors = ValidationComposer.Validate(
-            ValidationComposer.Any(
-                ConnectionValidation.ValidateAddAssignmentWithPersonInput(person?.PersonIdentifier, person?.LastName),
-                ParameterValidation.ToIsGuid(to)
-            )
-        );
-
-        if (validationErrors is { })
+        if (entity.IsProblem)
         {
-            return validationErrors.ToActionResult();
+            return entity.Problem.ToActionResult();
         }
 
-        var resolver = new ToUuidResolver(EntityService, UserProfileLookupService);
-        var resolveResult = hasPersonInputParameter
-            ? await resolver.ResolveWithPersonInputAsync(person, HttpContext, cancellationToken)
-            : await resolver.ResolveWithConnectionInputAsync((Guid)to, false, cancellationToken);
-
-        if (!resolveResult.Success)
-        {
-            return resolveResult.ErrorResult!;
-        }
-
-        var result = await clientDelegationService.AddAgent(party, resolveResult.ToUuid, cancellationToken);
-
+        var result = await clientDelegationService.AddAgent(party, entity.Value.Id, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();

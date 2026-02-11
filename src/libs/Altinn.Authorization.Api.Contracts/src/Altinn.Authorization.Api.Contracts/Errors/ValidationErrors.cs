@@ -157,4 +157,10 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor PackageIsNotDelegable { get; }
         = _factory.Create(33, "Package is not delegable.");
+    
+    /// <summary>
+    /// Delegation has active connections.
+    /// </summary>
+    public static ValidationErrorDescriptor InvalidExternalIdentifiers { get; }
+        = _factory.Create(34, "Given external identifiers yielded empty result.");
 }

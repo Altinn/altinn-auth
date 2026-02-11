@@ -20,7 +20,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Utils;
 /// - PersonInput (identifier + last name) resolved via <see cref="IUserProfileLookupService"/>
 /// Internal implementation detail of the Enduser API.
 /// </summary>
-internal sealed class ToUuidResolver
+public sealed class ToUuidResolver
 {
     private readonly IEntityService _entityService;
     private readonly IUserProfileLookupService _userProfileLookupService;
