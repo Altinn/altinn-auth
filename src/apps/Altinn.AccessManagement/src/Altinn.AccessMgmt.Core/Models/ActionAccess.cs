@@ -23,8 +23,6 @@ namespace Altinn.AccessMgmt.Core.Models
 
         public HashSet<ActionDto.Reason> RoleDenyAccess { get; set; }
 
-        public List<string> ResourceAllowAccess { get; set; }
-
-        public HashSet<ActionDto.Reason> ResourceDenyAccess { get; set; }
+        public List<RulePermission> ResourceAllowAccess { get; set; }
     }
 }

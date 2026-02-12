@@ -116,7 +116,7 @@ public static class Problems
 
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor PersonLookupFailedToManyErrors { get; }
-    = _factory.Create(26, HttpStatusCode.TooManyRequests, "There has been to many failed lookups");
+    = _factory.Create(26, HttpStatusCode.TooManyRequests, "There has been too many failed lookups");
 
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor InvallidResource { get; }

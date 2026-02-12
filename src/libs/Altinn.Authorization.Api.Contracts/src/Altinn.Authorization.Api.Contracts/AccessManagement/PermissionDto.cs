@@ -29,4 +29,9 @@ public class PermissionDto
     /// Via role
     /// </summary>
     public CompactRoleDto ViaRole { get; set; }
+
+    /// <summary>
+    /// Reason
+    /// </summary>
+    public AccessReason Reason { get; set; }
 }

@@ -129,7 +129,6 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
                 current.RoleAllowAccess = [];
                 current.RoleDenyAccess = [];
                 current.ResourceAllowAccess = [];
-                current.ResourceDenyAccess = [];
 
                 result.Add(current);
             }
@@ -152,6 +151,115 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
             return false;
         }
 
+        public static IEnumerable<ResourceAndAction> SplitActionKeys(IEnumerable<string> actionKeys)
+        {
+            List<ResourceAndAction> result = [];
+
+            foreach (string key in actionKeys)
+            {
+                result.Add(SplitActionKey(key));
+            }
+
+            return result;
+        }
+
+        public static ResourceAndAction SplitActionKey(string actionKey)
+        {
+            List<string> resourceList = [];
+            List<string> actionList = [];
+
+            string[] urns = actionKey.Split("urn:", StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string part in urns)
+            {
+                string current = "urn:" + part;
+
+                if (current.EndsWith(':'))
+                {
+                    current = current.Remove(current.Length - 1);
+                }
+
+                if (current.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.ActionId))
+                {
+                    actionList.Add(current);
+                }
+                else
+                {
+                    resourceList.Add(current);
+                }
+            }
+
+            return new ResourceAndAction { Resource = resourceList, Action = actionList.FirstOrDefault() };
+        }
+
+        public static IEnumerable<XacmlRule> ConvertActionKeysToRules(IEnumerable<string> actionKeys, Guid toId)
+        {
+            List<XacmlRule> result = [];
+            foreach (string key in actionKeys)
+            {
+                XacmlRule currentRule = new XacmlRule(Guid.CreateVersion7().ToString(), XacmlEffectType.Permit);
+
+                var resourceAction = SplitActionKey(key);
+
+                currentRule.Target = BuildDelegationRuleTarget(toId.ToString(), resourceAction.Resource, resourceAction.Action);
+
+                result.Add(currentRule);
+            }
+
+            return result;
+        }
+
+        public static XacmlTarget BuildDelegationRuleTarget(string toId, IEnumerable<string> resourceList, string action)
+        {
+            List<XacmlAnyOf> targetList = new List<XacmlAnyOf>();
+
+            // Build Subject
+            List<XacmlAllOf> subjectAllOfs = new List<XacmlAllOf>();
+
+            subjectAllOfs.Add(new XacmlAllOf(new List<XacmlMatch>
+            {
+                new XacmlMatch(
+                    new Uri(XacmlConstants.AttributeMatchFunction.StringEqualIgnoreCase),
+                    new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), toId),
+                    new XacmlAttributeDesignator(new Uri(XacmlConstants.MatchAttributeCategory.Subject), new Uri(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyUuidAttribute), new Uri(XacmlConstants.DataTypes.XMLString), false))
+            }));
+
+            // Build Resource
+            List<XacmlMatch> resourceMatches = new List<XacmlMatch>();
+            foreach (string resource in resourceList)
+            {
+                string resourceId = resource.Substring(0, resource.LastIndexOf(':'));
+                string resourceValue = resource.Substring(resource.LastIndexOf(':') + 1);
+
+                resourceMatches.Add(
+                    new XacmlMatch(
+                        new Uri(XacmlConstants.AttributeMatchFunction.StringEqualIgnoreCase),
+                        new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), resourceValue),
+                        new XacmlAttributeDesignator(new Uri(XacmlConstants.MatchAttributeCategory.Resource), new Uri(resourceId), new Uri(XacmlConstants.DataTypes.XMLString), false)));
+            }
+
+            List<XacmlAllOf> resourceAllOfs = new List<XacmlAllOf> { new XacmlAllOf(resourceMatches) };
+
+            // Build Action
+            List<XacmlAllOf> actionAllOfs = new List<XacmlAllOf>();
+            string actionId = action.Substring(0, action.LastIndexOf(':'));
+            string actionValue = action.Substring(action.LastIndexOf(':') + 1);
+
+            actionAllOfs.Add(new XacmlAllOf(new List<XacmlMatch>
+            {
+                new XacmlMatch(
+                        new Uri(XacmlConstants.AttributeMatchFunction.StringEqualIgnoreCase),
+                        new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), actionValue),
+                        new XacmlAttributeDesignator(new Uri(XacmlConstants.MatchAttributeCategory.Action), new Uri(actionId), new Uri(XacmlConstants.DataTypes.XMLString), false))
+            }));
+
+            targetList.Add(new XacmlAnyOf(subjectAllOfs));
+            targetList.Add(new XacmlAnyOf(resourceAllOfs));
+            targetList.Add(new XacmlAnyOf(actionAllOfs));
+
+            return new XacmlTarget(targetList);
+        }
+
         /// <summary>
         /// Returns a list of resource/action keys based on a given policy rule
         /// </summary>
@@ -162,7 +270,7 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
         {
             List<string> result = [];
 
-            //Use policy to calculate the rest of the key
+            // Use policy to calculate the rest of the key
             var resources = PolicyHelper.GetRulePolicyAttributeMatchesForCategory(rule, XacmlConstants.MatchAttributeCategory.Resource).ToList();
             var actions = PolicyHelper.GetRulePolicyAttributeMatchesForCategory(rule, XacmlConstants.MatchAttributeCategory.Action);
             List<string> resourceKeys = new List<string>();

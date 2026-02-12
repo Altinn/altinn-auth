@@ -5,6 +5,7 @@ using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Features;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
@@ -245,7 +246,7 @@ public class ConnectionQuery(AppDbContext db)
                     Reason = ConnectionReason.Assignment,
                     IsKeyRoleAccess = false,
                     IsMainUnitAccess = false,
-                    IsRoleMap = false
+                    IsRoleMap = false,
                 });
 
         var keyrole =
@@ -273,7 +274,7 @@ public class ConnectionQuery(AppDbContext db)
                         Reason = ConnectionReason.KeyRole,
                         IsKeyRoleAccess = true,
                         IsMainUnitAccess = false,
-                        IsRoleMap = false
+                        IsRoleMap = false,
                     });
 
         var a1 = filter.IncludeKeyRole
@@ -298,7 +299,7 @@ public class ConnectionQuery(AppDbContext db)
                         Reason = ConnectionReason.RoleMap,
                         IsKeyRoleAccess = dkr.IsKeyRoleAccess,
                         IsMainUnitAccess = false,
-                        IsRoleMap = true
+                        IsRoleMap = true,
                     });
 
         var delegations =
@@ -328,7 +329,7 @@ public class ConnectionQuery(AppDbContext db)
                         Reason = ConnectionReason.Delegation,
                         IsKeyRoleAccess = false,
                         IsMainUnitAccess = false,
-                        IsRoleMap = false
+                        IsRoleMap = false,
                     });
 
         var a2 = filter.IncludeDelegation
@@ -354,7 +355,7 @@ public class ConnectionQuery(AppDbContext db)
                 Reason = ConnectionReason.Hierarchy,
                 IsKeyRoleAccess = c.IsKeyRoleAccess,
                 IsMainUnitAccess = true,
-                IsRoleMap = c.IsRoleMap
+                IsRoleMap = c.IsRoleMap,
             });
 
         var innehaverConnections =
@@ -379,7 +380,7 @@ public class ConnectionQuery(AppDbContext db)
                 IsKeyRoleAccess = reviRegnConnection.IsKeyRoleAccess,
                 IsRoleMap = reviRegnConnection.IsRoleMap,
                 IsMainUnitAccess = reviRegnConnection.IsMainUnitAccess,
-                Reason = ConnectionReason.Hierarchy
+                Reason = ConnectionReason.Hierarchy,
             };
 
         /*

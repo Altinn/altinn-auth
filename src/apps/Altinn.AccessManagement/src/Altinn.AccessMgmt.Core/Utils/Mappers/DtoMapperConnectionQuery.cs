@@ -97,7 +97,7 @@ public partial class DtoMapper : IDtoMapper
         .GroupBy(t => t.Resource)
         .Select(g => new ResourcePermissionDto
         {
-            Resource = ConvertCompactResource(g.Key),
+            Resource = Convert(g.Key),
             Permissions = g.Select(t => ConvertToPermission(t.Assignment))
         })
         .ToList();
@@ -112,7 +112,7 @@ public partial class DtoMapper : IDtoMapper
             .DistinctBy(p => p.Id)
             .Select(res => new ResourcePermissionDto
             {
-                Resource = ConvertCompactResource(res),
+                Resource = Convert(res),
                 Permissions = records
                     .Where(r => r.Resources.Any(p => p.Id == res.Id))
                     .Select(ConvertToPermission)
@@ -125,7 +125,7 @@ public partial class DtoMapper : IDtoMapper
             .DistinctBy(r => r.Id)
             .Select(res => new ResourcePermissionDto
             {
-                Resource = ConvertCompactResource(res),
+                Resource = Convert(res),
                 Permissions = records
                     .Where(r => r.Resources.Any(p => p.Id == res.Id))
                     .Select(ConvertToPermission)
