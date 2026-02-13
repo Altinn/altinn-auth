@@ -2468,6 +2468,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnName("audit_validfrom");
 
                     b.Property<string>("Code")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("code");
 
@@ -2510,6 +2511,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnName("providerid");
 
                     b.Property<string>("Urn")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("urn");
 
@@ -2519,11 +2521,19 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasIndex("AreaId")
                         .HasDatabaseName("ix_package_areaid");
 
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_package_code");
+
                     b.HasIndex("EntityTypeId")
                         .HasDatabaseName("ix_package_entitytypeid");
 
                     b.HasIndex("ProviderId")
                         .HasDatabaseName("ix_package_providerid");
+
+                    b.HasIndex("Urn")
+                        .IsUnique()
+                        .HasDatabaseName("ix_package_urn");
 
                     b.HasIndex("ProviderId", "Name", "EntityTypeId")
                         .IsUnique()
@@ -2720,6 +2730,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnName("providerid");
 
                     b.Property<string>("RefId")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("refid");
 
@@ -2732,6 +2743,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.HasIndex("ProviderId")
                         .HasDatabaseName("ix_resource_providerid");
+
+                    b.HasIndex("RefId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_resource_refid");
 
                     b.HasIndex("TypeId")
                         .HasDatabaseName("ix_resource_typeid");
@@ -2861,6 +2876,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasKey("Id")
                         .HasName("pk_role");
 
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_role_code");
+
                     b.HasIndex("EntityTypeId")
                         .HasDatabaseName("ix_role_entitytypeid");
 
@@ -2870,10 +2889,6 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasIndex("Urn")
                         .IsUnique()
                         .HasDatabaseName("ix_role_urn");
-
-                    b.HasIndex("ProviderId", "Code")
-                        .IsUnique()
-                        .HasDatabaseName("ix_role_providerid_code");
 
                     b.HasIndex("ProviderId", "Name")
                         .IsUnique()

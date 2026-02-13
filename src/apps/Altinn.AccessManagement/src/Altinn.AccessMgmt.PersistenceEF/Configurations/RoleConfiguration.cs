@@ -29,8 +29,8 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
         builder.PropertyWithReference(navKey: t => t.EntityType, foreignKey: t => t.EntityTypeId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict, required: false);
 
         builder.HasIndex(t => t.Urn).IsUnique();
+        builder.HasIndex(t => t.Code).IsUnique();
         builder.HasIndex(t => new { t.ProviderId, t.Name }).IsUnique();
-        builder.HasIndex(t => new { t.ProviderId, t.Code }).IsUnique();
     }
 }
 

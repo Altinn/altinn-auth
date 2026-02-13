@@ -18,17 +18,19 @@ public class PackageConfiguration : IEntityTypeConfiguration<Package>
 
         builder.Property(t => t.Name);
         builder.Property(t => t.Description);
-        builder.Property(t => t.Urn);
+        builder.Property(t => t.Urn).IsRequired();
         builder.Property(t => t.IsAssignable).HasDefaultValue(false);
         builder.Property(t => t.IsDelegable).HasDefaultValue(false);
         builder.Property(t => t.IsAvailableForServiceOwners).HasDefaultValue(false);
-        builder.Property(t => t.Code);
+        builder.Property(t => t.Code).IsRequired();
 
         builder.PropertyWithReference(navKey: t => t.Provider, foreignKey: t => t.ProviderId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
         builder.PropertyWithReference(navKey: t => t.EntityType, foreignKey: t => t.EntityTypeId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
         builder.PropertyWithReference(navKey: t => t.Area, foreignKey: t => t.AreaId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
 
         builder.HasIndex(t => new { t.ProviderId, t.Name, t.EntityTypeId }).IsUnique();
+        builder.HasIndex(t => t.Urn).IsUnique();
+        builder.HasIndex(t => t.Code).IsUnique();
     }
 }
 
