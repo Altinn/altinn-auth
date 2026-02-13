@@ -4717,39 +4717,6 @@ public static class RoleConstants
     };
 
     /// <summary>
-    /// Represents the 'Godkjenning av bedriftshelsetjeneste' role.
-    /// </summary>
-    /// <remarks>
-    /// - <c>Id:</c> cde501eb-0d23-410b-b728-00ab9d68fb2e
-    /// - <c>URN:</c> urn:altinn:rolecode:GKBHT
-    /// - <c>Provider:</c> Altinn2
-    /// - <c>Code:</c> GKBHT
-    /// - <c>Description:</c> Godkjenning av bedriftshelsetjeneste
-    /// </remarks>
-    public static ConstantDefinition<Role> Gkbht { get; } = new ConstantDefinition<Role>("cde501eb-0d23-410b-b728-00ab9d68fb2e")
-    {
-        Entity = new()
-        {
-            EntityTypeId = EntityTypeConstants.Organization,
-            ProviderId = ProviderConstants.Altinn2,
-            Name = "Godkjenning av bedriftshelsetjeneste",
-            Code = "gkbht",
-            Description = "Godkjenning av bedriftshelsetjeneste",
-            Urn = "urn:altinn:rolecode:gkbht",
-            IsKeyRole = false,
-            IsAvailableForServiceOwners = false,
-        },
-        EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Godkjenning av bedriftshelsetjeneste"),
-            KeyValuePair.Create("Description", "Godkjenning av bedriftshelsetjeneste")
-        ),
-        NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Godkjenning av bedriftshelsetjeneste"),
-            KeyValuePair.Create("Description", "Godkjenning av bedriftshelsetjeneste")
-        )
-    };
-
-    /// <summary>
     /// Represents the 'Hovedadministrator' role.
     /// </summary>
     /// <remarks>
