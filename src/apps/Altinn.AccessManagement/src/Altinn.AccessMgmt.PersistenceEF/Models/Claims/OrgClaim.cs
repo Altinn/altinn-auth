@@ -1,0 +1,22 @@
+﻿using System.Text.Json.Serialization;
+
+namespace Altinn.AccessMgmt.PersistenceEF.Models.Claims
+{
+    /// <summary>
+    /// Organization claim matching structure from maskinporten
+    /// </summary>
+    public class OrgClaim
+    {
+        /// <summary>
+        /// The authority that defines organization numbers. 
+        /// </summary>
+        [JsonPropertyName("authority")]
+        public string Authority => "iso6523-actorid-upis";
+
+        /// <summary>
+        /// The orgclaim id
+        /// </summary>
+        [JsonPropertyName("ID")]
+        public string ID { get; set; }
+    }
+}
