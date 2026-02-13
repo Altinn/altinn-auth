@@ -206,7 +206,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
             static bool IsInvalidAppIdentifier(ServiceResource serviceResource)
             {
                 if (serviceResource.ResourceType == ResourceType.AltinnApp
-                    && !serviceResource.Identifier.StartsWith($"{ResourceConstants.APPLICATION_RESOURCE_PREFIX}_{serviceResource.HasCompetentAuthority.Orgcode}", StringComparison.OrdinalIgnoreCase))
+                    && !serviceResource.Identifier.StartsWith($"{ResourceConstants.APPLICATION_RESOURCE_PREFIX}{serviceResource.HasCompetentAuthority.Orgcode}", StringComparison.OrdinalIgnoreCase))
                 {
                     // Uses app ResourceType without having correct identifier prefix for app resource
                     return true;
