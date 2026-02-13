@@ -6705,7 +6705,7 @@ public static class PackageConstants
         {
             Name = "Kommune - Skatt og avgift",
             Code = "vergemal-kommune-skatt-avgift",
-            Description = "Omfatter oppgaver som hører inn under områdene arbeidsgiveravgift, kommunale avgifter, eiendomsskatt og skatteattest",
+            Description = "Omfatter oppgaver som hører inn under områdene kommunale avgifter og eiendomsskatt.",
             Urn = "urn:altinn:accesspackage:vergemal-kommune-skatt-avgift",
             IsDelegable = false,
             IsAssignable = false,
@@ -6716,11 +6716,11 @@ public static class PackageConstants
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Municipality - Tax and duty"),
-            KeyValuePair.Create("Description", "Includes tasks that fall under the areas of employers national insurance contributions, municipal fees, property tax, and tax certificates")
+            KeyValuePair.Create("Description", "Includes tasks that fall under the areas of municipal fees and property tax.")
         ),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Kommune - Skatt og avgift"),
-            KeyValuePair.Create("Description", "Omfattar oppgåver som høyrer inn under områda arbeidsgivaravgift, kommunale avgifter, eigedomsskatt og skatteattest")
+            KeyValuePair.Create("Description", "Omfattar oppgåver som høyrer inn under områda kommunale avgifter og eigedomsskatt.")
         ),
     };
 
@@ -6865,23 +6865,23 @@ public static class PackageConstants
     };
 
     /// <summary>
-    /// Represents the 'Namsmannen - Tvangsfullbyrdelse' role.
+    /// Represents the 'Namsmannen - Tvangsfullbyrdelse, herunder behandling i forliksrådet' role.
     /// </summary>
     /// <remarks>
-    /// - <c>Id:</c> 60a3b6f1-a864-44e2-995f-bb2adde2f31b
-    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-namsmannen-tvangsfullbyrdelse
+    /// - <c>Id:</c> d7f33652-414a-42e6-ae70-1a4e2a46d079
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-namsmannen-tvangsfullbyrdelse-forliksradet
     /// - <c>Provider:</c> CivilRightsAuthority
-    /// - <c>Code:</c> vergemal-namsmannen-tvangsfullbyrdelse
-    /// - <c>Description:</c> Namsmannen - Tvangsfullbyrdelse
+    /// - <c>Code:</c> vergemal-namsmannen-tvangsfullbyrdelse-forliksradet
+    /// - <c>Description:</c> Gjelder representasjon i saker om tvangsfullbyrdelse etter tvangsfullbyrdelsesloven, herunder eventuell behandling i forliksrådet av slike saker og oppfølging av saken hos innkrevingsmyndigheten.
     /// </remarks>
-    public static ConstantDefinition<Package> VergemalTheEnforcementOfficerEnforcement { get; } = new ConstantDefinition<Package>("60a3b6f1-a864-44e2-995f-bb2adde2f31b")
+    public static ConstantDefinition<Package> VergemalEnforcementIncludingProceedingsInTheConciliationBoard { get; } = new ConstantDefinition<Package>("d7f33652-414a-42e6-ae70-1a4e2a46d079")
     {
         Entity = new()
         {
-            Name = "Namsmannen - Tvangsfullbyrdelse",
-            Code = "vergemal-namsmannen-tvangsfullbyrdelse",
-            Description = "Gjelder representasjon i saker om tvangsfullbyrdelse etter tvangsfullbyrdelsesloven",
-            Urn = "urn:altinn:accesspackage:vergemal-namsmannen-tvangsfullbyrdelse",
+            Name = "Namsmannen - Tvangsfullbyrdelse, herunder behandling i forliksrådet",
+            Code = "vergemal-namsmannen-tvangsfullbyrdelse-forliksradet",
+            Description = "Gjelder representasjon i saker om tvangsfullbyrdelse etter tvangsfullbyrdelsesloven, herunder eventuell behandling i forliksrådet av slike saker og oppfølging av saken hos innkrevingsmyndigheten.",
+            Urn = "urn:altinn:accesspackage:namsmannen-tvangsfullbyrdelse-forliksradet",
             IsDelegable = false,
             IsAssignable = false,
             IsAvailableForServiceOwners = true,
@@ -6890,12 +6890,12 @@ public static class PackageConstants
             AreaId = AreaConstants.VergemalBailiff,
         },
         EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "The Enforcement Officer - Enforcement"),
-            KeyValuePair.Create("Description", "Applies to representation in cases of enforcement under the Enforcement Act")
+            KeyValuePair.Create("Name", "The Enforcement Officer - Enforcement, including proceedings in the conciliation board"),
+            KeyValuePair.Create("Description", "Applies to representation in enforcement cases under tvangsfullbyrdelsesloven, including possible proceedings in the conciliation board and follow-up of the case with the collection authority.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Namsmannen - Tvangsfullbyrding"),
-            KeyValuePair.Create("Description", "Gjeld representasjon i saker om tvangsfullbyrding etter tvangsfullbyrdingslova")
+            KeyValuePair.Create("Name", "Namsmannen - Tvangsfullbyrding, inkludert behandling i forliksrådet"),
+            KeyValuePair.Create("Description", "Gjeld representasjon i saker om tvangsfullbyrding etter tvangsfullbyrdingslova, herunder eventuell behandling i forliksrådet av slike saker og oppfølging av saka hos innkrevjingsmyndigheita.")
         ),
     };
 
@@ -7110,41 +7110,6 @@ public static class PackageConstants
     };
 
     /// <summary>
-    /// Represents the 'Skatteetaten - Innkreving' role.
-    /// </summary>
-    /// <remarks>
-    /// - <c>Id:</c> 98af22ae-2397-4aea-a600-f46894cda346
-    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-skatteetaten-innkreving
-    /// - <c>Provider:</c> CivilRightsAuthority
-    /// - <c>Code:</c> vergemal-skatteetaten-innkreving
-    /// - <c>Description:</c> Skatteetaten - Innkreving
-    /// </remarks>
-    public static ConstantDefinition<Package> VergemalTheTaxAdministrationCollection { get; } = new ConstantDefinition<Package>("98af22ae-2397-4aea-a600-f46894cda346")
-    {
-        Entity = new()
-        {
-            Name = "Skatteetaten - Innkreving",
-            Code = "vergemal-skatteetaten-innkreving",
-            Description = "Gjelder oppfølging og behandling av krav fra Skatteetaten, for eksempel restskatt",
-            Urn = "urn:altinn:accesspackage:vergemal-skatteetaten-innkreving",
-            IsDelegable = false,
-            IsAssignable = false,
-            IsAvailableForServiceOwners = true,
-            EntityTypeId = EntityTypeConstants.Person,
-            ProviderId = ProviderConstants.CivilRightsAuthority,
-            AreaId = AreaConstants.VergemalTaxAuthority,
-        },
-        EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "The Tax Administration - Collection"),
-            KeyValuePair.Create("Description", "Applies to follow-up and processing of claims from the Tax Administration, for example, residual tax")
-        ),
-        NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Skatteetaten - Innkrevjing"),
-            KeyValuePair.Create("Description", "Gjeld oppfølging og behandling av krav frå Skatteetaten, for eksempel restskatt")
-        ),
-    };
-
-    /// <summary>
     /// Represents the 'Skatteetaten - Endre postadresse' role.
     /// </summary>
     /// <remarks>
@@ -7222,7 +7187,7 @@ public static class PackageConstants
     /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-skatteetaten-skatt
     /// - <c>Provider:</c> CivilRightsAuthority
     /// - <c>Code:</c> vergemal-skatteetaten-skatt
-    /// - <c>Description:</c> Skatteetaten - Skatt
+    /// - <c>Description:</c> Gjelder innsyn i skattedata, og representasjon overfor skattemyndighetene i alle saker om skatteforhold, herunder endring av skattekort, levering av skattemelding, skatteoppgjør og det ordinære løpet for restskatt eller penger til gode, til og med varsel etter tvangsfullbyrdelsesloven §4-18 og §4-19.
     /// </remarks>
     public static ConstantDefinition<Package> VergemalTheTaxAdministrationTax { get; } = new ConstantDefinition<Package>("494275f4-0446-4864-82c8-d0d76f969715")
     {
@@ -7230,7 +7195,7 @@ public static class PackageConstants
         {
             Name = "Skatteetaten - Skatt",
             Code = "vergemal-skatteetaten-skatt",
-            Description = "Gjelder innsyn i skattedata, og representasjon overfor skattemyndighetene i alle saker om skatteforhold, herunder endring av skattekort, levering av skattemelding, skatteoppgjør og det ordinære løpet for restskatt eller penger til gode.",
+            Description = "Gjelder innsyn i skattedata, og representasjon overfor skattemyndighetene i alle saker om skatteforhold, herunder endring av skattekort, levering av skattemelding, skatteoppgjør og det ordinære løpet for restskatt eller penger til gode, til og med varsel etter tvangsfullbyrdelsesloven §4-18 og §4-19.",
             Urn = "urn:altinn:accesspackage:vergemal-skatteetaten-skatt",
             IsDelegable = false,
             IsAssignable = false,
@@ -7241,46 +7206,46 @@ public static class PackageConstants
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "The Tax Administration - Tax"),
-            KeyValuePair.Create("Description", "Applies to access to tax data and representation before the tax authorities in all matters concerning tax issues, including changing tax cards, submitting tax returns, tax settlements, and the ordinary course of residual tax or money owed.")
+            KeyValuePair.Create("Description", "Applies to access to tax data and representation before the tax authorities in all matters concerning tax issues, including changing tax cards, submitting tax returns, tax settlements, and the ordinary course for residual tax or money owed, up to and including notice under Sections 4-18 and 4-19 of tvangsfullbyrdelsesloven.")
         ),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Skatteetaten - Skatt"),
-            KeyValuePair.Create("Description", "Gjeld innsyn i skattedata, og representasjon overfor skattemyndigheitene i alle saker om skatteforhold, herunder endring av skattekort, levering av skattemelding, skatteoppgjer og det ordinære løpet for restskatt eller pengar til gode.")
+            KeyValuePair.Create("Description", "Gjeld innsyn i skattedata, og representasjon overfor skattemyndigheitene i alle saker om skatteforhold, herunder endring av skattekort, levering av skattemelding, skatteoppgjer og det ordinære løpet for restskatt eller pengar til gode, til og med varsel etter tvangsfullbyrdingslova §4-18 og §4-19.")
         ),
     };
 
     /// <summary>
-    /// Represents the 'Statens innkrevingssentral - Gjeldsordning og betalingsavtaler' role.
+    /// Represents the 'Skatteetaten - Innkreving og tvangsfullbyrdelse' role.
     /// </summary>
     /// <remarks>
-    /// - <c>Id:</c> fca1e7d4-46b4-4e82-b958-4ce159d69f22
-    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-statens-innkrevingssentral-gjeldsordning-betalingsavtaler
+    /// - <c>Id:</c> cece4b37-50cb-4392-a928-139a390e65f1
+    /// - <c>URN:</c> urn:altinn:accesspackage:vergemal-skatteetaten-innkreving-tvangsfullbyrdelse
     /// - <c>Provider:</c> CivilRightsAuthority
-    /// - <c>Code:</c> vergemal-statens-innkrevingssentral-gjeldsordning-betalingsavtaler
-    /// - <c>Description:</c> Statens innkrevingssentral - Gjeldsordning og betalingsavtaler
+    /// - <c>Code:</c> vergemal-skatteetaten-innkreving-tvangsfullbyrdelse
+    /// - <c>Description:</c> Gjelder saker som innkrevingsmyndigheten i Skatteetaten behandler etter innkrevingsloven, fra og med varsel etter tvangsfullbyrdelsesloven §4-18 og §4-19.
     /// </remarks>
-    public static ConstantDefinition<Package> VergemalTheNorwegianNationalCollectionAgencyDebtSettlementAndPaymentAgreements { get; } = new ConstantDefinition<Package>("fca1e7d4-46b4-4e82-b958-4ce159d69f22")
+    public static ConstantDefinition<Package> VergemalTheTaxAdministrationCollectionAndEnforcement { get; } = new ConstantDefinition<Package>("cece4b37-50cb-4392-a928-139a390e65f1")
     {
         Entity = new()
         {
-            Name = "Statens innkrevingssentral - Gjeldsordning og betalingsavtaler",
-            Code = "vergemal-statens-innkrevingssentral-gjeldsordning-betalingsavtaler",
-            Description = "Gjelder søknad om og forvaltning av gjeldsordning og betalingsavtaler",
-            Urn = "urn:altinn:accesspackage:vergemal-statens-innkrevingssentral-gjeldsordning-betalingsavtaler",
+            Name = "Skatteetaten - Innkreving og tvangsfullbyrdelse",
+            Code = "vergemal-skatteetaten-innkreving-tvangsfullbyrdelse",
+            Description = "Gjelder saker som innkrevingsmyndigheten i Skatteetaten behandler etter innkrevingsloven, fra og med varsel etter tvangsfullbyrdelsesloven §4-18 og §4-19.",
+            Urn = "urn:altinn:accesspackage:vergemal-skatteetaten-innkreving-tvangsfullbyrdelse",
             IsDelegable = false,
             IsAssignable = false,
             IsAvailableForServiceOwners = true,
             EntityTypeId = EntityTypeConstants.Person,
             ProviderId = ProviderConstants.CivilRightsAuthority,
-            AreaId = AreaConstants.VergemalNorwegianCollectionCenter,
+            AreaId = AreaConstants.VergemalBailiff,
         },
         EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "The Norwegian National Collection Agency - Debt settlement and payment agreements"),
-            KeyValuePair.Create("Description", "Applies to applications for and management of debt settlements and payment agreements")
+            KeyValuePair.Create("Name", "The Tax Administration - Collection and enforcement"),
+            KeyValuePair.Create("Description", "Applies to cases handled by the collection authority in the Tax Administration under the Collection Act, from and including notice under Sections 4-18 and 4-19 of tvangsfullbyrdelsesloven.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Statens innkrevingssentral - Gjeldsordning og betalingsavtalar"),
-            KeyValuePair.Create("Description", "Gjeld søknad om og forvaltning av gjeldsordning og betalingsavtalar")
+            KeyValuePair.Create("Name", "Skatteetaten - Innkrevjing og tvangsfullbyrding"),
+            KeyValuePair.Create("Description", "Gjeld saker som innkrevjingsmyndigheita i Skatteetaten behandlar etter innkrevjingslova, frå og med varsel etter tvangsfullbyrdingslova §4-18 og §4-19.")
         ),
     };
 

@@ -1958,23 +1958,23 @@ public static class RoleConstants
     };
 
     /// <summary>
-    /// Represents the 'Namsmannen - Tvangsfullbyrdelse' role.
+    /// Represents the 'Namsmannen - Tvangsfullbyrdelse, herunder behandling i forliksrådet' role.
     /// </summary>
     /// <remarks>
-    /// - <c>Id:</c> 37245465-71e0-49ac-88a2-3e7a6d016e8a
-    /// - <c>URN:</c> urn:altinn:external-role:cra:namsmannen-tvangsfullbyrdelse
+    /// - <c>Id:</c> e5b0809a-8d27-45ac-ac96-022eb3d0514e
+    /// - <c>URN:</c> urn:altinn:external-role:cra:namsmannen-gjeldsordning
     /// - <c>Provider:</c> CivilRightsAuthority
-    /// - <c>Code:</c> namsmannen-tvangsfullbyrdelse
-    /// - <c>Description:</c> Namsmannen - Tvangsfullbyrdelse
+    /// - <c>Code:</c> namsmannen-gjeldsordning
+    /// - <c>Description:</c> Namsmannen - Gjeldsordning
     /// </remarks>
-    public static ConstantDefinition<Role> TheEnforcementOfficerEnforcement { get; } = new ConstantDefinition<Role>("37245465-71e0-49ac-88a2-3e7a6d016e8a")
+    public static ConstantDefinition<Role> EnforcementIncludingProceedingsInTheConciliationBoard { get; } = new ConstantDefinition<Role>("e5b0809a-8d27-45ac-ac96-022eb3d0514e")
     {
         Entity = new()
         {
-            Name = "Namsmannen - Tvangsfullbyrdelse",
-            Code = "namsmannen-tvangsfullbyrdelse",
-            Description = "Gjelder representasjon i saker om tvangsfullbyrdelse etter tvangsfullbyrdelsesloven",
-            Urn = "urn:altinn:external-role:cra:namsmannen-tvangsfullbyrdelse",
+            Name = "Namsmannen - Tvangsfullbyrdelse, herunder behandling i forliksrådet",
+            Code = "namsmannen-tvangsfullbyrdelse-forliksradet",
+            Description = "Gjelder representasjon i saker om tvangsfullbyrdelse etter tvangsfullbyrdelsesloven, herunder eventuell behandling i forliksrådet av slike saker og oppfølging av saken hos innkrevingsmyndigheten.",
+            Urn = "urn:altinn:external-role:cra:namsmannen-tvangsfullbyrdelse-forliksradet",
             IsKeyRole = false,
             IsAssignable = false,
             EntityTypeId = EntityTypeConstants.Person,
@@ -1982,12 +1982,12 @@ public static class RoleConstants
             IsAvailableForServiceOwners = false,
         },
         EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "The Enforcement Officer - Enforcement"),
-            KeyValuePair.Create("Description", "Applies to representation in cases of enforcement under the Enforcement Act")
+            KeyValuePair.Create("Name", "The Enforcement Officer - Enforcement, including proceedings in the conciliation board"),
+            KeyValuePair.Create("Description", "Applies to applications for and/or management of existing debt settlements")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Namsmannen - Tvangsfullbyrding"),
-            KeyValuePair.Create("Description", "Gjeld representasjon i saker om tvangsfullbyrding etter tvangsfullbyrdingslova")
+            KeyValuePair.Create("Name", "Namsmannen - Tvangsfullbyrding, inkludert behandling i forliksrådet"),
+            KeyValuePair.Create("Description", "Gjeld representasjon i saker om tvangsfullbyrding etter tvangsfullbyrdingslova, herunder eventuell behandling i forliksrådet av slike saker og oppfølging av saka hos innkrevjingsmyndigheita.")
         ),
     };
 
@@ -2196,40 +2196,6 @@ public static class RoleConstants
     };
 
     /// <summary>
-    /// Represents the 'Skatteetaten - Innkreving' role.
-    /// </summary>
-    /// <remarks>
-    /// - <c>Id:</c> 15f73703-0a67-436c-8f3c-05a77c3919ab
-    /// - <c>URN:</c> urn:altinn:external-role:cra:skatteetaten-innkreving
-    /// - <c>Provider:</c> CivilRightsAuthority
-    /// - <c>Code:</c> skatteetaten-innkreving
-    /// - <c>Description:</c> Skatteetaten - Innkreving
-    /// </remarks>
-    public static ConstantDefinition<Role> TheTaxAdministrationCollection { get; } = new ConstantDefinition<Role>("15f73703-0a67-436c-8f3c-05a77c3919ab")
-    {
-        Entity = new()
-        {
-            Name = "Skatteetaten - Innkreving",
-            Code = "skatteetaten-innkreving",
-            Description = "Gjelder oppfølging og behandling av krav fra Skatteetaten, for eksempel restskatt",
-            Urn = "urn:altinn:external-role:cra:skatteetaten-innkreving",
-            IsKeyRole = false,
-            IsAssignable = false,
-            EntityTypeId = EntityTypeConstants.Person,
-            ProviderId = ProviderConstants.CivilRightsAuthority,
-            IsAvailableForServiceOwners = false,
-        },
-        EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "The Tax Administration - Collection"),
-            KeyValuePair.Create("Description", "Applies to follow-up and processing of claims from the Tax Administration, for example, residual tax")
-        ),
-        NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Skatteetaten - Innkrevjing"),
-            KeyValuePair.Create("Description", "Gjeld oppfølging og behandling av krav frå Skatteetaten, for eksempel restskatt")
-        ),
-    };
-
-    /// <summary>
     /// Represents the 'Skatteetaten - Endre postadresse' role.
     /// </summary>
     /// <remarks>
@@ -2332,23 +2298,23 @@ public static class RoleConstants
     };
 
     /// <summary>
-    /// Represents the 'Statens innkrevingssentral - Gjeldsordning og betalingsavtaler' role.
+    /// Represents the 'Skatteetaten - Innkreving og tvangsfullbyrdelse' role.
     /// </summary>
     /// <remarks>
-    /// - <c>Id:</c> ae5b1799-be1a-4fda-b3b0-e6d797813b4a
-    /// - <c>URN:</c> urn:altinn:external-role:cra:statens-innkrevingssentral-gjeldsordning-betalingsavtaler
+    /// - <c>Id:</c> 823fd7da-8594-4627-b6dc-32e8d333b6e4
+    /// - <c>URN:</c> urn:altinn:external-role:cra:skatteetaten-skatt
     /// - <c>Provider:</c> CivilRightsAuthority
-    /// - <c>Code:</c> statens-innkrevingssentral-gjeldsordning-betalingsavtaler
-    /// - <c>Description:</c> Statens innkrevingssentral - Gjeldsordning og betalingsavtaler
+    /// - <c>Code:</c> skatteetaten-innkreving-tvangsfullbyrdelse
+    /// - <c>Description:</c> Skatteetaten - Innkreving og tvangsfullbyrdelse
     /// </remarks>
-    public static ConstantDefinition<Role> TheNorwegianNationalCollectionAgencyDebtSettlementAndPaymentAgreements { get; } = new ConstantDefinition<Role>("ae5b1799-be1a-4fda-b3b0-e6d797813b4a")
+    public static ConstantDefinition<Role> TheTaxAdministrationCollectionAndEnforcement { get; } = new ConstantDefinition<Role>("823fd7da-8594-4627-b6dc-32e8d333b6e4")
     {
         Entity = new()
         {
-            Name = "Statens innkrevingssentral - Gjeldsordning og betalingsavtaler",
-            Code = "statens-innkrevingssentral-gjeldsordning-betalingsavtaler",
-            Description = "Gjelder søknad om og forvaltning av gjeldsordning og betalingsavtaler",
-            Urn = "urn:altinn:external-role:cra:statens-innkrevingssentral-gjeldsordning-betalingsavtaler",
+            Name = "Skatteetaten - Innkreving og tvangsfullbyrdelse",
+            Code = "skatteetaten-innkreving-tvangsfullbyrdelse",
+            Description = "saker som innkrevingsmyndigheten i Skatteetaten behandler etter innkrevingsloven, fra og med varsel etter tvangsfullbyrdelsesloven §4-18 og §4-19.",
+            Urn = "urn:altinn:external-role:cra:skatteetaten-innkreving-tvangsfullbyrdelse",
             IsKeyRole = false,
             IsAssignable = false,
             EntityTypeId = EntityTypeConstants.Person,
@@ -2356,12 +2322,12 @@ public static class RoleConstants
             IsAvailableForServiceOwners = false,
         },
         EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "The Norwegian National Collection Agency - Debt settlement and payment agreements"),
-            KeyValuePair.Create("Description", "Applies to applications for and management of debt settlements and payment agreements")
+            KeyValuePair.Create("Name", "The Tax Administration - Collection and enforcement"),
+            KeyValuePair.Create("Description", "Applies to cases handled by the collection authority in the Tax Administration under the Collection Act, from and including notice under Sections 4-18 and 4-19 of tvangsfullbyrdelsesloven.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Statens innkrevingssentral - Gjeldsordning og betalingsavtalar"),
-            KeyValuePair.Create("Description", "Gjeld søknad om og forvaltning av gjeldsordning og betalingsavtalar")
+            KeyValuePair.Create("Name", "Skatteetaten - Innkrevjing og tvangsfullbyrding"),
+            KeyValuePair.Create("Description", "Gjeld saker som innkrevjingsmyndigheita i Skatteetaten behandlar etter innkrevjingslova, frå og med varsel etter tvangsfullbyrdingslova §4-18 og §4-19.")
         ),
     };
 
