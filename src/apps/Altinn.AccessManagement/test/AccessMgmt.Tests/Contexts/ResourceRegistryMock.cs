@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,7 +30,7 @@ public class ResourceRegistryMock(MockContext context) : IResourceRegistryClient
         Task.FromResult(Context.Resources);
 
     /// <inheritdoc/>
-    public Task<List<ServiceResource>> GetResources(CancellationToken cancellationToken = default) =>
+    public Task<List<ServiceResource>> GetResources(CancellationToken cancellationToken = default, string? searchParams = null) =>
         Task.FromResult(Context.Resources);
 
     /// <inheritdoc/>

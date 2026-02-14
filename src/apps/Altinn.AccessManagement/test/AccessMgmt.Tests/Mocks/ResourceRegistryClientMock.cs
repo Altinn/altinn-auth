@@ -42,7 +42,7 @@ namespace Altinn.AccessManagement.Tests.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<List<ServiceResource>> GetResources(CancellationToken cancellationToken = default)
+        public Task<List<ServiceResource>> GetResources(CancellationToken cancellationToken = default, string? searchParams = null)
         {
             List<ServiceResource> resources = new List<ServiceResource>();
 

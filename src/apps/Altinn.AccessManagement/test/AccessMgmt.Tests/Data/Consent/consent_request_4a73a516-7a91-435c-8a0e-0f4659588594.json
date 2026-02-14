@@ -1,0 +1,40 @@
+﻿{
+    "CreatedTime": "2025-10-30T12:00:00+01:00",
+    "ConsentGuid": "4a73a516-7a91-435c-8a0e-0f4659588594",
+    "OfferedByPartyUUID": "d5b861c8-8e3b-44cd-9952-5315e5990cf5",
+    "RequiredDelegatorUUID": "e4c8ca33-5f2e-4357-b69a-73179abe11d1",
+    "CoveredByPartyUUID": "14b19044-031d-4ee6-9675-1b8feaf7beef",
+    "HandledByPartyUUID": "d181df4e-70a8-4724-b192-8209a4ef0d35",
+    "ValidTo": "2026-10-30T00:00:00+01:00",
+    "RequestMessage": {
+        "NorwegianNO": "Dette er teksten"
+    },
+    "ConsentRequestStatus": "accepted",
+    "Consented": "2026-01-01T00:00:00+01:00",
+    "RequestResources": [
+        {
+            "RoleTypeID": null,
+            "ServiceCode": "5928",
+            "ServiceEditionCode": 202301,
+            "ServiceEditionVersionID": 3,
+            "AltinnAppId": null,
+            "Operations": [
+                "Read",
+                "Write"
+            ],
+            "Metadata": {
+                "inntektsaar": "2024"
+            }
+        }
+    ],
+    "ConsentHistoryEvents": [
+        {
+            "Created": "2026-01-01T00:00:00+01:00",
+            "PerformedByPartyUUID": "96aa9c29-811b-47ad-92ec-7e234ccf751f",
+            "EventType": "Accepted",
+            "ConsentRequestID": "4a73a516-7a91-435c-8a0e-0f4659588594"
+        }
+    ],
+    "RedirectUrl": "https://www.vg.no",
+    "TemplateId": "sblanesoknad"
+}

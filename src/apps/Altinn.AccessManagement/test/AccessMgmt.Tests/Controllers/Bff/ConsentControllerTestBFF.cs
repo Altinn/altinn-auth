@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
+using Npgsql.Internal;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -55,6 +56,7 @@ namespace AccessMgmt.Tests.Controllers.Bff
                     services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
                     services.AddSingleton<IPDP, PdpPermitMock>();
                     services.AddSingleton<IProfileClient, ProfileClientMock>();
+                    services.AddSingleton<IAltinn2ConsentClient, Altinn2ConsentClientMock>();
 
                     // Register the SAME mock instance
                     services.AddSingleton<IAmPartyRepository>(_mockAmPartyRepository.Object);

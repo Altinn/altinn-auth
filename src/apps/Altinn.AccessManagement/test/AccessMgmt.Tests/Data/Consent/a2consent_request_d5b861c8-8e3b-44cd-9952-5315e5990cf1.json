@@ -1,0 +1,70 @@
+﻿{
+    "CreatedTime": "2025-10-30T12:00:00+01:00",
+    "ConsentGuid": "d5b861c8-8e3b-44cd-9952-5315e5990cf1",
+    "OfferedByPartyUUID": "d5b861c8-8e3b-44cd-9952-5315e5990cf5",
+    "RequiredDelegatorUUID": "8ef5e5fa-94e1-4869-8635-df86b6219181",
+    "CoveredByPartyUUID": "8ef5e5fa-94e1-4869-8635-df86b6219181",
+    "HandledByPartyUUID": "d181df4e-70a8-4724-b192-8209a4ef0d35",
+    "ValidTo": "2026-10-30T00:00:00+01:00",
+    "RequestMessage": {
+        "NorwegianNO": "Dette er teksten"
+    },
+    "ConsentRequestStatus": "accepted",
+    "Consented": "2026-01-30T10:00:00+01:00",
+    "RequestResources": [
+        {
+            "RoleTypeID": null,
+            "ServiceCode": "5928",
+            "ServiceEditionCode": 202301,
+            "ServiceEditionVersionID": 3,
+            "AltinnAppId": null,
+            "Operations": [
+                "Read",
+                "Write"
+            ],
+            "Metadata": {
+                "fraOgMed": "2025-04",
+                "tilOgMed": "2026-09",
+                "inntektsaar": "2024"
+            }
+        },
+        {
+            "RoleTypeID": null,
+            "ServiceCode": "5930",
+            "ServiceEditionCode": 202301,
+            "ServiceEditionVersionID": 6,
+            "AltinnAppId": null,
+            "Operations": [
+                "Read",
+                "Write"
+            ],
+            "Metadata": {
+                "fraOgMed": "2025-04",
+                "tilOgMed": "2026-09",
+                "inntektsaar": "2024"
+            }
+        }
+    ],
+    "ConsentHistoryEvents": [
+        {
+            "Created": "2026-01-01T00:00:00+01:00",
+            "PerformedByPartyUUID": "d5b861c8-8e3b-44cd-9952-5315e5990cf5",
+            "EventType": "Accepted",
+            "ConsentRequestID": "d5b861c8-8e3b-44cd-9952-5315e5990cf1"
+        },
+        {
+            "Created": "2026-01-20T00:00:00+01:00",
+            "PerformedByPartyUUID": "d5b861c8-8e3b-44cd-9952-5315e5990cf5",
+            "EventType": "Used",
+            "ConsentRequestID": "d5b861c8-8e3b-44cd-9952-5315e5990cf1"
+        },
+        {
+            "Created": "2026-01-22T00:00:00+01:00",
+            "PerformedByPartyUUID": "d5b861c8-8e3b-44cd-9952-5315e5990cf5",
+            "EventType": "Used",
+            "ConsentRequestID": "d5b861c8-8e3b-44cd-9952-5315e5990cf1"
+        }
+    ],
+    "RedirectUrl": "https://www.vg.no",
+    "TemplateId": "sblanesoknad"
+}

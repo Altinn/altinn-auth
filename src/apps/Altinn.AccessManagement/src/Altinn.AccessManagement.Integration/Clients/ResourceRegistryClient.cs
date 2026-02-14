@@ -59,13 +59,19 @@ namespace Altinn.AccessManagement.Integration.Clients
         }
 
         /// <inheritdoc/>
-        public async Task<List<ServiceResource>> GetResources(CancellationToken cancellationToken = default)
+        public async Task<List<ServiceResource>> GetResources(CancellationToken cancellationToken = default, string? searchParams = null)
         {
             List<ServiceResource> resources = new();
 
             try
             {
-                string endpointUrl = $"resource/search";
+                string endpointUrl = "resource/search";
+
+                if (!string.IsNullOrWhiteSpace(searchParams))
+                {
+                    string prefix = searchParams.StartsWith("?") ? string.Empty : "?";
+                    endpointUrl += prefix + searchParams;
+                }
 
                 HttpResponseMessage response = await _httpClient.GetAsync(endpointUrl, cancellationToken);
                 if (response.StatusCode == HttpStatusCode.OK)

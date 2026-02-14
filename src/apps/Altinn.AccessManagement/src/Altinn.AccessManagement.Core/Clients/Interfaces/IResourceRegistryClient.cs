@@ -21,8 +21,9 @@ namespace Altinn.AccessManagement.Core.Clients.Interfaces
         /// Integration point for retrieving a list of resources
         /// </summary>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <param name="searchParams">The search parameters to filter the resources</param>
         /// <returns>The resource list if exists</returns>
-        Task<List<ServiceResource>> GetResources(CancellationToken cancellationToken = default);
+        Task<List<ServiceResource>> GetResources(CancellationToken cancellationToken = default, string? searchParams = null);
 
         /// <summary>
         /// Integration point for retrieving the full list of resources
