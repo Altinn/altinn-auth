@@ -10,6 +10,13 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql("""
+            SET LOCAL app.changed_by = '0195efb8-7c80-7262-b616-7d9eb843bcaa';
+            SET LOCAL app.changed_by_system = '3296007f-f9ea-4bd0-b6a6-c8462d54633a';
+            SET LOCAL app.change_operation_id = 'c69a5357-ad30-4384-b2b7-7581c4be71ee';
+            UPDATE dbo.package SET code = reverse(split_part(reverse(urn), ':', 1)) WHERE code is null;
+            """);
+
             migrationBuilder.DropIndex(
                 name: "ix_role_providerid_code",
                 schema: "dbo",
