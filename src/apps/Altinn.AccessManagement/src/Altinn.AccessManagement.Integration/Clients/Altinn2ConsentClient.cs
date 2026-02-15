@@ -151,14 +151,13 @@ public class Altinn2ConsentClient : IAltinn2ConsentClient
             UriBuilder uriBuilder = new UriBuilder($"{_sblBridgeSettings.BaseApiUrl}authorization/api/updateconsentmigratestatus?consentGuid={consentGuid}&status={status}");
 
             HttpResponseMessage response = await _client.GetAsync(uriBuilder.Uri, cancellationToken);
-            string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (response.StatusCode == HttpStatusCode.OK)
             {
-                return bool.Parse(responseContent);
+                return true;
             }
 
-            _logger.LogError("AccessManagement // Altinn2ConsentClient // UpdateConsentStatus // Unexpected HttpStatusCode: {StatusCode}\n {responseContent}", response.StatusCode, responseContent);
+            _logger.LogError("AccessManagement // Altinn2ConsentClient // UpdateConsentStatus // Unexpected HttpStatusCode: {StatusCode}", response.StatusCode);
             return false;
         }
         catch (Exception ex)
