@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -43,10 +44,10 @@ public class Altinn2ConsentClient : IAltinn2ConsentClient
     /// <param name="platformSettings">the platform setttings</param>
     /// <param name="accessTokenGenerator">An instance of the AccessTokenGenerator service.</param>
     public Altinn2ConsentClient(
-        HttpClient httpClient, 
-        IOptions<SblBridgeSettings> sblBridgeSettings, 
-        ILogger<Altinn2ConsentClient> logger, 
-        IHttpContextAccessor httpContextAccessor, 
+        HttpClient httpClient,
+        IOptions<SblBridgeSettings> sblBridgeSettings,
+        ILogger<Altinn2ConsentClient> logger,
+        IHttpContextAccessor httpContextAccessor,
         IOptions<PlatformSettings> platformSettings,
         IAccessTokenGenerator accessTokenGenerator)
     {
@@ -66,11 +67,9 @@ public class Altinn2ConsentClient : IAltinn2ConsentClient
     {
         try
         {
-            string endpointUrl = $"getconsentlistformigration?numberOfConsentsToReturn={numberOfConsentsToReturn}&status={status}&onlyGetExpired={onlyGetExpired}";
-            string token = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _platformSettings.JwtCookieName);
-            var accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "access-management");
+            UriBuilder uriBuilder = new UriBuilder($"{_sblBridgeSettings.BaseApiUrl}authorization/api/getconsentlistformigration?numberOfConsentsToReturn={numberOfConsentsToReturn}&status={status}&onlyGetExpired={onlyGetExpired}");
 
-            HttpResponseMessage response = await _client.GetAsync(token, endpointUrl, accessToken, cancellationToken);
+            HttpResponseMessage response = await _client.GetAsync(uriBuilder.Uri, cancellationToken);
             string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (response.StatusCode == HttpStatusCode.OK)
@@ -93,13 +92,12 @@ public class Altinn2ConsentClient : IAltinn2ConsentClient
     {
         try
         {
-            string query = string.Join("&", consentList.Select(g => "consentList=" + WebUtility.UrlEncode(g.ToString())));
+            UriBuilder uriBuilder = new UriBuilder($"{_sblBridgeSettings.BaseApiUrl}authorization/api/getmultipleconsents");
 
-            string endpointUrl = $"getmultipleconsents?getmultipleconsents?{query}";
-            string token = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _platformSettings.JwtCookieName);
-            var accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "access-management");
+            string json = JsonSerializer.Serialize(consentList, _serializerOptions);
+            StringContent requestBody = new StringContent(json, Encoding.UTF8, "application/json");
 
-            HttpResponseMessage response = await _client.GetAsync(token, endpointUrl, accessToken, cancellationToken);
+            HttpResponseMessage response = await _client.PostAsync(uriBuilder.Uri, requestBody, cancellationToken);
             string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (response.StatusCode == HttpStatusCode.OK)
@@ -124,11 +122,9 @@ public class Altinn2ConsentClient : IAltinn2ConsentClient
     {
         try
         {
-            string endpointUrl = $"consent?consentGuid={consentGuid}";
-            string token = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _platformSettings.JwtCookieName);
-            var accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "access-management");
+            UriBuilder uriBuilder = new UriBuilder($"{_sblBridgeSettings.BaseApiUrl}authorization/api/consent?consentGuid={consentGuid}");
 
-            HttpResponseMessage response = await _client.GetAsync(token, endpointUrl, accessToken, cancellationToken);
+            HttpResponseMessage response = await _client.GetAsync(uriBuilder.Uri, cancellationToken);
             string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (response.StatusCode == HttpStatusCode.OK)
@@ -152,12 +148,9 @@ public class Altinn2ConsentClient : IAltinn2ConsentClient
     {
         try
         {
-            string endpointUrl = $"updateconsentmigratestatus?consentGuid={consentGuid}&status={status}";
-            string token = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _platformSettings.JwtCookieName);
-            var accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "access-management");
-            StringContent requestBody = new StringContent(JsonSerializer.Serialize(consentGuid), Encoding.UTF8, "application/json");
-            
-            HttpResponseMessage response = await _client.PostAsync(token, endpointUrl, requestBody, accessToken, cancellationToken);
+            UriBuilder uriBuilder = new UriBuilder($"{_sblBridgeSettings.BaseApiUrl}authorization/api/updateconsentmigratestatus?consentGuid={consentGuid}&status={status}");
+
+            HttpResponseMessage response = await _client.GetAsync(uriBuilder.Uri, cancellationToken);
             string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (response.StatusCode == HttpStatusCode.OK)
