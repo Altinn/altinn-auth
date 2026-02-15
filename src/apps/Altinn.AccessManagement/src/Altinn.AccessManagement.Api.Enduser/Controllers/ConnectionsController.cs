@@ -451,7 +451,7 @@ public class ConnectionsController(
     [HttpGet("resources")]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
-    [ProducesResponseType<ResourcePermissionDto>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<IEnumerable<ResourcePermissionDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -477,7 +477,12 @@ public class ConnectionsController(
             cancellationToken: cancellationToken
             );
 
-        return Ok(result);
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok(result.Value);
     }
 
     /// <summary>
@@ -523,7 +528,7 @@ public class ConnectionsController(
                 resourceId: resourceObj.Id,
                 configureConnection: ConfigureConnections,
                 cancellationToken: cancellationToken
-                ); 
+                );
 
         return Ok(result);
     }
