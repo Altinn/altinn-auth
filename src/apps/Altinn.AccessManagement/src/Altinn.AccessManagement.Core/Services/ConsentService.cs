@@ -226,7 +226,10 @@ namespace Altinn.AccessManagement.Core.Services
                     From = consentRequest.From,
                     To = consentRequest.To,
                     ValidTo = consentRequest.ValidTo,
-                    ConsentRights = consentRequest.ConsentRights
+                    ConsentRights = consentRequest.ConsentRights,
+                    ConsentRequestEvents = consentRequest.ConsentRequestEvents,
+                    TemplateId = consentRequest.TemplateId,
+                    HandledBy = consentRequest.HandledBy,
                 };
 
                 consent.Context = await _consentRepository.GetConsentContext(consentRequestId, cancellationToken);
