@@ -73,40 +73,6 @@ public interface IConnectionService
     Task<Result<IEnumerable<ResourcePermissionDto>>> GetResources(Guid party, Guid? fromId, Guid? toId, Guid? resourceId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Adds a resource to an assignment (by resource ID) based on the role between two entities.
-    /// </summary>
-    /// <param name="fromId">ID of the entity from which the assignment originates.</param>
-    /// <param name="toId">ID of the entity to which the assignment is made.</param>
-    /// <param name="resourceId">Unique identifier of the resource to assign.</param>
-    /// <param name="delegationChangeId">Delegation change id (Legacy)</param>
-    /// <param name="policyPath">Path to policy</param>
-    /// <param name="policyVersion">Policy version</param>
-    /// <param name="configureConnection">ConnectionOptions</param>
-    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
-    /// <returns>
-    /// A <see cref="Result{T}"/> containing the created <see cref="AssignmentResource"/>.
-    /// </returns>
-    Task<Result<AssignmentResourceDto>> AddResource(Guid fromId, Guid toId, Guid resourceId, int delegationChangeId, string policyPath, string policyVersion, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Adds a resource to an assignment (by resource unique name) based on the role between two entities.
-    /// </summary>
-    /// <param name="fromId">ID of the entity from which the assignment originates.</param>
-    /// <param name="toId">ID of the entity to which the assignment is made.</param>
-    /// <param name="resourceId">Resource unique string identifier</param>
-    /// <param name="delegationChangeId">Delegation change id (Legacy)</param>
-    /// <param name="policyPath">Path to policy</param>
-    /// <param name="policyVersion">Policy version</param>
-    /// <param name="configureConnection">ConnectionOptions</param>
-    /// <param name="cancellationToken">
-    /// Token to monitor for cancellation requests.
-    /// </param>
-    /// <returns>
-    /// A <see cref="Result{T}"/> containing the created <see cref="AssignmentResource"/>.
-    /// </returns>
-    Task<Result<AssignmentResourceDto>> AddResource(Guid fromId, Guid toId, string resourceId, int delegationChangeId, string policyPath, string policyVersion, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Removes a resource (by resource unique name) from assignment based on a specific role between two entities.
     /// </summary>
     /// <param name="fromId">ID of the entity from which the assignment originates.</param>
@@ -133,34 +99,6 @@ public interface IConnectionService
     /// A <see cref="ValidationProblemInstance"/> indicating success or describing any validation errors.
     /// </returns>
     Task<ValidationProblemInstance> RemoveResource(Guid fromId, Guid toId, Guid resourceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Checks if an authpenticated user is an access manager and has the necessary permissions to delegate a specific resource.
-    /// </summary>
-    /// <param name="party">ID of the person.</param>
-    /// <param name="resourceIds">Filter param using unique resource identifiers.</param>
-    /// <param name="configureConnection">ConnectionOptions</param>
-    /// <param name="cancellationToken">
-    /// Token to monitor for cancellation requests.
-    /// </param>
-    /// <returns>
-    /// A <see cref="ValidationProblemInstance"/> indicating success or describing any validation errors.
-    /// </returns>
-    Task<Result<Dictionary<Guid, bool>>> CheckResource(Guid party, IEnumerable<Guid> resourceIds = null, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Checks if an authpenticated user is an access manager and has the necessary permissions to delegate a specific resource.
-    /// </summary>
-    /// <param name="party">ID of the person.</param>
-    /// <param name="resources">Filter param using resource key identifiers.</param>
-    /// <param name="configureConnection">ConnectionOptions</param>
-    /// <param name="cancellationToken">
-    /// Token to monitor for cancellation requests.
-    /// </param>
-    /// <returns>
-    /// A <see cref="ValidationProblemInstance"/> indicating success or describing any validation errors.
-    /// </returns>
-    Task<Result<Dictionary<string, bool>>> CheckResource(Guid party, IEnumerable<string> resources, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get connection packages
@@ -338,4 +276,18 @@ public interface IConnectionService
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>collection of all connections of the agent</returns>
     Task<IEnumerable<SystemUserClientConnectionDto>> GetConnectionsToAgent(Guid viaId, Guid toId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Adds a delegation to a resource between two entities with the specified action keys. If not all actions is posible nothing is performed and a Problem is returned
+    /// </summary>
+    /// <param name="from">The source entity from which the delegation originates.</param>
+    /// <param name="to">The target entity to which the delegation is granted.</param>
+    /// <param name="resourceObj">The resource to associate between the source and target entities.</param>
+    /// <param name="actionKeys">A list of action keys that define the permissions or actions allowed for the resource.</param>
+    /// <param name="by">The entity performing the operation. Used for auditing and authorization purposes.</param>
+    /// <param name="configureConnection">An optional delegate to configure connection options for the operation. If null, default connection settings are used.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a Result object indicating whether
+    /// the resource was successfully added.</returns>
+    Task<Result<bool>> AddResource(Entity from, Entity to, Resource resourceObj, RuleKeyListDto actionKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
 }

@@ -6,17 +6,12 @@ namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 /// <summary>
 /// Action
 /// </summary>
-public class ActionDto
+public class RuleCheckDto
 {
     /// <summary>
-    /// Key that uniquely identifies an action with all parameters found in the policy
+    /// Rule key data
     /// </summary>
-    public required string ActionKey { get; set; }
-
-    /// <summary>
-    /// Name of the action to present in frontend
-    /// </summary>
-    public required string ActionName { get; set; }
+    public required RuleDto Rule { get; set; }
 
     /// <summary>
     /// Result of the delegation check.
@@ -27,12 +22,17 @@ public class ActionDto
     /// <summary>
     /// Reason for the result of the delegation check.
     /// </summary>
-    public IEnumerable<Reason> Reasons { get; set; } = [];
+    internal IEnumerable<Permision> Permissions { get; set; } = [];
+
+    /// <summary>
+    /// List of reasons for permit or deny
+    /// </summary>
+    public IEnumerable<DelegationCheckReasonCode> ReasonCodes { get; set; }
 
     /// <summary>
     /// Resource delegation check response model
     /// </summary>
-    public class Reason
+    public class Permision
     {
         /// <summary>
         /// Description of the reason.
@@ -43,7 +43,7 @@ public class ActionDto
         /// Reason  code indicating the type of delegation check result.
         /// </summary>
         [JsonConverter(typeof(JsonStringEnumConverter))]
-        public required DelegationCheckReasonCode ReasonKey { get; set; }
+        public required DelegationCheckReasonCode PermisionKey { get; set; }
 
         /// <summary>
         /// Role ID of the role providing access

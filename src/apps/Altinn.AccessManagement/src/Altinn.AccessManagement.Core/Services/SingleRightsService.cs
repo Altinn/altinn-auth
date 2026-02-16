@@ -18,6 +18,7 @@ using Altinn.AccessManagement.Core.Resolvers.Extensions;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Enums;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -135,50 +136,76 @@ namespace Altinn.AccessManagement.Core.Services
             return await _pap.TryWriteDelegationPolicyRules(rules, cancellationToken);
         }
 
-        public async Task<List<Rule>> TryWriteDelegationPolicyRules(Entity from, Entity to, Resource resource, List<string> actionIds, Entity performedBy, CancellationToken cancellationToken)
+        public async Task<List<Rule>> TryWriteDelegationPolicyRules(Entity from, Entity to, Resource resource, RuleKeyListDto actionIds, Entity performedBy, CancellationToken cancellationToken)
         {
             var rules = GenerateRules(from, to, resource, actionIds, performedBy).ToList();
             return await _pap.TryWriteDelegationPolicyRules(rules, cancellationToken);
         }
 
-        private IEnumerable<Rule> GenerateRules(Entity from, Entity to, Resource resource, List<string> actionIds, Entity performedBy)
+        private IEnumerable<Rule> GenerateRules(Entity from, Entity to, Resource resource, RuleKeyListDto actionIds, Entity performedBy)
         {
             var coveredBy = to;
             var offeredBy = from;
 
-            var coveredByUuidType = DelegationHelper.GetUuidTypeFromEntityType(coveredBy.TypeId);
             var offeredByUuidType = DelegationHelper.GetUuidTypeFromEntityType(offeredBy.TypeId);
-            var performedByUuidType = DelegationHelper.GetUuidTypeFromEntityType(performedBy.TypeId);
+            
+            List<Rule> rules = [];
 
-            var result = actionIds.Select(action =>
-                new Rule
+            foreach (string ruleKey in actionIds.RuleKeys)
+            {
+                (List<AttributeMatch> Resource, AttributeMatch Action) resourceAndAction = SplitActionKey(ruleKey);
+
+                rules.Add(new Rule
                 {
-                    RuleId = Guid.NewGuid().ToString(),
+                    RuleId = Guid.CreateVersion7().ToString(),
                     Type = RuleType.None,
-
                     CoveredBy = ConvertEntityToAttributeMatch(coveredBy),
-                    Resource = ConvertResourceToAttributeMatches(resource),
-                    Action = ConvertActionToAttributeMatch(action),
-
+                    Resource = resourceAndAction.Resource,
+                    Action = resourceAndAction.Action,
                     OfferedByPartyId = offeredBy.PartyId.HasValue ? offeredBy.PartyId.Value : 0,
                     OfferedByPartyUuid = offeredBy.Id,
                     OfferedByPartyType = offeredByUuidType,
-
                     PerformedBy = ConvertEntityToAttributeMatch(performedBy),
                     DelegatedByUserId = performedBy.UserId,
-                    DelegatedByPartyId = performedBy.PartyId,
+                    DelegatedByPartyId = performedBy.PartyId
                 });
+            }            
 
-            return result;
+            return rules;
         }
 
-        private static AttributeMatch ConvertActionToAttributeMatch(string action)
+        private static (List<AttributeMatch> Resource, AttributeMatch Action) SplitActionKey(string actionKey)
         {
-            return new AttributeMatch
+            List<AttributeMatch> resourceList = [];
+            List<AttributeMatch> actionList = [];
+
+            string[] urns = actionKey.Split("urn:", StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string part in urns)
             {
-                Id = AltinnXacmlConstants.MatchAttributeIdentifiers.ActionId,
-                Value = action
-            };
+                string current = "urn:" + part;
+
+                if (current.EndsWith(':'))
+                {
+                    current = current.Remove(current.Length - 1);
+                }
+
+                int index = current.LastIndexOf(':');
+                string currentKey = current.Substring(0, index);
+                string currentValue = current.Substring(index + 1);
+                AttributeMatch currentAttributeMatch = new(currentKey, currentValue);
+
+                if (currentAttributeMatch.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.ActionId, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    actionList.Add(currentAttributeMatch);
+                }
+                else
+                {
+                    resourceList.Add(currentAttributeMatch);
+                }
+            }
+
+            return (resourceList, actionList.FirstOrDefault());
         }
 
         private static List<AttributeMatch> ConvertEntityToAttributeMatch(Entity entity)
@@ -194,17 +221,15 @@ namespace Altinn.AccessManagement.Core.Services
             });
 
             // User
-            if (!matches.Any() && entity.UserId.HasValue)
+            if (entity.UserId.HasValue)
             {
                 matches.Add(new AttributeMatch
                 {
                     Id = AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute,
                     Value = entity.UserId.Value.ToString()
                 });
-            }
-
-            // Party
-            if (!matches.Any() && entity.PartyId.HasValue)
+            }            
+            else if (entity.PartyId.HasValue) // Party
             {
                 matches.Add(new AttributeMatch
                 {

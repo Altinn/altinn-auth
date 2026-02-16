@@ -4,6 +4,7 @@ using System.Text;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
 using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.AccessList;
 using Altinn.AccessManagement.Core.Models.Party;
 using Altinn.AccessManagement.Core.Models.Register;
@@ -45,8 +46,8 @@ public partial class ConnectionService(
     IAccessListsAuthorizationClient accessListsAuthorizationClient,
     IPolicyRetrievalPoint policyRetrievalPoint,
     IRoleService roleService,
-    IResourceService resourceService,
-    ITranslationService translationService) : IConnectionService
+    ITranslationService translationService,
+    ISingleRightsService singleRightsService) : IConnectionService
 {
     public async Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, bool includeClientDelegations = true, bool includeAgentConnections = true, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
     {
@@ -235,97 +236,10 @@ public partial class ConnectionService(
         return DtoMapper.ConvertResources(resources);
     }
 
-    public async Task<Result<AssignmentResourceDto>> AddResource(Guid fromId, Guid toId, string resourceId, int delegationChangeId, string policyPath, string policyVersion, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
+    public async Task<ValidationProblemInstance> RemoveResource(Guid fromId, Guid toId, string resource, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
-        var resource = await dbContext.Resources.AsNoTracking().FirstOrDefaultAsync(t => t.RefId == resourceId);
-        return await AddResource(fromId, toId, resource.Id, delegationChangeId, policyPath, policyVersion, configureConnection, cancellationToken);
-    }
-
-    public async Task<Result<AssignmentResourceDto>> AddResource(Guid fromId, Guid toId, Guid resourceId, int delegationChangeId, string policyPath, string policyVersion, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
-    {
-        var options = new ConnectionOptions(configureConnection);
-        var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
-        var problem = ValidateWriteOpInput(from, to, options);
-        if (problem is { })
-        {
-            return problem;
-        }
-
-        var connection = await Get(fromId, fromId, toId, configureConnections: configureConnection, cancellationToken: cancellationToken);
-        if (!connection.IsSuccess || connection.Value.Count() == 0)
-        {
-            return Problems.MissingConnection;
-        }
-
-        var check = await CheckResource(fromId, resourceIds: [resourceId], configureConnection, cancellationToken);
-        if (check.IsProblem)
-        {
-            return check.Problem;
-        }
-
-        // Look for existing direct rightholder assignment
-        var assignment = await dbContext.Assignments
-            .Where(a => a.FromId == fromId)
-            .Where(a => a.ToId == toId)
-            .Where(a => a.RoleId == RoleConstants.Rightholder.Id)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (assignment == null)
-        {
-            var hasConnection = await connectionQuery.HasConnection(fromId, toId);
-            if (hasConnection.Result)
-            {
-                throw new Exception("No connection found between parties");
-            }
-
-            assignment = new Assignment()
-            {
-                FromId = fromId,
-                ToId = toId,
-                RoleId = RoleConstants.Rightholder.Id
-            };
-
-            await dbContext.Assignments.AddAsync(assignment, cancellationToken);
-        }
-
-        var assignmentResource = await dbContext.AssignmentResources.AsTracking()
-                .Where(a => a.AssignmentId == assignment.Id)
-                .Where(a => a.ResourceId == resourceId)
-                .FirstOrDefaultAsync(cancellationToken);
-
-        if (assignmentResource == null)
-        {
-            assignmentResource = new AssignmentResource()
-            {
-                AssignmentId = assignment.Id,
-                ResourceId = resourceId,
-                DelegationChangeId = delegationChangeId,
-                PolicyPath = policyPath,
-                PolicyVersion = policyVersion
-            };
-            await dbContext.AssignmentResources.AddAsync(assignmentResource, cancellationToken);
-        }
-        else
-        {
-            assignmentResource.PolicyPath = policyPath;
-            assignmentResource.PolicyVersion = policyVersion;
-            assignmentResource.DelegationChangeId = delegationChangeId;
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        if (from.PartyId.HasValue && to.PartyId.HasValue)
-        {
-            await altinn2Client.ClearReporteeRights(from.PartyId.Value, to.PartyId.Value, to.UserId.HasValue ? to.UserId.Value : 0, cancellationToken: cancellationToken);
-        }
-
-        return DtoMapper.Convert(assignmentResource);
-    }
-
-    public async Task<ValidationProblemInstance> RemoveResource(Guid fromId, Guid toId, string resourceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
-    {
-        var resource = await dbContext.Resources.AsNoTracking().FirstOrDefaultAsync(t => t.RefId == resourceId);
-        return await RemoveResource(fromId, toId, resource.Id, configureConnection, cancellationToken);
+        var resourceObj = await dbContext.Resources.AsNoTracking().FirstOrDefaultAsync(t => t.RefId == resource);
+        return await RemoveResource(fromId, toId, (Guid)resourceObj.Id, configureConnection, cancellationToken);
     }
 
     public async Task<ValidationProblemInstance> RemoveResource(Guid fromId, Guid toId, Guid resourceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
@@ -374,17 +288,6 @@ public partial class ConnectionService(
 
         return null;
     }
-
-    public async Task<Result<Dictionary<Guid, bool>>> CheckResource(Guid party, IEnumerable<Guid> resourceIds = null, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<Result<Dictionary<string, bool>>> CheckResource(Guid party, IEnumerable<string> resources, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     #endregion
 
     #region Packages
@@ -897,7 +800,7 @@ public partial class ConnectionService(
         bool isResourceDelegable = resourceMetadata.Delegable;
 
         // Decompose policy into resource/tasks
-        List<ActionAccess> actionAccesses = DelegationCheckHelper.DecomposePolicy(policy, resourceId);
+        List<RuleAccess> ruleAccesses = DelegationCheckHelper.DecomposePolicy(policy, resourceId);
 
         // Fetch packages
         var packages = await CheckPackageForResource(party, null, ConfigureConnections, cancellationToken);
@@ -910,22 +813,22 @@ public partial class ConnectionService(
         // Fetch resource rights
         var resources = await GetResourcesRules(party, authenticatedUserUuid, resource.Id, null, cancellationToken);
 
-        ProcessTheAccessToTheAccessKeys(actionAccesses, packages.Value, roles.Value, resources);
+        ProcessTheAccessToTheRuleKeys(ruleAccesses, packages.Value, roles.Value, resources);
 
         // Map to result
-        IEnumerable<ActionDto> actions = await MapFromInternalToExternalActions(actionAccesses, resourceId, accessListMode, fromParty, isResourceDelegable, cancellationToken);
+        IEnumerable<RuleCheckDto> rules = await MapFromInternalToExternalRule(ruleAccesses, resourceId, accessListMode, fromParty, isResourceDelegable, cancellationToken);
 
         // build reult with reason based on roles, packages, resource rights and users delegable
         ResourceCheckDto resourceCheckDto = new ResourceCheckDto
         {
             Resource = resource,
-            Actions = actions
+            Rules = rules
         };
         
         return resourceCheckDto;
     }
 
-    private string GetActionNameFromKey(string key, string resourceId)
+    private string GetActionNameFromRuleKey(string key, string resourceId)
     {
         string[] parts = key.Split("urn:", options: StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         StringBuilder sb = new StringBuilder();
@@ -971,15 +874,15 @@ public partial class ConnectionService(
         return char.ToUpper(input[0]) + input.Substring(1);
     }
 
-    private async Task<ActionDto> MapFromInternalToExternalAction(ActionAccess actionAccess, string resourceId, ResourceAccessListMode accessListMode, MinimalParty fromParty, bool isResourceDelegable, CancellationToken cancellationToken)
+    private async Task<RuleCheckDto> MapFromInternalToExternalRule(RuleAccess ruleAccess, string resource, ResourceAccessListMode accessListMode, MinimalParty fromParty, bool isResourceDelegable, CancellationToken cancellationToken)
     {
         if (DelegationCheckHelper.IsAccessListModeEnabledAndApplicable(accessListMode, fromParty.PartyType))
         {
-            string actionValue = actionAccess.ActionKey.Substring(actionAccess.ActionKey.LastIndexOf(":") + 1);
+            string actionValue = ruleAccess.Key.Substring(ruleAccess.Key.LastIndexOf(":") + 1);
             AccessListAuthorizationRequest accessListAuthorizationRequest = new AccessListAuthorizationRequest
             {
                 Subject = PartyUrn.PartyUuid.Create(fromParty.PartyUuid),
-                Resource = ResourceIdUrn.ResourceId.Create(ResourceIdentifier.CreateUnchecked(resourceId)),
+                Resource = ResourceIdUrn.ResourceId.Create(ResourceIdentifier.CreateUnchecked(resource)),
                 Action = ActionUrn.ActionId.Create(ActionIdentifier.CreateUnchecked(actionValue))
             };
 
@@ -987,68 +890,81 @@ public partial class ConnectionService(
             AccessListAuthorizationResult accessListAuthorizationResult = accessListAuthorizationResponse.Result;
             if (accessListAuthorizationResult != AccessListAuthorizationResult.Authorized)
             {
-                actionAccess.AccessListDenied = true;
+                ruleAccess.AccessListDenied = true;
             }
         }
 
-        ActionDto currentAction = new ActionDto
+        ResourceAndAction resourceAndAction = DelegationCheckHelper.SplitRuleKey(ruleAccess.Key);
+
+        RuleCheckDto currentAction = new RuleCheckDto
         {
-            ActionKey = actionAccess.ActionKey,
-            ActionName = GetActionNameFromKey(actionAccess.ActionKey, resourceId),
-            Result = false,
+            Rule = new RuleDto { 
+                Key = ruleAccess.Key,
+                Name = GetActionNameFromRuleKey(ruleAccess.Key, resource),
+                Resource = resourceAndAction.Resource,
+                Action = resourceAndAction.Action
+            },
+            Result = false
         };
 
-        List<ActionDto.Reason> reasons = [];
-
-        if (actionAccess.PackageAllowAccess.Count == 0 && actionAccess.RoleAllowAccess.Count == 0 && actionAccess.ResourceAllowAccess.Count == 0)
+        List<RuleCheckDto.Permision> permisions = [];
+        if (ruleAccess.PackageAllowAccess.Count == 0 && ruleAccess.RoleAllowAccess.Count == 0 && ruleAccess.ResourceAllowAccess.Count == 0)
         {
             currentAction.Result = false;
 
-            reasons.AddRange(actionAccess.PackageDenyAccess);
-            reasons.AddRange(actionAccess.RoleDenyAccess);
+            permisions.AddRange(ruleAccess.PackageDenyAccess);
+            permisions.AddRange(ruleAccess.RoleDenyAccess);
 
-            reasons.Add(new ActionDto.Reason
+            permisions.Add(new RuleCheckDto.Permision
             {
                 Description = "Missing-Resource",
-                ReasonKey = DelegationCheckReasonCode.MissingDelegationAccess
+                PermisionKey = DelegationCheckReasonCode.MissingDelegationAccess
             });
         }
         else
         {
             currentAction.Result = true;
 
-            ProcessPackageAllowAccessReasons(actionAccess.PackageAllowAccess, reasons);
-            ProcessRoleAllowAccessReasons(actionAccess.RoleAllowAccess, reasons);
-            ProcessResourceAllowAccessReasons(actionAccess.ResourceAllowAccess, reasons);
+            ProcessPackageAllowAccessReasons(ruleAccess.PackageAllowAccess, permisions);
+            ProcessRoleAllowAccessReasons(ruleAccess.RoleAllowAccess, permisions);
+            ProcessResourceAllowAccessReasons(ruleAccess.ResourceAllowAccess, permisions);
         }
 
         if (!isResourceDelegable)
         {
             currentAction.Result = false;
-            ActionDto.Reason reason = new ActionDto.Reason
+            RuleCheckDto.Permision permision = new RuleCheckDto.Permision
             {
                 Description = $"Resource-NotDelegable",
-                ReasonKey = DelegationCheckReasonCode.ResourceNotDelegable,
+                PermisionKey = DelegationCheckReasonCode.ResourceNotDelegable,
             };
-            reasons.Add(reason);
+            permisions.Add(permision);
         }
 
-        if (actionAccess.AccessListDenied == true)
+        if (ruleAccess.AccessListDenied == true)
         {
             currentAction.Result = false;
-            ActionDto.Reason reason = new ActionDto.Reason
+            RuleCheckDto.Permision permision = new RuleCheckDto.Permision
             {
                 Description = "Resource-AccessList-Enabled-NotListed",
-                ReasonKey = DelegationCheckReasonCode.AccessListValidationFail,
+                PermisionKey = DelegationCheckReasonCode.AccessListValidationFail,
             };
-            reasons.Add(reason);
+            permisions.Add(permision);
         }
 
-        currentAction.Reasons = reasons;
+        HashSet<DelegationCheckReasonCode> reasonKeys = [];
+
+        foreach (var permision in permisions)
+        {
+            reasonKeys.Add(permision.PermisionKey);
+        }
+
+        currentAction.ReasonCodes = reasonKeys;
+
         return currentAction;
     }
 
-    private void ProcessResourceAllowAccessReasons(List<RulePermission> resourceRulesAllowAccess, List<ActionDto.Reason> reasons)
+    private void ProcessResourceAllowAccessReasons(List<RulePermission> resourceRulesAllowAccess, List<RuleCheckDto.Permision> permisions)
     {
         if (resourceRulesAllowAccess.Count > 0)
         {
@@ -1056,10 +972,10 @@ public partial class ConnectionService(
             {
                 foreach (var resourceRulePermission in resourceRuleAllowAccess.Permissions)
                 {
-                    ActionDto.Reason reason = new ActionDto.Reason
+                    RuleCheckDto.Permision permision = new RuleCheckDto.Permision
                     {
                         Description = "Access-Resource",
-                        ReasonKey = DelegationCheckReasonCode.DelegationAccess,
+                        PermisionKey = DelegationCheckReasonCode.DelegationAccess,
                         FromName = resourceRulePermission.From?.Name,
                         FromId = resourceRulePermission.From?.Id,
                         ToName = resourceRulePermission.To?.Name,
@@ -1073,13 +989,40 @@ public partial class ConnectionService(
                         ViaRoleUrn = resourceRulePermission.ViaRole?.Urn
                     };
 
-                    reasons.Add(reason);
+                    permisions.Add(permision);
                 }
             }
         }
     }
 
-    private void ProcessRoleAllowAccessReasons(List<RoleDtoCheck> rolesAllowAccess, List<ActionDto.Reason> reasons)
+    /// <inheritdoc />
+    public async Task<Result<bool>> AddResource(Entity from, Entity to, Resource resourceObj, RuleKeyListDto ruleKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
+    {
+        var canDelegate = await ResourceDelegationCheck(by.Id, from.Id, resourceObj.RefId, ConfigureConnections, cancellationToken);
+        if (canDelegate.IsProblem)
+        {
+            return canDelegate.Problem;
+        }
+
+        foreach (var ruleKey in ruleKeys.RuleKeys)
+        {
+            if (!canDelegate.Value.Rules.Any(a => a.Rule.Key == ruleKey && a.Result))
+            {
+                return Problems.NotAuthorizedForDelegationRequest;
+            }
+        }
+
+        List<Rule> result = await singleRightsService.TryWriteDelegationPolicyRules(from, to, resourceObj, ruleKeys, by, cancellationToken);
+
+        if (!result.All(r => r.CreatedSuccessfully))
+        {
+            return Problems.DelegationPolicyRuleWriteFailed;
+        }
+
+        return true;
+    }
+
+    private void ProcessRoleAllowAccessReasons(List<RoleDtoCheck> rolesAllowAccess, List<RuleCheckDto.Permision> permisions)
     {
         if (rolesAllowAccess.Count > 0)
         {
@@ -1087,10 +1030,10 @@ public partial class ConnectionService(
             {
                 foreach (var roleReason in roleAllowAccess.Reasons)
                 {
-                    ActionDto.Reason reason = new ActionDto.Reason
+                    RuleCheckDto.Permision permison = new RuleCheckDto.Permision
                     {
                         Description = roleReason.Description,
-                        ReasonKey = DelegationCheckReasonCode.RoleAccess,
+                        PermisionKey = DelegationCheckReasonCode.RoleAccess,
                         FromName = roleReason.FromName,
                         FromId = roleReason.FromId,
                         ToId = roleReason.ToId,
@@ -1103,13 +1046,13 @@ public partial class ConnectionService(
                         ViaRoleUrn = roleReason.ViaRoleUrn,
                     };
 
-                    reasons.Add(reason);
+                    permisions.Add(permison);
                 }
             }
         }
     }
 
-    private void ProcessPackageAllowAccessReasons(List<AccessPackageDto.AccessPackageDtoCheck> packagesAllowAccess, List<ActionDto.Reason> reasons)
+    private void ProcessPackageAllowAccessReasons(List<AccessPackageDto.AccessPackageDtoCheck> packagesAllowAccess, List<RuleCheckDto.Permision> reasons)
     {
         if (packagesAllowAccess.Count > 0)
         {
@@ -1117,10 +1060,10 @@ public partial class ConnectionService(
             {
                 foreach (var packageReason in packageAllowAccess.Reasons)
                 {
-                    ActionDto.Reason reason = new ActionDto.Reason
+                    RuleCheckDto.Permision permision = new RuleCheckDto.Permision
                     {
                         Description = packageReason.Description,
-                        ReasonKey = DelegationCheckReasonCode.PackageAccess,
+                        PermisionKey = DelegationCheckReasonCode.PackageAccess,
                         FromName = packageReason.FromName,
                         PackageId = packageAllowAccess.Package.Id,
                         PackageUrn = packageAllowAccess.Package.Urn,
@@ -1135,25 +1078,25 @@ public partial class ConnectionService(
                         ViaRoleUrn = packageReason.ViaRoleUrn,
                     };
 
-                    reasons.Add(reason);
+                    reasons.Add(permision);
                 }
             }
         }
     }
 
-    private async Task<IEnumerable<ActionDto>> MapFromInternalToExternalActions(List<ActionAccess> actionAccesses, string resourceId, ResourceAccessListMode accessListMode, MinimalParty fromParty, bool isResourceDelegable, CancellationToken cancellationToken = default)
+    private async Task<IEnumerable<RuleCheckDto>> MapFromInternalToExternalRule(List<RuleAccess> ruleAccesses, string resourceId, ResourceAccessListMode accessListMode, MinimalParty fromParty, bool isResourceDelegable, CancellationToken cancellationToken = default)
     {
-        List<ActionDto> actions = [];
+        List<RuleCheckDto> rules = [];
 
-        foreach (var actionAccess in actionAccesses)
+        foreach (var ruleAccess in ruleAccesses)
         {
-            actions.Add(await MapFromInternalToExternalAction(actionAccess, resourceId, accessListMode, fromParty, isResourceDelegable, cancellationToken));
+            rules.Add(await MapFromInternalToExternalRule(ruleAccess, resourceId, accessListMode, fromParty, isResourceDelegable, cancellationToken));
         }
 
-        return actions;
+        return rules;
     }
 
-    private void ProcessTheAccessToTheAccessKeys(List<ActionAccess> actionAccesses, IEnumerable<AccessPackageDto.AccessPackageDtoCheck> packages, IEnumerable<RoleDtoCheck> roles, List<ResourceRuleDto> resources)
+    private void ProcessTheAccessToTheRuleKeys(List<RuleAccess> actionAccesses, IEnumerable<AccessPackageDto.AccessPackageDtoCheck> packages, IEnumerable<RoleDtoCheck> roles, List<ResourceRuleDto> resources)
     {
         foreach (var actionAccess in actionAccesses)
         {
@@ -1174,15 +1117,15 @@ public partial class ConnectionService(
                     }
                     else
                     {
-                        ActionDto.Reason reason = new ActionDto.Reason
+                        RuleCheckDto.Permision permision = new RuleCheckDto.Permision
                         {
                             Description = $"Missing-Package",
-                            ReasonKey = DelegationCheckReasonCode.MissingPackageAccess,
+                            PermisionKey = DelegationCheckReasonCode.MissingPackageAccess,
                             PackageId = package.Package.Id,
                             PackageUrn = package.Package.Urn
                         };
 
-                        actionAccess.PackageDenyAccess.Add(reason);
+                        actionAccess.PackageDenyAccess.Add(permision);
                     }
                 }
 
@@ -1194,24 +1137,24 @@ public partial class ConnectionService(
                     }
                     else
                     {
-                        ActionDto.Reason reason = new ActionDto.Reason
+                        RuleCheckDto.Permision permision = new RuleCheckDto.Permision
                         {
                             Description = $"Missing-Role",
-                            ReasonKey = DelegationCheckReasonCode.MissingRoleAccess,
+                            PermisionKey = DelegationCheckReasonCode.MissingRoleAccess,
                             RoleId = role.Role.Id,
                             RoleUrn = role.Role.Urn,
                         };
 
-                        actionAccess.RoleDenyAccess.Add(reason);
+                        actionAccess.RoleDenyAccess.Add(permision);
                     }
                 }
             }
 
             foreach (var resource in resources)
             {
-                if (resource.Rules.Any(r => r.Key == actionAccess.ActionKey))
+                if (resource.Rules.Any(r => r.Rule.Key == actionAccess.Key))
                 {
-                    actionAccess.ResourceAllowAccess.Add(resource.Rules.First(r => r.Key == actionAccess.ActionKey));
+                    actionAccess.ResourceAllowAccess.Add(resource.Rules.First(r => r.Rule.Key == actionAccess.Key));
                 }
             }
         }
@@ -1679,16 +1622,19 @@ public partial class ConnectionService
 
                 foreach (var actionKey in validActions)
                 {
-                    var rule = resourceRule.Rules.FirstOrDefault(t => t.Key == actionKey);
+                    var rule = resourceRule.Rules.FirstOrDefault(t => t.Rule.Key == actionKey);
 
                     if (rule == null)
                     {
-                        var splitAction = DelegationCheckHelper.SplitActionKey(actionKey);
+                        var splitAction = DelegationCheckHelper.SplitRuleKey(actionKey);
                         rule = new RulePermission()
                         {
-                            Key = actionKey,
-                            SubResource = string.Join(':', splitAction.Resource),
-                            Action = splitAction.Action,
+                            Rule = new RuleDto
+                            {
+                                Key = actionKey,
+                                Resource = splitAction.Resource,
+                                Action = splitAction.Action,
+                            },
                             Reason = assignmentResource.Reason,
                             Permissions = new List<PermissionDto>(),
                         };

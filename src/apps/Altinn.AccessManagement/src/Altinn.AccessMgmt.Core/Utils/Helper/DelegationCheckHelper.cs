@@ -93,7 +93,7 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
         /// <param name="policy">the policy to process</param>
         /// <param name="resourceId">the resource id the subjects must point to</param>
         /// <returns></returns>
-        public static List<ActionAccess> DecomposePolicy(XacmlPolicy policy, string resourceId)
+        public static List<RuleAccess> DecomposePolicy(XacmlPolicy policy, string resourceId)
         {
             Dictionary<string, List<string>> rules = new Dictionary<string, List<string>>();
 
@@ -117,12 +117,12 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
                 }
             }
 
-            List<ActionAccess> result = [];
+            List<RuleAccess> result = [];
 
             foreach (KeyValuePair<string, List<string>> action in rules)
             {
-                ActionAccess current = new ActionAccess();
-                current.ActionKey = action.Key;
+                RuleAccess current = new RuleAccess();
+                current.Key = action.Key;
                 current.AccessorUrns = action.Value;
                 current.PackageAllowAccess = [];
                 current.PackageDenyAccess = [];
@@ -151,19 +151,19 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
             return false;
         }
 
-        public static IEnumerable<ResourceAndAction> SplitActionKeys(IEnumerable<string> actionKeys)
+        public static IEnumerable<ResourceAndAction> SplitRuleKeys(IEnumerable<string> actionKeys)
         {
             List<ResourceAndAction> result = [];
 
             foreach (string key in actionKeys)
             {
-                result.Add(SplitActionKey(key));
+                result.Add(SplitRuleKey(key));
             }
 
             return result;
         }
 
-        public static ResourceAndAction SplitActionKey(string actionKey)
+        public static ResourceAndAction SplitRuleKey(string actionKey)
         {
             List<string> resourceList = [];
             List<string> actionList = [];
@@ -199,7 +199,7 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
             {
                 XacmlRule currentRule = new XacmlRule(Guid.CreateVersion7().ToString(), XacmlEffectType.Permit);
 
-                var resourceAction = SplitActionKey(key);
+                var resourceAction = SplitRuleKey(key);
 
                 currentRule.Target = BuildDelegationRuleTarget(toId.ToString(), resourceAction.Resource, resourceAction.Action);
 

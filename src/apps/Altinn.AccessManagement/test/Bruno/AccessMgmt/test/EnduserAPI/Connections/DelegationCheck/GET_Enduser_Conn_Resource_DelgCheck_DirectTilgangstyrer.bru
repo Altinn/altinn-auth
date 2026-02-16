@@ -1,0 +1,62 @@
+meta {
+  name: GET_Enduser_Conn_Resource_DelgCheck_DirectTilgangstyrer
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/delegationcheck?party={{party}}&resource={{resourceid}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  resource: {{resourceid}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/resource-delegationcheck/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "GET_Enduser_Conn_AccPcks_DelgCheck_Dagl_NoFilter");
+  
+  bru.setVar("party", testdata.VOKSENDE_FRYKTLØS_TIGER.partyUuid);
+  bru.setVar("resourceid", testdata.resources.packageResourceId);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.VOKSENDE_FRYKTLØS_TIGER.tilgangstyrer_med_enkeltrettighet.userId,
+    auth_partyId: testdata.VOKSENDE_FRYKTLØS_TIGER.tilgangstyrer_med_enkeltrettighet.partyId,
+    auth_partyUuid: testdata.VOKSENDE_FRYKTLØS_TIGER.tilgangstyrer_med_enkeltrettighet.partyUuid,
+    auth_ssn: testdata.VOKSENDE_FRYKTLØS_TIGER.tilgangstyrer_med_enkeltrettighet.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  
+  test(bru.getVar("requestName"), function() {
+    const body = res.getBody();
+    const actions = body.actions;
+    
+    expect(res.status).to.equal(200);
+    assert.isNotEmpty(actions, "Expected data in response body to NOT be empty array");
+    
+    const expectedNumPackages = 6;
+    assert.lengthOf(actions, expectedNumPackages, `Expected response data to contain all ${expectedNumPackages} available packages giving access to the resource`);
+    
+    for (let i = 0; i < actions.Length; i++) {
+      assert.isTrue(actions[i].result, "expected all actions to be available");
+    }
+  });
+}

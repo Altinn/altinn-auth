@@ -1,5 +1,8 @@
-﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement.Enums
+﻿using System.Text.Json.Serialization;
+
+namespace Altinn.Authorization.Api.Contracts.AccessManagement.Enums
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum DelegationCheckReasonCode
     {
         /// <summary>

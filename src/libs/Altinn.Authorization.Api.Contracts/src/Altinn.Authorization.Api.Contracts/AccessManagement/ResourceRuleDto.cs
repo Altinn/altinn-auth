@@ -22,19 +22,9 @@ public class ResourceRuleDto
 public class RulePermission
 {
     /// <summary>
-    /// Unique key for action
+    /// Gets or sets the rule associated with this instance.
     /// </summary>
-    public string Key { get; set; }
-
-    /// <summary>
-    /// Concatenated key for subresources from policy rule
-    /// </summary>
-    public string SubResource { get; set; }
-
-    /// <summary>
-    /// Action
-    /// </summary>
-    public string Action { get; set; }
+    public RuleDto Rule { get; set; }
 
     /// <summary>
     /// Reason
