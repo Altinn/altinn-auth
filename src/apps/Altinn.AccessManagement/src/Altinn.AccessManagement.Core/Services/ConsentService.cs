@@ -861,7 +861,7 @@ namespace Altinn.AccessManagement.Core.Services
 
         private static ValidationErrorBuilder ValidateValidTo(ConsentRequest consentRequest, ValidationErrorBuilder errors)
         {
-            if (consentRequest.ValidTo < DateTime.UtcNow)
+            if (consentRequest.ValidTo < DateTime.UtcNow && consentRequest.CreatedTime == null)
             {
                 errors.Add(ValidationErrors.TimeNotInFuture, "ValidTo");
             }
@@ -947,7 +947,7 @@ namespace Altinn.AccessManagement.Core.Services
                 To = ConsentPartyUrn.PartyUuid.Create((Guid)altinn2Consent.CoveredByPartyUUID),
                 ValidTo = altinn2Consent.ValidTo,
                 ConsentRights = await MapAltinn2ResourcesToConsentRights(altinn2Consent.RequestResources, cancellationToken),
-                ConsentRequestEvents = await MapA2ConsentEventsToA3ConsentEvents(altinn2Consent.ConsentHistoryEvents, cancellationToken),
+                ConsentRequestEvents = await MapA2ConsentEventsToA3ConsentEvents(altinn2Consent, altinn2Consent.ConsentHistoryEvents, cancellationToken),
                 RedirectUrl = altinn2Consent.RedirectUrl,
                 TemplateId = altinn2Consent.TemplateId
             };
@@ -992,9 +992,19 @@ namespace Altinn.AccessManagement.Core.Services
             return await Task.FromResult(consentRights);
         }
 
-        private async Task<List<ConsentRequestEvent>> MapA2ConsentEventsToA3ConsentEvents(List<Altinn2ConsentRequestEvent> a2Events, CancellationToken cancellationToken)
+        private async Task<List<ConsentRequestEvent>> MapA2ConsentEventsToA3ConsentEvents(Altinn2ConsentRequest altinn2Consent, List<Altinn2ConsentRequestEvent> a2Events, CancellationToken cancellationToken)
         {
             List<ConsentRequestEvent> consentEvents = new();
+
+            ConsentRequestEvent consentEventCreated = new()
+            {
+                ConsentRequestID = altinn2Consent.ConsentGuid,
+                Created = (DateTimeOffset)altinn2Consent.CreatedTime,
+                EventType = ConsentRequestEventType.Created,
+                PerformedBy = ConsentPartyUrn.PartyUuid.Create(altinn2Consent.HandledByPartyUUID ?? altinn2Consent.CoveredByPartyUUID ?? Guid.Empty)
+            };
+
+            consentEvents.Add(consentEventCreated);
 
             foreach (Altinn2ConsentRequestEvent a2Event in a2Events)
             {

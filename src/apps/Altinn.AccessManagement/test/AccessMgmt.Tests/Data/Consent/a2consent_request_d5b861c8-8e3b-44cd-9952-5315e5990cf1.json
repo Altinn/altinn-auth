@@ -4,7 +4,7 @@
     "OfferedByPartyUUID": "d5b861c8-8e3b-44cd-9952-5315e5990cf5",
     "RequiredDelegatorUUID": "8ef5e5fa-94e1-4869-8635-df86b6219181",
     "CoveredByPartyUUID": "8ef5e5fa-94e1-4869-8635-df86b6219181",
-    "HandledByPartyUUID": "d181df4e-70a8-4724-b192-8209a4ef0d35",
+    "HandledByPartyUUID": "8ef5e5fa-94e1-4869-8635-df86b6219181",
     "ValidTo": "2026-10-30T00:00:00+01:00",
     "RequestMessage": {
         "NorwegianNO": "Dette er teksten"

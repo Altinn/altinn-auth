@@ -1,0 +1,58 @@
+﻿{
+    "CreatedTime": "2025-10-20T12:00:00+01:00",
+    "ConsentGuid": "4a73a516-7a91-435c-8a0e-0f4659588594",
+    "OfferedByPartyUUID": "d5b861c8-8e3b-44cd-9952-5315e5990cf5",
+    "RequiredDelegatorUUID": "8ef5e5fa-94e1-4869-8635-df86b6219181",
+    "CoveredByPartyUUID": "8ef5e5fa-94e1-4869-8635-df86b6219181",
+    "HandledByPartyUUIDx": "8ef5e5fa-94e1-4869-8635-df86b6219181",
+    "ValidTo": "2025-10-30T00:00:00+01:00",
+    "RequestMessage": {
+        "NorwegianNO": "Dette er teksten"
+    },
+    "ConsentRequestStatus": "accepted",
+    "Consented": "2025-10-22T12:00:00+01:00",
+    "RequestResources": [
+        {
+            "RoleTypeID": null,
+            "ServiceCode": "5928",
+            "ServiceEditionCode": 202301,
+            "ServiceEditionVersionID": 3,
+            "AltinnAppId": null,
+            "Operations": [
+                "Read",
+                "Write"
+            ],
+            "Metadata": {
+                "fraOgMed": "2025-04",
+                "tilOgMed": "2026-09",
+                "inntektsaar": "2024"
+            }
+        },
+        {
+            "RoleTypeID": null,
+            "ServiceCode": "5930",
+            "ServiceEditionCode": 202301,
+            "ServiceEditionVersionID": 6,
+            "AltinnAppId": null,
+            "Operations": [
+                "Read",
+                "Write"
+            ],
+            "Metadata": {
+                "fraOgMed": "2025-04",
+                "tilOgMed": "2026-09",
+                "inntektsaar": "2024"
+            }
+        }
+    ],
+    "ConsentHistoryEvents": [
+        {
+            "Created": "2025-10-22T12:00:00+01:00",
+            "PerformedByPartyUUID": "d5b861c8-8e3b-44cd-9952-5315e5990cf5",
+            "EventType": "Accepted",
+            "ConsentRequestID": "4a73a516-7a91-435c-8a0e-0f4659588594"
+        }
+    ],
+    "RedirectUrl": "https://www.vg.no",
+    "TemplateId": "sblanesoknad"
+}
