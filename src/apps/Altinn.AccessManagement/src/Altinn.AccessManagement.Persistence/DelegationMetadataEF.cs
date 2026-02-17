@@ -248,13 +248,12 @@ public class DelegationMetadataEF : IDelegationMetadataRepository
             throw new ArgumentException($"All params: {nameof(coveredByUserId)}, {nameof(coveredByPartyId)}, {nameof(toUuid)} cannot be null.");
         }
 
-        var resourceUuid = Guid.Parse(resourceId);
-
         var from = await DbContext.Entities.AsNoTracking().SingleAsync(t => t.PartyId == offeredByPartyId, cancellationToken);
 
         var result = await DbContext.AssignmentResources.AsNoTracking()
             .Include(t => t.Assignment).ThenInclude(t => t.To)
-            .Where(t => t.ResourceId == resourceUuid)
+            .Include(t => t.Resource)
+            .Where(t => t.Resource.RefId == resourceId)
             .Where(t => t.Assignment.FromId == from.Id)
             .WhereIf(coveredByPartyId != null, t => t.Assignment.To.PartyId == coveredByPartyId)
             .WhereIf(coveredByPartyId != null, t => t.Assignment.To.UserId == coveredByUserId)
