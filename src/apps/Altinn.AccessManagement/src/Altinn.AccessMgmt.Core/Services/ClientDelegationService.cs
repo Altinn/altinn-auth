@@ -157,12 +157,14 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                     x.Assignment.From,
                     x.Assignment.Role,
                     AssignmentPackage = x.AssignmentPackage.Package,
-                    RolePackage = rp.Package
+                    RolePackage = rp.Package,
+                    RolePackageEntityVariantId = rp.EntityVariantId
                 }
             )
             .Where(x =>
                 (x.AssignmentPackage == null || x.AssignmentPackage.IsDelegable) &&
-                (x.RolePackage == null || x.RolePackage.IsDelegable))
+                (x.RolePackage == null || x.RolePackage.IsDelegable) &&
+                (x.RolePackageEntityVariantId == null || x.RolePackageEntityVariantId == x.From.VariantId))
             .GroupBy(x => x.From.Id)
             .ToListAsync(cancellationToken);
 

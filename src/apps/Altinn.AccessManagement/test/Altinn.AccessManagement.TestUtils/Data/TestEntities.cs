@@ -98,6 +98,28 @@ public static class TestEntities
         }
     };
 
+    public static ConstantDefinition<Entity> OrganizationOkernBorettslag { get; } = new("508F126C-958C-41D8-9436-E4CEE94660B1")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Økern Borettslag BRL",
+            OrganizationIdentifier = "815493000",
+            Parent = null,
+            ParentId = null,
+            PartyId = 50068511,
+            PersonIdentifier = null,
+            RefId = "815493000",
+            TypeId = EntityTypeConstants.Organization,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.BRL,
+        }
+    };
+
     public static ConstantDefinition<Entity> OrganizationVerdiqAS { get; } = new("77362379-847f-412e-8937-de6172188020")
     {
         Entity = new()
