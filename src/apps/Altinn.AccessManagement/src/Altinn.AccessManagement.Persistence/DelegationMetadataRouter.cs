@@ -20,6 +20,13 @@ public sealed class DelegationMetadataRouter(ILegacyRoutingPolicy policy, IServi
         "GetActiveInstanceDelegations",
     };
 
+    private static readonly HashSet<string> FeedMethods = new(StringComparer.Ordinal)
+    {
+        "GetNextPageAppDelegationChanges",
+        "GetNextPageResourceDelegationChanges",
+        "GetNextPageInstanceDelegationChanges"
+    };
+
     private async Task<T> Route<T>(string methodName, Func<IDelegationMetadataRepository, Task<T>> call, CancellationToken ct)
     {
         string feature = InstanceMethods.Contains(methodName)
@@ -27,6 +34,11 @@ public sealed class DelegationMetadataRouter(ILegacyRoutingPolicy policy, IServi
             : "ResourceDelegation";
 
         var useEF = await policy.IsEnabledAsync(feature, "EF", "AccessManagement", ct);
+
+        if (FeedMethods.Contains(methodName))
+        {
+            useEF = false;
+        }
 
         using var scope = scopeFactory.CreateScope();
 
@@ -223,5 +235,29 @@ public sealed class DelegationMetadataRouter(ILegacyRoutingPolicy policy, IServi
         => Route(
             nameof(GetAllDelegationChangesForAuthorizedParties),
             repo => repo.GetAllDelegationChangesForAuthorizedParties(toPartyUuids, cancellationToken),
+            cancellationToken);
+
+    public Task<List<DelegationChange>> GetNextPageAppDelegationChanges(
+        long startFeedIndex,
+        CancellationToken cancellationToken)
+        => Route(
+            nameof(GetNextPageAppDelegationChanges),
+            repo => repo.GetNextPageAppDelegationChanges(startFeedIndex, cancellationToken),
+            cancellationToken);
+
+    public Task<List<DelegationChange>> GetNextPageResourceDelegationChanges(
+        long startFeedIndex,
+        CancellationToken cancellationToken)
+        => Route(
+            nameof(GetNextPageResourceDelegationChanges),
+            repo => repo.GetNextPageResourceDelegationChanges(startFeedIndex, cancellationToken),
+            cancellationToken);
+
+    public Task<List<InstanceDelegationChange>> GetNextPageInstanceDelegationChanges(
+        long startFeedIndex,
+        CancellationToken cancellationToken)
+        => Route(
+            nameof(GetNextPageInstanceDelegationChanges),
+            repo => repo.GetNextPageInstanceDelegationChanges(startFeedIndex, cancellationToken),
             cancellationToken);
 }

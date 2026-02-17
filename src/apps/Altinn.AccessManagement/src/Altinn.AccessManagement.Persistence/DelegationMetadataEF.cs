@@ -605,4 +605,19 @@ public class DelegationMetadataEF : IDelegationMetadataRepository
 
         return result.Select(Convert).ToList();
     }
+
+    Task<List<DelegationChange>> IDelegationMetadataRepository.GetNextPageAppDelegationChanges(long startFeedIndex, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    Task<List<DelegationChange>> IDelegationMetadataRepository.GetNextPageResourceDelegationChanges(long startFeedIndex, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    Task<List<InstanceDelegationChange>> IDelegationMetadataRepository.GetNextPageInstanceDelegationChanges(long startFeedIndex, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }

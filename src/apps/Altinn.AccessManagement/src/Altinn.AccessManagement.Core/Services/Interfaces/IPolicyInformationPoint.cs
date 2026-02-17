@@ -68,5 +68,29 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns></returns>
         Task<IEnumerable<DelegationChange>> GetOfferedDelegationsFromRepository(int partyId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Fetch app right feed
+        /// </summary>
+        /// <param name="appRightFeedId">The first id to fetch</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns></returns>
+        Task<List<DelegationChange>> GetNextPageAppDelegationChanges(long appRightFeedId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Fetch resource right feed
+        /// </summary>
+        /// <param name="resourceRightFeedId">The first id to fetch</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns></returns>
+        Task<List<DelegationChange>> GetNextPageResourceDelegationChanges(long resourceRightFeedId = 1, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Fetch instance right feed
+        /// </summary>
+        /// <param name="instanceRightFeedId">The first id to fetch</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns></returns>
+        Task<List<InstanceDelegationChange>> GetNextPageInstanceDelegationChanges(long instanceRightFeedId = 1, CancellationToken cancellationToken = default);
     }
 }

@@ -8,6 +8,7 @@ using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Integration.Platform.SblBridge;
+using Altinn.Platform.Register.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -35,6 +36,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
         private readonly IAltinnSblBridge _role;
         private readonly ILogger<AltinnClientRoleSyncService> _logger;
         private readonly IServiceProvider _serviceProivider;
+        private readonly IAMPartyService _partyService;
 
         public async Task SyncAdminRoles(ILease lease, CancellationToken cancellationToken)
         {

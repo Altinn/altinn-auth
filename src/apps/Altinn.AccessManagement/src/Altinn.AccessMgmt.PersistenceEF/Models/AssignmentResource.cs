@@ -8,12 +8,22 @@ namespace Altinn.AccessMgmt.PersistenceEF.Models;
 public class AssignmentResource : BaseAssignmentResource
 {
     /// <summary>
-    /// Assignment
+    /// The associated assignment
     /// </summary>
     public Assignment Assignment { get; set; }
 
     /// <summary>
-    /// Resource
+    /// The associated resource
     /// </summary>
     public Resource Resource { get; set; }
+
+    /// <summary>
+    /// Policy path refers to where the corresponding policy is stored
+    /// </summary>
+    public string PolicyPath { get; set; }
+
+    /// <summary>
+    /// The version of the policy referred to by this change.
+    /// </summary>
+    public string PolicyVersion { get; set; }
 }

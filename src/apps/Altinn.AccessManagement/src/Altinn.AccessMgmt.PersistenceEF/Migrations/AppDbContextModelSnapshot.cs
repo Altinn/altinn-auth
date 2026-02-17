@@ -2440,6 +2440,43 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasAnnotation("EnableAudit", true);
                 });
 
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.ErrorQueue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<long>("DelegationChangeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("delegationchangeid");
+
+                    b.Property<string>("ErrorItem")
+                        .HasColumnType("text")
+                        .HasColumnName("erroritem");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("text")
+                        .HasColumnName("errormessage");
+
+                    b.Property<string>("OriginType")
+                        .HasColumnType("text")
+                        .HasColumnName("origintype");
+
+                    b.Property<bool>("Processed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("processed");
+
+                    b.Property<bool>("ReProcess")
+                        .HasColumnType("boolean")
+                        .HasColumnName("reprocess");
+
+                    b.HasKey("Id")
+                        .HasName("pk_errorqueue");
+
+                    b.ToTable("errorqueue", "dbo");
+                });
+
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Package", b =>
                 {
                     b.Property<Guid>("Id")

@@ -723,6 +723,24 @@ namespace Altinn.AccessManagement.Core.Services
             return assertion;
         }
 
+        /// <inheritdoc/>
+        public async Task<List<DelegationChange>> GetNextPageAppDelegationChanges(long appRightFeedId = 1, CancellationToken cancellationToken = default)
+        {
+            return await _pip.GetNextPageAppDelegationChanges(appRightFeedId, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<DelegationChange>> GetNextPageResourceDelegationChanges(long appRightFeedId = 1, CancellationToken cancellationToken = default)
+        {
+            return await _pip.GetNextPageResourceDelegationChanges(appRightFeedId, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<InstanceDelegationChange>> GetNextPageInstanceDelegationChanges(long appRightFeedId = 1, CancellationToken cancellationToken = default)
+        {
+            return await _pip.GetNextPageInstanceDelegationChanges(appRightFeedId, cancellationToken);
+        }
+
         /// <summary>
         /// Fetch the actual internal id from the attribute match list
         /// </summary>

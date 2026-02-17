@@ -443,5 +443,92 @@ namespace Altinn.AccessManagement.Controllers
 
             return Ok();
         }
+
+        [Authorize(Policy = AuthzConstants.PLATFORM_ACCESS_AUTHORIZATION)]
+        [ActionName(nameof(SingleAppRightsFeed))]
+        [HttpGet("internal/singleright/appdelegation/stream")]
+        [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> SingleAppRightsFeed([FromQuery]long singleAppDelegationEventId, CancellationToken cancellationToken)
+        {
+            // get the data
+            var data = await _rights.GetNextPageAppDelegationChanges(singleAppDelegationEventId);
+            
+            // calculate nextlink
+            string nextLink = null;
+            if (data.Any())
+            {
+                long nextEventId = data.Last().DelegationChangeId + 1;
+                nextLink = $"{Request.Scheme}://{Request.Host}{Request.Path}?singleAppDelegationEventId={nextEventId}";
+            }
+
+            // create result
+            Paginated<DelegationChange> result;
+            PaginatedLinks link = new PaginatedLinks(nextLink);
+            result = new Paginated<DelegationChange>(link, data);
+
+            // return result
+            return Ok(result);
+        }
+
+        [Authorize(Policy = AuthzConstants.PLATFORM_ACCESS_AUTHORIZATION)]
+        [ActionName(nameof(SingleResourceRightsFeed))]
+        [HttpGet("internal/singleright/resourcedelegation/stream")]
+        [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> SingleResourceRightsFeed([FromQuery] long singleResourceDelegationEventId, CancellationToken cancellationToken)
+        {
+            // get the data
+            var data = await _rights.GetNextPageResourceDelegationChanges(singleResourceDelegationEventId);
+
+            // calculate nextlink
+            string nextLink = null;
+            if (data.Any())
+            {
+                long nextEventId = data.Last().ResourceRegistryDelegationChangeId + 1;
+                nextLink = $"{Request.Scheme}://{Request.Host}{Request.Path}?singleResourceDelegationEventId={nextEventId}";
+            }
+
+            // create result
+            Paginated<DelegationChange> result;
+            PaginatedLinks link = new PaginatedLinks(nextLink);
+            result = new Paginated<DelegationChange>(link, data);
+
+            // return result
+            return Ok(result);
+        }
+
+        [Authorize(Policy = AuthzConstants.PLATFORM_ACCESS_AUTHORIZATION)]
+        [ActionName(nameof(SingleInstanceRightsFeed))]
+        [HttpGet("internal/singleright/instancedelegation/stream")]
+        [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> SingleInstanceRightsFeed([FromQuery] long singleInstanceDelegationEventId, CancellationToken cancellationToken)
+        {
+            // get the data
+            var data = await _rights.GetNextPageInstanceDelegationChanges(singleInstanceDelegationEventId);
+
+            // calculate nextlink
+            string nextLink = null;
+            if (data.Any())
+            {
+                long nextEventId = data.Last().InstanceDelegationChangeId + 1;
+                nextLink = $"{Request.Scheme}://{Request.Host}{Request.Path}?singleInstanceDelegationEventId={nextEventId}";
+            }
+
+            // create result
+            Paginated<InstanceDelegationChange> result;
+            PaginatedLinks link = new PaginatedLinks(nextLink);
+            result = new Paginated<InstanceDelegationChange>(link, data);
+
+            // return result
+            return Ok(result);
+        }
     }
 }

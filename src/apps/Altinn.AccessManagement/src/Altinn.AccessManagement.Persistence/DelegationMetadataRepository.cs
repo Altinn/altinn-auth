@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessManagement.Core.Enums;
@@ -777,6 +777,21 @@ public class DelegationMetadataRepository : IDelegationMetadataRepository
 
     /// <inheritdoc />
     public Task<bool> InsertMultipleInstanceDelegations(List<PolicyWriteOutput> policyWriteOutputs, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<List<DelegationChange>> GetNextPageAppDelegationChanges(long startFeedIndex = 1, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<List<DelegationChange>> GetNextPageResourceDelegationChanges(long startFeedIndex = 1, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<List<InstanceDelegationChange>> GetNextPageInstanceDelegationChanges(long startFeedIndex = 1, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

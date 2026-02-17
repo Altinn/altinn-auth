@@ -523,6 +523,38 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         return result > 0;
     }
 
+    private async Task<bool> UpsertAssignmentResourceInternal(Guid assignmentId, Guid resourceId, string policyPath, string policyVersion, int delegationEventId, AuditValues audit, CancellationToken cancellationToken = default)
+    {
+        var assignment = await db.Assignments.AsNoTracking().SingleAsync(t => t.Id == assignmentId, cancellationToken);
+        var resource = await db.Resources.AsNoTracking().SingleAsync(t => t.Id == resourceId, cancellationToken);
+
+        var res = await db.AssignmentResources.AsTracking().FirstOrDefaultAsync(t => t.AssignmentId == assignmentId && t.ResourceId == resource.Id, cancellationToken);
+
+        if (res != null)
+        {
+            res.PolicyPath = policyPath;
+            res.PolicyVersion = policyVersion;
+            res.DelegationChangeId = delegationEventId;
+        }
+        else
+        {
+            res = new AssignmentResource()
+            {
+                Id = Guid.CreateVersion7(),
+                AssignmentId = assignment.Id,
+                ResourceId = resource.Id,
+                PolicyPath = policyPath,
+                PolicyVersion = policyVersion,
+                DelegationChangeId = delegationEventId
+            };
+            db.AssignmentResources.Add(res);
+        }
+
+        var result = await db.SaveChangesAsync(audit, cancellationToken);
+
+        return result > 0;
+    }
+
     /// <inheritdoc />
     public async Task<bool> UpsertAssignmentInstance(Guid userId, Guid assignmentId, Guid resourceId, string instanceId, string policyPath, string policyVersion, CancellationToken cancellationToken = default)
     {
@@ -564,6 +596,38 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         }
 
         var result = await db.SaveChangesAsync(cancellationToken);
+
+        return result > 0;
+    }
+
+    private async Task<bool> UpsertAssignmentInstanceInternal(Guid assignmentId, Guid resourceId, string instanceId, string policyPath, string policyVersion, int delegationChangeId, AuditValues audit, CancellationToken cancellationToken = default)
+    {
+        var assignment = await db.Assignments.AsNoTracking().SingleAsync(t => t.Id == assignmentId, cancellationToken);
+        var resource = await db.Resources.AsNoTracking().SingleAsync(t => t.Id == resourceId, cancellationToken);
+
+        var res = await db.AssignmentInstances.AsTracking().FirstOrDefaultAsync(t => t.AssignmentId == assignmentId && t.ResourceId == resource.Id && t.InstanceId == instanceId, cancellationToken);
+        
+        if (res != null)
+        {
+            res.PolicyPath = policyPath;
+            res.PolicyVersion = policyVersion;
+        }
+        else
+        {
+            res = new AssignmentInstance()
+            {
+                Id = Guid.CreateVersion7(),
+                AssignmentId = assignment.Id,
+                ResourceId = resource.Id,
+                InstanceId = instanceId,
+                PolicyPath = policyPath,
+                PolicyVersion = policyVersion,
+                DelegationChangeId = delegationChangeId
+            };
+            db.AssignmentInstances.Add(res);
+        }
+
+        var result = await db.SaveChangesAsync(audit, cancellationToken);
 
         return result > 0;
     }
@@ -766,6 +830,14 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         }
 
         var resources = await db.AssignmentResources.AsNoTracking()
+            .Where(t => t.AssignmentId == assignmentId)
+            .ToListAsync(cancellationToken);
+        if (resources != null && resources.Any())
+        {
+            errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("resources", string.Join(",", resources.Select(p => p.Id.ToString())))]);
+        }
+
+        var instances = await db.AssignmentInstances.AsNoTracking()
             .Where(t => t.AssignmentId == assignmentId)
             .ToListAsync(cancellationToken);
         if (resources != null && resources.Any())
@@ -1068,5 +1140,224 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     private static void Unreachable()
     {
         throw new UnreachableException();
+    }
+
+    /// <inheritdoc />
+    public async Task<int> RevokeImportedAssignmentResource(Guid fromId, Guid toId, string resourceName, AuditValues audit, CancellationToken cancellationToken = default)
+    {
+        var resource = await db.Resources
+            .AsNoTracking()
+            .Where(a => a.RefId == resourceName)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (resource is null)
+        {
+            throw new Exception(string.Format("Resource '{0}' not found", resourceName));
+        }
+
+        var maskinportenResourceType = await db.ResourceTypes
+            .AsNoTracking()
+            .Where(a => a.Name == "MaskinportenSchema")
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var assignmentRole = RoleConstants.Rightholder;
+
+        if (maskinportenResourceType is not null && maskinportenResourceType.Id == resource.TypeId)
+        {
+            assignmentRole = RoleConstants.Supplier;
+        }
+
+        var assignment = await db.Assignments
+            .AsNoTracking()
+            .Where(a => a.FromId == fromId)
+            .Where(a => a.ToId == toId)
+            .Where(a => a.RoleId == assignmentRole.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (assignment is null)
+        {
+            return 0;
+        }
+
+        var assignmentResource = await db.AssignmentResources
+            .AsNoTracking()
+            .Where(ar => ar.AssignmentId == assignment.Id)
+            .Where(ar => ar.ResourceId == resource.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        int result = 0;
+
+        if (assignmentResource is not null)
+        {
+            db.Remove(assignmentResource);
+            result = await db.SaveChangesAsync(audit, cancellationToken);
+        }
+
+        if (assignment.Audit_ChangedBySystem == SystemEntityConstants.SingleRightImportSystem)
+        {
+            await DeleteAssignment(assignment.Id, false, audit, cancellationToken);
+        }
+
+        return result;
+    }
+
+    /// <inheritdoc />
+    public async Task<int> ImportAssignmentResourceChange(Guid fromId, Guid toId, string resourceName, string blobStoragePolicyPath, string blobStorageVersionId, int delegationEventId, AuditValues audit, CancellationToken cancellationToken = default)
+    {
+        var resource = await db.Resources
+            .AsNoTracking()
+            .Where(a => a.RefId == resourceName)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (resource is null)
+        {
+            throw new Exception(string.Format("Resource '{0}' not found", resourceName));
+        }
+
+        var resourceType = await db.ResourceTypes
+            .AsNoTracking()
+            .Where(a => a.Name == "MaskinportenSchema")
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var assignmentRole = RoleConstants.Rightholder;
+
+        if (resourceType is not null && resourceType.Id == resource.TypeId)
+        {
+            assignmentRole = RoleConstants.Supplier;
+        }
+
+        var assignment = await db.Assignments
+            .AsNoTracking()
+            .Where(a => a.FromId == fromId)
+            .Where(a => a.ToId == toId)
+            .Where(a => a.RoleId == assignmentRole.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (assignment is null)
+        {
+            assignment = new Assignment()
+            {
+                FromId = fromId,
+                ToId = toId,
+                RoleId = assignmentRole.Id,
+                Audit_ValidFrom = audit?.ValidFrom ?? DateTimeOffset.UtcNow,
+            };
+            await db.Assignments.AddAsync(assignment, cancellationToken);
+            await db.SaveChangesAsync(audit, cancellationToken);
+        }
+
+        var result = await UpsertAssignmentResourceInternal(assignment.Id, resource.Id, blobStoragePolicyPath, blobStorageVersionId, delegationEventId, audit, cancellationToken);
+
+        return result ? 1 : 0;
+    }
+
+    /// <inheritdoc />
+    public async Task<int> ImportInstanceAssignmentChange(Guid fromId, Guid toId, string resourceName, string blobStoragePolicyPath, string blobStorageVersionId, string instanceId, int delegationEventId, AuditValues audit, CancellationToken cancellationToken = default)
+    {
+        var resource = await db.Resources
+            .AsNoTracking()
+            .Where(a => a.RefId == resourceName)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (resource is null)
+        {
+            throw new Exception(string.Format("Resource '{0}' not found", resourceName));
+        }
+
+        var resourceType = await db.ResourceTypes
+            .AsNoTracking()
+            .Where(a => a.Name == "MaskinportenSchema")
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var assignmentRole = RoleConstants.Rightholder;
+
+        if (resourceType is not null && resourceType.Id == resource.TypeId)
+        {
+            assignmentRole = RoleConstants.Supplier;
+        }
+
+        var assignment = await db.Assignments
+            .AsNoTracking()
+            .Where(a => a.FromId == fromId)
+            .Where(a => a.ToId == toId)
+            .Where(a => a.RoleId == assignmentRole.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (assignment is null)
+        {
+            assignment = new Assignment()
+            {
+                FromId = fromId,
+                ToId = toId,
+                RoleId = assignmentRole.Id,
+                Audit_ValidFrom = audit?.ValidFrom ?? DateTimeOffset.UtcNow,
+            };
+            await db.Assignments.AddAsync(assignment, cancellationToken);
+            await db.SaveChangesAsync(audit, cancellationToken);
+        }
+
+        var result = await UpsertAssignmentInstanceInternal(assignment.Id, resource.Id, instanceId, blobStoragePolicyPath, blobStorageVersionId, delegationEventId, audit, cancellationToken);
+
+        return result ? 1 : 0;
+    }
+
+    /// <inheritdoc />
+    public async Task<int> RevokeImportedInstanceAssignment(Guid fromId, Guid toId, string resourceName, string instanceId, AuditValues audit, CancellationToken cancellationToken = default)
+    {
+        var resource = await db.Resources
+            .AsNoTracking()
+            .Where(a => a.RefId == resourceName)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (resource is null)
+        {
+            throw new Exception(string.Format("Resource '{0}' not found", resourceName));
+        }
+
+        var maskinportenResourceType = await db.ResourceTypes
+            .AsNoTracking()
+            .Where(a => a.Name == "MaskinportenSchema")
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var assignmentRole = RoleConstants.Rightholder;
+
+        if (maskinportenResourceType is not null && maskinportenResourceType.Id == resource.TypeId)
+        {
+            assignmentRole = RoleConstants.Supplier;
+        }
+
+        var assignment = await db.Assignments
+            .AsNoTracking()
+            .Where(a => a.FromId == fromId)
+            .Where(a => a.ToId == toId)
+            .Where(a => a.RoleId == assignmentRole.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (assignment is null)
+        {
+            return 0;
+        }
+
+        var assignmentInstance = await db.AssignmentInstances
+            .AsNoTracking()
+            .Where(ar => ar.AssignmentId == assignment.Id)
+            .Where(ar => ar.ResourceId == resource.Id)
+            .Where(ar => ar.InstanceId == instanceId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        int result = 0;
+
+        if (assignmentInstance is not null)
+        {
+            db.Remove(assignmentInstance);
+            result = await db.SaveChangesAsync(audit, cancellationToken);
+        }
+
+        if (assignment.Audit_ChangedBySystem == SystemEntityConstants.SingleRightImportSystem)
+        {
+            await DeleteAssignment(assignment.Id, false, audit, cancellationToken);
+        }
+
+        return result;
     }
 }

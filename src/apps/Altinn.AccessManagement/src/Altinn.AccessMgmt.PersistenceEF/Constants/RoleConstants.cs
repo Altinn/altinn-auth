@@ -148,6 +148,39 @@ public static class RoleConstants
     };
 
     /// <summary>
+    /// Represents the 'Supplier' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 961f6ebb-ecf7-4fc6-ab5a-ca0841db4931
+    /// - <c>URN:</c> urn:altinn:role:supplier
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Code:</c> supplier
+    /// - <c>Description:</c> Gir mulighet til å motta delegerte api tilganger for virksomheten
+    /// </remarks>
+    public static ConstantDefinition<Role> Supplier { get; } = new ConstantDefinition<Role>("961f6ebb-ecf7-4fc6-ab5a-ca0841db4931")
+    {
+        Entity = new()
+        {
+            Name = "Supplier",
+            Code = "supplier",
+            Description = "Gir mulighet til å motta delegerte api tilganger for virksomheten",
+            Urn = "urn:altinn:role:supplier",
+            IsKeyRole = false,
+            IsAssignable = true,
+            EntityTypeId = EntityTypeConstants.Organization,
+            ProviderId = ProviderConstants.Altinn3,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Leverandør"),
+            KeyValuePair.Create("Description", "Allows receiving delegated api-schemes for the business")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Leverandør"),
+            KeyValuePair.Create("Description", "Gjev høve til å motta delegerte api tilganger for verksemda")
+        ),
+    };
+
+    /// <summary>
     /// Represents the 'Hovedadministrator' role.
     /// </summary>
     /// <remarks>

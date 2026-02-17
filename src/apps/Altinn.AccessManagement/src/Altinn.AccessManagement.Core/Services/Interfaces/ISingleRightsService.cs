@@ -92,5 +92,29 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         /// <returns>The result of the deletion</returns>
         /// <param name="cancellationToken">http context token</param>
         Task<ValidationProblemDetails> RevokeRightsDelegation(int authenticatedUserId, Guid authenticatedUserPartyUuid, DelegationLookup delegation, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Gets the next page of delegation changes from the app right feed
+        /// </summary>
+        /// <param name="appRightFeedId">The current position in the feed</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns></returns>
+        Task<List<DelegationChange>> GetNextPageAppDelegationChanges(long appRightFeedId = 1, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets the next page of delegation changes from the resource right feed
+        /// </summary>
+        /// <param name="resourceRightFeedId">The current position in the feed</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns></returns>
+        Task<List<DelegationChange>> GetNextPageResourceDelegationChanges(long resourceRightFeedId = 1, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets the next page of delegation changes from the instance right feed
+        /// </summary>
+        /// <param name="instanceRightFeedId">The current position in the feed</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns></returns>
+        Task<List<InstanceDelegationChange>> GetNextPageInstanceDelegationChanges(long instanceRightFeedId = 1, CancellationToken cancellationToken = default);
     }
 }

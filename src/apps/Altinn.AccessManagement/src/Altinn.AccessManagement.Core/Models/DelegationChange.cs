@@ -54,11 +54,13 @@ namespace Altinn.AccessManagement.Core.Models
         /// <summary>
         /// The uuid of the party the right is on behalf of
         /// </summary>
+        [JsonPropertyName("fromuuid")]
         public Guid? FromUuid { get; set; }
 
         /// <summary>
         /// The type of party the right is on behalf of (Person, Organization, SystemUser)
         /// </summary>
+        [JsonPropertyName("fromuuidtype")]
         public UuidType FromUuidType { get; set; }
 
         /// <summary>
@@ -76,11 +78,13 @@ namespace Altinn.AccessManagement.Core.Models
         /// <summary>
         /// The uuid of the party holding the right
         /// </summary>
+        [JsonPropertyName("touuid")]
         public Guid? ToUuid { get; set; }
 
         /// <summary>
         /// The type of party holding the right
         /// </summary>
+        [JsonPropertyName("touuidtype")]
         public UuidType ToUuidType { get; set; }
 
         /// <summary>
@@ -98,11 +102,13 @@ namespace Altinn.AccessManagement.Core.Models
         /// <summary>
         /// The uuid of the party that performed the delegation
         /// </summary>
+        [JsonPropertyName("performedbyuuid")]
         public string? PerformedByUuid { get; set; }
 
         /// <summary>
         /// The type of the party that performed the delegation
         /// </summary>
+        [JsonPropertyName("performedbyuuidtype")]
         public UuidType PerformedByUuidType { get; set; }
 
         /// <summary>

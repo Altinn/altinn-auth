@@ -26,6 +26,11 @@ public static class AuditDefaults
     public const string InternalApiImportSystem = "b96cda05-c0e0-4c59-b4b8-f15a7dff9590";
 
     /// <summary>
+    /// SingleRightImportSystem
+    /// </summary>
+    public const string SingleRightImportSystem = "f1be3999-68f6-4757-92b4-d3f3d33345e1";
+
+    /// <summary>
     /// EnduserApi
     /// </summary>
     public const string EnduserApi = "ed771364-42a8-4934-801e-b482ed20ec3e";
@@ -39,11 +44,6 @@ public static class AuditDefaults
     /// Altinn2ClientImportSystem
     /// </summary>
     public const string Altinn2RoleImportSystem = "46cfa478-971f-446e-9bc1-af57469361d0";
-
-    /// <summary>
-    /// SingleRightImportSystem
-    /// </summary>
-    public const string SingleRightImportSystem = "f1be3999-68f6-4757-92b4-d3f3d33345e1";
 
     /// <summary>
     /// DBA

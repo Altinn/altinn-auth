@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Helpers.Extensions;
@@ -639,6 +639,21 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
     }
 
     public Task<List<DelegationChange>> GetAllDelegationChangesForAuthorizedParties(List<Guid> toPartyUuids, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<List<DelegationChange>> GetNextPageAppDelegationChanges(long startFeedIndex = 1, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<List<DelegationChange>> GetNextPageResourceDelegationChanges(long startFeedIndex = 1, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<List<InstanceDelegationChange>> GetNextPageInstanceDelegationChanges(long startFeedIndex = 1, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

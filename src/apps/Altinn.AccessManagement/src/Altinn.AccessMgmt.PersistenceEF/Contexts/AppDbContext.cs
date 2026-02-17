@@ -68,6 +68,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<RoleResource> RoleResources => Set<RoleResource>();
 
+    public DbSet<ErrorQueue> ErrorQueue => Set<ErrorQueue>();
+
     #endregion
 
     #region Audit
@@ -199,6 +201,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<RoleMap>(new RoleMapConfiguration());
         modelBuilder.ApplyConfiguration<RolePackage>(new RolePackageConfiguration());
         modelBuilder.ApplyConfiguration<RoleResource>(new RoleResourceConfiguration());
+        modelBuilder.ApplyConfiguration<ErrorQueue>(new ErrorQueueConfiguration());
     }
 
     #region Extensions

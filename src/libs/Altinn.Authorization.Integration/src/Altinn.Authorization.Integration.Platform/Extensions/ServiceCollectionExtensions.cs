@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using Altinn.Authorization.Host.Identity;
 using Altinn.Authorization.Host.Startup;
 using Altinn.Authorization.Integration.Platform.AccessManagement;
@@ -63,6 +63,10 @@ public static partial class ServiceCollectionExtensions
         .AddSblBridge(opts =>
         {
             opts.Endpoint = appsettings.SblBridge.Endpoint;
+        })
+        .AddAccessManagement(opts =>
+        {
+            opts.Endpoint = appsettings.AccessManagement.Endpoint;
         });
 
         return services;
@@ -216,9 +220,9 @@ public static partial class ServiceCollectionExtensions
 
             return this;
         }
-        
+
         /// <summary>
-        /// Adds Altinn SBL bridge services to the service collection.
+        /// Adds Altinn Access Management services to the service collection.
         /// </summary>
         /// <param name="configureOptions">A delegate to configure <see cref="AltinnResourceRegistryOptions"/>.</param>
         /// <returns>The updated <see cref="PlatformBuilder"/>.</returns>
@@ -230,7 +234,7 @@ public static partial class ServiceCollectionExtensions
             }
 
             Services.AddOptions<AltinnAccessManagementOptions>()
-                .Validate(opts => opts.Endpoint is { }, $"Can't add SBL Bridge as '{nameof(AltinnAccessManagementOptions.Endpoint)}' is not specified")
+                .Validate(opts => opts.Endpoint is { }, $"Can't add AccessManagement as '{nameof(AltinnAccessManagementOptions.Endpoint)}' is not specified")
                 .Configure(configureOptions);
 
             Services.AddSingleton<IAltinnAccessManagement, AltinnAccessManagementClient>();
