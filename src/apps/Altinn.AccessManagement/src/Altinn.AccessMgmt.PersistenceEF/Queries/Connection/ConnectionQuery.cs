@@ -215,7 +215,8 @@ public class ConnectionQuery(AppDbContext db)
         var toId = filter.ToIds.First();
         var fromSet = filter.FromIds?.Count > 0 ? new HashSet<Guid>(filter.FromIds) : null;
         var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
-        var roleSetExclude = filter.ExcludeRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ExcludeRoleIds) : null;
+        var roleSetExclude = filter.ExcludeRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ExcludeRoleIds) : [];
+        roleSetExclude.Add(RoleConstants.Supplier.Id); // Supplier role should never be included in results as it is only used for maskinporten schemas.
         var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
         var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
 
@@ -437,7 +438,8 @@ public class ConnectionQuery(AppDbContext db)
         var toSet = new HashSet<Guid>(filter.ToIds);
         var fromSet = filter.FromIds?.Count > 0 ? new HashSet<Guid>(filter.FromIds) : null;
         var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
-        var roleSetExclude = filter.ExcludeRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ExcludeRoleIds) : null; 
+        var roleSetExclude = filter.ExcludeRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ExcludeRoleIds) : [];
+        roleSetExclude.Add(RoleConstants.Supplier.Id); // Supplier role should never be included in results as it is only used for maskinporten schemas.
         var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
         var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
 
@@ -672,7 +674,8 @@ public class ConnectionQuery(AppDbContext db)
         var fromId = filter.FromIds.First();
         var toSet = filter.ToIds?.Count > 0 ? new HashSet<Guid>(filter.ToIds) : null;
         var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
-        var roleSetExclude = filter.ExcludeRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ExcludeRoleIds) : null;
+        var roleSetExclude = filter.ExcludeRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ExcludeRoleIds) : [];
+        roleSetExclude.Add(RoleConstants.Supplier.Id); // Supplier role should never be included in results as it is only used for maskinporten schemas.
         var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
         var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
 
