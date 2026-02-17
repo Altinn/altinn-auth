@@ -326,9 +326,9 @@ namespace Altinn.ResourceRegistry.Tests
                 {
                     new ()
                     {
-                        ReferenceSource = ReferenceSource.Altinn2,
+                        ReferenceSource = ReferenceSource.Altinn3,
                         ReferenceType = ReferenceType.ApplicationId,
-                        Reference = "altinn:skd/flyttemelding"
+                        Reference = "skd/flyttemelding"
                     }
                 },
                 Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
@@ -554,7 +554,7 @@ namespace Altinn.ResourceRegistry.Tests
 
             ServiceResource resource = new ServiceResource()
             {
-                Identifier = "app_superdupertjenestene",
+                Identifier = "app_skd_superdupertjenestene",
                 Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
                 Status = "Active",
                 Homepage = "www.altinn.no",
@@ -568,14 +568,14 @@ namespace Altinn.ResourceRegistry.Tests
                     Organization = "974761076",
                     Orgcode = "skd",
                 },
-                ResourceType = ResourceType.GenericAccessResource,
+                ResourceType = ResourceType.AltinnApp,
                 ResourceReferences = new List<ResourceReference>
                 {
                     new()
                     {
                         ReferenceSource = ReferenceSource.Altinn3,
                         ReferenceType = ReferenceType.ApplicationId,
-                        Reference = "skd/asd"
+                        Reference = "skd/superdupertjenestene"
                     },
                    
                 }
