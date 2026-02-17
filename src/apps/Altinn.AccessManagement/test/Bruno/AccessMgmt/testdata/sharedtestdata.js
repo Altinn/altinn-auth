@@ -19,7 +19,8 @@
         "enterpriseUser": "EnterpriseUser",
         "platformAccess": "PlatformAccess",
         "platformToken": "PlatformToken",
-        "systemUser": "SystemUser"
+        "systemUser": "SystemUser",
+        "selfRegisteredEmailUser": "SelfRegisteredEmailUser"
     },
     "serviceOwners": {
         "ttd": {

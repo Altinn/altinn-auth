@@ -44,6 +44,11 @@ public class AuthorizedPartyExternal
     public int PartyId { get; set; }
 
     /// <summary>
+    /// Gets or sets idporten email identifier
+    /// </summary>
+    public string EmailId { get; set; }
+
+    /// <summary>
     /// Gets or sets the type of party
     /// </summary>
     public AuthorizedPartyTypeExternal Type { get; set; }

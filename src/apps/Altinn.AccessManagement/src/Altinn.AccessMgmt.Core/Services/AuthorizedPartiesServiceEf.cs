@@ -34,6 +34,7 @@ public class AuthorizedPartiesServiceEf(
         AltinnXacmlConstants.MatchAttributeIdentifiers.SystemUserUuid => await GetAuthorizedPartiesBySystemUserUuid(subjectAttribute.Value, filter, cancellationToken),
         AltinnXacmlConstants.MatchAttributeIdentifiers.EnterpriseUserName => await GetAuthorizedPartiesByEnterpriseUsername(subjectAttribute.Value, filter, cancellationToken),
         AltinnXacmlConstants.MatchAttributeIdentifiers.EnterpriseUserUuid => await GetAuthorizedPartiesByPartyUuid(subjectAttribute.Value, filter, cancellationToken),
+        AltinnXacmlConstants.MatchAttributeIdentifiers.IdPortenEmail => await GetAuthorizedPartiesByIdPortenEmailId(subjectAttribute.Value, filter, cancellationToken),
         _ => throw new ArgumentException(message: $"Unknown attribute type: {subjectAttribute.Type}", paramName: nameof(subjectAttribute))
     };
 
@@ -201,6 +202,13 @@ public class AuthorizedPartiesServiceEf(
     public async Task<List<AuthorizedParty>> GetAuthorizedPartiesBySystemUserUuid(string subjectSystemUserUuid, AuthorizedPartiesFilters filter, CancellationToken cancellationToken)
     {
         return await GetAuthorizedPartiesByPartyUuid(subjectSystemUserUuid, filter, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<List<AuthorizedParty>> GetAuthorizedPartiesByIdPortenEmailId(string subjectIdPortenEmailId, AuthorizedPartiesFilters filter, CancellationToken cancellationToken)
+    {
+        var subject = await repoService.GetEntityByIdPortenEmailId(subjectIdPortenEmailId, cancellationToken);
+        return await GetAuthorizedParties(subject, filter, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -736,6 +744,7 @@ public class AuthorizedPartiesServiceEf(
                 break;
             case var siUserType when siUserType == EntityTypeConstants.SelfIdentified.Id:
                 party.Type = AuthorizedPartyType.SelfIdentified;
+                party.EmailId = entity.EmailIdentifier;
                 break;
             default:
                 // Only Organizations and Persons can be represented by others. SIUsers can represent themselves.

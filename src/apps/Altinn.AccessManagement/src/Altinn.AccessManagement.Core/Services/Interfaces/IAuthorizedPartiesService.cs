@@ -98,6 +98,15 @@ public interface IAuthorizedPartiesService
     Task<List<AuthorizedParty>> GetAuthorizedPartiesBySystemUserUuid(string subjectSystemUserUuid, AuthorizedPartiesFilters filter, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Gets the full unfiltered list of authorized parties the given idporten email user can represent in Altinn
+    /// </summary>
+    /// <param name="subjectIdPortenEmailId">The idporten email id of the user to retrieve the authorized party list for</param>
+    /// <param name="filter">Filters to apply when retrieving authorized parties</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns>The unfiltered party list</returns>
+    Task<List<AuthorizedParty>> GetAuthorizedPartiesByIdPortenEmailId(string subjectIdPortenEmailId, AuthorizedPartiesFilters filter, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Gets all relevant filter party UUIDs for the provided party attributes
     /// </summary>
     /// <param name="partyAttributes">The party attributes to lookup party uuids</param>

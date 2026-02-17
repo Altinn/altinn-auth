@@ -96,8 +96,6 @@ public class AuthorizedPartiesController(
                 return Ok(PaginatedResult.Create(DtoMapper.ConvertToAuthorizedPartiesDto(result), null));
             }
 
-            //// ToDo: support self-identified email-users 
-
             return Unauthorized("Unknown user type");
         }
         catch (Exception ex)

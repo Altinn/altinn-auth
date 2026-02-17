@@ -193,6 +193,12 @@ public class AuthorizedPartiesService : IAuthorizedPartiesService
         throw new NotImplementedException();
     }
 
+    /// <inheritdoc/>
+    public Task<List<AuthorizedParty>> GetAuthorizedPartiesByIdPortenEmailId(string subjectIdPortenEmailId, AuthorizedPartiesFilters filter, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     private async Task AddInstanceDelegations(List<DelegationChange> delegations, int subjectUserId, List<int> subjectPartyIds, CancellationToken cancellationToken)
     {
         var toParties = new List<Party>();

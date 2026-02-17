@@ -44,6 +44,11 @@ public class AuthorizedPartyDto
     public int PartyId { get; set; }
 
     /// <summary>
+    /// Gets or sets idporten email identifier
+    /// </summary>
+    public string EmailId { get; set; }
+
+    /// <summary>
     /// Gets or sets the type of party
     /// </summary>
     public AuthorizedPartyTypeDto Type { get; set; }

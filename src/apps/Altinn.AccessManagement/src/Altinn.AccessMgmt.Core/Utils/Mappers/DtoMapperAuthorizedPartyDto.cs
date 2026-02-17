@@ -20,6 +20,7 @@ public partial class DtoMapper : IDtoMapper
             PersonId = authorizedParty.PersonId,
             DateOfBirth = authorizedParty.DateOfBirth,
             PartyId = authorizedParty.PartyId,
+            EmailId = authorizedParty.EmailId,
             Type = (Authorization.Api.Contracts.AccessManagement.Enums.AuthorizedPartyTypeDto)authorizedParty.Type,
             UnitType = authorizedParty.UnitType,
             IsDeleted = authorizedParty.IsDeleted,

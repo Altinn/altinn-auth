@@ -299,5 +299,12 @@ module.exports =
             "partyId": 51479239,
             "partyUuid": "5d0ec048-5cc4-435e-9056-9246189c039a"
         }
+    },
+    "idportenEmailUser": {
+      "name": "am-bruno-automated-tests@mailinator.com",
+      "emailId": "am-bruno-automated-tests@mailinator.com",
+      "userId": 2680437,
+      "partyId": 53440923,
+      "partyUuid": "a28806e7-5e11-4ffa-be5a-56c47dcedf98",
     }
 };

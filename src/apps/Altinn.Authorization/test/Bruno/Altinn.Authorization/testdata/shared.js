@@ -12,7 +12,8 @@ module.exports =
         "enterprise": "Enterprise",
         "enterpriseUser": "EnterpriseUser",
         "platformToken": "PlatformToken",
-        "platformAccessToken": "PlatformAccessToken"
+        "platformAccessToken": "PlatformAccessToken",
+        "selfRegisteredEmailUser": "SelfRegisteredEmailUser"
     },
     "serviceOwners": {
 		"ttd":

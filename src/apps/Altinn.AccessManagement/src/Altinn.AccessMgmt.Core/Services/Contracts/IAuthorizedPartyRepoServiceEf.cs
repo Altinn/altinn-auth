@@ -55,6 +55,13 @@ public interface IAuthorizedPartyRepoServiceEf
     Task<Entity?> GetEntityByUsername(string username, CancellationToken ct = default);
 
     /// <summary>
+    /// Get Entity based on IDPorten email identifier
+    /// </summary>
+    /// <param name="emailIdentifier">Email identifier</param>
+    /// <param name="ct">The <see cref="CancellationToken"/></param>
+    Task<Entity?> GetEntityByIdPortenEmailId(string emailIdentifier, CancellationToken ct = default);
+
+    /// <summary>
     /// Get all child entities based on a list of parentIds
     /// </summary>
     /// <param name="parentIds">List of parent ids</param>

@@ -177,6 +177,11 @@
             public const string SystemUserUuid = "urn:altinn:systemuser:uuid";
 
             /// <summary>
+            /// Email-user uuid
+            /// </summary>
+            public const string IdPortenEmail = "urn:altinn:person:idporten-email";
+
+            /// <summary>
             /// Attribute Matching Identity.
             /// </summary>
             public const string ActionId = "urn:oasis:names:tc:xacml:1.0:action:action-id";

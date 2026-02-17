@@ -104,6 +104,11 @@ public class AuthorizedParty
     public int PartyId { get; set; }
 
     /// <summary>
+    /// Gets or sets idporten email identifier
+    /// </summary>
+    public string EmailId { get; set; }
+
+    /// <summary>
     /// Gets or sets the type of party
     /// </summary>
     public AuthorizedPartyType Type { get; set; }

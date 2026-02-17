@@ -62,6 +62,15 @@ exports.getToken = async function (getTokenParameters) {
     tokenUrl = `${tokenBaseUrl}/api/Get${tokenType}Token?env=${tokenEnv}&scopes=${tokenScopes}&systemUserId=${tokenSystemUser}&orgNo=${tokenOrgNo}&clientId=${tokenClientId}&ttl=30`;
   }
   
+  else if (tokenType == "SelfRegisteredEmailUser") {
+    const tokenUser = getTokenParameters.auth_userId;
+    const tokenParty = getTokenParameters.auth_partyId;
+    const tokenPartyUuid = getTokenParameters.auth_partyUuid ?? "00000000-0000-0000-0000-000000000000";
+    const tokenEmail = getTokenParameters.auth_email;    
+
+    tokenUrl = `${tokenBaseUrl}/api/Get${tokenType}Token?env=${tokenEnv}&scopes=${tokenScopes}&partyId=${tokenParty}&userId=${tokenUser}&email=${tokenEmail}&partyuuid=${tokenPartyUuid}&ttl=30`;
+  }
+  
   console.log("tokenurl: " + tokenUrl);
   const response = await axios.get(tokenUrl, {
     headers: { Authorization }

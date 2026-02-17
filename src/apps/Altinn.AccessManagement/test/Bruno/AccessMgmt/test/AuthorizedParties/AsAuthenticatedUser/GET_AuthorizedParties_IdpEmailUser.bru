@@ -1,0 +1,65 @@
+meta {
+  name: GET_AuthorizedParties_IdpEmailUser
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/authorizedparties?includeAltinn2=true&includeAltinn3=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAltinn2: true
+  includeAltinn3: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "GET_AuthorizedParties_IdpEmailUser");
+  
+  var getTokenParameters = {
+    auth_userId: testdata.idportenEmailUser.userId,
+    auth_partyId: testdata.idportenEmailUser.partyId,
+    auth_partyUuid: testdata.idportenEmailUser.partyUuid,
+    auth_email: testdata.idportenEmailUser.emailId,
+    auth_tokenType: sharedtestdata.authTokenType.selfRegisteredEmailUser,
+    auth_tokenLvl: 0,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const body = res.getBody();
+  const requestName = bru.getVar("requestName");
+  
+  test(requestName + "|HttpStatus.OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test(requestName + "|Find Self and AuthorizedRoles", function() {  
+    // Test that the expected party exists in the response with the expected roles
+    
+    const allParties = body.flatMap(party => [party, ...(party.subunits || [])]);
+    const targetParty = allParties.find(party => party.partyUuid === testdata.idportenEmailUser.partyUuid);
+  
+    assert.exists(targetParty, 'Party with partyUuid '+testdata.idportenEmailUser.partyUuid+' should exist');
+    assert.includeMembers(targetParty.authorizedRoles, ["SELN"]);
+  
+  });
+}
