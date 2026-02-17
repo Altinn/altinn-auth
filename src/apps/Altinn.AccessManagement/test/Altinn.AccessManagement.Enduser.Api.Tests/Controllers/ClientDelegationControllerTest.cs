@@ -104,6 +104,12 @@ public class ClientDelegationControllerTest
                     RolePackageId = rppaula.Id,
                     PackageId = PackageConstants.AccountantWithSigningRights,
                 };
+                var delegationPackageAccountantSalaryToPaula = new DelegationPackage()
+                {
+                    DelegationId = delegationToPaula.Id,
+                    RolePackageId = rppaula.Id,
+                    PackageId = PackageConstants.AccountantSalary,
+                };
 
                 var delegationPackageAccountantWithSigningRightsToOrjan = new DelegationPackage()
                 {
@@ -125,6 +131,7 @@ public class ClientDelegationControllerTest
 
                 db.DelegationPackages.Add(delegationPackageAccountantWithSigningRightsToPaula);
                 db.DelegationPackages.Add(delegationPackageAccountantWithSigningRightsToOrjan);
+                db.DelegationPackages.Add(delegationPackageAccountantSalaryToPaula);
                 db.AssignmentPackages.Add(new()
                 {
                     AssignmentId = rightholderFromNordisToVerdiq.Id,
@@ -202,11 +209,16 @@ public class ClientDelegationControllerTest
             Assert.Single(verdiqClients.Access);
             var verdiqAccess = verdiqClients.Access.FirstOrDefault();
 
-            Assert.Single(verdiqAccess.Packages);
-            var verdiqClientPackages = verdiqAccess.Packages.FirstOrDefault();
+            Assert.Equal(2, verdiqAccess.Packages.Length);
+            var verdiqPackageAccountantWithSigningRights = verdiqAccess.Packages.FirstOrDefault(p => p.Id == PackageConstants.AccountantWithSigningRights);
+            var verdiqPackageAccountantSalary = verdiqAccess.Packages.FirstOrDefault(p => p.Id == PackageConstants.AccountantSalary);
+
+            Assert.NotNull(verdiqPackageAccountantWithSigningRights);
+            Assert.NotNull(verdiqPackageAccountantSalary);
 
             Assert.Equal(RoleConstants.Accountant.Id, verdiqAccess.Role.Id);
-            Assert.Equal(PackageConstants.AccountantWithSigningRights, verdiqClientPackages.Id);
+            Assert.Equal(PackageConstants.AccountantWithSigningRights, verdiqPackageAccountantWithSigningRights.Id);
+            Assert.Equal(PackageConstants.AccountantSalary, verdiqPackageAccountantSalary.Id);
 
             Assert.Equal(TestEntities.OrganizationVerdiqAS.Id, verdiq.Provider.Id);
             Assert.Equal(TestEntities.OrganizationNordisAS.Id, verdiqClients.Client.Id);
