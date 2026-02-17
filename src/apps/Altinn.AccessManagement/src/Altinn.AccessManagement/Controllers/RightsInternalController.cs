@@ -451,6 +451,7 @@ namespace Altinn.AccessManagement.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> SingleAppRightsFeed([FromQuery]long singleAppDelegationEventId, CancellationToken cancellationToken)
         {
             // get the data
@@ -480,6 +481,7 @@ namespace Altinn.AccessManagement.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> SingleResourceRightsFeed([FromQuery] long singleResourceDelegationEventId, CancellationToken cancellationToken)
         {
             // get the data
@@ -509,6 +511,7 @@ namespace Altinn.AccessManagement.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> SingleInstanceRightsFeed([FromQuery] long singleInstanceDelegationEventId, CancellationToken cancellationToken)
         {
             // get the data
