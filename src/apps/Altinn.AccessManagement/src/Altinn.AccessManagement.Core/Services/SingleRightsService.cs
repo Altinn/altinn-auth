@@ -130,19 +130,19 @@ namespace Altinn.AccessManagement.Core.Services
             return result;
         }
 
-        public async Task<List<Rule>> EnrichAndTryWriteDelegationPolicyRules(List<Rule> rules, CancellationToken cancellationToken)
+        public async Task<List<Rule>> EnrichAndTryWriteDelegationPolicyRules(List<Rule> rules, bool ignoreExistingPolicy = false, CancellationToken cancellationToken = default)
         {
             rules = await EnrichRulesWithUuidInformation(rules, cancellationToken);
-            return await _pap.TryWriteDelegationPolicyRules(rules, cancellationToken);
+            return await _pap.TryWriteDelegationPolicyRules(rules: rules, ignoreExistingPolicy: ignoreExistingPolicy, cancellationToken: cancellationToken);
         }
 
-        public async Task<List<Rule>> TryWriteDelegationPolicyRules(Entity from, Entity to, Resource resource, RuleKeyListDto actionIds, Entity performedBy, CancellationToken cancellationToken)
+        public async Task<List<Rule>> TryWriteDelegationPolicyRules(Entity from, Entity to, Resource resource, List<string> ruleKeys, Entity performedBy, bool ignoreExistingPolicy = false, CancellationToken cancellationToken = default)
         {
-            var rules = GenerateRules(from, to, resource, actionIds, performedBy).ToList();
-            return await _pap.TryWriteDelegationPolicyRules(rules, cancellationToken);
+            var rules = GenerateRules(from, to, resource, ruleKeys, performedBy).ToList();
+            return await _pap.TryWriteDelegationPolicyRules(rules: rules, ignoreExistingPolicy: ignoreExistingPolicy, cancellationToken: cancellationToken);
         }
 
-        private IEnumerable<Rule> GenerateRules(Entity from, Entity to, Resource resource, RuleKeyListDto actionIds, Entity performedBy)
+        private IEnumerable<Rule> GenerateRules(Entity from, Entity to, Resource resource, List<string> ruleKeys, Entity performedBy)
         {
             var coveredBy = to;
             var offeredBy = from;
@@ -151,7 +151,7 @@ namespace Altinn.AccessManagement.Core.Services
             
             List<Rule> rules = [];
 
-            foreach (string ruleKey in actionIds.RuleKeys)
+            foreach (string ruleKey in ruleKeys)
             {
                 (List<AttributeMatch> Resource, AttributeMatch Action) resourceAndAction = SplitActionKey(ruleKey);
 
@@ -679,7 +679,7 @@ namespace Altinn.AccessManagement.Core.Services
                 }
             }
 
-            List<Rule> delegationResult = await _pap.TryWriteDelegationPolicyRules(rulesToDelegate);
+            List<Rule> delegationResult = await _pap.TryWriteDelegationPolicyRules(rulesToDelegate, ignoreExistingPolicy: false, cancellationToken: cancellationToken);
             result.Rights = DelegationHelper.GetRightDelegationResultsFromRules(delegationResult);
 
             if (rightsUserCantDelegate.Any())
@@ -700,6 +700,12 @@ namespace Altinn.AccessManagement.Core.Services
         public Task<List<RightDelegation>> GetReceivedRights(AttributeMatch reportee, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public async Task<string> ClearPolicyRules(string policyPath, string policyVersion, CancellationToken cancellationToken = default)
+        {
+            return await _pap.ClearPolicyRules(policyPath, policyVersion, cancellationToken);
         }
 
         /// <inheritdoc/>

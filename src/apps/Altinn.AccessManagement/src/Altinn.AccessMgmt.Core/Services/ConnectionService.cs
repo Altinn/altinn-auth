@@ -2,8 +2,11 @@
 using System.Diagnostics;
 using System.Text;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
+using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
 using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessManagement.Core.Helpers;
+using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.AccessList;
 using Altinn.AccessManagement.Core.Models.Party;
@@ -236,12 +239,38 @@ public partial class ConnectionService(
         return DtoMapper.ConvertResources(resources);
     }
 
+    public async Task<Result<bool>> UpdateResource(Entity from, Entity to, Resource resourceObj, List<string> ruleKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
+    {
+        var canDelegate = await ResourceDelegationCheck(by.Id, from.Id, resourceObj.RefId, ConfigureConnections, cancellationToken);
+        if (canDelegate.IsProblem)
+        {
+            return canDelegate.Problem;
+        }
+
+        foreach (var ruleKey in ruleKeys)
+        {
+            if (!canDelegate.Value.Rules.Any(a => a.Rule.Key == ruleKey && a.Result))
+            {
+                return Problems.NotAuthorizedForDelegationRequest;
+            }
+        }
+
+        List<Rule> result = await singleRightsService.TryWriteDelegationPolicyRules(from, to, resourceObj, ruleKeys, by, ignoreExistingPolicy: true, cancellationToken: cancellationToken);
+
+        if (!result.All(r => r.CreatedSuccessfully))
+        {
+            return Problems.DelegationPolicyRuleWriteFailed;
+        }
+
+        return true;
+    }
+
     public async Task<ValidationProblemInstance> RemoveResource(Guid fromId, Guid toId, string resource, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
         var resourceObj = await dbContext.Resources.AsNoTracking().FirstOrDefaultAsync(t => t.RefId == resource);
         return await RemoveResource(fromId, toId, (Guid)resourceObj.Id, configureConnection, cancellationToken);
     }
-
+    
     public async Task<ValidationProblemInstance> RemoveResource(Guid fromId, Guid toId, Guid resourceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
         var options = new ConnectionOptions(configureConnection);
@@ -282,6 +311,10 @@ public partial class ConnectionService(
         {
             return null;
         }
+        
+        var newVersion = await singleRightsService.ClearPolicyRules(existingAssignmentResources.PolicyPath, existingAssignmentResources.PolicyVersion, cancellationToken);
+        existingAssignmentResources.PolicyVersion = newVersion;
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         dbContext.Remove(existingAssignmentResources);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -1012,7 +1045,7 @@ public partial class ConnectionService(
             }
         }
 
-        List<Rule> result = await singleRightsService.TryWriteDelegationPolicyRules(from, to, resourceObj, ruleKeys, by, cancellationToken);
+        List<Rule> result = await singleRightsService.TryWriteDelegationPolicyRules(from, to, resourceObj, ruleKeys.RuleKeys.ToList(), by, ignoreExistingPolicy: false, cancellationToken: cancellationToken);
 
         if (!result.All(r => r.CreatedSuccessfully))
         {
@@ -1518,7 +1551,7 @@ public partial class ConnectionService
                 Role = t.Role,
                 PolicyPath = t.PolicyPath,
                 PolicyVersion = t.PolicyVersion,
-                Reason = AccessReasonFlag.Direct
+                Reason = AccessReasonFlag.Parent
             });
 
         // KeyRole
@@ -1550,7 +1583,7 @@ public partial class ConnectionService
                Role = t.Role,
                PolicyPath = t.PolicyPath,
                PolicyVersion = t.PolicyVersion,
-               Reason = AccessReasonFlag.Direct
+               Reason = AccessReasonFlag.KeyRole
            });
 
         // KeyRole + Heirarchy

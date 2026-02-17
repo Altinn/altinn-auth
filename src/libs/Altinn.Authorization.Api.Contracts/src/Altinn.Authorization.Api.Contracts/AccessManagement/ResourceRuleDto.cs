@@ -36,3 +36,40 @@ public class RulePermission
     /// </summary>
     public List<PermissionDto> Permissions { get; set; }
 }
+
+/// <summary>
+/// Resource rules
+/// </summary>
+public class ExternalResourceRuleDto
+{
+    /// <summary>
+    /// Resource
+    /// </summary>
+    public ResourceDto Resource { get; set; }
+
+    /// <summary>
+    /// Rules
+    /// </summary>
+    public List<RulePermission> DirectRules { get; set; }
+
+    /// <summary>
+    /// Rules
+    /// </summary>
+    public List<RulePermission> IndirectRules { get; set; }
+}
+
+/// <summary>
+/// Resource rules
+/// </summary>
+public class ExternalResourceRuleUpdateDto
+{
+    /// <summary>
+    /// Resource
+    /// </summary>
+    public string Resource { get; set; }
+
+    /// <summary>
+    /// Rules
+    /// </summary>
+    public List<string> DirectRuleKeys { get; set; }
+}

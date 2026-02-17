@@ -129,4 +129,8 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor DelegationPolicyRuleWriteFailed { get; }
     = _factory.Create(29, HttpStatusCode.InternalServerError, "The delegation failed");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor AssignmentNotFound { get; }
+    = _factory.Create(30, HttpStatusCode.InternalServerError, "The assignment was not found");
 }

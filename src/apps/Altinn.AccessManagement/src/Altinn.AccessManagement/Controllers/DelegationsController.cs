@@ -59,7 +59,7 @@ namespace Altinn.AccessManagement.Controllers
                 return BadRequest("Invalid model");
             }
 
-            List<Rule> delegationResults = await _rights.EnrichAndTryWriteDelegationPolicyRules(rules, cancellationToken);
+            List<Rule> delegationResults = await _rights.EnrichAndTryWriteDelegationPolicyRules(rules, ignoreExistingPolicy: false, cancellationToken: cancellationToken);
 
             if (delegationResults.All(r => r.CreatedSuccessfully))
             {

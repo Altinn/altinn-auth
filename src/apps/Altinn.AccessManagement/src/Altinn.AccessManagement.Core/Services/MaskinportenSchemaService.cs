@@ -155,7 +155,7 @@ namespace Altinn.AccessManagement.Core.Services
                 });
             }
 
-            List<Rule> delegationResult = await _pap.TryWriteDelegationPolicyRules(rulesToDelegate, cancellationToken);
+            List<Rule> delegationResult = await _pap.TryWriteDelegationPolicyRules(rulesToDelegate, ignoreExistingPolicy: false, cancellationToken: cancellationToken);
 
             // Map response
             if (delegationResult.All(r => r.CreatedSuccessfully))
