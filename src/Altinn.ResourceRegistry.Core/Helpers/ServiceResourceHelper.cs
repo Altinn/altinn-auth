@@ -50,7 +50,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
         /// <summary>
         /// Method to validate service resource
         /// </summary>
-        public static bool ValidateResource(ServiceResource serviceResource, out Dictionary<string, List<string>> validationMessages)
+        public static bool ValidateResource(ServiceResource serviceResource, bool isNew, out Dictionary<string, List<string>> validationMessages)
         {
             bool isValid = true;
             validationMessages = new Dictionary<string, List<string>>();
@@ -92,7 +92,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
                 isValid = false;
             }
 
-            if (!ResourceIdentifierRegex().IsMatch(serviceResource.Identifier))
+            if (isNew && !ResourceIdentifierRegex().IsMatch(serviceResource.Identifier))
             {
                 AddValidationMessage(validationMessages, "Identifier", "Invalid id. Only a-z and 0-9 is allowed together with _ and -.  Minimum 4 characters");
                 isValid = false;

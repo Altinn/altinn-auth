@@ -126,7 +126,7 @@ namespace Altinn.ResourceRegistry.Controllers
             }
 
             // Validate Resource
-            if (!ServiceResourceHelper.ValidateResource(serviceResource, out Dictionary<string, List<string>> message))
+            if (!ServiceResourceHelper.ValidateResource(serviceResource, true, out Dictionary<string, List<string>> message))
             {
                 foreach (KeyValuePair<string, List<string>> kvp in message)
                 {
@@ -207,7 +207,7 @@ namespace Altinn.ResourceRegistry.Controllers
 
             // Validate Resource
             // Validate Resource
-            if (!ServiceResourceHelper.ValidateResource(serviceResource, out Dictionary<string, List<string>> message))
+            if (!ServiceResourceHelper.ValidateResource(serviceResource, false, out Dictionary<string, List<string>> message))
             {
                 foreach (KeyValuePair<string, List<string>> kvp in message)
                 {
