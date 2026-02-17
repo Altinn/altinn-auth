@@ -67,7 +67,7 @@ public partial class ResourceSyncService : IResourceSyncService
         }
 
         // IngestService will map in Id property and update properties not matchaed
-        await ingestService.IngestAndMergeData(resourceOwners, options, ["Id"], cancellationToken: cancellationToken);
+        await ingestService.IngestAndMergeData(resourceOwners, options, ["Id"], ignoreColumnsToUpdate: ["audit_validfrom"], cancellationToken: cancellationToken);
 
         return true;
     }

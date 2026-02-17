@@ -160,7 +160,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
                 }
 
                 var mergedEntities = await ingestService.MergeTempData<Entity>(batchIdEntity, options, matchColumns: ["id"], ignoreColumnsToUpdate: ["parentid"], cancellationToken: cancellationToken);
-                int mergedAssignments = await ingestService.MergeTempData<Assignment>(batchIdAssignment, options, matchColumns: ["fromid","toid","roleid"], ignoreColumnsToUpdate: [ "id", "audit_validfrom" ], cancellationToken: cancellationToken);
+                int mergedAssignments = await ingestService.MergeTempData<Assignment>(batchIdAssignment, options, matchColumns: ["fromid","toid","roleid"], ignoreColumnsToUpdate: ["id", "audit_validfrom"], cancellationToken: cancellationToken);
 
                 _logger.LogInformation("Merge complete: Entity ({0}/{1})", mergedEntities, ingestedEntities);
                 return mergedEntities;
