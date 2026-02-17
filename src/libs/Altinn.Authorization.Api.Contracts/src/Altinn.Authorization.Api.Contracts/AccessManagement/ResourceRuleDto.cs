@@ -57,19 +57,3 @@ public class ExternalResourceRuleDto
     /// </summary>
     public List<RulePermission> IndirectRules { get; set; }
 }
-
-/// <summary>
-/// Resource rules
-/// </summary>
-public class ExternalResourceRuleUpdateDto
-{
-    /// <summary>
-    /// Resource
-    /// </summary>
-    public string Resource { get; set; }
-
-    /// <summary>
-    /// Rules
-    /// </summary>
-    public List<string> DirectRuleKeys { get; set; }
-}

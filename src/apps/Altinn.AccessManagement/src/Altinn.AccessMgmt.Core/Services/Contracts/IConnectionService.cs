@@ -283,13 +283,13 @@ public interface IConnectionService
     /// <param name="from">The source entity from which the delegation originates.</param>
     /// <param name="to">The target entity to which the delegation is granted.</param>
     /// <param name="resourceObj">The resource to associate between the source and target entities.</param>
-    /// <param name="actionKeys">A list of action keys that define the permissions or actions allowed for the resource.</param>
+    /// <param name="ruleKeys">A list of rule keys that define the permissions or actions allowed for the resource.</param>
     /// <param name="by">The entity performing the operation. Used for auditing and authorization purposes.</param>
     /// <param name="configureConnection">An optional delegate to configure connection options for the operation. If null, default connection settings are used.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains a Result object indicating whether
     /// the resource was successfully added.</returns>
-    Task<Result<bool>> AddResource(Entity from, Entity to, Resource resourceObj, RuleKeyListDto actionKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
+    Task<Result<bool>> AddResource(Entity from, Entity to, Resource resourceObj, RuleKeyListDto ruleKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a delegation to a resource between two entities with the specified action keys. If not all actions is posible nothing is performed and a Problem is returned
@@ -297,11 +297,11 @@ public interface IConnectionService
     /// <param name="from">The source entity from which the delegation originates.</param>
     /// <param name="to">The target entity to which the delegation is granted.</param>
     /// <param name="resourceObj">The resource to associate between the source and target entities.</param>
-    /// <param name="actionKeys">A list of action keys that define the permissions or actions allowed for the resource.</param>
+    /// <param name="ruleKeys">A list of rule keys that define the permissions or actions allowed for the resource.</param>
     /// <param name="by">The entity performing the operation. Used for auditing and authorization purposes.</param>
     /// <param name="configureConnection">An optional delegate to configure connection options for the operation. If null, default connection settings are used.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains a Result object indicating whether
     /// the resource was successfully added.</returns>
-    Task<Result<bool>> UpdateResource(Entity from, Entity to, Resource resourceObj, List<string> actionKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
+    Task<Result<bool>> UpdateResource(Entity from, Entity to, Resource resourceObj, IEnumerable<string> ruleKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
 }

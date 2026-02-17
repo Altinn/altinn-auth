@@ -597,7 +597,7 @@ public class ConnectionsController(
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status500InternalServerError, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> UpdateResourceRules([FromQuery] ConnectionInput connection, [FromQuery] string resource, [FromBody] ExternalResourceRuleUpdateDto updateDto, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> UpdateResourceRules([FromQuery] ConnectionInput connection, [FromQuery] string resource, [FromBody] RuleKeyListDto updateDto, CancellationToken cancellationToken = default)
     {
         var validationErrors = ValidationComposer.Validate(ConnectionValidation.ValidateAddResourceToConnectionWithConnectionInput(connection.Party, connection.From, connection.To));
 
