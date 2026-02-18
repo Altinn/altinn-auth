@@ -85,11 +85,11 @@ public static class AccessReasonMapping
         {
             {
                 AccessReasonFlag.Direct,
-                new("assignment", "Access granted directly with assignment")
+                new("direct", "Access granted directly with assignment")
             },
             {
                 AccessReasonFlag.ClientDelegation,
-                new("delegation", "Access granted via delegation")
+                new("client-delegation", "Access granted via client delegation")
             },
             {
                 AccessReasonFlag.KeyRole,
@@ -101,7 +101,7 @@ public static class AccessReasonMapping
             },
             {
                 AccessReasonFlag.Parent,
-                new("hierarchy", "Access granted through parent/child relation")
+                new("parent", "Access granted through parent party")
             }
         };
 

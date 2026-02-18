@@ -533,9 +533,12 @@ public class ConnectionsController(
         var externalResult = new ExternalResourceRuleDto
         {
             Resource = DtoMapper.Convert(resourceObj),
-            DirectRules = result?.Rules?.Where(t => t.Reason.Equals(AccessReasonFlag.Direct)).ToList(),
-            IndirectRules = result?.Rules?.Where(t => !t.Reason.Equals(AccessReasonFlag.Direct)).ToList(),
+            DirectRules = result?.Rules?.Where(t => t.Reason.Contains(AccessReasonFlag.Direct)).ToList(),
+            IndirectRules = result?.Rules?.Where(t => !t.Reason.Contains(AccessReasonFlag.Direct)).ToList(),
         };
+
+        externalResult.DirectRules.ForEach(r => r.Reason = AccessReasonFlag.Direct);
+        externalResult.IndirectRules.ForEach(r => r.Reason.Remove(AccessReasonFlag.Direct));
 
         return Ok(externalResult);
     }
