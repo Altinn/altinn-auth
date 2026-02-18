@@ -26,6 +26,8 @@ public static class TestDataSeeds
             TestEntities.MainUnitNordis,
             TestEntities.OrganizationNordisAS,
             TestEntities.OrganizationVerdiqAS,
+            TestEntities.SystemUserClient,
+            TestEntities.SystemUserStandard,
             TestEntities.OrganizationOkernBorettslag
         ]);
         #endregion

@@ -53,7 +53,7 @@ public static class TestEntities
     #endregion
 
     #region Organizations
-    
+
     public static ConstantDefinition<Entity> MainUnitNordis { get; } = new("8b8ab597-f0e6-47d8-8f3c-eaefd71c7049")
     {
         Entity = new()
@@ -139,6 +139,50 @@ public static class TestEntities
             UserId = null,
             Username = null,
             VariantId = EntityVariantConstants.AS,
+        }
+    };
+
+    public static ConstantDefinition<Entity> SystemUserStandard { get; } = new("2cacc11b-6960-413f-9894-c330f99ed7e4")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Standard",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = null,
+            PersonIdentifier = null,
+            RefId = "2cacc11b-6960-413f-9894-c330f99ed7e4",
+            TypeId = EntityTypeConstants.SystemUser,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.StandardSystem,
+        }
+    };
+
+    public static ConstantDefinition<Entity> SystemUserClient { get; } = new("421667ea-8a95-4242-a5a4-572874a9035c")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Client",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = null,
+            PersonIdentifier = null,
+            RefId = "421667ea-8a95-4242-a5a4-572874a9035c",
+            TypeId = EntityTypeConstants.SystemUser,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.AgentSystem,
         }
     };
 
