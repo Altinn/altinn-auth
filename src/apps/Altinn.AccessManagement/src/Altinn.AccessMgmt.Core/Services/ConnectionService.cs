@@ -1644,7 +1644,11 @@ public partial class ConnectionService
                 Rules = new List<RulePermission>()
             };
 
-            var resourcePolicy = await policyRetrievalPoint.GetPolicyAsync(resource.RefId, cancellationToken);
+            bool isApp = DelegationCheckHelper.IsAppResourceId(resource.RefId, out string org, out string app);
+            var resourcePolicy = isApp ? 
+                await policyRetrievalPoint.GetPolicyAsync(org, app, cancellationToken) :
+                await policyRetrievalPoint.GetPolicyAsync(resource.RefId, cancellationToken);
+
             var validRuleActions = resourcePolicy.Rules.SelectMany(t => DelegationCheckHelper.CalculateActionKey(t, resource.RefId));
 
             foreach (var assignmentResource in res)
