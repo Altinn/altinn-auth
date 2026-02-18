@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement;
+﻿namespace Altinn.AccessManagement;
 
 /// <summary>
 /// Access Management Feature Flags.

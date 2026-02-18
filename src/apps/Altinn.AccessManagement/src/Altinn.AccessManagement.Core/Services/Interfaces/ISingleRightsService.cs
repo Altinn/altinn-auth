@@ -103,7 +103,8 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>VersionId</returns>
         Task<string> ClearPolicyRules(string policyPath, string policyVersion, CancellationToken cancellationToken = default);
-        
+
+        /// <summary>
         /// Gets the next page of delegation changes from the app right feed
         /// </summary>
         /// <param name="appRightFeedId">The current position in the feed</param>
