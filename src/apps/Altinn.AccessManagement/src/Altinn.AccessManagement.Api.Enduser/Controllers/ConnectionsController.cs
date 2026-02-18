@@ -533,12 +533,35 @@ public class ConnectionsController(
         var externalResult = new ExternalResourceRuleDto
         {
             Resource = DtoMapper.Convert(resourceObj),
-            DirectRules = result?.Rules?.Where(t => t.Reason.Contains(AccessReasonFlag.Direct)).ToList(),
-            IndirectRules = result?.Rules?.Where(t => !t.Reason.Contains(AccessReasonFlag.Direct)).ToList(),
+            DirectRules = [],
+            IndirectRules = []
         };
 
-        externalResult.DirectRules.ForEach(r => r.Reason = AccessReasonFlag.Direct);
-        externalResult.IndirectRules.ForEach(r => r.Reason.Remove(AccessReasonFlag.Direct));
+        foreach (var rule in result?.Rules ?? [])
+        {
+            if (rule.Reason.Contains(AccessReasonFlag.Direct))
+            {
+                RulePermission rulePermission = new RulePermission
+                {
+                    Rule = rule.Rule,
+                    Reason = AccessReasonFlag.Direct,
+                    Permissions = rule.Permissions.Where(p => p.Reason == AccessReasonFlag.Direct).ToList()
+                };
+                externalResult.DirectRules.Add(rulePermission);
+            }
+
+            // if the rule contains any other reason than Direct, we consider it an indirect rule and include it in the IndirectRules list
+            if (rule.Reason != AccessReasonFlag.Direct)
+            {
+                RulePermission rulePermission = new RulePermission
+                {
+                    Rule = rule.Rule,
+                    Reason = rule.Reason & ~AccessReasonFlag.Direct, // Remove Direct flag from reason for indirect rules
+                    Permissions = rule.Permissions.Where(p => p.Reason != AccessReasonFlag.Direct).ToList()
+                };
+                externalResult.IndirectRules.Add(rulePermission);
+            }
+        }
 
         return Ok(externalResult);
     }
