@@ -616,7 +616,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
         var entities = await db.Entities.Where(e => e.Id == partyId || e.Id == fromId || e.Id == toId).ToDictionaryAsync(e => e.Id, cancellationToken);
         if (!entities.ContainsKey(partyId))
         {
-            throw new UnreachableException();
+            errorBuilder.Add(ValidationErrors.EntityNotExists, "QUERY/party", [new($"{partyId}", "entity do not exist.")]);
         }
 
         if (!entities.ContainsKey(fromId))
@@ -658,7 +658,6 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                 continue;
             }
 
-            // check ass must exist
             var rolePackages = await db.RolePackages.AsNoTracking().Where(t => t.RoleId == input.Role.Id && pkgIds.Contains(t.PackageId)).ToListAsync(cancellationToken);
             var assignmentPackages = await db.AssignmentPackages.AsNoTracking().Where(t => t.AssignmentId == clientAssignment.Id && pkgIds.Contains(t.PackageId)).ToListAsync(cancellationToken);
 
@@ -701,19 +700,19 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                     FromId = fromId,
                     ToId = toId,
                     ViaId = partyId,
-
                     RoleId = input.Role,
                     PackageId = pkgId,
                     Changed = toRemove is { }
                 });
             }
         }
-
+        
+        // Get all delegation from client to agent via party.
         var uniqueRoleIds = inputs.Select(p => p.Role.Id).Distinct();
         var delegations = await db.Delegations
             .Where(d => d.FacilitatorId == partyId)
-            .Include(d => d.From)
-            .Where(d => d.From.FromId == fromId && uniqueRoleIds.Contains(d.From.RoleId))
+            .Where(d => d.From.FromId == fromId && d.From.ToId == partyId && uniqueRoleIds.Contains(d.From.RoleId))
+            .Where(d => d.To.ToId == toId && d.To.FromId == partyId && d.To.RoleId == RoleConstants.Agent)
             .GroupJoin(
                 db.DelegationPackages,
                 d => d.Id,
@@ -727,6 +726,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
             )
             .ToListAsync(cancellationToken);
 
+        // Remove delegation if all delegation packages are removed from client.
         foreach (var delegation in delegations)
         {
             var scheduledDeletedPackages = result.Where(r => r.Changed).Select(p => p.PackageId).ToHashSet();

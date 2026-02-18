@@ -1396,10 +1396,17 @@ public class ClientDelegationControllerTest
                     ToId = TestEntities.PersonPaula,
                     RoleId = RoleConstants.Agent,
                 };
+                var agentFromVerdiqToOrjan = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationVerdiqAS.Id,
+                    ToId = TestEntities.PersonOrjan,
+                    RoleId = RoleConstants.Agent,
+                };
 
                 db.Assignments.Add(rightholderfromNordisToVerdiq);
                 db.Assignments.Add(accountantFromNordisToVerdiq);
                 db.Assignments.Add(agentFromVerdiqToPaula);
+                db.Assignments.Add(agentFromVerdiqToOrjan);
 
                 db.AssignmentPackages.Add(new()
                 {
@@ -1449,6 +1456,30 @@ public class ClientDelegationControllerTest
             var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
+            response = await client.PostAsJsonAsync(
+            $"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&from={TestEntities.OrganizationNordisAS}&to={TestEntities.PersonOrjan}",
+            new DelegationBatchInputDto()
+            {
+                Values = [
+                    new()
+                    {
+                        Role = RoleConstants.Rightholder.Entity.Code,
+                        Packages = [PackageConstants.Customs.Entity.Urn]
+                    }
+                ]
+            },
+            TestContext.Current.CancellationToken
+            );
+
+            await Fixture.QueryDb(db =>
+            {
+                Assert.Equal(2, db.Delegations.Count());
+                return Task.CompletedTask;
+            });
+
+            data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
             // Verify Delegation exists
             var getDelegationsToAgent = await client.GetAsync($"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&to={TestEntities.PersonPaula}", TestContext.Current.CancellationToken);
             var delegationsToAgentPayload = await getDelegationsToAgent.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
@@ -1457,6 +1488,11 @@ public class ClientDelegationControllerTest
             Assert.NotEmpty(delegationToAgentResult.Items.FirstOrDefault()?.Access.FirstOrDefault()?.Packages);
 
             var deleteResult = await ShouldDeleteSuccessfully(client);
+            await Fixture.QueryDb(async db =>
+            {
+                Assert.True(await db.Delegations.Where(d => d.FacilitatorId == TestEntities.OrganizationVerdiqAS && d.To.ToId == TestEntities.PersonOrjan).AnyAsync(TestContext.Current.CancellationToken));
+                Assert.False(await db.Delegations.Where(d => d.FacilitatorId == TestEntities.OrganizationVerdiqAS && d.To.ToId == TestEntities.PersonPaula).AnyAsync(TestContext.Current.CancellationToken));
+            });
 
             // Assert that changes were actually applied.
             Assert.NotEmpty(deleteResult);
