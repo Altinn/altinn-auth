@@ -119,7 +119,6 @@ public class DelegationMetadataEF : IDelegationMetadataRepository
             .Include(t => t.Assignment).ThenInclude(t => t.From)
             .Include(t => t.Assignment).ThenInclude(t => t.To)
             .Include(t => t.Resource).ThenInclude(t => t.Provider)
-            .Where(t => t.Id == id)
             .SingleAsync(t => t.Id == id)
             );
     }
@@ -130,14 +129,13 @@ public class DelegationMetadataEF : IDelegationMetadataRepository
             .Include(t => t.Assignment).ThenInclude(t => t.From)
             .Include(t => t.Assignment).ThenInclude(t => t.To)
             .Include(t => t.Resource).ThenInclude(t => t.Provider)
-            .Where(t => t.Id == id)
             .SingleAsync(t => t.Id == id)
             );
     }
 
     private async Task<Resource> GetResource(string resourceIdentifier, CancellationToken cancellationToken = default)
     {
-        return await DbContext.Resources.AsNoTracking().SingleAsync(t => t.RefId == resourceIdentifier, cancellationToken);
+        return await DbContext.Resources.AsNoTracking().FirstOrDefaultAsync(t => t.RefId == resourceIdentifier, cancellationToken);
     }
 
     public AppDbContext DbContext { get; }
@@ -248,7 +246,12 @@ public class DelegationMetadataEF : IDelegationMetadataRepository
             throw new ArgumentException($"All params: {nameof(coveredByUserId)}, {nameof(coveredByPartyId)}, {nameof(toUuid)} cannot be null.");
         }
 
-        var from = await DbContext.Entities.AsNoTracking().SingleAsync(t => t.PartyId == offeredByPartyId, cancellationToken);
+        var from = await DbContext.Entities.AsNoTracking().FirstOrDefaultAsync(t => t.PartyId == offeredByPartyId, cancellationToken);
+        
+        if (from == null)
+        {
+            throw new Exception($"OfferedBy not found with partyId '{offeredByPartyId}'");
+        }
 
         var result = await DbContext.AssignmentResources.AsNoTracking()
             .Include(t => t.Assignment).ThenInclude(t => t.To)
@@ -256,11 +259,13 @@ public class DelegationMetadataEF : IDelegationMetadataRepository
             .Where(t => t.Resource.RefId == resourceId)
             .Where(t => t.Assignment.FromId == from.Id)
             .WhereIf(coveredByPartyId != null, t => t.Assignment.To.PartyId == coveredByPartyId)
-            .WhereIf(coveredByPartyId != null, t => t.Assignment.To.UserId == coveredByUserId)
+            .WhereIf(coveredByUserId != null, t => t.Assignment.To.UserId == coveredByUserId)
             .WhereIf(toUuid.HasValue, t => t.Assignment.ToId == toUuid.Value)
-            .SingleAsync(cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken);
 
-        return Convert(result);
+        return result == null 
+            ? null
+            : Convert(result);
     }
 
     /// <inheritdoc/>

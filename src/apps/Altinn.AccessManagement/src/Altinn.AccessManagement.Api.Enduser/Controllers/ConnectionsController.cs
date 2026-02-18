@@ -508,7 +508,7 @@ public class ConnectionsController(
         var validFromUuid = Guid.TryParse(connection.From, out var fromUuid);
         var validToUuid = Guid.TryParse(connection.To, out var toUuid);
 
-        var resourceObj = await resourceService.GetResource(resource, cancellationToken) ?? null;
+        var resourceObj = await resourceService.GetResource(resource, cancellationToken);
         if (resourceObj is null)
         {
             return NotFound($"Resource '{resource}' not found.");
