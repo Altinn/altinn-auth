@@ -46,9 +46,22 @@ public static class AuditDefaults
     public const string Altinn2RoleImportSystem = "46cfa478-971f-446e-9bc1-af57469361d0";
 
     /// <summary>
+    /// Altinn2AddRulesApi
+    /// </summary>
+    public const string Altinn2AddRulesApi = "0d8c172d-64e4-4aa2-8233-91ad32aa0f9d";
+
+    /// <summary>
+    /// LegacySingleRightsApi
+    /// </summary>
+    public const string LegacySingleRightsApi = "b1b52707-bd24-4f01-9bb9-3b0b6d6bd8d6";
+
+    /// <summary>
+    /// LegacyMaskinportenSchemaApi
+    /// </summary>
+    public const string LegacyMaskinportenSchemaApi = "cfd2991c-bbdf-43b5-8b10-1ba1dfaed167";
+
+    /// <summary>
     /// DBA
     /// </summary>
     public const string DBA = "0195efb8-7c80-7262-b616-7d9eb843bcaa";
 }
-
-////

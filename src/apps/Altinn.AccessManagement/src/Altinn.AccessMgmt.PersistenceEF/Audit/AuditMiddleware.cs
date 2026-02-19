@@ -29,10 +29,16 @@ public class AuditMiddleware : IMiddleware
                     auditContextAccessor.AuditValues = new(uuid, Guid.Parse(jwtClaimToDb.System), Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier, DateTimeOffset.UtcNow);
                 }
             }
-
-            if (endpoint.Metadata.GetMetadata<AuditStaticDbAttribute>() is var staticDb && staticDb != null)
+            else if (endpoint.Metadata.GetMetadata<AuditStaticDbAttribute>() is var staticDb && staticDb != null)
             {
-                auditContextAccessor.AuditValues = new(Guid.Parse(staticDb.ChangedBy), Guid.Parse(staticDb.System), Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier, DateTimeOffset.UtcNow);
+                if (staticDb.ChangedBy != null && staticDb.System != null)
+                {
+                    auditContextAccessor.AuditValues = new(Guid.Parse(staticDb.ChangedBy), Guid.Parse(staticDb.System), Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier, DateTimeOffset.UtcNow);
+                }
+                else if (staticDb.System != null)
+                {
+                    auditContextAccessor.AuditValues = new(Guid.Parse(staticDb.System), Guid.Parse(staticDb.System), Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier, DateTimeOffset.UtcNow);
+                }
             }
         }
 

@@ -186,12 +186,12 @@ public static class SystemEntityConstants
     };
 
     /// <summary>
-    /// Represents the InternalApiImportSystem system entity.
+    /// Represents the Altinn2RoleImportSystem system entity.
     /// </summary>
     /// <remarks>
-    /// - <c>Id:</c> b96cda05-c0e0-4c59-b4b8-f15a7dff9590
-    /// - <c>Name:</c> InternalApiImportSystem
-    /// - <c>RefId:</c> sys-internal-api-import-system
+    /// - <c>Id:</c> 46cfa478-971f-446e-9bc1-af57469361d0
+    /// - <c>Name:</c> Altinn2RoleImportSystem
+    /// - <c>RefId:</c> sys-altinn2-role-import-system
     /// - <c>TypeId:</c> Internal entity type
     /// - <c>VariantId:</c> Standard variant
     /// </remarks>
@@ -210,7 +210,85 @@ public static class SystemEntityConstants
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Altinn2 Role-importsystem")),
     };
-    
+
+    /// <summary>
+    /// Represents the Altinn2AddRulesApi system entity.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 0d8c172d-64e4-4aa2-8233-91ad32aa0f9d
+    /// - <c>Name:</c> Altinn2AddRulesApi
+    /// - <c>RefId:</c> sys-altinn2-addrules-api-system
+    /// - <c>TypeId:</c> Internal entity type
+    /// - <c>VariantId:</c> Standard variant
+    /// </remarks>
+    public static ConstantDefinition<Entity> Altinn2AddRulesApi { get; } = new ConstantDefinition<Entity>(AuditDefaults.Altinn2AddRulesApi)
+    {
+        Entity = new()
+        {
+            Name = nameof(AuditDefaults.Altinn2AddRulesApi),
+            RefId = "sys-altinn2-addrules-api-system",
+            ParentId = null,
+            TypeId = EntityTypeConstants.Internal,
+            VariantId = EntityVariantConstants.Standard,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Altinn2 AddRules API System")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Altinn2 AddRules API System")),
+    };
+
+    /// <summary>
+    /// Represents the LegacySingleRightsApi system entity.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> b1b52707-bd24-4f01-9bb9-3b0b6d6bd8d6
+    /// - <c>Name:</c> LegacySingleRightsApi
+    /// - <c>RefId:</c> sys-legacy-singlerights-api-system
+    /// - <c>TypeId:</c> Internal entity type
+    /// - <c>VariantId:</c> Standard variant
+    /// </remarks>
+    public static ConstantDefinition<Entity> LegacySingleRightsApi { get; } = new ConstantDefinition<Entity>(AuditDefaults.LegacySingleRightsApi)
+    {
+        Entity = new()
+        {
+            Name = nameof(AuditDefaults.LegacySingleRightsApi),
+            RefId = "sys-legacy-singlerights-api-system",
+            ParentId = null,
+            TypeId = EntityTypeConstants.Internal,
+            VariantId = EntityVariantConstants.Standard,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Legacy Single Rights API System")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Legacy Single Rights API System")),
+    };
+
+    /// <summary>
+    /// Represents the LegacyMaskinportenSchemaApi system entity.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> cfd2991c-bbdf-43b5-8b10-1ba1dfaed167
+    /// - <c>Name:</c> LegacyMaskinportenSchemaApi
+    /// - <c>RefId:</c> sys-legacy-maskinportenschema-api-system
+    /// - <c>TypeId:</c> Internal entity type
+    /// - <c>VariantId:</c> Standard variant
+    /// </remarks>
+    public static ConstantDefinition<Entity> LegacyMaskinportenSchemaApi { get; } = new ConstantDefinition<Entity>(AuditDefaults.LegacyMaskinportenSchemaApi)
+    {
+        Entity = new()
+        {
+            Name = nameof(AuditDefaults.LegacyMaskinportenSchemaApi),
+            RefId = "sys-legacy-maskinportenschema-api-system",
+            ParentId = null,
+            TypeId = EntityTypeConstants.Internal,
+            VariantId = EntityVariantConstants.Standard,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Legacy MaskinportenSchema API System")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Legacy MaskinportenSchema API System")),
+    };
+
     #endregion
 
     #region API Systems

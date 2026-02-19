@@ -4,6 +4,8 @@ using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
+using Altinn.AccessMgmt.PersistenceEF.Audit;
+using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -46,6 +48,7 @@ namespace Altinn.AccessManagement.Controllers
         /// <response code="500">Internal Server Error</response>
         [HttpPost]
         [Authorize(Policy = AuthzConstants.ALTINNII_AUTHORIZATION)]
+        [AuditStaticDb(System = AuditDefaults.Altinn2AddRulesApi)]
         [Route("accessmanagement/api/v1/delegations/addrules")]
         public async Task<ActionResult> Post([FromBody] List<Rule> rules, CancellationToken cancellationToken)
         {
@@ -147,6 +150,7 @@ namespace Altinn.AccessManagement.Controllers
         /// <response code="500">Internal Server Error</response>
         [HttpPost]
         [Authorize(Policy = AuthzConstants.ALTINNII_AUTHORIZATION)]
+        [AuditStaticDb(System = AuditDefaults.Altinn2AddRulesApi)]
         [Route("accessmanagement/api/v1/delegations/deleterules")]
         public async Task<ActionResult> DeleteRule([FromBody] RequestToDeleteRuleList rulesToDelete, CancellationToken cancellationToken)
         {
@@ -185,6 +189,7 @@ namespace Altinn.AccessManagement.Controllers
         /// <response code="500">Internal Server Error</response>
         [HttpPost]
         [Authorize(Policy = AuthzConstants.ALTINNII_AUTHORIZATION)]
+        [AuditStaticDb(System = AuditDefaults.Altinn2AddRulesApi)]
         [Route("accessmanagement/api/v1/delegations/deletepolicy")]
         public async Task<ActionResult> DeletePolicy([FromBody] RequestToDeletePolicyList policiesToDelete, CancellationToken cancellationToken)
         {

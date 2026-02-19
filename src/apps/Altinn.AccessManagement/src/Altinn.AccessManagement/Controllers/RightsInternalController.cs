@@ -10,6 +10,8 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Utilities;
+using Altinn.AccessMgmt.PersistenceEF.Audit;
+using Altinn.AccessMgmt.PersistenceEF.Utils;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -187,6 +189,7 @@ namespace Altinn.AccessManagement.Controllers
         /// <response code="500">Internal Server Error</response>
         [HttpPost]
         [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_WRITE)]
+        [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.LegacySingleRightsApi)]
         [Route("internal/{party}/rights/delegation/offered")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [Produces("application/json")]
@@ -295,6 +298,7 @@ namespace Altinn.AccessManagement.Controllers
         /// <param name="cancellationToken">Cancellation token used for cancelling the inbound HTTP</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
         [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_WRITE)]
+        [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.LegacySingleRightsApi)]
         [ActionName(nameof(RevokeReceivedDelegation))]
         [HttpPost("internal/{party}/rights/delegation/received/revoke")]
         [Produces(MediaTypeNames.Application.Json, Type = typeof(void))]
@@ -360,6 +364,7 @@ namespace Altinn.AccessManagement.Controllers
         /// <param name="cancellationToken">Cancellation token used for cancelling the inbound HTTP</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
         [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_WRITE)]
+        [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.LegacySingleRightsApi)]
         [ActionName(nameof(RevokeOfferedDelegation))]
         [HttpPost("internal/{party}/rights/delegation/offered/revoke")]
         [Produces(MediaTypeNames.Application.Json, Type = typeof(void))]
