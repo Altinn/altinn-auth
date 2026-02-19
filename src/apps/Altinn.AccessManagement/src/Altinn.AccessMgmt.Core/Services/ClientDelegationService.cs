@@ -9,7 +9,6 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
@@ -254,12 +253,20 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
         if (!SupportedToTypes.Any(e => e.Id == entity.TypeId))
         {
             var supportedToTypeNames = string.Join(", ", SupportedToTypes.Select(t => t.Entity.Name));
-            errorBuilder.Add(ValidationErrors.DisallowedEntityType, "$QUERY/to", [new($"{entity.TypeId}", $"entity type is not supported as agent, only <{supportedToTypeNames}>.")]);
+            errorBuilder.Add(
+                ValidationErrors.DisallowedEntityType,
+                "$QUERY/to",
+                [new($"{entity.TypeId}", $"Entity type is not supported as an agent. Supported types: <{supportedToTypeNames}>.")]
+            );
         }
 
         if (entity.TypeId == EntityTypeConstants.SystemUser && entity.VariantId != EntityVariantConstants.AgentSystem)
         {
-            errorBuilder.Add(ValidationErrors.DisallowedEntityType, "$QUERY/to", [new($"{toUuid}", $"system user with id '{toUuid}' is not created for client delegation.")]);
+            errorBuilder.Add(
+                ValidationErrors.DisallowedEntityType,
+                "$QUERY/to",
+                [new($"{toUuid}", $"System user with id '{toUuid}' is not created for client delegation.")]
+            );
         }
 
         if (errorBuilder.TryBuild(out var problem))
@@ -450,20 +457,32 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
         {
             if (input.Role is null)
             {
-                errorBuilder.Add(ValidationErrors.InvalidRole, $"/values[{input.RoleIdx}]/role", [new($"{input.Role}", "role do not exist.")]);
+                errorBuilder.Add(
+                    ValidationErrors.InvalidRole,
+                    $"/values[{input.RoleIdx}]/role",
+                    [new($"{input.InputRole}", "Role does not exist.")]
+                );
             }
 
             foreach (var inputPackage in input.InputPackages)
             {
                 if (!inputPackage.PackageExist)
                 {
-                    errorBuilder.Add(ValidationErrors.InvalidPackage, $"/values[{input.RoleIdx}]/packages[{inputPackage.PackageIdx}]", [new($"{inputPackage.InputPackage}", "package do not exist.")]);
+                    errorBuilder.Add(
+                        ValidationErrors.InvalidPackage,
+                        $"/values[{input.RoleIdx}]/packages[{inputPackage.PackageIdx}]",
+                        [new($"{inputPackage.InputPackage}", "Package does not exist.")]
+                    );
                     continue;
                 }
 
                 if (!inputPackage.Package.Entity.IsDelegable)
                 {
-                    errorBuilder.Add(ValidationErrors.PackageIsNotDelegable, $"/values[{input.RoleIdx}]/packages[{inputPackage.PackageIdx}]", [new($"{inputPackage.Package.Entity.Urn}", $"Package is not delegable.")]);
+                    errorBuilder.Add(
+                        ValidationErrors.PackageIsNotDelegable,
+                        $"/values[{input.RoleIdx}]/packages[{inputPackage.PackageIdx}]",
+                        [new($"{inputPackage.Package.Entity.Urn}", $"Package is not delegable.")]
+                    );
                 }
             }
         }
@@ -476,12 +495,20 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
 
         if (!entities.ContainsKey(fromId))
         {
-            errorBuilder.Add(ValidationErrors.EntityNotExists, $"$QUERY/from", [new($"{fromId}", "entity do not exist.")]);
+            errorBuilder.Add(
+                ValidationErrors.EntityNotExists,
+                $"$QUERY/from",
+                [new($"{fromId}", "entity do not exist.")]
+            );
         }
 
         if (!entities.ContainsKey(toId))
         {
-            errorBuilder.Add(ValidationErrors.EntityNotExists, $"$QUERY/to", [new($"{toId}", "entity do not exist.")]);
+            errorBuilder.Add(
+                ValidationErrors.EntityNotExists,
+                $"$QUERY/to",
+                [new($"{toId}", "entity do not exist.")]
+            );
         }
 
         if (errorBuilder.TryBuild(out var errorResult))
@@ -494,19 +521,31 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
 
         if (agentAssignment is null)
         {
-            errorBuilder.Add(ValidationErrors.MissingAssignment, $"$QUERY/to", [new(RoleConstants.Agent.Entity.Urn, $"Role is not assigned to '{toId}' from '{partyId}'.")]);
+            errorBuilder.Add(
+                ValidationErrors.MissingAssignment,
+                $"$QUERY/to",
+                [new(RoleConstants.Agent.Entity.Urn, $"Role is not assigned to '{toId}' from '{partyId}'.")]
+            );
         }
-    
+
         var to = entities[toId];
         if (!SupportedToTypes.Any(e => e.Id == to.TypeId))
         {
             var supportedToTypeNames = string.Join(", ", SupportedToTypes.Select(t => t.Entity.Name));
-            errorBuilder.Add(ValidationErrors.DisallowedEntityType, "$QUERY/to", [new($"{to.TypeId}", $"entity type is not supported as agent, only <{supportedToTypeNames}>.")]);
+            errorBuilder.Add(
+                ValidationErrors.DisallowedEntityType,
+                "$QUERY/to",
+                [new($"{to.TypeId}", $"entity type is not supported as agent, only <{supportedToTypeNames}>.")]
+            );
         }
 
         if (to.TypeId == EntityTypeConstants.SystemUser && to.VariantId != EntityVariantConstants.AgentSystem)
         {
-            errorBuilder.Add(ValidationErrors.DisallowedEntityType, "$QUERY/to", [new($"{to.Id}", $"system user '{to.Id}' is not created for client delegation.")]);
+            errorBuilder.Add(
+                ValidationErrors.DisallowedEntityType,
+                "$QUERY/to",
+                [new($"{to.Id}", $"system user '{to.Id}' is not created for client delegation.")]
+            );
         }
 
         if (errorBuilder.TryBuild(out errorResult))
@@ -522,13 +561,18 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
 
             if (clientAssignment is null)
             {
-                errorBuilder.Add(ValidationErrors.MissingAssignment, $"/values[{input.RoleIdx}]/role", [new($"{input.Role.Entity.Urn}", $"Role is not assigned to '{partyId}' from '{fromId}'.")]);
+                errorBuilder.Add(
+                    ValidationErrors.MissingAssignment,
+                    $"/values[{input.RoleIdx}]/role",
+                    [new($"{input.Role.Entity.Urn}", $"Role is not assigned to '{partyId}' from '{fromId}'.")]
+                );
+                
                 continue;
             }
 
-            // check ass must exist
-            var rolePackages = await db.RolePackages.AsNoTracking().Where(t => t.RoleId == input.Role.Id && pkgIds.Contains(t.PackageId)).ToListAsync(cancellationToken);
-            var assignmentPackages = await db.AssignmentPackages.AsNoTracking().Where(t => t.AssignmentId == clientAssignment.Id && pkgIds.Contains(t.PackageId)).ToListAsync(cancellationToken);
+            // assignment must exist.
+            var rolePackages = await db.RolePackages.AsNoTracking().Where(rp => rp.RoleId == input.Role.Id && pkgIds.Contains(rp.PackageId)).ToListAsync(cancellationToken);
+            var assignmentPackages = await db.AssignmentPackages.AsNoTracking().Where(ap => ap.AssignmentId == clientAssignment.Id && pkgIds.Contains(ap.PackageId)).ToListAsync(cancellationToken);
 
             var delegation = await db.Delegations.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == clientAssignment.Id && t.ToId == agentAssignment.Id && t.FacilitatorId == partyId, cancellationToken);
             if (delegation is null)
@@ -546,11 +590,39 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
             var existingDelegationPackages = db.DelegationPackages.Where(t => t.DelegationId == delegation.Id);
             foreach (var pkg in input.Packages)
             {
-                var rolePackageId = rolePackages.FirstOrDefault(r => r.PackageId == pkg.Package.Id)?.Id;
+                var rolePackage = rolePackages.FirstOrDefault(r => r.PackageId == pkg.Package.Id);
+                var rolePackageId = rolePackage?.Id;
                 var assignmentPackageId = assignmentPackages.FirstOrDefault(t => t.PackageId == pkg.Package.Id)?.Id;
-                if (rolePackageId is null && assignmentPackageId is null)
+
+                // Validate if role package is ment for from entity type.
+                if (rolePackage is { })
                 {
-                    errorBuilder.Add(ValidationErrors.UserNotAuthorized, $"/values[{input.RoleIdx}]/packages[{pkg.PackageIdx}]", [new($"{pkg.Package.Entity.Urn}", $"Can't delegate package from client '{fromId}' as they haven't been assigned to '{partyId}' through role '{input.Role.Entity.Urn}'.")]);
+                    if (rolePackage.EntityVariantId is { } entityVariantId && entityVariantId != entities[fromId].VariantId)
+                    {
+                        if (EntityVariantConstants.TryGetById(entityVariantId, out var entityVariant))
+                        {
+                            throw new UnreachableException();
+                        }
+
+                        errorBuilder.Add(
+                            ValidationErrors.UserNotAuthorized,
+                            $"/values[{input.RoleIdx}]/packages[{pkg.PackageIdx}]",
+                            [new($"{pkg.Package.Entity.Urn}", $"Can't delegate package from client '{fromId}' as package is ment for '{entityVariant.Entity.Name}' and not '{entities[fromId].Name}'.")]
+                        );
+
+                        continue;
+                    }
+                }
+
+                // Validate that package is given either through CCR or Rightholder 
+                if (rolePackage is null && assignmentPackageId is null)
+                {
+                    errorBuilder.Add(
+                        ValidationErrors.UserNotAuthorized,
+                        $"/values[{input.RoleIdx}]/packages[{pkg.PackageIdx}]",
+                        [new($"{pkg.Package.Entity.Urn}", $"Can't delegate package from client '{fromId}' as they haven't been assigned to '{partyId}' through role '{input.Role.Entity.Urn}'.")]
+                    );
+                    
                     continue;
                 }
 
@@ -635,14 +707,23 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
         {
             if (input.Role is null)
             {
-                errorBuilder.Add(ValidationErrors.InvalidRole, $"/values[{input.RoleIdx}]/role", [new($"{input.Role}", "role do not exist.")]);
+                errorBuilder.Add(
+                    ValidationErrors.InvalidRole,
+                    $"/values[{input.RoleIdx}]/role",
+                    [new($"{input.Role}", "role do not exist.")]
+                );
             }
 
             foreach (var inputPackage in input.InputPackages)
             {
                 if (!inputPackage.PackageExist)
                 {
-                    errorBuilder.Add(ValidationErrors.InvalidPackage, $"/values[{input.RoleIdx}]/packages[{inputPackage.PackageIdx}]", [new($"{inputPackage.InputPackage}", "package do not exist.")]);
+                    errorBuilder.Add(
+                        ValidationErrors.InvalidPackage,
+                        $"/values[{input.RoleIdx}]/packages[{inputPackage.PackageIdx}]",
+                        [new($"{inputPackage.InputPackage}", "package do not exist.")]
+                    );
+                    
                     continue;
                 }
             }
@@ -651,17 +732,29 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
         var entities = await db.Entities.Where(e => e.Id == partyId || e.Id == fromId || e.Id == toId).ToDictionaryAsync(e => e.Id, cancellationToken);
         if (!entities.ContainsKey(partyId))
         {
-            errorBuilder.Add(ValidationErrors.EntityNotExists, "$QUERY/party", [new($"{partyId}", "entity do not exist.")]);
+            errorBuilder.Add(
+                ValidationErrors.EntityNotExists,
+                "$QUERY/party",
+                [new($"{partyId}", "entity do not exist.")]
+            );
         }
 
         if (!entities.ContainsKey(fromId))
         {
-            errorBuilder.Add(ValidationErrors.EntityNotExists, $"$QUERY/from", [new($"{fromId}", "entity do not exist.")]);
+            errorBuilder.Add(
+                ValidationErrors.EntityNotExists,
+                $"$QUERY/from",
+                [new($"{fromId}", "entity do not exist.")]
+            );
         }
 
         if (!entities.ContainsKey(toId))
         {
-            errorBuilder.Add(ValidationErrors.EntityNotExists, $"$QUERY/to", [new($"{toId}", "entity do not exist.")]);
+            errorBuilder.Add(
+                ValidationErrors.EntityNotExists,
+                $"$QUERY/to",
+                [new($"{toId}", "entity do not exist.")]
+            );
         }
 
         var agentAssignment = await db.Assignments
@@ -669,7 +762,11 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
 
         if (agentAssignment is null)
         {
-            errorBuilder.Add(ValidationErrors.MissingAssignment, $"$QUERY/to", [new(RoleConstants.Agent.Entity.Urn, $"Role is not assigned to '{toId}' from '{partyId}'.")]);
+            errorBuilder.Add(
+                ValidationErrors.MissingAssignment,
+                $"$QUERY/to",
+                [new(RoleConstants.Agent.Entity.Urn, $"Role is not assigned to '{toId}' from '{partyId}'.")]
+            );
         }
 
         if (errorBuilder.TryBuild(out var errorResult))
@@ -741,7 +838,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                 });
             }
         }
-        
+
         // Get all delegation from client to agent via party.
         var uniqueRoleIds = inputs.Select(p => p.Role.Id).Distinct();
         var delegations = await db.Delegations
