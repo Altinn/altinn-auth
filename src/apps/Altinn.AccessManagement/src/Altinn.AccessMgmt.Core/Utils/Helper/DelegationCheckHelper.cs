@@ -374,6 +374,41 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
         }
 
         /// <summary>
+        /// Check to verify if a given exception should be pushed to the error queue for later handling.
+        /// </summary>
+        /// <param name="ex">the exception to check</param>
+        /// <returns>verdict to add to error queue</returns>
+        public static bool CheckIfErrorShouldBePushedToErrorQueue(Exception ex)
+        {
+            if (ex.Message.StartsWith("Resource '", StringComparison.InvariantCultureIgnoreCase) && ex.Message.EndsWith("' not found", StringComparison.InvariantCultureIgnoreCase))
+            {
+                return true;
+            }
+
+            if (ex.InnerException != null && ex.InnerException.Message.StartsWith("23503: insert or update on table \"assignment\" violates foreign key constraint \"fk_assignment_entity_toid\"", StringComparison.InvariantCultureIgnoreCase))
+            {
+                return true;
+            }
+
+            if (ex.InnerException != null && ex.InnerException.Message.StartsWith("23503: insert or update on table \"assignment\" violates foreign key constraint \"fk_assignment_entity_fromid\"", StringComparison.InvariantCultureIgnoreCase))
+            {
+                return true;
+            }
+
+            if (ex.Message.StartsWith("Resource '", StringComparison.InvariantCultureIgnoreCase) && ex.Message.EndsWith("' not found", StringComparison.InvariantCultureIgnoreCase))
+            {
+                return true;
+            }
+
+            if (ex.Message.Equals("Audit fields are required.", StringComparison.InvariantCultureIgnoreCase))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Filters the specified list of urns giving acces to only include the ones actual for end users.
         /// attribute prefixes.
         /// </summary>

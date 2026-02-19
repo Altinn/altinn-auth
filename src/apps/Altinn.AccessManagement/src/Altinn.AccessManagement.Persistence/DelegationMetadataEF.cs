@@ -7,6 +7,7 @@ using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Microsoft.EntityFrameworkCore;
+using static Altinn.AccessManagement.Core.Models.ResourceRegistry.ResourceIdUrn;
 
 namespace Altinn.AccessMgmt.Core.Services.Legacy;
 
@@ -31,7 +32,12 @@ public class DelegationMetadataEF : IDelegationMetadataRepository
     {
         return new DelegationChange()
         {
-            DelegationChangeId = assignmentResource.DelegationChangeId,
+            DelegationChangeId = assignmentResource.Resource.Type.Name == "AltinnApp"
+            ? assignmentResource.DelegationChangeId
+            : 0,            
+            ResourceRegistryDelegationChangeId = assignmentResource.Resource.Type.Name != "AltinnApp" 
+            ? assignmentResource.DelegationChangeId
+            : 0,
             Created = assignmentResource.Audit_ValidFrom.UtcDateTime,
             
             ResourceId = assignmentResource.Resource.Type.Name == "AltinnApp"
@@ -47,6 +53,9 @@ public class DelegationMetadataEF : IDelegationMetadataRepository
             OfferedByPartyId = assignmentResource.Assignment.From.PartyId.Value,           
             
             PerformedByUuid = assignmentResource.Audit_ChangedBy.ToString(),
+            PerformedByUuidType = UuidType.Party,
+
+            DelegationChangeType = DelegationChangeType.Grant,
 
             ToUuid = assignmentResource.Assignment.ToId,
             ToUuidType = ConvertEntityTypeToUuidType(assignmentResource.Assignment.To.TypeId),
