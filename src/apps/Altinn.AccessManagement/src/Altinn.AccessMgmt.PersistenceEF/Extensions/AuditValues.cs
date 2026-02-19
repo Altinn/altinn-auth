@@ -8,6 +8,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Extensions;
 
 public record AuditValues(Guid ChangedBy, Guid ChangedBySystem, string OperationId, DateTimeOffset ValidFrom)
 {
+    public AuditValues(Guid changedBy, Guid changedBySystem, string OperationId)
+        : this(changedBy, changedBySystem, OperationId, DateTimeOffset.UtcNow) { }
+
     public AuditValues(Guid changedBy, Guid changedBySystem)
         : this(changedBy, changedBySystem, Activity.Current?.TraceId.ToString() ?? Guid.CreateVersion7().ToString(), DateTimeOffset.UtcNow) { }
     
