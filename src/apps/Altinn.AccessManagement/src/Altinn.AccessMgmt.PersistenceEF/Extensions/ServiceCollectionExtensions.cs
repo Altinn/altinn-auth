@@ -74,7 +74,25 @@ public static class ServiceCollectionExtensions
                         activity.SetTag("net.transport", null);
 
                         // Change statement tag to hash large queries and log the full query once per application lifetime
-                        activity.SetTag("db.statement", GetCommandTextHash(command.CommandText));
+                        // Tags get truncated if # > 8192 by some component before they reach the app insights GUI (remember this happens only
+                        // once for a particular query in the POD's lifetime), so they are split into multiple tags. Npgsql does currently
+                        // not follow the otel standard for tag (span) names, so the npgsql standard is expanded by adding a number
+                        // to "db.statement". This name without a number is recognized by app insights and translated to "Command".
+                        // The names with a number are shown as custom properties in app insights.
+                        var commandSpan = GetCommandTextHash(command.CommandText).AsSpan();
+                        int maxTags = 8; // Arbitrary max number of tags. Effective total is maxTags * maxTagLength
+                        int maxTagLength = 8192; // Truncation limit observed in the value chain before the app insights GUI
+                        for (int i = 0; i < maxTags; i++)
+                        {
+                            activity.SetTag(
+                                $"db.statement{(i > 0 ? i : null)}",
+                                commandSpan.Slice(i * maxTagLength, Math.Min(maxTagLength, commandSpan.Length - (i * maxTagLength))).ToString());
+                            if ((i + 1) * maxTagLength >= commandSpan.Length)
+                            {
+                                break;
+                            }
+                        }
+
                         if (command.Parameters.Count > 0)
                         {
                             activity.AddTag("db.command.parameters", GetParametersForLogging(command));

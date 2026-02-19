@@ -134,23 +134,25 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
         AuthorizedPartiesFilters filters = null,
         CancellationToken ct = default)
     {
-        return await connectionQuery.GetPipConnectionPackagesAsync(
-        new ConnectionQueryFilter()
-        {
-            ToIds = [toId],
-            FromIds = filters?.PartyFilter?.Keys.ToList(),
-            PackageIds = null,
-            EnrichEntities = false,
-            IncludeSubConnections = true,
-            IncludeKeyRole = filters?.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.True ? true : false,
-            IncludeMainUnitConnections = true,
-            IncludeDelegation = true,
-            IncludePackages = filters?.IncludeAccessPackages ?? true,
-            IncludeResources = false,
-            EnrichPackageResources = false,
-            ExcludeDeleted = false
-        },
-        ct);
+        return await connectionQuery.GetConnectionsAsync(
+            new ConnectionQueryFilter()
+            {
+                ToIds = [toId],
+                FromIds = filters?.PartyFilter?.Keys.ToList(),
+                PackageIds = null,
+                EnrichEntities = false,
+                IncludeSubConnections = true,
+                IncludeKeyRole = filters?.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.True ? true : false,
+                IncludeMainUnitConnections = true,
+                IncludeDelegation = true,
+                IncludePackages = filters?.IncludeAccessPackages ?? true,
+                IncludeResources = false,
+                EnrichPackageResources = false,
+                ExcludeDeleted = false
+            },
+            ConnectionQueryDirection.FromOthers,
+            useNewQuery: true,
+            ct);
     }
 
     public async Task<List<Resource>> GetResources(string? providerCode = null, IEnumerable<string>? resourceIds = null, CancellationToken ct = default)

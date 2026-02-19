@@ -186,29 +186,6 @@ public class ConnectionQuery(AppDbContext db)
         }
     }
 
-    /// <summary>
-    /// Slightly optimized connection packages lookup for PIP API
-    /// </summary>
-    public async Task<List<ConnectionQueryExtendedRecord>> GetPipConnectionPackagesAsync(ConnectionQueryFilter filter, CancellationToken ct = default)
-    {
-        try
-        {
-            var baseQuery = BuildBaseQueryFromOthersNew(db, filter, filter.IncludeSubConnections, true);
-            var queryString = baseQuery.ToQueryString();
-
-            var query = EnrichFromEntities(filter, baseQuery);
-            var data = await query.AsNoTracking().ToListAsync(ct);
-            var result = data.Select(ToDtoEmpty).ToList();
-
-            var pkgs = await LoadPackagesByKeyAsync(result, filter, ct);
-            return Attach(result, pkgs, p => p.Id, (dto, list) => dto.Packages = list);
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"Failed to get pip connection packages with filter: {JsonSerializer.Serialize(filter)}", ex);
-        }
-    }
-
     private IQueryable<ConnectionQueryBaseRecord> BuildBaseQueryFromOthersNew(AppDbContext db, ConnectionQueryFilter filter, bool doChildNesting, bool applyFromFilter)
     {
         var toId = filter.ToIds.First();
@@ -336,7 +313,6 @@ public class ConnectionQuery(AppDbContext db)
             ? a1.Concat(rolemap).Concat(delegations)
             : a1.Concat(rolemap);
 
-        // Temporary until GetPipConnectionPackagesAsync is removed
         var fromChildren = !doChildNesting ? a2 :
         a2
         .Join(
@@ -395,20 +371,12 @@ public class ConnectionQuery(AppDbContext db)
             : filter.IncludeSubConnections ? a2.Concat(innehaverConnections) : a2;
 
         return
-            applyFromFilter
-            ?
-                query
-                .FromIdContains(fromSet)
-                .ViaIdContains(viaSet)
-                .ViaRoleIdContains(viaRoleSet)
-                .RoleIdContains(roleSet)
-                .RoleIdExcludes(roleSetExclude)
-            :
-                query
-                .ViaIdContains(viaSet)
-                .ViaRoleIdContains(viaRoleSet)
-                .RoleIdContains(roleSet)
-                .RoleIdExcludes(roleSetExclude);
+            query
+            .FromIdContains(fromSet, applyFromFilter)
+            .ViaIdContains(viaSet)
+            .ViaRoleIdContains(viaRoleSet)
+            .RoleIdContains(roleSet)
+            .RoleIdExcludes(roleSetExclude);
     }
 
     private IQueryable<ConnectionQueryBaseRecord> BuildBaseQueryFromOthers(AppDbContext db, ConnectionQueryFilter filter)
@@ -987,52 +955,33 @@ public class ConnectionQuery(AppDbContext db)
         return keysWithChildren;
     }
 
-    private IQueryable<ConnectionQueryRecord> EnrichFromEntities(ConnectionQueryFilter filter, IQueryable<ConnectionQueryBaseRecord> allKeys)
-    {
-        var entities = db.Entities.AsQueryable();
-
-        var query = allKeys
-            .Join(entities, c => c.FromId, e => e.Id, (c, f) => new { c, f })
-            .WhereIf(filter.ExcludeDeleted, x => !x.f.IsDeleted)
-            .Select(x => new ConnectionQueryRecord
-            {
-                FromId = x.c.FromId,
-                ToId = x.c.ToId,
-                RoleId = x.c.RoleId,
-                AssignmentId = x.c.AssignmentId,
-                DelegationId = x.c.DelegationId,
-                ViaId = x.c.ViaId,
-                ViaRoleId = x.c.ViaRoleId,
-                From = x.f,
-                Reason = x.c.Reason,
-            });
-
-        return query;
-    }
-
     private async Task<ConnectionIndex<ConnectionQueryPackage>> LoadPackagesByKeyAsync(IEnumerable<ConnectionQueryExtendedRecord> keys, ConnectionQueryFilter filter, CancellationToken ct)
     {
         var packageSet = filter.PackageIds?.Count > 0 ? new HashSet<Guid>(filter.PackageIds) : null;
         var index = new ConnectionIndex<ConnectionQueryPackage>();
 
         var apKeys = keys.Where(k => k.RoleId == RoleConstants.Rightholder).Select(k => k.AssignmentId).Distinct().ToList();
-        var assignmentPackagesRaw = await db.AssignmentPackages.Where(a => apKeys.Contains(a.AssignmentId))
-            .WhereIf(packageSet is not null, p => packageSet!.Contains(p.PackageId))
-            .Select(ap => new { ap.PackageId, ap.AssignmentId })
-            .ToListAsync(ct);
 
         SortedList<Guid, List<Guid>> assignmentPackages = [];
         SortedSet<Guid> apPackageIds = [];
-        foreach (var assignmentPackage in assignmentPackagesRaw)
+        if (apKeys.Count > 0)
         {
-            apPackageIds.Add(assignmentPackage.PackageId);
-            if (assignmentPackages.TryGetValue(assignmentPackage.AssignmentId, out var ids))
+            var assignmentPackagesRaw = await db.AssignmentPackages.Where(a => apKeys.Contains(a.AssignmentId))
+                .WhereIf(packageSet is not null, p => packageSet!.Contains(p.PackageId))
+                .Select(ap => new { ap.PackageId, ap.AssignmentId })
+                .ToListAsync(ct);
+
+            foreach (var assignmentPackage in assignmentPackagesRaw)
             {
-                ids.Add(assignmentPackage.PackageId);
-            }
-            else
-            {
-                assignmentPackages.Add(assignmentPackage.AssignmentId, [assignmentPackage.PackageId]);
+                apPackageIds.Add(assignmentPackage.PackageId);
+                if (assignmentPackages.TryGetValue(assignmentPackage.AssignmentId, out var ids))
+                {
+                    ids.Add(assignmentPackage.PackageId);
+                }
+                else
+                {
+                    assignmentPackages.Add(assignmentPackage.AssignmentId, [assignmentPackage.PackageId]);
+                }
             }
         }
 
@@ -1077,14 +1026,17 @@ public class ConnectionQuery(AppDbContext db)
             }
         }
 
-        var entityKeys = keys.Where(k => rolePackagesForEntity.ContainsKey(k.RoleId)).Select(k => k.FromId).Distinct().ToList();
-        var entityVariantsRaw = await db.Entities.Where(e => entityKeys.Contains(e.Id))
-            .Select(e => new { e.Id, e.VariantId })
-            .ToListAsync(ct);
         SortedList<Guid, Guid> entityVariants = [];
-        foreach (var entityVariant in entityVariantsRaw)
+        var entityKeys = keys.Where(k => rolePackagesForEntity.ContainsKey(k.RoleId)).Select(k => k.FromId).Distinct().ToList();
+        if (entityKeys.Count > 0)
         {
-            entityVariants[entityVariant.Id] = entityVariant.VariantId;
+            var entityVariantsRaw = await db.Entities.Where(e => entityKeys.Contains(e.Id))
+                .Select(e => new { e.Id, e.VariantId })
+                .ToListAsync(ct);
+            foreach (var entityVariant in entityVariantsRaw)
+            {
+                entityVariants[entityVariant.Id] = entityVariant.VariantId;
+            }
         }
 
         var delegationIds = keys.Select(k => k.DelegationId).Where(id => id != null).Distinct().ToList();
@@ -1266,23 +1218,6 @@ public class ConnectionQuery(AppDbContext db)
         return results is List<ConnectionQueryExtendedRecord> list ? list : results.ToList();
     }
 
-    private static ConnectionQueryExtendedRecord ToDtoEmpty(ConnectionQueryRecord x) => new()
-    {
-        FromId = x.FromId,
-        ToId = x.ToId,
-        RoleId = x.RoleId,
-        AssignmentId = x.AssignmentId,
-        DelegationId = x.DelegationId,
-        ViaId = x.ViaId,
-        ViaRoleId = x.ViaRoleId,
-        From = x.From,
-        To = x.To,
-        Role = x.Role,
-        Via = x.Via,
-        ViaRole = x.ViaRole,
-        Reason = x.Reason,
-    };
-
     private static ConnectionQueryExtendedRecord ToDtoEmpty(ConnectionQueryBaseRecord x) => new()
     {
         FromId = x.FromId,
@@ -1344,9 +1279,9 @@ internal static class ConnectionQueryExtensions
         return query.Where(t => ids.Contains(t.ToId));
     }
 
-    internal static IQueryable<ConnectionQueryBaseRecord> FromIdContains(this IQueryable<ConnectionQueryBaseRecord> query, HashSet<Guid> ids)
+    internal static IQueryable<ConnectionQueryBaseRecord> FromIdContains(this IQueryable<ConnectionQueryBaseRecord> query, HashSet<Guid> ids, bool applyFromFilter = true)
     {
-        if (ids is null || ids.Count == 0)
+        if (!applyFromFilter || ids is null || ids.Count == 0)
         {
             return query;
         }
