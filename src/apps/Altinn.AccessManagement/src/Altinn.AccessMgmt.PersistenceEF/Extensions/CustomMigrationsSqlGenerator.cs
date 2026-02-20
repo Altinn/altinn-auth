@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
@@ -20,66 +21,252 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
         base.Generate(operation, model, builder, terminate);
         builder.EndCommand();
 
-        var entityType = model?.GetEntityTypes().FirstOrDefault(et =>
-            et.GetTableName() == operation.Name &&
-            et.GetSchema() == operation.Schema);
+        var effectiveModel = GetEffectiveModel(model);
+        var entityType = FindEntityType(effectiveModel, operation.Name, operation.Schema);
+        var columns = GetDataColumnNames(operation);
 
-        if (entityType?.FindAnnotation("EnableAudit")?.Value as bool? == true)
+        GenerateScripts(entityType, effectiveModel, builder, columns);
+    }
+
+    protected override void Generate(AddColumnOperation operation, IModel? model, MigrationCommandListBuilder builder, bool terminate = true)
+    {
+        base.Generate(operation, model, builder, terminate);
+        builder.EndCommand();
+
+        var effectiveModel = GetEffectiveModel(model);
+        var entityType = FindEntityType(effectiveModel, operation.Table, operation.Schema);
+
+        if (entityType is null)
         {
-            var columns = GetDataColumnNames(operation, model);
-
-            builder.AppendLine(GenerateAuditInsertFunctionAndTrigger(operation.Schema, operation.Name, columns));
-            builder.EndCommand();
-
-            builder.AppendLine(GenerateAuditUpdateFunctionAndTrigger(operation.Schema, operation.Name, columns));
-            builder.EndCommand();
-
-            builder.AppendLine(GenerateAuditDeleteFunctionAndTrigger(operation.Schema, operation.Name, columns));
-            builder.EndCommand();
+            return;
         }
 
-        if (entityType?.FindAnnotation("EnableTranslation")?.Value as bool? == true)
+        var columns = GetDataColumnNames(
+            effectiveModel,
+            operation.Table,
+            operation.Schema,
+            addedColumn: operation.Name);
+
+        GenerateScripts(entityType, effectiveModel, builder, columns);
+    }
+
+    protected override void Generate(DropColumnOperation operation, IModel? model, MigrationCommandListBuilder builder, bool terminate = true)
+    {
+        base.Generate(operation, model, builder, terminate);
+        builder.EndCommand();
+
+        var effectiveModel = GetEffectiveModel(model);
+        var entityType = FindEntityType(effectiveModel, operation.Table, operation.Schema);
+
+        if (entityType is null)
         {
-            // Find all properties with annotation "Translate"
-            // Moved to TranslationService
+            return;
+        }
+
+        var columns = GetDataColumnNames(
+            effectiveModel,
+            operation.Table,
+            operation.Schema,
+            removedColumn: operation.Name);
+
+        GenerateScripts(entityType, effectiveModel, builder, columns);
+    }
+
+    protected override void Generate(AlterColumnOperation operation, IModel? model, MigrationCommandListBuilder builder)
+    {
+        base.Generate(operation, model, builder);
+        builder.EndCommand();
+
+        var effectiveModel = GetEffectiveModel(model);
+        var entityType = FindEntityType(effectiveModel, operation.Table, operation.Schema);
+
+        if (entityType is null)
+        {
+            return;
+        }
+
+        var columns = GetDataColumnNames(effectiveModel, operation.Table, operation.Schema);
+
+        GenerateScripts(entityType, effectiveModel, builder, columns);
+    }
+
+    protected override void Generate(RenameColumnOperation operation, IModel? model, MigrationCommandListBuilder builder)
+    {
+        base.Generate(operation, model, builder);
+        builder.EndCommand();
+
+        var effectiveModel = GetEffectiveModel(model);
+        var entityType = FindEntityType(effectiveModel, operation.Table, operation.Schema);
+
+        if (entityType is null)
+        {
+            return;
+        }
+
+        var columns = GetDataColumnNames(
+            effectiveModel,
+            operation.Table,
+            operation.Schema,
+            addedColumn: operation.NewName,
+            removedColumn: operation.Name);
+
+        GenerateScripts(entityType, effectiveModel, builder, columns);
+    }
+
+    // Viktig for annotation-changes på entity/table
+    protected override void Generate(AlterTableOperation operation, IModel? model, MigrationCommandListBuilder builder)
+    {
+        base.Generate(operation, model, builder);
+        builder.EndCommand();
+
+        var effectiveModel = GetEffectiveModel(model);
+        var entityType = FindEntityType(effectiveModel, operation.Name, operation.Schema);
+
+        if (entityType is null)
+        {
+            return;
+        }
+
+        var columns = GetDataColumnNames(effectiveModel, operation.Name, operation.Schema);
+
+        GenerateScripts(entityType, effectiveModel, builder, columns);
+    }
+
+    // Viktig for global “audit version” / database-annotations
+    protected override void Generate(AlterDatabaseOperation operation, IModel? model, MigrationCommandListBuilder builder)
+    {
+        base.Generate(operation, model, builder);
+        builder.EndCommand();
+
+        var effectiveModel = GetEffectiveModel(model);
+
+        foreach (var entityType in effectiveModel.GetEntityTypes())
+        {
+            if (entityType.FindAnnotation(AuditExtensions.AnnotationName) is null)
+            {
+                continue;
+            }
+
+            var table = entityType.GetTableName();
+            var schema = entityType.GetSchema();
+
+            if (string.IsNullOrWhiteSpace(table))
+            {
+                continue;
+            }
+
+            var columns = GetDataColumnNames(effectiveModel, table!, schema);
+
+            GenerateScripts(entityType, effectiveModel, builder, columns);
         }
     }
 
-    private static List<string> GetDataColumnNames(CreateTableOperation op, IModel? model)
+    private IModel GetEffectiveModel(IModel? model)
     {
-        var cols = new List<string>();
-        if (model is null)
+        // 1) Hvis EF sender inn en reell app-model, bruk den
+        if (model is not null && IsApplicationModel(model))
         {
-            return cols;
+            return model;
         }
 
-        var et = model.GetEntityTypes()
-            .FirstOrDefault(x => x.GetTableName() == op.Name && x.GetSchema() == op.Schema);
+        // 2) Stabil kilde for app-modell i både CLI og runtime
+        var migrationsAssembly = Dependencies.CurrentContext.Context.GetService<IMigrationsAssembly>();
+        var snapshotModel = migrationsAssembly.ModelSnapshot?.Model;
 
-        if (et is null)
+        if (snapshotModel is not null && IsApplicationModel(snapshotModel))
         {
-            return cols;
+            return snapshotModel;
         }
 
-        var storeObject = StoreObjectIdentifier.Table(op.Name, op.Schema);
+        // 3) Siste fallback (kan være HistoryRow-only)
+        return Dependencies.CurrentContext.Context.Model;
+    }
 
-        cols = et.GetProperties()
-            .Select(p => p.GetColumnName(storeObject))
-            .Where(n => n != null && !n.StartsWith("audit_", StringComparison.OrdinalIgnoreCase))
+    private static bool IsApplicationModel(IModel model)
+    {
+        // HistoryRow-only => kun __EFMigrationsHistory
+        return model.GetEntityTypes().Any(et =>
+            !string.Equals(et.GetTableName(), "__EFMigrationsHistory", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static IEntityType? FindEntityType(IModel model, string table, string? schema)
+    {
+        return model.GetEntityTypes()
+            .FirstOrDefault(et =>
+                et.GetTableName() == table &&
+                et.GetSchema() == schema);
+    }
+
+    private void GenerateScripts(IEntityType? entityType, IModel model, MigrationCommandListBuilder builder, List<string> columns)
+    {
+        if (entityType is null)
+        {
+            return;
+        }
+
+        if (entityType.FindAnnotation(AuditExtensions.AnnotationName) is null)
+        {
+            return;
+        }
+
+        var schema = entityType.GetSchema();
+        var table = entityType.GetTableName();
+
+        builder.AppendLine(GenerateAuditInsertFunctionAndTrigger(schema!, table!, columns));
+        builder.EndCommand();
+
+        builder.AppendLine(GenerateAuditUpdateFunctionAndTrigger(schema!, table!, columns));
+        builder.EndCommand();
+
+        builder.AppendLine(GenerateAuditDeleteFunctionAndTrigger(schema!, table!, columns));
+        builder.EndCommand();
+    }
+
+    private static List<string> GetDataColumnNames(CreateTableOperation operation)
+    {
+        return operation.Columns
+            .Select(c => c.Name)
+            .Where(n => !n.StartsWith("audit_", StringComparison.OrdinalIgnoreCase))
             .Distinct()
+            .OrderBy(n => n)
+            .ToList();
+    }
+
+    private static List<string> GetDataColumnNames(
+        IModel model,
+        string table,
+        string? schema,
+        string? addedColumn = null,
+        string? removedColumn = null)
+    {
+        var entityType = FindEntityType(model, table, schema);
+
+        if (entityType is null)
+        {
+            return new();
+        }
+
+        var storeObject = StoreObjectIdentifier.Table(table, schema);
+
+        var columns = entityType.GetProperties()
+            .Select(p => p.GetColumnName(storeObject))
+            .Where(n => n is not null && !n.StartsWith("audit_", StringComparison.OrdinalIgnoreCase))
             .ToList()!;
 
-        // Fallback til operation.Columns hvis noe ikke var mappet:
-        if (cols.Count == 0)
+        if (!string.IsNullOrWhiteSpace(addedColumn) && !columns.Contains(addedColumn))
         {
-            cols = op.Columns
-                .Select(c => c.Name)
-                .Where(n => !n.StartsWith("audit_", StringComparison.OrdinalIgnoreCase))
-                .Distinct()
-                .ToList();
+            columns.Add(addedColumn);
         }
 
-        return cols;
+        if (!string.IsNullOrWhiteSpace(removedColumn))
+        {
+            columns.Remove(removedColumn);
+        }
+
+        return columns
+            .Distinct()
+            .OrderBy(n => n)
+            .ToList();
     }
 
     private string GenerateAuditInsertFunctionAndTrigger(string schema, string name, List<string> columns)
@@ -172,4 +359,5 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
 
         return sb.ToString();
     }
+
 }

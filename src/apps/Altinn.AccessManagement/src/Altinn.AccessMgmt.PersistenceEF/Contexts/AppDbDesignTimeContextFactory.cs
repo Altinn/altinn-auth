@@ -13,7 +13,7 @@ public sealed class AppDbDesignTimeContextFactory : IDesignTimeDbContextFactory<
 {
     public AppDbContext CreateDbContext(string[] args)
     {
-        var cs = Environment.GetEnvironmentVariable("Database:Postgres:MigrationConnectionString") ?? "Database=accessmgmt_ef_02;Host=localhost;Username=platform_authorization_admin;Password=Password;Include Error Detail=true";
+        var cs = Environment.GetEnvironmentVariable("Database:Postgres:MigrationConnectionString") ?? "Database=authorizationdb;Host=localhost;Username=platform_authorization_admin;Password=Password;Include Error Detail=true";
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(cs)

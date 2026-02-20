@@ -6,6 +6,7 @@ using Altinn.AccessMgmt.PersistenceEF.Models.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Contexts;
 
@@ -128,6 +129,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         ApplyConfiguration(modelBuilder);
         ApplyViewConfiguration(modelBuilder);
         modelBuilder.UseLowerCaseNamingConvention();
+        modelBuilder.HasAnnotation(AuditExtensions.AnnotationName, AuditEFConfiguration.Version);
     }
 
     private void ApplyViewConfiguration(ModelBuilder modelBuilder)
