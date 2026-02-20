@@ -8,6 +8,7 @@ using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Common.Authentication.Configuration;
 using Altinn.Common.PEP.Authorization;
 using Altinn.Platform.Events.Formatters;
+using Altinn.Register.Authorization;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.Clients;
 using Altinn.ResourceRegistry.Core.Clients.Interfaces;
@@ -108,6 +109,8 @@ internal static class ResourceRegistryHost
                 .RequireScopeAnyOf(AuthzConstants.SCOPE_RESOURCE_ADMIN))
             .AddPolicy(AuthzConstants.POLICY_PLATFORM_COMPONENT_ONLY, policy =>
                 policy.Requirements.Add(new AccessTokenRequirement("platform")))
+            .AddPolicy(AuthzConstants.POLICY_INTERNAL_OR_PLATFORM, policy =>
+                policy.Requirements.Add(new InternalScopeOrAccessTokenRequirement("platform", "altinn:resourceregistry/resource.admin")))
             .AddPolicy(AuthzConstants.POLICY_STUDIO_DESIGNER, policy => policy.Requirements.Add(new ClaimAccessRequirement("urn:altinn:app", "studio.designer")));
 
         services.AddResourceRegistryAuthorizationHandlers();

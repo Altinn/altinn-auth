@@ -50,7 +50,7 @@ public class AccessListMembershipsController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A list-object of access-list memberships that include <paramref name="partiesQuery"/> and <paramref name="resourcesQuery"/>.</returns>
     [HttpGet("")]
-    [Authorize(Policy = AuthzConstants.POLICY_PLATFORM_COMPONENT_ONLY)]
+    [Authorize(Policy = AuthzConstants.POLICY_INTERNAL_OR_PLATFORM)]
     public async Task<ActionResult<ListObject<AccessListResourceMembershipWithActionFilterDto>>> GetMembershipsForResourceForParty(
         [FromQuery(Name = "party")] List<string?>? partiesQuery = null,
         [FromQuery(Name = "resource")] List<string?>? resourcesQuery = null,

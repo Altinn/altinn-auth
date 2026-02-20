@@ -41,6 +41,11 @@
         public const string POLICY_PLATFORM_COMPONENT_ONLY = "PlatformComponentOnly";
 
         /// <summary>
+        /// Policy name for authorizing access to internal endpoints, allowing either platform component access or internal scope.
+        /// </summary>
+        public const string POLICY_INTERNAL_OR_PLATFORM = "InternalOrPlatform";
+        
+        /// <summary>
         /// Scope for resourceregistry read access
         /// </summary>
         public const string SCOPE_RESOURCE_READ = "altinn:resourceregistry/resource.read";
