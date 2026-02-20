@@ -77,7 +77,7 @@ public class WebApplicationFixture : WebApplicationFactory<Program>, IAsyncLifet
 
             builder.ConfigureServices(services =>
             {
-                services.AddSingleton<RepositoryContainer>();
+                services.AddScoped<RepositoryContainer>();
             });
 
             builder.ConfigureTestServices(services =>
@@ -100,9 +100,9 @@ public class WebApplicationFixture : WebApplicationFactory<Program>, IAsyncLifet
         services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
 
         services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
-        services.AddSingleton<IPDP, PdpPermitMock>();
-        services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
-        services.AddSingleton<IAltinn2ConsentClient, Altinn2ConsentClientMock>();
+        services.AddScoped<IPDP, PdpPermitMock>();
+        services.AddScoped<IAltinn2RightsClient, Altinn2RightsClientMock>();
+        services.AddScoped<IAltinn2ConsentClient, Altinn2ConsentClientMock>();
         services.AddSingleton<IDelegationChangeEventQueue>(new DelegationChangeEventQueueMock());
     }
 
@@ -128,8 +128,10 @@ public class WebApplicationFixture : WebApplicationFactory<Program>, IAsyncLifet
 /// <summary>
 /// Container for the test server API and HTTP Client for sending requests 
 /// </summary>
-public class Host(WebApplicationFactory<Program> api, HttpClient client, MockContext mock)
+public class Host(WebApplicationFactory<Program> api, HttpClient client, MockContext mock) : IDisposable
 {
+    private readonly IServiceScope scope = api.Services.CreateScope();
+
     public MockContext Mock { get; set; } = mock;
 
     /// <summary>
@@ -145,5 +147,10 @@ public class Host(WebApplicationFactory<Program> api, HttpClient client, MockCon
     /// <summary>
     /// Repository Container that contains database implementation
     /// </summary>
-    public RepositoryContainer Repository => Api.Services.GetRequiredService<RepositoryContainer>();
+    public RepositoryContainer Repository => scope.ServiceProvider.GetRequiredService<RepositoryContainer>();
+
+    public void Dispose()
+    {
+        scope.Dispose();
+    }
 }

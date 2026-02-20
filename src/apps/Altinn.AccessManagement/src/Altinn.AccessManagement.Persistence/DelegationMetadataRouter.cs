@@ -8,7 +8,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessMgmt.Core.Services.Legacy;
 
-public sealed class DelegationMetadataRouter(ILegacyRoutingPolicy policy, IServiceScopeFactory scopeFactory) : IDelegationMetadataRepository
+public sealed class DelegationMetadataRouter(
+    ILegacyRoutingPolicy policy,
+    DelegationMetadataEF delegationMetadataEF,
+    DelegationMetadataRepo delegationMetadataRepo
+    ) : IDelegationMetadataRepository
 {
     private static readonly HashSet<string> InstanceMethods = new(StringComparer.Ordinal)
     {
@@ -40,11 +44,9 @@ public sealed class DelegationMetadataRouter(ILegacyRoutingPolicy policy, IServi
             useEF = false;
         }
 
-        using var scope = scopeFactory.CreateScope();
-
         var target = useEF
-            ? (IDelegationMetadataRepository)scope.ServiceProvider.GetRequiredService<DelegationMetadataEF>() 
-            : (IDelegationMetadataRepository)scope.ServiceProvider.GetRequiredService<DelegationMetadataRepo>();
+            ? (IDelegationMetadataRepository)delegationMetadataEF
+            : (IDelegationMetadataRepository)delegationMetadataRepo;
 
         return await call(target);
     }

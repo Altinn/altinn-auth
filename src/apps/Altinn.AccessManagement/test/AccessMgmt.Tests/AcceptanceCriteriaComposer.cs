@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
@@ -155,9 +155,13 @@ public abstract class AcceptanceCriteriaComposer
         var host = fixture.ConfigureHostBuilderWithScenarios([.. Scenarios]);
         Request.RequestUri = new Uri(host.Client.BaseAddress, RequestUri);
 
-        foreach (var seed in host.Mock.DbSeeds)
+        using (var scope = host.Api.Services.CreateScope())
         {
-            await seed(host.Api.Services.GetRequiredService<RepositoryContainer>());
+            var repo = scope.ServiceProvider.GetRequiredService<RepositoryContainer>();
+            foreach (var seed in host.Mock.DbSeeds)
+            {
+                await seed(repo);
+            }
         }
 
         await AssertResponse(await host.Client.SendAsync(Request));

@@ -27,7 +27,7 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
         if (entityType?.FindAnnotation("EnableAudit")?.Value as bool? == true)
         {
             var columns = GetDataColumnNames(operation, model);
-            
+
             builder.AppendLine(GenerateAuditInsertFunctionAndTrigger(operation.Schema, operation.Name, columns));
             builder.EndCommand();
 
@@ -114,7 +114,7 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
     }
 
     private string GenerateAuditUpdateFunctionAndTrigger(string schema, string name, List<string> columns)
-    {        
+    {
         var sb = new StringBuilder();
 
         sb.AppendLine($"CREATE OR REPLACE FUNCTION {schema}.audit_{name}_update_fn()");

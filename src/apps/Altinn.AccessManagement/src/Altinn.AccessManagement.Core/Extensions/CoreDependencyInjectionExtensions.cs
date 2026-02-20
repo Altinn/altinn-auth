@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Asserters;
+﻿using Altinn.AccessManagement.Core.Asserters;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Resolvers;
 using Altinn.AccessManagement.Core.Services;
@@ -38,20 +38,20 @@ public static class CoreDependencyInjectionExtensions
         builder.Services.AddTransient<IAMPartyService, AMPartyService>();
 
         builder.Services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPoint>();
-        builder.Services.AddSingleton<IPolicyInformationPoint, PolicyInformationPoint>();
-        builder.Services.AddSingleton<IPolicyAdministrationPoint, PolicyAdministrationPoint>();
+        builder.Services.AddScoped<IPolicyInformationPoint, PolicyInformationPoint>();
+        builder.Services.AddScoped<IPolicyAdministrationPoint, PolicyAdministrationPoint>();
         builder.Services.AddSingleton<IResourceAdministrationPoint, ResourceAdministrationPoint>();
 
         builder.Services.AddSingleton<IResourceAdministrationPoint, ResourceAdministrationPoint>();
         builder.Services.AddSingleton<IContextRetrievalService, ContextRetrievalService>();
-        builder.Services.AddSingleton<IMaskinportenSchemaService, MaskinportenSchemaService>();
+        builder.Services.AddScoped<IMaskinportenSchemaService, MaskinportenSchemaService>();
 
         builder.Services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
         builder.Services.AddTransient<ISigningCredentialsResolver, SigningCredentialsResolver>();
 
         builder.Services.AddScoped<ISingleRightsService, SingleRightsService>();
         builder.Services.AddSingleton<IUserProfileLookupService, UserProfileLookupService>();
-        builder.Services.AddSingleton<IAltinn2RightsService, Altinn2RightsService>();
-        builder.Services.AddSingleton<IAppsInstanceDelegationService, AppsInstanceDelegationService>();
+        builder.Services.AddScoped<IAltinn2RightsService, Altinn2RightsService>();
+        builder.Services.AddScoped<IAppsInstanceDelegationService, AppsInstanceDelegationService>();
     }
 }

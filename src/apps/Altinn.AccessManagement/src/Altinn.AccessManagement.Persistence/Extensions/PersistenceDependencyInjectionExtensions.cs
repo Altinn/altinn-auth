@@ -51,7 +51,7 @@ public static class PersistenceDependencyInjectionExtensions
         builder.Services.AddSingleton<ILegacyRoutingPolicy, FeatureFlagLegacyRoutingPolicy>();
         builder.Services.AddScoped<DelegationMetadataEF>();
         builder.Services.AddScoped<DelegationMetadataRepo>();
-        builder.Services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRouter>();
+        builder.Services.AddScoped<IDelegationMetadataRepository, DelegationMetadataRouter>();
 
         builder.Services.AddSingleton<IResourceMetadataRepository, ResourceMetadataRepo>();
 
