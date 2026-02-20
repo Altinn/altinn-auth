@@ -1,8 +1,10 @@
-﻿using System.Linq.Expressions;
+﻿using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Linq.Expressions;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Extensions;
 

@@ -26,4 +26,6 @@ public class AssignmentResource : BaseAssignmentResource
     /// The version of the policy referred to by this change.
     /// </summary>
     public string PolicyVersion { get; set; }
+
+    public Entity? ChangedBy { get; set; }
 }
