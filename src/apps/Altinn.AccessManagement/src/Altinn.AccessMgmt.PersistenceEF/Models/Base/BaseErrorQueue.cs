@@ -35,5 +35,5 @@ public class BaseErrorQueue
 
             _id = value;
         }
-    }    
+    }
 }

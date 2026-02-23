@@ -1233,23 +1233,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             .Where(a => a.RoleId == assignmentRole.Id)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (assignment is not null)
-        {
-            // Check if assignment resource already exists with same policy path and version we must skip the update
-            var assignmentresource = await db.AssignmentResources
-                .AsNoTracking()
-                .Where(ar => ar.AssignmentId == assignment.Id)
-                .Where(ar => ar.ResourceId == resource.Id)
-                .Where(ar => ar.PolicyPath == blobStoragePolicyPath)
-                .Where(ar => ar.PolicyVersion == blobStorageVersionId)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (assignmentresource is not null)
-            {
-                return 0;
-            }
-        }
-        else
+        if (assignment is null)
         {
             assignment = new Assignment()
             {

@@ -34,6 +34,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IEntityService, EntityService>();
         services.AddScoped<IAmPartyRepository, AMPartyService>();
         services.AddScoped<IErrorQueueService, ErrorQueueService>();
+        services.AddScoped<IRightImportProgressService, RightImportProgressService>();
         services.AddScoped<IAuthorizedPartyRepoService, AuthorizedPartyRepoService>();
         services.AddScoped<IAuthorizedPartyRepoServiceEf, AuthorizedPartyRepoServiceEf>();
         services.AddScoped<IClientDelegationService, ClientDelegationService>();

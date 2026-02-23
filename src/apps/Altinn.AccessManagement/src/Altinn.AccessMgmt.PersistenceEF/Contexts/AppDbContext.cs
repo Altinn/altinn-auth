@@ -71,6 +71,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<ErrorQueue> ErrorQueue => Set<ErrorQueue>();
 
+    public DbSet<RightImportProgress> RightImportProgress => Set<RightImportProgress>();
+
     #endregion
 
     #region Audit
@@ -204,6 +206,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<RolePackage>(new RolePackageConfiguration());
         modelBuilder.ApplyConfiguration<RoleResource>(new RoleResourceConfiguration());
         modelBuilder.ApplyConfiguration<ErrorQueue>(new ErrorQueueConfiguration());
+        modelBuilder.ApplyConfiguration<RightImportProgress>(new RightImportProgressConfiguration());
     }
 
     #region Extensions
