@@ -783,6 +783,7 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
           .Include(t => t.Assignment).ThenInclude(t => t.From)
           .Include(t => t.Assignment).ThenInclude(t => t.To)
           .Include(t => t.Resource).ThenInclude(t => t.Type)
+          .Include(t => t.ChangedBy)
           .Where(t => toPartyUuids.Contains(t.Assignment.ToId))
           .Where(t => t.Assignment.RoleId == RoleConstants.Rightholder)
           .ToListAsync(cancellationToken);
