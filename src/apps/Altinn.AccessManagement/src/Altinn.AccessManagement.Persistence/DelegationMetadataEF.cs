@@ -66,8 +66,8 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
 
             ToUuid = assignmentResource.Assignment.ToId,
             ToUuidType = ConvertEntityTypeToUuidType(assignmentResource.Assignment.To.TypeId),
-            CoveredByPartyId = assignmentResource.Assignment.To.PartyId,
             CoveredByUserId = assignmentResource.Assignment.To.UserId,
+            CoveredByPartyId = assignmentResource.Assignment.To.UserId.HasValue ? null : assignmentResource.Assignment.To.PartyId, // If CoveredByUserId already has value skip setting CoveredByPartyId as old logic expects only one of these
         };
     }
 
@@ -268,12 +268,12 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
             .Include(t => t.Assignment).ThenInclude(t => t.From)
             .Include(t => t.Resource).ThenInclude(t => t.Type)
             .Include(t => t.ChangedBy)
-            .Where(t => t.Resource.RefId == resourceId)
+            .Where(t => t.Resource.RefId == CheckAndConvertIfAppResourceId(resourceId))
             .Where(t => t.Assignment.FromId == from.Id)
             .WhereIf(coveredByPartyId != null, t => t.Assignment.To.PartyId == coveredByPartyId)
             .WhereIf(coveredByUserId != null, t => t.Assignment.To.UserId == coveredByUserId)
             .WhereIf(toUuid.HasValue, t => t.Assignment.ToId == toUuid.Value)
-            .FirstOrDefaultAsync(cancellationToken);
+            .SingleOrDefaultAsync(cancellationToken);
 
         return result == null 
             ? null
@@ -309,8 +309,15 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
             await DbContext.Entities.AsNoTracking().SingleAsync(t => t.PartyId == delegationChange.CoveredByPartyId, cancellationToken);
 
         var assignment = await DbContext.Assignments.FirstOrDefaultAsync(t => t.FromId == from.Id && t.ToId == to.Id && t.RoleId == role.Id, cancellationToken);
+        AssignmentResource assignmentResource = null;
+
         if (assignment == null)
         {
+            if (delegationChange.DelegationChangeType == DelegationChangeType.RevokeLast)
+            {
+                return null;
+            }
+
             assignment = new Assignment()
             {
                 Id = Guid.CreateVersion7(),
@@ -321,8 +328,10 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
             DbContext.Assignments.Add(assignment);
             await DbContext.SaveChangesAsync(cancellationToken);
         }
-
-        var assignmentResource = await DbContext.AssignmentResources.FirstOrDefaultAsync(t => t.AssignmentId == assignment.Id && t.ResourceId == resource.Id, cancellationToken);
+        else
+        {
+            assignmentResource = await DbContext.AssignmentResources.FirstOrDefaultAsync(t => t.AssignmentId == assignment.Id && t.ResourceId == resource.Id, cancellationToken);
+        }
 
         if (assignmentResource == null)
         {
@@ -365,8 +374,6 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
                 await DbContext.SaveChangesAsync(cancellationToken);
             }
             */
-
-
         }
         else
         {
@@ -381,6 +388,7 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
                 */
 
                 DbContext.AssignmentResources.Remove(assignmentResource);
+                await DbContext.SaveChangesAsync(cancellationToken);
 
                 return null;
             }
@@ -395,8 +403,6 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
                 return await GetAssignmentResource(assignmentResource.Id);
             }
         }
-
-        return null;
     }
 
     /// <summary>

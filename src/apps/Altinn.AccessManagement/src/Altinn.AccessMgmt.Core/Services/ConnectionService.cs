@@ -2,11 +2,8 @@
 using System.Diagnostics;
 using System.Text;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
-using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
 using Altinn.AccessManagement.Core.Errors;
-using Altinn.AccessManagement.Core.Helpers;
-using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.AccessList;
 using Altinn.AccessManagement.Core.Models.Party;
@@ -314,7 +311,6 @@ public partial class ConnectionService(
         
         var newVersion = await singleRightsService.ClearPolicyRules(existingAssignmentResources.PolicyPath, existingAssignmentResources.PolicyVersion, cancellationToken);
         existingAssignmentResources.PolicyVersion = newVersion;
-        await dbContext.SaveChangesAsync(cancellationToken);
 
         dbContext.Remove(existingAssignmentResources);
         await dbContext.SaveChangesAsync(cancellationToken);
