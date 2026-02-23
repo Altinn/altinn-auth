@@ -19,4 +19,5 @@ internal static class ValidationErrorMessageTexts
     internal const string PersonIdentifierInvalid = "Invalid national identity number";
     internal const string LastNameRequired = "Required when providing PersonInput details";
     internal const string PersonIdentifierLastNameInvalid = "PersonInput details must match";
+    internal const string SelfDelegationNotAllowed = "Self-delegation not allowed. From and To cannot be the same party";
 }

@@ -104,6 +104,34 @@ internal static class ConnectionCombinationRules
     };
 
     /// <summary>
+    /// Prevents self-delegation: from and to must be different parties.
+    /// Used in add/update scenarios to ensure a party cannot delegate to itself.
+    /// </summary>
+    internal static RuleExpression FromAndToMustBeDifferent(string from, string to) => () =>
+    {
+        if (!Guid.TryParse(from, out var fromId) || fromId == Guid.Empty)
+        {
+            return null;
+        }
+
+        if (!Guid.TryParse(to, out var toId) || toId == Guid.Empty)
+        {
+            return null;
+        }
+
+        if (fromId == toId)
+        {
+            return (ref ValidationErrorBuilder errors) =>
+            {
+                errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/from", [new("from", ValidationErrorMessageTexts.SelfDelegationNotAllowed)]);
+                errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/to", [new("to", ValidationErrorMessageTexts.SelfDelegationNotAllowed)]);
+            };
+        }
+
+        return null;
+    };
+
+    /// <summary>
     /// Package reference must be exactly one of (packageId, packageUrn). Reject empty Guid.
     /// </summary>
     internal static RuleExpression ExclusivePackageReference(Guid? packageId, string packageUrn, string idName = "packageId", string urnName = "package") => () =>
