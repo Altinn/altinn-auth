@@ -201,7 +201,15 @@ namespace Altinn.AccessManagement.Core.Services
                 }
                 else
                 {
-                    resourceList.Add(currentAttributeMatch);
+                    if (currentAttributeMatch.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, StringComparison.InvariantCultureIgnoreCase) && DelegationHelper.IsAppResourceId(currentAttributeMatch.Value, out string org, out string app))
+                    {
+                        resourceList.Add(new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute, Value = org });
+                        resourceList.Add(new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute, Value = app });
+                    }
+                    else
+                    {
+                        resourceList.Add(currentAttributeMatch);
+                    }
                 }
             }
 
