@@ -18,7 +18,8 @@ jobs:
   hub:
     name: Hub
     secrets: inherit
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs['skip-hub'] == false
+    # Inputs from workflow_dispatch are strings: 'true'/'false'
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.skip-hub != 'true'
     uses: ./.github/workflows/_cd-infra-template.yml
     with:
       environment: prod
@@ -28,6 +29,7 @@ jobs:
   test-spoke:
     name: Spoke Test
     needs: hub
+    # Run if hub succeeded OR was skipped (e.g., skip-hub=true)
     if: always() && (needs.hub.result == 'success' || needs.hub.result == 'skipped')
     secrets: inherit
     uses: ./.github/workflows/_cd-infra-template.yml
@@ -43,7 +45,8 @@ jobs:
   staging-spoke:
     name: Spoke Staging
     needs: test-spoke
-    if: always() && (needs['test-spoke'].result == 'success')
+    # Only proceed if the matrix job overall succeeded
+    if: always() && needs.test-spoke.result == 'success'
     secrets: inherit
     uses: ./.github/workflows/_cd-infra-template.yml
     strategy:
@@ -58,7 +61,7 @@ jobs:
   prod-spoke:
     name: Spoke Prod
     needs: staging-spoke
-    if: always() && (needs['staging-spoke'].result == 'success')
+    if: always() && needs.staging-spoke.result == 'success'
     secrets: inherit
     uses: ./.github/workflows/_cd-infra-template.yml
     strategy:
