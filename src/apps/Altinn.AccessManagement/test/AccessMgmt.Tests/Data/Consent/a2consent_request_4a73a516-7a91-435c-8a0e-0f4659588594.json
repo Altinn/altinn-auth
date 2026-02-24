@@ -54,5 +54,6 @@
         }
     ],
     "RedirectUrl": "https://www.vg.no",
-    "TemplateId": "sblanesoknad"
+    "TemplateId": "sblanesoknad",
+    "PortalViewMode": "Hide"
 }

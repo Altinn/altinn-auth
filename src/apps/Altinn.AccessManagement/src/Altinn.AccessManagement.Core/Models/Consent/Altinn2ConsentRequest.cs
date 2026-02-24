@@ -76,6 +76,11 @@ namespace Altinn.AccessManagement.Core.Models.Consent
         /// The consent template id.
         /// </summary>
         public string TemplateId { get; set; }
+
+        /// <summary>
+        /// The consent portal view mode.
+        /// </summary>
+        public string PortalViewMode { get; set; }
     }
 
     public class AuthorizationRequestResourceBE
