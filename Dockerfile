@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine@sha256:e0f7abfb9c18aa419198b2c4e05dc2f7fd864a6098f09bddb1ceb2b0bce67685 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine@sha256:7d98d5883675c6bca25b1db91f393b24b85125b5b00b405e55404fd6b8d2aead AS build
 WORKDIR /app
 
 # Copy everything and build
@@ -7,7 +7,7 @@ RUN dotnet publish -c Release -o out ./src/Altinn.ResourceRegistry/Altinn.Resour
   && cp -r src/Altinn.ResourceRegistry.Persistence/Migration out/Migration
 
 # Build runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine@sha256:be36809e32840cf9fcbf1a3366657c903e460d3c621d6593295a5e5d02268a0d AS final
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine@sha256:56f0ed1f866f9db4fa0969dc2cd222d50a41800f455107e63f5bcca76c0b4cff AS final
 EXPOSE 5100
 WORKDIR /app
 
