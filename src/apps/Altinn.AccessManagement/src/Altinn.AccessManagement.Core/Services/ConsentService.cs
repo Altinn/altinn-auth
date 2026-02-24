@@ -16,6 +16,7 @@ using Altinn.Authorization.ProblemDetails;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Register.Models;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.AccessManagement.Core.Services
@@ -26,7 +27,7 @@ namespace Altinn.AccessManagement.Core.Services
     /// <remarks>
     /// Service responsible for consent functionality
     /// </remarks>
-    public class ConsentService(IConsentRepository consentRepository, IAltinn2ConsentClient altinn2ConsentClient, IPartiesClient partiesClient, ISingleRightsService singleRightsService,
+    public class ConsentService(ILogger<ConsentService> logger, IConsentRepository consentRepository, IAltinn2ConsentClient altinn2ConsentClient, IPartiesClient partiesClient, ISingleRightsService singleRightsService,
         IResourceRegistryClient resourceRegistryClient, IAMPartyService ampartyService, IMemoryCache memoryCache, IProfileClient profileClient, TimeProvider timeProvider, IOptions<GeneralSettings> generalSettings) : IConsent
     {
         private readonly IConsentRepository _consentRepository = consentRepository;
@@ -254,6 +255,13 @@ namespace Altinn.AccessManagement.Core.Services
                 if (!result.IsProblem)
                 {
                     consentRequest = await _consentRepository.GetRequest(consentRequestId, cancellationToken);
+                }
+                else
+                {
+                    logger.LogWarning(
+                        "Consent with id {ConsentRequestId} exist in Altinn2 but failed to migrate to Altinn3 with error {Error}.",
+                        consentRequestId,
+                        string.Join(Environment.NewLine, ((ValidationProblemInstance)result.Problem).Errors.Select(e => $"{e.ErrorCode}: {e.Detail}")));
                 }
             }
 
