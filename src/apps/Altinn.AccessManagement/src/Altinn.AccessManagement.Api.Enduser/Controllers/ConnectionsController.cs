@@ -12,6 +12,7 @@ using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.Core.Validation;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
@@ -454,7 +455,7 @@ public class ConnectionsController(
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetResources([FromQuery] ConnectionInput connection, [FromQuery, FromHeader] PagingInput paging, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetResources([FromQuery] ConnectionInput connection, [FromQuery, FromHeader] PagingInput paging, [FromQuery] string? resource = null, CancellationToken cancellationToken = default)
     {
         var validationErrors = ValidationComposer.Validate(ConnectionValidation.ValidateReadConnection(connection.Party, connection.From, connection.To));
 
@@ -467,11 +468,21 @@ public class ConnectionsController(
         var validFromUuid = Guid.TryParse(connection.From, out var fromUuid);
         var validToUuid = Guid.TryParse(connection.To, out var toUuid);
 
+        Resource resourceObj = null;
+        if (resource != null)
+        {
+            resourceObj = await resourceService.GetResource(resource, cancellationToken);
+            if (resourceObj is null)
+            {
+                return NotFound($"Resource '{resource}' not found.");
+            }
+        }
+
         var result = await ConnectionService.GetResources(
             partyUuid,
             fromId: validFromUuid ? fromUuid : null,
             toId: validToUuid ? toUuid : null,
-            resourceId: null,
+            resourceId: resourceObj != null ? resourceObj.Id : null,
             configureConnections: ConfigureConnections,
             cancellationToken: cancellationToken
             );
