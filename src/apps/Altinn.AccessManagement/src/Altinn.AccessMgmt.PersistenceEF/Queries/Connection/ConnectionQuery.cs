@@ -652,7 +652,7 @@ public class ConnectionQuery(AppDbContext db)
 
         var direct =
             from childAss in db.Assignments.WhereIf(!FeatureFlags.IncludeSingleRightsImportedAssignments, t => t.Audit_ChangedBySystem != SystemEntityConstants.SingleRightImportSystem)
-            where childAss.FromId == fromId && childAss.Audit_ChangedBySystem != SystemEntityConstants.SingleRightImportSystem
+            where childAss.FromId == fromId
             select new ConnectionQueryBaseRecord()
             {
                 AssignmentId = childAss.Id,
