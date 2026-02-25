@@ -89,9 +89,9 @@ namespace Altinn.ResourceRegistry.Controllers
         {
             ServiceResource resource = await _resourceRegistry.GetResource(id, versionId, cancellationToken);
 
-            if (resource == null && id.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX))
+            if (resource == null && id.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX) && !id.Contains("_a1-"))
             {
-                List<ServiceResource> resourceList = await _resourceRegistry.GetResourceList(includeApps: true, includeAltinn2: false, includeExpired: false, includeMigratedApps: false, includeAllVersions:false, cancellationToken);
+                List<ServiceResource> resourceList = await _resourceRegistry.GetResourceList(includeApps: true, includeAltinn2: false, includeExpired: true, includeMigratedApps: true, includeAllVersions:false, cancellationToken);
                 ServiceResource appResource = resourceList.FirstOrDefault(r => r.Identifier == id);
                 if (appResource != null)
                 {

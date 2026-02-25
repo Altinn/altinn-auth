@@ -348,6 +348,12 @@ namespace Altinn.ResourceRegistry.Core.Services
                     service.HasCompetentAuthority.Name = orgentity.Name;
                 }
 
+                if (application.Id.StartsWith("a1-"))
+                {
+                    service.Delegable = false;
+                    service.Visible = false;
+                }
+
                 return service;
             }
         }
