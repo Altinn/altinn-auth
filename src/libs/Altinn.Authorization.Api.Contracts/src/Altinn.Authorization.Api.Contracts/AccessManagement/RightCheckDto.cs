@@ -4,14 +4,14 @@ using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 
 /// <summary>
-/// Action
+/// Right check Dto for response of delegation check
 /// </summary>
-public class RuleCheckDto
+public class RightCheckDto
 {
     /// <summary>
-    /// Rule key data
+    /// Right key data
     /// </summary>
-    public required RuleDto Rule { get; set; }
+    public required RightDto Right { get; set; }
 
     /// <summary>
     /// Result of the delegation check.

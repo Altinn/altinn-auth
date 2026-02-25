@@ -2,7 +2,7 @@
 
 namespace Altinn.AccessMgmt.Core.Models
 {
-    public class RuleAccess
+    public class Right
     {
         public string Key { get; set; }
 
@@ -12,12 +12,12 @@ namespace Altinn.AccessMgmt.Core.Models
 
         public List<AccessPackageDto.AccessPackageDtoCheck> PackageAllowAccess { get; set; }
 
-        public HashSet<RuleCheckDto.Permision> PackageDenyAccess { get; set; }
+        public HashSet<RightCheckDto.Permision> PackageDenyAccess { get; set; }
 
         public List<RoleDtoCheck> RoleAllowAccess { get; set; }
 
-        public HashSet<RuleCheckDto.Permision> RoleDenyAccess { get; set; }
+        public HashSet<RightCheckDto.Permision> RoleDenyAccess { get; set; }
 
-        public List<RulePermission> ResourceAllowAccess { get; set; }
+        public List<RightPermission> ResourceAllowAccess { get; set; }
     }
 }

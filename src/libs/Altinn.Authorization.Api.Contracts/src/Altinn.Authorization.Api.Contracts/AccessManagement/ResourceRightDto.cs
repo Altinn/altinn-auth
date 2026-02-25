@@ -1,9 +1,9 @@
 ﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 
 /// <summary>
-/// Resource rules
+/// Resource rights
 /// </summary>
-public class ResourceRuleDto
+public class ResourceRightDto
 {
     /// <summary>
     /// Resource
@@ -11,20 +11,20 @@ public class ResourceRuleDto
     public ResourceDto Resource { get; set; }
 
     /// <summary>
-    /// Rules
+    /// Rights
     /// </summary>
-    public List<RulePermission> Rules { get; set; }
+    public List<RightPermission> Rights { get; set; }
 }
 
 /// <summary>
-/// Permissions for rule
+/// Permissions for right
 /// </summary>
-public class RulePermission
+public class RightPermission
 {
     /// <summary>
-    /// Gets or sets the rule associated with this instance.
+    /// Gets or sets the right associated with this instance.
     /// </summary>
-    public RuleDto Rule { get; set; }
+    public RightDto Right { get; set; }
 
     /// <summary>
     /// Reason
@@ -38,9 +38,9 @@ public class RulePermission
 }
 
 /// <summary>
-/// Resource rules
+/// Resource rights
 /// </summary>
-public class ExternalResourceRuleDto
+public class ExternalResourceRightDto
 {
     /// <summary>
     /// Resource
@@ -48,12 +48,12 @@ public class ExternalResourceRuleDto
     public ResourceDto Resource { get; set; }
 
     /// <summary>
-    /// Rules
+    /// Rights
     /// </summary>
-    public List<RulePermission> DirectRules { get; set; }
+    public List<RightPermission> DirectRights { get; set; }
 
     /// <summary>
-    /// Rules
+    /// Rights
     /// </summary>
-    public List<RulePermission> IndirectRules { get; set; }
+    public List<RightPermission> IndirectRights { get; set; }
 }

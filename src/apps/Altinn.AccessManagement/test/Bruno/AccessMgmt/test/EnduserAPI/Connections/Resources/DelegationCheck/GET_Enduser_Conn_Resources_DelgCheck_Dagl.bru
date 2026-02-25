@@ -47,7 +47,7 @@ tests {
   
   test(bru.getVar("requestName"), function() {
     const body = res.getBody();
-    const actions = body.actions;
+    const actions = body.rights;
     
     expect(res.status).to.equal(200);
     assert.isNotEmpty(actions, "Expected data in response body to NOT be empty array");

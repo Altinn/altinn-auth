@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 namespace Altinn.Authorization.Api.Contracts.AccessManagement
 {
     /// <summary>
-    /// Represents a data transfer object that defines an rule, including its key, display name, associated
+    /// Represents a data transfer object that defines a right, including its key, display name, associated
     /// resources, and action identifier.
     /// </summary>
-    public class RuleDto
+    public class RightDto
     {
         /// <summary>
         /// Unique key for action

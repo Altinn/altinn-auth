@@ -15,46 +15,6 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
     public class DelegationCheckHelper
     {
         /// <summary>
-        /// Check if it exist any roles giving access to the resource if there is no such access rules this must be a rule defined for the service owner as there is not any way the end user could gain access
-        /// </summary>
-        /// <param name="right">the right to analyze</param>
-        /// <returns>the decision</returns>
-        public static bool CheckIfRuleIsAnEndUserRule(Right right)
-        {
-            List<RightSource> rightAccessSources = right.RightSources.Where(rs => rs.RightSourceType != RightSourceType.DelegationPolicy).ToList();
-            List<AttributeMatch> userAccess = [];
-            if (rightAccessSources.Any())
-            {
-                List<AttributeMatch> roles = GetAttributeMatches(rightAccessSources.SelectMany(roleAccessSource => roleAccessSource.PolicySubjects)).FindAll(policySubject => policySubject.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, StringComparison.OrdinalIgnoreCase) 
-                                                                                                                                                                           || policySubject.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.ExternalCcrRoleAttribute, StringComparison.OrdinalIgnoreCase)
-                                                                                                                                                                           || policySubject.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.ExternalCraRoleAttribute, StringComparison.OrdinalIgnoreCase)
-                                                                                                                                                                           || policySubject.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.AccessPackageAttribute, StringComparison.OrdinalIgnoreCase));
-                return roles.Count != 0;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Checks if AccessList feature is enabled and applicable for the given right, resource, and fromParty. The AccessListMode feature is currently enabled only for orgs.
-        /// </summary>
-        /// <param name="right">The right to be delegated</param>
-        /// <param name="resource">The resource we are making delegations for</param>
-        /// <param name="fromParty">The party we are making delegations on behalf of</param>
-        /// <returns>True if Access List authorization mode is enabled and applicable</returns>
-        public static bool IsAccessListModeEnabledAndApplicable(Right right, ServiceResource resource, AccessManagement.Core.Models.Party.MinimalParty fromParty)
-        {
-            if (right.CanDelegate.HasValue && right.CanDelegate.Value
-                && resource.AccessListMode == AccessManagement.Core.Enums.ResourceRegistry.ResourceAccessListMode.Enabled
-                && fromParty.PartyType == EntityTypeId.Organization)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
         /// Gets a nested list of AttributeMatche models for all XacmlMatch instances matching the specified attribute category. 
         /// </summary>
         /// <param name="rule">The xacml rule to process</param>
@@ -93,7 +53,7 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
         /// <param name="policy">the policy to process</param>
         /// <param name="resourceId">the resource id the subjects must point to</param>
         /// <returns></returns>
-        public static List<RuleAccess> DecomposePolicy(XacmlPolicy policy, string resourceId)
+        public static List<Core.Models.Right> DecomposePolicy(XacmlPolicy policy, string resourceId)
         {
             Dictionary<string, List<string>> rules = new Dictionary<string, List<string>>();
 
@@ -117,11 +77,11 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
                 }
             }
 
-            List<RuleAccess> result = [];
+            List<Core.Models.Right> result = [];
 
             foreach (KeyValuePair<string, List<string>> action in rules)
             {
-                RuleAccess current = new RuleAccess();
+                Core.Models.Right current = new Core.Models.Right();
                 current.Key = action.Key;
                 current.AccessorUrns = action.Value;
                 current.PackageAllowAccess = [];
@@ -157,13 +117,13 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
 
             foreach (string key in actionKeys)
             {
-                result.Add(SplitRuleKey(key));
+                result.Add(SplitRightKey(key));
             }
 
             return result;
         }
 
-        public static ResourceAndAction SplitRuleKey(string actionKey)
+        public static ResourceAndAction SplitRightKey(string actionKey)
         {
             List<string> resourceList = [];
             List<string> actionList = [];
@@ -199,7 +159,7 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
             {
                 XacmlRule currentRule = new XacmlRule(Guid.CreateVersion7().ToString(), XacmlEffectType.Permit);
 
-                var resourceAction = SplitRuleKey(key);
+                var resourceAction = SplitRightKey(key);
 
                 currentRule.Target = BuildDelegationRuleTarget(toId.ToString(), resourceAction.Resource, resourceAction.Action);
 

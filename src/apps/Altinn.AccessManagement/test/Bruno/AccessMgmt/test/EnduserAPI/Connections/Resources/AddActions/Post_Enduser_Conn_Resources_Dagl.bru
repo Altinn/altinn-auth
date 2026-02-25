@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/rules?party={{party}}&from={{from}}&to={{to}}&resource={{resource}}
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/rights?party={{party}}&from={{from}}&to={{to}}&resource={{resource}}
   body: json
   auth: inherit
 }
@@ -23,7 +23,7 @@ headers {
 
 body:json {
   {
-    "RuleKeys": [
+    "DirectRightKeys": [
       "urn:altinn:resource:tilgangspakke_delegering_ressurs:urn:oasis:names:tc:xacml:1.0:action:action-id:read"
     ]
   }
