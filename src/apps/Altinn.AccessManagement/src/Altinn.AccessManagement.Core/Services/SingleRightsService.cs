@@ -1078,4 +1078,3 @@ namespace Altinn.AccessManagement.Core.Services
         }
     }
 }
-
