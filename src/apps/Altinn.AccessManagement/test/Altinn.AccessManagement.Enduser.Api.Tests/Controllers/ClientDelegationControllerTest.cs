@@ -397,25 +397,23 @@ public class ClientDelegationControllerTest
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             var result = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(data);
+
             Assert.NotEmpty(result.Items);
-            foreach (var item in result.Items)
+
+            var mainUnitNordis = result.Items.FirstOrDefault(c => c.Client.Id == TestEntities.MainUnitNordis);
+            Assert.NotNull(mainUnitNordis);
+            var mainUnitNordisAccess = mainUnitNordis.Access.FirstOrDefault(r => r.Role.Id == RoleConstants.BusinessManager);
+            Assert.NotNull(mainUnitNordisAccess);
+            Assert.Empty(mainUnitNordisAccess.Packages);
+
+            var organizationOkernBorettslag = result.Items.FirstOrDefault(c => c.Client.Id == TestEntities.OrganizationOkernBorettslag);
+            Assert.NotNull(organizationOkernBorettslag);
+            var organizationOkernBorettslagAccess = organizationOkernBorettslag.Access.FirstOrDefault(r => r.Role.Id == RoleConstants.BusinessManager);
+            Assert.NotNull(organizationOkernBorettslagAccess);
+            Assert.Contains(organizationOkernBorettslagAccess.Packages,  package =>
             {
-                if (item.Client.Id == TestEntities.MainUnitNordis.Id)
-                {
-                    Assert.Fail("Result should not include MainUnitNordis, as no valid forretningsforer client-assignment exists. Note: unless this is changed in the future to add other packages to forretningsforer than forretningsforer-eiendom (limited to ESEK and BRL)");
-                }
-
-                Assert.NotEmpty(item.Access);
-                foreach (var role in item.Access)
-                {
-                    Assert.Equal(RoleConstants.BusinessManager.Id, role.Role.Id);
-
-                    if (item.Client.Id == TestEntities.OrganizationOkernBorettslag.Id)
-                    {
-                        Assert.Contains(PackageConstants.BusinessManagerRealEstate.Id, role.Packages.Select(p => p.Id));
-                    }
-                }
-            }
+                return package.Id == PackageConstants.BusinessManagerRealEstate;
+            });
         }
     }
     #endregion

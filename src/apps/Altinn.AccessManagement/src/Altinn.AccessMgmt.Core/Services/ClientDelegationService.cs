@@ -20,6 +20,10 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
         EntityTypeConstants.SystemUser
     ];
 
+    private IEnumerable<Guid> ExcludeClientRoles { get; } = [
+        RoleConstants.Supplier.Id,
+    ];
+
     /// <inheritdoc/>
     public async Task<Result<List<MyClientDto>>> GetMyClients(Guid partyId, List<Guid> provider, CancellationToken cancellationToken = default)
     {
@@ -65,20 +69,20 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
 
                 var clients = providerGroup
                     .Where(x => x.Client is not null)
-                    .GroupBy(x => x.Client!.Id)
+                    .GroupBy(x => x.Client.Id)
                     .Select(clientGroup =>
                     {
-                        var client = clientGroup.First().Client!;
+                        var client = clientGroup.First().Client;
 
                         var access = clientGroup
                             .Where(x => x.Role is not null)
                             .GroupBy(x => x.Role.Id)
                             .Select(roleGroup => new ClientDto.RoleAccessPackages
                             {
-                                Role = DtoMapper.ConvertCompactRole(roleGroup.First().Role!),
+                                Role = DtoMapper.ConvertCompactRole(roleGroup.First().Role),
                                 Packages = roleGroup
                                     .Where(x => x.Package is not null)
-                                    .Select(x => DtoMapper.ConvertCompactPackage(x.Package!))
+                                    .Select(x => DtoMapper.ConvertCompactPackage(x.Package))
                                     .DistinctBy(p => p.Id)
                                     .ToArray(),
                             })
@@ -123,11 +127,13 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
             }).ToList();
     }
 
+    /// <inheritdoc/>
     public async Task<Result<ValidationProblemInstance>> DeleteMyProvider(Guid useruuid, Guid provider, CancellationToken cancellationToken = default)
     {
         return await RemoveAgent(provider, useruuid, true, cancellationToken);
     }
 
+    /// <inheritdoc/>
     public async Task<Result<List<DelegationDto>>> DeleteMyClient(Guid useruuid, Guid provider, Guid from, DelegationBatchInputDto payload, CancellationToken cancellationToken = default)
     {
         return await RemoveAgentDelegation(provider, from, useruuid, payload, cancellationToken);
@@ -157,7 +163,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
 
         var query = await db.Assignments
             .AsNoTracking()
-            .Where(a => a.ToId == partyId)
+            .Where(a => a.ToId == partyId && !ExcludeClientRoles.Contains(a.RoleId))
             .WhereIf(roleFilter.Count > 0, r => roleFilter.Contains(r.RoleId))
             .Include(a => a.From)
             .GroupJoin(
@@ -188,10 +194,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                     RolePackageEntityVariantId = rp.EntityVariantId
                 }
             )
-            .Where(x =>
-                (x.AssignmentPackage == null || x.AssignmentPackage.IsDelegable) &&
-                (x.RolePackage == null || x.RolePackage.IsDelegable) &&
-                (x.RolePackageEntityVariantId == null || x.RolePackageEntityVariantId == x.From.VariantId))
+            .Where(x => x.RolePackage != null || x.AssignmentPackage != null)
             .GroupBy(x => x.From.Id)
             .ToListAsync(cancellationToken);
 
@@ -204,8 +207,13 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                 {
                     Role = DtoMapper.ConvertCompactRole(r.First().Role),
                     Packages = [
-                        .. r.Where(p => p.AssignmentPackage is { }).Select(p => DtoMapper.ConvertCompactPackage(p.AssignmentPackage)).DistinctBy(p => p.Id),
-                        .. r.Where(p => p.RolePackage is { }).Select(p => DtoMapper.ConvertCompactPackage(p.RolePackage)).DistinctBy(p => p.Id),
+                        .. r.Where(p => p.AssignmentPackage is { } && p.AssignmentPackage.IsDelegable)
+                            .Select(p => DtoMapper.ConvertCompactPackage(p.AssignmentPackage))
+                            .DistinctBy(p => p.Id),
+                        .. r.Where(p => p.RolePackage is { } && p.RolePackage.IsDelegable)
+                            .Where(p => p.RolePackageEntityVariantId == null || p.RolePackageEntityVariantId == p.From.VariantId)
+                            .Select(p => DtoMapper.ConvertCompactPackage(p.RolePackage))
+                            .DistinctBy(p => p.Id),
                     ],
                 }).ToList(),
             }).ToList();
@@ -566,7 +574,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                     $"/values[{input.RoleIdx}]/role",
                     [new($"{input.Role.Entity.Urn}", $"Role is not assigned to '{partyId}' from '{fromId}'.")]
                 );
-                
+
                 continue;
             }
 
@@ -622,7 +630,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                         $"/values[{input.RoleIdx}]/packages[{pkg.PackageIdx}]",
                         [new($"{pkg.Package.Entity.Urn}", $"Can't delegate package from client '{fromId}' as they haven't been assigned to '{partyId}' through role '{input.Role.Entity.Urn}'.")]
                     );
-                    
+
                     continue;
                 }
 
@@ -723,7 +731,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                         $"/values[{input.RoleIdx}]/packages[{inputPackage.PackageIdx}]",
                         [new($"{inputPackage.InputPackage}", "package do not exist.")]
                     );
-                    
+
                     continue;
                 }
             }
@@ -882,36 +890,120 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
 }
 
 /// <summary>
-/// Client Delegation Service
+/// Service for managing client delegations and delegation of access packages.
 /// </summary>
 public interface IClientDelegationService
 {
     #region My
-    Task<Result<List<MyClientDto>>> GetMyClients(Guid partyId, List<Guid> provider, CancellationToken cancellationToken = default);
 
-    Task<Result<List<AgentDto>>> GetMyProviders(Guid useruuid, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Gets clients available to the party, grouped by provider,
+    /// including delegated roles and packages.
+    /// </summary>
+    Task<Result<List<MyClientDto>>> GetMyClients(
+        Guid partyId,
+        List<Guid> provider,
+        CancellationToken cancellationToken = default);
 
-    Task<Result<ValidationProblemInstance?>> DeleteMyProvider(Guid useruuid, Guid provider, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Gets providers that have assigned the Agent role to the given user/party.
+    /// </summary>
+    Task<Result<List<AgentDto>>> GetMyProviders(
+        Guid useruuid,
+        CancellationToken cancellationToken = default);
 
-    Task<Result<List<DelegationDto>>> DeleteMyClient(Guid useruuid, Guid provider, Guid from, DelegationBatchInputDto payload, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Removes an agent assignment from the specified provider to the user.
+    /// </summary>
+    Task<Result<ValidationProblemInstance?>> DeleteMyProvider(
+        Guid useruuid,
+        Guid provider,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes delegated packages from a client relationship.
+    /// </summary>
+    Task<Result<List<DelegationDto>>> DeleteMyClient(
+        Guid useruuid,
+        Guid provider,
+        Guid from,
+        DelegationBatchInputDto payload,
+        CancellationToken cancellationToken = default);
 
     #endregion
 
     #region Provider
-    Task<Result<List<ClientDto>>> GetClients(Guid partyId, List<string>? roles, CancellationToken cancellationToken = default);
 
-    Task<Result<List<AgentDto>>> GetAgents(Guid partyId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Gets clients that have assigned roles to the party.
+    /// Optional role filter can be applied.
+    /// </summary>
+    Task<Result<List<ClientDto>>> GetClients(
+        Guid partyId,
+        List<string>? roles,
+        CancellationToken cancellationToken = default);
 
-    Task<Result<AssignmentDto>> AddAgent(Guid partyId, Guid toUuid, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Gets agents assigned by the party.
+    /// </summary>
+    Task<Result<List<AgentDto>>> GetAgents(
+        Guid partyId,
+        CancellationToken cancellationToken = default);
 
-    Task<ValidationProblemInstance?> RemoveAgent(Guid partyId, Guid toUuid, bool cascade, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Assigns the Agent role from the party to the target entity.
+    /// </summary>
+    Task<Result<AssignmentDto>> AddAgent(
+        Guid partyId,
+        Guid toUuid,
+        CancellationToken cancellationToken = default);
 
-    Task<Result<List<AgentDto>>> GetDelegatedAccessPackagesFromClientsViaParty(Guid partyId, Guid fromId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Removes an Agent role assignment.
+    /// If <paramref name="cascade"/> is false, removal fails when active delegations exist.
+    /// </summary>
+    Task<ValidationProblemInstance?> RemoveAgent(
+        Guid partyId,
+        Guid toUuid,
+        bool cascade,
+        CancellationToken cancellationToken = default);
 
-    Task<Result<List<ClientDto>>> GetDelegatedAccessPackagesToAgentsViaPartyAsync(Guid partyId, Guid toId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Gets packages delegated from a specific client via the party, grouped by agent.
+    /// </summary>
+    Task<Result<List<AgentDto>>> GetDelegatedAccessPackagesFromClientsViaParty(
+        Guid partyId,
+        Guid fromId,
+        CancellationToken cancellationToken = default);
 
-    Task<Result<List<DelegationDto>>> DelegateAccessPackageToAgent(Guid partyId, Guid fromId, Guid toId, DelegationBatchInputDto payload, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Gets packages delegated to a specific agent via the party, grouped by client.
+    /// </summary>
+    Task<Result<List<ClientDto>>> GetDelegatedAccessPackagesToAgentsViaPartyAsync(
+        Guid partyId,
+        Guid toId,
+        CancellationToken cancellationToken = default);
 
-    Task<Result<List<DelegationDto>>> RemoveAgentDelegation(Guid partyId, Guid fromId, Guid toId, DelegationBatchInputDto payload, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Delegates access packages from a client through the party to an agent.
+    /// Performs validation of roles, packages, assignments and entity types.
+    /// </summary>
+    Task<Result<List<DelegationDto>>> DelegateAccessPackageToAgent(
+        Guid partyId,
+        Guid fromId,
+        Guid toId,
+        DelegationBatchInputDto payload,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes previously delegated access packages from a client to an agent.
+    /// </summary>
+    Task<Result<List<DelegationDto>>> RemoveAgentDelegation(
+        Guid partyId,
+        Guid fromId,
+        Guid toId,
+        DelegationBatchInputDto payload,
+        CancellationToken cancellationToken = default);
+
     #endregion
 }
