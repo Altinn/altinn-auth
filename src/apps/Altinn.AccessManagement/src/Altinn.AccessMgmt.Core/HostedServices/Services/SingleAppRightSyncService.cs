@@ -197,6 +197,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
             IErrorQueueService errorQueueService = scope.ServiceProvider.GetRequiredService<IErrorQueueService>();
 
             var items = await errorQueueService.RetrieveItemsForReProcessing("App", cancellationToken);
+            AuditValues values = null;
 
             foreach (var item in items)
             {
@@ -222,7 +223,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                         }
                     }
 
-                    AuditValues values = new AuditValues(
+                    values = new AuditValues(
                         performedByGuid,
                         SystemEntityConstants.SingleRightImportSystem.Id,
                         batchId.ToString(),
@@ -268,11 +269,16 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                         }
                     }
 
-                    var result = errorQueueService.MarkErrorQueueElementProcessed(item.Id, values, cancellationToken);
+                    var result = await errorQueueService.MarkErrorQueueElementProcessed(item.Id, values, cancellationToken);
                 }
                 catch (OperationCanceledException)
                 {
                     return;
+                }
+                catch (Exception ex)
+                {
+                    string errorMessage = ex.InnerException is null ? ex.Message : ex.InnerException.Message;
+                    await errorQueueService.UpdateErrorMessage(item.Id, values, errorMessage, cancellationToken);
                 }
             }
         }        

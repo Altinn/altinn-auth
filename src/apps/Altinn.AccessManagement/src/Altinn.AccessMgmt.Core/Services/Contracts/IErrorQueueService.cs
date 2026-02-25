@@ -33,5 +33,15 @@ namespace Altinn.AccessMgmt.Core.Services.Contracts
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns></returns>
         Task<bool> MarkErrorQueueElementProcessed(Guid id, AuditValues values, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Update error message for an ErrorQueue element
+        /// </summary>
+        /// <param name="id">The id of the error queue element to update error message on</param>
+        /// <param name="values">Audit values</param>
+        /// <param name="errorMessage">the new error message</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns></returns>
+        Task<bool> UpdateErrorMessage(Guid id, AuditValues values, string errorMessage, CancellationToken cancellationToken);
     }
 }
