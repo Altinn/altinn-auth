@@ -258,10 +258,14 @@ namespace Altinn.AccessManagement.Core.Services
                 }
                 else
                 {
-                    logger.LogWarning(
-                        "Consent with id {ConsentRequestId} exist in Altinn2 but failed to migrate to Altinn3 with error {Error}.",
-                        consentRequestId,
-                        string.Join(Environment.NewLine, ((ValidationProblemInstance)result.Problem).Errors.Select(e => $"{e.ErrorCode}: {e.Detail}")));
+                    string errorMessage = result.Problem switch
+                    {
+                        ValidationProblemInstance vpi when vpi.Errors != null && vpi.Errors.Any() =>
+                            $"{result.Problem.ErrorCode}: {result.Problem.Detail}, {string.Join(", ", vpi.Errors.Select(e => $"{e.ErrorCode}: {e.Detail}"))}",
+                        _ => $"{result.Problem.ErrorCode}: {result.Problem.Detail}"
+                    };
+
+                    logger.LogWarning("Consent with id {ConsentRequestId} exist in Altinn2 but failed to migrate to Altinn3 with error {Error}. ", consentRequestId, errorMessage);
                 }
             }
 
