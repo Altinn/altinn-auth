@@ -258,19 +258,47 @@ namespace Altinn.AccessManagement.Core.Services
                 }
                 else
                 {
-                    string errorMessage = result.Problem switch
-                    {
-                        ValidationProblemInstance vpi when vpi.Errors != null && vpi.Errors.Any() =>
-                            $"{result.Problem.ErrorCode}: {result.Problem.Detail}, {string.Join(", ", vpi.Errors.Select(e => $"{e.ErrorCode}: {e.Detail}"))}",
-                        _ => $"{result.Problem.ErrorCode}: {result.Problem.Detail}"
-                    };
-
-                    logger.LogWarning("Consent with id {ConsentRequestId} exist in Altinn2 but failed to migrate to Altinn3 with error {Error}. ", consentRequestId, errorMessage);
+                    logger.LogWarning("Consent with id {ConsentRequestId} exist in Altinn2 but failed to migrate to Altinn3 with error {Error}. ", consentRequestId, BuildProblemErrorMessage(result.Problem));
                 }
             }
 
             return consentRequest;
         }
+
+        private static string BuildProblemErrorMessage(ProblemInstance problem)
+        {
+            string errorMessage = $"{problem.ErrorCode}: {problem.Detail}";
+
+            if (typeof(ValidationProblemInstance).IsInstanceOfType(problem))
+            {
+                ValidationProblemInstance vpi = (ValidationProblemInstance)problem;
+                if (vpi.Errors != null && vpi.Errors.Any())
+                {
+                    errorMessage += string.Join(", ", vpi.Errors.Select(e => $"{e.ErrorCode}: {e.Detail}"));
+                }
+            }
+
+            if (typeof(MultipleProblemInstance).IsInstanceOfType(problem))
+            {
+                MultipleProblemInstance mpi = (MultipleProblemInstance)problem;
+                foreach (ProblemInstance subProblem in mpi.Problems)
+                {
+                    if (typeof(ValidationProblemInstance).IsInstanceOfType(subProblem))
+                    {
+                        ValidationProblemInstance vpi = (ValidationProblemInstance)subProblem;
+                        if (vpi.Errors != null && vpi.Errors.Any())
+                        {
+                            errorMessage += string.Join(", ", vpi.Errors.Select(e => $"{e.ErrorCode}: {e.Detail}"));
+                        }
+                    }
+                    else
+                    {
+                        errorMessage += $"{subProblem.ErrorCode}: {subProblem.Detail}";
+                    }
+                }
+            }
+
+            return errorMessage;        }
 
         private MultipleProblemBuilder ValidateGetConsentRequest(ConsentPartyUrn from, ConsentPartyUrn to, ref MultipleProblemBuilder problemsBUilders, ConsentRequestDetails consentRequest)
         {
