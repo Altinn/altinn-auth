@@ -39,7 +39,7 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         /// <summary>
         /// Creates a consent requests and return info about the created one. Available for enteprises. 
         /// </summary>
-        Task<Result<ConsentRequestDetailsWrapper>> CreateRequest(ConsentRequest consentRequest, ConsentPartyUrn performedByParty,  CancellationToken cancellationToken);
+        Task<Result<ConsentRequestDetailsWrapper>> CreateRequest(ConsentRequest consentRequest, ConsentPartyUrn performedByParty, bool fromAltinn2, CancellationToken cancellationToken);
 
         /// <summary>
         /// Rejects a consent request. For end user
@@ -49,7 +49,7 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         /// <summary>
         /// Approves a concent request. The request needs to be a valid request. 
         /// </summary>
-        Task<Result<ConsentRequestDetails>> AcceptRequest(Guid consentRequestId, Guid performedByParty, ConsentContext context,  CancellationToken cancellationToken);
+        Task<Result<ConsentRequestDetails>> AcceptRequest(Guid consentRequestId, Guid performedByParty, ConsentContext context, CancellationToken cancellationToken);
 
         /// <summary>
         /// Revokes a consent. The consent needs to be in accepted state to be able to be revoked.

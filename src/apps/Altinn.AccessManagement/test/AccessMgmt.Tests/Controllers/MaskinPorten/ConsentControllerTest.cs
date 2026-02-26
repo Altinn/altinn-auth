@@ -165,10 +165,10 @@ namespace AccessMgmt.Tests.Controllers.MaskinPorten
             HttpResponseMessage response = await client.PostAsJsonAsync(url, consentLookup);
             var task = await repositgo.GetRequest(requestId, default);
             string responseContent = await response.Content.ReadAsStringAsync();
-            ProblemDetails problemDetails = JsonSerializer.Deserialize<ProblemDetails>(responseContent, _jsonOptions);
-            Assert.Equal("Consent not found", problemDetails.Detail);
+            ConsentInfoMaskinportenDto consentInfo = JsonSerializer.Deserialize<ConsentInfoMaskinportenDto>(responseContent, _jsonOptions);
+            Assert.True(requestId == consentInfo.Id);
+            Assert.Equal(2, consentInfo.ConsentRights.Count());
         }
-
 
         [Fact]
         public async Task GetConsent_CreatedExpired_BadRequest()

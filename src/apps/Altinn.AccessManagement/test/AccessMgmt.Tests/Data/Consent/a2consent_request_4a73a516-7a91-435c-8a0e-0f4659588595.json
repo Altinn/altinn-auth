@@ -5,7 +5,7 @@
     "RequiredDelegatorUUID": "8ef5e5fa-94e1-4869-8635-df86b6219181",
     "CoveredByPartyUUID": "8ef5e5fa-94e1-4869-8635-df86b6219181",
     "HandledByPartyUUIDx": "8ef5e5fa-94e1-4869-8635-df86b6219181",
-    "ValidTo": "2025-10-30T00:00:00+01:00",
+    "ValidTo": "2026-10-30T00:00:00+01:00",
     "RequestMessage": {
         "NorwegianNO": "Dette er teksten"
     },
@@ -54,7 +54,7 @@
             "ConsentRequestID": "4a73a516-7a91-435c-8a0e-0f4659588595"
         }
     ],
-    "RedirectUrl": "https:///www.vg.no",
+    "RedirectUrl": "https://www.vg.no",
     "TemplateId": "sblanesoknad",
     "PortalViewMode": "Hide"
 }
