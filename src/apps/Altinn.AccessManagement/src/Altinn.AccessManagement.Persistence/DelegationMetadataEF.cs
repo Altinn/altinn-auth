@@ -733,9 +733,9 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
            .Include(t => t.Assignment).ThenInclude(t => t.To)
            .Include(t => t.Resource).ThenInclude(t => t.Type)
            .Include(t => t.ChangedBy)
-           .Where(t => t.Assignment.From.PartyId.HasValue && t.Assignment.From.PartyId.Value == offeredByPartyId)
-           .Where(t => t.Assignment.To.PartyId.HasValue && t.Assignment.To.PartyId.Value == coveredByPartyId)
-           .Where(t => resourceRefIds.Contains(t.Resource.RefId))
+           .WhereIf(offeredByPartyId != 0, t => t.Assignment.From.PartyId.HasValue && t.Assignment.From.PartyId.Value == offeredByPartyId)
+           .WhereIf(coveredByPartyId != 0, t => t.Assignment.To.PartyId.HasValue && t.Assignment.To.PartyId.Value == coveredByPartyId)
+           .WhereIf(resourceRefIds?.Count() > 0, t => resourceRefIds.Contains(t.Resource.RefId))
            .Where(t => t.Resource.Type.Name == resourceTypeName)
            .ToListAsync(cancellationToken);
 
