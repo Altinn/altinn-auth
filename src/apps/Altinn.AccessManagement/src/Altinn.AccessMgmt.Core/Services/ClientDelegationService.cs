@@ -598,7 +598,11 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
             var existingDelegationPackages = db.DelegationPackages.Where(t => t.DelegationId == delegation.Id);
             foreach (var pkg in input.Packages)
             {
-                var rolePackage = rolePackages.FirstOrDefault(r => r.PackageId == pkg.Package.Id);
+                var rolePackage = rolePackages
+                    .Where(rp => rp.PackageId == pkg.Package.Id && (rp.EntityVariantId == null || rp.EntityVariantId == entities[fromId].VariantId))
+                    .OrderBy(rp => rp.EntityVariantId != null)
+                    .FirstOrDefault();
+
                 var rolePackageId = rolePackage?.Id;
                 var assignmentPackageId = assignmentPackages.FirstOrDefault(t => t.PackageId == pkg.Package.Id)?.Id;
 
@@ -607,7 +611,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                 {
                     if (rolePackage.EntityVariantId is { } entityVariantId && entityVariantId != entities[fromId].VariantId)
                     {
-                        if (EntityVariantConstants.TryGetById(entityVariantId, out var entityVariant))
+                        if (!EntityVariantConstants.TryGetById(entityVariantId, out var entityVariant))
                         {
                             throw new UnreachableException();
                         }
