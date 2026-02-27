@@ -121,11 +121,11 @@ public class ConnectionQuery(AppDbContext db)
 
             var baseQuery = direction == ConnectionQueryDirection.FromOthers 
                 ? useNewQuery ? BuildBaseQueryFromOthersNew(
-                    db,
-                    filter,
-                    filter.IncludeSubConnections && !delayChildNesting,
-                    !filter.IncludeSubConnections || !delayFromFilter)
-                : BuildBaseQueryFromOthers(db, filter)
+                        db,
+                        filter,
+                        filter.IncludeSubConnections && !delayChildNesting,
+                        !filter.IncludeSubConnections || !delayFromFilter)
+                    : BuildBaseQueryFromOthers(db, filter)
                 : BuildBaseQueryToOthers(db, filter);
 
             var result = baseQuery.Select(ToDtoEmpty).ToList();
@@ -729,9 +729,9 @@ public class ConnectionQuery(AppDbContext db)
                DelegationId = delegation.Id,
                FromId = fromAssignment.FromId,
                ToId = toAssignment.ToId,
-               RoleId = fromAssignment.RoleId,
+               RoleId = toAssignment.RoleId,
                ViaId = fromAssignment.ToId,
-               ViaRoleId = toAssignment.RoleId,
+               ViaRoleId = fromAssignment.RoleId,
                IsRoleMap = false,
                IsKeyRoleAccess = false,
                IsMainUnitAccess = false,
