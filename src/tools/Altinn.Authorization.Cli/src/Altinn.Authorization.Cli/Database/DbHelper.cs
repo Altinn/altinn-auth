@@ -23,6 +23,8 @@ internal sealed class DbHelper
     /// <returns>A new <see cref="DbHelper"/> for the <paramref name="connectionString"/>.</returns>
     public static async Task<DbHelper> Create(string connectionString, CancellationToken cancellationToken)
     {
+        Guard.IsNotNullOrEmpty(connectionString);
+
         var connStrBuilder = new NpgsqlConnectionStringBuilder(connectionString);
         connStrBuilder.Pooling = true;
         connStrBuilder.MaxPoolSize = 5;

@@ -1,76 +1,80 @@
-{
-  "profiles": {
-    "cp AT22 register to local": {
-      "commandName": "Project",
-      "commandLineArgs": "db cp\r\n\"${REGISTER_DB_AT22}\"\r\n\"${REGISTER_DB_LOCAL}\"\r\n\"register\""
-    },
-    "export AT22 register": {
-      "commandName": "Project",
-      "commandLineArgs": "db export\r\n\"${REGISTER_DB_MIGRATOR_AT22}\"\r\nregister\r\n\"C:\\temp\\export\""
-    },
-    "bootstrap AT22 register": {
-      "commandName": "Project",
-      "commandLineArgs": "db bootstrap\r\n\"..\\..\\..\\..\\..\\..\\..\\apps\\Altinn.Register\\conf.json\"\r\n--tenant \"${AZ_TENANT_ID}\"\r\n--server-subscription \"${REGISTER_DB_SUBSCRIPTION_AT22}\"\r\n--server-resource-group \"${REGISTER_DB_RG_AT22}\"\r\n--server-name \"${REGISTER_DB_NAME_AT22}\"\r\n--kv-subscription \"${REGISTER_KV_SUBSCRIPTION_AT22}\"\r\n--kv-resource-group \"${REGISTER_KV_RG_AT22}\"\r\n--kv-name \"${REGISTER_KV_NAME_AT22}\""
-    },
-    "retry AT22 queues": {
-      "commandName": "Project",
-      "commandLineArgs": "sb retry\r\n\"${REGISTER_SB_AT22}\""
-    },
-    "retry AT22 register import": {
-      "commandName": "Project",
-      "commandLineArgs": "register retry\r\n\"${REGISTER_SB_AT22}\"\r\n\"${REGISTER_DB_AT22}\""
-    },
-    "get local register ext-roles": {
-      "commandName": "Project",
-      "commandLineArgs": "register roles\r\n\"${REGISTER_DB_LOCAL}\""
-    },
-    "register export errors": {
-      "commandName": "Project",
-      "commandLineArgs": "register export-errors\r\n\"${REGISTER_SB_YT01}\"\r\n\"${ERROR_DB}\""
-    },
-    "retry AT23 register import": {
-      "commandName": "Project",
-      "commandLineArgs": "register retry\r\n\"${REGISTER_SB_AT23}\"\r\n\"${REGISTER_DB_AT23}\""
-    },
-    "retry AT24 register import": {
-      "commandName": "Project",
-      "commandLineArgs": "register retry\r\n\"${REGISTER_SB_AT24}\"\r\n\"${REGISTER_DB_AT24}\""
-    },
-    "retry YT01 register import": {
-      "commandName": "Project",
-      "commandLineArgs": "register retry\r\n\"${REGISTER_SB_YT01}\"\r\n\"${REGISTER_DB_YT01}\""
-    },
-    "retry TT02 register import": {
-      "commandName": "Project",
-      "commandLineArgs": "register retry\r\n\"${REGISTER_SB_TT02}\"\r\n\"${REGISTER_DB_TT02}\""
-    },
-    "retry PROD register import": {
-      "commandName": "Project",
-      "commandLineArgs": "register retry\r\n\"${REGISTER_SB_PROD}\"\r\n\"${REGISTER_DB_PROD}\""
-    },
-    "export AT22 errors": {
-      "commandName": "Project",
-      "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_AT22}\""
-    },
-    "export AT23 errors": {
-      "commandName": "Project",
-      "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_AT23}\""
-    },
-    "export AT24 errors": {
-      "commandName": "Project",
-      "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_AT24}\""
-    },
-    "export YT01 errors": {
-      "commandName": "Project",
-      "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_YT01}\""
-    },
-    "export TT02 errors": {
-      "commandName": "Project",
-      "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_TT02}\""
-    },
-    "export PROD errors": {
-      "commandName": "Project",
-      "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_PROD}\""
+﻿{
+    "profiles": {
+        "cp AT22 register to local": {
+            "commandName": "Project",
+            "commandLineArgs": "db cp\r\n\"${REGISTER_DB_AT22}\"\r\n\"${REGISTER_DB_LOCAL}\"\r\n\"register\""
+        },
+        "export AT22 register": {
+            "commandName": "Project",
+            "commandLineArgs": "db export\r\n\"${REGISTER_DB_MIGRATOR_AT22}\"\r\nregister\r\n\"C:\\temp\\export\""
+        },
+        "bootstrap AT22 register": {
+            "commandName": "Project",
+            "commandLineArgs": "db bootstrap\r\n\"..\\..\\..\\..\\..\\..\\..\\apps\\Altinn.Register\\conf.json\"\r\n--tenant \"${AZ_TENANT_ID}\"\r\n--server-subscription \"${REGISTER_DB_SUBSCRIPTION_AT22}\"\r\n--server-resource-group \"${REGISTER_DB_RG_AT22}\"\r\n--server-name \"${REGISTER_DB_NAME_AT22}\"\r\n--kv-subscription \"${REGISTER_KV_SUBSCRIPTION_AT22}\"\r\n--kv-resource-group \"${REGISTER_KV_RG_AT22}\"\r\n--kv-name \"${REGISTER_KV_NAME_AT22}\""
+        },
+        "retry AT22 queues": {
+            "commandName": "Project",
+            "commandLineArgs": "sb retry\r\n\"${REGISTER_SB_AT22}\""
+        },
+        "retry AT22 register import": {
+            "commandName": "Project",
+            "commandLineArgs": "register retry\r\n\"${REGISTER_SB_AT22}\"\r\n\"${REGISTER_DB_AT22}\""
+        },
+        "get local register ext-roles": {
+            "commandName": "Project",
+            "commandLineArgs": "register roles\r\n\"${REGISTER_DB_LOCAL}\""
+        },
+        "get AT22 register ext-roles": {
+            "commandName": "Project",
+            "commandLineArgs": "register roles\r\n\"${REGISTER_DB_AT22}\""
+        },
+        "register export errors": {
+            "commandName": "Project",
+            "commandLineArgs": "register export-errors\r\n\"${REGISTER_SB_YT01}\"\r\n\"${ERROR_DB}\""
+        },
+        "retry AT23 register import": {
+            "commandName": "Project",
+            "commandLineArgs": "register retry\r\n\"${REGISTER_SB_AT23}\"\r\n\"${REGISTER_DB_AT23}\""
+        },
+        "retry AT24 register import": {
+            "commandName": "Project",
+            "commandLineArgs": "register retry\r\n\"${REGISTER_SB_AT24}\"\r\n\"${REGISTER_DB_AT24}\""
+        },
+        "retry YT01 register import": {
+            "commandName": "Project",
+            "commandLineArgs": "register retry\r\n\"${REGISTER_SB_YT01}\"\r\n\"${REGISTER_DB_YT01}\""
+        },
+        "retry TT02 register import": {
+            "commandName": "Project",
+            "commandLineArgs": "register retry\r\n\"${REGISTER_SB_TT02}\"\r\n\"${REGISTER_DB_TT02}\""
+        },
+        "retry PROD register import": {
+            "commandName": "Project",
+            "commandLineArgs": "register retry\r\n\"${REGISTER_SB_PROD}\"\r\n\"${REGISTER_DB_PROD}\""
+        },
+        "export AT22 errors": {
+            "commandName": "Project",
+            "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_AT22}\""
+        },
+        "export AT23 errors": {
+            "commandName": "Project",
+            "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_AT23}\""
+        },
+        "export AT24 errors": {
+            "commandName": "Project",
+            "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_AT24}\""
+        },
+        "export YT01 errors": {
+            "commandName": "Project",
+            "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_YT01}\""
+        },
+        "export TT02 errors": {
+            "commandName": "Project",
+            "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_TT02}\""
+        },
+        "export PROD errors": {
+            "commandName": "Project",
+            "commandLineArgs": "sb export-errors\r\n\"${REGISTER_SB_PROD}\""
+        }
     }
-  }
 }

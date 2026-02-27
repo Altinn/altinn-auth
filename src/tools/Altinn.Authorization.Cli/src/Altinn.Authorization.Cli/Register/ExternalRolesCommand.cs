@@ -78,31 +78,41 @@ public class ExternalRolesCommand(CancellationToken ct)
     private class TableOutputBuilder
         : IOutputBuilder
     {
-        private readonly Table _table;
-
-        public TableOutputBuilder()
-        {
-            _table = new Table();
-            _table.AddColumn(new TableColumn("Source").RightAligned());
-            _table.AddColumn("Identifier");
-            _table.AddColumn("Name");
-            _table.AddColumn("Description");
-            _table.AddColumn("Code");
-        }
+        private readonly Dictionary<string, Table> _tables = new();
 
         public void AddRole(string source, string identifier, string name, string description, string? code)
         {
-            _table.AddRow(
-                source,
+            GetTable(source).AddRow(
                 identifier,
                 name,
                 description,
                 code ?? string.Empty);
         }
 
+        private Table GetTable(string source)
+        {
+            if (!_tables.TryGetValue(source, out var table))
+            {
+                table = new();
+                table.AddColumn("Identifier");
+                table.AddColumn("Name");
+                table.AddColumn("Description");
+                table.AddColumn("Code");
+                _tables.Add(source, table);
+            }
+
+            return table;
+        }
+
         public void Render()
         {
-            AnsiConsole.Write(_table);
+            foreach (var (source, table) in _tables) 
+            {
+                var panel = new Panel(table).Header(new PanelHeader(source, Justify.Center)).NoBorder().Expand();
+                AnsiConsole.Write(panel);
+                AnsiConsole.WriteLine();
+                AnsiConsole.WriteLine();
+            }
         }
     }
 
@@ -136,71 +146,96 @@ public class ExternalRolesCommand(CancellationToken ct)
     private class HtmlBuilder
         : IOutputBuilder
     {
-        private readonly StringBuilder _builder;
-
-        public HtmlBuilder()
-        {
-            _builder = new();
-            _builder.AppendLine("<table>");
-            _builder.AppendLine("  <thead>");
-            _builder.AppendLine("    <tr>");
-            _builder.AppendLine("      <td>Source</td>");
-            _builder.AppendLine("      <td>Identifier</td>");
-            _builder.AppendLine("      <td>Name</td>");
-            _builder.AppendLine("      <td>Description</td>");
-            _builder.AppendLine("      <td>Code</td>");
-            _builder.AppendLine("      <td>Urn</td>");
-            _builder.AppendLine("    </tr>");
-            _builder.AppendLine("  </thead>");
-            _builder.AppendLine("  <tbody>");
-        }
+        private readonly Dictionary<string, StringBuilder> _builders = new();
 
         public void AddRole(string source, string identifier, string name, string description, string? code)
         {
-            _builder.AppendLine("    <tr>");
-            _builder.AppendLine($"      <td style=\"text-align: right;\">{source}</td>");
-            _builder.AppendLine($"      <td>{identifier}</td>");
-            _builder.AppendLine($"      <td>{name}</td>");
-            _builder.AppendLine($"      <td>{description}</td>");
-            _builder.AppendLine($"      <td>{code ?? string.Empty}</td>");
-            _builder.AppendLine($"      <td><code style=\"white-space: nowrap;\">urn:altinn:external-role:{source}:{identifier}</code></td>");
-            _builder.AppendLine("    </tr>");
+            var builder = GetBuilder(source);
+            builder.AppendLine("      <tr>");
+            builder.AppendLine($"        <td>{identifier}</td>");
+            builder.AppendLine($"        <td>{name}</td>");
+            builder.AppendLine($"        <td>{description}</td>");
+            builder.AppendLine($"        <td>{code ?? string.Empty}</td>");
+            builder.AppendLine($"        <td><code style=\"white-space: nowrap;\">urn:altinn:external-role:{source}:{identifier}</code></td>");
+            builder.AppendLine("      </tr>");
+        }
+
+        private StringBuilder GetBuilder(string source)
+        {
+            if (!_builders.TryGetValue(source, out var builder))
+            {
+                builder = new();
+                _builders.Add(source, builder);
+            }
+
+            return builder;
         }
 
         public void Render()
         {
-            _builder.AppendLine("  </tbody>");
-            _builder.AppendLine("</table>");
-            Console.WriteLine(_builder.ToString());
+            var builder = new StringBuilder();
+            foreach (var (source, sub) in _builders)
+            {
+                builder.AppendLine("<section>");
+                builder.AppendLine($"  <h2>{source}</h2>");
+                builder.AppendLine("  <table>");
+                builder.AppendLine("    <thead>");
+                builder.AppendLine("      <tr>");
+                builder.AppendLine("        <td>Identifier</td>");
+                builder.AppendLine("        <td>Name</td>");
+                builder.AppendLine("        <td>Description</td>");
+                builder.AppendLine("        <td>Code</td>");
+                builder.AppendLine("        <td>Urn</td>");
+                builder.AppendLine("      </tr>");
+                builder.AppendLine("    </thead>");
+                builder.AppendLine("    <tbody>");
+                builder.Append(sub);
+                builder.AppendLine("    </tbody>");
+                builder.AppendLine("  </table>");
+                builder.AppendLine("</section>");
+            }
+
+            Console.WriteLine(builder.ToString());
         }
     }
 
     private class MarkdownBuilder
         : IOutputBuilder
     {
-        private readonly StringBuilder _builder;
-
-        public MarkdownBuilder()
-        {
-            _builder = new();
-            _builder.AppendLine(
-                """
-                | Source | Identifier | Name | Description | Code | Urn |
-                | -----: | :--------- | ---- | ----------- | ---- | --- |
-                """);
-        }
+        private readonly Dictionary<string, StringBuilder> _builders = new();
 
         public void AddRole(string source, string identifier, string name, string description, string? code)
         {
-            _builder.AppendLine(
+            GetBuilder(source).AppendLine(
                 $"""
-                | {source} | {identifier} | {name} | {description} | {code ?? string.Empty} | `urn:altinn:external-role:{source}:{identifier}` |
+                | {identifier} | {name} | {description} | {code ?? string.Empty} | `urn:altinn:external-role:{source}:{identifier}` |
                 """);
+        }
+
+        private StringBuilder GetBuilder(string source)
+        {
+            if (!_builders.TryGetValue(source, out var builder))
+            {
+                builder = new();
+                _builders.Add(source, builder);
+            }
+
+            return builder;
         }
 
         public void Render()
         {
-            Console.WriteLine(_builder.ToString());
+            var builder = new StringBuilder();
+            foreach (var (source, sub) in _builders)
+            {
+                builder.AppendLine($"## {source}");
+                builder.AppendLine();
+                builder.AppendLine("| Identifier | Name | Description | Code | Urn |");
+                builder.AppendLine("| :--------- | ---- | ----------- | ---- | --- |");
+                builder.Append(sub);
+            }
+
+            Console.WriteLine(builder.ToString());
         }
     }
 
