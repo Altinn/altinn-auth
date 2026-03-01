@@ -6081,7 +6081,7 @@ public static class PackageConstants
             Urn = "urn:altinn:accesspackage:innbygger-tilgangsstyring-privatperson",
             Code = "innbygger-tilgangsstyring-privatperson",
             IsDelegable = true,
-            IsAvailableForServiceOwners = true,
+            IsAvailableForServiceOwners = false,
             IsAssignable = true,
             EntityTypeId = EntityTypeConstants.Person,
             ProviderId = ProviderConstants.Altinn3,
