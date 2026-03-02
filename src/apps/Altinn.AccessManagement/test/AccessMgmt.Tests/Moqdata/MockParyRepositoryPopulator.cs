@@ -112,6 +112,19 @@ namespace AccessMgmt.Tests.Moqdata
             _mockAmPartyRepository.Setup(x => x.GetByUuid(lepsoyogTonstad.PartyUuid, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(lepsoyogTonstad);
 
+            // Organization for consent test: Maps to 810419512 (used in consent_request_d1bedb7d-a682-4668-9f84-7a56b3d733ab.json)
+            MinimalParty consentToParty = new MinimalParty
+            {
+                PartyUuid = Guid.Parse("00000000-0000-0000-0005-000000004646"),
+                PartyId = 50004646,
+                Name = "CONSENT TO ORG",
+                OrganizationId = "810419512",
+                PartyType = EntityTypeConstants.Organization
+            };
+
+            _mockAmPartyRepository.Setup(x => x.GetByUuid(consentToParty.PartyUuid, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(consentToParty);
+
             // Person: 01025181049 (for duplicate test)
             _mockAmPartyRepository.Setup(x => x.GetByPersonNo(PersonIdentifier.Parse("01025181049"), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new MinimalParty

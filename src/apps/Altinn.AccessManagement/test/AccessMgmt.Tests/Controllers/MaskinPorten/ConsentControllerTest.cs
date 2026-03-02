@@ -239,6 +239,47 @@ namespace AccessMgmt.Tests.Controllers.MaskinPorten
             Assert.Equal(Altinn.Authorization.Api.Contracts.Consent.ConsentPartyUrn.OrganizationId.Create(OrganizationNumber.Parse("910493353")), consentInfo.From);
         }
 
+        /// <summary>
+        /// In this scenario the to party matches the handled by party, and the from party is an org. 
+        /// This should be allowed
+        /// </summary>
+        /// <returns></returns>
+        [Fact]
+        public async Task GetConsent_ValidHandledByOrg()
+        {
+            SetupMockPartyRepository();
+            Guid requestId = Guid.Parse("d1bedb7d-a682-4668-9f84-7a56b3d733ab");
+            IConsentRepository repositgo = _fixture.Services.GetRequiredService<IConsentRepository>();
+            ConsentRequest request = await GetRequest(requestId);
+            request.ValidTo = DateTime.UtcNow.AddDays(10);
+            await repositgo.CreateRequest(request, Altinn.AccessManagement.Core.Models.Consent.ConsentPartyUrn.PartyUuid.Create(Guid.Parse("8ef5e5fa-94e1-4869-8635-df86b6219181")), default);
+            ConsentContextDto consentContextExternal = new ConsentContextDto
+            {
+                Language = "nb",
+            };
+            await repositgo.AcceptConsentRequest(requestId, Guid.NewGuid(), consentContextExternal.ToConsentContext());
+
+            HttpClient client = GetTestClient();
+            string url = $"/accessmanagement/api/v1/maskinporten/consent/lookup/";
+
+            string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:maskinporten/consent.read");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            ConsentLookupDto consentLookup = new()
+            {
+                Id = requestId,
+                From = Altinn.Authorization.Api.Contracts.Consent.ConsentPartyUrn.OrganizationId.Create(OrganizationNumber.Parse("910493353")),
+                To = Altinn.Authorization.Api.Contracts.Consent.ConsentPartyUrn.OrganizationId.Create(OrganizationNumber.Parse("810419512"))
+            };
+
+            HttpResponseMessage response = await client.PostAsJsonAsync(url, consentLookup);
+            string responseContent = await response.Content.ReadAsStringAsync();
+            ConsentInfoMaskinportenDto consentInfo = JsonSerializer.Deserialize<ConsentInfoMaskinportenDto>(responseContent, _jsonOptions);
+            Assert.True(DateTime.UtcNow.AddDays(-2) < consentInfo.Consented);
+            Assert.Equal(2, consentInfo.ConsentRights.Count());
+            Assert.Equal(Altinn.Authorization.Api.Contracts.Consent.ConsentPartyUrn.OrganizationId.Create(OrganizationNumber.Parse("910493353")), consentInfo.From);
+        }
+
         [Fact]
         public async Task GetConsent_Created_BadRequest()
         {

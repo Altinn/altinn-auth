@@ -317,7 +317,7 @@ namespace Altinn.AccessManagement.Core.Services
 
         private MultipleProblemBuilder ValidateGetConsentRequest(ConsentPartyUrn from, ConsentPartyUrn to, ref MultipleProblemBuilder problemsBUilders, ConsentRequestDetails consentRequest)
         {
-            if (!to.Equals(consentRequest.To))
+            if (!to.Equals(consentRequest.To) && !to.Equals(consentRequest.HandledBy))
             {
                 problemsBUilders.Add(Problems.ConsentNotFound);
             }
