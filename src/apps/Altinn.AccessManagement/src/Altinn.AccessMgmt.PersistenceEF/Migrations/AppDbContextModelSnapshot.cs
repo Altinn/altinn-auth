@@ -361,11 +361,11 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasIndex("AssignmentId")
                         .HasDatabaseName("ix_assignmentresource_assignmentid");
 
-                b.HasIndex("Audit_ChangedBy")
-                    .HasDatabaseName("ix_assignmentresource_audit_changedby");
+                    b.HasIndex("Audit_ChangedBy")
+                        .HasDatabaseName("ix_assignmentresource_audit_changedby");
 
-                b.HasIndex("ResourceId")
-                    .HasDatabaseName("ix_assignmentresource_resourceid");
+                    b.HasIndex("ResourceId")
+                        .HasDatabaseName("ix_assignmentresource_resourceid");
 
                     b.HasIndex("AssignmentId", "ResourceId")
                         .IsUnique()
@@ -3274,24 +3274,24 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_assignmentresource_assignment_assignmentid");
 
-                b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Entity", "ChangedBy")
-                    .WithMany()
-                    .HasForeignKey("Audit_ChangedBy")
-                    .OnDelete(DeleteBehavior.NoAction)
-                    .HasConstraintName("fk_assignmentresource_entity_audit_changedby");
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Entity", "ChangedBy")
+                        .WithMany()
+                        .HasForeignKey("Audit_ChangedBy")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .HasConstraintName("fk_assignmentresource_entity_audit_changedby");
 
-                b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Resource", "Resource")
-                    .WithMany()
-                    .HasForeignKey("ResourceId")
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .IsRequired()
-                    .HasConstraintName("fk_assignmentresource_resource_resourceid");
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Resource", "Resource")
+                        .WithMany()
+                        .HasForeignKey("ResourceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignmentresource_resource_resourceid");
 
                     b.Navigation("Assignment");
 
-                b.Navigation("ChangedBy");
+                    b.Navigation("ChangedBy");
 
-                b.Navigation("Resource");
+                    b.Navigation("Resource");
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Connection", b =>
