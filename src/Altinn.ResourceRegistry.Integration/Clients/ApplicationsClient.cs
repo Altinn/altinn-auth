@@ -3,6 +3,7 @@ using System.Text.Json;
 using Altinn.Platform.Storage.Interface.Models;
 using Altinn.ResourceRegistry.Core.Configuration;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.ResourceRegistry.Integration.Clients
@@ -19,14 +20,19 @@ namespace Altinn.ResourceRegistry.Integration.Clients
 
         private readonly HttpClient _client;
         private readonly PlatformSettings _settings;
+        private readonly IMemoryCache _memoryCache;
+        private static readonly MemoryCacheEntryOptions _cacheEntryOptions = new MemoryCacheEntryOptions()
+            .SetPriority(CacheItemPriority.High)
+            .SetAbsoluteExpiration(new TimeSpan(0, 0, 10, 0));
 
         /// <summary>
         /// Default constructor
         /// </summary>
-        public ApplicationsClient(HttpClient client, IOptions<PlatformSettings> settings)
+        public ApplicationsClient(HttpClient client, IOptions<PlatformSettings> settings, IMemoryCache memoryCache)
         {
             _client = client;
             _settings = settings.Value;
+            _memoryCache = memoryCache;
         }
 
         /// <inheritdoc/>
@@ -36,9 +42,14 @@ namespace Altinn.ResourceRegistry.Integration.Clients
 
             try
             {
-                HttpResponseMessage response = await _client.GetAsync(availabbleServicePath, cancellationToken);
+                string cacheKey = "applications";
+                if (!_memoryCache.TryGetValue(cacheKey, out ApplicationList? applications))
+                {
+                    HttpResponseMessage response = await _client.GetAsync(availabbleServicePath, cancellationToken);
 
-                ApplicationList? applications = await response.Content.ReadFromJsonAsync<ApplicationList>(SerializerOptions, cancellationToken);
+                    applications = await response.Content.ReadFromJsonAsync<ApplicationList>(SerializerOptions, cancellationToken);
+                    _memoryCache.Set(cacheKey, applications, _cacheEntryOptions);
+                }
                 
                 if (includeMigratedApps)
                 {

@@ -5,6 +5,7 @@ using Altinn.ResourceRegistry.Core.Configuration;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Integration.Clients;
 using Altinn.ResourceRegistry.Tests.Mocks;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.TestPlatform.Common;
@@ -36,7 +37,8 @@ namespace Altinn.ResourceRegistry.Tests
             // Arrange
             _platformSettings.Value.StorageApiEndpoint = "http://localhost:5117/storage/api/v1/";
             HttpRequestMessage? requestMessage = null;
-            
+            var cache = new MemoryCache(new MemoryCacheOptions());
+
             Mock<HttpMessageHandler> mockHttpMessageHandler = new Mock<HttpMessageHandler>();
             mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(),
@@ -48,7 +50,7 @@ namespace Altinn.ResourceRegistry.Tests
                     Content = JsonContent.Create(await GetApplicationsData())
                 });
             HttpClient applicationsClient = new HttpClient(mockHttpMessageHandler.Object);
-            ApplicationsClient target = new ApplicationsClient(applicationsClient, _platformSettings);
+            ApplicationsClient target = new ApplicationsClient(applicationsClient, _platformSettings, cache);
             // Act
             ApplicationList result = await target.GetApplicationList(false, cancellationToken:default);
             // Assert
@@ -64,6 +66,7 @@ namespace Altinn.ResourceRegistry.Tests
             // Arrange
             _platformSettings.Value.StorageApiEndpoint = "http://localhost:5117/storage/api/v1/";
             HttpRequestMessage? requestMessage = null;
+            var cache = new MemoryCache(new MemoryCacheOptions());
 
             Mock<HttpMessageHandler> mockHttpMessageHandler = new Mock<HttpMessageHandler>();
             mockHttpMessageHandler.Protected()
@@ -76,7 +79,7 @@ namespace Altinn.ResourceRegistry.Tests
                     Content = JsonContent.Create(await GetApplicationsData())
                 });
             HttpClient applicationsClient = new HttpClient(mockHttpMessageHandler.Object);
-            ApplicationsClient target = new ApplicationsClient(applicationsClient, _platformSettings);
+            ApplicationsClient target = new ApplicationsClient(applicationsClient, _platformSettings, cache);
             // Act
             ApplicationList result = await target.GetApplicationList(true, cancellationToken: default);
             // Assert
