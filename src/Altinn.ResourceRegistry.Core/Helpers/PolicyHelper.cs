@@ -206,6 +206,39 @@ namespace Altinn.ResourceRegistry.Core.Helpers
         }
 
         /// <summary>
+        /// Gets a nested list of AttributeMatche models for all XacmlMatch instances matching the specified attribute category. 
+        /// </summary>
+        /// <param name="rule">The xacml rule to process</param>
+        /// <param name="category">The attribute category to match</param>
+        /// <returns>Nested list of PolicyAttributeMatch models</returns>
+        public static List<List<PolicyAttributeMatch>> GetRulePolicyAttributeMatchesForCategory(XacmlRule rule, string category)
+        {
+            List<List<PolicyAttributeMatch>> ruleAttributeMatches = new();
+
+            foreach (XacmlAnyOf anyOf in rule.Target.AnyOf)
+            {
+                foreach (XacmlAllOf allOf in anyOf.AllOf)
+                {
+                    List<PolicyAttributeMatch> anyOfAttributeMatches = new();
+                    foreach (XacmlMatch xacmlMatch in allOf.Matches)
+                    {
+                        if (xacmlMatch.AttributeDesignator.Category.Equals(category))
+                        {
+                            anyOfAttributeMatches.Add(new PolicyAttributeMatch { Id = xacmlMatch.AttributeDesignator.AttributeId.OriginalString, Value = xacmlMatch.AttributeValue.Value });
+                        }
+                    }
+
+                    if (anyOfAttributeMatches.Any())
+                    {
+                        ruleAttributeMatches.Add(anyOfAttributeMatches);
+                    }
+                }
+            }
+
+            return ruleAttributeMatches;
+        }
+
+        /// <summary>
         /// This method will flatten the XACML rule into a list of PolicyRule where each PolicyRule contains a list of KeyValueUrn for subject, action and resource
         /// The list will cotain duplicates if there is duplicate rules in XACML.
         /// 
@@ -347,6 +380,5 @@ namespace Altinn.ResourceRegistry.Core.Helpers
 
             return result;
         }
-       
     }
 }

@@ -80,6 +80,26 @@ namespace Altinn.ResourceRegistry.Core.Constants
             /// Resource registry attribute match indentifier 
             /// </summary>
             public const string ResourceRegistryAttribute = "urn:altinn:resource";
+
+            /// <summary>
+            /// Attribute Matching Identity.
+            /// </summary>
+            public const string ActionId = "urn:oasis:names:tc:xacml:1.0:action:action-id";
+
+            /// <summary>
+            /// External CCR Role Code attribute match identifier 
+            /// </summary>
+            public const string ExternalCcrRoleAttribute = "urn:altinn:external-role:ccr";
+
+            /// <summary>
+            /// External CRA Role Code attribute match identifier 
+            /// </summary>
+            public const string ExternalCraRoleAttribute = "urn:altinn:external-role:cra";
+
+            /// <summary>
+            /// Access package for organisations attribute match identifier 
+            /// </summary>
+            public const string AccessPackageAttribute = "urn:altinn:accesspackage";
         }
 
         /// <summary>

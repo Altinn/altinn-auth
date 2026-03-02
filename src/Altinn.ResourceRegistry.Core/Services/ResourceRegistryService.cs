@@ -1,6 +1,6 @@
 ﻿using System.Buffers;
-using System.Collections.Generic;
 using System.Net;
+using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ProblemDetails;
@@ -442,6 +442,21 @@ namespace Altinn.ResourceRegistry.Core.Services
 
             List<PolicyRight> policyResourceActions = PolicyHelper.ConvertToPolicyRight(policy);
             return policyResourceActions;
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<Right>> GetPolicyRightsV2(string resourceId, CancellationToken cancellationToken = default)
+        {
+            XacmlPolicy policy = await GetXacmlPolicy(resourceId, cancellationToken);
+            if (policy == null)
+            {
+                return null;
+            }
+            
+            // Decompose policy into resource/tasks
+            List<Right> rights = DelegationCheckHelper.DecomposePolicy(policy, resourceId);
+
+            return rights;
         }
 
         private async Task<XacmlPolicy> GetXacmlPolicy(string resourceIdentifer, CancellationToken cancellationToken)

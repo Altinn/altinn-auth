@@ -65,6 +65,7 @@ internal static class ResourceRegistryHost
         services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
         services.Configure<ResourceRegistrySettings>(config.GetSection("ResourceRegistrySettings"));
         services.Configure<OidcProviderSettings>(config.GetSection("OidcProviders"));
+        services.Configure<ActionTranslationsOptions>(config.GetSection("ActionConfig"));   
         services.Configure<PostgreSQLSettings>(config.GetSection("PostgreSQLSettings"));
         services.Configure<AzureStorageConfiguration>(config.GetSection("AzureStorageConfiguration"));
         services.AddOptions<RegisterClientOptions>()

@@ -22,6 +22,9 @@
     <None Update="appsettings.test.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Data\AppPolicies\brg\aarsregnskap-vanlig-202406\policy.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Data\ResourcePolicies\altinn_access_management\resourcepolicy.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -53,7 +56,6 @@
 
   <ItemGroup>
     <Folder Include="Data\Altinn3Storage\" />
-    <Folder Include="Data\AppPolicies\brg\" />
     <Folder Include="Data\Policies\" />
   </ItemGroup>
 
