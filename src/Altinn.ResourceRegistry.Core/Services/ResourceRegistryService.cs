@@ -221,11 +221,34 @@ namespace Altinn.ResourceRegistry.Core.Services
             }
 
             var resourceLists = await Task.WhenAll(tasks);
-            var resourcesCount = resourceLists.Sum(list => list.Count);
-            var resources = new List<ServiceResource>(resourcesCount);
-            foreach (var resourceList in resourceLists)
+            
+            // Get Resource Registry resources (always first in the list)
+            var registryResources = resourceLists[0];
+            
+            // Build a HashSet of app identifiers that exist in Resource Registry
+            var registryAppIdentifiers = new HashSet<string>(
+                registryResources
+                    .Where(r => r.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX, StringComparison.OrdinalIgnoreCase))
+                    .Select(r => r.Identifier),
+                StringComparer.OrdinalIgnoreCase);
+            
+            // Combine all resources, but filter out Storage apps that are already in Resource Registry
+            var resources = new List<ServiceResource>(registryResources);
+            
+            for (int i = 1; i < resourceLists.Length; i++)
             {
-                resources.AddRange(resourceList);
+                var resourceList = resourceLists[i];
+                foreach (var resource in resourceList)
+                {
+                    // Skip Storage apps that are already published to Resource Registry
+                    if (resource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX, StringComparison.OrdinalIgnoreCase) 
+                        && registryAppIdentifiers.Contains(resource.Identifier))
+                    {
+                        continue; // Skip this duplicate
+                    }
+                    
+                    resources.Add(resource);
+                }
             }
 
             return resources;
@@ -238,10 +261,37 @@ namespace Altinn.ResourceRegistry.Core.Services
 
                 foreach (ServiceResource resource in resources)
                 {
-                    resource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
+                    // For app resources, use org/app format like Storage apps do
+                    if (resource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX, StringComparison.OrdinalIgnoreCase))
                     {
-                        new AuthorizationReferenceAttribute() { Id = "urn:altinn:resource", Value = resource.Identifier }
-                    };
+                        string[] parts = resource.Identifier.Split('_');
+                        if (parts.Length >= 3)
+                        {
+                            string org = parts[1];
+                            string app = string.Join("_", parts.Skip(2)); // Handle app names with underscores
+                            resource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
+                            {
+                                new AuthorizationReferenceAttribute() { Id = "urn:altinn:org", Value = org },
+                                new AuthorizationReferenceAttribute() { Id = "urn:altinn:app", Value = app }
+                            };
+                        }
+                        else
+                        {
+                            // Fallback if identifier format is unexpected
+                            resource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
+                            {
+                                new AuthorizationReferenceAttribute() { Id = "urn:altinn:resource", Value = resource.Identifier }
+                            };
+                        }
+                    }
+                    else
+                    {
+                        // Non-app resources use resource format
+                        resource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
+                        {
+                            new AuthorizationReferenceAttribute() { Id = "urn:altinn:resource", Value = resource.Identifier }
+                        };
+                    }
                 }
 
                 return resources;

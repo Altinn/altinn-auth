@@ -161,7 +161,7 @@ namespace Altinn.ResourceRegistry.Tests
             List<ServiceResource>? resource = JsonSerializer.Deserialize<List<ServiceResource>>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
 
             Assert.NotNull(resource);
-            Assert.Equal(324, resource.Count);
+            Assert.Equal(325, resource.Count);
         }
 
         [Fact]
@@ -199,7 +199,7 @@ namespace Altinn.ResourceRegistry.Tests
             List<ServiceResource>? resource = JsonSerializer.Deserialize<List<ServiceResource>>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
 
             Assert.NotNull(resource);
-            Assert.Equal(15, resource.Count);
+            Assert.Equal(16, resource.Count);
         }
 
         [Fact]
@@ -221,6 +221,43 @@ namespace Altinn.ResourceRegistry.Tests
             Assert.Equal(144, resource.Count);
             Assert.Contains(resource, r => r.Identifier == "app_ssb_a1-1021-7048:1");
             Assert.Contains(resource, r => r.Identifier == "app_skd_a2-4223-160201");
+        }
+
+        [Fact]
+        public async Task ResourceList_AppPublishedToResourceRegistry_NoDuplicate()
+        {
+            // This test verifies issue #735 fix: Apps published to Resource Registry should not appear twice
+            // Test setup: app_ttd_bli-tjenesteeier exists in both Storage (applications.json) and Resource Registry (test data)
+            var client = CreateClient();
+            string requestUri = "resourceregistry/api/v1/Resource/resourcelist?includeApps=true&includeAltinn2=false";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+            List<ServiceResource>? resources = JsonSerializer.Deserialize<List<ServiceResource>>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
+            Assert.NotNull(resources);
+
+            // Verify the app appears only once in the list
+            var appResources = resources.Where(r => r.Identifier == "app_ttd_bli-tjenesteeier").ToList();
+            Assert.Single(appResources);
+
+            var appResource = appResources.First();
+
+            // Verify it's the Resource Registry version (has proper metadata)
+            Assert.NotNull(appResource.Description);
+            Assert.True(appResource.Description.ContainsKey("nb"));
+            Assert.Equal("Søknad om å bli tjenesteeier i Altinn", appResource.Description["nb"]);
+
+            // Verify authorization reference uses org/app format (not resource format)
+            Assert.NotNull(appResource.AuthorizationReference);
+            Assert.Equal(2, appResource.AuthorizationReference.Count);
+            Assert.Contains(appResource.AuthorizationReference, a => a.Id == "urn:altinn:org" && a.Value == "ttd");
+            Assert.Contains(appResource.AuthorizationReference, a => a.Id == "urn:altinn:app" && a.Value == "bli-tjenesteeier");
+
+            // Verify ResourceType is AltinnApp
+            Assert.Equal(ResourceType.AltinnApp, appResource.ResourceType);
         }
 
         [Fact]

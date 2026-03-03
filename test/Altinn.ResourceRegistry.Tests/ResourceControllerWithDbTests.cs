@@ -516,6 +516,7 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
 
         Assert.Equal("skd-migrert-4628-1", matchingResources[0].Identifier);
 
+        // This is the old version of the resource that is found when searching on a given reference.
         ServiceResource resource = matchingResources[0];
 
         Assert.NotNull(resource.ResourceReferences);
@@ -533,7 +534,8 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
 
         Assert.NotNull(allResources);
         Assert.True(allResources.Count > 1, "Expected multiple resources in test data");
-      
+
+        // The old version of the resource should not be returned when searching without reference, but the new version should
         Assert.DoesNotContain(allResources, r => r.Identifier == "skd-migrert-4628-1" && r.VersionId == resource.VersionId);
         Assert.Contains(allResources, r => r.Identifier == "skd-migrert-4628-1" && r.VersionId > resource.VersionId);
     }
