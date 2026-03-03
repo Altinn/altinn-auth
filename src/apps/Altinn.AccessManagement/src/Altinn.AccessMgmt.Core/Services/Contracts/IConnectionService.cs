@@ -77,13 +77,13 @@ public interface IConnectionService
     /// </summary>
     /// <param name="fromId">ID of the entity from which the assignment originates.</param>
     /// <param name="toId">ID of the entity to which the assignment was made.</param>
-    /// <param name="resourceId">Resource unique string identifier</param>
+    /// <param name="resource">Resource unique string identifier</param>
     /// <param name="configureConnection">ConnectionOptions</param>
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     /// <returns>
     /// A <see cref="ValidationProblemInstance"/> indicating success or describing any validation errors.
     /// </returns>
-    Task<ValidationProblemInstance> RemoveResource(Guid fromId, Guid toId, string resourceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
+    Task<ValidationProblemInstance> RemoveResource(Guid fromId, Guid toId, string resource, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes a resource (by resource id) from assignment based on a specific role between two entities.
@@ -181,19 +181,19 @@ public interface IConnectionService
     /// </summary>
     /// <param name="authenticatedUserUuid">The authenticated user</param>
     /// <param name="party">The party performing the checl on behalf of</param>
-    /// <param name="resourceId">The resource id to check</param>
+    /// <param name="resource">The resource id to check</param>
     /// <param name="configureConnection">ConnectionOptions</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The result on all the resource/action that is delegable on the resource and a reason behinf if the user can or can not delegate a given action</returns>
-    Task<Result<ResourceCheckDto>> ResourceDelegationCheck(Guid authenticatedUserUuid, Guid party, string resourceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
+    Task<Result<ResourceCheckDto>> ResourceDelegationCheck(Guid authenticatedUserUuid, Guid party, string resource, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Method to decompose a resource into all the resource/action that exists.
     /// </summary>
-    /// <param name="resourceId">The resource id to check</param>
+    /// <param name="resource">The resource id to check</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The result on all the resource/action that is delegable on the resource and a reason behind if the user can or can not delegate a given action</returns>
-    Task<Result<ResourceDecomposedDto>> DecomposeResource(string resourceId, CancellationToken cancellationToken = default);
+    Task<Result<ResourceDecomposedDto>> DecomposeResource(string resource, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks if an authpenticated user is an access manager and has the necessary permissions to a specific access package for delegation of resources.

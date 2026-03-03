@@ -474,7 +474,9 @@ public class ConnectionsController(
             resourceObj = await resourceService.GetResource(resource, cancellationToken);
             if (resourceObj is null)
             {
-                return NotFound($"Resource '{resource}' not found.");
+                ProblemDetails problem = Core.Errors.Problems.InvalidResource.ToProblemDetails();
+                problem.Extensions["resource"] = resource;
+                return problem.ToActionResult();
             }
         }
 
@@ -521,7 +523,9 @@ public class ConnectionsController(
         var resourceObj = await resourceService.GetResource(resource, cancellationToken);
         if (resourceObj is null)
         {
-            return NotFound($"Resource '{resource}' not found.");
+            ProblemDetails problem = Core.Errors.Problems.InvalidResource.ToProblemDetails();
+            problem.Extensions["resource"] = resource;
+            return problem.ToActionResult();
         }
 
         var result = connection.Direction == ConnectionQueryDirection.ToOthers
@@ -598,9 +602,29 @@ public class ConnectionsController(
 
         var byId = AuthenticationHelper.GetPartyUuid(this.HttpContext);
 
-        if (!Guid.TryParse(connection.From, out var fromId) || !Guid.TryParse(connection.To, out var toId) || byId == Guid.Empty)
+        bool validFrom = Guid.TryParse(connection.From, out var fromId);
+        bool validTo = Guid.TryParse(connection.To, out var toId);
+
+        if (!validFrom || !validTo || byId == Guid.Empty)
         {
-            return Problem();
+            ProblemDetails problem = Core.Errors.Problems.PartyNotFound.ToProblemDetails();
+
+            if (!validFrom)
+            {
+                problem.Extensions["from"] = connection.From;
+            }
+            
+            if (!validTo)
+            {
+                problem.Extensions["to"] = connection.To;
+            }
+            
+            if (byId == Guid.Empty)
+            {
+                problem.Extensions["authenticatedUser"] = byId;
+            }
+
+            return problem.ToActionResult();         
         }
 
         var from = await EntityService.GetEntity(fromId, cancellationToken);
@@ -612,6 +636,13 @@ public class ConnectionsController(
 
         if (result.IsProblem)
         {
+            if (result.Problem.Equals(Core.Errors.Problems.InvalidResource))
+            {
+                ProblemDetails problem = result.Problem.ToProblemDetails();
+                problem.Extensions["resource"] = resource;
+                return problem.ToActionResult();
+            }
+
             return result.Problem.ToActionResult();
         }
 
@@ -639,10 +670,29 @@ public class ConnectionsController(
         }
 
         var byId = AuthenticationHelper.GetPartyUuid(this.HttpContext);
+        bool validFrom = Guid.TryParse(connection.From, out var fromId);
+        bool validTo = Guid.TryParse(connection.To, out var toId);
 
-        if (!Guid.TryParse(connection.From, out var fromId) || !Guid.TryParse(connection.To, out var toId) || byId == Guid.Empty)
+        if (!validFrom || !validTo || byId == Guid.Empty)
         {
-            return Problem();
+            ProblemDetails problem = Core.Errors.Problems.PartyNotFound.ToProblemDetails();
+
+            if (!validFrom)
+            {
+                problem.Extensions["from"] = connection.From;
+            }
+
+            if (!validTo)
+            {
+                problem.Extensions["to"] = connection.To;
+            }
+
+            if (byId == Guid.Empty)
+            {
+                problem.Extensions["authenticatedUser"] = byId;
+            }
+
+            return problem.ToActionResult();
         }
 
         var from = await EntityService.GetEntity(fromId, cancellationToken);
@@ -654,6 +704,13 @@ public class ConnectionsController(
 
         if (result.IsProblem)
         {
+            if (result.Problem.Equals(Core.Errors.Problems.InvalidResource))
+            {
+                ProblemDetails problem = result.Problem.ToProblemDetails();
+                problem.Extensions["resource"] = resource;
+                return problem.ToActionResult();
+            }
+
             return result.Problem.ToActionResult();
         }
 
@@ -681,9 +738,29 @@ public class ConnectionsController(
         }
 
         var byId = AuthenticationHelper.GetPartyUuid(this.HttpContext);
-        if (!Guid.TryParse(connection.From, out var fromId) || !Guid.TryParse(connection.To, out var toId) || byId == Guid.Empty)
+        bool validFrom = Guid.TryParse(connection.From, out var fromId);
+        bool validTo = Guid.TryParse(connection.To, out var toId);
+
+        if (!validFrom || !validTo || byId == Guid.Empty)
         {
-            return Problem();
+            ProblemDetails partyProblem = Core.Errors.Problems.PartyNotFound.ToProblemDetails();
+
+            if (!validFrom)
+            {
+                partyProblem.Extensions["from"] = connection.From;
+            }
+            
+            if (!validTo)
+            {
+                partyProblem.Extensions["to"] = connection.To;
+            }
+            
+            if (byId == Guid.Empty)
+            {
+                partyProblem.Extensions["authenticatedUser"] = byId;
+            }
+
+            return partyProblem.ToActionResult();
         }
 
         var problem = await ConnectionService.RemoveResource(fromId, toId, resource, ConfigureConnections, cancellationToken);
@@ -713,6 +790,13 @@ public class ConnectionsController(
         var result = await ConnectionService.ResourceDelegationCheck(authenticatedUserUuid, party, resource, ConfigureConnections, cancellationToken);
         if (result.IsProblem)
         {
+            if (result.Problem.Equals(Core.Errors.Problems.InvalidResource))
+            {
+                ProblemDetails problem = result.Problem.ToProblemDetails();
+                problem.Extensions["resource"] = resource;
+                return problem.ToActionResult();
+            }
+
             return result.Problem.ToActionResult();
         }
 

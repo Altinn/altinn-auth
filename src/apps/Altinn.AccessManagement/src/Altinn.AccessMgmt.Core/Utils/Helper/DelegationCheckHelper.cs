@@ -309,20 +309,20 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
         /// <summary>
         /// Method to check if a resourceid is an app and decompose it into org/app values
         /// </summary>
-        /// <param name="resourceId">the resourceid to check</param>
+        /// <param name="resource">the resourceid to check</param>
         /// <param name="org">the org part of the resourceid if it is an app</param>
         /// <param name="app">the app part of the resourceid if it is an app</param>
         /// <returns>true if app false if not</returns>
-        public static bool IsAppResourceId(string resourceId, out string org, out string app)
+        public static bool IsAppResource(string resource, out string org, out string app)
         {
             org = null;
             app = null;
             bool isApp = false;
 
-            if (resourceId.StartsWith("app_"))
+            if (resource.StartsWith("app_"))
             {
                 isApp = true;
-                string[] parts = resourceId.Split('_', 3);
+                string[] parts = resource.Split('_', 3);
                 if (parts.Length == 3)
                 {
                     org = parts[1];
