@@ -222,6 +222,17 @@ public sealed class DelegationMetadataRouter(
             repo => repo.GetResourceRegistryDelegationChanges(resourceIds, offeredByPartyId, coveredByPartyId, resourceType, cancellationToken),
             cancellationToken);
 
+    public Task<List<DelegationChange>> GetResourceRegistryDelegationChanges(
+        List<string> resourceIds,
+        Guid? offeredByPartyUuid,
+        Guid? coveredByPartyUuid,
+        AccessManagement.Core.Models.ResourceRegistry.ResourceType resourceType,
+        CancellationToken cancellationToken = default)
+        => Route(
+            nameof(GetResourceRegistryDelegationChanges),
+            repo => repo.GetResourceRegistryDelegationChanges(resourceIds, offeredByPartyUuid, coveredByPartyUuid, resourceType, cancellationToken),
+            cancellationToken);
+
     public Task<List<DelegationChange>> GetAllDelegationChangesForAuthorizedParties(
         List<int> coveredByUserIds, 
         List<int> coveredByPartyIds,

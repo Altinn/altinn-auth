@@ -173,6 +173,16 @@ public interface IDelegationMetadataRepository
     Task<List<DelegationChange>> GetResourceRegistryDelegationChanges(List<string> resourceIds, int offeredByPartyId, int coveredByPartyId, ResourceType resourceType, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets the delgations for a given supplier, consumer and resourcetype based on resourceids
+    /// </summary>
+    /// <param name="resourceIds">the resource ids</param>
+    /// <param name="offeredByPartyUuid">the party uuid of the entity that offered the delegation</param>
+    /// <param name="coveredByPartyUuid">The party uuid of the entity that received the delegation</param>
+    /// <param name="resourceType">the type of resource</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    Task<List<DelegationChange>> GetResourceRegistryDelegationChanges(List<string> resourceIds, Guid? offeredByPartyUuid, Guid? coveredByPartyUuid, ResourceType resourceType, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets all the active app or resource delegations (except MaskinportenSchema delegations) for the set of covered userIds or partyIds
     /// </summary>
     /// <param name="coveredByUserIds">The user ids of the users to get received delegation for</param>

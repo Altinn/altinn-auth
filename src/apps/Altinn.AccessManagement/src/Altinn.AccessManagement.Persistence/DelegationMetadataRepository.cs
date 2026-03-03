@@ -567,6 +567,12 @@ public class DelegationMetadataRepository : IDelegationMetadataRepository
     }
 
     /// <inheritdoc/>
+    public async Task<List<DelegationChange>> GetResourceRegistryDelegationChanges(List<string> resourceIds, Guid? offeredByPartyUuid, Guid? coveredByPartyUuid, ResourceType resourceType, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException("This method is only implemented for EF");
+    }
+
+    /// <inheritdoc/>
     public async Task<List<DelegationChange>> GetResourceRegistryDelegationChanges(List<string> resourceIds, int offeredByPartyId, int coveredByPartyId, ResourceType resourceType, CancellationToken cancellationToken = default)
     {
         using var activity = TelemetryConfig.ActivitySource.StartActivity(ActivityKind.Client);

@@ -657,4 +657,9 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
     {
         throw new NotImplementedException();
     }
+
+    public Task<List<DelegationChange>> GetResourceRegistryDelegationChanges(List<string> resourceIds, Guid? offeredByPartyUuid, Guid? coveredByPartyUuid, ResourceType resourceType, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
