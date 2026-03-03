@@ -858,8 +858,13 @@ public partial class ConnectionService(
         }
 
         // Fetch Resourcemetadata
-        bool isApp = DelegationCheckHelper.IsAppResource(resource, out string org, out string app);
-        ServiceResource resourceMetadata = await contextRetrievalService.GetResourceFromResourceList(resource, isApp ? org : null, isApp ? app : null);
+        ServiceResource resourceMetadata = await contextRetrievalService.GetResource(resource, cancellationToken);
+        
+        if (resourceMetadata is null)
+        {
+            return Problems.InvalidResource;
+        }
+        
         ResourceAccessListMode accessListMode = resourceMetadata.AccessListMode;
         bool isResourceDelegable = resourceMetadata.Delegable;
 
