@@ -1121,6 +1121,12 @@ public partial class ConnectionService(
             }
         }
 
+        var connection = await Get(from.Id, from.Id, to.Id, configureConnections: configureConnection, cancellationToken: cancellationToken);
+        if (!connection.IsSuccess || connection.Value.Count() == 0)
+        {
+            return Problems.MissingConnection;
+        }
+
         List<Rule> result = await singleRightsService.TryWriteDelegationPolicyRules(from, to, resourceObj, rightKeys.DirectRightKeys.ToList(), by, ignoreExistingPolicy: false, cancellationToken: cancellationToken);
 
         if (!result.All(r => r.CreatedSuccessfully))

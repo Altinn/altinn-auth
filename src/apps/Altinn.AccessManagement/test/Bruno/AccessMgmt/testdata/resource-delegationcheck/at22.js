@@ -75,5 +75,31 @@
         "partyUuid": "4063f244-e480-49a5-b0c3-9c330760da1d"
       }
     }
+  },
+  "TROFAS_SOLID_TIGER": {
+    "name": "TROFAST SOLID TIGER AS",
+    "orgno": "311057901",
+    "partyId": 51404735,
+    "partyUuid": "f947b9a1-fb77-418e-8f0d-7475b7b8d585",
+    "dagligleder": {
+      "name": "INNBRINGENDE DROMEDAR",
+      "pid": "07835999739",
+      "userId": 20467869,
+      "partyId": 50939392,
+      "partyUuid": "61f35250-7db4-43f6-90ee-3785d514e013"
+    }
+  },
+  "KOMPLEKS_LOJAL_TIGER": {
+    "name": "KOMPLEKS LOJAL TIGER AS",
+    "orgno": "312816334",
+    "partyId": 51588868,
+    "partyUuid": "5ea44607-16bc-47f7-ab30-ce5950924790",
+    "dagligleder": {
+      "name": "TREIG AMBULANSE",
+      "pid": "14926097890",
+      "userId": 20884083,
+      "partyId": 50184266,
+      "partyUuid": "b85ad030-d606-415a-819e-344ca39567be"
+    }
   }
 };
