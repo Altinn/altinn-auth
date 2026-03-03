@@ -909,6 +909,83 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         Assert.Contains("Skattegrunnlag latest version", responseContent);
     }
 
+    /// <summary>
+    /// Scenario: Create an app resource and store a policy with org/app XACML attributes.
+    /// This tests the fix for issue #730 where app policies using urn:altinn:org and urn:altinn:app
+    /// should be accepted instead of requiring urn:altinn:resource.
+    /// </summary>
+    [Fact]
+    public async Task StoreAppPolicy_WithOrgAndAppAttributes_ShouldSucceed()
+    {
+        // Arrange - Create the app resource
+        ServiceResource resource = new ServiceResource()
+        {
+            Identifier = "app_brg_rrh-innrapportering",
+            Title = new Dictionary<string, string> { { "en", "BRG RRH Reporting" }, { "nb", "BRG RRH Innrapportering" }, { "nn", "BRG RRH Innrapportering" } },
+            Description = new Dictionary<string, string> { { "en", "App for reporting" }, { "nb", "App for innrapportering" }, { "nn", "App for innrapportering" } },
+            ResourceType = ResourceType.AltinnApp,
+            HasCompetentAuthority = new CompetentAuthority()
+            {
+                Organization = "974761076",
+                Orgcode = "brg"
+            },
+            ResourceReferences = new List<ResourceReference>
+            {
+                new()
+                {
+                    ReferenceSource = ReferenceSource.Altinn3,
+                    ReferenceType = ReferenceType.ApplicationId,
+                    Reference = "brg/rrh-innrapportering"
+                }
+            }
+        };
+
+        await Repository.CreateResource(resource);
+
+        // Arrange - Prepare policy file upload
+        using var client = CreateClient();
+        string token = PrincipalUtil.GetOrgToken("brg", "974761076", "altinn:resourceregistry/resource.write");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        string fileName = "policy.xml";
+        string filePath = "Data/AppPolicies/brg/rrh-innrapportering/policy.xml";
+
+        Uri requestUri = new Uri($"resourceregistry/api/v1/Resource/{resource.Identifier}/policy", UriKind.Relative);
+
+        ByteArrayContent fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
+        fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("text/xml");
+
+        MultipartFormDataContent content = new();
+        content.Add(fileContent, "policyFile", fileName);
+
+        HttpRequestMessage httpRequestMessage = new() { Method = HttpMethod.Post, RequestUri = requestUri, Content = content };
+        httpRequestMessage.Headers.Add("ContentType", "multipart/form-data");
+
+        // Act - Store the policy (this should succeed with org/app attributes)
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        // Assert - Policy should be stored successfully
+        if (response.StatusCode != HttpStatusCode.Created)
+        {
+            string errorContent = await response.Content.ReadAsStringAsync();
+            Assert.Fail($"Expected Created but got {response.StatusCode}. Error: {errorContent}");
+        }
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        // Verify subjects were extracted from the policy
+        requestUri = new Uri($"resourceregistry/api/v1/resource/{resource.Identifier}/policy/subjects", UriKind.Relative);
+
+        httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        httpRequestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        HttpResponseMessage subjectsResponse = await client.SendAsync(httpRequestMessage);
+        Paginated<AttributeMatchV2>? subjectMatch = await subjectsResponse.Content.ReadFromJsonAsync<Paginated<AttributeMatchV2>>();
+
+        Assert.Equal(HttpStatusCode.OK, subjectsResponse.StatusCode);
+        Assert.NotNull(subjectMatch);
+        Assert.True(subjectMatch.Items.Count() > 0, "Policy should contain subjects");
+    }
+
     #region Utils
     private static ResourceSubjects CreateResourceSubjects(string resourceurn, List<string> subjecturns, string owner)
     {

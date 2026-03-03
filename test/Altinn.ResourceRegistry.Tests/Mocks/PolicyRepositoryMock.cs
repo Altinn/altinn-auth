@@ -90,6 +90,19 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             return Task.FromResult(mockResponse.Object);
         }
 
+        public Task<Response<BlobContentInfo>> WriteAppPolicyAsync(string org, string app, Stream fileStream, CancellationToken cancellationToken)
+        {
+            BlobContentInfo mockedBlobInfo = BlobsModelFactory.BlobContentInfo(new ETag("ETagSuccess"), DateTime.Now, new byte[1], DateTime.Now.ToUniversalTime().ToString(), "encryptionKeySha256", "encryptionScope", 1);
+            Mock<Response<BlobContentInfo>> mockResponse = new Mock<Response<BlobContentInfo>>();
+            mockResponse.SetupGet(r => r.Value).Returns(mockedBlobInfo);
+
+            Mock<Response> responseMock = new Mock<Response>();
+            responseMock.SetupGet(r => r.Status).Returns((int)HttpStatusCode.Created);
+            mockResponse.Setup(r => r.GetRawResponse()).Returns(responseMock.Object);
+
+            return Task.FromResult(mockResponse.Object);
+        }
+
         public Task<Response<BlobContentInfo>> WritePolicyConditionallyAsync(string filepath, Stream fileStream, string blobLeaseId, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();

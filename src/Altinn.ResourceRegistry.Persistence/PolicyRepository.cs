@@ -83,6 +83,15 @@ internal class PolicyRepository : IPolicyRepository
     }
 
     /// <inheritdoc/>
+    public async Task<Response<BlobContentInfo>> WriteAppPolicyAsync(string org, string app, Stream fileStream, CancellationToken cancellationToken = default)
+    {
+        string filePath = PolicyHelper.GetAltinnAppsPolicyPath(org, app);
+        BlobClient blobClient = CreateAppPolicyBlobClient(filePath);
+
+        return await WriteBlobStreamInternal(blobClient, fileStream, cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async Task<Response<BlobContentInfo>> WritePolicyConditionallyAsync(string resourceId, Stream fileStream, string blobLeaseId, CancellationToken cancellationToken = default)
     {
         string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";

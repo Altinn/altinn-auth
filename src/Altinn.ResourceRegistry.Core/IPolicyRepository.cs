@@ -45,6 +45,16 @@ namespace Altinn.ResourceRegistry.Core
         Task<Response<BlobContentInfo>> WritePolicyAsync(string resourceId, Stream fileStream, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Writes an app policy file stream to blobstorage in the metadata container
+        /// </summary>
+        /// <param name="org">The org</param>
+        /// <param name="app">The app</param>
+        /// <param name="fileStream">File stream of the policy file to be written</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>Azure response BlobContentInfo</returns>
+        Task<Response<BlobContentInfo>> WriteAppPolicyAsync(string org, string app, Stream fileStream, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Writes a file stream to blobstorage to the specified path, including the conditional check that the provided blob lease id is valid.
         /// </summary>
         /// <param name="resourceId">The resourceId</param> 

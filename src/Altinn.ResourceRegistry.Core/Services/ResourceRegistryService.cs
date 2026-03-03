@@ -118,7 +118,31 @@ namespace Altinn.ResourceRegistry.Core.Services
         {
             XacmlPolicy policy = PolicyHelper.ParsePolicy(policyContent);
             PolicyHelper.EnsureValidPolicy(serviceResource, policy);
-            Response<BlobContentInfo> response = await _policyRepository.WritePolicyAsync(serviceResource.Identifier, policyContent.AsStream(), cancellationToken);
+            
+            Response<BlobContentInfo> response;
+            
+            // App resources should be stored in the metadata container at org/app/policy.xml
+            if (serviceResource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX, StringComparison.OrdinalIgnoreCase))
+            {
+                string[] parts = serviceResource.Identifier.Split('_');
+                if (parts.Length >= 3)
+                {
+                    string org = parts[1];
+                    string app = parts[2];
+                    response = await _policyRepository.WriteAppPolicyAsync(org, app, policyContent.AsStream(), cancellationToken);
+                }
+                else
+                {
+                    // Fallback to standard location if identifier format is unexpected
+                    response = await _policyRepository.WritePolicyAsync(serviceResource.Identifier, policyContent.AsStream(), cancellationToken);
+                }
+            }
+            else
+            {
+                // Standard resources stored at resourceId/resourcepolicy.xml
+                response = await _policyRepository.WritePolicyAsync(serviceResource.Identifier, policyContent.AsStream(), cancellationToken);
+            }
+            
             IDictionary<string, ICollection<string>> subjectAttributes = policy.GetAttributeDictionaryByCategory(XacmlConstants.MatchAttributeCategory.Subject);
             ResourceSubjects resourceSubjects = GetResourceSubjects(serviceResource, subjectAttributes);
             await _repository.SetResourceSubjects(resourceSubjects, CancellationToken.None);

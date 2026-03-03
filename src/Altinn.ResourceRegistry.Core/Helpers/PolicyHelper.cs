@@ -26,6 +26,20 @@ namespace Altinn.ResourceRegistry.Core.Helpers
         /// <param name="policy">The xacml policy</param>
         public static void EnsureValidPolicy(ServiceResource serviceResources, XacmlPolicy policy) 
         {
+            bool isAppResource = serviceResources.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX);
+            string expectedOrg = null;
+            string expectedApp = null;
+
+            if (isAppResource)
+            {
+                string[] parts = serviceResources.Identifier.Split('_');
+                if (parts.Length == 3)
+                {
+                    expectedOrg = parts[1];
+                    expectedApp = parts[2];
+                }
+            }
+
             foreach (XacmlRule policyRule in policy.Rules)
             {
                 List<AttributeMatch> xacmlResources = GetResourceFromXacmlRule(policyRule);
@@ -35,7 +49,20 @@ namespace Altinn.ResourceRegistry.Core.Helpers
                     throw new ArgumentException("Policy not accepted: Contains rules for a different registry resource");
                 }
 
-                if (!xacmlResources.Any(r => r.Id.Equals(MatchAttributeIdentifiers.ResourceRegistryAttribute) && r.Value.Equals(serviceResources.Identifier)))
+                bool hasValidResourceReference = xacmlResources.Any(r => r.Id.Equals(MatchAttributeIdentifiers.ResourceRegistryAttribute) && r.Value.Equals(serviceResources.Identifier));
+
+                if (isAppResource && !hasValidResourceReference && expectedOrg != null && expectedApp != null)
+                {
+                    bool hasOrgAttribute = xacmlResources.Any(r => r.Id.Equals(MatchAttributeIdentifiers.OrgAttribute) && r.Value.Equals(expectedOrg, StringComparison.OrdinalIgnoreCase));
+                    bool hasAppAttribute = xacmlResources.Any(r => r.Id.Equals(MatchAttributeIdentifiers.AppAttribute) && r.Value.Equals(expectedApp, StringComparison.OrdinalIgnoreCase));
+
+                    if (hasOrgAttribute && hasAppAttribute)
+                    {
+                        hasValidResourceReference = true;
+                    }
+                }
+
+                if (!hasValidResourceReference)
                 {
                     throw new ArgumentException("Policy not accepted: Contains rule without reference to registry resource id");
                 }
