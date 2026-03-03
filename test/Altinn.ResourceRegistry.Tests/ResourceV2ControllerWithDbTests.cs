@@ -51,15 +51,14 @@ public class ResourceV2ControllerWithDbTests(DbFixture dbFixture, WebApplication
         HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
         string content = await response.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        ResourceDecomposedDto? policyRights = await response.Content.ReadFromJsonAsync<ResourceDecomposedDto>();
+        List<RightDto>? policyRights = await response.Content.ReadFromJsonAsync<List<RightDto>>();
         Assert.NotNull(policyRights);
-        Assert.NotEmpty(policyRights!.Rights);
 
-        foreach(RightDecomposedDto right in policyRights.Rights)
+        foreach (RightDto right in policyRights)
         {
-            Assert.NotNull(right.Right.Key);
-            Assert.NotNull(right.Right.Name);
-            Assert.Equal(right.Right.Key, right.Right.Key.ToLowerInvariant());
+            Assert.NotNull(right.Key);
+            Assert.NotNull(right.Name);
+            Assert.Equal(right.Key, right.Key.ToLowerInvariant());
         }
     }
 
@@ -81,15 +80,14 @@ public class ResourceV2ControllerWithDbTests(DbFixture dbFixture, WebApplication
         HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
         string content = await response.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        ResourceDecomposedDto? policyRights = await response.Content.ReadFromJsonAsync<ResourceDecomposedDto>();
+        List<RightDto>? policyRights = await response.Content.ReadFromJsonAsync<List<RightDto>>();
         Assert.NotNull(policyRights);
-        Assert.NotEmpty(policyRights!.Rights);
 
-        foreach (RightDecomposedDto right in policyRights.Rights)
+        foreach (RightDto right in policyRights)
         {
-            Assert.NotNull(right.Right.Key);
-            Assert.NotNull(right.Right.Name);
-            Assert.Equal(right.Right.Key, right.Right.Key.ToLowerInvariant());
+            Assert.NotNull(right.Key);
+            Assert.NotNull(right.Name);
+            Assert.Equal(right.Key, right.Key.ToLowerInvariant());
         }
     }
 
@@ -113,15 +111,14 @@ public class ResourceV2ControllerWithDbTests(DbFixture dbFixture, WebApplication
         HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
         string content = await response.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        ResourceDecomposedDto? policyRights = await response.Content.ReadFromJsonAsync<ResourceDecomposedDto>();
+        List<RightDto>? policyRights = await response.Content.ReadFromJsonAsync<List<RightDto>>();
         Assert.NotNull(policyRights);
-        Assert.NotEmpty(policyRights!.Rights);
 
-        foreach (RightDecomposedDto right in policyRights.Rights)
+        foreach (RightDto right in policyRights)
         {
-            Assert.NotNull(right.Right.Key);
-            Assert.NotNull(right.Right.Name);
-            Assert.Equal(right.Right.Key, right.Right.Key.ToLowerInvariant());
+            Assert.NotNull(right.Key);
+            Assert.NotNull(right.Name);
+            Assert.Equal(right.Key, right.Key.ToLowerInvariant());
         }
     }
 
@@ -145,15 +142,14 @@ public class ResourceV2ControllerWithDbTests(DbFixture dbFixture, WebApplication
         HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
         string content = await response.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        ResourceDecomposedDto? policyRights = await response.Content.ReadFromJsonAsync<ResourceDecomposedDto>();
+        List<RightDto>? policyRights = await response.Content.ReadFromJsonAsync<List<RightDto>>();
         Assert.NotNull(policyRights);
-        Assert.NotEmpty(policyRights!.Rights);
 
-        foreach (RightDecomposedDto right in policyRights.Rights)
+        foreach (RightDto right in policyRights)
         {
-            Assert.NotNull(right.Right.Key);
-            Assert.NotNull(right.Right.Name);
-            Assert.Equal(right.Right.Key, right.Right.Key.ToLowerInvariant());
+            Assert.NotNull(right.Key);
+            Assert.NotNull(right.Name);
+            Assert.Equal(right.Key, right.Key.ToLowerInvariant());
         }
     }
 
