@@ -1,0 +1,98 @@
+meta {
+  name: POST_Enduser_Conn_AccPck_AdmaiDelegatingPackageWithoutAccess
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toOrg}}&package={{package}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toOrg}}
+  package: {{package}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  /* 
+    Test scenario: delegation of package without the authenticated accessmanager having access to delegate the package
+    Expected result: should give 400 BadRequest with error
+  */
+  bru.setVar("requestName", "POST_Enduser_Conn_AccPck_AdmaiDelegatingPackageWithoutAccess");
+  
+  bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+  bru.setVar("toOrg", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.a2_klientadministrator.partyUuid);
+  bru.setVar("package", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.a2_tilgangsstyrer.notAllowedToDelegatePackage);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.a2_tilgangsstyrer.userId,
+    auth_partyId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.a2_tilgangsstyrer.partyId,
+    auth_partyUuid: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.a2_tilgangsstyrer.partyUuid,
+    auth_ssn: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.a2_tilgangsstyrer.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+script:post-response {
+  const data = res.getBody();
+  const packageId = data.packageId;
+  bru.setEnvVar("packageId", packageId)
+}
+
+tests {
+  
+  test(bru.getVar("requestName"), function() {
+    // Status
+    expect(res.status).to.equal(400);
+  
+    const body = res.body;
+    expect(body).to.be.an('object');
+  
+    // Top-level ProblemDetails fields
+    expect(body).to.have.property('type', 'https://tools.ietf.org/html/rfc9110#section-15.5.1');
+    expect(body).to.have.property('title', 'Bad Request');
+    expect(body).to.have.property('status', 400);
+    expect(body).to.have.property('detail', 'One or more validation errors occurred.');
+    expect(body).to.have.property('code', 'STD-00000');
+  
+    // validationErrors array present and has exactly one item
+    expect(body).to.have.property('validationErrors');
+    expect(body.validationErrors).to.be.an('array').with.length(1);
+  
+    const ve = body.validationErrors[0];
+    expect(ve).to.be.an('object');
+  
+    // Validation error properties
+    expect(ve).to.have.property('code', 'AM.VLD-00026');
+    expect(ve).to.have.property('detail', 'User not authorized for operation.');
+  
+    // paths is an array with the expected single entry
+    expect(ve).to.have.property('paths');
+    expect(ve.paths).to.be.an('array');
+    expect(ve.paths).to.deep.equal(['QUERY/packageId']);
+  
+    // packages message (exact match)
+    expect(ve).to.have.property(
+      'packages',
+      "User is not allowed to assign the following package(s) 'urn:altinn:accesspackage:oppforing-bygg-anlegg'."
+    );
+    
+  });
+}

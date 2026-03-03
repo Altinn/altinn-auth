@@ -1,0 +1,84 @@
+meta {
+  name: POST_Enduser_Conn_Res_AdmaiDelegatingResourceWithoutAccess
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/rights?party={{party}}&from={{party}}&resource={{resource}}&to={{toParty}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  resource: {{resource}}
+  to: {{toParty}}
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "DirectRightKeys": [
+      "urn:altinn:resource:{{resource}}:urn:oasis:names:tc:xacml:1.0:action:action-id:read"
+    ]
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  /* 
+    Test scenario: delegation of resource without the authenticated accessmanager having access to delegate the resource
+    Expected result: should give 400 BadRequest with error
+  */
+  
+  bru.setVar("requestName", "POST_Enduser_Conn_Res_AdmaiDelegatingResourceWithoutAccess");
+  
+  bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+  bru.setVar("toParty", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.a2_klientadministrator.partyUuid);
+  bru.setVar("resource", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.a2_tilgangsstyrer.notAllowedToDelegateResource);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.a2_tilgangsstyrer.userId,
+    auth_partyId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.a2_tilgangsstyrer.partyId,
+    auth_partyUuid: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.a2_tilgangsstyrer.partyUuid,
+    auth_ssn: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.a2_tilgangsstyrer.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+script:post-response {
+  const data = res.getBody();
+  const packageId = data.packageId;
+  bru.setEnvVar("packageId", packageId)
+}
+
+tests {
+  
+  test(bru.getVar("requestName"), function() {
+    // Status
+    expect(res.status).to.equal(400);
+  
+    const body = res.body;
+    expect(body).to.be.an('object');
+  
+    // Top-level ProblemDetails fields
+    expect(body).to.have.property('type', 'https://tools.ietf.org/html/rfc9110#section-15.5.1');
+    expect(body).to.have.property('title', 'Bad Request');
+    expect(body).to.have.property('status', 400);
+    expect(body).to.have.property('detail', 'Not authorized for delegation');
+    expect(body).to.have.property('code', 'AM-00028');
+    
+  });
+}
