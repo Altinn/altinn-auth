@@ -84,11 +84,14 @@ public class InternalAuthorizedPartiesController(
                 AnyOfResourceIds = anyOfResourceIds
             };
 
-            var partyUuids = await authorizedPartiesService.GetPartyFilterUuids(partyFilter, cancellationToken);
-            filters.PartyFilter = new SortedDictionary<Guid, Guid>();
-            foreach (var partyUuid in partyUuids.Distinct())
+            if (partyFilter?.Any() == true)
             {
-                filters.PartyFilter[partyUuid] = partyUuid;
+                var partyUuids = await authorizedPartiesService.GetPartyFilterUuids(partyFilter, cancellationToken);
+                filters.PartyFilter = new SortedDictionary<Guid, Guid>();
+                foreach (var partyUuid in partyUuids.Distinct())
+                {
+                    filters.PartyFilter[partyUuid] = partyUuid;
+                }
             }
 
             int userId = AuthenticationHelper.GetUserId(HttpContext);
