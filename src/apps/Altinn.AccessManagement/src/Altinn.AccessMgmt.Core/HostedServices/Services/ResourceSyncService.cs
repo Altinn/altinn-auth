@@ -161,7 +161,7 @@ public partial class ResourceSyncService : IResourceSyncService
         var packageResource = await dbContext.PackageResources
             .AsTracking()
             .Include(r => r.Package)
-            .Where(r => r.Package.Urn == updatedResource.SubjectUrn)
+            .Where(r => r.Package.Urn == updatedResource.SubjectUrn && r.ResourceId == resource.Id)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (packageResource is { })
