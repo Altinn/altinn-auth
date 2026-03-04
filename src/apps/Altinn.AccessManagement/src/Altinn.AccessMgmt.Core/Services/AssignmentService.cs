@@ -1,22 +1,14 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
-using Altinn.AccessManagement.Core.Helpers;
-using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
-using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.AccessMgmt.Core.Utils.Models;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
-using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
-using Altinn.Authorization.ABAC.Utils;
-using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +19,7 @@ namespace Altinn.AccessMgmt.Core.Services;
 public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery) : IAssignmentService
 {
     /// <inheritdoc/>
-    public async Task<List<Authorization.Api.Contracts.AccessManagement.AssignmentPackageDto>> ImportAssignmentPackages(Guid fromId, Guid toId, List<string> packageUrns, AuditValues values = null, CancellationToken cancellationToken = default)
+    public async Task<List<AssignmentPackageDto>> ImportAssignmentPackages(Guid fromId, Guid toId, List<string> packageUrns, AuditValues values = null, CancellationToken cancellationToken = default)
     {
         var packageIds = await db.Packages
             .AsNoTracking()
@@ -61,7 +53,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             .Where(a => packageIds.Contains(a.PackageId))
             .ToListAsync(cancellationToken);
 
-        List<Authorization.Api.Contracts.AccessManagement.AssignmentPackageDto> result = new();
+        List<AssignmentPackageDto> result = new();
 
         foreach (var existing in existingAssignmentPackages)
         {

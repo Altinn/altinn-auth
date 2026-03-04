@@ -27,7 +27,7 @@ public interface IConnectionService
     /// <returns>
     /// A <see cref="Result{T}"/> containing the newly created <see cref="Assignment"/>.
     /// </returns>
-    Task<Result<AssignmentDto>> AddAssignment(Guid fromId, Guid toId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
+    Task<Result<AssignmentDto>> AddRightholder(Guid fromId, Guid toId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes a specific role assignment between two entities.

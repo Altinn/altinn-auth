@@ -1,5 +1,6 @@
 ﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 
 namespace Altinn.AccessMgmt.Core.Utils;
 
@@ -20,8 +21,8 @@ public partial class DtoMapper : IDtoMapper
             PersonId = authorizedParty.PersonId,
             DateOfBirth = authorizedParty.DateOfBirth,
             PartyId = authorizedParty.PartyId,
+            Type = (AuthorizedPartyTypeDto)authorizedParty.Type,
             EmailId = authorizedParty.EmailId,
-            Type = (Authorization.Api.Contracts.AccessManagement.Enums.AuthorizedPartyTypeDto)authorizedParty.Type,
             UnitType = authorizedParty.UnitType,
             IsDeleted = authorizedParty.IsDeleted,
             OnlyHierarchyElementWithNoAccess = authorizedParty.OnlyHierarchyElementWithNoAccess,

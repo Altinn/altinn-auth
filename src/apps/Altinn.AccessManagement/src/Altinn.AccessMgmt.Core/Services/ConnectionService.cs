@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Text;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
@@ -95,7 +95,8 @@ public partial class ConnectionService(
             : DtoMapper.ConvertToOthers(connections, getSingle: toId.HasValue);
     }
 
-    public async Task<Result<AssignmentDto>> AddAssignment(Guid fromId, Guid toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
+    /// <inheritdoc/>
+    public async Task<Result<AssignmentDto>> AddRightholder(Guid fromId, Guid toId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
     {
         var options = new ConnectionOptions(configureConnections);
         var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
@@ -1950,9 +1951,9 @@ internal class AssignmentResourceQueryResult
 
     internal Entity Via { get; set; }
 
-    internal PersistenceEF.Models.Role ViaRole { get; set; }
+    internal Role ViaRole { get; set; }
 
-    internal PersistenceEF.Models.Role Role { get; set; }
+    internal Role Role { get; set; }
 
     internal string PolicyPath { get; set; }
 
