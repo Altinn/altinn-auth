@@ -1,0 +1,78 @@
+meta {
+  name: GET_Delegated_Enketltjeneste_ToOthers
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources?party={{party}}&from={{party}}&to={{to}}&resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+  resource: {{resource}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/enkelttjenestedelegering/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.Bruker_A_delegates.partyuuid);
+  bru.setVar("to", testdata.Bruker_B_delegates.partyuuid);
+  bru.setVar("resource", testdata.resource_to_delegate.resource_id_privatperson);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.Bruker_A_delegates.userid,
+    auth_partyId: testdata.Bruker_A_delegates.partyid,
+    auth_partyUuid: testdata.Bruker_A_delegates.partyuuid,
+    auth_ssn: testdata.Bruker_A_delegates.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("GET resources which are delegated from Privat_users : ToOthers ", function() {
+    
+  const testdata = require(`./testdata/enkelttjenestedelegering/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    const data = res.getBody();
+    expect(res.status).to.equal(200);
+    
+  
+  //  Find the record for the expected resource name
+  const record = data.find(item =>
+    item.resource.name === "ttd-test-bruno-enkelttjeneste-privatperson-ressurs"
+  );
+  
+  expect(record, "Resource should exist").to.exist;
+  
+  // Check FROM partyuuid
+  expect(record.permissions[0].from).to.have.property(
+    'id',
+    testdata.Bruker_A_delegates.partyuuid.toLowerCase()
+  );
+  
+  // Check TO partyuuid
+  expect(record.permissions[0].to).to.have.property(
+    'id',
+    testdata.Bruker_B_delegates.partyuuid.toLowerCase()
+  );
+  
+    
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

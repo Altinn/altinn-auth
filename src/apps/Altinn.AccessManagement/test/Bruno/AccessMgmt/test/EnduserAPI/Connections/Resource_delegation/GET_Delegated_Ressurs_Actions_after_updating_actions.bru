@@ -1,0 +1,97 @@
+meta {
+  name: GET_Delegated_Ressurs_Actions_after_updating_actions
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/rights?party={{party}}&from={{party}}&to={{to}}&resource={{resource}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+  resource: {{resource}}
+}
+
+body:json {
+  {
+    "DirectRightsKeys": [
+      "urn:altinn:resource:ttd-test-bruno-enkelttjeneste-privatperson-ressurs:urn:oasis:names:tc:xacml:1.0:action:action-id:read",
+      
+      "urn:altinn:resource:ttd-test-bruno-enkelttjeneste-privatperson-ressurs:urn:oasis:names:tc:xacml:1.0:action:action-id:write"
+      
+    ]
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/enkelttjenestedelegering/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.Bruker_A_delegates.partyuuid);
+  bru.setVar("to", testdata.Bruker_B_delegates.partyuuid);
+  bru.setVar("resource", testdata.resource_to_delegate.resource_id_privatperson);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.Bruker_A_delegates.userid,
+    auth_partyId: testdata.Bruker_A_delegates.partyid,
+    auth_partyUuid: testdata.Bruker_A_delegates.partyuuid,
+    auth_ssn: testdata.Bruker_A_delegates.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  test("GET_Delegated actions on resources after updating actions ", function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(200);
+    
+    // Resource check
+  expect(data.resource).to.exist;
+  expect(data.resource.refId).to.equal("ttd-test-bruno-enkelttjeneste-privatperson-ressurs");
+  
+  // No indirect rights
+  expect(data.indirectRights).to.be.an("array");
+  expect(data.indirectRights.length).to.equal(0);
+  
+  // Expected actions (ONLY these)
+  const expectedActions = [
+    "urn:oasis:names:tc:xacml:1.0:action:action-id:read",
+    "urn:oasis:names:tc:xacml:1.0:action:action-id:write",
+    "urn:oasis:names:tc:xacml:1.0:action:action-id:sign"
+  ];
+  
+  // Collect actions from response
+  const actualActions = data.directRights.map(r => r.right.action);
+  
+  // Verify: no missing and no extra actions
+  expect(actualActions).to.have.members(expectedActions);
+  
+  // Verify each right is "direct" and has permissions
+  data.directRights.forEach(r => {
+    expect(r.reason.items[0].name).to.equal("direct");
+    expect(r.permissions).to.be.an("array");
+    expect(r.permissions.length).to.be.greaterThan(0);
+  });
+    
+    
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

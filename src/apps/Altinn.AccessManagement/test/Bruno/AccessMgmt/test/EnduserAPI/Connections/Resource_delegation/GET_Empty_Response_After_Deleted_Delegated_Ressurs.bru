@@ -1,0 +1,60 @@
+meta {
+  name: GET_Empty_Response_After_Deleted_Delegated_Ressurs
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources?party={{party}}&from={{party}}&to={{to}}&resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+  resource: {{resource}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/enkelttjenestedelegering/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.orgA_delegates.partyuuid);
+  bru.setVar("to", testdata.orgB_delegates.partyuuid);
+  bru.setVar("resource", testdata.resource_to_delegate.app_id);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.orgA_delegates.innehaver.userid,
+    auth_partyId: testdata.orgA_delegates.innehaver.partyid,
+    auth_partyUuid: testdata.orgA_delegates.innehaver.partyuuid,
+    auth_ssn: testdata.orgA_delegates.innehaver.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("GET App which are delegated from Org_user : ToOthers ", function() {
+    
+  const testdata = require(`./testdata/enkelttjenestedelegering/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    const data = res.getBody();
+    expect(res.status).to.equal(200);
+    assert.isEmpty(data, "Expected data in response body to be empty array");
+    
+  
+    
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

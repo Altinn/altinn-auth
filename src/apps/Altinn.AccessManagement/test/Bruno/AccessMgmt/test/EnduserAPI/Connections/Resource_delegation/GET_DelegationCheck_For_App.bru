@@ -1,0 +1,103 @@
+meta {
+  name: GET_DelegationCheck_For_App
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/delegationcheck?party={{party}}&resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  resource: {{resource}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+vars:pre-request {
+  party: 08cb10ee-4f3d-461a-8b11-a6604fdf2cc2
+  resource: ttd-test-enkeltjeneste-ressurs-at22
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/enkelttjenestedelegering/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.orgA_delegates.partyuuid);
+  bru.setVar("to", testdata.orgB_delegates.partyuuid);
+  bru.setVar("resource", testdata.resource_to_delegate.app_id);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.orgA_delegates.innehaver.userid,
+    auth_partyId: testdata.orgA_delegates.innehaver.partyid,
+    auth_partyUuid: testdata.orgA_delegates.innehaver.partyuuid,
+    auth_ssn: testdata.orgA_delegates.innehaver.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+script:post-response {
+  
+  
+}
+
+tests {
+  const testdata = require(`./testdata/enkelttjenestedelegering/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  test("DelegationCheck for party has access to App to delegate App", function() {
+    const data = res.getBody();
+    
+  expect(data.resource).to.exist;
+  expect(data.resource.refId).to.equal(testdata.resource_to_delegate.app_id);
+  
+  // Expected actions
+  const expectedActions = [
+    "urn:oasis:names:tc:xacml:1.0:action:action-id:read",
+    "urn:oasis:names:tc:xacml:1.0:action:action-id:write",
+    "urn:oasis:names:tc:xacml:1.0:action:action-id:delete",
+    "urn:oasis:names:tc:xacml:1.0:action:action-id:instantiate",
+    "urn:oasis:names:tc:xacml:1.0:action:action-id:complete"
+  ];
+  
+  // ✅ Verify allowed ones are true with RoleAccess
+  const delegableActions = [
+    "urn:oasis:names:tc:xacml:1.0:action:action-id:read",
+    "urn:oasis:names:tc:xacml:1.0:action:action-id:write",
+    "urn:oasis:names:tc:xacml:1.0:action:action-id:delete",
+    "urn:oasis:names:tc:xacml:1.0:action:action-id:instantiate"
+  ];
+  
+  delegableActions.forEach(a => {
+    const rr = data.rights.find(x => x.right.action === a);
+    expect(rr, `Missing action ${a}`).to.exist;
+    expect(rr.result, `${a} should be allowed`).to.equal(true);
+    expect(rr.reasonCodes).to.include("RoleAccess");
+  });
+  
+  // Verify complete is with MissingDelegationAccess
+  const complete = "urn:oasis:names:tc:xacml:1.0:action:action-id:complete";
+  const cr = data.rights.find(x => x.right.action === complete);
+  
+  expect(cr, "Missing complete action").to.exist;
+  expect(cr.result, "complete should be denied").to.equal(false);
+  expect(cr.reasonCodes).to.include("MissingDelegationAccess");
+  
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

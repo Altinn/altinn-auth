@@ -1,0 +1,67 @@
+meta {
+  name: POST_Enduser_Connections_Add_Person_Ressurs_deleegring
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  ~to: {{toPerson}}
+}
+
+body:json {
+   {
+    "personidentifier": "{{toPerson}}", // fnr or username
+    "lastName": "{{toPersonLastName}}"
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/enkelttjenestedelegering/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("toPerson", testdata.Bruker_B_delegates.pid);
+  bru.setVar("toPersonLastName", testdata.Bruker_B_delegates.lastname);
+  bru.setVar("party", testdata.Bruker_A_delegates.partyuuid);
+  bru.setVar("to", testdata.Bruker_B_delegates.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.Bruker_A_delegates.userid,
+    auth_partyId: testdata.Bruker_A_delegates.partyid,
+    auth_partyUuid: testdata.Bruker_A_delegates.partyuuid,
+    auth_ssn: testdata.Bruker_A_delegates.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const testdata = require(`./testdata/enkelttjenestedelegering/${bru.getEnvVar("tokenEnv")}.js`);
+  test("POST_Enduser_Connections_Person", function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(200);
+    assert.isOk(data, "Expected response body to return created assignment");
+    
+    assert.equal(data.fromId, bru.getVar("party").toLowerCase());
+    assert.equal(data.toId, testdata.Bruker_B_delegates.partyuuid.toLowerCase());
+    assert.equal(data.roleId, "42cae370-2dc1-4fdc-9c67-c2f4b0f0f829"); // rettighetshaver uuid
+    
+  });
+}
+
+docs {
+  Lager connection til person
+}

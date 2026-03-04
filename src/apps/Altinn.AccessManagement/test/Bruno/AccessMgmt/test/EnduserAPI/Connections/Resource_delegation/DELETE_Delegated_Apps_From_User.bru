@@ -1,0 +1,56 @@
+meta {
+  name: DELETE_Delegated_Apps_From_User
+  type: http
+  seq: 19
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources?party={{party}}&from={{party}}&to={{to}}&resource={{resource}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+  resource: {{resource}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/enkelttjenestedelegering/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.orgA_delegates.partyuuid);
+  bru.setVar("to", testdata.orgB_delegates.partyuuid);
+  bru.setVar("resource", testdata.resource_to_delegate.app_id);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.orgA_delegates.innehaver.userid,
+    auth_partyId: testdata.orgA_delegates.innehaver.partyid,
+    auth_partyUuid: testdata.orgA_delegates.innehaver.partyuuid,
+    auth_ssn: testdata.orgA_delegates.innehaver.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test("Revoke delegated App from User", function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(204);
+    
+    });
+    
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

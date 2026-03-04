@@ -1,0 +1,76 @@
+meta {
+  name: POST_Delegate_Enkelttjeneste_til_bruker
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/rights?party={{party}}&from={{party}}&to={{to}}&resource={{resource}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+  resource: {{resource}}
+}
+
+body:json {
+  {
+    "DirectRightKeys": [
+      "urn:altinn:resource:ttd-test-bruno-enkelttjeneste-privatperson-ressurs:urn:oasis:names:tc:xacml:1.0:action:action-id:read",
+      
+      "urn:altinn:resource:ttd-test-bruno-enkelttjeneste-privatperson-ressurs:urn:oasis:names:tc:xacml:1.0:action:action-id:write"
+      
+      
+      
+    ]
+  }
+}
+
+vars:pre-request {
+  party: 08cb10ee-4f3d-461a-8b11-a6604fdf2cc2
+  to: ae79dcad-1efb-4304-813d-8a9f39ff360b
+  resource: ttd-test-enkeltjeneste-ressurs-at22
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/enkelttjenestedelegering/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.Bruker_A_delegates.partyuuid);
+  bru.setVar("to", testdata.Bruker_B_delegates.partyuuid);
+  bru.setVar("resource", testdata.resource_to_delegate.resource_id_privatperson);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.Bruker_A_delegates.userid,
+    auth_partyId: testdata.Bruker_A_delegates.partyid,
+    auth_partyUuid: testdata.Bruker_A_delegates.partyuuid,
+    auth_ssn: testdata.Bruker_A_delegates.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  test("Delegate enkelttjeneste ressurs to privat person user ", function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(201);
+    
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
