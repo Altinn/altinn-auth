@@ -5,14 +5,12 @@ using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
-using Altinn.AccessMgmt.Core;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.FeatureManagement;
 using Microsoft.FeatureManagement.Mvc;
 
 namespace Altinn.AccessManagement.Controllers;
@@ -25,7 +23,6 @@ namespace Altinn.AccessManagement.Controllers;
 public class InternalAuthorizedPartiesController(
     ILogger<InternalAuthorizedPartiesController> logger,
     IMapper mapper,
-    FeatureManager featureManager,
     IAuthorizedPartiesService authorizedPartiesService,
     IContextRetrievalService contextRetrievalService) : ControllerBase
 {
@@ -87,14 +84,11 @@ public class InternalAuthorizedPartiesController(
                 AnyOfResourceIds = anyOfResourceIds
             };
 
-            if (await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.AuthorizedPartiesEfEnabled, cancellationToken) && partyFilter?.Any() == true)
+            var partyUuids = await authorizedPartiesService.GetPartyFilterUuids(partyFilter, cancellationToken);
+            filters.PartyFilter = new SortedDictionary<Guid, Guid>();
+            foreach (var partyUuid in partyUuids.Distinct())
             {
-                var partyUuids = await authorizedPartiesService.GetPartyFilterUuids(partyFilter, cancellationToken);
-                filters.PartyFilter = new SortedDictionary<Guid, Guid>();
-                foreach (var partyUuid in partyUuids.Distinct())
-                {
-                    filters.PartyFilter[partyUuid] = partyUuid;
-                }
+                filters.PartyFilter[partyUuid] = partyUuid;
             }
 
             int userId = AuthenticationHelper.GetUserId(HttpContext);
@@ -193,15 +187,12 @@ public class InternalAuthorizedPartiesController(
                 return Unauthorized();
             }
 
-            if (await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.AuthorizedPartiesEfEnabled, cancellationToken))
+            var partyFilters = new BaseAttribute(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, partyId.ToString()).SingleToList();
+            var partyUuids = await authorizedPartiesService.GetPartyFilterUuids(partyFilters, cancellationToken);
+            filters.PartyFilter = new SortedDictionary<Guid, Guid>();
+            foreach (var partyUuid in partyUuids.Distinct())
             {
-                var partyFilters = new BaseAttribute(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, partyId.ToString()).SingleToList();
-                var partyUuids = await authorizedPartiesService.GetPartyFilterUuids(partyFilters, cancellationToken);
-                filters.PartyFilter = new SortedDictionary<Guid, Guid>();
-                foreach (var partyUuid in partyUuids.Distinct())
-                {
-                    filters.PartyFilter[partyUuid] = partyUuid;
-                }
+                filters.PartyFilter[partyUuid] = partyUuid;
             }
 
             List<AuthorizedParty> authorizedParties = await authorizedPartiesService.GetAuthorizedPartiesByUserId(userId, filters, cancellationToken);

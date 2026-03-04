@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using Altinn.AccessManagement.Core.Services.Contracts;
 using Altinn.AccessMgmt.Persistence.Core.Contracts;
 using Altinn.AccessMgmt.Persistence.Core.Definitions;
 using Altinn.AccessMgmt.Persistence.Core.Executors;

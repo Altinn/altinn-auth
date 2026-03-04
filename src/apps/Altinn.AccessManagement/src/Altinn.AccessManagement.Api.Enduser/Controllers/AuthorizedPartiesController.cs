@@ -3,13 +3,11 @@ using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
-using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 
@@ -20,7 +18,6 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 [Route("accessmanagement/api/v1/enduser/authorizedparties")]
 public class AuthorizedPartiesController(
     ILogger<AuthorizedPartiesController> logger,
-    FeatureManager featureManager,
     IAuthorizedPartiesService authorizedPartiesService) : ControllerBase
 {
     /// <summary>
@@ -71,15 +68,12 @@ public class AuthorizedPartiesController(
                 AnyOfResourceIds = anyOfResourceIds
             };
 
-            if (await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.AuthorizedPartiesEfEnabled, cancellationToken) && partyFilter?.Any() == true)
-            {
-                var partyUuids = await authorizedPartiesService.GetPartyFilterUuids(partyFilter, cancellationToken);
-                filters.PartyFilter = new SortedDictionary<Guid, Guid>();
+            var partyUuids = await authorizedPartiesService.GetPartyFilterUuids(partyFilter, cancellationToken);
+            filters.PartyFilter = new SortedDictionary<Guid, Guid>();
 
-                foreach (var partyUuid in partyUuids.Distinct())
-                {
-                    filters.PartyFilter[partyUuid] = partyUuid;
-                }
+            foreach (var partyUuid in partyUuids.Distinct())
+            {
+                filters.PartyFilter[partyUuid] = partyUuid;
             }
 
             int userId = AuthenticationHelper.GetUserId(HttpContext);

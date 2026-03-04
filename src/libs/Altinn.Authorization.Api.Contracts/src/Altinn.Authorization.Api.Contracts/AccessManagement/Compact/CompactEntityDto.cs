@@ -32,12 +32,6 @@ public class CompactEntityDto
     public string Variant { get; set; }
 
     /// <summary>
-    /// Values from entityLoookup
-    /// </summary>
-    [JsonPropertyName("keyValues")]
-    public Dictionary<string, string> KeyValues { get; set; }
-
-    /// <summary>
     /// Parent
     /// </summary>
     [JsonPropertyName("parent")]

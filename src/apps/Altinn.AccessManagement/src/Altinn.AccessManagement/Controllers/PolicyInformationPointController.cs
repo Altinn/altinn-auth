@@ -1,13 +1,11 @@
 ﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
-using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessManagement.Controllers;
 
@@ -17,10 +15,8 @@ namespace Altinn.AccessManagement.Controllers;
 [Route("accessmanagement/api/v1/policyinformation")]
 [ApiController]
 public class PolicyInformationPointController(
-    IFeatureManager featureManager,
     IMapper mapper,
     IPolicyInformationPoint pip,
-    IConnectionService connectionService,
     IAuthorizedPartyRepoServiceEf authorizedPartyRepoService
     ) : ControllerBase
 {
@@ -64,22 +60,11 @@ public class PolicyInformationPointController(
     {
         List<AccessPackageUrn> packages = new();
 
-        if (await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.AuthorizedPartiesEfEnabled))
+        var filter = new AuthorizedPartiesFilters { IncludeAccessPackages = true, IncludePartiesViaKeyRoles = AuthorizedPartiesIncludeFilter.True, PartyFilter = new SortedDictionary<Guid, Guid> { { from, from } } };
+        var connectionPackages = await authorizedPartyRepoService.GetPipConnectionsFromOthers(to, filters: filter, ct: cancellationToken);
+        if (connectionPackages != null)
         {
-            var filter = new AuthorizedPartiesFilters { IncludeAccessPackages = true, IncludePartiesViaKeyRoles = AuthorizedPartiesIncludeFilter.True, PartyFilter = new SortedDictionary<Guid, Guid> { { from, from } } };
-            var connectionPackages = await authorizedPartyRepoService.GetPipConnectionsFromOthers(to, filters: filter, ct: cancellationToken);
-            if (connectionPackages != null)
-            {
-                packages.AddRange(connectionPackages.SelectMany(conPackage => conPackage.Packages.Select(pkg => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(pkg.Urn.Split(':').Last())))));
-            }
-        }
-        else
-        {
-            var connectionPackages = await connectionService.GetPackagePermissionsFromOthers(partyId: to, fromId: from, cancellationToken: cancellationToken);
-            if (connectionPackages != null)
-            {
-                packages.AddRange(connectionPackages.Select(conPackage => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(conPackage.Package.Urn.Split(':').Last()))));
-            }
+            packages.AddRange(connectionPackages.SelectMany(conPackage => conPackage.Packages.Select(pkg => AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked(pkg.Urn.Split(':').Last())))));
         }
 
         return Ok(packages);

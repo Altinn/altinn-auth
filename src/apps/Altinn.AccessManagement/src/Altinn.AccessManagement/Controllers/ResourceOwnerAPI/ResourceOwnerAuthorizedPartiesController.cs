@@ -5,14 +5,12 @@ using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
-using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.FeatureManagement;
 using Microsoft.FeatureManagement.Mvc;
 
 namespace Altinn.AccessManagement.Controllers;
@@ -22,7 +20,7 @@ namespace Altinn.AccessManagement.Controllers;
 /// </summary>
 [ApiController]
 [Route("accessmanagement/api/v1/resourceowner")]
-public class ResourceOwnerAuthorizedPartiesController(ILogger<ResourceOwnerAuthorizedPartiesController> logger, IMapper mapper, FeatureManager featureManager, IAuthorizedPartiesService authorizedPartiesService, IProviderService providerService) : ControllerBase
+public class ResourceOwnerAuthorizedPartiesController(ILogger<ResourceOwnerAuthorizedPartiesController> logger, IMapper mapper, IAuthorizedPartiesService authorizedPartiesService, IProviderService providerService) : ControllerBase
 {
     /// <summary>
     /// Endpoint for retrieving all authorized parties (with option to include Authorized Parties, aka Reportees, from Altinn 2) for a given user or organization 
@@ -98,15 +96,12 @@ public class ResourceOwnerAuthorizedPartiesController(ILogger<ResourceOwnerAutho
                 AnyOfResourceIds = anyOfResourceIds
             };
 
-            if (await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.AuthorizedPartiesEfEnabled) && subject.PartyFilter?.Count() > 0)
+            var partyFilters = subject.PartyFilter.Select(attr => new BaseAttribute(attr.Type, attr.Value)).ToList();
+            var partyUuids = await authorizedPartiesService.GetPartyFilterUuids(partyFilters, cancellationToken);
+            filters.PartyFilter = new SortedDictionary<Guid, Guid>();
+            foreach (var partyUuid in partyUuids?.Distinct())
             {
-                var partyFilters = subject.PartyFilter.Select(attr => new BaseAttribute(attr.Type, attr.Value)).ToList();
-                var partyUuids = await authorizedPartiesService.GetPartyFilterUuids(partyFilters, cancellationToken);
-                filters.PartyFilter = new SortedDictionary<Guid, Guid>();
-                foreach (var partyUuid in partyUuids?.Distinct())
-                {
-                    filters.PartyFilter[partyUuid] = partyUuid;
-                }
+                filters.PartyFilter[partyUuid] = partyUuid;
             }
 
             List<AuthorizedParty> authorizedParties = await authorizedPartiesService.GetAuthorizedParties(subjectAttribute, filters, cancellationToken);

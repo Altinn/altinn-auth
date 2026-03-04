@@ -33,11 +33,6 @@ public static class AccessMgmtFeatureFlags
     public const string HostedServicesAltinnAdminRoleSync = $"AccessMgmt.Core.HostedServices.AltinnAdminRoleSync";
 
     /// <summary>
-    /// Specifies if AuthorizedPartiesServiceEf should be used
-    /// </summary>
-    public const string AuthorizedPartiesEfEnabled = $"AccessMgmt.Core.Services.AuthorizedParties.EfEnabled";
-
-    /// <summary>
     /// Specifies Client Delegation should be enabled in enduser API.
     /// </summary>
     public const string EnduserControllerClientDelegation = $"AccessMgmt.Enduser.Controller.ClientDelegation";
