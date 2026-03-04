@@ -2,6 +2,10 @@
 
 using System.Buffers;
 using System.Buffers.Text;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Text;
+using CommunityToolkit.Diagnostics;
 
 namespace Altinn.ResourceRegistry.Utils;
 
@@ -45,7 +49,11 @@ internal static class Base64UrlEncoder
         var buff = ArrayPool<char>.Shared.Rent(GetMaxEncodedLength(data.Length));
         try
         {
-            Convert.TryToBase64Chars(data, buff, out var charsWritten);
+            if (!Convert.TryToBase64Chars(data, buff, out var charsWritten))
+            {
+                ThrowHelper.ThrowInvalidOperationException("Failed to encode data to base64.");
+            }
+
             var written = buff.AsSpan(0, charsWritten).TrimEnd('=');
             written.Replace('+', '-');
             written.Replace('/', '_');
@@ -54,6 +62,29 @@ internal static class Base64UrlEncoder
         finally
         {
             ArrayPool<char>.Shared.Return(buff);
+        }
+    }
+
+    /// <summary>
+    /// Encode binary data within a byte span into base64 encoded text.
+    /// </summary>
+    /// <param name="data">The data to encode</param>
+    /// <returns>The resulting base64 string</returns>
+    public static string Encode(ReadOnlySpan<char> data)
+    {
+        var buff = ArrayPool<byte>.Shared.Rent(data.Length * 4);
+        try
+        {
+            if (!Encoding.UTF8.TryGetBytes(data, buff, out var bytesWritten))
+            {
+                ThrowHelper.ThrowInvalidOperationException("Failed to encode data to utf8 bytes.");
+            }
+
+            return Encode(buff.AsSpan(0, bytesWritten));
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buff);
         }
     }
 
@@ -106,6 +137,25 @@ internal static class Base64UrlEncoder
     }
 
     /// <summary>
+    /// Try to decode base 64 encoded text within a char span into a byte span.
+    /// </summary>
+    /// <param name="encoded">The encoded text</param>
+    /// <param name="data">The decoded string</param>
+    /// <returns><see langword="true"/> if decoding succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryDecode(ReadOnlySpan<char> encoded, [NotNullWhen(true)] out string? data)
+    {
+        var buffer = ArrayPool<byte>.Shared.Rent(GetMaxDecodedLength(encoded.Length + 2 /* might need padding */));
+        if (!TryDecode(encoded, buffer, out var bytesWritten))
+        {
+            data = null;
+            return false;
+        }
+
+        data = Encoding.UTF8.GetString(buffer.AsSpan(0, bytesWritten));
+        return true;
+    }
+
+    /// <summary>
     /// Try to decode base 64 encoded text within a utf8 byte span into a byte span.
     /// </summary>
     /// <param name="encoded">The encoded text as utf8 bytes</param>
@@ -122,6 +172,25 @@ internal static class Base64UrlEncoder
         {
             return TryDecodeInner(encoded, data, out bytesWritten);
         }
+    }
+
+    /// <summary>
+    /// Try to decode base 64 encoded text within a char span into a byte span.
+    /// </summary>
+    /// <param name="encoded">The encoded text</param>
+    /// <param name="data">The decoded string</param>
+    /// <returns><see langword="true"/> if decoding succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryDecode(ReadOnlySpan<byte> encoded, [NotNullWhen(true)] out string? data)
+    {
+        var buffer = ArrayPool<byte>.Shared.Rent(GetMaxDecodedLength(encoded.Length + 2 /* might need padding */));
+        if (!TryDecode(encoded, buffer, out var bytesWritten))
+        {
+            data = null;
+            return false;
+        }
+
+        data = Encoding.UTF8.GetString(buffer.AsSpan(0, bytesWritten));
+        return true;
     }
 
     private static bool TryReplaceAndDecode(ReadOnlySpan<char> encoded, Span<byte> data, out int bytesWritten)

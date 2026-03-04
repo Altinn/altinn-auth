@@ -34,6 +34,17 @@ public class Base64UrlEncoderTests
 
     [Theory]
     [MemberData(nameof(EncodedData))]
+    [InlineData("Hello world!")]
+    public void RoundTripsStrings2(string s)
+    {
+        var encoded = Base64UrlEncoder.Encode(s);
+        Base64UrlEncoder.TryDecode(encoded, out var decoded).Should().BeTrue();
+
+        s.Should().Be(decoded);
+    }
+
+    [Theory]
+    [MemberData(nameof(EncodedData))]
     public void RoundTripsUtf8(string s)
     {
         var utf8 = System.Text.Encoding.UTF8.GetBytes(s);
