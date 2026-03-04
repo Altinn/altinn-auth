@@ -36,8 +36,8 @@ script:pre-request {
   }
   
   
-const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
-const token = await testTokenGenerator.getToken(getTokenParameters);
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken", token);
 }
 
@@ -50,7 +50,7 @@ tests {
     expect(res.status).to.equal(200);
     assert.isNotEmpty(data, "Expected data in response body to NOT be empty array");
     
-    const expectedNumPackages = 137;
+    const expectedNumPackages = 138;
     assert.lengthOf(data, expectedNumPackages, `Expected response data to contain all ${expectedNumPackages} available packages`);
     
   });
