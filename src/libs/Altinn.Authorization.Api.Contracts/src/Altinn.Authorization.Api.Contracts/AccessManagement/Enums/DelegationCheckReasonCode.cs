@@ -48,6 +48,11 @@ namespace Altinn.Authorization.Api.Contracts.AccessManagement.Enums
         /// <summary>
         /// Indicates that the resource cannot be delegated to another user or entity.
         /// </summary>
-        ResourceNotDelegable = 13
+        ResourceNotDelegable = 13,
+
+        /// <summary>
+        /// Resource is not delegable in ConnectionApi due to being a maskinportenschema resource.
+        /// </summary>
+        ResourceIsMaskinPortenSchema = 14
     }
 }
