@@ -25,11 +25,11 @@ namespace Altinn.Authorization.Api.Contracts.AccessManagement
         /// <summary>
         /// Concatenated key for subresources from policy rule
         /// </summary>
-        public IEnumerable<string> Resource { get; set; }
+        public IEnumerable<AttributeDto> Resource { get; set; }
 
         /// <summary>
         /// Action
         /// </summary>
-        public string Action { get; set; }
+        public AttributeDto Action { get; set; }
     }
 }

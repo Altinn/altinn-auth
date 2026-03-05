@@ -138,11 +138,11 @@ namespace Altinn.AccessManagement.Core.Services
 
         public async Task<List<Rule>> TryWriteDelegationPolicyRules(Entity from, Entity to, Resource resource, List<string> ruleKeys, Entity performedBy, bool ignoreExistingPolicy = false, CancellationToken cancellationToken = default)
         {
-            var rules = GenerateRules(from, to, resource, ruleKeys, performedBy).ToList();
+            var rules = (await GenerateRules(from, to, resource, ruleKeys, performedBy, cancellationToken)).ToList();
             return await _pap.TryWriteDelegationPolicyRules(rules: rules, ignoreExistingPolicy: ignoreExistingPolicy, cancellationToken: cancellationToken);
         }
 
-        private IEnumerable<Rule> GenerateRules(Entity from, Entity to, Resource resource, List<string> ruleKeys, Entity performedBy)
+        private async Task<IEnumerable<Rule>> GenerateRules(Entity from, Entity to, Resource resource, List<string> ruleKeys, Entity performedBy, CancellationToken cancellationToken = default)
         {
             var coveredBy = to;
             var offeredBy = from;
@@ -151,9 +151,18 @@ namespace Altinn.AccessManagement.Core.Services
             
             List<Rule> rules = [];
 
+            var rightKeys = await _contextRetrievalService.GetResourcePolicyV2(resource.RefId, cancellationToken: cancellationToken);
+
             foreach (string ruleKey in ruleKeys)
             {
-                (List<AttributeMatch> Resource, AttributeMatch Action) resourceAndAction = SplitActionKey(ruleKey);
+                var rightKey = rightKeys?.FirstOrDefault(r => r.Key.Equals(ruleKey, StringComparison.InvariantCultureIgnoreCase));
+
+                if (rightKey is null)
+                {
+                    throw new KeyNotFoundException($"The key: '{ruleKey}' did not exist in the keyset for the resource: '{resource.RefId}'");
+                }
+
+                (List<AttributeMatch> Resource, AttributeMatch Action) resourceAndAction = MapRightDtoToResourceListAndAction(rightKey);
 
                 rules.Add(new Rule
                 {
@@ -174,46 +183,28 @@ namespace Altinn.AccessManagement.Core.Services
             return rules;
         }
 
-        private static (List<AttributeMatch> Resource, AttributeMatch Action) SplitActionKey(string actionKey)
+        private static (List<AttributeMatch> Resource, AttributeMatch Action) MapRightDtoToResourceListAndAction(RightDto actionKey)
         {
             List<AttributeMatch> resourceList = [];
-            List<AttributeMatch> actionList = [];
+            AttributeMatch action;
 
-            string[] urns = actionKey.Split("urn:", StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (string part in urns)
+            foreach (AttributeDto resource in actionKey.Resource)
             {
-                string current = "urn:" + part;
+                AttributeMatch currentAttributeMatch = new(resource.Type, resource.Value);
 
-                if (current.EndsWith(':'))
+                if (currentAttributeMatch.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, StringComparison.InvariantCultureIgnoreCase) && DelegationHelper.IsAppResourceId(currentAttributeMatch.Value, out string org, out string app))
                 {
-                    current = current.Remove(current.Length - 1);
-                }
-
-                int index = current.LastIndexOf(':');
-                string currentKey = current.Substring(0, index);
-                string currentValue = current.Substring(index + 1);
-                AttributeMatch currentAttributeMatch = new(currentKey, currentValue);
-
-                if (currentAttributeMatch.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.ActionId, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    actionList.Add(currentAttributeMatch);
+                    resourceList.Add(new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute, Value = org });
+                    resourceList.Add(new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute, Value = app });
                 }
                 else
                 {
-                    if (currentAttributeMatch.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, StringComparison.InvariantCultureIgnoreCase) && DelegationHelper.IsAppResourceId(currentAttributeMatch.Value, out string org, out string app))
-                    {
-                        resourceList.Add(new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute, Value = org });
-                        resourceList.Add(new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute, Value = app });
-                    }
-                    else
-                    {
-                        resourceList.Add(currentAttributeMatch);
-                    }
+                    resourceList.Add(currentAttributeMatch);
                 }
             }
 
-            return (resourceList, actionList.FirstOrDefault());
+            action = new AttributeMatch(actionKey.Action.Type, actionKey.Action.Value);
+            return (resourceList, action);
         }
 
         private static List<AttributeMatch> ConvertEntityToAttributeMatch(Entity entity)
