@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 
 namespace Altinn.AccessMgmt.Core.Authorization;
 
@@ -23,7 +23,11 @@ internal sealed class DefaultAuthorizationScopeProvider: IAuthorizationScopeProv
 
         foreach (var claim in context.User.Claims.Where(static c => string.Equals(c.Type, "scope")))
         {
-            yield return claim.Value;
+            var scopes = claim.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var scope in scopes)
+            {
+                yield return scope;
+            }
         }
     }
 }
