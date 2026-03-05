@@ -128,6 +128,11 @@ public partial class ConnectionService(
         await dbContext.Assignments.AddAsync(assignment, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        if (from.PartyId.HasValue && to.PartyId.HasValue)
+        {
+            await altinn2Client.ClearReporteeRights(from.PartyId.Value, to.PartyId.Value, to.UserId.HasValue ? to.UserId.Value : 0, cancellationToken: cancellationToken);
+        }
+
         return DtoMapper.Convert(assignment);
     }
 
