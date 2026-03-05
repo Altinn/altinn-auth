@@ -104,7 +104,7 @@ public class ConnectionsController(
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> AddRightholder(
         [Required][FromQuery(Name = "party")] Guid party,
-        [Required][FromQuery(Name = "to")] Guid to,
+        [FromQuery(Name = "to")] Guid to,
         [FromBody] PersonInput? person,
         CancellationToken cancellationToken = default)
     {
@@ -204,7 +204,7 @@ public class ConnectionsController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> AddAssignmentPackage(
         [Required][FromQuery(Name = "party")] Guid party,
-        [Required][FromQuery(Name = "to")] Guid to,
+        [FromQuery(Name = "to")] Guid to,
         [FromQuery(Name = "packageId")] Guid? packageId,
         [FromQuery(Name = "package")] string package,
         [FromBody] PersonInput? person,
