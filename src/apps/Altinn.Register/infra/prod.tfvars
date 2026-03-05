@@ -16,6 +16,10 @@ db_compute_sku           = "D4"
 db_storage_tier          = "P15"
 sbl_endpoint             = "https://ai-pr-vip-sblbridge.ai.basefarm.net/sblbridge/"
 enable_high_availability = true
+key_vault_rbac = [{
+  id       = "3863fbc0-a24b-42bf-af3d-f45111814457" # Altinn Product Authorization: Admins Prod
+  rolename = "Key Vault Secrets Officer"
+}]
 
 features = {
   a2_party_import = {
