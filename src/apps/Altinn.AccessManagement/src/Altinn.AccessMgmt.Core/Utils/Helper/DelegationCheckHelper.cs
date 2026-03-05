@@ -53,7 +53,7 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
         /// <returns></returns>
         public static List<Core.Models.Right> DecomposePolicy(XacmlPolicy policy, string resourceId)
         {
-            Dictionary<string, List<string>> rules = new Dictionary<string, List<string>>();
+            Dictionary<string, List<string>> rights = new Dictionary<string, List<string>>();
 
             foreach (XacmlRule rule in policy.Rules)
             {
@@ -63,32 +63,35 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
 
                 foreach (string key in keys)
                 {
-                    if (!rules.ContainsKey(key))
+                    if (!rights.ContainsKey(key))
                     {
                         List<string> value = [.. ruleSubjects];
-                        rules.Add(key, value);
+                        rights.Add(key, value);
                     }
                     else
                     {
-                        rules[key].AddRange(ruleSubjects);
+                        rights[key].AddRange(ruleSubjects);
                     }
                 }
             }
 
             List<Core.Models.Right> result = [];
 
-            foreach (KeyValuePair<string, List<string>> action in rules)
+            foreach (KeyValuePair<string, List<string>> right in rights)
             {
-                Core.Models.Right current = new Core.Models.Right();
-                current.Key = action.Key;
-                current.AccessorUrns = action.Value;
-                current.PackageAllowAccess = [];
-                current.PackageDenyAccess = [];
-                current.RoleAllowAccess = [];
-                current.RoleDenyAccess = [];
-                current.ResourceAllowAccess = [];
+                if (right.Value.Count > 0)
+                {
+                    Core.Models.Right current = new Core.Models.Right();
+                    current.Key = right.Key;
+                    current.AccessorUrns = right.Value;
+                    current.PackageAllowAccess = [];
+                    current.PackageDenyAccess = [];
+                    current.RoleAllowAccess = [];
+                    current.RoleDenyAccess = [];
+                    current.ResourceAllowAccess = [];
 
-                result.Add(current);
+                    result.Add(current);
+                }                
             }
 
             return result;
@@ -164,9 +167,9 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
         /// Returns a list of resource/action keys based on a given policy rule
         /// </summary>
         /// <param name="rule">the rule to analyze</param>
-        /// <param name="resourceId">the resourceid subjects must contain</param>
+        /// <param name="resource">the resource registry identifier value policy subjects must contain</param>
         /// <returns>list of resource/action keys</returns>
-        public static IEnumerable<string> CalculateRightKeys(XacmlRule rule, string resourceId)
+        public static IEnumerable<string> CalculateRightKeys(XacmlRule rule, string resource)
         {
             List<string> result = [];
 
@@ -176,29 +179,29 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
             List<string> resourceKeys = new List<string>();
             List<string> actionKeys = new List<string>();
 
-            foreach (var resource in resources)
+            foreach (var resourceObj in resources)
             {
-                var org = resource.FirstOrDefault(r => r.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute));
-                var app = resource.FirstOrDefault(r => r.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute));
+                var org = resourceObj.FirstOrDefault(r => r.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute));
+                var app = resourceObj.FirstOrDefault(r => r.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute));
 
                 if (org != null && app != null)
                 {
                     string resourceAppId = $"app_{org.Value}_{app.Value}";
-                    resource.Remove(org);
-                    resource.Remove(app);
-                    resource.Add(new PolicyAttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, Value = resourceAppId });
+                    resourceObj.Remove(org);
+                    resourceObj.Remove(app);
+                    resourceObj.Add(new PolicyAttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, Value = resourceAppId });
                 }
 
                 // Just throw away resources not matching the resourceid we are looking for
-                if (resource.Any(r => r.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute) && r.Value.Equals(resourceId, StringComparison.OrdinalIgnoreCase)) == false)
+                if (resourceObj.Any(r => r.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute) && r.Value.Equals(resource, StringComparison.OrdinalIgnoreCase)) == false)
                 {
                     continue;
                 }
 
                 StringBuilder resourceKey = new();
 
-                resource.Sort((a, b) => string.Compare(a.Id, b.Id, StringComparison.InvariantCultureIgnoreCase));
-                foreach (var item in resource)
+                resourceObj.Sort((a, b) => string.Compare(a.Id, b.Id, StringComparison.InvariantCultureIgnoreCase));
+                foreach (var item in resourceObj)
                 {
                     resourceKey.Append(item.Id.ToLowerInvariant());
                     resourceKey.Append(':');
@@ -235,11 +238,11 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
                 actionKeys.Add(actionKey.ToString());
             }
 
-            foreach (var resource in resourceKeys)
+            foreach (var resourceKey in resourceKeys)
             {
-                foreach (var action in actionKeys)
+                foreach (var actionKey in actionKeys)
                 {
-                    string rightKeyPlain = resource + ":" + action;
+                    string rightKeyPlain = resourceKey + ":" + actionKey;
                     string rightKeyHashed = "01" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(rightKeyPlain))).ToLowerInvariant();
                     result.Add(rightKeyHashed);
                 }
