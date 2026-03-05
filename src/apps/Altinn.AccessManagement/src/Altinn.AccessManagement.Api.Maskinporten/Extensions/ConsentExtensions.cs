@@ -26,6 +26,14 @@ namespace Altinn.AccessManagement.Api.Maskinporten.Extensions
                 _ => throw new ArgumentException("Unknown consent party urn")
             };
 
+            Authorization.Api.Contracts.Consent.ConsentPartyUrn handledBy = consent.HandledBy switch
+            {
+                Core.Models.Consent.ConsentPartyUrn.PersonId => Authorization.Api.Contracts.Consent.ConsentPartyUrn.PersonId.Create(PersonIdentifier.Parse(consent.HandledBy.ValueSpan)),
+                Core.Models.Consent.ConsentPartyUrn.OrganizationId => Authorization.Api.Contracts.Consent.ConsentPartyUrn.OrganizationId.Create(OrganizationNumber.Parse(consent.HandledBy.ValueSpan)),
+                null => null,
+                _ => throw new ArgumentException("Unknown consent party urn")
+            };
+
             return new ConsentInfoMaskinportenDto
             {
                 Id = consent.Id,
@@ -33,6 +41,7 @@ namespace Altinn.AccessManagement.Api.Maskinporten.Extensions
                 To = to,
                 Consented = consent.Consented,
                 ValidTo = consent.ValidTo,
+                HandledBy = handledBy,
                 ConsentRights = [.. consent.ConsentRights.Select(static x => x.ToConsentRightExternal())]
             };
         }

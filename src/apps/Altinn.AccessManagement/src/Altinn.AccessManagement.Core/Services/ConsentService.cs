@@ -198,6 +198,11 @@ namespace Altinn.AccessManagement.Core.Services
                     ConsentRights = consentRequest.ConsentRights
                 };
 
+                if (consentRequest.HandledBy != null)
+                {
+                    consent.HandledBy = await MapToExternalIdentity(consentRequest.HandledBy, cancellationToken);
+                }
+
                 return consent;
             }
         }

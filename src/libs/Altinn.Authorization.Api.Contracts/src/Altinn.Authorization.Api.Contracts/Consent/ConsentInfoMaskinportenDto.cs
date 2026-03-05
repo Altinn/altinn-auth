@@ -21,6 +21,11 @@
         public required ConsentPartyUrn To { get; set; }
 
         /// <summary>
+        /// Defines the party that handles the consent request on behalf of the requesting party.
+        /// </summary>
+        public ConsentPartyUrn HandledBy { get; set; }
+
+        /// <summary>
         /// Defines when the consent was given.
         /// </summary>
         public required DateTimeOffset Consented { get; set; }
