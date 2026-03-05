@@ -229,7 +229,7 @@ namespace Altinn.AccessManagement.Core.Services
                     To = consentRequest.To,
                     ValidTo = consentRequest.ValidTo,
                     ConsentRights = consentRequest.ConsentRights,
-                    ConsentRequestEvents = consentRequest.ConsentRequestEvents,
+                    ConsentRequestEvents = AddExpiredEventIfConsentIsExpired(consentRequest.ConsentRequestEvents, consentRequest.ValidTo, consentRequest.To),
                     TemplateId = consentRequest.TemplateId,
                     HandledBy = consentRequest.HandledBy,
                 };
@@ -402,8 +402,7 @@ namespace Altinn.AccessManagement.Core.Services
             }
 
             details.ViewUri = GetConsentViewUri(details.Id);
-
-            AddExpiredEventIfConsentIsExpired(details);
+            details.ConsentRequestEvents = AddExpiredEventIfConsentIsExpired(details.ConsentRequestEvents, details.ValidTo, details.To);
 
             return details;
         }
@@ -970,24 +969,27 @@ namespace Altinn.AccessManagement.Core.Services
             {
                 foreach (var req in requests.Value)
                 {
-                    AddExpiredEventIfConsentIsExpired(req);
+                    req.ConsentRequestEvents = AddExpiredEventIfConsentIsExpired(req.ConsentRequestEvents, req.ValidTo, req.To);
                 }
             }
 
             return requests;
         }
 
-        private void AddExpiredEventIfConsentIsExpired(ConsentRequestDetails consentRequest)
+        private List<ConsentRequestEvent> AddExpiredEventIfConsentIsExpired(List<ConsentRequestEvent> consentRequestEvents, DateTimeOffset validTo,  ConsentPartyUrn to)
         {
-            if (consentRequest.ValidTo < _timeProvider.GetUtcNow() && !consentRequest.ConsentRequestEvents.Exists(r => r.EventType.Equals(ConsentRequestEventType.Expired)))
+            if (validTo < _timeProvider.GetUtcNow() && !consentRequestEvents.Exists(r => r.EventType.Equals(ConsentRequestEventType.Expired)))
             {
-                consentRequest.ConsentRequestEvents.Add(new ConsentRequestEvent
+                var newEvent = new ConsentRequestEvent
                 {
                     EventType = ConsentRequestEventType.Expired,
-                    Created = consentRequest.ValidTo,
-                    PerformedBy = consentRequest.To
-                });
+                    Created = validTo,
+                    PerformedBy = to
+                };
+                return [.. consentRequestEvents, newEvent];
             }
+            
+            return consentRequestEvents;
         }
 
         private async Task<ConsentRequest> MapA2ConsentToA3Consent(Altinn2ConsentRequest altinn2Consent, CancellationToken cancellationToken)
