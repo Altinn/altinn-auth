@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Text;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
@@ -557,11 +557,11 @@ public partial class ConnectionService(
         }).ToList();
     }
 
-    public async Task<Result<IEnumerable<AccessPackageDto.AccessPackageDtoCheck>>> CheckPackageForResource(Guid party, IEnumerable<Guid> packageIds = null, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
+    public async Task<Result<IEnumerable<AccessPackageDto.AccessPackageDtoCheck>>> CheckPackageForResource(Guid party, Guid authenticatedUserUuid, IEnumerable<Guid> packageIds = null, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
         var assignablePackages = await dbContext.GetAssignableAccessPackages(
             party,
-            auditAccessor.AuditValues.ChangedBy,
+            authenticatedUserUuid,
             packageIds,
             true,
             cancellationToken
@@ -873,7 +873,7 @@ public partial class ConnectionService(
         List<Models.Right> rights = DelegationCheckHelper.DecomposePolicy(policy, resource);
 
         // Fetch packages
-        var packages = await CheckPackageForResource(party, null, ConfigureConnections, cancellationToken);
+        var packages = await CheckPackageForResource(party, authenticatedUserUuid, null, ConfigureConnections, cancellationToken);
 
         bool isMainAdminForFrom = packages.Value.Any(p => p.Result == true && p.Package.Id == PackageConstants.MainAdministrator.Id);
 
