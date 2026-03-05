@@ -7,6 +7,7 @@ using Altinn.AccessManagement.Core.Models.Profile;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Models.SblBridge;
 using Altinn.AccessManagement.Core.Services.Interfaces;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Platform.Register.Models;
 using Authorization.Platform.Authorization.Models;
 using Microsoft.Extensions.Caching.Memory;
@@ -348,6 +349,28 @@ public class ContextRetrievalService : IContextRetrievalService
         }
 
         return resource;
+    }
+
+    /// <inheritdoc/>
+    public async Task<List<RightDto>> GetResourcePolicyV2(string resourceRegistryId, string languageCode = "nb", CancellationToken cancellationToken = default)
+    {
+        string cacheKey = $"rrRkId:{resourceRegistryId}:{languageCode}";
+
+        if (!_memoryCache.TryGetValue(cacheKey, out List<RightDto> resourceKeys))
+        {
+            resourceKeys = await _resourceRegistryClient.GetPolicyRightsV2(resourceRegistryId, languageCode, cancellationToken);
+
+            if (resourceKeys != null)
+            {
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                   .SetPriority(CacheItemPriority.High)
+                   .SetAbsoluteExpiration(new TimeSpan(0, _cacheConfig.ResourceRegistryResourceCacheTimeout, 0));
+
+                _memoryCache.Set(cacheKey, resourceKeys, cacheEntryOptions);
+            }
+        }
+
+        return resourceKeys;
     }
 
     /// <inheritdoc/>

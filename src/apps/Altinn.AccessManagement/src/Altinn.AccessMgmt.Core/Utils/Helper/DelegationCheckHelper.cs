@@ -109,64 +109,6 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
             return false;
         }
 
-        public static IEnumerable<ResourceAndAction> SplitRuleKeys(IEnumerable<string> actionKeys)
-        {
-            List<ResourceAndAction> result = [];
-
-            foreach (string key in actionKeys)
-            {
-                result.Add(SplitRightKey(key));
-            }
-
-            return result;
-        }
-
-        public static ResourceAndAction SplitRightKey(string actionKey)
-        {
-            List<string> resourceList = [];
-            List<string> actionList = [];
-
-            string[] urns = actionKey.Split("urn:", StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (string part in urns)
-            {
-                string current = "urn:" + part;
-
-                if (current.EndsWith(':'))
-                {
-                    current = current.Remove(current.Length - 1);
-                }
-
-                if (current.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.ActionId))
-                {
-                    actionList.Add(current);
-                }
-                else
-                {
-                    resourceList.Add(current);
-                }
-            }
-
-            return new ResourceAndAction { Resource = resourceList, Action = actionList.FirstOrDefault() };
-        }
-
-        public static IEnumerable<XacmlRule> ConvertRightKeysToRules(IEnumerable<string> rightKeys, Guid toId)
-        {
-            List<XacmlRule> result = [];
-            foreach (string key in rightKeys)
-            {
-                XacmlRule currentRule = new XacmlRule(Guid.CreateVersion7().ToString(), XacmlEffectType.Permit);
-
-                var resourceAction = SplitRightKey(key);
-
-                currentRule.Target = BuildDelegationRuleTarget(toId.ToString(), resourceAction.Resource, resourceAction.Action);
-
-                result.Add(currentRule);
-            }
-
-            return result;
-        }
-
         public static XacmlTarget BuildDelegationRuleTarget(string toId, IEnumerable<string> resourceList, string action)
         {
             List<XacmlAnyOf> targetList = new List<XacmlAnyOf>();
@@ -297,7 +239,9 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
             {
                 foreach (var action in actionKeys)
                 {
-                    result.Add(resource + ":" + action);
+                    string rightKeyPlain = resource + ":" + action;
+                    string rightKeyHashed = "01" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(rightKeyPlain))).ToLowerInvariant();
+                    result.Add(rightKeyHashed);
                 }
             }
 

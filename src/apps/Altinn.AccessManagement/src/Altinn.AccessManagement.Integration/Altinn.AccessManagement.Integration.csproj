@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Altinn.AccessManagement.Core\Altinn.AccessManagement.Core.csproj" />
+    <ProjectReference Include="..\Altinn.AccessMgmt.Core\Altinn.AccessMgmt.Core.csproj" />
   </ItemGroup>
 
 </Project>

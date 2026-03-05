@@ -6,6 +6,7 @@ using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 
 namespace Altinn.AccessManagement.Tests.Contexts;
 
@@ -36,4 +37,9 @@ public class ResourceRegistryMock(MockContext context) : IResourceRegistryClient
     /// <inheritdoc/>
     public Task<IDictionary<string, IEnumerable<BaseAttribute>>> GetSubjectResources(IEnumerable<string> subjects, CancellationToken cancellationToken = default) =>
         Task.FromResult(Context.SubjectResources);
+
+    public Task<List<RightDto>> GetPolicyRightsV2(string resource, string languageCode, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }

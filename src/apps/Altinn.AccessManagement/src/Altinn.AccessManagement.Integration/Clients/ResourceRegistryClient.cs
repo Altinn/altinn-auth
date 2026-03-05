@@ -8,6 +8,8 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Integration.Configuration;
+using Altinn.AccessMgmt.Core.Constants.Translation;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -39,6 +41,7 @@ namespace Altinn.AccessManagement.Integration.Clients
             _httpClient.Timeout = new TimeSpan(0, 0, 30);
             _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
             _memoryCache = memoryCache;
             _logger = logger;
         }
@@ -46,7 +49,7 @@ namespace Altinn.AccessManagement.Integration.Clients
         /// <inheritdoc/>
         public async Task<ServiceResource> GetResource(string resourceId, CancellationToken cancellationToken = default)
         {
-            string endpointUrl = $"resource/{resourceId}";
+            string endpointUrl = $"v1/resource/{resourceId}";
 
             HttpResponseMessage response = await _httpClient.GetAsync(endpointUrl, cancellationToken);
             if (response.StatusCode == HttpStatusCode.OK)
@@ -65,7 +68,7 @@ namespace Altinn.AccessManagement.Integration.Clients
 
             try
             {
-                string endpointUrl = "resource/search";
+                string endpointUrl = "v1/resource/search";
 
                 if (!string.IsNullOrWhiteSpace(searchParams))
                 {
@@ -96,7 +99,7 @@ namespace Altinn.AccessManagement.Integration.Clients
 
             try
             {
-                string endpointUrl = $"resource/resourcelist";
+                string endpointUrl = $"v1/resource/resourcelist";
 
                 HttpResponseMessage response = await _httpClient.GetAsync(endpointUrl, cancellationToken);
                 if (response.StatusCode == HttpStatusCode.OK)
@@ -117,7 +120,7 @@ namespace Altinn.AccessManagement.Integration.Clients
         /// <inheritdoc/>
         public async Task<IDictionary<string, IEnumerable<BaseAttribute>>> GetSubjectResources(IEnumerable<string> subjects, CancellationToken cancellationToken = default)
         {
-            string endpointUrl = $"resource/bysubjects";
+            string endpointUrl = $"v1/resource/bysubjects";
             Dictionary<string, IEnumerable<BaseAttribute>> subjectResources = new Dictionary<string, IEnumerable<BaseAttribute>>();
             StringContent requestBody = new StringContent(JsonSerializer.Serialize(subjects), Encoding.UTF8, "application/json");
 
@@ -152,6 +155,32 @@ namespace Altinn.AccessManagement.Integration.Clients
             return consentTemplate;
         }
 
+        /// <inheritdoc/>
+        public async Task<List<RightDto>> GetPolicyRightsV2(string resource, string languageCode = "nb", CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                string endpointUrl = $"v2/resource/{resource}/policy/rights";
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, endpointUrl);
+                request.Headers.Add(TranslationConstants.AcceptLanguageHeader, languageCode);
+
+                HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    string content = await response.Content.ReadAsStringAsync(cancellationToken);
+                    return JsonSerializer.Deserialize<List<RightDto>>(content, options);
+                }
+
+                _logger.LogError("AccessManagement // ResourceRegistryClient // GetPolicyRights // NonOkHttpResult");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "AccessManagement // ResourceRegistryClient // GetPolicyRights // Exception");
+                throw;
+            }
+        }
+
         private async Task<List<ConsentTemplate>> GetConsentTemplates()
         {
             // Temp location. Will be moved to CDN
@@ -182,6 +211,6 @@ namespace Altinn.AccessManagement.Integration.Clients
             {
                 throw new Exception($"Something went wrong when retrieving consent templates", ex);
             }
-        }
+        }        
     }
 }

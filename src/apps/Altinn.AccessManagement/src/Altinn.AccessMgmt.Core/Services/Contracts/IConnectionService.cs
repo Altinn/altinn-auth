@@ -183,17 +183,10 @@ public interface IConnectionService
     /// <param name="party">The party performing the checl on behalf of</param>
     /// <param name="resource">The resource id to check</param>
     /// <param name="configureConnection">ConnectionOptions</param>
+    /// <param name="languageCode">the requested language code fallback "nb"</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The result on all the resource/action that is delegable on the resource and a reason behinf if the user can or can not delegate a given action</returns>
-    Task<Result<ResourceCheckDto>> ResourceDelegationCheck(Guid authenticatedUserUuid, Guid party, string resource, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Method to decompose a resource into all the resource/action that exists.
-    /// </summary>
-    /// <param name="resource">The resource id to check</param>
-    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-    /// <returns>The result on all the resource/action that is delegable on the resource and a reason behind if the user can or can not delegate a given action</returns>
-    Task<Result<ResourceDecomposedDto>> DecomposeResource(string resource, CancellationToken cancellationToken = default);
+    Task<Result<ResourceCheckDto>> ResourceDelegationCheck(Guid authenticatedUserUuid, Guid party, string resource, Action<ConnectionOptions> configureConnection = null, string languageCode = "nb", CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks if an authpenticated user is an access manager and has the necessary permissions to a specific access package for delegation of resources.

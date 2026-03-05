@@ -1,6 +1,7 @@
 ﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 
 namespace Altinn.AccessManagement.Core.Clients.Interfaces
 {
@@ -44,5 +45,14 @@ namespace Altinn.AccessManagement.Core.Clients.Interfaces
         /// Returns a consent template by its id and version
         /// </summary>
         Task<ConsentTemplate> GetConsentTemplate(string templateId,int? version, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Fetch resource policy rights for a given resource from the Resource Registry. This includes decomposing the resource's policy rules and returning the rights in a structured format that can be used for access management decisions.
+        /// </summary>
+        /// <param name="resource">the resource registry identifier</param>
+        /// <param name="languageCode">the requested language code fallback "nb"</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns></returns>
+        Task<List<RightDto>> GetPolicyRightsV2(string resource, string languageCode = "nb", CancellationToken cancellationToken = default);
     }
 }
