@@ -153,6 +153,96 @@ public class ResourceV2ControllerWithDbTests(DbFixture dbFixture, WebApplication
         }
     }
 
+    /// <summary>
+    /// Scenario: Get Policy righs for app_ttd_signering-brukerstyrt with only end-user rights included
+    /// </summary>
+    [Fact]
+    public async Task GetpolicyRightBrukerstyrtSignering_OnlyEndUserRights()
+    {
+        await LoadTestDataWithUpdates();
+        using var client = CreateAuthenticatedClient();
+
+        string requestUri = "resourceregistry/api/v2/resource/app_ttd_signering-brukerstyrt/policy/rights";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
+        {
+        };
+
+        httpRequestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+        string content = await response.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        List<RightDto>? policyRights = await response.Content.ReadFromJsonAsync<List<RightDto>>();
+        Assert.NotNull(policyRights);
+        Assert.Equal(20, policyRights.Count); // Should only contain end-user rights
+        foreach (RightDto right in policyRights)
+        {
+            Assert.NotNull(right.Key);
+            Assert.NotNull(right.Name);
+            Assert.Equal(right.Key, right.Key.ToLowerInvariant());
+        }
+    }
+
+    /// <summary>
+    /// Scenario: Get Policy righs for app_ttd_signering-brukerstyrt with both end-user and service owner rights included
+    /// </summary>
+    [Fact]
+    public async Task GetpolicyRightBrukerstyrtSignering_EndUserAndServiceOwnerRights()
+    {
+        await LoadTestDataWithUpdates();
+        using var client = CreateAuthenticatedClient();
+
+        string requestUri = "resourceregistry/api/v2/resource/app_ttd_signering-brukerstyrt/policy/rights?includeServiceOwnerRights=true";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
+        {
+        };
+
+        httpRequestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+        string content = await response.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        List<RightDto>? policyRights = await response.Content.ReadFromJsonAsync<List<RightDto>>();
+        Assert.NotNull(policyRights);
+        Assert.Equal(23, policyRights.Count); // Should only contain end-user rights
+        foreach (RightDto right in policyRights)
+        {
+            Assert.NotNull(right.Key);
+            Assert.NotNull(right.Name);
+            Assert.Equal(right.Key, right.Key.ToLowerInvariant());
+        }
+    }
+
+    [Fact]
+    public async Task GetpolicyRightBrukerstyrtSignering_EndUserAndServiceOwnerAndAppRights()
+    {
+        await LoadTestDataWithUpdates();
+        using var client = CreateAuthenticatedClient();
+
+        string requestUri = "resourceregistry/api/v2/resource/app_ttd_signering-brukerstyrt/policy/rights?includeServiceOwnerRights=true&includeAppRights=true";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
+        {
+        };
+
+        httpRequestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+        string content = await response.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        List<RightDto>? policyRights = await response.Content.ReadFromJsonAsync<List<RightDto>>();
+        Assert.NotNull(policyRights);
+        Assert.Equal(23, policyRights.Count); // Should only contain end-user rights
+        foreach (RightDto right in policyRights)
+        {
+            Assert.NotNull(right.Key);
+            Assert.NotNull(right.Name);
+            Assert.Equal(right.Key, right.Key.ToLowerInvariant());
+        }
+    }
+
 
     #region Utils
     private static ResourceSubjects CreateResourceSubjects(string resourceurn, List<string> subjecturns, string owner)

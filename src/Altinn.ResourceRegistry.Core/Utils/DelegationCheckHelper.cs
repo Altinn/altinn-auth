@@ -4,6 +4,7 @@ using Altinn.Authorization.ABAC.Xacml;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Helpers;
 using Altinn.ResourceRegistry.Core.Models;
+using static Altinn.ResourceRegistry.Core.Constants.AltinnXacmlConstants;
 
 namespace Altinn.AccessMgmt.Core.Utils.Helper
 {
@@ -50,43 +51,40 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
         /// </summary>
         /// <param name="policy">the policy to process</param>
         /// <param name="resourceId">the resource id the subjects must point to</param>
+        /// <param name="includeServiceOwnerRights">boolean indicating whether to include rights related to service owners</param>
+        /// <param name="includeAppRights">boolean indicating whether to include rights related to applications (used for paralell signing rights)</param>
         /// <returns></returns>
-        public static List<Right> DecomposePolicy(XacmlPolicy policy, string resourceId)
+        public static List<Right> DecomposePolicy(XacmlPolicy policy, string resourceId, bool includeServiceOwnerRights, bool includeAppRights)
         {
-            Dictionary<string, List<string>> rules = new Dictionary<string, List<string>>();
+            Dictionary<string, Right> rights = new Dictionary<string, Right>();
 
             foreach (XacmlRule rule in policy.Rules)
             {
-                IEnumerable<string> keys = DelegationCheckHelper.CalculateActionKey(rule, resourceId);
-                IEnumerable<string> ruleSubjects = DelegationCheckHelper.GetFirstAccessorValuesFromPolicy(rule, XacmlConstants.MatchAttributeCategory.Subject);
-                ruleSubjects = RemoveNonUserRules(ruleSubjects);
+                IEnumerable<Right> rightsWithKeys = DelegationCheckHelper.CalculateActionKey(rule, resourceId);
+                List<string> ruleSubjects = DelegationCheckHelper.GetFirstAccessorValuesFromPolicy(rule, XacmlConstants.MatchAttributeCategory.Subject).ToList();
 
-                foreach (string key in keys)
+                ruleSubjects = FilterSubjects(ruleSubjects, includeServiceOwnerRights, includeAppRights);
+
+                if (ruleSubjects.Count == 0 || !rightsWithKeys.Any())
                 {
-                    if (!rules.ContainsKey(key))
+                    continue;
+                }
+
+                foreach (Right rightWithKey in rightsWithKeys)
+                {
+                    if (!rights.TryGetValue(rightWithKey.Key, out Right value))
                     {
-                        List<string> value = [.. ruleSubjects];
-                        rules.Add(key, value);
+                        rightWithKey.AccessorUrns = [.. ruleSubjects];
+                        rights.Add(rightWithKey.Key, rightWithKey);
                     }
                     else
                     {
-                        rules[key].AddRange(ruleSubjects);
+                        value.AccessorUrns.UnionWith(ruleSubjects);
                     }
                 }
             }
 
-            List<Right> result = [];
-
-            foreach (KeyValuePair<string, List<string>> action in rules)
-            {
-                Right current = new Right();
-                current.Key = action.Key;
-                current.AccessorUrns = action.Value;
-
-                result.Add(current);
-            }
-
-            return result;
+            return rights.Values.ToList();
         }
 
         /// <summary>
@@ -95,41 +93,46 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
         /// <param name="rule">the rule to analyze</param>
         /// <param name="resourceId">the resourceid subjects must contain</param>
         /// <returns>list of resource/action keys</returns>
-        public static IEnumerable<string> CalculateActionKey(XacmlRule rule, string resourceId)
+        public static IEnumerable<Right> CalculateActionKey(XacmlRule rule, string resourceId)
         {
-            List<string> result = [];
+            List<Right> result = [];
 
             // Use policy to calculate the rest of the key
-            var resources = PolicyHelper.GetRulePolicyAttributeMatchesForCategory(rule, XacmlConstants.MatchAttributeCategory.Resource).ToList();
-            var actions = PolicyHelper.GetRulePolicyAttributeMatchesForCategory(rule, XacmlConstants.MatchAttributeCategory.Action);
-            List<string> resourceKeys = new List<string>();
+            List<List<PolicyAttributeMatch>> resources = PolicyHelper.GetRulePolicyAttributeMatchesForCategory(rule, XacmlConstants.MatchAttributeCategory.Resource).ToList();
+            List<List<PolicyAttributeMatch>> actions = PolicyHelper.GetRulePolicyAttributeMatchesForCategory(rule, XacmlConstants.MatchAttributeCategory.Action);
+            List<Right> resourceKeys = new List<Right>();
             List<string> actionKeys = new List<string>();
 
             foreach (var resource in resources)
             {
-                var org = resource.FirstOrDefault(r => r.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute));
-                var app = resource.FirstOrDefault(r => r.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute));
+                var org = resource.FirstOrDefault(r => r.Type.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute));
+                var app = resource.FirstOrDefault(r => r.Type.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute));
 
                 if (org != null && app != null)
                 {
                     string resourceAppId = $"app_{org.Value}_{app.Value}";
                     resource.Remove(org);
                     resource.Remove(app);
-                    resource.Add(new PolicyAttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, Value = resourceAppId });
+                    resource.Add(new PolicyAttributeMatch { Type = AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, Value = resourceAppId });
                 }
 
                 // Just throw away resources not matching the resourceid we are looking for
-                if (resource.Any(r => r.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute) && r.Value.Equals(resourceId, StringComparison.OrdinalIgnoreCase)) == false)
+                if (resource.Any(r => r.Type.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute) && r.Value.Equals(resourceId, StringComparison.OrdinalIgnoreCase)) == false)
                 {
                     continue;
                 }
 
+                Right rightWithKey = new Right
+                {
+                    Resource = [..resource] // Collection expression with spread - creates a new list
+                };
+
                 StringBuilder resourceKey = new();
 
-                resource.Sort((a, b) => string.Compare(a.Id, b.Id, StringComparison.InvariantCultureIgnoreCase));
+                resource.Sort((a, b) => string.Compare(a.Type, b.Type, StringComparison.InvariantCultureIgnoreCase));
                 foreach (var item in resource)
                 {
-                    resourceKey.Append(item.Id);
+                    resourceKey.Append(item.Type);
                     resourceKey.Append(':');
                     resourceKey.Append(item.Value);
                     resourceKey.Append(':');
@@ -140,17 +143,18 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
                     resourceKey.Remove(resourceKey.Length - 1, 1);
                 }
 
-                resourceKeys.Add(resourceKey.ToString());
+                rightWithKey.Key = resourceKey.ToString();
+                resourceKeys.Add(rightWithKey);
             }
 
             foreach (var action in actions)
             {
                 StringBuilder actionKey = new();
 
-                action.Sort((a, b) => string.Compare(a.Id, b.Id, StringComparison.InvariantCultureIgnoreCase));
+                action.Sort((a, b) => string.Compare(a.Type, b.Type, StringComparison.InvariantCultureIgnoreCase));
                 foreach (var item in action)
                 {
-                    actionKey.Append(item.Id);
+                    actionKey.Append(item.Type);
                     actionKey.Append(':');
                     actionKey.Append(item.Value);
                     actionKey.Append(':');
@@ -164,11 +168,11 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
                 actionKeys.Add(actionKey.ToString());
             }
 
-            foreach (var resource in resourceKeys)
+            foreach (Right resource in resourceKeys)
             {
                 foreach (var action in actionKeys)
                 {
-                    result.Add(resource + ":" + action);
+                    result.Add(new Right { Key = resource.Key + ":" + action, Resource = resource.Resource, Action = new PolicyAttributeMatch() { Type = MatchAttributeIdentifiers.ActionId, Value = action.Replace(MatchAttributeIdentifiers.ActionId + ":", string.Empty) } });
                 }
             }
 
@@ -215,9 +219,11 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
         /// package attributes. This method excludes any urns that do not match these prefixes.</remarks>
         /// <param name="accessUrns">An enumerable collection of urns to be filtered. Each string is evaluated to determine if it
         /// matches a user rule attribute prefix.</param>
+        /// <param name="includeServiceOwnerRights">boolean indicating whether to include rights related to service owners</param>
+        /// <param name="includeAppRights">boolean indicating whether to include rights related to applications (used for paralell signing rights)</param>
         /// <returns>An enumerable collection containing only the rule subjects that correspond to user rules. The collection
         /// will be empty if no subjects match the recognized prefixes.</returns>
-        private static IEnumerable<string> RemoveNonUserRules(IEnumerable<string> accessUrns)
+        private static List<string> FilterSubjects(IEnumerable<string> accessUrns, bool includeServiceOwnerRights, bool includeAppRights)
         {
             List<string> result = [];
             foreach (string urn in accessUrns)
@@ -235,6 +241,14 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
                     result.Add(urn);
                 }
                 else if (urn.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.AccessPackageAttribute))
+                {
+                    result.Add(urn);
+                }
+                else if (includeServiceOwnerRights && urn.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute))
+                {
+                    result.Add(urn);
+                }
+                else if (includeAppRights && urn.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.Delegation))
                 {
                     result.Add(urn);
                 }

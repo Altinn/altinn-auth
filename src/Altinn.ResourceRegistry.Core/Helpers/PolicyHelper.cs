@@ -251,7 +251,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
                     {
                         if (xacmlMatch.AttributeDesignator.Category.Equals(category))
                         {
-                            anyOfAttributeMatches.Add(new PolicyAttributeMatch { Id = xacmlMatch.AttributeDesignator.AttributeId.OriginalString, Value = xacmlMatch.AttributeValue.Value });
+                            anyOfAttributeMatches.Add(new PolicyAttributeMatch { Type = xacmlMatch.AttributeDesignator.AttributeId.OriginalString, Value = xacmlMatch.AttributeValue.Value });
                         }
                     }
 

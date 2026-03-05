@@ -7,6 +7,7 @@ using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using static Altinn.ResourceRegistry.Core.Constants.AltinnXacmlConstants;
 
 namespace Altinn.ResourceRegistry.Controllers
 {
@@ -44,9 +45,9 @@ namespace Altinn.ResourceRegistry.Controllers
         [HttpGet("{id}/policy/rights")]
         [Produces("application/json")]
         [Consumes("application/json")]
-        public async Task<ActionResult<ResourceDecomposedDto>> GetRights(string id, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<ResourceDecomposedDto>> GetRights(string id, bool includeServiceOwnerRights = false, bool includeAppRights = false, CancellationToken cancellationToken = default)
         {
-            List<Right> rights = await _resourceRegistry.GetPolicyRightsV2(id, cancellationToken);
+            List<Right> rights = await _resourceRegistry.GetPolicyRightsV2(id, includeServiceOwnerRights, includeAppRights, cancellationToken);
 
             string language = HttpContext.Request.Headers.AcceptLanguage.FirstOrDefault();
             if (language == null) 
@@ -80,9 +81,9 @@ namespace Altinn.ResourceRegistry.Controllers
             {
                 Key = "01" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(rights.Key.ToLowerInvariant()))).ToLowerInvariant(),
                 Name = GetActionNameFromRightKey(rights.Key, resource, language),
-                Resource = resourceAndAction.Resource.OrderBy(r => !r.StartsWith("urn:altinn:resource", StringComparison.OrdinalIgnoreCase)).ToArray(),
-                Action = resourceAndAction.Action
-            };
+                Resource = rights.Resource.Select(m => new AttributeMatchDTO() { Type = m.Type, Value = m.Value }).ToList(),
+                Action = new AttributeMatchDTO() { Type = MatchAttributeIdentifiers.ActionId, Value = rights.Action.Value }
+            };  
     
             return right;
         }

@@ -519,7 +519,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<Right>> GetPolicyRightsV2(string resourceId, CancellationToken cancellationToken = default)
+        public async Task<List<Right>> GetPolicyRightsV2(string resourceId, bool includeServiceOwnerRights, bool includeAppRights, CancellationToken cancellationToken = default)
         {
             XacmlPolicy policy = await GetXacmlPolicy(resourceId, cancellationToken);
             if (policy == null)
@@ -528,7 +528,7 @@ namespace Altinn.ResourceRegistry.Core.Services
             }
             
             // Decompose policy into resource/tasks
-            List<Right> rights = DelegationCheckHelper.DecomposePolicy(policy, resourceId);
+            List<Right> rights = DelegationCheckHelper.DecomposePolicy(policy, resourceId, includeServiceOwnerRights, includeAppRights);
 
             return rights;
         }

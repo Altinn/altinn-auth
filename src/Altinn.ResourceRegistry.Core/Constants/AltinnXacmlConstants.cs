@@ -100,6 +100,11 @@ namespace Altinn.ResourceRegistry.Core.Constants
             /// Access package for organisations attribute match identifier 
             /// </summary>
             public const string AccessPackageAttribute = "urn:altinn:accesspackage";
+
+            /// <summary>
+            /// Delegation attribute match identifier uses for user controlled delegation
+            /// </summary>
+            public const string Delegation = "urn:altinn:resource:delegation";
         }
 
         /// <summary>

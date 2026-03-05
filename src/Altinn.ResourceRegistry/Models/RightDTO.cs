@@ -19,11 +19,11 @@
         /// <summary>
         /// Concatenated key for subresources from policy rule
         /// </summary>
-        public IEnumerable<string> Resource { get; set; }
+        public IEnumerable<AttributeMatchDTO> Resource { get; set; }
 
         /// <summary>
         /// Action
         /// </summary>
-        public string Action { get; set; }
+        public AttributeMatchDTO Action { get; set; }
     }
 }
