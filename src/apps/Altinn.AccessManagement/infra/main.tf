@@ -192,7 +192,7 @@ module "appsettings" {
   hub_suffix = local.hub_suffix
 
   labels = {
-    "${var.environment}-accessmanagement" = {
+    "${var.environment}-access-management" = {
       values = {
         "ConsentMigration:BatchSize" = { value = tostring(var.configuration.consent.batch_size) }
       }
