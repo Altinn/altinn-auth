@@ -5,8 +5,8 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toPerson}}&package={{package}}
-  body: json
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toPerson}}
+  body: none
   auth: inherit
 }
 
@@ -14,7 +14,6 @@ params:query {
   party: {{party}}
   from: {{party}}
   to: {{toPerson}}
-  package: {{package}}
 }
 
 body:json {
@@ -26,8 +25,9 @@ script:pre-request {
   const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("party", testdata.vassen_riktig_tiger_as.partyuuid);
-  bru.setVar("toPerson", testdata.vassen_riktig_tiger_as.person1.pid);
-  bru.setVar("toPersonLastName", testdata.vassen_riktig_tiger_as.person1.lastname);
+  bru.setVar("package", testdata.package_to_delegate.package_urn);
+  bru.setVar("toPerson", testdata.vassen_riktig_tiger_as.person1.partyuuid);
+  
   
   var getTokenParameters = {
     auth_userId: testdata.vassen_riktig_tiger_as.dagl.userid,
@@ -49,12 +49,9 @@ tests {
   test("GET_Enduser_Conn_AccPcks_Person_ToOthers_Deleted", function() {
   
      const data = res.getBody();
-    
-     const package = data.data.find(item => item.package.id === bru.getEnvVar("packageId"));
-     expect(package).to.exist;
-    
-    const to = package.permissions.find(item => item.to.id === testdata.vassen_riktig_tiger_as.person1.partyuuid.toLowerCase());
-    expect(to).to.not.exist;
+    expect(res.status).to.equal(200);
+    expect(data.data).to.be.empty;
+  
   });
 }
 

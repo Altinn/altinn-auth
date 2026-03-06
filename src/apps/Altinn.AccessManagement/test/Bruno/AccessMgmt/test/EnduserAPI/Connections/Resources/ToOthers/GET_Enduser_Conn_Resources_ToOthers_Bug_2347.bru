@@ -5,18 +5,16 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/rules?party=2c0fe83d-f4f7-4cf4-9e83-cfa0b2e677d5&from=2c0fe83d-f4f7-4cf4-9e83-cfa0b2e677d5&to=2ef6656c-ae55-40b8-aa68-d796d511c20b&resource=altinn2-link-service-with-srr-and-consent-gui-test
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/rights?party={{party}}&from={{party}}&to={{party}}&resource={{resource}}
   body: json
   auth: inherit
 }
 
 params:query {
-  party: 2c0fe83d-f4f7-4cf4-9e83-cfa0b2e677d5
-  from: 2c0fe83d-f4f7-4cf4-9e83-cfa0b2e677d5
-  to: 2ef6656c-ae55-40b8-aa68-d796d511c20b
-  resource: altinn2-link-service-with-srr-and-consent-gui-test
-  ~resource: {{resource}}
-  ~to: {{party}}
+  party: {{party}}
+  from: {{party}}
+  to: {{party}}
+  resource: {{resource}}
 }
 
 headers {
@@ -38,7 +36,7 @@ script:pre-request {
     auth_partyUuid: testdata.VOKSENDE_FRYKTLØS_TIGER.dagligleder.partyUuid,
     auth_ssn: testdata.VOKSENDE_FRYKTLØS_TIGER.dagligleder.pid,
     auth_tokenType: sharedtestdata.authTokenType.personal,
-    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    auth_scopes: sharedtestdata.auth_scopes.sluttbrukersystemsopesReadToOthers
   }
   
   

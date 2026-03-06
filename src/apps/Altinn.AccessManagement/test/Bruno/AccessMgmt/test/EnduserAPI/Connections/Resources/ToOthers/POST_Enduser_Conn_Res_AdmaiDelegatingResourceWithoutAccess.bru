@@ -50,7 +50,7 @@ script:pre-request {
     auth_partyUuid: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.a2_tilgangsstyrer.partyUuid,
     auth_ssn: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.a2_tilgangsstyrer.pid,
     auth_tokenType: sharedtestdata.authTokenType.personal,
-    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    auth_scopes: sharedtestdata.auth_scopes.sluttbrukersystemsopesWriteToOrganizations
   }
   
   const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
