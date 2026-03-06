@@ -1,4 +1,6 @@
-﻿using Altinn.AccessManagement.Core.Repositories.Interfaces;
+﻿using Altinn.AccessManagement.Core.Clients.Interfaces;
+using Altinn.AccessManagement.Core.Configuration;
+using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Authorization;
@@ -22,6 +24,7 @@ public static class ServiceCollectionExtensions
         services.AddHostedService<RegisterHostedService>();
         services.AddHostedService<AltinnRoleHostedService>();
         services.AddHostedService<SingleRightsHostedService>();
+        services.AddHostedService<ConsentMigrationHostedService>();
         services.AddScoped<RegisterHostedService>();
         services.AddScoped<IIngestService, IngestService>();
         services.AddScoped<IConnectionService, ConnectionService>();
@@ -43,6 +46,15 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthorizationScopeProvider, DefaultAuthorizationScopeProvider>();
         services.AddScoped<IAuthorizationHandler, ScopeConditionAuthorizationHandler>();
 
+        // Consent Migration - Configuration
+        services.AddOptions<ConsentMigrationSettings>()
+                .ValidateDataAnnotations()
+                .ValidateOnStart()
+                .BindConfiguration("ConsentMigration");
+
+        // Consent Migration - Services (Core - Scoped)
+        services.AddScoped<IConsentMigrationService, ConsentMigrationService>();        
+
         AddJobs(services);
         return services;
     }
@@ -58,5 +70,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISingleAppRightSyncService, SingleAppRightSyncService>();
         services.AddSingleton<ISingleResourceRegistryRightSyncService, SingleResourceRegistryRightSyncService>();
         services.AddSingleton<ISingleInstanceRightSyncService, SingleInstanceRightSyncService>();
+        services.AddSingleton<IConsentMigrationSyncService, ConsentMigrationSyncService>();
     }
 }

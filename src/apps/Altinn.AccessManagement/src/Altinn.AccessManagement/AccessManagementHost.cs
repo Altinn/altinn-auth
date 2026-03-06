@@ -37,6 +37,7 @@ using Microsoft.FeatureManagement;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Npgsql;
+using OpenTelemetry.Metrics;
 using Swashbuckle.AspNetCore.Filters;
 
 namespace Altinn.AccessManagement;
@@ -81,6 +82,9 @@ internal static partial class AccessManagementHost
                     });
             }
         }
+
+        builder.Services.ConfigureOpenTelemetryMeterProvider(provider =>
+                    provider.AddMeter("Altinn.AccessManagement.ConsentMigration"));
 
         var connectionStrings = GetConnectionStrings(builder.Configuration);
 

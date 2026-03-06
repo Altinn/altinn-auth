@@ -82,3 +82,12 @@ variable "db_storage_tier" {
   type    = string
   default = "P10"
 }
+
+variable "configuration" {
+  type = object({
+    consent = optional(object({
+      batch_size = optional(number, 5)
+    }), {})
+  })
+  default = {}
+}

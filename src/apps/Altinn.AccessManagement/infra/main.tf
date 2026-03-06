@@ -190,6 +190,15 @@ data "azurerm_key_vault_secret" "postgres_app" {
 module "appsettings" {
   source     = "../../../../infra/modules/appsettings"
   hub_suffix = local.hub_suffix
+
+  labels = {
+    "${var.environment}-accessmanagement" = {
+      values = {
+        "ConsentMigration:BatchSize" = { value = tostring(var.configuration.consent.batch_size) }
+      }
+    }
+  }
+
   key_vault_reference = [
     {
       key                 = "Database:Postgres:AppConnectionString"
@@ -339,6 +348,12 @@ module "appsettings" {
     {
       name        = "AccessManagement.ResourceDelegation.EF"
       description = "Specifies if singlerights resource delegation should use ef."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Core.HostedServices.ConsentMigration"
+      description = "Specifies if consent migration service should start"
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },
