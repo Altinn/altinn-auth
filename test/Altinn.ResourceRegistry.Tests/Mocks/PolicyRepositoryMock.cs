@@ -50,7 +50,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             return null;
         }
 
-        public Task<Stream> GetPolicyVersionAsync(string filepath, string version, CancellationToken cancellationToken)
+        public Task<Stream?> GetPolicyVersionAsync(string filepath, string version, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }

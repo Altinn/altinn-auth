@@ -14,8 +14,8 @@ namespace Altinn.ResourceRegistry.Core
         /// </summary>
         /// <param name="resourceId">The resource id</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-        /// <returns>File stream of the policy file</returns>
-        Task<Stream> GetPolicyAsync(string resourceId, CancellationToken cancellationToken = default);
+        /// <returns>File stream of the policy file, or null if not found or empty</returns>
+        Task<Stream?> GetPolicyAsync(string resourceId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets file stream for the App policy file from blob storage
@@ -23,8 +23,8 @@ namespace Altinn.ResourceRegistry.Core
         /// <param name="org">The org</param>
         /// <param name="app">the app</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-        /// <returns>File stream of the policy file</returns>
-        Task<Stream> GetAppPolicyAsync(string org, string app, CancellationToken cancellationToken = default);
+        /// <returns>File stream of the policy file, or null if not found or empty</returns>
+        Task<Stream?> GetAppPolicyAsync(string org, string app, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets file stream for the specified version of a policy file from blob storage, if it exists at the specified path.
@@ -32,8 +32,8 @@ namespace Altinn.ResourceRegistry.Core
         /// <param name="resourceId">The resource id</param>
         /// <param name="version">The blob storage version</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-        /// <returns>File stream of the policy file</returns>
-        Task<Stream> GetPolicyVersionAsync(string resourceId, string version, CancellationToken cancellationToken = default);
+        /// <returns>File stream of the policy file, or null if not found or empty</returns>
+        Task<Stream?> GetPolicyVersionAsync(string resourceId, string version, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Writes a file stream to blobstorage to the specified path.

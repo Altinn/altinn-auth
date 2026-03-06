@@ -47,7 +47,7 @@ internal class PolicyRepository : IPolicyRepository
     }
 
     /// <inheritdoc/>
-    public async Task<Stream> GetPolicyAsync(string resourceId, CancellationToken cancellationToken = default)
+    public async Task<Stream?> GetPolicyAsync(string resourceId, CancellationToken cancellationToken = default)
     {
         string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
         BlobClient blobClient = CreateBlobClient(filePath);
@@ -56,7 +56,7 @@ internal class PolicyRepository : IPolicyRepository
     }
 
     /// <inheritdoc/>
-    public async Task<Stream> GetAppPolicyAsync(string org, string app, CancellationToken cancellationToken = default)
+    public async Task<Stream?> GetAppPolicyAsync(string org, string app, CancellationToken cancellationToken = default)
     {
         string filePath = PolicyHelper.GetAltinnAppsPolicyPath(org, app);
         BlobClient blobClient = CreateAppPolicyBlobClient(filePath);
@@ -65,7 +65,7 @@ internal class PolicyRepository : IPolicyRepository
     }
 
     /// <inheritdoc/>
-    public async Task<Stream> GetPolicyVersionAsync(string resourceId, string version, CancellationToken cancellationToken = default)
+    public async Task<Stream?> GetPolicyVersionAsync(string resourceId, string version, CancellationToken cancellationToken = default)
     {
         string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
         BlobClient blobClient = CreateBlobClient(filePath).WithVersion(version);
@@ -251,21 +251,26 @@ internal class PolicyRepository : IPolicyRepository
         return _metadataContainerClient.GetBlobClient(blobName);
     }
 
-    private async Task<Stream> GetBlobStreamInternal(BlobClient blobClient, CancellationToken cancellationToken = default)
+    private async Task<Stream?> GetBlobStreamInternal(BlobClient blobClient, CancellationToken cancellationToken = default)
     {
         try
         {
             Stream memoryStream = new MemoryStream();
-
-            if (await blobClient.ExistsAsync(cancellationToken))
+            await blobClient.DownloadToAsync(memoryStream, cancellationToken);
+            
+            if (memoryStream.Length == 0)
             {
-                await blobClient.DownloadToAsync(memoryStream, cancellationToken);
-                memoryStream.Position = 0;
-
-                return memoryStream;
+                _logger.LogWarning("Policy file at {BlobName} was downloaded but is empty.", blobClient.Name);
+                return null;
             }
-
+            
+            memoryStream.Position = 0;
             return memoryStream;
+        }
+        catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.NotFound)
+        {
+            _logger.LogWarning("Policy file not found at {BlobName}.", blobClient.Name);
+            return null;
         }
         catch (Exception ex)
         {
