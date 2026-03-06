@@ -148,22 +148,22 @@
         /// <summary>
         /// Enduser scope giving access to read operations on received connections aka from others
         /// </summary>
-        public const string SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ = "altinn:accmgmt/enduser:connections:from-others.read";
+        public const string SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ = "altinn:accessmanagement/enduser:connections:fromothers.read";
 
         /// <summary>
         /// Enduser scope giving access to write operations on received connections aka from others
         /// </summary>
-        public const string SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_WRITE = "altinn:accmgmt/enduser:connections:from-others.write";
+        public const string SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_WRITE = "altinn:accessmanagement/enduser:connections:fromothers.write";
 
         /// <summary>
         /// Enduser scope giving access to read operations on provided connections aka to others
         /// </summary>
-        public const string SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ = "altinn:accmgmt/enduser:connections:to-others.read";
+        public const string SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ = "altinn:accessmanagement/enduser:connections:toothers.read";
 
         /// <summary>
         /// Enduser scope giving access to write operations on provided connections aka to others
         /// </summary>
-        public const string SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE = "altinn:accmgmt/enduser:connections:to-others.write";
+        public const string SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE = "altinn:accessmanagement/enduser:connections:toothers.write";
 
         /// <summary>
         /// Scope giving access to getting authorized parties for a given subject.
