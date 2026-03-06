@@ -253,7 +253,7 @@ namespace Altinn.ResourceRegistry.Controllers
         public async Task<ActionResult> GetPolicy(string id, CancellationToken cancellationToken)
         {
             ServiceResource resource = await _resourceRegistry.GetResource(id, null, cancellationToken);
-            if (resource == null && id.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX))
+            if (id.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX))
             {
                 string[] idParts = id.Split('_');
 
