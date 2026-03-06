@@ -20,11 +20,8 @@ params:query {
 body:json {
   {
     "DirectRightKeys": [
-      "urn:altinn:resource:app_ttd_test-bruno-app-for-delegation:urn:oasis:names:tc:xacml:1.0:action:action-id:read",
-      
-      "urn:altinn:resource:app_ttd_test-bruno-app-for-delegation:urn:oasis:names:tc:xacml:1.0:action:action-id:write"
-      
-      
+      "01e5e0b7aba56e68ebf0e78ca710170a3535cb13cd23e6d54bd361bef8d87611bc", 
+      "01a9dab63238e815f06d6503d1f0144457db03b0738d16002aa3aa3ad49f7caaa2" 
       
     ]
   }
@@ -50,7 +47,7 @@ script:pre-request {
     auth_partyUuid: testdata.orgA_delegates.innehaver.partyuuid,
     auth_ssn: testdata.orgA_delegates.innehaver.pid,
     auth_tokenType: sharedtestdata.authTokenType.personal,
-    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    auth_scopes: sharedtestdata.auth_scopes.sluttbrukersystemsopesWriteToOrganizations
   }
   
   

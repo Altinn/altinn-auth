@@ -1,7 +1,7 @@
 meta {
   name: POST_Delegate_Enkelttjeneste_til_bruker
   type: http
-  seq: 2
+  seq: 3
 }
 
 post {
@@ -20,9 +20,9 @@ params:query {
 body:json {
   {
     "DirectRightKeys": [
-      "urn:altinn:resource:ttd-test-bruno-enkelttjeneste-privatperson-ressurs:urn:oasis:names:tc:xacml:1.0:action:action-id:read",
+      "01110dbbc220efc3f5bc4137dbcb793c23806ffcb990f6d14e8212b42e5482ee75",
       
-      "urn:altinn:resource:ttd-test-bruno-enkelttjeneste-privatperson-ressurs:urn:oasis:names:tc:xacml:1.0:action:action-id:write"
+      "01bc693317ed4472b404eac91fd20841c2b572a64e4f1a0698ee85791abf2db5b6"
       
       
       
@@ -50,7 +50,7 @@ script:pre-request {
     auth_partyUuid: testdata.Bruker_A_delegates.partyuuid,
     auth_ssn: testdata.Bruker_A_delegates.pid,
     auth_tokenType: sharedtestdata.authTokenType.personal,
-    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    auth_scopes: sharedtestdata.auth_scopes.sluttbrukersystemsopesWriteToOrganizations
   }
   
   
@@ -60,8 +60,6 @@ script:pre-request {
 }
 
 tests {
-  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
-  
   test("Delegate enkelttjeneste ressurs to privat person user ", function() {
     const data = res.getBody();
     

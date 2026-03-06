@@ -20,9 +20,9 @@ params:query {
 body:json {
   {
     "DirectRightKeys": [
-      "urn:altinn:resource:ttd-test-bruno-enkelttjeneste-privatperson-ressurs:urn:oasis:names:tc:xacml:1.0:action:action-id:read",
+      "01045f32abedc746d8118db94c5f846573758417a812ead006e098cba0be7a6db7",
       
-      "urn:altinn:resource:ttd-test-bruno-enkelttjeneste-privatperson-ressurs:urn:oasis:names:tc:xacml:1.0:action:action-id:write"  
+      "01bc693317ed4472b404eac91fd20841c2b572a64e4f1a0698ee85791abf2db5b6"  
       
     ]
   }
@@ -39,7 +39,7 @@ script:pre-request {
   const testdata = require(`./testdata/enkelttjenestedelegering/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("party", testdata.Bruker_A_delegates.partyuuid);
-  bru.setVar("to", testdata.Bruker_B_delegates.partyuuid);
+  bru.setVar("to", testdata.orgB_delegates.partyuuid);
   bru.setVar("resource", testdata.resource_to_delegate.resource_id_privatperson);
   
   var getTokenParameters = {
@@ -48,7 +48,7 @@ script:pre-request {
     auth_partyUuid: testdata.Bruker_A_delegates.partyuuid,
     auth_ssn: testdata.Bruker_A_delegates.pid,
     auth_tokenType: sharedtestdata.authTokenType.personal,
-    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    auth_scopes: sharedtestdata.auth_scopes.sluttbrukersystemsopesWriteToOrganizations
   }
   
   
@@ -65,9 +65,8 @@ tests {
     
     expect(res.status).to.equal(400);
     expect(data).to.have.property(
-    "detail",
-    "Operation can not be completed, because it requires an existing connection between the parties."
-  );
+   "detail",
+   "Operation can not be completed, because it requires an existing connection between the parties.")
     
   });
 }

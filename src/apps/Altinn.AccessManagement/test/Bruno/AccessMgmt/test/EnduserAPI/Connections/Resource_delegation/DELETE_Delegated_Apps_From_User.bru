@@ -5,15 +5,15 @@ meta {
 }
 
 delete {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources?party={{party}}&from={{party}}&to={{to}}&resource={{resource}}
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources?party={{to}}&to={{to}}&from={{party}}&resource={{resource}}
   body: json
   auth: inherit
 }
 
 params:query {
-  party: {{party}}
-  from: {{party}}
+  party: {{to}}
   to: {{to}}
+  from: {{party}}
   resource: {{resource}}
 }
 
@@ -26,12 +26,12 @@ script:pre-request {
   bru.setVar("resource", testdata.resource_to_delegate.app_id);
   
   var getTokenParameters = {
-    auth_userId: testdata.orgA_delegates.innehaver.userid,
-    auth_partyId: testdata.orgA_delegates.innehaver.partyid,
-    auth_partyUuid: testdata.orgA_delegates.innehaver.partyuuid,
-    auth_ssn: testdata.orgA_delegates.innehaver.pid,
+    auth_userId: testdata.orgB_delegates.bostyrer.userid,
+    auth_partyId: testdata.orgB_delegates.bostyrer.partyid,
+    auth_partyUuid: testdata.orgB_delegates.bostyrer.partyuuid,
+    auth_ssn: testdata.orgB_delegates.bostyrer.pid,
     auth_tokenType: sharedtestdata.authTokenType.personal,
-    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    auth_scopes: sharedtestdata.auth_scopes.sluttbrukersystemsopesWriteFromOrganizations
   }
   
   
@@ -41,7 +41,7 @@ script:pre-request {
 }
 
 tests {
-  test("Revoke delegated App from User", function() {
+  test("Revoke delegated App from User : FromOthers", function() {
     const data = res.getBody();
     
     expect(res.status).to.equal(204);

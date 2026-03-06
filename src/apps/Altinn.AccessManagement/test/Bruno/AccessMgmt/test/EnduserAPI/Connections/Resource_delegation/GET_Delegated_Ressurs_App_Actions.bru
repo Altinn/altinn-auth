@@ -31,7 +31,7 @@ script:pre-request {
     auth_partyUuid: testdata.orgA_delegates.innehaver.partyuuid,
     auth_ssn: testdata.orgA_delegates.innehaver.pid,
     auth_tokenType: sharedtestdata.authTokenType.personal,
-    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    auth_scopes: sharedtestdata.auth_scopes.sluttbrukersystemsopesReadToOthers
   }
   
   
@@ -41,39 +41,41 @@ script:pre-request {
 }
 
 tests {
-  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
-  
   test("GET_Delegated actions on Apps ", function() {
+    
+    const testdata = require(`./testdata/enkelttjenestedelegering/${bru.getEnvVar("tokenEnv")}.js`);
     const data = res.getBody();
     
     expect(res.status).to.equal(200);
     
     // Resource check
   expect(data.resource).to.exist;
-  expect(data.resource.refId).to.equal("app_ttd_test-bruno-app-for-delegation");
+  expect(data.resource.refId).to.equal(testdata.resource_to_delegate.app_id);
   
-  // No indirect rights
-  expect(data.indirectRights).to.be.an("array");
-  expect(data.indirectRights.length).to.equal(0);
-  
-  // Expected actions (ONLY these)
-  const expectedActions = [
-    "urn:oasis:names:tc:xacml:1.0:action:action-id:read",
-    "urn:oasis:names:tc:xacml:1.0:action:action-id:write"
-  ];
-  
-  // Collect actions from response
-  const actualActions = data.directRights.map(r => r.right.action);
-  
-  // Verify: no missing and no extra actions
+  // Expected actions
+  const expectedActions = ["read", "write"];
+  const actualActions = data.directRights.map(d => d.right.action.value);
   expect(actualActions).to.have.members(expectedActions);
   
-  // Verify each right is "direct" and has permissions
-  data.directRights.forEach(r => {
-    expect(r.reason.items[0].name).to.equal("direct");
-    expect(r.permissions).to.be.an("array");
-    expect(r.permissions.length).to.be.greaterThan(0);
-  });
+  // Verify each right
+  data.directRights.forEach(d => {
+  
+    // reason check
+    expect(d.reason.items[0].name).to.equal("direct");
+  
+    // resource check
+    expect(d.right.resource[0]).to.have.property(
+      "value",
+      testdata.resource_to_delegate.app_id
+    );
+  
+    // permission check
+    const perm = d.permissions[0];
+  
+    expect(perm.from).to.have.property("id", testdata.orgA_delegates.partyuuid);
+    expect(perm.to).to.have.property("id", testdata.orgB_delegates.partyuuid);
+    
+  })
     
     
   });

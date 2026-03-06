@@ -42,7 +42,7 @@ script:pre-request {
     auth_partyUuid: testdata.Bruker_A_delegates.partyuuid,
     auth_ssn: testdata.Bruker_A_delegates.pid,
     auth_tokenType: sharedtestdata.authTokenType.personal,
-    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    auth_scopes: sharedtestdata.auth_scopes.sluttbrukersystemsopesReadToOthers
   }
   
   
@@ -52,9 +52,9 @@ script:pre-request {
 }
 
 tests {
-  const testdata = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
-  
   test("GET_Delegated actions on resources after updating actions ", function() {
+    
+    const testdata = require(`./testdata/enkelttjenestedelegering/${bru.getEnvVar("tokenEnv")}.js`);
     const data = res.getBody();
     
     expect(res.status).to.equal(200);
@@ -63,30 +63,31 @@ tests {
   expect(data.resource).to.exist;
   expect(data.resource.refId).to.equal("ttd-test-bruno-enkelttjeneste-privatperson-ressurs");
   
-  // No indirect rights
-  expect(data.indirectRights).to.be.an("array");
-  expect(data.indirectRights.length).to.equal(0);
+  expect(data.directRights.length).to.equal(3);
   
-  // Expected actions (ONLY these)
-  const expectedActions = [
-    "urn:oasis:names:tc:xacml:1.0:action:action-id:read",
-    "urn:oasis:names:tc:xacml:1.0:action:action-id:write",
-    "urn:oasis:names:tc:xacml:1.0:action:action-id:sign"
-  ];
+  // Expected actions
+  const expectedActions = ["read", "write", "delete"];
+  const actualActions = data.directRights.map(d => d.right.action.value);
   
-  // Collect actions from response
-  const actualActions = data.directRights.map(r => r.right.action);
-  
-  // Verify: no missing and no extra actions
+  // Verify exact actions (no missing/extra)
   expect(actualActions).to.have.members(expectedActions);
   
-  // Verify each right is "direct" and has permissions
-  data.directRights.forEach(r => {
-    expect(r.reason.items[0].name).to.equal("direct");
-    expect(r.permissions).to.be.an("array");
-    expect(r.permissions.length).to.be.greaterThan(0);
+  // Verify each directRight details
+  data.directRights.forEach(d => {
+    // direct reason
+    expect(d.reason.items[0].name).to.equal("direct");
+  
+  
+    // permissions exist
+    expect(d.permissions).to.be.an("array");
+    expect(d.permissions.length).to.be.greaterThan(0);
+  
+    const perm = d.permissions[0];
+  
+    // from/to match
+    expect(perm.from).to.have.property("id", testdata.Bruker_A_delegates.partyuuid);
+    expect(perm.to).to.have.property("id", testdata.Bruker_B_delegates.partyuuid);
   });
-    
     
   });
 }

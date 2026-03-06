@@ -58,31 +58,25 @@ tests {
   test("DelegationCheck for party has access to resource to delegate", function() {
     const data = res.getBody();
     
-  expect(data.resource).to.exist;
-  expect(data.resource.refId).to.equal(testdata.resource_to_delegate.resource_id_privatperson);
-  
+  expect(data.rights).to.be.an("array");
   expect(data.rights.length).to.equal(5);
   
-  // Expected actions
-  const expectedActions = [
-    "urn:oasis:names:tc:xacml:1.0:action:action-id:read",
-    "urn:oasis:names:tc:xacml:1.0:action:action-id:write",
-    "urn:oasis:names:tc:xacml:1.0:action:action-id:delete",
-    "urn:oasis:names:tc:xacml:1.0:action:action-id:sign",
-    "urn:oasis:names:tc:xacml:1.0:action:action-id:confirm"
-  ];
+  const expectedActions = ["read", "write", "delete", "sign", "confirm"];
   
-  // Loop through rules and validate
-  data.rights.forEach(wrapper => {
+  const actualActions = data.rights.map(r => r.right.action.value);
   
-    expect(wrapper).to.exist;
-    expect(wrapper.right).to.exist;
+  expect(actualActions).to.have.members(expectedActions);
   
-    const action = wrapper.right.action;
+  data.rights.forEach(r => {
+    expect(r.result).to.equal(true);
+    expect(r.reasonCodes).to.include("RoleAccess");
   
-    expect(expectedActions).to.include(action);
-    expect(wrapper.result).to.equal(true);
-    expect(wrapper.reasonCodes).to.include("RoleAccess");
+    // Key should exist
+    expect(r.right.key).to.exist;
+  
+    // Resource in right should match the same resource refId
+    expect(r.right.resource).to.be.an("array");
+    expect(r.right.resource[0]).to.have.property("value", testdata.resource_to_delegate.resource_id_privatperson);
   
   });
   });

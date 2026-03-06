@@ -1,7 +1,7 @@
 meta {
   name: GET_Empty_Response_After_Deleted_Delegated_Ressurs
   type: http
-  seq: 9
+  seq: 10
 }
 
 get {
@@ -31,7 +31,7 @@ script:pre-request {
     auth_partyUuid: testdata.orgA_delegates.innehaver.partyuuid,
     auth_ssn: testdata.orgA_delegates.innehaver.pid,
     auth_tokenType: sharedtestdata.authTokenType.personal,
-    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    auth_scopes: sharedtestdata.auth_scopes.sluttbrukersystemsopesReadToOthers
   }
   
   

@@ -11,7 +11,11 @@
         "maskinportenAdmin": "altinn:maskinporten/delegations.admin",
         "authorizedParties": "altinn:accessmanagement/authorizedparties",
         "authorizedPartiesResourceOwner": "altinn:accessmanagement/authorizedparties.resourceowner",
-        "authorizedPartiesAdmin": "altinn:accessmanagement/authorizedparties.admin"
+        "authorizedPartiesAdmin": "altinn:accessmanagement/authorizedparties.admin",
+        "sluttbrukersystemsopesReadToOthers": "altinn:accmgmt/enduser:connections:to-others.read",
+        "sluttbrukersystemsopesReadFromOthers": "altinn:accmgmt/enduser:connections:from-others.read",
+        "sluttbrukersystemsopesWriteToOrganizations": "altinn:accmgmt/enduser:connections:to-others.write",
+        "sluttbrukersystemsopesWriteFromOrganizations": "altinn:accmgmt/enduser:connections:from-others.write",
     },
     "authTokenType": {
         "personal": "Personal",

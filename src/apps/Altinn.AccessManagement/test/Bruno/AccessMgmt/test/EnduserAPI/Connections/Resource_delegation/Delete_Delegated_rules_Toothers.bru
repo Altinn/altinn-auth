@@ -20,7 +20,7 @@ params:query {
 body:json {
   {
     "DirectRightKeys": [
-      "urn:altinn:resource:ttd-test-bruno-enkelttjeneste-privatperson-ressurs:urn:oasis:names:tc:xacml:1.0:action:action-id:sign"
+      "01045f32abedc746d8118db94c5f846573758417a812ead006e098cba0be7a6db7"
       
     ]
   }
@@ -40,7 +40,7 @@ script:pre-request {
     auth_partyUuid: testdata.Bruker_A_delegates.partyuuid,
     auth_ssn: testdata.Bruker_A_delegates.pid,
     auth_tokenType: sharedtestdata.authTokenType.personal,
-    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    auth_scopes: sharedtestdata.auth_scopes.sluttbrukersystemsopesWriteToOrganizations
   }
   
   
