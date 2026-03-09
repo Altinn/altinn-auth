@@ -209,6 +209,9 @@ module "appsettings" {
           "Altinn:register:PartyImport:SystemUsers:Enable"       = { value = var.features.party_import.system_users }
           "Altinn:register:PartyImport:Npr:Guardianships:Enable" = { value = var.features.party_import.npr.guardianships }
 
+          "Altinn:register:Ccr:Update:Enabled" = { value = var.features.ccr_proxy.enabled }
+          "Altinn:register:Ccr:Update:Record"  = { value = var.features.ccr_proxy.record }
+
           // config
           "Altinn:register:PartyImport:A2:MaxDbSizeInGib" = { value = var.config.a2_party_import.max_db_size_in_gib }
 
