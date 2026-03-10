@@ -105,7 +105,7 @@ public class InternalAuthorizedPartiesController(
                 return mapper.Map<List<AuthorizedPartyExternal>>(await authorizedPartiesService.GetAuthorizedPartiesByUserId(userId, filters, cancellationToken));
             }
 
-            string systemUserUuid = AuthenticationHelper.GetSystemUserUuid(HttpContext);
+            string systemUserUuid = AuthenticationHelper.GetSystemUserUuidString(HttpContext);
             if (!string.IsNullOrWhiteSpace(systemUserUuid))
             {
                 return mapper.Map<List<AuthorizedPartyExternal>>(await authorizedPartiesService.GetAuthorizedPartiesBySystemUserUuid(systemUserUuid, filters, cancellationToken));

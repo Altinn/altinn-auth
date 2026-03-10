@@ -63,7 +63,7 @@ namespace Altinn.AccessManagement.Core.Helpers
         /// </summary>
         /// <param name="context">the http context</param>
         /// <returns>The sytem user uuid</returns>
-        public static string GetSystemUserUuid(HttpContext context)
+        public static string GetSystemUserUuidString(HttpContext context)
         {
             var claim = context.User?.Claims.FirstOrDefault(c => c.Type.Equals("authorization_details"));
             if (claim == null || string.IsNullOrEmpty(claim.Value))
@@ -78,6 +78,42 @@ namespace Altinn.AccessManagement.Core.Helpers
             }
 
             return string.Empty;
+        }
+
+        /// <summary>
+        /// Gets the users PartyUuid or system user uuid.
+        /// </summary>
+        public static Guid GetAuthenticatedPartyUuid(HttpContext context)
+        {
+            var partyuuid = GetPartyUuid(context);
+            if (partyuuid == Guid.Empty)
+            {
+                return GetSystemUserUuid(context);
+            }
+
+            return partyuuid;
+        }
+
+        /// <summary>
+        /// Gets the system user PartyUuid
+        /// </summary>
+        /// <param name="context">the http context</param>
+        /// <returns>The sytem user uuid</returns>
+        public static Guid GetSystemUserUuid(HttpContext context)
+        {
+            var claim = context.User?.Claims.FirstOrDefault(c => c.Type.Equals("authorization_details"));
+            if (claim == null || string.IsNullOrEmpty(claim.Value))
+            {
+                return Guid.Empty;
+            }
+
+            AuthorizationDetails authDetails = JsonSerializer.Deserialize<AuthorizationDetails>(claim.Value);
+            if (authDetails != null && authDetails.Type == "urn:altinn:systemuser")
+            {
+                return Guid.Parse(authDetails.SystemUserId[0]);
+            }
+
+            return Guid.Empty;
         }
 
         /// <summary>

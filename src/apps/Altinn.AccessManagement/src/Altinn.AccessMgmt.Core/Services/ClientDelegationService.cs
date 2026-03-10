@@ -25,13 +25,13 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
     ];
 
     /// <inheritdoc/>
-    public async Task<Result<List<MyClientDto>>> GetMyClients(Guid partyId, List<Guid> provider, CancellationToken cancellationToken = default)
+    public async Task<Result<List<MyClientDto>>> GetMyClients(Guid partyUuid, List<Guid> providerUuids, CancellationToken cancellationToken = default)
     {
-        provider ??= [];
+        providerUuids ??= [];
         var query = await db.Assignments
             .AsNoTracking()
-            .Where(a => a.ToId == partyId && a.RoleId == RoleConstants.Agent)
-            .WhereIf(provider.Count > 0, a => provider.Contains(a.FromId))
+            .Where(a => a.ToId == partyUuid && a.RoleId == RoleConstants.Agent)
+            .WhereIf(providerUuids.Count > 0, a => providerUuids.Contains(a.FromId))
             .GroupJoin(
                 db.Delegations,
                 a => a.Id,
@@ -104,12 +104,12 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
             .ToList();
     }
 
-    public async Task<Result<List<AgentDto>>> GetMyProviders(Guid useruuid, CancellationToken cancellationToken = default)
+    public async Task<Result<List<AgentDto>>> GetMyProviders(Guid partyUuid, CancellationToken cancellationToken = default)
     {
         var query = await db.Assignments
             .AsNoTracking()
             .Include(a => a.From)
-            .Where(a => a.ToId == useruuid && a.RoleId == RoleConstants.Agent)
+            .Where(a => a.ToId == partyUuid && a.RoleId == RoleConstants.Agent)
             .ToListAsync(cancellationToken);
 
         return query
@@ -128,19 +128,19 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
     }
 
     /// <inheritdoc/>
-    public async Task<Result<ValidationProblemInstance>> DeleteMyProvider(Guid useruuid, Guid provider, CancellationToken cancellationToken = default)
+    public async Task<Result<ValidationProblemInstance>> DeleteMyProvider(Guid partyUuid, Guid providerUuid, CancellationToken cancellationToken = default)
     {
-        return await RemoveAgent(provider, useruuid, true, cancellationToken);
+        return await RemoveAgent(providerUuid, partyUuid, true, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<Result<List<DelegationDto>>> DeleteMyClient(Guid useruuid, Guid provider, Guid from, DelegationBatchInputDto payload, CancellationToken cancellationToken = default)
+    public async Task<Result<List<DelegationDto>>> DeleteMyClient(Guid partyUuid, Guid providerUuid, Guid fromUuid, DelegationBatchInputDto payload, CancellationToken cancellationToken = default)
     {
-        return await RemoveAgentDelegation(provider, from, useruuid, payload, cancellationToken);
+        return await RemoveAgentDelegation(providerUuid, fromUuid, partyUuid, payload, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public async Task<Result<List<ClientDto>>> GetClients(Guid partyId, List<string>? roles, CancellationToken cancellationToken = default)
+    public async Task<Result<List<ClientDto>>> GetClients(Guid partyUuid, List<string>? roles, CancellationToken cancellationToken = default)
     {
         roles ??= [];
         var roleFilter = new List<Guid>();
@@ -163,7 +163,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
 
         var query = await db.Assignments
             .AsNoTracking()
-            .Where(a => a.ToId == partyId && !ExcludeClientRoles.Contains(a.RoleId))
+            .Where(a => a.ToId == partyUuid && !ExcludeClientRoles.Contains(a.RoleId))
             .WhereIf(roleFilter.Count > 0, r => roleFilter.Contains(r.RoleId))
             .Include(a => a.From)
             .GroupJoin(
@@ -220,10 +220,10 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
     }
 
     /// <inheritdoc/>
-    public async Task<Result<List<AgentDto>>> GetAgents(Guid partyId, CancellationToken cancellationToken = default)
+    public async Task<Result<List<AgentDto>>> GetAgents(Guid partyUuid, CancellationToken cancellationToken = default)
     {
         var query = await db.Assignments
-            .Where(a => a.FromId == partyId && a.RoleId == RoleConstants.Agent)
+            .Where(a => a.FromId == partyUuid && a.RoleId == RoleConstants.Agent)
             .Include(a => a.To)
             .ToListAsync(cancellationToken);
 
@@ -242,11 +242,11 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
     }
 
     /// <inheritdoc/>
-    public async Task<Result<AssignmentDto>> AddAgent(Guid partyId, Guid toUuid, CancellationToken cancellationToken = default)
+    public async Task<Result<AssignmentDto>> AddAgent(Guid partyUuid, Guid toUuid, CancellationToken cancellationToken = default)
     {
         ValidationErrorBuilder errorBuilder = default;
 
-        var existingAssignment = await db.Assignments.AsNoTracking().Where(p => p.FromId == partyId && p.ToId == toUuid && p.RoleId == RoleConstants.Agent).FirstOrDefaultAsync(cancellationToken);
+        var existingAssignment = await db.Assignments.AsNoTracking().Where(p => p.FromId == partyUuid && p.ToId == toUuid && p.RoleId == RoleConstants.Agent).FirstOrDefaultAsync(cancellationToken);
         if (existingAssignment is { })
         {
             return DtoMapper.Convert(existingAssignment);
@@ -284,7 +284,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
 
         var assignment = new Assignment
         {
-            FromId = partyId,
+            FromId = partyUuid,
             ToId = toUuid,
             RoleId = RoleConstants.Agent,
         };
@@ -295,13 +295,13 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
     }
 
     /// <inheritdoc/>
-    public async Task<ValidationProblemInstance?> RemoveAgent(Guid partyId, Guid toUuid, bool cascade, CancellationToken cancellationToken = default)
+    public async Task<ValidationProblemInstance?> RemoveAgent(Guid partyUuid, Guid toUuid, bool cascade, CancellationToken cancellationToken = default)
     {
         ValidationErrorBuilder errorBuilder = default;
 
         var existingAssignment = await db.Assignments
             .AsTracking()
-            .Where(p => p.FromId == partyId && p.ToId == toUuid && p.RoleId == RoleConstants.Agent)
+            .Where(p => p.FromId == partyUuid && p.ToId == toUuid && p.RoleId == RoleConstants.Agent)
             .FirstOrDefaultAsync(cancellationToken);
 
         var existingDelegations = await db.Delegations
@@ -351,13 +351,13 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
     }
 
     /// <inheritdoc/>
-    public async Task<Result<List<AgentDto>>> GetDelegatedAccessPackagesFromClientsViaParty(Guid partyId, Guid fromId, CancellationToken cancellationToken = default)
+    public async Task<Result<List<AgentDto>>> GetDelegatedAccessPackagesFromClientsViaParty(Guid partyUuid, Guid fromUuid, CancellationToken cancellationToken = default)
     {
         var query = await db.Delegations
             .AsNoTracking()
             .Include(d => d.From)
             .Include(d => d.To).ThenInclude(a => a.To)
-            .Where(d => d.FacilitatorId == partyId && d.From.FromId == fromId)
+            .Where(d => d.FacilitatorId == partyUuid && d.From.FromId == fromUuid)
             .Join(
                 db.DelegationPackages,
                 d => d.Id,
@@ -389,13 +389,13 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
     }
 
     /// <inheritdoc/>
-    public async Task<Result<List<ClientDto>>> GetDelegatedAccessPackagesToAgentsViaPartyAsync(Guid partyId, Guid toId, CancellationToken cancellationToken = default)
+    public async Task<Result<List<ClientDto>>> GetDelegatedAccessPackagesToAgentsViaPartyAsync(Guid partyUuid, Guid toUuid, CancellationToken cancellationToken = default)
     {
         var query = await db.Delegations
             .AsNoTracking()
             .Include(d => d.To)
             .Include(d => d.From).ThenInclude(a => a.From)
-            .Where(d => d.FacilitatorId == partyId && d.To.ToId == toId)
+            .Where(d => d.FacilitatorId == partyUuid && d.To.ToId == toUuid)
             .Join(
                 db.DelegationPackages,
                 d => d.Id,
@@ -681,9 +681,9 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
 
     /// <inheritdoc/>
     public async Task<Result<List<DelegationDto>>> RemoveAgentDelegation(
-        Guid partyId,
-        Guid fromId,
-        Guid toId,
+        Guid partyUuid,
+        Guid fromUuid,
+        Guid toUuid,
         DelegationBatchInputDto payload,
         CancellationToken cancellationToken = default)
     {
@@ -741,43 +741,43 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
             }
         }
 
-        var entities = await db.Entities.Where(e => e.Id == partyId || e.Id == fromId || e.Id == toId).ToDictionaryAsync(e => e.Id, cancellationToken);
-        if (!entities.ContainsKey(partyId))
+        var entities = await db.Entities.Where(e => e.Id == partyUuid || e.Id == fromUuid || e.Id == toUuid).ToDictionaryAsync(e => e.Id, cancellationToken);
+        if (!entities.ContainsKey(partyUuid))
         {
             errorBuilder.Add(
                 ValidationErrors.EntityNotExists,
                 "$QUERY/party",
-                [new($"{partyId}", "entity do not exist.")]
+                [new($"{partyUuid}", "entity do not exist.")]
             );
         }
 
-        if (!entities.ContainsKey(fromId))
+        if (!entities.ContainsKey(fromUuid))
         {
             errorBuilder.Add(
                 ValidationErrors.EntityNotExists,
                 $"$QUERY/from",
-                [new($"{fromId}", "entity do not exist.")]
+                [new($"{fromUuid}", "entity do not exist.")]
             );
         }
 
-        if (!entities.ContainsKey(toId))
+        if (!entities.ContainsKey(toUuid))
         {
             errorBuilder.Add(
                 ValidationErrors.EntityNotExists,
                 $"$QUERY/to",
-                [new($"{toId}", "entity do not exist.")]
+                [new($"{toUuid}", "entity do not exist.")]
             );
         }
 
         var agentAssignment = await db.Assignments
-            .FirstOrDefaultAsync(a => a.FromId == partyId && a.ToId == toId && a.RoleId == RoleConstants.Agent.Id, cancellationToken: cancellationToken);
+            .FirstOrDefaultAsync(a => a.FromId == partyUuid && a.ToId == toUuid && a.RoleId == RoleConstants.Agent.Id, cancellationToken: cancellationToken);
 
         if (agentAssignment is null)
         {
             errorBuilder.Add(
                 ValidationErrors.MissingAssignment,
                 $"$QUERY/to",
-                [new(RoleConstants.Agent.Entity.Urn, $"Role is not assigned to '{toId}' from '{partyId}'.")]
+                [new(RoleConstants.Agent.Entity.Urn, $"Role is not assigned to '{toUuid}' from '{partyUuid}'.")]
             );
         }
 
@@ -795,7 +795,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
         foreach (var input in inputs)
         {
             var pkgIds = input.Packages.Select(p => p.Package).Select(p => p.Id).Distinct();
-            var clientAssignment = await db.Assignments.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == fromId && t.ToId == partyId && t.RoleId == input.Role.Id, cancellationToken);
+            var clientAssignment = await db.Assignments.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == fromUuid && t.ToId == partyUuid && t.RoleId == input.Role.Id, cancellationToken);
 
             if (clientAssignment is null)
             {
@@ -805,16 +805,16 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
             var rolePackages = await db.RolePackages.AsNoTracking().Where(t => t.RoleId == input.Role.Id && pkgIds.Contains(t.PackageId)).ToListAsync(cancellationToken);
             var assignmentPackages = await db.AssignmentPackages.AsNoTracking().Where(t => t.AssignmentId == clientAssignment.Id && pkgIds.Contains(t.PackageId)).ToListAsync(cancellationToken);
 
-            var delegation = await db.Delegations.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == clientAssignment.Id && t.ToId == agentAssignment.Id && t.FacilitatorId == partyId, cancellationToken);
+            var delegation = await db.Delegations.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == clientAssignment.Id && t.ToId == agentAssignment.Id && t.FacilitatorId == partyUuid, cancellationToken);
             if (delegation is null)
             {
                 result.AddRange(pkgIds.Select(pkg => new DelegationDto()
                 {
-                    FromId = fromId,
+                    FromId = fromUuid,
                     PackageId = pkg,
                     RoleId = input.Role,
-                    ToId = toId,
-                    ViaId = partyId,
+                    ToId = toUuid,
+                    ViaId = partyUuid,
                     Changed = false,
                 }));
 
@@ -841,9 +841,9 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
 
                 result.Add(new()
                 {
-                    FromId = fromId,
-                    ToId = toId,
-                    ViaId = partyId,
+                    FromId = fromUuid,
+                    ToId = toUuid,
+                    ViaId = partyUuid,
                     RoleId = input.Role,
                     PackageId = pkgId,
                     Changed = toRemove is { }
@@ -854,9 +854,9 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
         // Get all delegation from client to agent via party.
         var uniqueRoleIds = inputs.Select(p => p.Role.Id).Distinct();
         var delegations = await db.Delegations
-            .Where(d => d.FacilitatorId == partyId)
-            .Where(d => d.From.FromId == fromId && d.From.ToId == partyId && uniqueRoleIds.Contains(d.From.RoleId))
-            .Where(d => d.To.ToId == toId && d.To.FromId == partyId && d.To.RoleId == RoleConstants.Agent)
+            .Where(d => d.FacilitatorId == partyUuid)
+            .Where(d => d.From.FromId == fromUuid && d.From.ToId == partyUuid && uniqueRoleIds.Contains(d.From.RoleId))
+            .Where(d => d.To.ToId == toUuid && d.To.FromId == partyUuid && d.To.RoleId == RoleConstants.Agent)
             .GroupJoin(
                 db.DelegationPackages,
                 d => d.Id,
@@ -905,32 +905,32 @@ public interface IClientDelegationService
     /// including delegated roles and packages.
     /// </summary>
     Task<Result<List<MyClientDto>>> GetMyClients(
-        Guid partyId,
-        List<Guid> provider,
+        Guid partyUuid,
+        List<Guid> providerUuids,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets providers that have assigned the Agent role to the given user/party.
     /// </summary>
     Task<Result<List<AgentDto>>> GetMyProviders(
-        Guid useruuid,
+        Guid partyUuid,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes an agent assignment from the specified provider to the user.
     /// </summary>
     Task<Result<ValidationProblemInstance?>> DeleteMyProvider(
-        Guid useruuid,
-        Guid provider,
+        Guid partyUuid,
+        Guid providerUuid,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes delegated packages from a client relationship.
     /// </summary>
     Task<Result<List<DelegationDto>>> DeleteMyClient(
-        Guid useruuid,
-        Guid provider,
-        Guid from,
+        Guid partyUuid,
+        Guid providerUuid,
+        Guid fromUuid,
         DelegationBatchInputDto payload,
         CancellationToken cancellationToken = default);
 
@@ -943,7 +943,7 @@ public interface IClientDelegationService
     /// Optional role filter can be applied.
     /// </summary>
     Task<Result<List<ClientDto>>> GetClients(
-        Guid partyId,
+        Guid partyUuid,
         List<string>? roles,
         CancellationToken cancellationToken = default);
 
@@ -951,14 +951,14 @@ public interface IClientDelegationService
     /// Gets agents assigned by the party.
     /// </summary>
     Task<Result<List<AgentDto>>> GetAgents(
-        Guid partyId,
+        Guid partyUuid,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Assigns the Agent role from the party to the target entity.
     /// </summary>
     Task<Result<AssignmentDto>> AddAgent(
-        Guid partyId,
+        Guid partyUuid,
         Guid toUuid,
         CancellationToken cancellationToken = default);
 
@@ -967,7 +967,7 @@ public interface IClientDelegationService
     /// If <paramref name="cascade"/> is false, removal fails when active delegations exist.
     /// </summary>
     Task<ValidationProblemInstance?> RemoveAgent(
-        Guid partyId,
+        Guid partyUuid,
         Guid toUuid,
         bool cascade,
         CancellationToken cancellationToken = default);
@@ -976,16 +976,16 @@ public interface IClientDelegationService
     /// Gets packages delegated from a specific client via the party, grouped by agent.
     /// </summary>
     Task<Result<List<AgentDto>>> GetDelegatedAccessPackagesFromClientsViaParty(
-        Guid partyId,
-        Guid fromId,
+        Guid partyUuid,
+        Guid fromUuid,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets packages delegated to a specific agent via the party, grouped by client.
     /// </summary>
     Task<Result<List<ClientDto>>> GetDelegatedAccessPackagesToAgentsViaPartyAsync(
-        Guid partyId,
-        Guid toId,
+        Guid partyUuid,
+        Guid toUuid,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -993,9 +993,9 @@ public interface IClientDelegationService
     /// Performs validation of roles, packages, assignments and entity types.
     /// </summary>
     Task<Result<List<DelegationDto>>> DelegateAccessPackageToAgent(
-        Guid partyId,
-        Guid fromId,
-        Guid toId,
+        Guid partyUuid,
+        Guid fromUuid,
+        Guid toUuid,
         DelegationBatchInputDto payload,
         CancellationToken cancellationToken = default);
 
@@ -1003,9 +1003,9 @@ public interface IClientDelegationService
     /// Removes previously delegated access packages from a client to an agent.
     /// </summary>
     Task<Result<List<DelegationDto>>> RemoveAgentDelegation(
-        Guid partyId,
-        Guid fromId,
-        Guid toId,
+        Guid partyUuid,
+        Guid fromUuid,
+        Guid toUuid,
         DelegationBatchInputDto payload,
         CancellationToken cancellationToken = default);
 
