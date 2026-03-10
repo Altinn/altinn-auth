@@ -209,7 +209,7 @@ module "appsettings" {
           "Altinn:register:PartyImport:SystemUsers:Enable"       = { value = var.features.party_import.system_users }
           "Altinn:register:PartyImport:Npr:Guardianships:Enable" = { value = var.features.party_import.npr.guardianships }
 
-          "Altinn:register:Ccr:Update:Enabled" = { value = var.features.ccr_proxy.enabled }
+          "Altinn:register:Ccr:Update:Enabled" = { value = var.features.ccr_proxy.enable }
           "Altinn:register:Ccr:Update:Record"  = { value = var.features.ccr_proxy.record }
 
           // config

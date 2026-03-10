@@ -99,8 +99,8 @@ variable "features" {
     }), {})
 
     ccr_proxy = optional(object({
-      enabled = optional(bool, false)
-      record  = optional(bool, false)
+      enable = optional(bool, false)
+      record = optional(bool, false)
     }), {})
   })
   default = {}
