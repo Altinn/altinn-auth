@@ -962,8 +962,18 @@ namespace Altinn.AccessManagement.Core.Services
 
         public static bool IsValidUrl(string url)
         {
-            return Uri.TryCreate(url, UriKind.Absolute, out Uri? uriResult)
-                   && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+            if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uriResult))
+            {
+                return false;
+            }
+
+            if (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps)
+            {
+                return true;
+            }
+
+            // Allow custom URI schemes for mobile app deep links (RFC 3986: letter followed by letters, digits, +, -, .)
+            return System.Text.RegularExpressions.Regex.IsMatch(uriResult.Scheme, @"^[a-z][a-z0-9+\-.]*$");
         }
 
         public async Task<Result<List<ConsentRequestDetails>>> GetRequestsForParty(Guid coveredByParty, bool useInternalIdenties, CancellationToken cancellationToken)
