@@ -1012,7 +1012,8 @@ namespace Altinn.AccessManagement.Core.Services
                 ConsentRequestEvents = await MapA2ConsentEventsToA3ConsentEvents(altinn2Consent, altinn2Consent.ConsentHistoryEvents, cancellationToken),
                 RedirectUrl = altinn2Consent.RedirectUrl,
                 TemplateId = altinn2Consent.TemplateId,
-                PortalViewMode = altinn2Consent.PortalViewMode != null ? Enum.Parse<ConsentPortalViewMode>(altinn2Consent.PortalViewMode, true) : ConsentPortalViewMode.Hide
+                PortalViewMode = altinn2Consent.PortalViewMode != null ? Enum.Parse<ConsentPortalViewMode>(altinn2Consent.PortalViewMode, true) : ConsentPortalViewMode.Hide,
+                HandledBy = altinn2Consent.HandledByPartyUUID != null ? ConsentPartyUrn.PartyUuid.Create((Guid)altinn2Consent.HandledByPartyUUID) : null
             };
 
             return consent;
