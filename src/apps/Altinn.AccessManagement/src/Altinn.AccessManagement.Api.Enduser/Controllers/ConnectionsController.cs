@@ -475,11 +475,11 @@ public class ConnectionsController(
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetResources(
+    public async Task<IActionResult> GetResourceRights(
         [Required][FromQuery(Name = "party")] Guid party,
         [Required][FromQuery(Name = "from")] Guid from,
         [Required][FromQuery(Name = "to")] Guid to,
-        [FromQuery(Name = "resource")] string resource,
+        [Required][FromQuery(Name = "resource")] string resource,
         [FromQuery, FromHeader] PagingInput paging,
         CancellationToken cancellationToken = default)
     {
@@ -555,10 +555,10 @@ public class ConnectionsController(
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status500InternalServerError, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> AddResourceRules(
+    public async Task<IActionResult> AddResourceRights(
         [Required][FromQuery(Name = "party")] Guid party,
         [Required][FromQuery(Name = "to")] Guid to,
-        [FromQuery(Name = "resource")] string resource,
+        [Required][FromQuery(Name = "resource")] string resource,
         [FromBody] RightKeyListDto rightKeys,
         CancellationToken cancellationToken = default)
     {
@@ -596,10 +596,10 @@ public class ConnectionsController(
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status500InternalServerError, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> UpdateResourceRules(
+    public async Task<IActionResult> UpdateResourceRights(
         [Required][FromQuery(Name = "party")] Guid party,
         [Required][FromQuery(Name = "to")] Guid to,
-        [FromQuery(Name = "resource")] string resource,
+        [Required][FromQuery(Name = "resource")] string resource,
         [FromBody] RightKeyListDto updateDto,
         CancellationToken cancellationToken = default)
     {
@@ -687,6 +687,317 @@ public class ConnectionsController(
         }
 
         return Ok(result.Value);
+    }
+
+    #endregion
+
+    #region Instances
+
+    /// <summary>
+    /// Gets all resource instances between the authenticated user's selected party and the specified target party.
+    /// </summary>
+    [HttpGet("resources/instances")]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_BIDRECTIONAL_READ)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType<IEnumerable<InstancePermissionDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetInstances(
+        [Required][FromQuery(Name = "party")] Guid party,
+        [FromQuery(Name = "from")] Guid? from,
+        [FromQuery(Name = "to")] Guid? to,
+        [FromQuery, FromHeader] PagingInput paging,
+        [FromQuery] string? resource = null,
+        [FromQuery] string? instance = null,
+        CancellationToken cancellationToken = default)
+    {
+        return NotFound();
+
+        /* ToDo: Implement instance support in connection service and uncomment code below when ready. Currently we return the same result as GetResources, but with the intention to include instance information in the result once supported in connection service.
+        Resource resourceObj = null;
+        if (resource != null)
+        {
+            resourceObj = await resourceService.GetResource(resource, cancellationToken);
+            if (resourceObj is null)
+            {
+                ProblemDetails problem = Core.Errors.Problems.InvalidResource.ToProblemDetails();
+                problem.Extensions["resource"] = resource;
+                problem.Extensions["instance"] = instance;
+                return problem.ToActionResult();
+            }
+        }
+
+        var result = await ConnectionService.GetResourceInstances(
+            party,
+            fromId: from,
+            toId: to,
+            resourceId: resourceObj?.Id,
+            configureConnections: ConfigureConnections,
+            cancellationToken: cancellationToken
+        );
+
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok(result.Value);
+        */
+    }
+
+    /// <summary>
+    /// Gets all resource instance rights between the authenticated user's selected party and the specified target party.
+    /// </summary>
+    [HttpGet("resources/instances/rights")]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_BIDRECTIONAL_READ)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType<ExtInstanceRightDto>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetInstanceRights(
+        [Required][FromQuery(Name = "party")] Guid party,
+        [Required][FromQuery(Name = "from")] Guid from,
+        [Required][FromQuery(Name = "to")] Guid to,
+        [Required][FromQuery(Name = "resource")] string resource,
+        [Required][FromQuery(Name = "instance")] string instance,
+        [FromQuery, FromHeader] PagingInput paging,
+        CancellationToken cancellationToken = default)
+    {
+        return NotFound();
+
+        /* ToDo: Implement instance support in connection service and uncomment code below when ready. Currently we return the same result as GetResourceRights, but with the intention to include instance information in the result once supported in connection service.
+        var resourceObj = await resourceService.GetResource(resource, cancellationToken);
+        if (resourceObj is null)
+        {
+            ProblemDetails problem = Core.Errors.Problems.InvalidResource.ToProblemDetails();
+            problem.Extensions["resource"] = resource;
+            problem.Extensions["instance"] = instance;
+            return problem.ToActionResult();
+        }
+
+        var result = party == from
+            ? await ConnectionService.GetResourceInstanceRightsToOthers(
+                partyId: party,
+                toId: to,
+                resourceId: resourceObj.Id,
+                configureConnection: ConfigureConnections,
+                cancellationToken: cancellationToken
+                )
+            : await ConnectionService.GetResourceInstanceRightsFromOthers(
+                partyId: party,
+                fromId: from,
+                resourceId: resourceObj.Id,
+                configureConnection: ConfigureConnections,
+                cancellationToken: cancellationToken
+                );
+
+        var externalResult = new ExternalResourceRightDto
+        {
+            Resource = DtoMapper.Convert(resourceObj),
+            DirectRights = [],
+            IndirectRights = []
+        };
+
+        foreach (var right in result?.Rights ?? [])
+        {
+            if (right.Reason.Contains(AccessReasonFlag.Direct))
+            {
+                RightPermission rightPermission = new RightPermission
+                {
+                    Right = right.Right,
+                    Reason = AccessReasonFlag.Direct,
+                    Permissions = right.Permissions.Where(p => p.Reason == AccessReasonFlag.Direct).ToList()
+                };
+                externalResult.DirectRights.Add(rightPermission);
+            }
+
+            // if the right contains any other reason than Direct, we consider it an indirect right and include it in the IndirectRights list
+            if (right.Reason != AccessReasonFlag.Direct)
+            {
+                RightPermission rightPermission = new RightPermission
+                {
+                    Right = right.Right,
+                    Reason = right.Reason & ~AccessReasonFlag.Direct, // Remove Direct flag from reason for indirect rights
+                    Permissions = right.Permissions.Where(p => p.Reason != AccessReasonFlag.Direct).ToList()
+                };
+                externalResult.IndirectRights.Add(rightPermission);
+            }
+        }
+
+        return Ok(externalResult);
+        */
+    }
+
+    /// <summary>
+    /// Add resource instance rights to an existing rightholder connection
+    /// </summary>
+    [HttpPost("resources/instances/rights")]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_WRITE_TOOTHERS)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status500InternalServerError, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> AddInstanceRights(
+        [Required][FromQuery(Name = "party")] Guid party,
+        [Required][FromQuery(Name = "to")] Guid to,
+        [Required][FromQuery(Name = "resource")] string resource,
+        [Required][FromQuery(Name = "instance")] string instance,
+        [FromBody] RightKeyListDto rightKeys,
+        CancellationToken cancellationToken = default)
+    {
+        return NotFound();
+
+        /* ToDo: Implement instance support in connection service and uncomment code below when ready. Currently we return the same result as AddResourceRights, but with the intention to include instance information in the result once supported in connection service.
+        var byId = AuthenticationHelper.GetPartyUuid(HttpContext);
+        var fromEntity = await EntityService.GetEntity(party, cancellationToken);
+        var toEntity = await EntityService.GetEntity(to, cancellationToken);
+        var by = await EntityService.GetEntity(byId, cancellationToken);
+        var resourceObj = await resourceService.GetResource(resource, cancellationToken);
+        var result = await ConnectionService.AddInstance(fromEntity, toEntity, resourceObj, instance, rightKeys, by, ConfigureConnections, cancellationToken);
+
+        if (result.IsProblem)
+        {
+            if (result.Problem.Equals(Core.Errors.Problems.InvalidResource))
+            {
+                ProblemDetails problem = result.Problem.ToProblemDetails();
+                problem.Extensions["resource"] = resource;
+                problem.Extensions["instance"] = instance;
+                return problem.ToActionResult();
+            }
+
+            return result.Problem.ToActionResult();
+        }
+
+        return Created();
+        */
+    }
+
+    /// <summary>
+    /// Update resource instance rights for an existing rightholder connection
+    /// </summary>
+    [HttpPut("resources/instances/rights")]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_WRITE_TOOTHERS)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status500InternalServerError, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> UpdateInstanceRights(
+        [Required][FromQuery(Name = "party")] Guid party,
+        [Required][FromQuery(Name = "to")] Guid to,
+        [Required][FromQuery(Name = "resource")] string resource,
+        [Required][FromQuery(Name = "instance")] string instance,
+        [FromBody] RightKeyListDto updateDto,
+        CancellationToken cancellationToken = default)
+    {
+        return NotFound();
+
+        /* ToDo: Implement instance support in connection service and uncomment code below when ready. Currently we return the same result as UpdateResourceRights, but with the intention to include instance information in the result once supported in connection service.
+        var byId = AuthenticationHelper.GetPartyUuid(HttpContext);
+        var fromEntity = await EntityService.GetEntity(party, cancellationToken);
+        var toEntity = await EntityService.GetEntity(to, cancellationToken);
+        var byEntity = await EntityService.GetEntity(byId, cancellationToken);
+        var resourceObj = await resourceService.GetResource(resource, cancellationToken);
+
+        var result = await ConnectionService.UpdateInstance(fromEntity, toEntity, resourceObj, instance, updateDto.DirectRightKeys, byEntity, ConfigureConnections, cancellationToken);
+
+        if (result.IsProblem)
+        {
+            if (result.Problem.Equals(Core.Errors.Problems.InvalidResource))
+            {
+                ProblemDetails problem = result.Problem.ToProblemDetails();
+                problem.Extensions["resource"] = resource;
+                problem.Extensions["instance"] = instance;
+                return problem.ToActionResult();
+            }
+
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok();
+        */
+    }
+
+    /// <summary>
+    /// Remove resource from rightholder connection and all actions
+    /// </summary>
+    [HttpDelete("resources")]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_BIDIRECTIONAL_WRITE)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> RemoveInstance(
+        [Required][FromQuery(Name = "party")] Guid party,
+        [Required][FromQuery(Name = "from")] Guid from,
+        [Required][FromQuery(Name = "to")] Guid to,
+        [Required][FromQuery(Name = "resource")] string resource,
+        [Required][FromQuery(Name = "instance")] string instance,
+        CancellationToken cancellationToken = default)
+    {
+        return NotFound();
+
+        /* ToDo: Implement instance support in connection service and uncomment code below when ready. Currently we return the same result as RemoveResources, but with the intention to include instance information in the result once supported in connection service.
+        var byId = AuthenticationHelper.GetPartyUuid(HttpContext);
+        var problem = await ConnectionService.RemoveInstance(from, to, resource, instance, ConfigureConnections, cancellationToken);
+        if (problem is { })
+        {
+            return problem.ToActionResult();
+        }
+
+        return NoContent();
+        */
+    }
+
+    /// <summary>
+    /// Delegation check of instance delegation, for which resources the authenticated user has permission to assign to others on behalf of the specified party.
+    /// </summary>
+    [HttpGet("resources/instances/delegationcheck")]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_WRITE_TOOTHERS)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [ProducesResponseType<InstanceCheckDto>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> CheckInstance(
+        [Required][FromQuery(Name = "party")] Guid party,
+        [Required][FromQuery(Name = "resource")] string resource,
+        [Required][FromQuery(Name = "instance")] string instance,
+        CancellationToken cancellationToken = default)
+    {
+        return NotFound();
+
+        /* ToDo: Implement instance support in connection service and uncomment code below when ready. Currently we return the same result as CheckResources, but with the intention to include instance information in the result once supported in connection service.
+        Guid authenticatedUserUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
+        string languageCode = this.GetLanguageCode();
+
+        var result = await ConnectionService.InstanceDelegationCheck(authenticatedUserUuid, party, resource, instance, ConfigureConnections, languageCode, cancellationToken);
+        if (result.IsProblem)
+        {
+            if (result.Problem.Equals(Core.Errors.Problems.InvalidResource))
+            {
+                ProblemDetails problem = result.Problem.ToProblemDetails();
+                problem.Extensions["resource"] = resource;
+                problem.Extensions["instance"] = instance;
+                return problem.ToActionResult();
+            }
+
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok(result.Value);
+        */
     }
 
     #endregion
