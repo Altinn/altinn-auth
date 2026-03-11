@@ -25,7 +25,6 @@ script:pre-request {
   bru.setVar("toPerson", testdata.privat_person_B.partyuuid);
   bru.setVar("package", testdata.package_to_delegate.innbygger_pacakage_urn);
   
-  
   var getTokenParameters = {
     auth_userId: testdata.privat_person_A.userid,
     auth_partyId: testdata.privat_person_A.partyid,
@@ -43,7 +42,7 @@ script:pre-request {
 
 tests {
   const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
-  test("GET delegated person in fullmakter hos andre list after delegating pacakage : FromOthers", function() {
+  test("Delete delegated access pacakge for privat person user", function() {
   
      const data = res.getBody();
     

@@ -21,11 +21,8 @@ headers {
   Accept: application/json
 }
 
-body:json {
-   {
-    "personidentifier": "{{toPersonpid}}", // fnr or username
-    "lastName": "{{toPersonLastName}}"
-  }
+vars:pre-request {
+  package: urn:altinn:accesspackage:innbygger-straffesak
 }
 
 script:pre-request {
@@ -34,8 +31,6 @@ script:pre-request {
   
   bru.setVar("party", testdata.privat_person_A.partyuuid);
   bru.setVar("toPerson", testdata.privat_person_B.partyuuid);
-  bru.setVar("toPersonLastName", testdata.privat_person_B.lastname);
-  bru.setVar("toPersonpid", testdata.privat_person_B.pid);
   bru.setVar("package", testdata.package_to_delegate.innbygger_pacakage_urn);
   
   var getTokenParameters = {

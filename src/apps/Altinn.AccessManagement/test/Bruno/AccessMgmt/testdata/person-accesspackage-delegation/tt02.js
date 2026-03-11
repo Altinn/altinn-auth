@@ -3,7 +3,8 @@
   "env": "tt02",
   "package_to_delegate": {
     "package_urn": "urn:altinn:accesspackage:skattegrunnlag",
-    "invalid_pkg": "12345"
+    "invalid_pkg": "12345",
+    "innbygger_pacakage_urn" : "urn:altinn:accesspackage:innbygger-straffesak"
   },
   "vassen_riktig_tiger_as": {
     "orgno": "311013823",

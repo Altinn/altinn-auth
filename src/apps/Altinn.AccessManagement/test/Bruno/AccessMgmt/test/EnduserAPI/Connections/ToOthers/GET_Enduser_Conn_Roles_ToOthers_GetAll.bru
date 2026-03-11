@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/roles?party={{party}}&from={{party}}
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/roles?party={{party}}&from={{party}}&to={{toParty}}
   body: json
   auth: inherit
 }
@@ -13,6 +13,7 @@ get {
 params:query {
   party: {{party}}
   from: {{party}}
+  to: {{toParty}}
 }
 
 headers {
@@ -23,10 +24,11 @@ script:pre-request {
   const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
   
-  bru.setVar("requestName", "GET_Enduser_Conn_AccPcks_ToOthers_GetAll");
+  bru.setVar("requestName", "GET_Enduser_Conn_Roles_ToOthers_GetAll");
   
   bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
   bru.setVar("package", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg1.directPackageToDelegate);
+  bru.setVar("toParty", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.partyUuid);
   
   var getTokenParameters = {
     auth_userId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.userId,
@@ -38,8 +40,8 @@ script:pre-request {
   }
   
   
-const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
-const token = await testTokenGenerator.getToken(getTokenParameters);
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken", token);
 }
 
