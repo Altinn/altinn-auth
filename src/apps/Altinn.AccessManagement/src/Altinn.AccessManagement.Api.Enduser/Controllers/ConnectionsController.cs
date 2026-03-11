@@ -928,9 +928,9 @@ public class ConnectionsController(
     }
 
     /// <summary>
-    /// Remove resource from rightholder connection and all actions
+    /// Remove resource instance from rightholder connection and all actions
     /// </summary>
-    [HttpDelete("resources")]
+    [HttpDelete("resources/instances")]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_BIDIRECTIONAL_WRITE)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
