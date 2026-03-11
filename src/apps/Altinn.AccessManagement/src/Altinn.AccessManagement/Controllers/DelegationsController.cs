@@ -4,7 +4,7 @@ using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
-using Altinn.AccessMgmt.PersistenceEF.Audit;
+using Altinn.AccessMgmt.Core.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

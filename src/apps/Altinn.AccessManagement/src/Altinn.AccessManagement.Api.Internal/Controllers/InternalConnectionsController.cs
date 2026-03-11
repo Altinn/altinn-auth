@@ -2,9 +2,9 @@
 using Altinn.AccessManagement.Api.Internal.Models;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessMgmt.Core.Audit;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
-using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;

@@ -1,11 +1,18 @@
 ﻿using System.Diagnostics;
 using System.Security.Claims;
 using System.Text.Json;
+using Altinn.AccessManagement.Core.Models.Consent;
+using Altinn.AccessMgmt.Core.Utils;
+using Altinn.AccessMgmt.PersistenceEF.Audit;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Altinn.AccessMgmt.PersistenceEF.Audit;
+namespace Altinn.AccessMgmt.Core.Audit;
 
 public class AuditMiddleware : IMiddleware
 {
@@ -26,23 +33,51 @@ public class AuditMiddleware : IMiddleware
 
                 if (claim != null && Guid.TryParse(claim.Value, out var uuid))
                 {
-                    auditContextAccessor.AuditValues = new(uuid, Guid.Parse(jwtClaimToDb.System), Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier, DateTimeOffset.UtcNow);
+                    auditContextAccessor.AuditValues = new(uuid, Guid.Parse(jwtClaimToDb.System), TraceId(context), DateTimeOffset.UtcNow);
                 }
             }
             else if (endpoint.Metadata.GetMetadata<AuditStaticDbAttribute>() is var staticDb && staticDb != null)
             {
                 if (staticDb.ChangedBy != null && staticDb.System != null)
                 {
-                    auditContextAccessor.AuditValues = new(Guid.Parse(staticDb.ChangedBy), Guid.Parse(staticDb.System), Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier, DateTimeOffset.UtcNow);
+                    auditContextAccessor.AuditValues = new(Guid.Parse(staticDb.ChangedBy), Guid.Parse(staticDb.System), TraceId(context), DateTimeOffset.UtcNow);
                 }
                 else if (staticDb.System != null)
                 {
-                    auditContextAccessor.AuditValues = new(Guid.Parse(staticDb.System), Guid.Parse(staticDb.System), Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier, DateTimeOffset.UtcNow);
+                    auditContextAccessor.AuditValues = new(Guid.Parse(staticDb.System), Guid.Parse(staticDb.System), TraceId(context), DateTimeOffset.UtcNow);
+                }
+            }
+            else if (endpoint.Metadata.GetMetadata<AuditServiceOwnerConsumerAttribute>() is var serviceOwnerConsumer && serviceOwnerConsumer is { })
+            {
+                var party = OrgUtil.GetAuthenticatedParty(context.User);
+                if (party is { })
+                {
+                    var db = context.RequestServices.GetRequiredService<AppDbContext>();
+                    var entity = await GetEntityFromConsumerClaim(db, context, party);
+                    if (entity is { })
+                    {
+                        auditContextAccessor.AuditValues = new(entity.Id, SystemEntityConstants.ServiceOwnerApi, TraceId(context));
+                    }
                 }
             }
         }
 
         await next(context);
+    }
+
+    private static string TraceId(HttpContext context)
+    {
+        return Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier;
+    }
+
+    private async Task<Entity> GetEntityFromConsumerClaim(AppDbContext db, HttpContext context, ConsentPartyUrn party)
+    {
+        if (party.IsOrganizationId(out var organizationIdentifier))
+        {
+            return await db.Entities.FirstOrDefaultAsync(e => e.OrganizationIdentifier == organizationIdentifier, context.RequestAborted);
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -56,7 +91,7 @@ public class AuditMiddleware : IMiddleware
         {
             JsonSerializerOptions jsonOptions = new(JsonSerializerDefaults.Web);
             SystemUserClaim systemUserClaimCore = JsonSerializer.Deserialize<SystemUserClaim>(authorizationDetails.Value, jsonOptions);
-            
+
             if (systemUserClaimCore?.Systemuser_id != null && systemUserClaimCore.Systemuser_id.Count > 0)
             {
                 return new Claim("urn:altinn:party:uuid", systemUserClaimCore.Systemuser_id[0]);

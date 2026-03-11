@@ -1,8 +1,8 @@
-﻿using Altinn.AccessManagement.Core.Clients.Interfaces;
-using Altinn.AccessManagement.Core.Configuration;
+﻿using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services;
 using Altinn.AccessManagement.Core.Services.Interfaces;
+using Altinn.AccessMgmt.Core.Audit;
 using Altinn.AccessMgmt.Core.Authorization;
 using Altinn.AccessMgmt.Core.HostedServices;
 using Altinn.AccessMgmt.Core.HostedServices.Contracts;
@@ -45,6 +45,8 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IAuthorizationScopeProvider, DefaultAuthorizationScopeProvider>();
         services.AddScoped<IAuthorizationHandler, ScopeConditionAuthorizationHandler>();
+
+        services.AddSingleton<AuditMiddleware>();
 
         // Consent Migration - Configuration
         services.AddOptions<ConsentMigrationSettings>()

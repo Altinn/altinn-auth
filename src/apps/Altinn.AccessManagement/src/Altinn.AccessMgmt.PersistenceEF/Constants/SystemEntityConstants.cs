@@ -345,6 +345,32 @@ public static class SystemEntityConstants
             KeyValuePair.Create("Name", "Internt API")),
     };
 
+    /// <summary>
+    /// Represents the ServiceOwnerApi system entity.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> ab418674-710b-4ca0-8ff1-b7daac8dc3d0
+    /// - <c>Name:</c> Service Owner API
+    /// - <c>RefId:</c> accessmgmt-service-owner-api
+    /// - <c>TypeId:</c> Internal entity type
+    /// - <c>VariantId:</c> Standard variant
+    /// </remarks>
+    public static ConstantDefinition<Entity> ServiceOwnerApi { get; } = new ConstantDefinition<Entity>(AuditDefaults.ServiceOwnerApi)
+    {
+        Entity = new()
+        {
+            Name = nameof(AuditDefaults.ServiceOwnerApi),
+            RefId = "accessmgmt-service-owner-api",
+            ParentId = null,
+            TypeId = EntityTypeConstants.Internal,
+            VariantId = EntityVariantConstants.Standard,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Service owner API")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Tjenesteeier API")),
+    };
+
     #endregion
 
     #region Internal

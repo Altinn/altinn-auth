@@ -32,8 +32,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<AppDbContextFactory>();
         services.AddScoped(sp => sp.GetRequiredService<AppDbContextFactory>().CreateDbContext());
 
-        services.AddSingleton<AuditMiddleware>();
-
         if (options.EnableEFPooling)
         {
             return options.Source switch

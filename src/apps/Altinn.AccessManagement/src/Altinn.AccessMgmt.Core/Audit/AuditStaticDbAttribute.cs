@@ -1,20 +1,15 @@
-﻿namespace Altinn.AccessMgmt.PersistenceEF.Audit;
+namespace Altinn.AccessMgmt.Core.Audit;
 
 /// <summary>
 /// Attribute to decorate actions
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
-public class AuditJWTClaimToDbAttribute : Attribute
+public class AuditStaticDbAttribute : Attribute
 {
     /// <summary>
     /// Token claim that gets set to ChangedBy. Claim must be UUID.
     /// </summary>
-    public string Claim { get; set; }
-
-    /// <summary>
-    /// Allow system user. Will try to find system user claim if not standard claim available
-    /// </summary>
-    public bool AllowSystemUser { get; set; } = true;
+    public string ChangedBy { get; set; }
 
     /// <summary>
     /// Which system that initiates the request.

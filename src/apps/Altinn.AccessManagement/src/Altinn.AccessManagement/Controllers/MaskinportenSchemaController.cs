@@ -8,7 +8,7 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Utilities;
-using Altinn.AccessMgmt.PersistenceEF.Audit;
+using Altinn.AccessMgmt.Core.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;

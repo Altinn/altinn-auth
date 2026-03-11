@@ -41,6 +41,11 @@ public static class AuditDefaults
     public const string InternalApi = "b2b7dd36-8de5-40fb-a6ce-c7a4020f9ddc";
 
     /// <summary>
+    /// Service Owner API
+    /// </summary>
+    public const string ServiceOwnerApi = "ab418674-710b-4ca0-8ff1-b7daac8dc3d0";
+
+    /// <summary>
     /// Altinn2ClientImportSystem
     /// </summary>
     public const string Altinn2RoleImportSystem = "46cfa478-971f-446e-9bc1-af57469361d0";
