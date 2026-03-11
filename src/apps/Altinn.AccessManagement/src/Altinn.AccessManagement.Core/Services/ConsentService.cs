@@ -256,7 +256,7 @@ namespace Altinn.AccessManagement.Core.Services
                 ConsentRequest mappedConsentFromA2 = await MapA2ConsentToA3Consent(altinn2ConsentRequest, cancellationToken);
                 Result<ConsentRequestDetailsWrapper> result = await CreateRequest(mappedConsentFromA2, mappedConsentFromA2.From, true, cancellationToken);
 
-                await _altinn2ConsentClient.UpdateAltinn2ConsentMigrateStatus(consentRequestId.ToString(), result.IsProblem ? 2 : 1, cancellationToken);
+                await _altinn2ConsentClient.UpdateAltinn2ConsentMigrateStatus(consentRequestId.ToString(), (result.IsProblem && result.Problem != Problems.ConsentWithIdAlreadyExist) ? 2 : 1, cancellationToken);
 
                 if (!result.IsProblem)
                 {
