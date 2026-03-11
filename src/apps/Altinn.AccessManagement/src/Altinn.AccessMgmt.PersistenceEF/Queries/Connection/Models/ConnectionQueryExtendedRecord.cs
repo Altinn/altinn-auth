@@ -14,4 +14,9 @@ public class ConnectionQueryExtendedRecord : ConnectionQueryRecord
     /// Resources
     /// </summary>
     public List<ConnectionQueryResource> Resources { get; set; } = new();
+
+    /// <summary>
+    /// Instances
+    /// </summary>
+    public List<ConnectionQueryInstance> Instances { get; set; } = new();
 }

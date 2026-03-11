@@ -49,6 +49,11 @@ public sealed class ConnectionQueryFilter
     public IReadOnlyCollection<Guid> ResourceIds { get; init; }
 
     /// <summary>
+    /// Gets the collection of instance identifiers.
+    /// </summary>
+    public IReadOnlyCollection<string> InstanceIds { get; init; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether only unique results should be returned.
     /// </summary>
     public bool OnlyUniqueResults { get; set; } = false;
@@ -67,6 +72,11 @@ public sealed class ConnectionQueryFilter
     /// Gets or sets a value indicating whether to include resources.
     /// </summary>
     public bool IncludeResources { get; init; } = false;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to include instances.
+    /// </summary>
+    public bool IncludeInstances { get; init; } = false;
 
     /// <summary>
     /// Gets or sets a value indicating whether to include resources connected to packages.
@@ -106,7 +116,8 @@ public sealed class ConnectionQueryFilter
         ToIds?.Count > 0 ||
         RoleIds?.Count > 0 ||
         PackageIds?.Count > 0 ||
-        ResourceIds?.Count > 0;
+        ResourceIds?.Count > 0 ||
+        InstanceIds?.Count > 0;
 
     /// <summary>
     /// Ensures that at least one filter parameter is set.

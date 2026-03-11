@@ -713,9 +713,12 @@ public class ConnectionsController(
         [FromQuery] string? instance = null,
         CancellationToken cancellationToken = default)
     {
-        return NotFound();
+        var validationErrors = ValidationComposer.Validate(ConnectionValidation.ValidateReadConnection(party.ToString(), from?.ToString(), to?.ToString()));
+        if (validationErrors is { })
+        {
+            return validationErrors.ToActionResult();
+        }
 
-        /* ToDo: Implement instance support in connection service and uncomment code below when ready. Currently we return the same result as GetResources, but with the intention to include instance information in the result once supported in connection service.
         Resource resourceObj = null;
         if (resource != null)
         {
@@ -734,6 +737,7 @@ public class ConnectionsController(
             fromId: from,
             toId: to,
             resourceId: resourceObj?.Id,
+            instanceId: instance,
             configureConnections: ConfigureConnections,
             cancellationToken: cancellationToken
         );
@@ -743,8 +747,7 @@ public class ConnectionsController(
             return result.Problem.ToActionResult();
         }
 
-        return Ok(result.Value);
-        */
+        return Ok(PaginatedResult.Create(result.Value, null));
     }
 
     /// <summary>
@@ -767,9 +770,12 @@ public class ConnectionsController(
         [FromQuery, FromHeader] PagingInput paging,
         CancellationToken cancellationToken = default)
     {
-        return NotFound();
+        var validationErrors = ValidationComposer.Validate(ConnectionValidation.ValidateReadConnection(party.ToString(), from.ToString(), to.ToString()));
+        if (validationErrors is { })
+        {
+            return validationErrors.ToActionResult();
+        }
 
-        /* ToDo: Implement instance support in connection service and uncomment code below when ready. Currently we return the same result as GetResourceRights, but with the intention to include instance information in the result once supported in connection service.
         var resourceObj = await resourceService.GetResource(resource, cancellationToken);
         if (resourceObj is null)
         {
@@ -780,24 +786,27 @@ public class ConnectionsController(
         }
 
         var result = party == from
-            ? await ConnectionService.GetResourceInstanceRightsToOthers(
+            ? await ConnectionService.GetInstanceRightsToOthers(
                 partyId: party,
                 toId: to,
                 resourceId: resourceObj.Id,
+                instanceId: instance,
                 configureConnection: ConfigureConnections,
                 cancellationToken: cancellationToken
                 )
-            : await ConnectionService.GetResourceInstanceRightsFromOthers(
+            : await ConnectionService.GetInstanceRightsFromOthers(
                 partyId: party,
                 fromId: from,
                 resourceId: resourceObj.Id,
+                instanceId: instance,
                 configureConnection: ConfigureConnections,
                 cancellationToken: cancellationToken
                 );
 
-        var externalResult = new ExternalResourceRightDto
+        var externalResult = new ExtInstanceRightDto
         {
             Resource = DtoMapper.Convert(resourceObj),
+            Instance = result?.Instance,
             DirectRights = [],
             IndirectRights = []
         };
@@ -829,7 +838,6 @@ public class ConnectionsController(
         }
 
         return Ok(externalResult);
-        */
     }
 
     /// <summary>

@@ -26,6 +26,7 @@ using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
+using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
@@ -240,6 +241,91 @@ public partial class ConnectionService(
         );
 
         return DtoMapper.ConvertResources(resources);
+    }
+
+    public async Task<Result<IEnumerable<InstancePermissionDto>>> GetResourceInstances(Guid party, Guid? fromId, Guid? toId, Guid? resourceId, string instanceId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
+    {
+        var options = new ConnectionOptions(configureConnections);
+        var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
+        var problem = ValidateReadOpInput(fromId, from, toId, to, options);
+        if (problem is { })
+        {
+            if (problem.ErrorCode == Problems.PartyNotFound.ErrorCode)
+            {
+                return new List<InstancePermissionDto>();
+            }
+
+            return problem;
+        }
+
+        var direction = party == fromId
+            ? ConnectionQueryDirection.ToOthers
+            : ConnectionQueryDirection.FromOthers;
+
+        var instances = await connectionQuery.GetConnectionsAsync(
+            new ConnectionQueryFilter()
+            {
+                RoleIds = [RoleConstants.Rightholder.Id],
+                ResourceIds = resourceId.HasValue ? [resourceId.Value] : null,
+                InstanceIds = !string.IsNullOrEmpty(instanceId) ? [instanceId] : null,
+                FromIds = from != null ? [from.Id] : null,
+                ToIds = to != null ? [to.Id] : null,
+                IncludeInstances = true,
+                IncludeResources = false,
+                IncludeKeyRole = true,
+                IncludeMainUnitConnections = false,
+                IncludeSubConnections = false,
+                IncludePackages = false,
+                EnrichPackageResources = false,
+                IncludeDelegation = false,
+            },
+            direction,
+            true,
+            cancellationToken
+        );
+
+        return await MapConnectionsToInstancePermissions(instances, cancellationToken);
+    }
+
+    private async Task<List<InstancePermissionDto>> MapConnectionsToInstancePermissions(IEnumerable<ConnectionQueryExtendedRecord> connections, CancellationToken cancellationToken)
+    {
+        var result = new List<InstancePermissionDto>();
+
+        // Group connections by resource and instance
+        var grouped = connections
+            .Where(c => c.Instances != null && c.Instances.Any())
+            .SelectMany(c => c.Instances, (connection, instance) => new { Connection = connection, Instance = instance })
+            .GroupBy(x => new { x.Instance.ResourceId, x.Instance.InstanceId });
+
+        foreach (var group in grouped)
+        {
+            var firstInstance = group.First().Instance;
+            var firstConnection = group.First().Connection;
+
+            // Get the resource from the Resources collection
+            var resource = firstConnection.Resources?.FirstOrDefault(r => r.Id == firstInstance.ResourceId);
+
+            if (resource == null)
+            {
+                continue; // Skip if resource not found
+            }
+
+            var dto = new InstancePermissionDto
+            {
+                Resource = DtoMapper.Convert(resource),
+                Instance = new InstanceDto
+                {
+                    Id = firstInstance.InstanceId,
+                    Urn = $"urn:altinn:instance-id:{firstInstance.InstanceId}",
+                    Type = null // TODO: InstanceType support to be added later
+                },
+                Permissions = group.Select(x => DtoMapper.ConvertToPermission(x.Connection)).ToList()
+            };
+
+            result.Add(dto);
+        }
+
+        return result;
     }
 
     public async Task<Result<bool>> UpdateResource(Entity from, Entity to, Resource resourceObj, IEnumerable<string> rightKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
@@ -1489,6 +1575,36 @@ public partial class ConnectionService
         return result.FirstOrDefault();
     }
 
+    /// <inheritdoc />
+    public async Task<InstanceRightDto> GetInstanceRightsToOthers(Guid partyId, Guid toId, Guid resourceId, string instanceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
+    {
+        var result = await GetInstanceRights(
+           fromId: partyId,
+           toId: toId,
+           resourceId: resourceId,
+           instanceId: instanceId,
+           roleId: RoleConstants.Rightholder,
+           cancellationToken: cancellationToken
+           );
+
+        return result.FirstOrDefault();
+    }
+
+    /// <inheritdoc />
+    public async Task<InstanceRightDto> GetInstanceRightsFromOthers(Guid partyId, Guid fromId, Guid resourceId, string instanceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
+    {
+        var result = await GetInstanceRights(
+            fromId: fromId,
+            toId: partyId,
+            resourceId: resourceId,
+            instanceId: instanceId,
+            roleId: RoleConstants.Rightholder,
+            cancellationToken: cancellationToken
+            );
+
+        return result.FirstOrDefault();
+    }
+
     private async Task<List<ResourceRightDto>> GetResourceRights(Guid? fromId, Guid? toId, Guid? resourceId, Guid? roleId, CancellationToken cancellationToken = default)
     {
         if (!fromId.HasValue && !toId.HasValue)
@@ -1707,6 +1823,171 @@ public partial class ConnectionService
         return result;
     }
 
+    private async Task<List<InstanceRightDto>> GetInstanceRights(Guid? fromId, Guid? toId, Guid? resourceId, string instanceId, Guid? roleId, CancellationToken cancellationToken = default)
+    {
+        if (!fromId.HasValue && !toId.HasValue)
+        {
+            throw new ArgumentException("You need to specify from or to");
+        }
+
+        #region Data
+
+        var baseQuery = dbContext.AssignmentInstances.AsNoTracking()
+            .Include(t => t.Assignment)
+            .ThenInclude(t => t.From)
+            .Include(t => t.Assignment)
+            .ThenInclude(t => t.To)
+            .Include(t => t.Assignment)
+            .ThenInclude(t => t.Role)
+            .Include(t => t.Resource)
+            .WhereIf(fromId.HasValue, t => t.Assignment.FromId == fromId.Value)
+            .WhereIf(toId.HasValue, t => t.Assignment.ToId == toId.Value)
+            .WhereIf(roleId.HasValue, t => t.Assignment.RoleId == roleId.Value)
+            .WhereIf(resourceId.HasValue, t => t.ResourceId == resourceId.Value)
+            .Where(t => t.InstanceId == instanceId);
+
+        // Direct
+        var direct = baseQuery
+            .Select(t => new AssignmentInstanceQueryResult()
+            {
+                Resource = t.Resource,
+                From = t.Assignment.From,
+                To = t.Assignment.To,
+                Role = t.Assignment.Role,
+                InstanceId = t.InstanceId,
+                PolicyPath = t.PolicyPath,
+                PolicyVersion = t.PolicyVersion,
+                Reason = AccessReasonFlag.Direct
+            });
+
+        // KeyRole
+        var keyRoleResult = dbContext.AssignmentInstances.AsNoTracking()
+            .Include(t => t.Assignment)
+            .ThenInclude(t => t.From)
+            .Include(t => t.Assignment)
+            .ThenInclude(t => t.To)
+            .Include(t => t.Assignment)
+            .ThenInclude(t => t.Role)
+            .Include(t => t.Resource)
+           .WhereIf(roleId.HasValue, t => t.Assignment.RoleId == roleId.Value)
+           .WhereIf(resourceId.HasValue, t => t.ResourceId == resourceId.Value)
+           .Where(t => t.InstanceId == instanceId)
+           .Join(
+               dbContext.Assignments.AsNoTracking()
+                   .Include(a => a.From)
+                   .Include(a => a.To)
+                   .Include(a => a.Role)
+                   .Where(t => t.Role.IsKeyRole),
+               ai => ai.Assignment.ToId,
+               c => c.FromId,
+               (ai, c) => new AssignmentInstanceQueryResult
+               {
+                   Resource = ai.Resource,
+                   From = ai.Assignment.From,
+                   To = c.To,
+                   Role = ai.Assignment.Role,
+                   Via = c.From,
+                   ViaRole = c.Role,
+                   InstanceId = ai.InstanceId,
+                   PolicyPath = ai.PolicyPath,
+                   PolicyVersion = ai.PolicyVersion
+               })
+           .WhereIf(fromId.HasValue, t => t.From.Id == fromId.Value)
+           .WhereIf(toId.HasValue, t => t.To.Id == toId.Value)
+           .Select(t => new AssignmentInstanceQueryResult()
+           {
+               Resource = t.Resource,
+               From = t.From,
+               To = t.To,
+               Role = t.Role,
+               InstanceId = t.InstanceId,
+               PolicyPath = t.PolicyPath,
+               PolicyVersion = t.PolicyVersion,
+               Reason = AccessReasonFlag.KeyRole
+           });
+
+        var query = direct
+            .Union(keyRoleResult);
+
+        var res = await query.ToListAsync(cancellationToken);
+
+        #endregion
+
+        var result = new List<InstanceRightDto>();
+
+        foreach (var resource in res.Select(t => t.Resource).DistinctBy(t => t.Id))
+        {
+            var internalResource = res.First().Resource;
+            var rightKeys = await contextRetrievalService.GetResourcePolicyV2(internalResource.RefId, cancellationToken: cancellationToken);
+
+            var instanceRight = new InstanceRightDto()
+            {
+                Resource = DtoMapper.Convert(internalResource),
+                Instance = new InstanceDto { Id = instanceId, Urn = $"urn:altinn:instance-id:{instanceId}" },
+                Rights = new List<RightPermission>()
+            };
+
+            bool isApp = DelegationCheckHelper.IsAppResource(resource.RefId, out string org, out string app);
+            var resourcePolicy = isApp ? 
+                await policyRetrievalPoint.GetPolicyAsync(org, app, cancellationToken) :
+                await policyRetrievalPoint.GetPolicyAsync(resource.RefId, cancellationToken);
+
+            var policyRights = resourcePolicy.Rules.SelectMany(t => DelegationCheckHelper.CalculateRightKeys(t, resource.RefId));
+
+            foreach (var assignmentInstance in res)
+            {
+                var policy = await policyRetrievalPoint.GetPolicyVersionAsync(assignmentInstance.PolicyPath, assignmentInstance.PolicyVersion, cancellationToken);
+                var availableRights = policy.Rules.SelectMany(t => DelegationCheckHelper.CalculateRightKeys(t, assignmentInstance.Resource.RefId));
+                var validRights = policyRights.Intersect(availableRights);
+
+                foreach (var rightKey in validRights)
+                {
+                    var right = instanceRight.Rights.FirstOrDefault(t => t.Right.Key == rightKey);
+
+                    if (right == null)
+                    {
+                        var rightKeyMetadata = rightKeys.FirstOrDefault(r => r.Key == rightKey);
+                        right = new RightPermission()
+                        {
+                            Right = new RightDto
+                            {
+                                Key = rightKey,
+                                Resource = rightKeyMetadata?.Resource,
+                                Action = rightKeyMetadata?.Action,
+                            },
+                            Reason = assignmentInstance.Reason,
+                            Permissions = new List<PermissionDto>(),
+                        };
+                        instanceRight.Rights.Add(right);
+                    }
+
+                    if (!right.Permissions.Any(p =>
+                        p.From.Id == assignmentInstance.From.Id &&
+                        p.To.Id == assignmentInstance.To.Id &&
+                        p.Role.Id == assignmentInstance.Role.Id &&
+                        p.Via?.Id == assignmentInstance.Via?.Id &&
+                        p.ViaRole?.Id == assignmentInstance.ViaRole?.Id &&
+                        p.Reason == assignmentInstance.Reason))
+                    {
+                        right.Permissions.Add(new PermissionDto()
+                        {
+                            From = DtoMapper.Convert(assignmentInstance.From),
+                            To = DtoMapper.Convert(assignmentInstance.To),
+                            Role = DtoMapper.ConvertCompactRole(assignmentInstance.Role),
+                            Via = DtoMapper.Convert(assignmentInstance.Via),
+                            ViaRole = DtoMapper.ConvertCompactRole(assignmentInstance.ViaRole),
+                            Reason = assignmentInstance.Reason
+                        });
+                    }
+                }
+            }
+
+            result.Add(instanceRight);
+        }
+
+        return result;
+    }
+
     /// <inheritdoc />
     public async Task<IEnumerable<SystemUserClientConnectionDto>> GetConnectionsToAgent(Guid viaId, Guid toId, CancellationToken cancellationToken = default)
     {
@@ -1873,6 +2154,29 @@ internal class AssignmentResourceQueryResult
     internal Role ViaRole { get; set; }
 
     internal Role Role { get; set; }
+
+    internal string PolicyPath { get; set; }
+
+    internal string PolicyVersion { get; set; }
+
+    internal AccessReasonFlag Reason { get; set; }
+}
+
+internal class AssignmentInstanceQueryResult
+{
+    internal Resource Resource { get; set; }
+
+    internal Entity From { get; set; }
+
+    internal Entity To { get; set; }
+
+    internal Entity Via { get; set; }
+
+    internal Role ViaRole { get; set; }
+
+    internal Role Role { get; set; }
+
+    internal string InstanceId { get; set; }
 
     internal string PolicyPath { get; set; }
 

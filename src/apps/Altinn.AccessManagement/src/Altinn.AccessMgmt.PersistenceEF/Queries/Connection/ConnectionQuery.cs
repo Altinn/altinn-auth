@@ -166,6 +166,19 @@ public class ConnectionQuery(AppDbContext db)
                 throw new Exception("Failed to include resources", ex);
             }
 
+            try
+            {
+                if (filter.IncludeInstances)
+                {
+                    var instances = await LoadInstancesByKeyAsync(baseQuery, filter, ct);
+                    result = Attach(result, instances, r => r.Id, (dto, list) => dto.Instances = list);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to include instances", ex);
+            }
+
             if (filter.EnrichEntities || filter.ExcludeDeleted)
             {
                 result = await EnrichEntities(
@@ -1140,6 +1153,44 @@ public class ConnectionQuery(AppDbContext db)
                 Id = z.Resource.Id,
                 Name = z.Resource.Name,
                 RefId = z.Resource.RefId,
+            }).DistinctBy(p => p.Id);
+
+            index.AddRange(g.Key, mapped);
+        }
+
+        return index;
+    }
+
+    private async Task<ConnectionIndex<ConnectionQueryInstance>> LoadInstancesByKeyAsync(IQueryable<ConnectionQueryBaseRecord> allKeys, ConnectionQueryFilter filter, CancellationToken ct)
+    {
+        var instanceSet = filter.InstanceIds?.Count > 0 ? new HashSet<string>(filter.InstanceIds) : null;
+        var resourceSet = filter.ResourceIds?.Count > 0 ? new HashSet<Guid>(filter.ResourceIds) : null;
+
+        // Assignment → AssignmentInstance
+        var assignmentInstances = allKeys
+            .Join(db.AssignmentInstances, c => c.AssignmentId, ai => ai.AssignmentId, (c, ai) => new { c, ai })
+            .WhereIf(instanceSet is not null, x => instanceSet!.Contains(x.ai.InstanceId))
+            .WhereIf(resourceSet is not null, x => resourceSet!.Contains(x.ai.ResourceId));
+
+        var flat = assignmentInstances.Select(x => new { x.c, x.ai.Id, x.ai.ResourceId, x.ai.InstanceId });
+
+        var rows = await flat
+            .Select(x => new
+            {
+                Key = new ConnectionCompositeKey(x.c.FromId, x.c.ToId, x.c.RoleId, x.c.AssignmentId, x.c.DelegationId, x.c.ViaId, x.c.ViaRoleId),
+                Instance = new { x.Id, x.ResourceId, x.InstanceId }
+            })
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        var index = new ConnectionIndex<ConnectionQueryInstance>();
+        foreach (var g in rows.GroupBy(x => x.Key))
+        {
+            var mapped = g.Select(z => new ConnectionQueryInstance
+            {
+                Id = z.Instance.Id,
+                ResourceId = z.Instance.ResourceId,
+                InstanceId = z.Instance.InstanceId,
             }).DistinctBy(p => p.Id);
 
             index.AddRange(g.Key, mapped);
