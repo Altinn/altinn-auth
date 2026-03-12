@@ -58,7 +58,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
 
                 Guid batchId = Guid.CreateVersion7();
                 var batchName = batchId.ToString().ToLower().Replace("-", string.Empty);
-                _logger.LogInformation("Starting proccessing role page '{0}'", batchName);
+                _logger.LogInformation("Starting processing role page '{0}'", batchName);
 
                 if (page.Content != null)
                 {

@@ -11,32 +11,32 @@ public static class AccessMgmtFeatureFlags
     public const string HostedServicesConsentMigration = "AccessMgmt.Core.HostedServices.ConsentMigration";
 
     /// <summary>
-    /// Specifies if the register data should streamed from register service to access management database
+    /// Specifies if the register data should be streamed from register service to access management database
     /// </summary>
     public const string HostedServicesRegisterSync = $"AccessMgmt.Core.HostedServices.RegisterSync";
 
     /// <summary>
-    /// Specifies if the register data should streamed from register service to access management database
+    /// Specifies if the register data should be streamed from register service to access management database
     /// </summary>
     public const string HostedServicesRegisterSyncImport = $"AccessMgmt.Core.HostedServices.RegisterSync.Import";
 
     /// <summary>
-    /// Specifies if the register data should streamed from register service to access management database
+    /// Specifies if the register data should be streamed from register service to access management database
     /// </summary>
     public const string HostedServicesResourceRegistrySync = $"AccessMgmt.Core.HostedServices.ResourceRegistrySync";
 
     /// <summary>
-    /// Specifies if the altinn roles data should streamed from sblbridge service to access management database
+    /// Specifies if the altinn roles data should be streamed from sblbridge service to access management database
     /// </summary>
     public const string HostedServicesAllAltinnRoleSync = $"AccessMgmt.Core.HostedServices.AllAltinnRoleSync";
 
     /// <summary>
-    /// Specifies if the altinn client roles data should streamed from sblbridge service to access management database
+    /// Specifies if the altinn client roles data should be streamed from sblbridge service to access management database
     /// </summary>
     public const string HostedServicesAltinnClientRoleSync = $"AccessMgmt.Core.HostedServices.AltinnClientRoleSync";
 
     /// <summary>
-    /// Specifies if the altinn admin roles data should streamed from sblbridge service to access management database
+    /// Specifies if the altinn admin roles data should be streamed from sblbridge service to access management database
     /// </summary>
     public const string HostedServicesAltinnAdminRoleSync = $"AccessMgmt.Core.HostedServices.AltinnAdminRoleSync";
 
@@ -45,6 +45,11 @@ public static class AccessMgmtFeatureFlags
     /// </summary>
     public const string HostedServicesPrivateTaxAffairRoleSync = $"AccessMgmt.Core.HostedServices.AltinnPrivateTaxAffairRoleSync";
     
+    /// <summary>
+    /// Specifies if the altinn bankruptcyestate roles data should be streamed from sblbridge service to access management database
+    /// </summary>
+    public const string HostedServicesAltinnBankruptcyEstateRoleSync = $"AccessMgmt.Core.HostedServices.AltinnBankruptcyEstateRoleSync";
+
     /// <summary>
     /// Specifies if AuthorizedPartiesServiceEf should be used
     /// </summary>
