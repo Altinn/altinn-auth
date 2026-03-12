@@ -249,7 +249,8 @@ public class AuthorizedParty
     /// </summary>
     /// <param name="resourceId">The resource ID of the instance delegation to add to the authorized party</param>
     /// <param name="instanceId">The instance ID of the instance delegation to add to the authorized party</param>
-    public void EnrichWithResourceInstanceAccess(string resourceId, string instanceId)
+    /// <param name="instanceRef">The instance reference of the instance delegation to add to the authorized party</param>
+    public void EnrichWithResourceInstanceAccess(string resourceId, string instanceId, string instanceRef = null)
     {
         if (string.IsNullOrWhiteSpace(resourceId) || string.IsNullOrWhiteSpace(instanceId))
         {
@@ -263,7 +264,8 @@ public class AuthorizedParty
             SortedAuthorizedInstances.Add(key, new()
             {
                 ResourceId = resourceId,
-                InstanceId = instanceId
+                InstanceId = instanceId,
+                InstanceRef = instanceRef
             });
         }
     }
@@ -293,5 +295,10 @@ public class AuthorizedParty
         /// Instance ID
         /// </summary>
         public string InstanceId { get; set; }
+
+        /// <summary>
+        /// Instance Reference
+        /// </summary>
+        public string InstanceRef { get; set; }
     }
 }

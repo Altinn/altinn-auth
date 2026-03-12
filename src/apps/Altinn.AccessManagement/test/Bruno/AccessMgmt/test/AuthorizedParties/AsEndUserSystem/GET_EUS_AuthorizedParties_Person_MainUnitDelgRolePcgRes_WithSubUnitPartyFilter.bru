@@ -120,13 +120,21 @@ tests {
       expectedMainUnit.instanceIdDelegatedToPerson,
       expectedMainUnit.instanceIdDelegatedToKeyRoleUnit
     ];
+    const expectedInstanceRefsMainUnit = [
+      expectedMainUnit.instanceRefDelegatedToPerson,
+      expectedMainUnit.instanceRefDelegatedToKeyRoleUnit
+    ];
     const expectedInstancesSubUnit = [
       expectedMainUnit.subunit.instanceIdDelegatedToPerson,
       expectedMainUnit.subunit.instanceIdDelegatedToKeyRoleUnit
     ];
+    const expectedInstanceRefsSubUnit = [
+      expectedMainUnit.subunit.instanceRefDelegatedToPerson,
+      expectedMainUnit.subunit.instanceRefDelegatedToKeyRoleUnit
+    ];
     
-    assertInstances(actualMainUnit.authorizedInstances, expectedInstancesMainUnit, expectedInstanceResourceId);
-    assertInstances(actualSubUnit.authorizedInstances, expectedInstancesSubUnit, expectedInstanceResourceId);
+    assertInstances(actualMainUnit.authorizedInstances, expectedInstanceResourceId, expectedInstancesMainUnit, expectedInstanceRefsMainUnit);
+    assertInstances(actualSubUnit.authorizedInstances, expectedInstanceResourceId, expectedInstancesSubUnit, expectedInstanceRefsSubUnit);
   });
     
   test(requestName + "|Inheirits all mainunit accesses on subunits", function() {  
@@ -221,7 +229,7 @@ tests {
   });
   
   // Helper to assert instances against expected IDs (order-agnostic)
-  function assertInstances(actualInstances, expectedInstanceIds, expectedResourceId) {
+  function assertInstances(actualInstances, expectedResourceId, expectedInstanceIds, expectedInstanceRefs) {
     expect(actualInstances, 'authorizedInstances must be an array').to.be.an('array');
     expect(actualInstances.length, 'unexpected number of instances').to.equal(expectedInstanceIds.length);
   
@@ -230,6 +238,7 @@ tests {
       expect(inst, `instance object at index ${idx} must be an object`).to.be.an('object');
       expect(inst).to.have.property('resourceId', expectedResourceId);
       expect(inst).to.have.property('instanceId').that.is.a('string').and.is.not.empty;
+      expect(inst).to.have.property('instanceRef').that.is.a('string').and.is.not.empty;
     });
   
     // Compare sets of instanceIds (order-agnostic)
@@ -240,6 +249,15 @@ tests {
     // Ensure uniqueness
     const uniqueCount = new Set(actualIds).size;
     expect(uniqueCount, 'duplicate instanceIds found').to.equal(actualIds.length);
+    
+    // Compare sets of instanceRefs (order-agnostic)
+    const actualRefs = actualInstances.map(i => i.instanceRef).sort();
+    const expectedRefsSorted = [...expectedInstanceRefs].sort();
+    expect(actualRefs).to.deep.equal(expectedRefsSorted);
+  
+    // Ensure uniqueness
+    const uniqueRefsCount = new Set(actualRefs).size;
+    expect(uniqueRefsCount, 'duplicate instanceRefs found').to.equal(actualRefs.length);
   }
   
   

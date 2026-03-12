@@ -32,7 +32,8 @@ public partial class DtoMapper : IDtoMapper
             AuthorizedInstances = authorizedParty.AuthorizedInstances.Select(instance => new AuthorizedPartyDto.AuthorizedResourceInstance()
             {
                 ResourceId = instance.ResourceId,
-                InstanceId = instance.InstanceId
+                InstanceId = instance.InstanceId,
+                InstanceRef = instance.InstanceRef
             }).ToList(),
             Subunits = ConvertToAuthorizedPartiesDto(authorizedParty.Subunits).ToList()
         };

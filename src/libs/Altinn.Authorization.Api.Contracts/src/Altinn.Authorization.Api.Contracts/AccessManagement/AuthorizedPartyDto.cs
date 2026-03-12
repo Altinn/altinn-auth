@@ -107,5 +107,10 @@ public class AuthorizedPartyDto
         /// Instance ID
         /// </summary>
         public string InstanceId { get; set; }
+
+        /// <summary>
+        /// Instance Reference
+        /// </summary>
+        public string InstanceRef { get; set; }
     }
 }

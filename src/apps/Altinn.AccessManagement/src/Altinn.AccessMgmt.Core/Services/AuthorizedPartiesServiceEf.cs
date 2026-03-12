@@ -7,6 +7,7 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
@@ -641,7 +642,14 @@ public class AuthorizedPartiesServiceEf(
             {
                 if (delegation.InstanceId != null && filters.IncludeInstances)
                 {
-                    party.EnrichWithResourceInstanceAccess(delegation.ResourceId, delegation.InstanceId);
+                    var instanceId = delegation.InstanceId;
+                    var instanceRef = delegation.InstanceId;
+                    if (DelegationCheckHelper.IsAppResource(delegation.ResourceId, out string _, out string _) && !instanceRef.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.InstanceAttribute, StringComparison.OrdinalIgnoreCase))
+                    {
+                        instanceRef = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.InstanceAttribute}:{party.PartyId}/{delegation.InstanceId}";
+                    }
+
+                    party.EnrichWithResourceInstanceAccess(delegation.ResourceId, instanceId, instanceRef);
                 }
                 else if (filters.IncludeResources)
                 {

@@ -108,7 +108,9 @@ module.exports =
                 "resourceIdDelegatedToPerson": "devtest_gar_authparties-sub-to-person",
                 "resourceIdDelegatedToKeyRoleUnit": "devtest_gar_authparties-sub-to-org",
                 "instanceIdDelegatedToPerson": "de5d0a27-3a5f-4c04-951e-70581c5b29d8",
-                "instanceIdDelegatedToKeyRoleUnit": "7d79836f-cee4-48ec-ad7e-caa198a1923d"
+                "instanceRefDelegatedToPerson": "urn:altinn:instance-id:51961130/de5d0a27-3a5f-4c04-951e-70581c5b29d8",
+                "instanceIdDelegatedToKeyRoleUnit": "7d79836f-cee4-48ec-ad7e-caa198a1923d",
+                "instanceRefDelegatedToKeyRoleUnit": "urn:altinn:instance-id:51961130/7d79836f-cee4-48ec-ad7e-caa198a1923d"
             },
             "directPackageToDelegate": "mobler-og-annen-industri",
             "directPackageToDelegate2": "revisorattesterer",
@@ -120,7 +122,9 @@ module.exports =
             "appIdDelegatedToPerson": "app_ttd_authz-bruno-testapp1",
             "appIdDelegatedToKeyRoleUnit": "app_ttd_authz-bruno-testapp2",
             "instanceIdDelegatedToPerson": "74638d4c-275f-4568-8040-af6979246694",
-            "instanceIdDelegatedToKeyRoleUnit": "b9468899-35b9-4956-99ab-2dcb0cc065fb"
+            "instanceRefDelegatedToPerson": "urn:altinn:instance-id:51871764/74638d4c-275f-4568-8040-af6979246694",
+            "instanceIdDelegatedToKeyRoleUnit": "b9468899-35b9-4956-99ab-2dcb0cc065fb",
+            "instanceRefDelegatedToKeyRoleUnit": "urn:altinn:instance-id:51871764/b9468899-35b9-4956-99ab-2dcb0cc065fb"
         },
         "client_ENK_DELETED_2025_11_27_InnehaverAccess": {
             "name": "SJELDEN REN KATT KONJAKK",
