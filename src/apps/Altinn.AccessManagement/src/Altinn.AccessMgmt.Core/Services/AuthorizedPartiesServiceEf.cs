@@ -644,9 +644,20 @@ public class AuthorizedPartiesServiceEf(
                 {
                     var instanceId = delegation.InstanceId;
                     var instanceRef = delegation.InstanceId;
-                    if (DelegationCheckHelper.IsAppResource(delegation.ResourceId, out string _, out string _) && !instanceRef.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.InstanceAttribute, StringComparison.OrdinalIgnoreCase))
+                    if (DelegationCheckHelper.IsAppResource(delegation.ResourceId, out string _, out string _))
                     {
-                        instanceRef = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.InstanceAttribute}:{party.PartyId}/{delegation.InstanceId}";
+                        if (instanceId.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.InstanceAttribute, StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Remove prefix from instanceId to remain backwards compatible. 
+                            var partyAndInstanceId = instanceRef.Substring(AltinnXacmlConstants.MatchAttributeIdentifiers.InstanceAttribute.Length + 1);
+                            var split = partyAndInstanceId.Split('/');
+                            instanceId = split.Length == 2 ? split[1] : partyAndInstanceId;
+                        }
+                        else
+                        {
+                            // Add prefix to instanceRef
+                            instanceRef = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.InstanceAttribute}:{party.PartyId}/{delegation.InstanceId}";
+                        }
                     }
 
                     party.EnrichWithResourceInstanceAccess(delegation.ResourceId, instanceId, instanceRef);
