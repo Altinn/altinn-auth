@@ -68,6 +68,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IRoleSyncService, RoleSyncService>();
         services.AddSingleton<IResourceSyncService, ResourceSyncService>();
         services.AddSingleton<IAltinnClientRoleSyncService, AltinnClientRoleSyncService>();
+        services.AddSingleton<IPrivateTaxAffairRoleSyncService, PrivateTaxAffairRoleSyncService>();
         services.AddSingleton<IAltinnAdminRoleSyncService, AltinnAdminRoleSyncService>();
         services.AddSingleton<IAllAltinnRoleSyncService, AllAltinnRoleSyncService>();
         services.AddSingleton<ISingleAppRightSyncService, SingleAppRightSyncService>();
