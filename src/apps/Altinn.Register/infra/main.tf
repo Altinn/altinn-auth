@@ -217,6 +217,14 @@ module "appsettings" {
 
           // services
           "Services:altinn-authentication:http" = { value = "http://altinn-authentication.default.svc.cluster.local/" }
+
+          // api sources default
+          "Altinn:register:ApiSource:Default" = { value = var.config.api_source.default }
+        },
+        // api sources endpoints
+        {
+          for key, value in var.config.api_source.endpoints :
+          "Altinn:register:ApiSource:Endpoints:${key}" => { value = value }
         },
         var.features.maskinporten ? {
           // maskinporten config
