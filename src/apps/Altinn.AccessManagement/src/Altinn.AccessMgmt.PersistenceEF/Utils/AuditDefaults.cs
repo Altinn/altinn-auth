@@ -38,7 +38,7 @@ public static class AuditDefaults
     /// <summary>
     ///  Service Owner API
     /// </summary>
-    public const string ServiceOwnerApi = "006cd1fb-fb60-7892-ab1c-9228e00618d6";
+    public const string ServiceOwnerApi = "ab418674-710b-4ca0-8ff1-b7daac8dc3d0";
 
     /// <summary>
     /// EnduserApi
