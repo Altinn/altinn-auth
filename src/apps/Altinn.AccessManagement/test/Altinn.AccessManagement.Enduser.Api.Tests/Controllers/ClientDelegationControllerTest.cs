@@ -1079,7 +1079,7 @@ public class ClientDelegationControllerTest
             Assert.NotNull(orjanAccess);
 
             Assert.Single(paulasAccess.Access);
-            Assert.Equal(2, paulasAccess.Access.FirstOrDefault()?.Packages.Count());
+            Assert.Equal(2, paulasAccess.Access.FirstOrDefault()?.Packages.Length);
 
             Assert.Single(orjanAccess.Access);
             Assert.Single(orjanAccess.Access.FirstOrDefault()?.Packages);
@@ -1407,7 +1407,7 @@ public class ClientDelegationControllerTest
                             new()
                         {
                             Role = role,
-                            Packages = packages.ToList(),
+                            Packages = [.. packages],
                         }
                         ]
                     })

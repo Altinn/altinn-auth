@@ -74,7 +74,7 @@ public class AuditMiddleware : IMiddleware
     {
         if (party.IsOrganizationId(out var organizationIdentifier))
         {
-            return await db.Entities.FirstOrDefaultAsync(e => e.OrganizationIdentifier == organizationIdentifier, context.RequestAborted);
+            return await db.Entities.FirstOrDefaultAsync(e => e.OrganizationIdentifier == organizationIdentifier.ToString(), context.RequestAborted);
         }
 
         return null;

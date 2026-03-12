@@ -31,7 +31,39 @@ public static class TestDataSeeds
             TestEntities.OrganizationOkernBorettslag
         ]);
         #endregion
-        
+
+        #region TestData Entities
+        db.Entities.AddRange([
+            TestData.BakerJohnsen,
+            TestData.SvendsenAutomobil,
+            TestData.FredriksonsFabrikk,
+            TestData.RegnskapNorge,
+            TestData.MittRegnskap,
+            TestData.RpcAS,
+            TestData.LarsBakke,
+            TestData.HildeStrand,
+            TestData.KnutVik,
+            TestData.MortenDahl,
+            TestData.GreteHolm,
+            TestData.ArneLund,
+            TestData.SiljeHaugen,
+            TestData.EinarBerg,
+            TestData.ToneKvam,
+            TestData.BjornMoe,
+            TestData.RandiLie,
+            TestData.VegardSolberg,
+            TestData.IngerNygard,
+            TestData.AstridJohansen,
+            TestData.TrondLarsen,
+            TestData.MaritEriksen,
+            TestData.GeirPedersen,
+            TestData.OddHalvorsen,
+            TestData.LivKristiansen,
+            TestData.SteinarAndreassen,
+            TestData.HelgeNilsen,
+        ]);
+        #endregion
+
         #region Assignments
         db.Assignments.AddRange([
             new()
@@ -41,6 +73,11 @@ public static class TestDataSeeds
                 RoleId = RoleConstants.HasAsRegistrationUnitBEDR,
             },
         ]);
+        #endregion
+
+        #region TestData Assignments and Delegations
+        db.Assignments.AddRange(TestData.Assignments);
+        //// db.Delegations.AddRange(TestData.Delegations);
         #endregion
 
         await db.SaveChangesAsync();

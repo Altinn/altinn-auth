@@ -5,6 +5,7 @@ using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.Core.Services;
@@ -123,6 +124,31 @@ public class PackageService : IPackageService
         }
 
         var resources = await GetDbPackageResources(id, cancellationToken);
+
+        return DtoMapper.Convert(package, package.Area, resources);
+    }
+
+    /// <inheritdoc/>
+    public async Task<PackageDto> GetPackage(RequestRefrenceDto refrence, CancellationToken cancellationToken = default)
+    {
+        if (refrence.Id == null && string.IsNullOrEmpty(refrence.Urn))
+        {
+            return null;
+        }
+
+        var package = await DbContext.Packages.AsNoTracking()
+            .Include(t => t.Area)
+            .Include(t => t.EntityType)
+            .WhereIf(refrence.Id.HasValue && refrence.Id.Value != Guid.Empty, t => t.Id == refrence.Id.Value)
+            .WhereIf(!string.IsNullOrEmpty(refrence.Urn), t => t.Urn == refrence.Urn)
+            .SingleAsync(cancellationToken);
+
+        if (package == null)
+        {
+            return null;
+        }
+
+        var resources = await GetDbPackageResources(package.Id, cancellationToken);
 
         return DtoMapper.Convert(package, package.Area, resources);
     }

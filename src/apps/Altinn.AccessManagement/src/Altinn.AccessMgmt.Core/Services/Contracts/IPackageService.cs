@@ -1,6 +1,7 @@
 ﻿using Altinn.AccessMgmt.Core.Utils.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 
 namespace Altinn.AccessMgmt.Core.Services.Contracts;
 
@@ -74,6 +75,14 @@ public interface IPackageService
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The package with the specified ID.</returns>
     Task<PackageDto> GetPackage(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a specific package by its unique identifier.
+    /// </summary>
+    /// <param name="refrence">The unique identifier of the package.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns>The package with the specified ID.</returns>
+    Task<PackageDto> GetPackage(RequestRefrenceDto refrence, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get package by urnValue

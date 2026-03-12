@@ -17,6 +17,12 @@ public interface IDelegationService
     Task<Delegation> GetDelegation(Guid id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets delegations
+    /// </summary>
+    /// <returns></returns>
+    Task<IEnumerable<Delegation>> GetDelegations(Guid fromId, Guid toId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Create a new delegation betweeen two assignments
     /// </summary>
     /// <param name="userId">User</param>

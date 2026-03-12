@@ -219,5 +219,15 @@
         /// Claim for consumer prefixes from maskinporten token
         /// </summary>
         public const string CLAIM_MASKINPORTEN_CONSUMER_PREFIX = "consumer_prefix";
+
+        /// <summary>
+        /// Scope giving access to reading delegationrequests
+        /// </summary>
+        public const string ALTINN_SERVICEOWNER_DELEGATIONREQUESTS_READ = "altinn:serviceowner/delegationrequests.read";
+
+        /// <summary>
+        /// Scope giving access to creating delegationrequests
+        /// </summary>
+        public const string ALTINN_SERVICEOWNER_DELEGATIONREQUESTS_WRITE = "altinn:serviceowner/delegationrequests.write";
     }
 }

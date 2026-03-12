@@ -125,6 +125,11 @@ public interface IAssignmentService
     Task<Assignment> GetAssignment(Guid fromId, Guid toId, Guid roleId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets assignments
+    /// </summary>
+    Task<IEnumerable<Assignment>> GetAssignments(Guid fromId, Guid toId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Fetches assignments.
     /// </summary>
     Task<List<Assignment>> GetFacilitatorAssignments(Guid fromId, string roleCode, CancellationToken cancellationToken = default);

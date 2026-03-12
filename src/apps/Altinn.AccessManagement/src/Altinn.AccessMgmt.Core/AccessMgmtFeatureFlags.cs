@@ -79,4 +79,14 @@ public static class AccessMgmtFeatureFlags
     /// Feature flag for Controller Enduser Connections
     /// </summary>
     public const string EnduserControllerConnections = "AccessManagement.Enduser.Connections";
+
+    /// <summary>
+    /// Enables request assignment resource endpoints in enduser and serviceowner APIs.
+    /// </summary>
+    public const string EnableRequestAssignmentResource = "AccessMgmt.Controller.RequestAssignment.Resource";
+
+    /// <summary>
+    /// Enables request assignment package endpoints in enduser and serviceowner APIs.
+    /// </summary>
+    public const string EnableRequestAssignmentPackage = "AccessMgmt.Controller.RequestAssignment.Package";
 }

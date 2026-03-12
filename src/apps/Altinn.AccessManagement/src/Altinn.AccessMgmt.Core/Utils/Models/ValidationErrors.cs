@@ -107,4 +107,9 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor UnableToCompleteOperation { get; }
     = _factory.Create(27, $"The operation could not be completed.");
+
+    /// <summary>
+    /// Gets a validation error descriptor indicating that the object was not found.
+    /// </summary>
+    public static ValidationErrorDescriptor NotFound { get; } = _factory.Create(28, "Object not found");
 }

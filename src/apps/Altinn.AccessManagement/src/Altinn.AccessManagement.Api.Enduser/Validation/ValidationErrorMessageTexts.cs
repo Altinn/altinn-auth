@@ -14,10 +14,13 @@ internal static class ValidationErrorMessageTexts
     internal const string RequireOneResourceRef = "Either a resource key or a resource ID must be provided";
     internal const string PackageIdMustNotBeEmpty = "Package ID must not be empty UUID";
     internal const string ResourceIdMustNotBeEmpty = "Resource ID must not be empty UUID";
+    internal const string ResourceRefMustNotBeEmpty = "Resource reference must not be empty";
+    internal const string PackageRefMustNotBeEmpty = "Package reference must not be empty";
     internal const string InvalidPartyValue = "Must be a valid non-empty UUID";
     internal const string PersonIdentifierRequired = "Required when providing PersonInput details";
     internal const string PersonIdentifierInvalid = "Invalid national identity number";
     internal const string LastNameRequired = "Required when providing PersonInput details";
     internal const string PersonIdentifierLastNameInvalid = "PersonInput details must match";
     internal const string SelfDelegationNotAllowed = "Self-delegation not allowed. From and To cannot be the same party";
+    internal const string NotFound = "Object not found";
 }

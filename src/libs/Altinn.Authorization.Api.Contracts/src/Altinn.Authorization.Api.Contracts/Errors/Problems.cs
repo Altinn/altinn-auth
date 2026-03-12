@@ -133,4 +133,12 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor AssignmentNotFound { get; }
     = _factory.Create(30, HttpStatusCode.InternalServerError, "The assignment was not found");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor RequestNotFound { get; }
+    = _factory.Create(31, HttpStatusCode.NotFound, "The request was not found");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor RequestCreationFailed { get; }
+    = _factory.Create(32, HttpStatusCode.InternalServerError, "Failed to create request");
 }

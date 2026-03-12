@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
+using Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Models.Extensions;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Models.Base;
@@ -8,7 +9,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Models.Base;
 /// Resource
 /// </summary>
 [NotMapped]
-public class BaseResource : BaseAudit
+public class BaseResource : BaseAudit, IEntityId
 {
     private Guid _id;
 

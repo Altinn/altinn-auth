@@ -41,6 +41,7 @@
         <ProjectReference Include="..\Altinn.AccessManagement.Api.Internal\Altinn.AccessManagement.Api.Internal.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Api.Maskinporten\Altinn.AccessManagement.Api.Maskinporten.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Api.Metadata\Altinn.AccessManagement.Api.Metadata.csproj" />
+        <ProjectReference Include="..\Altinn.AccessManagement.Api.ServiceOwner\Altinn.AccessManagement.Api.ServiceOwner.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Core\Altinn.AccessManagement.Core.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Integration\Altinn.AccessManagement.Integration.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Persistence\Altinn.AccessManagement.Persistence.csproj" />

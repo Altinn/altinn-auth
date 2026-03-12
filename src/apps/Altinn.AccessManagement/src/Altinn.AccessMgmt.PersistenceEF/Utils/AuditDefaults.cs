@@ -36,14 +36,14 @@ public static class AuditDefaults
     public const string EnduserApi = "ed771364-42a8-4934-801e-b482ed20ec3e";
 
     /// <summary>
+    ///  Service Owner API
+    /// </summary>
+    public const string ServiceOwnerApi = "006cd1fb-fb60-7892-ab1c-9228e00618d6";
+
+    /// <summary>
     /// EnduserApi
     /// </summary>
     public const string InternalApi = "b2b7dd36-8de5-40fb-a6ce-c7a4020f9ddc";
-
-    /// <summary>
-    /// Service Owner API
-    /// </summary>
-    public const string ServiceOwnerApi = "ab418674-710b-4ca0-8ff1-b7daac8dc3d0";
 
     /// <summary>
     /// Altinn2ClientImportSystem

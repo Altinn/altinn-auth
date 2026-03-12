@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11512.155
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
@@ -74,6 +74,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.TestUtils", "test\Altinn.AccessManagement.TestUtils\Altinn.AccessManagement.TestUtils.csproj", "{560D74B0-7640-4D6F-944D-1E6C5EA0FCBD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessMgmt.PersistenceEF.Tests", "test\Altinn.AccessMgmt.PersistenceEF.Tests\Altinn.AccessMgmt.PersistenceEF.Tests.csproj", "{F7190148-4EEC-4F29-9230-B9BC6FC25FD4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.ServiceOwner.Api.Tests", "test\Altinn.AccessManagement.ServiceOwner.Api.Tests\Altinn.AccessManagement.ServiceOwner.Api.Tests.csproj", "{8BE62361-DD30-4A69-938B-45E171E6254B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.Api.Tests", "test\Altinn.AccessManagement.Api.Tests\Altinn.AccessManagement.Api.Tests.csproj", "{DA9E72D7-CB2A-4170-9D86-38C0E1913490}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -421,6 +425,30 @@ Global
 		{F7190148-4EEC-4F29-9230-B9BC6FC25FD4}.Release|x64.Build.0 = Release|Any CPU
 		{F7190148-4EEC-4F29-9230-B9BC6FC25FD4}.Release|x86.ActiveCfg = Release|Any CPU
 		{F7190148-4EEC-4F29-9230-B9BC6FC25FD4}.Release|x86.Build.0 = Release|Any CPU
+		{8BE62361-DD30-4A69-938B-45E171E6254B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8BE62361-DD30-4A69-938B-45E171E6254B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8BE62361-DD30-4A69-938B-45E171E6254B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8BE62361-DD30-4A69-938B-45E171E6254B}.Debug|x64.Build.0 = Debug|Any CPU
+		{8BE62361-DD30-4A69-938B-45E171E6254B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8BE62361-DD30-4A69-938B-45E171E6254B}.Debug|x86.Build.0 = Debug|Any CPU
+		{8BE62361-DD30-4A69-938B-45E171E6254B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8BE62361-DD30-4A69-938B-45E171E6254B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8BE62361-DD30-4A69-938B-45E171E6254B}.Release|x64.ActiveCfg = Release|Any CPU
+		{8BE62361-DD30-4A69-938B-45E171E6254B}.Release|x64.Build.0 = Release|Any CPU
+		{8BE62361-DD30-4A69-938B-45E171E6254B}.Release|x86.ActiveCfg = Release|Any CPU
+		{8BE62361-DD30-4A69-938B-45E171E6254B}.Release|x86.Build.0 = Release|Any CPU
+		{DA9E72D7-CB2A-4170-9D86-38C0E1913490}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA9E72D7-CB2A-4170-9D86-38C0E1913490}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA9E72D7-CB2A-4170-9D86-38C0E1913490}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DA9E72D7-CB2A-4170-9D86-38C0E1913490}.Debug|x64.Build.0 = Debug|Any CPU
+		{DA9E72D7-CB2A-4170-9D86-38C0E1913490}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DA9E72D7-CB2A-4170-9D86-38C0E1913490}.Debug|x86.Build.0 = Debug|Any CPU
+		{DA9E72D7-CB2A-4170-9D86-38C0E1913490}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA9E72D7-CB2A-4170-9D86-38C0E1913490}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA9E72D7-CB2A-4170-9D86-38C0E1913490}.Release|x64.ActiveCfg = Release|Any CPU
+		{DA9E72D7-CB2A-4170-9D86-38C0E1913490}.Release|x64.Build.0 = Release|Any CPU
+		{DA9E72D7-CB2A-4170-9D86-38C0E1913490}.Release|x86.ActiveCfg = Release|Any CPU
+		{DA9E72D7-CB2A-4170-9D86-38C0E1913490}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -458,6 +486,8 @@ Global
 		{D49D926C-E56C-40A5-8BD0-2E726D7A9000} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
 		{560D74B0-7640-4D6F-944D-1E6C5EA0FCBD} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
 		{F7190148-4EEC-4F29-9230-B9BC6FC25FD4} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
+		{8BE62361-DD30-4A69-938B-45E171E6254B} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
+		{DA9E72D7-CB2A-4170-9D86-38C0E1913490} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7E091FE0-EC9B-410B-9087-FB89517072B5}

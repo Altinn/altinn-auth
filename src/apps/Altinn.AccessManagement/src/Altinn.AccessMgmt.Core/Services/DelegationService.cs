@@ -27,6 +27,17 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
     }
 
     /// <inheritdoc/>
+    public async Task<IEnumerable<Delegation>> GetDelegations(Guid fromId, Guid toId, CancellationToken cancellationToken = default)
+    {
+        return await db.Delegations.AsNoTracking()
+            .Include(t => t.From)
+            .Include(t => t.To)
+            .Where(t => t.From.FromId == fromId)
+            .Where(t => t.To.ToId == toId)
+            .ToListAsync();
+    }
+
+    /// <inheritdoc/>
     public async Task<Delegation> CreateDelgation(Guid userId, Guid fromAssignmentId, Guid toAssignmentId, CancellationToken cancellationToken)
     {
         var fromAssignment = await assignmentService.GetAssignment(fromAssignmentId, cancellationToken);

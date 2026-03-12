@@ -357,6 +357,18 @@ module "appsettings" {
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },
+    {
+      name        = "AccessMgmt.Controller.RequestAssignment.Resource"
+      description = "Enables request assignment resource endpoints in enduser and serviceowner APIs."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Controller.RequestAssignment.Package"
+      description = "Enables request assignment package endpoints in enduser and serviceowner APIs."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
   ]
   providers = {
     azurerm.hub = azurerm.hub

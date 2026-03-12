@@ -285,6 +285,12 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     }
 
     /// <inheritdoc/>
+    public async Task<IEnumerable<Assignment>> GetAssignments(Guid fromId, Guid toId, CancellationToken cancellationToken = default)
+    {
+        return await db.Assignments.AsNoTracking().Where(t => t.FromId == fromId && t.ToId == toId).ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async Task<List<Assignment>> GetFacilitatorAssignments(Guid fromId, string roleCode, CancellationToken cancellationToken = default)
     {
         var roleResult = await db.Roles.AsNoTracking()

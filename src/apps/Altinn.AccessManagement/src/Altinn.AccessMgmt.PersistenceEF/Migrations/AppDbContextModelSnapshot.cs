@@ -1484,6 +1484,178 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.ToTable("auditprovidertype", "dbo_history");
                 });
 
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Audit.AuditRequestAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("Audit_ValidFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validfrom");
+
+                    b.Property<DateTimeOffset>("Audit_ValidTo")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validto");
+
+                    b.Property<string>("Audit_ChangeOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_changeoperation");
+
+                    b.Property<Guid?>("Audit_ChangedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedby");
+
+                    b.Property<Guid?>("Audit_ChangedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedbysystem");
+
+                    b.Property<string>("Audit_DeleteOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_deleteoperation");
+
+                    b.Property<Guid?>("Audit_DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_deletedby");
+
+                    b.Property<Guid?>("Audit_DeletedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_deletedbysystem");
+
+                    b.Property<Guid>("FromId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("fromid");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("roleid");
+
+                    b.Property<Guid>("ToId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("toid");
+
+                    b.HasKey("Id", "Audit_ValidFrom", "Audit_ValidTo")
+                        .HasName("pk_auditrequestassignment");
+
+                    b.ToTable("auditrequestassignment", "dbo_history");
+                });
+
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Audit.AuditRequestAssignmentPackage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("Audit_ValidFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validfrom");
+
+                    b.Property<DateTimeOffset>("Audit_ValidTo")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validto");
+
+                    b.Property<Guid>("AssignmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assignmentid");
+
+                    b.Property<string>("Audit_ChangeOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_changeoperation");
+
+                    b.Property<Guid?>("Audit_ChangedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedby");
+
+                    b.Property<Guid?>("Audit_ChangedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedbysystem");
+
+                    b.Property<string>("Audit_DeleteOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_deleteoperation");
+
+                    b.Property<Guid?>("Audit_DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_deletedby");
+
+                    b.Property<Guid?>("Audit_DeletedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_deletedbysystem");
+
+                    b.Property<Guid>("PackageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("packageid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id", "Audit_ValidFrom", "Audit_ValidTo")
+                        .HasName("pk_auditrequestassignmentpackage");
+
+                    b.ToTable("auditrequestassignmentpackage", "dbo_history");
+                });
+
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Audit.AuditRequestAssignmentResource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("Audit_ValidFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validfrom");
+
+                    b.Property<DateTimeOffset>("Audit_ValidTo")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validto");
+
+                    b.Property<string>("Action")
+                        .HasColumnType("text")
+                        .HasColumnName("action");
+
+                    b.Property<Guid>("AssignmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assignmentid");
+
+                    b.Property<string>("Audit_ChangeOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_changeoperation");
+
+                    b.Property<Guid?>("Audit_ChangedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedby");
+
+                    b.Property<Guid?>("Audit_ChangedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedbysystem");
+
+                    b.Property<string>("Audit_DeleteOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_deleteoperation");
+
+                    b.Property<Guid?>("Audit_DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_deletedby");
+
+                    b.Property<Guid?>("Audit_DeletedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_deletedbysystem");
+
+                    b.Property<Guid>("ResourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resourceid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id", "Audit_ValidFrom", "Audit_ValidTo")
+                        .HasName("pk_auditrequestassignmentresource");
+
+                    b.ToTable("auditrequestassignmentresource", "dbo_history");
+                });
+
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Audit.AuditResource", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2733,6 +2905,168 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.RequestAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Audit_ChangeOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_changeoperation");
+
+                    b.Property<Guid?>("Audit_ChangedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedby");
+
+                    b.Property<Guid?>("Audit_ChangedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedbysystem");
+
+                    b.Property<DateTimeOffset>("Audit_ValidFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validfrom");
+
+                    b.Property<Guid>("FromId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("fromid");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("roleid");
+
+                    b.Property<Guid>("ToId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("toid");
+
+                    b.HasKey("Id")
+                        .HasName("pk_requestassignment");
+
+                    b.HasIndex("FromId")
+                        .HasDatabaseName("ix_requestassignment_fromid");
+
+                    b.HasIndex("RoleId")
+                        .HasDatabaseName("ix_requestassignment_roleid");
+
+                    b.HasIndex("ToId")
+                        .HasDatabaseName("ix_requestassignment_toid");
+
+                    b.ToTable("requestassignment", "dbo");
+
+                    b.HasAnnotation("Altinn:AuditVersion", 3);
+                });
+
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.RequestAssignmentPackage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AssignmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assignmentid");
+
+                    b.Property<string>("Audit_ChangeOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_changeoperation");
+
+                    b.Property<Guid?>("Audit_ChangedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedby");
+
+                    b.Property<Guid?>("Audit_ChangedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedbysystem");
+
+                    b.Property<DateTimeOffset>("Audit_ValidFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validfrom");
+
+                    b.Property<Guid>("PackageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("packageid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("pk_requestassignmentpackage");
+
+                    b.HasIndex("AssignmentId")
+                        .HasDatabaseName("ix_requestassignmentpackage_assignmentid");
+
+                    b.HasIndex("PackageId")
+                        .HasDatabaseName("ix_requestassignmentpackage_packageid");
+
+                    b.HasIndex("AssignmentId", "PackageId", "Status")
+                        .IsUnique()
+                        .HasDatabaseName("ix_requestassignmentpackage_assignmentid_packageid_status");
+
+                    b.ToTable("requestassignmentpackage", "dbo");
+
+                    b.HasAnnotation("Altinn:AuditVersion", 3);
+                });
+
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.RequestAssignmentResource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Action")
+                        .HasColumnType("text")
+                        .HasColumnName("action");
+
+                    b.Property<Guid>("AssignmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assignmentid");
+
+                    b.Property<string>("Audit_ChangeOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_changeoperation");
+
+                    b.Property<Guid?>("Audit_ChangedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedby");
+
+                    b.Property<Guid?>("Audit_ChangedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedbysystem");
+
+                    b.Property<DateTimeOffset>("Audit_ValidFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validfrom");
+
+                    b.Property<Guid>("ResourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resourceid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("pk_requestassignmentresource");
+
+                    b.HasIndex("AssignmentId")
+                        .HasDatabaseName("ix_requestassignmentresource_assignmentid");
+
+                    b.HasIndex("ResourceId")
+                        .HasDatabaseName("ix_requestassignmentresource_resourceid");
+
+                    b.HasIndex("AssignmentId", "ResourceId", "Action", "Status")
+                        .IsUnique()
+                        .HasDatabaseName("ix_requestassignmentresource_assignmentid_resourceid_action_st~");
+
+                    b.ToTable("requestassignmentresource", "dbo");
+
+                    b.HasAnnotation("Altinn:AuditVersion", 3);
+                });
+
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Resource", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3591,6 +3925,78 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasConstraintName("fk_provider_providertype_typeid");
 
                     b.Navigation("Type");
+                });
+
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.RequestAssignment", b =>
+                {
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Entity", "From")
+                        .WithMany()
+                        .HasForeignKey("FromId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_requestassignment_entity_fromid");
+
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_requestassignment_role_roleid");
+
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Entity", "To")
+                        .WithMany()
+                        .HasForeignKey("ToId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_requestassignment_entity_toid");
+
+                    b.Navigation("From");
+
+                    b.Navigation("Role");
+
+                    b.Navigation("To");
+                });
+
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.RequestAssignmentPackage", b =>
+                {
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.RequestAssignment", "Assignment")
+                        .WithMany()
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_requestassignmentpackage_requestassignment_assignmentid");
+
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Package", "Package")
+                        .WithMany()
+                        .HasForeignKey("PackageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_requestassignmentpackage_package_packageid");
+
+                    b.Navigation("Assignment");
+
+                    b.Navigation("Package");
+                });
+
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.RequestAssignmentResource", b =>
+                {
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.RequestAssignment", "Assignment")
+                        .WithMany()
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_requestassignmentresource_requestassignment_assignmentid");
+
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Resource", "Resource")
+                        .WithMany()
+                        .HasForeignKey("ResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_requestassignmentresource_resource_resourceid");
+
+                    b.Navigation("Assignment");
+
+                    b.Navigation("Resource");
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Resource", b =>

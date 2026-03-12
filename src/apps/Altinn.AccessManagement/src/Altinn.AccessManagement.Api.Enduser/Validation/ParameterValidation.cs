@@ -1,6 +1,7 @@
-using Altinn.AccessMgmt.Core.Utils.Models;
+﻿using Altinn.AccessMgmt.Core.Utils.Models;
 using Altinn.AccessMgmt.Core.Validation;
-using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.ProblemDetails;
 
