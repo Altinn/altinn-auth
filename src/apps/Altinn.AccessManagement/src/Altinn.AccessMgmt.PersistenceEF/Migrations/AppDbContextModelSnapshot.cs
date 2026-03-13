@@ -2145,6 +2145,8 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasIndex("ToId")
                         .HasDatabaseName("ix_delegation_toid");
 
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("ToId"), new[] { "Id", "FromId" });
+
                     b.HasIndex("FromId", "ToId", "FacilitatorId")
                         .IsUnique()
                         .HasDatabaseName("ix_delegation_fromid_toid_facilitatorid");
