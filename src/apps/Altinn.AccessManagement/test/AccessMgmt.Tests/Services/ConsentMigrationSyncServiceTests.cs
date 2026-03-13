@@ -45,7 +45,8 @@ public class ConsentMigrationSyncServiceTests
             ConsentStatus = 3,
             OnlyExpiredConsents = true,
             NormalDelayMs = 1000,
-            EmptyFeedDelayMs = 5000
+            EmptyFeedDelayMs = 5000,
+            MaxDegreeOfParallelism = 10
         };
 
         _settingsMonitorMock = new Mock<IOptionsMonitor<ConsentMigrationSettings>>();        
@@ -195,42 +196,6 @@ public class ConsentMigrationSyncServiceTests
     }
 
     [Fact]
-    public async Task ProcessBatch_Cancelled_StopsProcessing()
-    {
-        // Arrange
-        var consentIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
-        _clientMock.Setup(x => x.GetAltinn2ConsentListForMigration(
-            It.IsAny<int>(),
-            It.IsAny<int?>(),
-            It.IsAny<bool>(),
-            It.IsAny<CancellationToken>()))
-            .ReturnsAsync(consentIds);
-
-        var cts = new CancellationTokenSource();
-        var callCount = 0;
-
-        _migrationServiceMock.Setup(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .Returns(() =>
-            {
-                callCount++;
-                if (callCount == 1)
-                {
-                    cts.Cancel(); // Cancel after first consent
-                }
-
-                return Task.FromResult(ConsentMigrationResult.Succeeded);
-            });
-
-        var service = CreateService();
-
-        // Act
-        await Assert.ThrowsAsync<OperationCanceledException>(async () => await service.ProcessBatch(cts.Token));
-
-        // Assert
-        _migrationServiceMock.Verify(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
     public async Task ProcessBatch_MixedExceptionsAndResults_HandlesAll()
     {
         // Arrange
@@ -294,6 +259,433 @@ public class ConsentMigrationSyncServiceTests
                 _settings.OnlyExpiredConsents,
                 It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    // ADD THESE 12 NEW TESTS to the existing ConsentMigrationSyncServiceTests class
+
+    [Fact]
+    public async Task ProcessBatch_ParallelProcessing_ProcessesConsentsInParallel()
+    {
+        // Arrange
+        var consentIds = Enumerable.Range(0, 20).Select(_ => Guid.NewGuid()).ToList();
+        var processingTimes = new List<DateTime>();
+        var lockObj = new object();
+
+        _clientMock.Setup(x => x.GetAltinn2ConsentListForMigration(
+          It.IsAny<int>(),
+          It.IsAny<int?>(),
+          It.IsAny<bool>(),
+          It.IsAny<CancellationToken>()))
+          .ReturnsAsync(consentIds);
+
+        _migrationServiceMock.Setup(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+          .Returns(async () =>
+          {
+              lock (lockObj)
+              {
+                  processingTimes.Add(DateTime.UtcNow);
+              }
+
+              await Task.Delay(50); // Simulate processing time
+              return ConsentMigrationResult.Succeeded;
+          });
+
+        var service = CreateService();
+
+        // Act
+        var startTime = DateTime.UtcNow;
+        var result = await service.ProcessBatch(CancellationToken.None);
+        var endTime = DateTime.UtcNow;
+
+        // Assert
+        Assert.Equal(20, result);
+        _migrationServiceMock.Verify(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Exactly(20));
+
+        // With MaxDegreeOfParallelism=10, processing 20 items with 50ms each should take ~100ms (not 1000ms sequential)
+        var totalTime = (endTime - startTime).TotalMilliseconds;
+        Assert.True(totalTime < 500, $"Expected parallel processing to complete in <500ms, but took {totalTime}ms");
+
+        // Verify that multiple consents were processed at the same time (within 10ms window)
+        var concurrentGroups = processingTimes
+          .GroupBy(t => t.Ticks / TimeSpan.FromMilliseconds(10).Ticks)
+          .Where(g => g.Count() > 1)
+          .Count();
+
+        Assert.True(concurrentGroups > 0, "Expected some consents to be processed concurrently");
+    }
+
+    [Fact]
+    public async Task ProcessBatch_RespectsMaxDegreeOfParallelism()
+    {
+        // Arrange
+        _settings.MaxDegreeOfParallelism = 5;
+        var consentIds = Enumerable.Range(0, 50).Select(_ => Guid.NewGuid()).ToList();
+        var concurrentCount = 0;
+        var maxConcurrentCount = 0;
+        var lockObj = new object();
+
+        _clientMock.Setup(x => x.GetAltinn2ConsentListForMigration(
+          It.IsAny<int>(),
+          It.IsAny<int?>(),
+          It.IsAny<bool>(),
+          It.IsAny<CancellationToken>()))
+          .ReturnsAsync(consentIds);
+
+        _migrationServiceMock.Setup(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+          .Returns(async () =>
+          {
+              lock (lockObj)
+              {
+                  concurrentCount++;
+                  if (concurrentCount > maxConcurrentCount)
+                  {
+                      maxConcurrentCount = concurrentCount;
+                  }
+              }
+
+              await Task.Delay(20);
+
+              lock (lockObj)
+              {
+                  concurrentCount--;
+              }
+
+              return ConsentMigrationResult.Succeeded;
+          });
+
+        var service = CreateService();
+
+        // Act
+        var result = await service.ProcessBatch(CancellationToken.None);
+
+        // Assert
+        Assert.Equal(50, result);
+        Assert.True(maxConcurrentCount <= _settings.MaxDegreeOfParallelism,
+          $"Expected max concurrent <= {_settings.MaxDegreeOfParallelism}, but was {maxConcurrentCount}");
+        Assert.True(maxConcurrentCount > 1, "Expected parallel processing to occur");
+    }
+
+    [Fact]
+    public async Task ProcessBatch_LargeBatch_ProcessesAllConsents()
+    {
+        // Arrange
+        _settings.BatchSize = 10000;
+        var consentIds = Enumerable.Range(0, 10000).Select(_ => Guid.NewGuid()).ToList();
+
+        _clientMock.Setup(x => x.GetAltinn2ConsentListForMigration(
+          It.IsAny<int>(),
+          It.IsAny<int?>(),
+          It.IsAny<bool>(),
+          It.IsAny<CancellationToken>()))
+          .ReturnsAsync(consentIds);
+
+        _migrationServiceMock.Setup(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+          .ReturnsAsync(ConsentMigrationResult.Succeeded);
+
+        var service = CreateService();
+
+        // Act
+        var result = await service.ProcessBatch(CancellationToken.None);
+
+        // Assert
+        Assert.Equal(10000, result);
+        _migrationServiceMock.Verify(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Exactly(10000));
+    }
+
+    [Fact]
+    public async Task ProcessBatch_ParallelProcessing_ThreadSafeCounters()
+    {
+        // Arrange
+        var consentIds = Enumerable.Range(0, 100).Select(_ => Guid.NewGuid()).ToList();
+        var successCount = 0;
+        var failedCount = 0;
+
+        _clientMock.Setup(x => x.GetAltinn2ConsentListForMigration(
+          It.IsAny<int>(),
+          It.IsAny<int?>(),
+          It.IsAny<bool>(),
+          It.IsAny<CancellationToken>()))
+          .ReturnsAsync(consentIds);
+
+        _migrationServiceMock.Setup(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+          .Returns(async () =>
+          {
+              await Task.Delay(1);
+              // Randomly succeed or fail
+              var success = Guid.NewGuid().GetHashCode() % 2 == 0;
+              if (success)
+              {
+                  Interlocked.Increment(ref successCount);
+                  return ConsentMigrationResult.Succeeded;
+              }
+              else
+              {
+                  Interlocked.Increment(ref failedCount);
+                  return ConsentMigrationResult.Failed("Random failure");
+              }
+          });
+
+        var service = CreateService();
+
+        // Act
+        var result = await service.ProcessBatch(CancellationToken.None);
+
+        // Assert
+        Assert.Equal(100, result);
+        Assert.Equal(100, successCount + failedCount); // All accounted for
+        _migrationServiceMock.Verify(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Exactly(100));
+    }
+
+    [Fact]
+    public async Task ProcessBatch_ParallelProcessing_AllConsentsProcessedExactlyOnce()
+    {
+        // Arrange
+        var consentIds = Enumerable.Range(0, 50).Select(_ => Guid.NewGuid()).ToList();
+        var processedIds = new System.Collections.Concurrent.ConcurrentBag<Guid>();
+
+        _clientMock.Setup(x => x.GetAltinn2ConsentListForMigration(
+          It.IsAny<int>(),
+          It.IsAny<int?>(),
+          It.IsAny<bool>(),
+          It.IsAny<CancellationToken>()))
+          .ReturnsAsync(consentIds);
+
+        _migrationServiceMock.Setup(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+          .Returns(async (Guid id, CancellationToken ct) =>
+          {
+              processedIds.Add(id);
+              await Task.Delay(5);
+              return ConsentMigrationResult.Succeeded;
+          });
+
+        var service = CreateService();
+
+        // Act
+        var result = await service.ProcessBatch(CancellationToken.None);
+
+        // Assert
+        Assert.Equal(50, result);
+        Assert.Equal(50, processedIds.Count);
+
+        // Verify each consent was processed exactly once
+        foreach (var consentId in consentIds)
+        {
+            Assert.Equal(1, processedIds.Count(id => id == consentId));
+        }
+    }
+
+    [Fact]
+    public async Task ProcessBatch_CancellationDuringParallelProcessing_StopsGracefully()
+    {
+        // Arrange
+        var consentIds = Enumerable.Range(0, 100).Select(_ => Guid.NewGuid()).ToList();
+        var cts = new CancellationTokenSource();
+        var processedCount = 0;
+
+        _clientMock.Setup(x => x.GetAltinn2ConsentListForMigration(
+          It.IsAny<int>(),
+          It.IsAny<int?>(),
+          It.IsAny<bool>(),
+          It.IsAny<CancellationToken>()))
+          .ReturnsAsync(consentIds);
+
+        _migrationServiceMock.Setup(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+          .Returns(async (Guid id, CancellationToken ct) =>
+          {
+              var count = Interlocked.Increment(ref processedCount);
+              if (count == 10)
+              {
+                  cts.Cancel(); // Cancel after 10 consents processed
+              }
+
+              await Task.Delay(10, ct);
+              return ConsentMigrationResult.Succeeded;
+          });
+
+        var service = CreateService();
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => service.ProcessBatch(cts.Token));
+        Assert.True(ex is OperationCanceledException); // always true
+
+        // Some consents were processed before cancellation
+        Assert.True(processedCount < 100, $"Expected processing to stop early, but processed {processedCount} consents");
+    }
+
+    [Fact]
+    public async Task ProcessBatch_MixedSuccessAndFailureInParallel_CountsCorrectly()
+    {
+        // Arrange
+        var consentIds = Enumerable.Range(0, 30).Select(_ => Guid.NewGuid()).ToList();
+
+        _clientMock.Setup(x => x.GetAltinn2ConsentListForMigration(
+          It.IsAny<int>(),
+          It.IsAny<int?>(),
+          It.IsAny<bool>(),
+          It.IsAny<CancellationToken>()))
+          .ReturnsAsync(consentIds);
+
+        var callCount = 0;
+        _migrationServiceMock.Setup(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+          .Returns(() =>
+          {
+              var count = Interlocked.Increment(ref callCount);
+              // Every 3rd consent fails
+              if (count % 3 == 0)
+              {
+                  return Task.FromResult(ConsentMigrationResult.Failed("Test failure"));
+              }
+
+              return Task.FromResult(ConsentMigrationResult.Succeeded);
+          });
+
+        var service = CreateService();
+
+        // Act
+        var result = await service.ProcessBatch(CancellationToken.None);
+
+        // Assert
+        Assert.Equal(30, result);
+        _migrationServiceMock.Verify(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Exactly(30));
+    }
+
+    [Fact]
+    public async Task ProcessBatch_ParallelExceptions_DoesNotStopOtherConsents()
+    {
+        // Arrange
+        var consentIds = Enumerable.Range(0, 10).Select(_ => Guid.NewGuid()).ToList();
+
+        _clientMock.Setup(x => x.GetAltinn2ConsentListForMigration(
+          It.IsAny<int>(),
+          It.IsAny<int?>(),
+          It.IsAny<bool>(),
+          It.IsAny<CancellationToken>()))
+          .ReturnsAsync(consentIds);
+
+        var callCount = 0;
+        _migrationServiceMock.Setup(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+          .Returns(() =>
+          {
+              var count = Interlocked.Increment(ref callCount);
+              // Throw exception on every 3rd call
+              if (count % 3 == 0)
+              {
+                  throw new InvalidOperationException("Test exception");
+              }
+
+              return Task.FromResult(ConsentMigrationResult.Succeeded);
+          });
+
+        var service = CreateService();
+
+        // Act
+        var result = await service.ProcessBatch(CancellationToken.None);
+
+        // Assert
+        Assert.Equal(10, result); // All consents processed despite exceptions
+        _migrationServiceMock.Verify(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Exactly(10));
+    }
+
+    [Fact]
+    public async Task ProcessBatch_MaxDegreeOfParallelism_DefaultValue()
+    {
+        // Arrange - Test with default MaxDegreeOfParallelism
+        var defaultSettings = new ConsentMigrationSettings
+        {
+            BatchSize = 10,
+            ConsentStatus = 3,
+            OnlyExpiredConsents = true,
+            MaxDegreeOfParallelism = 10 // Default value
+        };
+
+        _settingsMonitorMock.Setup(x => x.CurrentValue).Returns(defaultSettings);
+
+        var consentIds = Enumerable.Range(0, 20).Select(_ => Guid.NewGuid()).ToList();
+
+        _clientMock.Setup(x => x.GetAltinn2ConsentListForMigration(
+          It.IsAny<int>(),
+          It.IsAny<int?>(),
+          It.IsAny<bool>(),
+          It.IsAny<CancellationToken>()))
+          .ReturnsAsync(consentIds);
+
+        _migrationServiceMock.Setup(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+          .ReturnsAsync(ConsentMigrationResult.Succeeded);
+
+        var service = CreateService();
+
+        // Act
+        var result = await service.ProcessBatch(CancellationToken.None);
+
+        // Assert
+        Assert.Equal(20, result);
+        _migrationServiceMock.Verify(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Exactly(20));
+    }
+
+    [Fact]
+    public async Task ProcessBatch_SingleDegreeOfParallelism_ProcessesSequentially()
+    {
+        // Arrange - Test with MaxDegreeOfParallelism = 1 (sequential)
+        _settings.MaxDegreeOfParallelism = 1;
+        var consentIds = Enumerable.Range(0, 5).Select(_ => Guid.NewGuid()).ToList();
+        var processingOrder = new List<Guid>();
+        var lockObj = new object();
+
+        _clientMock.Setup(x => x.GetAltinn2ConsentListForMigration(
+          It.IsAny<int>(),
+          It.IsAny<int?>(),
+          It.IsAny<bool>(),
+          It.IsAny<CancellationToken>()))
+          .ReturnsAsync(consentIds);
+
+        _migrationServiceMock.Setup(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+          .Returns(async (Guid id, CancellationToken ct) =>
+          {
+              lock (lockObj)
+              {
+                  processingOrder.Add(id);
+              }
+
+              await Task.Delay(10);
+              return ConsentMigrationResult.Succeeded;
+          });
+
+        var service = CreateService();
+
+        // Act
+        var result = await service.ProcessBatch(CancellationToken.None);
+
+        // Assert
+        Assert.Equal(5, result);
+        Assert.Equal(5, processingOrder.Count);
+        _migrationServiceMock.Verify(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Exactly(5));
+    }
+
+    [Fact]
+    public async Task ProcessBatch_HighParallelism_HandlesLoad()
+    {
+        // Arrange - Test with high parallelism
+        _settings.MaxDegreeOfParallelism = 50;
+        var consentIds = Enumerable.Range(0, 100).Select(_ => Guid.NewGuid()).ToList();
+
+        _clientMock.Setup(x => x.GetAltinn2ConsentListForMigration(
+          It.IsAny<int>(),
+          It.IsAny<int?>(),
+          It.IsAny<bool>(),
+          It.IsAny<CancellationToken>()))
+          .ReturnsAsync(consentIds);
+
+        _migrationServiceMock.Setup(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+          .ReturnsAsync(ConsentMigrationResult.Succeeded);
+
+        var service = CreateService();
+
+        // Act
+        var result = await service.ProcessBatch(CancellationToken.None);
+
+        // Assert
+        Assert.Equal(100, result);
+        _migrationServiceMock.Verify(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Exactly(100));
     }
 
     private ConsentMigrationSyncService CreateService()

@@ -195,6 +195,7 @@ module "appsettings" {
     "${var.environment}-access-management" = {
       values = {
         "ConsentMigration:BatchSize" = { value = tostring(var.configuration.consent.batch_size) }
+        "ConsentMigration:MaxDegreeOfParallelism" = { value = tostring(var.configuration.consent.max_degree_of_parallelism) }
       }
     }
   }

@@ -10,7 +10,7 @@ public class ConsentMigrationSettings
     /// <summary>
     /// Number of consent GUIDs to fetch per batch
     /// </summary>
-    [Range(1, 1000)]
+    [Range(1, 50000)]
     public int BatchSize { get; set; } = 100;
 
     /// <summary>
@@ -41,4 +41,10 @@ public class ConsentMigrationSettings
     /// Indicates whether only expired consents should be migrated
     /// </summary>
     public bool OnlyExpiredConsents { get; set; } = true;
+
+    /// <summary>
+    /// Maximum number of consents to process in parallel within a single batch (N workers)
+    /// </summary>
+    [Range(1, 50)]
+    public int MaxDegreeOfParallelism { get; set; } = 10;
 }

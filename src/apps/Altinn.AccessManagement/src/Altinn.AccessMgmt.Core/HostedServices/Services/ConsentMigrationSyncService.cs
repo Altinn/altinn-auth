@@ -95,21 +95,27 @@ public class ConsentMigrationSyncService : BaseSyncService, IConsentMigrationSyn
         int successCount = 0;
         int failedCount = 0;
 
-        foreach (Guid consentId in consentIds)
+        // Start N parallel workers to process the batch
+        var parallelOptions = new ParallelOptions
         {
-            // Check for cancellation before processing each consent
-            cancellationToken.ThrowIfCancellationRequested();
+            MaxDegreeOfParallelism = migrationSettings.MaxDegreeOfParallelism,
+            CancellationToken = cancellationToken
+        };
 
-            bool success = await ProcessSingleConsent(migrationService, consentId, cancellationToken);
+        await Parallel.ForEachAsync(consentIds, parallelOptions, async (consentId, ct) =>
+        {
+            bool success = await ProcessSingleConsent(migrationService, consentId, ct);
             if (success)
             {
-                successCount++;
+                Interlocked.Increment(ref successCount);
             }
             else
             {
-                failedCount++;
+                Interlocked.Increment(ref failedCount);
             }
-        }
+        });
+
+        _logger.LogInformation("Batch completed: {Success} succeeded, {Failed} failed", successCount, failedCount);
 
         return consentIds.Count;
     }
