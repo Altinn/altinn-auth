@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Api.Contracts.AccessManagement;
+﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 
 /// <summary>
 /// Party entity reference
@@ -21,9 +21,9 @@ public class PartyEntityDto
     public string Type { get; set; }
 
     /// <summary>
-    /// SubType of entity (e.g. for organization: AS, ENK, DA)
+    /// Variant is a sub type of entity (e.g. for organization: AS, ENK, DA)
     /// </summary>
-    public string SubType { get; set; }
+    public string Variant { get; set; }
 
     /// <summary>
     /// OrganizationIdentifier

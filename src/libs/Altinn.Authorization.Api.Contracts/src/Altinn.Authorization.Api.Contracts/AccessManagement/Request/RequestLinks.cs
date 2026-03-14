@@ -3,9 +3,9 @@
 public class RequestLinks
 {
     /// <summary>
-    /// Link for the end user to confirm the request (change status from draft to pending)
+    /// Link to request details
     /// </summary>
-    public string ConfirmLink { get; set; }
+    public string DetailsLink { get; set; }
 
     /// <summary>
     /// Link to check status of request

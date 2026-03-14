@@ -21,6 +21,11 @@ public class RequestDto
     public string Type { get; set; }
 
     /// <summary>
+    /// Last updated
+    /// </summary>
+    public DateTimeOffset LastUpdated { get; set; }
+
+    /// <summary>
     /// Requested resource
     /// </summary>
     public RequestRefrenceDto Resource { get; set; }
@@ -36,7 +41,12 @@ public class RequestDto
     public RequestLinks Links { get; set; }
 
     /// <summary>
-    /// Connection from one party to another that is requested
+    /// Party that is requested to grant access
     /// </summary>
-    public RequestConnectionDto Connection { get; set; }
+    public PartyEntityDto From { get; set; }
+
+    /// <summary>
+    /// Party that access is requested for
+    /// </summary>
+    public PartyEntityDto To { get; set; }
 }

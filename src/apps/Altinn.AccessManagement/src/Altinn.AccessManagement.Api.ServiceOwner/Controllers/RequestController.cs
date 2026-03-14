@@ -69,13 +69,16 @@ public class RequestController(
     {
         ValidationErrorBuilder errorBuilder = default;
 
-        var fromResult = await GetEntity(input.Connection.From, "BODY/connection.from", ct);
+        var fromInput = string.IsNullOrEmpty(input.From) ? input.Connection.From : input.From;
+        var toInput = string.IsNullOrEmpty(input.To) ? input.Connection.To : input.To;
+
+        var fromResult = await GetEntity(fromInput, "BODY/connection.from", ct);
         if (fromResult.IsProblem)
         {
             return fromResult.Problem.ToActionResult();
         }
 
-        var toResult = await GetEntity(input.Connection.To, "BODY/connection.to", ct);
+        var toResult = await GetEntity(toInput, "BODY/connection.to", ct);
         if (toResult.IsProblem) 
         { 
             return toResult.Problem.ToActionResult(); 
@@ -91,12 +94,12 @@ public class RequestController(
 
         if (input.Resource.HasValue() && resource == null)
         {
-            errorBuilder.Add(ValidationErrorDescriptors.RequestedResourceNotFound, $"BODY/resource", [new("resource", $"Urn {input.Resource.Urn} is not valid")]);
+            errorBuilder.Add(ValidationErrorDescriptors.RequestedResourceNotFound, $"BODY/resource", [new("resource", $"Urn {input.Resource.ReferenceId} is not valid")]);
         }
 
         if (input.Package.HasValue() && package == null)
         {
-            errorBuilder.Add(ValidationErrorDescriptors.RequestedPackageNotFound, $"BODY/package", [new("package", $"Urn {input.Package.Urn} is not valid")]);
+            errorBuilder.Add(ValidationErrorDescriptors.RequestedPackageNotFound, $"BODY/package", [new("package", $"Urn {input.Package.ReferenceId} is not valid")]);
         }
 
         if (errorBuilder.TryBuild(out var problem))
@@ -177,7 +180,7 @@ public class RequestController(
 
     private static RequestLinks BuildLinks(Guid requestId) => new()
     {
-        ConfirmLink = $"accessmanagement/api/v1/enduser/request/{requestId}/accept",
+        DetailsLink = $"accessmanagement/api/v1/enduser/request/{requestId}/accept",
         StatusLink = $"accessmanagement/api/v1/serviceowner/delegationrequests/{requestId}"
     };
 }

@@ -3,17 +3,17 @@
 public class RequestRefrenceDto
 {
     /// <summary>
-    /// Uniqueidentifier
+    /// Unique identifier
     /// </summary>
     public Guid? Id { get; set; }
 
     /// <summary>
-    /// URN
+    /// Refrence identifier
     /// </summary>
-    public string Urn { get; set; }
+    public string ReferenceId { get; set; }
 
     public bool HasValue()
     {
-        return Id.HasValue || !string.IsNullOrEmpty(Urn);
+        return Id.HasValue || !string.IsNullOrEmpty(ReferenceId);
     }
 }

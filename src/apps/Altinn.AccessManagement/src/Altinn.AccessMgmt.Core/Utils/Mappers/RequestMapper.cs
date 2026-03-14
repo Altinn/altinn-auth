@@ -1,8 +1,9 @@
-﻿using System.Text;
-using Altinn.AccessMgmt.Core.Services;
+﻿using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+using Azure.Core;
+using System.Text;
 
 namespace Altinn.AccessMgmt.Core.Utils;
 
@@ -18,13 +19,11 @@ public partial class DtoMapper : IDtoMapper
         {
             Id = request.Id,
             Type = "package",
-            Connection = new RequestConnectionDto
-            {
-                From = ConvertToPartyEntityDto(request.Assignment.From),
-                To = ConvertToPartyEntityDto(request.Assignment.To),
-            },
+            LastUpdated = request.Audit_ValidFrom,
+            From = ConvertToPartyEntityDto(request.Assignment.From),
+            To = ConvertToPartyEntityDto(request.Assignment.To),
             Status = request.Status,
-            Package = new RequestRefrenceDto() { Id = request.PackageId, Urn = request.Package?.Urn },
+            Package = new RequestRefrenceDto() { Id = request.PackageId, ReferenceId = request.Package?.Urn },
         };
     }
 
@@ -34,13 +33,11 @@ public partial class DtoMapper : IDtoMapper
         {
             Id = request.Id,
             Type = "resource",
-            Connection = new RequestConnectionDto
-            {
-                From = ConvertToPartyEntityDto(request.Assignment.From),
-                To = ConvertToPartyEntityDto(request.Assignment.To),
-            },
+            LastUpdated = request.Audit_ValidFrom,
+            From = ConvertToPartyEntityDto(request.Assignment.From),
+            To = ConvertToPartyEntityDto(request.Assignment.To),
             Status = request.Status,
-            Resource = new RequestRefrenceDto() { Id = request.ResourceId, Urn = request.Resource?.RefId },
+            Resource = new RequestRefrenceDto() { Id = request.ResourceId, ReferenceId = request.Resource?.RefId },
         };
     }
 
@@ -51,7 +48,7 @@ public partial class DtoMapper : IDtoMapper
             Id = entity.Id,
             Name = entity.Name,
             Type = entity.Type?.ToString(),
-            SubType = entity.Variant?.ToString(),
+            Variant = entity.Variant?.ToString(),
             OrganizationIdentifier = entity.OrganizationIdentifier?.ToString(),
             PersonIdentifier = entity.PersonIdentifier?.ToString()
         };

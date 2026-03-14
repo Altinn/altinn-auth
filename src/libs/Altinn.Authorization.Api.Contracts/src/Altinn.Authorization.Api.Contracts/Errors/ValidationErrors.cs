@@ -199,4 +199,10 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor RequestFailedToApprove { get; }
         = _factory.Create(40, $"Failed to approve request.");
+
+    /// <summary>
+    /// Request connection not found
+    /// </summary>
+    public static ValidationErrorDescriptor RequestConnectionNotFound { get; }
+        = _factory.Create(41, $"Initial connection between parties not found.");
 }

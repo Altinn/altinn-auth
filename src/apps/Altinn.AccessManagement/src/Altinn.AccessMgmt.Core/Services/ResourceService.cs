@@ -33,7 +33,7 @@ public class ResourceService : IResourceService
 
     public async ValueTask<Resource> GetResource(RequestRefrenceDto refrence, CancellationToken cancellationToken = default)
     {
-        if (refrence.Id == null && string.IsNullOrEmpty(refrence.Urn))
+        if (refrence.Id == null && string.IsNullOrEmpty(refrence.ReferenceId))
         {
             return null;
         }
@@ -42,7 +42,7 @@ public class ResourceService : IResourceService
             .Include(t => t.Type)
             .Include(t => t.Provider)
             .WhereIf(refrence.Id.HasValue && refrence.Id.Value != Guid.Empty, t => t.Id == refrence.Id.Value)
-            .WhereIf(!string.IsNullOrEmpty(refrence.Urn), t => t.RefId == refrence.Urn)
+            .WhereIf(!string.IsNullOrEmpty(refrence.ReferenceId), t => t.RefId == refrence.ReferenceId)
             .SingleOrDefaultAsync(cancellationToken);
     }
 }

@@ -131,7 +131,7 @@ public class PackageService : IPackageService
     /// <inheritdoc/>
     public async Task<PackageDto> GetPackage(RequestRefrenceDto refrence, CancellationToken cancellationToken = default)
     {
-        if (refrence.Id == null && string.IsNullOrEmpty(refrence.Urn))
+        if (refrence.Id == null && string.IsNullOrEmpty(refrence.ReferenceId))
         {
             return null;
         }
@@ -140,7 +140,7 @@ public class PackageService : IPackageService
             .Include(t => t.Area)
             .Include(t => t.EntityType)
             .WhereIf(refrence.Id.HasValue && refrence.Id.Value != Guid.Empty, t => t.Id == refrence.Id.Value)
-            .WhereIf(!string.IsNullOrEmpty(refrence.Urn), t => t.Urn == refrence.Urn)
+            .WhereIf(!string.IsNullOrEmpty(refrence.ReferenceId), t => t.Urn == refrence.ReferenceId)
             .SingleAsync(cancellationToken);
 
         if (package == null)

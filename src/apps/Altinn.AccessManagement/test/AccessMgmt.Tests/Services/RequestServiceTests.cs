@@ -165,10 +165,10 @@ public class RequestServiceTests : IClassFixture<PostgresFixture>
         var resource = await SeedUniqueResource();
         await _requestService.CreateRequest(new CreateRequestDto() { From = OrgFrom.Id, To = PersonTo.Id, Role = RoleConstants.Rightholder.Id, Resource = resource.Id, Status = RequestStatus.Draft });
 
-        var results = await _requestService.GetRequests(fromId: OrgFrom.Id, toId: null, status: [], after: null, ct: default);
+        var results = await _requestService.GetRequests(fromId: OrgFrom.Id, toId: null, status: [], type: null, ct: default);
 
         Assert.NotEmpty(results.Value);
-        Assert.All(results.Value, r => Assert.Equal(OrgFrom.Id, r.Connection.From.Id));
+        Assert.All(results.Value, r => Assert.Equal(OrgFrom.Id, r.From.Id));
     }
 
     [Fact]
@@ -177,17 +177,17 @@ public class RequestServiceTests : IClassFixture<PostgresFixture>
         var resource = await SeedUniqueResource();
         await _requestService.CreateRequest(new CreateRequestDto() { From = OrgFrom.Id, To = PersonTo.Id, Role = RoleConstants.Rightholder.Id, Resource = resource.Id, Status = RequestStatus.Draft });
 
-        var results = await _requestService.GetRequests(fromId: null, toId: PersonTo.Id, status: [], after: null, ct: default);
+        var results = await _requestService.GetRequests(fromId: null, toId: PersonTo.Id, status: [], type: null, ct: default);
 
         Assert.NotEmpty(results.Value);
-        Assert.All(results.Value, r => Assert.Equal(PersonTo.Id, r.Connection.To.Id));
+        Assert.All(results.Value, r => Assert.Equal(PersonTo.Id, r.To.Id));
     }
 
     [Fact]
     public async Task GetRequests_WithoutFromOrToId_ThrowsArgumentException()
     {
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            _requestService.GetRequests(fromId: null, toId: null, status: [], after: null, ct: default));
+            _requestService.GetRequests(fromId: null, toId: null, status: [], type: null, ct: default));
     }
     #endregion
 

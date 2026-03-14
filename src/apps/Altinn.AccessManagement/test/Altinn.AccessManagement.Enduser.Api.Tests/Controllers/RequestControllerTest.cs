@@ -34,20 +34,6 @@ public class RequestControllerTest
         return client;
     }
 
-    private static StringContent CreateRequestBody(string packageUrn = null, string resourceId = null)
-    {
-        var body = new CreateRequestInput
-        {
-            Package = new RequestRefrenceDto { Urn = packageUrn ?? string.Empty },
-            Resource = new RequestRefrenceDto { Urn = resourceId ?? string.Empty },
-        };
-
-        var json = JsonSerializer.Serialize(body, JsonSerializerOptions);
-        return new StringContent(json, Encoding.UTF8, "application/json");
-    }
-
-    private static JsonSerializerOptions JsonSerializerOptions => new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-
     private static void EnableFeatureFlags(ApiFixture fixture)
     {
         fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableRequestAssignmentPackage);
@@ -71,11 +57,11 @@ public class RequestControllerTest
         {
             // LarsBakke er daglig leder i BakerJohnsen (seeded via TestData.Assignments)
             var client = CreateClient(Fixture, TestData.LarsBakke.Id);
-            var packageUrn = PackageConstants.Agriculture.Entity.Urn;
+            var package = PackageConstants.Agriculture.Entity.Id;
 
             var response = await client.PostAsync(
-                $"{Route}?party={TestData.LarsBakke.Id}&to={TestData.BakerJohnsen.Id}",
-                CreateRequestBody(packageUrn: packageUrn),
+                $"{Route}/package?party={TestData.LarsBakke.Id}&to={TestData.BakerJohnsen.Id}&packageId={package}", 
+                null, 
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -85,8 +71,8 @@ public class RequestControllerTest
             var root = doc.RootElement;
 
             Assert.Equal((int)RequestStatus.Pending, root.GetProperty("status").GetInt32());
-            Assert.Equal(TestData.BakerJohnsen.Id.ToString(), root.GetProperty("connection").GetProperty("from").GetProperty("id").GetString());
-            Assert.Equal(TestData.LarsBakke.Id.ToString(), root.GetProperty("connection").GetProperty("to").GetProperty("id").GetString());
+            Assert.Equal(TestData.BakerJohnsen.Id.ToString(), root.GetProperty("from").GetProperty("id").GetString());
+            Assert.Equal(TestData.LarsBakke.Id.ToString(), root.GetProperty("to").GetProperty("id").GetString());
         }
     }
 
@@ -135,8 +121,8 @@ public class RequestControllerTest
             var client = CreateClient(Fixture, TestData.KnutVik.Id);
 
             var response = await client.PostAsync(
-                $"{Route}?party={TestData.KnutVik.Id}&to={TestData.BakerJohnsen.Id}",
-                CreateRequestBody(resourceId: TestResourceRefId),
+                $"{Route}/resource?party={TestData.KnutVik.Id}&to={TestData.BakerJohnsen.Id}&resource={TestResourceRefId}",
+                null,
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -171,8 +157,8 @@ public class RequestControllerTest
             var packageUrn = PackageConstants.Agriculture.Entity.Urn;
 
             var response = await client.PostAsync(
-                $"{Route}?party={TestData.BjornMoe.Id}&to={TestData.BakerJohnsen.Id}",
-                CreateRequestBody(packageUrn: packageUrn),
+                $"{Route}/package?party={TestData.BjornMoe.Id}&to={TestData.BakerJohnsen.Id}&package={packageUrn}",
+                null,
                 TestContext.Current.CancellationToken);
 
             Assert.False(response.IsSuccessStatusCode, "Person without connection should not be able to create request");
@@ -183,11 +169,11 @@ public class RequestControllerTest
         {
             // BjornMoe er daglig leder i RegnskapNorge, og har da nøkkel rolle til BakerJohnsen
             var client = CreateClient(Fixture, TestData.BjornMoe.Id);
-            var packageUrn = PackageConstants.Agriculture.Entity.Urn;
+            var package = PackageConstants.Agriculture.Entity.Id;
 
             var response = await client.PostAsync(
-                $"{Route}?party={TestData.BjornMoe.Id}&to={TestData.BakerJohnsen.Id}",
-                CreateRequestBody(packageUrn: packageUrn),
+                $"{Route}/package?party={TestData.BjornMoe.Id}&to={TestData.BakerJohnsen.Id}&packageId={package}",
+                null,
                 TestContext.Current.CancellationToken);
 
             Assert.True(response.IsSuccessStatusCode, "Person without keyrole connection should be able to create request");
@@ -321,8 +307,8 @@ public class RequestControllerTest
             }
 
             Assert.True(match.HasValue, "Receiver should see the package request");
-            Assert.Equal(TestData.BakerJohnsen.Id.ToString(), match.Value.GetProperty("connection").GetProperty("from").GetProperty("id").GetString());
-            Assert.Equal(TestData.LarsBakke.Id.ToString(), match.Value.GetProperty("connection").GetProperty("to").GetProperty("id").GetString());
+            Assert.Equal(TestData.BakerJohnsen.Id.ToString(), match.Value.GetProperty("from").GetProperty("id").GetString());
+            Assert.Equal(TestData.LarsBakke.Id.ToString(), match.Value.GetProperty("to").GetProperty("id").GetString());
         }
     }
 

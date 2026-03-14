@@ -17,7 +17,7 @@ public interface IRequestService
     /// <summary>
     /// Retrieves a collection of request DTOs matching the specified filtering criteria.
     /// </summary>
-    Task<Result<IEnumerable<RequestDto>>> GetRequests(Guid? fromId, Guid? toId, IEnumerable<RequestStatus> status, DateTimeOffset? after, CancellationToken ct = default);
+    Task<Result<IEnumerable<RequestDto>>> GetRequests(Guid? fromId, Guid? toId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default);
 
     /// <summary>
     /// Creates a new request

@@ -7,7 +7,6 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
@@ -50,7 +49,7 @@ public class RequestService(AppDbContext db) : IRequestService
     }
     
     /// <inheritdoc/>
-    public async Task<Result<IEnumerable<RequestDto>>> GetRequests(Guid? fromId, Guid? toId, IEnumerable<RequestStatus> status, DateTimeOffset? after, CancellationToken ct = default)
+    public async Task<Result<IEnumerable<RequestDto>>> GetRequests(Guid? fromId, Guid? toId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default)
     {
         ValidationErrorBuilder error = default;
 
@@ -59,8 +58,8 @@ public class RequestService(AppDbContext db) : IRequestService
             error.Add(ValidationErrors.RequestMissingFromOrTo);
         }
 
-        var requestResources = await GetRequestAssignmentResource(fromId, toId, status, after, ct);
-        var requestPackages = await GetRequestAssignmentPackage(fromId, toId, status, after, ct);
+        var requestResources = string.IsNullOrEmpty(type) || type == "resource" ? await GetRequestAssignmentResource(fromId, toId, status, ct) : default;
+        var requestPackages = string.IsNullOrEmpty(type) || type == "package" ? await GetRequestAssignmentPackage(fromId, toId, status, ct) : default;
 
         if (!requestResources.Any() && !requestPackages.Any())
         {
@@ -119,7 +118,7 @@ public class RequestService(AppDbContext db) : IRequestService
 
         var request = requestResult.Value;
         
-        if (request.Connection.From.Id != partyUuid)
+        if (request.From.Id != partyUuid)
         {
             errorBuilder.Add(ValidationErrors.RequestNotFound, "$QUERY/requestId", [new("RequestId", $"Request {requestId} does not exists")]);
         }
@@ -187,7 +186,7 @@ public class RequestService(AppDbContext db) : IRequestService
         return false;
     }
 
-    private async Task<IEnumerable<RequestAssignmentResource>> GetRequestAssignmentResource(Guid? fromId, Guid? toId, IEnumerable<RequestStatus> status, DateTimeOffset? after, CancellationToken ct)
+    private async Task<IEnumerable<RequestAssignmentResource>> GetRequestAssignmentResource(Guid? fromId, Guid? toId, IEnumerable<RequestStatus> status, CancellationToken ct)
     {
         if (!fromId.HasValue && !toId.HasValue)
         {
@@ -202,11 +201,10 @@ public class RequestService(AppDbContext db) : IRequestService
             .WhereIf(fromId.HasValue, r => r.Assignment.FromId == fromId.Value)
             .WhereIf(toId.HasValue, r => r.Assignment.ToId == toId.Value)
             .WhereIf(status?.Any() == true, r => status.Contains(r.Status))
-            .WhereIf(after.HasValue, r => r.Audit_ValidFrom >= after.Value)
             .ToListAsync(cancellationToken: ct);
     }
     
-    private async Task<IEnumerable<RequestAssignmentPackage>> GetRequestAssignmentPackage(Guid? fromId, Guid? toId, IEnumerable<RequestStatus> status, DateTimeOffset? after, CancellationToken ct)
+    private async Task<IEnumerable<RequestAssignmentPackage>> GetRequestAssignmentPackage(Guid? fromId, Guid? toId, IEnumerable<RequestStatus> status, CancellationToken ct)
     {
         if (!fromId.HasValue && !toId.HasValue)
         {
@@ -221,7 +219,6 @@ public class RequestService(AppDbContext db) : IRequestService
             .WhereIf(fromId.HasValue, r => r.Assignment.FromId == fromId.Value)
             .WhereIf(toId.HasValue, r => r.Assignment.ToId == toId.Value)
             .WhereIf(status?.Any() == true, r => status.Contains(r.Status))
-            .WhereIf(after.HasValue, r => r.Audit_ValidFrom >= after.Value)
             .ToListAsync(cancellationToken: ct);
     }
 
