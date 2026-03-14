@@ -3594,6 +3594,40 @@ public static class PackageConstants
     };
 
     /// <summary>
+    /// Represents the 'Tilgangsstyrer for enkeltmeldinger, -skjema og -dialoger' access package.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 019ce74f-7fc8-7032-b3ed-85af6492ea84
+    /// - <c>URN:</c> urn:altinn:accesspackage:tilgangsstyring-enkeltinstanser
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Description:</c> Gir tilgang til brukergrensesnitt i meldingsboksen, for å kunne gi andre brukere tilganger til enkeltmeldinger, -skjema og -dialoger, som mottakeren selv har tilgang til.
+    /// </remarks>
+    public static ConstantDefinition<Package> InstanceDelegation { get; } = new ConstantDefinition<Package>("019ce74f-7fc8-7032-b3ed-85af6492ea84")
+    {
+        Entity = new()
+        {
+            Name = "Tilgangsstyrer for enkeltmeldinger, -skjema og -dialoger",
+            Description = "Gir tilgang til brukergrensesnitt i meldingsboksen, for å kunne gi andre brukere tilgang til enkeltmeldinger, -skjema og -dialoger, som mottakeren selv har tilgang til.",
+            Urn = "urn:altinn:accesspackage:tilgangsstyring-enkeltinstanser",
+            Code = "tilgangsstyring-enkeltinstanser",
+            IsDelegable = false,
+            IsAvailableForServiceOwners = false,
+            IsAssignable = true,
+            EntityTypeId = EntityTypeConstants.Organization,
+            ProviderId = ProviderConstants.Altinn3,
+            AreaId = AreaConstants.ManageAccess,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Access management of individual messages, forms and dialogs"),
+            KeyValuePair.Create("Description", "Provides access to the user interface in the message box, allowing users to grant access to individual messages, forms, and dialogs that the recipient themselves have access to.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Tilgangsstyrar for enkeltmeldinger, -skjema og -dialoger"),
+            KeyValuePair.Create("Description", "Gir tilgang til brukargrensesnitt i meldingsboksa, for å kunne gi brukarar tilgang for enkeltmeldingar, -skjema og -dialogar, som mottakaren sjølv har tilgang til.")
+        ),
+    };
+
+    /// <summary>
     /// Represents the 'Klientadministrator' access package.
     /// </summary>
     /// <remarks>
