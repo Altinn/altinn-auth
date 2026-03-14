@@ -67,7 +67,7 @@ script:pre-request {
   const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("requestName", "SysRes_EnduserAccMgmt_AsAdmai_Permit");
-  bru.setVar("resourceId", sharedtestdata.systemResources.enduser_accessmanagment);
+  bru.setVar("resourceId", sharedtestdata.systemResources.accessmanagment);
   bru.setVar("subjectUserId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.a2_tilgangsstyrer.userId);
   bru.setVar("resourcePartyId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyId);
   

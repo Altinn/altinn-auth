@@ -29,6 +29,8 @@ module.exports =
 	},
     "systemResources": {
         "client_administration": "altinn_client_administration",
-        "enduser_accessmanagment": "altinn_enduser_access_management"
+        "accessmanagment": "altinn_access_management",
+        "instance_delegation": "altinn_instance_delegation",
+        "mainadmin": "altinn_access_management_hovedadmin"
     }
 };

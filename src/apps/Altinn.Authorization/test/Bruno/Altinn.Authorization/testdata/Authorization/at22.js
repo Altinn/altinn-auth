@@ -115,6 +115,16 @@ module.exports =
             "partyId": 50382857,
             "partyUuid": "f489878a-927f-4789-9dab-ff73c36c2f26"
         },
+        "employee_instancedelegator": {
+          "name": "LYS MAMMA",
+          "lastname": "MAMMA",
+          "pid": "01818199690",
+          "userId": 20774140,
+          "partyId": 50363273,
+          "partyUuid": "a126547a-ae41-47c7-a63e-9d0f516ecd30",
+          "directPackageToDelegate": "post-til-virksomheten-med-taushetsbelagt-innhold",
+          "directPackageInstanceDelegator": "tilgangsstyring-enkeltinstanser"
+        },
         "systemuser": {
             "name": "Fiken",
             "partyUuid": "e2eba2c3-b369-4ff9-8418-99a810d6bb58"
