@@ -11,7 +11,6 @@ namespace Altinn.AccessManagement.Core.Models
         /// <summary>
         /// Undefined default value
         /// </summary>
-        // ReSharper disable UnusedMember.Global
         Undefined = 0,
 
         /// <summary>

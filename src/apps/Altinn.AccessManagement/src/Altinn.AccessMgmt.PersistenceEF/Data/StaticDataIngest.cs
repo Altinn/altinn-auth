@@ -137,6 +137,17 @@ public static partial class StaticDataIngest
             cancellationToken
         );
 
+        /* InstanceSourceType */
+        await AutoIngest(
+            dbContext,
+            InstanceSourceTypeConstants.AllEntities(),
+            (instanceSourceType, seed) =>
+            {
+                instanceSourceType.Name = seed.Entity.Name;
+            },
+            cancellationToken
+        );
+
         await IngestRoleMap(dbContext, cancellationToken);
         await IngestRolePackage(dbContext, cancellationToken);
         await IngestEntityVariantRole(dbContext, cancellationToken);

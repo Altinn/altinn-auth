@@ -1,4 +1,5 @@
 ﻿using Altinn.AccessMgmt.PersistenceEF.Configurations.Base;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models.Audit;
@@ -15,9 +16,11 @@ public class AssignmentInstanceConfiguration : IEntityTypeConfiguration<Assignme
         builder.EnableAudit();
 
         builder.HasKey(p => p.Id);
+        builder.Property(p => p.InstanceSourceTypeId).IsRequired().HasDefaultValue(InstanceSourceTypeConstants.AltinnApp.Id);
 
         builder.PropertyWithReference(navKey: t => t.Assignment, foreignKey: t => t.AssignmentId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
         builder.PropertyWithReference(navKey: t => t.Resource, foreignKey: t => t.ResourceId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
+        builder.PropertyWithReference(navKey: t => t.InstanceSourceType, foreignKey: t => t.InstanceSourceTypeId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.NoAction);
 
         builder.HasIndex(t => new { t.AssignmentId, t.ResourceId, t.InstanceId }).IsUnique();
     }

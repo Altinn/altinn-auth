@@ -66,4 +66,9 @@ public class BaseAssignmentInstance : BaseAudit
     /// Legacy DelegationChangeId
     /// </summary>
     public int DelegationChangeId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the unique identifier that specifies the source type of the instance delegation.
+    /// </summary>
+    public Guid InstanceSourceTypeId { get; set; }
 }

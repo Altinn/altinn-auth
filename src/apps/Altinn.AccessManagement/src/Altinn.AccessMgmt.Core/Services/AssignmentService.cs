@@ -598,7 +598,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         return result > 0;
     }
 
-    private async Task<bool> UpsertAssignmentInstanceInternal(Guid assignmentId, Guid resourceId, string instanceId, string policyPath, string policyVersion, int delegationChangeId, AuditValues audit, CancellationToken cancellationToken = default)
+    private async Task<bool> UpsertAssignmentInstanceInternal(Guid assignmentId, Guid resourceId, string instanceId, string policyPath, string policyVersion, int delegationChangeId, Guid instanceSourceTypeId, AuditValues audit, CancellationToken cancellationToken = default)
     {
         var assignment = await db.Assignments.AsNoTracking().SingleAsync(t => t.Id == assignmentId, cancellationToken);
         var resource = await db.Resources.AsNoTracking().SingleAsync(t => t.Id == resourceId, cancellationToken);
@@ -609,6 +609,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         {
             res.PolicyPath = policyPath;
             res.PolicyVersion = policyVersion;
+            res.DelegationChangeId = delegationChangeId;
         }
         else
         {
@@ -620,7 +621,8 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
                 InstanceId = instanceId,
                 PolicyPath = policyPath,
                 PolicyVersion = policyVersion,
-                DelegationChangeId = delegationChangeId
+                DelegationChangeId = delegationChangeId,
+                InstanceSourceTypeId = instanceSourceTypeId
             };
             db.AssignmentInstances.Add(res);
         }
@@ -1294,7 +1296,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             await db.SaveChangesAsync(audit, cancellationToken);
         }
 
-        var result = await UpsertAssignmentInstanceInternal(assignment.Id, resource.Id, instanceId, blobStoragePolicyPath, blobStorageVersionId, delegationEventId, audit, cancellationToken);
+        var result = await UpsertAssignmentInstanceInternal(assignment.Id, resource.Id, instanceId, blobStoragePolicyPath, blobStorageVersionId, delegationEventId, InstanceSourceTypeConstants.AltinnApp.Id, audit, cancellationToken);
 
         return result ? 1 : 0;
     }

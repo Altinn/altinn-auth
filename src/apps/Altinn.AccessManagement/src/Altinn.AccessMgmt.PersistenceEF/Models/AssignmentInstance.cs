@@ -16,4 +16,9 @@ public class AssignmentInstance : BaseAssignmentInstance
     /// Resource
     /// </summary>
     public Resource Resource { get; set; }
+
+    /// <summary>
+    /// Gets or sets the source type of the instance delegation, indicating the origin of the data.
+    /// </summary>
+    public InstanceSourceType InstanceSourceType { get; set; }
 }

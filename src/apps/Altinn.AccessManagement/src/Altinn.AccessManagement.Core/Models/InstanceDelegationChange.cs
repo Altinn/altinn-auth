@@ -18,11 +18,13 @@ namespace Altinn.AccessManagement.Core.Models
         /// <summary>
         /// Gets or sets the DelegationChangeType.
         /// </summary>
+        [JsonPropertyName("delegationchangetype")]
         public DelegationChangeType DelegationChangeType { get; set; }
 
         /// <summary>
         /// Gets or sets the InstanceDelegationType.
         /// </summary>
+        [JsonPropertyName("instancedelegationmode")]
         public InstanceDelegationMode InstanceDelegationMode { get; set; }
 
         /// <summary>

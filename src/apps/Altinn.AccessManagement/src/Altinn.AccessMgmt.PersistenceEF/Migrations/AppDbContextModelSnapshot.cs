@@ -233,6 +233,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("text")
                         .HasColumnName("instanceid");
 
+                    b.Property<Guid>("InstanceSourceTypeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("019cd6c4-a340-776e-a63a-2370a05db6c7"))
+                        .HasColumnName("instancesourcetypeid");
+
                     b.Property<string>("PolicyPath")
                         .HasColumnType("text")
                         .HasColumnName("policypath");
@@ -250,6 +256,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.HasIndex("AssignmentId")
                         .HasDatabaseName("ix_assignmentinstance_assignmentid");
+
+                    b.HasIndex("InstanceSourceTypeId")
+                        .HasDatabaseName("ix_assignmentinstance_instancesourcetypeid");
 
                     b.HasIndex("ResourceId")
                         .HasDatabaseName("ix_assignmentinstance_resourceid");
@@ -605,6 +614,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.Property<string>("InstanceId")
                         .HasColumnType("text")
                         .HasColumnName("instanceid");
+
+                    b.Property<Guid>("InstanceSourceTypeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("instancesourcetypeid");
 
                     b.Property<string>("PolicyPath")
                         .HasColumnType("text")
@@ -2655,6 +2668,46 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.ToTable("errorqueue", "dbo");
                 });
 
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.InstanceSourceType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Audit_ChangeOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_changeoperation");
+
+                    b.Property<Guid?>("Audit_ChangedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedby");
+
+                    b.Property<Guid?>("Audit_ChangedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedbysystem");
+
+                    b.Property<DateTimeOffset>("Audit_ValidFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validfrom");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_instancesourcetype");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_instancesourcetype_name");
+
+                    b.ToTable("instancesourcetype", "dbo");
+
+                    b.HasAnnotation("Altinn:AuditVersion", 3);
+                });
+
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Package", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3568,6 +3621,13 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_assignmentinstance_assignment_assignmentid");
 
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.InstanceSourceType", "InstanceSourceType")
+                        .WithMany()
+                        .HasForeignKey("InstanceSourceTypeId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired()
+                        .HasConstraintName("fk_assignmentinstance_instancesourcetype_instancesourcetypeid");
+
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Resource", "Resource")
                         .WithMany()
                         .HasForeignKey("ResourceId")
@@ -3576,6 +3636,8 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasConstraintName("fk_assignmentinstance_resource_resourceid");
 
                     b.Navigation("Assignment");
+
+                    b.Navigation("InstanceSourceType");
 
                     b.Navigation("Resource");
                 });
