@@ -509,10 +509,10 @@ public class RequestControllerTest
         [Fact]
         public async Task Sender_WithdrawsPendingRequest_ReturnsWithdrawn()
         {
-            var client = CreateClient(Fixture, TestData.BakerJohnsen.Id);
+            var client = CreateClient(Fixture, TestData.HildeStrand.Id);
 
             var response = await client.PutAsync(
-                $"{Route}/sent/withdraw?party={TestData.BakerJohnsen.Id}&id={PendingPackageRequestId}",
+                $"{Route}/sent/withdraw?party={TestData.HildeStrand.Id}&id={PendingPackageRequestId}",
                 null,
                 TestContext.Current.CancellationToken);
 
@@ -562,10 +562,10 @@ public class RequestControllerTest
         [Fact]
         public async Task Sender_ConfirmsDraftRequest_ReturnsPending()
         {
-            var client = CreateClient(Fixture, TestData.BakerJohnsen.Id);
+            var client = CreateClient(Fixture, TestData.LarsBakke.Id);
 
             var response = await client.PutAsync(
-                $"{Route}/sent/confirm?party={TestData.BakerJohnsen.Id}&id={DraftPackageRequestId}",
+                $"{Route}/sent/confirm?party={TestData.LarsBakke.Id}&id={DraftPackageRequestId}",
                 null,
                 TestContext.Current.CancellationToken);
 

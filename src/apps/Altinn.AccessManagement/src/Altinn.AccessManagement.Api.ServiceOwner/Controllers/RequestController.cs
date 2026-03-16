@@ -69,8 +69,8 @@ public class RequestController(
     {
         ValidationErrorBuilder errorBuilder = default;
 
-        var fromInput = string.IsNullOrEmpty(input.From) ? input.Connection.From : input.From;
-        var toInput = string.IsNullOrEmpty(input.To) ? input.Connection.To : input.To;
+        var fromInput = input.From;
+        var toInput = input.To;
 
         var fromResult = await GetEntity(fromInput, "BODY/connection.from", ct);
         if (fromResult.IsProblem)
@@ -89,15 +89,15 @@ public class RequestController(
 
         var role = RoleConstants.Rightholder;
         var status = RequestStatus.Draft;
-        var resource = input.Resource is { } ? await resourceService.GetResource(input.Resource, ct) : null;
-        var package = input.Package is { } ? await packageService.GetPackage(input.Package, ct) : null;
+        var resource = input.Resource is { } && input.Resource.HasValue() ? await resourceService.GetResource(input.Resource, ct) : null;
+        var package = input.Package is { } && input.Package.HasValue() ? await packageService.GetPackage(input.Package, ct) : null;
 
-        if (input.Resource.HasValue() && resource == null)
+        if (input.Resource is { } && input.Resource.HasValue() && resource == null)
         {
             errorBuilder.Add(ValidationErrorDescriptors.RequestedResourceNotFound, $"BODY/resource", [new("resource", $"Urn {input.Resource.ReferenceId} is not valid")]);
         }
 
-        if (input.Package.HasValue() && package == null)
+        if (input.Package is { } && input.Package.HasValue() && package == null)
         {
             errorBuilder.Add(ValidationErrorDescriptors.RequestedPackageNotFound, $"BODY/package", [new("package", $"Urn {input.Package.ReferenceId} is not valid")]);
         }

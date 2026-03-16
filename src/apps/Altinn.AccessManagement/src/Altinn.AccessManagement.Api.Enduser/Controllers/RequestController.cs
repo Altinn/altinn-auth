@@ -106,7 +106,7 @@ public class RequestController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetRequest(
         [FromQuery][Required] Guid party, 
-        [FromRoute][Required] Guid id,
+        [FromQuery][Required] Guid id,
         [FromQuery, FromHeader] PagingInput paging, 
         CancellationToken ct = default
         )
@@ -327,8 +327,6 @@ public class RequestController(
         CancellationToken ct = default
         )
     {
-        ValidationErrorBuilder errorBuilder = default;
-
         var requestResult = await requestService.GetRequest(id, ct);
         if (requestResult.IsProblem)
         {

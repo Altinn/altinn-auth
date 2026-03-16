@@ -205,4 +205,22 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor RequestConnectionNotFound { get; }
         = _factory.Create(41, $"Initial connection between parties not found.");
+
+    /// <summary>
+    /// DbNoRowsAffected
+    /// </summary>
+    public static ValidationErrorDescriptor DbNoRowsAffected { get; }
+        = _factory.Create(42, $"No rows affected.");
+
+    /// <summary>
+    /// DbNoRowsFound
+    /// </summary>
+    public static ValidationErrorDescriptor DbNoRowsFound { get; }
+        = _factory.Create(43, $"No rows found.");
+
+    /// <summary>
+    /// RequestUnauthorizedStatusUpdate
+    /// </summary>
+    public static ValidationErrorDescriptor RequestUnauthorizedStatusUpdate { get; }
+        = _factory.Create(44, $"Party cannot perform this status change.");
 }

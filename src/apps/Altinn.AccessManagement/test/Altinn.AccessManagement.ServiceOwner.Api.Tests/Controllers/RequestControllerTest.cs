@@ -149,7 +149,6 @@ public class RequestControllerTest
 
             var body = new CreateServiceOwnerRequest
             {
-                Connection = new ConnectionRequestInputDto { From = from, To = to },
                 From = from,
                 To = to,
                 Resource = new RequestRefrenceDto { ReferenceId = "test-resource-so-1" },
@@ -184,11 +183,6 @@ public class RequestControllerTest
 
             var body = new CreateServiceOwnerRequest
             {
-                Connection = new ConnectionRequestInputDto
-                {
-                    From = "urn:invalid:prefix:12345",
-                    To = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}"
-                },
                 From = "urn:invalid:prefix:12345",
                 To = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}",
                 Resource = new RequestRefrenceDto { ReferenceId = "test-resource-so-1" },
@@ -212,7 +206,6 @@ public class RequestControllerTest
 
             var body = new CreateServiceOwnerRequest
             {
-                Connection = new ConnectionRequestInputDto { From = from, To = to },
                 From = from,
                 To = to,
                 Resource = new RequestRefrenceDto { ReferenceId = string.Empty },
@@ -251,7 +244,6 @@ public class RequestControllerTest
 
             var body = new CreateServiceOwnerRequest
             {
-                Connection = new ConnectionRequestInputDto { From = from, To = to },
                 From = from,
                 To = to,
                 Resource = new RequestRefrenceDto(),
@@ -286,11 +278,6 @@ public class RequestControllerTest
 
             var body = new CreateServiceOwnerRequest
             {
-                Connection = new ConnectionRequestInputDto
-                {
-                    From = "urn:invalid:prefix:12345",
-                    To = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}"
-                },
                 From = "urn:invalid:prefix:12345",
                 To = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}",
                 Resource = new RequestRefrenceDto(),
@@ -314,7 +301,6 @@ public class RequestControllerTest
 
             var body = new CreateServiceOwnerRequest
             {
-                Connection = new ConnectionRequestInputDto { From = from, To = to },
                 From = from,
                 To = to,
                 Resource = new RequestRefrenceDto(),
@@ -392,7 +378,6 @@ public class RequestControllerTest
             // Step 3: Create request with resource
             var body = new CreateServiceOwnerRequest
             {
-                Connection = new ConnectionRequestInputDto { From = from, To = to },
                 From = from,
                 To = to,
                 Resource = new RequestRefrenceDto { ReferenceId = "test-resource-e2e-1" },
@@ -433,7 +418,6 @@ public class RequestControllerTest
             // Step 3: Create request with package
             var body = new CreateServiceOwnerRequest
             {
-                Connection = new ConnectionRequestInputDto { From = from, To = to },
                 From = from,
                 To = to,
                 Resource = new RequestRefrenceDto(),

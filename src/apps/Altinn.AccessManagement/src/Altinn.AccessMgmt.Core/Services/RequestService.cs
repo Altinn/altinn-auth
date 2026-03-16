@@ -113,77 +113,181 @@ public class RequestService(AppDbContext db) : IRequestService
         var requestResult = await GetRequest(requestId, ct);
         if (requestResult.IsProblem)
         {
-            return requestResult;
+            return requestResult.Problem;
         }
 
-        var request = requestResult.Value;
-        
-        if (request.From.Id != partyUuid)
+        var verify = VerifyRequestStatusUpdate(request: requestResult.Value, partyUuid, status);
+        if (verify.IsProblem)
         {
-            errorBuilder.Add(ValidationErrors.RequestNotFound, "$QUERY/requestId", [new("RequestId", $"Request {requestId} does not exists")]);
+            return verify.Problem;
         }
 
-        var statusRules = new Dictionary<RequestStatus, List<RequestStatus>>
-        {
-            { RequestStatus.Draft, [RequestStatus.Pending, RequestStatus.Withdrawn] },
-            { RequestStatus.Pending, [RequestStatus.Approved, RequestStatus.Rejected, RequestStatus.Withdrawn] },
-            { RequestStatus.Approved, [] },
-            { RequestStatus.Rejected, [] },
-            { RequestStatus.Withdrawn, [] }
-        };
-
-        foreach (var rule in statusRules)
-        {
-            if (request.Status == rule.Key && !rule.Value.Contains(status))
-            {
-                errorBuilder.Add(ValidationErrors.RequestUnsupportedStatusUpdate, "$QUERY/status", [new("Status", $"Request cannot change from {request.Status} to {status}.")]);
-            }
-        }
-
-        if (errorBuilder.TryBuild(out var problem))
-        {
-            return problem;
-        }
-
-        switch (request.Type)
+        switch (requestResult.Value.Type)
         {
             case "resource":
-                await UpdateResourceRequestStatus(requestId, status);
-                break;
+                return await UpdateResourceRequestStatus(requestId, status, ct);
             case "package":
-                await UpdatePackageRequestStatus(requestId, status);
-                break;
+                return await UpdatePackageRequestStatus(requestId, status, ct);
         }
 
-        return await GetRequest(requestId, ct);
+        errorBuilder.Add(ValidationErrors.RequestNotFound);
+        errorBuilder.TryBuild(out var problems);
+        return problems;
     }
 
     #region privates
 
-    private async Task<bool> UpdatePackageRequestStatus(Guid id, RequestStatus status)
+    private static Result<RequestDto> VerifyRequestStatusUpdate(RequestDto request, Guid partyUuid, RequestStatus status)
     {
-        var request = await db.RequestAssignmentPackages.FirstOrDefaultAsync(t => t.Id == id);
-        if (request is { })
+        ValidationErrorBuilder errorBuilder = default;
+
+        switch (request.Status)
         {
-            request.Status = status;
-            await db.SaveChangesAsync();
-            return true;
+            case RequestStatus.Draft:
+                ValidateDraft(request, partyUuid, status, ref errorBuilder);
+                break;
+
+            case RequestStatus.Pending:
+                ValidatePending(request, partyUuid, status, ref errorBuilder);
+                break;
+
+            case RequestStatus.Approved:
+            case RequestStatus.Rejected:
+            case RequestStatus.Withdrawn:
+                AddUnsupportedStatusError(request, status, ref errorBuilder);
+                break;
         }
 
-        return false;
+        errorBuilder.TryBuild(out var problems);
+
+        return problems != null ? problems : request;
     }
 
-    private async Task<bool> UpdateResourceRequestStatus(Guid id, RequestStatus status)
+    private static void ValidateDraft(RequestDto request, Guid partyUuid, RequestStatus status, ref ValidationErrorBuilder errorBuilder)
     {
-        var request = await db.RequestAssignmentResources.FirstOrDefaultAsync(t => t.Id == id);
-        if (request is { })
+        if (status != RequestStatus.Pending && status != RequestStatus.Withdrawn)
         {
-            request.Status = status;
-            await db.SaveChangesAsync();
-            return true;
+            AddUnsupportedStatusError(request, status, ref errorBuilder);
+            return;
         }
 
-        return false;
+        if (request.To.Id != partyUuid)
+        {
+            AddUnauthorizedStatusError(request, status, ref errorBuilder);
+        }
+    }
+
+    private static void ValidatePending(RequestDto request, Guid partyUuid, RequestStatus status, ref ValidationErrorBuilder errorBuilder)
+    {
+        switch (status)
+        {
+            case RequestStatus.Withdrawn:
+                if (request.To.Id != partyUuid)
+                {
+                    AddUnauthorizedStatusError(request, status, ref errorBuilder);
+                }
+
+                break;
+
+            case RequestStatus.Approved:
+            case RequestStatus.Rejected:
+                if (request.From.Id != partyUuid)
+                {
+                    AddUnauthorizedStatusError(request, status, ref errorBuilder);
+                }
+
+                break;
+
+            default:
+                AddUnsupportedStatusError(request, status, ref errorBuilder);
+                break;
+        }
+    }
+
+    private static void AddUnsupportedStatusError(RequestDto request, RequestStatus status, ref ValidationErrorBuilder errorBuilder)
+    {
+        var paramName = "party";
+
+        errorBuilder.Add(
+            ValidationErrors.RequestUnsupportedStatusUpdate,
+            $"$QUERY/{paramName}",
+            [new(paramName, $"Changing request status from {request.Status} to {status} is not allowed.")]
+        );
+    }
+
+    private static void AddUnauthorizedStatusError(RequestDto request, RequestStatus status, ref ValidationErrorBuilder errorBuilder)
+    {
+        var paramName = "party";
+
+        errorBuilder.Add(
+            ValidationErrors.RequestUnauthorizedStatusUpdate,
+            $"$QUERY/{paramName}",
+            [new(paramName, $"Unable to update {request.Id} from {request.Status} to {status}")]
+        );
+    }
+
+    private async Task<Result<RequestDto>> UpdatePackageRequestStatus(Guid id, RequestStatus status, CancellationToken ct = default)
+    {
+        ValidationErrorBuilder errorBuilder = default;
+
+        var request = await db.RequestAssignmentPackages.FirstOrDefaultAsync(t => t.Id == id, ct);
+        if (request is not { })
+        {
+            errorBuilder.Add(ValidationErrors.DbNoRowsFound, nameof(db.RequestAssignmentPackages));
+            errorBuilder.TryBuild(out var errors);
+            if (errors != null)
+            {
+                return errors;
+            }
+        }
+
+        request.Status = status;
+        var res = await db.SaveChangesAsync(ct);
+
+        if (res != 1)
+        {
+            errorBuilder.Add(ValidationErrors.DbNoRowsAffected, nameof(db.RequestAssignmentPackages));
+        }
+
+        errorBuilder.TryBuild(out var problems);
+        if (problems != null)
+        {
+            return problems;
+        }
+
+        return await GetRequest(id, ct);
+    }
+
+    private async Task<Result<RequestDto>> UpdateResourceRequestStatus(Guid id, RequestStatus status, CancellationToken ct = default)
+    {
+        ValidationErrorBuilder errorBuilder = default;
+
+        var request = await db.RequestAssignmentResources.FirstOrDefaultAsync(t => t.Id == id, ct);
+        if (request is not { })
+        {
+            errorBuilder.Add(ValidationErrors.DbNoRowsFound, nameof(db.RequestAssignmentResources));
+            errorBuilder.TryBuild(out var errors);
+            if (errors != null)
+            {
+                return errors;
+            }
+        }
+
+        request.Status = status;
+        var res = await db.SaveChangesAsync(ct);
+
+        if (res != 1)
+        {
+            errorBuilder.Add(ValidationErrors.DbNoRowsAffected, nameof(db.RequestAssignmentResources));
+        }
+
+        errorBuilder.TryBuild(out var problems);
+        if (problems != null)
+        {
+            return problems;
+        }
+
+        return await GetRequest(id, ct);
     }
 
     private async Task<IEnumerable<RequestAssignmentResource>> GetRequestAssignmentResource(Guid? fromId, Guid? toId, IEnumerable<RequestStatus> status, CancellationToken ct)
