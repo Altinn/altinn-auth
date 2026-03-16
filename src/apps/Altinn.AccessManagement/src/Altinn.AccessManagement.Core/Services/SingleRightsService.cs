@@ -21,6 +21,8 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
+using Altinn.Urn;
+using Altinn.Urn.Json;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Altinn.AccessManagement.Core.Services
@@ -142,13 +144,36 @@ namespace Altinn.AccessManagement.Core.Services
             return await _pap.TryWriteDelegationPolicyRules(rules: rules, ignoreExistingPolicy: ignoreExistingPolicy, cancellationToken: cancellationToken);
         }
 
+        public async Task<List<InstanceRule>> TryWriteInstanceDelegationPolicyRules(Entity from, Entity to, Resource resource, string instanceId, List<string> ruleKeys, Entity performedBy, bool ignoreExistingPolicy = false, CancellationToken cancellationToken = default)
+        {
+            var instanceRules = await GenerateInstanceRules(resource, instanceId, ruleKeys, cancellationToken);
+
+            var instanceRight = new InstanceRight
+            {
+                FromUuid = from.Id,
+                FromType = DelegationHelper.GetUuidTypeFromEntityType(from.TypeId),
+                ToUuid = to.Id,
+                ToType = DelegationHelper.GetUuidTypeFromEntityType(to.TypeId),
+                PerformedBy = performedBy.Id.ToString(),
+                PerformedByType = DelegationHelper.GetUuidTypeFromEntityType(performedBy.TypeId),
+                ResourceId = resource.RefId,
+                InstanceId = instanceId,
+                InstanceDelegationMode = InstanceDelegationMode.Normal,
+                InstanceDelegationSource = InstanceDelegationSource.User,
+                InstanceRules = instanceRules
+            };
+
+            InstanceRight result = await _pap.TryWriteInstanceDelegationPolicyRules(instanceRight, cancellationToken);
+            return result.InstanceRules;
+        }
+
         private async Task<IEnumerable<Rule>> GenerateRules(Entity from, Entity to, Resource resource, List<string> ruleKeys, Entity performedBy, CancellationToken cancellationToken = default)
         {
             var coveredBy = to;
             var offeredBy = from;
 
             var offeredByUuidType = DelegationHelper.GetUuidTypeFromEntityType(offeredBy.TypeId);
-            
+
             List<Rule> rules = [];
 
             var rightKeys = await _contextRetrievalService.GetResourcePolicyV2(resource.RefId, cancellationToken: cancellationToken);
@@ -183,6 +208,43 @@ namespace Altinn.AccessManagement.Core.Services
             return rules;
         }
 
+        private async Task<List<InstanceRule>> GenerateInstanceRules(Resource resource, string instanceId, List<string> ruleKeys, CancellationToken cancellationToken = default)
+        {
+            List<InstanceRule> instanceRules = [];
+
+            var rightKeys = await _contextRetrievalService.GetResourcePolicyV2(resource.RefId, cancellationToken: cancellationToken);
+
+            // Create instance-id URN that will be added to all rules
+            UrnJsonTypeValue instanceUrn = KeyValueUrn.CreateUnchecked(
+                $"{AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceInstanceAttribute}:{instanceId}",
+                AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceInstanceAttribute.Length + 1
+            );
+
+            foreach (string ruleKey in ruleKeys)
+            {
+                var rightKey = rightKeys?.FirstOrDefault(r => r.Key.Equals(ruleKey, StringComparison.InvariantCultureIgnoreCase));
+
+                if (rightKey is null)
+                {
+                    throw new KeyNotFoundException($"The key: '{ruleKey}' did not exist in the keyset for the resource: '{resource.RefId}'");
+                }
+
+                (List<UrnJsonTypeValue> Resource, ActionUrn Action) resourceAndAction = MapRightDtoToUrnTypes(rightKey);
+
+                // Add instance-id URN to resource URNs
+                resourceAndAction.Resource.Add(instanceUrn);
+
+                instanceRules.Add(new InstanceRule
+                {
+                    RuleId = Guid.CreateVersion7().ToString(),
+                    Resource = resourceAndAction.Resource,
+                    Action = resourceAndAction.Action
+                });
+            }
+
+            return instanceRules;
+        }
+
         private static (List<AttributeMatch> Resource, AttributeMatch Action) MapRightDtoToResourceListAndAction(RightDto actionKey)
         {
             List<AttributeMatch> resourceList = [];
@@ -205,6 +267,46 @@ namespace Altinn.AccessManagement.Core.Services
 
             action = new AttributeMatch(actionKey.Action.Type, actionKey.Action.Value);
             return (resourceList, action);
+        }
+
+        private static (List<UrnJsonTypeValue> Resource, ActionUrn Action) MapRightDtoToUrnTypes(RightDto rightDto)
+        {
+            List<UrnJsonTypeValue> resourceUrns = [];
+
+            foreach (AttributeDto resource in rightDto.Resource)
+            {
+                // Check if this is an app resource that needs splitting
+                if (resource.Type.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, StringComparison.InvariantCultureIgnoreCase) 
+                    && DelegationHelper.IsAppResourceId(resource.Value, out string org, out string app))
+                {
+                    // Split app resource into org and app URNs
+                    UrnJsonTypeValue orgUrn = KeyValueUrn.CreateUnchecked(
+                        $"{AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute}:{org}",
+                        AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute.Length + 1
+                    );
+                    UrnJsonTypeValue appUrn = KeyValueUrn.CreateUnchecked(
+                        $"{AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute}:{app}",
+                        AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute.Length + 1
+                    );
+                    resourceUrns.Add(orgUrn);
+                    resourceUrns.Add(appUrn);
+                }
+                else
+                {
+                    // Regular resource URN
+                    UrnJsonTypeValue resourceUrn = KeyValueUrn.CreateUnchecked(
+                        $"{resource.Type}:{resource.Value}",
+                        resource.Type.Length + 1
+                    );
+                    resourceUrns.Add(resourceUrn);
+                }
+            }
+
+            // Convert action to ActionUrn
+            ActionIdentifier actionIdentifier = ActionIdentifier.CreateUnchecked(rightDto.Action.Value);
+            ActionUrn actionUrn = ActionUrn.ActionId.Create(actionIdentifier);
+
+            return (resourceUrns, actionUrn);
         }
 
         private static List<AttributeMatch> ConvertEntityToAttributeMatch(Entity entity)

@@ -195,6 +195,19 @@ public interface IConnectionService
     Task<Result<ResourceCheckDto>> ResourceDelegationCheck(Guid authenticatedUserUuid, Guid party, string resource, Action<ConnectionOptions> configureConnection = null, string languageCode = "nb", CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Method to check if a resource instance is delegable by an authenticated user on behalf of a party
+    /// </summary>
+    /// <param name="authenticatedUserUuid">The authenticated user</param>
+    /// <param name="party">The party performing the check on behalf of</param>
+    /// <param name="resource">The resource id to check</param>
+    /// <param name="instanceId">The instance identifier to check</param>
+    /// <param name="configureConnection">ConnectionOptions</param>
+    /// <param name="languageCode">the requested language code fallback "nb"</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns>The result on all the resource/action that is delegable on the resource instance</returns>
+    Task<Result<InstanceCheckDto>> InstanceDelegationCheck(Guid authenticatedUserUuid, Guid party, string resource, string instanceId, Action<ConnectionOptions> configureConnection = null, string languageCode = "nb", CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Checks if an authpenticated user is an access manager and has the necessary permissions to a specific access package for delegation of resources.
     /// </summary>
     /// <param name="party">ID of the person.</param>
@@ -322,4 +335,19 @@ public interface IConnectionService
     /// <returns>A task that represents the asynchronous operation. The task result contains a Result object indicating whether
     /// the resource was successfully added.</returns>
     Task<Result<bool>> UpdateResource(Entity from, Entity to, Resource resourceObj, IEnumerable<string> rightKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Adds a delegation to a resource instance between two entities with the specified action keys. If not all actions is posible nothing is performed and a Problem is returned
+    /// </summary>
+    /// <param name="from">The source entity from which the delegation originates.</param>
+    /// <param name="to">The target entity to which the delegation is granted.</param>
+    /// <param name="resourceObj">The resource to associate between the source and target entities.</param>
+    /// <param name="instanceId">The instance identifier for the resource instance.</param>
+    /// <param name="rightKeys">A list of rule keys that define the permissions or actions allowed for the resource instance.</param>
+    /// <param name="by">The entity performing the operation. Used for auditing and authorization purposes.</param>
+    /// <param name="configureConnection">An optional delegate to configure connection options for the operation. If null, default connection settings are used.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a Result object indicating whether
+    /// the instance delegation was successfully added.</returns>
+    Task<Result<bool>> AddInstance(Entity from, Entity to, Resource resourceObj, string instanceId, RightKeyListDto rightKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
 }

@@ -43,6 +43,20 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         Task<List<Rule>> TryWriteDelegationPolicyRules(Entity from, Entity to, Resource resource, List<string> ruleKeys, Entity performedBy, bool ignoreExistingPolicy = false, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Takes entities, an instance id and a list of actionKeys and tries to write instance-specific delegation policy
+        /// </summary>
+        /// <param name="from">From (OfferedBy)</param>
+        /// <param name="to">To (CoveredBy)</param>
+        /// <param name="resource">Resource to delegate</param>
+        /// <param name="instanceId">Instance identifier</param>
+        /// <param name="ruleKeys">Rules on resource to delegate</param>
+        /// <param name="performedBy">Performed by</param>
+        /// <param name="ignoreExistingPolicy">Ignore existing policy when writing new policy</param>
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <returns>The stored instance rules</returns>
+        Task<List<InstanceRule>> TryWriteInstanceDelegationPolicyRules(Entity from, Entity to, Resource resource, string instanceId, List<string> ruleKeys, Entity performedBy, bool ignoreExistingPolicy = false, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Enrich delete request with Performed by uuid and call PAP to delete rules
         /// </summary>
         /// <param name="rulesToDelete">Entity to define which rules to be deleted</param>
