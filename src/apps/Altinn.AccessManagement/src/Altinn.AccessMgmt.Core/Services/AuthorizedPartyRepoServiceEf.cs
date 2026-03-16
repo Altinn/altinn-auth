@@ -165,19 +165,26 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
             .ToListAsync(ct);
     }
 
-    public async Task<List<RoleResource>> GetRoleResources(
+    public async Task<List<string>> GetRoleCodesFromRoleResources(
         string? providerCode = null,
         IEnumerable<string>? resourceIds = null,
         CancellationToken ct = default)
     {
-        return await db.RoleResources
+        var results = await db.RoleResources
             .AsNoTracking()
             .Include(rr => rr.Role)
             .Include(rr => rr.Resource)
                 .ThenInclude(res => res.Provider)
             .WhereIf(providerCode != null, rr => rr.Resource.Provider.Code == providerCode)
             .WhereIf(resourceIds != null, rr => resourceIds!.Contains(rr.Resource.RefId))
+            .Select(rr => new { rr.Role.Code, rr.Role.LegacyCode })
+            .Distinct()
             .ToListAsync(ct);
+        
+        return results.SelectMany(r => new[] { r.Code, r.LegacyCode })
+            .Where(code => !string.IsNullOrEmpty(code))
+            .Distinct()
+            .ToList();
     }
 
     public async Task<List<PackageResource>> GetPackageResources(string? providerCode = null, IEnumerable<string>? resourceIds = null, CancellationToken ct = default)

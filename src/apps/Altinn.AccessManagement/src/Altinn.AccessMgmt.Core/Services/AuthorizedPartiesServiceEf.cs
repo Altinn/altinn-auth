@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums;
@@ -12,6 +13,7 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Altinn.AccessManagement.Core.Services;
 
@@ -20,8 +22,11 @@ public class AuthorizedPartiesServiceEf(
     IAltinnRolesClient altinnRolesClient,
     IDelegationMetadataRepository resourceDelegationRepository,
     IContextRetrievalService contextRetrievalService,
-    IAuthorizedPartyRepoServiceEf repoService) : IAuthorizedPartiesService
+    IAuthorizedPartyRepoServiceEf repoService,
+    IMemoryCache memoryCache) : IAuthorizedPartiesService
 {
+    private static readonly MemoryCacheEntryOptions _cacheEntryOptions = new() { AbsoluteExpirationRelativeToNow = new TimeSpan(0, 5, 0) };
+
     /// <inheritdoc/>
     public async Task<List<AuthorizedParty>> GetAuthorizedParties(BaseAttribute subjectAttribute, AuthorizedPartiesFilters filter, CancellationToken cancellationToken = default) => subjectAttribute.Type switch
     {
@@ -777,69 +782,84 @@ public class AuthorizedPartiesServiceEf(
     private async Task<AuthorizedPartiesFilters> ProcessProviderAndResourceFilters(AuthorizedPartiesFilters filter, CancellationToken cancellationToken)
     {
         // Only build resource filters if providerCode or anyOfResourceIds filters are specified
-        if (filter.ProviderCode != null || filter.AnyOfResourceIds?.Count() > 0)
+        if (filter.ProviderCode != null || filter.AnyOfResourceIds?.Length > 0)
         {
             // Make sure all include filters are set to true, as we need all access info when filtering on provider/resources
             filter.IncludeAltinn2 = filter.IncludeAltinn3 = filter.IncludeRoles = filter.IncludeAccessPackages = filter.IncludeResources = filter.IncludeInstances = true;
 
-            List<Resource> resources = await repoService.GetResources(filter.ProviderCode, filter.AnyOfResourceIds, ct: cancellationToken);
-
-            if (resources.Count == 0)
+            // Build cache key. Currently PackageFilter and RoleFilter are always empty when entering this method
+            StringBuilder cacheBuilder = new($"pparf:{filter.ProviderCode}:");
+            filter.AnyOfResourceIds?.ToList().ForEach(r => cacheBuilder.Append($"{r}:"));
+            cacheBuilder.Append("|");
+            filter.PackageFilter?.ToList().ForEach(p => cacheBuilder.Append($"{p.Key}:"));
+            cacheBuilder.Append("|");
+            filter.RoleFilter?.ToList().ForEach(r => cacheBuilder.Append($"{r.Key}:"));
+            string cacheKey = cacheBuilder.ToString();
+            if (!memoryCache.TryGetValue(cacheKey, out (SortedDictionary<string, string> ResourceFilter, SortedDictionary<Guid, Guid>? PackageFilter, SortedDictionary<string, string>? RoleFilter) cachedFilters))
             {
-                // ServiceOwner or Resource filter specified, but no resources found matching.
-                return filter;
-            }
+                List<Resource> resources = await repoService.GetResources(filter.ProviderCode, filter.AnyOfResourceIds, ct: cancellationToken);
 
-            filter.ResourceFilter = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var resource in resources)
-            {
-                filter.ResourceFilter[resource.RefId] = resource.RefId;
-            }
-
-            List<PackageResource> packageResources = await repoService.GetPackageResources(filter.ProviderCode, filter.ResourceFilter.Keys, ct: cancellationToken);
-
-            // Add packageIds from packageResources to filter.PackageFilter
-            filter.PackageFilter ??= new SortedDictionary<Guid, Guid>();
-            foreach (var packageResource in packageResources)
-            {
-                if (!filter.PackageFilter.ContainsKey(packageResource.PackageId))
+                if (resources.Count == 0)
                 {
-                    filter.PackageFilter[packageResource.PackageId] = packageResource.PackageId;
+                    // ServiceOwner or Resource filter specified, but no resources found matching.
+                    return filter;
                 }
-            }
 
-            // Build filter.RoleFilter based on roleResources and packageRoles
-            filter.RoleFilter ??= new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            
-            List<RoleResource> roleResources = await repoService.GetRoleResources(filter.ProviderCode, filter.ResourceFilter.Keys, ct: cancellationToken);
-            foreach (var group in roleResources.GroupBy(rr => rr.RoleId))
-            {
-                Role role = group.First().Role;
-                filter.RoleFilter[role.Code] = role.Code;
-
-                if (role.LegacyCode != null)
+                filter.ResourceFilter = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var resource in resources)
                 {
-                    filter.RoleFilter[role.LegacyCode] = role.LegacyCode;
+                    filter.ResourceFilter[resource.RefId] = resource.RefId;
                 }
-            }
 
-            // Find all Roles for the PackageResources found above, as we need to include roles giving access via packages as well.
-            List<RolePackage> rolePackages = await repoService.GetRolePackages(packageIds: filter.PackageFilter.Keys, ct: cancellationToken);
-            foreach (var group in rolePackages.GroupBy(rp => rp.PackageId))
-            {
-                foreach (var role in group.Select(rp => rp.Role))
+                List<PackageResource> packageResources = await repoService.GetPackageResources(filter.ProviderCode, filter.ResourceFilter.Keys, ct: cancellationToken);
+
+                // Add packageIds from packageResources to filter.PackageFilter
+                filter.PackageFilter ??= new SortedDictionary<Guid, Guid>();
+                foreach (var packageResource in packageResources)
                 {
-                    if (!filter.RoleFilter.ContainsKey(role.Code))
+                    if (!filter.PackageFilter.ContainsKey(packageResource.PackageId))
                     {
-                        filter.RoleFilter[role.Code] = role.Code;
-                    }
-
-                    if (role.LegacyCode != null && !filter.RoleFilter.ContainsKey(role.LegacyCode))
-                    {
-                        filter.RoleFilter[role.LegacyCode] = role.LegacyCode;
+                        filter.PackageFilter[packageResource.PackageId] = packageResource.PackageId;
                     }
                 }
+
+                // Build filter.RoleFilter based on roleResources and packageRoles
+                filter.RoleFilter ??= new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+                List<string> roleCodes = await repoService.GetRoleCodesFromRoleResources(filter.ProviderCode, filter.ResourceFilter.Keys, ct: cancellationToken);
+                foreach (var roleCode in roleCodes)
+                {
+                    filter.RoleFilter[roleCode] = roleCode;
+                }
+
+                // Find all Roles for the PackageResources found above, as we need to include roles giving access via packages as well.
+                List<RolePackage> rolePackages = await repoService.GetRolePackages(packageIds: filter.PackageFilter.Keys, ct: cancellationToken);
+                foreach (var group in rolePackages.GroupBy(rp => rp.PackageId))
+                {
+                    foreach (var role in group.Select(rp => rp.Role))
+                    {
+                        if (!filter.RoleFilter.ContainsKey(role.Code))
+                        {
+                            filter.RoleFilter[role.Code] = role.Code;
+                        }
+
+                        if (role.LegacyCode != null && !filter.RoleFilter.ContainsKey(role.LegacyCode))
+                        {
+                            filter.RoleFilter[role.LegacyCode] = role.LegacyCode;
+                        }
+                    }
+                }
+
+                cachedFilters.ResourceFilter = filter.ResourceFilter;
+                cachedFilters.PackageFilter = filter.PackageFilter;
+                cachedFilters.RoleFilter = filter.RoleFilter;
+
+                memoryCache.Set(cacheKey, cachedFilters, _cacheEntryOptions);
             }
+
+            filter.ResourceFilter = cachedFilters.ResourceFilter;
+            filter.PackageFilter = cachedFilters.PackageFilter;
+            filter.RoleFilter = cachedFilters.RoleFilter;
         }
 
         return filter;

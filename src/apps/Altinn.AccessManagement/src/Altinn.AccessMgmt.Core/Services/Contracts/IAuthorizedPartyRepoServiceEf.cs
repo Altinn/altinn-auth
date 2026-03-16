@@ -115,13 +115,13 @@ public interface IAuthorizedPartyRepoServiceEf
     Task<List<Resource>> GetResources(string? providerCode = null, IEnumerable<string>? resourceIds = null, CancellationToken ct = default);
 
     /// <summary>
-    /// Get resources filtered by provider code and/or resource ids, grouped by role codes (including legacy code)
+    /// Get role codes filtered by provider code and/or resource ids
     /// </summary>
     /// <param name="providerCode">Provider code</param>
     /// <param name="resourceIds">Resource ids</param>
     /// <param name="ct">The <see cref="CancellationToken"/></param>
-    /// <returns>List of role resources</returns>
-    Task<List<RoleResource>> GetRoleResources(string? providerCode = null, IEnumerable<string>? resourceIds = null, CancellationToken ct = default);
+    /// <returns>List of roles for the specified filtering</returns>
+    Task<List<string>> GetRoleCodesFromRoleResources(string? providerCode = null, IEnumerable<string>? resourceIds = null, CancellationToken ct = default);
 
     /// <summary>
     /// Get resources filtered by provider code and/or resource ids, grouped by package id
