@@ -86,7 +86,7 @@ variable "db_storage_tier" {
 variable "configuration" {
   type = object({
     consent = optional(object({
-      batch_size = optional(number, 5)
+      batch_size                = optional(number, 5)
       max_degree_of_parallelism = optional(number, 5)
     }), {})
   })
