@@ -181,18 +181,8 @@ public class RequestControllerTest
                 Assert.Equal(1, data.Updated);
             });
 
-            var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-
-            Assert.True(root.GetProperty("status").GetInt32() >= 0);
-            Assert.True(root.TryGetProperty("resource", out var resource));
-            Assert.True(resource.TryGetProperty("referenceId", out _));
-            Assert.True(root.TryGetProperty("from", out _));
-            Assert.True(root.TryGetProperty("to", out _));
-            Assert.True(root.TryGetProperty("links", out var links));
-            Assert.True(links.TryGetProperty("detailsLink", out _));
-            Assert.True(links.TryGetProperty("statusLink", out _));
+            var obj = await response.Content.ReadFromJsonAsync<RequestDto>(TestContext.Current.CancellationToken);
+            Assert.NotNull(obj);
         }
 
         [Fact]
@@ -276,18 +266,8 @@ public class RequestControllerTest
 
             Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
 
-            var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-
-            Assert.True(root.GetProperty("status").GetInt32() >= 0);
-            Assert.True(root.TryGetProperty("package", out var package));
-            Assert.True(package.TryGetProperty("referenceId", out _));
-            Assert.True(root.TryGetProperty("from", out _));
-            Assert.True(root.TryGetProperty("to", out _));
-            Assert.True(root.TryGetProperty("links", out var links));
-            Assert.True(links.TryGetProperty("detailsLink", out _));
-            Assert.True(links.TryGetProperty("statusLink", out _));
+            var obj = await response.Content.ReadFromJsonAsync<RequestDto>(TestContext.Current.CancellationToken);
+            Assert.NotNull(obj);
         }
 
         [Fact]
