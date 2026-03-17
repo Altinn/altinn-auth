@@ -12,7 +12,7 @@ namespace Altinn.Authorization.Integration.Platform.Appsettings
         /// <remarks>
         /// The endpoint should be a valid URI, typically pointing to an API service.
         /// </remarks>
-        public EndpointOptions Notification { get; set; } = new();
+        public EndpointOptions Notifications { get; set; } = new();
 
         /// <summary>
         /// Gets or sets the endpoint URI for the Resource Register service.

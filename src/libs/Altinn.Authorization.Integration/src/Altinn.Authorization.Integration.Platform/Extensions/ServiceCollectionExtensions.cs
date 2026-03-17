@@ -55,7 +55,7 @@ public static partial class ServiceCollectionExtensions
         })
         .AddNotification(opts =>
         {
-            opts.Endpoint = appsettings.Notification.Endpoint;
+            opts.Endpoint = appsettings.Notifications.Endpoint;
         })
         .AddRegister(opts =>
         {
