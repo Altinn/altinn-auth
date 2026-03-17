@@ -32,5 +32,5 @@ public interface IAltinnNotification
     /// A task that represents the asynchronous operation. The task result contains the platform response
     /// with details about the created SMS notification order.
     /// </returns>
-    Task<PlatformResponse<NotificationOrderChainResponseExt>> Send(NotificationOrderChainRequestExt model,CancellationToken cancellationToken = default);
+    Task<PlatformResponse<NotificationOrderChainResponseExt>> Send(NotificationOrderChainRequestExt model, CancellationToken cancellationToken = default);
 }
