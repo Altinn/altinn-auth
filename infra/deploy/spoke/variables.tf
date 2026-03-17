@@ -61,6 +61,7 @@ variable "service_bus_firewall" {
 
 variable "appconfiguration" {
   type = object({
+    platform_notifications_endpoint     = string
     platform_resource_registry_endpoint = string
     platform_register_endpoint          = string
     platform_accessmanagement_endpoint  = string
