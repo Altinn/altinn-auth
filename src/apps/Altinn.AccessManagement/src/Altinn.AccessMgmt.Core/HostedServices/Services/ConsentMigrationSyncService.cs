@@ -16,7 +16,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services;
 /// - Updates Altinn2 migration status after processing
 /// - Exports metrics for monitoring
 /// </summary>
-public class ConsentMigrationSyncService : BaseSyncService, IConsentMigrationSyncService
+public partial class ConsentMigrationSyncService : BaseSyncService, IConsentMigrationSyncService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IOptionsMonitor<ConsentMigrationSettings> _settings;
@@ -57,7 +57,7 @@ public class ConsentMigrationSyncService : BaseSyncService, IConsentMigrationSyn
         }
         catch (HttpRequestException httpEx)
         {
-            _logger.LogWarning(httpEx, "Network error in batch processing. Will retry in next cycle.");
+            Log.LogNetworkWarning(_logger, httpEx);
             return 0;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -77,7 +77,6 @@ public class ConsentMigrationSyncService : BaseSyncService, IConsentMigrationSyn
         CancellationToken cancellationToken)
     {
         var migrationClient = scopedServices.GetRequiredService<IAltinn2ConsentClient>();
-        var migrationService = scopedServices.GetRequiredService<IConsentMigrationService>();
 
         var consentIds = await migrationClient.GetAltinn2ConsentListForMigration(
             migrationSettings.BatchSize,
@@ -90,7 +89,7 @@ public class ConsentMigrationSyncService : BaseSyncService, IConsentMigrationSyn
             return 0;
         }
 
-        _logger.LogInformation("Processing batch of {Count} consents with status '{Status}'", consentIds.Count, _settings.CurrentValue.ConsentStatus);
+        Log.LogBatchProcessing(_logger, consentIds.Count, _settings.CurrentValue.ConsentStatus);
 
         int successCount = 0;
         int failedCount = 0;
@@ -104,6 +103,8 @@ public class ConsentMigrationSyncService : BaseSyncService, IConsentMigrationSyn
 
         await Parallel.ForEachAsync(consentIds, parallelOptions, async (consentId, ct) =>
         {
+            await using var workerScope = _serviceProvider.CreateAsyncScope();
+            var migrationService = workerScope.ServiceProvider.GetRequiredService<IConsentMigrationService>();
             bool success = await ProcessSingleConsent(migrationService, consentId, ct);
             if (success)
             {
@@ -115,7 +116,7 @@ public class ConsentMigrationSyncService : BaseSyncService, IConsentMigrationSyn
             }
         });
 
-        _logger.LogInformation("Batch completed: {Success} succeeded, {Failed} failed", successCount, failedCount);
+        Log.LogBatchCompleted(_logger, successCount, failedCount);
 
         return consentIds.Count;
     }
@@ -140,7 +141,7 @@ public class ConsentMigrationSyncService : BaseSyncService, IConsentMigrationSyn
             else
             {
                 _failedCounter.Add(1);
-                _logger.LogWarning("Failed to migrate consent {ConsentId}: {Error}", consentId, result.ErrorMessage);
+                Log.LogFailedMigrateWarning(_logger, consentId, result.ErrorMessage);
                 return false;
             }
         }
@@ -156,10 +157,31 @@ public class ConsentMigrationSyncService : BaseSyncService, IConsentMigrationSyn
             // Only log unexpected errors
             if (ex is not HttpRequestException and not TaskCanceledException)
             {
-                _logger.LogError(ex, "Unexpected error migrating consent {ConsentId}", consentId);
+                Log.LogUnexpectedError(_logger, ex, consentId);
             }
 
             return false;
         }
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage(EventId = 1001, Level = LogLevel.Information, Message = "Processing batch of {Count} consents with status '{Status}'")]
+        public static partial void LogBatchProcessing(ILogger logger, int count, int status);
+
+        [LoggerMessage(EventId = 1002, Level = LogLevel.Information, Message = "Batch completed: {Success} succeeded, {Failed} failed")]
+        public static partial void LogBatchCompleted(ILogger logger, int success, int failed);
+
+        [LoggerMessage(EventId = 1003, Level = LogLevel.Warning, Message = "Network error in batch processing. Will retry in next cycle.")]
+        public static partial void LogNetworkWarning(ILogger logger, Exception exception);
+
+        [LoggerMessage(EventId = 1004, Level = LogLevel.Warning, Message = "Failed to migrate consent {ConsentId}: {Error}")]
+        public static partial void LogFailedMigrateWarning(ILogger logger, Guid consentId, string error);
+
+        [LoggerMessage(EventId = 1005, Level = LogLevel.Error, Message = "Error in batch processing")]
+        public static partial void LogBatchError(ILogger logger, Exception exception);
+
+        [LoggerMessage(EventId = 1006, Level = LogLevel.Error, Message = "Unexpected error migrating consent {ConsentId}")]
+        public static partial void LogUnexpectedError(ILogger logger, Exception exception, Guid consentId);
     }
 }

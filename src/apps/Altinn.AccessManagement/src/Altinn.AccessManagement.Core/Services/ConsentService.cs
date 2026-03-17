@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Text;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Configuration;
@@ -28,21 +30,62 @@ namespace Altinn.AccessManagement.Core.Services
     /// <remarks>
     /// Service responsible for consent functionality
     /// </remarks>
-    public class ConsentService(ILogger<ConsentService> logger, IConsentRepository consentRepository, IAltinn2ConsentClient altinn2ConsentClient, IPartiesClient partiesClient, ISingleRightsService singleRightsService,
-        IResourceRegistryClient resourceRegistryClient, IAMPartyService ampartyService, IMemoryCache memoryCache, IProfileClient profileClient, TimeProvider timeProvider, IOptions<GeneralSettings> generalSettings) : IConsent
+    public class ConsentService: IConsent
     {
-        private readonly IConsentRepository _consentRepository = consentRepository;
-        private readonly IPartiesClient _partiesClient = partiesClient;
-        private readonly ISingleRightsService _singleRightsService = singleRightsService;
-        private readonly IResourceRegistryClient _resourceRegistryClient = resourceRegistryClient;
-        private readonly IAMPartyService _ampartyService = ampartyService;
-        private readonly IMemoryCache _memoryCache = memoryCache;
-        private readonly IProfileClient _profileClient = profileClient;
-        private readonly TimeProvider _timeProvider = timeProvider;
-        private readonly GeneralSettings _generalSettings = generalSettings.Value;
-        private readonly IAltinn2ConsentClient _altinn2ConsentClient = altinn2ConsentClient;
+        private readonly IConsentRepository _consentRepository;
+        private readonly IPartiesClient _partiesClient ;
+        private readonly ISingleRightsService _singleRightsService;
+        private readonly IResourceRegistryClient _resourceRegistryClient;
+        private readonly IAMPartyService _ampartyService;
+        private readonly IMemoryCache _memoryCache;
+        private readonly IProfileClient _profileClient;
+        private readonly TimeProvider _timeProvider;
+        private readonly GeneralSettings _generalSettings;
+        private readonly IAltinn2ConsentClient _altinn2ConsentClient;
+        private readonly ILogger<ConsentService> _logger;
+
+        // histograms for sub-step durations (seconds)
+        private readonly Histogram<double>? _getA2Histogram;
+        private readonly Histogram<double>? _insertA3Histogram;
+        private readonly Histogram<double>? _updateA2Histogram;
+
+        // overall per-consent end-to-end duration (seconds)
+        private readonly Histogram<double>? _consentOverallHistogram;
 
         private const string ResourceParam = "Resource";
+
+        public ConsentService(
+            ILogger<ConsentService> logger, 
+            IConsentRepository consentRepository, 
+            IAltinn2ConsentClient altinn2ConsentClient, 
+            IPartiesClient partiesClient, 
+            ISingleRightsService singleRightsService,
+            IResourceRegistryClient resourceRegistryClient, 
+            IAMPartyService ampartyService, 
+            IMemoryCache memoryCache, 
+            IProfileClient profileClient, 
+            TimeProvider timeProvider, 
+            IOptions<GeneralSettings> generalSettings,
+            IMeterFactory meterFactory)
+        {
+            _logger = logger;
+            _consentRepository = consentRepository;
+            _altinn2ConsentClient = altinn2ConsentClient;
+            _partiesClient = partiesClient;
+            _singleRightsService = singleRightsService;
+            _resourceRegistryClient = resourceRegistryClient;
+            _ampartyService = ampartyService;
+            _memoryCache = memoryCache;
+            _profileClient = profileClient;
+            _timeProvider = timeProvider;
+            _generalSettings = generalSettings.Value;
+
+            var meter = meterFactory.Create("Altinn.AccessManagement.ConsentMigration");
+            _getA2Histogram = meter.CreateHistogram<double>("consent_migration_get_a2_duration_seconds", unit: "s", description: "Seconds to get a single consent from Altinn2");
+            _insertA3Histogram = meter.CreateHistogram<double>("consent_migration_insert_a3_duration_seconds", unit: "s", description: "Seconds to insert consent into Altinn3 (DB)");
+            _updateA2Histogram = meter.CreateHistogram<double>("consent_migration_update_a2_duration_seconds", unit: "s", description: "Seconds to update migrate status back to Altinn2");
+            _consentOverallHistogram = meter.CreateHistogram<double>("consent_migration_overall_duration_seconds", unit: "s", description: "Seconds for overall consent migration process");
+        }
 
         /// <inheritdoc/>
         public async Task<Result<ConsentRequestDetailsWrapper>> CreateRequest(ConsentRequest consentRequest, ConsentPartyUrn performedByParty, bool fromAltinn2, CancellationToken cancellationToken)
@@ -249,14 +292,28 @@ namespace Altinn.AccessManagement.Core.Services
         public async Task<Result<ConsentRequestDetails>> GetAndStoreAltinn2Consent(Guid consentRequestId, CancellationToken cancellationToken)
         {
             ConsentRequestDetails consentRequest = null;
+
+            // overall timer start
+            var overallStart = _timeProvider.GetTimestamp();
+
+            var start = _timeProvider.GetTimestamp();
             Altinn2ConsentRequest altinn2ConsentRequest = await _altinn2ConsentClient.GetAltinn2Consent(consentRequestId, cancellationToken);
+            var dur = _timeProvider.GetElapsedTime(start).TotalSeconds;
+            _getA2Histogram?.Record(dur);
 
             if (altinn2ConsentRequest != null)
             {
                 ConsentRequest mappedConsentFromA2 = await MapA2ConsentToA3Consent(altinn2ConsentRequest, cancellationToken);
+                
+                start = _timeProvider.GetTimestamp();
                 Result<ConsentRequestDetailsWrapper> result = await CreateRequest(mappedConsentFromA2, mappedConsentFromA2.From, true, cancellationToken);
+                dur = _timeProvider.GetElapsedTime(start).TotalSeconds;
+                _insertA3Histogram?.Record(dur);
 
+                start = _timeProvider.GetTimestamp();
                 await _altinn2ConsentClient.UpdateAltinn2ConsentMigrateStatus(consentRequestId.ToString(), (result.IsProblem && result.Problem != Problems.ConsentWithIdAlreadyExist) ? 2 : 1, cancellationToken);
+                dur = _timeProvider.GetElapsedTime(start).TotalSeconds;
+                _updateA2Histogram?.Record(dur);
 
                 if (!result.IsProblem)
                 {
@@ -264,9 +321,13 @@ namespace Altinn.AccessManagement.Core.Services
                 }
                 else
                 {
-                    logger.LogWarning("Consent with id {ConsentRequestId} exist in Altinn2 but failed to migrate to Altinn3 with error {Error}. ", consentRequestId, BuildProblemErrorMessage(result.Problem));
+                    _logger.LogWarning("Consent with id {ConsentRequestId} exist in Altinn2 but failed to migrate to Altinn3 with error {Error}. ", consentRequestId, BuildProblemErrorMessage(result.Problem));
                 }
             }
+
+            // overall duration record
+            var overallDur = _timeProvider.GetElapsedTime(overallStart).TotalSeconds;
+            _consentOverallHistogram?.Record(overallDur);
 
             return consentRequest;
         }

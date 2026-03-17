@@ -688,6 +688,44 @@ public class ConsentMigrationSyncServiceTests
         _migrationServiceMock.Verify(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Exactly(100));
     }
 
+    [Fact]
+    public async Task ProcessBatch_CreatesScopePerItem()
+    {
+        // Arrange
+        var consentIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
+
+        _clientMock.Setup(x => x.GetAltinn2ConsentListForMigration(
+            It.IsAny<int>(),
+            It.IsAny<int?>(),
+            It.IsAny<bool>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(consentIds);
+
+        _migrationServiceMock.Setup(x => x.MigrateConsent(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ConsentMigrationResult.Succeeded);
+
+        // track CreateScope calls in a thread-safe way
+        var scopeCount = 0;
+        _serviceScopeFactoryMock
+            .Setup(x => x.CreateScope())
+            .Callback(() => Interlocked.Increment(ref scopeCount))
+            .Returns(_serviceScopeMock.Object);
+
+        var service = CreateService();
+
+        // Act
+        var result = await service.ProcessBatch(CancellationToken.None);
+
+        // Assert
+        Assert.Equal(consentIds.Count, result);
+
+        // Expect at least one batch scope + one per consent (use >= to avoid flakiness)
+        var expectedMinimum = 1 + consentIds.Count;
+        Assert.True(
+            scopeCount >= expectedMinimum,
+            $"Expected at least {expectedMinimum} CreateScope() calls, but saw {scopeCount}");
+    }
+
     private ConsentMigrationSyncService CreateService()
     {
         return new ConsentMigrationSyncService(
