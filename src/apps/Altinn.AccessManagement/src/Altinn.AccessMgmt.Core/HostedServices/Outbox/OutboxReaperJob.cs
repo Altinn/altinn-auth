@@ -16,7 +16,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Outbox;
 /// <param name="provider"><see cref="IServiceProvider"/></param>
 /// <param name="featureManager">for managing if job should be on or off.</param>
 internal partial class OutboxReaperJob(
-    ILogger<OutboxHandlerJob> logger,
+    ILogger<OutboxReaperJob> logger,
     IServiceProvider provider,
     IFeatureManager featureManager
     ) : IHostedService
