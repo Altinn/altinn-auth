@@ -30,6 +30,8 @@ public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage
         builder.Property(p => p.Schedule);
         builder.Property(p => p.StartedAt);
 
+        builder.Property(p => p.HandlerMessage);
+
         builder.Property(b => b.Status)
             .HasConversion<string>()
             .HasDefaultValue(OutboxStatus.Pending)

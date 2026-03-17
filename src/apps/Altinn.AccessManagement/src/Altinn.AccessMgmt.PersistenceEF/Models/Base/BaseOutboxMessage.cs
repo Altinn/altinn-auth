@@ -114,6 +114,11 @@ public class BaseOutboxMessage
     public DateTime? StartedAt { get; set; }
 
     /// <summary>
+    /// Custom message field.
+    /// </summary>
+    public string? HandlerMessage { get; set; }
+
+    /// <summary>
     /// Gets or sets the timestamp when the message processing completed.
     /// </summary>
     /// <remarks>

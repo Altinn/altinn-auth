@@ -159,8 +159,9 @@ internal partial class OutboxHandlerJob(
                 {
                     throw;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    message.HandlerMessage = $"Handler threw exception: {ex.Message}\n{ex.StackTrace}";
                     return OutboxStatus.Failed;
                 }
             }

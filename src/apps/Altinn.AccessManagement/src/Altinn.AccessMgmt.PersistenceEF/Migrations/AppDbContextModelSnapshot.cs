@@ -2732,6 +2732,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("text")
                         .HasColumnName("handler");
 
+                    b.Property<string>("HandlerMessage")
+                        .HasColumnType("text")
+                        .HasColumnName("handlermessage");
+
                     b.Property<string>("RefId")
                         .HasColumnType("text")
                         .HasColumnName("refid");
