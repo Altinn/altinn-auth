@@ -215,6 +215,18 @@ module "appsettings" {
 
   feature_flags = [
     {
+      name        = "AccessMgmt.Core.HostedServices.Outbox.Handler"
+      description = "Specifies if the outbox handler should be enabled."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Core.HostedServices.Outbox.Reaper"
+      description = "Specifies if the outbox reaper should be enabled."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
       name        = "AccessMgmt.Core.Services.IncludeSingleRightsImportedAssignments"
       description = "Ignores single rights."
       label       = "${lower(var.environment)}-access-management"
