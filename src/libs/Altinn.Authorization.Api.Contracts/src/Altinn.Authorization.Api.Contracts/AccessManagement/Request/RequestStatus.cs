@@ -1,10 +1,11 @@
-﻿using System.Reflection;
+﻿using System.Text.Json.Serialization;
 
 namespace Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 
 /// <summary>
 /// Request status
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum RequestStatus
 {
     /// <summary>
