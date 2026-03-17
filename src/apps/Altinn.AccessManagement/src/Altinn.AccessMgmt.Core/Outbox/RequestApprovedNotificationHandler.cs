@@ -109,7 +109,7 @@ public class RequestApprovedNotificationHandler(
                 RecipientPerson = new RecipientPersonExt
                 {
                     NationalIdentityNumber = recipient.PersonIdentifier,
-                    ChannelSchema = NotificationChannelExt.EmailPreferred,
+                    ChannelSchema = NotificationChannelExt.Email,
                     ResourceId = "urn:altinn:resource:altinn_access_management_hovedadmin",
                     EmailSettings = new EmailSendingOptionsExt
                     {
@@ -135,7 +135,7 @@ public class RequestApprovedNotificationHandler(
                 RecipientOrganization = new RecipientOrganizationExt
                 {
                     OrgNumber = recipient.OrganizationIdentifier,
-                    ChannelSchema = NotificationChannelExt.EmailPreferred,
+                    ChannelSchema = NotificationChannelExt.Email,
                     ResourceId = "urn:altinn:resource:altinn_access_management_hovedadmin",
                     EmailSettings = new()
                     {
