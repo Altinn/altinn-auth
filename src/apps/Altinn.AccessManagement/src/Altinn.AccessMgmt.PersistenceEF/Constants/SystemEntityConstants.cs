@@ -400,5 +400,32 @@ public static class SystemEntityConstants
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "DBA")),
     };
+
+    /// <summary>
+    /// Represents the Outbox system entity.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 2b0e4b45-b5ac-41a9-b063-bba1dc9410e6
+    /// - <c>Name:</c> Outbox
+    /// - <c>RefId:</c> sys-outbox
+    /// - <c>TypeId:</c> Internal entity type
+    /// - <c>VariantId:</c> Standard variant
+    /// </remarks>
+    public static ConstantDefinition<Entity> Outbox { get; } = new ConstantDefinition<Entity>(AuditDefaults.Outbox)
+    {
+        Entity = new()
+        {
+            Name = nameof(AuditDefaults.Outbox),
+            RefId = "sys-outbox",
+            ParentId = null,
+            TypeId = EntityTypeConstants.Internal,
+            VariantId = EntityVariantConstants.Standard,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Outbox")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Outbox")),
+    };
+
     #endregion
 }

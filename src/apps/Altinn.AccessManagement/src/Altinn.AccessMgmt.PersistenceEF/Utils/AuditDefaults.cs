@@ -69,4 +69,9 @@ public static class AuditDefaults
     /// DBA
     /// </summary>
     public const string DBA = "0195efb8-7c80-7262-b616-7d9eb843bcaa";
+
+    /// <summary>
+    /// Outbox
+    /// </summary>
+    public const string Outbox = "2b0e4b45-b5ac-41a9-b063-bba1dc9410e6";
 }

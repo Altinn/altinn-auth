@@ -1,4 +1,4 @@
-﻿using System.Net.Mime;
+﻿﻿using System.Net.Mime;
 using Altinn.AccessManagement.Api.ServiceOwner.Validation;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessMgmt.Core;

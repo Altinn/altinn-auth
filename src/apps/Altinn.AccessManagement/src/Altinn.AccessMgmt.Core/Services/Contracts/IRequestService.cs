@@ -1,4 +1,4 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Models;
+﻿﻿using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Altinn.Authorization.ProblemDetails;
 

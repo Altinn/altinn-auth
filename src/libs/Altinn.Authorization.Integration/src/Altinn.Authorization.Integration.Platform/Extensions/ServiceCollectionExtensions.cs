@@ -3,6 +3,7 @@ using Altinn.Authorization.Host.Identity;
 using Altinn.Authorization.Host.Startup;
 using Altinn.Authorization.Integration.Platform.AccessManagement;
 using Altinn.Authorization.Integration.Platform.Appsettings;
+using Altinn.Authorization.Integration.Platform.Notification;
 using Altinn.Authorization.Integration.Platform.Register;
 using Altinn.Authorization.Integration.Platform.ResourceRegistry;
 using Altinn.Authorization.Integration.Platform.SblBridge;
@@ -51,6 +52,10 @@ public static partial class ServiceCollectionExtensions
                 opts.PlatformAccessToken.TestTool.Password = appsettings.Token.TestTool.Password;
                 opts.PlatformAccessToken.TestTool.Environment = appsettings.Token.TestTool.Environment;
             }
+        })
+        .AddNotification(opts =>
+        {
+            opts.Endpoint = appsettings.Notification.Endpoint;
         })
         .AddRegister(opts =>
         {
@@ -156,6 +161,28 @@ public static partial class ServiceCollectionExtensions
         internal IServiceCollection Services { get; }
 
         /// <summary>
+        /// Adds Altinn Notification services to the service collection.
+        /// </summary>
+        /// <param name="configureOptions">A delegate to configure <see cref="AltinnNotificationOptions"/>.</param>
+        /// <returns>The updated <see cref="PlatformBuilder"/>.</returns>
+        public PlatformBuilder AddNotification(Action<AltinnNotificationOptions> configureOptions)
+        {
+            if (Services.Contains(Markers.Notification))
+            {
+                return this;
+            }
+
+            Services.AddOptions<AltinnNotificationOptions>()
+                .Validate(opts => opts.Endpoint != null, $"Can't add Notification as '{nameof(AltinnNotificationOptions.Endpoint)}' is not specified")
+                .Configure(configureOptions);
+
+            Services.TryAddSingleton<IAltinnNotification, AltinnNotificationClient>();
+            Services.TryAddSingleton(Markers.Notification);
+
+            return this;
+        }
+
+        /// <summary>
         /// Adds Altinn Register services to the service collection.
         /// </summary>
         /// <param name="configureOptions">A delegate to configure <see cref="AltinnRegisterOptions"/>.</param>
@@ -245,6 +272,8 @@ public static partial class ServiceCollectionExtensions
 
         private sealed class Markers
         {
+            public static ServiceDescriptor Notification { get; } = ServiceDescriptor.Singleton<NotificationMarker, NotificationMarker>();
+
             public static ServiceDescriptor Register { get; } = ServiceDescriptor.Singleton<RegisterMarker, RegisterMarker>();
 
             public static ServiceDescriptor ResourceRegistry { get; } = ServiceDescriptor.Singleton<ResourceRegistryMarker, ResourceRegistryMarker>();
@@ -252,6 +281,9 @@ public static partial class ServiceCollectionExtensions
             public static ServiceDescriptor SblBridge { get; } = ServiceDescriptor.Singleton<SblBridgeMarker, SblBridgeMarker>();
 
             public static ServiceDescriptor AccessManagement { get; } = ServiceDescriptor.Singleton<AccessManagementMarker, AccessManagementMarker>();
+
+            [SuppressMessage("CodeSmell", "S2094:Classes should not be empty", Justification = "Used as a DI marker")]
+            private sealed class NotificationMarker { }
 
             [SuppressMessage("CodeSmell", "S2094:Classes should not be empty", Justification = "Used as a DI marker")]
             private sealed class RegisterMarker { }

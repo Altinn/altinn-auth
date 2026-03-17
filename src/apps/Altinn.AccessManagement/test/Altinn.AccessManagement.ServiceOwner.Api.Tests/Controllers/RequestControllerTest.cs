@@ -8,10 +8,13 @@ using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core;
+using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+using Microsoft.EntityFrameworkCore;
+using Xunit.Sdk;
 
 namespace Altinn.AccessManagement.ServiceOwner.Api.Tests.Controllers;
 
@@ -161,6 +164,22 @@ public class RequestControllerTest
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+
+            await Fixture.QueryDb(static async db =>
+            {
+                var outbox = await db.OutboxMessages.FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+                Assert.NotNull(outbox);
+                Assert.NotNull(outbox.Data);
+
+                var data = JsonSerializer.Deserialize<ResourceRequestPendingNotificationMessage>(outbox.Data);
+                Assert.NotNull(data);
+
+                Assert.Equal(TestData.BakerJohnsen, data.RecipientId);
+                Assert.Equal(TestData.LarsBakke, data.RequesterId);
+                Assert.NotEmpty(data.ResourceIds);
+                Assert.Empty(data.PackageIds);
+                Assert.Equal(1, data.Updated);
+            });
 
             var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             using var doc = JsonDocument.Parse(json);

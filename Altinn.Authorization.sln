@@ -131,6 +131,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.Tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessMgmt.PersistenceEF.Tests", "src\apps\Altinn.AccessManagement\test\Altinn.AccessMgmt.PersistenceEF.Tests\Altinn.AccessMgmt.PersistenceEF.Tests.csproj", "{355F0DE6-D65C-41C9-A08C-73544CFD422F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessMgmt.Core.Tests", "src\apps\Altinn.AccessManagement\test\Altinn.AccessMgmt.Core.Tests\Altinn.AccessMgmt.Core.Tests.csproj", "{874D9C45-CA26-46DF-BAC7-808F5F1DEE2E}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.Api.Tests", "src\apps\Altinn.AccessManagement\test\Altinn.AccessManagement.Api.Tests\Altinn.AccessManagement.Api.Tests.csproj", "{818A3DBB-F2E8-418C-8027-B5C1EC812B89}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.ServiceOwner.Api.Tests", "src\apps\Altinn.AccessManagement\test\Altinn.AccessManagement.ServiceOwner.Api.Tests\Altinn.AccessManagement.ServiceOwner.Api.Tests.csproj", "{9E1761C5-643A-4CAC-B417-C1163B3EEF60}"
@@ -577,6 +579,18 @@ Global
 		{355F0DE6-D65C-41C9-A08C-73544CFD422F}.Release|x64.Build.0 = Release|Any CPU
 		{355F0DE6-D65C-41C9-A08C-73544CFD422F}.Release|x86.ActiveCfg = Release|Any CPU
 		{355F0DE6-D65C-41C9-A08C-73544CFD422F}.Release|x86.Build.0 = Release|Any CPU
+		{874D9C45-CA26-46DF-BAC7-808F5F1DEE2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{874D9C45-CA26-46DF-BAC7-808F5F1DEE2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{874D9C45-CA26-46DF-BAC7-808F5F1DEE2E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{874D9C45-CA26-46DF-BAC7-808F5F1DEE2E}.Debug|x64.Build.0 = Debug|Any CPU
+		{874D9C45-CA26-46DF-BAC7-808F5F1DEE2E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{874D9C45-CA26-46DF-BAC7-808F5F1DEE2E}.Debug|x86.Build.0 = Debug|Any CPU
+		{874D9C45-CA26-46DF-BAC7-808F5F1DEE2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{874D9C45-CA26-46DF-BAC7-808F5F1DEE2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{874D9C45-CA26-46DF-BAC7-808F5F1DEE2E}.Release|x64.ActiveCfg = Release|Any CPU
+		{874D9C45-CA26-46DF-BAC7-808F5F1DEE2E}.Release|x64.Build.0 = Release|Any CPU
+		{874D9C45-CA26-46DF-BAC7-808F5F1DEE2E}.Release|x86.ActiveCfg = Release|Any CPU
+		{874D9C45-CA26-46DF-BAC7-808F5F1DEE2E}.Release|x86.Build.0 = Release|Any CPU
 		{818A3DBB-F2E8-418C-8027-B5C1EC812B89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{818A3DBB-F2E8-418C-8027-B5C1EC812B89}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{818A3DBB-F2E8-418C-8027-B5C1EC812B89}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -666,6 +680,7 @@ Global
 		{99150D64-9592-482B-8003-52AC31879FF0} = {D2DF925C-A14F-80C1-51E0-7ECFD06D725B}
 		{67AD5881-D57B-4D33-9265-4623BD17731D} = {D2DF925C-A14F-80C1-51E0-7ECFD06D725B}
 		{355F0DE6-D65C-41C9-A08C-73544CFD422F} = {D2DF925C-A14F-80C1-51E0-7ECFD06D725B}
+		{874D9C45-CA26-46DF-BAC7-808F5F1DEE2E} = {D2DF925C-A14F-80C1-51E0-7ECFD06D725B}
 		{818A3DBB-F2E8-418C-8027-B5C1EC812B89} = {D2DF925C-A14F-80C1-51E0-7ECFD06D725B}
 		{9E1761C5-643A-4CAC-B417-C1163B3EEF60} = {D2DF925C-A14F-80C1-51E0-7ECFD06D725B}
 	EndGlobalSection

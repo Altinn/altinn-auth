@@ -1,5 +1,6 @@
 locals {
   app_settings = {
+    "Platform:Notifications:Endpoints"   = var.appconfiguration.platform_notifications_endpoint
     "Platform:SblBridge:Endpoint"        = var.appconfiguration.platform_sbl_bridge_endpoint
     "Platform:ResourceRegistry:Endpoint" = var.appconfiguration.platform_resource_registry_endpoint
     "Platform:Register:Endpoint"         = var.appconfiguration.platform_register_endpoint

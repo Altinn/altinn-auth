@@ -91,6 +91,16 @@ public static class AccessMgmtFeatureFlags
     public const string HostedServicesSingleInstanceRightSyncFromErrorQueue = $"AccessMgmt.Core.HostedServices.SingleInstanceRightsSync.FromErrorQueue";
 
     /// <summary>
+    /// Represents the handler for proessing pending outbox messages.
+    /// </summary>
+    public const string HostedServicesOutboxHandler = $"AccessMgmt.Core.HostedServices.Outbox.Handler";
+
+    /// <summary>
+    /// Represents the handler for outbox messages that couldn't be processed.
+    /// </summary>
+    public const string HostedServicesOutboxReaper = $"AccessMgmt.Core.HostedServices.Outbox.Reaper";
+
+    /// <summary>
     /// Feature flag for Controller Enduser Connections
     /// </summary>
     public const string EnduserControllerConnections = "AccessManagement.Enduser.Connections";

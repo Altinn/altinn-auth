@@ -7,6 +7,14 @@ namespace Altinn.Authorization.Integration.Platform.Appsettings
     public class PlatformSettings
     {
         /// <summary>
+        /// Gets or sets the endpoint URI for the notification service.
+        /// </summary>
+        /// <remarks>
+        /// The endpoint should be a valid URI, typically pointing to an API service.
+        /// </remarks>
+        public EndpointOptions Notification { get; set; } = new();
+
+        /// <summary>
         /// Gets or sets the endpoint URI for the Resource Register service.
         /// This service provides metadata about resources in the Altinn ecosystem.
         /// </summary>
