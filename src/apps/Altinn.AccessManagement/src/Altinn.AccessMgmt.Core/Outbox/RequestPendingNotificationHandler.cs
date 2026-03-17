@@ -127,7 +127,9 @@ public class RequestPendingNotificationHandler(
                     EmailSettings = new EmailSendingOptionsExt
                     {
                         Subject = "Altinn Tilgangsforespørsel",
-                        Body = emailContent.ToString()
+                        Body = emailContent.ToString(),
+                        ContentType = EmailContentTypeExt.Html,
+                        SendingTimePolicy = SendingTimePolicyExt.Anytime,
                     }
                 }
             };
@@ -152,7 +154,9 @@ public class RequestPendingNotificationHandler(
                     EmailSettings = new()
                     {
                         Subject = "Altinn Tilgangsforespørsel",
-                        Body = emailContent.ToString()
+                        Body = emailContent.ToString(),
+                        ContentType = EmailContentTypeExt.Html,
+                        SendingTimePolicy = SendingTimePolicyExt.Anytime,
                     }
                 }
             };
