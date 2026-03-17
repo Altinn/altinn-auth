@@ -10,7 +10,6 @@ using Altinn.Authorization.Integration.Platform.Notification;
 using Altinn.Authorization.Integration.Platform.Notification.Models;
 using Altinn.Authorization.Integration.Platform.Notification.Models.Email;
 using Altinn.Authorization.Integration.Platform.Notification.Models.Recipient;
-using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.Core.Outbox;
@@ -28,7 +27,6 @@ public class RequestPendingNotificationHandler(
         {
             IdempotencyId = idempotencyId,
             Recipient = CreateRecipient(recipient, requester, resources, packages),
-            RequestedSendTime = DateTime.UtcNow,
         };
 
         var response = await notification.Send(content, cancellationToken);
@@ -37,7 +35,7 @@ public class RequestPendingNotificationHandler(
         {
             throw new InvalidOperationException(
                 $@"Failed to send notification.
-                    Payload: {JsonSerializer.Serialize(response.Content)}
+                    Payload: {JsonSerializer.Serialize(content)}
                     CorrelationId: {Activity.Current?.TraceId}
                     Status Code: {response.StatusCode}
                     Problem Title: {response.ProblemDetails?.Title}
@@ -124,8 +122,8 @@ public class RequestPendingNotificationHandler(
                 RecipientPerson = new RecipientPersonExt
                 {
                     NationalIdentityNumber = recipient.PersonIdentifier,
-                    ChannelSchema = NotificationChannelExt.EmailAndSms,
-                    ResourceId = "altinn_access_management_hovedadmin",
+                    ChannelSchema = NotificationChannelExt.EmailPreferred,
+                    ResourceId = "urn:altinn:resource:altinn_access_management_hovedadmin",
                     EmailSettings = new EmailSendingOptionsExt
                     {
                         Subject = "Altinn Tilgangsforespørsel",
@@ -150,7 +148,7 @@ public class RequestPendingNotificationHandler(
                 {
                     OrgNumber = recipient.OrganizationIdentifier,
                     ChannelSchema = NotificationChannelExt.EmailPreferred,
-                    ResourceId = "altinn_access_management_hovedadmin",
+                    ResourceId = "urn:altinn:resource:altinn_access_management_hovedadmin",
                     EmailSettings = new()
                     {
                         Subject = "Altinn Tilgangsforespørsel",

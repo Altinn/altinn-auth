@@ -29,7 +29,7 @@ public class NotificationOrderBaseExt
     /// Defaults to the current UTC time if not specified.
     /// </remarks>
     [JsonPropertyName("requestedSendTime")]
-    public DateTime RequestedSendTime { get; set; } = DateTime.UtcNow;
+    public DateTime? RequestedSendTime { get; set; }
 
     /// <summary>
     /// Gets or sets a URI endpoint that can determine whether the notification should be sent.
