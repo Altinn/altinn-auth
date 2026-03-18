@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Text;
+using System.Linq;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
 using Altinn.AccessManagement.Core.Errors;
@@ -330,13 +331,14 @@ public partial class ConnectionService(
 
     public async Task<Result<bool>> UpdateResource(Entity from, Entity to, Resource resourceObj, IEnumerable<string> rightKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
-        var canDelegate = await ResourceDelegationCheck(by.Id, from.Id, resourceObj?.RefId, ConfigureConnections, cancellationToken: cancellationToken);
+        var canDelegate = await ResourceDelegationCheck(by.Id, from.Id, resourceObj?.RefId, configureConnection, cancellationToken: cancellationToken);
         if (canDelegate.IsProblem)
         {
             return canDelegate.Problem;
         }
 
-        foreach (var ruleKey in rightKeys)
+        var keys = rightKeys.ToList();
+        foreach (var ruleKey in keys)
         {
             if (!canDelegate.Value.Rights.Any(a => a.Right.Key == ruleKey && a.Result))
             {
@@ -344,7 +346,7 @@ public partial class ConnectionService(
             }
         }
 
-        List<Rule> result = await singleRightsService.TryWriteDelegationPolicyRules(from, to, resourceObj, rightKeys.ToList(), by, ignoreExistingPolicy: true, cancellationToken: cancellationToken);
+        List<Rule> result = await singleRightsService.TryWriteDelegationPolicyRules(from, to, resourceObj, keys, by, ignoreExistingPolicy: true, cancellationToken: cancellationToken);
 
         if (!result.All(r => r.CreatedSuccessfully))
         {
@@ -356,8 +358,15 @@ public partial class ConnectionService(
 
     public async Task<ValidationProblemInstance> RemoveResource(Guid fromId, Guid toId, string resource, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
-        var resourceObj = await dbContext.Resources.AsNoTracking().FirstOrDefaultAsync(t => t.RefId == resource);
-        return await RemoveResource(fromId, toId, (Guid)resourceObj.Id, configureConnection, cancellationToken);
+        var resourceObj = await dbContext.Resources.AsNoTracking().FirstOrDefaultAsync(t => t.RefId == resource, cancellationToken);
+        if (resourceObj == null)
+        {
+            return ValidationComposer.Validate(
+                ResourceValidation.ResourceExists(resourceObj, resource)
+            );
+        }
+
+        return await RemoveResource(fromId, toId, resourceObj.Id, configureConnection, cancellationToken);
     }
     
     public async Task<ValidationProblemInstance> RemoveResource(Guid fromId, Guid toId, Guid resourceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
@@ -1010,13 +1019,12 @@ public partial class ConnectionService(
         List<Models.Right> rights = DelegationCheckHelper.DecomposePolicy(policy, resource);
 
         var packages = await CheckPackageForResource(party, authenticatedUserUuid, null, configureConnection, cancellationToken);
-        bool isMainAdminForFrom = packages.Value.Any(p => p.Result && p.Package.Id == PackageConstants.MainAdministrator.Id);
+        bool isMainAdminForFrom = packages.Value.Any(p => p.Result == true && p.Package.Id == PackageConstants.MainAdministrator.Id);
 
         var roles = await RoleDelegationCheck(party, authenticatedUserUuid, isMainAdminForFrom, cancellationToken);
         var resources = await GetResourceRights(party, authenticatedUserUuid, resourceDto.Id, null, cancellationToken);
-        var instances = await GetInstanceRights(party, authenticatedUserUuid, resourceDto.Id, instanceId, RoleConstants.Rightholder, cancellationToken);
 
-        ProcessTheAccessToTheRightKeys(rights, packages.Value, roles.Value, resources, instances);
+        ProcessTheAccessToTheRightKeys(rights, packages.Value, roles.Value, resources);
 
         // Map to result
         IEnumerable<RightCheckDto> checkRights = await MapFromInternalToExternalRights(rights, resource, accessListMode, fromParty, rightKeys, isResourceDelegable, isMaskinPortenSchema, cancellationToken);
@@ -1180,13 +1188,14 @@ public partial class ConnectionService(
     /// <inheritdoc />
     public async Task<Result<bool>> AddResource(Entity from, Entity to, Resource resourceObj, RightKeyListDto rightKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
-        var canDelegate = await ResourceDelegationCheck(by.Id, from.Id, resourceObj?.RefId, ConfigureConnections, cancellationToken: cancellationToken);
+        var canDelegate = await ResourceDelegationCheck(by.Id, from.Id, resourceObj?.RefId, configureConnection, cancellationToken: cancellationToken);
         if (canDelegate.IsProblem)
         {
             return canDelegate.Problem;
         }
 
-        foreach (var rightKey in rightKeys.DirectRightKeys)
+        var keys = rightKeys.DirectRightKeys.ToList();
+        foreach (var rightKey in keys)
         {
             if (!canDelegate.Value.Rights.Any(a => a.Right.Key == rightKey && a.Result))
             {
@@ -1200,7 +1209,7 @@ public partial class ConnectionService(
             return Problems.MissingConnection;
         }
 
-        List<Rule> result = await singleRightsService.TryWriteDelegationPolicyRules(from, to, resourceObj, rightKeys.DirectRightKeys.ToList(), by, ignoreExistingPolicy: false, cancellationToken: cancellationToken);
+        List<Rule> result = await singleRightsService.TryWriteDelegationPolicyRules(from, to, resourceObj, keys, by, ignoreExistingPolicy: false, cancellationToken: cancellationToken);
 
         if (!result.All(r => r.CreatedSuccessfully))
         {
@@ -1213,15 +1222,19 @@ public partial class ConnectionService(
     /// <inheritdoc />
     public async Task<Result<bool>> AddInstance(Entity from, Entity to, Resource resourceObj, string instanceId, RightKeyListDto rightKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
-        var canDelegate = await ResourceDelegationCheck(by.Id, from.Id, resourceObj?.RefId, ConfigureConnections, cancellationToken: cancellationToken);
+        var canDelegate = await ResourceDelegationCheck(by.Id, from.Id, resourceObj?.RefId, configureConnection, cancellationToken: cancellationToken);
         if (canDelegate.IsProblem)
         {
             return canDelegate.Problem;
         }
 
-        if (rightKeys.DirectRightKeys.Any(rightKey => !canDelegate.Value.Rights.Any(a => a.Right.Key == rightKey && a.Result)))
+        var keys = rightKeys.DirectRightKeys.ToList();
+        foreach (var rightKey in keys)
         {
-            return Problems.NotAuthorizedForDelegationRequest;
+            if (!canDelegate.Value.Rights.Any(a => a.Right.Key == rightKey && a.Result))
+            {
+                return Problems.NotAuthorizedForDelegationRequest;
+            }
         }
 
         var connection = await Get(from.Id, from.Id, to.Id, configureConnections: configureConnection, cancellationToken: cancellationToken);
@@ -1230,7 +1243,7 @@ public partial class ConnectionService(
             return Problems.MissingConnection;
         }
 
-        List<InstanceRule> result = await singleRightsService.TryWriteInstanceDelegationPolicyRules(from, to, resourceObj, instanceId, rightKeys.DirectRightKeys.ToList(), by, ignoreExistingPolicy: false, cancellationToken: cancellationToken);
+        List<InstanceRule> result = await singleRightsService.TryWriteInstanceDelegationPolicyRules(from, to, resourceObj, instanceId, keys, by, ignoreExistingPolicy: false, cancellationToken: cancellationToken);
 
         if (!result.All(r => r.CreatedSuccessfully))
         {
@@ -1238,6 +1251,92 @@ public partial class ConnectionService(
         }
 
         return true;
+    }
+
+    public async Task<Result<bool>> UpdateInstance(Entity from, Entity to, Resource resourceObj, string instanceId, IEnumerable<string> rightKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
+    {
+        var canDelegate = await InstanceDelegationCheck(by.Id, from.Id, resourceObj?.RefId, instanceId, ConfigureConnections, cancellationToken: cancellationToken);
+        if (canDelegate.IsProblem)
+        {
+            return canDelegate.Problem;
+        }
+
+        var keys = rightKeys.ToList();
+        foreach (var rightKey in keys)
+        {
+            if (!canDelegate.Value.Rights.Any(a => a.Right.Key == rightKey && a.Result))
+            {
+                return Problems.NotAuthorizedForDelegationRequest;
+            }
+        }
+
+        List<InstanceRule> result = await singleRightsService.TryWriteInstanceDelegationPolicyRules(from, to, resourceObj, instanceId, keys, by, ignoreExistingPolicy: true, cancellationToken: cancellationToken);
+
+        if (!result.All(r => r.CreatedSuccessfully))
+        {
+            return Problems.DelegationPolicyRuleWriteFailed;
+        }
+
+        return true;
+    }
+
+    public async Task<ValidationProblemInstance> RemoveInstance(Guid fromId, Guid toId, string resource, string instanceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
+    {
+        var resourceObj = await dbContext.Resources.AsNoTracking().FirstOrDefaultAsync(t => t.RefId == resource, cancellationToken);
+        if (resourceObj == null)
+        {
+            return ValidationComposer.Validate(
+                ResourceValidation.ResourceExists(resourceObj, resource)
+            );
+        }
+
+        var options = new ConnectionOptions(configureConnection);
+        var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
+        var problem = ValidateWriteOpInput(from, to, options);
+        if (problem is { })
+        {
+            return problem;
+        }
+
+        var assignment = await dbContext.Assignments
+            .AsNoTracking()
+            .Include(a => a.From)
+            .Include(a => a.To)
+            .Where(a => a.FromId == fromId)
+            .Where(a => a.ToId == toId)
+            .Where(a => a.RoleId == RoleConstants.Rightholder)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (assignment is null)
+        {
+            return null;
+        }
+
+        problem = ValidateWriteOpInput(assignment.From, assignment.To, options);
+        if (problem is { })
+        {
+            return problem;
+        }
+
+        var existingAssignmentInstance = await dbContext.AssignmentInstances
+            .AsTracking()
+            .Where(a => a.AssignmentId == assignment.Id)
+            .Where(a => a.ResourceId == resourceObj.Id)
+            .Where(a => a.InstanceId == instanceId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (existingAssignmentInstance is null)
+        {
+            return null;
+        }
+
+        var newVersion = await singleRightsService.ClearPolicyRules(existingAssignmentInstance.PolicyPath, existingAssignmentInstance.PolicyVersion, cancellationToken);
+        existingAssignmentInstance.PolicyVersion = newVersion;
+
+        dbContext.Remove(existingAssignmentInstance);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return null;
     }
 
     private void ProcessRoleAllowAccessReasons(List<RoleDtoCheck> rolesAllowAccess, List<RightCheckDto.Permision> permisions)
@@ -2017,7 +2116,6 @@ public partial class ConnectionService
                PolicyVersion = t.PolicyVersion,
                Reason = AccessReasonFlag.KeyRole
            });
-
         var query = direct
             .Union(keyRoleResult);
 

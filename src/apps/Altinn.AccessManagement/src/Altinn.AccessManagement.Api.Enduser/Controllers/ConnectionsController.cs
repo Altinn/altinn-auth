@@ -903,9 +903,6 @@ public class ConnectionsController(
         [FromBody] RightKeyListDto updateDto,
         CancellationToken cancellationToken = default)
     {
-        return NotFound();
-
-        /* ToDo: Implement instance support in connection service and uncomment code below when ready. Currently we return the same result as UpdateResourceRights, but with the intention to include instance information in the result once supported in connection service.
         var byId = AuthenticationHelper.GetPartyUuid(HttpContext);
         var fromEntity = await EntityService.GetEntity(party, cancellationToken);
         var toEntity = await EntityService.GetEntity(to, cancellationToken);
@@ -928,7 +925,6 @@ public class ConnectionsController(
         }
 
         return Ok();
-        */
     }
 
     /// <summary>
@@ -950,10 +946,6 @@ public class ConnectionsController(
         [Required][FromQuery(Name = "instance")] string instance,
         CancellationToken cancellationToken = default)
     {
-        return NotFound();
-
-        /* ToDo: Implement instance support in connection service and uncomment code below when ready. Currently we return the same result as RemoveResources, but with the intention to include instance information in the result once supported in connection service.
-        var byId = AuthenticationHelper.GetPartyUuid(HttpContext);
         var problem = await ConnectionService.RemoveInstance(from, to, resource, instance, ConfigureConnections, cancellationToken);
         if (problem is { })
         {
@@ -961,7 +953,6 @@ public class ConnectionsController(
         }
 
         return NoContent();
-        */
     }
 
     /// <summary>

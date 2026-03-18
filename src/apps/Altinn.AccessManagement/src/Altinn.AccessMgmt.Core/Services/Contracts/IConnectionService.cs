@@ -350,4 +350,47 @@ public interface IConnectionService
     /// <returns>A task that represents the asynchronous operation. The task result contains a Result object indicating whether
     /// the instance delegation was successfully added.</returns>
     Task<Result<bool>> AddInstance(Entity from, Entity to, Resource resourceObj, string instanceId, RightKeyListDto rightKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates (replaces) a delegation to a resource instance between two entities with the specified action keys. If not all actions are possible, nothing is performed and a Problem is returned.
+    /// </summary>
+    /// <param name="from">The source entity from which the delegation originates.</param>
+    /// <param name="to">The target entity to which the delegation is granted.</param>
+    /// <param name="resourceObj">The resource to associate between the source and target entities.</param>
+    /// <param name="instanceId">The instance identifier for the resource instance.</param>
+    /// <param name="rightKeys">A list of rule keys that define the permissions or actions allowed for the resource instance.</param>
+    /// <param name="by">The entity performing the operation. Used for auditing and authorization purposes.</param>
+    /// <param name="configureConnection">An optional delegate to configure connection options for the operation. If null, default connection settings are used.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a Result object indicating whether
+    /// the instance delegation was successfully updated.</returns>
+    Task<Result<bool>> UpdateInstance(Entity from, Entity to, Resource resourceObj, string instanceId, IEnumerable<string> rightKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes a resource instance (by resource string and instance id) from assignment based on a specific role between two entities.
+    /// </summary>
+    /// <param name="fromId">ID of the entity from which the assignment originates.</param>
+    /// <param name="toId">ID of the entity to which the assignment was made.</param>
+    /// <param name="resource">Resource reference id</param>
+    /// <param name="instanceId">Instance identifier</param>
+    /// <param name="configureConnection">ConnectionOptions</param>
+    /// <param name="cancellationToken">
+    /// Token to monitor for cancellation requests.
+    /// </param>
+    /// <returns>
+    /// A task whose result is either <c>null</c> or a <see cref="ValidationProblemInstance"/>.
+    /// <list type="bullet">
+    /// <item>
+    /// <description>
+    /// <c>null</c> if the instance assignment was successfully removed, or if no matching assignment was found for the specified parameters.
+    /// </description>
+    /// </item>
+    /// <item>
+    /// <description>
+    /// A <see cref="ValidationProblemInstance"/> describing any validation errors that prevented the removal of the instance assignment.
+    /// </description>
+    /// </item>
+    /// </list>
+    /// </returns>
+    Task<ValidationProblemInstance> RemoveInstance(Guid fromId, Guid toId, string resource, string instanceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
 }

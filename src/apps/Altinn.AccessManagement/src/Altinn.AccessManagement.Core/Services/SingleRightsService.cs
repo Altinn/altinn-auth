@@ -146,7 +146,7 @@ namespace Altinn.AccessManagement.Core.Services
 
         public async Task<List<InstanceRule>> TryWriteInstanceDelegationPolicyRules(Entity from, Entity to, Resource resource, string instanceId, List<string> ruleKeys, Entity performedBy, bool ignoreExistingPolicy = false, CancellationToken cancellationToken = default)
         {
-            var instanceRules = await GenerateInstanceRules(resource, instanceId, ruleKeys, cancellationToken);
+            var instanceRules = await GenerateInstanceRules(from, to, resource, instanceId, ruleKeys, performedBy, cancellationToken);
 
             var instanceRight = new InstanceRight
             {
@@ -208,7 +208,7 @@ namespace Altinn.AccessManagement.Core.Services
             return rules;
         }
 
-        private async Task<List<InstanceRule>> GenerateInstanceRules(Resource resource, string instanceId, List<string> ruleKeys, CancellationToken cancellationToken = default)
+        private async Task<List<InstanceRule>> GenerateInstanceRules(Entity from, Entity to, Resource resource, string instanceId, List<string> ruleKeys, Entity performedBy, CancellationToken cancellationToken = default)
         {
             List<InstanceRule> instanceRules = [];
 
