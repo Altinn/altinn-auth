@@ -63,17 +63,9 @@ public class RequestService(AppDbContext db) : IRequestService
         var requestResources = string.IsNullOrEmpty(type) || type == "resource" ? await GetRequestAssignmentResource(fromId, toId, status, ct) : default;
         var requestPackages = string.IsNullOrEmpty(type) || type == "package" ? await GetRequestAssignmentPackage(fromId, toId, status, ct) : default;
 
-        if (!requestResources.Any() && !requestPackages.Any())
-        {
-            error.Add(ValidationErrors.RequestNotFound);
-        }
+        var result = requestResources.Select(DtoMapper.Convert)
+            .Union(requestPackages.Select(DtoMapper.Convert));
 
-        if (error.TryBuild(out var problems))
-        {
-            return problems;
-        }
-
-        var result = requestResources.Select(DtoMapper.Convert).Union(requestPackages.Select(DtoMapper.Convert));
         return result.ToList();
     }
 
@@ -81,6 +73,13 @@ public class RequestService(AppDbContext db) : IRequestService
     public async Task<Result<RequestDto>> CreateRequest(CreateRequestDto request, CancellationToken ct = default)
     {
         ValidationErrorBuilder error = default;
+
+        if (request.From == request.To)
+        {
+            error.Add(ValidationErrors.RequestFromSelfNotAllowed);
+            error.TryBuild(out var inputProblems);
+            return inputProblems;
+        }
 
         if (!request.Resource.HasValue && !request.Package.HasValue)
         {

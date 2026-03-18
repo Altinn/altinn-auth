@@ -186,7 +186,7 @@ public static class ValidationErrors
     /// RequestMissingFromOrTo
     /// </summary>
     public static ValidationErrorDescriptor RequestMissingResourceOrPackage { get; }
-        = _factory.Create(38, $"Either Resource og PAckage must be included in request.");
+        = _factory.Create(38, $"Either Resource or Package must be included in request.");
 
     /// <summary>
     /// RequestMissingFromOrTo
@@ -223,4 +223,10 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor RequestUnauthorizedStatusUpdate { get; }
         = _factory.Create(44, $"Party cannot perform this status change.");
+
+    /// <summary>
+    /// Request connection not found
+    /// </summary>
+    public static ValidationErrorDescriptor RequestFromSelfNotAllowed { get; }
+        = _factory.Create(45, $"Self-targeted requests are not allowed.");
 }

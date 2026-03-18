@@ -217,7 +217,7 @@ public class RequestControllerTest
             var client = CreateClient(Fixture, TestData.BakerJohnsen.Id);
 
             var response = await client.GetAsync(
-                $"{Route}/sent?party={TestData.BakerJohnsen.Id}&to={TestData.LarsBakke.Id}",
+                $"{Route}/sent?party={TestData.LarsBakke.Id}&to={TestData.BakerJohnsen.Id}",
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -282,7 +282,7 @@ public class RequestControllerTest
             var client = CreateClient(Fixture, TestData.LarsBakke.Id);
 
             var response = await client.GetAsync(
-                $"{Route}/received?party={TestData.LarsBakke.Id}&from={TestData.BakerJohnsen.Id}",
+                $"{Route}/received?party={TestData.BakerJohnsen.Id}&from={TestData.LarsBakke.Id}",
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -369,7 +369,7 @@ public class RequestControllerTest
             var client = CreateClient(Fixture, TestData.MortenDahl.Id);
 
             var response = await client.GetAsync(
-                $"{Route}/received?party={TestData.MortenDahl.Id}&from={TestData.SvendsenAutomobil.Id}",
+                $"{Route}/received?party={TestData.SvendsenAutomobil.Id}&from={TestData.MortenDahl.Id}",
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
