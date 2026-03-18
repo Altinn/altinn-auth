@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Models
+﻿namespace Altinn.Platform.Authorization.Models
 {
     /// <summary>
     /// Defines the resource attributes in a xacml request
@@ -24,6 +24,11 @@ namespace Altinn.Platform.Authorization.Models
         /// Gets or sets the value for a resource instance attribute
         /// </summary>
         public string ResourceInstanceValue { get; set; }
+
+        /// <summary>
+        /// Gets or sets the value for an app instance id
+        /// </summary>
+        public string AppInstanceIdValue { get; set; }
 
         /// <summary>
         /// Gets or sets the value for resource party id attribute

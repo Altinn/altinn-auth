@@ -227,9 +227,10 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 requestResourceAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.ResourceRegistryAttribute, $"app_{orgAttribute.AttributeValues.FirstOrDefault()?.Value}_{appAttribute.AttributeValues.FirstOrDefault()?.Value}"));
             }
 
-            if (resourceInstanceAttribute == null && resourceAttributes.ResourceInstanceValue != null)
+            if (resourceAttributes.ResourceInstanceValue != null && resourceAttributes.AppInstanceIdValue != null)
             {
-                // Missing resource registry instanceId attribute, but altinn app instance id exists.
+                // Missing resource registry instanceId attribute, add both old and new attribute for backward compatibility.
+                requestResourceAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.ResourceRegistryInstanceAttribute, resourceAttributes.AppInstanceIdValue));           
                 requestResourceAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.ResourceRegistryInstanceAttribute, resourceAttributes.ResourceInstanceValue));
             }
 
@@ -304,12 +305,26 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 {
                     resourceAttributes.InstanceValue = attribute.AttributeValues.First().Value;
                     string[] instanceValues = resourceAttributes.InstanceValue.Split('/');
-                    resourceAttributes.ResourceInstanceValue = instanceValues[1];
+                    if (instanceValues.Length == 2)
+                    {
+                        resourceAttributes.ResourceInstanceValue = $"{XacmlRequestAttribute.InstanceAttribute}:{resourceAttributes.InstanceValue}";
+                        resourceAttributes.AppInstanceIdValue = instanceValues[1];
+                    }
                 }
 
                 if (attribute.AttributeId.OriginalString.Equals(XacmlRequestAttribute.ResourceRegistryInstanceAttribute))
                 {
                     resourceAttributes.ResourceInstanceValue = attribute.AttributeValues.First().Value;
+                    var instanceValueSplit = resourceAttributes.ResourceInstanceValue.Split($"{XacmlRequestAttribute.InstanceAttribute}:");
+                    if (instanceValueSplit.Length == 2)
+                    {
+                        string[] instanceValues = instanceValueSplit[1].Split('/');
+                        if (instanceValues.Length == 2)
+                        {
+                            resourceAttributes.InstanceValue = instanceValueSplit[1];
+                            resourceAttributes.AppInstanceIdValue = instanceValues[1];
+                        }
+                    }
                 }
 
                 if (attribute.AttributeId.OriginalString.Equals(XacmlRequestAttribute.PartyAttribute))

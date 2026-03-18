@@ -32,6 +32,9 @@
     <Attribute IncludeInResult="false" AttributeId="urn:altinn:resource:instance-id">
       <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">7dd3c208-0062-4ff6-9ef7-2384e9199a6c</AttributeValue>
     </Attribute>
+    <Attribute IncludeInResult="false" AttributeId="urn:altinn:resource:instance-id">
+      <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">urn:altinn:instance-id:1000/7dd3c208-0062-4ff6-9ef7-2384e9199a6c</AttributeValue>
+    </Attribute>
   </Attributes>
   <Attributes Category="urn:oasis:names:tc:xacml:3.0:attribute-category:action">
     <Attribute IncludeInResult="false" AttributeId="urn:oasis:names:tc:xacml:1.0:action:action-id">
