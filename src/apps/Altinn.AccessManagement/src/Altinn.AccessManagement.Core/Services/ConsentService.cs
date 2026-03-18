@@ -863,7 +863,7 @@ namespace Altinn.AccessManagement.Core.Services
                 }
             }
 
-            if (consentRequest.RedirectUrl != null && !IsValidUrl(consentRequest.RedirectUrl))
+            if (consentRequest.RedirectUrl != null && !IsValidUrl(consentRequest.RedirectUrl) && !fromAltinn2)
             {
                 validationErrorsBuilder.Add(ValidationErrors.InvalidRedirectUrl, "RedirectUrl");
             }
