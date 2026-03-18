@@ -102,7 +102,7 @@ public class RequestApprovedNotificationHandler(
 
             AddResourcesAndPackage(resources, packages, emailContent);
 
-            emailContent.AppendLine($"<p>Med vennnlig hilsen<b>Altinn</b></p>");
+            emailContent.AppendLine($"<p>Med vennlig hilsen</br>Altinn</p>");
 
             return new NotificationRecipientExt
             {
@@ -128,7 +128,7 @@ public class RequestApprovedNotificationHandler(
 
             AddResourcesAndPackage(resources, packages, emailContent);
 
-            emailContent.AppendLine($"<p>Med vennnlig hilsen<b>Altinn</b></p>");
+            emailContent.AppendLine($"<p>Med vennlig hilsen</br>Altinn</p>");
 
             return new NotificationRecipientExt
             {
@@ -157,7 +157,7 @@ public class RequestApprovedNotificationHandler(
                 emailContent.AppendLine("<ul>");
                 foreach (var resource in resources)
                 {
-                    emailContent.AppendLine($"<li>{resource}</li>");
+                    emailContent.AppendLine($"<li>{resource.Name}</li>");
                 }
 
                 emailContent.AppendLine("</ul>");
@@ -169,7 +169,7 @@ public class RequestApprovedNotificationHandler(
                 emailContent.AppendLine("<ul>");
                 foreach (var package in packages)
                 {
-                    emailContent.AppendLine($"<li>{package}</li>");
+                    emailContent.AppendLine($"<li>{package.Name}</li>");
                 }
 
                 emailContent.AppendLine("</ul>");
