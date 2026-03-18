@@ -1,4 +1,4 @@
-﻿﻿#nullable enable
+﻿#nullable enable
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Mime;
@@ -7,6 +7,8 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
+using Altinn.AccessMgmt.Core.Audit;
+using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.ProblemDetails;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -47,6 +49,7 @@ public class AppsInstanceDelegationController : ControllerBase
     [HttpGet]
     [Route("v1/app/delegationcheck/resource/{resourceId}/instance/{instanceId}")]
     [Authorize(Policy = AuthzConstants.PLATFORM_ACCESS_AUTHORIZATION)]
+    [AuditPlatformStaticDb(System = AuditDefaults.AppInstanceDelegationApi)]
     [Consumes(MediaTypeNames.Application.Json)]
     [Produces(MediaTypeNames.Application.Json)]
     [ProducesResponseType(typeof(Paginated<ResourceRightDelegationCheckResultDto>), StatusCodes.Status200OK)]
@@ -92,6 +95,7 @@ public class AppsInstanceDelegationController : ControllerBase
     [HttpPost]
     [Route("v1/app/delegations/resource/{resourceId}/instance/{instanceId}")]
     [Authorize(Policy = AuthzConstants.PLATFORM_ACCESS_AUTHORIZATION)]
+    [AuditPlatformStaticDb(System = AuditDefaults.AppInstanceDelegationApi)]
     [Consumes(MediaTypeNames.Application.Json)]
     [Produces(MediaTypeNames.Application.Json)]
     [ProducesResponseType(typeof(AppsInstanceDelegationResponseDto), StatusCodes.Status200OK)]
@@ -146,6 +150,7 @@ public class AppsInstanceDelegationController : ControllerBase
     /// <returns>Result</returns>
     [HttpGet]
     [Authorize(Policy = AuthzConstants.PLATFORM_ACCESS_AUTHORIZATION)]
+    [AuditPlatformStaticDb(System = AuditDefaults.AppInstanceDelegationApi)]
     [Route("v1/app/delegations/resource/{resourceId}/instance/{instanceId}")]
     [Consumes(MediaTypeNames.Application.Json)]
     [Produces(MediaTypeNames.Application.Json)]
@@ -196,6 +201,7 @@ public class AppsInstanceDelegationController : ControllerBase
     /// <returns>Result</returns>
     [HttpPost]
     [Authorize(Policy = AuthzConstants.PLATFORM_ACCESS_AUTHORIZATION)]
+    [AuditPlatformStaticDb(System = AuditDefaults.AppInstanceDelegationApi)]
     [Route("v1/app/delegationrevoke/resource/{resourceId}/instance/{instanceId}")]
     [Consumes(MediaTypeNames.Application.Json)]
     [Produces(MediaTypeNames.Application.Json)]
@@ -248,6 +254,7 @@ public class AppsInstanceDelegationController : ControllerBase
     /// <returns>Result</returns>
     [HttpDelete]
     [Authorize(Policy = AuthzConstants.PLATFORM_ACCESS_AUTHORIZATION)]
+    [AuditPlatformStaticDb(System = AuditDefaults.AppInstanceDelegationApi)]
     [Route("v1/app/delegationrevoke/resource/{resourceId}/instance/{instanceId}")]
     [Consumes(MediaTypeNames.Application.Json)]
     [Produces(MediaTypeNames.Application.Json)]

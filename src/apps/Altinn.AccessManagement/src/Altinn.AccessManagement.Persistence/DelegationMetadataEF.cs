@@ -87,7 +87,7 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
             BlobStoragePolicyPath = assignmentInstance.PolicyPath,
             BlobStorageVersionId = assignmentInstance.PolicyVersion,
             
-            ResourceId = assignmentInstance.ResourceId.ToString(),
+            ResourceId = assignmentInstance.Resource.RefId,
             InstanceId = assignmentInstance.InstanceId,
             
             InstanceDelegationMode = InstanceDelegationMode.ParallelSigning,
@@ -436,17 +436,22 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
     public async Task<InstanceDelegationChange> GetLastInstanceDelegationChange(InstanceDelegationChangeRequest request, CancellationToken cancellationToken = default)
     {
         var result = await DbContext.AssignmentInstances.AsNoTracking()
-           .Include(t => t.Assignment).ThenInclude(t => t.From)
-           .Include(t => t.Assignment).ThenInclude(t => t.To)
-           .Include(t => t.Resource).ThenInclude(t => t.Type)
+            .Include(t => t.Assignment).ThenInclude(t => t.From)
+            .Include(t => t.Assignment).ThenInclude(t => t.To)
+            .Include(t => t.Resource).ThenInclude(t => t.Type)
 
-           .Where(t => t.Resource.RefId == request.Resource)
-           .Where(t => t.InstanceId == request.Instance)
-           .Where(t => t.Assignment.FromId == request.FromUuid)
-           .Where(t => t.Assignment.ToId == request.ToUuid)
-           .SingleAsync(cancellationToken);
+            .Where(t => t.Resource.RefId == request.Resource)
+            .Where(t => t.InstanceId == request.Instance)
+            .Where(t => t.Assignment.FromId == request.FromUuid)
+            .Where(t => t.Assignment.ToId == request.ToUuid)
+            .SingleOrDefaultAsync(cancellationToken);
 
-        return Convert(result);
+        if (result == null)
+        {
+            return null;
+        }
+            
+        return Convert(result);                
     }
 
     /// <inheritdoc />
@@ -484,6 +489,7 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
         }
 
         var assignmentInstance = await DbContext.AssignmentInstances.FirstOrDefaultAsync(t => t.AssignmentId == assignment.Id && t.ResourceId == resource.Id && t.InstanceId == instanceDelegationChange.InstanceId, cancellationToken);
+        bool isRevokelast = false;
 
         if (assignmentInstance == null)
         {
@@ -501,41 +507,13 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
                 };
                 DbContext.AssignmentInstances.Add(assignmentInstance);
             }
-            //// If we want audit log
-            /*
-            else
-            {
-                assignmentInstance = new AssignmentInstance()
-                {
-                    Id = Guid.CreateVersion7(),
-                    AssignmentId = assignment.Id,
-                    ResourceId = resource.Id,
-                    InstanceId = instanceDelegationChange.InstanceId,
-                    PolicyPath = instanceDelegationChange.BlobStoragePolicyPath,
-                    PolicyVersion = instanceDelegationChange.BlobStorageVersionId,
-                    DelegationChangeId = instanceDelegationChange.InstanceDelegationChangeId,
-                };
-                DbContext.AssignmentInstances.Add(assignmentInstance);
-                await DbContext.SaveChangesAsync(cancellationToken);
-
-                DbContext.AssignmentInstances.Remove(assignmentInstance);
-                await DbContext.SaveChangesAsync(cancellationToken);
-            }
-            */
         }
         else
         {
             if (instanceDelegationChange.DelegationChangeType == DelegationChangeType.RevokeLast)
             {
-                /*
-                // If we want audit log
-                assignmentInstance.PolicyPath = instanceDelegationChange.BlobStoragePolicyPath;
-                assignmentInstance.PolicyVersion = instanceDelegationChange.BlobStorageVersionId;
-                assignmentInstance.DelegationChangeId = instanceDelegationChange.InstanceDelegationChangeId;
-                await DbContext.SaveChangesAsync(cancellationToken);
-                */
-
                 DbContext.AssignmentInstances.Remove(assignmentInstance);
+                isRevokelast = true;
             }
             else
             {
@@ -547,7 +525,75 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
 
         await DbContext.SaveChangesAsync(cancellationToken);
 
+        if (isRevokelast)
+        {
+            bool removeAssignment = await CheckCascadingAssignmentRevoke(assignment.Id, cancellationToken);
+
+            if (removeAssignment)
+            {
+                DbContext.Assignments.Remove(assignment);
+                await DbContext.SaveChangesAsync(cancellationToken);
+            }
+        }        
+
         return await GetAssignmentInstance(assignmentInstance.Id);
+    }
+
+    /// <summary>
+    /// Check if all connections to the assignment is removed
+    /// 
+    /// WARNING:    If this method is missing checks it can lead to cascading revokes of assignments and data loss that was not 
+    ///             intended so this has to be updated toghether with any new feature that adds dependencies on assignments
+    ///             
+    /// There exist a similar test in Altinn.AccessMgmt.Core.Services.AssignmentService.CheckCascadingAssignmentRevoke that 
+    /// must be kept in sync if new connections are added.
+    /// </summary>
+    /// <param name="assignmentId">The assignment to check for connections</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns>true if there is no remaining connections, false if there exist at least one remaining connection</returns>
+    private async Task<bool> CheckCascadingAssignmentRevoke(Guid assignmentId, CancellationToken cancellationToken)
+    {
+        var packages = await DbContext.AssignmentPackages.AsNoTracking()
+                    .Where(t => t.AssignmentId == assignmentId)
+                    .ToListAsync(cancellationToken);
+        if (packages != null && packages.Any())
+        {
+            return false;
+        }
+
+        var resources = await DbContext.AssignmentResources.AsNoTracking()
+            .Where(t => t.AssignmentId == assignmentId)
+            .ToListAsync(cancellationToken);
+        if (resources != null && resources.Any())
+        {
+            return false;
+        }
+
+        var instances = await DbContext.AssignmentInstances.AsNoTracking()
+            .Where(t => t.AssignmentId == assignmentId)
+            .ToListAsync(cancellationToken);
+        if (instances != null && instances.Any())
+        {
+            return false;
+        }
+
+        var delegationsFromAssingment = await DbContext.Delegations.AsNoTracking()
+            .Where(t => t.FromId == assignmentId)
+            .ToListAsync(cancellationToken);
+        if (delegationsFromAssingment != null && delegationsFromAssingment.Any())
+        {
+            return false;
+        }
+
+        var delegationsToAssignment = await DbContext.Delegations.AsNoTracking()
+            .Where(t => t.ToId == assignmentId)
+            .ToListAsync(cancellationToken);
+        if (delegationsToAssignment != null && delegationsToAssignment.Any())
+        {
+            return false;
+        }
+
+        return true;
     }
 
     /// <inheritdoc />
@@ -555,6 +601,7 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
     {
         try
         {
+            HashSet<Assignment> assignmentsToCheckForConnections = [];
             foreach (var policy in policyWriteOutputs)
             {
                 var resource = await GetResource(policy.Rules.ResourceId, cancellationToken);
@@ -567,11 +614,24 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
 
                 if (assignment == null || resource == null)
                 {
-                    throw new Exception("Assignment or resource not found for given policy  ");
+                    // Removes the assignment already processed before aborting the processing
+                    foreach (Assignment currentAssignment in assignmentsToCheckForConnections)
+                    {
+                        bool removeAssignment = await CheckCascadingAssignmentRevoke(currentAssignment.Id, cancellationToken);
+
+                        if (removeAssignment)
+                        {
+                            DbContext.Assignments.Remove(currentAssignment);
+                        }
+                    }
+
+                    await DbContext.SaveChangesAsync(cancellationToken);
+
+                    throw new Exception("Assignment or resource not found for given policy");
                 }
 
                 var assignmentInstance = await DbContext.AssignmentInstances.FirstOrDefaultAsync(t => t.AssignmentId == assignment.Id && t.ResourceId == resource.Id && t.InstanceId == policy.Rules.InstanceId, cancellationToken);
-
+                
                 if (assignmentInstance is null)
                 {
                     assignmentInstance = new AssignmentInstance()
@@ -591,10 +651,24 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
                 if (policy.ChangeType == DelegationChangeType.RevokeLast)
                 {
                     DbContext.AssignmentInstances.Remove(assignmentInstance);
+                    assignmentsToCheckForConnections.Add(assignment);
                 }
             }
 
             await DbContext.SaveChangesAsync(cancellationToken);
+
+            foreach (Assignment assignment in assignmentsToCheckForConnections)
+            {
+                bool removeAssignment = await CheckCascadingAssignmentRevoke(assignment.Id, cancellationToken);
+
+                if (removeAssignment)
+                {
+                    DbContext.Assignments.Remove(assignment);
+                }
+            }
+
+            await DbContext.SaveChangesAsync(cancellationToken);
+
             return true;
         }
         catch

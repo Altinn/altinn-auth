@@ -813,6 +813,9 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     /// 
     /// WARNING:    If this method is missing checks it can lead to cascading revokes of assignments and data loss that was not 
     ///             intended so this has to be updated toghether with any new feature that adds dependencies on assignments
+    ///             
+    /// There exist a similar test in Altinn.AccessMgmt.Core.Services.Legacy.DelegationMetadataEF.CheckCascadingAssignmentRevoke that 
+    /// must be kept in sync if new connections are added.
     /// </summary>
     /// <param name="assignmentId">The id of the assignment to delete</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
@@ -840,9 +843,9 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         var instances = await db.AssignmentInstances.AsNoTracking()
             .Where(t => t.AssignmentId == assignmentId)
             .ToListAsync(cancellationToken);
-        if (resources != null && resources.Any())
+        if (instances != null && instances.Any())
         {
-            errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("resources", string.Join(",", resources.Select(p => p.Id.ToString())))]);
+            errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("resources", string.Join(",", instances.Select(p => p.Id.ToString())))]);
         }
 
         var delegationsFromAssingment = await db.Delegations.AsNoTracking()

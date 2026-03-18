@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Json;
+using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
@@ -60,6 +62,17 @@ public class AuditMiddleware : IMiddleware
                     }
                 }
             }
+            else if (endpoint.Metadata.GetMetadata<AuditPlatformStaticDbAttribute>() is var platformStaticDb && platformStaticDb != null)
+            {
+                if (platformStaticDb.ChangedBy != null && platformStaticDb.System != null)
+                {
+                    auditContextAccessor.AuditValues = new(Guid.Parse(platformStaticDb.ChangedBy), Guid.Parse(platformStaticDb.System), AppAndTraceId(context), DateTimeOffset.UtcNow);
+                }
+                else if (platformStaticDb.System != null)
+                {
+                    auditContextAccessor.AuditValues = new(Guid.Parse(platformStaticDb.System), Guid.Parse(platformStaticDb.System), AppAndTraceId(context), DateTimeOffset.UtcNow);
+                }
+            }
         }
 
         await next(context);
@@ -68,6 +81,39 @@ public class AuditMiddleware : IMiddleware
     private static string TraceId(HttpContext context)
     {
         return Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier;
+    }
+
+    private static string AppAndTraceId(HttpContext context)
+    {
+        string appid = null;
+        try
+        {
+            string token = context.Request.Headers["PlatformAccessToken"];
+            if (!string.IsNullOrEmpty(token))
+            {
+                var handler = new JwtSecurityTokenHandler();
+                if (handler.CanReadToken(token))
+                {
+                    var jwtSecurityToken = handler.ReadJwtToken(token);
+                    var appidentifier = jwtSecurityToken.Claims.FirstOrDefault(c => c.Type == AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute);
+                    if (appidentifier != null)
+                    {
+                        appid = $"app_{jwtSecurityToken.Issuer}_{appidentifier.Value}";
+                    }
+                }
+
+            }
+        }
+        catch (Exception)
+        {
+        }
+
+        if (appid is not null)
+        {
+            return $"{appid}_{TraceId(context)}";
+        }
+
+        return TraceId(context);
     }
 
     private async Task<Entity> GetEntityFromConsumerClaim(AppDbContext db, HttpContext context, ConsentPartyUrn party)

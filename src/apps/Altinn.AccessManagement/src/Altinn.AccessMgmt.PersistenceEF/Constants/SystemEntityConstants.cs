@@ -371,6 +371,32 @@ public static class SystemEntityConstants
             KeyValuePair.Create("Name", "Tjenesteeier API")),
     };
 
+    /// <summary>
+    /// Represents the AppInstanceDelegationApi system entity.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 81435d97-8527-4246-a475-ce281a898fa0
+    /// - <c>Name:</c> App Instance Delegation API
+    /// - <c>RefId:</c> accessmgmt-app-instance-delegation-api
+    /// - <c>TypeId:</c> Internal entity type
+    /// - <c>VariantId:</c> Standard variant
+    /// </remarks>
+    public static ConstantDefinition<Entity> AppInstanceDelegationApi { get; } = new ConstantDefinition<Entity>(AuditDefaults.AppInstanceDelegationApi)
+    {
+        Entity = new()
+        {
+            Name = nameof(AuditDefaults.AppInstanceDelegationApi),
+            RefId = "accessmgmt-app-instance-delegation-api",
+            ParentId = null,
+            TypeId = EntityTypeConstants.Internal,
+            VariantId = EntityVariantConstants.Standard,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "App instance delegation API")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "App Instans delegerings API")),
+    };
+
     #endregion
 
     #region Internal
