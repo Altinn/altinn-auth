@@ -844,6 +844,7 @@ public class ConnectionsController(
     /// Add resource instance rights to an existing rightholder connection
     /// </summary>
     [HttpPost("resources/instances/rights")]
+    [FeatureGate(AccessMgmtFeatureFlags.InstanceDbEf)]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_WRITE_TOOTHERS)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
@@ -876,7 +877,7 @@ public class ConnectionsController(
                 problem.Extensions["instance"] = instance;
                 return problem.ToActionResult();
             }
-
+            
             return result.Problem.ToActionResult();
         }
 
@@ -887,6 +888,7 @@ public class ConnectionsController(
     /// Update resource instance rights for an existing rightholder connection
     /// </summary>
     [HttpPut("resources/instances/rights")]
+    [FeatureGate(AccessMgmtFeatureFlags.InstanceDbEf)]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_WRITE_TOOTHERS)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
@@ -931,6 +933,7 @@ public class ConnectionsController(
     /// Remove resource instance from rightholder connection and all actions
     /// </summary>
     [HttpDelete("resources/instances")]
+    [FeatureGate(AccessMgmtFeatureFlags.InstanceDbEf)]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_BIDIRECTIONAL_WRITE)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]

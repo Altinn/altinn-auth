@@ -114,4 +114,9 @@ public static class AccessMgmtFeatureFlags
     /// Enables request assignment package endpoints in enduser and serviceowner APIs.
     /// </summary>
     public const string EnableRequestAssignmentPackage = "AccessMgmt.Controller.RequestAssignment.Package";
+
+    /// <summary>
+    /// Specifies if entity framework implementation of instance delegations should be used.
+    /// </summary>
+    public const string InstanceDbEf = $"AccessManagement.InstanceDelegation.EF";
 }
