@@ -301,23 +301,13 @@ public partial class ConnectionService(
         foreach (var group in grouped)
         {
             var firstInstance = group.First().Instance;
-            var firstConnection = group.First().Connection;
-
-            // Get the resource from the Resources collection
-            var resource = firstConnection.Resources?.FirstOrDefault(r => r.Id == firstInstance.ResourceId);
-
-            if (resource == null)
-            {
-                continue; // Skip if resource not found
-            }
 
             var dto = new InstancePermissionDto
             {
-                Resource = DtoMapper.Convert(resource),
+                Resource = new ResourceDto { Id = firstInstance.ResourceId, RefId = firstInstance.ResourceRefId, Name = firstInstance.ResourceName },
                 Instance = new InstanceDto
                 {
-                    Id = firstInstance.InstanceId,
-                    Urn = $"urn:altinn:instance-id:{firstInstance.InstanceId}",
+                    RefId = firstInstance.InstanceId,
                     Type = null // TODO: InstanceType support to be added later
                 },
                 Permissions = group.Select(x => DtoMapper.ConvertToPermission(x.Connection)).ToList()
@@ -1035,8 +1025,7 @@ public partial class ConnectionService(
             Resource = resourceDto,
             Instance = new InstanceDto
             {
-                Id = instanceId,
-                Urn = $"urn:altinn:instance-id:{instanceId}",
+                RefId = instanceId,
                 Type = null
             },
             Rights = checkRights
@@ -2134,7 +2123,7 @@ public partial class ConnectionService
             {
                 Resource = DtoMapper.Convert(internalResource),
                 Instance = !string.IsNullOrEmpty(instanceId) 
-                    ? new InstanceDto { Id = instanceId, Urn = $"urn:altinn:instance-id:{instanceId}" }
+                    ? new InstanceDto { RefId = instanceId }
                     : null,
                 Rights = new List<RightPermission>()
             };

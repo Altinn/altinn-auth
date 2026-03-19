@@ -1175,10 +1175,11 @@ public class ConnectionQuery(AppDbContext db)
         var flat = assignmentInstances.Select(x => new { x.c, x.ai.Id, x.ai.ResourceId, x.ai.InstanceId });
 
         var rows = await flat
-            .Select(x => new
+            .Join(db.Resources, x => x.ResourceId, r => r.Id, (x, r) => new
             {
                 Key = new ConnectionCompositeKey(x.c.FromId, x.c.ToId, x.c.RoleId, x.c.AssignmentId, x.c.DelegationId, x.c.ViaId, x.c.ViaRoleId),
-                Instance = new { x.Id, x.ResourceId, x.InstanceId }
+                Instance = new { x.Id, x.ResourceId, x.InstanceId },
+                Resource = new { r.Name, r.RefId }
             })
             .AsNoTracking()
             .ToListAsync(ct);
@@ -1191,6 +1192,8 @@ public class ConnectionQuery(AppDbContext db)
                 Id = z.Instance.Id,
                 ResourceId = z.Instance.ResourceId,
                 InstanceId = z.Instance.InstanceId,
+                ResourceName = z.Resource.Name,
+                ResourceRefId = z.Resource.RefId,
             }).DistinctBy(p => p.Id);
 
             index.AddRange(g.Key, mapped);

@@ -6,14 +6,9 @@
 public class InstanceDto
 {
     /// <summary>
-    /// InstanceId
+    /// Instance RefId
     /// </summary>
-    public string Id { get; set; }
-
-    /// <summary>
-    /// InstanceUrn
-    /// </summary>
-    public string Urn { get; set; }
+    public string RefId { get; set; }
 
     /// <summary>
     /// Type
