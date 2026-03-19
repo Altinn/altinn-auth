@@ -57,11 +57,6 @@ export var platformAuthorization = {
   maskinPortenSchemaReceived: `https://platform.${baseUrl}/accessmanagement/api/v1/delegations/AddRules`,
 };
 
-//PDF
-export var platformPdf = {
-  generate: 'https://platform.' + baseUrl + '/pdf/api/v1/generate',
-};
-
 //Receipt
 export var platformReceipt = {
   receipt: 'https://platform.' + baseUrl + '/receipt/api/v1/instances',
