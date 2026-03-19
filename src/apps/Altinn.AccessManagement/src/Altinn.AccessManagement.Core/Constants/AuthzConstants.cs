@@ -234,5 +234,26 @@
         /// Scope giving access to creating delegationrequests
         /// </summary>
         public const string ALTINN_SERVICEOWNER_DELEGATIONREQUESTS_WRITE = "altinn:serviceowner/delegationrequests.write";
+
+        /// <summary>
+        /// Valid URN prefixes for instance identifiers
+        /// </summary>
+        public static class InstanceUrnPrefixes
+        {
+            /// <summary>
+            /// URN prefix for Altinn App instances
+            /// </summary>
+            public const string Apps = "urn:altinn:instance-id:";
+
+            /// <summary>
+            /// URN prefix for Altinn Correspondence instances
+            /// </summary>
+            public const string Correspondence = "urn:altinn:correspondence-id:";
+
+            /// <summary>
+            /// URN prefix for Dialogporten Dialog instances
+            /// </summary>
+            public const string Dialog = "urn:altinn:dialog-id:";
+        }
     }
 }

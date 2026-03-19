@@ -1,4 +1,6 @@
-﻿using Altinn.AccessMgmt.Core.Utils.Models;
+﻿using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessMgmt.Core.Constants;
+using Altinn.AccessMgmt.Core.Utils.Models;
 using Altinn.AccessMgmt.Core.Validation;
 using Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
@@ -141,6 +143,36 @@ internal static class ParameterValidation
         }
 
         return null;
+    };
+
+    /// <summary>
+    /// Validates that the instance parameter uses one of the allowed URN prefixes.
+    /// Valid prefixes are:
+    /// - urn:altinn:instance-id: (Altinn Apps)
+    /// - urn:altinn:correspondence-id: (Correspondence)
+    /// - urn:altinn:dialog-id: (Dialogporten)
+    /// </summary>
+    /// <param name="value">The instance identifier value to validate</param>
+    /// <returns>A deferred rule expression that yields an error builder when invalid, otherwise null.</returns>
+    internal static RuleExpression InstanceUrn(string value) => () =>
+    {
+        // If value is null or empty, allow it - other validation handles required fields
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        // Check if the value starts with any of the valid URN prefixes
+        if (value.StartsWith(AuthzConstants.InstanceUrnPrefixes.Apps, StringComparison.OrdinalIgnoreCase) ||
+            value.StartsWith(AuthzConstants.InstanceUrnPrefixes.Correspondence, StringComparison.OrdinalIgnoreCase) ||
+            value.StartsWith(AuthzConstants.InstanceUrnPrefixes.Dialog, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        // Invalid format - return error
+        return (ref ValidationErrorBuilder errors) =>
+            errors.Add(ValidationErrors.InvalidQueryParameter, "$QUERY/instance", [new("instance", ValidationErrorMessageTexts.InvalidInstanceUrnFormat)]);
     };
 
     private static RuleExpression ValidateFromOrToParty(string value, string paramName) => () =>
