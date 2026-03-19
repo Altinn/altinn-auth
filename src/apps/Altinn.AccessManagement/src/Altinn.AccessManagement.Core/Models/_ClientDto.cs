@@ -1,15 +1,16 @@
-﻿namespace Altinn.AccessManagement.Core.Models;
+namespace Altinn.AccessManagement.Core.Models;
 
 /// <summary>
 /// Model representing a connected client party, meaning a party which has been authorized for one or more accesses, either directly or through role(s), access packages, resources or resource instances.
 /// Model can be used both to represent a connection received from another party or a connection provided to another party.
 /// </summary>
-public class ClientDto
+[Obsolete("new client DTO in contracts")]
+public class _ClientDto
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="ClientDto"/> class.
+    /// Initializes a new instance of the <see cref="_ClientDto"/> class.
     /// </summary>
-    public ClientDto()
+    public _ClientDto()
     {
     }
 

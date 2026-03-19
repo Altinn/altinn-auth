@@ -27,7 +27,7 @@ public class AssignmentService(
     private static readonly Guid PartyTypeOrganizationUuid = new Guid("8c216e2f-afdd-4234-9ba2-691c727bb33d");
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<ClientDto>> GetClients(Guid toId, string[] roles, string[] packages, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<_ClientDto>> GetClients(Guid toId, string[] roles, string[] packages, CancellationToken cancellationToken = default)
     {
         // Fetch role metadata
         var roleFilter = roleRepository.CreateFilterBuilder();
@@ -80,9 +80,9 @@ public class AssignmentService(
         return await GetFilteredClientsFromAssignments(clients, assignmentPackageResult, roleResult, packageResult, rolePackageResult, packages, cancellationToken);
     }
 
-    private async Task<List<ClientDto>> GetFilteredClientsFromAssignments(IEnumerable<ExtAssignment> assignments, IEnumerable<AssignmentPackage> assignmentPackages, QueryResponse<Role> roles, QueryResponse<Package> packages, QueryResponse<RolePackage> rolePackages, string[] filterPackages, CancellationToken ct)
+    private async Task<List<_ClientDto>> GetFilteredClientsFromAssignments(IEnumerable<ExtAssignment> assignments, IEnumerable<AssignmentPackage> assignmentPackages, QueryResponse<Role> roles, QueryResponse<Package> packages, QueryResponse<RolePackage> rolePackages, string[] filterPackages, CancellationToken ct)
     {
-        Dictionary<Guid, ClientDto> clients = new();
+        Dictionary<Guid, _ClientDto> clients = new();
 
         // Fetch Entity metadata
         var entityVariants = await entityVariantRepository.Get(cancellationToken: ct);
@@ -102,11 +102,11 @@ public class AssignmentService(
             }
 
             // Add client to dictionary if not already present
-            if (!clients.TryGetValue(assignment.FromId, out ClientDto client))
+            if (!clients.TryGetValue(assignment.FromId, out _ClientDto client))
             {
-                client = new ClientDto()
+                client = new _ClientDto()
                 {
-                    Party = new ClientDto.ClientParty
+                    Party = new _ClientDto.ClientParty
                     {
                         Id = assignment.FromId,
                         Name = assignment.From.Name,
@@ -121,7 +121,7 @@ public class AssignmentService(
             // Add packages client has been assigned
             if (assignmentPackageNames.Length > 0)
             {
-                client.Access.Add(new ClientDto.ClientRoleAccessPackages
+                client.Access.Add(new _ClientDto.ClientRoleAccessPackages
                 {
                     Role = roleName,
                     Packages = assignmentPackageNames
@@ -131,7 +131,7 @@ public class AssignmentService(
             // Add packages client has through role
             if (rolePackageNames.Length > 0)
             {
-                client.Access.Add(new ClientDto.ClientRoleAccessPackages
+                client.Access.Add(new _ClientDto.ClientRoleAccessPackages
                 {
                     Role = roleName,
                     Packages = rolePackageNames
@@ -140,7 +140,7 @@ public class AssignmentService(
         }
 
         // Return only clients having all required filterpackages
-        List<ClientDto> result = new();
+        List<_ClientDto> result = new();
         foreach (var client in clients.Keys)
         {
             var allClientPackages = clients[client].Access.SelectMany(rp => rp.Packages).Distinct();
