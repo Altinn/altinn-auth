@@ -55,7 +55,7 @@ public class Resource
     public string Description { get; set; }
 
     /// <summary>
-    /// Refrence identifier
+    /// Reference identifier
     /// </summary>
     public string RefId { get; set; }
 }

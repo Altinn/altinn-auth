@@ -9,5 +9,5 @@ public interface IResourceService
 
     ValueTask<Resource> GetResource(string refId, CancellationToken cancellationToken);
 
-    ValueTask<Resource> GetResource(RequestRefrenceDto refrence, CancellationToken cancellationToken);
+    ValueTask<Resource> GetResource(RequestReferenceDto reference, CancellationToken cancellationToken);
 }

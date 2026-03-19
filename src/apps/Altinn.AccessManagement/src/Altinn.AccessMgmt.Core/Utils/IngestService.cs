@@ -306,7 +306,7 @@ internal class IngestColumnDefinition
     public bool IsPK { get; set; }
 
     /// <summary>
-    /// Is column refrenced to from other tables
+    /// Is column referenced to from other tables
     /// </summary>
     public bool IsFK { get; set; }
 }

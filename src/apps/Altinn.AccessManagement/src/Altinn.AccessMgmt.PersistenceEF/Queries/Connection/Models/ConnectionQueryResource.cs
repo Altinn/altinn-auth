@@ -1,7 +1,7 @@
 ﻿namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 
 /// <summary>
-/// Basic Resource refrence for Connection Query
+/// Basic Resource reference for Connection Query
 /// </summary>
 public sealed class ConnectionQueryResource
 {

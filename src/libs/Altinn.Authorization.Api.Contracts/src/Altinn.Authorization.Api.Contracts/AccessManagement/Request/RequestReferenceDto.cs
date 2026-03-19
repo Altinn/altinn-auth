@@ -1,6 +1,6 @@
 ﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 
-public class RequestRefrenceDto
+public class RequestReferenceDto
 {
     /// <summary>
     /// Unique identifier
@@ -8,7 +8,7 @@ public class RequestRefrenceDto
     public Guid? Id { get; set; }
 
     /// <summary>
-    /// Refrence identifier
+    /// Reference identifier
     /// </summary>
     public string ReferenceId { get; set; }
 

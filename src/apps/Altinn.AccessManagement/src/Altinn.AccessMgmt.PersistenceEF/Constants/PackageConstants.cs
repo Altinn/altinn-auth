@@ -16,6 +16,12 @@ public static class PackageConstants
     /// </summary>
     public static bool TryGetByAll(string value, [NotNullWhen(true)] out ConstantDefinition<Package>? result)
     {
+        if (string.IsNullOrEmpty(value))
+        {
+            result = null;
+            return false;
+        }
+
         if (TryGetByUrn(value, out result))
         {
             return true;

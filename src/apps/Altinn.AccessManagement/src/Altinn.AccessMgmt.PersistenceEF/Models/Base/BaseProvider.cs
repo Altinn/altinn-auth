@@ -21,7 +21,7 @@ public class BaseProvider : BaseAudit, IEntityId, IEntityName
     public string Name { get; set; }
 
     /// <summary>
-    /// Refrence Identifier (e.g. OrgNo)
+    /// Reference Identifier (e.g. OrgNo)
     /// </summary>
     public string? RefId { get; set; }
 

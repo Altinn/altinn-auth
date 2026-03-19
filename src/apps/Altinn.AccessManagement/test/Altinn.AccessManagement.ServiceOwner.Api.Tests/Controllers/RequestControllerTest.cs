@@ -154,8 +154,8 @@ public class RequestControllerTest
             {
                 From = from,
                 To = to,
-                Resource = new RequestRefrenceDto { ReferenceId = "test-resource-so-1" },
-                Package = new RequestRefrenceDto(),
+                Resource = new RequestReferenceDto { ReferenceId = "test-resource-so-1" },
+                Package = new RequestReferenceDto(),
             };
 
             var response = await client.PostAsJsonAsync(
@@ -194,8 +194,8 @@ public class RequestControllerTest
             {
                 From = "urn:invalid:prefix:12345",
                 To = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}",
-                Resource = new RequestRefrenceDto { ReferenceId = "test-resource-so-1" },
-                Package = new RequestRefrenceDto(),
+                Resource = new RequestReferenceDto { ReferenceId = "test-resource-so-1" },
+                Package = new RequestReferenceDto(),
             };
 
             var response = await client.PostAsJsonAsync(
@@ -217,8 +217,8 @@ public class RequestControllerTest
             {
                 From = from,
                 To = to,
-                Resource = new RequestRefrenceDto { ReferenceId = string.Empty },
-                Package = new RequestRefrenceDto(),
+                Resource = new RequestReferenceDto { ReferenceId = string.Empty },
+                Package = new RequestReferenceDto(),
             };
 
             var response = await client.PostAsJsonAsync(
@@ -255,8 +255,8 @@ public class RequestControllerTest
             {
                 From = from,
                 To = to,
-                Resource = new RequestRefrenceDto(),
-                Package = new RequestRefrenceDto { ReferenceId = PackageConstants.Agriculture.Entity.Urn },
+                Resource = new RequestReferenceDto(),
+                Package = new RequestReferenceDto { ReferenceId = PackageConstants.Agriculture.Entity.Urn },
             };
 
             var response = await client.PostAsJsonAsync(
@@ -279,8 +279,8 @@ public class RequestControllerTest
             {
                 From = "urn:invalid:prefix:12345",
                 To = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}",
-                Resource = new RequestRefrenceDto(),
-                Package = new RequestRefrenceDto { ReferenceId = PackageConstants.Agriculture.Entity.Urn },
+                Resource = new RequestReferenceDto(),
+                Package = new RequestReferenceDto { Id = PackageConstants.Agriculture.Id },
             };
 
             var response = await client.PostAsJsonAsync(
@@ -302,8 +302,8 @@ public class RequestControllerTest
             {
                 From = from,
                 To = to,
-                Resource = new RequestRefrenceDto(),
-                Package = new RequestRefrenceDto { ReferenceId = string.Empty },
+                Resource = new RequestReferenceDto(),
+                Package = new RequestReferenceDto { ReferenceId = string.Empty },
             };
 
             var response = await client.PostAsJsonAsync(
@@ -379,8 +379,8 @@ public class RequestControllerTest
             {
                 From = from,
                 To = to,
-                Resource = new RequestRefrenceDto { ReferenceId = "test-resource-e2e-1" },
-                Package = new RequestRefrenceDto()
+                Resource = new RequestReferenceDto { ReferenceId = "test-resource-e2e-1" },
+                Package = new RequestReferenceDto()
             };
 
             var response = await client.PostAsJsonAsync(
@@ -419,8 +419,8 @@ public class RequestControllerTest
             {
                 From = from,
                 To = to,
-                Resource = new RequestRefrenceDto(),
-                Package = new RequestRefrenceDto { ReferenceId = PackageConstants.Agriculture.Entity.Urn },
+                Resource = new RequestReferenceDto(),
+                Package = new RequestReferenceDto { ReferenceId = PackageConstants.Agriculture.Entity.Urn },
             };
 
             var response = await client.PostAsJsonAsync(

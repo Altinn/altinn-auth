@@ -9,7 +9,6 @@ using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Audit;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
-using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
@@ -33,7 +32,6 @@ public class RequestController(
     IConnectionService connectionService,
     ConnectionQuery connectionQuery,
     IResourceService resourceService,
-    IPackageService packageService,
     IEntityService entityService
     ) : ControllerBase
 {
@@ -56,11 +54,11 @@ public class RequestController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetSentRequests(
-        [FromQuery][Required] Guid party, 
+        [FromQuery][Required] Guid party,
         [FromQuery] Guid? to,
         [FromQuery] RequestStatus[]? status,
         [FromQuery] string type,
-        [FromQuery, FromHeader] PagingInput paging, 
+        [FromQuery, FromHeader] PagingInput paging,
         CancellationToken ct = default
         )
     {
@@ -68,7 +66,8 @@ public class RequestController(
             ? new List<RequestStatus>() { RequestStatus.Draft, RequestStatus.Pending, RequestStatus.Approved, RequestStatus.Rejected, RequestStatus.Withdrawn }
             : status.ToList();
 
-        var result = await requestService.GetRequests(fromId: to, toId: party, status: statusFilter, type, ct);
+        var result = await requestService.GetSentRequests(party, to, statusFilter, type, ct);
+
         return result.IsSuccess ? Ok(PaginatedResult.Create(result.Value, null)) : result.Problem.ToActionResult();
     }
 
@@ -85,7 +84,7 @@ public class RequestController(
         [FromQuery] Guid? from,
         [FromQuery] RequestStatus[]? status,
         [FromQuery] string type,
-        [FromQuery, FromHeader] PagingInput paging, 
+        [FromQuery, FromHeader] PagingInput paging,
         CancellationToken ct = default
         )
     {
@@ -93,7 +92,7 @@ public class RequestController(
             ? new List<RequestStatus>() { RequestStatus.Draft, RequestStatus.Pending, RequestStatus.Approved, RequestStatus.Rejected, RequestStatus.Withdrawn }
             : status.ToList();
 
-        var result = await requestService.GetRequests(fromId: party, toId: from, status: statusFilter, type, ct);
+        var result = await requestService.GetReceivedRequests(party, from, statusFilter, type, ct);
         return result.IsSuccess ? Ok(PaginatedResult.Create(result.Value, null)) : result.Problem.ToActionResult();
     }
 
@@ -106,9 +105,9 @@ public class RequestController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetRequest(
-        [FromQuery][Required] Guid party, 
+        [FromQuery][Required] Guid party,
         [FromQuery][Required] Guid id,
-        [FromQuery, FromHeader] PagingInput paging, 
+        [FromQuery, FromHeader] PagingInput paging,
         CancellationToken ct = default
         )
     {
@@ -133,48 +132,46 @@ public class RequestController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateResourceRequest(
-        [FromQuery][Required] Guid party, 
-        [FromQuery][Required] Guid to, 
-        [FromQuery][Required] string resource, 
-        [FromBody] string[]? rightKeys, 
+        [FromQuery][Required] Guid party,
+        [FromQuery][Required] Guid to,
+        [FromQuery][Required] string resource,
+        [FromBody] string[]? rightKeys,
         CancellationToken ct = default
         )
     {
         ValidationErrorBuilder errorBuilder = default;
 
-        /*
-        Person1 vil be FirmaA om en rettighet, derfor er to = FirmaA i queryparam. 
-        Men da blir Assignment.From = FirmaA og Assignment.To = Party (Person1)
-        GLHF
-        */
-
         var authUserUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
-        var connections = await connectionQuery.HasConnection(to, authUserUuid);
-        if (!connections.Result)
+        var (hasConnections, _) = await connectionQuery.HasConnection(to, authUserUuid);
+        if (!hasConnections)
         {
             errorBuilder.Add(ValidationErrors.RequestConnectionNotFound, "$QUERY/to", [new("to", $"No connection between party:'{party}' and to:'{to}'")]);
-            errorBuilder.TryBuild(out var problem);
-            return problem.ToActionResult();
         }
 
         var resourceObj = await resourceService.GetResource(resource, ct);
         if (resourceObj is not { })
         {
             errorBuilder.Add(ValidationErrors.ResourceNotExists, "$QUERY/resource", [new("resource", $"Unable to get resource '{resource}'")]);
-            errorBuilder.TryBuild(out var problem);
+        }
+
+        if (errorBuilder.TryBuild(out var problem))
+        {
             return problem.ToActionResult();
         }
 
-        var result = await requestService.CreateRequest(
-                new CreateRequestDto()
-                {
-                    From = to, // YES, this is correct
-                    To = party,
-                    Role = RoleConstants.Rightholder.Id,
-                    Status = RequestStatus.Pending,
-                    Resource = resourceObj.Id,
-                },
-                ct
+        /*
+        Per (authUserUuid) ber om tilgang for Kari (party) til App (resource) hos Org (to).
+        ==
+        Per (by) ber om tilgang for Kari (for) til App (resource) hos Org (at).
+        */
+        var result = await requestService.CreateResourceRequest(
+            toId: to, 
+            fromId: party, 
+            byId: authUserUuid, 
+            roleId: RoleConstants.Rightholder.Id,
+            resourceId: resourceObj.Id, 
+            status: RequestStatus.Pending, 
+            ct: ct
             );
 
         if (result.IsProblem)
@@ -197,52 +194,44 @@ public class RequestController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreatePackageRequest(
-        [FromQuery][Required] Guid party, 
-        [FromQuery][Required] Guid to, 
-        [FromQuery] Guid? packageId,
-        [FromQuery] string? package,
+        [FromQuery][Required] Guid party,
+        [FromQuery][Required] Guid to,
+        [FromQuery][Required] string package,
         CancellationToken ct = default
         )
     {
         ValidationErrorBuilder errorBuilder = default;
 
-        /*
-        Person1 vil be FirmaA om en rettighet, derfor er to = FirmaA i queryparam. 
-        Men da blir Assignment.From = FirmaA og Assignment.To = Party (Person1)
-        GLHF
-        */
-
         var authUserUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
-        var connections = await connectionQuery.HasConnection(to, authUserUuid);
-
-        if (!connections.Result)
+        var (hasConnections, _) = await connectionQuery.HasConnection(to, authUserUuid);
+        if (!hasConnections)
         {
-            errorBuilder.Add(ValidationErrors.RequestConnectionNotFound, "$QUERY/to", [new("to", $"No connection between party:'{party}' and to:'{to}'")]);
-            errorBuilder.TryBuild(out var problem);
+            errorBuilder.Add(ValidationErrors.RequestConnectionNotFound, "$QUERY/to", [new("to", $"No connection exists between the authenticated user and party '{to}'.")]);
+        }
+
+        if (!PackageConstants.TryGetByAll(package, out var packageObj))
+        {
+            errorBuilder.Add(ValidationErrors.PackageNotExists, "$QUERY/package", [new("package", $"No package was found with value '{package}'.")]);
+        }
+
+        if (errorBuilder.TryBuild(out var problem))
+        {
             return problem.ToActionResult();
         }
 
-        var packageObj = packageId.HasValue ? await packageService.GetPackage(packageId.Value, ct) : await packageService.GetPackageByUrnValue(package, ct);
-        if (packageObj is not { })
-        {
-            var paramName = packageId.HasValue ? "packageId" : "package";
-            var paramValue = packageId.HasValue ? packageId.ToString() : package;
-            errorBuilder.Add(ValidationErrors.PackageNotExists, $"$QUERY/{paramName}", [new(paramName, $"Unable to get package '{paramValue}'")]);
-            errorBuilder.TryBuild(out var problem);
-            return problem.ToActionResult();
-        }
-
-        var result = await requestService.CreateRequest(
-                new CreateRequestDto()
-                {
-                    From = to, // YES, this is correct
-                    To = party,
-                    Role = RoleConstants.Rightholder.Id,
-                    Status = RequestStatus.Pending,
-                    Package = packageObj?.Id,
-                },
-                ct
-            );
+        /*
+        A Request from Kari by NAV to BakerAS for AppResource01.
+        Will create an Assignment from BakerAS to Kari with an AssignmentResource for AppResource01.
+        */
+        var result = await requestService.CreatePackageRequest(
+           toId: to,
+           fromId: party,
+           byId: authUserUuid,
+           roleId: RoleConstants.Rightholder.Id,
+           packageId: packageObj.Id,
+           status: RequestStatus.Pending,
+           ct: ct
+        );
 
         if (result.IsProblem)
         {
@@ -262,8 +251,8 @@ public class RequestController(
     [ProducesResponseType<RequestDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ConfirmRequest(
-        [FromQuery][Required] Guid party, 
-        [FromQuery][Required] Guid id, 
+        [FromQuery][Required] Guid party,
+        [FromQuery][Required] Guid id,
         CancellationToken ct = default
         )
     {
@@ -280,8 +269,8 @@ public class RequestController(
     [ProducesResponseType<RequestDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> WithdrawRequest(
-        [FromQuery][Required] Guid party, 
-        [FromQuery][Required] Guid id, 
+        [FromQuery][Required] Guid party,
+        [FromQuery][Required] Guid id,
         CancellationToken ct = default
         )
     {
@@ -301,8 +290,8 @@ public class RequestController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RejectRequest(
-        [FromQuery][Required] Guid party, 
-        [FromQuery][Required] Guid id, 
+        [FromQuery][Required] Guid party,
+        [FromQuery][Required] Guid id,
         CancellationToken ct = default
         )
     {
@@ -322,9 +311,9 @@ public class RequestController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ApproveRequest(
-        [FromQuery][Required] Guid party, 
-        [FromQuery][Required] Guid id, 
-        [FromBody] string[]? rightKeys, 
+        [FromQuery][Required] Guid party,
+        [FromQuery][Required] Guid id,
+        [FromBody] string[]? rightKeys,
         CancellationToken ct = default
         )
     {
@@ -358,7 +347,10 @@ public class RequestController(
         if (assignment is null)
         {
             errorBuilder.Add(ValidationErrors.RequestFailedToApprove, "Approve", [new("Approve", $"Unable to get or create rightholder assignment")]);
-            errorBuilder.TryBuild(out var problem);
+        }
+
+        if (errorBuilder.TryBuild(out var problem))
+        {
             return problem.ToActionResult();
         }
 

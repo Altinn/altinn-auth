@@ -79,10 +79,10 @@ public interface IPackageService
     /// <summary>
     /// Retrieves a specific package by its unique identifier.
     /// </summary>
-    /// <param name="refrence">The unique identifier of the package.</param>
+    /// <param name="reference">The unique identifier of the package.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The package with the specified ID.</returns>
-    Task<PackageDto> GetPackage(RequestRefrenceDto refrence, CancellationToken cancellationToken = default);
+    Task<PackageDto> GetPackage(RequestReferenceDto reference, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get package by urnValue

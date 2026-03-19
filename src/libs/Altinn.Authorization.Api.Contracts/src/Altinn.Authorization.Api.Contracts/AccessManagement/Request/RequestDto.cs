@@ -28,12 +28,12 @@ public class RequestDto
     /// <summary>
     /// Requested resource
     /// </summary>
-    public RequestRefrenceDto Resource { get; set; }
+    public RequestReferenceDto Resource { get; set; }
 
     /// <summary>
     /// Requested package
     /// </summary>
-    public RequestRefrenceDto Package { get; set; }
+    public RequestReferenceDto Package { get; set; }
 
     /// <summary>
     /// Relevant links for the request (e.g. confirm, check status)
