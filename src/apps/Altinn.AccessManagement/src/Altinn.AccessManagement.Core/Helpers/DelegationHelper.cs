@@ -500,8 +500,8 @@ namespace Altinn.AccessManagement.Core.Helpers
             catch (Exception)
             {
                 return false;
-            }            
-            
+            }
+
             sb.Append(rule.ToType);
             sb.Append('-');
             sb.Append(rule.ToUuid);
@@ -509,9 +509,51 @@ namespace Altinn.AccessManagement.Core.Helpers
 
             sb.Append(rule.InstanceDelegationSource);
             sb.Append('/');
-            
+
             sb.Append(rule.InstanceDelegationMode);
             sb.Append('/');
+
+            sb.Append("delegationpolicy.xml");
+            instanceDelegationPolicyPath = sb.ToString();
+
+            return true;
+        }
+
+        /// <summary>
+        /// Gets the delegation policy path for a single Rule given the storage is in dbo schema under EntityFramework
+        /// </summary>
+        /// <returns>A bool indicating whether necessary params to build the path where found</returns>
+        public static bool TryGetNewDelegationPolicyPathFromInstanceRule(InstanceRight rule, out string instanceDelegationPolicyPath)
+        {
+            instanceDelegationPolicyPath = null;
+            StringBuilder sb = new StringBuilder();
+
+            sb.Append("resourceregistry");
+            sb.Append('/');
+
+            sb.Append(rule.ResourceId);
+            sb.Append('/');
+
+            sb.Append("instances");
+            sb.Append('/');
+
+            sb.Append("from_");
+            sb.Append(rule.FromUuid);
+            sb.Append('/');
+
+            sb.Append("to_");
+            sb.Append(rule.ToUuid);
+            sb.Append('/');
+
+            try
+            {
+                sb.Append(rule.InstanceId.AsFileName(false));
+                sb.Append('/');
+            }
+            catch (Exception)
+            {
+                return false;
+            }
 
             sb.Append("delegationpolicy.xml");
             instanceDelegationPolicyPath = sb.ToString();

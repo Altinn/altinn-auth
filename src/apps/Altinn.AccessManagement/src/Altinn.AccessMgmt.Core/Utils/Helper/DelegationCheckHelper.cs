@@ -310,6 +310,11 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
                 return true;
             }
 
+            if (ex.Message.StartsWith("Failed to find original policy file: ", StringComparison.InvariantCultureIgnoreCase))
+            {
+                return true;
+            }
+
             return false;
         }
 

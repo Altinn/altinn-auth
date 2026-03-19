@@ -141,6 +141,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                                     CreateInstanceUrnFromInstanceIdAndPartyId(item.InstanceId, party.PartyId),
                                     item.InstanceDelegationChangeId,
                                     values,
+                                    party.PartyId,
                                     cancellationToken);
 
                                 if (adds == 0)
@@ -273,6 +274,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                             CreateInstanceUrnFromInstanceIdAndPartyId(element.InstanceId, party.PartyId),
                             element.InstanceDelegationChangeId,
                             values,
+                            party.PartyId,
                             cancellationToken);
 
                         if (adds == 0)
