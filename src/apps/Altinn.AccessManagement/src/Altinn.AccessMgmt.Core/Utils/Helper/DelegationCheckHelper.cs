@@ -183,6 +183,7 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
             {
                 var org = resourceObj.FirstOrDefault(r => r.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute));
                 var app = resourceObj.FirstOrDefault(r => r.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute));
+                var instance = resourceObj.FirstOrDefault(r => r.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceInstanceAttribute));
 
                 if (org != null && app != null)
                 {
@@ -190,6 +191,11 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
                     resourceObj.Remove(org);
                     resourceObj.Remove(app);
                     resourceObj.Add(new PolicyAttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, Value = resourceAppId });
+                }
+
+                if (instance != null)
+                {
+                    resourceObj.Remove(instance);
                 }
 
                 // Just throw away resources not matching the resourceid we are looking for
