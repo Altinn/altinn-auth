@@ -1,20 +1,17 @@
-﻿using Altinn.AccessManagement.Core.Clients.Interfaces;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics.Metrics;
+using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Configuration;
-using Altinn.AccessManagement.Core.Errors;
-using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Models.Party;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services;
 using Altinn.AccessManagement.Core.Services.Interfaces;
-using Altinn.Authorization.Api.Contracts.Register;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using System.Collections.Concurrent;
-using System.Diagnostics.Metrics;
 
 namespace AccessMgmt.Tests.Services;
 
@@ -34,6 +31,7 @@ public class ConsentServiceTests
     private readonly Mock<IProfileClient> _profileClientMock;
     private readonly TimeProvider _timeProvider;
     private readonly Mock<IOptions<GeneralSettings>> _generalSettingsMock;
+    private readonly Mock<IConsentDelegationCheckService> _consentDelegationCheckServiceMock;
     private readonly Mock<IMeterFactory> _meterFactoryMock;
 
     public ConsentServiceTests()
@@ -42,7 +40,6 @@ public class ConsentServiceTests
         _consentRepositoryMock = new Mock<IConsentRepository>();
         _altinn2ConsentClientMock = new Mock<IAltinn2ConsentClient>();
         _partiesClientMock = new Mock<IPartiesClient>();
-        _singleRightsServiceMock = new Mock<ISingleRightsService>();
         _resourceRegistryClientMock = new Mock<IResourceRegistryClient>();
         _amPartyServiceMock = new Mock<IAMPartyService>();
         _memoryCacheMock = new Mock<IMemoryCache>();
@@ -50,6 +47,7 @@ public class ConsentServiceTests
         _timeProvider = TimeProvider.System;
         _generalSettingsMock = new Mock<IOptions<GeneralSettings>>();
         _meterFactoryMock = new Mock<IMeterFactory>();
+        _consentDelegationCheckServiceMock = new Mock<IConsentDelegationCheckService>();
 
         var meter = new Meter("Altinn.AccessManagement.ConsentMigration.Test");
         _meterFactoryMock.Setup(x => x.Create(It.IsAny<MeterOptions>())).Returns(meter);
@@ -356,14 +354,14 @@ public class ConsentServiceTests
             _consentRepositoryMock.Object,
             _altinn2ConsentClientMock.Object,
             _partiesClientMock.Object,
-            _singleRightsServiceMock.Object,
             _resourceRegistryClientMock.Object,
             _amPartyServiceMock.Object,
             _memoryCacheMock.Object,
             _profileClientMock.Object,
             _timeProvider,
             _generalSettingsMock.Object,
-            _meterFactoryMock.Object);
+            _meterFactoryMock.Object,
+            _consentDelegationCheckServiceMock.Object);
     }
 
     private Altinn2ConsentRequest CreateAltinn2ConsentRequest(Guid id, Guid fromPartyUuid, Guid toPartyUuid)

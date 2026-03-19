@@ -673,7 +673,7 @@ public class ConnectionsController(
         Guid authenticatedUserUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
         string languageCode = this.GetLanguageCode();
 
-        var result = await ConnectionService.ResourceDelegationCheck(authenticatedUserUuid, party, resource, ConfigureConnections, languageCode, cancellationToken);
+        var result = await ConnectionService.ResourceDelegationCheck(authenticatedUserUuid, party, resource, ConfigureConnections, languageCode, cancellationToken: cancellationToken);
         if (result.IsProblem)
         {
             if (result.Problem.Equals(Core.Errors.Problems.InvalidResource))

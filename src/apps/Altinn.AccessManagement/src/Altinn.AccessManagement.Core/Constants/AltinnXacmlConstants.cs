@@ -200,6 +200,11 @@
             /// Gets the value action id for request consent
             /// </summary>
             public const string RequestconsentAction = "requestconsent";
+
+            /// <summary>
+            /// Delegation attribute match identifier used for user controlled delegation
+            /// </summary>
+            public const string Delegation = "urn:altinn:resource:delegation";
         }
 
         /// <summary>

@@ -1,18 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Net.Http.Json;
 using Altinn.AccessManagement.Controllers;
 using Altinn.AccessManagement.Core.Helpers.Extensions;
-using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.Tests.Scenarios;
 using Altinn.AccessManagement.Tests.Seeds;
-using Xunit;
 
 namespace Altinn.AccessManagement.Tests.Controllers;
 

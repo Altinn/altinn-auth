@@ -186,13 +186,14 @@ public interface IConnectionService
     /// Method to check if a resource is delegable by an authenticated user on behalf of a party
     /// </summary>
     /// <param name="authenticatedUserUuid">The authenticated user</param>
-    /// <param name="party">The party performing the checl on behalf of</param>
+    /// <param name="party">The party performing the check on behalf of</param>
     /// <param name="resource">The resource id to check</param>
     /// <param name="configureConnection">ConnectionOptions</param>
     /// <param name="languageCode">the requested language code fallback "nb"</param>
+    /// <param name="ignoreDelegableFlag">When true, the resource's Delegable flag is ignored and only the user's access is checked. Used for consent scenarios where re-delegation should not be allowed but access verification is still needed.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-    /// <returns>The result on all the resource/action that is delegable on the resource and a reason behinf if the user can or can not delegate a given action</returns>
-    Task<Result<ResourceCheckDto>> ResourceDelegationCheck(Guid authenticatedUserUuid, Guid party, string resource, Action<ConnectionOptions> configureConnection = null, string languageCode = "nb", CancellationToken cancellationToken = default);
+    /// <returns>The result on all the resource/action that is delegable on the resource and a reason behind if the user can or can not delegate a given action</returns>
+    Task<Result<ResourceCheckDto>> ResourceDelegationCheck(Guid authenticatedUserUuid, Guid party, string resource, Action<ConnectionOptions> configureConnection = null, string languageCode = "nb", bool ignoreDelegableFlag = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Method to check if a resource instance is delegable by an authenticated user on behalf of a party

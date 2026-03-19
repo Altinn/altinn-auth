@@ -1,4 +1,5 @@
-﻿using AccessMgmt.Tests.Moqdata;
+﻿using AccessMgmt.Tests.Mocks;
+using AccessMgmt.Tests.Moqdata;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models.Party;
