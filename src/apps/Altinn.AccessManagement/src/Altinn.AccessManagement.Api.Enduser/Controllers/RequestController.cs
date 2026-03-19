@@ -317,16 +317,23 @@ public class RequestController(
         CancellationToken ct = default
         )
     {
+        ValidationErrorBuilder errorBuilder = default;
+
         var requestResult = await requestService.GetRequest(id, ct);
         if (requestResult.IsProblem)
         {
-            return BadRequest(requestResult.Problem.ToProblemDetails());
+            return requestResult.Problem.ToActionResult();
         }
 
         var request = requestResult.Value;
-        if (request is null || request.From.Id != party)
+        if (request is null || request.To.Id != party)
         {
-            return NotFound();
+            errorBuilder.Add(ValidationErrors.RequestUnauthorizedStatusUpdate);
+        }
+
+        if (errorBuilder.TryBuild(out var problem))
+        {
+            return problem.ToActionResult();
         }
 
         var authUserUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
