@@ -841,12 +841,15 @@ public class ConnectionsController(
     }
 
     /// <summary>
-    /// Add resource instance rights to an existing rightholder connection
+    /// Add resource instance rights to an existing or new rightholder connection.
+    /// Supports two modes: 
+    /// 1. Using 'to' query parameter for existing connections
+    /// 2. Using PersonInput in body to create new rightholder and delegate in one operation
     /// </summary>
     [HttpPost("resources/instances/rights")]
     [FeatureGate(AccessMgmtFeatureFlags.InstanceDbEf)]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_WRITE_TOOTHERS)]
-    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [Authorize(Policy = AuthzConstants.POLICY_INSTANCE_DELEGATION)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
@@ -855,18 +858,73 @@ public class ConnectionsController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> AddInstanceRights(
         [Required][FromQuery(Name = "party")] Guid party,
-        [Required][FromQuery(Name = "to")] Guid to,
+        [FromQuery(Name = "to")] Guid? to,
         [Required][FromQuery(Name = "resource")] string resource,
         [Required][FromQuery(Name = "instance")] string instance,
-        [FromBody] RightKeyListDto rightKeys,
+        [Required][FromBody] InstanceRightsDelegationDto input,
         CancellationToken cancellationToken = default)
     {
+        var validationErrors = ValidationComposer.Validate(
+            ParameterValidation.InstanceRightsDelegationInput(to, input?.To, input?.DirectRightKeys)
+        );
+        if (validationErrors is { })
+        {
+            return validationErrors.ToActionResult();
+        }
+
+        // Resolve the target entity
+        Guid targetEntityId;
+        if (to.HasValue)
+        {
+            // Existing connection scenario
+            targetEntityId = to.Value;
+        }
+        else
+        {
+            // New rightholder scenario - use inputValidation to sanitize and create/get entity
+            var personInput = new PersonInput
+            {
+                PersonIdentifier = input.To.PersonIdentifier,
+                LastName = input.To.LastName
+            };
+
+            var entityResult = await inputValidation.SanitizeToInput(
+                party,
+                Guid.Empty, // Will be resolved from PersonInput
+                personInput,
+                options =>
+                {
+                    options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.Organization];
+                    options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
+                },
+                cancellationToken);
+
+            if (entityResult.IsProblem)
+            {
+                return entityResult.Problem.ToActionResult();
+            }
+
+            targetEntityId = entityResult.Value.Id;
+
+            // Create rightholder connection (AddRightholder returns existing connection if already exists)
+            var assignmentResult = await ConnectionService.AddRightholder(party, targetEntityId, ConfigureConnections, cancellationToken);
+            if (assignmentResult.IsProblem)
+            {
+                return assignmentResult.Problem.ToActionResult();
+            }
+        }
+
+        // Proceed with instance delegation
         var byId = AuthenticationHelper.GetPartyUuid(HttpContext);
         var fromEntity = await EntityService.GetEntity(party, cancellationToken);
-        var toEntity = await EntityService.GetEntity(to, cancellationToken);
+        var toEntity = await EntityService.GetEntity(targetEntityId, cancellationToken);
         var by = await EntityService.GetEntity(byId, cancellationToken);
         var resourceObj = await resourceService.GetResource(resource, cancellationToken);
-        var result = await ConnectionService.AddInstance(fromEntity, toEntity, resourceObj, instance, rightKeys, by, ConfigureConnections, cancellationToken);
+
+        // Convert input to RightKeyListDto for service call
+        var rightKeysDto = new RightKeyListDto { DirectRightKeys = input.DirectRightKeys };
+
+        var result = await ConnectionService.AddInstance(fromEntity, toEntity, resourceObj, instance, rightKeysDto, by, ConfigureConnections, cancellationToken);
 
         if (result.IsProblem)
         {
@@ -877,7 +935,7 @@ public class ConnectionsController(
                 problem.Extensions["instance"] = instance;
                 return problem.ToActionResult();
             }
-            
+
             return result.Problem.ToActionResult();
         }
 

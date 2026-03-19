@@ -46,6 +46,11 @@
         public const string POLICY_ACCESS_MANAGEMENT_WRITE = "AccessManagementWrite";
 
         /// <summary>
+        /// Policy tag for authorizing instance delegation for end users
+        /// </summary>
+        public const string POLICY_INSTANCE_DELEGATION = "InstanceDelegation";
+
+        /// <summary>
         /// Policy tag for reading enduser access management information for the authorized party
         /// </summary>
         public const string POLICY_ACCESS_MANAGEMENT_ENDUSER_READ_WITH_PASS_TROUGH = "AccessManagementEndUserReadOrAuthorizedParty";
