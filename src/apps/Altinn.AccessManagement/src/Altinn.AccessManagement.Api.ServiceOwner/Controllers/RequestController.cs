@@ -27,7 +27,6 @@ public class RequestController(
     IRequestService requestService,
     IEntityService entityService,
     IResourceService resourceService,
-    IPackageService packageService,
     IAuditAccessor auditAccessor
     ) : ControllerBase
 {
@@ -176,15 +175,22 @@ public class RequestController(
     {
         ValidationErrorBuilder errorBuilder = default;
 
-        if (input.Resource.HasValue() && input.Package.HasValue())
+        if (input?.Resource is null && input?.Package is null)
         {
-            errorBuilder.Add(ValidationErrorDescriptors.RequestResourceOrPackage);
+            errorBuilder.Add(ValidationErrors.RequestMissingResourceOrPackage, "/resource", [new("resource", "Either package or resource must be defined.")]);
+            errorBuilder.Add(ValidationErrors.RequestMissingResourceOrPackage, "/package", [new("package", "Either package or resource must be defined.")]);
         }
 
-        var fromResult = await GetEntity(input.From, "connection/from", ct);
+        if (input?.Resource?.HasValue() == true && input?.Package?.HasValue() == true)
+        {
+            errorBuilder.Add(ValidationErrors.ResourceAndPackageIsSpecified, "/resource", [new("resource", "Both package and resource are specified. Only one must be defined.")]);
+            errorBuilder.Add(ValidationErrors.ResourceAndPackageIsSpecified, "/package", [new("package", "Both package and resource are specified. Only one must be defined.")]);
+        }
+
+        var fromResult = await GetEntity(input?.From, "/connection/from", ct);
         fromResult.Problems(ref errorBuilder);
 
-        var toResult = await GetEntity(input.To, "connection/to", ct);
+        var toResult = await GetEntity(input?.To, "/connection/to", ct);
         toResult.Problems(ref errorBuilder);
 
         if (errorBuilder.TryBuild(out var problem))
@@ -198,7 +204,7 @@ public class RequestController(
         NAV (by) ber om tilgang for Kari (for) til App (resource) hos Org (at).
         */
 
-        if (input.Resource is { } && input.Resource.HasValue())
+        if (input?.Resource is { } && input.Resource.HasValue())
         {
             return await CreateResourceRequest(
                 atId: fromResult.Entity.Id,
@@ -211,7 +217,7 @@ public class RequestController(
             );
         }
 
-        if (input.Package is { } && input.Package.HasValue())
+        if (input?.Package is { } && input.Package.HasValue())
         {
             return await CreatePackageRequest(
                 atId: fromResult.Entity.Id,
@@ -237,7 +243,7 @@ public class RequestController(
         var resource = await resourceService.GetResource(resourceRef, ct);
         if (resource is null)
         {
-            errorBuilder.Add(ValidationErrorDescriptors.RequestedResourceNotFound, $"BODY/resource", [new("resource", $"Urn {resourceRef.ReferenceId} is not valid")]);
+            errorBuilder.Add(ValidationErrorDescriptors.RequestedResourceNotFound, "/resource", [new("resource", $"Resource with reference ID '{resourceRef.ReferenceId}' was not found.")]);
         }
 
         if (errorBuilder.TryBuild(out var problem))
