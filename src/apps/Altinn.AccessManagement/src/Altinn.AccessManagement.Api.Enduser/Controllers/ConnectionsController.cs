@@ -89,6 +89,48 @@ public class ConnectionsController(
         return Ok(PaginatedResult.Create(result.Value, null));
     }
 
+    /// <summary>
+    /// Gets all available users who already have some access from the specified party and are available to receive new delegations.
+    /// </summary>
+    [HttpGet("users")]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_WRITE_TOOTHERS)]
+    [Authorize(Policy = AuthzConstants.POLICY_INSTANCE_DELEGATION)]
+    [ProducesResponseType<PaginatedResult<SimplifiedConnectionDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetAvailableUsers(
+        [Required][FromQuery(Name = "party")] Guid party,
+        [FromQuery, FromHeader] PagingInput paging,
+        CancellationToken cancellationToken = default)
+    {
+        var validationErrors = ValidationComposer.Validate(
+            ParameterValidation.Party(party.ToString()),
+            ConnectionValidation.ValidateReadConnection(party.ToString(), party.ToString(), null));
+        if (validationErrors is { })
+        {
+            return validationErrors.ToActionResult();
+        }
+
+        var result = await ConnectionService.Get(
+            party,
+            party,
+            null,
+            includeClientDelegations: true,
+            includeAgentConnections: true,
+            ConfigureConnections,
+            cancellationToken
+        );
+
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        var simplifiedConnections = DtoMapper.ToSimplifiedConnections(result.Value);
+        return Ok(PaginatedResult.Create(simplifiedConnections, null));
+    }
+
     #region Assignment
 
     /// <summary>
@@ -1070,6 +1112,65 @@ public class ConnectionsController(
         }
 
         return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Gets all users who have access to a specific instance.
+    /// </summary>
+    [HttpGet("resources/instances/users")]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_BIDRECTIONAL_READ)]
+    [Authorize(Policy = AuthzConstants.POLICY_INSTANCE_DELEGATION)]
+    [ProducesResponseType<PaginatedResult<SimplifiedPartyDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetInstanceUsers(
+        [Required][FromQuery(Name = "party")] Guid party,
+        [Required][FromQuery(Name = "resource")] string resource,
+        [Required][FromQuery(Name = "instance")] string instance,
+        [FromQuery, FromHeader] PagingInput paging,
+        CancellationToken cancellationToken = default)
+    {
+        var validationErrors = ValidationComposer.Validate(
+            ParameterValidation.Party(party.ToString()),
+            ParameterValidation.InstanceUrn(instance));
+        if (validationErrors is { })
+        {
+            return validationErrors.ToActionResult();
+        }
+
+        var resourceObj = await resourceService.GetResource(resource, cancellationToken);
+        if (resourceObj is null)
+        {
+            ProblemDetails problem = Core.Errors.Problems.InvalidResource.ToProblemDetails();
+            problem.Extensions["resource"] = resource;
+            problem.Extensions["instance"] = instance;
+            return problem.ToActionResult();
+        }
+
+        var result = await ConnectionService.GetResourceInstances(
+            party,
+            fromId: party,
+            toId: null,
+            resourceId: resourceObj.Id,
+            instanceId: instance,
+            configureConnections: ConfigureConnections,
+            cancellationToken: cancellationToken
+        );
+
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        var users = result.Value
+            .SelectMany(inst => inst.Permissions ?? Enumerable.Empty<PermissionDto>())
+            .Where(perm => perm.To != null)
+            .Select(perm => DtoMapper.ToSimplifiedParty(perm.To))
+            .DistinctBy(p => p.Id)
+            .ToList();
+
+        return Ok(PaginatedResult.Create(users, null));
     }
 
     #endregion
