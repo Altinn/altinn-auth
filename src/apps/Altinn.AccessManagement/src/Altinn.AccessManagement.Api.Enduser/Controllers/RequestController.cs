@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
+using System.Security.Claims;
 using Altinn.AccessManagement.Api.Enduser.Models;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
@@ -12,9 +13,12 @@ using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
+using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Altinn.Authorization.ProblemDetails;
+using Altinn.Common.PEP.Helpers;
+using Altinn.Common.PEP.Interfaces;
 using Azure.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,7 +36,8 @@ public class RequestController(
     IConnectionService connectionService,
     ConnectionQuery connectionQuery,
     IResourceService resourceService,
-    IEntityService entityService
+    IEntityService entityService,
+    IPDP Pdp
     ) : ControllerBase
 {
     private Action<ConnectionOptions> ConfigureConnections { get; } = options =>
@@ -94,6 +99,35 @@ public class RequestController(
 
         var result = await requestService.GetReceivedRequests(party, from, statusFilter, type, ct);
         return result.IsSuccess ? Ok(PaginatedResult.Create(result.Value, null)) : result.Problem.ToActionResult();
+    }
+
+    [HttpGet("draft")]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource)]
+    [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
+    [ProducesResponseType<RequestDto>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetDraftRequest([FromQuery][Required] Guid id, CancellationToken ct = default)
+    {
+        var result = await requestService.GetRequest(id, ct);
+        if (result.IsProblem)
+        {
+            return Forbid();
+        }
+
+        if (result.Value.Status != RequestStatus.Draft)
+        {
+            return Forbid();
+        }
+
+        bool isAuthorized = await AuthorizeResourceAccess("altinn_access_management", result.Value.From.Id, User, "write");
+        if (isAuthorized)
+        {
+            return Forbid();
+        }
+
+        return Ok(result.Value);
     }
 
     [HttpGet]
@@ -451,5 +485,23 @@ public class RequestController(
         }
 
         return Ok(result.Value);
+    }
+
+    private async Task<bool> AuthorizeResourceAccess(string resource, Guid resourceParty, ClaimsPrincipal userPrincipal, string action)
+    {
+        XacmlJsonRequestRoot request = DecisionHelper.CreateDecisionRequestForResourceRegistryResource(resource, resourceParty, userPrincipal, action);
+        XacmlJsonResponse response = await Pdp.GetDecisionForRequest(request);
+
+        if (response?.Response == null)
+        {
+            throw new InvalidOperationException("response");
+        }
+
+        if (!DecisionHelper.ValidatePdpDecision(response.Response, userPrincipal))
+        {
+            return false;
+        }
+
+        return true;
     }
 }

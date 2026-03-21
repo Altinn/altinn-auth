@@ -1118,7 +1118,7 @@ public class ConnectionsController(
     /// Gets all users who have access to a specific instance.
     /// </summary>
     [HttpGet("resources/instances/users")]
-    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_BIDRECTIONAL_READ)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_WRITE_TOOTHERS)]
     [Authorize(Policy = AuthzConstants.POLICY_INSTANCE_DELEGATION)]
     [ProducesResponseType<PaginatedResult<SimplifiedPartyDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
