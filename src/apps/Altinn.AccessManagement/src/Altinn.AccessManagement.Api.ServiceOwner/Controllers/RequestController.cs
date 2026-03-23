@@ -1,4 +1,4 @@
-﻿﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
 using Altinn.AccessManagement.Api.ServiceOwner.Validation;
 using Altinn.AccessManagement.Core.Constants;
@@ -174,23 +174,25 @@ public class RequestController(
     public async Task<IActionResult> CreateRequest([FromBody] CreateServiceOwnerRequest input, CancellationToken ct = default)
     {
         ValidationErrorBuilder errorBuilder = default;
+        var resourceParamName = "resource";
+        var packageParamName = "package";
 
         if (input?.Resource is null && input?.Package is null)
         {
-            errorBuilder.Add(ValidationErrors.RequestMissingResourceOrPackage, "/resource", [new("resource", "Either package or resource must be defined.")]);
-            errorBuilder.Add(ValidationErrors.RequestMissingResourceOrPackage, "/package", [new("package", "Either package or resource must be defined.")]);
+            errorBuilder.Add(ValidationErrors.RequestMissingResourceOrPackage, resourceParamName, [new(resourceParamName, "Either package or resource must be defined.")]);
+            errorBuilder.Add(ValidationErrors.RequestMissingResourceOrPackage, packageParamName, [new(packageParamName, "Either package or resource must be defined.")]);
         }
 
         if (input?.Resource?.HasValue() == true && input?.Package?.HasValue() == true)
         {
-            errorBuilder.Add(ValidationErrors.ResourceAndPackageIsSpecified, "/resource", [new("resource", "Both package and resource are specified. Only one must be defined.")]);
-            errorBuilder.Add(ValidationErrors.ResourceAndPackageIsSpecified, "/package", [new("package", "Both package and resource are specified. Only one must be defined.")]);
+            errorBuilder.Add(ValidationErrors.ResourceAndPackageIsSpecified, resourceParamName, [new(resourceParamName, "Both package and resource are specified. Only one must be defined.")]);
+            errorBuilder.Add(ValidationErrors.ResourceAndPackageIsSpecified, packageParamName, [new(packageParamName, "Both package and resource are specified. Only one must be defined.")]);
         }
 
-        var fromResult = await GetEntity(input?.From, "/connection/from", ct);
+        var fromResult = await GetEntity(input?.From, "connection/from", ct);
         fromResult.Problems(ref errorBuilder);
 
-        var toResult = await GetEntity(input?.To, "/connection/to", ct);
+        var toResult = await GetEntity(input?.To, "connection/to", ct);
         toResult.Problems(ref errorBuilder);
 
         if (errorBuilder.TryBuild(out var problem))
@@ -239,11 +241,18 @@ public class RequestController(
     private async Task<IActionResult> CreateResourceRequest(Guid atId, Guid forId, Guid byId, Guid roleId, RequestStatus status, RequestReferenceDto resourceRef, CancellationToken ct = default)
     {
         ValidationErrorBuilder errorBuilder = default;
+        var paramName = "resource";
 
         var resource = await resourceService.GetResource(resourceRef, ct);
         if (resource is null)
         {
-            errorBuilder.Add(ValidationErrorDescriptors.RequestedResourceNotFound, "/resource", [new("resource", $"Resource with reference ID '{resourceRef.ReferenceId}' was not found.")]);
+            errorBuilder.Add(ValidationErrorDescriptors.RequestedResourceNotFound, paramName, [new(paramName, $"Resource with reference ID '{resourceRef.ReferenceId}' was not found.")]);
+        }
+
+        var byEntity = await entityService.GetEntity(byId, ct);
+        if (resource.Provider.RefId != byEntity.OrganizationIdentifier)
+        {
+            errorBuilder.Add(ValidationErrorDescriptors.RequestedResourceNotByServiceOwner, paramName, [new(paramName, $"Resource with reference ID '{resourceRef.ReferenceId}' is not owned by serviceowner.")]);
         }
 
         if (errorBuilder.TryBuild(out var problem))

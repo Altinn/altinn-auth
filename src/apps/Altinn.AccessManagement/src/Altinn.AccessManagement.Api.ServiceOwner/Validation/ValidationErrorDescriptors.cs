@@ -15,4 +15,6 @@ public static class ValidationErrorDescriptors
     public static ValidationErrorDescriptor RequestedPackageNotFound { get; } = _factory.Create(4, $"Requested package was not found");
 
     public static ValidationErrorDescriptor RequestResourceOrPackage { get; } = _factory.Create(5, $"Request can only contain package or resource");
+
+    public static ValidationErrorDescriptor RequestedResourceNotByServiceOwner { get; } = _factory.Create(6, $"Requested resource is not owned by serviceowner");
 }

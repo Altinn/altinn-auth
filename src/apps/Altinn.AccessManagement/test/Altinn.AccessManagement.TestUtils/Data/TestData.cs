@@ -7,20 +7,6 @@ public static class TestData
 {
     #region Firmaer
 
-    /*
-    
-    
-
-123456785
-555555555
-777777777
-314159268
-625818281
-990123454
-100000016
-    
-    */
-
     public static ConstantDefinition<Entity> BakerJohnsen { get; } = new("a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d")
     {
         Entity = new()
@@ -84,6 +70,39 @@ public static class TestData
             UserId = null,
             Username = null,
             VariantId = EntityVariantConstants.AS,
+        }
+    };
+
+    public static ConstantDefinition<Entity> NAV { get; } = new("019d1a5e-68b6-754c-8ee2-e79f4ac137cc")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Arbeids- og velferdsetaten (NAV)",
+            OrganizationIdentifier = "889640782",
+            Parent = null,
+            ParentId = null,
+            PartyId = null,
+            PersonIdentifier = null,
+            RefId = "889640782",
+            TypeId = EntityTypeConstants.Organization,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.AS,
+        }
+    };
+
+    public static ConstantDefinition<Provider> ServiceOwnerNAV { get; } = new("e95e2ed7-67b3-3983-56ed-9f88a960c686")
+    {
+        Entity = new()
+        {
+            Name = "Arbeids- og velferdsetaten (NAV)",
+            RefId = "889640782",
+            TypeId = ProviderTypeConstants.ServiceOwner,
+            Code = "nav",
         }
     };
 
