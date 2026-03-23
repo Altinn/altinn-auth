@@ -163,7 +163,7 @@ namespace Altinn.AccessManagement.Core.Services
                 InstanceRules = instanceRules
             };
 
-            InstanceRight result = await _pap.TryWriteInstanceDelegationPolicyRules(instanceRight, cancellationToken);
+            InstanceRight result = await _pap.TryWriteInstanceDelegationPolicyRules(instanceRight, ignoreExistingPolicy, cancellationToken);
             return result.InstanceRules;
         }
 

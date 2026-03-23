@@ -641,7 +641,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
 
         if (rulesToDelegate.InstanceRules.Count > 0)
         {
-            InstanceRight delegationResult = await _pap.TryWriteInstanceDelegationPolicyRules(rulesToDelegate, cancellationToken);
+            InstanceRight delegationResult = await _pap.TryWriteInstanceDelegationPolicyRules(rulesToDelegate, cancellationToken: cancellationToken);
             rights.AddRange(DelegationHelper.GetRightDelegationResultsFromInstanceRules(delegationResult));
         }
 

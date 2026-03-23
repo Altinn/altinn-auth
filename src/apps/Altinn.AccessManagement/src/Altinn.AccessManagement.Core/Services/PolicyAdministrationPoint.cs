@@ -143,7 +143,7 @@ namespace Altinn.AccessManagement.Core.Services
             }
         }
 
-        private async Task<bool> WriteInstanceDelegationPolicyInternal(string policyPath, InstanceRight rules, CancellationToken cancellationToken = default)
+        private async Task<bool> WriteInstanceDelegationPolicyInternal(string policyPath, InstanceRight rules, bool ignoreExistingPolicy = false, CancellationToken cancellationToken = default)
         {
             // Check for a current delegation change from postgresql
             (XacmlPolicy ExistingDelegationPolicy, string PolicyPath) policyData = await GetExistingPolicy(policyPath, rules, cancellationToken);
@@ -162,7 +162,7 @@ namespace Altinn.AccessManagement.Core.Services
                 try
                 {
                     // Build delegation XacmlPolicy either as a new policy or add rules to existing
-                    XacmlPolicy delegationPolicy = BuildInstanceDelegationPolicy(policyData.ExistingDelegationPolicy, rules);
+                    XacmlPolicy delegationPolicy = BuildInstanceDelegationPolicy(policyData.ExistingDelegationPolicy, rules, ignoreExistingPolicy);
 
                     // Write delegation policy to blob storage
                     MemoryStream dataStream = PolicyHelper.GetXmlMemoryStreamFromXacmlPolicy(delegationPolicy);
@@ -264,11 +264,11 @@ namespace Altinn.AccessManagement.Core.Services
             return (existingDelegationPolicy, policyPath);
         }
 
-        private static XacmlPolicy BuildInstanceDelegationPolicy(XacmlPolicy existingDelegationPolicy, InstanceRight rules)
+        private static XacmlPolicy BuildInstanceDelegationPolicy(XacmlPolicy existingDelegationPolicy, InstanceRight rules, bool ignoreExistingPolicy)
         {
             // Build delegation XacmlPolicy either as a new policy or add rules to existing
             XacmlPolicy delegationPolicy;
-            if (existingDelegationPolicy != null)
+            if (existingDelegationPolicy != null && !ignoreExistingPolicy)
             {
                 delegationPolicy = existingDelegationPolicy;
                 PolicyParameters policyData = PolicyHelper.GetPolicyDataFromInstanceRight(rules);
@@ -305,7 +305,7 @@ namespace Altinn.AccessManagement.Core.Services
         }
 
         /// <inheritdoc />
-        public async Task<InstanceRight> TryWriteInstanceDelegationPolicyRules(InstanceRight rules, CancellationToken cancellationToken = default)
+        public async Task<InstanceRight> TryWriteInstanceDelegationPolicyRules(InstanceRight rules, bool ignoreExistingPolicy = false, CancellationToken cancellationToken = default)
         {
             bool useEF = await _featureManager.IsEnabledAsync("AccessManagement.InstanceDelegation.EF");
             bool validPath;
@@ -326,7 +326,7 @@ namespace Altinn.AccessManagement.Core.Services
 
                 try
                 {
-                    writePolicySuccess = await WriteInstanceDelegationPolicyInternal(path, rules, cancellationToken);
+                    writePolicySuccess = await WriteInstanceDelegationPolicyInternal(path, rules, ignoreExistingPolicy, cancellationToken);
                 }
                 catch (Exception ex)
                 {
