@@ -52,6 +52,8 @@ script:pre-request {
   
   bru.setVar("resourceId", resource);
   bru.setVar("instanceId", testdata.instanceid);
+  bru.setVar("fromUuid", testdata.org1.partyuuid);
+  bru.setVar("toUuid", testdata.person1.partyuuid);
   
   var getTokenParameters = {
       auth_org: sharedtestdata.serviceOwners.ttd.org,
@@ -60,8 +62,8 @@ script:pre-request {
     }
   
   
-const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
-const token = await testTokenGenerator.getToken(getTokenParameters);
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("platformAccessToken",  token);
 }
 
