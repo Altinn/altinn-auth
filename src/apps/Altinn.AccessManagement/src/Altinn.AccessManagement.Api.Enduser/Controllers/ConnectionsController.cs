@@ -3,6 +3,7 @@ using System.Net.Mime;
 using Altinn.AccessManagement.Api.Enduser.Models;
 using Altinn.AccessManagement.Api.Enduser.Validation;
 using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Core;
@@ -914,6 +915,12 @@ public class ConnectionsController(
         if (validationErrors is { })
         {
             return validationErrors.ToActionResult();
+        }
+
+        if (input?.DirectRightKeys is null || !input.DirectRightKeys.Any())
+        {
+            ProblemDescriptor error = Problems.MissingRightKey;
+            return error.ToActionResult();
         }
 
         // Resolve the target entity
