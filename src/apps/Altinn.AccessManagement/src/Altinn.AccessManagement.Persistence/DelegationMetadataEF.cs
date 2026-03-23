@@ -686,7 +686,7 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
            .Include(t => t.Resource).ThenInclude(t => t.Type)
 
            .Where(t => t.Resource.RefId == resourceID)
-           .Where(t => t.InstanceId == instanceID)
+           .Where(t => t.InstanceId.EndsWith(instanceID))
            .ToListAsync(cancellationToken);
 
         return result.Select(Convert).ToList();

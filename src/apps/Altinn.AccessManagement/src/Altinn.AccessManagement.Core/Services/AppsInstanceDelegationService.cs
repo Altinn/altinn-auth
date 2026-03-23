@@ -231,7 +231,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
 
     private async Task<MinimalParty> GetMinimalParty(PartyUrn urn, CancellationToken cancellationToken)
     {
-        switch (urn.KeySpan.ToString())
+        switch (urn.PrefixSpan.ToString())
         {
             case AltinnXacmlConstants.MatchAttributeIdentifiers.PartyUuidAttribute:
                 return await _partyService.GetByUid(new Guid(urn.ValueSpan.ToString()), cancellationToken);
@@ -264,7 +264,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
             }
 
             string instanceUrn = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.InstanceAttribute}:{party.PartyId}/{instanceId}";
-            request.InstanceId = instanceUrn;            
+            request.InstanceId = instanceUrn;
         }
 
         (ValidationErrorBuilder Errors, InstanceRight RulesToHandle, List<RightInternal> RightsAppCantHandle) input = await SetUpDelegationOrRevokeRequest(request, cancellationToken);
@@ -330,7 +330,21 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
         }
 
         // Fetch all existing delegations
-        List<AppsInstanceDelegationResponse> delegations = await _pip.GetInstanceDelegations(request, cancellationToken);
+        List<AppsInstanceDelegationResponse> delegations;
+        try
+        { 
+            delegations = await _pip.GetInstanceDelegations(request, cancellationToken);
+        }
+        catch (ValidationException)
+        {
+            errors.Add(ValidationErrors.InvalidInstanceId, "request.InstanceId");
+            if (errors.TryBuild(out var invalidInstanceId))
+            {
+                return invalidInstanceId;
+            }
+
+            delegations = [];
+        }
 
         // If nothing to delete just return with empty result set and no errors
         if (delegations.Count == 0)
@@ -365,7 +379,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
         List<InstanceRight> revokedResult = await _pap.TryWriteInstanceRevokeAllPolicyRules(rightsToRevoke, cancellationToken);
         List<AppsInstanceRevokeResponse> result = TransformInstanceRightListToAppsInstanceDelegationResponseList(revokedResult);
         result = RemoveInstanceIdFromResourceForRevokeResponseList(result);
-        
+        result = RemoveUrnPrefixFromInstanceIdForRevokeResponceList(result, request.InstanceId);
         return result;
     }
 
@@ -683,9 +697,35 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
             return errorResult;
         }
 
-        List<AppsInstanceDelegationResponse> result = await _pip.GetInstanceDelegations(request, cancellationToken);
+        List<AppsInstanceDelegationResponse> result;
+        try 
+        {
+            result = await _pip.GetInstanceDelegations(request, cancellationToken);
+        } 
+        catch (ValidationException)
+        {
+            errors.Add(ValidationErrors.InvalidInstanceId, "request.InstanceId");
+            if (errors.TryBuild(out var invalidInstanceId))
+            {
+                return invalidInstanceId;
+            }
+
+            result = [];
+        }
+
         result = RemoveInstanceIdFromResourceForDelegationResponseList(result);
+        result = RemoveUrnPrefixFromInstanceId(result, request.InstanceId);
         return result;
+    }
+
+    private static List<AppsInstanceDelegationResponse> RemoveUrnPrefixFromInstanceId(List<AppsInstanceDelegationResponse> input, string instanceId)
+    {
+        foreach (AppsInstanceDelegationResponse item in input)
+        {
+            item.InstanceId = instanceId;
+        }
+
+        return input;
     }
 
     private static AppsInstanceRevokeResponse RemoveInstanceIdFromResourceForRevokeResponse(AppsInstanceRevokeResponse input)
@@ -707,6 +747,16 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
 
         return input;
     }
+
+    private static List<AppsInstanceRevokeResponse> RemoveUrnPrefixFromInstanceIdForRevokeResponceList(List<AppsInstanceRevokeResponse> input, string instanceId)
+    {
+        foreach (AppsInstanceRevokeResponse item in input)
+        {
+            item.InstanceId = instanceId;
+        }
+
+        return input;
+    }    
 
     private static List<AppsInstanceDelegationResponse> RemoveInstanceIdFromResourceForDelegationResponseList(List<AppsInstanceDelegationResponse> input)
     {

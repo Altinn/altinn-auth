@@ -1,0 +1,71 @@
+meta {
+  name: Post_Enduser_Conn_Instances_Dagl
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/rights?party={{party}}&from={{from}}&to={{to}}&resource={{resource}}&instance={{instance}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{from}}
+  to: {{to}}
+  resource: {{resource}}
+  instance: {{instance}}
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "DirectRightKeys": [
+      "0144e74457db71df2ba504e6fc5b081d2e72b7396f501de222767cbf838c0a56f3",
+      "0166c5e067d84985ad6974588ad0b76d7e12c1502c65cbb551e16521696088c742",
+      "01f223492db1318fea6edad70bed2c2462e9b431e42596a1a6382f5630dfd9486b",
+      "0159c58c191e76b3e6bbf8e74c81f0b1c1ec2ed6158e51843afb3f7bd9c37fb210"
+    ]
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/resource-delegationcheck/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "Post_Enduser_Conn_Instances_Dagl");
+  
+  bru.setVar("party", testdata.VOKSENDE_FRYKTLØS_TIGER.partyUuid);
+  bru.setVar("from", testdata.VOKSENDE_FRYKTLØS_TIGER.partyUuid);
+  bru.setVar("to", testdata.KOMPLEKS_LOJAL_TIGER.dagligleder.partyUuid);
+  bru.setVar("resource", testdata.resources.instanceResourceId);
+  bru.setVar("instance", testdata.instances.testInstance1);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.VOKSENDE_FRYKTLØS_TIGER.dagligleder.userId,
+    auth_partyId: testdata.VOKSENDE_FRYKTLØS_TIGER.dagligleder.partyId,
+    auth_partyUuid: testdata.VOKSENDE_FRYKTLØS_TIGER.dagligleder.partyUuid,
+    auth_ssn: testdata.VOKSENDE_FRYKTLØS_TIGER.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.enduserSystemToOthersWrite
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  
+  test(bru.getVar("requestName"), function() {
+    const body = res.getBody();
+    const actions = body.actions;
+    
+    expect(res.status).to.equal(201);  
+  });
+}

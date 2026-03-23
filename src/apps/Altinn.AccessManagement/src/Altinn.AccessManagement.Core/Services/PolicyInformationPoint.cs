@@ -308,6 +308,12 @@ namespace Altinn.AccessManagement.Core.Services
 
             List<InstanceDelegationChange> delegations = await _delegationRepository.GetAllLatestInstanceDelegationChanges(request.InstanceDelegationSource, request.ResourceId, request.InstanceId, cancellationToken);
 
+            List<Guid> fromParties = delegations.Select(d => d.FromUuid).Distinct().ToList();
+            if (fromParties.Count > 1)
+            {
+                throw new ValidationException($"Multiple from parties found for instance delegations: {string.Join(", ", fromParties)}");
+            }
+            
             foreach (InstanceDelegationChange delegation in delegations)
             {
                 AppsInstanceDelegationResponse appsInstanceDelegationResponse = new AppsInstanceDelegationResponse

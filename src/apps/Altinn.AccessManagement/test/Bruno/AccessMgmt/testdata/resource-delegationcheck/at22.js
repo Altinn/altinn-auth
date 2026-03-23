@@ -3,7 +3,11 @@
   "env": "at22",
   "resources": {
     "packageResourceId": "tilgangspakke_delegering_ressurs",
-    "roleResourceId": "jks-test-resource"
+    "roleResourceId": "jks-test-resource",
+    "instanceResourceId": "app_ttd_instance-gui-test"
+  },
+  "instances": {
+    "testInstance1": "urn:altinn:instance-id:51385701/e39ce2dd-7892-44ad-91fd-1b9a03829fac"
   },
   "VOKSENDE_FRYKTLØS_TIGER": {
     "name": "VOKSENDE FRYKTLØS TIGER AS",

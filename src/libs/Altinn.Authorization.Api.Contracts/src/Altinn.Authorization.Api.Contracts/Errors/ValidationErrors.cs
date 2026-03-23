@@ -235,4 +235,10 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor ResourceAndPackageIsSpecified { get; }
         = _factory.Create(46, "Either Resource or Package must be included in the request, but not both.");
+
+    /// <summary>
+    /// More than one fromParty is connected to the same instance uuid this should not be posible
+    /// </summary>
+    public static ValidationErrorDescriptor InvalidInstanceId { get; }
+        = _factory.Create(47, $"The instance ID is invalid as more than one owner was found.");
 }
