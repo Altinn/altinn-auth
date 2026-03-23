@@ -1212,7 +1212,7 @@ public partial class ConnectionService(
     /// <inheritdoc />
     public async Task<Result<bool>> AddInstance(Entity from, Entity to, Resource resourceObj, string instanceId, RightKeyListDto rightKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
-        var canDelegate = await ResourceDelegationCheck(by.Id, from.Id, resourceObj?.RefId, configureConnection, cancellationToken: cancellationToken);
+        var canDelegate = await InstanceDelegationCheck(by.Id, from.Id, resourceObj?.RefId, instanceId, configureConnection, cancellationToken: cancellationToken);
         if (canDelegate.IsProblem)
         {
             return canDelegate.Problem;
