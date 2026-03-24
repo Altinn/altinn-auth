@@ -1,0 +1,40 @@
+{
+  "identifier": "app_dihe_omsetningsoppgave-for-alkohol",
+  "title": {
+    "nb": "Omsetningsoppgave for alkohol"
+  },
+  "resourceReferences": [
+    {
+      "referenceSource": "Altinn3",
+      "reference": "dihe/omsetningsoppgave-for-alkohol",
+      "referenceType": "ApplicationId"
+    }
+  ],
+  "delegable": true,
+  "visible": true,
+  "hasCompetentAuthority": {
+    "name": {
+      "en": "Digital Helgeland ",
+      "nn": "Digitale Helgeland",
+      "nb": "Digitale Helgeland"
+    },
+    "organization": "964983291",
+    "orgcode": "dihe"
+  },
+  "accessListMode": "Disabled",
+  "selfIdentifiedUserEnabled": false,
+  "enterpriseUserEnabled": false,
+  "resourceType": "AltinnApp",
+  "authorizationReference": [
+    {
+      "id": "urn:altinn:org",
+      "value": "dihe"
+    },
+    {
+      "id": "urn:altinn:app",
+      "value": "omsetningsoppgave-for-alkohol"
+    }
+  ],
+  "isOneTimeConsent": false,
+  "versionId": 0
+}

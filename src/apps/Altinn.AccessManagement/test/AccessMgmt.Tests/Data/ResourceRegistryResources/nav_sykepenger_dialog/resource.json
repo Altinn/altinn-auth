@@ -1,0 +1,56 @@
+{
+  "identifier": "nav_sykepenger_dialog",
+  "version": "5",
+  "title": {
+    "en": "Dialogs for sickness benefits",
+    "nb": "Dialog for sykepenger",
+    "nn": "Dialog for sjukepengar"
+  },
+  "description": {
+    "en": "The service is used to send and receive dialogues in Dialogporten about new sick leaves, submitted applications, requests for income reports, and receipts for submitted income reports.",
+    "nb": "Tjenesten brukes til å sende og motta dialoger i Dialogporten om nye sykmeldinger, innsendte søknader, forespørsler om inntektsmelding og kvitteringer på innsendte inntektsmeldinger.",
+    "nn": "Tenesta blir brukt til å sende og ta imot dialogar i Dialogporten om nye sjukmeldingar, innsendte søknader, førespurnader om inntektsmelding og kvitteringar på innsendte inntektsmeldingar."
+  },
+  "rightDescription": {
+    "en": "The authorization allows the user to send and retrieve dialogue messages on behalf of the enterprise. Access should be limited to employees responsible for processing sickness benefit cases.",
+    "nb": "Rettigheten gir brukeren mulighet til å sende og hente ut dialogmeldinger på vegne av virksomheten. Tilgangen bør begrenses til ansatte som har ansvar for å behandle saker om sykepenger.",
+    "nn": "Retten gir brukaren moglegheit til å sende og hente ut dialogmeldingar på vegner av verksemda. Tilgangen bør avgrensast til tilsette som har ansvar for å behandle saker om sjukepengar."
+  },
+  "homepage": "",
+  "status": "Completed",
+  "contactPoints": [
+    {
+      "category": "Nav kontaktsenter arbeidsgivertelefon",
+      "email": "",
+      "telephone": "55553336",
+      "contactPage": ""
+    }
+  ],
+  "delegable": true,
+  "visible": true,
+  "hasCompetentAuthority": {
+    "name": {
+      "en": "Norwegian Labour and Welfare Administration (NAV)",
+      "nb": "Arbeids- og velferdsetaten (NAV)",
+      "nn": "Arbeids- og velferdsetaten (NAV)"
+    },
+    "organization": "889640782",
+    "orgcode": "nav"
+  },
+  "keywords": [
+    {
+      "word": "sykepenger",
+      "language": "nb"
+    }
+  ],
+  "accessListMode": "Disabled",
+  "selfIdentifiedUserEnabled": false,
+  "enterpriseUserEnabled": false,
+  "resourceType": "GenericAccessResource",
+  "availableForType": [
+    "LegalEntityEnterprise",
+    "Company"
+  ],
+  "isOneTimeConsent": false,
+  "versionId": 902
+}
