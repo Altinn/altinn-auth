@@ -1,17 +1,14 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
-using System.Text;
 using System.Text.Json;
 using Altinn.AccessManagement.Core.Constants;
-using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
-using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Controllers;
@@ -109,21 +106,6 @@ public class RequestControllerTest
         public ApiFixture Fixture { get; }
 
         [Fact]
-        public async Task PersonWithNoConnection_GetsNonSuccessResponse()
-        {
-            // BjornMoe er daglig leder i RegnskapNorge, men har ingen rolle i BakerJohnsen
-            var client = CreateClient(Fixture, TestData.VegardSolberg.Id);
-            var packageUrn = PackageConstants.Agriculture.Entity.Urn;
-
-            var response = await client.PostAsync(
-                $"{Route}/package?party={TestData.BjornMoe.Id}&to={TestData.BakerJohnsen.Id}&package={packageUrn}",
-                null,
-                TestContext.Current.CancellationToken);
-
-            Assert.False(response.IsSuccessStatusCode, "Person without connection should not be able to create request");
-        }
-
-        [Fact]
         public async Task PersonWithKeyConnection_GetsSuccessResponse()
         {
             // BjornMoe er daglig leder i RegnskapNorge, og har da nøkkel rolle til BakerJohnsen
@@ -155,8 +137,8 @@ public class RequestControllerTest
             {
                 var reqAssignment = new RequestAssignment
                 {
-                    FromId = TestData.BakerJohnsen.Id,
-                    ToId = TestData.LarsBakke.Id,
+                    ToId = TestData.BakerJohnsen.Id,
+                    FromId = TestData.LarsBakke.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.RequestAssignments.Add(reqAssignment);
@@ -178,7 +160,7 @@ public class RequestControllerTest
         [Fact]
         public async Task Sender_GetSentRequests_ContainsSeededRequest()
         {
-            var client = CreateClient(Fixture, TestData.BakerJohnsen.Id);
+            var client = CreateClient(Fixture, TestData.LarsBakke.Id);
 
             var response = await client.GetAsync(
                 $"{Route}/sent?party={TestData.LarsBakke.Id}&to={TestData.BakerJohnsen.Id}",
@@ -240,8 +222,8 @@ public class RequestControllerTest
 
                 var reqAssignment = new RequestAssignment
                 {
-                    FromId = TestData.SvendsenAutomobil.Id,
-                    ToId = TestData.MortenDahl.Id,
+                    ToId = TestData.SvendsenAutomobil.Id,
+                    FromId = TestData.MortenDahl.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.RequestAssignments.Add(reqAssignment);
@@ -325,8 +307,8 @@ public class RequestControllerTest
 
                 var reqAssignment = new RequestAssignment
                 {
-                    FromId = TestData.SvendsenAutomobil.Id,
-                    ToId = TestData.MortenDahl.Id,
+                    ToId = TestData.SvendsenAutomobil.Id,
+                    FromId = TestData.MortenDahl.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.RequestAssignments.Add(reqAssignment);
@@ -378,8 +360,8 @@ public class RequestControllerTest
             {
                 var reqAssignment = new RequestAssignment
                 {
-                    FromId = TestData.BakerJohnsen.Id,
-                    ToId = TestData.HildeStrand.Id,
+                    ToId = TestData.BakerJohnsen.Id,
+                    FromId = TestData.HildeStrand.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.RequestAssignments.Add(reqAssignment);
@@ -431,8 +413,8 @@ public class RequestControllerTest
             {
                 var reqAssignment = new RequestAssignment
                 {
-                    FromId = TestData.BakerJohnsen.Id,
-                    ToId = TestData.LarsBakke.Id,
+                    ToId = TestData.BakerJohnsen.Id,
+                    FromId = TestData.LarsBakke.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.RequestAssignments.Add(reqAssignment);

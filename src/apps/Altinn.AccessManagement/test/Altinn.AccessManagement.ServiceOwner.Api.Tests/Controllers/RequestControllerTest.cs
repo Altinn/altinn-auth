@@ -144,8 +144,8 @@ public class RequestControllerTest
         public async Task CreateRequest_WithResource_Returns202Accepted()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
-            var from = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
-            var to = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
+            var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
+            var from = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
             var body = new CreateServiceOwnerRequest
             {

@@ -227,7 +227,7 @@ public class RequestController(
         ValidationErrorBuilder errorBuilder = default;
 
         var authUserUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
-        var (hasConnections, _) = await connectionQuery.HasConnection(to, authUserUuid);
+        var (hasConnections, _) = await connectionQuery.HasConnection(to, party);
         if (!hasConnections)
         {
             errorBuilder.Add(ValidationErrors.RequestConnectionNotFound, "$QUERY/to", [new("to", $"No connection between party:'{party}' and to:'{to}'")]);
@@ -288,10 +288,10 @@ public class RequestController(
         ValidationErrorBuilder errorBuilder = default;
 
         var authUserUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
-        var (hasConnections, _) = await connectionQuery.HasConnection(to, authUserUuid);
+        var (hasConnections, _) = await connectionQuery.HasConnection(to, party);
         if (!hasConnections)
         {
-            errorBuilder.Add(ValidationErrors.RequestConnectionNotFound, "$QUERY/to", [new("to", $"No connection exists between the authenticated user and party '{to}'.")]);
+            errorBuilder.Add(ValidationErrors.RequestConnectionNotFound, "$QUERY/to", [new("to", $"No connection between party:'{party}' and to:'{to}'")]);
         }
 
         if (!PackageConstants.TryGetByAll(package, out var packageObj))
