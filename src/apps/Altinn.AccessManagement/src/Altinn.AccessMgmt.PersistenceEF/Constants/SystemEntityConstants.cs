@@ -186,6 +186,32 @@ public static class SystemEntityConstants
     };
 
     /// <summary>
+    /// Represents the Internal Instance Delegation ImportSystem system entity.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 07ab1b35-0299-4667-9dde-4c3f75d9bbeb
+    /// - <c>Name:</c> Internal Instance Delegation Import System
+    /// - <c>RefId:</c> sys-instance-right-import-system
+    /// - <c>TypeId:</c> Internal entity type
+    /// - <c>VariantId:</c> Standard variant
+    /// </remarks>
+    public static ConstantDefinition<Entity> InstanceRightImportSystem { get; } = new ConstantDefinition<Entity>(AuditDefaults.InstanceRightImportSystem)
+    {
+        Entity = new()
+        {
+            Name = nameof(AuditDefaults.InstanceRightImportSystem),
+            RefId = "sys-instance-right-import-system",
+            ParentId = null,
+            TypeId = EntityTypeConstants.Internal,
+            VariantId = EntityVariantConstants.Standard,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Internal Instance Delegation Import System")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Internt Instans Delegering-importsystem")),
+    };
+
+    /// <summary>
     /// Represents the Altinn2RoleImportSystem system entity.
     /// </summary>
     /// <remarks>

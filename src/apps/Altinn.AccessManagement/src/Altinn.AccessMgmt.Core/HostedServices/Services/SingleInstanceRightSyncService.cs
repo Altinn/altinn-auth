@@ -81,12 +81,12 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
 
                             if (!Guid.TryParse(item.PerformedBy, out Guid performedByGuid))
                             {
-                                performedByGuid = SystemEntityConstants.SingleRightImportSystem.Id;
+                                performedByGuid = SystemEntityConstants.InstanceRightImportSystem.Id;
                             }
 
                             AuditValues values = new AuditValues(
                                 performedByGuid,
-                                SystemEntityConstants.SingleRightImportSystem.Id,
+                                SystemEntityConstants.InstanceRightImportSystem.Id,
                                 item.PerformedBy,
                                 item.Created?.ToUniversalTime() ?? DateTime.UtcNow);
 
@@ -184,8 +184,8 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                                 };
 
                                 AuditValues values = new AuditValues(
-                                SystemEntityConstants.SingleRightImportSystem.Id,
-                                SystemEntityConstants.SingleRightImportSystem.Id,
+                                SystemEntityConstants.InstanceRightImportSystem.Id,
+                                SystemEntityConstants.InstanceRightImportSystem.Id,
                                 batchId.ToString(),
                                 DateTime.UtcNow);
 
@@ -230,12 +230,12 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
 
                     if (!Guid.TryParse(element.PerformedBy, out Guid performedByGuid))
                     {
-                        performedByGuid = SystemEntityConstants.SingleRightImportSystem.Id;
+                        performedByGuid = SystemEntityConstants.InstanceRightImportSystem.Id;
                     }
 
                     values = new AuditValues(
                         performedByGuid,
-                        SystemEntityConstants.SingleRightImportSystem.Id,
+                        SystemEntityConstants.InstanceRightImportSystem.Id,
                         batchId.ToString(),
                         element.Created?.ToUniversalTime() ?? DateTime.UtcNow);
 

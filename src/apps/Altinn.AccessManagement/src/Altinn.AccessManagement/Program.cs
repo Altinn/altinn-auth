@@ -85,7 +85,7 @@ async Task Init()
 async Task PersistenceFeatures()
 {
     // Delete me after next prod release
-    Altinn.AccessMgmt.PersistenceEF.Utils.Settings.FeatureFlags.IncludeSingleRightsImportedAssignments = await featureManager.IsEnabledAsync("AccessMgmt.Core.Services.IncludeSingleRightsImportedAssignments");
+    Altinn.AccessMgmt.PersistenceEF.Utils.Settings.FeatureFlags.UseInstanceDelegationEF = await featureManager.IsEnabledAsync("AccessManagement.InstanceDelegation.EF");
 }
 
 /// <summary>

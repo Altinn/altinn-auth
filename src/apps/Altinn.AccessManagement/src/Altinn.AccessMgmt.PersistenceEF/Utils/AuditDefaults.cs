@@ -31,6 +31,11 @@ public static class AuditDefaults
     public const string SingleRightImportSystem = "f1be3999-68f6-4757-92b4-d3f3d33345e1";
 
     /// <summary>
+    /// InstanceRightImportSystem
+    /// </summary>
+    public const string InstanceRightImportSystem = "07ab1b35-0299-4667-9dde-4c3f75d9bbeb";
+
+    /// <summary>
     /// EnduserApi
     /// </summary>
     public const string EnduserApi = "ed771364-42a8-4934-801e-b482ed20ec3e";

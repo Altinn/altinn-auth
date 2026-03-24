@@ -2,5 +2,5 @@
 
 public static class FeatureFlags
 {
-    public static bool IncludeSingleRightsImportedAssignments { get; set; }
+    public static bool UseInstanceDelegationEF { get; set; }
 }

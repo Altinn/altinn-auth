@@ -1465,7 +1465,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
             result = await db.SaveChangesAsync(audit, cancellationToken);
         }
 
-        if (assignment.Audit_ChangedBySystem == SystemEntityConstants.SingleRightImportSystem)
+        if (assignment.Audit_ChangedBySystem == SystemEntityConstants.InstanceRightImportSystem)
         {
             await DeleteAssignment(assignment.Id, false, audit, cancellationToken);
         }
