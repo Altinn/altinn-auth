@@ -14,14 +14,24 @@ public interface IRequestService
     Task<Result<RequestDto>> GetRequest(Guid requestId, CancellationToken ct = default);
 
     /// <summary>
-    /// Get requests created for party
+    /// Get requests sent by the party
     /// </summary>
     Task<Result<IEnumerable<RequestDto>>> GetSentRequests(Guid partyId, Guid? toId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default);
-    
+
     /// <summary>
-    /// Get requests created at party
+    /// Get requests received by the party
     /// </summary>
     Task<Result<IEnumerable<RequestDto>>> GetReceivedRequests(Guid partyId, Guid? fromId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default);
+
+    /// <summary>
+    /// Get count of requests sent by the party
+    /// </summary>
+    Task<Result<int>> GetSentRequestsCount(Guid partyId, Guid? toId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default);
+
+    /// <summary>
+    /// Get count of requests received by the party
+    /// </summary>
+    Task<Result<int>> GetReceivedRequestsCount(Guid partyId, Guid? fromId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default);
 
     /// <summary>
     /// Creates a new request

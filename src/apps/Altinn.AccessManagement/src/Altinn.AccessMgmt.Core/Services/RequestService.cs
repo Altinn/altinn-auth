@@ -77,6 +77,26 @@ public class RequestService(AppDbContext db) : IRequestService
     }
 
     /// <inheritdoc/>
+    public async Task<Result<int>> GetSentRequestsCount(Guid partyId, Guid? toId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default)
+    {
+        var filter = QuerySentFilter(partyId, toId);
+        var resourceCount = string.IsNullOrEmpty(type) || type.Equals("resource", StringComparison.OrdinalIgnoreCase) ? await GetRequestAssignmentResourceCount(filter, status, ct) : 0;
+        var packageCount = string.IsNullOrEmpty(type) || type.Equals("package", StringComparison.OrdinalIgnoreCase) ? await GetRequestAssignmentPackageCount(filter, status, ct) : 0;
+
+        return resourceCount + packageCount;
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<int>> GetReceivedRequestsCount(Guid partyId, Guid? fromId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default)
+    {
+        var filter = QueryReceivedFilter(partyId, fromId);
+        var resourceCount = string.IsNullOrEmpty(type) || type.Equals("resource", StringComparison.OrdinalIgnoreCase) ? await GetRequestAssignmentResourceCount(filter, status, ct) : 0;
+        var packageCount = string.IsNullOrEmpty(type) || type.Equals("package", StringComparison.OrdinalIgnoreCase) ? await GetRequestAssignmentPackageCount(filter, status, ct) : 0;
+
+        return resourceCount + packageCount;
+    }
+
+    /// <inheritdoc/>
     public async Task<Result<RequestDto>> UpdateRequest(Guid partyUuid, Guid requestId, RequestStatus status, CancellationToken ct = default)
     {
         ValidationErrorBuilder errorBuilder = default;
@@ -380,38 +400,62 @@ public class RequestService(AppDbContext db) : IRequestService
 
     private async Task<IEnumerable<RequestAssignmentResource>> GetRequestAssignmentResource(RequestFilter filter, IEnumerable<RequestStatus> status, CancellationToken ct)
     {
-        if (!filter.FromId.HasValue && !filter.ToId.HasValue)
-        {
-            throw new ArgumentException("At least one of fromId, toId or requestedBy must be provided");
-        }
+        ValidateFilter(filter);
 
-        return await db.RequestAssignmentResources
+        return await BuildRequestAssignmentResourceQuery(filter, status)
             .Include(r => r.Assignment).ThenInclude(a => a.From)
             .Include(r => r.Assignment).ThenInclude(a => a.To)
             .Include(r => r.Assignment).ThenInclude(a => a.Role)
             .Include(r => r.Resource)
-            .WhereIf(filter.FromId.HasValue, r => r.Assignment.FromId == filter.FromId.Value)
-            .WhereIf(filter.ToId.HasValue, r => r.Assignment.ToId == filter.ToId.Value)
-            .WhereIf(status?.Any() == true, r => status.Contains(r.Status))
             .ToListAsync(cancellationToken: ct);
     }
 
     private async Task<IEnumerable<RequestAssignmentPackage>> GetRequestAssignmentPackage(RequestFilter filter, IEnumerable<RequestStatus> status, CancellationToken ct)
     {
-        if (!filter.FromId.HasValue && !filter.ToId.HasValue)
-        {
-            throw new ArgumentException("At least one of fromId, toId or requestedBy must be provided");
-        }
+        ValidateFilter(filter);
 
-        return await db.RequestAssignmentPackages
+        return await BuildRequestAssignmentPackageQuery(filter, status)
             .Include(r => r.Assignment).ThenInclude(a => a.From)
             .Include(r => r.Assignment).ThenInclude(a => a.To)
             .Include(r => r.Assignment).ThenInclude(a => a.Role)
             .Include(r => r.Package)
+            .ToListAsync(cancellationToken: ct);
+    }
+
+    private async Task<int> GetRequestAssignmentResourceCount(RequestFilter filter, IEnumerable<RequestStatus> status, CancellationToken ct)
+    {
+        ValidateFilter(filter);
+        return await BuildRequestAssignmentResourceQuery(filter, status).CountAsync(cancellationToken: ct);
+    }
+
+    private async Task<int> GetRequestAssignmentPackageCount(RequestFilter filter, IEnumerable<RequestStatus> status, CancellationToken ct)
+    {
+        ValidateFilter(filter);
+        return await BuildRequestAssignmentPackageQuery(filter, status).CountAsync(cancellationToken: ct);
+    }
+
+    private IQueryable<RequestAssignmentResource> BuildRequestAssignmentResourceQuery(RequestFilter filter, IEnumerable<RequestStatus> status)
+    {
+        return db.RequestAssignmentResources
             .WhereIf(filter.FromId.HasValue, r => r.Assignment.FromId == filter.FromId.Value)
             .WhereIf(filter.ToId.HasValue, r => r.Assignment.ToId == filter.ToId.Value)
-            .WhereIf(status?.Any() == true, r => status.Contains(r.Status))
-            .ToListAsync(cancellationToken: ct);
+            .WhereIf(status?.Any() == true, r => status.Contains(r.Status));
+    }
+
+    private IQueryable<RequestAssignmentPackage> BuildRequestAssignmentPackageQuery(RequestFilter filter, IEnumerable<RequestStatus> status)
+    {
+        return db.RequestAssignmentPackages
+            .WhereIf(filter.FromId.HasValue, r => r.Assignment.FromId == filter.FromId.Value)
+            .WhereIf(filter.ToId.HasValue, r => r.Assignment.ToId == filter.ToId.Value)
+            .WhereIf(status?.Any() == true, r => status.Contains(r.Status));
+    }
+
+    private static void ValidateFilter(RequestFilter filter)
+    {
+        if (!filter.FromId.HasValue && !filter.ToId.HasValue)
+        {
+            throw new ArgumentException("At least one of fromId or toId must be provided");
+        }
     }
 
     private async Task<Result<RequestAssignment>> GetOrCreateRequestAssignment(Guid fromId, Guid toId, Guid roleId, CancellationToken ct = default)
