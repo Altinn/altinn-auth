@@ -4831,11 +4831,11 @@ public static class PackageConstants
             AreaId = AreaConstants.TransportAndStorage,
         },
         EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "RoadUsers"),
-            KeyValuePair.Create("Description", "This authorization gives access to services related to vehicles and vehicle control. This includes the purchase and sale of vehicles. In the event of regulatory changes or the introduction of new digital services, there may be changes in which access this authorization provides.")
+            KeyValuePair.Create("Name", "Road users"),
+            KeyValuePair.Create("Description", "This authorization gives access to services related to driving licences and traffic information. In the event of regulatory changes or the introduction of new digital services, there may be changes in which access this authorization provides.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Køyretøy"),
+            KeyValuePair.Create("Name", "Trafikant"),
             KeyValuePair.Create("Description", "Denne fullmakta gir tilgang til tenester knytte til førarkort og trafikantinformasjon. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i kva tilgangar denne fullmakta gir.")
         ),
     };
