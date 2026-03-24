@@ -1,4 +1,5 @@
-﻿using Altinn.AccessManagement.Core.Errors;
+﻿using System.Diagnostics;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -7,9 +8,7 @@ using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Altinn.Authorization.ProblemDetails;
-using Authorization.Platform.Authorization.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
@@ -55,8 +54,8 @@ public class RequestService(AppDbContext db) : IRequestService
     public async Task<Result<IEnumerable<RequestDto>>> GetSentRequests(Guid partyId, Guid? toId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default)
     {
         var filter = QuerySentFilter(partyId, toId);
-        var requestResources = string.IsNullOrEmpty(type) || type == "resource" ? await GetRequestAssignmentResource(filter, status, ct) : default;
-        var requestPackages = string.IsNullOrEmpty(type) || type == "package" ? await GetRequestAssignmentPackage(filter, status, ct) : default;
+        var requestResources = string.IsNullOrEmpty(type) || type.Equals("resource", StringComparison.OrdinalIgnoreCase) ? await GetRequestAssignmentResource(filter, status, ct) : new List<RequestAssignmentResource>();
+        var requestPackages = string.IsNullOrEmpty(type) || type.Equals("package", StringComparison.OrdinalIgnoreCase) ? await GetRequestAssignmentPackage(filter, status, ct) : new List<RequestAssignmentPackage>();
 
         var result = requestResources.Select(DtoMapper.Convert)
             .Union(requestPackages.Select(DtoMapper.Convert));
@@ -68,8 +67,8 @@ public class RequestService(AppDbContext db) : IRequestService
     public async Task<Result<IEnumerable<RequestDto>>> GetReceivedRequests(Guid partyId, Guid? fromId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default)
     {
         var filter = QueryReceivedFilter(partyId, fromId);
-        var requestResources = string.IsNullOrEmpty(type) || type == "resource" ? await GetRequestAssignmentResource(filter, status, ct) : default;
-        var requestPackages = string.IsNullOrEmpty(type) || type == "package" ? await GetRequestAssignmentPackage(filter, status, ct) : default;
+        var requestResources = string.IsNullOrEmpty(type) || type.Equals("resource", StringComparison.OrdinalIgnoreCase) ? await GetRequestAssignmentResource(filter, status, ct) : new List<RequestAssignmentResource>();
+        var requestPackages = string.IsNullOrEmpty(type) || type.Equals("package", StringComparison.OrdinalIgnoreCase) ? await GetRequestAssignmentPackage(filter, status, ct) : new List<RequestAssignmentPackage>();
 
         var result = requestResources.Select(DtoMapper.Convert)
             .Union(requestPackages.Select(DtoMapper.Convert));
