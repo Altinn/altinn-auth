@@ -3624,12 +3624,12 @@ public static class PackageConstants
             AreaId = AreaConstants.ManageAccess,
         },
         EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Access management of individual messages, forms and dialogs"),
+            KeyValuePair.Create("Name", "Access manager of individual messages, forms and dialogs"),
             KeyValuePair.Create("Description", "Provides access to the user interface in the message box, allowing users to grant access to individual messages, forms, and dialogs that the recipient themselves have access to.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Tilgangsstyrar for enkeltmeldinger, -skjema og -dialoger"),
-            KeyValuePair.Create("Description", "Gir tilgang til brukargrensesnitt i meldingsboksa, for å kunne gi brukarar tilgang for enkeltmeldingar, -skjema og -dialogar, som mottakaren sjølv har tilgang til.")
+            KeyValuePair.Create("Name", "Tilgangsstyrar for enkeltmeldingar, -skjema og -dialogar"),
+            KeyValuePair.Create("Description", "Gir tilgang til brukargrensesnitt i meldingsboksen, for å kunne gi brukarar tilgang til enkeltmeldingar, -skjema og -dialogar, som mottakaren sjølv har tilgang til.")
         ),
     };
 
