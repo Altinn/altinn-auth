@@ -122,7 +122,7 @@ public class RequestController(
         }
 
         bool isAuthorized = await AuthorizeResourceAccess("altinn_access_management", result.Value.From.Id, User, "write");
-        if (isAuthorized)
+        if (!isAuthorized)
         {
             return Forbid();
         }
