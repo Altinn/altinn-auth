@@ -1,0 +1,40 @@
+{
+  "identifier": "app_skd_sirius-skattemelding-v1",
+  "title": {
+    "nb": "Skattemelding med næringsspesifikasjon 2020"
+  },
+  "resourceReferences": [
+    {
+      "referenceSource": "Altinn3",
+      "reference": "skd/sirius-skattemelding-v1",
+      "referenceType": "ApplicationId"
+    }
+  ],
+  "delegable": true,
+  "visible": true,
+  "hasCompetentAuthority": {
+    "name": {
+      "en": "Norwegian Tax Administration",
+      "nb": "Skatteetaten",
+      "nn": "Skatteetaten"
+    },
+    "organization": "974761076",
+    "orgcode": "skd"
+  },
+  "accessListMode": "Disabled",
+  "selfIdentifiedUserEnabled": false,
+  "enterpriseUserEnabled": false,
+  "resourceType": "AltinnApp",
+  "authorizationReference": [
+    {
+      "id": "urn:altinn:org",
+      "value": "skd"
+    },
+    {
+      "id": "urn:altinn:app",
+      "value": "sirius-skattemelding-v1"
+    }
+  ],
+  "isOneTimeConsent": false,
+  "versionId": 0
+}

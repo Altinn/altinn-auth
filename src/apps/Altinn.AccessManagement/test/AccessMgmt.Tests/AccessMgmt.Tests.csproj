@@ -60,5 +60,6 @@
 
     <ItemGroup>
       <Folder Include="Data\ResourceRegistryResources\nav_sykepenger_dialog\" />
+      <Folder Include="Data\Xacml\3.0\appdelegation\" />
     </ItemGroup>
 </Project>

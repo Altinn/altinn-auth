@@ -19,6 +19,10 @@ public static class TestDataSeeds
     /// <param name="db">The <see cref="AppDbContext"/> to seed.</param>
     public static async Task Exec(AppDbContext db)
     {
+        #region Resource Types
+        db.ResourceTypes.Add(TestData.TestResourceType);
+        #endregion
+
         #region Entities
         db.Entities.AddRange([
             TestEntities.PersonPaula,
@@ -67,7 +71,8 @@ public static class TestDataSeeds
             TestData.JosephineYvonnesdottir,
             TestData.BodilFarmor,
             TestData.DumboAdventures,
-            TestData.MilleHundefrisor
+            TestData.MilleHundefrisor,
+            TestData.Milena
         ]);
         #endregion
 

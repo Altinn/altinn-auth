@@ -1,10 +1,14 @@
-﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
+﻿using System.Text.Json.Serialization;
+
+namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 
 /// <summary>
 /// Reason for access (Dto)
 /// </summary>
 public sealed class AccessReason
 {
+    public AccessReasonFlag Flag => flag;
+
     private readonly AccessReasonFlag flag;
 
     private IReadOnlyList<AccessReasonRecord>? items;
@@ -12,7 +16,7 @@ public sealed class AccessReason
     public IReadOnlyList<AccessReasonRecord> Items =>
         items ??= AccessReasonMapping.ToRecords(flag);
 
-    internal AccessReason(AccessReasonFlag flag)
+    public AccessReason(AccessReasonFlag flag)
     {
         this.flag = flag;
     }

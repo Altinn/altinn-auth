@@ -5,6 +5,19 @@ namespace Altinn.AccessManagement.TestUtils.Data;
 
 public static class TestData
 {
+    #region Resource Types
+
+    /// <summary>
+    /// A generic test resource type used across integration tests.
+    /// </summary>
+    public static ResourceType TestResourceType { get; } = new()
+    {
+        Id = Guid.Parse("0195efb8-7c80-7f26-817a-50893176320d"),
+        Name = "Test",
+    };
+
+    #endregion
+
     #region Firmaer
 
     public static ConstantDefinition<Entity> BakerJohnsen { get; } = new("a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d")
@@ -458,6 +471,32 @@ public static class TestData
 
     #endregion
 
+    #region Personer - Mille Hundefrisør
+
+    public static ConstantDefinition<Entity> Milena { get; } = new("10000024-aaaa-4bbb-8ccc-ddddeeee0024")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1990, 5, 10),
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Milena Solstad",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 50298981,
+            PersonIdentifier = "28849198981",
+            RefId = "28849198981",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 20198981,
+            Username = "milena.solstad",
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+
+    #endregion
+
     #region Personer - Fredriksons Fabrikk
 
     public static ConstantDefinition<Entity> SiljeHaugen { get; } = new("10000007-aaaa-4bbb-8ccc-ddddeeee0007")
@@ -843,7 +882,11 @@ public static class TestData
 
     // Dumbo Adventures - personroller
     private static readonly Guid AssignDumboAdventuresMalinEmilieMD = Guid.Parse("0196a0b1-0001-7001-8001-000000000020");
-    private static readonly Guid AssignDumboAdventuresThea = Guid.Parse("0196a0b1-0001-7001-8001-000000000021");  
+    private static readonly Guid AssignDumboAdventuresThea = Guid.Parse("0196a0b1-0001-7001-8001-000000000021");
+
+    // Mille Hundefrisør - personroller
+    private static readonly Guid AssignMilleHundefrisorTheaMD = Guid.Parse("0196a0b1-0001-7001-8001-000000000030");
+    private static readonly Guid AssignMilleHundefrisorMilenaCB = Guid.Parse("0196a0b1-0001-7001-8001-000000000031");
 
     // Org-til-org assignments
     private static readonly Guid AssignBakerJohnsenRegnskapNorgeAcc = Guid.Parse("0196a0b1-0001-7001-8001-000000000016");
@@ -889,6 +932,10 @@ public static class TestData
         // Dumbo Adventures - personroller
         new Assignment() { Id = AssignDumboAdventuresMalinEmilieMD, FromId = DumboAdventures, ToId = MalinEmilie, RoleId = RoleConstants.ManagingDirector },
         new Assignment() { Id = AssignDumboAdventuresThea, FromId = DumboAdventures, ToId = Thea, RoleId = RoleConstants.Rightholder },
+
+        // Mille Hundefrisør - personroller
+        new Assignment() { Id = AssignMilleHundefrisorTheaMD, FromId = MilleHundefrisor, ToId = Thea, RoleId = RoleConstants.ManagingDirector },
+        new Assignment() { Id = AssignMilleHundefrisorMilenaCB, FromId = MilleHundefrisor, ToId = Milena, RoleId = RoleConstants.ChairOfTheBoard },
 
         // RPC AS - personroller
         new Assignment() { Id = AssignRpcOddHalvorsenMD, FromId = RpcAS, ToId = OddHalvorsen, RoleId = RoleConstants.ManagingDirector },
