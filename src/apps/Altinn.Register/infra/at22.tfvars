@@ -49,8 +49,5 @@ config = {
 
   api_source = {
     default = "db"
-    endpoints = {
-      "Testing:Terraform" = "a2"
-    }
   }
 }
