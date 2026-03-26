@@ -943,9 +943,8 @@ public partial class ConnectionService(
         // Fetch packages
         var packages = await CheckPackageForResource(party, authenticatedUserUuid, null, ConfigureConnections, cancellationToken);
 
-        bool isMainAdminForFrom = packages.Value.Any(p => p.Result && p.Package.Id == PackageConstants.MainAdministrator.Id);
-
-        // Fetch roles
+        bool isMainAdminForFrom = await IsMainAdmin(party, authenticatedUserUuid, cancellationToken);
+        
         var roles = await RoleDelegationCheck(party, authenticatedUserUuid, isMainAdminForFrom, cancellationToken);
 
         // Fetch resource rights
@@ -1009,7 +1008,8 @@ public partial class ConnectionService(
         List<Models.Right> rights = DelegationCheckHelper.DecomposePolicy(policy, resource);
 
         var packages = await CheckPackageForResource(party, authenticatedUserUuid, null, configureConnection, cancellationToken);
-        bool isMainAdminForFrom = packages.Value.Any(p => p.Result == true && p.Package.Id == PackageConstants.MainAdministrator.Id);
+
+        bool isMainAdminForFrom = await IsMainAdmin(party, authenticatedUserUuid, cancellationToken);
 
         var roles = await RoleDelegationCheck(party, authenticatedUserUuid, isMainAdminForFrom, cancellationToken);
         var resources = await GetResourceRights(party, authenticatedUserUuid, resourceDto.Id, null, cancellationToken);
@@ -1033,6 +1033,27 @@ public partial class ConnectionService(
         };
 
         return instanceCheckDto;
+    }
+
+    private async Task<bool> IsMainAdmin(Guid fromId, Guid authenticatedUserUuid, CancellationToken cancellationToken)
+    {
+        var connectionsToFromParty = await connectionQuery.GetConnectionsAsync(
+            new ConnectionQueryFilter()
+            {
+                FromIds = [fromId],
+                ToIds = [authenticatedUserUuid],
+                IncludeKeyRole = true,
+                IncludeMainUnitConnections = true,
+                IncludeSubConnections = true,
+                IncludePackages = true,
+                IncludeDelegation = false,
+                EnrichEntities = false,
+            },
+            ConnectionQueryDirection.FromOthers,
+            true,
+            cancellationToken
+        );
+        return connectionsToFromParty.Any(c => c.RoleId == RoleConstants.Hadm.Id || c.Packages.Any(p => p.Id == PackageConstants.MainAdministrator.Id));
     }
 
     private async Task<RightCheckDto> MapFromInternalToExternalRight(Models.Right right, string resource, ResourceAccessListMode accessListMode, MinimalParty fromParty, List<RightDto> rightKeys, bool isResourceDelegable, bool isMaskinPortenSchema, CancellationToken cancellationToken)
