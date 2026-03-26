@@ -38,7 +38,7 @@ public class OutboxReaperJobTest : IClassFixture<ApiFixture>
     {
         await Fixture.QueryDb(async db =>
         {
-            await db.UpsertOutboxAsync(nameof(OutboxMessage_ProcessFailedJobs_RetriesAtLeastThreeTimes), nameof(FailureHandler), _ => new TestMessage { Content = "fail" }, null, TestContext.Current.CancellationToken);
+            await db.OutboxMessages.UpsertOutboxAsync(nameof(OutboxMessage_ProcessFailedJobs_RetriesAtLeastThreeTimes), nameof(FailureHandler), _ => new TestMessage { Content = "fail" }, null, TestContext.Current.CancellationToken);
             await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         });
 

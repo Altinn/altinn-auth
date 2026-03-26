@@ -55,6 +55,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
+    public DbSet<OutboxMessageLog> OutboxMessageLogs => Set<OutboxMessageLog>();
+
     public DbSet<Package> Packages => Set<Package>();
 
     public DbSet<PackageResource> PackageResources => Set<PackageResource>();
@@ -183,6 +185,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<AuditEntityVariant>(new AuditEntityVariantConfiguration());
         modelBuilder.ApplyConfiguration<AuditEntityVariantRole>(new AuditEntityVariantRoleConfiguration());
         modelBuilder.ApplyConfiguration<OutboxMessage>(new OutboxMessageConfiguration());
+        modelBuilder.ApplyConfiguration<OutboxMessageLog>(new OutboxMessageLogConfiguration());
         modelBuilder.ApplyConfiguration<AuditPackage>(new AuditPackageConfiguration());
         modelBuilder.ApplyConfiguration<AuditPackageResource>(new AuditPackageResourceConfiguration());
         modelBuilder.ApplyConfiguration<AuditProvider>(new AuditProviderConfiguration());
@@ -291,152 +294,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             }
 
             throw;
-        }
-    }
-
-    /// <summary>
-    /// Adds or updates an outbox message associated with the specified reference identifier.
-    /// </summary>
-    /// <remarks>
-    /// This method implements an <c>upsert</c> pattern for outbox messages:
-    /// <list type="bullet">
-    /// <item>
-    /// If no existing outbox entry is found for the provided <paramref name="refId"/>,
-    /// a new value is created using <paramref name="addValueFactory"/>.
-    /// </item>
-    /// <item>
-    /// If an existing outbox entry is found, its value is updated using
-    /// <paramref name="updateValueFactory"/>, which receives both the current stored data
-    /// and the incoming outbox data.
-    /// </item>
-    /// </list>
-    /// 
-    /// The method is typically used to ensure that a single logical message or event
-    /// associated with a given reference identifier is maintained in the outbox.
-    /// </remarks>
-    /// <typeparam name="T">
-    /// The type of the data to be stored or updated in the outbox message.
-    /// </typeparam>
-    /// <param name="refId">
-    /// A reference identifier used to locate an existing outbox message.
-    /// This typically represents a domain entity identifier or correlation key.
-    /// </param>
-    /// <param name="handler">handler that should process the message.</param>
-    /// <param name="addValueFactory">
-    /// A factory function used to create the initial value when no existing
-    /// outbox message is found for the given <paramref name="refId"/>.
-    /// </param>
-    /// <param name="updateValueFactory">
-    /// A function used to update the value when an existing outbox message is found.
-    /// The function receives the current stored value and the existing outbox data,
-    /// and returns the updated value to be stored.
-    /// </param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>
-    /// A task that represents the asynchronous upsert operation.
-    /// </returns>
-    public async Task UpsertOutboxAsync<T>(
-        string refId,
-        string handler,
-        Func<OutboxMessage, T> addValueFactory,
-        Func<OutboxMessage, T, T> updateValueFactory,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(refId);
-        ArgumentNullException.ThrowIfNull(addValueFactory);
-
-        var message = await OutboxMessages
-            .AsTracking()
-            .FirstOrDefaultAsync(
-                o =>
-                o.RefId == refId &&
-                o.Handler == handler &&
-                o.Status == OutboxStatus.Pending,
-                cancellationToken);
-
-        UpsertOutbox(refId, handler, addValueFactory, updateValueFactory, message);
-    }
-
-    /// <summary>
-    /// Adds or updates an outbox message associated with the specified reference identifier.
-    /// </summary>
-    /// <remarks>
-    /// This method implements an <c>upsert</c> pattern for outbox messages:
-    /// <list type="bullet">
-    /// <item>
-    /// If no existing outbox entry is found for the provided <paramref name="refId"/>,
-    /// a new value is created using <paramref name="addValueFactory"/>.
-    /// </item>
-    /// <item>
-    /// If an existing outbox entry is found, its value is updated using
-    /// <paramref name="updateValueFactory"/>, which receives both the current stored data
-    /// and the incoming outbox data.
-    /// </item>
-    /// </list>
-    /// 
-    /// The method is typically used to ensure that a single logical message or event
-    /// associated with a given reference identifier is maintained in the outbox.
-    /// </remarks>
-    /// <typeparam name="T">
-    /// The type of the data to be stored or updated in the outbox message.
-    /// </typeparam>
-    /// <param name="refId">
-    /// A reference identifier used to locate an existing outbox message.
-    /// This typically represents a domain entity identifier or correlation key.
-    /// </param>
-    /// <param name="handler">handler that should process the message.</param>
-    /// <param name="addValueFactory">
-    /// A factory function used to create the initial value when no existing
-    /// outbox message is found for the given <paramref name="refId"/>.
-    /// </param>
-    /// <param name="updateValueFactory">
-    /// A function used to update the value when an existing outbox message is found.
-    /// The function receives the current stored value and the existing outbox data,
-    /// and returns the updated value to be stored.
-    /// </param>
-    public void UpsertOutbox<T>(
-        string refId,
-        string handler,
-        Func<OutboxMessage, T> addValueFactory,
-        Func<OutboxMessage, T, T> updateValueFactory)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(refId);
-        ArgumentNullException.ThrowIfNull(addValueFactory);
-
-        var message = OutboxMessages
-            .AsTracking()
-            .FirstOrDefault(o =>
-                o.RefId == refId &&
-                o.Handler == handler &&
-                o.Status == OutboxStatus.Pending);
-
-        UpsertOutbox(refId, handler, addValueFactory, updateValueFactory, message);
-    }
-
-    private void UpsertOutbox<T>(string refId, string handler, Func<OutboxMessage, T> addValueFactory, Func<OutboxMessage, T, T> updateValueFactory, OutboxMessage message)
-    {
-        if (message is { })
-        {
-            if (updateValueFactory is { })
-            {
-                var data = JsonSerializer.Deserialize<T>(message.Data);
-                var updatedValue = updateValueFactory(message, data);
-                message.Data = JsonSerializer.Serialize(updatedValue);
-            }
-        }
-        else
-        {
-            message = new OutboxMessage()
-            {
-                CorrelationId = Activity.Current?.TraceId.ToString(),
-                Status = OutboxStatus.Pending,
-                RefId = refId,
-                Handler = handler,
-            };
-
-            var data = addValueFactory(message);
-            message.Data = JsonSerializer.Serialize(data);
-            OutboxMessages.Add(message);
         }
     }
 

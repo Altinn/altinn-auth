@@ -1,0 +1,25 @@
+namespace Altinn.AccessMgmt.Core.Appsettings;
+
+public class CoreAppsettings
+{
+    public CoreAppsettings()
+    {
+    }
+
+    public CoreAppsettings(Action<CoreAppsettings> configureAppsettings)
+    {
+        if (configureAppsettings is { })
+        {
+            configureAppsettings(this);
+        }
+    }
+
+    public RequestOptions Request { get; set; } = new();
+
+    public class RequestOptions
+    {
+        public int NotifyRequestApprovedInSeconds { get; set; } = 60 * 15;
+
+        public int NotifyRequestPendingInSeconds { get; set; } = 60 * 15;
+    }
+}

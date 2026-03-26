@@ -44,7 +44,7 @@ public static class AccessMgmtFeatureFlags
     /// Specifies if the altinn private tax affair roles data should streamed from sblbridge service to access management database
     /// </summary>
     public const string HostedServicesPrivateTaxAffairRoleSync = $"AccessMgmt.Core.HostedServices.AltinnPrivateTaxAffairRoleSync";
-    
+
     /// <summary>
     /// Specifies if the altinn bankruptcyestate roles data should be streamed from sblbridge service to access management database
     /// </summary>
@@ -99,6 +99,16 @@ public static class AccessMgmtFeatureFlags
     /// Represents the handler for outbox messages that couldn't be processed.
     /// </summary>
     public const string HostedServicesOutboxReaper = $"AccessMgmt.Core.HostedServices.Outbox.Reaper";
+
+    /// <summary>
+    /// Specifies if notifications for pending requests are enabled.
+    /// </summary>
+    public const string AccessMgmtCoreOutboxRequestNotifyPending = $"AccessMgmt.Core.Outbox.RequestNotifyPending";
+
+    /// <summary>
+    /// Specifies if notifications for approved requests are enabled.
+    /// </summary>
+    public const string AccessMgmtCoreOutboxRequestNotifyApproved = $"AccessMgmt.Core.Outbox.RequestNotifyApproved";
 
     /// <summary>
     /// Feature flag for Controller Enduser Connections

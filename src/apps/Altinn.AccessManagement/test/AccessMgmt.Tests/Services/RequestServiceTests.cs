@@ -1,4 +1,6 @@
-﻿using Altinn.AccessManagement.Tests.Fixtures;
+﻿using System.Security.Cryptography;
+using Altinn.AccessManagement.Tests.Fixtures;
+using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -8,6 +10,9 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace AccessMgmt.Tests.Services;
 
@@ -42,6 +47,8 @@ public class RequestServiceTests : IClassFixture<PostgresFixture>
     private readonly AppDbContext _db;
     private readonly RequestService _requestService;
 
+    private readonly IOptions<CoreAppsettings> _coreSettings;
+
     public RequestServiceTests(PostgresFixture fixture)
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -53,9 +60,19 @@ public class RequestServiceTests : IClassFixture<PostgresFixture>
             AuditAccessor = new AuditAccessor { AuditValues = TestAudit }
         };
 
+        var configurationBuilder = new ConfigurationBuilder()
+            .AddInMemoryCollection([
+            ]);
+
+        var collection = new ServiceCollection()
+            .AddSingleton<IConfiguration>(configurationBuilder.Build())
+            .AddOptions<CoreAppsettings>();
+
+        var sp = collection.Services.BuildServiceProvider();
+
         SeedSharedData(_db).GetAwaiter().GetResult();
 
-        _requestService = new RequestService(_db);
+        _requestService = new RequestService(_db, sp.GetRequiredService<IOptions<CoreAppsettings>>());
     }
 
     private static async Task SeedSharedData(AppDbContext db)

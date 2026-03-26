@@ -7,4 +7,5 @@ namespace Altinn.AccessMgmt.PersistenceEF.Models;
 /// </summary>
 public class OutboxMessage : BaseOutboxMessage
 {
+    public ICollection<OutboxMessageLog> OutboxMessageLogs { get; set; }
 }

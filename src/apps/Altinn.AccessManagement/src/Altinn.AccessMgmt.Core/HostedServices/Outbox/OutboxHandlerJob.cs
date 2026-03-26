@@ -152,8 +152,8 @@ internal partial class OutboxHandlerJob(
             {
                 try
                 {
-                    await handler.Handle(message, cancellationToken);
-                    return OutboxStatus.Completed;
+                    var result = await handler.Handle(message, cancellationToken);
+                    return result;
                 }
                 catch (OperationCanceledException)
                 {
@@ -161,7 +161,7 @@ internal partial class OutboxHandlerJob(
                 }
                 catch (Exception ex)
                 {
-                    message.HandlerMessage = $"Handler threw exception: {ex.Message}\n{ex.StackTrace}";
+                    message.HandlerMessage = $"Handler threw unhandled exception: {ex.Message}\n{ex.StackTrace}";
                     return OutboxStatus.Failed;
                 }
             }

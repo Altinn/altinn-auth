@@ -89,6 +89,11 @@ variable "configuration" {
       batch_size                = optional(number, 5)
       max_degree_of_parallelism = optional(number, 5)
     }), {})
+    core = optional(object({
+      request_notify_request_approved_in_seconds = optional(number, 60 * 15)
+      request_notify_request_pending_in_seconds  = optional(number, 60 * 15)
+    }), {})
   })
   default = {}
 }
+

@@ -39,7 +39,7 @@ public class OutboxHandlerJobTest : IClassFixture<ApiFixture>
     {
         await Fixture.QueryDb(async db =>
         {
-            await db.UpsertOutboxAsync(nameof(OutboxMessage_WithSuccessHandler_Success), nameof(SuccessHandler), _ => new TestMessage { Content = "ok" }, null, TestContext.Current.CancellationToken);
+            await db.OutboxMessages.UpsertOutboxAsync(nameof(OutboxMessage_WithSuccessHandler_Success), nameof(SuccessHandler), _ => new TestMessage { Content = "ok" }, null, TestContext.Current.CancellationToken);
             await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         });
 
@@ -61,7 +61,7 @@ public class OutboxHandlerJobTest : IClassFixture<ApiFixture>
     {
         await Fixture.QueryDb(async db =>
         {
-            await db.UpsertOutboxAsync(nameof(OutboxMessage_WithFailureHandler_Failure), nameof(FailureHandler), _ => new TestMessage { Content = "fail" }, null, TestContext.Current.CancellationToken);
+            await db.OutboxMessages.UpsertOutboxAsync(nameof(OutboxMessage_WithFailureHandler_Failure), nameof(FailureHandler), _ => new TestMessage { Content = "fail" }, null, TestContext.Current.CancellationToken);
             await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         });
 
@@ -82,7 +82,7 @@ public class OutboxHandlerJobTest : IClassFixture<ApiFixture>
     {
         await Fixture.QueryDb(async db =>
         {
-            await db.UpsertOutboxAsync(
+            await db.OutboxMessages.UpsertOutboxAsync(
                 nameof(OutboxMessage_WithTimeoutHandler_Timedout),
                 nameof(TimeoutHandler),
                 msg =>
@@ -113,7 +113,7 @@ public class OutboxHandlerJobTest : IClassFixture<ApiFixture>
     {
         await Fixture.QueryDb(async db =>
         {
-            await db.UpsertOutboxAsync(
+            await db.OutboxMessages.UpsertOutboxAsync(
                 nameof(OutboxMessage_WithTimeoutHandler_Interrrupted),
                 nameof(TimeoutHandler),
                 msg =>
@@ -142,15 +142,15 @@ public class OutboxHandlerJobTest : IClassFixture<ApiFixture>
 
 public class SuccessHandler : IOutboxHandler
 {
-    public Task Handle(OutboxMessage message, CancellationToken cancellationToken)
+    public Task<OutboxStatus> Handle(OutboxMessage message, CancellationToken cancellationToken)
     {
-        return Task.CompletedTask;
+        return Task.FromResult(OutboxStatus.Completed);
     }
 }
 
 public class FailureHandler : IOutboxHandler
 {
-    public Task Handle(OutboxMessage message, CancellationToken cancellationToken)
+    public Task<OutboxStatus> Handle(OutboxMessage message, CancellationToken cancellationToken)
     {
         throw new ArgumentException("failure");
     }
@@ -158,9 +158,10 @@ public class FailureHandler : IOutboxHandler
 
 public class TimeoutHandler : IOutboxHandler
 {
-    public async Task Handle(OutboxMessage message, CancellationToken cancellationToken)
+    public async Task<OutboxStatus> Handle(OutboxMessage message, CancellationToken cancellationToken)
     {
         await Task.Delay(100_000_000, cancellationToken);
+        return OutboxStatus.Completed;
     }
 }
 

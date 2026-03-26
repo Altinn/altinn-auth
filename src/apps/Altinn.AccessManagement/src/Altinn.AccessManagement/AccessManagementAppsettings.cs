@@ -1,7 +1,9 @@
+using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.Authorization.Host.Appsettings;
 using Altinn.Authorization.Host.Database.Appsettings;
 using Altinn.Authorization.Host.Lease.Appsettings;
 using Altinn.Authorization.Integration.Platform.Appsettings;
+using Azure.Storage.Blobs.Models;
 
 namespace Altinn.AccessManagement;
 
@@ -33,6 +35,11 @@ public class AccessManagementAppsettings
     /// Gets or sets the database-related settings.
     /// </summary>
     public DatabaseSettings Database { get; set; } = new();
+
+    /// <summary>
+    /// Core Appsettings
+    /// </summary>
+    public CoreAppsettings Core { get; set; } = new();
 
     /// <summary>
     /// Gets or sets the application configuration settings.

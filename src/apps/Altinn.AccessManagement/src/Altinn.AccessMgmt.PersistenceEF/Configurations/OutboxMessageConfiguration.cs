@@ -1,4 +1,5 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Extensions;
+﻿using System.Drawing;
+using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models.Base;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,9 @@ public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage
         builder.Property(p => p.Data)
             .HasColumnType("jsonb")
             .IsRequired();
+        
+        builder.HasMany(p => p.OutboxMessageLogs)
+            .WithOne(p => p.OutboxMessage);
 
         builder.Property(p => p.Handler);
         builder.Property(p => p.Retries)

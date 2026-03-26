@@ -18,4 +18,8 @@ configuration = {
     batch_size                = 10000,
     max_degree_of_parallelism = 20
   }
+  core = {
+    request_notify_request_approved_in_seconds = 600
+    request_notify_request_pending_in_seconds  = 960
+  }
 }
