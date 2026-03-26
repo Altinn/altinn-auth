@@ -143,7 +143,7 @@ internal partial class OutboxHandlerJob(
     public async Task<OutboxStatus> RunHandler(OutboxMessage message, IServiceScope serviceScope, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(message);
-
+        var db = serviceScope.ServiceProvider.GetRequiredService<AppDbContext>();
         var handlers = options.Value.Handlers;
         if (handlers.TryGetValue(message.Handler, out var handlerType))
         {
@@ -161,7 +161,8 @@ internal partial class OutboxHandlerJob(
                 }
                 catch (Exception ex)
                 {
-                    message.HandlerMessage = $"Handler threw unhandled exception: {ex.Message}\n{ex.StackTrace}";
+                    db.OutboxMessageLogs.Add(message, $"Handler threw unhandled exception: {ex.Message}\n{ex.StackTrace}");
+                    await db.SaveChangesAsync(cancellationToken);
                     return OutboxStatus.Failed;
                 }
             }

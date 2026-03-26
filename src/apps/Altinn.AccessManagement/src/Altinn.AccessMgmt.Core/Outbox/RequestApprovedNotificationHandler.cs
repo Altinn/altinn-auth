@@ -44,6 +44,17 @@ public class RequestApprovedNotificationHandler(
 
         if (response.IsProblem)
         {
+            // Contact information for organization / person is missing
+            if (response.ProblemDetails?.ErrorCode.ToString() == "NOT-00001")
+            {
+                db.OutboxMessageLogs.Add(
+                    message,
+                    response.ProblemDetails?.Title ?? "Missing contact information for recipient(s)"
+                );
+
+                await db.SaveChangesAsync(cancellationToken);
+            }
+
             var errorMessage = $@"Failed to send notification.
                 Payload: {JsonSerializer.Serialize(content)}
                 CorrelationId: {Activity.Current?.TraceId}

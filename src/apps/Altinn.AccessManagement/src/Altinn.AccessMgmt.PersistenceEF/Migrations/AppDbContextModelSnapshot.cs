@@ -2727,6 +2727,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("text")
                         .HasColumnName("correlationid");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("createdat")
+                        .HasDefaultValueSql("NOW()");
+
                     b.Property<string>("Data")
                         .IsRequired()
                         .HasColumnType("jsonb")
@@ -2735,10 +2741,6 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.Property<string>("Handler")
                         .HasColumnType("text")
                         .HasColumnName("handler");
-
-                    b.Property<string>("HandlerMessage")
-                        .HasColumnType("text")
-                        .HasColumnName("handlermessage");
 
                     b.Property<string>("RefId")
                         .HasColumnType("text")

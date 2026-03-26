@@ -114,9 +114,9 @@ public class BaseOutboxMessage
     public DateTime? StartedAt { get; set; }
 
     /// <summary>
-    /// Custom message field.
+    /// gets or sets the created at outbox element.
     /// </summary>
-    public string? HandlerMessage { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// Gets or sets the timestamp when the message processing completed.
