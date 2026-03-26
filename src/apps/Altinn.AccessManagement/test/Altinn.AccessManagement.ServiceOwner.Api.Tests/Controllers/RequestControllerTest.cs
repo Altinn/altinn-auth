@@ -268,8 +268,8 @@ public class RequestControllerTest
         public async Task CreateRequest_WithPackage_Returns202Accepted()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
-            var from = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
-            var to = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
+            var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
+            var from = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
             var body = new CreateServiceOwnerRequest
             {
@@ -297,8 +297,8 @@ public class RequestControllerTest
 
             var body = new CreateServiceOwnerRequest
             {
-                From = "urn:invalid:prefix:12345",
-                To = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}",
+                To = "urn:invalid:prefix:12345",
+                From = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}",
                 Resource = new RequestReferenceDto(),
                 Package = new RequestReferenceDto { Id = PackageConstants.Agriculture.Id },
             };
@@ -315,8 +315,8 @@ public class RequestControllerTest
         public async Task CreateRequest_WithEmptyPackageUrn_Returns400()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
-            var from = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
-            var to = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
+            var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
+            var from = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
             var body = new CreateServiceOwnerRequest
             {
@@ -391,8 +391,8 @@ public class RequestControllerTest
             var personPrefix = urnPrefixes.First(u => u.Contains("person"));
 
             // Step 2: Build URNs using the returned prefixes
-            var from = $"{orgPrefix}:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
-            var to = $"{personPrefix}:{TestData.LarsBakke.Entity.PersonIdentifier}";
+            var to = $"{orgPrefix}:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
+            var from = $"{personPrefix}:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
             // Step 3: Create request with resource
             var body = new CreateServiceOwnerRequest
@@ -431,8 +431,8 @@ public class RequestControllerTest
             var personPrefix = urnPrefixes.First(u => u.Contains("person"));
 
             // Step 2: Build URNs using the returned prefixes
-            var from = $"{orgPrefix}:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
-            var to = $"{personPrefix}:{TestData.LarsBakke.Entity.PersonIdentifier}";
+            var to = $"{orgPrefix}:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
+            var from = $"{personPrefix}:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
             // Step 3: Create request with package
             var body = new CreateServiceOwnerRequest
