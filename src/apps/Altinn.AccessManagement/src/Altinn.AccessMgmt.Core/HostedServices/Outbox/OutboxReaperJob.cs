@@ -115,20 +115,17 @@ internal partial class OutboxReaperJob(
                 WHERE
                     status = 'Processing'
                     AND startedat IS NOT NULL
-                    AND (NOW() > startedat + timeout::interval + INTERVAL '5 seconds')
-                    AND retries < 2
+                    AND (NOW() > startedat + timeout::interval + INTERVAL '10 seconds')
                 FOR UPDATE SKIP LOCKED
             )
             UPDATE dbo.outboxmessage
             SET
-                startedat = NULL,
-                completedat = NULL,
-                retries = retries + 1,
-                status = 'Pending'
+                status = 'TimedOut'
             FROM locked_rows
             WHERE dbo.outboxmessage.id = locked_rows.id
             RETURNING dbo.outboxmessage.*;
         """)
+
         .ToListAsync(cancellationToken);
     }
 
