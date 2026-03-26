@@ -1,0 +1,61 @@
+meta {
+  name: Create resource request
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "from": "urn:altinn:person:identifier-no:{{fromSsn}}",
+    "to": "urn:altinn:organization:identifier-no:{{toOrg}}",
+    "resource": {
+      "referenceid": "{{resourceId}}"
+    }
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/delegationrequest/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("resourceId", testdata.app);
+  bru.setVar("toOrg", testdata.org1.orgno);
+  bru.setVar("fromSsn", testdata.person1.pid);
+  
+  var getTokenParameters = {
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_org: sharedtestdata.serviceOwners.ttd.org,
+    auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
+    auth_scopes: "altinn:serviceowner/delegationrequests.write"
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+  
+  //bru.setVar("toPersonId",  testdata.persons.hakkeDyr.personId);
+}
+
+tests {
+  // Should be the same as the .bru request file. Used as prefix in test name which also shows in test result in pipeline.
+  const requestName = "DelegationRequest_CreateDraftRequest";
+  const testdata = require(`./testdata/instance-delegation-authorized-parties/${bru.getEnvVar("tokenEnv")}.js`);
+  const body = res.getBody();
+  
+  test(requestName + "|HttpStatus.Accepted", function() {
+    expect(res.status).to.equal(202);
+  });
+  
+  
+}
