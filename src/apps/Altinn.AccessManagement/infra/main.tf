@@ -229,6 +229,66 @@ module "appsettings" {
       value       = false
     },
     {
+      name        = "AccessMgmt.Core.Outbox.RightholderNotifyAdded"
+      description = "Specifies if notifications should be sent if rightholder assignemnt is added."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Core.Outbox.RightholderNotifyRemoved"
+      description = "Specifies if notifications should be sent if rightholder assignemnt is removed."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Core.Outbox.PackageNotifyAdded"
+      description = "Specifies if notifications should be sent if package is added."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Core.Outbox.PackageNotifyRemoved"
+      description = "Specifies if notifications should be sent if package is removed."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Core.Outbox.ResourceNotifyAdded"
+      description = "Specifies if notifications should be sent if resource is added."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Core.Outbox.ResourceNotifyRemoved"
+      description = "Specifies if notifications should be sent if resource is removed."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Core.Outbox.AgentNotifyAdded"
+      description = "Specifies if notifications should be sent if aggent is added."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Core.Outbox.AgentNotifyRemoved"
+      description = "Specifies if notifications should be sent if agent is removed."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Core.Outbox.ClientNotifyAdded"
+      description = "Specifies if notifications should be sent if client is added."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Core.Outbox.ClientNotifyRemoved"
+      description = "Specifies if notifications should be sent if client is removed."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
       name        = "AccessMgmt.Core.HostedServices.Outbox.Handler"
       description = "Specifies if the outbox handler should be enabled."
       label       = "${lower(var.environment)}-access-management"
