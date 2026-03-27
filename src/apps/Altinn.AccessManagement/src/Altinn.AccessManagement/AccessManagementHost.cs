@@ -340,8 +340,9 @@ internal static partial class AccessManagementHost
                 new ConditionalScope(ConditionalScope.FromOthers, AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_WRITE),
                 new ConditionalScope(ConditionalScope.ToOthers, AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE)
             ))
-            .AddPolicy(AuthzConstants.POLICY_ENDUSER_CONNECTIONS_WRITE_TOOTHERS, policy => policy.AddRequirements(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE]))
-            );
+            .AddPolicy(AuthzConstants.POLICY_ENDUSER_CONNECTIONS_WRITE_TOOTHERS, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE])))
+            .AddPolicy(AuthzConstants.POLICY_ENDUSER_REQUESTS_READ, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_REQUESTS_READ])))
+            .AddPolicy(AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_REQUESTS_WRITE])));
 
         builder.Services.AddScoped<IAuthorizationHandler, AccessTokenHandler>();
         builder.Services.AddScoped<IAuthorizationHandler, ClaimAccessHandler>();

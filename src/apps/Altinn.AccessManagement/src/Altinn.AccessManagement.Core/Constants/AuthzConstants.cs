@@ -171,6 +171,26 @@
         public const string SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE = "altinn:accessmanagement/enduser:connections:toothers.write";
 
         /// <summary>
+        /// Policy tag for authorizing enduser requests API read access
+        /// </summary>
+        public const string POLICY_ENDUSER_REQUESTS_READ = "POLICY_ENDUSER_REQUESTS_READ";
+
+        /// <summary>
+        /// Policy tag for authorizing enduser requests API write access
+        /// </summary>
+        public const string POLICY_ENDUSER_REQUESTS_WRITE = "POLICY_ENDUSER_REQUESTS_WRITE";
+
+        /// <summary>
+        /// Enduser scope giving access to read operations on requests
+        /// </summary>
+        public const string SCOPE_ENDUSER_REQUESTS_READ = "altinn:accessmanagement/enduser:requests.read";
+
+        /// <summary>
+        /// Enduser scope giving access to write operations on requests
+        /// </summary>
+        public const string SCOPE_ENDUSER_REQUESTS_WRITE = "altinn:accessmanagement/enduser:requests.write";
+
+        /// <summary>
         /// Scope giving access to getting authorized parties for a given subject.
         /// </summary>
         public const string SCOPE_AUTHORIZEDPARTIES_ENDUSERSYSTEM = "altinn:accessmanagement/authorizedparties";
