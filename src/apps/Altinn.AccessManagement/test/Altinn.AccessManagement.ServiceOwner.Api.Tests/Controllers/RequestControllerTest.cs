@@ -171,8 +171,8 @@ public class RequestControllerTest
                 var data = JsonSerializer.Deserialize<ResourceRequestPendingNotificationMessage>(outbox.Data);
                 Assert.NotNull(data);
 
-                Assert.Equal(TestData.BakerJohnsen, data.RecipientId);
-                Assert.Equal(TestData.LarsBakke, data.RequesterId);
+                Assert.Equal(TestData.LarsBakke, data.RecipientId);
+                Assert.Equal(TestData.BakerJohnsen, data.RequesterId);
                 Assert.NotEmpty(data.ResourceIds);
                 Assert.Empty(data.PackageIds);
                 Assert.Equal(1, data.Updated);

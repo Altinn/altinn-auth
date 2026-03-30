@@ -549,8 +549,8 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
             msg.Timeout = TimeSpan.FromMinutes(1);
             return new ResourceRequestPendingNotificationMessage()
             {
-                RecipientId = requesterId,
-                RequesterId = recipientId,
+                RecipientId = recipientId,
+                RequesterId = requesterId,
                 ResourceIds = resourceId.HasValue && resourceId.Value != Guid.Empty ? [resourceId.Value] : [],
                 PackageIds = packageId.HasValue && packageId.Value != Guid.Empty ? [packageId.Value] : [],
                 InitiatedAt = now,
@@ -620,12 +620,12 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
 
             return new RequestApprovedNotificationMessage()
             {
-                RecipientId = approverId,
-                ApproverId = recipientId,
+                RecipientId = recipientId,
+                ApproverId = approverId,
                 ResourceIds = resourceId.HasValue && resourceId.Value != Guid.Empty ? [resourceId.Value] : [],
                 PackageIds = packageId.HasValue && packageId.Value != Guid.Empty ? [packageId.Value] : [],
                 InitiatedAt = schedule,
-                Updated = 1,
+                Updated = 0,
             };
         }
     }

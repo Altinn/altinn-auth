@@ -147,7 +147,7 @@ public class RequestPendingNotificationHandler(
             AddResourcesAndPackage(resources, packages, emailContent);
 
             emailContent.AppendLine("<p>Logg inn i Altinn, gå til tilgangsstyring og forespørsler for å behandle forespørselen.</p>");
-            emailContent.AppendLine($"<p>Med vennlig hilsen</br>Altinn</p>");
+            emailContent.AppendLine($"<p>Med vennlig hilsen </br>Altinn</p>");
 
             return new NotificationRecipientExt
             {
