@@ -53,6 +53,7 @@ public class RequestPendingNotificationHandler(
                 );
 
                 await db.SaveChangesAsync(cancellationToken);
+                return OutboxStatus.Completed;
             }
 
             var errorMessage = $@"Failed to send notification.
