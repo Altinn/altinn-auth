@@ -90,12 +90,14 @@ internal partial class OutboxHandlerJob(
                 SELECT id
                 FROM dbo.outboxmessage
                 WHERE status = 'Pending' AND (schedule IS NULL OR schedule <= NOW())
+                LIMIT 10
                 FOR UPDATE SKIP LOCKED
             )
             UPDATE dbo.outboxmessage
             SET
                 status = 'Processing',
-                startedat = NOW()
+                startedat = NOW(),
+                attempt = attempt + 1
             FROM locked_rows
             WHERE dbo.outboxmessage.id = locked_rows.id
             RETURNING dbo.outboxmessage.*;

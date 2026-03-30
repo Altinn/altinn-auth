@@ -75,4 +75,9 @@ public class BaseOutboxMessageLog
     /// Just an indicator that allows you to correlate message with the attempt.
     /// </remarks>
     public int Attempt { get; set; }
+
+    /// <summary>
+    /// gets or sets the created at outbox element.
+    /// </summary>
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

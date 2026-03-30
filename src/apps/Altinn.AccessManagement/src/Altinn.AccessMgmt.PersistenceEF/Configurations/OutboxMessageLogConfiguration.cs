@@ -14,6 +14,11 @@ public class OutboxMessageLogConfiguration : IEntityTypeConfiguration<OutboxMess
         builder.HasKey(p => p.Id);
         builder.Property(p => p.Attempt);
         builder.Property(p => p.Log);
+        
+        builder.Property(p => p.CreatedAt)
+            .IsRequired()
+            .HasDefaultValueSql("NOW()")
+            .ValueGeneratedOnAdd();
 
         builder.HasOne(p => p.OutboxMessage)
             .WithMany(p => p.OutboxMessageLogs)

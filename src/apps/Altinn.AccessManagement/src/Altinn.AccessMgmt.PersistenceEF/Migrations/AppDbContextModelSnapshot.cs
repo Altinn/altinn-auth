@@ -2793,6 +2793,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("attempt");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("createdat")
+                        .HasDefaultValueSql("NOW()");
+
                     b.Property<string>("Log")
                         .HasColumnType("text")
                         .HasColumnName("log");
