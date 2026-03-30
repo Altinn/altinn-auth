@@ -2217,7 +2217,7 @@ public partial class ConnectionService
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<SystemUserClientConnectionDto>> GetConnectionsToAgent(Guid viaId, Guid toId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<SystemUserClientConnectionDto>> GetConnectionsToAgent(Guid viaId, Guid toId, Guid? fromId = null, CancellationToken cancellationToken = default)
     {
         var result = await dbContext.Connections
             .AsNoTracking()
@@ -2231,6 +2231,7 @@ public partial class ConnectionService
             .Include(t => t.ViaRole)
             .Where(t => t.ToId == toId)
             .Where(t => t.ViaId == viaId)
+            .WhereIf(fromId.HasValue, t => t.FromId == fromId)
             .ToListAsync(cancellationToken);
 
         return GetConnectionsAsSystemUserClientConnectionDto(result);

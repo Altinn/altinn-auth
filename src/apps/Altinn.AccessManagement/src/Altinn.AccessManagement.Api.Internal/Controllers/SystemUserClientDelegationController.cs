@@ -67,14 +67,15 @@ public class SystemUserClientDelegationController(
     /// </summary>
     /// <param name="party">The party the authenticated user is performing client administration on behalf of</param>
     /// <param name="systemUser">The system user the authenticated user is delegating access to</param>
+    /// <param name="client">The client id of the customer</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns><seealso cref="SystemUserClientConnectionDto"/>List of connections</returns>
     [HttpGet]
     [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ)]
     [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_READ)]
-    public async Task<ActionResult<IEnumerable<SystemUserClientConnectionDto>>> GetClientDelegations([FromQuery] Guid party, [FromQuery] Guid systemUser, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<IEnumerable<SystemUserClientConnectionDto>>> GetClientDelegations([FromQuery] Guid party, [FromQuery] Guid systemUser, [FromQuery] Guid? client = null, CancellationToken cancellationToken = default)
     {
-        return Ok(await connectionService.GetConnectionsToAgent(viaId: party, toId: systemUser, cancellationToken: cancellationToken));
+        return Ok(await connectionService.GetConnectionsToAgent(viaId: party, toId: systemUser, fromId: client, cancellationToken: cancellationToken));
     }
 
     /// <summary>

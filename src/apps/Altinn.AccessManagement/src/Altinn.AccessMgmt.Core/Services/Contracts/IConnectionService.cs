@@ -305,9 +305,10 @@ public interface IConnectionService
     /// </summary>
     /// <param name="viaId">The uuid of the service provider party</param>
     /// <param name="toId">The uuid of the agent</param>
+    /// <param name="fromId">The uuid of the client</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>collection of all connections of the agent</returns>
-    Task<IEnumerable<SystemUserClientConnectionDto>> GetConnectionsToAgent(Guid viaId, Guid toId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<SystemUserClientConnectionDto>> GetConnectionsToAgent(Guid viaId, Guid toId, Guid? fromId = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a delegation to a resource between two entities with the specified action keys. If not all actions is posible nothing is performed and a Problem is returned
