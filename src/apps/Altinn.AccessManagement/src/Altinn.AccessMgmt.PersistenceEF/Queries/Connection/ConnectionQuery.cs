@@ -170,8 +170,7 @@ public class ConnectionQuery(AppDbContext db)
             {
                 if (filter.IncludeInstances)
                 {
-                    var instances = await LoadInstancesByKeyAsync(baseQuery, filter, ct);
-                    result = Attach(result, instances, r => r.Id, (dto, list) => dto.Instances = list);
+                    result = await LoadInstancesByKeyAsync(result, filter, ct);
                 }
             }
             catch (Exception ex)
@@ -1161,45 +1160,74 @@ public class ConnectionQuery(AppDbContext db)
         return index;
     }
 
-    private async Task<ConnectionIndex<ConnectionQueryInstance>> LoadInstancesByKeyAsync(IQueryable<ConnectionQueryBaseRecord> allKeys, ConnectionQueryFilter filter, CancellationToken ct)
+    private async Task<List<ConnectionQueryExtendedRecord>> LoadInstancesByKeyAsync(List<ConnectionQueryExtendedRecord> allKeys, ConnectionQueryFilter filter, CancellationToken ct)
     {
         var instanceSet = filter.InstanceIds?.Count > 0 ? new HashSet<string>(filter.InstanceIds) : null;
         var resourceSet = filter.ResourceIds?.Count > 0 ? new HashSet<Guid>(filter.ResourceIds) : null;
 
         // Assignment → AssignmentInstance
-        var assignmentInstances = allKeys
-            .Join(db.AssignmentInstances, c => c.AssignmentId, ai => ai.AssignmentId, (c, ai) => new { c, ai })
-            .WhereIf(instanceSet is not null, x => instanceSet!.Contains(x.ai.InstanceId))
-            .WhereIf(resourceSet is not null, x => resourceSet!.Contains(x.ai.ResourceId));
+        var aIds = allKeys.Where(a => a.AssignmentId.HasValue).Select(a => (Guid)a.AssignmentId).Distinct().ToList();
+        if (aIds.Count == 0)
+        {
+            return allKeys;
+        }
 
-        var flat = assignmentInstances.Select(x => new { x.c, x.ai.Id, x.ai.ResourceId, x.ai.InstanceId });
-
-        var rows = await flat
+        var assignmentInstances = await db.AssignmentInstances
+            .Where(ai => aIds.Contains(ai.AssignmentId))
+            .Select(ai => new { ai.AssignmentId, ai.Id, ai.ResourceId, ai.InstanceId })
+            .WhereIf(instanceSet is not null, x => instanceSet!.Contains(x.InstanceId))
+            .WhereIf(resourceSet is not null, x => resourceSet!.Contains(x.ResourceId))
             .Join(db.Resources, x => x.ResourceId, r => r.Id, (x, r) => new
             {
-                Key = new ConnectionCompositeKey(x.c.FromId, x.c.ToId, x.c.RoleId, x.c.AssignmentId, x.c.DelegationId, x.c.ViaId, x.c.ViaRoleId),
-                Instance = new { x.Id, x.ResourceId, x.InstanceId },
-                Resource = new { r.Name, r.RefId }
+                x.AssignmentId,
+                x.Id,
+                x.ResourceId,
+                x.InstanceId,
+                ResourceName = r.Name,
+                ResourceRefId = r.RefId
             })
             .AsNoTracking()
             .ToListAsync(ct);
 
-        var index = new ConnectionIndex<ConnectionQueryInstance>();
-        foreach (var g in rows.GroupBy(x => x.Key))
+        SortedList<Guid, List<ConnectionQueryInstance>> instancesByAssignment = [];
+        foreach (var ai in assignmentInstances)
         {
-            var mapped = g.Select(z => new ConnectionQueryInstance
+            if (instancesByAssignment.TryGetValue(ai.AssignmentId, out var list))
             {
-                Id = z.Instance.Id,
-                ResourceId = z.Instance.ResourceId,
-                InstanceId = z.Instance.InstanceId,
-                ResourceName = z.Resource.Name,
-                ResourceRefId = z.Resource.RefId,
-            }).DistinctBy(p => p.Id);
-
-            index.AddRange(g.Key, mapped);
+                list.Add(new ConnectionQueryInstance()
+                {
+                    Id = ai.Id,
+                    ResourceId = ai.ResourceId,
+                    InstanceId = ai.InstanceId,
+                    ResourceName = ai.ResourceName,
+                    ResourceRefId = ai.ResourceRefId
+                });
+            }
+            else
+            {
+                instancesByAssignment[ai.AssignmentId] =
+                [
+                    new ConnectionQueryInstance()
+                    {
+                        Id = ai.Id,
+                        ResourceId = ai.ResourceId,
+                        InstanceId = ai.InstanceId,
+                        ResourceName = ai.ResourceName,
+                        ResourceRefId = ai.ResourceRefId
+                    }
+                ];
+            }
         }
 
-        return index;
+        foreach (var key in allKeys)
+        {
+            if (key.AssignmentId.HasValue && instancesByAssignment.TryGetValue((Guid)key.AssignmentId!, out var list))
+            {
+                key.Instances = list;
+            }
+        }
+
+        return allKeys;
     }
 
     private async Task EnrichPackageResourcesAsync(ConnectionIndex<ConnectionQueryPackage> packageIndex, ConnectionQueryFilter filter, CancellationToken ct = default)
