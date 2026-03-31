@@ -173,11 +173,25 @@ public partial class ConnectionsControllerTest
         [Fact]
         public async Task ListConnections_WithDirectionToOthersUsingToOtherScopeWithPartyNotEqualFromOrTo_ReturnsForbidden()
         {
-            var client = CreateClient(AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
+            var client = CreateClient(AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
             var response = await client.GetAsync($"{Route}?party={TestEntities.OrganizationVerdiqAS.Id}&from={TestEntities.PersonPaula.Id}&to={TestEntities.PersonOrjan.Id}", TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+
+        /// <summary>
+        /// Party (Verdiq) does not match either from (Paula) or to (Ørjan), so the request is rejected.
+        /// Expects 403 Forbidden.
+        /// </summary>
+        [Fact]
+        public async Task ListConnections_WithDirectionToOthersUsingToOtherScopeWithSystemUserAsTo_ReturnsOK()
+        {
+            var client = CreateClient(AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
+
+            var response = await client.GetAsync($"{Route}?party={TestEntities.OrganizationVerdiqAS.Id}&from={TestEntities.OrganizationVerdiqAS}&to={TestEntities.SystemUserStandard.Id}", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
     }
 }
