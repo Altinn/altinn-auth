@@ -1,0 +1,48 @@
+{
+  "UserId": 20049134,
+  "UserUuid": "8f52236a-7fbb-4681-ae45-429de0c747e3",
+  "UserType": 1,
+  "UserName": "thea.bff",
+  "ExternalIdentity": "",
+  "PhoneNumber": null,
+  "Email": null,
+  "PartyId": 50049134,
+  "Party": {
+    "PartyTypeName": 1,
+    "SSN": "11813349134",
+    "OrgNumber": "",
+    "Person": {
+      "SSN": "11813349134",
+      "Name": "THEA BFF",
+      "FirstName": "THEA",
+      "MiddleName": "",
+      "LastName": "BFF",
+      "TelephoneNumber": "",
+      "MobileNumber": "",
+      "MailingAddress": "",
+      "MailingPostalCode": "",
+      "MailingPostalCity": "",
+      "AddressMunicipalNumber": "",
+      "AddressMunicipalName": "",
+      "AddressStreetName": "",
+      "AddressHouseNumber": "",
+      "AddressHouseLetter": "",
+      "AddressPostalCode": "",
+      "AddressCity": "",
+      "DateOfDeath": null
+    },
+    "Organization": null,
+    "PartyId": 50049134,
+    "PartyUuid": "8f52236a-7fbb-4681-ae45-429de0c747e3",
+    "UnitType": null,
+    "Name": "THEA BFF",
+    "IsDeleted": false,
+    "OnlyHierarchyElementWithNoAccess": false,
+    "ChildParties": null
+  },
+  "ProfileSettingPreference": {
+    "Language": "nb",
+    "PreSelectedPartyId": 0,
+    "DoNotPromptForParty": false
+  }
+}

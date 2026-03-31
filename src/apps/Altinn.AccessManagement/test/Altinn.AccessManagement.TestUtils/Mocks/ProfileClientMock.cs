@@ -1,0 +1,35 @@
+﻿using System.Text.Json;
+using Altinn.AccessManagement.Core.Clients.Interfaces;
+using Altinn.AccessManagement.Core.Models.Profile;
+
+namespace Altinn.AccessManagement.TestUtils.Mocks
+{
+    /// <summary>
+    /// Mock class for <see cref="IProfileClient"></see> interface
+    /// </summary>
+    public class ProfileClientMock : IProfileClient
+    {
+        /// <inheritdoc/>
+        public Task<NewUserProfile> GetUser(UserProfileLookup userProfileLookup, CancellationToken cancellationToken = default)
+        {
+            NewUserProfile userProfile = null;
+
+            string userProfilePath = GetUserProfilePath(userProfileLookup);
+
+            if (File.Exists(userProfilePath))
+            {
+                string content = File.ReadAllText(userProfilePath);
+                userProfile = (NewUserProfile)JsonSerializer.Deserialize(content, typeof(NewUserProfile), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+
+            return Task.FromResult(userProfile);
+        }
+
+        private static string GetUserProfilePath(UserProfileLookup userProfileLookup)
+        {
+            string userIdentifier = userProfileLookup.UserId > 0 ? userProfileLookup.UserId.ToString() : userProfileLookup.Ssn ?? userProfileLookup.Username ?? userProfileLookup.UserUuid?.ToString();
+            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(ProfileClientMock).Assembly.Location).LocalPath);
+            return Path.Combine(unitTestFolder, "Data", "UserProfile", $"{userIdentifier}.json");
+        }
+    }
+}

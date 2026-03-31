@@ -1,0 +1,59 @@
+{
+  "identifier": "nav_sykepenger_sykmelding",
+  "version": "6",
+  "title": {
+    "en": "Sick leave to employer",
+    "nb": "Sykmelding til arbeidsgiver",
+    "nn": "Sjukmelding til arbeidsgivar"
+  },
+  "description": {
+    "en": "The employee’s sick leave allows the employer to receive the sick leave information sent by the employee from nav.no. The service provides access to the necessary details, such as the period and degree of sick leave, which form the basis for further processing of the sickness benefit case.",
+    "nb": "Sykmelding fra arbeidstaker gjør at arbeidsgiver kan motta sykmeldingen som den sykmeldte sender fra nav.no. Tjenesten gir tilgang til nødvendige opplysninger, som sykmeldingsperiode og grad (helt eller delvis sykmelding), som danner grunnlag for videre behandling av sykepengesaken.",
+    "nn": "Sjukmelding frå arbeidstakar gjer at arbeidsgivar kan ta imot sjukmeldinga som den sjukmelde sender frå nav.no. Tenesta gir tilgang til nødvendige opplysningar, som sjukmeldingsperiode og grad (heilt eller delvis sjukmelding), som dannar grunnlaget for vidare behandling av sjukepengesaka."
+  },
+  "rightDescription": {
+    "en": "The authorization allows the user to retrieve sick leave information on behalf of the enterprise. Access should be limited to employees responsible for processing sick leave.",
+    "nb": "Rettigheten gir brukeren mulighet til å hente ut sykmeldinger på vegne av virksomheten. Tilgangen bør begrenses til ansatte som har ansvar for sykepengesaker.",
+    "nn": "Retten gir brukaren moglegheit til å hente ut sjukmeldingar på vegner av verksemda. Tilgangen bør avgrensast til tilsette som har ansvar for sjukepengesaker."
+  },
+  "status": "Completed",
+  "contactPoints": [
+    {
+      "category": "Nav kontaktsenter arbeidsgivertelefon",
+      "email": "",
+      "telephone": "55553336",
+      "contactPage": ""
+    }
+  ],
+  "delegable": true,
+  "visible": true,
+  "hasCompetentAuthority": {
+    "name": {
+      "en": "Norwegian Labour and Welfare Administration (NAV)",
+      "nb": "Arbeids- og velferdsetaten (NAV)",
+      "nn": "Arbeids- og velferdsetaten (NAV)"
+    },
+    "organization": "889640782",
+    "orgcode": "nav"
+  },
+  "keywords": [
+    {
+      "word": "sykepenger",
+      "language": "nb"
+    },
+    {
+      "word": "sykmelding",
+      "language": "nb"
+    }
+  ],
+  "accessListMode": "Disabled",
+  "selfIdentifiedUserEnabled": false,
+  "enterpriseUserEnabled": false,
+  "resourceType": "GenericAccessResource",
+  "availableForType": [
+    "LegalEntityEnterprise",
+    "Company"
+  ],
+  "isOneTimeConsent": false,
+  "versionId": 914
+}

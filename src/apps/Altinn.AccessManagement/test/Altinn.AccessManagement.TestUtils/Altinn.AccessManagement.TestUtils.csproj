@@ -6,6 +6,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <None Include="Data\UserProfile\**">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Testcontainers.PostgreSql" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
         <PackageReference Include="Moq" />
@@ -13,6 +19,21 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Altinn.AccessManagement\Altinn.AccessManagement.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="Data\AuthorizedParties\SBLBridge\authorizedparties_u20049134.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Data\AuthorizedParties\SBLBridge\authorizedparties_u20049963.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Data\AuthorizedParties\SBLBridge\authorizedparties_u20096763.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Data\AuthorizedParties\SBLBridge\authorizedparties_u20198981.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

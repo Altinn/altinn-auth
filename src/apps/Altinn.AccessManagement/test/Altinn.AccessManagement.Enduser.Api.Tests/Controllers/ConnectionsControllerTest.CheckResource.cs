@@ -27,10 +27,12 @@ public partial class ConnectionsControllerTest
     /// <remarks>
     /// <para>
     /// Seed Data:
-    /// - ResourceType "Test"
+    /// - Assignment: Nordis AS → Verdiq AS (Rightholder)
+    /// </para>
+    /// <para>
+    /// Pre-seeded via <see cref="TestDataSeeds"/>:
     /// - Resource "Dialogs for sickness benefits" (nav_sykepenger_dialog)
     /// - Resource "Omsetningsoppgave for alkohol" (app_dihe_omsetningsoppgave-for-alkohol)
-    /// - Assignment: Nordis AS → Verdiq AS (Rightholder)
     /// </para>
     /// <para>
     /// Mocks:
@@ -60,28 +62,6 @@ public partial class ConnectionsControllerTest
             });
             Fixture.EnsureSeedOnce(db =>
             {
-                Resource navSykepengerResource = new Resource()
-                {
-                    Name = "Dialogs for sickness benefits",
-                    Description = "The service is used to send and receive dialogues in Dialogporten about new sick leaves, submitted applications, requests for income reports, and receipts for submitted income reports.",
-                    RefId = "nav_sykepenger_dialog",
-                    TypeId = TestData.TestResourceType.Id,
-                    ProviderId = ProviderConstants.Altinn3.Id,
-                };
-
-                db.Resources.Add(navSykepengerResource);
-
-                Resource diheOmsetningsoppgaveAlkohol = new Resource()
-                {
-                    Name = "Omsetningsoppgave for alkohol",
-                    Description = "Omsetningsoppgave for alkohol",
-                    RefId = "app_dihe_omsetningsoppgave-for-alkohol",
-                    TypeId = TestData.TestResourceType.Id,
-                    ProviderId = ProviderConstants.Altinn3.Id,
-                };
-
-                db.Resources.Add(diheOmsetningsoppgaveAlkohol);
-
                 var rightholderFromNordisToVerdiq = new Assignment()
                 {
                     FromId = TestEntities.OrganizationNordisAS.Id,

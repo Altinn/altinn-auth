@@ -183,4 +183,9 @@ public static class AccessMgmtFeatureFlags
     /// Specifies if entity framework implementation of instance delegations should be used.
     /// </summary>
     public const string InstanceDbEf = $"AccessManagement.InstanceDelegation.EF";
+
+    /// <summary>
+    /// Specifies if entity framework implementation of resource delegations should be used.
+    /// </summary>
+    public const string ResourceDelegationEF = "AccessManagement.ResourceDelegation.EF";
 }

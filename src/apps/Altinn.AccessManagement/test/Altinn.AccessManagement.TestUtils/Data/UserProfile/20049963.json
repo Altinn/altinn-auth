@@ -1,0 +1,48 @@
+{
+  "UserId": 20049963,
+  "UserUuid": "eeec4506-51d7-40d2-a0ef-38b95c95dff6",
+  "UserType": 1,
+  "UserName": "josephine.yvonnesdottir",
+  "ExternalIdentity": "",
+  "PhoneNumber": null,
+  "Email": null,
+  "PartyId": 5049963,
+  "Party": {
+    "PartyTypeName": 1,
+    "SSN": "02883749963",
+    "OrgNumber": "",
+    "Person": {
+      "SSN": "02883749963",
+      "Name": "JOSEPHINE YVONNESDOTTIR",
+      "FirstName": "JOSEPHINE",
+      "MiddleName": "",
+      "LastName": "YVONNESDOTTIR",
+      "TelephoneNumber": "",
+      "MobileNumber": "",
+      "MailingAddress": "",
+      "MailingPostalCode": "",
+      "MailingPostalCity": "",
+      "AddressMunicipalNumber": "",
+      "AddressMunicipalName": "",
+      "AddressStreetName": "",
+      "AddressHouseNumber": "",
+      "AddressHouseLetter": "",
+      "AddressPostalCode": "",
+      "AddressCity": "",
+      "DateOfDeath": null
+    },
+    "Organization": null,
+    "PartyId": 5049963,
+    "PartyUuid": "eeec4506-51d7-40d2-a0ef-38b95c95dff6",
+    "UnitType": null,
+    "Name": "JOSEPHINE YVONNESDOTTIR",
+    "IsDeleted": false,
+    "OnlyHierarchyElementWithNoAccess": false,
+    "ChildParties": null
+  },
+  "ProfileSettingPreference": {
+    "Language": "nb",
+    "PreSelectedPartyId": 0,
+    "DoNotPromptForParty": false
+  }
+}

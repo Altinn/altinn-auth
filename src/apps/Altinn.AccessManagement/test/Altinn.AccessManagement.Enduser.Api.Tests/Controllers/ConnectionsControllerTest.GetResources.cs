@@ -4,7 +4,6 @@ using System.Text.Json;
 using Altinn.AccessManagement.Api.Enduser.Controllers;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
-using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
@@ -17,6 +16,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Controllers;
 
+/// <summary>
+/// Partialt class for various connections controller tests. This part focuses on testing the GetResources endpoint, which retrieves resources associated with a connection between two parties. The tests cover different actor perspectives (Dumbo vs Mille), delegation directions (from-others vs to-others), and scope-based authorization scenarios to ensure that the endpoint behaves correctly under various conditions.
+/// </summary>
 public partial class ConnectionsControllerTest
 {
     /// <summary>
@@ -53,27 +55,6 @@ public partial class ConnectionsControllerTest
             });
             Fixture.EnsureSeedOnce(db =>
             {
-                var skattResource = new Resource()
-                {
-                    Name = "Skattemelding",
-                    Description = "Innlevering av skattemelding for næringsdrivende",
-                    RefId = "app_skd_skattemelding",
-                    TypeId = TestData.TestResourceType.Id,
-                    ProviderId = ProviderConstants.Altinn3.Id,
-                };
-
-                var mvaResource = new Resource()
-                {
-                    Name = "MVA-melding",
-                    Description = "Innlevering av merverdiavgiftsmelding",
-                    RefId = "app_skd_mva-melding",
-                    TypeId = TestData.TestResourceType.Id,
-                    ProviderId = ProviderConstants.Altinn3.Id,
-                };
-
-                db.Resources.Add(skattResource);
-                db.Resources.Add(mvaResource);
-
                 var rightholderFromDumboToMille = new Assignment()
                 {
                     FromId = TestData.DumboAdventures.Id,
@@ -87,13 +68,13 @@ public partial class ConnectionsControllerTest
                 db.AssignmentResources.Add(new AssignmentResource()
                 {
                     AssignmentId = rightholderFromDumboToMille.Id,
-                    ResourceId = skattResource.Id,
+                    ResourceId = TestData.SkattResource.Id,
                 });
 
                 db.AssignmentResources.Add(new AssignmentResource()
                 {
                     AssignmentId = rightholderFromDumboToMille.Id,
-                    ResourceId = mvaResource.Id,
+                    ResourceId = TestData.MvaResource.Id,
                 });
 
                 db.SaveChanges();

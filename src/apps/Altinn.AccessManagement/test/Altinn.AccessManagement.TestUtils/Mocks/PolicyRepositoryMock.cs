@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Collections.Concurrent;
+using System.Net;
 using System.Reflection;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Azure;
@@ -11,11 +12,13 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
     /// <summary>
     /// Mock class for <see cref="IPolicyRepository"></see> interface
     /// </summary>
-    public class PolicyRepositoryMock(string filepath, ILogger<PolicyRepositoryMock> logger) : IPolicyRepository
+    public class PolicyRepositoryMock(string filepath, ILogger<PolicyRepositoryMock> logger, ConcurrentDictionary<string, byte[]> writtenPolicies = null) : IPolicyRepository
     {
         private string Filepath { get; } = filepath;
 
         private ILogger<PolicyRepositoryMock> Logger { get; } = logger;
+
+        private ConcurrentDictionary<string, byte[]> WrittenPolicies { get; } = writtenPolicies;
 
         /// <inheritdoc/>
         public Task<Stream> GetPolicyAsync(CancellationToken cancellationToken = default)
@@ -107,7 +110,7 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
             return ms;
         }
 
-        private static async Task<Response<BlobContentInfo>> WriteStreamToTestDataFolder(string filepath, Stream fileStream)
+        private async Task<Response<BlobContentInfo>> WriteStreamToTestDataFolder(string filepath, Stream fileStream)
         {
             string dataPath = Path.Combine(GetDataOutputBlobPath(), filepath);
 
@@ -117,6 +120,15 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
             }
 
             int filesize;
+
+            if (WrittenPolicies != null)
+            {
+                var ms = new MemoryStream();
+                await fileStream.CopyToAsync(ms);
+                WrittenPolicies[filepath] = ms.ToArray();
+                ms.Position = 0;
+                fileStream = ms;
+            }
 
             using (Stream streamToWriteTo = File.Open(dataPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite))
             {

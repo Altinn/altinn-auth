@@ -1,0 +1,50 @@
+{
+  "identifier": "app_mat_mattilsynet-baker-konditorvare",
+  "title": {
+    "en": "Production of bakery and confectionery products",
+    "nb": "Produksjon av baker- og konditorvarer",
+    "nn": "Produksjon av bakar- og konditorvarer"
+  },
+  "description": {
+    "en": "The form is to be used by individuals or businesses to register the production of bakery and confectionery products. This applies to bakeries and confectionery that produce for sale.",
+    "nb": "Skjemaet skal brukes av personer eller virksomheter for å registrere produksjon av baker- og konditorvarer. Dette gjelder bakerier og konditorier som produserer for salg. ",
+    "nn": "Skjemaet skal brukast av personar eller verksemder for å registrere produksjon av bakar- og konditorvarer. Dette gjeld bakeri og konditori som produserer for sal."
+  },
+  "rightDescription": {
+    "en": "The authorization provides access to log in to the form, register data, and submit a notification of registration/approval on behalf of the business.",
+    "nb": "Fullmakten gir tilgang til å logge på skjemaet, registrere data, og sende inn melding om registrering/godkjenning på vegne av virksomheten.",
+    "nn": "Fullmakta gir tilgang til å logge på skjemaet, registrere data, og sende inn melding om registrering/godkjenning på vegner av verksemda.\n"
+  },
+  "contactPoints": [
+    {
+      "category": "Kontakt oss via telefon eller e-post hvis det er noe du lurer på.",
+      "email": "postmottak@mattilsynet.no",
+      "telephone": "22 40 00 00",
+      "contactPage": "https://www.mattilsynet.no/kontakt-oss"
+    }
+  ],
+  "resourceReferences": [
+    {
+      "referenceSource": "Altinn3",
+      "reference": "mat/mattilsynet-baker-konditorvare",
+      "referenceType": "ApplicationId"
+    }
+  ],
+  "delegable": true,
+  "visible": true,
+  "hasCompetentAuthority": {
+    "name": {
+      "en": "Norwegian Food Safety Authority",
+      "nb": "Mattilsynet",
+      "nn": "Mattilsynet"
+    },
+    "organization": "985399077",
+    "orgcode": "mat"
+  },
+  "accessListMode": "Disabled",
+  "selfIdentifiedUserEnabled": false,
+  "enterpriseUserEnabled": false,
+  "resourceType": "AltinnApp",
+  "isOneTimeConsent": false,
+  "versionId": 3938
+}

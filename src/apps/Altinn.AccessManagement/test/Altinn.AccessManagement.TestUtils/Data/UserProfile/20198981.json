@@ -1,0 +1,48 @@
+{
+  "UserId": 20198981,
+  "UserUuid": "10000024-aaaa-4bbb-8ccc-ddddeeee0024",
+  "UserType": 1,
+  "UserName": "milena.solstad",
+  "ExternalIdentity": "",
+  "PhoneNumber": null,
+  "Email": null,
+  "PartyId": 50298981,
+  "Party": {
+    "PartyTypeName": 1,
+    "SSN": "28849198981",
+    "OrgNumber": "",
+    "Person": {
+      "SSN": "28849198981",
+      "Name": "MILENA SOLSTAD",
+      "FirstName": "MILENA",
+      "MiddleName": "",
+      "LastName": "SOLSTAD",
+      "TelephoneNumber": "",
+      "MobileNumber": "",
+      "MailingAddress": "",
+      "MailingPostalCode": "",
+      "MailingPostalCity": "",
+      "AddressMunicipalNumber": "",
+      "AddressMunicipalName": "",
+      "AddressStreetName": "",
+      "AddressHouseNumber": "",
+      "AddressHouseLetter": "",
+      "AddressPostalCode": "",
+      "AddressCity": "",
+      "DateOfDeath": null
+    },
+    "Organization": null,
+    "PartyId": 50298981,
+    "PartyUuid": "10000024-aaaa-4bbb-8ccc-ddddeeee0024",
+    "UnitType": null,
+    "Name": "MILENA SOLSTAD",
+    "IsDeleted": false,
+    "OnlyHierarchyElementWithNoAccess": false,
+    "ChildParties": null
+  },
+  "ProfileSettingPreference": {
+    "Language": "nb",
+    "PreSelectedPartyId": 0,
+    "DoNotPromptForParty": false
+  }
+}

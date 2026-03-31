@@ -72,7 +72,10 @@ public static class TestDataSeeds
             TestData.BodilFarmor,
             TestData.DumboAdventures,
             TestData.MilleHundefrisor,
-            TestData.Milena
+            TestData.Milena,
+            TestData.KaosMagicDesignAndArts,
+            TestData.JinxArcane,
+            TestData.AlexTheArtist
         ]);
         #endregion
 
@@ -95,6 +98,17 @@ public static class TestDataSeeds
         db.Assignments.AddRange(TestData.Assignments);
         db.AssignmentPackages.AddRange(TestData.AssignmentPackages);
         //// db.Delegations.AddRange(TestData.Delegations);
+        #endregion
+
+        #region Resources
+        db.Resources.Add(TestData.MattilsynetBakeryService);
+        db.Resources.Add(TestData.SiriusSkattemelding);
+        db.Resources.Add(TestData.NavSykepengerDialog);
+        db.Resources.Add(TestData.DiheOmsetningsoppgaveAlkohol);
+        db.Resources.Add(TestData.NavSykepengerSykmelding);
+        db.Resources.Add(TestData.SkattResource);
+        db.Resources.AddRange(TestData.MvaResource);
+
         #endregion
 
         await db.SaveChangesAsync();

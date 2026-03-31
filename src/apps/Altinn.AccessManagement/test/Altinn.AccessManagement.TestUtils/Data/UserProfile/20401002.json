@@ -1,0 +1,48 @@
+{
+  "UserId": 20401002,
+  "UserUuid": "7a1b2c3d-4e5f-4678-9abc-def012345672",
+  "UserType": 1,
+  "UserName": "alex.theartist",
+  "ExternalIdentity": "",
+  "PhoneNumber": null,
+  "Email": null,
+  "PartyId": 50401002,
+  "Party": {
+    "PartyTypeName": 1,
+    "SSN": "14038840102",
+    "OrgNumber": "",
+    "Person": {
+      "SSN": "14038840102",
+      "Name": "ALEX THE ARTIST",
+      "FirstName": "ALEX",
+      "MiddleName": "THE",
+      "LastName": "ARTIST",
+      "TelephoneNumber": "",
+      "MobileNumber": "",
+      "MailingAddress": "",
+      "MailingPostalCode": "",
+      "MailingPostalCity": "",
+      "AddressMunicipalNumber": "",
+      "AddressMunicipalName": "",
+      "AddressStreetName": "",
+      "AddressHouseNumber": "",
+      "AddressHouseLetter": "",
+      "AddressPostalCode": "",
+      "AddressCity": "",
+      "DateOfDeath": null
+    },
+    "Organization": null,
+    "PartyId": 50401002,
+    "PartyUuid": "7a1b2c3d-4e5f-4678-9abc-def012345672",
+    "UnitType": null,
+    "Name": "ALEX THE ARTIST",
+    "IsDeleted": false,
+    "OnlyHierarchyElementWithNoAccess": false,
+    "ChildParties": null
+  },
+  "ProfileSettingPreference": {
+    "Language": "nb",
+    "PreSelectedPartyId": 0,
+    "DoNotPromptForParty": false
+  }
+}

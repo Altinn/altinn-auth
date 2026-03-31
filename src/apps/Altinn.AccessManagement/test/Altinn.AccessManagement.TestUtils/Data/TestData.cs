@@ -18,6 +18,78 @@ public static class TestData
 
     #endregion
 
+    #region Resources
+
+    public static readonly Resource MattilsynetBakeryService = new()
+    {
+        Id = Guid.Parse("0195efb8-7c80-7f26-817a-50893176320c"),
+        Name = "Mattilsynet Bakery Service",
+        Description = "Service for bakery inspections and food safety reporting to the Norwegian Food Safety Authority",
+        RefId = "app_mat_mattilsynet-baker-konditorvare",
+        TypeId = TestData.TestResourceType.Id,
+        ProviderId = ProviderConstants.Altinn3.Id,
+    };
+
+    public static readonly Resource SiriusSkattemelding = new()
+    {
+        Id = Guid.Parse("0195efb8-7c80-7f26-817a-50893176320e"),
+        Name = "Skattemelding med næringsspesifikasjon 2020",
+        Description = "Skattemelding med næringsspesifikasjon 2020",
+        RefId = "app_skd_sirius-skattemelding-v1",
+        TypeId = TestData.TestResourceType.Id,
+        ProviderId = ProviderConstants.Altinn3.Id,
+    };
+
+    public static readonly Resource NavSykepengerDialog = new()
+    {
+        Id = Guid.Parse("0195efb8-7c80-7f26-817a-50893176320f"),
+        Name = "Dialogs for sickness benefits",
+        Description = "The service is used to send and receive dialogues in Dialogporten about new sick leaves, submitted applications, requests for income reports, and receipts for submitted income reports.",
+        RefId = "nav_sykepenger_dialog",
+        TypeId = TestData.TestResourceType.Id,
+        ProviderId = ProviderConstants.Altinn3.Id,
+    };
+
+    public static readonly Resource DiheOmsetningsoppgaveAlkohol = new()
+    {
+        Id = Guid.Parse("0195efb8-7c80-7f26-817a-508931763210"),
+        Name = "Omsetningsoppgave for alkohol",
+        Description = "Omsetningsoppgave for alkohol",
+        RefId = "app_dihe_omsetningsoppgave-for-alkohol",
+        TypeId = TestData.TestResourceType.Id,
+        ProviderId = ProviderConstants.Altinn3.Id,
+    };
+
+    public static readonly Resource NavSykepengerSykmelding = new()
+    {
+        Id = Guid.Parse("0195efb8-7c80-7f26-817a-508931763211"),
+        Name = "Sykmelding til arbeidsgiver",
+        Description = "Sykmelding fra arbeidstaker gjør at arbeidsgiver kan motta sykmeldingen som den sykmeldte sender fra nav.no.",
+        RefId = "nav_sykepenger_sykmelding",
+        TypeId = TestData.TestResourceType.Id,
+        ProviderId = ProviderConstants.Altinn3.Id,
+    };
+
+    public static readonly Resource SkattResource = new()
+    {
+        Name = "Skattemelding",
+        Description = "Innlevering av skattemelding for næringsdrivende",
+        RefId = "app_skd_skattemelding",
+        TypeId = TestData.TestResourceType.Id,
+        ProviderId = ProviderConstants.Altinn3.Id,
+    };
+
+    public static readonly Resource MvaResource = new()
+    {
+        Name = "MVA-melding",
+        Description = "Innlevering av merverdiavgiftsmelding",
+        RefId = "app_skd_mva-melding",
+        TypeId = TestData.TestResourceType.Id,
+        ProviderId = ProviderConstants.Altinn3.Id,
+    };
+
+    #endregion
+
     #region Firmaer
 
     public static ConstantDefinition<Entity> BakerJohnsen { get; } = new("a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d")
@@ -127,6 +199,28 @@ public static class TestData
             UserId = null,
             Username = null,
             VariantId = EntityVariantConstants.ENK,
+        }
+    };
+
+    public static ConstantDefinition<Entity> KaosMagicDesignAndArts { get; } = new("7a1b2c3d-4e5f-4678-9abc-def012345670")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Kaos Magic Design and Arts",
+            OrganizationIdentifier = "315678901",
+            Parent = null,
+            ParentId = null,
+            PartyId = 50315678,
+            PersonIdentifier = null,
+            RefId = "315678901",
+            TypeId = EntityTypeConstants.Organization,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.AS,
         }
     };
 
@@ -491,6 +585,54 @@ public static class TestData
             TypeId = EntityTypeConstants.Person,
             UserId = 20198981,
             Username = "milena.solstad",
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+
+    #endregion
+
+    #region Personer - Kaos Magic Design and Arts
+
+    public static ConstantDefinition<Entity> JinxArcane { get; } = new("7a1b2c3d-4e5f-4678-9abc-def012345671")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1993, 7, 22),
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Jinx Arcane",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 50401001,
+            PersonIdentifier = "22079340101",
+            RefId = "22079340101",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 20401001,
+            Username = "jinx.arcane",
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+
+    public static ConstantDefinition<Entity> AlexTheArtist { get; } = new("7a1b2c3d-4e5f-4678-9abc-def012345672")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1988, 3, 14),
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Alex The Artist",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 50401002,
+            PersonIdentifier = "14038840102",
+            RefId = "14038840102",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 20401002,
+            Username = "alex.theartist",
             VariantId = EntityVariantConstants.Person,
         }
     };
@@ -888,6 +1030,21 @@ public static class TestData
     private static readonly Guid AssignMilleHundefrisorTheaMD = Guid.Parse("0196a0b1-0001-7001-8001-000000000030");
     private static readonly Guid AssignMilleHundefrisorMilenaCB = Guid.Parse("0196a0b1-0001-7001-8001-000000000031");
 
+    // Kaos Magic Design and Arts - personroller
+    private static readonly Guid AssignKaosJinxArcaneMD = Guid.Parse("0196a0b1-0001-7001-8001-000000000050");
+    private static readonly Guid AssignKaosAlexTheArtistCB = Guid.Parse("0196a0b1-0001-7001-8001-000000000051");
+
+    // Dumbo Adventures - org-til-org
+    private static readonly Guid AssignDumboAdventuresKaosAuditor = Guid.Parse("0196a0b1-0001-7001-8001-000000000052");
+
+    // Privatperson (self-to-self) assignments
+    private static readonly Guid AssignMalinEmiliePriv = Guid.Parse("0196a0b1-0001-7001-8001-000000000040");
+    private static readonly Guid AssignTheaPriv = Guid.Parse("0196a0b1-0001-7001-8001-000000000041");
+    private static readonly Guid AssignJosephinePriv = Guid.Parse("0196a0b1-0001-7001-8001-000000000042");
+    private static readonly Guid AssignMilenaPriv = Guid.Parse("0196a0b1-0001-7001-8001-000000000043");
+    private static readonly Guid AssignJinxArcanePriv = Guid.Parse("0196a0b1-0001-7001-8001-000000000044");
+    private static readonly Guid AssignAlexTheArtistPriv = Guid.Parse("0196a0b1-0001-7001-8001-000000000045");
+
     // Org-til-org assignments
     private static readonly Guid AssignBakerJohnsenRegnskapNorgeAcc = Guid.Parse("0196a0b1-0001-7001-8001-000000000016");
     private static readonly Guid AssignSvendsenMittRegnskapAcc = Guid.Parse("0196a0b1-0001-7001-8001-000000000017");
@@ -936,6 +1093,21 @@ public static class TestData
         // Mille Hundefrisør - personroller
         new Assignment() { Id = AssignMilleHundefrisorTheaMD, FromId = MilleHundefrisor, ToId = Thea, RoleId = RoleConstants.ManagingDirector },
         new Assignment() { Id = AssignMilleHundefrisorMilenaCB, FromId = MilleHundefrisor, ToId = Milena, RoleId = RoleConstants.ChairOfTheBoard },
+
+        // Kaos Magic Design and Arts - personroller
+        new Assignment() { Id = AssignKaosJinxArcaneMD, FromId = KaosMagicDesignAndArts, ToId = JinxArcane, RoleId = RoleConstants.ManagingDirector },
+        new Assignment() { Id = AssignKaosAlexTheArtistCB, FromId = KaosMagicDesignAndArts, ToId = AlexTheArtist, RoleId = RoleConstants.ChairOfTheBoard },
+
+        // Dumbo Adventures - org-til-org (Kaos is auditor for Dumbo)
+        new Assignment() { Id = AssignDumboAdventuresKaosAuditor, FromId = DumboAdventures, ToId = KaosMagicDesignAndArts, RoleId = RoleConstants.Auditor },
+
+        // Privatperson (self-to-self)
+        new Assignment() { Id = AssignMalinEmiliePriv, FromId = MalinEmilie, ToId = MalinEmilie, RoleId = RoleConstants.PrivatePerson },
+        new Assignment() { Id = AssignTheaPriv, FromId = Thea, ToId = Thea, RoleId = RoleConstants.PrivatePerson },
+        new Assignment() { Id = AssignJosephinePriv, FromId = JosephineYvonnesdottir, ToId = JosephineYvonnesdottir, RoleId = RoleConstants.PrivatePerson },
+        new Assignment() { Id = AssignMilenaPriv, FromId = Milena, ToId = Milena, RoleId = RoleConstants.PrivatePerson },
+        new Assignment() { Id = AssignJinxArcanePriv, FromId = JinxArcane, ToId = JinxArcane, RoleId = RoleConstants.PrivatePerson },
+        new Assignment() { Id = AssignAlexTheArtistPriv, FromId = AlexTheArtist, ToId = AlexTheArtist, RoleId = RoleConstants.PrivatePerson },
 
         // RPC AS - personroller
         new Assignment() { Id = AssignRpcOddHalvorsenMD, FromId = RpcAS, ToId = OddHalvorsen, RoleId = RoleConstants.ManagingDirector },

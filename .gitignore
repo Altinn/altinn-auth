@@ -51,5 +51,8 @@ src/apps/Altinn.AccessMgmt.Worker.ER/allunits
 .sonarqube/
 /src/apps/Altinn.AccessManagement/test/AccessMgmt.Tests/coverage-report
 
+# Claude Code
+.claude/
+
 # Artifacts
 artifacts/

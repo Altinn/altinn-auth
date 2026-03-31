@@ -1,0 +1,48 @@
+{
+  "UserId": 20096763,
+  "UserUuid": "3a53efdd-c152-436d-800b-bc3d2bada0f9",
+  "UserType": 1,
+  "UserName": "malin.emilie",
+  "ExternalIdentity": "",
+  "PhoneNumber": null,
+  "Email": null,
+  "PartyId": 50096763,
+  "Party": {
+    "PartyTypeName": 1,
+    "SSN": "05887196763",
+    "OrgNumber": "",
+    "Person": {
+      "SSN": "05887196763",
+      "Name": "MALIN EMILIE",
+      "FirstName": "MALIN",
+      "MiddleName": "",
+      "LastName": "EMILIE",
+      "TelephoneNumber": "",
+      "MobileNumber": "",
+      "MailingAddress": "",
+      "MailingPostalCode": "",
+      "MailingPostalCity": "",
+      "AddressMunicipalNumber": "",
+      "AddressMunicipalName": "",
+      "AddressStreetName": "",
+      "AddressHouseNumber": "",
+      "AddressHouseLetter": "",
+      "AddressPostalCode": "",
+      "AddressCity": "",
+      "DateOfDeath": null
+    },
+    "Organization": null,
+    "PartyId": 50096763,
+    "PartyUuid": "3a53efdd-c152-436d-800b-bc3d2bada0f9",
+    "UnitType": null,
+    "Name": "MALIN EMILIE",
+    "IsDeleted": false,
+    "OnlyHierarchyElementWithNoAccess": false,
+    "ChildParties": null
+  },
+  "ProfileSettingPreference": {
+    "Language": "nb",
+    "PreSelectedPartyId": 0,
+    "DoNotPromptForParty": false
+  }
+}
