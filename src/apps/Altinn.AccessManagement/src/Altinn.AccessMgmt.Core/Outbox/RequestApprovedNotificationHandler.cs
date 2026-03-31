@@ -139,15 +139,13 @@ public class RequestApprovedNotificationHandler(
     {
         ArgumentNullException.ThrowIfNull(recipient);
 
+        var emailContent = new StringBuilder();
+        AddApprover(approver, emailContent);
+        AddResourcesAndPackage(resources, packages, emailContent);
+        emailContent.AppendLine($"<p>Med vennlig hilsen</br>Altinn</p>");
+
         if (recipient.TypeId == EntityTypeConstants.Person)
         {
-            var emailContent = new StringBuilder();
-            emailContent.AppendLine($"<p>{approver.Name} har akseptert din forespørsel om følgende fullmakter.</p>");
-
-            AddResourcesAndPackage(resources, packages, emailContent);
-
-            emailContent.AppendLine($"<p>Med vennlig hilsen</br>Altinn</p>");
-
             return new NotificationRecipientExt
             {
                 RecipientPerson = new RecipientPersonExt
@@ -167,13 +165,6 @@ public class RequestApprovedNotificationHandler(
         }
         else if (recipient.TypeId == EntityTypeConstants.Organization)
         {
-            var emailContent = new StringBuilder();
-            emailContent.AppendLine($"<p>{approver.Name} med Org.nr {recipient.OrganizationIdentifier} har akseptert din forespørsel om følgende fullmakter.</p>");
-
-            AddResourcesAndPackage(resources, packages, emailContent);
-
-            emailContent.AppendLine($"<p>Med vennlig hilsen </br>Altinn</p>");
-
             return new NotificationRecipientExt
             {
                 RecipientOrganization = new RecipientOrganizationExt
@@ -192,7 +183,33 @@ public class RequestApprovedNotificationHandler(
             };
         }
 
-        throw new InvalidOperationException("Unsupported party type. not person or organization");
+        if (!EntityTypeConstants.TryGetById(recipient.TypeId, out var entityType))
+        {
+            throw new InvalidOperationException($"Couldn't find recipient entity with typeid {recipient.TypeId}");
+        }
+
+        throw new InvalidOperationException($"Unsupported recipient entity type with uuid '{recipient.Id}', must be a person or organization, not '{entityType.Entity.Name}'.");
+
+        static void AddApprover(Entity approver, StringBuilder emailContent)
+        {
+            if (approver.TypeId == EntityTypeConstants.Organization)
+            {
+                emailContent.AppendLine($"<p>{approver.Name} med Org.nr {approver.OrganizationIdentifier} har akseptert din forespørsel om følgende fullmakter.</p>");
+            }
+            else if (approver.TypeId == EntityTypeConstants.Person)
+            {
+                emailContent.AppendLine($"<p>{approver.Name} har akseptert din forespørsel om følgende fullmakter.</p>");
+            }
+            else
+            {
+                if (!EntityTypeConstants.TryGetById(approver.TypeId, out var entityType))
+                {
+                    throw new InvalidOperationException($"Couldn't find approver with entity with typeid {approver.TypeId}");
+                }
+
+                throw new InvalidOperationException($"Unsupported approver entity type with uuid '{approver.Id}', must be a person or organization, not '{entityType.Entity.Name}'.");
+            }
+        }
 
         static void AddResourcesAndPackage(IEnumerable<Resource> resources, IEnumerable<Package> packages, StringBuilder emailContent)
         {
