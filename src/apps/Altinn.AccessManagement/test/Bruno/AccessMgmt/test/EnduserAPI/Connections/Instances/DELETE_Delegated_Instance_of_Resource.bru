@@ -1,0 +1,54 @@
+meta {
+  name: DELETE_Delegated_Instance_of_Resource
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/instances?party={{party}}&from={{from}}&to={{to}}&resource={{resource}}&instance={{instance}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{from}}
+  to: {{to}}
+  resource: {{resource}}
+  instance: {{instance}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/enduser_instans-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    bru.setVar("party", testdata.instance_from_user.user_1.partyUuid);
+    bru.setVar("from", testdata.instance_from_user.user_1.partyUuid);
+    bru.setVar("to", testdata.instance_to_user.user_2.partyUuid);
+    bru.setVar("resource", testdata.app.app_id);
+    bru.setVar("instance", testdata.app.instans_urn);
+    
+    var getTokenParameters = {
+      auth_userId: testdata.instance_from_user.user_1.userId,
+      auth_partyId: testdata.instance_from_user.user_1.partyId,
+      auth_partyUuid: testdata.instance_from_user.user_1.partyUuid,
+      auth_ssn: testdata.instance_from_user.user_1.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    };
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+}
+
+tests {
+  test("DELETE_Delegated_Instance_of_Resource", function() {
+      expect(res.status).to.be.oneOf([204], "Expected 204 on successful delete");
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

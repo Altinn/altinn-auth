@@ -1,0 +1,66 @@
+meta {
+  name: PUT_Withdraw_Requested_Request_On_App
+  type: http
+  seq: 10
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/sent/withdraw?party={{party}}&id={{apprequestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  id: {{apprequestId}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    bru.setVar("party", testdata.Bot_from_person.partyuuid);
+    
+     var getTokenParameters = {
+      auth_userId: testdata.Bot_from_person.userid,
+      auth_partyId: testdata.Bot_from_person.partyid,
+      auth_partyUuid: testdata.Bot_from_person.partyuuid,
+      auth_ssn: testdata.Bot_from_person.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.sluttbrukerdelegationrequestwrite
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    test("Withdraw request which was sent from_Person", function() {
+      const data = res.getBody();
+      
+      expect(res.status).to.equal(200);
+      expect(data).to.exist;
+      expect(data.id).to.exist;
+      expect(data).to.have.property("id");
+    expect(data).to.have.property("status").that.is.oneOf(["Withdrawn"]);
+    expect(data).to.have.property("type", "resource");
+    
+    // Resource check
+    expect(data.resource).to.exist;
+    expect(data.resource).to.have.property(
+      "referenceId",
+      testdata.resource_to_delegate.app_id
+    );
+    
+    // From / To check
+    expect(data.from).to.have.property("id", testdata.Bot_from_person.partyuuid);
+    expect(data.to).to.have.property("id", testdata.Bot_Org_2.partyuuid);
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

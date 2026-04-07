@@ -1,5 +1,5 @@
 
-exports.getToken = async function (getTokenParameters) {
+async function getToken(getTokenParameters) {
   const axios = require("axios");
   const btoa = require("btoa");
 
@@ -78,3 +78,7 @@ exports.getToken = async function (getTokenParameters) {
 
   return response.data;
 }
+
+module.exports = {
+  getToken,
+};

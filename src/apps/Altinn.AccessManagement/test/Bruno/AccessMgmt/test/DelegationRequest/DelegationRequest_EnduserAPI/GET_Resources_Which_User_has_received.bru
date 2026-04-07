@@ -1,0 +1,55 @@
+meta {
+  name: GET_Resources_Which_User_has_received
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/received?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    bru.setVar("party", testdata.Bot_person.partyuuid);
+    var getTokenParameters = {
+      auth_userId: testdata.Bot_person.userid,
+      auth_partyId: testdata.Bot_person.partyid,
+      auth_partyUuid: testdata.Bot_person.partyuuid,
+      auth_ssn: testdata.Bot_person.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.sluttbrukerdelegationrequestread
+    }
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token)
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    test("GET received request for access on resources for privat person", function() {
+      const data = res.getBody();
+      expect(res.status).to.equal(200);
+      expect(data).to.exist;
+      expect(data).to.have.property("data");
+      expect(data.data).to.be.an("array");
+      if (data.data.length > 0) {
+        const request = data.data[0];
+        expect(request).to.have.property("id");
+        expect(request).to.have.property("type", "resource");
+        expect(request.resource).to.exist;
+        expect(request.to).to.have.property("personIdentifier", testdata.Bot_person.pid);
+      }
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,68 @@
+meta {
+  name: POST_Enduser_Connections_Be_Om_tilgang_App_Add_bruker
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+}
+
+body:json {
+  {
+      "personidentifier": "{{toPerson}}",
+      "lastName": "{{toPersonLastName}}"
+    }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    bru.setVar("party", testdata.Bot_Org_2.partyuuid);
+    bru.setVar("toPerson", testdata.Bot_from_person.pid);
+    bru.setVar("toPersonLastName", testdata.Bot_from_person.lastname);
+    
+    
+    var getTokenParameters = {
+      auth_userId: testdata.Bot_Org_2.styreleder.userid,
+      auth_partyId: testdata.Bot_Org_2.styreleder.partyid,
+      auth_partyUuid: testdata.Bot_Org_2.styreleder.partyuuid,
+      auth_ssn: testdata.Bot_Org_2.styreleder.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+  
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    test("Add Org_User as rettighetshaver for Be_om_Tilgang", function() {
+      const data = res.getBody();
+      
+      expect(res.status).to.equal(200);
+      assert.isOk(data, "Expected response body to return created assignment");
+      
+      assert.equal(data.fromId, bru.getVar("party").toLowerCase());
+      assert.equal(data.toId, testdata.Bot_from_person.partyuuid.toLowerCase());
+      assert.equal(data.roleId, "42cae370-2dc1-4fdc-9c67-c2f4b0f0f829"); // rettighetshaver uuid
+      
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,66 @@
+meta {
+  name: PUT_Confirm_Resource_Request_From_Draft
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/draft/confirm?party={{party}}&id={{serviceowner_requestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  id: {{serviceowner_requestId}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    bru.setVar("party", testdata.Bot_Org_for_serviceowner.partyuuid);
+    
+    var getTokenParameters = {
+      auth_userId: testdata.Bot_Org_for_serviceowner.dagligleder.userid,
+      auth_partyId: testdata.Bot_Org_for_serviceowner.dagligleder.partyid,
+      auth_partyUuid: testdata.Bot_Org_for_serviceowner.dagligleder.partyuuid,
+      auth_ssn: testdata.Bot_Org_for_serviceowner.dagligleder.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    test("Confirm request for access on resources from Org_user", function() {
+      const data = res.getBody();
+      
+      expect(res.status).to.equal(200);
+      expect(data).to.exist;
+      expect(data.id).to.exist;
+      expect(data).to.have.property("id");
+    expect(data).to.have.property("status", "Pending");
+    expect(data).to.have.property("type", "resource");
+    
+    // Resource check
+    expect(data.resource).to.exist;
+    expect(data.resource).to.have.property(
+      "referenceId",
+      "ttd-test-bruno-enkelttjeneste-privatperson-ressurs"
+    );
+    
+   
+      
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

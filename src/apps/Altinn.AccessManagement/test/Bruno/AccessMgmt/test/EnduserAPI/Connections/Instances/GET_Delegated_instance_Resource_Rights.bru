@@ -1,0 +1,89 @@
+meta {
+  name: GET_Delegated_instance_Resource_Rights
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/instances/rights?party={{party}}&from={{from}}&to={{to}}&resource={{resource}}&instance={{instance}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{from}}
+  to: {{to}}
+  resource: {{resource}}
+  instance: {{instance}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/enduser_instans-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    bru.setVar("party", testdata.instance_from_user.user_1.partyUuid);
+    bru.setVar("from", testdata.instance_from_user.user_1.partyUuid);
+    bru.setVar("to", testdata.instance_to_user.user_2.partyUuid);
+    bru.setVar("resource", testdata.app.app_id);
+    bru.setVar("instance", testdata.app.instans_urn);
+    
+    var getTokenParameters = {
+      auth_userId: testdata.instance_from_user.user_1.userId,
+      auth_partyId: testdata.instance_from_user.user_1.partyId,
+      auth_partyUuid: testdata.instance_from_user.user_1.partyUuid,
+      auth_ssn: testdata.instance_from_user.user_1.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    };
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/enduser_instans-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+    test("GET_Delegated_instance_Resource_Rights", function() {
+      const data = res.getBody();
+    
+      expect(res.status).to.equal(200);
+    
+      // Resource check
+    expect(data.resource).to.exist;
+    expect(data.resource.refId).to.equal(testdata.app.app_id);
+    
+    // Instance check
+    expect(data.instance).to.exist;
+    expect(data.instance.refId).to.equal(
+      testdata.app.instans_urn
+    );
+    
+    // directRights check
+    expect(data.directRights).to.be.an("array");
+    expect(data.directRights.length).to.equal(2);
+    
+    //  Actions check
+    const expectedActions = ["read", "write"];
+    const actualActions = data.directRights.map(r => r.right.action.value);
+    
+    expect(actualActions).to.have.members(expectedActions);
+    
+    // Verify each delegated right
+    data.directRights.forEach(d => {
+      expect(d.reason.items[0].name).to.equal("direct");
+      expect(d.right.resource[0]).to.have.property("value", "app_ttd_bruno-instans-delegering-app");
+    
+      const perm = d.permissions[0];
+      expect(perm.from).to.have.property("id", testdata.instance_from_user.user_1.partyUuid);
+      expect(perm.to).to.have.property("id", testdata.instance_to_user.user_2.partyUuid);
+    });
+    
+      
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

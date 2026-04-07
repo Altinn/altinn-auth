@@ -1,0 +1,67 @@
+meta {
+  name: PUT_New_Actions_To_Delegate_Resource_instans_To_User
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/instances/rights?party={{party}}&from={{from}}&to={{to}}&resource={{resource}}&instance={{instance}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{from}}
+  to: {{to}}
+  resource: {{resource}}
+  instance: {{instance}}
+}
+
+body:json {
+  {
+      "DirectRightKeys": [
+        "01decb78ed8b0db4c850c6535e3aa729b7a043f6fa18a5718bd0732ba6cd64d3bb"
+      ]
+    }
+  
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/enduser_instans-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    bru.setVar("party", testdata.instance_from_user.user_1.partyUuid);
+    bru.setVar("from", testdata.instance_from_user.user_1.partyUuid);
+    bru.setVar("to", testdata.instance_to_user.user_2.partyUuid);
+    bru.setVar("resource", testdata.app.app_id);
+    bru.setVar("instance", testdata.app.instans_urn);
+    
+    var getTokenParameters = {
+      auth_userId: testdata.instance_from_user.user_1.userId,
+      auth_partyId: testdata.instance_from_user.user_1.partyId,
+      auth_partyUuid: testdata.instance_from_user.user_1.partyUuid,
+      auth_ssn: testdata.instance_from_user.user_1.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    };
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+  
+}
+
+tests {
+  const testdata = require(`./testdata/enduser_instans-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+    test("PUT_New_Actions_To_Delegate_Resource_instans_To_User", function() {
+      const data = res.getBody();
+    
+      expect(res.status).to.equal(200);
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,65 @@
+meta {
+  name: PUT_Approve_Received_Request_On_Resource
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/received/approve?party={{party}}&id={{resourcerequestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  id: {{resourcerequestId}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    bru.setVar("party", testdata.Bot_person.partyuuid);
+    
+    var getTokenParameters = {
+      auth_userId: testdata.Bot_person.userid,
+      auth_partyId: testdata.Bot_person.partyid,
+      auth_partyUuid: testdata.Bot_person.partyuuid,
+      auth_ssn: testdata.Bot_person.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.sluttbrukerdelegationrequestwrite
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+  
+}
+
+script:post-response {
+  const data = res.getBody();
+    expect(data).to.exist;
+      expect(data.id).to.exist;
+    bru.setEnvVar("resourcerequestidapprove", data.id);
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    test("PUT_Approve_Received_Request_On_Resource", function() {
+      expect(res.status).to.be.oneOf([200, 204], "Expected 200 or 204 for approve request");
+      
+      // If we get 200 with body, verify it
+      if(res.status === 200) {
+        const data = res.getBody();
+        if(data) {
+          expect(data).to.have.property("status", "Approved");
+        }
+      }
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

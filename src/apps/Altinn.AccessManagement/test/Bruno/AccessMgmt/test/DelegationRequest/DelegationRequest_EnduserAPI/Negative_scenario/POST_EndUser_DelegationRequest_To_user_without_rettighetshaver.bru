@@ -1,0 +1,65 @@
+meta {
+  name: POST_EndUser_DelegationRequest_To_user_without_rettighetshaver
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/resource?party={{party}}&to={{toUser}}&resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{toUser}}
+  resource: {{resource}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    bru.setVar("party", testdata.Bot_Org.partyuuid);
+    bru.setVar("toUser", testdata.user_uten_rettighetshaver.partyuuid);
+    bru.setVar("resource", testdata.resource_to_delegate.resource_id_privatperson);
+    
+    var getTokenParameters = {
+      auth_userId: testdata.Bot_Org.innehaver.userid,
+      auth_partyId: testdata.Bot_Org.innehaver.partyid,
+      auth_partyUuid: testdata.Bot_Org.innehaver.partyuuid,
+      auth_ssn: testdata.Bot_Org.innehaver.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.sluttbrukerdelegationrequestwrite
+    }
+    
+    
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    test("Person_A request for access on resources to Org_user", function() {
+      const data = res.getBody();
+      const expectedTo = `No connection between party:'${testdata.Bot_Org.partyuuid.toLowerCase()}' and to:'${testdata.user_uten_rettighetshaver.partyuuid.toLowerCase()}'`;
+      
+      expect(res.status).to.equal(400);
+      expect(data).to.have.property("validationErrors");
+      const validationError = data.validationErrors[0];
+      expect(validationError).to.have.property("detail", "Initial connection between parties not found.");
+      expect(validationError).to.have.property("paths");
+      expect(validationError.paths).to.be.an("array").with.length.greaterThan(0);
+      expect(validationError.paths[0]).to.equal("$QUERY/to");
+      expect(validationError).to.have.property("to", expectedTo);
+      
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,65 @@
+meta {
+  name: POST_Delegate_Resource_instans_To_User
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/instances/rights?party={{party}}&to={{to}}&resource={{resource}}&instance={{instance}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{to}}
+  resource: {{resource}}
+  instance: {{instance}}
+}
+
+body:json {
+  {
+      "DirectRightKeys": [
+        "0170d2fa5543afde12c67d703afc57c179949e0bb2ae2697bd438091e754c109ee",
+        "01a1fe90501d314db95735f2bf8c52186f4aa3b46e420e5a381eee39c4820b47e2"
+      ]
+    }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/enduser_instans-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    bru.setVar("party", testdata.instance_from_user.user_1.partyUuid);
+    bru.setVar("to", testdata.instance_to_user.user_2.partyUuid);
+    bru.setVar("resource", testdata.app.app_id);
+    bru.setVar("instance", testdata.app.instans_urn);
+    
+    var getTokenParameters = {
+      auth_userId: testdata.instance_from_user.user_1.userId,
+      auth_partyId: testdata.instance_from_user.user_1.partyId,
+      auth_partyUuid: testdata.instance_from_user.user_1.partyUuid,
+      auth_ssn: testdata.instance_from_user.user_1.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/enduser_instans-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+    test("POST_Delegate_Resource_instans_To_User", function() {
+      const data = res.getBody();
+    
+      expect(res.status).to.equal(201);
+      
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,78 @@
+meta {
+  name: POST_EndUser_DelegationRequest_To_Fra_Org_to_Org
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/resource?party={{party}}&to={{toUser}}&resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{toUser}}
+  resource: {{resource}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    bru.setVar("party", testdata.Bot_Org_2.partyuuid);
+    bru.setVar("toUser", testdata.Bot_Org.partyuuid);
+    bru.setVar("resource", testdata.resource_to_delegate.app_id);
+    
+    var getTokenParameters = {
+      auth_userId: testdata.Bot_Org_2.styreleder.userid,
+      auth_partyId: testdata.Bot_Org_2.styreleder.partyid,
+      auth_partyUuid: testdata.Bot_Org_2.styreleder.partyuuid,
+      auth_ssn: testdata.Bot_Org_2.styreleder.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.sluttbrukerdelegationrequestwrite
+    }
+    
+    
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+  
+}
+
+script:post-response {
+  const data = res.getBody();
+    expect(data).to.exist;
+      expect(data.id).to.exist;
+    bru.setEnvVar("resource2requestId", data.id);
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    test("Org_A request for access on resources to Org_B", function() {
+      const data = res.getBody();
+      
+      expect(res.status).to.equal(200);
+      expect(data).to.exist;
+      expect(data.id).to.exist;
+      expect(data).to.have.property("id");
+    expect(data).to.have.property("status", "Pending");
+    expect(data).to.have.property("type", "resource");
+    
+    // Resource check
+    expect(data.resource).to.exist;
+    
+    // From / To check - Person to Org
+    expect(data.from).to.have.property("id", testdata.Bot_Org_2.partyuuid);
+    expect(data.to).to.have.property("id", testdata.Bot_Org.partyuuid);
+    
+      
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

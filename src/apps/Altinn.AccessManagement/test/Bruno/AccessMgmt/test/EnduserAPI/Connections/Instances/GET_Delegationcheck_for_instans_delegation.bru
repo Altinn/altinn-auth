@@ -1,0 +1,92 @@
+meta {
+  name: GET_Delegationcheck_for_instans_delegation
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/instances/delegationcheck?party={{party}}&resource={{resource}}&instance={{instance}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  resource: {{resource}}
+  instance: {{instance}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/enduser_instans-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    bru.setVar("party", testdata.instance_from_user.user_1.partyUuid);
+    bru.setVar("resource", testdata.app.app_id);
+    bru.setVar("instance", testdata.app.instans_urn);
+    
+    var getTokenParameters = {
+      auth_userId: testdata.instance_from_user.user_1.userId,
+      auth_partyId: testdata.instance_from_user.user_1.partyId,
+      auth_partyUuid: testdata.instance_from_user.user_1.partyUuid,
+      auth_ssn: testdata.instance_from_user.user_1.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    };
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/enduser_instans-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+    test("GET_Delegationcheck_for_instans_delegation_for_user", function() {
+      const data = res.getBody();
+    
+      expect(res.status).to.equal(200);
+      expect(data.resource).to.exist;
+    expect(data.resource).to.have.property("refId", testdata.app.app_id);
+    expect(data.resource.provider).to.have.property("code", "ttd");
+    expect(data.resource.type).to.have.property("name", "AltinnApp");
+    
+    // ---------- Instance check ----------
+    expect(data.instance).to.exist;
+    expect(data.instance).to.have.property(
+      "refId",
+      testdata.app.instans_urn
+    );
+    
+    // ---------- Rights checks ----------
+    expect(data.rights).to.be.an("array");
+    expect(data.rights.length).to.equal(4);
+    
+    // Expected actions
+    const expectedActions = ["read", "write", "delete", "instantiate"];
+    const actualActions = data.rights.map(r => r.right.action.value);
+    
+    // Verify all actions exist
+    expect(actualActions).to.have.members(expectedActions);
+    
+    // ---------- Validate each right ----------
+    data.rights.forEach(r => {
+      expect(r.right).to.have.property("key");
+      expect(r.right.resource[0]).to.have.property(
+        "value",
+        testdata.app.app_id
+      );
+    
+      // result should be true
+      expect(r).to.have.property("result", true);
+    
+      // reasonCodes check
+      expect(r.reasonCodes).to.include("RoleAccess");
+    });
+      
+      
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
