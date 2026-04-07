@@ -97,6 +97,7 @@ public static class TestDataSeeds
         #region TestData Assignments and Delegations
         db.Assignments.AddRange(TestData.Assignments);
         db.AssignmentPackages.AddRange(TestData.AssignmentPackages);
+        db.AssignmentInstances.AddRange(TestData.AssignmentInstances);
         //// db.Delegations.AddRange(TestData.Delegations);
         #endregion
 

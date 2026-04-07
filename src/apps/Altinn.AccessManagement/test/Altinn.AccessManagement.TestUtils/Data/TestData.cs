@@ -1034,6 +1034,9 @@ public static class TestData
     private static readonly Guid AssignKaosJinxArcaneMD = Guid.Parse("0196a0b1-0001-7001-8001-000000000050");
     private static readonly Guid AssignKaosAlexTheArtistCB = Guid.Parse("0196a0b1-0001-7001-8001-000000000051");
 
+    // Kaos Magic Design and Arts - rettighetshavere
+    public static readonly Guid AssignKaosJosephineRightholder = Guid.Parse("0196a0b1-0001-7001-8001-000000000053");
+
     // Dumbo Adventures - org-til-org
     private static readonly Guid AssignDumboAdventuresKaosAuditor = Guid.Parse("0196a0b1-0001-7001-8001-000000000052");
 
@@ -1098,6 +1101,9 @@ public static class TestData
         new Assignment() { Id = AssignKaosJinxArcaneMD, FromId = KaosMagicDesignAndArts, ToId = JinxArcane, RoleId = RoleConstants.ManagingDirector },
         new Assignment() { Id = AssignKaosAlexTheArtistCB, FromId = KaosMagicDesignAndArts, ToId = AlexTheArtist, RoleId = RoleConstants.ChairOfTheBoard },
 
+        // Kaos Magic Design and Arts - rettighetshavere
+        new Assignment() { Id = AssignKaosJosephineRightholder, FromId = KaosMagicDesignAndArts, ToId = JosephineYvonnesdottir, RoleId = RoleConstants.Rightholder },
+
         // Dumbo Adventures - org-til-org (Kaos is auditor for Dumbo)
         new Assignment() { Id = AssignDumboAdventuresKaosAuditor, FromId = DumboAdventures, ToId = KaosMagicDesignAndArts, RoleId = RoleConstants.Auditor },
 
@@ -1140,6 +1146,35 @@ public static class TestData
         { 
             AssignmentId = AssignDumboAdventuresThea, 
             PackageId = PackageConstants.SalarySpecialCategory.Id 
+        },
+    };
+
+    #endregion
+
+    #region Assignment Instances
+
+#pragma warning disable SA1401 // Fields should be private
+    public static List<AssignmentInstance> AssignmentInstances = new()
+#pragma warning restore SA1401 // Fields should be private
+    {
+        // Josephine has instance rights for Kaos on SiriusSkattemelding
+        new AssignmentInstance()
+        {
+            AssignmentId = AssignKaosJosephineRightholder,
+            ResourceId = SiriusSkattemelding.Id,
+            InstanceId = "urn:altinn:instance-id:50315678/b1a2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+            PolicyPath = "sirius-skattemelding-v1/50315678/p5049963/delegationpolicy.xml",
+            PolicyVersion = "1.0",
+        },
+
+        // Josephine has instance rights for Kaos on MattilsynetBakeryService
+        new AssignmentInstance()
+        {
+            AssignmentId = AssignKaosJosephineRightholder,
+            ResourceId = MattilsynetBakeryService.Id,
+            InstanceId = "urn:altinn:instance-id:50315678/a2b3c4d5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+            PolicyPath = "mattilsynet-baker-konditorvare/50315678/p5049963/delegationpolicy.xml",
+            PolicyVersion = "1.0",
         },
     };
 

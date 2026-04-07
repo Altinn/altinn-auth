@@ -172,11 +172,10 @@ public partial class ConnectionsControllerTest
         }
 
         /// <summary>
-        /// Malin (MD of Dumbo) queries resource rights for Skattemelding delegated to Mille in the to-others direction.
-        /// Expects OK with a valid response containing the resource.
-        /// 
-        /// Mille gets rights indirectly since Thea is MD of Mille. (nøkkelrollearv)
-        /// She should get the same rights as query for Mille, bit indirect not direct.
+        /// Malin (MD of Dumbo) queries resource rights for Skattemelding for Thea in the to-others direction.
+        /// Thea is not a direct rightholder for Skattemelding — instead she inherits access through her
+        /// ManagingDirector role at Mille Hundefrisor, which IS a rightholder of Dumbo (key-role inheritance / nøkkelrollearv).
+        /// Expects OK with 9 IndirectRights (KeyRole reason), no DirectRights.
         /// </summary>
         [Fact]
         public async Task GetResourceRights_AsMalinForDumboToThea_WithToOthersScope_ReturnsOk()
@@ -212,6 +211,12 @@ public partial class ConnectionsControllerTest
             Assert.Equal("app_skd_sirius-skattemelding-v1", resourceRightsDto.Resource.RefId);
         }
 
+        /// <summary>
+        /// Malin (MD of Dumbo) queries resource rights for Skattemelding for Milena in the to-others direction.
+        /// Milena is Chair of the Board at Mille Hundefrisor, which is a rightholder of Dumbo. She inherits
+        /// access indirectly through her key-role at Mille (nøkkelrollearv).
+        /// Expects OK with 9 IndirectRights (KeyRole reason), no DirectRights.
+        /// </summary>
         [Fact]
         public async Task GetResourceRights_AsMalinForDumboToMilena_WithToOthersScope_ReturnsOk()
         {
@@ -246,6 +251,13 @@ public partial class ConnectionsControllerTest
             Assert.Equal("app_skd_sirius-skattemelding-v1", resourceRightsDto.Resource.RefId);
         }
 
+        /// <summary>
+        /// Thea queries her own resource rights for Skattemelding from Dumbo in the from-others direction.
+        /// Thea inherits access indirectly through her ManagingDirector role at Mille Hundefrisor,
+        /// which is a rightholder of Dumbo (key-role inheritance).
+        /// Expects OK with 9 IndirectRights (KeyRole reason), no DirectRights.
+        /// Note: method name says "ToOthers" but the query is actually from-others (party=Thea, from=Dumbo, to=Thea).
+        /// </summary>
         [Fact]
         public async Task GetResourceRights_AsTheaForDumboToThea_WithToOthersScope_ReturnsOk()
         {

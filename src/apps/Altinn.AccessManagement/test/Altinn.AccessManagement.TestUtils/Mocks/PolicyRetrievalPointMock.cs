@@ -23,7 +23,7 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
         private readonly string _appAttributeId = "urn:altinn:app";
 
         /// <summary>
-        /// Constructor setting up dependencies
+        /// Constructor setting up dependencies.
         /// </summary>
         /// <param name="httpContextAccessor">httpContextAccessor</param>
         /// <param name="logger">logger</param>
@@ -104,7 +104,7 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
         }
 
         /// <inheritdoc/>
-        public async Task<XacmlPolicy> GetPolicyVersionAsync(string policyPath, string version, CancellationToken cancellationToken = default)
+        public virtual async Task<XacmlPolicy> GetPolicyVersionAsync(string policyPath, string version, CancellationToken cancellationToken = default)
         {
             string path = GetAltinnAppsDelegationPolicyPath(policyPath);
             if (File.Exists(path))

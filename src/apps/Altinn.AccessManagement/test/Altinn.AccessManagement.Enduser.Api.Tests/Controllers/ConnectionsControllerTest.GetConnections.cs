@@ -181,8 +181,8 @@ public partial class ConnectionsControllerTest
         }
 
         /// <summary>
-        /// Party (Verdiq) does not match either from (Paula) or to (Ørjan), so the request is rejected.
-        /// Expects 403 Forbidden.
+        /// Verdiq queries connections where from=Verdiq and to=SystemUserStandard using to-others read scope.
+        /// SystemUser is an allowed entity type for the "to" parameter. Expects 200 OK.
         /// </summary>
         [Fact]
         public async Task ListConnections_WithDirectionToOthersUsingToOtherScopeWithSystemUserAsTo_ReturnsOK()
