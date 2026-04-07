@@ -47,9 +47,12 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
         }
 
         error.Add(ValidationErrors.RequestNotFound);
-        error.TryBuild(out var problems);
+        if (error.TryBuild(out var problems)) 
+        { 
+            return problems;
+        }
 
-        return problems;
+        throw new UnreachableException();
     }
 
     /// <inheritdoc/>

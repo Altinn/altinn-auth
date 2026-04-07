@@ -63,17 +63,22 @@ public class RequestController(
     public async Task<IActionResult> GetRequest(
     [FromQuery][Required] Guid party,
     [FromQuery][Required] Guid id,
-    [FromQuery, FromHeader] PagingInput paging,
     CancellationToken ct = default
     )
     {
         var result = await requestService.GetRequest(id, ct);
+
+        if (!result.IsSuccess)
+        {
+            return Forbid(); // Don't reveal whether the request exists or not
+        }
+
         if (result.Value.From.Id != party && result.Value.To.Id != party)
         {
             return Forbid();
         }
 
-        return result.IsSuccess ? Ok(result.Value) : result.Problem.ToActionResult();
+        return Ok(result.Value);
     }
 
     [HttpGet("draft")]
