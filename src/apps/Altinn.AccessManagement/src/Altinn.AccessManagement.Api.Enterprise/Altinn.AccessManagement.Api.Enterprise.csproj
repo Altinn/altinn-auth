@@ -4,7 +4,9 @@
     <PackageReference Include="Altinn.Authorization.ProblemDetails" />
     <PackageReference Include="Altinn.Authorization.ProblemDetails.Abstractions" />
     <PackageReference Include="Altinn.Urn" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Filters" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
   </ItemGroup>
 
   <ItemGroup>

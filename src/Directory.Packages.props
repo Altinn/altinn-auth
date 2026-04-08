@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
@@ -117,6 +117,7 @@
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
     <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="8.1.4" />
     <PackageVersion Include="Swashbuckle.AspNetCore.Filters" Version="9.0.1" />
+    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.4" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="8.1.4" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
     <PackageVersion Include="System.IO.Hashing" Version="10.0.2" />

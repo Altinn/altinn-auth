@@ -1,16 +1,19 @@
-﻿using Altinn.AccessMgmt.Core.Utils;
+﻿using Altinn.AccessManagement.Api.Metadata;
+using Altinn.AccessMgmt.Core.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.ConfigureOpenAPI();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    // Enable Swagger
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
