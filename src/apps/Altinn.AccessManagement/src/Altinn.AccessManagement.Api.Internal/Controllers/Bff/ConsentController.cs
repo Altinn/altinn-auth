@@ -68,6 +68,35 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
             return Forbid();
         }
 
+        /// <summary>
+        /// Get the count of consent requests for a given party and status.
+        /// </summary>
+        [HttpGet]
+        [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
+        [Route("consentrequests/count/{partyUuid}")]
+        public async Task<IActionResult> GetConsentRequestCount([FromRoute] Guid partyUuid, [FromQuery] Core.Models.Consent.ConsentRequestStatusType status, CancellationToken cancellationToken = default)
+        {
+            Guid? performedBy = UserUtil.GetUserUuid(User);
+            if (performedBy == null)
+            {
+                return Unauthorized();
+            }
+
+            bool isAuthorized = await AuthorizeResourceAccess(accessManagementResource, partyUuid, User, "read");
+            if (!isAuthorized)
+            {
+                return Unauthorized();
+            }
+
+            Result<int> count = await ConsentService.GetConsentRequestCountForParty(partyUuid, status, cancellationToken);
+            if (count.IsProblem)
+            {
+                return count.Problem.ToActionResult();
+            }
+
+            return Ok(count.Value);
+        }
+
         [HttpGet]
         [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
         [Route("consentrequests/list/{partyUuid}", Name = "requestlist")]

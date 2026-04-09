@@ -52,5 +52,10 @@ namespace Altinn.AccessManagement.Core.Repositories.Interfaces
         /// Returns a list over consent request for a specific party.
         /// </summary>
         Task<Result<List<ConsentRequestDetails>>> GetRequestsForParty(Guid consentParty, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Returns the count of consent requests for a specific party and status.
+        /// </summary>
+        Task<int> GetConsentRequestCountForParty(Guid fromPartyUuid, ConsentRequestStatusType status, CancellationToken cancellationToken);
     }
 }

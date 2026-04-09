@@ -75,5 +75,10 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         /// Returns true if status is updated ok.
         /// </summary>
         Task<Result<bool>> UpdateAltinn2ConsentMigrateStatus(string consentId, int status, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Returns the count of consent requests for a specific party and status.
+        /// </summary>
+        Task<Result<int>> GetConsentRequestCountForParty(Guid offeredByParty, ConsentRequestStatusType status, CancellationToken cancellationToken);
     }
 }

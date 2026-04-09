@@ -63,5 +63,10 @@ namespace AccessMgmt.Tests.Mocks
         {
             throw new NotImplementedException();
         }
+
+        public Task<int> GetConsentRequestCountForParty(Guid fromPartyUuid, ConsentRequestStatusType status, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

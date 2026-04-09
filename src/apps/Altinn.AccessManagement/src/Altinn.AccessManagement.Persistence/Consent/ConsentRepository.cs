@@ -528,6 +528,23 @@ namespace Altinn.AccessManagement.Persistence.Consent
             return results;
         }
 
+        /// <inheritdoc/>
+        public async Task<int> GetConsentRequestCountForParty(Guid fromPartyUuid, ConsentRequestStatusType status, CancellationToken cancellationToken)
+        {
+            string query = /*strpsql*/@$"
+                SELECT COUNT(*)
+                FROM consent.consentrequest
+                WHERE fromPartyUuid = @fromPartyUuid AND status = @status AND portalviewmode = 'show'
+            ";
+
+            await using var pgcom = _db.CreateCommand(query);
+            pgcom.Parameters.AddWithValue("fromPartyUuid", NpgsqlDbType.Uuid, fromPartyUuid);
+            pgcom.Parameters.Add(new NpgsqlParameter<ConsentRequestStatusType>("status", status));
+
+            var result = await pgcom.ExecuteScalarAsync(cancellationToken);
+            return Convert.ToInt32(result);
+        }
+
         /// <summary>
         /// Return the consent rights for a given consentRequest
         /// </summary>

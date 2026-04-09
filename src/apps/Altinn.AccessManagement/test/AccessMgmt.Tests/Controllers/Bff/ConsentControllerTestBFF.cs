@@ -757,6 +757,78 @@ namespace AccessMgmt.Tests.Controllers.Bff
             Assert.Equal(Problems.ConsentCantBeRevoked.ErrorCode, problemDetails.ErrorCode);
         }
 
+        [Fact]
+        public async Task GetConsentRequestCount_Created_ReturnsCorrectCount()
+        {
+            Guid requestId = Guid.Parse("019d7114-413f-7dbd-af65-72caa1c18d04");
+            IConsentRepository repositgo = _fixture.Services.GetRequiredService<IConsentRepository>();
+            await repositgo.CreateRequest(await GetRequest(requestId, DateTimeOffset.Now.AddDays(10)), Altinn.AccessManagement.Core.Models.Consent.ConsentPartyUrn.PartyUuid.Create(Guid.Parse("8ef5e5fa-94e1-4869-8635-df86b6219181")), default);
+            HttpClient client = GetTestClient();
+            string token = PrincipalUtil.GetToken(20001337, 50003899, 2, Guid.Parse("d5b861c8-8e3b-44cd-9952-5315e5990cf5"), AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            HttpResponseMessage response = await client.GetAsync($"accessmanagement/api/v1/bff/consentrequests/count/d5b861c8-8e3b-44cd-9952-5315e5990cf5?status=Created");
+            string responseText = await response.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            int count = JsonSerializer.Deserialize<int>(responseText);
+            Assert.True(count >= 1);
+        }
+
+        [Fact]
+        public async Task GetConsentRequestCount_HiddenPortalMode_ReturnsZero()
+        {
+            Guid requestId = Guid.Parse("e2071c55-6adf-487b-af05-9198a230ed44");
+            IConsentRepository repositgo = _fixture.Services.GetRequiredService<IConsentRepository>();
+            await repositgo.CreateRequest(await GetRequest(requestId, DateTimeOffset.Now.AddDays(10)), Altinn.AccessManagement.Core.Models.Consent.ConsentPartyUrn.PartyUuid.Create(Guid.Parse("8ef5e5fa-94e1-4869-8635-df86b6219181")), default);
+            HttpClient client = GetTestClient();
+            string token = PrincipalUtil.GetToken(20001337, 50003899, 2, Guid.Parse("d5b861c8-8e3b-44cd-9952-5315e5990cf5"), AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            HttpResponseMessage response = await client.GetAsync($"accessmanagement/api/v1/bff/consentrequests/count/d5b861c8-8e3b-44cd-9952-5315e5990cf5?status=Created");
+            string responseText = await response.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            int count = JsonSerializer.Deserialize<int>(responseText);
+            Assert.Equal(0, count);
+        }
+
+        [Fact]
+        public async Task GetConsentRequestCount_Accepted_ReturnsZeroForCreatedOnly()
+        {
+            Guid requestId = Guid.Parse("019d7110-437e-7560-b91a-5494525b4c66");
+            IConsentRepository repositgo = _fixture.Services.GetRequiredService<IConsentRepository>();
+            await repositgo.CreateRequest(await GetRequest(requestId, DateTimeOffset.Now.AddDays(10)), Altinn.AccessManagement.Core.Models.Consent.ConsentPartyUrn.PartyUuid.Create(Guid.Parse("8ef5e5fa-94e1-4869-8635-df86b6219181")), default);
+            HttpClient client = GetTestClient();
+            string token = PrincipalUtil.GetToken(20001337, 50003899, 2, Guid.Parse("d5b861c8-8e3b-44cd-9952-5315e5990cf5"), AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            HttpResponseMessage response = await client.GetAsync($"accessmanagement/api/v1/bff/consentrequests/count/d5b861c8-8e3b-44cd-9952-5315e5990cf5?status=Accepted");
+            string responseText = await response.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            int count = JsonSerializer.Deserialize<int>(responseText);
+            Assert.Equal(0, count);
+        }
+
+        [Fact]
+        public async Task GetConsentRequestCount_AcceptedStatus_ReturnsCorrectCount()
+        {
+            Guid performedBy = Guid.Parse("d5b861c8-8e3b-44cd-9952-5315e5990cf5");
+            Guid requestId = Guid.Parse("e2071c55-6adf-487b-af05-9198a230ed46");
+            IConsentRepository repositgo = _fixture.Services.GetRequiredService<IConsentRepository>();
+            await repositgo.CreateRequest(await GetRequest(requestId, DateTimeOffset.Now.AddDays(10)), Altinn.AccessManagement.Core.Models.Consent.ConsentPartyUrn.PartyUuid.Create(Guid.Parse("8ef5e5fa-94e1-4869-8635-df86b6219181")), default);
+
+            ConsentContextDto consentContextExternal = new ConsentContextDto
+            {
+                Language = "nb",
+            };
+            await repositgo.AcceptConsentRequest(requestId, performedBy, consentContextExternal.ToConsentContext());
+
+            HttpClient client = GetTestClient();
+            string token = PrincipalUtil.GetToken(20001337, 50003899, 2, performedBy, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            HttpResponseMessage response = await client.GetAsync($"accessmanagement/api/v1/bff/consentrequests/count/d5b861c8-8e3b-44cd-9952-5315e5990cf5?status=Accepted");
+            string responseText = await response.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            int count = JsonSerializer.Deserialize<int>(responseText);
+            Assert.True(count >= 1);
+        }
+
         private HttpClient GetTestClient()
         {
             HttpClient client = _fixture.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
