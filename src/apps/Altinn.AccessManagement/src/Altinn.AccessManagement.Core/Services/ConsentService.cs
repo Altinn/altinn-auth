@@ -946,7 +946,10 @@ namespace Altinn.AccessManagement.Core.Services
                 }
             }
 
-            ValidateRequiredMetadata(ref problemsBuilder, consentRight, resourceDetails);
+            if (!fromAltinn2)
+            {
+                ValidateRequiredMetadata(ref problemsBuilder, consentRight, resourceDetails);
+            }
         }
 
         private static void ValidateRequiredMetadata(ref MultipleProblemBuilder problemsBuilder, ConsentRight consentRight, ServiceResource resourceDetails)
