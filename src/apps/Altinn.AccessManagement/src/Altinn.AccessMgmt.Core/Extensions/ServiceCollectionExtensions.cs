@@ -53,11 +53,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthorizationScopeProvider, DefaultAuthorizationScopeProvider>();
         services.AddScoped<IAuthorizationHandler, ScopeConditionAuthorizationHandler>();
 
+        // NOTE: can be removed once RequestReviewedNotificationHandler is in production.
         services.AddTransient<RequestApprovedNotificationHandler>();
+        services.AddTransient<RequestReviewedNotificationHandler>();
         services.AddTransient<RequestPendingNotificationHandler>();
 
         services.AddSingleton<AuditMiddleware>();
-        
+
         services.AddOptions<CoreAppsettings>()
             .Configure(configureAppsettings);
 
@@ -68,7 +70,7 @@ public static class ServiceCollectionExtensions
                 .BindConfiguration("ConsentMigration");
 
         // Consent Migration - Services (Core - Scoped)
-        services.AddScoped<IConsentMigrationService, ConsentMigrationService>();        
+        services.AddScoped<IConsentMigrationService, ConsentMigrationService>();
 
         AddJobs(services);
         return services;

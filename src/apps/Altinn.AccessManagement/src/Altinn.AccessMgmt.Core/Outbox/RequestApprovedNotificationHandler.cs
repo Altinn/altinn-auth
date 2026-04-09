@@ -17,6 +17,7 @@ using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessMgmt.Core.Outbox;
 
+[Obsolete($"will be removed once {nameof(RequestReviewedNotificationHandler)} is in production.")]
 public class RequestApprovedNotificationHandler(
     AppDbContext db,
     IAltinnNotification notification,

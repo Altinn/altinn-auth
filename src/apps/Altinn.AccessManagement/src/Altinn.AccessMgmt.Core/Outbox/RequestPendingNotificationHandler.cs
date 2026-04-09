@@ -155,7 +155,6 @@ public class RequestPendingNotificationHandler(
                 {
                     NationalIdentityNumber = recipient.PersonIdentifier,
                     ChannelSchema = NotificationChannelExt.Email,
-                    ResourceId = "urn:altinn:resource:altinn_access_management_hovedadmin",
                     EmailSettings = new EmailSendingOptionsExt
                     {
                         Subject = "Altinn Tilgangsforespørsel",

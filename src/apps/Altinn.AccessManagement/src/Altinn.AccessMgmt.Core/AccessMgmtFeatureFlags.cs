@@ -110,7 +110,13 @@ public static class AccessMgmtFeatureFlags
     /// <summary>
     /// Specifies if notifications for approved requests are enabled.
     /// </summary>
+    [Obsolete($"will be removed once {nameof(AccessMgmtCoreOutboxRequestNotifyReviewed)} is in production.")]
     public const string AccessMgmtCoreOutboxRequestNotifyApproved = $"AccessMgmt.Core.Outbox.RequestNotifyApproved";
+
+    /// <summary>
+    /// Specifies if notifications for approved requests are enabled.
+    /// </summary>
+    public const string AccessMgmtCoreOutboxRequestNotifyReviewed = $"AccessMgmt.Core.Outbox.RequestNotifyReviewed";
 
     /// <summary>
     /// Specifies if notifications should be sent if rightholder assignemnt is added.
