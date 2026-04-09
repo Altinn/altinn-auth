@@ -44,9 +44,11 @@ public static partial class AccessManagementEnduserHost
             options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
             {
                 Description = "Standard Authorization header using the Bearer scheme. Example: \"bearer {token}\"",
-                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
                 Name = "Authorization",
-                Type = SecuritySchemeType.ApiKey
+                In = ParameterLocation.Header,
+                Scheme = "bearer",
+                BearerFormat = "JWT"
             });
             options.OperationFilter<SecurityRequirementsOperationFilter>();
             options.EnableAnnotations();

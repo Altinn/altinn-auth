@@ -17,13 +17,6 @@ namespace Altinn.AccessManagement.Api.Metadata
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {
-                options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
-                {
-                    Description = "Standard Authorization header using the Bearer scheme. Example: \"bearer {token}\"",
-                    In = ParameterLocation.Header,
-                    Name = "Authorization",
-                    Type = SecuritySchemeType.ApiKey
-                });
                 options.OperationFilter<SecurityRequirementsOperationFilter>();
                 options.EnableAnnotations();
 
