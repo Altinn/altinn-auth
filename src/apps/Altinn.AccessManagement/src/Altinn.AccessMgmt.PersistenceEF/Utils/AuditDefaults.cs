@@ -76,6 +76,11 @@ public static class AuditDefaults
     public const string LegacyMaskinportenSchemaApi = "cfd2991c-bbdf-43b5-8b10-1ba1dfaed167";
 
     /// <summary>
+    /// ManuellSanering
+    /// </summary>
+    public const string ManuellSanering = "019d85eb-5255-700d-8214-0dcdec1df3d1";
+
+    /// <summary>
     /// DBA
     /// </summary>
     public const string DBA = "0195efb8-7c80-7262-b616-7d9eb843bcaa";

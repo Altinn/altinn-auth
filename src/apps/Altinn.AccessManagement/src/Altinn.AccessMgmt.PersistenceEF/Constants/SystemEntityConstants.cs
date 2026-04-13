@@ -454,6 +454,32 @@ public static class SystemEntityConstants
     };
 
     /// <summary>
+    /// Represents the ManuellSanering system entity.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 019d85eb-5255-700d-8214-0dcdec1df3d1
+    /// - <c>Name:</c> ManuellSanering
+    /// - <c>RefId:</c> sys-manuell-sanering
+    /// - <c>TypeId:</c> Internal entity type
+    /// - <c>VariantId:</c> Standard variant
+    /// </remarks>
+    public static ConstantDefinition<Entity> ManualScripting { get; } = new ConstantDefinition<Entity>(AuditDefaults.ManuellSanering)
+    {
+        Entity = new()
+        {
+            Name = "Altinn",
+            RefId = "sys-manuell-sanering",
+            ParentId = null,
+            TypeId = EntityTypeConstants.Internal,
+            VariantId = EntityVariantConstants.Standard,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Altinn")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Altinn")),
+    };
+
+    /// <summary>
     /// Represents the Outbox system entity.
     /// </summary>
     /// <remarks>
