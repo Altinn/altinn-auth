@@ -172,7 +172,7 @@ public class RequestPendingNotificationHandler(
 
             AddResourcesAndPackage(resources, packages, emailContent);
 
-            emailContent.AppendLine($"<p>Du mottar denne forespørselen fordi du har tilgangspakken hovedaministrator for {recipient.Name} i Altinn. Logg inn i Altinn velg riktig aktør og gå til tilgangsstyring og forespørsler for å behandle forespørselen.</p>");
+            emailContent.AppendLine($"<p>Du mottar denne forespørselen fordi du er hovedadministrator for {recipient.Name} i Altinn. Logg inn i Altinn velg riktig aktør og gå til tilgangsstyring og forespørsler for å behandle forespørselen.</p>");
             emailContent.AppendLine($"<p>Med vennlig hilsen</br>Altinn</p>");
 
             return new NotificationRecipientExt
@@ -199,6 +199,7 @@ public class RequestPendingNotificationHandler(
         {
             if (resources.Any())
             {
+                emailContent.Append("<strong>Ressurser:</strong>");
                 emailContent.AppendLine("<ul>");
                 foreach (var resource in resources)
                 {
@@ -210,7 +211,7 @@ public class RequestPendingNotificationHandler(
 
             if (packages.Any())
             {
-                emailContent.AppendLine("<p>og/eller følgende pakkeløsninger:</p>");
+                emailContent.Append("<strong>Tilgangspakker:</strong>");
                 emailContent.AppendLine("<ul>");
                 foreach (var package in packages)
                 {
