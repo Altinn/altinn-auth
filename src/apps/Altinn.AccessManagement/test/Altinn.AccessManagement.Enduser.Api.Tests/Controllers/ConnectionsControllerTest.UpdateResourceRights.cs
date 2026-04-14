@@ -62,7 +62,6 @@ public partial class ConnectionsControllerTest
         public UpdateResourceRights(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnduserControllerConnections);
             Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.ResourceDelegationEF);
             Fixture.ConfiureServices(services =>
             {

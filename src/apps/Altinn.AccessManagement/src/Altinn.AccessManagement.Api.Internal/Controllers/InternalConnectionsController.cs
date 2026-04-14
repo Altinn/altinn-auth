@@ -20,7 +20,6 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers;
 /// </summary>
 [ApiController]
 [Route("accessmanagement/api/v1/internal/connections")]
-[FeatureGate(AccessManagementInternalFeatureFlags.ControllerConnections)]
 [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
 public class InternalConnectionsController(IConnectionService connectionService) : ControllerBase
 {

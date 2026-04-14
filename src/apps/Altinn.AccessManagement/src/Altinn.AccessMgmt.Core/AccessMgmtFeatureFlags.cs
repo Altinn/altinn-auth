@@ -21,7 +21,7 @@ public static class AccessMgmtFeatureFlags
     public const string HostedServicesRegisterSyncImport = $"AccessMgmt.Core.HostedServices.RegisterSync.Import";
 
     /// <summary>
-    /// Specifies if the register data should be streamed from register service to access management database
+    /// Specifies if the resource registry data should be streamed from resource registry service to access management database
     /// </summary>
     public const string HostedServicesResourceRegistrySync = $"AccessMgmt.Core.HostedServices.ResourceRegistrySync";
 
@@ -49,16 +49,6 @@ public static class AccessMgmtFeatureFlags
     /// Specifies if the altinn bankruptcyestate roles data should be streamed from sblbridge service to access management database
     /// </summary>
     public const string HostedServicesAltinnBankruptcyEstateRoleSync = $"AccessMgmt.Core.HostedServices.AltinnBankruptcyEstateRoleSync";
-
-    /// <summary>
-    /// Specifies if AuthorizedPartiesServiceEf should be used
-    /// </summary>
-    public const string AuthorizedPartiesEfEnabled = $"AccessMgmt.Core.Services.AuthorizedParties.EfEnabled";
-
-    /// <summary>
-    /// Specifies Client Delegation should be enabled in enduser API.
-    /// </summary>
-    public const string EnduserControllerClientDelegation = $"AccessMgmt.Enduser.Controller.ClientDelegation";
 
     /// <summary>
     /// Represents the resource name for the hosted service responsible for synchronizing single application rights.
@@ -171,11 +161,6 @@ public static class AccessMgmtFeatureFlags
     #endregion
 
     /// <summary>
-    /// Feature flag for Controller Enduser Connections
-    /// </summary>
-    public const string EnduserControllerConnections = "AccessManagement.Enduser.Connections";
-
-    /// <summary>
     /// Enables request assignment resource endpoints in enduser and serviceowner APIs.
     /// </summary>
     public const string EnableRequestAssignmentResource = "AccessMgmt.Controller.RequestAssignment.Resource";
@@ -186,12 +171,12 @@ public static class AccessMgmtFeatureFlags
     public const string EnableRequestAssignmentPackage = "AccessMgmt.Controller.RequestAssignment.Package";
 
     /// <summary>
+    /// Specifies if entity framework implementation of resource delegations should be used.
+    /// </summary>
+    public const string ResourceDelegationEF = $"AccessManagement.ResourceDelegation.EF";
+
+    /// <summary>
     /// Specifies if entity framework implementation of instance delegations should be used.
     /// </summary>
     public const string InstanceDbEf = $"AccessManagement.InstanceDelegation.EF";
-
-    /// <summary>
-    /// Specifies if entity framework implementation of resource delegations should be used.
-    /// </summary>
-    public const string ResourceDelegationEF = "AccessManagement.ResourceDelegation.EF";
 }

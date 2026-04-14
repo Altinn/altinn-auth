@@ -54,7 +54,6 @@ public partial class ConnectionsControllerTest
         public GetAvailableUsers(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnduserControllerConnections);
         }
 
         public ApiFixture Fixture { get; }

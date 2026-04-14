@@ -29,7 +29,6 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 /// </summary>
 [ApiController]
 [Route("accessmanagement/api/v1/enduser/connections")]
-[FeatureGate(AccessMgmtFeatureFlags.EnduserControllerConnections)]
 public class ConnectionsController(
     IConnectionService ConnectionService,
     IInputValidation inputValidation,

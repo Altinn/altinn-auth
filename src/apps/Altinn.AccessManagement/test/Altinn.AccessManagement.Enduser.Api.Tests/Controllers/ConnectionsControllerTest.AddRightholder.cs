@@ -48,7 +48,6 @@ public partial class ConnectionsControllerTest
         public AddRightholder(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnduserControllerConnections);
             Fixture.ConfiureServices(services =>
             {
                 services.AddSingleton<IUserProfileLookupService, UserProfileLookupServiceMock>();

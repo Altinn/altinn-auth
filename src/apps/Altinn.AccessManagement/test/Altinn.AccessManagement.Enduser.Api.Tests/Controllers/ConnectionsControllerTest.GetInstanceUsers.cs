@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
 using Altinn.AccessManagement.Api.Enduser.Controllers;
@@ -46,7 +46,6 @@ public partial class ConnectionsControllerTest
         public GetInstanceUsers(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnduserControllerConnections);
             Fixture.ConfiureServices(services =>
             {
                 services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();

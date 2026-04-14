@@ -53,17 +53,9 @@ await app.RunAsync();
 
 async Task Init()
 {
-    if (await featureManager.IsEnabledAsync(AccessManagementFeatureFlags.MigrationDbEf))
-    {
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await dbContext.Database.MigrateAsync();
-        await Altinn.AccessMgmt.PersistenceEF.Data.StaticDataIngest.IngestAll(dbContext);
-    }
-    else if (await featureManager.IsEnabledAsync(AccessManagementFeatureFlags.MigrationDb))
-    {
-        bool generateBasicData = await featureManager.IsEnabledAsync(AccessManagementFeatureFlags.MigrationDbWithBasicData);
-        await app.UseAccessMgmtDb(generateBasicData);
-    }
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await dbContext.Database.MigrateAsync();
+    await Altinn.AccessMgmt.PersistenceEF.Data.StaticDataIngest.IngestAll(dbContext);
 
     using var cts = new CancellationTokenSource();
     AppDomain.CurrentDomain.ProcessExit += (s, e) =>

@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Security.Claims;
 using Altinn.AccessManagement.Api.Enduser.Controllers;
 using Altinn.AccessManagement.Core.Constants;
@@ -29,7 +29,6 @@ public partial class ConnectionsControllerTest
         public RemoveRole(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnduserControllerConnections);
         }
 
         public ApiFixture Fixture { get; }
