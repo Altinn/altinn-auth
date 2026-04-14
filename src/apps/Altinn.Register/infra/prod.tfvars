@@ -27,8 +27,14 @@ features = {
     user_ids = true
     profiles = true
   }
+
   party_import = {
     system_users = true
+  }
+
+  ccr_proxy = {
+    enable = true
+    record = true
   }
 }
 
