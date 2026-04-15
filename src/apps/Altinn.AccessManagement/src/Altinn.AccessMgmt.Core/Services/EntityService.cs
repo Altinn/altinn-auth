@@ -80,6 +80,14 @@ public class EntityService : IEntityService
             .FirstOrDefaultAsync(cancellationToken);
 
     /// <inheritdoc/>
+    public async Task<Entity> GetByOrgNoWithType(string orgNo, CancellationToken cancellationToken = default) => await
+        Db.Entities
+            .AsNoTracking()
+            .Include(e => e.Type)
+            .Where(e => e.OrganizationIdentifier == orgNo)
+            .FirstOrDefaultAsync(cancellationToken);
+
+    /// <inheritdoc/>
     public async Task<Entity> GetByPersNo(string persNo, CancellationToken cancellationToken = default) => await 
         Db.Entities
             .AsNoTracking()

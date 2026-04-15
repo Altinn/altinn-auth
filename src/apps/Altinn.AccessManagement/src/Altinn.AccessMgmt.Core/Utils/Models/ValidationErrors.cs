@@ -118,4 +118,35 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor InvalidInstanceUrn { get; }
         = _factory.Create(29, "Instance must use a valid URN format: 'urn:altinn:instance-id:', 'urn:altinn:correspondence-id:', or 'urn:altinn:dialog-id:'.");
+
+    /// <summary>
+    /// Gets a validation error descriptor for when a resource does not exist.
+    /// </summary>
+    public static ValidationErrorDescriptor ResourceNotExists { get; }
+        = _factory.Create(30, "Resource does not exist.");
+
+    /// <summary>
+    /// Gets a validation error descriptor for when assignment has resources delegated.
+    /// </summary>
+    public static ValidationErrorDescriptor AssignmentResourcesExist { get; }
+        = _factory.Create(31, "Assignment has resources delegated.");
+
+    /// <summary>
+    /// Gets a validation error descriptor for invalid resource type.
+    /// </summary>
+    public static ValidationErrorDescriptor InvalidResourceType { get; }
+        = _factory.Create(32, "Invalid resource type.");
+
+    /// <summary>
+    /// Gets a validation error descriptor for when package is not assignable to recipient.
+    /// </summary>
+    public static ValidationErrorDescriptor PackageIsNotAssignableToRecipient { get; }
+        = _factory.Create(33, "Package is not assignable to the recipient entity type.");
+
+    /// <summary>
+    /// Gets a validation error descriptor for when clearing delegation policy rules fails.
+    /// </summary>
+    public static ValidationErrorDescriptor PolicyClearFailed { get; }
+        = _factory.Create(34, "Failed to clear delegation policy rules.");
 }
+

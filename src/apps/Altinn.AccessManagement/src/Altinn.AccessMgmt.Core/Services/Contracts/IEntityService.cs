@@ -19,6 +19,14 @@ public interface IEntityService
     Task<Entity> GetByOrgNo(string orgNo, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Get Entity based on OrgNo with Type navigation property included
+    /// </summary>
+    /// <param name="orgNo">Organization No</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns></returns>
+    Task<Entity> GetByOrgNoWithType(string orgNo, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Get Entity based on PersNo
     /// </summary>
     /// <param name="persNo">persNo</param>

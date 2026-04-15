@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Errors;
+﻿using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.ProblemDetails;
 
@@ -64,5 +64,19 @@ public static class EntityValidation
     internal static RuleExpression ToExists(Entity party) => () =>
     {
         return EntityExists(party, "to")();
+    };
+
+    internal static RuleExpression FromIsNotTo(Guid fromId, Guid toId, string fromParamName = "party", string toParamName = "supplier") => () =>
+    {
+        if (fromId != toId)
+        {
+            return null;
+        }
+
+        return (ref ValidationErrorBuilder errors) =>
+        {
+            errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{fromParamName}", [new(fromParamName, "An organization cannot delegate to itself.")]);
+            errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{toParamName}", [new(toParamName, "An organization cannot delegate to itself.")]);
+        };
     };
 }
