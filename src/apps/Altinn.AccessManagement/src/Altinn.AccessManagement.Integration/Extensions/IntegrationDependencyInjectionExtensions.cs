@@ -31,7 +31,6 @@ public static class IntegrationDependencyInjectionExtensions
         builder.Services.AddHttpClient<IProfileClient, ProfileClient>();
         builder.Services.AddHttpClient<IAccessListsAuthorizationClient, AccessListAuthorizationClient>();
         builder.Services.AddHttpClient<IAltinn2RightsClient, Altinn2RightsClient>();
-        builder.Services.AddHttpClient<IAltinn2ConsentClient, Altinn2ConsentClient>();
         builder.Services.AddHttpClient<IAuthenticationClient, AuthenticationClient>();
         builder.Services.AddSingleton<IResourceRegistryClient, ResourceRegistryClient>();
 
@@ -40,6 +39,13 @@ public static class IntegrationDependencyInjectionExtensions
             {
                 c.Retry.ShouldHandle = static _ => ValueTask.FromResult(false);
                 c.AttemptTimeout.Timeout = TimeSpan.FromSeconds(15);
+            });
+        builder.Services.AddHttpClient<IAltinn2ConsentClient, Altinn2ConsentClient>()
+            .ReplaceResilienceHandler(static c =>
+            {
+                c.Retry.ShouldHandle = static _ => ValueTask.FromResult(false);
+                c.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(60);
+                c.AttemptTimeout.Timeout = TimeSpan.FromSeconds(30);
             });
 
         return builder;
