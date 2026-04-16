@@ -1101,7 +1101,22 @@ namespace Altinn.AccessManagement.Core.Services
                 consentRight.AddMetadataValues(tempResourceMetadata);
 
                 string searchParam = $"reference={resource.ServiceEditionVersionID}&ResourceType=Consent&id={resource.ServiceCode}_{resource.ServiceEditionCode}";
-                List<ServiceResource> resourceDetails = await _resourceRegistryClient.GetResources(cancellationToken, searchParam);
+                string cacheKey = $"consent:resources:{searchParam}";
+
+                List<ServiceResource> resourceDetails;
+                if (_memoryCache.TryGetValue(cacheKey, out List<ServiceResource> resourceDetailsCache))
+                {
+                    resourceDetails = resourceDetailsCache;
+                }
+                else
+                {
+                    resourceDetails = await _resourceRegistryClient.GetResources(cancellationToken, searchParam);
+                    
+                    if (resourceDetails != null && resourceDetails.Count > 0)
+                    {
+                        _memoryCache.Set(cacheKey, resourceDetails, TimeSpan.FromHours(24));
+                    }
+                }
 
                 if (resourceDetails != null)
                 {
