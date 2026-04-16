@@ -220,6 +220,9 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
 
         builder.AppendLine(GenerateAuditDeleteFunctionAndTrigger(schema!, table!, columns));
         builder.EndCommand();
+
+        builder.AppendLine(GenerateGrants(schema!, table!));
+        builder.EndCommand();
     }
 
     private static List<string> GetDataColumnNames(CreateTableOperation operation)
@@ -360,4 +363,10 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
         return sb.ToString();
     }
 
+    private string GenerateGrants(string schema, string table)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE {schema}.{table} TO platform_authorization;");
+        return sb.ToString();
+    }
 }
