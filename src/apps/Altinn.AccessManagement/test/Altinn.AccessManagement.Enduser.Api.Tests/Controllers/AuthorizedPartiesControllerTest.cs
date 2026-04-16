@@ -28,7 +28,6 @@ public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
     public AuthorizedPartiesControllerTest(ApiFixture fixture)
     {
         Fixture = fixture;
-        Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.InstanceDbEf);
         Fixture.ConfiureServices(services =>
         {
             services.AddSingleton<IProfileClient, ProfileClientMock>();

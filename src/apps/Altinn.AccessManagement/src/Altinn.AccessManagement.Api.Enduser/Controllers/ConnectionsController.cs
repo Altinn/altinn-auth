@@ -893,7 +893,6 @@ public class ConnectionsController(
     /// 2. Using PersonInput in body to create new rightholder and delegate in one operation
     /// </summary>
     [HttpPost("resources/instances/rights")]
-    [FeatureGate(AccessMgmtFeatureFlags.InstanceDbEf)]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_WRITE_TOOTHERS)]
     [Authorize(Policy = AuthzConstants.POLICY_INSTANCE_DELEGATION)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
@@ -996,7 +995,6 @@ public class ConnectionsController(
     /// Update resource instance rights for an existing rightholder connection
     /// </summary>
     [HttpPut("resources/instances/rights")]
-    [FeatureGate(AccessMgmtFeatureFlags.InstanceDbEf)]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_WRITE_TOOTHERS)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
@@ -1047,7 +1045,6 @@ public class ConnectionsController(
     /// Remove resource instance from rightholder connection and all actions
     /// </summary>
     [HttpDelete("resources/instances")]
-    [FeatureGate(AccessMgmtFeatureFlags.InstanceDbEf)]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_CONNECTIONS_BIDIRECTIONAL_WRITE)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]

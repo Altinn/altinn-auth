@@ -1,6 +1,11 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using Altinn.AccessMgmt.PersistenceEF.Audit;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Extensions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Tests
 {
@@ -25,6 +30,21 @@ namespace Altinn.AccessManagement.Tests
             });
 
             builder.UseConfiguration(appsettings.Build());
+
+            builder.ConfigureTestServices(services =>
+            {
+                // Replace the IAuditAccessor registration from production code with test version
+                var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(IAuditAccessor));
+                if (descriptor != null)
+                {
+                    services.Remove(descriptor);
+                }
+
+                services.AddScoped<IAuditAccessor>(sp => new AuditAccessor
+                {
+                    AuditValues = new AuditValues(SystemEntityConstants.StaticDataIngest.Entity.Id)
+                });
+            });
         }
     }
 }

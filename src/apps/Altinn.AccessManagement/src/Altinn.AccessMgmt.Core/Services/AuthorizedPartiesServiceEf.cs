@@ -643,8 +643,6 @@ public class AuthorizedPartiesServiceEf(
             return;
         }
 
-        bool useEF = await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.InstanceDbEf);
-
         foreach (DelegationChange delegation in resourceDelegations)
         {
             if (parties.TryGetValue(delegation.FromUuid.Value, out AuthorizedParty party))
@@ -661,11 +659,6 @@ public class AuthorizedPartiesServiceEf(
                             var partyAndInstanceId = instanceRef.Substring(AltinnXacmlConstants.MatchAttributeIdentifiers.InstanceAttribute.Length + 1);
                             var split = partyAndInstanceId.Split('/');
                             instanceId = split.Length == 2 ? split[1] : partyAndInstanceId;
-                        }
-                        else if (!useEF)
-                        {
-                            // Only add prefix when using old data model (EF feature flag disabled)
-                            instanceRef = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.InstanceAttribute}:{party.PartyId}/{delegation.InstanceId}";
                         }
                     }
 

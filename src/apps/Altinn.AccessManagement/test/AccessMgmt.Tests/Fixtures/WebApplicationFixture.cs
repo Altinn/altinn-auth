@@ -1,11 +1,13 @@
 ﻿using System.Reflection;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
-﻿using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Tests.Contexts;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Scenarios;
+using Altinn.AccessMgmt.PersistenceEF.Audit;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
@@ -36,8 +38,6 @@ public class WebApplicationFixture : WebApplicationFactory<Program>, IAsyncLifet
                ["PostgreSQLSettings:EnableDBConnection"] = "true",
                ["Logging:LogLevel:*"] = "Error",
                ["FeatureManagement:AccessManagement.MigrationDbEf"] = "true",
-               ["FeatureManagement:AccessManagement.InstanceDelegation.EF"] = "false",
-               ["FeatureManagement:AccessManagement.ResourceDelegation.EF"] = "false",
                ["RunIntegrationTests"] = "true",
            });
 
@@ -104,11 +104,28 @@ public class WebApplicationFixture : WebApplicationFactory<Program>, IAsyncLifet
         services.AddScoped<IAltinn2RightsClient, Altinn2RightsClientMock>();
         services.AddScoped<IAltinn2ConsentClient, Altinn2ConsentClientMock>();
         services.AddSingleton<IDelegationChangeEventQueue>(new DelegationChangeEventQueueMock());
+
+        // Replace the IAuditAccessor registration from production code with test version
+        var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(IAuditAccessor));
+        if (descriptor != null)
+        {
+            services.Remove(descriptor);
+        }
+
+        services.AddScoped<IAuditAccessor>(sp => new AuditAccessor
+        {
+            AuditValues = new AuditValues(SystemEntityConstants.StaticDataIngest.Entity.Id)
+        });
     }
 
     /// <summary>
     /// Signalize usage of postgres server
     /// </summary>
+    /// <remarks>
+    /// Note: WebApplicationFixture does not seed test data. Tests that require EF delegation
+    /// with proper resource data should use ApiFixture instead, which seeds all necessary
+    /// test entities via TestDataSeeds.
+    /// </remarks>
     public Task InitializeAsync()
     {
         PostgresServer.StartUsing(this);

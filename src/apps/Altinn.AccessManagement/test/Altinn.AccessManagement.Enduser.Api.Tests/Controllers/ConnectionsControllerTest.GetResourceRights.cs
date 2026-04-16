@@ -49,7 +49,6 @@ public partial class ConnectionsControllerTest
         public GetResourceRights(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.ResourceDelegationEF);
             Fixture.ConfiureServices(services =>
             {
                 services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();

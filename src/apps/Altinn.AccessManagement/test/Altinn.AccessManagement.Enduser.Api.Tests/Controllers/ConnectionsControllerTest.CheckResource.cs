@@ -54,7 +54,6 @@ public partial class ConnectionsControllerTest
         public CheckResource(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.ResourceDelegationEF);
             Fixture.ConfiureServices(services =>
             {
                 services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
