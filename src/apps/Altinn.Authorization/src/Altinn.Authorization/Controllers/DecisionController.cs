@@ -20,6 +20,7 @@ using Altinn.Platform.Authorization.Models.External;
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Authorization.Services.Interface;
 using Altinn.Platform.Authorization.Services.Interfaces;
+using Altinn.Platform.Authorization.Telemetry;
 using Altinn.Platform.Register.Models;
 using Altinn.Platform.Storage.Interface.Models;
 using AutoMapper;
@@ -50,6 +51,7 @@ namespace Altinn.Platform.Authorization.Controllers
         private readonly IResourceRegistry _resourceRegistry;
         private readonly IRegisterService _registerService;
         private readonly IAccessListAuthorization _accessListAuthorization;
+        private readonly DecisionTelemetry _decisionTelemetry;
         private readonly IMapper _mapper;
 
         private readonly SortedDictionary<string, AuthInfo> _appInstanceInfo = new();
@@ -76,6 +78,7 @@ namespace Altinn.Platform.Authorization.Controllers
         /// <param name="memoryCache">memory cache</param>
         /// <param name="eventLog">the authorization event logger</param>
         /// <param name="featureManager">the feature manager</param>
+        /// <param name="decisionTelemetry">PDP decision metric recorder</param>
         /// <param name="mapper">The model mapper</param>
         public DecisionController(
             IAccessManagementWrapper accessManagement,
@@ -90,6 +93,7 @@ namespace Altinn.Platform.Authorization.Controllers
             IMemoryCache memoryCache,
             IEventLog eventLog,
             IFeatureManager featureManager,
+            DecisionTelemetry decisionTelemetry,
             IMapper mapper)
         {
             _pdp = new PolicyDecisionPoint();
@@ -104,6 +108,7 @@ namespace Altinn.Platform.Authorization.Controllers
             _resourceRegistry = resourceRegistry;
             _registerService = registerService;
             _accessListAuthorization = accessListAuthorization;
+            _decisionTelemetry = decisionTelemetry;
             _mapper = mapper;
         }
 
@@ -385,6 +390,12 @@ namespace Altinn.Platform.Authorization.Controllers
 
             XacmlContextResponse finalResponse = delegationContextResponse ?? rolesContextResponse;
             XacmlContextResult finalResult = finalResponse.Results.First();
+
+            // Recorded before the access-list early-return below so that every exit path with a
+            // computed decision is counted. The metric is dimensioned on the request, not the
+            // response, so its placement does not depend on which response is ultimately returned.
+            await RecordPdpDecisionMetric(decisionRequest, cancellationToken);
+
             if (finalResult.Decision.Equals(XacmlContextDecision.Permit) && !await IsAccessListAuthorized(decisionRequest, cancellationToken))
             {
                 return new XacmlContextResponse(new XacmlContextResult(XacmlContextDecision.Deny)
@@ -404,6 +415,50 @@ namespace Altinn.Platform.Authorization.Controllers
             }
 
             return finalResponse;
+        }
+
+        /// <summary>
+        /// Resolves the resource owner and resource identifier for the current decision request and records
+        /// a PDP decision counter increment so that PDP usage can be attributed back to the service owner of
+        /// the resource being protected.
+        /// </summary>
+        private async Task RecordPdpDecisionMetric(XacmlContextRequest decisionRequest, CancellationToken cancellationToken)
+        {
+            try
+            {
+                PolicyResourceType resourceType = PolicyHelper.GetPolicyResourceType(decisionRequest, out string policyResourceId, out string org, out string app);
+
+                string ownerOrg;
+                string resourceId;
+
+                switch (resourceType)
+                {
+                    case PolicyResourceType.AltinnApps:
+                        ownerOrg = string.IsNullOrEmpty(org) ? DecisionTelemetry.UnknownDimensionValue : org;
+                        resourceId = $"app_{org}_{app}";
+                        break;
+
+                    case PolicyResourceType.ResourceRegistry:
+                        // GetResourceAsync is cached in ResourceRegistryWrapper with the same TTL as policies,
+                        // so calls from IsAccessListAuthorized and from here collapse to a single cold lookup.
+                        ServiceResource resource = await _resourceRegistry.GetResourceAsync(policyResourceId, cancellationToken);
+                        ownerOrg = resource?.HasCompetentAuthority?.Orgcode ?? DecisionTelemetry.UnknownDimensionValue;
+                        resourceId = policyResourceId;
+                        break;
+
+                    default:
+                        ownerOrg = DecisionTelemetry.UnknownDimensionValue;
+                        resourceId = DecisionTelemetry.UnknownDimensionValue;
+                        break;
+                }
+
+                _decisionTelemetry.RecordDecision(ownerOrg, resourceId);
+            }
+            catch (Exception ex)
+            {
+                // Telemetry must never break the authorization flow.
+                _logger.LogWarning(ex, "// DecisionController // RecordPdpDecisionMetric // Failed to record PdpDecisions metric");
+            }
         }
 
         private async Task<bool> IsAccessListAuthorized(XacmlContextRequest decisionRequest, CancellationToken cancellationToken = default)
