@@ -28,6 +28,9 @@
     <None Update="Data\AppPolicies\brg\rrh-innrapportering\policy.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Data\AppPolicies\skd\app_skd_a2-4223-160201\policy.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Data\AppPolicies\ttd\signering-brukerstyrt\policy.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
