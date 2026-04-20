@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Altinn.AccessMgmt.Core.Extensions;
@@ -37,6 +37,7 @@ public class RequestReviewedNotificationHandler(
         NotificationOrderChainRequestExt content = new()
         {
             IdempotencyId = idempotencyId,
+            SendersReference = idempotencyId,
             Recipient = CreateRecipient(recipient, reviewer, resources, packages),
         };
 
