@@ -1,7 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
-using System.Text;
-using System.Linq;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
 using Altinn.AccessManagement.Core.Errors;
@@ -14,7 +12,6 @@ using Altinn.AccessManagement.Core.Models.Rights;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Constants.Translation;
 using Altinn.AccessMgmt.Core.Extensions;
-using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.Core.Utils.Helper;

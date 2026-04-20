@@ -462,8 +462,8 @@ public class RequestController(
         }
 
         var result = await connectionService.AddPackage(
-            request.From.Id,
             request.To.Id,
+            request.From.Id,
             request.Package.Id.Value,
             ConfigureConnections,
             ct);
