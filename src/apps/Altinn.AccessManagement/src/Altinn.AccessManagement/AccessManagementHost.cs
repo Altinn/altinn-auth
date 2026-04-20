@@ -10,6 +10,7 @@ using Altinn.AccessManagement.Integration.Configuration;
 using Altinn.AccessManagement.Integration.Extensions;
 using Altinn.AccessManagement.Persistence.Configuration;
 using Altinn.AccessManagement.Persistence.Extensions;
+using Altinn.AccessManagement.Telemetry;
 using Altinn.AccessMgmt.Core.Authorization;
 using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.Outbox;
@@ -84,8 +85,10 @@ internal static partial class AccessManagementHost
             }
         }
 
-        builder.Services.ConfigureOpenTelemetryMeterProvider(provider =>
-                    provider.AddMeter("Altinn.AccessManagement.ConsentMigration"));
+        builder.Services.AddSingleton<AuthorizedPartiesTelemetry>();
+        builder.Services.ConfigureOpenTelemetryMeterProvider(provider => provider
+            .AddMeter("Altinn.AccessManagement.ConsentMigration")
+            .AddMeter(AuthorizedPartiesTelemetry.MeterName));
 
         var connectionStrings = GetConnectionStrings(builder.Configuration);
 

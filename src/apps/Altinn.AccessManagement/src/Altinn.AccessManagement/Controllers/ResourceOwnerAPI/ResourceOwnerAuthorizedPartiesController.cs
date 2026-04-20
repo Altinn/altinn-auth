@@ -5,12 +5,14 @@ using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
+using Altinn.AccessManagement.Telemetry;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.FeatureManagement.Mvc;
 
 namespace Altinn.AccessManagement.Controllers;
@@ -20,7 +22,7 @@ namespace Altinn.AccessManagement.Controllers;
 /// </summary>
 [ApiController]
 [Route("accessmanagement/api/v1/resourceowner")]
-public class ResourceOwnerAuthorizedPartiesController(ILogger<ResourceOwnerAuthorizedPartiesController> logger, IMapper mapper, IAuthorizedPartiesService authorizedPartiesService, IProviderService providerService) : ControllerBase
+public class ResourceOwnerAuthorizedPartiesController(ILogger<ResourceOwnerAuthorizedPartiesController> logger, IMapper mapper, IAuthorizedPartiesService authorizedPartiesService, IProviderService providerService, AuthorizedPartiesTelemetry authorizedPartiesTelemetry, IMemoryCache memoryCache) : ControllerBase
 {
     /// <summary>
     /// Endpoint for retrieving all authorized parties (with option to include Authorized Parties, aka Reportees, from Altinn 2) for a given user or organization 
@@ -71,6 +73,8 @@ public class ResourceOwnerAuthorizedPartiesController(ILogger<ResourceOwnerAutho
         {
             BaseAttribute subjectAttribute = new BaseAttribute(subject.Type, subject.Value);
 
+            await RecordResourceOwnerRequestMetric(cancellationToken);
+
             if (orgCode != null)
             {
                 orgCode = orgCode.Trim().ToLower();
@@ -120,6 +124,60 @@ public class ResourceOwnerAuthorizedPartiesController(ILogger<ResourceOwnerAutho
             logger.LogError(500, ex, "Unexpected internal exception occurred during ServiceOwnerGetAuthorizedParties");
             return new ObjectResult(ProblemDetailsFactory.CreateProblemDetails(HttpContext, detail: "Internal Server Error"));
         }
+    }
+
+    /// <summary>
+    /// Resolves the calling party identifier and records a resource owner AuthorizedParties
+    /// request counter increment so usage can be attributed per caller. Resolution order:
+    /// <list type="number">
+    ///   <item><c>urn:altinn:org</c> claim (Altinn-issued token) — used directly as orgcode.</item>
+    ///   <item>Maskinporten <c>consumer</c> claim → orgnumber → providers table lookup (same
+    ///   principle as ServiceOwnerLookup in altinn-resource-registry, backed by Providers instead
+    ///   of an OrgList cache). If a registered tjenesteier is found, its orgcode is recorded.</item>
+    ///   <item>If the caller has the scope but is not a registered tjenesteier in Altinn, the
+    ///   raw orgnumber from the consumer claim is recorded so the metric still carries an
+    ///   identifier for the actor.</item>
+    /// </list>
+    /// </summary>
+    private async Task RecordResourceOwnerRequestMetric(CancellationToken cancellationToken)
+    {
+        try
+        {
+            string resolvedIdentifier = await ResolveCallerOrgCode(cancellationToken);
+            authorizedPartiesTelemetry.RecordResourceOwnerRequest(resolvedIdentifier);
+        }
+        catch (Exception ex)
+        {
+            // Telemetry must never break the AuthorizedParties flow.
+            logger.LogWarning(ex, "// ResourceOwnerAuthorizedPartiesController // RecordResourceOwnerRequestMetric // Failed to record resource owner AuthorizedParties metric");
+        }
+    }
+
+    private async Task<string> ResolveCallerOrgCode(CancellationToken cancellationToken)
+    {
+        var tokenOrgCode = User.FindFirst("urn:altinn:org")?.Value;
+        if (!string.IsNullOrEmpty(tokenOrgCode))
+        {
+            return tokenOrgCode;
+        }
+
+        var consumerUrn = OrgUtil.GetAuthenticatedParty(User);
+        if (consumerUrn is not null && consumerUrn.IsOrganizationId(out var organizationId))
+        {
+            // Cached because orgnumber→orgcode is effectively static and this endpoint is high-traffic.
+            var orgNumberKey = organizationId.ToString();
+            string? orgCode = await memoryCache.GetOrCreateAsync($"authparties:orgcode:{orgNumberKey}", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
+                Provider provider = await providerService.GetProviderByOrganizationId(orgNumberKey, cancellationToken);
+                return provider?.Code;
+            });
+
+            // Fall back to orgnumber when the caller has the scope but is not a registered tjenesteier in Altinn.
+            return orgCode ?? orgNumberKey;
+        }
+
+        return AuthorizedPartiesTelemetry.UnknownDimensionValue;
     }
 
     private async Task<bool> IsAuthorizedForOrgCode(string orgCode, CancellationToken ct)

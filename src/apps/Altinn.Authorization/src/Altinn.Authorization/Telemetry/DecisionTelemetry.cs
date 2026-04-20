@@ -46,8 +46,8 @@ namespace Altinn.Platform.Authorization.Telemetry
         {
             _pdpDecisions.Add(
                 1,
-                new KeyValuePair<string, object?>(OwnerOrgTag, ownerOrg),
-                new KeyValuePair<string, object?>(ResourceIdTag, resourceId));
+                new KeyValuePair<string, object?>(OwnerOrgTag, ownerOrg.ToLowerInvariant()),
+                new KeyValuePair<string, object?>(ResourceIdTag, resourceId.ToLowerInvariant()));
         }
     }
 }
