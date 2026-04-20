@@ -3,9 +3,9 @@ using System.Net.Mime;
 using Altinn.AccessManagement.Api.Enduser.Models;
 using Altinn.AccessManagement.Api.Enduser.Validation;
 using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Audit;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -14,7 +14,6 @@ using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.FeatureManagement.Mvc;
 
 namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 
@@ -27,7 +26,7 @@ public class ClientDelegationController(
     IClientDelegationService clientDelegationService) : ControllerBase
 {
     #region My
- 
+
     [HttpGet("my/clients")]
     [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_MYCLIENTS_READ)]
     [ProducesResponseType<PaginatedResult<MyClientDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
@@ -110,7 +109,41 @@ public class ClientDelegationController(
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> DeleteMyClientViaParty(
+    public async Task<IActionResult> DeleteMyClientViaProvider(
+        [FromQuery(Name = "provider")][Required] Guid provider,
+        [FromQuery(Name = "from")][Required] Guid from,
+        [FromBody] DelegationBatchInputDto payload,
+        [FromQuery(Name = "cascade")] bool cascade = false,
+        CancellationToken cancellationToken = default)
+    {
+        if (!cascade && payload is { })
+        {
+            return await DeleteMyPackagesToClientViaProvider(provider, from, payload, cancellationToken);
+        }
+
+        var partyUuid = AuthenticationHelper.GetAuthenticatedPartyUuid(httpContextAccessor.HttpContext);
+        if (partyUuid == Guid.Empty)
+        {
+            return Unauthorized();
+        }
+
+        var problem = await clientDelegationService.RemoveAnAgentsClient(provider, from, partyUuid, cascade, cancellationToken);
+        if (problem is { })
+        {
+            return problem.ToActionResult();
+        }
+
+        return NoContent();
+    }
+
+    [HttpDelete("my/clients/accesspackages")]
+    [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_MYCLIENTS_WRITE)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType<List<DelegationDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> DeleteMyPackagesToClientViaProvider(
         [FromQuery(Name = "provider")][Required] Guid provider,
         [FromQuery(Name = "from")][Required] Guid from,
         [FromBody][Required] DelegationBatchInputDto payload,
@@ -232,6 +265,30 @@ public class ClientDelegationController(
         CancellationToken cancellationToken = default)
     {
         var problem = await clientDelegationService.RemoveAgent(party, to, cascade, cancellationToken);
+        if (problem is { })
+        {
+            return problem.ToActionResult();
+        }
+
+        return NoContent();
+    }
+
+    [HttpDelete("agents/clients")]
+    [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE)]
+    [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_WRITE)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> RemoveAgentsClient(
+        [FromQuery(Name = "party")][Required] Guid party,
+        [FromQuery(Name = "from")][Required] Guid from,
+        [FromQuery(Name = "to")][Required] Guid to,
+        [FromQuery(Name = "cascade")] bool cascade = false,
+        CancellationToken cancellationToken = default)
+    {
+        var problem = await clientDelegationService.RemoveAnAgentsClient(party, from, to, cascade, cancellationToken);
         if (problem is { })
         {
             return problem.ToActionResult();

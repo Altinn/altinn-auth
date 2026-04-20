@@ -21,4 +21,9 @@ public class Delegation : BaseDelegation
     /// Delegation facilitator
     /// </summary>
     public Entity Facilitator { get; set; }
+
+    /// <summary>
+    /// Delegation Packages
+    /// </summary>
+    public ICollection<DelegationPackage> DelegationPackages { get; set; } = [];
 }

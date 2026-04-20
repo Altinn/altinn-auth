@@ -16,8 +16,8 @@ public class DelegationPackageConfiguration : IEntityTypeConfiguration<Delegatio
 
         builder.HasKey(p => p.Id);
 
-        builder.PropertyWithReference(navKey: t => t.Delegation, foreignKey: t => t.DelegationId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
         builder.PropertyWithReference(navKey: t => t.Package, foreignKey: t => t.PackageId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
+        builder.PropertyWithReference(navKey: t => t.Delegation, foreignKey: t => t.DelegationId, principalKey: t => t.Id, withMany: t => t.DelegationPackages, deleteBehavior: DeleteBehavior.Cascade);
 
         builder.HasIndex(t => new { t.DelegationId, t.PackageId }).IsUnique();
     }

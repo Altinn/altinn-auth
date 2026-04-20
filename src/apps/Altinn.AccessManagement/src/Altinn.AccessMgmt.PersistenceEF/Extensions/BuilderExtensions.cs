@@ -120,6 +120,7 @@ public static class BuilderExtensions
         Expression<Func<TEntity, TReference>> navKey,
         Expression<Func<TEntity, object>> foreignKey,
         Expression<Func<TReference, object>> principalKey,
+        Expression<Func<TReference, IEnumerable<TEntity>>>? withMany = null,
         DeleteBehavior deleteBehavior = DeleteBehavior.Restrict,
         bool hasIndex = true,
         bool required = true)
@@ -127,7 +128,7 @@ public static class BuilderExtensions
         where TReference : class
     {
         var rel = builder.HasOne<TReference>(navKey)
-                            .WithMany()
+                            .WithMany(withMany)
                             .HasForeignKey(foreignKey)
                             .HasPrincipalKey(principalKey)
                             .OnDelete(deleteBehavior);
@@ -141,6 +142,26 @@ public static class BuilderExtensions
         {
             builder.HasIndex(foreignKey);
         }
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Configure collection navigation with reference navigation and required FK with chosen delete behavior.
+    /// </summary>
+    public static EntityTypeBuilder<TEntity> CollectionPropertyWithReference<TEntity, TRelated>(
+        this EntityTypeBuilder<TEntity> builder,
+        Expression<Func<TEntity, IEnumerable<TRelated>>> collectionNav,
+        Expression<Func<TRelated, TEntity>> referenceNav,
+        Expression<Func<TRelated, object>> foreignKey,
+        DeleteBehavior deleteBehavior = DeleteBehavior.Restrict)
+    where TEntity : class
+    where TRelated : class
+    {
+        var rel = builder.HasMany<TRelated>(collectionNav)
+                         .WithOne(referenceNav)
+                         .HasForeignKey(foreignKey)
+                         .OnDelete(deleteBehavior);
 
         return builder;
     }
