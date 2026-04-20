@@ -36,5 +36,8 @@ namespace Altinn.ResourceRegistry.Core.Enums
 
         [PgName("consent")]
         Consent = 1 << 7,
+
+        [PgName("migratedapp")]
+        MigratedApp = 1 << 8,
     }
 }
