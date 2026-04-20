@@ -427,14 +427,14 @@ public class ContextRetrievalService : IContextRetrievalService
             List<ServiceResource> resources = await GetResourceList(cancellationToken);
             foreach (ServiceResource serviceResource in resources)
             {
-                if (resourceId != null && (serviceResource.ResourceType != ResourceType.Altinn2Service || serviceResource.ResourceType != ResourceType.AltinnApp) &&
+                if (resourceId != null && (serviceResource.ResourceType != ResourceType.Altinn2Service || serviceResource.ResourceType != ResourceType.AltinnApp || serviceResource.ResourceType != ResourceType.MigratedApp) &&
                     serviceResource.Identifier == resourceId)
                 {
                     resource = serviceResource;
                     break;
                 }
 
-                if (org != null && app != null && serviceResource.ResourceType == ResourceType.AltinnApp &&
+                if (org != null && app != null && (serviceResource.ResourceType == ResourceType.AltinnApp || serviceResource.ResourceType == ResourceType.MigratedApp) &&
                     serviceResource.ResourceReferences.Exists(rf => rf.ReferenceType == ReferenceType.ApplicationId && string.Equals(rf.Reference, $"{org}/{app}", StringComparison.OrdinalIgnoreCase)))
                 {
                     resource = serviceResource;

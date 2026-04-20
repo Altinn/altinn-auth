@@ -185,7 +185,7 @@ public static class DelegationScenarios
 
         mock.DbSeeds.AddRange([
             async postgres => await postgres.DelegationMetadataRepository.InsertDelegation(
-                resource.Resource.ResourceType == ResourceType.AltinnApp ? ResourceAttributeMatchType.AltinnAppId : ResourceAttributeMatchType.ResourceRegistry,
+                resource.Resource.ResourceType == ResourceType.AltinnApp || resource.Resource.ResourceType == ResourceType.MigratedApp ? ResourceAttributeMatchType.AltinnAppId : ResourceAttributeMatchType.ResourceRegistry,
                 DelegationChangeComposer.New(
                     DelegationChangeComposer.WithFrom(from),
                     DelegationChangeComposer.WithToUser(to),
@@ -209,7 +209,7 @@ public static class DelegationScenarios
 
         mock.DbSeeds.AddRange([
             async postgres => await postgres.DelegationMetadataRepository.InsertDelegation(
-                resource.Resource.ResourceType == ResourceType.AltinnApp ? ResourceAttributeMatchType.AltinnAppId : ResourceAttributeMatchType.ResourceRegistry,
+                resource.Resource.ResourceType == ResourceType.AltinnApp || resource.Resource.ResourceType == ResourceType.MigratedApp ? ResourceAttributeMatchType.AltinnAppId : ResourceAttributeMatchType.ResourceRegistry,
                 DelegationChangeComposer.New(
                     DelegationChangeComposer.WithFrom(from),
                     DelegationChangeComposer.WithToParty(to),

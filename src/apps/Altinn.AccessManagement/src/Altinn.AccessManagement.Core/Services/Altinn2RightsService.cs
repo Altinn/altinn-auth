@@ -114,7 +114,7 @@ public class Altinn2RightsService : IAltinn2RightsService
 
             entry.From.Add(new(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, delegation.OfferedByPartyId.ToString()));
 
-            if (delegation.ResourceType.Contains("AltinnApp", StringComparison.InvariantCultureIgnoreCase))
+            if (delegation.ResourceType.Contains("AltinnApp", StringComparison.InvariantCultureIgnoreCase) || delegation.ResourceType.Contains("MigratedApp", StringComparison.InvariantCultureIgnoreCase))
             {
                 var app = delegation.ResourceId.Split("/");
                 entry.Resource.AddRange([
@@ -151,7 +151,7 @@ public class Altinn2RightsService : IAltinn2RightsService
             entry.From.Add(new(GetUuidTypeAsUrn(delegation.FromUuidType), delegation.FromUuid));
             entry.To.Add(new(GetUuidTypeAsUrn(delegation.ToUuidType), delegation.ToUuid));
 
-            if (delegation.ResourceType.Contains("AltinnApp", StringComparison.InvariantCultureIgnoreCase))
+            if (delegation.ResourceType.Contains("AltinnApp", StringComparison.InvariantCultureIgnoreCase) || delegation.ResourceType.Contains("MigratedApp", StringComparison.InvariantCultureIgnoreCase))
             {
                 var app = delegation.ResourceId.Split("/");
                 entry.Resource.AddRange([

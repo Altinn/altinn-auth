@@ -35,6 +35,9 @@ namespace Altinn.AccessManagement.Core.Models.ResourceRegistry
         [PgName("consent")]
         Consent = 1 << 7,
 
+        [PgName("migratedapp")]
+        MigratedApp = 1 << 8,
+
         All = ~Default
     }
 }

@@ -349,9 +349,11 @@ namespace Altinn.AccessManagement.Core.Services
             |Systemresource       | ResourceRegistry | urn:altinn:resource
             |MaskinportenSchema   | ResourceRegistry | urn:altinn:resource
             |CorrespondenceService| ResourceRegistry | urn:altinn:resource
-            |Consent              | ResourceRegistry | urn:altinn:resource 
+            |Consent              | ResourceRegistry | urn:altinn:resource
             |AltinnApp            | AltinnApp  | urn:altinn:org + urn:altinn:app
             |AltinnApp            | AltinnApp  | urn:altinn:resource with value/resourceId app_{orgcode}_{appname}
+            |MigratedApp          | AltinnApp  | urn:altinn:org + urn:altinn:app
+
             dbo.Resource.RefId : app_ttd_signering-brukerstyrt
             */
 
@@ -372,6 +374,7 @@ namespace Altinn.AccessManagement.Core.Services
                         }
                     ];
                 case "AltinnApp":
+                case "MigratedApp":
                     return
                     [
                         new AttributeMatch

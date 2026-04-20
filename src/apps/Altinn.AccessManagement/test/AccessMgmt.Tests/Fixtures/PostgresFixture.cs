@@ -376,7 +376,7 @@ public static class DelegationChangeComposer
     /// <param name="resource">resource</param>
     public static Action<DelegationChange> WithResource(IAccessManagementResource resource) => delegation =>
     {
-        if (resource.Resource.ResourceType == ResourceType.AltinnApp)
+        if (resource.Resource.ResourceType == ResourceType.AltinnApp || resource.Resource.ResourceType == ResourceType.MigratedApp)
         {
             var org = resource.Resource.AuthorizationReference.FirstOrDefault(attr => attr.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute);
             var app = resource.Resource.AuthorizationReference.FirstOrDefault(attr => attr.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute);

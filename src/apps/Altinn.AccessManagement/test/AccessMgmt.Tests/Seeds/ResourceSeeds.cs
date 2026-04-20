@@ -15,7 +15,7 @@ public static class ResourceSeeds
 
         public AccessManagementResource DbResource => new AccessManagementResource
         {
-            ResourceRegistryId = Resource.ResourceType == ResourceType.AltinnApp ? $"{Resource.AuthorizationReference.First(p => p.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute)}/{Resource.Identifier}" : Resource.Identifier,
+            ResourceRegistryId = Resource.ResourceType == ResourceType.AltinnApp || Resource.ResourceType == ResourceType.MigratedApp ? $"{Resource.AuthorizationReference.First(p => p.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute)}/{Resource.Identifier}" : Resource.Identifier,
             ResourceType = Resource.ResourceType,
         };
     }

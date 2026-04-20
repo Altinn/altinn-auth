@@ -171,7 +171,7 @@ namespace Altinn.AccessManagement.Core.Services
             XacmlPolicy policy = await GetPolicy(rightsQuery.Resource.AuthorizationReference, cancellationToken);
 
             int minimumAuthenticationLevel = PolicyHelper.GetMinimumAuthenticationLevelFromXacmlPolicy(policy);
-            RightSourceType policyType = rightsQuery.Resource.ResourceType == ResourceType.AltinnApp ? RightSourceType.AppPolicy : RightSourceType.ResourceRegistryPolicy;
+            RightSourceType policyType = (rightsQuery.Resource.ResourceType == ResourceType.AltinnApp || rightsQuery.Resource.ResourceType == ResourceType.MigratedApp) ? RightSourceType.AppPolicy : RightSourceType.ResourceRegistryPolicy;
             EnrichRightsDictionaryWithRightsFromPolicy(result, policy, policyType, rightsQuery.To, minimumAuthenticationLevel: minimumAuthenticationLevel, returnAllPolicyRights: false, getDelegableRights: true);
 
             return result.Values.Where(r => r.CanDelegate.HasValue && r.CanDelegate.Value).ToList();

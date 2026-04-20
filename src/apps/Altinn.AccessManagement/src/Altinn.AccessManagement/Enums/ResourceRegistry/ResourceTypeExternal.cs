@@ -24,6 +24,18 @@ namespace Altinn.AccessManagement.Enums.ResourceRegistry
         AltinnApp = 8,
 
         [PgName("genericaccessresource")]
-        GenericAccessResource = 16
+        GenericAccessResource = 16,
+
+        [PgName("brokerservice")]
+        BrokerService = 1 << 5,
+
+        [PgName("correspondenceservice")]
+        CorrespondenceService = 1 << 6,
+
+        [PgName("consent")]
+        Consent = 1 << 7,
+
+        [PgName("migratedapp")]
+        MigratedApp = 1 << 8,
     }
 }
