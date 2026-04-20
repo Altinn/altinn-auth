@@ -43,6 +43,7 @@ public class AuthorizedParty
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AuthorizedParty"/> class based on a <see cref="SblAuthorizedParty"/> class.
+    /// Todo: can be removed post June 19th with end of life of Altinn 2
     /// </summary>
     /// <param name="sblAuthorizedParty">Authorized Party model from Altinn 2 SBL Bridge</param>
     /// <param name="includeSubunits">Whether model should also build list of subunits if any exists</param>
@@ -52,7 +53,9 @@ public class AuthorizedParty
         PartyUuid = sblAuthorizedParty.PartyUuid.Value;
         Name = sblAuthorizedParty.Name;
         Type = (AuthorizedPartyType)sblAuthorizedParty.PartyTypeName;
-        AuthorizedRoles = sblAuthorizedParty.AuthorizedRoles;
+        SortedAuthorizedRoles = new SortedList<string, string>(
+            sblAuthorizedParty.AuthorizedRoles?.Distinct().ToDictionary(role => role, role => role) ?? new Dictionary<string, string>()
+        );
 
         if (Type == AuthorizedPartyType.Organization)
         {
@@ -129,9 +132,20 @@ public class AuthorizedParty
     public bool OnlyHierarchyElementWithNoAccess { get; set; }
 
     /// <summary>
+    /// Gets or sets a collection of all role codes the authorized subject has some access to on behalf of this party
+    /// </summary>
+    public SortedList<string, string> SortedAuthorizedRoles { get; set; } = [];
+
+    /// <summary>
     /// Gets or sets a collection of all rolecodes for roles from either Enhetsregisteret or Altinn 2 which the authorized subject has been authorized for on behalf of this party
     /// </summary>
-    public List<string> AuthorizedRoles { get; set; } = [];
+    public List<string> AuthorizedRoles
+    {
+        get
+        {
+            return SortedAuthorizedRoles?.Values.ToList() ?? [];
+        }
+    }
 
     /// <summary>
     /// Gets or sets a collection of all accesspackage identifiers the authorized subject has some access to on behalf of this party
@@ -187,6 +201,33 @@ public class AuthorizedParty
     public List<AuthorizedParty> Subunits { get; set; } = [];
 
     /// <summary>
+    /// Enriches this authorized party and any subunits with a role access
+    /// </summary>
+    /// <param name="roleCode">The role code to add to the authorized party (and any subunits) list of authorized resources</param>
+    public void EnrichWithRole(string roleCode)
+    {
+        if (string.IsNullOrWhiteSpace(roleCode))
+        {
+            return;
+        }
+
+        OnlyHierarchyElementWithNoAccess = false;
+
+        if (!SortedAuthorizedRoles.ContainsKey(roleCode))
+        {
+            SortedAuthorizedRoles.Add(roleCode, roleCode);
+        }
+
+        if (Subunits != null)
+        {
+            foreach (var subunit in Subunits)
+            {
+                subunit.EnrichWithRole(roleCode);
+            }
+        }
+    }
+
+    /// <summary>
     /// Enriches this authorized party and any subunits with a resource access
     /// </summary>
     /// <param name="accessPackages">The access packages to add to the authorized party (and any subunits) list of authorized packages</param>
@@ -218,6 +259,7 @@ public class AuthorizedParty
 
     /// <summary>
     /// Enriches this authorized party and any subunits with a resource access
+    /// Todo: can be removed alongside AuthorizedPartiesServiceEfOld
     /// </summary>
     /// <param name="resourceId">The resource ID to add to the authorized party (and any subunits) list of authorized resources</param>
     public void EnrichWithResourceAccess(string resourceId)
@@ -240,6 +282,32 @@ public class AuthorizedParty
             foreach (var subunit in Subunits)
             {
                 subunit.EnrichWithResourceAccess(resourceId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Enriches this authorized party and any subunits with resource accesses
+    /// </summary>
+    /// <param name="resourceIds">The resource IDs to add to the authorized party (and any subunits) list of authorized resources</param>
+    public void EnrichWithResourceAccess(IEnumerable<string> resourceIds)
+    {
+        if (resourceIds == null || !resourceIds.Any())
+        {
+            return;
+        }
+
+        OnlyHierarchyElementWithNoAccess = false;
+        foreach (var resourceId in resourceIds.Where(resourceId => !SortedAuthorizedResources.ContainsKey(resourceId)))
+        {
+            SortedAuthorizedResources.Add(resourceId, resourceId);
+        }
+
+        if (Subunits != null)
+        {
+            foreach (var subunit in Subunits)
+            {
+                subunit.EnrichWithResourceAccess(resourceIds);
             }
         }
     }
@@ -270,6 +338,10 @@ public class AuthorizedParty
         }
     }
 
+    /// <summary>
+    /// Maps legacy Altinn App ID in format org/app to resource ID in format app_org_app
+    /// Todo: can be removed alongside AuthorizedPartiesServiceEfOld
+    /// </summary>
     private static string MapAppIdToResourceId(string altinnAppId)
     {
         string[] orgAppSplit = altinnAppId.Split('/');

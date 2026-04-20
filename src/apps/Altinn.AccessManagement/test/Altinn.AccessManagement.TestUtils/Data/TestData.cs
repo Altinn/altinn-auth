@@ -1142,10 +1142,37 @@ public static class TestData
 #pragma warning restore SA1401 // Fields should be private
     {
         // Dumbo Adventures - Thea has Rightholder with a package
-        new AssignmentPackage() 
-        { 
-            AssignmentId = AssignDumboAdventuresThea, 
-            PackageId = PackageConstants.SalarySpecialCategory.Id 
+        new AssignmentPackage()
+        {
+            AssignmentId = AssignDumboAdventuresThea,
+            PackageId = PackageConstants.SalarySpecialCategory.Id
+        },
+    };
+
+    #endregion
+
+    #region Assignment Resources
+
+#pragma warning disable SA1401 // Fields should be private
+    public static List<AssignmentResource> AssignmentResources = new()
+#pragma warning restore SA1401 // Fields should be private
+    {
+        // Josephine has instance rights for Kaos on SiriusSkattemelding
+        new AssignmentResource()
+        {
+            AssignmentId = AssignKaosJosephineRightholder,
+            ResourceId = SiriusSkattemelding.Id,
+            PolicyPath = "sirius-skattemelding-v1/50315678/p5049963/delegationpolicy.xml",
+            PolicyVersion = "1.0",
+        },
+
+        // Josephine has instance rights for Kaos on MattilsynetBakeryService
+        new AssignmentResource()
+        {
+            AssignmentId = AssignKaosJosephineRightholder,
+            ResourceId = MattilsynetBakeryService.Id,
+            PolicyPath = "mattilsynet-baker-konditorvare/50315678/p5049963/delegationpolicy.xml",
+            PolicyVersion = "1.0",
         },
     };
 

@@ -2934,8 +2934,8 @@ public static class RoleConstants
             IsAssignable = false,
             EntityTypeId = EntityTypeConstants.Person,
             ProviderId = ProviderConstants.Altinn2,
-            LegacyCode = "PRIV",
-            LegacyUrn = "urn:altinn:rolecode:PRIV",
+            LegacyCode = "priv",
+            LegacyUrn = "urn:altinn:rolecode:priv",
             IsAvailableForServiceOwners = true,
         },
         EN = TranslationEntryList.Create(
@@ -3023,9 +3023,9 @@ public static class RoleConstants
     /// </summary>
     /// <remarks>
     /// - <c>Id:</c> 48f9e5ec-efd5-4863-baba-9697b8971666
-    /// - <c>URN:</c> urn:altinn:rolecode:ADMAI
+    /// - <c>URN:</c> urn:altinn:rolecode:admai
     /// - <c>Provider:</c> Altinn2
-    /// - <c>Code:</c> ADMAI
+    /// - <c>Code:</c> admai
     /// - <c>Description:</c> Denne rollen gir administratortilgang til å gi videre rettigheter til andre.
     /// </remarks>
     public static ConstantDefinition<Role> AccessManager { get; } = new ConstantDefinition<Role>("48f9e5ec-efd5-4863-baba-9697b8971666")
@@ -3033,9 +3033,9 @@ public static class RoleConstants
         Entity = new()
         {
             Name = "Tilgangsstyring",
-            Code = "ADMAI",
+            Code = "admai",
             Description = "Denne rollen gir administratortilgang til å gi videre rettigheter til andre.",
-            Urn = "urn:altinn:rolecode:ADMAI",
+            Urn = "urn:altinn:rolecode:admai",
             IsKeyRole = false,
             IsAssignable = false,
             EntityTypeId = EntityTypeConstants.Organization,
@@ -3058,9 +3058,9 @@ public static class RoleConstants
     /// </summary>
     /// <remarks>
     /// - <c>Id:</c> e078bb18-f55a-4a2d-8964-c599f41b29b5
-    /// - <c>URN:</c> urn:altinn:rolecode:APIADM
+    /// - <c>URN:</c> urn:altinn:rolecode:apiadm
     /// - <c>Provider:</c> Altinn2
-    /// - <c>Code:</c> APIADM
+    /// - <c>Code:</c> apiadm
     /// - <c>Description:</c> Delegerbar rolle som gir tilgang til å administrere tilgang til programmeringsgrensesnitt - API, på vegne av virksomheten.
     /// </remarks>
     public static ConstantDefinition<Role> APIADM { get; } = new ConstantDefinition<Role>("e078bb18-f55a-4a2d-8964-c599f41b29b5")
@@ -3068,9 +3068,9 @@ public static class RoleConstants
         Entity = new()
         {
             Name = "Programmeringsgrensesnitt (API)",
-            Code = "APIADM",
+            Code = "apiadm",
             Description = "Delegerbar rolle som gir tilgang til å administrere tilgang til programmeringsgrensesnitt - API, på vegne av virksomheten.",
-            Urn = "urn:altinn:rolecode:APIADM",
+            Urn = "urn:altinn:rolecode:apiadm",
             IsKeyRole = false,
             IsAssignable = false,
             EntityTypeId = EntityTypeConstants.Organization,

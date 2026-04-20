@@ -5,6 +5,7 @@ using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
+using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
@@ -23,7 +24,8 @@ namespace Altinn.AccessManagement.Controllers;
 public class InternalAuthorizedPartiesController(
     ILogger<InternalAuthorizedPartiesController> logger,
     IMapper mapper,
-    IAuthorizedPartiesService authorizedPartiesService,
+    [FromKeyedServices("newConnectionQueryOnlyImplementation")] IAuthorizedPartiesService newConnectionQueryOnlyImplementation,
+    [FromKeyedServices("oldDelegationMetadataEfImplementation")] IAuthorizedPartiesService oldDelegationMetadataEfImplementation,
     IContextRetrievalService contextRetrievalService) : ControllerBase
 {
     /// <summary>
@@ -70,6 +72,8 @@ public class InternalAuthorizedPartiesController(
     {
         try
         {
+            var authorizedPartiesService = AuthorizedPartiesSettings.UsingConnectionQueryOnly ? newConnectionQueryOnlyImplementation : oldDelegationMetadataEfImplementation;
+
             var filters = new AuthorizedPartiesFilters
             {
                 IncludeAltinn2 = includeAltinn2,
@@ -164,6 +168,8 @@ public class InternalAuthorizedPartiesController(
     {
         try
         {
+            var authorizedPartiesService = AuthorizedPartiesSettings.UsingConnectionQueryOnly ? newConnectionQueryOnlyImplementation : oldDelegationMetadataEfImplementation;
+
             if (partyId == 0)
             {
                 ModelState.AddModelError("InvalidParty", "The party id must be a valid non-zero integer");
@@ -259,6 +265,8 @@ public class InternalAuthorizedPartiesController(
     {
         try
         {
+            var authorizedPartiesService = AuthorizedPartiesSettings.UsingConnectionQueryOnly ? newConnectionQueryOnlyImplementation : oldDelegationMetadataEfImplementation;
+
             var filters = new AuthorizedPartiesFilters
             {
                 IncludeAltinn2 = includeAltinn2,

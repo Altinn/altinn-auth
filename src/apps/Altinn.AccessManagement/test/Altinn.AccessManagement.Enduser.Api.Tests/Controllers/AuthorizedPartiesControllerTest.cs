@@ -8,7 +8,6 @@ using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
-using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
@@ -381,7 +380,6 @@ public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
     /// <summary>
     /// Josephine requests authorized parties with includeResources=true.
     /// Kaos should appear with AuthorizedResources populated from the instance delegations
-    /// (resources are listed regardless of whether access is at resource or instance level).
     /// AuthorizedInstances should be empty since includeInstances is not set.
     /// </summary>
     [Fact]
@@ -405,10 +403,10 @@ public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
 
     /// <summary>
     /// Josephine requests authorized parties with both includeResources and includeInstances.
-    /// Kaos should have instances populated (from seed) but resources empty (no resource delegations).
+    /// Kaos should have both resources and instances populated (from seed).
     /// </summary>
     [Fact]
-    public async Task GetAuthorizedParties_AsJosephineWithIncludeResourcesAndInstances_ReturnsKaosWithInstancesButNoResources()
+    public async Task GetAuthorizedParties_AsJosephineWithIncludeResourcesAndInstances_ReturnsKaosWithBothResourcesAndInstances()
     {
         HttpClient client = CreatePortalClient(TestData.JosephineYvonnesdottir);
 
@@ -421,69 +419,79 @@ public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
 
         AuthorizedPartyDto kaos = result.Items.FirstOrDefault(p => p.PartyUuid == TestData.KaosMagicDesignAndArts.Id);
         Assert.NotNull(kaos);
-        Assert.Empty(kaos.AuthorizedResources);
+        Assert.True(kaos.AuthorizedResources.Count >= 2, $"Expected at least 2 resources but got {kaos.AuthorizedResources.Count}. Response: {content}");
+        Assert.Contains("app_skd_sirius-skattemelding-v1", kaos.AuthorizedResources);
+        Assert.Contains("app_mat_mattilsynet-baker-konditorvare", kaos.AuthorizedResources);
         Assert.True(kaos.AuthorizedInstances.Count >= 2, $"Expected at least 2 instances but got {kaos.AuthorizedInstances.Count}. Response: {content}");
         Assert.Contains(kaos.AuthorizedInstances, i => i.ResourceId == "app_skd_sirius-skattemelding-v1");
         Assert.Contains(kaos.AuthorizedInstances, i => i.ResourceId == "app_mat_mattilsynet-baker-konditorvare");
     }
 
     /// <summary>
-    /// Asserts that the authorized party has the expected DAGL role and its subroles.
+    /// Asserts that the authorized party has the expected DAGL (ManagingDirector) role and its subroles.
+    /// Codes come from RoleConstants via the ConnectionQuery role map expansion.
     /// </summary>
     private static void AssertHasDaglRoles(AuthorizedPartyDto party)
     {
         Assert.True(party.AuthorizedRoles.Count >= 25, $"Expected at least 25 roles for DAGL, but got {party.AuthorizedRoles.Count}");
-        Assert.Contains("DAGL", party.AuthorizedRoles);
-        Assert.Contains("UTINN", party.AuthorizedRoles);
-        Assert.Contains("SISKD", party.AuthorizedRoles);
-        Assert.Contains("REGNA", party.AuthorizedRoles);
-        Assert.Contains("APIADM", party.AuthorizedRoles);
-        Assert.Contains("ECKEYROLE", party.AuthorizedRoles);
-        Assert.Contains("HADM", party.AuthorizedRoles);
-        Assert.Contains("SIGNE", party.AuthorizedRoles);
+        Assert.Contains("daglig-leder", party.AuthorizedRoles);
+        Assert.Contains("dagl", party.AuthorizedRoles);
+        Assert.Contains("utinn", party.AuthorizedRoles);
+        Assert.Contains("siskd", party.AuthorizedRoles);
+        Assert.Contains("regna", party.AuthorizedRoles);
+        Assert.Contains("apiadm", party.AuthorizedRoles);
+        Assert.Contains("eckeyrole", party.AuthorizedRoles);
+        Assert.Contains("hadm", party.AuthorizedRoles);
+        Assert.Contains("signe", party.AuthorizedRoles);
     }
 
     /// <summary>
     /// Asserts that the authorized party has the expected LEDE (ChairOfTheBoard) role and its subroles.
+    /// Codes come from RoleConstants via the ConnectionQuery role map expansion.
     /// </summary>
     private static void AssertHasLedeRoles(AuthorizedPartyDto party)
     {
         Assert.True(party.AuthorizedRoles.Count >= 23, $"Expected at least 23 roles for LEDE, but got {party.AuthorizedRoles.Count}");
-        Assert.Contains("LEDE", party.AuthorizedRoles);
-        Assert.Contains("UTINN", party.AuthorizedRoles);
-        Assert.Contains("SISKD", party.AuthorizedRoles);
-        Assert.Contains("REGNA", party.AuthorizedRoles);
-        Assert.Contains("APIADM", party.AuthorizedRoles);
-        Assert.Contains("ECKEYROLE", party.AuthorizedRoles);
-        Assert.Contains("HADM", party.AuthorizedRoles);
-        Assert.Contains("SIGNE", party.AuthorizedRoles);
+        Assert.Contains("styreleder", party.AuthorizedRoles);
+        Assert.Contains("lede", party.AuthorizedRoles);
+        Assert.Contains("utinn", party.AuthorizedRoles);
+        Assert.Contains("siskd", party.AuthorizedRoles);
+        Assert.Contains("regna", party.AuthorizedRoles);
+        Assert.Contains("apiadm", party.AuthorizedRoles);
+        Assert.Contains("eckeyrole", party.AuthorizedRoles);
+        Assert.Contains("hadm", party.AuthorizedRoles);
+        Assert.Contains("signe", party.AuthorizedRoles);
     }
 
     /// <summary>
-    /// Asserts that the authorized party has the expected PRIV role and its subroles.
+    /// Asserts that the authorized party has the expected PRIV (PrivatePerson) role and its subroles.
+    /// Codes come from RoleConstants via the ConnectionQuery role map expansion.
     /// </summary>
     private static void AssertHasPrivRoles(AuthorizedPartyDto party)
     {
         Assert.True(party.AuthorizedRoles.Count >= 16, $"Expected at least 16 roles for PRIV, but got {party.AuthorizedRoles.Count}");
-        Assert.Contains("PRIV", party.AuthorizedRoles);
-        Assert.Contains("UTINN", party.AuthorizedRoles);
-        Assert.Contains("SISKD", party.AuthorizedRoles);
-        Assert.Contains("REGNA", party.AuthorizedRoles);
-        Assert.Contains("PRIUT", party.AuthorizedRoles);
-        Assert.Contains("BOADM", party.AuthorizedRoles);
-        Assert.Contains("ADMAI", party.AuthorizedRoles);
-        Assert.Contains("KOMAB", party.AuthorizedRoles);
+        Assert.Contains("privatperson", party.AuthorizedRoles);
+        Assert.Contains("priv", party.AuthorizedRoles);
+        Assert.Contains("utinn", party.AuthorizedRoles);
+        Assert.Contains("siskd", party.AuthorizedRoles);
+        Assert.Contains("regna", party.AuthorizedRoles);
+        Assert.Contains("priut", party.AuthorizedRoles);
+        Assert.Contains("boadm", party.AuthorizedRoles);
+        Assert.Contains("admai", party.AuthorizedRoles);
+        Assert.Contains("komab", party.AuthorizedRoles);
     }
 
     /// <summary>
     /// Asserts that the authorized party has the expected REVI (Auditor) role and its subroles.
+    /// Codes come from RoleConstants via the ConnectionQuery role map expansion.
     /// </summary>
     private static void AssertHasReviRoles(AuthorizedPartyDto party)
     {
         Assert.True(party.AuthorizedRoles.Count >= 3, $"Expected at least 3 roles for REVI, but got {party.AuthorizedRoles.Count}");
-        Assert.Contains("REVI", party.AuthorizedRoles);
-        Assert.Contains("A0237", party.AuthorizedRoles);
-        Assert.Contains("A0238", party.AuthorizedRoles);
+        Assert.Contains("revisor", party.AuthorizedRoles);
+        Assert.Contains("revi", party.AuthorizedRoles);
+        Assert.Contains("a0237", party.AuthorizedRoles);
+        Assert.Contains("a0238", party.AuthorizedRoles);
     }
 
     /// <summary>

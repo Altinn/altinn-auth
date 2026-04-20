@@ -174,4 +174,14 @@ public static class AccessMgmtFeatureFlags
     /// Enables request assignment package endpoints in enduser and serviceowner APIs.
     /// </summary>
     public const string EnableRequestAssignmentPackage = "AccessMgmt.Controller.RequestAssignment.Package";
+
+    /// <summary>
+    /// Specifies if AuthorizedParty should still perform SBL Bridge lookup of AuthorizedParties from Altinn 2.
+    /// </summary>
+    public const string AuthorizedPartiesIncludeAltinn2 = "AccessManagement.AuthorizedParties.IncludeAltinn2";
+
+    /// <summary>
+    /// Specifies if AuthorizedParty should use the new implementation based on lookup of all connection info (roles, packages, resources and instances) through the ConnectionQuery.
+    /// </summary>
+    public const string AuthorizedPartiesUsingConnectionQueryOnly = "AccessManagement.AuthorizedParties.UsingConnectionQueryOnly";
 }

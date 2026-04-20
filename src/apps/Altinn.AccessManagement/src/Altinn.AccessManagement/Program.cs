@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessManagement;
+using Altinn.AccessMgmt.Core;
+using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.HostedServices;
 using Altinn.AccessMgmt.Persistence.Extensions;
@@ -78,6 +80,10 @@ async Task PersistenceFeatures()
 {
     // Delete me after next prod release
     Altinn.AccessMgmt.PersistenceEF.Utils.Settings.FeatureFlags.UseInstanceDelegationEF = await featureManager.IsEnabledAsync("AccessManagement.InstanceDelegation.EF");
+
+    // Delete me after june 19th and Altinn 2 is no more
+    AuthorizedPartiesSettings.IncludeAltinn2 = await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.AuthorizedPartiesIncludeAltinn2);
+    AuthorizedPartiesSettings.UsingConnectionQueryOnly = await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.AuthorizedPartiesUsingConnectionQueryOnly);
 }
 
 /// <summary>
