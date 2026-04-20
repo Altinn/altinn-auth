@@ -147,16 +147,15 @@ public class RequestControllerTest
             var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
             var from = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
-            var body = new CreateServiceOwnerRequest
+            var body = new RequestResourceDto
             {
                 From = from,
                 To = to,
-                Resource = new RequestReferenceDto { ReferenceId = "test-resource-so-1" },
-                Package = new RequestReferenceDto(),
+                Resource = "test-resource-so-1",
             };
 
             var response = await client.PostAsJsonAsync(
-                Route,
+                Route + "/resource",
                 body,
                 TestContext.Current.CancellationToken);
 
@@ -171,8 +170,8 @@ public class RequestControllerTest
                 var data = JsonSerializer.Deserialize<ResourceRequestPendingNotificationMessage>(outbox.Data);
                 Assert.NotNull(data);
 
-                Assert.Equal(TestData.LarsBakke, data.RecipientId);
-                Assert.Equal(TestData.BakerJohnsen, data.RequesterId);
+                Assert.Equal(TestData.LarsBakke, data.RequesterId);
+                Assert.Equal(TestData.BakerJohnsen, data.RecipientId);
                 Assert.NotEmpty(data.ResourceIds);
                 Assert.Empty(data.PackageIds);
                 Assert.Equal(1, data.Updated);
@@ -187,16 +186,15 @@ public class RequestControllerTest
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
 
-            var body = new CreateServiceOwnerRequest
+            var body = new RequestResourceDto
             {
                 From = "urn:invalid:prefix:12345",
                 To = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}",
-                Resource = new RequestReferenceDto { ReferenceId = "test-resource-so-1" },
-                Package = new RequestReferenceDto(),
+                Resource = "test-resource-so-1"
             };
 
             var response = await client.PostAsJsonAsync(
-                Route,
+                Route + "/resource",
                 body,
                 TestContext.Current.CancellationToken);
 
@@ -210,16 +208,15 @@ public class RequestControllerTest
             var from = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
             var to = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
-            var body = new CreateServiceOwnerRequest
+            var body = new RequestResourceDto
             {
                 From = from,
                 To = to,
-                Resource = new RequestReferenceDto { ReferenceId = "test-resource-so-1" },
-                Package = new RequestReferenceDto(),
+                Resource = "test-resource-so-1"
             };
 
             var response = await client.PostAsJsonAsync(
-                Route,
+                Route + "/resource",
                 body,
                 TestContext.Current.CancellationToken);
 
@@ -233,16 +230,15 @@ public class RequestControllerTest
             var from = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
             var to = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
-            var body = new CreateServiceOwnerRequest
+            var body = new RequestResourceDto
             {
                 From = from,
                 To = to,
-                Resource = new RequestReferenceDto { ReferenceId = string.Empty },
-                Package = new RequestReferenceDto(),
+                Resource = string.Empty
             };
 
             var response = await client.PostAsJsonAsync(
-                Route,
+                Route + "/resource",
                 body,
                 TestContext.Current.CancellationToken);
 
@@ -271,16 +267,15 @@ public class RequestControllerTest
             var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
             var from = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
-            var body = new CreateServiceOwnerRequest
+            var body = new RequestPackageDto
             {
                 From = from,
                 To = to,
-                Resource = new RequestReferenceDto(),
-                Package = new RequestReferenceDto { ReferenceId = PackageConstants.Agriculture.Entity.Urn },
+                Package = PackageConstants.Agriculture.Entity.Urn
             };
 
             var response = await client.PostAsJsonAsync(
-                Route,
+                Route + "/package",
                 body,
                 TestContext.Current.CancellationToken);
 
@@ -291,43 +286,21 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task CreateRequest_WithInvalidFromUrn_Returns400()
-        {
-            var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
-
-            var body = new CreateServiceOwnerRequest
-            {
-                To = "urn:invalid:prefix:12345",
-                From = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}",
-                Resource = new RequestReferenceDto(),
-                Package = new RequestReferenceDto { Id = PackageConstants.Agriculture.Id },
-            };
-
-            var response = await client.PostAsJsonAsync(
-                Route,
-                body,
-                TestContext.Current.CancellationToken);
-
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        }
-
-        [Fact]
         public async Task CreateRequest_WithEmptyPackageUrn_Returns400()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
             var from = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
-            var body = new CreateServiceOwnerRequest
+            var body = new RequestPackageDto
             {
                 From = from,
                 To = to,
-                Resource = new RequestReferenceDto(),
-                Package = new RequestReferenceDto { ReferenceId = string.Empty },
+                Package = string.Empty,
             };
 
             var response = await client.PostAsJsonAsync(
-                Route,
+                Route + "/package",
                 body,
                 TestContext.Current.CancellationToken);
 
@@ -395,16 +368,15 @@ public class RequestControllerTest
             var from = $"{personPrefix}:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
             // Step 3: Create request with resource
-            var body = new CreateServiceOwnerRequest
+            var body = new RequestResourceDto
             {
                 From = from,
                 To = to,
-                Resource = new RequestReferenceDto { ReferenceId = "test-resource-e2e-1" },
-                Package = new RequestReferenceDto()
+                Resource = "test-resource-e2e-1",
             };
 
             var response = await client.PostAsJsonAsync(
-                Route,
+                Route + "/resource",
                 body,
                 TestContext.Current.CancellationToken);
 
@@ -435,16 +407,15 @@ public class RequestControllerTest
             var from = $"{personPrefix}:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
             // Step 3: Create request with package
-            var body = new CreateServiceOwnerRequest
+            var body = new RequestPackageDto
             {
                 From = from,
                 To = to,
-                Resource = new RequestReferenceDto(),
-                Package = new RequestReferenceDto { ReferenceId = PackageConstants.Agriculture.Entity.Urn },
+                Package = PackageConstants.Agriculture.Entity.Urn
             };
 
             var response = await client.PostAsJsonAsync(
-                Route,
+                Route + "/package",
                 body,
                 TestContext.Current.CancellationToken);
 

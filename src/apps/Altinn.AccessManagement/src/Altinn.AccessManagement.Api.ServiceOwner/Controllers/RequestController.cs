@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Net.Mime;
-using Altinn.AccessManagement.Api.ServiceOwner.Validation;
+﻿using Altinn.AccessManagement.Api.ServiceOwner.Validation;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
@@ -17,6 +15,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Microsoft.FeatureManagement.Mvc;
+using System.ComponentModel.DataAnnotations;
+using System.Net.Mime;
 
 namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers;
 
@@ -75,20 +75,14 @@ public class RequestController(
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> CreateResourceRequest(
-        [FromQuery][Required] string from,
-        [FromQuery][Required] string to,
-        [FromQuery][Required] string resource,
-        [FromBody] string[]? rightKeys,
-        CancellationToken ct = default
-        )
+    public async Task<IActionResult> CreateResourceRequest([FromBody] RequestResourceDto data, CancellationToken ct = default)
     {
         ValidationErrorBuilder errorBuilder = default;
 
-        var fromResult = await GetEntity(from, "$QUERY/from", ct);
+        var fromResult = await GetEntity(data.From, "BODY/from", ct);
         fromResult.Problems(ref errorBuilder);
 
-        var toResult = await GetEntity(to, "$QUERY/to", ct);
+        var toResult = await GetEntity(data.To, "BODY/to", ct);
         toResult.Problems(ref errorBuilder);
 
         if (errorBuilder.TryBuild(out var problem))
@@ -107,7 +101,7 @@ public class RequestController(
             byId: auditAccessor.AuditValues.ChangedBy,
             roleId: RoleConstants.Rightholder.Id,
             status: RequestStatus.Draft,
-            resourceRef: new RequestReferenceDto() { ReferenceId = resource },
+            resourceRef: new RequestReferenceDto() { ReferenceId = data.Resource },
             ct: ct
             );
     }
@@ -123,25 +117,19 @@ public class RequestController(
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> CreatePackageRequest(
-        [FromQuery][Required] string from,
-        [FromQuery][Required] string to,
-        [FromQuery][Required] string package,
-        [FromBody] string[]? rightKeys,
-        CancellationToken ct = default
-        )
+    public async Task<IActionResult> CreatePackageRequest([FromBody] RequestPackageDto data, CancellationToken ct = default)
     {
         ValidationErrorBuilder errorBuilder = default;
 
-        var fromResult = await GetEntity(from, "$QUERY/from", ct);
+        var fromResult = await GetEntity(data.From, "BODY/from", ct);
         fromResult.Problems(ref errorBuilder);
 
-        var toResult = await GetEntity(to, "$QUERY/to", ct);
+        var toResult = await GetEntity(data.To, "BODY/to", ct);
         toResult.Problems(ref errorBuilder);
 
-        if (!PackageConstants.TryGetByAll(package, out var packageObj))
+        if (!PackageConstants.TryGetByAll(data.Package, out var packageObj))
         {
-            errorBuilder.Add(ValidationErrors.PackageNotExists, "$QUERY/package", [new("package", $"No package was found with value '{package}'.")]);
+            errorBuilder.Add(ValidationErrors.PackageNotExists, "BODY/package", [new("package", $"No package was found with value '{data.Package}'.")]);
         }
 
         if (errorBuilder.TryBuild(out var problem))
@@ -161,7 +149,7 @@ public class RequestController(
             byId: auditAccessor.AuditValues.ChangedBy,
             roleId: RoleConstants.Rightholder.Id,
             status: RequestStatus.Draft,
-            package: new RequestReferenceDto() { Id = packageObj.Id },
+            package: new RequestReferenceDto() { Id = packageObj.Id, ReferenceId = packageObj.Entity.Urn },
             ct: ct
             );
     }
