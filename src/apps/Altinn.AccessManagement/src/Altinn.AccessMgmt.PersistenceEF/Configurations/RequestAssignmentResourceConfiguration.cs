@@ -21,7 +21,7 @@ public class RequestAssignmentResourceConfiguration : IEntityTypeConfiguration<R
         builder.PropertyWithReference(navKey: t => t.Assignment, foreignKey: t => t.AssignmentId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
         builder.PropertyWithReference(navKey: t => t.Resource, foreignKey: t => t.ResourceId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
 
-        builder.HasIndex(["AssignmentId", "ResourceId", "Action", "Status"]).IsUnique();
+        builder.HasIndex(["AssignmentId", "ResourceId"]).IncludeProperties(["Status"]);
     }
 }
 
