@@ -475,6 +475,12 @@ module "appsettings" {
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },
+    {
+      name        = "AccessManagement.Enduser.MaskinportenAdminApi"
+      description = "Enables the Maskinporten admin API endpoints (consumers and suppliers) in the enduser API."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
   ]
   providers = {
     azurerm.hub = azurerm.hub

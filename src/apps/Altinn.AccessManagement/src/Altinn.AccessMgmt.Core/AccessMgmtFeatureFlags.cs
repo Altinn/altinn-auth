@@ -161,6 +161,11 @@ public static class AccessMgmtFeatureFlags
     #endregion
 
     /// <summary>
+    /// Enables the Maskinporten admin API endpoints (consumers and suppliers) in the enduser API.
+    /// </summary>
+    public const string EnableEnduserMaskinportenAdminApi = "AccessManagement.Enduser.MaskinportenAdminApi";
+
+    /// <summary>
     /// Enables request assignment resource endpoints in enduser and serviceowner APIs.
     /// </summary>
     public const string EnableRequestAssignmentResource = "AccessMgmt.Controller.RequestAssignment.Resource";

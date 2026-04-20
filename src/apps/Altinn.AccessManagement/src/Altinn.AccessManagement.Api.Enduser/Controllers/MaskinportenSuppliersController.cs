@@ -2,17 +2,16 @@
 using System.Net.Mime;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Helpers;
+using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Audit;
 using Altinn.AccessMgmt.Core.Extensions;
-using Altinn.AccessMgmt.Core.Models;
-using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
-using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.FeatureManagement.Mvc;
 
 namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 
@@ -20,6 +19,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 /// Controller for managing Maskinporten supplier assignments and scope delegations
 /// </summary>
 [ApiController]
+[FeatureGate(AccessMgmtFeatureFlags.EnableEnduserMaskinportenAdminApi)]
 [Route("accessmanagement/api/v1/enduser/maskinportensuppliers")]
 public class MaskinportenSuppliersController(
     IMaskinportenSupplierService maskinportenSupplierService
