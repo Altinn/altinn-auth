@@ -16,7 +16,6 @@
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="Npgsql" />
-    <PackageReference Include="System.Linq.Async" />
   </ItemGroup>
 
   <ItemGroup>

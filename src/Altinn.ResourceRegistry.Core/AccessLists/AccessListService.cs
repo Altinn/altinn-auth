@@ -406,7 +406,7 @@ internal class AccessListService
 
         var identifiers = await _register
             .GetPartyIdentifiers(data.Value.Select(m => m.PartyUuid), cancellationToken)
-            .ToDictionaryAsync(m => m.PartyUuid, cancellationToken);
+            .ToDictionaryAsync(m => m.PartyUuid, comparer: null, cancellationToken);
 
         var enrichedBuilder = ImmutableArray.CreateBuilder<EnrichedAccessListMembership>(data.Value.Count);
         enrichedBuilder.AddRange(data.Value.Select(m => new EnrichedAccessListMembership(m, identifiers[m.PartyUuid])));

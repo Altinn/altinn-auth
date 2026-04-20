@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Data.SqlTypes;
+using System.Linq;
 using System.Text.Json;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.ResourceRegistry.Core;
@@ -84,7 +85,7 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             pgcom.Parameters.AddWithNullableValue("keyword", NpgsqlDbType.Text, resourceSearch.Keyword);
 
             return await pgcom.ExecuteEnumerableAsync(cancellationToken)
-                 .SelectAwaitWithCancellation(GetServiceResource)
+                 .Select(GetServiceResource)
                 .ToListAsync(cancellationToken);
         }
         catch (Exception e)
@@ -189,7 +190,7 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, id);
 
             var serviceResource = await pgcom.ExecuteEnumerableAsync(cancellationToken)
-                .SelectAwaitWithCancellation(GetServiceResource)
+                .Select(GetServiceResource)
                 .SingleOrDefaultAsync(cancellationToken);
 
             return serviceResource;
@@ -235,7 +236,7 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             }
 
             var serviceResource = await pgcom.ExecuteEnumerableAsync(cancellationToken)
-                .SelectAwaitWithCancellation(GetServiceResource)
+                .Select(GetServiceResource)
                 .SingleOrDefaultAsync(cancellationToken);
 
             return serviceResource;
@@ -310,7 +311,7 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             pgcom.Parameters.AddWithValue("serviceresourcejson", NpgsqlDbType.Jsonb, json);
 
             var serviceResource = await pgcom.ExecuteEnumerableAsync(cancellationToken)
-                 .SelectAwaitWithCancellation(GetServiceResource)
+                 .Select(GetServiceResource)
                 .FirstOrDefaultAsync(cancellationToken);
 
             return serviceResource ?? throw new SqlNullValueException("No result from database");

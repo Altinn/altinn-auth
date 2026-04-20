@@ -17,7 +17,7 @@ public static class AsyncEnumerableExtensions
     public static IAsyncEnumerable<T> Merge<T>(ReadOnlySpan<IAsyncEnumerable<T>> sources)
         => sources switch
         {
-            [] => AsyncEnumerable.Empty<T>(),
+            [] => System.Linq.AsyncEnumerable.Empty<T>(),
             [var first] => first,
             [MergedAsyncEnumerable<T> first, .. var rest] => first.MergeWith(rest),
             _ => MergedAsyncEnumerable<T>.Create(sources),
