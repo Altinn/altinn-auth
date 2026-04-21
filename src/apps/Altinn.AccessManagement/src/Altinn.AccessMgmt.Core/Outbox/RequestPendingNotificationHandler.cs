@@ -126,7 +126,7 @@ public class RequestPendingNotificationHandler(
         {
             if (content.PackageIds is { } && content.PackageIds.Any())
             {
-                var packages = await db.Packages
+                return await db.Packages
                     .AsNoTracking()
                     .Where(r => content.PackageIds.Contains(r.Id))
                     .ToListAsync(cancellationToken);

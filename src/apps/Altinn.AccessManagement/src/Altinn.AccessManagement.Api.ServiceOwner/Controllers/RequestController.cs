@@ -1,4 +1,5 @@
-﻿using Altinn.AccessManagement.Api.ServiceOwner.Validation;
+﻿using System.Net.Mime;
+using Altinn.AccessManagement.Api.ServiceOwner.Validation;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
@@ -15,8 +16,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Microsoft.FeatureManagement.Mvc;
-using System.ComponentModel.DataAnnotations;
-using System.Net.Mime;
 
 namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers;
 
@@ -33,7 +32,6 @@ public class RequestController(
     IOptions<GeneralSettings> generalSettings
     ) : ControllerBase
 {
-
     private readonly GeneralSettings _generalSettings = generalSettings.Value;
 
     /// <summary>
@@ -95,6 +93,7 @@ public class RequestController(
         ==
         NAV (by) ber om tilgang for Kari (for) til App (resource) hos Org (at).
         */
+
         return await CreateResourceRequest(
             toId: toResult.Entity.Id,
             fromId: fromResult.Entity.Id,

@@ -130,7 +130,7 @@ public class RequestServiceTests : IClassFixture<PostgresFixture>
     {
         var resource = await SeedUniqueResource();
 
-        var first  = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, RequestStatus.Pending)).Value;
+        var first = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, RequestStatus.Pending)).Value;
         var second = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, RequestStatus.Pending)).Value;
 
         Assert.Equal(first.Id, second.Id);
@@ -153,8 +153,7 @@ public class RequestServiceTests : IClassFixture<PostgresFixture>
 
     [Fact]
     public async Task GetRequest_WithPackageRequestId_ReturnsRequestDto()
-    {
-        
+    {        
         var created = (await _requestService.CreatePackageRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, PackageConstants.Agriculture.Id, RequestStatus.Draft)).Value;
 
         var result = await _requestService.GetRequest(created.Id);
