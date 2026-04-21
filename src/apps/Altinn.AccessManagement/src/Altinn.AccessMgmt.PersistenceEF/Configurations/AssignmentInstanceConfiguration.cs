@@ -23,6 +23,7 @@ public class AssignmentInstanceConfiguration : IEntityTypeConfiguration<Assignme
         builder.PropertyWithReference(navKey: t => t.InstanceSourceType, foreignKey: t => t.InstanceSourceTypeId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.NoAction);
 
         builder.HasIndex(t => new { t.AssignmentId, t.ResourceId, t.InstanceId }).IsUnique();
+        builder.HasIndex(t => new { t.AssignmentId }).IncludeProperties(["Id", "ResourceId", "InstanceId"]);
     }
 }
 

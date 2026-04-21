@@ -27,6 +27,7 @@ public class AssignmentResourceConfiguration : IEntityTypeConfiguration<Assignme
           .OnDelete(DeleteBehavior.NoAction);
 
         builder.HasIndex(t => new { t.AssignmentId, t.ResourceId }).IsUnique();
+        builder.HasIndex(t => new { t.AssignmentId }).IncludeProperties(["Id", "ResourceId"]);
     }
 }
 

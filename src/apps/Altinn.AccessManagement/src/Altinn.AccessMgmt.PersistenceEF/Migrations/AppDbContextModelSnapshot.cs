@@ -257,6 +257,8 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasIndex("AssignmentId")
                         .HasDatabaseName("ix_assignmentinstance_assignmentid");
 
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("AssignmentId"), new[] { "Id", "ResourceId", "InstanceId" });
+
                     b.HasIndex("InstanceSourceTypeId")
                         .HasDatabaseName("ix_assignmentinstance_instancesourcetypeid");
 
@@ -369,6 +371,8 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.HasIndex("AssignmentId")
                         .HasDatabaseName("ix_assignmentresource_assignmentid");
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("AssignmentId"), new[] { "Id", "ResourceId" });
 
                     b.HasIndex("Audit_ChangedBy")
                         .HasDatabaseName("ix_assignmentresource_audit_changedby");
