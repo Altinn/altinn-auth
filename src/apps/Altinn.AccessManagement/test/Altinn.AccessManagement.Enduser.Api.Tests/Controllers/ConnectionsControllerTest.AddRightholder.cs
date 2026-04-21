@@ -48,12 +48,12 @@ public partial class ConnectionsControllerTest
         public AddRightholder(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.ConfiureServices(services =>
+            Fixture.ConfigureServices(services =>
             {
                 services.AddSingleton<IUserProfileLookupService, UserProfileLookupServiceMock>();
                 services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
             });
-            Fixture.EnsureSeedOnce(db =>
+            Fixture.EnsureSeedOnce<AddRightholder>(db =>
             {
                 db.SaveChanges();
             });

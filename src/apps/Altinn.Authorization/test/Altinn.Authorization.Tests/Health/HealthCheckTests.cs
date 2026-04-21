@@ -1,10 +1,7 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Altinn.Platform.Authorization.Health;
-using Altinn.Platform.Authorization.IntegrationTests.Webfactory;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
+using Altinn.Platform.Authorization.IntegrationTests.Fixtures;
 using Xunit;
 
 namespace Altinn.Platform.Authorization.IntegrationTests.Health
@@ -12,17 +9,17 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Health
     /// <summary>
     /// Health check 
     /// </summary>
-    public class HealthCheckTests : IClassFixture<CustomWebApplicationFactory<HealthCheck>>
+    public class HealthCheckTests : IClassFixture<AuthorizationApiFixture>
     {
-        private readonly CustomWebApplicationFactory<HealthCheck> _factory;
+        private readonly HttpClient _client;
 
         /// <summary>
         /// Default constructor
         /// </summary>
-        /// <param name="fixture">The web application fixture</param>
-        public HealthCheckTests(CustomWebApplicationFactory<HealthCheck> fixture)
+        /// <param name="fixture">The shared authorization API fixture</param>
+        public HealthCheckTests(AuthorizationApiFixture fixture)
         {
-            _factory = fixture;
+            _client = fixture.BuildClient();
         }
 
         /// <summary>
@@ -32,25 +29,11 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Health
         [Fact]
         public async Task VerifyHealthCheck_OK()
         {
-            HttpClient client = GetTestClient();
-
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "/health");
 
-            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+            HttpResponseMessage response = await _client.SendAsync(httpRequestMessage);
             string content = await response.Content.ReadAsStringAsync();
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        }
-
-        private HttpClient GetTestClient()
-        {
-            HttpClient client = _factory.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                });
-            }).CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-
-            return client;
         }
     }
 }

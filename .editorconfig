@@ -27,3 +27,9 @@ dotnet_diagnostic.FAA0002.severity = none
 
 # CA1822: Mark members as static
 dotnet_diagnostic.CA1822.severity = none
+
+# Test projects: documentation not required (test names are self-documenting)
+[**/test/**/*.cs]
+
+# SA1600: Elements should be documented
+dotnet_diagnostic.SA1600.severity = none

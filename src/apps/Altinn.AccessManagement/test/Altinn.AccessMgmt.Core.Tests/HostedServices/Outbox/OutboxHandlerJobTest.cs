@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.TestUtils.Fixtures;
+﻿using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.HostedServices.Outbox;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
@@ -18,7 +18,7 @@ public class OutboxHandlerJobTest : IClassFixture<ApiFixture>
     public OutboxHandlerJobTest(ApiFixture fixture)
     {
         Fixture = fixture;
-        Fixture.ConfiureServices(services =>
+        Fixture.ConfigureServices(services =>
         {
             services.AddSingleton<SuccessHandler>();
             services.AddSingleton<FailureHandler>();

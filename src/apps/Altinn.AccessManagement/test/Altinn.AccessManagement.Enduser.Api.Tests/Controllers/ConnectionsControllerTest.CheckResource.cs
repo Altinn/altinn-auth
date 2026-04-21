@@ -54,12 +54,12 @@ public partial class ConnectionsControllerTest
         public CheckResource(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.ConfiureServices(services =>
+            Fixture.ConfigureServices(services =>
             {
                 services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
             });
-            Fixture.EnsureSeedOnce(db =>
+            Fixture.EnsureSeedOnce<CheckResource>(db =>
             {
                 var rightholderFromNordisToVerdiq = new Assignment()
                 {

@@ -50,14 +50,14 @@ public partial class ConnectionsControllerTest
         public RemoveInstance(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.ConfiureServices(services =>
+            Fixture.ConfigureServices(services =>
             {
                 services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
                 services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointWithWrittenPoliciesMock>();
                 services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
             });
-            Fixture.EnsureSeedOnce(db =>
+            Fixture.EnsureSeedOnce<RemoveInstance>(db =>
             {
                 var rightholderFromDumboToKaos = new Assignment()
                 {

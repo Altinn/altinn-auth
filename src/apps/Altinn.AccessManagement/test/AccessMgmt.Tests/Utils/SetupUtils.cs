@@ -1,18 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Net.Http;
-using AccessMgmt.Tests.Mocks;
-using Altinn.AccessManagement.Controllers;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
-using Altinn.AccessManagement.Core.Repositories.Interfaces;
-using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Tests.Controllers;
-using Altinn.AccessManagement.Tests.Mocks;
-using AltinnCore.Authentication.JwtCookie;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace Altinn.AccessManagement.Tests.Utils
 {
@@ -21,31 +10,6 @@ namespace Altinn.AccessManagement.Tests.Utils
     /// </summary>
     public static class SetupUtils
     {
-        /// <summary>
-        /// Gets a HttpClient for unittests testing
-        /// </summary>
-        /// <param name="customFactory">Web app factory to configure test services for</param>
-        /// <returns>HttpClient</returns>
-        public static HttpClient GetTestClient(CustomWebApplicationFactory<DelegationsController> customFactory)
-        {
-            WebApplicationFactory<DelegationsController> factory = customFactory.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
-                    services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
-                    services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
-                    services.AddSingleton<IDelegationChangeEventQueue, DelegationChangeEventQueueMock>();
-                    services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                    services.AddSingleton<IPartiesClient, PartiesClientMock>();
-                    services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
-                    services.AddSingleton<IAuthenticationClient, AuthenticationMock>();
-                });
-            });
-            factory.Server.AllowSynchronousIO = true;
-            return factory.CreateClient();
-        }
-
         /// <summary>
         /// Deletes a app blob stored locally
         /// </summary>

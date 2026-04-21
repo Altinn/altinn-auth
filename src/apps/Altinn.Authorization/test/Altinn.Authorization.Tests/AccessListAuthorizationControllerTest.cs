@@ -1,38 +1,25 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Altinn.Common.AccessToken.Services;
-using Altinn.Common.Authentication.Configuration;
-using Altinn.Platform.Authorization.Controllers;
-using Altinn.Platform.Authorization.IntegrationTests.MockServices;
+using Altinn.Platform.Authorization.IntegrationTests.Fixtures;
 using Altinn.Platform.Authorization.IntegrationTests.Util;
-using Altinn.Platform.Authorization.IntegrationTests.Webfactory;
 using Altinn.Platform.Authorization.Models;
-using Altinn.Platform.Authorization.Services.Interface;
-using Altinn.Platform.Authorization.Services.Interfaces;
-using Altinn.Platform.Events.Tests.Mocks;
-using Altinn.ResourceRegistry.Tests.Mocks;
-using AltinnCore.Authentication.JwtCookie;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Altinn.Platform.Authorization.IntegrationTests;
 
-public class AccessListAuthorizationControllerTest : IClassFixture<CustomWebApplicationFactory<AccessListAuthorizationController>>
+public class AccessListAuthorizationControllerTest : IClassFixture<AuthorizationApiFixture>
 {
     private static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-    private readonly CustomWebApplicationFactory<AccessListAuthorizationController> _factory;
+    private readonly HttpClient _client;
 
-    public AccessListAuthorizationControllerTest(CustomWebApplicationFactory<AccessListAuthorizationController> fixture)
+    public AccessListAuthorizationControllerTest(AuthorizationApiFixture fixture)
     {
-        _factory = fixture;
+        _client = fixture.BuildClient();
     }
 
     /// <summary>
@@ -42,7 +29,7 @@ public class AccessListAuthorizationControllerTest : IClassFixture<CustomWebAppl
     public async Task AccessList_Authorization_Unauthorized_MissingPlatformAccessToken()
     {
         // Act
-        HttpResponseMessage response = await GetTestClient().SendAsync(GetPostRequestMessage("Permit_WithoutActionFilter"));
+        HttpResponseMessage response = await _client.SendAsync(GetPostRequestMessage("Permit_WithoutActionFilter"));
 
         // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -58,7 +45,7 @@ public class AccessListAuthorizationControllerTest : IClassFixture<CustomWebAppl
         AccessListAuthorizationResponse expected = GetExpectedResponse("Permit_WithoutActionFilter");
 
         // Act
-        HttpResponseMessage response = await GetTestClient().SendAsync(GetPostRequestMessage(testCase, PrincipalUtil.GetAccessToken("access-management", "platform")));
+        HttpResponseMessage response = await _client.SendAsync(GetPostRequestMessage(testCase, PrincipalUtil.GetAccessToken("access-management", "platform")));
         string responseContent = await response.Content.ReadAsStringAsync();
 
         // Assert
@@ -66,24 +53,6 @@ public class AccessListAuthorizationControllerTest : IClassFixture<CustomWebAppl
 
         AccessListAuthorizationResponse actual = JsonSerializer.Deserialize<AccessListAuthorizationResponse>(responseContent, _serializerOptions);
         AssertionUtil.AssertEqual(expected, actual);
-    }
-
-    private HttpClient GetTestClient()
-    {
-        HttpClient client = _factory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureTestServices(services =>
-            {
-                services.AddSingleton<IParties, PartiesMock>();
-                services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                services.AddSingleton<IPostConfigureOptions<OidcProviderSettings>, OidcProviderPostConfigureSettingsStub>();
-                services.AddSingleton<IRegisterService, RegisterServiceMock>();
-                services.AddSingleton<IResourceRegistry, ResourceRegistryMock>();
-                services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProviderMock>();
-            });
-        }).CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-
-        return client;
     }
 
     private static HttpRequestMessage GetPostRequestMessage(string testCase, string platformAccessToken = null)

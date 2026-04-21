@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- Coverage configuration for XPlat Code Coverage -->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <ExcludeByFile>**/Migrations/**/*.cs</ExcludeByFile>
+          <ExcludeByAttribute>
+            Obsolete,
+            GeneratedCodeAttribute,
+            CompilerGeneratedAttribute,
+            ExcludeFromCodeCoverageAttribute
+          </ExcludeByAttribute>
+          <Include>
+            [Altinn.AccessManagement*]*,[Altinn.AccessMgmt*]*,[Altinn.Authorization*]*,[Altinn.Authorization.ABAC]*,[Altinn.Authorization.PEP]*,[Altinn.Authorization.Host*]*
+          </Include>
+          <Exclude>
+            [*Tests]*,[*TestUtils]*,[*Mocks]*
+          </Exclude>
+          <SingleHit>false</SingleHit>
+          <UseSourceLink>true</UseSourceLink>
+          <IncludeTestAssembly>false</IncludeTestAssembly>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <!-- Clear the singular TargetFramework inherited from src/Directory.Build.props so
+             dotnet test routes to the Microsoft Testing Platform (required for xUnit v3). -->
+        <TargetFramework></TargetFramework>
+        <TargetFrameworks>net9.0</TargetFrameworks>
         <IsTestProject>true</IsTestProject>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
@@ -15,6 +19,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Api.Contracts\src\Altinn.Authorization.Api.Contracts\Altinn.Authorization.Api.Contracts.csproj" />
         <ProjectReference Include="..\..\src\Altinn.AccessManagement\Altinn.AccessManagement.csproj" />
+        <ProjectReference Include="..\Altinn.AccessManagement.TestUtils\Altinn.AccessManagement.TestUtils.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -51,15 +56,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Remove="Mocks\InstanceRepositoryMock.cs" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Remove="Data\AuthorizedParties\TestDataAppsInstanceDelegation.cs" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Data\ResourceRegistryResources\nav_sykepenger_dialog\" />
-      <Folder Include="Data\Xacml\3.0\appdelegation\" />
+        <Content Include="xunit.runner.json" CopyToOutputDirectory="Always" />
     </ItemGroup>
 </Project>

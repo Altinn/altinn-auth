@@ -1,4 +1,4 @@
-name: "Template: Vertical CI"
+﻿name: "Template: Vertical CI"
 
 on:
   workflow_call:
@@ -73,14 +73,138 @@ jobs:
         run: dotnet build -c Release -bl:binlog/build.binlog
         working-directory: ${{ inputs.path }}
 
+      - name: Install dotnet-coverage
+        # Installed once per job so the Test step below can wrap `dotnet test`
+        # under `dotnet-coverage collect`. Keeping install in a separate step
+        # keeps the Test step's run log focused on test output and makes the
+        # install failure (if any) easy to spot as its own red checkmark.
+        run: dotnet tool install -g dotnet-coverage
+        shell: bash
+
       - name: Test
-        run: dotnet test -c Release --no-build -bl:binlog/test.binlog
+        # Single test execution that ALSO collects coverage — this replaces
+        # the old "run tests twice" pattern (once for pass/fail, once under
+        # `dotnet-coverage` for XML). The Coverage threshold check step below
+        # is now parse-only and completes in seconds.
+        #
+        # `dotnet-coverage collect -- dotnet test` propagates the test
+        # command's exit code, so:
+        #   * exit 0 = tests passed
+        #   * exit 2 = real test failures (fails this step, red ❌)
+        #   * exit 8 = no tests ran (e.g. every test `[Skip]`ed because
+        #             required infra like Azurite is missing in CI) — we
+        #             swallow this via `--ignore-exit-code 8`
+        # The cobertura XML is written to TestResults/coverage.cobertura.xml
+        # relative to the vertical's working directory.
+        id: test
+        run: dotnet-coverage collect --nologo --output TestResults/coverage.cobertura.xml --output-format cobertura -- dotnet test -c Release --no-build -bl:binlog/test.binlog -- --ignore-exit-code 8
         working-directory: ${{ inputs.path }}
+
+      - name: Report failed tests
+        # When the Test step fails, surface the specific failing test names
+        # (plus their assertion / stack context) directly in the workflow log.
+        # The workflow's dotnet-test output otherwise only contains per-DLL
+        # summary lines ("Failed: N, Passed: M, ...") — MTP writes the test-
+        # level detail to bin/.../TestResults/<Project>_<tfm>_<arch>.log,
+        # which this step parses. The same files are uploaded as artifacts by
+        # the step below; we mirror the failures into the log (and as
+        # ::error:: annotations for the PR checks summary) so reviewers don't
+        # need to download the artifact for the most common case.
+        if: failure() && steps.test.conclusion == 'failure'
+        shell: pwsh
+        working-directory: ${{ inputs.path }}
+        run: |
+          $logs = Get-ChildItem -Path . -Recurse -Filter '*_net9.0_x64.log' -ErrorAction SilentlyContinue |
+                  Where-Object { $_.FullName -match [regex]::Escape([IO.Path]::Combine('bin','Release','net9.0','TestResults')) }
+
+          if (-not $logs) {
+              Write-Host "No MTP per-project logs found under bin/Release/net9.0/TestResults/." -ForegroundColor Yellow
+              exit 0
+          }
+
+          $total = 0
+          foreach ($log in $logs) {
+              # MTP's per-project log prints a line of the form
+              #   failed <Test Display Name> (duration)
+              # followed by the assertion message, source location, and stack.
+              # We grab each "failed " line plus a bounded block of context.
+              # Note: `$matches` is an automatic variable in PowerShell (written
+              # by the -match operator), so use a distinct name here.
+              $failures = Select-String -Path $log.FullName -Pattern '^\s*failed\s+' -Context 0, 15
+              if (-not $failures) { continue }
+
+              Write-Host ""
+              Write-Host "::group::Failed tests in $($log.BaseName)"
+              foreach ($m in $failures) {
+                  $total++
+                  $title = ($m.Line -replace '^\s*failed\s+', '').Trim()
+                  # Take context up to (but not past) the next "failed " line or
+                  # an unrelated xUnit/MTP summary line — whichever comes first.
+                  $ctx = @()
+                  foreach ($line in $m.Context.PostContext) {
+                      if ($line -match '^\s*failed\s+' -or $line -match '^\s*(passed|skipped)\s+' -or $line -match 'Test run summary' -or $line -match 'Tests (failed|succeeded):' ) { break }
+                      $ctx += $line
+                  }
+                  $body = ($ctx -join "`n").TrimEnd()
+                  Write-Host "`n  $title"
+                  if ($body) { Write-Host $body }
+
+                  # PR-checks annotation (first non-empty context line as message)
+                  $msgLine = ($ctx | Where-Object { $_.Trim() } | Select-Object -First 1)
+                  if (-not $msgLine) { $msgLine = 'See workflow log / test-results artifact for details.' }
+                  $escTitle = $title -replace '%','%25' -replace "`r",'' -replace "`n",' '
+                  $escMsg = $msgLine.Trim() -replace '%','%25' -replace "`r",'' -replace "`n",' '
+                  Write-Host "::error title=$escTitle::$escMsg"
+              }
+              Write-Host "::endgroup::"
+          }
+
+          Write-Host ""
+          Write-Host "Total failing tests: $total"
+
+      - name: Coverage threshold check
+        # Parse-only: reads TestResults/coverage.cobertura.xml produced by the
+        # Test step above and enforces per-assembly thresholds. Completes in
+        # seconds — no test re-run. See eng/testing/check-coverage-thresholds.ps1.
+        if: hashFiles(format('{0}/TestResults/coverage.cobertura.xml', inputs.path)) != ''
+        shell: pwsh
+        working-directory: ${{ inputs.path }}
+        run: |
+          # Prefer a per-vertical thresholds file (colocated with the vertical),
+          # fall back to the global one under eng/testing/.
+          $localThresholds = Join-Path (Get-Location) 'coverage-thresholds.json'
+          $globalThresholds = Join-Path $env:GITHUB_WORKSPACE 'eng/testing/coverage-thresholds.json'
+          $thresholdsFile = if (Test-Path $localThresholds) { $localThresholds }
+                            elseif (Test-Path $globalThresholds) { $globalThresholds }
+                            else { $null }
+          if (-not $thresholdsFile) { Write-Host "No thresholds file, skipping"; exit 0 }
+          Write-Host "Using thresholds file: $thresholdsFile"
+          $cov = Join-Path (Get-Location) 'TestResults/coverage.cobertura.xml'
+          & (Join-Path $env:GITHUB_WORKSPACE 'eng/testing/check-coverage-thresholds.ps1') -CoverageFiles $cov -ThresholdsFile $thresholdsFile -OwnedRoot (Get-Location).Path
 
       - name: Pack
         run: dotnet pack -c Release --no-build -bl:binlog/pack.binlog
         working-directory: ${{ inputs.path }}
         if: inputs.type == 'pkg'
+
+      - name: Upload test results
+        # On failure only: capture MTP per-project logs and TRX reports so the
+        # cause can be diagnosed from GHA artifacts. The workflow `6_Test.txt`
+        # log contains only summary lines like "Failed: N, Passed: M"; per-test
+        # detail lives in bin/.../TestResults/<Project>_<tfm>_<arch>.log.
+        # We intentionally skip this on success — the logs aren't needed and
+        # uploading them every run added 10+ MB per CI pipeline.
+        # Cobertura XML is not uploaded (it's reproducible locally via
+        # eng/testing/run-coverage.ps1 and was the bulk of the artifact size).
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ inputs.slug }}-test-results
+          path: |
+            ${{ inputs.path }}/**/TestResults/*.log
+            ${{ inputs.path }}/**/TestResults/*.trx
+          if-no-files-found: ignore
+          retention-days: 3
 
       - name: Create binlog artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -143,7 +267,15 @@ jobs:
             /d:sonar.cs.vscoveragexml.reportsPaths="TestResults/coverage.xml"
 
           dotnet build --no-incremental
-          dotnet coverage collect 'dotnet test --no-build --results-directory TestResults/' \
+          # xUnit v3 routes `dotnet test` through Microsoft Testing Platform (MTP).
+          # Everything after `--` is forwarded to each per-project MTP runner:
+          #   --results-directory   emit artifacts (including the TRX below) under TestResults/
+          #   --report-xunit-trx    generate .trx files so Sonar's sonar.cs.vstest.reportsPaths picks them up
+          #                         (xUnit v3's built-in TRX reporter; the generic MTP
+          #                         --report-trx would need the separate
+          #                         Microsoft.Testing.Extensions.TrxReport package)
+          #   --ignore-exit-code 8  treat "all tests [Skip]ped" (e.g. Host.Lease without Azurite) as success
+          dotnet coverage collect 'dotnet test --no-build -- --results-directory TestResults/ --report-xunit-trx --ignore-exit-code 8' \
             -f xml -o 'TestResults/coverage.xml'
 
           dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"

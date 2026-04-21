@@ -11,24 +11,32 @@ using Altinn.AccessManagement.Core.Resolvers;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Mocks;
+using Altinn.AccessManagement.TestUtils.Fixtures;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.Utilities;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+
+// Migrated from CustomWebApplicationFactory<RightsInternalController> to ApiFixture
+// as part of Phase 2.2 (Sub-step 16.2a — AccessMgmt.Tests WAF consolidation, Group A
+// single-configuration migrations). All tests share a single mock set (WithServiceMoq),
+// so the DI can be registered once in the constructor; per-test HttpClients are built
+// via fixture.CreateClient(). See docs/testing/steps/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
 
 namespace Altinn.AccessManagement.Tests.Controllers;
 
 /// <summary>
 /// Controller test for <see cref="RightsInternalController"/>
 /// </summary>
-public class Altinn2RightsControllerTest : IClassFixture<CustomWebApplicationFactory<RightsInternalController>>
+public class Altinn2RightsControllerTest : IClassFixture<ApiFixture>
 {
-    private readonly CustomWebApplicationFactory<RightsInternalController> _factory;
+    private readonly ApiFixture _fixture;
 
     private readonly string sblInternalToken = PrincipalUtil.GetAccessToken("sbl.authorization");
 
@@ -38,12 +46,15 @@ public class Altinn2RightsControllerTest : IClassFixture<CustomWebApplicationFac
     };
 
     /// <summary>
-    /// Constructor setting up factory, test client and dependencies
+    /// Constructor setting up the shared <see cref="ApiFixture"/> with the mocks
+    /// required by this controller's tests.
     /// </summary>
-    /// <param name="factory">CustomWebApplicationFactory</param>
-    public Altinn2RightsControllerTest(CustomWebApplicationFactory<RightsInternalController> factory)
+    /// <param name="fixture">Shared <see cref="ApiFixture"/>.</param>
+    public Altinn2RightsControllerTest(ApiFixture fixture)
     {
-        _factory = factory;
+        _fixture = fixture;
+        fixture.WithAppsettings(builder => builder.AddJsonFile("appsettings.test.json", optional: false));
+        fixture.ConfigureServices(WithServiceMoq);
     }
 
     /// <summary>
@@ -121,7 +132,7 @@ public class Altinn2RightsControllerTest : IClassFixture<CustomWebApplicationFac
     [MemberData(nameof(ClearAccessCache_ReturnOk_input))]
     public async Task ClearAccessCache_ReturnOk(string authnUserToken, int party, BaseAttributeExternal toAttribute, Action<HttpResponseMessage> assert)
     {
-        var client = NewClient(NewServiceCollection(WithServiceMoq), WithClientRoute("accessmanagement/api/v1/"));
+        var client = NewClient(WithClientRoute("accessmanagement/api/v1/"));
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authnUserToken);
 
         HttpResponseMessage response = await client.PutAsync($"internal/{party}/accesscache/clear", new StringContent(JsonSerializer.Serialize(toAttribute), Encoding.UTF8, MediaTypeNames.Application.Json));
@@ -164,7 +175,7 @@ public class Altinn2RightsControllerTest : IClassFixture<CustomWebApplicationFac
     [MemberData(nameof(ClearAccessCache_ReturnBadRequest_input))]
     public async Task ClearAccessCache_ReturnBadRequest(string authnUserToken, int party, BaseAttributeExternal toAttribute, Action<HttpResponseMessage> assert)
     {
-        var client = NewClient(NewServiceCollection(WithServiceMoq), WithClientRoute("accessmanagement/api/v1/"));
+        var client = NewClient(WithClientRoute("accessmanagement/api/v1/"));
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authnUserToken);
 
         HttpResponseMessage response = await client.PutAsync($"internal/{party}/accesscache/clear", new StringContent(JsonSerializer.Serialize(toAttribute), Encoding.UTF8, MediaTypeNames.Application.Json));
@@ -245,26 +256,12 @@ public class Altinn2RightsControllerTest : IClassFixture<CustomWebApplicationFac
         Assert.Fail($"Failed to find any attributes in the field 'From' with type '{type}' and value '{value}'");
     };
 
-    private WebApplicationFactory<RightsInternalController> NewServiceCollection(params Action<IServiceCollection>[] actions)
-    {
-        return _factory.WithWebHostBuilder(builder =>
-       {
-           builder.ConfigureTestServices(services =>
-           {
-               foreach (var action in actions)
-               {
-                   action(services);
-               }
-           });
-       });
-    }
-
     private HttpClient NewDefaultClient(params Action<HttpClient>[] actions) =>
-        NewClient(NewServiceCollection(WithServiceMoq), [WithClientToken(), WithClientRoute("accessmanagement/api/v1/"), .. actions]);
+        NewClient([WithClientToken(), WithClientRoute("accessmanagement/api/v1/"), .. actions]);
 
-    private static HttpClient NewClient(WebApplicationFactory<RightsInternalController> factory, params Action<HttpClient>[] actions)
+    private HttpClient NewClient(params Action<HttpClient>[] actions)
     {
-        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        var client = _fixture.CreateClient(new() { AllowAutoRedirect = false });
         foreach (var action in actions)
         {
             action(client);
@@ -280,14 +277,19 @@ public class Altinn2RightsControllerTest : IClassFixture<CustomWebApplicationFac
         services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
         services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
         services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-        services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
         services.AddSingleton<IPartiesClient, PartiesClientMock>();
         services.AddSingleton<IProfileClient, ProfileClientMock>();
         services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
         services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
         services.AddSingleton<IPDP, PdpPermitMock>();
-        services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
+        services.AddSingleton<IAltinn2RightsClient, Tests.Mocks.Altinn2RightsClientMock>();
         services.AddSingleton<IDelegationChangeEventQueue>(new DelegationChangeEventQueueMock());
+
+        // ApiFixture registers PublicSigningKeyProviderMock by default, but these
+        // tests sign tokens via PrincipalUtil.GetAccessToken which requires the
+        // issuer-cert-backed SigningKeyResolverMock.
+        services.RemoveAll<IPublicSigningKeyProvider>();
+        services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
     }
 
     private static string GetUrlParameter(string header, object value) => header switch

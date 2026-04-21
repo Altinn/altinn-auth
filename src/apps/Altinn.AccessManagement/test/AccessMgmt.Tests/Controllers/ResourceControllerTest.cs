@@ -1,21 +1,32 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using Altinn.AccessManagement.Controllers;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.Tests.Utils;
+using Altinn.AccessManagement.TestUtils.Fixtures;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+
+// Migrated from CustomWebApplicationFactory<ResourceController> to ApiFixture
+// as part of Phase 2.2 (Step 16 — AccessMgmt.Tests WAF consolidation POC).
+// - appsettings.test.json is loaded via ApiFixture.WithAppsettings.
+// - SigningKeyResolverMock replaces ApiFixture's default PublicSigningKeyProviderMock
+//   because PrincipalUtil.GetAccessToken signs tokens with {issuer}-org.pem certs
+//   that SigningKeyResolverMock loads from disk.
+// - IResourceMetadataRepository is mocked, so the real Postgres DB created by
+//   ApiFixture is unused by these tests. The container overhead is acceptable
+//   and already paid by other AccessMgmt.Tests consumers.
 
 namespace Altinn.AccessManagement.Tests.Controllers
 {
@@ -23,9 +34,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
     /// Tests for AccessManagmet Resource metadata
     /// </summary>
     [Collection("ResourceController Tests")]
-    public class ResourceControllerTest : IClassFixture<CustomWebApplicationFactory<ResourceController>>
+    public class ResourceControllerTest : IClassFixture<ApiFixture>
     {
-        private readonly CustomWebApplicationFactory<ResourceController> _factory;
         private readonly HttpClient _client;
 
         private readonly JsonSerializerOptions options = new JsonSerializerOptions
@@ -34,13 +44,23 @@ namespace Altinn.AccessManagement.Tests.Controllers
         };
 
         /// <summary>
-        /// Constructor setting up factory, test client and dependencies
+        /// Constructor setting up the ApiFixture with the mocks required by this controller's tests.
         /// </summary>
-        /// <param name="factory">CustomWebApplicationFactory</param>
-        public ResourceControllerTest(CustomWebApplicationFactory<ResourceController> factory)
+        /// <param name="fixture">Shared <see cref="ApiFixture"/>.</param>
+        public ResourceControllerTest(ApiFixture fixture)
         {
-            _factory = factory;
-            _client = GetTestClient();
+            fixture.WithAppsettings(builder => builder.AddJsonFile("appsettings.test.json", optional: false));
+            fixture.ConfigureServices(services =>
+            {
+                services.AddSingleton<IResourceMetadataRepository, ResourceMetadataRepositoryMock>();
+                services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
+                services.RemoveAll<IPublicSigningKeyProvider>();
+                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
+                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
+                services.AddSingleton<IPDP, PdpPermitMock>();
+            });
+
+            _client = fixture.CreateClient(new() { AllowAutoRedirect = false });
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
@@ -240,23 +260,6 @@ namespace Altinn.AccessManagement.Tests.Controllers
             // Assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             Assert.Equal(expected, actual);
-        }
-
-        private HttpClient GetTestClient()
-        {
-            HttpClient client = _factory.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.AddSingleton<IResourceMetadataRepository, ResourceMetadataRepositoryMock>();
-                    services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                    services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
-                    services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
-                    services.AddSingleton<IPDP, PdpPermitMock>();
-                });
-            }).CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-
-            return client;
         }
     }
 }

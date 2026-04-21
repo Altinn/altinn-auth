@@ -14,6 +14,19 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
+// Audit:
+//   Pattern: A-isolated
+//   Mocks: (none — pure service test, no web host)
+//   Writes: Yes (seeds entities/resources and creates/updates requests)
+//   Notes: Does NOT use a web server. Constructs AppDbContext directly from
+//          PostgresFixture.SharedDb connection string, then instantiates
+//          RequestService by hand. Migrate to ApiFixture: replace
+//          PostgresFixture.SharedDb with ApiFixture.Services.CreateEFScope
+//          to obtain an AppDbContext; keep the service-under-test construction
+//          as-is. Each test seeds a unique Resource to avoid inter-test
+//          interference so the class must remain IClassFixture<ApiFixture>
+//          (Pattern A-isolated) — not eligible for sharing.
+
 namespace AccessMgmt.Tests.Services;
 
 public class RequestServiceTests : IClassFixture<PostgresFixture>

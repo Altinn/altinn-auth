@@ -9,31 +9,61 @@ using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Data;
+using Altinn.AccessManagement.TestUtils.Fixtures;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Utils;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+
+// Migrated from CustomWebApplicationFactory<AppsInstanceDelegationController> to ApiFixture
+// as part of Phase 2.2 (Sub-step 16.2a — AccessMgmt.Tests WAF consolidation, Group A
+// single-configuration migrations). All tests share a single mock set (the previous
+// `WithPDPMock` extension point was dead code), so DI is registered once in the
+// constructor; per-test HttpClients are built via fixture.CreateClient().
+// See docs/testing/steps/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
 
 namespace Altinn.AccessManagement.Tests.Controllers;
 
-public class AppsInstanceDelegationControllerTest : IClassFixture<CustomWebApplicationFactory<AppsInstanceDelegationController>>
+public class AppsInstanceDelegationControllerTest : IClassFixture<ApiFixture>
 {
-    private readonly CustomWebApplicationFactory<AppsInstanceDelegationController> _factory;
+    private readonly ApiFixture _fixture;
     private readonly JsonSerializerOptions options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
     /// <summary>
-    /// Constructor setting up factory, test client and dependencies
+    /// Constructor setting up the shared <see cref="ApiFixture"/> with the mocks
+    /// required by this controller's tests.
     /// </summary>
-    /// <param name="factory">CustomWebApplicationFactory</param>
-    public AppsInstanceDelegationControllerTest(CustomWebApplicationFactory<AppsInstanceDelegationController> factory)
+    /// <param name="fixture">Shared <see cref="ApiFixture"/>.</param>
+    public AppsInstanceDelegationControllerTest(ApiFixture fixture)
     {
-        _factory = factory;
+        _fixture = fixture;
+        fixture.WithAppsettings(builder => builder.AddJsonFile("appsettings.test.json", optional: false));
+        fixture.ConfigureServices(services =>
+        {
+            services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
+            services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
+            services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
+            services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
+            services.AddSingleton<IPartiesClient, PartiesClientMock>();
+            services.AddSingleton<IProfileClient, ProfileClientMock>();
+            services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
+            services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
+            services.AddSingleton<IPDP, PdpPermitMock>();
+            services.AddSingleton<IAltinn2RightsClient, Tests.Mocks.Altinn2RightsClientMock>();
+
+            // ApiFixture registers PublicSigningKeyProviderMock by default, but these
+            // tests sign tokens via PrincipalUtil.GetAccessToken which requires the
+            // issuer-cert-backed SigningKeyResolverMock.
+            services.RemoveAll<IPublicSigningKeyProvider>();
+            services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
+        });
     }
 
     /// <summary>
@@ -214,32 +244,9 @@ public class AppsInstanceDelegationControllerTest : IClassFixture<CustomWebAppli
         AssertionUtil.AssertPagination(expected, actual, AssertionUtil.AssertAppsInstanceDelegationResponseDto);
     }
 
-    private static void WithPDPMock(IServiceCollection services) => services.AddSingleton(new PepWithPDPAuthorizationMock());
-
-    private HttpClient GetTestClient(string token, params Action<IServiceCollection>[] actions)
+    private HttpClient GetTestClient(string token)
     {
-        HttpClient client = _factory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureTestServices(services =>
-            {
-                services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
-                services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
-                services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
-                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
-                services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                services.AddSingleton<IPartiesClient, PartiesClientMock>();
-                services.AddSingleton<IProfileClient, ProfileClientMock>();
-                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
-                services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
-                services.AddSingleton<IPDP, PdpPermitMock>();
-                services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
-
-                foreach (var action in actions)
-                {
-                    action(services);
-                }
-            });
-        }).CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        HttpClient client = _fixture.CreateClient(new() { AllowAutoRedirect = false });
 
         client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         if (token != null)

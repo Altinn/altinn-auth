@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using AccessMgmt.Tests.Mocks;
 using Altinn.AccessManagement.Controllers;
@@ -17,6 +18,8 @@ using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.Tests.Utils;
+using Altinn.AccessManagement.TestUtils.Fixtures;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Register.Models;
@@ -24,38 +27,150 @@ using AltinnCore.Authentication.JwtCookie;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
-using Moq;
 using Xunit;
+
+// Migrated from CustomWebApplicationFactory<MaskinportenSchemaController> to ApiFixture
+// as part of Phase 2.2 (Sub-step 16.2b — AccessMgmt.Tests WAF consolidation, Group A
+// nested-class splits). The five tests that registered PdpPermitMock instead of
+// PepWithPDPAuthorizationMock live in the sibling class MaskinportenSchemaPdpPermitControllerTest.
+// Per-test HttpContextAccessor route-value customization is supported without
+// rebuilding DI by using a shared MutableHttpContextAccessor (AsyncLocal-based override).
+// See docs/testing/steps/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
 
 namespace Altinn.AccessManagement.Tests.Controllers
 {
     /// <summary>
+    /// Shared IHttpContextAccessor whose <see cref="HttpContext"/> getter returns
+    /// a test-scoped override (stored in an <see cref="AsyncLocal{T}"/>) when one
+    /// is set via <see cref="SetOverride(string, string)"/>. Falls back to the
+    /// inner <see cref="HttpContextAccessor"/> otherwise so the ambient request
+    /// context continues to flow during normal request handling.
+    /// </summary>
+    internal sealed class MutableHttpContextAccessor : IHttpContextAccessor
+    {
+        private readonly Dictionary<string, object> _routeOverrides = new();
+        private readonly HttpContextAccessor _default = new();
+
+        public HttpContext HttpContext
+        {
+            get
+            {
+                var real = _default.HttpContext;
+                Dictionary<string, object> overrides;
+                lock (_routeOverrides)
+                {
+                    if (_routeOverrides.Count == 0 || real is null)
+                    {
+                        return real;
+                    }
+
+                    overrides = new Dictionary<string, object>(_routeOverrides);
+                }
+
+                // Return a lightweight fake that carries the real User and
+                // request Headers so authorization handlers (which read both
+                // from the injected IHttpContextAccessor) continue to work,
+                // but with route values overridden per-test. Matches legacy
+                // behavior where GetHttpContextAccessorMock injected a
+                // dedicated accessor with only "party" route values set.
+                var fake = new DefaultHttpContext { User = real.User };
+                foreach (var h in real.Request.Headers)
+                {
+                    fake.Request.Headers[h.Key] = h.Value;
+                }
+
+                foreach (var kvp in overrides)
+                {
+                    fake.Request.RouteValues[kvp.Key] = kvp.Value;
+                }
+
+                return fake;
+            }
+            set => _default.HttpContext = value;
+        }
+
+        public void SetOverride(string partytype, string id)
+        {
+            lock (_routeOverrides)
+            {
+                _routeOverrides[partytype] = id;
+            }
+        }
+
+        public void ClearOverride()
+        {
+            lock (_routeOverrides)
+            {
+                _routeOverrides.Clear();
+            }
+        }
+    }
+
+    /// <summary>
     /// Test class for <see cref="MaskinportenSchemaController"></see>
     /// </summary>
-    [Collection("MaskinportenSchemaController Tests")]
-    public class MaskinportenSchemaControllerTest : IClassFixture<CustomWebApplicationFactory<MaskinportenSchemaController>>
+    public class MaskinportenSchemaControllerTest : IClassFixture<ApiFixture>
     {
-        private readonly CustomWebApplicationFactory<MaskinportenSchemaController> _factory;
+        private readonly ApiFixture _fixture;
+        private static readonly MutableHttpContextAccessor _httpContextAccessor = new();
         private HttpClient _client;
 
         private readonly JsonSerializerOptions options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
         /// <summary>
-        /// Constructor setting up factory, test client and dependencies
+        /// Constructor setting up the shared <see cref="ApiFixture"/> with the
+        /// mocks required by this controller's tests. IPDP defaults to
+        /// <see cref="PepWithPDPAuthorizationMock"/> (the majority variant).
         /// </summary>
-        /// <param name="factory">CustomWebApplicationFactory</param>
-        public MaskinportenSchemaControllerTest(CustomWebApplicationFactory<MaskinportenSchemaController> factory)
+        /// <param name="fixture">Shared <see cref="ApiFixture"/>.</param>
+        public MaskinportenSchemaControllerTest(ApiFixture fixture)
         {
-            _factory = factory;
-            _client = GetTestClient();
+            _fixture = fixture;
+            _httpContextAccessor.ClearOverride();
+            fixture.WithAppsettings(builder => builder.AddJsonFile("appsettings.test.json", optional: false));
+            fixture.ConfigureServices(services =>
+            {
+                services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
+                services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
+                services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
+                services.AddSingleton<IDelegationChangeEventQueue, DelegationChangeEventQueueMock>();
+                services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
+                services.AddSingleton<IPartiesClient, PartiesClientMock>();
+                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
+                services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
+                services.RemoveAll<IPublicSigningKeyProvider>();
+                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
+                services.RemoveAll<IHttpContextAccessor>();
+                services.AddSingleton<IHttpContextAccessor>(_httpContextAccessor);
+                services.RemoveAll<IPDP>();
+                services.AddSingleton<IPDP, PepWithPDPAuthorizationMock>();
+            });
+
+            _client = _fixture.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             string token = PrincipalUtil.GetAccessToken("sbl.authorization");
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
+
+        private HttpClient NewClient()
+        {
+            var client = _fixture.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            return client;
+        }
+
+        private DelegationMetadataRepositoryMock ResetDelegationMetadataRepository()
+        {
+            var repo = (DelegationMetadataRepositoryMock)_fixture.Services.GetRequiredService<IDelegationMetadataRepository>();
+            repo.MetadataChanges = new Dictionary<string, List<DelegationChange>>();
+            return repo;
+        }
+
 
         /// <summary>
         /// Test case: GetOfferedMaskinportenSchemaDelegations returns a list of delegations offeredby has given coveredby
@@ -893,122 +1008,10 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "jks_audi_etron_gt", $"p{fromParty}", "p50004222");
 
             // Act
-            HttpResponseMessage response = await GetTestClient().PostAsync($"accessmanagement/api/v1/{fromParty}/maskinportenschema/offered/", requestContent);
+            HttpResponseMessage response = await NewClient().PostAsync($"accessmanagement/api/v1/{fromParty}/maskinportenschema/offered/", requestContent);
 
             // Assert
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-        }
-
-        /// <summary>
-        /// Test case: MaskinportenDelegation performed by authenticated user 20001337 with authentication level 2,
-        ///            for the reportee party 1 to the recipient party 2
-        ///            In this case:
-        ///            - The request contains multiple rights
-        /// Expected: MaskinportenDelegation returns 400 Bad Request with a problem details respons body describing the error
-        /// </summary>
-        [Fact]
-        public async Task PostMaskinportenSchemaDelegation_ValidationProblemDetails_SingleRightOnly()
-        {
-            // Arrange
-            _client = GetTestClient(new PdpPermitMock(), GetHttpContextAccessorMock("party", "1"));
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
-
-            StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "Input_SingleRightOnly");
-            ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "ExpectedOutput_SingleRightOnly");
-
-            // Act
-            HttpResponseMessage response = await _client.PostAsync($"accessmanagement/api/v1/1/maskinportenschema/offered/", requestContent);
-
-            // Assert
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-
-            string responseContent = await response.Content.ReadAsStringAsync();
-            ValidationProblemDetails actualResponse = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, options);
-            AssertionUtil.AssertValidationProblemDetailsEqual(expectedResponse, actualResponse);
-        }
-
-        /// <summary>
-        /// Test case: MaskinportenDelegation performed by authenticated user 20001337 with authentication level 2,
-        ///            for the reportee party 1 to the recipient party 2
-        ///            In this case:
-        ///            - The request contains a resource specification using Org/App identifier
-        /// Expected: MaskinportenDelegation returns 400 Bad Request with a problem details respons body describing the error
-        /// </summary>
-        [Fact]
-        public async Task PostMaskinportenSchemaDelegation_ValidationProblemDetails_OrgAppResource()
-        {
-            // Arrange
-            _client = GetTestClient(new PdpPermitMock(), GetHttpContextAccessorMock("party", "1"));
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
-
-            StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "Input_OrgAppResource");
-            ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "ExpectedOutput_OrgAppResource");
-
-            // Act
-            HttpResponseMessage response = await _client.PostAsync($"accessmanagement/api/v1/1/maskinportenschema/offered/", requestContent);
-
-            // Assert
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-
-            string responseContent = await response.Content.ReadAsStringAsync();
-            ValidationProblemDetails actualResponse = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, options);
-            AssertionUtil.AssertValidationProblemDetailsEqual(expectedResponse, actualResponse);
-        }
-
-        /// <summary>
-        /// Test case: MaskinportenDelegation performed by authenticated user 20001337 with authentication level 2,
-        ///            for the reportee party 1 to the recipient party 2
-        ///            In this case:
-        ///            - The resource registry id does not exist
-        /// Expected: MaskinportenDelegation returns 400 Bad Request with a problem details respons body describing the error
-        /// </summary>
-        [Fact]
-        public async Task PostMaskinportenSchemaDelegation_ValidationProblemDetails_InvalidResourceRegistryId()
-        {
-            // Arrange
-            _client = GetTestClient(new PdpPermitMock(), GetHttpContextAccessorMock("party", "1"));
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
-
-            StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "Input_InvalidResourceRegistryId");
-            ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "ExpectedOutput_InvalidResourceRegistryId");
-
-            // Act
-            HttpResponseMessage response = await _client.PostAsync($"accessmanagement/api/v1/1/maskinportenschema/offered/", requestContent);
-
-            // Assert
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-
-            string responseContent = await response.Content.ReadAsStringAsync();
-            ValidationProblemDetails actualResponse = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, options);
-            AssertionUtil.AssertValidationProblemDetailsEqual(expectedResponse, actualResponse);
-        }
-
-        /// <summary>
-        /// Test case: MaskinportenDelegation performed by authenticated user 20001337 with authentication level 2,
-        ///            for the reportee party 1 to the recipient party 2
-        ///            In this case:
-        ///            - The resource registry id is not for a MaskinportenSchema 
-        /// Expected: MaskinportenDelegation returns 400 Bad Request with a problem details respons body describing the error
-        /// </summary>
-        [Fact]
-        public async Task PostMaskinportenSchemaDelegation_ValidationProblemDetails_InvalidResourceType()
-        {
-            // Arrange
-            _client = GetTestClient(new PdpPermitMock(), GetHttpContextAccessorMock("party", "1"));
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
-
-            StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "Input_InvalidResourceType");
-            ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "ExpectedOutput_InvalidResourceType");
-
-            // Act
-            HttpResponseMessage response = await _client.PostAsync($"accessmanagement/api/v1/1/maskinportenschema/offered/", requestContent);
-
-            // Assert
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-
-            string responseContent = await response.Content.ReadAsStringAsync();
-            ValidationProblemDetails actualResponse = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, options);
-            AssertionUtil.AssertValidationProblemDetailsEqual(expectedResponse, actualResponse);
         }
 
         /// <summary>
@@ -1089,37 +1092,6 @@ namespace Altinn.AccessManagement.Tests.Controllers
 
             // Act
             HttpResponseMessage response = await _client.PostAsync($"accessmanagement/api/v1/{fromParty}/maskinportenschema/offered/", requestContent);
-
-            // Assert
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-
-            string responseContent = await response.Content.ReadAsStringAsync();
-            ValidationProblemDetails actualResponse = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, options);
-            AssertionUtil.AssertValidationProblemDetailsEqual(expectedResponse, actualResponse);
-        }
-
-        /// <summary>
-        /// Test case: MaskinportenDelegation performed by authenticated user 20000490 with authentication level 2, on behalf of himself.
-        ///            In this case:
-        ///            - The user 20000490 tries to perform maskinporten delegation from himself
-        ///            - This shouldn't really happen as long as the authorization requirement is done through roles tied to ER-roles,
-        ///              but this case mocks permit from PDP to test internal service validation
-        /// Expected: MaskinportenDelegation returns 400 Bad Request with a problem details respons body describing the error
-        /// </summary>
-        [Fact]
-        public async Task PostMaskinportenSchemaDelegation_ValidationProblemDetails_InvalidFrom_Ssn()
-        {
-            // Arrange
-            string fromParty = "50002598";
-            _client = GetTestClient(new PdpPermitMock(), GetHttpContextAccessorMock("party", "50002598"));
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
-            _client.DefaultRequestHeaders.Add("Altinn-Party-SocialSecurityNumber", "07124912037");
-
-            StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p{fromParty}", "p2", "Input_Default");
-            ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p{fromParty}", "p2", "ExpectedOutput_InvalidFrom_Ssn");
-
-            // Act
-            HttpResponseMessage response = await _client.PostAsync($"accessmanagement/api/v1/person/maskinportenschema/offered/", requestContent);
 
             // Assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -1751,14 +1723,46 @@ namespace Altinn.AccessManagement.Tests.Controllers
             AssertionUtil.AssertCollections(expectedResponse, actualResponse, AssertionUtil.AssertRightDelegationCheckExternalEqual);
         }
 
+        private HttpClient GetTestClient(IPDP pdpMock = null, IHttpContextAccessor httpContextAccessor = null, IDelegationMetadataRepository delegationMetadataRepositoryMock = null)
+        {
+            // Migrated stub kept to minimize diff in test bodies. pdpMock is honored
+            // only if it's a PepWithPDPAuthorizationMock (this class is already that
+            // configuration); switch to MaskinportenSchemaPdpPermitControllerTest if
+            // PdpPermitMock is required. httpContextAccessor is honored by reading
+            // its HttpContext.Request.RouteValues and applying them to the shared
+            // MutableHttpContextAccessor. delegationMetadataRepositoryMock is
+            // ignored — the repository is now a singleton; use
+            // ResetDelegationMetadataRepository() to access/reset its state.
+            if (httpContextAccessor is not null)
+            {
+                var ctx = httpContextAccessor.HttpContext;
+                if (ctx is not null)
+                {
+                    foreach (var kvp in ctx.Request.RouteValues)
+                    {
+                        _httpContextAccessor.SetOverride(kvp.Key, (string)kvp.Value);
+                    }
+                }
+            }
+
+            if (delegationMetadataRepositoryMock is DelegationMetadataRepositoryMock providedRepo)
+            {
+                // Alias: share one dictionary instance between the singleton and the
+                // caller's local variable so test assertions that read providedRepo
+                // observe mutations performed through the request pipeline.
+                var repo = (DelegationMetadataRepositoryMock)_fixture.Services.GetRequiredService<IDelegationMetadataRepository>();
+                repo.MetadataChanges = new Dictionary<string, List<DelegationChange>>();
+                providedRepo.MetadataChanges = repo.MetadataChanges;
+            }
+
+            return NewClient();
+        }
+
         private static IHttpContextAccessor GetHttpContextAccessorMock(string partytype, string id)
         {
             HttpContext httpContext = new DefaultHttpContext();
             httpContext.Request.RouteValues.Add(partytype, id);
-
-            var httpContextAccessorMock = new Mock<IHttpContextAccessor>();
-            httpContextAccessorMock.Setup(h => h.HttpContext).Returns(httpContext);
-            return httpContextAccessorMock.Object;
+            return new HttpContextAccessor { HttpContext = httpContext };
         }
 
         private static List<MPDelegationExternal> GetExpectedMaskinportenSchemaDelegations(string supplierOrg, string consumerOrg, List<string> resourceIds)
@@ -1834,32 +1838,157 @@ namespace Altinn.AccessManagement.Tests.Controllers
             content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             return content;
         }
+    }
 
-        private HttpClient GetTestClient(IPDP pdpMock = null, IHttpContextAccessor httpContextAccessor = null, IDelegationMetadataRepository delegationMetadataRepositoryMock = null)
+    /// <summary>
+    /// Sibling to <see cref="MaskinportenSchemaControllerTest"/> hosting the
+    /// <c>PostMaskinportenSchemaDelegation_ValidationProblemDetails_*</c> tests
+    /// that require <see cref="PdpPermitMock"/> instead of the default
+    /// <see cref="PepWithPDPAuthorizationMock"/>. Split per recipe rule 6 (one
+    /// mutually-exclusive DI configuration per class).
+    /// </summary>
+    public class MaskinportenSchemaPdpPermitControllerTest : IClassFixture<ApiFixture>
+    {
+        private readonly ApiFixture _fixture;
+        private static readonly MutableHttpContextAccessor _httpContextAccessor = new();
+        private readonly JsonSerializerOptions options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+        public MaskinportenSchemaPdpPermitControllerTest(ApiFixture fixture)
         {
-            pdpMock ??= new PepWithPDPAuthorizationMock();
-            httpContextAccessor ??= new HttpContextAccessor();
-            delegationMetadataRepositoryMock ??= new DelegationMetadataRepositoryMock();
-
-            HttpClient client = _factory.WithWebHostBuilder(builder =>
+            _fixture = fixture;
+            _httpContextAccessor.ClearOverride();
+            fixture.WithAppsettings(builder => builder.AddJsonFile("appsettings.test.json", optional: false));
+            fixture.ConfigureServices(services =>
             {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
-                    services.AddSingleton(delegationMetadataRepositoryMock);
-                    services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
-                    services.AddSingleton<IDelegationChangeEventQueue, DelegationChangeEventQueueMock>();
-                    services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                    services.AddSingleton<IPartiesClient, PartiesClientMock>();
-                    services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
-                    services.AddSingleton(pdpMock);
-                    services.AddSingleton(httpContextAccessor);
-                    services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
-                    services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
-                });
-            }).CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+                services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
+                services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
+                services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
+                services.AddSingleton<IDelegationChangeEventQueue, DelegationChangeEventQueueMock>();
+                services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
+                services.AddSingleton<IPartiesClient, PartiesClientMock>();
+                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
+                services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
+                services.RemoveAll<IPublicSigningKeyProvider>();
+                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
+                services.RemoveAll<IHttpContextAccessor>();
+                services.AddSingleton<IHttpContextAccessor>(_httpContextAccessor);
+                services.RemoveAll<IPDP>();
+                services.AddSingleton<IPDP, PdpPermitMock>();
+            });
+        }
 
+        private HttpClient NewClient()
+        {
+            var client = _fixture.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             return client;
+        }
+
+        [Fact]
+        public async Task PostMaskinportenSchemaDelegation_ValidationProblemDetails_SingleRightOnly()
+        {
+            _httpContextAccessor.SetOverride("party", "1");
+            var client = NewClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
+
+            StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "Input_SingleRightOnly");
+            ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "ExpectedOutput_SingleRightOnly");
+
+            HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/1/maskinportenschema/offered/", requestContent);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            string responseContent = await response.Content.ReadAsStringAsync();
+            ValidationProblemDetails actualResponse = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, options);
+            AssertionUtil.AssertValidationProblemDetailsEqual(expectedResponse, actualResponse);
+        }
+
+        [Fact]
+        public async Task PostMaskinportenSchemaDelegation_ValidationProblemDetails_OrgAppResource()
+        {
+            _httpContextAccessor.SetOverride("party", "1");
+            var client = NewClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
+
+            StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "Input_OrgAppResource");
+            ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "ExpectedOutput_OrgAppResource");
+
+            HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/1/maskinportenschema/offered/", requestContent);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            string responseContent = await response.Content.ReadAsStringAsync();
+            ValidationProblemDetails actualResponse = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, options);
+            AssertionUtil.AssertValidationProblemDetailsEqual(expectedResponse, actualResponse);
+        }
+
+        [Fact]
+        public async Task PostMaskinportenSchemaDelegation_ValidationProblemDetails_InvalidResourceRegistryId()
+        {
+            _httpContextAccessor.SetOverride("party", "1");
+            var client = NewClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
+
+            StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "Input_InvalidResourceRegistryId");
+            ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "ExpectedOutput_InvalidResourceRegistryId");
+
+            HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/1/maskinportenschema/offered/", requestContent);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            string responseContent = await response.Content.ReadAsStringAsync();
+            ValidationProblemDetails actualResponse = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, options);
+            AssertionUtil.AssertValidationProblemDetailsEqual(expectedResponse, actualResponse);
+        }
+
+        [Fact]
+        public async Task PostMaskinportenSchemaDelegation_ValidationProblemDetails_InvalidResourceType()
+        {
+            _httpContextAccessor.SetOverride("party", "1");
+            var client = NewClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20001337, 50001337, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
+
+            StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "Input_InvalidResourceType");
+            ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p1", "p2", "ExpectedOutput_InvalidResourceType");
+
+            HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/1/maskinportenschema/offered/", requestContent);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            string responseContent = await response.Content.ReadAsStringAsync();
+            ValidationProblemDetails actualResponse = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, options);
+            AssertionUtil.AssertValidationProblemDetailsEqual(expectedResponse, actualResponse);
+        }
+
+        [Fact]
+        public async Task PostMaskinportenSchemaDelegation_ValidationProblemDetails_InvalidFrom_Ssn()
+        {
+            string fromParty = "50002598";
+            _httpContextAccessor.SetOverride("party", "50002598");
+            var client = NewClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(20000490, 50002598, userPartyUuid: new Guid("f200a9cb-31ce-4ed6-aad3-ed08b3cbbeee")));
+            client.DefaultRequestHeaders.Add("Altinn-Party-SocialSecurityNumber", "07124912037");
+
+            StreamContent requestContent = GetRequestContent("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p{fromParty}", "p2", "Input_Default");
+            ValidationProblemDetails expectedResponse = GetExpectedValidationProblemDetails("MaskinportenScopeDelegation", "mp_validation_problem_details", $"p{fromParty}", "p2", "ExpectedOutput_InvalidFrom_Ssn");
+
+            HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/person/maskinportenschema/offered/", requestContent);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            string responseContent = await response.Content.ReadAsStringAsync();
+            ValidationProblemDetails actualResponse = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, options);
+            AssertionUtil.AssertValidationProblemDetailsEqual(expectedResponse, actualResponse);
+        }
+
+        private static StreamContent GetRequestContent(string operation, string resourceId, string from, string to, string inputFileName = "Input_Default")
+        {
+            Stream dataStream = File.OpenRead($"Data/Json/MaskinportenSchema/{operation}/{resourceId}/from_{from}/to_{to}/{inputFileName}.json");
+            StreamContent content = new StreamContent(dataStream);
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            return content;
+        }
+
+        private static ValidationProblemDetails GetExpectedValidationProblemDetails(string operation, string resourceId, string from, string to, string responseFileName = "ExpectedOutput_Default")
+        {
+            string responsePath = $"Data/Json/MaskinportenSchema/{operation}/{resourceId}/from_{from}/to_{to}/{responseFileName}.json";
+            string content = File.ReadAllText(responsePath);
+            return (ValidationProblemDetails)JsonSerializer.Deserialize(content, typeof(ValidationProblemDetails), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
     }
 }

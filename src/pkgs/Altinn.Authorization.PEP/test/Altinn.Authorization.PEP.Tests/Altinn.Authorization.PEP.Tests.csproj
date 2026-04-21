@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <TargetFrameworks>net9.0</TargetFrameworks>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
@@ -14,6 +15,10 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Altinn.Authorization.PEP\Altinn.Authorization.PEP.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="xunit.runner.json" CopyToOutputDirectory="Always" />
     </ItemGroup>
 
 </Project>

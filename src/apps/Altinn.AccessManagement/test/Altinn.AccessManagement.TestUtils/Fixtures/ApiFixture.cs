@@ -1,3 +1,4 @@
+﻿using System.Collections.Concurrent;
 using Altinn.AccessManagement.TestUtils.Factories;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
@@ -22,7 +23,7 @@ namespace Altinn.AccessManagement.TestUtils.Fixtures;
 /// resources (for example a PostgreSQL test database).
 /// </summary>
 /// <remarks>
-/// Callbacks registered via <see cref="ConfiureServices"/>,
+/// Callbacks registered via <see cref="ConfigureServices"/>,
 /// <see cref="WithAppsettings"/>, or <see cref="WithInMemoryAppsettings"/>
 /// are collected and applied when the test host is constructed. The host is
 /// typically created on first use (for example when calling
@@ -45,9 +46,12 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     private PostgresDatabase _database = null!;
 
     /// <summary>
-    /// Seed gate used to ensure seed operations run only once.
+    /// Per-key seed gate. Each key (typically the calling test class type) is
+    /// added at most once, ensuring its seed actions run exactly once per
+    /// fixture lifetime even when the fixture is shared via
+    /// <see cref="Xunit.ICollectionFixture{TFixture}"/>.
     /// </summary>
-    private int _seedonce = 0;
+    private readonly ConcurrentDictionary<Type, bool> _seededKeys = new();
 
     /// <summary>
     /// Actions that can modify the <see cref="IConfigurationBuilder"/> used
@@ -61,14 +65,21 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     /// the test host is built. These actions are executed inside
     /// <see cref="ConfigureWebHost(IWebHostBuilder)"/>.
     /// </summary>
-    private List<Action<IServiceCollection>> ConfigureServices { get; } = [];
+    private List<Action<IServiceCollection>> _configureServicesActions { get; } = [];
 
     /// <summary>
     /// Builds an <see cref="HttpClient"/> from the test server and applies
-    /// optional configuration callbacks to it.
+    /// optional configuration callbacks to it (for example setting default
+    /// request headers such as <c>Authorization</c>).
     /// </summary>
     /// <param name="configureClient">Optional callbacks to configure the returned <see cref="HttpClient"/>.</param>
     /// <returns>The configured <see cref="HttpClient"/> instance.</returns>
+    /// <remarks>
+    /// <strong>Call from the constructor only.</strong> Calling this method
+    /// triggers the web host to be built if it has not been already, so
+    /// <see cref="ConfigureServices"/> and <see cref="EnsureSeedOnce{TKey}"/>
+    /// must be invoked before <see cref="BuildConfiguration"/>.
+    /// </remarks>
     public HttpClient BuildConfiguration(params Action<HttpClient>[] configureClient)
     {
         var client = Server.CreateClient();
@@ -123,7 +134,7 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 
             services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProviderMock>();
             services.AddSingleton<IPDP, PermitPdpMock>();
-            foreach (var configure in ConfigureServices)
+            foreach (var configure in _configureServicesActions)
             {
                 configure(services);
             }
@@ -133,20 +144,34 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     }
 
     /// <summary>
-    /// Registers a callback that will be executed to modify the
-    /// <see cref="IServiceCollection"/> used when building the test host.
+    /// Registers a callback that modifies the <see cref="IServiceCollection"/>
+    /// used when building the test host. Use this to replace production
+    /// services with test doubles (mocks, stubs, fakes).
     /// </summary>
-    /// <param name="configureServices">Action that will receive the service collection.</param>
+    /// <param name="configureServices">Action that receives the service collection.</param>
     /// <remarks>
-    /// Register service configuration in the constructor of your xUnit test
-    /// class or a collection fixture. If you need different configuration for
-    /// a group of tests, construct and configure a dedicated
-    /// <c>ApiFixture</c> instance in the test class (or collection) constructor
-    /// so the host is created with the intended settings.
+    /// <para>
+    /// <strong>Call from the constructor only.</strong> By the time a test
+    /// method runs the host is already built; callbacks registered inside
+    /// <c>[Fact]</c> methods are silently ignored.
+    /// </para>
+    /// <para>
+    /// Ordering constraint: <see cref="ConfigureServices"/> →
+    /// <see cref="EnsureSeedOnce{TKey}"/> →
+    /// <see cref="BuildConfiguration"/> must all be called before the first
+    /// access to the web host (e.g. <c>Server.CreateClient()</c>).
+    /// </para>
+    /// <para>
+    /// A test class that calls <c>ConfigureServices</c> must use its own
+    /// <see cref="Xunit.IClassFixture{TFixture}"/> — it cannot safely share
+    /// a fixture instance with other test classes via
+    /// <see cref="Xunit.ICollectionFixture{TFixture}"/> because the DI
+    /// container is sealed once the host is built.
+    /// </para>
     /// </remarks>
-    public void ConfiureServices(Action<IServiceCollection> configureServices)
+    public void ConfigureServices(Action<IServiceCollection> configureServices)
     {
-        ConfigureServices.Add(configureServices);
+        _configureServicesActions.Add(configureServices);
     }
 
     /// <summary>
@@ -212,11 +237,16 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     }
 
     /// <summary>
-    /// Execute asynchronous queries against the application's <see cref="AppDbContext"/>.
-    /// The provided delegates will run within a scoped <see cref="AppDbContext"/>,
-    /// and are guaranteed to execute only once across the fixture lifetime.
+    /// Executes asynchronous queries against the application's
+    /// <see cref="AppDbContext"/>. The provided delegates each receive a
+    /// scoped <see cref="AppDbContext"/> and may read or write data.
     /// </summary>
     /// <param name="configureDb">One or more async delegates that receive an <see cref="AppDbContext"/>.</param>
+    /// <remarks>
+    /// Unlike <see cref="EnsureSeedOnce{TKey}"/>, this method is <em>not</em>
+    /// guarded — every call will open a new scope and execute the delegates.
+    /// It is intended for per-test or per-query ad-hoc reads, not for seeding.
+    /// </remarks>
     public async Task QueryDb(params Func<AppDbContext, Task>[] configureDb)
     {
         var audit = new AuditValues(SystemEntityConstants.StaticDataIngest);
@@ -230,22 +260,40 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     }
 
     /// <summary>
-    /// Execute synchronous seed actions against the application's <see cref="AppDbContext"/>.
-    /// Actions will run only once across the fixture lifetime.
+    /// Executes synchronous seed actions against the application's
+    /// <see cref="AppDbContext"/> exactly once per <typeparamref name="TKey"/>.
     /// </summary>
+    /// <typeparam name="TKey">
+    /// A type that uniquely identifies this seed operation — typically the
+    /// calling test class itself (e.g. <c>EnsureSeedOnce&lt;MyTest&gt;(...)</c>).
+    /// Using the test-class type as the key means the seed runs once per
+    /// fixture even when the fixture is shared across multiple test classes
+    /// via <see cref="Xunit.ICollectionFixture{TFixture}"/>.
+    /// </typeparam>
     /// <param name="configureDb">One or more actions that receive an <see cref="AppDbContext"/>.</param>
-    public void EnsureSeedOnce(params Action<AppDbContext>[] configureDb)
+    /// <remarks>
+    /// <para>
+    /// <strong>Call from the constructor only.</strong> Ordering constraint:
+    /// <see cref="ConfigureServices"/> → <see cref="EnsureSeedOnce{TKey}"/> →
+    /// <see cref="BuildConfiguration"/> must all precede the first host access.
+    /// </para>
+    /// <para>
+    /// Seed operations should be <em>additive only</em> (INSERT, never DELETE
+    /// or UPDATE rows that other test classes may be reading). Classes that
+    /// need to mutate shared rows must use their own isolated
+    /// <see cref="Xunit.IClassFixture{TFixture}"/> instead of joining a
+    /// shared collection.
+    /// </para>
+    /// </remarks>
+    public void EnsureSeedOnce<TKey>(params Action<AppDbContext>[] configureDb)
     {
-        if (Interlocked.Increment(ref _seedonce) == 1)
+        if (_seededKeys.TryAdd(typeof(TKey), true))
         {
             var audit = new AuditValues(SystemEntityConstants.StaticDataIngest);
             using var scope = Services.CreateEFScope(audit);
             using var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
             foreach (var configure in configureDb)
-            {
                 configure(db);
-            }
         }
     }
 

@@ -10,6 +10,7 @@ using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Tests.Mocks;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessManagement.Tests.Utils;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;

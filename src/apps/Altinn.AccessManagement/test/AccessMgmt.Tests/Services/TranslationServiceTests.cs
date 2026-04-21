@@ -11,6 +11,19 @@ using AuditDefaults = Altinn.AccessMgmt.Persistence.Data.AuditDefaults;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
+// Audit:
+//   Pattern: A-isolated
+//   Mocks: (none — pure service test, no web host)
+//   Writes: No (reads only — queries translations from seeded static data)
+//   Notes: Does NOT use a web server. Constructs AppDbContext directly from
+//          PostgresFixture.SharedDb and instantiates TranslationService by hand.
+//          Migrate to ApiFixture: replace PostgresFixture.SharedDb with
+//          ApiFixture.Services.CreateEFScope to obtain an AppDbContext; keep
+//          the TranslationService construction as-is. Read-only access means
+//          this could technically share a fixture, but because the constructor
+//          builds its own AppDbContext instance it is simpler to keep as
+//          IClassFixture<ApiFixture> (Pattern A-isolated).
+
 namespace AccessMgmt.Tests.Services;
 
 /// <summary>

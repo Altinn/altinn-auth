@@ -1,34 +1,46 @@
-﻿using Altinn.AccessManagement.Controllers;
+﻿using System.Net.Http.Json;
+using System.Text.Json;
+using Altinn.AccessManagement.Controllers;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Tests.Fixtures;
-using Altinn.AccessManagement.Tests.Scenarios;
+using Altinn.AccessManagement.Tests.Mocks;
+using Altinn.AccessManagement.Tests.Util;
+using Altinn.Common.AccessToken.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
+// Migrated from WebApplicationFixture/AcceptanceCriteriaComposer to LegacyApiFixture
+// as part of sub-step 16.4a (Phase 2.2). The single previous theory row had a
+// no-op WithAssertResourceExistsInDb assertion, so the migration reduces to a
+// direct HTTP call with a platform access token.
+//
+// Why LegacyApiFixture: the endpoint writes through the Dapper-backed
+// ResourceMetadataRepo into accessmanagement.resource (Yuniql schema).
+// ApiFixture alone only provisions the EF dbo schemas; LegacyApiFixture adds
+// the production Yuniql migration pipeline on top.
 namespace Altinn.AccessManagement.Tests.Controllers;
 
 /// <summary>
 /// <see cref="ResourceController"/>
 /// </summary>
-public class V2ResourceControllerTest(WebApplicationFixture fixture) : IClassFixture<WebApplicationFixture>
+public class V2ResourceControllerTest : IClassFixture<LegacyApiFixture>
 {
-    private WebApplicationFixture Fixture { get; } = fixture;
+    private readonly HttpClient _client;
 
-    /// <summary>
-    /// Asserts that resource exists in DB
-    /// </summary>
-    /// <param name="expected">excpected resource to exsist</param>
-    /// <returns></returns>
-    public static Action<AcceptanceCriteriaComposer> WithAssertResourceExistsInDb(AccessManagementResource expected) => test =>
+    public V2ResourceControllerTest(LegacyApiFixture fixture)
     {
-        test.ApiAssertions.Add(async host =>
+        fixture.ConfigureServices(services =>
         {
-            await Task.CompletedTask;
+            // PlatformAccessToken is signed by {issuer}-org.pem; default
+            // PublicSigningKeyProviderMock only accepts the static test key.
+            services.RemoveAll<IPublicSigningKeyProvider>();
+            services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
         });
-    };
 
-    /// <summary>
-    /// Test input
-    /// </summary>
+        _client = fixture.CreateClient(new() { AllowAutoRedirect = false });
+    }
+
     private static readonly AccessManagementResource TestAltinnApp = new()
     {
         Created = DateTime.Today,
@@ -39,41 +51,24 @@ public class V2ResourceControllerTest(WebApplicationFixture fixture) : IClassFix
     };
 
     /// <summary>
-    /// Seeds for <see cref="SeedPostUpsertResource"/>
-    /// </summary>
-    /// <param name="acceptanceCriteria">Acceptance Criteria</param>
-    /// <param name="actions">modifiers for <see cref="AcceptanceCriteriaComposer"/></param>
-    public class SeedPostUpsertResource(string acceptanceCriteria, params Action<AcceptanceCriteriaComposer>[] actions) : AcceptanceCriteriaComposer(
-            acceptanceCriteria,
-            actions,
-            WithRequestRoute("accessmanagement", "api", "v1", "internal", "resources"),
-            WithRequestVerb(HttpMethod.Post))
-    {
-        /// <summary>
-        /// Seeds
-        /// </summary>
-        public static TheoryData<SeedPostUpsertResource> Seeds() =>
-        [
-            new(
-                /* Acceptance Criteria */ @"
-                GIVEN a resource is upserted in resource registry
-                WHEN resource registry forwards the resource
-                THEN the resource should be stored",
-
-                WithHttpRequestBodyJson<IEnumerable<AccessManagementResource>>([TestAltinnApp]),
-
-                WithScenarios(TokenScenario.PlatformToken("platform", "resourceregistry")),
-
-                WithAssertResponseStatusCodeSuccessful,
-                WithAssertResourceExistsInDb(TestAltinnApp))
-        ];
-    }
-
-    /// <summary>
     /// <see cref="ResourceController.Post(List{AccessManagementResource})"/>
     /// </summary>
-    /// <param name="acceptanceCriteria">acceptance criteria</param>
-    [Theory(DisplayName = "POST_UpsertResource")]
-    [MemberData(nameof(SeedPostUpsertResource.Seeds), MemberType = typeof(SeedPostUpsertResource))]
-    public async Task POST_UpsertResource(SeedPostUpsertResource acceptanceCriteria) => await acceptanceCriteria.Test(Fixture);
+    [Fact(DisplayName = "POST_UpsertResource")]
+    public async Task POST_UpsertResource()
+    {
+        // GIVEN a resource is upserted in resource registry
+        // WHEN resource registry forwards the resource
+        // THEN the resource should be stored
+        using var request = new HttpRequestMessage(HttpMethod.Post, "accessmanagement/api/v1/internal/resources")
+        {
+            Content = JsonContent.Create<IEnumerable<AccessManagementResource>>([TestAltinnApp]),
+        };
+        request.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("platform", "resourceregistry"));
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.True(
+            response.IsSuccessStatusCode,
+            $"expected successful status code, got {(int)response.StatusCode}: {response.StatusCode}");
+    }
 }

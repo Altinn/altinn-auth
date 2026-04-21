@@ -1,4 +1,4 @@
-# Local .terraform directories
+﻿# Local .terraform directories
 .terraform
 
 # .tfstate files
@@ -56,3 +56,6 @@ src/apps/Altinn.AccessMgmt.Worker.ER/allunits
 
 # Artifacts
 artifacts/
+
+# Test coverage results
+TestResults/

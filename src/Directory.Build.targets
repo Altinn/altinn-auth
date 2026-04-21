@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
     <Choose>
 
         <When Condition=" '$(IsTestProject)' == 'true' Or '$(IsTestLibrary)' == 'true'">
@@ -7,6 +7,15 @@
                 <NoWarn>$(NoWarn);SA0001</NoWarn>
                 <XUnitVersion Condition=" '$(XUnitVersion)' == '' ">v2</XUnitVersion>
                 <GenerateDocumentationFile Condition=" '$(EnableReferenceTrimmer)' == '' ">false</GenerateDocumentationFile>
+                <OutputType Condition=" '$(IsTestProject)' == 'true' And '$(XUnitVersion)' == 'v3' ">Exe</OutputType>
+
+                <!-- xUnit v3 runs on Microsoft Testing Platform, not VSTest.
+                     This opt-in makes `dotnet test` route to MTP so xUnit v3
+                     tests are actually discovered & executed in CI. -->
+                <TestingPlatformDotnetTestSupport Condition=" '$(IsTestProject)' == 'true' And '$(XUnitVersion)' == 'v3' ">true</TestingPlatformDotnetTestSupport>
+
+                <!-- Coverage output format for coverlet -->
+                <CoverletOutputFormat>cobertura</CoverletOutputFormat>
             </PropertyGroup>
 
             <ItemGroup>
@@ -19,10 +28,15 @@
                     <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
                 </PackageReference>
 
+                <PackageReference Include="coverlet.msbuild">
+                    <PrivateAssets>all</PrivateAssets>
+                    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+                </PackageReference>
+
                 <PackageReference Include="Microsoft.NET.Test.Sdk" />
                 <PackageReference Include="xunit" Condition=" '$(XUnitVersion)' == 'v2' " />
                 <PackageReference Include="xunit.v3" Condition=" '$(XUnitVersion)' == 'v3' " />
-                <PackageReference Include="xunit.runner.visualstudio">
+                <PackageReference Include="xunit.runner.visualstudio" Condition=" '$(XUnitVersion)' == 'v2' ">
                     <PrivateAssets>all</PrivateAssets>
                     <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
                 </PackageReference>
@@ -35,8 +49,16 @@
                 <PackageReference Include="xunit.v3.extensibility.core" Condition=" '$(XUnitVersion)' == 'v3' " />
             </ItemGroup>
 
+            <!-- FluentAssertions is available in both runnable test projects and
+                 shared test-helper libraries so the global using below resolves
+                 in either context. -->
+            <ItemGroup>
+                <PackageReference Include="FluentAssertions" />
+            </ItemGroup>
+
             <ItemGroup>
                 <Using Include="Xunit" />
+                <Using Include="FluentAssertions" />
             </ItemGroup>
 
         </When>

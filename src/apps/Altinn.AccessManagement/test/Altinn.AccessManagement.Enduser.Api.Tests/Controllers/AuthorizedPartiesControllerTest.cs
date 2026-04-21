@@ -27,7 +27,7 @@ public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
     public AuthorizedPartiesControllerTest(ApiFixture fixture)
     {
         Fixture = fixture;
-        Fixture.ConfiureServices(services =>
+        Fixture.ConfigureServices(services =>
         {
             services.AddSingleton<IProfileClient, ProfileClientMock>();
             services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 
@@ -469,6 +469,326 @@ namespace UnitTests
 
             ClaimsPrincipal user = new ClaimsPrincipal(new ClaimsIdentity(claims));
             return user;
+        }
+
+        [Fact]
+        public void ValidatePdpDecisionWithoutObligationCheck_Permit_ReturnsTrue()
+        {
+            // Arrange
+            var results = new List<XacmlJsonResult>
+            {
+                new XacmlJsonResult { Decision = XacmlContextDecision.Permit.ToString() }
+            };
+
+            // Act
+            bool result = DecisionHelper.ValidatePdpDecisionWithoutObligationCheck(results, CreateUserClaims(false));
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void ValidatePdpDecisionWithoutObligationCheck_Deny_ReturnsFalse()
+        {
+            // Arrange
+            var results = new List<XacmlJsonResult>
+            {
+                new XacmlJsonResult { Decision = XacmlContextDecision.Deny.ToString() }
+            };
+
+            // Act
+            bool result = DecisionHelper.ValidatePdpDecisionWithoutObligationCheck(results, CreateUserClaims(false));
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void ValidatePdpDecisionWithoutObligationCheck_MultipleResults_ReturnsFalse()
+        {
+            // Arrange
+            var results = new List<XacmlJsonResult>
+            {
+                new XacmlJsonResult { Decision = XacmlContextDecision.Permit.ToString() },
+                new XacmlJsonResult { Decision = XacmlContextDecision.Permit.ToString() }
+            };
+
+            // Act
+            bool result = DecisionHelper.ValidatePdpDecisionWithoutObligationCheck(results, CreateUserClaims(false));
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void ValidatePdpDecisionWithoutObligationCheck_NullResults_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() => DecisionHelper.ValidatePdpDecisionWithoutObligationCheck(null, CreateUserClaims(false)));
+        }
+
+        [Fact]
+        public void ValidatePdpDecisionDetailed_Permit_NoObligations_ReturnsAuthorized()
+        {
+            // Arrange
+            var results = new List<XacmlJsonResult>
+            {
+                new XacmlJsonResult { Decision = XacmlContextDecision.Permit.ToString() }
+            };
+
+            // Act
+            var result = DecisionHelper.ValidatePdpDecisionDetailed(results, CreateUserClaims(false));
+
+            // Assert
+            Assert.True(result.Authorized);
+            Assert.Null(result.FailedObligations);
+        }
+
+        [Fact]
+        public void ValidatePdpDecisionDetailed_Deny_ReturnsNotAuthorized()
+        {
+            // Arrange
+            var results = new List<XacmlJsonResult>
+            {
+                new XacmlJsonResult { Decision = XacmlContextDecision.Deny.ToString() }
+            };
+
+            // Act
+            var result = DecisionHelper.ValidatePdpDecisionDetailed(results, CreateUserClaims(false));
+
+            // Assert
+            Assert.False(result.Authorized);
+        }
+
+        [Fact]
+        public void ValidatePdpDecisionDetailed_MultipleResults_ReturnsNotAuthorized()
+        {
+            // Arrange
+            var results = new List<XacmlJsonResult>
+            {
+                new XacmlJsonResult { Decision = XacmlContextDecision.Permit.ToString() },
+                new XacmlJsonResult()
+            };
+
+            // Act
+            var result = DecisionHelper.ValidatePdpDecisionDetailed(results, CreateUserClaims(false));
+
+            // Assert
+            Assert.False(result.Authorized);
+        }
+
+        [Fact]
+        public void ValidateDecisionResult_OrgUser_MeetsOrgMinAuthLevel_ReturnsTrue()
+        {
+            // Arrange: org user with auth level 2, min auth level 3 but org min auth level 2
+            var result = new XacmlJsonResult
+            {
+                Decision = XacmlContextDecision.Permit.ToString(),
+                Obligations = new List<XacmlJsonObligationOrAdvice>
+                {
+                    new XacmlJsonObligationOrAdvice
+                    {
+                        AttributeAssignment = new List<XacmlJsonAttributeAssignment>
+                        {
+                            new XacmlJsonAttributeAssignment { Category = "urn:altinn:minimum-authenticationlevel", Value = "3" }
+                        }
+                    },
+                    new XacmlJsonObligationOrAdvice
+                    {
+                        AttributeAssignment = new List<XacmlJsonAttributeAssignment>
+                        {
+                            new XacmlJsonAttributeAssignment { Category = "urn:altinn:minimum-authenticationlevel-org", Value = "2" }
+                        }
+                    }
+                }
+            };
+
+            // Act
+            bool valid = DecisionHelper.ValidateDecisionResult(result, CreateUserClaims(false, "ttd"));
+
+            // Assert
+            Assert.True(valid);
+        }
+
+        [Fact]
+        public void CreateDecisionRequestForResourceRegistryResource_CreatesCorrectRequest()
+        {
+            // Arrange
+            var partyUuid = Guid.NewGuid();
+            var user = CreateUserClaims(false);
+
+            // Act
+            var requestRoot = DecisionHelper.CreateDecisionRequestForResourceRegistryResource("res1", partyUuid, user, "read");
+
+            // Assert
+            Assert.NotNull(requestRoot);
+            Assert.Single(requestRoot.Request.AccessSubject);
+            Assert.Single(requestRoot.Request.Action);
+            Assert.Single(requestRoot.Request.Resource);
+        }
+
+        [Fact]
+        public void CreateDecisionRequest_WithConsumerClaim_AddsOrganizationNumberAttribute()
+        {
+            // Arrange
+            var claims = new List<Claim>
+            {
+                new Claim("urn:altinn:authlevel", "2", "string", "org"),
+                new Claim("consumer", "{\"authority\":\"iso6523-actorid-upis\",\"ID\":\"0192:991825827\"}", "string", "maskinporten")
+            };
+            var user = new ClaimsPrincipal(new ClaimsIdentity(claims));
+
+            // Act
+            var requestRoot = DecisionHelper.CreateDecisionRequest(Org, App, user, ActionType);
+
+            // Assert
+            Assert.NotNull(requestRoot);
+            var subjectAttrs = requestRoot.Request.AccessSubject[0].Attribute;
+            Assert.Contains(subjectAttrs, a => a.AttributeId == "urn:altinn:organization:identifier-no" && a.Value == "991825827");
+        }
+
+        [Fact]
+        public void CreateDecisionRequest_WithSystemUserClaim_AddsSystemUserUuidAttribute()
+        {
+            // Arrange
+            var systemUserJson = "{\"type\":\"urn:altinn:systemuser\",\"systemuser_id\":[\"some-uuid-value\"]}";
+            var claims = new List<Claim>
+            {
+                new Claim("urn:altinn:authlevel", "2", "string", "org"),
+                new Claim("authorization_details", systemUserJson, "string", "maskinporten")
+            };
+            var user = new ClaimsPrincipal(new ClaimsIdentity(claims));
+
+            // Act
+            var requestRoot = DecisionHelper.CreateDecisionRequest(Org, App, user, ActionType);
+
+            // Assert
+            Assert.NotNull(requestRoot);
+            var subjectAttrs = requestRoot.Request.AccessSubject[0].Attribute;
+            Assert.Contains(subjectAttrs, a => a.AttributeId == "urn:altinn:systemuser:uuid" && a.Value == "some-uuid-value");
+        }
+
+        [Fact]
+        public void CreateDecisionRequest_WithSidClaim_AddsSessionIdAttribute()
+        {
+            // Arrange
+            var claims = new List<Claim>
+            {
+                new Claim("urn:altinn:authlevel", "2", "string", "org"),
+                new Claim("urn:name", "Test", "string", "org"),
+                new Claim("sid", "session-123", "string", "org")
+            };
+            var user = new ClaimsPrincipal(new ClaimsIdentity(claims));
+
+            // Act
+            var requestRoot = DecisionHelper.CreateDecisionRequest(Org, App, user, ActionType);
+
+            // Assert
+            var subjectAttrs = requestRoot.Request.AccessSubject[0].Attribute;
+            Assert.Contains(subjectAttrs, a => a.AttributeId == "urn:altinn:sessionid" && a.Value == "session-123");
+        }
+
+        [Fact]
+        public void CreateDecisionRequest_WithJtiClaim_AddsSessionIdAttribute()
+        {
+            // Arrange
+            var claims = new List<Claim>
+            {
+                new Claim("urn:altinn:authlevel", "2", "string", "org"),
+                new Claim("urn:name", "Test", "string", "org"),
+                new Claim("jti", "token-456", "string", "org")
+            };
+            var user = new ClaimsPrincipal(new ClaimsIdentity(claims));
+
+            // Act
+            var requestRoot = DecisionHelper.CreateDecisionRequest(Org, App, user, ActionType);
+
+            // Assert
+            var subjectAttrs = requestRoot.Request.AccessSubject[0].Attribute;
+            Assert.Contains(subjectAttrs, a => a.AttributeId == "urn:altinn:sessionid" && a.Value == "token-456");
+        }
+
+        [Fact]
+        public void CreateDecisionRequest_WithPersonUuidClaim_AddsPersonUuidAttribute()
+        {
+            // Arrange
+            var claims = new List<Claim>
+            {
+                new Claim("urn:altinn:authlevel", "2", "string", "org"),
+                new Claim("urn:altinn:person:uuid", "person-uuid-123", "string", "org")
+            };
+            var user = new ClaimsPrincipal(new ClaimsIdentity(claims));
+
+            // Act
+            var requestRoot = DecisionHelper.CreateDecisionRequest(Org, App, user, ActionType);
+
+            // Assert
+            var subjectAttrs = requestRoot.Request.AccessSubject[0].Attribute;
+            Assert.Contains(subjectAttrs, a => a.AttributeId == "urn:altinn:person:uuid" && a.Value == "person-uuid-123");
+        }
+
+        [Fact]
+        public void CreateDecisionRequest_WithPartyIdClaim_AddsPartyIdAttribute()
+        {
+            // Arrange
+            var claims = new List<Claim>
+            {
+                new Claim("urn:altinn:authlevel", "2", "string", "org"),
+                new Claim("urn:altinn:partyid", "50001234", "string", "org")
+            };
+            var user = new ClaimsPrincipal(new ClaimsIdentity(claims));
+
+            // Act
+            var requestRoot = DecisionHelper.CreateDecisionRequest(Org, App, user, ActionType);
+
+            // Assert
+            var subjectAttrs = requestRoot.Request.AccessSubject[0].Attribute;
+            Assert.Contains(subjectAttrs, a => a.AttributeId == "urn:altinn:partyid" && a.Value == "50001234");
+        }
+
+        [Fact]
+        public void CreateDecisionRequest_WithOrganizationNumberAttributeClaim_OverridesLegacy()
+        {
+            // Arrange: both old orgNumber and new organization:identifier-no claims
+            var claims = new List<Claim>
+            {
+                new Claim("urn:altinn:authlevel", "2", "string", "org"),
+                new Claim("urn:altinn:orgNumber", "111111111", "string", "org"),
+                new Claim("urn:altinn:organization:identifier-no", "222222222", "string", "org")
+            };
+            var user = new ClaimsPrincipal(new ClaimsIdentity(claims));
+
+            // Act
+            var requestRoot = DecisionHelper.CreateDecisionRequest(Org, App, user, ActionType);
+
+            // Assert
+            var subjectAttrs = requestRoot.Request.AccessSubject[0].Attribute;
+            Assert.Contains(subjectAttrs, a => a.AttributeId == "urn:altinn:organization:identifier-no" && a.Value == "222222222");
+            Assert.DoesNotContain(subjectAttrs, a => a.AttributeId == "urn:altinn:organizationnumber");
+        }
+
+        [Fact]
+        public void CreateActionCategory_WithIncludeResult_SetsIncludeInResult()
+        {
+            // Act
+            var category = DecisionHelper.CreateActionCategory("write", true);
+
+            // Assert
+            Assert.Single(category.Attribute);
+            Assert.True(category.Attribute[0].IncludeInResult);
+        }
+
+        [Fact]
+        public void CreateXacmlJsonAttribute_SetsAllProperties()
+        {
+            // Act
+            var attr = DecisionHelper.CreateXacmlJsonAttribute("urn:test:id", "value1", "string", "issuer1", true);
+
+            // Assert
+            Assert.Equal("urn:test:id", attr.AttributeId);
+            Assert.Equal("value1", attr.Value);
+            Assert.Equal("string", attr.DataType);
+            Assert.Equal("issuer1", attr.Issuer);
+            Assert.True(attr.IncludeInResult);
         }
 
         private ClaimsPrincipal CreateMaskinportenClaims(string org, string scope)

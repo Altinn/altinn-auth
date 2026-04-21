@@ -40,7 +40,9 @@
     <PackageVersion Include="Blazored.LocalStorage" Version="4.5.0" />
     <PackageVersion Include="CommunityToolkit.Diagnostics" Version="8.4.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="coverlet.msbuild" Version="6.0.4" />
     <PackageVersion Include="Docker.DotNet" Version="3.125.15" />
+    <PackageVersion Include="FluentAssertions" Version="7.0.0" />
     <PackageVersion Include="IdentityModel" Version="7.0.0" />
     <PackageVersion Include="JWTCookieAuthentication" Version="4.0.4" />
     <PackageVersion Include="MassTransit" Version="8.5.5" />

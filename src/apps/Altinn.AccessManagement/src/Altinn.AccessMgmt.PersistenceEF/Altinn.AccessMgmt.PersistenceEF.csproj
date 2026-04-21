@@ -3,10 +3,6 @@
   <InternalsVisibleTo Include="AccessMgmt.Tests" />
 </ItemGroup>
 <ItemGroup>
-  <Compile Remove="20250623220238_Functions.cs" />
-  <Compile Remove="20250623220238_Functions.Designer.cs" />
-</ItemGroup>
-  <ItemGroup>
       <PackageReference Include="Microsoft.FeatureManagement.AspNetCore" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" />
@@ -24,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Migrations\" />
-    <Folder Include="Utils\Values\" />
   </ItemGroup>
   
   <ItemGroup>

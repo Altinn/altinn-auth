@@ -43,7 +43,7 @@ public partial class ConnectionsControllerTest
         public AddAssignmentPackage(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.ConfiureServices(services =>
+            Fixture.ConfigureServices(services =>
             {
                 services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
                 services.AddSingleton<IUserProfileLookupService, UserProfileLookupServiceMock>();

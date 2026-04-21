@@ -32,7 +32,7 @@ public class ClientDelegationControllerTest
         public GetMyClients(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.EnsureSeedOnce(db =>
+            Fixture.EnsureSeedOnce<GetMyClients>(db =>
             {
                 var rightholderFromNordisToVerdiq = new Assignment()
                 {
@@ -235,7 +235,7 @@ public class ClientDelegationControllerTest
         public GetClients(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.EnsureSeedOnce(db =>
+            Fixture.EnsureSeedOnce<GetClients>(db =>
             {
                 var rightholderfromNordisToVerdiq = new Assignment()
                 {
@@ -426,7 +426,7 @@ public class ClientDelegationControllerTest
         public GetAgents(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.EnsureSeedOnce(db =>
+            Fixture.EnsureSeedOnce<GetAgents>(db =>
             {
                 var rightholderfromNordisToVerdiq = new Assignment()
                 {
@@ -630,7 +630,7 @@ public class ClientDelegationControllerTest
         public DeleteAgent(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.EnsureSeedOnce(db =>
+            Fixture.EnsureSeedOnce<DeleteAgent>(db =>
             {
                 var rightholderfromNordisToVerdiq = new Assignment()
                 {
@@ -758,7 +758,7 @@ public class ClientDelegationControllerTest
         public RemoveAnAgentsClient(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.EnsureSeedOnce(db =>
+            Fixture.EnsureSeedOnce<RemoveAnAgentsClient>(db =>
             {
                 var rightholderfromNordisToVerdiq = new Assignment()
                 {
@@ -928,7 +928,7 @@ public class ClientDelegationControllerTest
         public DelegateAccessPackageToAgentWithAgentRole(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.EnsureSeedOnce(db =>
+            Fixture.EnsureSeedOnce<DelegateAccessPackageToAgentWithAgentRole>(db =>
             {
                 var rightholderfromNordisToVerdiq = new Assignment()
                 {
@@ -1122,7 +1122,7 @@ public class ClientDelegationControllerTest
         public DelegateAccessPackageToAgentWithCCRRole(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.EnsureSeedOnce(db =>
+            Fixture.EnsureSeedOnce<DelegateAccessPackageToAgentWithCCRRole>(db =>
             {
                 var accountantFromNordisToVerdiq = new Assignment()
                 {
@@ -1323,7 +1323,7 @@ public class ClientDelegationControllerTest
         public DeleteAgentAccessPackageAndDelegation(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.EnsureSeedOnce(db =>
+            Fixture.EnsureSeedOnce<DeleteAgentAccessPackageAndDelegation>(db =>
             {
                 var rightholderfromNordisToVerdiq = new Assignment()
                 {
@@ -1587,7 +1587,7 @@ public class ClientDelegationControllerTest
         public DeleteAgentAccessPackage(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.EnsureSeedOnce(db =>
+            Fixture.EnsureSeedOnce<DeleteAgentAccessPackage>(db =>
             {
                 var rightholderfromNordisToVerdiq = new Assignment()
                 {

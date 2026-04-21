@@ -5,22 +5,27 @@ using Altinn.AccessManagement.Controllers;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Models;
+using Altinn.AccessManagement.TestUtils.Fixtures;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Utils;
 using Altinn.Authorization.Models;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
+// Migrated from CustomWebApplicationFactory<PolicyInformationPointController> to ApiFixture
+// as part of Phase 2.2 (Step 16.1 — AccessMgmt.Tests WAF consolidation, Group A easy wins).
+// The tests mock IDelegationMetadataRepository and friends, so the Postgres DB that
+// ApiFixture provisions is unused by this class. See docs/testing/steps/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
 
 namespace Altinn.AccessManagement.Tests.Controllers;
 
 /// <summary>
 /// Test class for <see cref="PolicyInformationPointController"></see>
 /// </summary>
-public class PolicyInformationPointControllerTest : IClassFixture<CustomWebApplicationFactory<PolicyInformationPointController>>
+public class PolicyInformationPointControllerTest : IClassFixture<ApiFixture>
 {
-    private HttpClient _client;
-    private readonly CustomWebApplicationFactory<PolicyInformationPointController> _factory;
+    private readonly HttpClient _client;
     private readonly JsonSerializerOptions options = new JsonSerializerOptions
     {
         PropertyNameCaseInsensitive = true,
@@ -29,29 +34,19 @@ public class PolicyInformationPointControllerTest : IClassFixture<CustomWebAppli
     /// <summary>
     /// Initializes a new instance of the <see cref="PolicyInformationPointControllerTest"/> class.
     /// </summary>
-    /// <param name="factory">CustomWebApplicationFactory</param>
-    public PolicyInformationPointControllerTest(CustomWebApplicationFactory<PolicyInformationPointController> factory)
+    /// <param name="fixture">Shared <see cref="ApiFixture"/>.</param>
+    public PolicyInformationPointControllerTest(ApiFixture fixture)
     {
-        _factory = factory;
-        _client = GetTestClient();
-    }
-
-    private HttpClient GetTestClient(IDelegationMetadataRepository delegationMetadataRepositoryMock = null)
-    {
-        delegationMetadataRepositoryMock ??= new DelegationMetadataRepositoryMock();
-
-        HttpClient client = _factory.WithWebHostBuilder(builder =>
+        fixture.WithAppsettings(builder => builder.AddJsonFile("appsettings.test.json", optional: false));
+        fixture.ConfigureServices(services =>
         {
-            builder.ConfigureTestServices(services =>
-            {
-                services.AddSingleton(delegationMetadataRepositoryMock);
-                services.AddSingleton<IPartiesClient, PartiesClientMock>();
-                services.AddSingleton<IProfileClient, ProfileClientMock>();
-                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
-            });
-        }).CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+            services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
+            services.AddSingleton<IPartiesClient, PartiesClientMock>();
+            services.AddSingleton<IProfileClient, ProfileClientMock>();
+            services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
+        });
 
-        return client;
+        _client = fixture.CreateClient(new() { AllowAutoRedirect = false });
     }
 
     /// <summary>

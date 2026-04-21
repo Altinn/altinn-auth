@@ -46,7 +46,7 @@ public partial class ConnectionsControllerTest
         public GetInstanceUsers(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.ConfiureServices(services =>
+            Fixture.ConfigureServices(services =>
             {
                 services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();

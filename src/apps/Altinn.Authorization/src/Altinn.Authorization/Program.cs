@@ -432,3 +432,17 @@ void Configure()
     app.MapControllers();
     app.MapHealthChecks("/health");
 }
+
+/// <summary>
+/// Make the auto-generated Program class public so test projects can
+/// reference it as the entry point for <c>WebApplicationFactory&lt;TEntryPoint&gt;</c>.
+/// </summary>
+public partial class Program
+{
+    /// <summary>
+    /// Prevents external instantiation of the entry-point marker type.
+    /// </summary>
+    protected Program()
+    {
+    }
+}

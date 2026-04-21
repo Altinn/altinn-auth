@@ -8,6 +8,7 @@ using Altinn.AccessManagement.Core.Resolvers.Extensions;
 using Altinn.AccessManagement.Core.Services;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Resolvers;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.Common.AccessToken.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -65,7 +66,7 @@ public static class ResolverServiceCollection
         services.AddSingleton<IProfileClient, ProfileClientMock>();
         services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
         services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
-        services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
+        services.AddSingleton<IAltinn2RightsClient, Tests.Mocks.Altinn2RightsClientMock>();
         services.AddSingleton<IProfileClient, ProfileClientMock>();
         services.AddSingleton<IAuthenticationClient, AuthenticationMock>();
     }

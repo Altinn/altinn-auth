@@ -6,18 +6,20 @@ using Altinn.AccessManagement.Core.Models.Party;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Tests.Fixtures;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.Authorization.Api.Contracts.Consent;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.ProblemDetails;
+using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Moq;
 using System.Net;
@@ -25,35 +27,46 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
+// Migrated from WebApplicationFixture to LegacyApiFixture as part of
+// sub-step 16.4a (Phase 2.2). The consent flow goes through the Dapper-backed
+// ConsentRepository which binds to the Yuniql-provisioned consent.status_type
+// enum; LegacyApiFixture overlays Yuniql on top of ApiFixture's EF schemas.
 namespace AccessMgmt.Tests.Controllers.Enterprise
 {
     /// <summary>
     /// Tests for maskinporten controller for consent
     /// </summary>
-    public class ConsentControllerTestEnterprise : IClassFixture<WebApplicationFixture>
+    public class ConsentControllerTestEnterprise : IClassFixture<LegacyApiFixture>
     {
         private readonly Mock<IAmPartyRepository> _mockAmPartyRepository;
-        private readonly WebApplicationFactory<Program> _fixture;
+        private readonly ApiFixture _fixture;
 
-        public ConsentControllerTestEnterprise(WebApplicationFixture fixture)
+        public ConsentControllerTestEnterprise(LegacyApiFixture fixture)
         {
             _mockAmPartyRepository = new Mock<IAmPartyRepository>();
-            
-            _fixture = fixture.WithWebHostBuilder(builder =>
+            _fixture = fixture;
+
+            fixture.ConfigureServices(services =>
             {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.AddSingleton<IPartiesClient, PartiesClientMock>();
-                    services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                    services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
-                    services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
-                    services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
-                    services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
-                    services.AddSingleton<IPDP, PdpPermitMock>();
-                    
-                    // Register the SAME mock instance
-                    services.AddSingleton<IAmPartyRepository>(_mockAmPartyRepository.Object);
-                });
+                // PlatformAccessToken / maskinporten tokens are signed by
+                // {issuer}-org.pem; default PublicSigningKeyProviderMock only
+                // accepts the static test key.
+                services.RemoveAll<IPublicSigningKeyProvider>();
+                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
+
+                // Replace ApiFixture's default PermitPdpMock with the legacy
+                // PdpPermitMock flavour used by these tests.
+                services.RemoveAll<IPDP>();
+                services.AddSingleton<IPDP, PdpPermitMock>();
+
+                services.AddSingleton<IPartiesClient, PartiesClientMock>();
+                services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
+                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
+                services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
+                services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
+
+                // Register the SAME mock instance
+                services.AddSingleton<IAmPartyRepository>(_mockAmPartyRepository.Object);
             });
         }
 

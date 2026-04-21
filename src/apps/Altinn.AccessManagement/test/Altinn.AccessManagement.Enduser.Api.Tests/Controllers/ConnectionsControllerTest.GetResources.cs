@@ -48,11 +48,11 @@ public partial class ConnectionsControllerTest
         public GetResources(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.ConfiureServices(services =>
+            Fixture.ConfigureServices(services =>
             {
                 services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
             });
-            Fixture.EnsureSeedOnce(db =>
+            Fixture.EnsureSeedOnce<GetResources>(db =>
             {
                 var rightholderFromDumboToMille = new Assignment()
                 {

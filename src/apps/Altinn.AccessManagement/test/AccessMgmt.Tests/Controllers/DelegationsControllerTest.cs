@@ -8,6 +8,8 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
+using Altinn.AccessManagement.TestUtils.Fixtures;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.Tests.Utils;
@@ -16,10 +18,16 @@ using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+
+// Migrated from CustomWebApplicationFactory<DelegationsController> to ApiFixture
+// as part of Phase 2.2 (Step 16.1 — AccessMgmt.Tests WAF consolidation, Group A easy wins).
+// The tests mock the delegation repositories, the PDP and the policy retrieval/factory, so
+// the Postgres DB that ApiFixture provisions is unused by this class.
+// See docs/testing/steps/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
 
 namespace Altinn.AccessManagement.Tests.Controllers
 {
@@ -27,10 +35,9 @@ namespace Altinn.AccessManagement.Tests.Controllers
     /// Test class for <see cref="DelegationsController"></see>
     /// </summary>
     [Collection("DelegationController Tests")]
-    public class DelegationsControllerTest : IClassFixture<CustomWebApplicationFactory<DelegationsController>>
+    public class DelegationsControllerTest : IClassFixture<ApiFixture>
     {
-        private readonly CustomWebApplicationFactory<DelegationsController> _factory;
-        private HttpClient _client;
+        private readonly HttpClient _client;
 
         private readonly JsonSerializerOptions options = new JsonSerializerOptions
         {
@@ -38,13 +45,34 @@ namespace Altinn.AccessManagement.Tests.Controllers
         };
 
         /// <summary>
-        /// Constructor setting up factory, test client and dependencies
+        /// Constructor setting up the shared <see cref="ApiFixture"/> with the mocks required by this controller's tests.
         /// </summary>
-        /// <param name="factory">CustomWebApplicationFactory</param>
-        public DelegationsControllerTest(CustomWebApplicationFactory<DelegationsController> factory)
+        /// <param name="fixture">Shared <see cref="ApiFixture"/>.</param>
+        public DelegationsControllerTest(ApiFixture fixture)
         {
-            _factory = factory;
-            _client = GetTestClient();
+            fixture.WithAppsettings(builder => builder.AddJsonFile("appsettings.test.json", optional: false));
+            fixture.ConfigureServices(services =>
+            {
+                services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
+                services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
+                services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
+                services.AddSingleton<IDelegationChangeEventQueue, DelegationChangeEventQueueMock>();
+                services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
+                services.AddSingleton<IPartiesClient, PartiesClientMock>();
+                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
+                services.AddSingleton<IPDP, PepWithPDPAuthorizationMock>();
+                services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+                services.AddSingleton<IAMPartyService, AMPartyServiceMock>();
+                services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
+
+                // ApiFixture registers PublicSigningKeyProviderMock by default, but these
+                // tests sign tokens via PrincipalUtil.GetAccessToken which requires the
+                // issuer-cert-backed SigningKeyResolverMock.
+                services.RemoveAll<IPublicSigningKeyProvider>();
+                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
+            });
+
+            _client = fixture.CreateClient(new() { AllowAutoRedirect = false });
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             string token = PrincipalUtil.GetAccessToken("sbl.authorization");
@@ -1599,33 +1627,5 @@ namespace Altinn.AccessManagement.Tests.Controllers
             return delegations;
         }
 
-        private HttpClient GetTestClient(IPDP pdpMock = null, IHttpContextAccessor httpContextAccessor = null, IDelegationMetadataRepository delegationMetadataRepositoryMock = null, IAMPartyService partyService = null)
-        {
-            pdpMock ??= new PepWithPDPAuthorizationMock();
-            httpContextAccessor ??= new HttpContextAccessor();
-            delegationMetadataRepositoryMock ??= new DelegationMetadataRepositoryMock();
-            partyService ??= new AMPartyServiceMock();
-
-            HttpClient client = _factory.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
-                    services.AddSingleton(delegationMetadataRepositoryMock);
-                    services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
-                    services.AddSingleton<IDelegationChangeEventQueue, DelegationChangeEventQueueMock>();
-                    services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                    services.AddSingleton<IPartiesClient, PartiesClientMock>();
-                    services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
-                    services.AddSingleton(pdpMock);
-                    services.AddSingleton(httpContextAccessor);
-                    services.AddSingleton(partyService);
-                    services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
-                    services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
-                });
-            }).CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-
-            return client;
+            }
         }
-    }
-}

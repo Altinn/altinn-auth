@@ -1,0 +1,17 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Per-assembly minimum line-coverage thresholds (%). CI fails if any assembly in 'assemblies' drops below its floor. Assemblies in 'warnings' emit a warning (non-fatal) when below their floor; use this as a ratchet for assemblies approaching enforcement. 'globalThreshold' of 0 means no implicit floor — only explicitly listed assemblies are enforced.",
+  "globalThreshold": 0,
+  "assemblies": {
+    "Altinn.Authorization": 60,
+    "Altinn.Authorization.ABAC": 60,
+    "Altinn.Authorization.PEP": 75,
+    "Altinn.AccessMgmt.PersistenceEF": 90,
+    "Altinn.AccessManagement.Api.Maskinporten": 75,
+    "Altinn.AccessManagement.Api.Enterprise": 60,
+    "Altinn.AccessManagement.Core": 60
+  },
+  "warnings": {
+    "Altinn.AccessManagement": 60
+  }
+}

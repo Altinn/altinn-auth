@@ -11,6 +11,7 @@ using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Tests.Fixtures;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
@@ -26,14 +27,25 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
-using Xunit.Abstractions;
 
 namespace AccessMgmt.Tests.Controllers.Bff
 {
-    public class ConsentControllerTestBFF: IClassFixture<WebApplicationFixture>
+    /// <summary>
+    /// Migrated from <c>WebApplicationFixture</c> to <see cref="LegacyApiFixture"/>
+    /// in sub-step 16.4b-continued. Because these tests reuse hard-coded
+    /// <c>requestId</c> GUIDs and share entity inserts, the class implements
+    /// <see cref="IAsyncLifetime"/> and stands up a fresh
+    /// <see cref="LegacyApiFixture"/> (hence a fresh per-test EF database,
+    /// cloned from the shared EFPostgresFactory template) for every
+    /// <c>[Fact]</c> — matching the per-test isolation the legacy
+    /// <c>WebApplicationFixture</c> provided via
+    /// <c>PostgresServer.NewEFDatabase()</c>.
+    /// </summary>
+    public class ConsentControllerTestBFF : IAsyncLifetime
     {
-        private readonly WebApplicationFactory<Program> _fixture;
+        private LegacyApiFixture _fixture = null!;
         private readonly ITestOutputHelper _output;
 
         private static readonly Altinn.AccessMgmt.PersistenceEF.Models.ResourceType ConsentResourceType = new()
@@ -83,7 +95,14 @@ namespace AccessMgmt.Tests.Controllers.Bff
             TypeId = EntityTypeConstants.Person,
             VariantId = EntityVariantConstants.Person,
             PartyId = 513370001,
-            UserId = 20001337,
+
+            // UserId intentionally null: the shared EFPostgresFactory template
+            // already seeds TestEntities.PersonOrjan with UserId = 20001337
+            // (the same UserId the BFF test tokens claim), so assigning a
+            // UserId here would violate the ix_entity_userid unique index.
+            // The BFF tests look up ElenaFjær by Id (partyUuid), never by
+            // UserId, so leaving it null is safe.
+            UserId = null,
         };
 
         private static readonly Altinn.AccessMgmt.PersistenceEF.Models.Entity SmekkFullBankEntity = new()
@@ -165,27 +184,36 @@ namespace AccessMgmt.Tests.Controllers.Bff
 
         #endregion
 
-        public ConsentControllerTestBFF(WebApplicationFixture fixture, ITestOutputHelper output)
+        public ConsentControllerTestBFF(ITestOutputHelper output)
         {
             _output = output;
+        }
 
-            _fixture = fixture.WithWebHostBuilder(builder =>
+        public async ValueTask InitializeAsync()
+        {
+            _fixture = new LegacyApiFixture();
+            _fixture.ConfigureServices(services =>
             {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.AddSingleton<IPartiesClient, PartiesClientMock>();
-                    services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                    services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
-                    services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
-                    services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
-                    services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
-                    services.AddSingleton<IPDP, PdpPermitMock>();
-                    services.AddSingleton<IProfileClient, ProfileClientMock>();
-                    services.AddSingleton<IAltinn2ConsentClient, Altinn2ConsentClientMock>();
-                });
+                services.AddSingleton<IPartiesClient, PartiesClientMock>();
+                services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
+                services.RemoveAll<IPublicSigningKeyProvider>();
+                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
+                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
+                services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
+                services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
+                services.RemoveAll<IPDP>();
+                services.AddSingleton<IPDP, PdpPermitMock>();
+                services.AddSingleton<IProfileClient, ProfileClientMock>();
+                services.AddSingleton<IAltinn2ConsentClient, Altinn2ConsentClientMock>();
             });
 
+            await _fixture.InitializeAsync();
             SeedResources();
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await _fixture.DisposeAsync();
         }
 
         private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions

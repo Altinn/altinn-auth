@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Altinn.Platform.Authorization.IntegrationTests.Util;
 
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -16,35 +17,17 @@ namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
     public class ConfigurationManagerStub : IConfigurationManager<OpenIdConnectConfiguration>
     {
         /// <inheritdoc />
-        public async Task<OpenIdConnectConfiguration> GetConfigurationAsync(CancellationToken cancel)
+        public Task<OpenIdConnectConfiguration> GetConfigurationAsync(CancellationToken cancel)
         {
-            ICollection<SecurityKey> signingKeys = await GetSigningKeys();
-
             OpenIdConnectConfiguration configuration = new OpenIdConnectConfiguration();
-            foreach (var securityKey in signingKeys)
-            {
-                configuration.SigningKeys.Add(securityKey);
-            }
-
-            return configuration;
+            configuration.SigningKeys.Add(TestCertificates.SecurityKey);
+            return Task.FromResult(configuration);
         }
 
         /// <inheritdoc />
         public void RequestRefresh()
         {
             throw new NotImplementedException();
-        }
-
-        private async Task<ICollection<SecurityKey>> GetSigningKeys()
-        {
-            List<SecurityKey> signingKeys = new List<SecurityKey>();
-
-            X509Certificate2 cert = new X509Certificate2("selfSignedTestCertificatePublic.cer");
-            SecurityKey key = new X509SecurityKey(cert);
-
-            signingKeys.Add(key);
-
-            return await Task.FromResult(signingKeys);
         }
     }
 }

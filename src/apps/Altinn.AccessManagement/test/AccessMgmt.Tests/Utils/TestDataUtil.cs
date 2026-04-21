@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
@@ -9,6 +9,7 @@ using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Enums.ResourceRegistry;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Controllers;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Platform.Register.Models;

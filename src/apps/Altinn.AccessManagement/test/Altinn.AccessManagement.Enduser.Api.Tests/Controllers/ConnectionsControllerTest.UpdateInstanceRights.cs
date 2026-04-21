@@ -51,14 +51,14 @@ public partial class ConnectionsControllerTest
         public UpdateInstanceRights(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.ConfiureServices(services =>
+            Fixture.ConfigureServices(services =>
             {
                 services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
                 services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointWithWrittenPoliciesMock>();
                 services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
             });
-            Fixture.EnsureSeedOnce(db =>
+            Fixture.EnsureSeedOnce<UpdateInstanceRights>(db =>
             {
                 var rightholderFromJinxToThea = new Assignment()
                 {

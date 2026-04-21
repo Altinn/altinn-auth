@@ -14,7 +14,6 @@ using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Integration.Clients;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel.DataCollection;
 
 namespace Altinn.AccessManagement.Tests.Mocks
 {

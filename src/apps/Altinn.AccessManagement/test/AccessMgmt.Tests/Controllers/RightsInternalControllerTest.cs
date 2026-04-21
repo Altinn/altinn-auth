@@ -10,26 +10,34 @@ using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.Tests.Utils;
+using Altinn.AccessManagement.TestUtils.Fixtures;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
-using Moq;
+
+// Migrated from CustomWebApplicationFactory<RightsInternalController> to ApiFixture
+// as part of Phase 2.2 (Sub-step 16.2b — AccessMgmt.Tests WAF consolidation, Group A
+// nested-class splits). The two Theory tests that required PepWithPDPAuthorizationMock
+// on top of the default PdpPermitMock are relocated to the sibling class
+// RightsInternalControllerWithPdpMockTest (recipe rule 6: one mutually-exclusive DI
+// configuration per class). See docs/testing/steps/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
 
 namespace Altinn.AccessManagement.Tests.Controllers
 {
     /// <summary>
     /// Test class for <see cref="RightsInternalController"></see>
     /// </summary>
-    [Collection("RightsInternalController Tests")]
-    public class RightsInternalControllerTest : IClassFixture<CustomWebApplicationFactory<RightsInternalController>>
+    public class RightsInternalControllerTest : IClassFixture<ApiFixture>
     {
-        private readonly CustomWebApplicationFactory<RightsInternalController> _factory;
+        private readonly ApiFixture _fixture;
 
         private readonly string sblInternalToken = PrincipalUtil.GetAccessToken("sbl.authorization");
 
@@ -39,12 +47,35 @@ namespace Altinn.AccessManagement.Tests.Controllers
         };
 
         /// <summary>
-        /// Constructor setting up factory, test client and dependencies
+        /// Constructor setting up the shared <see cref="ApiFixture"/> with the mocks
+        /// required by this controller's tests. IPDP is overridden with
+        /// <see cref="PdpPermitMock"/> (recipe rule 3: remove-then-add for the
+        /// defaults <see cref="ApiFixture"/> registers).
         /// </summary>
-        /// <param name="factory">CustomWebApplicationFactory</param>
-        public RightsInternalControllerTest(CustomWebApplicationFactory<RightsInternalController> factory)
+        /// <param name="fixture">Shared <see cref="ApiFixture"/>.</param>
+        public RightsInternalControllerTest(ApiFixture fixture)
         {
-            _factory = factory;
+            _fixture = fixture;
+            fixture.WithAppsettings(builder => builder.AddJsonFile("appsettings.test.json", optional: false));
+            fixture.ConfigureServices(services =>
+            {
+                services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
+                services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
+                services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
+                services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
+                services.RemoveAll<IPublicSigningKeyProvider>();
+                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
+                services.AddSingleton<IPartiesClient, PartiesClientMock>();
+                services.AddSingleton<IProfileClient, ProfileClientMock>();
+                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
+                services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
+                services.RemoveAll<IPDP>();
+                services.AddSingleton<IPDP, PdpPermitMock>();
+                services.AddSingleton<IAltinn2RightsClient, Tests.Mocks.Altinn2RightsClientMock>();
+                services.AddSingleton<IDelegationChangeEventQueue>(new DelegationChangeEventQueueMock());
+                services.AddSingleton<IAuthenticationClient>(new AuthenticationMock());
+                services.AddSingleton<IAccessListsAuthorizationClient>(new AccessListsAuthorizationClientMock());
+            });
         }
 
         /// <summary>
@@ -1541,101 +1572,9 @@ namespace Altinn.AccessManagement.Tests.Controllers
             AssertionUtil.AssertValidationProblemDetailsEqual(expectedResponse, actualResponse);
         }
 
-        /// <summary>
-        /// Test case: Revoke given delegation
-        /// Expected: - Should return 201 
-        /// </summary>
-        /// <returns></returns>
-        [Theory]
-        [MemberData(nameof(TestDataRevokeOfferedDelegationExternal.FromPersonToPerson), MemberType = typeof(TestDataRevokeOfferedDelegationExternal))]
-        [MemberData(nameof(TestDataRevokeOfferedDelegationExternal.FromPersonToOrganization), MemberType = typeof(TestDataRevokeOfferedDelegationExternal))]
-        [MemberData(nameof(TestDataRevokeOfferedDelegationExternal.FromOrganizationToOrganization), MemberType = typeof(TestDataRevokeOfferedDelegationExternal))]
-        [MemberData(nameof(TestDataRevokeOfferedDelegationExternal.FromOrganizationToPerson), MemberType = typeof(TestDataRevokeOfferedDelegationExternal))]
-        [MemberData(nameof(TestDataRevokeOfferedDelegationExternal.FromOrganizationToSystemUser), MemberType = typeof(TestDataRevokeOfferedDelegationExternal))]        
-        public async Task RevokeRightsOfferedDelegations_ReturnNoContent(string userToken, RevokeOfferedDelegationExternal input, string partyRouteValue, string headerKey = null, string headerValue = null)
+        private HttpClient GetTestClient(string token)
         {
-            var client = GetTestClient(userToken, WithPDPMock);
-            if (headerKey != null && headerValue != null)
-            {
-                client.DefaultRequestHeaders.Add(headerKey, headerValue);
-            }
-
-            // Act
-            HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/internal/{partyRouteValue}/rights/delegation/offered/revoke", new StringContent(JsonSerializer.Serialize(input), new MediaTypeHeaderValue(MediaTypeNames.Application.Json)));
-
-            // Assert
-            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
-        }
-
-        /// <summary>
-        /// Test case: Revoke given delegation
-        /// Expected: - Should return 201 
-        /// </summary>
-        /// <returns></returns>
-        // [MemberData(nameof(TestDataRevokeReceivedDelegationExternal.FromOrganizationToEnterpriseuser), MemberType = typeof(TestDataRevokeReceivedDelegationExternal))]
-        [Theory]
-        [MemberData(nameof(TestDataRevokeReceivedDelegationExternal.FromPersonToPerson), MemberType = typeof(TestDataRevokeReceivedDelegationExternal))]
-        [MemberData(nameof(TestDataRevokeReceivedDelegationExternal.FromPersonToOrganization), MemberType = typeof(TestDataRevokeReceivedDelegationExternal))]
-        [MemberData(nameof(TestDataRevokeReceivedDelegationExternal.FromOrganizationToOrganization), MemberType = typeof(TestDataRevokeReceivedDelegationExternal))]
-        [MemberData(nameof(TestDataRevokeReceivedDelegationExternal.FromOrganizationToPerson), MemberType = typeof(TestDataRevokeReceivedDelegationExternal))]
-        public async Task RevokeRightsReceivedDelegations_ReturnNoContent(string userToken, RevokeReceivedDelegationExternal input, string partyRouteValue, string headerKey = null, string headerValue = null)
-        {
-            var client = GetTestClient(userToken, WithPDPMock);
-            if (headerKey != null && headerValue != null)
-            {
-                client.DefaultRequestHeaders.Add(headerKey, headerValue);
-            }
-
-            // Act
-            HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/internal/{partyRouteValue}/rights/delegation/received/revoke", new StringContent(JsonSerializer.Serialize(input), new MediaTypeHeaderValue(MediaTypeNames.Application.Json)));
-
-            // Assert
-            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
-        }
-
-        private static Action<IServiceCollection> WithHttpContextAccessorMock(string partytype, string id)
-        {
-            return services =>
-            {
-                HttpContext httpContext = new DefaultHttpContext();
-                httpContext.Request.RouteValues.Add(partytype, id);
-
-                var mock = new Mock<IHttpContextAccessor>();
-                mock.Setup(h => h.HttpContext).Returns(httpContext);
-                services.AddSingleton(mock.Object);
-            };
-        }
-
-        private void WithPDPMock(IServiceCollection services) => services.AddSingleton(new PepWithPDPAuthorizationMock());
-
-        private HttpClient GetTestClient(string token, params Action<IServiceCollection>[] actions)
-        {
-            HttpClient client = _factory.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
-                    services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
-                    services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
-                    services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                    services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
-                    services.AddSingleton<IPartiesClient, PartiesClientMock>();
-                    services.AddSingleton<IProfileClient, ProfileClientMock>();
-                    services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
-                    services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
-                    services.AddSingleton<IPDP, PdpPermitMock>();
-                    services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
-                    services.AddSingleton<IDelegationChangeEventQueue>(new DelegationChangeEventQueueMock());
-                    services.AddSingleton<IAuthenticationClient>(new AuthenticationMock());
-                    services.AddSingleton<IAccessListsAuthorizationClient>(new AccessListsAuthorizationClientMock());
-
-                    foreach (var action in actions)
-                    {
-                        action(services);
-                    }
-                });
-            }).CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-
+            HttpClient client = _fixture.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             return client;
@@ -1701,6 +1640,106 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent content = new StreamContent(dataStream);
             content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             return content;
+        }
+    }
+
+    /// <summary>
+    /// Sibling to <see cref="RightsInternalControllerTest"/> hosting the two Theory
+    /// tests that exercised the legacy <c>WithPDPMock</c> action on top of the
+    /// default DI set — i.e. tests that need <see cref="PepWithPDPAuthorizationMock"/>
+    /// registered as a concrete singleton alongside <see cref="PdpPermitMock"/> for
+    /// <see cref="IPDP"/>. Split out per recipe rule 6 (one mutually-exclusive DI
+    /// configuration per class).
+    /// </summary>
+    public class RightsInternalControllerWithPdpMockTest : IClassFixture<ApiFixture>
+    {
+        private readonly ApiFixture _fixture;
+
+        /// <summary>
+        /// Constructor setting up the shared <see cref="ApiFixture"/> with the mocks
+        /// required by this controller's tests plus the concrete
+        /// <see cref="PepWithPDPAuthorizationMock"/> singleton.
+        /// </summary>
+        /// <param name="fixture">Shared <see cref="ApiFixture"/>.</param>
+        public RightsInternalControllerWithPdpMockTest(ApiFixture fixture)
+        {
+            _fixture = fixture;
+            fixture.WithAppsettings(builder => builder.AddJsonFile("appsettings.test.json", optional: false));
+            fixture.ConfigureServices(services =>
+            {
+                services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
+                services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
+                services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
+                services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
+                services.RemoveAll<IPublicSigningKeyProvider>();
+                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
+                services.AddSingleton<IPartiesClient, PartiesClientMock>();
+                services.AddSingleton<IProfileClient, ProfileClientMock>();
+                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
+                services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
+                services.RemoveAll<IPDP>();
+                services.AddSingleton<IPDP, PdpPermitMock>();
+                services.AddSingleton<IAltinn2RightsClient, Tests.Mocks.Altinn2RightsClientMock>();
+                services.AddSingleton<IDelegationChangeEventQueue>(new DelegationChangeEventQueueMock());
+                services.AddSingleton<IAuthenticationClient>(new AuthenticationMock());
+                services.AddSingleton<IAccessListsAuthorizationClient>(new AccessListsAuthorizationClientMock());
+
+                // Legacy WithPDPMock: additional concrete PepWithPDPAuthorizationMock singleton.
+                services.AddSingleton(new PepWithPDPAuthorizationMock());
+            });
+        }
+
+        /// <summary>
+        /// Test case: Revoke given delegation
+        /// Expected: - Should return 201
+        /// </summary>
+        [Theory]
+        [MemberData(nameof(TestDataRevokeOfferedDelegationExternal.FromPersonToPerson), MemberType = typeof(TestDataRevokeOfferedDelegationExternal))]
+        [MemberData(nameof(TestDataRevokeOfferedDelegationExternal.FromPersonToOrganization), MemberType = typeof(TestDataRevokeOfferedDelegationExternal))]
+        [MemberData(nameof(TestDataRevokeOfferedDelegationExternal.FromOrganizationToOrganization), MemberType = typeof(TestDataRevokeOfferedDelegationExternal))]
+        [MemberData(nameof(TestDataRevokeOfferedDelegationExternal.FromOrganizationToPerson), MemberType = typeof(TestDataRevokeOfferedDelegationExternal))]
+        [MemberData(nameof(TestDataRevokeOfferedDelegationExternal.FromOrganizationToSystemUser), MemberType = typeof(TestDataRevokeOfferedDelegationExternal))]
+        public async Task RevokeRightsOfferedDelegations_ReturnNoContent(string userToken, RevokeOfferedDelegationExternal input, string partyRouteValue, string headerKey = null, string headerValue = null)
+        {
+            var client = GetTestClient(userToken);
+            if (headerKey != null && headerValue != null)
+            {
+                client.DefaultRequestHeaders.Add(headerKey, headerValue);
+            }
+
+            HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/internal/{partyRouteValue}/rights/delegation/offered/revoke", new StringContent(JsonSerializer.Serialize(input), new MediaTypeHeaderValue(MediaTypeNames.Application.Json)));
+
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        }
+
+        /// <summary>
+        /// Test case: Revoke given delegation
+        /// Expected: - Should return 201
+        /// </summary>
+        [Theory]
+        [MemberData(nameof(TestDataRevokeReceivedDelegationExternal.FromPersonToPerson), MemberType = typeof(TestDataRevokeReceivedDelegationExternal))]
+        [MemberData(nameof(TestDataRevokeReceivedDelegationExternal.FromPersonToOrganization), MemberType = typeof(TestDataRevokeReceivedDelegationExternal))]
+        [MemberData(nameof(TestDataRevokeReceivedDelegationExternal.FromOrganizationToOrganization), MemberType = typeof(TestDataRevokeReceivedDelegationExternal))]
+        [MemberData(nameof(TestDataRevokeReceivedDelegationExternal.FromOrganizationToPerson), MemberType = typeof(TestDataRevokeReceivedDelegationExternal))]
+        public async Task RevokeRightsReceivedDelegations_ReturnNoContent(string userToken, RevokeReceivedDelegationExternal input, string partyRouteValue, string headerKey = null, string headerValue = null)
+        {
+            var client = GetTestClient(userToken);
+            if (headerKey != null && headerValue != null)
+            {
+                client.DefaultRequestHeaders.Add(headerKey, headerValue);
+            }
+
+            HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/internal/{partyRouteValue}/rights/delegation/received/revoke", new StringContent(JsonSerializer.Serialize(input), new MediaTypeHeaderValue(MediaTypeNames.Application.Json)));
+
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        }
+
+        private HttpClient GetTestClient(string token)
+        {
+            HttpClient client = _fixture.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            return client;
         }
     }
 }

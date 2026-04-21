@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Services;
+using Altinn.Platform.Authorization.IntegrationTests.Util;
 
 using Microsoft.IdentityModel.Tokens;
 
@@ -13,13 +13,7 @@ public class PublicSigningKeyProviderMock : IPublicSigningKeyProvider
 {
     public Task<IEnumerable<SecurityKey>> GetSigningKeys(string issuer)
     {
-        List<SecurityKey> signingKeys = new List<SecurityKey>();
-
-        X509Certificate2 cert = new X509Certificate2($"{issuer}-org.pem");
-        SecurityKey key = new X509SecurityKey(cert);
-
-        signingKeys.Add(key);
-
+        List<SecurityKey> signingKeys = [TestCertificates.SecurityKey];
         return Task.FromResult(signingKeys.AsEnumerable());
     }
 }

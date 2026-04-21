@@ -1,7 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+    <PropertyGroup>
+        <!-- Clear the singular TargetFramework inherited from src/Directory.Build.props so
+             dotnet test routes to the Microsoft Testing Platform (required for xUnit v3). -->
+        <TargetFramework></TargetFramework>
+        <TargetFrameworks>net9.0</TargetFrameworks>
+    </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\..\src\Altinn.Authorization.Host.Lease\Altinn.Authorization.Host.Lease.csproj" />
     </ItemGroup>
-    
+
+    <ItemGroup>
+        <Content Include="xunit.runner.json" CopyToOutputDirectory="Always" />
+    </ItemGroup>
+
 </Project>

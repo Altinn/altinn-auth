@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -6,37 +6,31 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Altinn.Authorization.ABAC.Constants;
-using Altinn.Common.AccessToken.Services;
 using Altinn.Platform.Authorization.Constants;
-using Altinn.Platform.Authorization.Controllers;
 using Altinn.Platform.Authorization.IntegrationTests.Data;
+using Altinn.Platform.Authorization.IntegrationTests.Fixtures;
 using Altinn.Platform.Authorization.IntegrationTests.MockServices;
 using Altinn.Platform.Authorization.IntegrationTests.Util;
-using Altinn.Platform.Authorization.IntegrationTests.Webfactory;
 using Altinn.Platform.Authorization.Models;
-using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Authorization.Services.Interface;
-using AltinnCore.Authentication.JwtCookie;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Xunit;
 
 namespace Altinn.Platform.Authorization.IntegrationTests
 {
     [Collection("Our Test Collection #1")]
-    public class PolicyControllerTest : IClassFixture<CustomWebApplicationFactory<DecisionController>>
+    public class PolicyControllerTest : IClassFixture<AuthorizationApiFixture>
     {
-        private readonly CustomWebApplicationFactory<DecisionController> _factory;
         private readonly HttpClient _client;
 
-        public PolicyControllerTest(CustomWebApplicationFactory<DecisionController> fixture)
+        public PolicyControllerTest(AuthorizationApiFixture fixture)
         {
-            _factory = fixture;
-            _client = GetTestClient();
-            _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("appliation/xml"));
+            fixture.ConfigureServices(services =>
+            {
+                services.AddScoped<IContextHandler, ContextHandlerMock>();
+            });
+            _client = fixture.BuildClient();
         }
 
         /// <summary>
@@ -480,24 +474,5 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             return policies;
         }
 
-        private HttpClient GetTestClient()
-        {
-            HttpClient client = _factory.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.AddScoped<IContextHandler, ContextHandlerMock>();
-                    services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
-                    services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
-                    services.AddSingleton<IRoles, RolesMock>();
-                    services.AddSingleton<IPolicyRepository, PolicyRepositoryMock>();
-                    services.AddSingleton<IDelegationChangeEventQueue, DelegationChangeEventQueueMock>();
-                    services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                    services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProviderMock>();
-                });
-            }).CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-
-            return client;
+            }
         }
-    }
-}

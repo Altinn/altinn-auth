@@ -1,8 +1,6 @@
-using System;
+﻿using System;
 using System.IdentityModel.Tokens.Jwt;
-using System.IO;
 using System.Security.Claims;
-using System.Security.Cryptography.X509Certificates;
 
 using Microsoft.IdentityModel.Tokens;
 
@@ -27,7 +25,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Util
             {
                 Subject = new ClaimsIdentity(principal.Identity),
                 Expires = DateTime.UtcNow.AddSeconds(tokenExpiry.TotalSeconds),
-                SigningCredentials = GetSigningCredentials(issuer),
+                SigningCredentials = TestCertificates.SigningCredentials,
                 Audience = "altinn.no",
                 Issuer = issuer
             };
@@ -36,21 +34,6 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Util
             string serializedToken = tokenHandler.WriteToken(token);
 
             return serializedToken;
-        }
-
-        private static SigningCredentials GetSigningCredentials(string issuer)
-        {
-            string certPath = "selfSignedTestCertificate.pfx";
-            if (!issuer.Equals("UnitTest") && File.Exists($"{issuer}-org.pfx"))
-            {
-                certPath = $"{issuer}-org.pfx";
-
-                X509Certificate2 certIssuer = new X509Certificate2(certPath);
-                return new X509SigningCredentials(certIssuer, SecurityAlgorithms.RsaSha256);
-            }
-
-            X509Certificate2 cert = new X509Certificate2("selfSignedTestCertificate.pfx", "qwer1234");
-            return new X509SigningCredentials(cert, SecurityAlgorithms.RsaSha256);
         }
     }
 }
