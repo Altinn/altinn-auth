@@ -27,7 +27,7 @@ public static class PackageConstants
             return true;
         }
 
-        if (TryGetByName(value, out result))
+        if (TryGetByCode(value, out result))
         {
             return true;
         }
@@ -41,10 +41,10 @@ public static class PackageConstants
     }
 
     /// <summary>
-    /// Try to get <see cref="Package"/> by name.
+    /// Try to get <see cref="Package"/> using code.
     /// </summary>
-    public static bool TryGetByName(string name, [NotNullWhen(true)] out ConstantDefinition<Package>? result)
-        => ConstantLookup.TryGetByName(typeof(PackageConstants), name, out result);
+    public static bool TryGetByCode(string code, [NotNullWhen(true)] out ConstantDefinition<Package>? result)
+        => ConstantLookup.TryGetByCode(typeof(PackageConstants), code, out result);
 
     /// <summary>
     /// Try to get <see cref="Package"/> using Guid.
