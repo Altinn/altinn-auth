@@ -241,4 +241,16 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor InvalidInstanceId { get; }
         = _factory.Create(47, $"The instance ID is invalid as more than one owner was found.");
+
+    /// <summary>
+    /// Package is not assignable
+    /// </summary>
+    public static ValidationErrorDescriptor PackageIsNotAssignable { get; }
+        = _factory.Create(48, $"One or more packages is not assignable.");
+
+    /// <summary>
+    /// Resource is not delegable
+    /// </summary>
+    public static ValidationErrorDescriptor ResourceIsNotDelegable { get; }
+        = _factory.Create(49, $"One or more resources is not delegable.");
 }

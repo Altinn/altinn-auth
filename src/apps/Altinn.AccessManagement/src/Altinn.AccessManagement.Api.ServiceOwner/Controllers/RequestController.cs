@@ -1,5 +1,6 @@
 ﻿using System.Net.Mime;
 using Altinn.AccessManagement.Api.ServiceOwner.Validation;
+using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
@@ -29,6 +30,7 @@ public class RequestController(
     IEntityService entityService,
     IResourceService resourceService,
     IAuditAccessor auditAccessor,
+    IResourceRegistryClient resourceRegistryClient,
     IOptions<GeneralSettings> generalSettings
     ) : ControllerBase
 {
@@ -77,10 +79,10 @@ public class RequestController(
     {
         ValidationErrorBuilder errorBuilder = default;
 
-        var fromResult = await GetEntity(data.From, "BODY/from", ct);
+        var fromResult = await GetEntity(data.From, "/from", ct);
         fromResult.Problems(ref errorBuilder);
 
-        var toResult = await GetEntity(data.To, "BODY/to", ct);
+        var toResult = await GetEntity(data.To, "/to", ct);
         toResult.Problems(ref errorBuilder);
 
         if (errorBuilder.TryBuild(out var problem))
@@ -120,15 +122,25 @@ public class RequestController(
     {
         ValidationErrorBuilder errorBuilder = default;
 
-        var fromResult = await GetEntity(data.From, "BODY/from", ct);
+        if (string.IsNullOrEmpty(data.Package))
+        {
+            errorBuilder.Add(ValidationErrorDescriptors.InvalidUrn, "/package", [new("package", "Package must be defined.")]);
+        }
+
+        var fromResult = await GetEntity(data.From, "/from", ct);
         fromResult.Problems(ref errorBuilder);
 
-        var toResult = await GetEntity(data.To, "BODY/to", ct);
+        var toResult = await GetEntity(data.To, "/to", ct);
         toResult.Problems(ref errorBuilder);
 
         if (!PackageConstants.TryGetByAll(data.Package, out var packageObj))
         {
-            errorBuilder.Add(ValidationErrors.PackageNotExists, "BODY/package", [new("package", $"No package was found with value '{data.Package}'.")]);
+            errorBuilder.Add(ValidationErrors.PackageNotExists, "/package", [new("package", $"No package was found with value '{data.Package}'.")]);
+        }
+
+        if (packageObj != null && !packageObj.Entity.IsAssignable)
+        {
+            errorBuilder.Add(ValidationErrors.PackageIsNotAssignable, "/package", [new("package", $"Package '{data.Package}' is not assignable.")]);
         }
 
         if (errorBuilder.TryBuild(out var problem))
@@ -242,6 +254,20 @@ public class RequestController(
             errorBuilder.Add(ValidationErrorDescriptors.RequestedResourceNotFound, paramName, [new(paramName, $"Resource with reference ID '{resourceRef.ReferenceId}' was not found.")]);
         }
 
+        try 
+        { 
+            var serviceResource = await resourceRegistryClient.GetResource(resourceRef.ReferenceId, ct);
+
+            if (!serviceResource.Delegable)
+            {
+                errorBuilder.Add(ValidationErrors.ResourceIsNotDelegable, paramName, [new(paramName, $"Resource with reference ID '{resourceRef.ReferenceId}' is not delegable.")]);
+            }
+        }
+        catch
+        {
+            // errorBuilder.Add(ValidationErrorDescriptors.RequestedResourceNotFound, paramName, [new(paramName, $"Resource with reference ID '{resourceRef.ReferenceId}' was not found.")]);
+        }
+
         if (errorBuilder.TryBuild(out var problem))
         {
             return problem.ToActionResult();
@@ -288,7 +314,12 @@ public class RequestController(
 
         if (!PackageConstants.TryGetByAll(package.ReferenceId, out var packageObj))
         {
-            errorBuilder.Add(ValidationErrors.PackageNotExists, "$QUERY/package", [new("package", $"No package was found with value '{package.ReferenceId}'.")]);
+            errorBuilder.Add(ValidationErrors.PackageNotExists, "/package", [new("package", $"No package was found with value '{package.ReferenceId}'.")]);
+        }
+
+        if (!packageObj.Entity.IsAssignable)
+        {
+            errorBuilder.Add(ValidationErrors.PackageIsNotAssignable, "/package", [new("package", $"Package with reference ID '{package.ReferenceId}' is not assignable.")]);
         }
 
         if (errorBuilder.TryBuild(out var problem))
@@ -341,7 +372,7 @@ public class RequestController(
 
         if (!ValidUrns.Contains(key))
         {
-            accumulatedErrors.Add((ref ValidationErrorBuilder errorBuilder) => errorBuilder.Add(ValidationErrorDescriptors.InvalidUrn, $"$QUERY/{paramName}", [new(paramName, $"Urn {urn} is not valid")]));
+            accumulatedErrors.Add((ref ValidationErrorBuilder errorBuilder) => errorBuilder.Add(ValidationErrorDescriptors.InvalidUrn, $"/{paramName}", [new(paramName, $"Urn {urn} is not valid")]));
             return (null, errorBuilderFunc);
         }
 
@@ -355,7 +386,7 @@ public class RequestController(
 
         if (entity == null)
         {
-            accumulatedErrors.Add((ref ValidationErrorBuilder errorBuilder) => errorBuilder.Add(ValidationErrorDescriptors.NotFound, $"$QUERY/{paramName}", [new(paramName, $"Entity not found with matcing urn '{urn}'")]));
+            accumulatedErrors.Add((ref ValidationErrorBuilder errorBuilder) => errorBuilder.Add(ValidationErrorDescriptors.NotFound, $"/{paramName}", [new(paramName, $"Entity not found with matcing urn '{urn}'")]));
         }
 
         return (entity, errorBuilderFunc);
