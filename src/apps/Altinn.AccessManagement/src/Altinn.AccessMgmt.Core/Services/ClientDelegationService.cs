@@ -376,10 +376,16 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
             .AsTracking()
             .Where(p => p.FromId == partyUuid && p.ToId == toUuid && p.RoleId == RoleConstants.Agent)
             .FirstOrDefaultAsync(cancellationToken);
+        
+        if (existingAssignment is null)
+        {
+            return null;
+        }
 
         var existingDelegations = await db.Delegations
             .AsNoTracking()
             .Where(p => p.ToId == existingAssignment.Id)
+            .Include(p => p.DelegationPackages)
             .Join(db.DelegationPackages, d => d.Id, dp => dp.DelegationId, (d, dp) => new
             {
                 Delegation = d,
