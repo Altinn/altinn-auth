@@ -16,6 +16,13 @@ public class CoreAppsettings
 
     public RequestOptions Request { get; set; } = new();
 
+    public ConnectionsOptions Connections { get; set; } = new();
+
+    public class ConnectionsOptions
+    {
+        public int NotifyAddRightholderPendingInSeconds { get; set; } = 60 * 2;
+    }
+
     public class RequestOptions
     {
         public int NotifyRequestApprovedInSeconds { get; set; } = 60 * 15;

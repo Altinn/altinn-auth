@@ -56,7 +56,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthorizationHandler, ScopeConditionAuthorizationHandler>();
 
         // NOTE: can be removed once RequestReviewedNotificationHandler is in production.
-        services.AddTransient<RequestApprovedNotificationHandler>();
+        services.AddTransient<RightholderAddedNotificationHandler>();
+        services.AddTransient<RightholderRemovedNotificationHandler>();
+
+        services.AddTransient<AccessAddedNotificationHandler>();
+        services.AddTransient<AccessRemovedNotificationHandler>();
+
         services.AddTransient<RequestReviewedNotificationHandler>();
         services.AddTransient<RequestPendingNotificationHandler>();
 

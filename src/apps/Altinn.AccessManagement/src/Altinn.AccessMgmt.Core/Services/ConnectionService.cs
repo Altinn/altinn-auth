@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using System.Linq;
+using System.Text;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
 using Altinn.AccessManagement.Core.Errors;
@@ -10,8 +12,11 @@ using Altinn.AccessManagement.Core.Models.Register;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Models.Rights;
 using Altinn.AccessManagement.Core.Services.Interfaces;
+using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Constants.Translation;
 using Altinn.AccessMgmt.Core.Extensions;
+using Altinn.AccessMgmt.Core.Models;
+using Altinn.AccessMgmt.Core.Notifications;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.Core.Utils.Helper;
@@ -31,6 +36,7 @@ using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
@@ -39,6 +45,7 @@ public partial class ConnectionService(
     AppDbContext dbContext,
     ConnectionQuery connectionQuery,
     IAuditAccessor auditAccessor,
+    IOptions<CoreAppsettings> appsettings,
     IAltinn2RightsClient altinn2Client,
     IAMPartyService partyService,
     IContextRetrievalService contextRetrievalService,
@@ -125,6 +132,8 @@ public partial class ConnectionService(
         };
 
         await dbContext.Assignments.AddAsync(assignment, cancellationToken);
+        await RightholderAddedNotification.Upsert(dbContext, from.Id, to.Id, appsettings?.Value?.Connections?.NotifyAddRightholderPendingInSeconds ?? 60 * 2 , cancellationToken);
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         if (from.PartyId.HasValue && to.PartyId.HasValue)
@@ -355,7 +364,7 @@ public partial class ConnectionService(
 
         return await RemoveResource(fromId, toId, resourceObj.Id, configureConnection, cancellationToken);
     }
-    
+
     public async Task<ValidationProblemInstance> RemoveResource(Guid fromId, Guid toId, Guid resourceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
         var options = new ConnectionOptions(configureConnection);
@@ -396,7 +405,7 @@ public partial class ConnectionService(
         {
             return null;
         }
-        
+
         var newVersion = await singleRightsService.ClearPolicyRules(existingAssignmentResources.PolicyPath, existingAssignmentResources.PolicyVersion, cancellationToken);
         existingAssignmentResources.PolicyVersion = newVersion;
 
@@ -933,7 +942,7 @@ public partial class ConnectionService(
         if (rightKeys is null)
         {
             return Problems.MissingMetadata;
-        }        
+        }
 
         ResourceAccessListMode accessListMode = resourceMetadata.AccessListMode;
         bool isResourceDelegable = ignoreDelegableFlag || resourceMetadata.Delegable || (allowMaskinportenSchema && isMaskinPortenSchemaResource);
@@ -945,7 +954,7 @@ public partial class ConnectionService(
         var packages = await CheckPackageForResource(party, authenticatedUserUuid, null, ConfigureConnections, cancellationToken);
 
         bool isMainAdminForFrom = await IsMainAdmin(party, authenticatedUserUuid, cancellationToken);
-        
+
         var roles = await RoleDelegationCheck(party, authenticatedUserUuid, isMainAdminForFrom, cancellationToken);
 
         // Fetch resource rights
@@ -1089,7 +1098,7 @@ public partial class ConnectionService(
             else
             {
                 right.AccessListDenied = true;
-            }            
+            }
         }
 
         RightCheckDto currentAction = new RightCheckDto
@@ -1793,10 +1802,10 @@ public partial class ConnectionService
     public async Task<ResourceRightDto> GetResourceRightsFromOthers(Guid partyId, Guid fromId, Guid resourceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
         var result = await GetResourceRights(
-            fromId: fromId, 
-            toId: partyId, 
-            resourceId: resourceId, 
-            roleId: RoleConstants.Rightholder, 
+            fromId: fromId,
+            toId: partyId,
+            resourceId: resourceId,
+            roleId: RoleConstants.Rightholder,
             cancellationToken: cancellationToken
             );
 
@@ -1983,7 +1992,7 @@ public partial class ConnectionService
         {
             var internalResource = res.First().Resource;
             var rightKeys = await contextRetrievalService.GetResourcePolicyV2(internalResource.RefId, cancellationToken: cancellationToken);
-            
+
             var resourceRight = new ResourceRightDto()
             {
                 Resource = DtoMapper.Convert(internalResource),
@@ -1991,7 +2000,7 @@ public partial class ConnectionService
             };
 
             bool isApp = DelegationCheckHelper.IsAppResource(resource.RefId, out string org, out string app);
-            var resourcePolicy = isApp ? 
+            var resourcePolicy = isApp ?
                 await policyRetrievalPoint.GetPolicyAsync(org, app, cancellationToken) :
                 await policyRetrievalPoint.GetPolicyAsync(resource.RefId, cancellationToken);
 
@@ -2150,14 +2159,14 @@ public partial class ConnectionService
             var instanceRight = new InstanceRightDto()
             {
                 Resource = DtoMapper.Convert(internalResource),
-                Instance = !string.IsNullOrEmpty(instanceId) 
+                Instance = !string.IsNullOrEmpty(instanceId)
                     ? new InstanceDto { RefId = instanceId }
                     : null,
                 Rights = new List<RightPermission>()
             };
 
             bool isApp = DelegationCheckHelper.IsAppResource(resource.RefId, out string org, out string app);
-            var resourcePolicy = isApp ? 
+            var resourcePolicy = isApp ?
                 await policyRetrievalPoint.GetPolicyAsync(org, app, cancellationToken) :
                 await policyRetrievalPoint.GetPolicyAsync(resource.RefId, cancellationToken);
 

@@ -13,6 +13,7 @@ using Altinn.AccessManagement.Persistence.Extensions;
 using Altinn.AccessManagement.Telemetry;
 using Altinn.AccessMgmt.Core.Authorization;
 using Altinn.AccessMgmt.Core.Extensions;
+using Altinn.AccessMgmt.Core.Notifications;
 using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.Persistence.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
@@ -105,9 +106,14 @@ internal static partial class AccessManagementHost
             options.AppConnectionString = connectionStrings.AppSource;
             options.MigrationConnectionString = connectionStrings.MigrationSource;
             options.Source = appsettings.RunInitOnly ? SourceType.Migration : SourceType.App;
-            options.AddOutboxHandler<RequestReviewedNotificationHandler>("request_reviewed");
-            options.AddOutboxHandler<RequestApprovedNotificationHandler>("request_approved");
-            options.AddOutboxHandler<RequestPendingNotificationHandler>("request_pending");
+            
+            // Request
+            options.AddOutboxHandler<RequestReviewedNotificationHandler>(RequestReviewedNotification.Handler);
+            options.AddOutboxHandler<RequestPendingNotificationHandler>(RequestPendingNotification.Handler);
+            
+            // Connections
+            options.AddOutboxHandler<RightholderAddedNotificationHandler>(RightholderAddedNotification.Handler);
+            options.AddOutboxHandler<RightholderRemovedNotificationHandler>(RightholderRemovedNotification.Handler);
         });
 
         builder.Services.AddAccessMgmtCore(builder.Configuration, options =>

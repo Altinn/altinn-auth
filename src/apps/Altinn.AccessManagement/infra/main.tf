@@ -228,7 +228,6 @@ module "appsettings" {
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },
-    # Deprecated
     {
       name        = "AccessMgmt.Core.Outbox.RequestNotifyApproved"
       description = "Specifies if notifications for approved requests are enabled."

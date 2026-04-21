@@ -38,6 +38,49 @@ public static class DbSetExtensions
     }
 
     /// <summary>
+    /// Removes a pending outbox message matching the specified reference identifier and handler.
+    /// </summary>
+    /// <remarks>
+    /// This method locates an <see cref="OutboxMessage"/> with the given
+    /// <paramref name="refId"/> and <paramref name="handler"/> that has status
+    /// <see cref="OutboxStatus.Pending"/>.
+    ///
+    /// If such a message exists, it is removed from the <see cref="DbSet{TEntity}"/>.
+    /// If no matching message is found, no action is taken.
+    /// </remarks>
+    /// <param name="dbset">
+    /// The <see cref="DbSet{TEntity}"/> containing <see cref="OutboxMessage"/> entities.
+    /// </param>
+    /// <param name="refId">
+    /// The reference identifier used to locate the outbox message.
+    /// </param>
+    /// <param name="handler">
+    /// The name of the handler associated with the outbox message.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token used to observe cancellation while querying the database.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    public static async Task CancelOutboxAsync(this DbSet<OutboxMessage> dbset, string refId, string handler, CancellationToken cancellationToken = default)
+    {
+        var message = await dbset
+            .AsTracking()
+            .FirstOrDefaultAsync(
+                o =>
+                o.RefId == refId &&
+                o.Handler == handler &&
+                o.Status == OutboxStatus.Pending,
+                cancellationToken);
+
+        if (message is { })
+        {
+            dbset.Remove(message);
+        }
+    }
+
+    /// <summary>
     /// Adds a new pending outbox message for the specified reference identifier,
     /// or updates the payload of an existing pending outbox message.
     /// </summary>

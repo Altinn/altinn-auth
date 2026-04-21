@@ -112,7 +112,7 @@ public class RequestReviewedNotificationHandler(
             entityReviewer,
             await GetResources(content, cancellationToken),
             await GetPackages(content, cancellationToken),
-            $"auth_resource_request_review_{entityRecipient.Id}_{entityReviewer.Id}_{content.InitiatedAt.Ticks}"
+            $"auth_resource_request_review_{entityRecipient.Id}_{entityReviewer.Id}_{message.CreatedAt.Ticks}"
         );
 
         async Task<IEnumerable<RequestReviewNotificationMessageResponse<Resource>>> GetResources(RequestReviewNotificationMessage content, CancellationToken cancellationToken)
@@ -323,11 +323,6 @@ public class RequestReviewNotificationMessage
     /// Guids of approved / rejected package.
     /// </summary>
     public List<RequestReviewNotificationMessageResponse<Guid>> Packages { get; set; } = [];
-
-    /// <summary>
-    /// Used for idempotency.
-    /// </summary>
-    public DateTime InitiatedAt { get; set; }
 
     /// <summary>
     /// Number of updates.
