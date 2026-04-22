@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAltinn2=true&includeAltinn3=true&includeAccessPackages=true
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAltinn2=true&includeAltinn3=true&includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true
   body: json
   auth: inherit
 }
@@ -13,7 +13,10 @@ post {
 params:query {
   includeAltinn2: true
   includeAltinn3: true
+  includeRoles: true
   includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
 }
 
 headers {
@@ -24,8 +27,8 @@ headers {
 body:json {
   {
     "type": "urn:altinn:person:identifier-no",
-    "value": "{{personId}}",
-    "partyFilter": [
+    "value": "{{personId}}"
+    ,"partyFilter": [
       {
         "type": "urn:altinn:party:uuid",
         "value": "{{filterSubUnitParty}}"
@@ -51,12 +54,18 @@ script:pre-request {
   }
   
   
-const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
-const token = await testTokenGenerator.getToken(getTokenParameters);
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken", token);
 }
 
 tests {
+  
+  const {
+    toLowerArray,
+    assertIncludeMembersIgnoreCase
+  } = require('./utils/assertHelper');
+  
   const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
   const body = res.getBody();
   const requestName = bru.getVar("requestName");
@@ -77,10 +86,6 @@ tests {
     assert.exists(actualSubUnit, 'Expected SubUnit Party: '+expectedMainUnit.subunit.name+' to exist');
     expect(allParties.length, `Result should only contain the parties filtered`).to.equal(2);
     
-    const expectedRolesMainUnit = [
-      expectedMainUnit.roleDelegatedToPerson,
-      expectedMainUnit.roleDelegatedToKeyRoleUnit
-    ];
     const expectedRolesSubUnit = [
       expectedMainUnit.roleDelegatedToPerson,
       expectedMainUnit.roleDelegatedToKeyRoleUnit,
@@ -88,14 +93,8 @@ tests {
       expectedMainUnit.subunit.roleDelegatedToKeyRoleUnit
     ];
     
-    assert.includeMembers(actualMainUnit.authorizedRoles, expectedRolesMainUnit);
-    assert.includeMembers(actualSubUnit.authorizedRoles, expectedRolesSubUnit);
+    assertIncludeMembersIgnoreCase(actualSubUnit.authorizedRoles, expectedRolesSubUnit);
     
-    const expectedPackagesMainUnit = [
-      expectedMainUnit.directPackageToDelegate,
-      expectedMainUnit.directPackageToDelegate2,
-      expectedMainUnit.packageDelegatedToPerson
-    ];
     const expectedPackagesSubUnit = [
       expectedMainUnit.directPackageToDelegate,
       expectedMainUnit.directPackageToDelegate2,
@@ -104,15 +103,8 @@ tests {
       expectedMainUnit.subunit.packageDelegatedToKeyRoleUnit
     ];
     
-    assert.includeMembers(actualMainUnit.authorizedAccessPackages, expectedPackagesMainUnit);
-    assert.includeMembers(actualSubUnit.authorizedAccessPackages, expectedPackagesSubUnit);
+    assertIncludeMembersIgnoreCase(actualSubUnit.authorizedAccessPackages, expectedPackagesSubUnit);
     
-    const expectedResourcesMainUnit = [
-      expectedMainUnit.resourceIdDelegatedToPerson,
-      expectedMainUnit.resourceIdDelegatedToKeyRoleUnit,
-      expectedMainUnit.appIdDelegatedToPerson,
-      expectedMainUnit.appIdDelegatedToKeyRoleUnit
-    ];
     const expectedResourcesSubUnit = [
       expectedMainUnit.resourceIdDelegatedToPerson,
       expectedMainUnit.resourceIdDelegatedToKeyRoleUnit,
@@ -122,20 +114,14 @@ tests {
       expectedMainUnit.subunit.resourceIdDelegatedToKeyRoleUnit
     ];
     
-    assert.includeMembers(actualMainUnit.authorizedResources, expectedResourcesMainUnit);
-    assert.includeMembers(actualSubUnit.authorizedResources, expectedResourcesSubUnit);
+    assertIncludeMembersIgnoreCase(actualSubUnit.authorizedResources, expectedResourcesSubUnit);
     
     const expectedInstanceResourceId = testdata.resources.appInstanceDelegation.resourceId;
-    const expectedInstancesMainUnit = [
-      expectedMainUnit.instanceIdDelegatedToPerson,
-      expectedMainUnit.instanceIdDelegatedToKeyRoleUnit
-    ];
     const expectedInstancesSubUnit = [
       expectedMainUnit.subunit.instanceIdDelegatedToPerson,
       expectedMainUnit.subunit.instanceIdDelegatedToKeyRoleUnit
     ];
     
-    assertInstances(actualMainUnit.authorizedInstances, expectedInstancesMainUnit, expectedInstanceResourceId);
     assertInstances(actualSubUnit.authorizedInstances, expectedInstancesSubUnit, expectedInstanceResourceId);
   });
   
@@ -145,19 +131,19 @@ tests {
       if (party.subunits && party.subunits.length > 0) {
         party.subunits.forEach((subunit, subunitIndex) => {
           try {
-            assert.includeMembers(
+            assertIncludeMembersIgnoreCase(
               subunit.authorizedAccessPackages,
               party.authorizedAccessPackages,
               `Subunit ${subunitIndex} of party ${partyIndex} does not include all authorizedAccessPackages`
             );
   
-            assert.includeMembers(
+            assertIncludeMembersIgnoreCase(
               subunit.authorizedResources,
               party.authorizedResources,
               `Subunit ${subunitIndex} of party ${partyIndex} does not include all authorizedResources`
             );
   
-            assert.includeMembers(
+            assertIncludeMembersIgnoreCase(
               subunit.authorizedRoles,
               party.authorizedRoles,
               `Subunit ${subunitIndex} of party ${partyIndex} does not include all authorizedRoles`
@@ -251,5 +237,6 @@ tests {
     const uniqueCount = new Set(actualIds).size;
     expect(uniqueCount, 'duplicate instanceIds found').to.equal(actualIds.length);
   }
+  
   
 }

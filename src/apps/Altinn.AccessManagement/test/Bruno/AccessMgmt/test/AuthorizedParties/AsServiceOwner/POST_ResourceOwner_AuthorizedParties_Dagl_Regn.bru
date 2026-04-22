@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAltinn2=true&includeAltinn3=true&includeAccessPackages=true&includePartiesViaKeyRoles=true&includeSubParties=true&includeInactiveParties=true
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAltinn2=true&includeAltinn3=true&includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true&includePartiesViaKeyRoles=true&includeSubParties=true&includeInactiveParties=true
   body: json
   auth: inherit
 }
@@ -13,7 +13,10 @@ post {
 params:query {
   includeAltinn2: true
   includeAltinn3: true
+  includeRoles: true
   includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
   includePartiesViaKeyRoles: true
   includeSubParties: true
   includeInactiveParties: true
@@ -47,8 +50,8 @@ script:pre-request {
   }
   
   
-const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
-const token = await testTokenGenerator.getToken(getTokenParameters);
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken", token);
 }
 

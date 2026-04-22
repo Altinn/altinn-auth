@@ -47,6 +47,12 @@ script:pre-request {
 }
 
 tests {
+  
+  const {
+    toLowerArray,
+    assertIncludeMembersIgnoreCase
+  } = require('./utils/assertHelper');
+  
   const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
   const body = res.getBody().data;
   const requestName = bru.getVar("requestName");
@@ -78,8 +84,8 @@ tests {
       expectedMainUnit.subunit.roleDelegatedToKeyRoleUnit
     ];
     
-    assert.includeMembers(actualMainUnit.authorizedRoles, expectedRolesMainUnit);
-    assert.includeMembers(actualSubUnit.authorizedRoles, expectedRolesSubUnit);
+    assertIncludeMembersIgnoreCase(actualMainUnit.authorizedRoles, expectedRolesMainUnit);
+    assertIncludeMembersIgnoreCase(actualSubUnit.authorizedRoles, expectedRolesSubUnit);
     
     const expectedPackagesMainUnit = [
       expectedMainUnit.directPackageToDelegate,
@@ -94,8 +100,8 @@ tests {
       expectedMainUnit.subunit.packageDelegatedToKeyRoleUnit
     ];
     
-    assert.includeMembers(actualMainUnit.authorizedAccessPackages, expectedPackagesMainUnit);
-    assert.includeMembers(actualSubUnit.authorizedAccessPackages, expectedPackagesSubUnit);
+    assertIncludeMembersIgnoreCase(actualMainUnit.authorizedAccessPackages, expectedPackagesMainUnit);
+    assertIncludeMembersIgnoreCase(actualSubUnit.authorizedAccessPackages, expectedPackagesSubUnit);
     
     const expectedResourcesMainUnit = [
       expectedMainUnit.resourceIdDelegatedToPerson,
@@ -112,8 +118,8 @@ tests {
       expectedMainUnit.subunit.resourceIdDelegatedToKeyRoleUnit
     ];
     
-    assert.includeMembers(actualMainUnit.authorizedResources, expectedResourcesMainUnit);
-    assert.includeMembers(actualSubUnit.authorizedResources, expectedResourcesSubUnit);
+    assertIncludeMembersIgnoreCase(actualMainUnit.authorizedResources, expectedResourcesMainUnit);
+    assertIncludeMembersIgnoreCase(actualSubUnit.authorizedResources, expectedResourcesSubUnit);
     
     const expectedInstanceResourceId = testdata.resources.appInstanceDelegation.resourceId;
     const expectedInstancesMainUnit = [

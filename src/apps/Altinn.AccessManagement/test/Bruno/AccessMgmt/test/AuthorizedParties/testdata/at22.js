@@ -223,6 +223,18 @@ module.exports =
       "partyUuid": "c8ded0aa-60b5-4007-9429-6acca2f88031",
       "directPackageToDelegate": "revisorattesterer",
       "directPackageTilgangsstyrer": "tilgangsstyrer"
+    },
+    "employee_instancedelegator": {
+      "name": "LYS MAMMA",
+      "lastname": "MAMMA",
+      "pid": "01818199690",
+      "userId": 20774140,
+      "partyId": 50363273,
+      "partyUuid": "a126547a-ae41-47c7-a63e-9d0f516ecd30",
+      "directPackageToDelegate": "post-til-virksomheten-med-taushetsbelagt-innhold",
+      "directPackageInstanceDelegator": "tilgangsstyring-enkeltinstanser",
+      "instanceThroughInstanceDelegation": "urn:altinn:instance-id:51235100/d64cdc13-8762-460c-9a9a-a727e3f8942e",
+      "instanceThroughPackageAccess": ""
     }
   },
   "a2BrunoSIUser": {

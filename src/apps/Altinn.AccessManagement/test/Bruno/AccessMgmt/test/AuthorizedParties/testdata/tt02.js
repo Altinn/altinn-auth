@@ -223,6 +223,16 @@ module.exports =
             "partyUuid": "4c03fda4-d742-4616-9d06-719939d6d70e",
             "directPackageToDelegate": "revisorattesterer",
             "directPackageTilgangsstyrer": "tilgangsstyrer"
+        },
+        "employee_instancedelegator": {
+          "name": "LYS MAMMA",
+          "lastname": "MAMMA",
+          "pid": "01818199690",
+          "userId": 1567159,
+          "partyId": 50561881,
+          "partyUuid": "190d6c80-6476-4b7f-9cf6-6aa08620562c",
+          "directPackageToDelegate": "post-til-virksomheten-med-taushetsbelagt-innhold",
+          "directPackageInstanceDelegator": "tilgangsstyring-enkeltinstanser"
         }
     },
     "a2BrunoSIUser": {

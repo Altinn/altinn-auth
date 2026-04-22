@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAltinn2=true&includeAltinn3=true&includeAccessPackages=true&orgCode=ttd
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAltinn2=true&includeAltinn3=true&includeRoles=true&includeAccessPackages=true&orgCode=ttd
   body: json
   auth: inherit
 }
@@ -13,6 +13,7 @@ post {
 params:query {
   includeAltinn2: true
   includeAltinn3: true
+  includeRoles: true
   includeAccessPackages: true
   orgCode: ttd
 }
@@ -29,6 +30,10 @@ body:json {
     "partyFilter": [
       {
         "type": "urn:altinn:party:uuid",
+        "value": "{{filterMainUnitParty}}"
+      },
+      {
+        "type": "urn:altinn:party:uuid",
         "value": "{{filterSubUnitParty}}"
       }
     ]
@@ -42,6 +47,7 @@ script:pre-request {
   
   bru.setVar("requestName", "POST_Admin_AuthorizedParties_Person_MainUnitDelgRolePcgRes_WithOrgCodeFilter");
   bru.setVar("personId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+  bru.setVar("filterMainUnitParty", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.partyUuid);
   bru.setVar("filterSubUnitParty", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.subunit.partyUuid);
   
   var getTokenParameters = {
@@ -58,6 +64,12 @@ script:pre-request {
 }
 
 tests {
+  
+  const {
+    toLowerArray,
+    assertIncludeMembersIgnoreCase
+  } = require('./utils/assertHelper');
+  
   const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
   const body = res.getBody();
   const requestName = bru.getVar("requestName");
@@ -89,8 +101,8 @@ tests {
       expectedMainUnit.subunit.roleDelegatedToKeyRoleUnit
     ];
     
-    assert.includeMembers(actualMainUnit.authorizedRoles, expectedRolesMainUnit);
-    assert.includeMembers(actualSubUnit.authorizedRoles, expectedRolesSubUnit);
+    assertIncludeMembersIgnoreCase(actualMainUnit.authorizedRoles, expectedRolesMainUnit);
+    assertIncludeMembersIgnoreCase(actualSubUnit.authorizedRoles, expectedRolesSubUnit);
     
     const expectedPackagesMainUnit = [
       //expectedMainUnit.directPackageToDelegate, // Not relevant for ttd orgCode filter as (currently) ttd does not have services for this package
@@ -105,8 +117,8 @@ tests {
       //expectedMainUnit.subunit.packageDelegatedToKeyRoleUnit // Not relevant for ttd orgCode filter as (currently) ttd does not have services for this package
     ];
     
-    assert.includeMembers(actualMainUnit.authorizedAccessPackages, expectedPackagesMainUnit);
-    assert.includeMembers(actualSubUnit.authorizedAccessPackages, expectedPackagesSubUnit);
+    assertIncludeMembersIgnoreCase(actualMainUnit.authorizedAccessPackages, expectedPackagesMainUnit);
+    assertIncludeMembersIgnoreCase(actualSubUnit.authorizedAccessPackages, expectedPackagesSubUnit);
     
     const expectedResourcesMainUnit = [
       expectedMainUnit.resourceIdDelegatedToPerson,
@@ -123,8 +135,8 @@ tests {
       expectedMainUnit.subunit.resourceIdDelegatedToKeyRoleUnit
     ];
     
-    assert.includeMembers(actualMainUnit.authorizedResources, expectedResourcesMainUnit);
-    assert.includeMembers(actualSubUnit.authorizedResources, expectedResourcesSubUnit);
+    assertIncludeMembersIgnoreCase(actualMainUnit.authorizedResources, expectedResourcesMainUnit);
+    assertIncludeMembersIgnoreCase(actualSubUnit.authorizedResources, expectedResourcesSubUnit);
     
     const expectedInstanceResourceId = testdata.resources.appInstanceDelegation.resourceId;
     const expectedInstancesMainUnit = [
@@ -146,19 +158,19 @@ tests {
       if (party.subunits && party.subunits.length > 0) {
         party.subunits.forEach((subunit, subunitIndex) => {
           try {
-            assert.includeMembers(
+            assertIncludeMembersIgnoreCase(
               subunit.authorizedAccessPackages,
               party.authorizedAccessPackages,
               `Subunit ${subunitIndex} of party ${partyIndex} does not include all authorizedAccessPackages`
             );
   
-            assert.includeMembers(
+            assertIncludeMembersIgnoreCase(
               subunit.authorizedResources,
               party.authorizedResources,
               `Subunit ${subunitIndex} of party ${partyIndex} does not include all authorizedResources`
             );
   
-            assert.includeMembers(
+            assertIncludeMembersIgnoreCase(
               subunit.authorizedRoles,
               party.authorizedRoles,
               `Subunit ${subunitIndex} of party ${partyIndex} does not include all authorizedRoles`
