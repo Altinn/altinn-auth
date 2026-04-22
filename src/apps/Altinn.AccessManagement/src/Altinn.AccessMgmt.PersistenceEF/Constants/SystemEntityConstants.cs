@@ -212,6 +212,32 @@ public static class SystemEntityConstants
     };
 
     /// <summary>
+    /// Represents the Altinn II Correspondence Instance Delegation ImportSystem system entity.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> ad63e2cc-e49d-435c-8e50-16589908e79b
+    /// - <c>Name:</c> Altinn II Correspondence Instance Delegation ImportSystem
+    /// - <c>RefId:</c> sys-a2-correspondence-instance-right-import-system
+    /// - <c>TypeId:</c> Internal entity type
+    /// - <c>VariantId:</c> Standard variant
+    /// </remarks>
+    public static ConstantDefinition<Entity> A2CorrespondenceInstanceRightImportSystem { get; } = new ConstantDefinition<Entity>(AuditDefaults.A2CorrespondenceInstanceRightImportSystem)
+    {
+        Entity = new()
+        {
+            Name = "Internt A2 Melding Instans Delegering-importsystem",
+            RefId = "sys-a2-correspondence-instance-right-import-system",
+            ParentId = null,
+            TypeId = EntityTypeConstants.Internal,
+            VariantId = EntityVariantConstants.Standard,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Internal A2 Correspondence Instance Delegation Import System")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Internt A2 Melding Instans Delegering-importsystem")),
+    };
+
+    /// <summary>
     /// Represents the Altinn2RoleImportSystem system entity.
     /// </summary>
     /// <remarks>

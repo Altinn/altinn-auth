@@ -1,9 +1,12 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessManagement.Core.Models.Rights;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
+using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -13,14 +16,17 @@ using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
+using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
+using Altinn.Urn;
+using Altinn.Urn.Json;
 using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc/>
-public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery, IPolicyFactory policyFactory) : IAssignmentService
+public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery, IPolicyFactory policyFactory, IPolicyRetrievalPoint policyRetrivalPoint, IContextRetrievalService contextRetrievalService) : IAssignmentService
 {
     /// <inheritdoc/>
     public async Task<List<AssignmentPackageDto>> ImportAssignmentPackages(Guid fromId, Guid toId, List<string> packageUrns, AuditValues values = null, CancellationToken cancellationToken = default)
@@ -1278,6 +1284,390 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
         }
 
         return null;
+    }
+
+    private string GetPolicyPathResource(Guid fromId, Guid toUuid, string resourcename, string instanceId)
+    {
+        string instanceUrn = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.CorrespondenceInstanceAttribute}:{instanceId}";
+
+        InstanceRight rule = new InstanceRight
+        {
+            FromUuid = fromId,
+            ToUuid = toUuid,
+            ResourceId = resourcename,
+            InstanceId = instanceUrn
+        };
+
+        bool pathOk = DelegationHelper.TryGetNewDelegationPolicyPathFromInstanceRule(rule, out string path);
+
+        if (pathOk)
+        {
+            return path;
+        }
+
+        return null;
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<bool>> RevokeInstanceAssignmentFromAltinn2(InstanceRevokeRequest input, CancellationToken cancellationToken = default)
+    {
+        // Create audit values
+        AuditValues audit = new AuditValues(input.PerformedBy, SystemEntityConstants.A2CorrespondenceInstanceRightImportSystem, $"A2-AuthorizationRuleId: {input.AuthorizationRuleID}", input.Created);
+
+        var resource = await db.Resources
+            .AsNoTracking()
+            .Where(a => a.RefId == input.ResourceId)
+            .Include(r => r.Type)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (resource is null || resource.Type.Name != "CorrespondenceService")
+        {
+            return AccessManagement.Core.Errors.Problems.InvalidResource;
+        }
+
+        var fromParty = await db.Entities
+            .AsNoTracking()
+            .Where(e => e.Id == input.FromUuid)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var toParty = await db.Entities
+            .AsNoTracking()
+            .Where(e => e.Id == input.ToUuid)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var performedByParty = await db.Entities
+            .AsNoTracking()
+            .Where(e => e.Id == input.PerformedBy)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (fromParty is null || toParty is null || performedByParty is null)
+        {
+            return AccessManagement.Core.Errors.Problems.PartyNotFound;
+        }
+
+        var assignment = await db.Assignments
+            .AsNoTracking()
+            .Where(a => a.FromId == input.FromUuid)
+            .Where(a => a.ToId == input.ToUuid)
+            .Where(a => a.RoleId == RoleConstants.Rightholder.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (assignment is null)
+        {
+            return false;
+        }
+
+        // Fetch the AssignmentInstance record for fetching the correct policy file
+        var assignmentInstance = await db.AssignmentInstances
+            .AsNoTracking()
+            .Where(ai => ai.AssignmentId == assignment.Id)
+            .Where(ai => ai.ResourceId == resource.Id)
+            .Where(ai => ai.InstanceId == $"{AltinnXacmlConstants.MatchAttributeIdentifiers.CorrespondenceInstanceAttribute}:{input.InstanceId.ToLowerInvariant()}")
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (assignmentInstance is null)
+        {
+            return false;
+        }
+
+        string leaseId = null;
+        IPolicyRepository policyClient = null;
+        try
+        {
+            string path = assignmentInstance.PolicyPath;
+            policyClient = policyFactory.Create(path);
+
+            XacmlPolicy delegationPolicy = await policyRetrivalPoint.GetPolicyVersionAsync(
+                path,
+                assignmentInstance.PolicyVersion,
+                cancellationToken);
+
+            if (delegationPolicy is not null)
+            {
+                leaseId = await policyClient.TryAcquireBlobLease(cancellationToken);
+
+                if (string.IsNullOrEmpty(leaseId))
+                {
+                    throw new InvalidOperationException($"Failed to acquire lease on new policy file: {path}");
+                }
+
+                delegationPolicy.Rules.Clear();
+
+                MemoryStream dataStream = PolicyHelper.GetXmlMemoryStreamFromXacmlPolicy(delegationPolicy);
+
+                // Write policy file to blob storage
+                var policyWriteResult = await policyClient.WritePolicyConditionallyAsync(dataStream, leaseId, cancellationToken);
+            }
+            
+            db.Remove(assignmentInstance);
+            await db.SaveChangesAsync(audit, cancellationToken);
+
+            ValidationErrorBuilder errors = await CheckCascadingAssignmentRevoke(assignment.Id, cancellationToken);
+
+            // if no existing dependencies remove assignment
+            if (errors.IsEmpty)
+            {
+                db.Assignments.Remove(assignment);
+                await db.SaveChangesAsync(audit, cancellationToken);
+            }
+            
+        }
+        finally
+        {
+            // Release lock on new policy file in blob storage
+            if (!string.IsNullOrEmpty(leaseId) && policyClient != null)
+            {
+                await policyClient.ReleaseBlobLease(leaseId, cancellationToken);
+            }
+        }
+
+        return true;
+    }
+
+    private async Task<bool> CheckInstanceDelegationRequestIsValidForAsignment(InstanceDelegationRequest input, CancellationToken cancellationToken)
+    {
+        List<RightDto> rightKeys = await contextRetrievalService.GetResourcePolicyV2(input.ResourceId, "nb", cancellationToken);
+
+        string resourceUrn = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute}:{input.ResourceId}";
+        List<string> inputRightKeys = [];
+
+        foreach (string action in input.Actions)
+        {
+            string rightKeyPlain = $"{resourceUrn}:{AltinnXacmlConstants.MatchAttributeIdentifiers.ActionId}:{action}";
+            string rightKeyHashed = "01" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(rightKeyPlain))).ToLowerInvariant();
+            inputRightKeys.Add(rightKeyHashed);
+        }
+
+        foreach (string rightKey in inputRightKeys)
+        {
+            if (!rightKeys.Any(rk => rk.Key == rightKey))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<bool>> ImportInstanceAssignmentFromAltinn2(InstanceDelegationRequest input, CancellationToken cancellationToken = default)
+    {
+        // Create audit values
+        AuditValues audit = new AuditValues(input.PerformedBy, SystemEntityConstants.A2CorrespondenceInstanceRightImportSystem, $"A2-AuthorizationRuleId: {input.AuthorizationRuleID}", input.Created);
+
+        var resource = await db.Resources
+            .AsNoTracking()
+            .Where(a => a.RefId == input.ResourceId)
+            .Include(r => r.Type)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (resource is null || resource.Type.Name != "CorrespondenceService")
+        {
+            return AccessManagement.Core.Errors.Problems.InvalidResource;
+        }
+
+        bool delegationValid = await CheckInstanceDelegationRequestIsValidForAsignment(input, cancellationToken);
+        if (!delegationValid)
+        {
+            return AccessManagement.Core.Errors.Problems.InvalidRightKey;
+        }
+
+        var fromParty = await db.Entities
+            .AsNoTracking()
+            .Where(e => e.Id == input.FromUuid)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var toParty = await db.Entities
+            .AsNoTracking()
+            .Where(e => e.Id == input.ToUuid)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var performedByParty = await db.Entities
+            .AsNoTracking()
+            .Where(e => e.Id == input.PerformedBy)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (fromParty is null || toParty is null || performedByParty is null)
+        {
+            return AccessManagement.Core.Errors.Problems.PartyNotFound;
+        }
+
+        var assignment = await db.Assignments
+            .AsNoTracking()
+            .Where(a => a.FromId == input.FromUuid)
+            .Where(a => a.ToId == input.ToUuid)
+            .Where(a => a.RoleId == RoleConstants.Rightholder.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (assignment is null)
+        {
+            assignment = new Assignment()
+            {
+                FromId = input.FromUuid,
+                ToId = input.ToUuid,
+                RoleId = RoleConstants.Rightholder.Id,
+                Audit_ValidFrom = audit?.ValidFrom ?? DateTimeOffset.UtcNow,
+            };
+            await db.Assignments.AddAsync(assignment, cancellationToken);
+            await db.SaveChangesAsync(audit, cancellationToken);
+        }
+
+        // Fetch the AssignmentInstance record for fetching the correct policy file
+        var normalizedInstanceId = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.CorrespondenceInstanceAttribute}:{input.InstanceId}".ToLowerInvariant();
+        var assignmentInstance = await db.AssignmentInstances
+            .AsNoTracking()
+            .Where(ai => ai.AssignmentId == assignment.Id)
+            .Where(ai => ai.ResourceId == resource.Id)
+            .Where(ai => ai.InstanceId == normalizedInstanceId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        string path = null;
+        XacmlPolicy existingDelegationPolicy = null;
+        if (assignmentInstance is not null)
+        {
+            path = assignmentInstance.PolicyPath;
+            existingDelegationPolicy = await policyRetrivalPoint.GetPolicyVersionAsync(
+                path,
+                assignmentInstance.PolicyVersion,
+                cancellationToken);
+        }
+        else
+        {
+            path = GetPolicyPathResource(input.FromUuid, input.ToUuid, input.ResourceId, input.InstanceId.ToLowerInvariant());
+        }
+
+        // Create lease and store the policy using this
+        string leaseId = null;
+        IPolicyRepository policyClient = null;
+        try
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new InvalidOperationException($"Failed to create path for policy file: {path}");
+            }
+
+            // Lock new policy file in blob storage
+            policyClient = policyFactory.Create(path);
+            if (!await policyClient.PolicyExistsAsync(cancellationToken))
+            {
+                // Create a new empty blob for lease locking
+                using (MemoryStream emptyStream = new MemoryStream())
+                {
+                    await policyClient.WritePolicyAsync(emptyStream, cancellationToken);
+                }
+            }
+
+            leaseId = await policyClient.TryAcquireBlobLease(cancellationToken);
+
+            if (string.IsNullOrEmpty(leaseId))
+            {
+                throw new InvalidOperationException($"Failed to acquire lease on new policy file: {path}");
+            }
+
+            // Convert input
+            InstanceRight instanceRight = CreateInstanceRightFromInstanceDelegationRequest(input);
+
+            // Create policy xacml from input
+            XacmlPolicy delegationPolicy = BuildInstanceDelegationPolicy(existingDelegationPolicy, instanceRight, false);
+            MemoryStream dataStream = PolicyHelper.GetXmlMemoryStreamFromXacmlPolicy(delegationPolicy);
+
+            // Write policy file to blob storage
+            var policyWriteResult = await policyClient.WritePolicyConditionallyAsync(dataStream, leaseId, cancellationToken);
+            var policyWriteStatus = policyWriteResult?.GetRawResponse()?.Status;
+            var policyVersionId = policyWriteResult?.Value.VersionId;
+            if (policyWriteStatus is null || policyWriteStatus < 200 || policyWriteStatus >= 300 || string.IsNullOrEmpty(policyVersionId))
+            {
+                return AccessManagement.Core.Errors.Problems.DelegationPolicyRuleWriteFailed;
+            }
+
+            // Update policy path and version in assignment instance
+            return await UpsertAssignmentInstanceInternal(
+                assignment.Id,
+                resource.Id,
+                instanceRight.InstanceId,
+                path,
+                policyVersionId,
+                0, // delegationEventId is not used for instance delegation comming from A2 but it is not null in db, set to 0 to not make any errors or craches with legitime data.
+                InstanceSourceTypeConstants.EndUser,
+                audit,
+                cancellationToken);
+        }
+        finally
+        {
+            // Release lock on new policy file in blob storage
+            if (!string.IsNullOrEmpty(leaseId) && policyClient != null)
+            {
+                await policyClient.ReleaseBlobLease(leaseId, cancellationToken);
+            }
+        }
+    }
+
+    private static InstanceRight CreateInstanceRightFromInstanceDelegationRequest(InstanceDelegationRequest input)
+    {
+        List<InstanceRule> rules = [];
+        List<UrnJsonTypeValue> resourceList = new();
+        UrnJsonTypeValue resourceUrn = KeyValueUrn.CreateUnchecked(
+            $"{AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute}:{input.ResourceId}",
+            AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute.Length + 1);
+        UrnJsonTypeValue instanceUrn = KeyValueUrn.CreateUnchecked(
+            $"{AltinnXacmlConstants.MatchAttributeIdentifiers.CorrespondenceInstanceAttribute}:{input.InstanceId.ToLowerInvariant()}",
+            AltinnXacmlConstants.MatchAttributeIdentifiers.CorrespondenceInstanceAttribute.Length + 1);
+
+        resourceList.Add(resourceUrn);
+        resourceList.Add(instanceUrn);
+
+        foreach (var rule in input.Actions)
+        {
+            InstanceRule instanceRule = new()
+            {
+                RuleId = Guid.CreateVersion7().ToString().ToLowerInvariant(),
+                Resource = resourceList,
+                Action = ActionUrn.Parse($"{AltinnXacmlConstants.MatchAttributeIdentifiers.ActionId}:{rule}")
+            };
+            rules.Add(instanceRule);
+        }
+
+        InstanceRight instanceRight = new InstanceRight
+        {
+            FromType = AccessManagement.Enums.UuidType.Party,
+            FromUuid = input.FromUuid,
+            InstanceDelegationMode = AccessManagement.Core.Enums.InstanceDelegationMode.Normal,
+            InstanceId = instanceUrn.ToString().ToLowerInvariant(),
+            InstanceDelegationSource = AccessManagement.Core.Enums.InstanceDelegationSource.User,
+            InstanceRules = rules,
+            PerformedByType = AccessManagement.Enums.UuidType.Party,
+            PerformedBy = input.PerformedBy.ToString().ToLowerInvariant(),
+            ToType = AccessManagement.Enums.UuidType.Party,
+            ToUuid = input.ToUuid,
+            ResourceId = input.ResourceId
+        };
+
+        return instanceRight;
+    }
+
+    private static XacmlPolicy BuildInstanceDelegationPolicy(XacmlPolicy existingDelegationPolicy, InstanceRight rules, bool ignoreExistingPolicy)
+    {
+        // Build delegation XacmlPolicy either as a new policy or add rules to existing
+        XacmlPolicy delegationPolicy;
+        if (existingDelegationPolicy != null && !ignoreExistingPolicy)
+        {
+            delegationPolicy = existingDelegationPolicy;
+            PolicyParameters policyData = PolicyHelper.GetPolicyDataFromInstanceRight(rules);
+
+            foreach (InstanceRule rule in rules.InstanceRules)
+            {
+                if (!DelegationHelper.PolicyContainsMatchingInstanceRule(delegationPolicy, rule))
+                {
+                    delegationPolicy.Rules.Add(PolicyHelper.BuildDelegationInstanceRule(policyData, rule));
+                }
+            }
+        }
+        else
+        {
+            delegationPolicy = PolicyHelper.BuildInstanceDelegationPolicy(rules);
+        }
+
+        return delegationPolicy;
     }
 
     /// <inheritdoc />

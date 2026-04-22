@@ -16,9 +16,28 @@ public static class TestData
         Name = "Test",
     };
 
+    /// <summary>
+    /// A generic test resource type used across integration tests.
+    /// </summary>
+    public static ResourceType CorrespondenceResourceType { get; } = new()
+    {
+        Id = Guid.Parse("019d95d1-95c7-7887-91cc-30fc9af97191"),
+        Name = "CorrespondenceService",
+    };
+
     #endregion
 
     #region Resources
+
+    public static readonly Resource TestdirektoratetCorrespondenceService = new()
+    {
+        Id = Guid.Parse("019d95d3-92d5-750f-a594-a8b08e756a4a"),
+        Name = "Testdirektoratet Correspondence Service",
+        Description = "Messaging service for testing instance delegation from Altinn II",
+        RefId = "ttd-migratedcorrespondence-4471-1",
+        TypeId = TestData.CorrespondenceResourceType.Id,
+        ProviderId = ProviderConstants.Altinn2.Id,
+    };
 
     public static readonly Resource MattilsynetBakeryService = new()
     {
@@ -91,6 +110,28 @@ public static class TestData
     #endregion
 
     #region Firmaer
+
+    public static ConstantDefinition<Entity> HanSoloEnterprise { get; } = new("c3af1102-9ea6-4335-800d-fb9a80b322ae")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Han Solo Enterprise",
+            OrganizationIdentifier = "305000043",
+            Parent = null,
+            ParentId = null,
+            PartyId = 50300004,
+            PersonIdentifier = null,
+            RefId = "305000043",
+            TypeId = EntityTypeConstants.Organization,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.AS,
+        }
+    };
 
     public static ConstantDefinition<Entity> BakerJohnsen { get; } = new("a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d")
     {
@@ -985,9 +1026,80 @@ public static class TestData
 
     #endregion
 
+    #region Personer - Han Solo Enterprise
+    public static ConstantDefinition<Entity> HanSolo { get; } = new("ffe29638-80d9-4f34-a8d8-a172a6f360c8")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1976, 3, 10),
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Han Solo",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 50300001,
+            PersonIdentifier = "10837612174",
+            RefId = "10837612174",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 20300001,
+            Username = null,
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+
+    public static ConstantDefinition<Entity> BenSolo { get; } = new("1e984aef-7edc-4435-8dd6-cdf1ff2899f1")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(2010, 9, 28),
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Ben Solo",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 50300002,
+            PersonIdentifier = "28091080186",
+            RefId = "28091080186",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 20300002,
+            Username = null,
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+
+    public static ConstantDefinition<Entity> LeiaOrgana { get; } = new("60c29841-a339-43d6-8244-a5957a961000")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1986, 10, 7),
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Leia Organa",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 50300003,
+            PersonIdentifier = "07108640094",
+            RefId = "07108640094",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 20300003,
+            Username = null,
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+    #endregion
+
     #region Assignments
 
     // UUIDv7 format: 0196a0b1-xxxx-7xxx-8xxx-xxxxxxxxxxxx
+
+    // Han Solo Enterprise - personroller
+    private static readonly Guid AssignHanSoloEnterpriseHanSoloMD = Guid.Parse("019d9613-c654-7a01-8998-a46f9c983067");
 
     // Baker Johnsen - personroller
     private static readonly Guid AssignBakerJohnsenLarsBakkeMD = Guid.Parse("0196a0b1-0001-7001-8001-000000000001");
@@ -1062,6 +1174,9 @@ public static class TestData
     public static List<Assignment> Assignments = new()
 #pragma warning restore SA1401 // Fields should be private
     {
+        // Han Solo Enterprise - personroller
+        new Assignment() { Id = AssignHanSoloEnterpriseHanSoloMD, FromId = HanSoloEnterprise.Id, ToId = HanSolo.Id, RoleId = RoleConstants.ManagingDirector.Id },
+    
         // Baker Johnsen - personroller
         new Assignment() { Id = AssignBakerJohnsenLarsBakkeMD, FromId = BakerJohnsen, ToId = LarsBakke, RoleId = RoleConstants.ManagingDirector },
         new Assignment() { Id = AssignBakerJohnsenHildeStrandCB, FromId = BakerJohnsen, ToId = HildeStrand, RoleId = RoleConstants.ChairOfTheBoard },

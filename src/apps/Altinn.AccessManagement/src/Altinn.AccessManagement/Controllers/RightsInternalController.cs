@@ -11,7 +11,9 @@ using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Utilities;
 using Altinn.AccessMgmt.Core.Audit;
+using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
+using Altinn.Authorization.ProblemDetails;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -31,6 +33,7 @@ namespace Altinn.AccessManagement.Controllers
         private readonly IPolicyInformationPoint _pip;
         private readonly ISingleRightsService _rights;
         private readonly IAltinn2RightsService _rightsForAltinn2;
+        private readonly IAssignmentService _assignmentService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RightsInternalController"/> class.
@@ -40,13 +43,14 @@ namespace Altinn.AccessManagement.Controllers
         /// <param name="policyInformationPoint">The policy information point</param>
         /// <param name="singleRightsService">Service implementation for providing rights operations for BFF and external integrations</param>
         /// <param name="rightsForAltinn2">Service implementation for providing rights operations for Altinn 2 integrations</param>
-        public RightsInternalController(ILogger<RightsInternalController> logger, IMapper mapper, IPolicyInformationPoint policyInformationPoint, ISingleRightsService singleRightsService, IAltinn2RightsService rightsForAltinn2)
+        public RightsInternalController(ILogger<RightsInternalController> logger, IMapper mapper, IPolicyInformationPoint policyInformationPoint, ISingleRightsService singleRightsService, IAltinn2RightsService rightsForAltinn2, IAssignmentService assignmentService)
         {
             _logger = logger;
             _mapper = mapper;
             _pip = policyInformationPoint;
             _rights = singleRightsService;
             _rightsForAltinn2 = rightsForAltinn2;
+            _assignmentService = assignmentService;
         }
 
         /// <summary>
@@ -314,7 +318,7 @@ namespace Altinn.AccessManagement.Controllers
             {
                 int authenticatedUserId = AuthenticationHelper.GetUserId(HttpContext);
                 Guid authenticatedUserPartyUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
-                
+
                 if (authenticatedUserPartyUuid == Guid.Empty)
                 {
                     ModelState.AddModelError("Unauthorized", "User Authentication token is missing uuid for the user");
@@ -457,11 +461,11 @@ namespace Altinn.AccessManagement.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         [ApiExplorerSettings(IgnoreApi = true)]
-        public async Task<IActionResult> SingleAppRightsFeed([FromQuery]long singleAppDelegationEventId, CancellationToken cancellationToken)
+        public async Task<IActionResult> SingleAppRightsFeed([FromQuery] long singleAppDelegationEventId, CancellationToken cancellationToken = default)
         {
             // get the data
-            var data = await _rights.GetNextPageAppDelegationChanges(singleAppDelegationEventId);
-            
+            var data = await _rights.GetNextPageAppDelegationChanges(singleAppDelegationEventId, cancellationToken);
+
             // calculate nextlink
             string nextLink = null;
             if (data.Any())
@@ -487,10 +491,10 @@ namespace Altinn.AccessManagement.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         [ApiExplorerSettings(IgnoreApi = true)]
-        public async Task<IActionResult> SingleResourceRightsFeed([FromQuery] long singleResourceDelegationEventId, CancellationToken cancellationToken)
+        public async Task<IActionResult> SingleResourceRightsFeed([FromQuery] long singleResourceDelegationEventId, CancellationToken cancellationToken = default)
         {
             // get the data
-            var data = await _rights.GetNextPageResourceDelegationChanges(singleResourceDelegationEventId);
+            var data = await _rights.GetNextPageResourceDelegationChanges(singleResourceDelegationEventId, cancellationToken);
 
             // calculate nextlink
             string nextLink = null;
@@ -517,10 +521,10 @@ namespace Altinn.AccessManagement.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         [ApiExplorerSettings(IgnoreApi = true)]
-        public async Task<IActionResult> SingleInstanceRightsFeed([FromQuery] long singleInstanceDelegationEventId, CancellationToken cancellationToken)
+        public async Task<IActionResult> SingleInstanceRightsFeed([FromQuery] long singleInstanceDelegationEventId, CancellationToken cancellationToken = default)
         {
             // get the data
-            var data = await _rights.GetNextPageInstanceDelegationChanges(singleInstanceDelegationEventId);
+            var data = await _rights.GetNextPageInstanceDelegationChanges(singleInstanceDelegationEventId, cancellationToken);
 
             // calculate nextlink
             string nextLink = null;
@@ -538,5 +542,104 @@ namespace Altinn.AccessManagement.Controllers
             // return result
             return Ok(result);
         }
-    }
+
+        /// <summary>
+        /// Delegates instance rights from one user to another. This endpoint is intended to be used internally by the delegation system between Altinn 2 and Altinn 3, 
+        /// and is not meant to be called directly. Please refer to the API documentation for the available endpoints. This endpoint does not perform any authorization checks 
+        /// in itself, and assumes that the caller has verified the data to be correct, This endpoint just verifies that the caller presents a valid authentication token
+        /// The caller should be the delegation system in Altinn 2, which has its own authorization checks to ensure that only valid delegations are performed.
+        /// </summary>
+        /// <param name="input">The data describing the delegation</param>
+        /// <param name="cancellationToken">Cancellation token used for cancelling the inbound HTTP</param>
+        /// <returns></returns>
+        [Authorize(Policy = AuthzConstants.ALTINNII_AUTHORIZATION)]
+        [ActionName(nameof(DelegateInstance))]
+        [HttpPost("internal/instance/delegation")]
+        [ProducesResponseType(typeof(void), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        public async Task<IActionResult> DelegateInstance([FromBody] InstanceDelegationRequest input, CancellationToken cancellationToken = default)
+        {
+            // Validate ModelState
+            if (!ModelState.IsValid)
+            {
+                return new ObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState));
+            }
+
+            try
+            {
+                var result = await _assignmentService.ImportInstanceAssignmentFromAltinn2(input, cancellationToken);
+                if (result.IsProblem)
+                {
+                    return result.Problem.ToActionResult();
+                }
+
+                // Delegation performed
+                return Created();                
+            }
+            catch (Exception ex) 
+            {
+                _logger.LogError(StatusCodes.Status500InternalServerError, ex, "Internal exception occurred during Instance Right Import");
+                var problem = new ProblemDetails
+                {
+                    Title = "An error occurred while delegating instance rights.",
+                    Detail = "An unexpected error occurred.",
+                    Status = StatusCodes.Status500InternalServerError
+                };
+                return problem.ToActionResult();
+            }            
+        }
+
+        /// <summary>
+        /// Revokes instance rights from a user. This endpoint is intended to be used internally by the delegation system between Altinn 2 and Altinn 3,
+        /// and is not meant to be called directly. Please refer to the API documentation for the available endpoints. This endpoint does not perform any authorization checks
+        /// in itself, and assumes that the caller has verified the data to be correct. This endpoint just verifies that the caller presents a valid authentication token.
+        /// The caller should be the delegation system in Altinn 2, which has its own authorization checks to ensure that only valid revocations are performed.
+        /// </summary>
+        /// <param name="input">The data describing the revocation</param>
+        /// <param name="cancellationToken">Cancellation token used for cancelling the inbound HTTP</param>
+        /// <returns></returns>
+        [Authorize(Policy = AuthzConstants.ALTINNII_AUTHORIZATION)]
+        [ActionName(nameof(RevokeInstance))]
+        [HttpPost("internal/instance/revoke")]
+        [ProducesResponseType(typeof(void), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public async Task<IActionResult> RevokeInstance([FromBody] InstanceRevokeRequest input, CancellationToken cancellationToken = default)
+        {
+            // Validate ModelState
+            if (!ModelState.IsValid)
+            {
+                return new ObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState));
+            }
+
+            try
+            {
+                var result = await _assignmentService.RevokeInstanceAssignmentFromAltinn2(input, cancellationToken);
+
+                if (result.IsProblem)
+                {
+                    return result.Problem.ToActionResult();
+                }
+
+                // Revoke performed
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(StatusCodes.Status500InternalServerError, ex, "Internal exception occurred during Instance Right revoke");
+                var problem = new ProblemDetails
+                {
+                    Title = "An error occurred while revoking instance rights.",
+                    Detail = "An unexpected error occurred.",
+                    Status = StatusCodes.Status500InternalServerError
+                };
+                return problem.ToActionResult();
+            }
+        }
+    }    
 }

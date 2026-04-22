@@ -145,4 +145,8 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor MissingRightKey { get; }
     = _factory.Create(33, HttpStatusCode.BadRequest, "No right key provided");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor InvalidRightKey { get; }
+    = _factory.Create(33, HttpStatusCode.BadRequest, "Policy does not contain all rightkeys in delegation request");
 }

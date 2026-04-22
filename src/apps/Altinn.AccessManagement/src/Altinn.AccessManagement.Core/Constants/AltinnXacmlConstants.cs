@@ -47,6 +47,11 @@
             public const string InstanceAttribute = "urn:altinn:instance-id";
 
             /// <summary>
+            /// Instance attribute match identifier 
+            /// </summary>
+            public const string CorrespondenceInstanceAttribute = "urn:altinn:correspondence-id";
+
+            /// <summary>
             /// ResouceRegistry Instance attribute match identifier
             /// </summary>
             public const string ResourceInstanceAttribute = "urn:altinn:resource:instance-id";

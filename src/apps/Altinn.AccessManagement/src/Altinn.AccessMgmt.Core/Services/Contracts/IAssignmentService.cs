@@ -224,6 +224,24 @@ public interface IAssignmentService
     Task<int> RevokeImportedInstanceAssignment(Guid fromId, Guid toId, string resourceName, string instanceId, AuditValues audit, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Takes data from Altinn 2 and imports instance assignment to Altinn 3. This includes creating the assignment if it does not exist, 
+    /// adding the instance as a resource to the assignment and also associating the correct blob storage policy with the instance resource.
+    /// </summary>
+    /// <param name="input">The data to import from Altinn 2.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the import operation.</param>
+    /// <returns>true if the assignmentinstance is stored and false if not</returns>
+    Task<Result<bool>> ImportInstanceAssignmentFromAltinn2(InstanceDelegationRequest input, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Revokes an assignment for a specific instance
+    /// </summary>
+    /// <param name="input">An object containing the details of the instance assignment to revoke. Cannot be null.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests. The default value is None.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a value indicating whether the
+    /// assignment was successfully revoked.</returns>
+    Task<Result<bool>> RevokeInstanceAssignmentFromAltinn2(InstanceRevokeRequest input, CancellationToken cancellationToken = default);
+
+    /// <summary>
     ///  Imports access to an assignment instance for a specified from, to and audit info.
     /// </summary>
     /// <param name="fromId">The unique identifier of the source assignment from which the resource change is imported.</param>
