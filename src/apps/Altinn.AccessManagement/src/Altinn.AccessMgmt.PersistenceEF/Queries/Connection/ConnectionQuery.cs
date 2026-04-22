@@ -14,7 +14,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 /// </summary>
 public class ConnectionQuery(AppDbContext db)
 {
-    private List<Guid>? _assignmentIds = null;
+    private List<ConnectionQueryExtendedRecord>? _rightholderAssignments = null;
 
     public async Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthersAsync(ConnectionQueryFilter filter, bool useNewQuery = true, CancellationToken ct = default)
     {
@@ -113,6 +113,7 @@ public class ConnectionQuery(AppDbContext db)
     {
         try
         {
+            _rightholderAssignments = null;
             bool delayChildNesting = true;
             bool delayFromFilter = true;
             if (direction == ConnectionQueryDirection.ToOthers || (filter.FromIds?.Count > 0 && filter.FromIds?.Count <= 20))
@@ -1129,14 +1130,15 @@ public class ConnectionQuery(AppDbContext db)
     {
         var resourceSet = filter.ResourceIds?.Count > 0 ? new HashSet<Guid>(filter.ResourceIds) : null;
 
-        var aIds = GetAssignmentIds(allKeys);
-        if (aIds.Count == 0)
+        var rightholderAssignments = GetRightholderAssignments(allKeys);
+        var rightholderAssignmentIds = rightholderAssignments.Select(a => (Guid)a.AssignmentId).Distinct().ToList();
+        if (rightholderAssignmentIds.Count == 0)
         {
             return allKeys;
         }
 
         var assignmentResources = await db.AssignmentResources
-            .Where(ai => aIds.Contains(ai.AssignmentId))
+            .Where(ai => rightholderAssignmentIds.Contains(ai.AssignmentId))
             .Select(ai => new { ai.AssignmentId, ai.Id, ai.ResourceId })
             .WhereIf(resourceSet is not null, x => resourceSet!.Contains(x.ResourceId))
             .Join(db.Resources, x => x.ResourceId, r => r.Id, (x, r) => new
@@ -1192,14 +1194,15 @@ public class ConnectionQuery(AppDbContext db)
         var resourceSet = filter.ResourceIds?.Count > 0 ? new HashSet<Guid>(filter.ResourceIds) : null;
 
         // Assignment → AssignmentInstance
-        var aIds = GetAssignmentIds(allKeys);
-        if (aIds.Count == 0)
+        var rightholderAssignments = GetRightholderAssignments(allKeys);
+        var rightholderAssignmentIds = rightholderAssignments.Where(a => a.Reason != ConnectionReason.Hierarchy).Select(a => (Guid)a.AssignmentId).Distinct().ToList();
+        if (rightholderAssignmentIds.Count == 0)
         {
             return allKeys;
         }
 
         var assignmentInstances = await db.AssignmentInstances
-            .Where(ai => aIds.Contains(ai.AssignmentId))
+            .Where(ai => rightholderAssignmentIds.Contains(ai.AssignmentId))
             .Select(ai => new { ai.AssignmentId, ai.Id, ai.ResourceId, ai.InstanceId })
             .WhereIf(instanceSet is not null, x => instanceSet!.Contains(x.InstanceId))
             .WhereIf(resourceSet is not null, x => resourceSet!.Contains(x.ResourceId))
@@ -1245,7 +1248,7 @@ public class ConnectionQuery(AppDbContext db)
             }
         }
 
-        foreach (var key in allKeys)
+        foreach (var key in allKeys.Where(k => k.AssignmentId.HasValue && rightholderAssignmentIds.Contains((Guid)k.AssignmentId) && k.Reason != ConnectionReason.Hierarchy))
         {
             if (key.AssignmentId.HasValue && instancesByAssignment.TryGetValue((Guid)key.AssignmentId!, out var list))
             {
@@ -1256,14 +1259,14 @@ public class ConnectionQuery(AppDbContext db)
         return allKeys;
     }
 
-    private List<Guid> GetAssignmentIds(List<ConnectionQueryExtendedRecord> allKeys)
+    private List<ConnectionQueryExtendedRecord> GetRightholderAssignments(List<ConnectionQueryExtendedRecord> allKeys)
     {
-        if (_assignmentIds is null)
+        if (_rightholderAssignments is null)
         {
-            _assignmentIds = allKeys.Where(a => a.AssignmentId.HasValue).Select(a => (Guid)a.AssignmentId).Distinct().ToList();
+            _rightholderAssignments = allKeys.Where(a => a.AssignmentId.HasValue && a.RoleId == RoleConstants.Rightholder).ToList();
         }
 
-        return _assignmentIds;
+        return _rightholderAssignments;
     }
 
     private async Task EnrichPackageResourcesAsync(ConnectionIndex<ConnectionQueryPackage> packageIndex, ConnectionQueryFilter filter, CancellationToken ct = default)
@@ -1345,7 +1348,10 @@ public class ConnectionQuery(AppDbContext db)
         DelegationId = x.DelegationId,
         ViaId = x.ViaId,
         ViaRoleId = x.ViaRoleId,
-        Reason = x.Reason
+        Reason = x.Reason,
+        IsKeyRoleAccess = x.IsKeyRoleAccess,
+        IsMainUnitAccess = x.IsMainUnitAccess,
+        IsRoleMap = x.IsRoleMap
     };
 }
 

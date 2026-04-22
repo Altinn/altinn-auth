@@ -229,12 +229,6 @@ public class AuthorizedPartiesServiceEf(
                     if (uuidEntity != null)
                     {
                         partyUuids.Add(uuidEntity.Id);
-
-                        if (uuidEntity.ParentId.HasValue)
-                        {
-                            // Also add parent uuid to cover subunit filters
-                            partyUuids.Add(uuidEntity.ParentId.Value);
-                        }
                     }
 
                     break;
@@ -248,12 +242,6 @@ public class AuthorizedPartiesServiceEf(
                     if (partyIdEntity != null)
                     {
                         partyUuids.Add(partyIdEntity.Id);
-
-                        if (partyIdEntity.ParentId.HasValue)
-                        {
-                            // Also add parent uuid to cover subunit filters
-                            partyUuids.Add(partyIdEntity.ParentId.Value);
-                        }
                     }
 
                     break;
@@ -283,12 +271,6 @@ public class AuthorizedPartiesServiceEf(
                     if (orgEntity != null)
                     {
                         partyUuids.Add(orgEntity.Id);
-
-                        if (orgEntity.ParentId.HasValue)
-                        {
-                            // Also add parent uuid to cover subunit filters
-                            partyUuids.Add(orgEntity.ParentId.Value);
-                        }
                     }
 
                     break;
