@@ -1195,7 +1195,7 @@ public class ConnectionQuery(AppDbContext db)
 
         // Assignment → AssignmentInstance
         var rightholderAssignments = GetRightholderAssignments(allKeys);
-        var rightholderAssignmentIds = rightholderAssignments.Where(a => a.Reason != ConnectionReason.Hierarchy).Select(a => (Guid)a.AssignmentId).Distinct().ToList();
+        var rightholderAssignmentIds = rightholderAssignments.Where(a => a.Reason != ConnectionReason.Hierarchy && !a.IsMainUnitAccess).Select(a => (Guid)a.AssignmentId).Distinct().ToList();
         if (rightholderAssignmentIds.Count == 0)
         {
             return allKeys;
@@ -1248,7 +1248,7 @@ public class ConnectionQuery(AppDbContext db)
             }
         }
 
-        foreach (var key in allKeys.Where(k => k.AssignmentId.HasValue && rightholderAssignmentIds.Contains((Guid)k.AssignmentId) && k.Reason != ConnectionReason.Hierarchy))
+        foreach (var key in allKeys.Where(k => k.AssignmentId.HasValue && rightholderAssignmentIds.Contains((Guid)k.AssignmentId) && k.Reason != ConnectionReason.Hierarchy && !k.IsMainUnitAccess))
         {
             if (key.AssignmentId.HasValue && instancesByAssignment.TryGetValue((Guid)key.AssignmentId!, out var list))
             {
