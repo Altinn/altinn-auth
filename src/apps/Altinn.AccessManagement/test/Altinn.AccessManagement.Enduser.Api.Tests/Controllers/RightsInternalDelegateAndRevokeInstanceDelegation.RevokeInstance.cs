@@ -33,8 +33,8 @@ public class RightsInternalDelegateAndRevokeInstanceDelegation : IClassFixture<A
 {
     private const string InstanceId = "fa0678ad-960d-4307-aba2-ba29c9804c9d";
     private const string InstanceUrn = "urn:altinn:correspondence-id:fa0678ad-960d-4307-aba2-ba29c9804c9d";
-    private const string RouteDelegation = "/accessmanagement/api/v1/internal/instance/delegation";
-    private const string RouteRevoke = "/accessmanagement/api/v1/internal/instance/revoke";
+    private const string RouteDelegation = "/accessmanagement/api/v1/internal-a2/instance/delegation";
+    private const string RouteRevoke = "/accessmanagement/api/v1/internal-a2/instance/revoke";
 
     private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
