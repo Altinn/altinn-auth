@@ -414,7 +414,15 @@ namespace Altinn.ResourceRegistry.Core.Services
                 ServiceResource service = new ServiceResource();
                 service.Title = application.Title;
                 service.Identifier = $"{ResourceConstants.APPLICATION_RESOURCE_PREFIX}{application.Org}_{application.Id.Substring(application.Id.IndexOf("/") + 1)}";
-                service.ResourceType = Enums.ResourceType.AltinnApp;
+                if (service.Identifier.Contains("_a2-") || service.Identifier.Contains("_a1-"))
+                {
+                    service.ResourceType = Enums.ResourceType.MigratedApp;
+                }
+                else
+                {
+                    service.ResourceType = Enums.ResourceType.AltinnApp;
+                }
+
                 service.ResourceReferences = new List<ResourceReference>
                 {
                     new ResourceReference() { ReferenceSource = Enums.ReferenceSource.Altinn3, ReferenceType = Enums.ReferenceType.ApplicationId, Reference = application.Id }
