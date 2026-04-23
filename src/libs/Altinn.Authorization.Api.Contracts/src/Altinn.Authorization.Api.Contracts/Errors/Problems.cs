@@ -94,9 +94,9 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor MissingRightHolder { get; }
     = _factory.Create(20, HttpStatusCode.BadRequest, "Missing rightholder");
-    
+
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
-    public static ProblemDescriptor ConnectionEntitiesDoNotExist { get; }  
+    public static ProblemDescriptor ConnectionEntitiesDoNotExist { get; }
     = _factory.Create(21, HttpStatusCode.BadRequest, "From and to parties do not exists.");
 
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
@@ -111,7 +111,7 @@ public static class Problems
     public static ProblemDescriptor PersonInputRequiredForPersonAssignment { get; }
     = _factory.Create(24, HttpStatusCode.BadRequest, "Target party is a person. Include a PersonInput object in the request body with both personIdentifier and lastName to perform this operation.");
 
-    public static ProblemDescriptor AgentHasExistingDelegations { get; }  
+    public static ProblemDescriptor AgentHasExistingDelegations { get; }
         = _factory.Create(25, HttpStatusCode.BadRequest, "Agent has existing delegations.");
 
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
@@ -147,6 +147,14 @@ public static class Problems
     = _factory.Create(33, HttpStatusCode.BadRequest, "No right key provided");
 
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor PackageDelegationNotAuthorized { get; }
+    = _factory.Create(34, HttpStatusCode.Forbidden, "Service owner is not authorized to delegate this access package");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor PackageNotFound { get; }
+    = _factory.Create(35, HttpStatusCode.BadRequest, "Unknown Access Package");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor InvalidRightKey { get; }
-    = _factory.Create(33, HttpStatusCode.BadRequest, "Policy does not contain all rightkeys in delegation request");
+    = _factory.Create(36, HttpStatusCode.BadRequest, "Policy does not contain all rightkeys in delegation request");
 }

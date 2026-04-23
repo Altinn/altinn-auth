@@ -241,6 +241,11 @@
         public const string SCOPE_CONSENTREQUEST_READ = "altinn:consentrequests.read";
 
         /// <summary>
+        /// Scope giving service owners access to delegate access packages betweeen two parties. Limited to packages "owned" by the service owner. Very limited access to this scope
+        /// </summary>
+        public const string SCOPE_SERVICEOWNER_PACKAGE_DELEGATION_WRITE = "altinn:serviceowner/delegations:accesspackage.write";
+
+        /// <summary>
         /// Claim for scopes from maskinporten token
         /// </summary>
         public const string CLAIM_MASKINPORTEN_SCOPE = "scope";
