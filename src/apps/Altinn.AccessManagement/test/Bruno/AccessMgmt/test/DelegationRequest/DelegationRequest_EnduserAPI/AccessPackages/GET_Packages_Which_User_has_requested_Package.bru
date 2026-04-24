@@ -1,0 +1,58 @@
+meta {
+  name: GET_Packages_Which_User_has_requested_Package
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/sent?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    bru.setVar("party", testdata.Bot_package_Org.partyuuid);
+    
+    var getTokenParameters = {
+      auth_userId: testdata.Bot_package_Org.innehaver.userid,
+      auth_partyId: testdata.Bot_package_Org.innehaver.partyid,
+      auth_partyUuid: testdata.Bot_package_Org.innehaver.partyuuid,
+      auth_ssn: testdata.Bot_package_Org.innehaver.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.sluttbrukerdelegationrequestread
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    test("GET request which user has sent (tilgangspakke)", function() {
+      const data = res.getBody();
+      
+      expect(res.status).to.equal(200);
+      expect(data).to.exist;
+      expect(data).to.be.an("array");
+
+      data.forEach(function(request) {
+        expect(request).to.be.an("object");
+        expect(request).to.have.property("type");
+        expect(request.type).to.equal("package");
+      });
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

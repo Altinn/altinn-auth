@@ -1,0 +1,60 @@
+meta {
+  name: PUT_Approve_Received_Request_On_Package_Already_approved
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/received/approve?party={{party}}&id={{resourcerequestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  id: {{resourcerequestId}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    bru.setVar("party", testdata.Bot_package_person.partyuuid);
+    
+    var getTokenParameters = {
+      auth_userId: testdata.Bot_package_person.userid,
+      auth_partyId: testdata.Bot_package_person.partyid,
+      auth_partyUuid: testdata.Bot_package_person.partyuuid,
+      auth_ssn: testdata.Bot_package_person.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.sluttbrukerdelegationrequestwrite
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+  
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    test("PUT_Approve_Received_Request_On_Package_AlreadyApproved", function() {
+      const data = res.getBody();
+      
+      expect(res.status).to.equal(400);
+      expect(data).to.have.property("validationErrors");
+      const validationError = data.validationErrors[0];
+      expect(validationError).to.have.property("detail", "Request does not support this status update.");
+      expect(validationError).to.have.property("paths");
+      expect(validationError.paths).to.be.an("array").with.length.greaterThan(0);
+      expect(validationError.paths[0]).to.equal("$QUERY/party");
+      expect(validationError).to.have.property("party", "Changing request status from Approved to Approved is not allowed.");
+      
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

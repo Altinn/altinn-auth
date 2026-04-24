@@ -8,6 +8,14 @@
     app_id: "app_ttd_test-bruno-app-for-delegation",
     skattetaten_ressurs: "ske-informasjon-om-trekkpaalegg",
   },
+  package_to_delegate: {
+    package_id_privatperson: "urn:altinn:accesspackage:innbygger-samliv",
+    package_id_privatperson_withdraw:
+      "urn:altinn:accesspackage:innbygger-vapen",
+    package_id_privatperson_reject:
+      "urn:altinn:accesspackage:innbygger-byggesoknad",
+    package_id_virksomhet: "urn:altinn:accesspackage:posttjenester",
+  },
   Bot_person: {
     lastname: "INGREDIENS",
     pid: "21866699620",
@@ -35,7 +43,7 @@
       partyuuid: "0e251053-2cf3-4cdb-ae3c-fde6931389fa",
     },
   },
-  Bot_person_serviceowner : {
+  Bot_person_serviceowner: {
     lastname: "STAMMOR",
     pid: "08826499630",
     partyid: 50956332,
@@ -80,5 +88,59 @@
   serviceowner_digdir: {
     org: "digdir",
     orgno: "991825827",
+  },
+  Bot_package_person: {
+    lastname: "KOLONI",
+    pid: "47855701924",
+    partyid: 51026392,
+    userid: 20159085,
+    partyuuid: "1ee055c5-53ae-4e35-8c47-1ab1d30cbc29",
+  },
+  Bot_package_person_withdraw: {
+    lastname: "ADAPTER",
+    pid: "18919173986",
+    partyid: 50465896,
+    userid: 20785410,
+    partyuuid: "a38a3b1e-8c8f-4fd4-8789-38f45837b1b3",
+  },
+  Bot_package_person_reject: {
+    lastname: "PLATINA",
+    pid: "06889774566",
+    partyid: 50479506,
+    userid: 20936786,
+    partyuuid: "c37f0e2e-afaa-4aec-860f-18c70f18d349",
+  },
+  Bot_package_from_person: {
+    lastname: "JUVEL",
+    pid: "11837198668",
+    partyid: 50941784,
+    userid: 20332321,
+    partyuuid: "4386762e-2b50-4208-a5ca-bfc0e28be176",
+  },
+  Bot_package_Org_for_serviceowner: {
+    name: "RASTLØS RESERVERT TIGER AS",
+    org_no: "210774432",
+    partyid: 51244126,
+    partyuuid: "ecee2f11-d9e8-436d-a188-d69e4fb51de3",
+    dagligleder: {
+      name: "NYTTIG RIBBE",
+      pid: "11826899389",
+      partyid: 50951925,
+      userid: 20119526,
+      partyuuid: "1676408c-c492-4878-a0f9-219f132c0315",
+    },
+  },
+  Bot_package_Org: {
+    name: "KREATIV SNÅL PIGGSVIN",
+    org_no: "313696057",
+    partyid: 51255656,
+    partyuuid: "8b0d56b5-2927-4775-9121-a005a30d4cae",
+    innehaver: {
+      name: "SMAL GÅSTOL",
+      pid: "26867198260",
+      partyid: 50633584,
+      userid: 20058157,
+      partyuuid: "09718393-861f-40c9-96b0-0252cf20c1ff",
+    },
   },
 };

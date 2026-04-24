@@ -1,0 +1,57 @@
+meta {
+  name: PUT_Reject_Package_Request
+  type: http
+  seq: 15
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/received/reject?party={{party}}&id={{resourcerequestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  id: {{resourcerequestId}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    bru.setVar("party", testdata.Bot_package_person_reject.partyuuid);
+    
+     var getTokenParameters = {
+      auth_userId: testdata.Bot_package_person_reject.userid,
+      auth_partyId: testdata.Bot_package_person_reject.partyid,
+      auth_partyUuid: testdata.Bot_package_person_reject.partyuuid,
+      auth_ssn: testdata.Bot_package_person_reject.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.sluttbrukerdelegationrequestwrite
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    test("PUT_Reject_Package_Request", function() {
+      expect(res.status).to.be.oneOf([200], "Expected 200 for reject request");
+      
+      // If we get 200 with body, verify it
+      if(res.status === 200) {
+        const data = res.getBody();
+        if(data) {
+          expect(data).to.have.property("status", "Rejected");
+        }
+      }
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

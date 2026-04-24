@@ -1,0 +1,69 @@
+meta {
+  name: GET_Specific_Package_Request_From_party_To_User_Approved
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request?party={{party}}&id={{resourcerequestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  id: {{resourcerequestId}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    bru.setVar("party", testdata.Bot_package_person.partyuuid);
+    bru.setVar("to", testdata.Bot_package_Org.partyuuid);
+    
+    var getTokenParameters = {
+      auth_userId: testdata.Bot_package_person.userid,
+      auth_partyId: testdata.Bot_package_person.partyid,
+      auth_partyUuid: testdata.Bot_package_person.partyuuid,
+      auth_ssn: testdata.Bot_package_person.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.sluttbrukerdelegationrequestread
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    test("GET specific package request by request_id", function() {
+      const data = res.getBody();
+      
+      expect(res.status).to.equal(200);
+      expect(data).to.exist;
+      expect(data.id).to.exist;
+      expect(data).to.have.property("id");
+    expect(data).to.have.property("status").that.is.oneOf(["Pending", "Approved"]);
+    expect(data).to.have.property("type", "package");
+    
+    // Resource check
+    expect(data.package).to.exist;
+    expect(data.package).to.have.property(
+      "referenceId",
+      testdata.package_to_delegate.package_id_privatperson
+    );
+    
+    // From / To check
+    expect(data.from).to.have.property("organizationIdentifier", testdata.Bot_package_Org.org_no);
+    expect(data.to).to.have.property("personIdentifier", testdata.Bot_package_person.pid);
+      
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
