@@ -132,7 +132,13 @@ public partial class ConnectionService(
         };
 
         await dbContext.Assignments.AddAsync(assignment, cancellationToken);
-        await RightholderAddedNotification.Upsert(dbContext, from.Id, to.Id, appsettings?.Value?.Connections?.NotifyAddRightholderPendingInSeconds ?? 60 * 2 , cancellationToken);
+        await RightholderAddedNotification.Upsert(
+            dbContext,
+            from.Id,
+            to.Id,
+            appsettings?.Value?.Notifications?.RightholderAddedNotifyInSeconds ?? RightholderAddedNotification.DefaultNotifyInSeconds,
+            cancellationToken
+        );
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -196,6 +202,14 @@ public partial class ConnectionService(
         }
 
         dbContext.Remove(existingAssignment);
+        await RightholderRemovedNotification.Upsert(
+            dbContext,
+            fromId,
+            toId,
+            appsettings?.Value?.Notifications?.RightholderRemovedNotifyInSeconds ?? RightholderRemovedNotification.DefaultNotifyInSeconds,
+            cancellationToken
+        );
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         if (from.PartyId.HasValue && to.PartyId.HasValue)
@@ -408,6 +422,15 @@ public partial class ConnectionService(
 
         var newVersion = await singleRightsService.ClearPolicyRules(existingAssignmentResources.PolicyPath, existingAssignmentResources.PolicyVersion, cancellationToken);
         existingAssignmentResources.PolicyVersion = newVersion;
+        await AccessRemovedNotification.Upsert(
+            dbContext,
+            fromId,
+            toId,
+            resourceId,
+            null,
+            appsettings?.Value?.Notifications?.AccessRemovedNotifyInSeconds ?? AccessRemovedNotification.DefaultNotifyInSeconds,
+            cancellationToken
+        );
 
         dbContext.Remove(existingAssignmentResources);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -528,6 +551,16 @@ public partial class ConnectionService(
         }
 
         dbContext.Remove(existingAssignmentPackages);
+        await AccessRemovedNotification.Upsert(
+            dbContext,
+            fromId,
+            toId,
+            null,
+            packageId,
+            appsettings?.Value?.Notifications?.AccessRemovedNotifyInSeconds ?? AccessRemovedNotification.DefaultNotifyInSeconds,
+            cancellationToken
+        );
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return null;
@@ -572,6 +605,7 @@ public partial class ConnectionService(
             .Where(a => a.ToId == toId)
             .Where(a => a.RoleId == RoleConstants.Rightholder.Id)
             .FirstOrDefaultAsync(cancellationToken);
+
         if (assignment == null)
         {
             assignment = new Assignment()
@@ -604,6 +638,16 @@ public partial class ConnectionService(
         };
 
         await dbContext.AssignmentPackages.AddAsync(newAssignmentPackage, cancellationToken);
+        await AccessAddedNotification.Upsert(
+            dbContext,
+            fromId,
+            toId,
+            null,
+            packageId,
+            appsettings?.Value?.Notifications?.AccessAddedNotifyInSeconds ?? AccessAddedNotification.DefaultNotifyInSeconds,
+            cancellationToken
+        );
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         if (from.PartyId.HasValue && to.PartyId.HasValue)
@@ -1236,6 +1280,16 @@ public partial class ConnectionService(
         }
 
         List<Rule> result = await singleRightsService.TryWriteDelegationPolicyRules(from, to, resourceObj, keys, by, ignoreExistingPolicy: false, cancellationToken: cancellationToken);
+
+        await AccessAddedNotification.Upsert(
+            dbContext,
+            from.Id,
+            to.Id,
+            resourceObj.Id,
+            null,
+            appsettings?.Value?.Notifications?.AccessAddedNotifyInSeconds ?? AccessAddedNotification.DefaultNotifyInSeconds,
+            cancellationToken
+        );
 
         if (!result.All(r => r.CreatedSuccessfully))
         {

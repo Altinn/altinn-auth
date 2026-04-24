@@ -1,6 +1,9 @@
 ﻿using System.Collections.Immutable;
+using System.Data.Common;
 using System.Diagnostics;
 using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessMgmt.Core.Appsettings;
+using Altinn.AccessMgmt.Core.Notifications;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
@@ -9,11 +12,12 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc/>
-public class ClientDelegationService(AppDbContext db) : IClientDelegationService
+public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> appsettings) : IClientDelegationService
 {
     private IEnumerable<ConstantDefinition<EntityType>> SupportedToTypes { get; } = [
         EntityTypeConstants.Person,
@@ -317,7 +321,15 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
             ToId = toUuid,
             RoleId = RoleConstants.Agent,
         };
+
         db.Assignments.Add(assignment);
+        await AgentAddedNotification.Upsert(
+            db,
+            partyUuid,
+            toUuid,
+            appsettings?.Value?.Notifications?.AgentAddedNotifyInSeconds ?? AgentAddedNotification.DefaultNotifyInSeconds,
+            cancellationToken
+        );
         await db.SaveChangesAsync(cancellationToken);
 
         return DtoMapper.Convert(assignment);
@@ -337,7 +349,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
             .Include(d => d.DelegationPackages)
             .ThenInclude(d => d.Package)
             .FirstOrDefaultAsync(cancellationToken);
-        
+
         if (existingDelegation is null)
         {
             return null;
@@ -363,6 +375,15 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
         }
 
         db.Delegations.Remove(existingDelegation);
+        await ClientRemovedNotification.Upsert(
+            db,
+            partyUuid,
+            fromUuid,
+            toUuid,
+            appsettings?.Value?.Notifications?.ClientRemovedNotifyInSeconds ?? ClientRemovedNotification.DefaultNotifyInSeconds,
+            cancellationToken
+        );
+
         await db.SaveChangesAsync(cancellationToken);
         return null;
     }
@@ -376,7 +397,7 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
             .AsTracking()
             .Where(p => p.FromId == partyUuid && p.ToId == toUuid && p.RoleId == RoleConstants.Agent)
             .FirstOrDefaultAsync(cancellationToken);
-        
+
         if (existingAssignment is null)
         {
             return null;
@@ -423,6 +444,14 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
         {
             return problem;
         }
+
+        await AgentRemovedNotification.Upsert(
+            db,
+            partyUuid,
+            toUuid,
+            appsettings?.Value?.Notifications?.AgentRemovedNotifyInSeconds ?? AgentRemovedNotification.DefaultNotifyInSeconds,
+            cancellationToken
+        );
 
         db.Assignments.Remove(existingAssignment);
         await db.SaveChangesAsync(cancellationToken);
@@ -672,6 +701,14 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                 };
 
                 db.Delegations.Add(delegation);
+                await ClientAddedNotification.Upsert(
+                    db,
+                    partyId,
+                    fromId,
+                    toId,
+                    appsettings.Value.Notifications.ClientAddedNotifyInSeconds,
+                    cancellationToken
+                );
             }
 
             var existingDelegationPackages = db.DelegationPackages.Where(t => t.DelegationId == delegation.Id);
@@ -961,6 +998,15 @@ public class ClientDelegationService(AppDbContext db) : IClientDelegationService
                 var deleteDelegation = await db.Delegations
                     .AsTracking()
                     .FirstOrDefaultAsync(d => d.Id == delegation.DelegationId, cancellationToken);
+
+                await ClientRemovedNotification.Upsert(
+                    db,
+                    partyUuid,
+                    fromUuid,
+                    toUuid,
+                    appsettings?.Value?.Notifications?.AgentRemovedNotifyInSeconds ?? ClientRemovedNotification.DefaultNotifyInSeconds,
+                    cancellationToken
+                );
 
                 db.Delegations.Remove(deleteDelegation);
             }

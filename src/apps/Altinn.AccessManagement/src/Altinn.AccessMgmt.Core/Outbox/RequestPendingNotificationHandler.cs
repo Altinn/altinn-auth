@@ -25,9 +25,9 @@ public class RequestPendingNotificationHandler(
 {
     public async Task<OutboxStatus> Handle(OutboxMessage message, CancellationToken cancellationToken)
     {
-        if (await featureManager.IsDisabledAsync(AccessMgmtFeatureFlags.AccessMgmtCoreOutboxRequestNotifyPending, cancellationToken))
+        if (await featureManager.IsDisabledAsync(AccessMgmtFeatureFlags.OutboxRequestPendingNotify, cancellationToken))
         {
-            db.OutboxMessageLogs.Add(message, $"Feature flag '{AccessMgmtFeatureFlags.AccessMgmtCoreOutboxRequestNotifyPending}' is disabled.");
+            db.OutboxMessageLogs.Add(message, $"Feature flag '{AccessMgmtFeatureFlags.OutboxRequestPendingNotify}' is disabled.");
             await db.SaveChangesAsync(cancellationToken);
             return OutboxStatus.Completed;
         }
@@ -250,12 +250,12 @@ public class ResourceRequestPendingNotificationMessage
     /// <summary>
     /// Guid of resource.
     /// </summary>
-    public List<Guid> ResourceIds { get; set; }
+    public List<Guid> ResourceIds { get; set; } = [];
 
     /// <summary>
     /// Guid of package
     /// </summary>
-    public List<Guid> PackageIds { get; set; }
+    public List<Guid> PackageIds { get; set; } = [];
 
     /// <summary>
     /// Number of updates.

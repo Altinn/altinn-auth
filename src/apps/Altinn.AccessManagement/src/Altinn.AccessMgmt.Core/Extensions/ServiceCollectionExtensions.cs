@@ -66,6 +66,12 @@ public static class ServiceCollectionExtensions
         services.AddTransient<RequestReviewedNotificationHandler>();
         services.AddTransient<RequestPendingNotificationHandler>();
 
+        services.AddTransient<AgentAddedNotificationHandler>();
+        services.AddTransient<AgentRemovedNotificationHandler>();
+
+        services.AddTransient<ClientAddedNotificationHandler>();
+        services.AddTransient<ClientRemovedNotificationHandler>();
+
         services.AddSingleton<AuditMiddleware>();
 
         services.AddOptions<CoreAppsettings>()

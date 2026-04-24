@@ -114,6 +114,18 @@ internal static partial class AccessManagementHost
             // Connections
             options.AddOutboxHandler<RightholderAddedNotificationHandler>(RightholderAddedNotification.Handler);
             options.AddOutboxHandler<RightholderRemovedNotificationHandler>(RightholderRemovedNotification.Handler);
+
+            // Access
+            options.AddOutboxHandler<AccessAddedNotificationHandler>(AccessAddedNotification.Handler);
+            options.AddOutboxHandler<AccessRemovedNotificationHandler>(AccessRemovedNotification.Handler);
+
+            // Agent
+            options.AddOutboxHandler<AgentAddedNotificationHandler>(AgentAddedNotification.Handler);
+            options.AddOutboxHandler<AgentRemovedNotificationHandler>(AgentRemovedNotification.Handler);
+
+            // Client
+            options.AddOutboxHandler<ClientAddedNotificationHandler>(ClientAddedNotification.Handler);
+            options.AddOutboxHandler<ClientRemovedNotificationHandler>(ClientRemovedNotification.Handler);
         });
 
         builder.Services.AddAccessMgmtCore(builder.Configuration, options =>

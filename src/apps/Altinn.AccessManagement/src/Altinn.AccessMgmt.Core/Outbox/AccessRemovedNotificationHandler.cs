@@ -11,9 +11,9 @@ public class AccessRemovedNotificationHandler(AppDbContext db, IFeatureManager f
 {
     public async Task<OutboxStatus> Handle(OutboxMessage message, CancellationToken cancellationToken)
     {
-        if (await featureManager.IsDisabledAsync(AccessMgmtFeatureFlags.AccessMgmtCoreOutboxAccessNotifyRemoved, cancellationToken))
+        if (await featureManager.IsDisabledAsync(AccessMgmtFeatureFlags.OutboxAccessRemovedNotify, cancellationToken))
         {
-            db.OutboxMessageLogs.Add(message, $"Feature flag '{AccessMgmtFeatureFlags.AccessMgmtCoreOutboxAccessNotifyRemoved}' is disabled.");
+            db.OutboxMessageLogs.Add(message, $"Feature flag '{AccessMgmtFeatureFlags.OutboxAccessRemovedNotify}' is disabled.");
             await db.SaveChangesAsync(cancellationToken);
             return OutboxStatus.Completed;
         }
@@ -28,9 +28,9 @@ public class AccessRemovedNotificationMessage
 
     public Guid ToId { get; set; }
 
-    public List<Guid> PackageIds { get; set; }
+    public List<Guid> PackageIds { get; set; } = [];
 
-    public List<Guid> ResourceIds { get; set; }
+    public List<Guid> ResourceIds { get; set; } = [];
 
     public int Updated { get; set; }
 }
