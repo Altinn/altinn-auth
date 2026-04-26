@@ -190,12 +190,7 @@ public class RequestControllerTest
 
         public ApiFixture Fixture { get; }
 
-        // TODO (6.7f): PDP/authz layer returns 401 Unauthorized when the
-        // sender queries `GET /sent?party=...&to=...` for their own seeded
-        // request. Previously masked by the VSTest discovery bug fixed in
-        // step 35 (see docs/testing/steps/CI_Tests_MTP_Discovery.md). Added to
-        // the follow-ups list in docs/testing/steps/INDEX.md.
-        [Fact(Skip = "PDP/authz returns 401 Unauthorized — tracked as Phase 6.7f follow-up; see docs/testing/steps/INDEX.md")]
+        [Fact]
         public async Task Sender_GetSentRequests_ContainsSeededRequest()
         {
             var client = CreateSystemClient(Fixture, TestData.BakerJohnsen.Id);
@@ -667,11 +662,26 @@ public class RequestControllerTest
 
         public ApiFixture Fixture { get; }
 
-        // TODO (6.7f): Product returns 400 BadRequest when the receiver approves
-        // a pending package request via `PUT /received/approve?party=...&id=...`.
-        // Previously masked by the VSTest discovery bug fixed in step 35.
-        // Tracked under Phase 6.7f in docs/testing/steps/INDEX.md.
-        [Fact(Skip = "Product returns 400 BadRequest — tracked as Phase 6.7f follow-up; see docs/testing/steps/INDEX.md")]
+        // TODO (step 62 follow-up): rewrite fixture before un-skipping.
+        // The happy-path approval exercises the real delegation-rights path
+        // (ConnectionService.AddPackage -> CheckPackage -> GetAssignableAccessPackages)
+        // which requires the authenticated principal to hold a role on the *receiver*
+        // party that grants permission to delegate the requested package, AND a
+        // pre-existing Rightholder connection between receiver and sender.
+        //
+        // The current seed authenticates as OddHalvorsen (a Person, and the request's
+        // "from"/sender), and uses party=BakerJohnsen (receiver) — Odd has no
+        // delegation rights on Baker's behalf, so CheckPackage correctly returns a
+        // validation error and the endpoint returns 400. Step 48 masked this by
+        // bypassing CheckPackage entirely via ImportAssignmentPackages, which is the
+        // A2 role-import helper and must not be used from the public approval
+        // endpoint — see step 62.
+        //
+        // A proper rewrite should e.g. authenticate as MalinEmilie (MD of
+        // DumboAdventures), seed the RequestAssignment with To=DumboAdventures and
+        // From=<an entity that already has a Rightholder connection with Dumbo>, and
+        // request a package Malin's MD role permits her to delegate.
+        [Fact(Skip = "Fixture mis-seeded: authenticates as the sender/Person with no delegation rights on the receiver. Needs rewrite — see step 62 for context.")]
         public async Task Receiver_ApprovesPendingPackageRequest_ReturnsApproved()
         {
             var client = CreateSystemClient(Fixture, TestData.OddHalvorsen.Id);

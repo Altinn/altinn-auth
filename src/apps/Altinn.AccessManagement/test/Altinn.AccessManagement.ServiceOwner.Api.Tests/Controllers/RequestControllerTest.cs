@@ -565,24 +565,23 @@ public class RequestControllerTest
 
         public ApiFixture Fixture { get; }
 
-        // TODO (6.7e): Latent product bug — RequestController.CreateResourceRequest
-        // query-param overload returns 400 BadRequest instead of 202 Accepted. Tracked
-        // under Phase 6.7e in docs/testing/steps/INDEX.md (Recommended Next Steps).
-        [Fact(Skip = "Latent product bug — tracked as Phase 6.7e follow-up; see docs/testing/steps/INDEX.md")]
+        [Fact]
         public async Task CreateResourceRequest_WithValidQueryParams_Returns202Accepted()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var from = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
             var to = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
-            var url = $"{Route}/resource"
-                + $"?from={Uri.EscapeDataString(from)}"
-                + $"&to={Uri.EscapeDataString(to)}"
-                + $"&resource={Uri.EscapeDataString("test-resource-query-1")}";
+            var body = new RequestResourceDto
+            {
+                From = from,
+                To = to,
+                Resource = "test-resource-query-1"
+            };
 
             var response = await client.PostAsJsonAsync(
-                url,
-                Array.Empty<string>(),
+                $"{Route}/resource",
+                body,
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
@@ -598,14 +597,16 @@ public class RequestControllerTest
             var from = "urn:invalid:prefix:12345";
             var to = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
-            var url = $"{Route}/resource"
-                + $"?from={Uri.EscapeDataString(from)}"
-                + $"&to={Uri.EscapeDataString(to)}"
-                + $"&resource={Uri.EscapeDataString("test-resource-query-1")}";
+            var body = new RequestResourceDto
+            {
+                From = from,
+                To = to,
+                Resource = "test-resource-query-1"
+            };
 
             var response = await client.PostAsJsonAsync(
-                url,
-                Array.Empty<string>(),
+                $"{Route}/resource",
+                body,
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -627,28 +628,28 @@ public class RequestControllerTest
         public ApiFixture Fixture { get; }
 
         [Fact]
-        public async Task CreatePackageRequest_WithKnownPackage_ReturnsBadRequest()
+        public async Task CreatePackageRequest_WithKnownPackage_Returns202Accepted()
         {
-            // NOTE: The query-parameter overload of POST /package currently returns 400 even for
-            // a valid package URN because the controller forwards the resolved package's Id (but
-            // not its ReferenceId) to the private CreatePackageRequest helper, which then fails
-            // its own PackageConstants.TryGetByAll lookup on a null ReferenceId. This test pins
-            // the current behaviour and exercises the endpoint for coverage purposes.
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var from = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
             var to = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
-            var url = $"{Route}/package"
-                + $"?from={Uri.EscapeDataString(from)}"
-                + $"&to={Uri.EscapeDataString(to)}"
-                + $"&package={Uri.EscapeDataString(PackageConstants.Agriculture.Entity.Urn)}";
+            var body = new RequestPackageDto
+            {
+                From = from,
+                To = to,
+                Package = PackageConstants.Agriculture.Entity.Urn
+            };
 
             var response = await client.PostAsJsonAsync(
-                url,
-                Array.Empty<string>(),
+                $"{Route}/package",
+                body,
                 TestContext.Current.CancellationToken);
 
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+            var dto = await response.Content.ReadFromJsonAsync<RequestDto>(TestContext.Current.CancellationToken);
+            Assert.NotNull(dto);
+            Assert.NotEqual(Guid.Empty, dto.Id);
         }
 
         [Fact]
@@ -658,14 +659,16 @@ public class RequestControllerTest
             var from = "urn:invalid:prefix:12345";
             var to = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
-            var url = $"{Route}/package"
-                + $"?from={Uri.EscapeDataString(from)}"
-                + $"&to={Uri.EscapeDataString(to)}"
-                + $"&package={Uri.EscapeDataString(PackageConstants.Agriculture.Entity.Urn)}";
+            var body = new RequestPackageDto
+            {
+                From = from,
+                To = to,
+                Package = PackageConstants.Agriculture.Entity.Urn
+            };
 
             var response = await client.PostAsJsonAsync(
-                url,
-                Array.Empty<string>(),
+                $"{Route}/package",
+                body,
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);

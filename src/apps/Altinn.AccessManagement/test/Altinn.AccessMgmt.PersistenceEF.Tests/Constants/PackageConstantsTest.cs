@@ -1,10 +1,10 @@
-using Altinn.AccessMgmt.PersistenceEF.Constants;
+﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Tests.Constants;
 
 public class PackageConstantsTest
 {
-    [Fact(Skip = "Name not unique for packages")]
+    [Fact]
     public void TryGetByAll_WithExistingUrnSuffixWithColon_ReturnsTrue()
     {
         var value = ":" + PackageConstants.Agriculture.Entity.Urn.Split(":").LastOrDefault();
@@ -13,7 +13,7 @@ public class PackageConstantsTest
         Assert.Equal(package, PackageConstants.Agriculture);
     }
 
-    [Fact(Skip = "Name not unique for packages")]
+    [Fact]
     public void TryGetByAll_WithExistingUrnSuffixWithoutColon_ReturnsTrue()
     {
         var value = PackageConstants.Agriculture.Entity.Urn.Split(":").LastOrDefault();
@@ -22,7 +22,7 @@ public class PackageConstantsTest
         Assert.Equal(package, PackageConstants.Agriculture);
     }
 
-    [Fact(Skip = "Name not unique for packages")]
+    [Fact]
     public void TryGetByAll_WithExistingUrn_ReturnsTrue()
     {
         bool result = PackageConstants.TryGetByAll(PackageConstants.Agriculture.Entity.Urn, out var package);
@@ -30,7 +30,7 @@ public class PackageConstantsTest
         Assert.Equal(package, PackageConstants.Agriculture);
     }
 
-    [Fact(Skip = "Name not unique for packages")]
+    [Fact]
     public void TryGetByAll_WithExistingName_ReturnsTrue()
     {
         bool result = PackageConstants.TryGetByAll(PackageConstants.Agriculture.Entity.Name, out var package);
@@ -38,7 +38,7 @@ public class PackageConstantsTest
         Assert.Equal(package, PackageConstants.Agriculture);
     }
 
-    [Fact(Skip = "Name not unique for packages")]
+    [Fact]
     public void TryGetByAll_WithExistingId_ReturnsTrue()
     {
         bool result = PackageConstants.TryGetByAll(PackageConstants.Agriculture.Entity.Id.ToString(), out var package);
@@ -46,7 +46,7 @@ public class PackageConstantsTest
         Assert.Equal(package, PackageConstants.Agriculture);
     }
 
-    [Fact(Skip = "Name not unique for packages")]
+    [Fact]
     public void TryGetByAll_WithRandomId_ReturnsFalse()
     {
         bool result = PackageConstants.TryGetByAll(Guid.CreateVersion7().ToString(), out var package);
@@ -54,7 +54,7 @@ public class PackageConstantsTest
         Assert.Null(package);
     }
 
-    [Fact(Skip = "Name not unique for packages")]
+    [Fact]
     public void TryGetByAll_WithNull_ReturnsFalse()
     {
         bool result = PackageConstants.TryGetByAll(null, out var package);

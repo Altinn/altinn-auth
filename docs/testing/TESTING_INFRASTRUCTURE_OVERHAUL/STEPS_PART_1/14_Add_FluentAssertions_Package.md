@@ -1,4 +1,4 @@
-﻿# Step 14: Add FluentAssertions Package
+# Step 14: Add FluentAssertions Package
 
 **Phase:** 4.2a — Test Patterns & Naming  
 **Status:** ✅ Complete  
@@ -237,5 +237,5 @@ As per INDEX.md recommended next steps:
 - [FluentAssertions Official Documentation](https://fluentassertions.com/)
 - [FluentAssertions GitHub](https://github.com/fluentassertions/fluentassertions)
 - [Step 13 — FluentAssertions Evaluation](FluentAssertions_Evaluation.md)
-- [TESTING_INFRASTRUCTURE_OVERHAUL.md Phase 4.2](../TESTING_INFRASTRUCTURE_OVERHAUL.md)
+- [TESTING_INFRASTRUCTURE_OVERHAUL.md Phase 4.2](../TESTING_INFRASTRUCTURE_OVERHAUL_PART_1.md)
 - [MSBuild Central Package Management](https://learn.microsoft.com/en-us/nuget/consume-packages/central-package-management)

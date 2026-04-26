@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using Altinn.AccessManagement.Api.Enduser.Validation;
 using Altinn.AccessMgmt.Core.Validation;
 using Altinn.Authorization.ProblemDetails;
@@ -10,7 +10,7 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Validation;
 ///
 /// These cover the cross-field (semantic) rules directly so they are not only
 /// exercised through controller integration tests. See
-/// <c>docs/testing/steps/Coverage_Enduser_Api.md</c> for the coverage rationale.
+/// <c>docs/testing/TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/Coverage_Enduser_Api.md</c> for the coverage rationale.
 /// </summary>
 public class ConnectionCombinationRulesTest
 {

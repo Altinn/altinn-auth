@@ -112,11 +112,10 @@ public class ResourceRegistryMock : IResourceRegistry
             if (memberships != null)
             {
                 PutInCache(cacheKey, 5, memberships);
-                return Task.FromResult(memberships);
             }
         }
 
-        return Task.FromResult(Enumerable.Empty<AccessListResourceMembershipWithActionFilterDto>());
+        return Task.FromResult(memberships ?? Enumerable.Empty<AccessListResourceMembershipWithActionFilterDto>());
     }
 
     private static string GetResourceRegistryPolicyPath(string resourceId)

@@ -126,12 +126,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         /// <summary>
         /// Tests the scenario where the reportee organization has access to 'ttd-accesslist-resource' through access list membership with matching action filter.
         /// </summary>
-        // TODO: class-level state pollution — passes in isolation but fails when
-        // the full class runs (expects Permit, gets Deny). The ctor registers
-        // featureManageMock / timeProviderMock on the shared AuthorizationApiFixture,
-        // so ordering pollution between tests is the likely cause. Tracked as a
-        // follow-up in docs/testing/steps/CI_Tests_MTP_Discovery.md ("Deferred").
-        [Fact(Skip = "Flaky due to AuthorizationApiFixture state pollution — see CI_Tests_MTP_Discovery.md Deferred section")]
+        [Fact]
         public async Task PDP_Decision_ResourceRegistry_AccessListAuthorization_Json_PermitWithActionFilterMatch()
         {
             string testCase = "ResourceRegistry_AccessListAuthorization_Json_PermitWithActionFilterMatch";

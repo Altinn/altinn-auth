@@ -69,8 +69,8 @@ public static class PackageConstants
             return true;
         }
 
-        // Case 2: Suffix only with ':'
-        if (urn.StartsWith(':') && urn.Split(':').Length == 1)
+        // Case 2: Suffix only with ':' (e.g. ":jordbruk")
+        if (urn.StartsWith(':') && urn.Split(':').Length == 2)
         {
             if (ConstantLookup.TryGetByUrn(typeof(PackageConstants), $"urn:altinn:accesspackage{urn}", out result))
             {

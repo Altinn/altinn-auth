@@ -63,10 +63,13 @@ public static class ConstantLookup
         return _byName.GetOrAdd(key, _ =>
         {
             var constants = GetConstants<TType>(constantsClass);
-            return constants.ToDictionary<ConstantDefinition<TType>, string, object>(
-                cd => cd.Entity.Name,
-                cd => cd,
-                StringComparer.OrdinalIgnoreCase);
+            var dict = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            foreach (var cd in constants)
+            {
+                dict.TryAdd(cd.Entity.Name, cd);
+            }
+
+            return dict;
         });
     }
 

@@ -43,6 +43,7 @@ namespace Altinn.AccessManagement.Controllers
         /// <param name="policyInformationPoint">The policy information point</param>
         /// <param name="singleRightsService">Service implementation for providing rights operations for BFF and external integrations</param>
         /// <param name="rightsForAltinn2">Service implementation for providing rights operations for Altinn 2 integrations</param>
+        /// <param name="assignmentService">Service implementation for assignment operations</param>
         public RightsInternalController(ILogger<RightsInternalController> logger, IMapper mapper, IPolicyInformationPoint policyInformationPoint, ISingleRightsService singleRightsService, IAltinn2RightsService rightsForAltinn2, IAssignmentService assignmentService)
         {
             _logger = logger;

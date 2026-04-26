@@ -1396,9 +1396,9 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
                 MemoryStream dataStream = PolicyHelper.GetXmlMemoryStreamFromXacmlPolicy(delegationPolicy);
 
                 // Write policy file to blob storage
-                var policyWriteResult = await policyClient.WritePolicyConditionallyAsync(dataStream, leaseId, cancellationToken);
+                await policyClient.WritePolicyConditionallyAsync(dataStream, leaseId, cancellationToken);
             }
-            
+
             db.Remove(assignmentInstance);
             await db.SaveChangesAsync(audit, cancellationToken);
 
@@ -1409,13 +1409,12 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
             {
                 db.Assignments.Remove(assignment);
                 await db.SaveChangesAsync(audit, cancellationToken);
-            }
-            
+            }   
         }
         finally
         {
             // Release lock on new policy file in blob storage
-            if (!string.IsNullOrEmpty(leaseId) && policyClient != null)
+            if (!string.IsNullOrEmpty(leaseId))
             {
                 await policyClient.ReleaseBlobLease(leaseId, cancellationToken);
             }
@@ -1438,15 +1437,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
             inputRightKeys.Add(rightKeyHashed);
         }
 
-        foreach (string rightKey in inputRightKeys)
-        {
-            if (!rightKeys.Any(rk => rk.Key == rightKey))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return inputRightKeys.All(rightKey => rightKeys.Any(rk => rk.Key == rightKey));
     }
 
     /// <inheritdoc />
@@ -1595,7 +1586,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
         finally
         {
             // Release lock on new policy file in blob storage
-            if (!string.IsNullOrEmpty(leaseId) && policyClient != null)
+            if (!string.IsNullOrEmpty(leaseId))
             {
                 await policyClient.ReleaseBlobLease(leaseId, cancellationToken);
             }
@@ -1654,12 +1645,9 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
             delegationPolicy = existingDelegationPolicy;
             PolicyParameters policyData = PolicyHelper.GetPolicyDataFromInstanceRight(rules);
 
-            foreach (InstanceRule rule in rules.InstanceRules)
+            foreach (InstanceRule rule in rules.InstanceRules.Where(rule => !DelegationHelper.PolicyContainsMatchingInstanceRule(delegationPolicy, rule)))
             {
-                if (!DelegationHelper.PolicyContainsMatchingInstanceRule(delegationPolicy, rule))
-                {
-                    delegationPolicy.Rules.Add(PolicyHelper.BuildDelegationInstanceRule(policyData, rule));
-                }
+                delegationPolicy.Rules.Add(PolicyHelper.BuildDelegationInstanceRule(policyData, rule));
             }
         }
         else

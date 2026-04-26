@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Altinn.AccessManagement.Controllers;
@@ -27,7 +27,7 @@ using Microsoft.Extensions.Options;
 // as part of Phase 2.2 (Step 16.1 — AccessMgmt.Tests WAF consolidation, Group A easy wins).
 // The tests mock the delegation repositories, the PDP and the policy retrieval/factory, so
 // the Postgres DB that ApiFixture provisions is unused by this class.
-// See docs/testing/steps/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
+// See docs/testing/TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
 
 namespace Altinn.AccessManagement.Tests.Controllers
 {

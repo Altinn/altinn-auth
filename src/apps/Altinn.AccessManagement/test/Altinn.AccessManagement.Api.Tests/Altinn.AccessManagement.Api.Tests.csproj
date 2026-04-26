@@ -19,6 +19,7 @@
 		<ProjectReference Include="..\..\src\Altinn.AccessManagement.Api.ServiceOwner\Altinn.AccessManagement.Api.ServiceOwner.csproj" />
 		<ProjectReference Include="..\Altinn.AccessManagement.TestUtils\Altinn.AccessManagement.TestUtils.csproj" />
 		<ProjectReference Include="..\..\src\Altinn.AccessManagement.Api.Enduser\Altinn.AccessManagement.Api.Enduser.csproj" />
+		<ProjectReference Include="..\..\src\Altinn.AccessManagement.Api.Internal\Altinn.AccessManagement.Api.Internal.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

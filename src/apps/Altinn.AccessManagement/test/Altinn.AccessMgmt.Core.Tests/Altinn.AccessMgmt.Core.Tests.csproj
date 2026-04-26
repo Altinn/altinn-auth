@@ -10,10 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    
+
     <ProjectReference Include="..\Altinn.AccessManagement.TestUtils\Altinn.AccessManagement.TestUtils.csproj" />
     <ProjectReference Include="..\..\src\Altinn.AccessMgmt.Core\Altinn.AccessMgmt.Core.csproj" />
-    
+    <ProjectReference Include="..\..\src\Altinn.AccessMgmt.Persistence.Core\Altinn.AccessMgmt.Persistence.Core.csproj" />
+    <ProjectReference Include="..\..\src\Altinn.AccessMgmt.PersistenceEF\Altinn.AccessMgmt.PersistenceEF.csproj" />
+
   </ItemGroup>
 
   <ItemGroup>

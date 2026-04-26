@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text.Json;
@@ -28,7 +28,7 @@ using Microsoft.Extensions.Options;
 // nested-class splits). The two Theory tests that required PepWithPDPAuthorizationMock
 // on top of the default PdpPermitMock are relocated to the sibling class
 // RightsInternalControllerWithPdpMockTest (recipe rule 6: one mutually-exclusive DI
-// configuration per class). See docs/testing/steps/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
+// configuration per class). See docs/testing/TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
 
 namespace Altinn.AccessManagement.Tests.Controllers
 {

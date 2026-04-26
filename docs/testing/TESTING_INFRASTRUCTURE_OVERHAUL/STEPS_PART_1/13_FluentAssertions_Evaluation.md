@@ -1,4 +1,4 @@
-﻿# Step 13: FluentAssertions Evaluation
+# Step 13: FluentAssertions Evaluation
 
 **Phase:** 4.2 — Test Patterns & Naming  
 **Status:** ✅ Complete  
@@ -304,4 +304,4 @@ Created comparison examples for:
 - [FluentAssertions Documentation](https://fluentassertions.com/)
 - [FluentAssertions GitHub](https://github.com/fluentassertions/fluentassertions)
 - [NuGet Package](https://www.nuget.org/packages/FluentAssertions/)
-- Phase 4.2 in [TESTING_INFRASTRUCTURE_OVERHAUL.md](../TESTING_INFRASTRUCTURE_OVERHAUL.md)
+- Phase 4.2 in [TESTING_INFRASTRUCTURE_OVERHAUL.md](../TESTING_INFRASTRUCTURE_OVERHAUL_PART_1.md)

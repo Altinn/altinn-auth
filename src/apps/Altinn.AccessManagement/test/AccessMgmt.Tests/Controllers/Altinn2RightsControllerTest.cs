@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
@@ -27,7 +27,7 @@ using Microsoft.Extensions.Options;
 // as part of Phase 2.2 (Sub-step 16.2a — AccessMgmt.Tests WAF consolidation, Group A
 // single-configuration migrations). All tests share a single mock set (WithServiceMoq),
 // so the DI can be registered once in the constructor; per-test HttpClients are built
-// via fixture.CreateClient(). See docs/testing/steps/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
+// via fixture.CreateClient(). See docs/testing/TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
 
 namespace Altinn.AccessManagement.Tests.Controllers;
 

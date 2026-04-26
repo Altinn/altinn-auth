@@ -110,13 +110,15 @@ TestingPlatformDotnetTestSupport=False
 
 ## Deferred / not in scope
 
-- **`PDP_Decision_ResourceRegistry_AccessListAuthorization_Json_PermitWithActionFilterMatch`**
-  in `src/apps/Altinn.Authorization/test/Altinn.Authorization.Tests/ResourceRegistry_DecisionTests.cs`
-  passes in isolation but fails when the full class runs (expects `Permit`, gets
-  `Deny`). The class uses `IClassFixture<AuthorizationApiFixture>` and its ctor
-  registers `featureManageMock` / `timeProviderMock` on the shared fixture, so
-  ordering pollution is the likely cause. Tracked as a follow-up step; does not
-  block the MTP-routing fix.
+- ~~**`PDP_Decision_ResourceRegistry_AccessListAuthorization_Json_PermitWithActionFilterMatch`**~~
+  **Resolved in Step 51.** Root cause was a cache-hit bug in `ResourceRegistryMock.GetMembershipsForResourceForParty`:
+  on a cache hit `TryGetValue` populates `memberships` but the enclosing `if (!TryGetValue(...))` block
+  is skipped, causing a fall-through to `return Enumerable.Empty<>()` instead of returning the cached
+  value. `DenyActionFilterNotMatching` (same `partyOrgNum` + same resource) always ran first, priming
+  the cache; the next call for `PermitWithActionFilterMatch` got a cache hit, returned empty, and the
+  PDP correctly (but wrongly from the test's perspective) issued Deny. Fixed by replacing the
+  early-return-inside-if pattern with `return memberships ?? Enumerable.Empty<>()` after the block.
+  `[Skip]` removed; all 21 tests in the class pass deterministically. See [51_Fix_6_7f_AccessListAuthorizationMockCacheBug.md](51_Fix_6_7f_AccessListAuthorizationMockCacheBug.md).
 - Any real failures in `AccessManagement.ServiceOwner.Api.Tests` and
   `AccessManagement.Enduser.Api.Tests` that were previously masked by VSTest's
   "0 tests" result. These will now surface in CI and can be addressed
