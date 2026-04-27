@@ -1,4 +1,4 @@
-﻿name: "Template: Vertical CI"
+name: "Template: Vertical CI"
 
 on:
   workflow_call:
@@ -52,12 +52,25 @@ permissions:
   contents: read
 
 jobs:
-  build-and-test:
-    name: Build and Test
+  build-test-analyze:
+    # Single job that builds, tests (with coverage), runs the threshold
+    # check, packs (for pkg verticals), and uploads the SonarCloud analysis
+    # — all driven by ONE test execution. Previously split across two jobs
+    # (`build-and-test` and `analyze`) that each rebuilt and re-ran every
+    # test, doubling per-vertical CI minutes. SonarCloud's C# scanner does
+    # not accept cobertura, so coverage is collected once into the native
+    # `.coverage` binary and merged into both formats: cobertura for the
+    # PowerShell threshold check, VSCoverage XML for Sonar.
+    name: Build, Test, Analyze
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          # Sonar needs full git history for accurate blame, SCM authors,
+          # and "new code" period detection on PRs.
+          fetch-depth: 0
+
       - name: Install .NET
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
@@ -69,36 +82,116 @@ jobs:
         run: dotnet workload restore
         working-directory: ${{ inputs.path }}
 
-      - name: Build
-        run: dotnet build -c Release -bl:binlog/build.binlog
-        working-directory: ${{ inputs.path }}
-
-      - name: Install dotnet-coverage
-        # Installed once per job so the Test step below can wrap `dotnet test`
-        # under `dotnet-coverage collect`. Keeping install in a separate step
-        # keeps the Test step's run log focused on test output and makes the
-        # install failure (if any) easy to spot as its own red checkmark.
-        run: dotnet tool install -g dotnet-coverage
+      - name: Detect SonarCloud config
+        # Single source of truth for "should Sonar run?". Exposed as a step
+        # output so the conditional Sonar steps below all reference one
+        # condition instead of repeating the checks inline.
+        # Sonar is disabled when:
+        #   - the vertical opted out (sonarProjectKey == 'false')
+        #   - the PR is from a fork (no SONAR_TOKEN access on forks)
+        #   - the PR was opened by Renovate / Dependabot — bot PRs only
+        #     touch dependency manifests and produce no useful Sonar
+        #     findings, so analysing them just burns Sonar minutes per
+        #     vertical. On push events `github.event.pull_request.user.login`
+        #     is null, so the bot checks pass and Sonar still runs on
+        #     merges to main (including the merge of a bot-authored PR).
+        id: sonar
         shell: bash
+        run: |
+          if [[ "${{ inputs.sonarProjectKey }}" != "false" \
+             && "${{ github.event.pull_request.head.repo.fork }}" != "true" \
+             && "${{ github.event.pull_request.user.login }}" != "renovate[bot]" \
+             && "${{ github.event.pull_request.user.login }}" != "dependabot[bot]" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Test
-        # Single test execution that ALSO collects coverage — this replaces
-        # the old "run tests twice" pattern (once for pass/fail, once under
-        # `dotnet-coverage` for XML). The Coverage threshold check step below
-        # is now parse-only and completes in seconds.
-        #
-        # `dotnet-coverage collect -- dotnet test` propagates the test
-        # command's exit code, so:
-        #   * exit 0 = tests passed
-        #   * exit 2 = real test failures (fails this step, red ❌)
-        #   * exit 8 = no tests ran (e.g. every test `[Skip]`ed because
-        #             required infra like Azurite is missing in CI) — we
-        #             swallow this via `--ignore-exit-code 8`
-        # The cobertura XML is written to TestResults/coverage.cobertura.xml
-        # relative to the vertical's working directory.
-        id: test
-        run: dotnet-coverage collect --nologo --output TestResults/coverage.cobertura.xml --output-format cobertura -- dotnet test -c Release --no-build -bl:binlog/test.binlog -- --ignore-exit-code 8
+      - name: Set up JDK 17
+        # Required by dotnet-sonarscanner. Skipped when Sonar is disabled
+        # for this vertical (e.g. Altinn.Register).
+        if: steps.sonar.outputs.enabled == 'true'
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
+        with:
+          distribution: "microsoft"
+          java-version: 17
+
+      - name: Cache SonarCloud scanner and analysis cache
+        # Caches both the dotnet-sonarscanner / dotnet-coverage global tools
+        # (~80MB) and Sonar's incremental analysis cache under ~/.sonar/cache.
+        # Keyed per-vertical so each project's analysis cache is isolated;
+        # bumped when the scanner version changes.
+        if: steps.sonar.outputs.enabled == 'true'
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            ~/.sonar/cache
+            ~/.dotnet/tools
+          key: ${{ runner.os }}-sonar-11.2.1-${{ inputs.slug }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-sonar-11.2.1-${{ inputs.slug }}-
+            ${{ runner.os }}-sonar-11.2.1-
+
+      - name: Install coverage and Sonar tools
+        # dotnet-coverage is needed by every vertical (collects test
+        # coverage). dotnet-sonarscanner is only needed when Sonar is on.
+        shell: bash
+        run: |
+          dotnet tool list --global | grep -q dotnet-coverage || dotnet tool install --global dotnet-coverage
+          if [[ "${{ steps.sonar.outputs.enabled }}" == "true" ]]; then
+            dotnet tool list --global | grep -q dotnet-sonarscanner || dotnet tool install --global dotnet-sonarscanner --version 11.2.1
+          fi
+
+      - name: SonarCloud begin
+        # Wraps the build/test that follow. The scanner injects its analyzers
+        # via MSBuild integration during the Build step; analysis data is
+        # then uploaded in the matching `SonarCloud end` step below.
+        id: sonar-begin
+        if: steps.sonar.outputs.enabled == 'true'
         working-directory: ${{ inputs.path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed for PR decoration
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_KEY: ${{ inputs.sonarProjectKey }}
+          SONAR_NAME: ${{ inputs.sonarProjectName }}
+        shell: bash
+        run: |
+          dotnet-sonarscanner begin \
+            /key:"$SONAR_KEY" \
+            /name:"$SONAR_NAME" \
+            /o:"altinn" \
+            /d:sonar.token="$SONAR_TOKEN" \
+            /s:"$GITHUB_WORKSPACE/SonarQube.Analysis.xml"
+
+      - name: Build
+        # `--no-incremental` keeps the output deterministic between this run
+        # and any local rebuild — important when the SonarCloud scanner is
+        # wrapping the build, which is sensitive to stale analyzer outputs.
+        run: dotnet build -c Release --no-incremental -bl:binlog/build.binlog
+        working-directory: ${{ inputs.path }}
+
+      - name: Test (with coverage)
+        # ONE test execution per CI run. dotnet-coverage collects in the
+        # native `.coverage` binary format; the two Convert steps below
+        # produce cobertura (for the threshold check) and VSCoverage XML
+        # (for Sonar) without re-running the tests. xUnit v3 routes through
+        # Microsoft Testing Platform (MTP); arguments after `--` are
+        # forwarded to each per-project MTP runner:
+        #   --results-directory   write per-project artifacts under TestResults/
+        #   --report-xunit-trx    emit .trx files (consumed by Sonar via
+        #                         sonar.cs.vstest.reportsPaths)
+        #   --ignore-exit-code 8  treat "all tests [Skip]ped" as success
+        #                         (e.g. Host.Lease without Azurite)
+        # `dotnet-coverage collect -- dotnet test` propagates the test exit
+        # code, so a real test failure (exit 2) fails this step.
+        id: test
+        shell: bash
+        working-directory: ${{ inputs.path }}
+        run: |
+          dotnet-coverage collect --nologo \
+            --output TestResults/coverage.coverage --output-format coverage \
+            -- dotnet test -c Release --no-build -bl:binlog/test.binlog \
+              -- --results-directory TestResults/ --report-xunit-trx --ignore-exit-code 8
 
       - name: Report failed tests
         # When the Test step fails, surface the specific failing test names
@@ -162,11 +255,50 @@ jobs:
           Write-Host ""
           Write-Host "Total failing tests: $total"
 
+      - name: Convert coverage to cobertura
+        # Reads the native .coverage binary written by the Test step and
+        # emits cobertura — the format the PowerShell threshold check below
+        # parses. Runs even on test failure so a coverage regression isn't
+        # masked by a separate test failure.
+        if: always() && hashFiles(format('{0}/TestResults/coverage.coverage', inputs.path)) != ''
+        shell: bash
+        working-directory: ${{ inputs.path }}
+        run: |
+          dotnet-coverage merge --nologo \
+            --output TestResults/coverage.cobertura.xml --output-format cobertura \
+            TestResults/coverage.coverage
+
+      - name: Convert coverage to VSCoverage XML
+        # Sonar's C# scanner does not accept cobertura — it reads VSCoverage
+        # XML via sonar.cs.vscoveragexml.reportsPaths (configured in the
+        # repo-root SonarQube.Analysis.xml). Skip when Sonar is off for this
+        # vertical (no consumer).
+        if: always() && steps.sonar-begin.outcome == 'success' && hashFiles(format('{0}/TestResults/coverage.coverage', inputs.path)) != ''
+        shell: bash
+        working-directory: ${{ inputs.path }}
+        run: |
+          dotnet-coverage merge --nologo \
+            --output TestResults/coverage.xml --output-format xml \
+            TestResults/coverage.coverage
+
+      - name: SonarCloud end
+        # Uploads analysis to SonarCloud. Runs on test failure too — issues
+        # found by the scanner are still useful when tests are red. Gated on
+        # `sonar-begin succeeded` so the matching `end` is only invoked when
+        # there's something to close out.
+        if: always() && steps.sonar-begin.outcome == 'success'
+        working-directory: ${{ inputs.path }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: bash
+        run: dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+
       - name: Coverage threshold check
-        # Parse-only: reads TestResults/coverage.cobertura.xml produced by the
-        # Test step above and enforces per-assembly thresholds. Completes in
-        # seconds — no test re-run. See eng/testing/check-coverage-thresholds.ps1.
-        if: hashFiles(format('{0}/TestResults/coverage.cobertura.xml', inputs.path)) != ''
+        # Parse-only: reads TestResults/coverage.cobertura.xml produced by
+        # the Convert-to-cobertura step above and enforces per-assembly
+        # thresholds. Completes in seconds — no test re-run.
+        # See eng/testing/check-coverage-thresholds.ps1.
+        if: always() && hashFiles(format('{0}/TestResults/coverage.cobertura.xml', inputs.path)) != ''
         shell: pwsh
         working-directory: ${{ inputs.path }}
         run: |
@@ -189,12 +321,12 @@ jobs:
 
       - name: Upload test results
         # On failure only: capture MTP per-project logs and TRX reports so the
-        # cause can be diagnosed from GHA artifacts. The workflow `6_Test.txt`
+        # cause can be diagnosed from GHA artifacts. The workflow `Test.txt`
         # log contains only summary lines like "Failed: N, Passed: M"; per-test
         # detail lives in bin/.../TestResults/<Project>_<tfm>_<arch>.log.
         # We intentionally skip this on success — the logs aren't needed and
         # uploading them every run added 10+ MB per CI pipeline.
-        # Cobertura XML is not uploaded (it's reproducible locally via
+        # Coverage XML is not uploaded (it's reproducible locally via
         # eng/testing/run-coverage.ps1 and was the bulk of the artifact size).
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -213,82 +345,3 @@ jobs:
           path: ${{ inputs.path }}/binlog/*.binlog
           if-no-files-found: error
           retention-days: 1
-
-  analyze:
-    name: Analyze
-    runs-on: ubuntu-latest
-    if: inputs.sonarProjectKey != 'false' && !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true)
-
-    steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        with:
-          # Sonar needs full git history for accurate blame, SCM authors,
-          # and "new code" period detection on PRs.
-          fetch-depth: 0
-      - name: Install .NET
-        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
-        with:
-          dotnet-version: |
-            8.0.x
-            9.0.x
-
-      - name: Restore dotnet workloads
-        run: dotnet workload restore
-        working-directory: ${{ inputs.path }}
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
-        with:
-          distribution: "microsoft"
-          java-version: 17
-
-      - name: Cache SonarCloud scanner and analysis cache
-        # Caches both the dotnet-sonarscanner / dotnet-coverage global tools
-        # (~80MB) and Sonar's incremental analysis cache under ~/.sonar/cache.
-        # Keyed per-vertical so each project's analysis cache is isolated;
-        # bumped when the scanner version changes.
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          path: |
-            ~/.sonar/cache
-            ~/.dotnet/tools
-          key: ${{ runner.os }}-sonar-11.2.1-${{ inputs.slug }}-${{ github.run_id }}
-          restore-keys: |
-            ${{ runner.os }}-sonar-11.2.1-${{ inputs.slug }}-
-            ${{ runner.os }}-sonar-11.2.1-
-
-      - name: Install SonarCloud scanner and dependencies
-        shell: bash
-        run: |
-          dotnet tool list --global | grep -q dotnet-sonarscanner || dotnet tool install --global dotnet-sonarscanner --version 11.2.1
-          dotnet tool list --global | grep -q dotnet-coverage      || dotnet tool install --global dotnet-coverage
-
-      - name: Analyze
-        working-directory: ${{ inputs.path }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_KEY: ${{ inputs.sonarProjectKey }}
-          SONAR_NAME: ${{ inputs.sonarProjectName }}
-        shell: bash
-        run: |
-          dotnet-sonarscanner begin \
-            /key:"$SONAR_KEY" \
-            /name:"$SONAR_NAME" \
-            /o:"altinn" \
-            /d:sonar.token="$SONAR_TOKEN" \
-            /s:"$GITHUB_WORKSPACE/SonarQube.Analysis.xml"
-
-          dotnet build --no-incremental
-          # xUnit v3 routes `dotnet test` through Microsoft Testing Platform (MTP).
-          # Everything after `--` is forwarded to each per-project MTP runner:
-          #   --results-directory   emit artifacts (including the TRX below) under TestResults/
-          #   --report-xunit-trx    generate .trx files so Sonar's sonar.cs.vstest.reportsPaths picks them up
-          #                         (xUnit v3's built-in TRX reporter; the generic MTP
-          #                         --report-trx would need the separate
-          #                         Microsoft.Testing.Extensions.TrxReport package)
-          #   --ignore-exit-code 8  treat "all tests [Skip]ped" (e.g. Host.Lease without Azurite) as success
-          dotnet coverage collect 'dotnet test --no-build -- --results-directory TestResults/ --report-xunit-trx --ignore-exit-code 8' \
-            -f xml -o 'TestResults/coverage.xml'
-
-          dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"

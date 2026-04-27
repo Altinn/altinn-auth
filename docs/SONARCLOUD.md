@@ -11,7 +11,7 @@ in **monorepo mode** so projects are isolated despite sharing a repository.
 | File | What it controls |
 |---|---|
 | [`SonarQube.Analysis.xml`](../SonarQube.Analysis.xml) | Shared analysis settings: host URL, exclusions, coverage report paths, duplication exclusions, monorepo flag. Referenced from CI via `/s:`. |
-| [`.github/workflows/tpl-vertical-ci.yml`](../.github/workflows/tpl-vertical-ci.yml) | The `analyze` job. Passes the four CLI-only properties (key / name / org / token) inline; everything else comes from the XML. |
+| [`.github/workflows/tpl-vertical-ci.yml`](../.github/workflows/tpl-vertical-ci.yml) | The `build-test-analyze` job. Passes the four CLI-only properties (key / name / org / token) inline; everything else comes from the XML. |
 | `src/apps/<vertical>/conf.json` | Per-vertical opt-in / project key (see below). |
 
 The CI invocation is intentionally minimal:
@@ -48,7 +48,7 @@ project key. Two shapes:
 // Enabled
 { "sonarcloud": { "projectKey": "Authorization_AccessManagement" } }
 
-// Disabled (the analyze job is skipped entirely)
+// Disabled (Sonar steps in build-test-analyze are skipped; build/test still run)
 { "sonarcloud": false }
 ```
 
@@ -63,6 +63,20 @@ Current state:
 To onboard a new vertical: create the SonarCloud project under the `altinn`
 organization (Sonar UI → New project → GitHub → pick the repo → set monorepo
 mode), then add `"sonarcloud": { "projectKey": "..." }` to its `conf.json`.
+
+### Automatic skips
+
+Even when a vertical opts in, the `Detect SonarCloud config` step skips
+Sonar when:
+
+- the PR is from a fork (no `SONAR_TOKEN` access)
+- the PR was opened by `renovate[bot]` or `dependabot[bot]` — bot PRs only
+  touch dependency manifests and produce no useful Sonar findings, so
+  analysing them just burns Sonar minutes per vertical
+
+Pushes to `main` (including the merge commit of a bot-authored PR) always
+run Sonar — the bot author check uses `pull_request.user.login`, which is
+null on push events.
 
 ## Exclusions
 
@@ -81,12 +95,18 @@ the file genuinely shouldn't be analyzed at all.
 
 ## Coverage import
 
-Sonar consumes the `analyze` job's own coverage run (VSCoverage XML at
-`TestResults/coverage.xml`) plus xUnit v3 TRX reports for test results. The
-`build-and-test` job's cobertura coverage is **not** the same artifact — see
-[issue #2934](https://github.com/Altinn/altinn-authorization-tmp/issues/2934)
-for the unification work and the coverage-format constraints. For local
-coverage workflow see [testing/COVERAGE.md](testing/COVERAGE.md).
+Tests run **once** under `dotnet-coverage collect`, producing a native
+`.coverage` binary. Two `dotnet-coverage merge` steps then convert it to
+the formats consumed downstream:
+
+| Output | Consumer |
+|---|---|
+| `TestResults/coverage.cobertura.xml` | `eng/testing/check-coverage-thresholds.ps1` |
+| `TestResults/coverage.xml` *(VSCoverage XML)* | SonarCloud (via `sonar.cs.vscoveragexml.reportsPaths` in the XML config) |
+
+Sonar's C# scanner does not accept cobertura, which is why both formats are
+materialized. For local coverage workflow see
+[testing/COVERAGE.md](testing/COVERAGE.md).
 
 ## Quality gate
 
@@ -102,11 +122,13 @@ property to `true` — expect ~30–90 s added to PR check time.
 every vertical on the next CI run. No per-project config needed.
 
 **Disable Sonar for a vertical.** Set `"sonarcloud": false` in the vertical's
-`conf.json`. The `analyze` job's `if:` guard then skips it entirely — no
-project deletion required on Sonar's side.
+`conf.json`. The `Detect SonarCloud config` step in the workflow then sets
+`enabled=false`, and every Sonar-specific step downstream is skipped — no
+project deletion required on Sonar's side. Build, test, and the coverage
+threshold check still run as normal.
 
 **Bump the scanner version.** Update the pinned version in two places that
-must agree: the `--version` flag in the *Install SonarCloud scanner*
+must agree: the `--version` flag in the *Install coverage and Sonar tools*
 step in `tpl-vertical-ci.yml`, and the cache key prefix on the same job
 (otherwise the cache hands the old binary to the new pinned install).
 
@@ -114,21 +136,22 @@ step in `tpl-vertical-ci.yml`, and the cache key prefix on the same job
 SonarCloud UI for the affected vertical's project — these decisions are
 project-scoped state, not source-controlled.
 
-## Debugging a failed analyze run
+## Debugging a failed Sonar run
 
-1. Check the `Analyze` step log in the failing job. The scanner prints a
-   summary URL near the end (`Quality gate status:` line) — open it for
-   the per-issue breakdown.
-2. If the failure is in `dotnet-sonarscanner begin`, the cause is usually
-   an invalid `SONAR_TOKEN` or a project key mismatch. Confirm the key in
-   `conf.json` matches a project that exists in the `altinn` org.
-3. If `dotnet build` inside the analyze step fails but `build-and-test`
-   succeeded, the issue is almost always the `--no-incremental` rebuild
-   hitting an analyzer that's tolerated by the incremental build. Reproduce
-   locally with `dotnet build --no-incremental`.
-4. If coverage is reported as 0 % despite passing tests, check that
-   `TestResults/coverage.xml` exists in the analyze job — the path is
-   relative to the vertical's `working-directory`, not the repo root.
+1. Check the `SonarCloud end` step log in the failing job. The scanner
+   prints a summary URL near the end (`Quality gate status:` line) — open
+   it for the per-issue breakdown.
+2. If the failure is in `SonarCloud begin`, the cause is usually an invalid
+   `SONAR_TOKEN`, an `xmlns` typo in `SonarQube.Analysis.xml`, or a project
+   key mismatch. Confirm the key in `conf.json` matches a project that
+   exists in the `altinn` org.
+3. If `Build` fails but local builds pass, the issue is almost always the
+   `--no-incremental` rebuild hitting an analyzer that's tolerated by the
+   incremental build. Reproduce locally with `dotnet build --no-incremental`.
+4. If coverage is reported as 0 % despite passing tests, check that the
+   `Convert coverage to VSCoverage XML` step ran and produced
+   `TestResults/coverage.xml` — the path is relative to the vertical's
+   `working-directory`, not the repo root.
 
 ## Related
 

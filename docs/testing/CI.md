@@ -1,27 +1,24 @@
 # Tests in CI
 
 Tests run per-vertical in parallel jobs. Each vertical (app/lib/pkg) has its
-own CI job driven by a shared template: `tpl-vertical-ci.yml`.
+own CI job driven by a shared template: `tpl-vertical-ci.yml`. Build, test,
+threshold enforcement, and SonarCloud analysis all happen in one job per
+vertical (`build-test-analyze`) so the test suite executes exactly once.
 
 ## Job structure
 
 For each vertical the pipeline runs:
 
-1. **Restore + build** — `dotnet build --configuration Release`.
-2. **Test + coverage (single pass)** — the tests are executed once under
-   `dotnet-coverage collect`, producing both a TRX report and
-   `TestResults/coverage.cobertura.xml`. See
+1. **SonarCloud begin** *(verticals that opt in via `conf.json`)* — `dotnet-sonarscanner begin` wraps the build/test that follow so the scanner can hook MSBuild's analyzers.
+2. **Restore + build** — `dotnet build -c Release --no-incremental`. The build inside Sonar's begin/end window is what gives the scanner its data.
+3. **Test + coverage (single pass)** — `dotnet-coverage collect` wraps `dotnet test` once, writing TRX reports plus a native `.coverage` binary. See
    [`TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/41_CI_Coverage_Single_Run.md`](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/41_CI_Coverage_Single_Run.md).
-3. **Coverage threshold check** — parses the Cobertura XML and fails the
-   job if any enforced assembly is below its floor. See [COVERAGE.md](COVERAGE.md).
-4. **Sonar analyze** (Authorization vertical only) — `dotnet test` run
-   under `dotnet-sonarscanner begin/end` with MTP-friendly arguments
-   (`--report-xunit-trx --ignore-exit-code 8`). See
-   [`TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/38_CI_MTP_Followups_Sonar_And_Coverage.md`](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/38_CI_MTP_Followups_Sonar_And_Coverage.md).
-5. **Report failed tests** — post-test step that parses MTP logs and emits
-   per-failure `::group::` + `::error title::` annotations on GitHub Actions.
-6. **Upload artifacts** on failure — MTP `*.log` / `*.trx` files from
-   `TestResults/`. Retention: 3 days. See
+4. **Convert coverage** — two `dotnet-coverage merge` calls turn the binary into cobertura (for the threshold check) and VSCoverage XML (for Sonar). No re-running tests.
+5. **SonarCloud end** *(verticals that opt in)* — uploads the analysis. Runs even if tests failed so issues found by the scanner are still posted. See [../SONARCLOUD.md](../SONARCLOUD.md).
+6. **Coverage threshold check** — parses the cobertura XML and fails the job if any enforced assembly is below its floor. See [COVERAGE.md](COVERAGE.md).
+7. **Pack** — `dotnet pack` for `pkg`-type verticals only.
+8. **Report failed tests** — post-test step that parses MTP logs and emits per-failure `::group::` + `::error title::` annotations on GitHub Actions.
+9. **Upload artifacts** on failure — MTP `*.log` / `*.trx` files from `TestResults/`. Retention: 3 days. See
    [`TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/40_CI_First_Green_Run_Hardening.md`](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/40_CI_First_Green_Run_Hardening.md).
 
 ## Microsoft Testing Platform (MTP)
