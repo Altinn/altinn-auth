@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine@sha256:188bdabf4e8228c1d11fc348bd9d1de0d6bebb180420b1b800686a0161d7e8c0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine@sha256:93efcdfe43fb46a2cf7543477c7de0c649e137726a06e90ae35ba655c3d56996 AS build
 WORKDIR /app
 WORKDIR /src
 COPY src/ .
