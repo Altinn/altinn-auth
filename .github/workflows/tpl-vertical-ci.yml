@@ -221,6 +221,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          # Sonar needs full git history for accurate blame, SCM authors,
+          # and "new code" period detection on PRs.
+          fetch-depth: 0
       - name: Install .NET
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
@@ -238,11 +242,26 @@ jobs:
           distribution: "microsoft"
           java-version: 17
 
+      - name: Cache SonarCloud scanner and analysis cache
+        # Caches both the dotnet-sonarscanner / dotnet-coverage global tools
+        # (~80MB) and Sonar's incremental analysis cache under ~/.sonar/cache.
+        # Keyed per-vertical so each project's analysis cache is isolated;
+        # bumped when the scanner version changes.
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            ~/.sonar/cache
+            ~/.dotnet/tools
+          key: ${{ runner.os }}-sonar-11.2.1-${{ inputs.slug }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-sonar-11.2.1-${{ inputs.slug }}-
+            ${{ runner.os }}-sonar-11.2.1-
+
       - name: Install SonarCloud scanner and dependencies
         shell: bash
         run: |
-          dotnet tool install --global dotnet-sonarscanner
-          dotnet tool install --global dotnet-coverage
+          dotnet tool list --global | grep -q dotnet-sonarscanner || dotnet tool install --global dotnet-sonarscanner --version 11.2.1
+          dotnet tool list --global | grep -q dotnet-coverage      || dotnet tool install --global dotnet-coverage
 
       - name: Analyze
         working-directory: ${{ inputs.path }}
@@ -256,15 +275,9 @@ jobs:
           dotnet-sonarscanner begin \
             /key:"$SONAR_KEY" \
             /name:"$SONAR_NAME" \
-            /o:"altinn" /d:sonar.token="$SONAR_TOKEN" \
-            /d:sonar.scanner.scanAll=false \
-            /d:sonar.project.monorepo.enabled=true \
-            /d:sonar.exclusions="**/Migration/**,**/Altinn.AccessMgmt.FFB/**,**/Altinn.AccessMgmt.WebComponents/**" \
-            /d:sonar.coverage.exclusions="**/Migration/**,**/Altinn.AccessMgmt.FFB/**,**/Altinn.AccessMgmt.WebComponents/**" \
-            /d:sonar.test.exclusions="**/test/**/*" \
-            /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.cs.vstest.reportsPaths="**/*.trx" \
-            /d:sonar.cs.vscoveragexml.reportsPaths="TestResults/coverage.xml"
+            /o:"altinn" \
+            /d:sonar.token="$SONAR_TOKEN" \
+            /s:"$GITHUB_WORKSPACE/SonarQube.Analysis.xml"
 
           dotnet build --no-incremental
           # xUnit v3 routes `dotnet test` through Microsoft Testing Platform (MTP).

@@ -88,5 +88,6 @@ post-hoc. (Decision: [`TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/40_CI_First_
 ## Related docs
 
 - [COVERAGE.md](COVERAGE.md) — threshold mechanics and local-dev workflow.
+- [../SONARCLOUD.md](../SONARCLOUD.md) — SonarCloud config, exclusions, per-vertical setup.
 - [GETTING_STARTED.md](GETTING_STARTED.md) — local prerequisites.
 - [`TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/INDEX.md`](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/INDEX.md) — every CI change is logged here.
