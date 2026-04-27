@@ -23,7 +23,7 @@ public static class RightholderAddedNotification
     /// </summary>
     /// <remarks>
     /// This method performs an upsert operation for an outbox message identified by the
-    /// combination of <paramref name="from"/> and <paramref name="to"/>.
+    /// combination of <paramref name="fromId"/> and <paramref name="toId"/>.
     ///
     /// If a matching pending message already exists, its payload is left unchanged.
     /// If no matching message exists, a new one is created with a scheduled processing time
@@ -32,10 +32,10 @@ public static class RightholderAddedNotification
     /// <param name="db">
     /// The <see cref="AppDbContext"/> used to access the outbox messages.
     /// </param>
-    /// <param name="from">
+    /// <param name="fromId">
     /// The identifier of the entity granting rights.
     /// </param>
-    /// <param name="to">
+    /// <param name="toId">
     /// The identifier of the entity receiving rights.
     /// </param>
     /// <param name="notifyInSeconds">
@@ -50,20 +50,20 @@ public static class RightholderAddedNotification
     /// </returns>
     public static async Task Upsert(
         AppDbContext db,
-        Guid from,
-        Guid to,
+        Guid fromId,
+        Guid toId,
         int notifyInSeconds = DefaultNotifyInSeconds,
         CancellationToken cancellationToken = default)
     {
         await db.OutboxMessages.UpsertOutboxAsync(
-            refId: $"{Handler}_{from}_{to}",
+            refId: $"{Handler}_{fromId}_{toId}",
             handler: Handler,
             updateValueFactory: (_, data) => data,
-            addValueFactory: (msg) => AddValue(msg, notifyInSeconds, from, to),
+            addValueFactory: (msg) => AddValue(msg, notifyInSeconds, fromId, toId),
             cancellationToken: cancellationToken
         );
 
-        await RightholderRemovedNotification.Cancel(db, from, to, cancellationToken);
+        await RightholderRemovedNotification.Cancel(db, fromId, toId, cancellationToken);
     }
 
     /// <summary>
@@ -71,7 +71,7 @@ public static class RightholderAddedNotification
     /// </summary>
     /// <remarks>
     /// This method attempts to locate a pending outbox message matching the specified
-    /// <paramref name="from"/> and <paramref name="to"/> identifiers.
+    /// <paramref name="fromId"/> and <paramref name="toId"/> identifiers.
     ///
     /// If such a message exists, it is removed from the database.
     /// If no matching pending message is found, no action is taken.
@@ -79,10 +79,10 @@ public static class RightholderAddedNotification
     /// <param name="db">
     /// The <see cref="AppDbContext"/> used to access the outbox messages.
     /// </param>
-    /// <param name="from">
+    /// <param name="fromId">
     /// The identifier of the entity granting rights.
     /// </param>
-    /// <param name="to">
+    /// <param name="toId">
     /// The identifier of the entity receiving rights.
     /// </param>
     /// <param name="cancellationToken">
@@ -91,10 +91,10 @@ public static class RightholderAddedNotification
     /// <returns>
     /// A task that represents the asynchronous operation.
     /// </returns>
-    public static async Task Cancel(AppDbContext db, Guid from, Guid to, CancellationToken cancellationToken = default)
+    public static async Task Cancel(AppDbContext db, Guid fromId, Guid toId, CancellationToken cancellationToken = default)
     {
         await db.OutboxMessages.CancelOutboxAsync(
-            refId: $"{Handler}_{from}_{to}",
+            refId: $"{Handler}_{fromId}_{toId}",
             handler: Handler,
             cancellationToken
         );
@@ -109,16 +109,16 @@ public static class RightholderAddedNotification
     /// <param name="notifyInSeconds">
     /// The delay, in seconds, before the message should be processed.
     /// </param>
-    /// <param name="from">
+    /// <param name="fromId">
     /// The identifier of the entity granting rights.
     /// </param>
-    /// <param name="to">
+    /// <param name="toId">
     /// The identifier of the entity receiving rights.
     /// </param>
     /// <returns>
     /// A <see cref="RightholderAddedNotificationMessage"/> payload.
     /// </returns>
-    private static RightholderAddedNotificationMessage AddValue(OutboxMessage msg, int notifyInSeconds, Guid from, Guid to)
+    private static RightholderAddedNotificationMessage AddValue(OutboxMessage msg, int notifyInSeconds, Guid fromId, Guid toId)
     {
         var processAfter = DateTime.UtcNow.Add(TimeSpan.FromSeconds(notifyInSeconds));
         msg.Schedule = processAfter;
@@ -126,8 +126,8 @@ public static class RightholderAddedNotification
         
         return new()
         {
-            From = from,
-            To = to,
+            FromId = fromId,
+            ToId = toId,
         };
     }
 }

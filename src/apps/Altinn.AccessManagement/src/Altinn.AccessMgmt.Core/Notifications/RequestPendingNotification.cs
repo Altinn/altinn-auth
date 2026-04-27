@@ -159,14 +159,16 @@ public static class RequestPendingNotification
         ResourceRequestPendingNotificationMessage data
     )
     {
-        if (resourceId.HasValue && resourceId.Value != Guid.Empty)
+        if (resourceId is { } resource && resource != Guid.Empty)
         {
-            data.ResourceIds.RemoveAll(r => r == resourceId.Value);
+            data.PackageIds ??= [];
+            data.ResourceIds.RemoveAll(r => r == resource);
         }
 
-        if (packageId.HasValue && packageId.Value != Guid.Empty)
+        if (packageId is { } package && package != Guid.Empty)
         {
-            data.PackageIds.RemoveAll(p => p == packageId.Value);
+            data.PackageIds ??= [];
+            data.PackageIds.RemoveAll(p => p == package);
         }
 
         return data;
