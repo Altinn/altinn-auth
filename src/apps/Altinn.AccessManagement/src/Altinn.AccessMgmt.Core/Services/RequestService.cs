@@ -153,7 +153,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
            );
         var requestAssignment = requestAssignmentResult.Value;
 
-        return await CreateResourceRequest(requestAssignment.Id, resourceId, status, ct);
+        return await CreateResourceRequest(requestAssignment, resourceId, status, ct);
     }
 
     /// <inheritdoc/>
@@ -185,7 +185,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
 
         var requestAssignment = requestAssignmentResult.Value;
 
-        return await CreatePackageRequest(requestAssignment.Id, package, status, ct);
+        return await CreatePackageRequest(requestAssignment, package, status, ct);
     }
 
     /// <inheritdoc/>
@@ -195,25 +195,25 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
     }
 
     #region privates
-    private async Task<Result<RequestDto>> CreateResourceRequest(Guid assignmentId, Guid resourceId, RequestStatus initialStatus = RequestStatus.Pending, CancellationToken ct = default)
+    private async Task<Result<RequestDto>> CreateResourceRequest(RequestAssignment assignment, Guid resourceId, RequestStatus initialStatus = RequestStatus.Pending, CancellationToken ct = default)
     {
         var request = await db.RequestAssignmentResources
             .Include(r => r.Assignment)
-            .FirstOrDefaultAsync(r => r.AssignmentId == assignmentId && r.ResourceId == resourceId && r.Status == initialStatus, ct);
+            .FirstOrDefaultAsync(r => r.AssignmentId == assignment.Id && r.ResourceId == resourceId && r.Status == initialStatus, ct);
 
         if (request is null)
         {
             request = new RequestAssignmentResource
             {
                 Status = initialStatus,
-                AssignmentId = assignmentId,
+                AssignmentId = assignment.Id,
                 ResourceId = resourceId
             };
             db.RequestAssignmentResources.Add(request);
             await RequestPendingNotification.Upsert(
                 db,
-                request.Assignment.FromId,
-                request.Assignment.ToId,
+                assignment.FromId,
+                assignment.ToId,
                 resourceId,
                 null,
                 appsettings?.Value?.Request?.NotifyRequestPendingInSeconds ?? 60 * 15,
@@ -231,7 +231,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
         return await GetRequest(request.Id, ct);
     }
 
-    private async Task<Result<RequestDto>> CreatePackageRequest(Guid assignmentId, string package, RequestStatus initialStatus = RequestStatus.Pending, CancellationToken ct = default)
+    private async Task<Result<RequestDto>> CreatePackageRequest(RequestAssignment assignment, string package, RequestStatus initialStatus = RequestStatus.Pending, CancellationToken ct = default)
     {
         if (!PackageConstants.TryGetByAll(package, out var packageObj))
         {
@@ -242,21 +242,21 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
 
         var request = await db.RequestAssignmentPackages
             .Include(r => r.Assignment)
-            .FirstOrDefaultAsync(r => r.AssignmentId == assignmentId && r.PackageId == packageId && r.Status == initialStatus, cancellationToken: ct);
+            .FirstOrDefaultAsync(r => r.AssignmentId == assignment.Id && r.PackageId == packageId && r.Status == initialStatus, cancellationToken: ct);
 
         if (request is null)
         {
             request = new RequestAssignmentPackage
             {
                 Status = initialStatus,
-                AssignmentId = assignmentId,
+                AssignmentId = assignment.Id,
                 PackageId = packageId,
             };
             db.RequestAssignmentPackages.Add(request);
             await RequestPendingNotification.Upsert(
                 db,
-                request.Assignment.FromId,
-                request.Assignment.ToId,
+                assignment.FromId,
+                assignment.ToId,
                 null,
                 packageId,
                 appsettings?.Value?.Request?.NotifyRequestPendingInSeconds ?? 60 * 15,
