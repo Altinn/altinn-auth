@@ -2,9 +2,10 @@
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Notifications;
-using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
+using Altinn.AccessMgmt.Core.Validation;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
@@ -30,7 +31,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
             .Include(r => r.Resource)
             .FirstOrDefaultAsync(t => t.Id == requestId, ct);
 
-        if (requestResource != null)
+        if (requestResource != null)    
         {
             return DtoMapper.Convert(requestResource);
         }
@@ -135,13 +136,13 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
     /// <inheritdoc/>
     public async Task<Result<RequestDto>> CreateResourceRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid resourceId, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
     {
-        ValidationErrorBuilder error = default;
+        var problem = ValidationComposer.Validate(
+            PackageValidation.SelfAssignmentNotAllowed(fromId, toId)
+        );
 
-        if (toId == fromId)
+        if (problem is { })
         {
-            error.Add(ValidationErrors.RequestFromSelfNotAllowed);
-            error.TryBuild(out var inputProblems);
-            return inputProblems;
+            return problem;
         }
 
         var requestAssignmentResult = await GetOrCreateRequestAssignment(
@@ -156,15 +157,23 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
     }
 
     /// <inheritdoc/>
-    public async Task<Result<RequestDto>> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid packageId, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
+    public async Task<Result<RequestDto>> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
     {
-        ValidationErrorBuilder error = default;
+        var to = await db.Entities.Include(t => t.Type).FirstOrDefaultAsync(e => e.Id == toId, ct);
+        var from = await db.Entities.Include(t => t.Type).FirstOrDefaultAsync(e => e.Id == fromId, ct);
 
-        if (toId == fromId)
+        var problem = ValidationComposer.Validate(
+            EntityValidation.ToExists(to),
+            EntityValidation.ToExists(from),
+            PackageValidation.PackageIsAssignable(package),
+            PackageValidation.PackageIsAssignableTo([package], from?.Type),
+            PackageValidation.PackageIsAssignableFrom([package], to?.Type),
+            PackageValidation.SelfAssignmentNotAllowed(fromId, toId)
+        );
+
+        if (problem is { })
         {
-            error.Add(ValidationErrors.RequestFromSelfNotAllowed);
-            error.TryBuild(out var inputProblems);
-            return inputProblems;
+            return problem;
         }
 
         var requestAssignmentResult = await GetOrCreateRequestAssignment(
@@ -176,7 +185,13 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
 
         var requestAssignment = requestAssignmentResult.Value;
 
-        return await CreatePackageRequest(requestAssignment.Id, packageId, status, ct);
+        return await CreatePackageRequest(requestAssignment.Id, package, status, ct);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<RequestDto>> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid packageId, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
+    {
+        return await CreatePackageRequest(toId, fromId, byId, roleId, packageId.ToString(), status, ct);
     }
 
     #region privates
@@ -216,8 +231,15 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
         return await GetRequest(request.Id, ct);
     }
 
-    private async Task<Result<RequestDto>> CreatePackageRequest(Guid assignmentId, Guid packageId, RequestStatus initialStatus = RequestStatus.Pending, CancellationToken ct = default)
+    private async Task<Result<RequestDto>> CreatePackageRequest(Guid assignmentId, string package, RequestStatus initialStatus = RequestStatus.Pending, CancellationToken ct = default)
     {
+        if (!PackageConstants.TryGetByAll(package, out var packageObj))
+        {
+            throw new ArgumentException($"Package '{package}' not found", nameof(package));
+        }
+
+        var packageId = packageObj.Id;
+
         var request = await db.RequestAssignmentPackages
             .Include(r => r.Assignment)
             .FirstOrDefaultAsync(r => r.AssignmentId == assignmentId && r.PackageId == packageId && r.Status == initialStatus, cancellationToken: ct);

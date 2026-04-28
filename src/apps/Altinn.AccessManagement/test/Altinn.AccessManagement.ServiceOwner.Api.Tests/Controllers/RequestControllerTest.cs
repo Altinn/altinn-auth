@@ -631,8 +631,8 @@ public class RequestControllerTest
         public async Task CreatePackageRequest_WithKnownPackage_Returns202Accepted()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
-            var from = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
-            var to = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
+            var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
+            var from = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
 
             var body = new RequestPackageDto
             {
@@ -664,6 +664,28 @@ public class RequestControllerTest
                 From = from,
                 To = to,
                 Package = PackageConstants.Agriculture.Entity.Urn
+            };
+
+            var response = await client.PostAsJsonAsync(
+                $"{Route}/package",
+                body,
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task CreatePackageRequest_WithInvalidFromType_Returns400()
+        {
+            var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
+            var from = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
+            var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
+
+            var body = new RequestPackageDto
+            {
+                From = from,
+                To = to,
+                Package = PackageConstants.InnbyggerPensjon.Entity.Urn
             };
 
             var response = await client.PostAsJsonAsync(

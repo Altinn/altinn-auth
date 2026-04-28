@@ -430,16 +430,6 @@ public class RequestController(
             errorBuilder.Add(ValidationErrors.RequestConnectionNotFound, "/to", [new("to", $"No connection between party:'{party}' and to:'{to}'")]);
         }
 
-        if (!PackageConstants.TryGetByAll(package, out var packageObj))
-        {
-            errorBuilder.Add(ValidationErrors.PackageNotExists, "/package", [new("package", $"No package was found with value '{package}'.")]);
-        }
-
-        if (packageObj != null && !packageObj.Entity.IsAssignable)
-        {
-            errorBuilder.Add(ValidationErrors.PackageIsNotAssignable, "/package", [new("package", $"Package '{package}' is not assignable.")]);
-        }
-
         if (errorBuilder.TryBuild(out var problem))
         {
             return problem.ToActionResult();
@@ -454,7 +444,7 @@ public class RequestController(
            fromId: party,
            byId: authUserUuid,
            roleId: RoleConstants.Rightholder.Id,
-           packageId: packageObj.Id,
+           package: package,
            status: RequestStatus.Pending,
            ct: ct
         );

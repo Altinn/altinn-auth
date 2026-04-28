@@ -48,6 +48,13 @@ public interface IRequestService
     Task<Result<RequestDto>> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid packageId, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default);
 
     /// <summary>
+    /// Creates a new request
+    /// A Request from Kari by NAV to BakerAS for Taxes.
+    /// Will create an Assignment from BakerAS to Kari with an AssignmentPackage for Taxes.
+    /// </summary>
+    Task<Result<RequestDto>> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default);
+
+    /// <summary>
     /// Updates the status of a request.
     /// </summary>
     Task<Result<RequestDto>> UpdateRequest(Guid partyUuid, Guid requestId, RequestStatus status, CancellationToken ct = default);
