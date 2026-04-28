@@ -1,7 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
 using Altinn.AccessManagement.Core.Errors;
@@ -15,7 +13,6 @@ using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Constants.Translation;
 using Altinn.AccessMgmt.Core.Extensions;
-using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Notifications;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -150,6 +147,49 @@ public partial class ConnectionService(
         return DtoMapper.Convert(assignment);
     }
 
+    /// <inheritdoc />
+    public async Task<ValidationProblemInstance> CheckAssignmentForConnectedRefernces(Guid assignmentId, CancellationToken cancellationToken = default)
+    {
+        // WARNING! The list of connected entities to check for active connections must be in sync with the connections that are actually deleted in the cascade delete in the database,
+        // otherwise we might end up deleting data that was not evaluted for cascading delete. Idealy this would have been only one method but given the problem returned is difrent from
+        // that used in AssignmentService we need to duplicate the checks here, as it is already published and would be a breaking change.
+        // Changes here must also be done in AssignmentService.CheckCascadingAssignmentRevoke(Guid assignmentId, CancellationToken cancellationToken).
+        var assignedPackages = await dbContext.AssignmentPackages
+            .AsNoTracking()
+            .Where(p => p.AssignmentId == assignmentId)
+            .ToListAsync(cancellationToken);
+
+        var resources = await dbContext.AssignmentResources
+            .AsNoTracking()
+            .Where(p => p.AssignmentId == assignmentId)
+            .ToListAsync(cancellationToken);
+
+        var instances = await dbContext.AssignmentInstances
+            .AsNoTracking()
+            .Where(p => p.AssignmentId == assignmentId)
+            .ToListAsync(cancellationToken);
+
+        var delegationsFrom = await dbContext.Delegations
+            .AsNoTracking()
+            .Where(p => p.FromId == assignmentId)
+            .ToListAsync(cancellationToken);
+
+        var delegationsTo = await dbContext.Delegations
+            .AsNoTracking()
+            .Where(p => p.ToId == assignmentId)
+            .ToListAsync(cancellationToken);
+
+        var problem = ValidationComposer.Validate(
+            AssignmentPackageValidation.HasAssignedPackages(assignedPackages),
+            AssignmentResourceValidation.HasAssignedResources(resources),
+            AssignmentInstanceValidation.HasAssignedInstances(instances),
+            DelegationValidation.HasDelegationsAssigned(delegationsFrom),
+            DelegationValidation.HasDelegationsAssigned(delegationsTo)
+        );
+
+        return problem;
+    }
+
     public async Task<ValidationProblemInstance> RemoveAssignment(Guid fromId, Guid toId, bool cascade = false, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
     {
         var options = new ConnectionOptions(configureConnections);
@@ -174,26 +214,7 @@ public partial class ConnectionService(
 
         if (!cascade)
         {
-            var assignedPackages = await dbContext.AssignmentPackages
-                .AsNoTracking()
-                .Where(p => p.AssignmentId == existingAssignment.Id)
-                .ToListAsync(cancellationToken);
-
-            var delegationsFrom = await dbContext.Delegations
-                .AsNoTracking()
-                .Where(p => p.FromId == existingAssignment.Id)
-                .ToListAsync(cancellationToken);
-
-            var delegationsTo = await dbContext.Delegations
-                .AsNoTracking()
-                .Where(p => p.ToId == toId)
-                .ToListAsync(cancellationToken);
-
-            problem = ValidationComposer.Validate(
-                AssignmentPackageValidation.HasAssignedPackages(assignedPackages),
-                DelegationValidation.HasDelegationsAssigned(delegationsFrom),
-                DelegationValidation.HasDelegationsAssigned(delegationsTo)
-            );
+            problem = await CheckAssignmentForConnectedRefernces(existingAssignment.Id, cancellationToken);
 
             if (problem is { })
             {

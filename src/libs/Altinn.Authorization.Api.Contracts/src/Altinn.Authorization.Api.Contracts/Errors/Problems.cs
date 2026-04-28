@@ -157,10 +157,18 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor InvalidRightKey { get; }
     = _factory.Create(36, HttpStatusCode.BadRequest, "Policy does not contain all rightkeys in delegation request");
+        
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor PackageNotAvailableForEntity { get; }
+    = _factory.Create(37, HttpStatusCode.BadRequest, "The from entity does not match the package entity requirement");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor PackageNotRevocableFromAssignment { get; }
+    = _factory.Create(38, HttpStatusCode.BadRequest, "The package is not delegated by the entity trying to revoke so it is denied");
 
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor InvalidRoleCode { get; }
-    = _factory.Create(37, HttpStatusCode.BadRequest, "The provided rolecode was not found");
+    = _factory.Create(39, HttpStatusCode.BadRequest, "The provided rolecode was not found");
 
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor RoleAssignmentNotRevocable { get; }

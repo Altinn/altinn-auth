@@ -823,7 +823,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
     /// 
     /// WARNING:    If this method is missing checks it can lead to cascading revokes of assignments and data loss that was not 
     ///             intended so this has to be updated toghether with any new feature that adds dependencies on assignments
-    ///             
+    ///             Changes here must also be done in ConnectionService.RemoveAssignment
     /// There exist a similar test in Altinn.AccessMgmt.Core.Services.Legacy.DelegationMetadataEF.CheckCascadingAssignmentRevoke that 
     /// must be kept in sync if new connections are added.
     /// </summary>

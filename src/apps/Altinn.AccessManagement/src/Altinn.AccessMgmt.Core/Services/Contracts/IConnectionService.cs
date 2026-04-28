@@ -43,6 +43,14 @@ public interface IConnectionService
     Task<ValidationProblemInstance> RemoveAssignment(Guid fromId, Guid toId, bool cascade = false, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Checks for connected references for a specific assignment.
+    /// </summary>
+    /// <param name="assignmentId">The ID of the assignment to check.</param>
+    /// <param name="cancellationToken">A token used to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a validation problem instance.</returns>
+    Task<ValidationProblemInstance> CheckAssignmentForConnectedRefernces(Guid assignmentId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Retrieves the roles associated with a given entity.
     /// </summary>
     /// <param name="party">The user is operating on behalf of.</param>
