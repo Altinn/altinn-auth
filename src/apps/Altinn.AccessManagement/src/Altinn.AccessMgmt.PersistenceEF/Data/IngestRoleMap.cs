@@ -60,83 +60,83 @@ public static partial class StaticDataIngest
         /*SAM*/
         var roleSam = RoleConstants.CoOwners.Id; // GetRoleId("urn:altinn:external-role:ccr:sameier", "sameier");
         /*SENS*/
-        var roleSens = RoleConstants.Sens.Id; // GetRoleId("urn:altinn:rolecode:sens", "Sensitive-tjenester");
+        var roleSens = RoleConstants.MainroleForSensitiveServices.Id; // GetRoleId("urn:altinn:rolecode:sens", "Sensitive-tjenester");
         /*SREVA*/
         var roleSreva = RoleConstants.RegisteredAuditor.Id; // GetRoleId("urn:altinn:external-role:ccr:kontaktperson-revisor", "kontaktperson-revisor");
         /*A0212*/
-        var roleA0212 = RoleConstants.A0212.Id; // GetRoleId("urn:altinn:rolecode:A0212", "A0212");
+        var roleA0212 = RoleConstants.PrimaryIndustryAndFoodstuff.Id; // GetRoleId("urn:altinn:rolecode:a0212", "a0212");
         /*A0236*/
-        var roleA0236 = RoleConstants.A0236.Id; // GetRoleId("urn:altinn:rolecode:A0236", "A0236");
+        var roleA0236 = RoleConstants.MailArchive.Id; // GetRoleId("urn:altinn:rolecode:a0236", "a0236");
         /*A0237*/
-        var roleA0237 = RoleConstants.A0237.Id; // GetRoleId("urn:altinn:rolecode:A0237", "A0237");
+        var roleA0237 = RoleConstants.AuditorInCharge.Id; // GetRoleId("urn:altinn:rolecode:a0237", "a0237");
         /*A0238*/
-        var roleA0238 = RoleConstants.AssistantAuditor.Id; // GetRoleId("urn:altinn:rolecode:A0238", "A0238");
+        var roleA0238 = RoleConstants.AssistantAuditor.Id; // GetRoleId("urn:altinn:rolecode:a0238", "a0238");
         /*A0239*/
-        var roleA0239 = RoleConstants.AccountantWithSigningRights.Id; // GetRoleId("urn:altinn:rolecode:A0239", "A0239");
+        var roleA0239 = RoleConstants.AccountantWithSigningRights.Id; // GetRoleId("urn:altinn:rolecode:a0239", "a0239");
         /*A0240*/
-        var roleA0240 = RoleConstants.AccountantWithoutSigningRights.Id; // GetRoleId("urn:altinn:rolecode:A0240", "A0240");
+        var roleA0240 = RoleConstants.AccountantWithoutSigningRights.Id; // GetRoleId("urn:altinn:rolecode:a0240", "a0240");
         /*A0241*/
-        var roleA0241 = RoleConstants.AccountantSalary.Id; // GetRoleId("urn:altinn:rolecode:A0241", "A0241");
+        var roleA0241 = RoleConstants.AccountantSalary.Id; // GetRoleId("urn:altinn:rolecode:a0241", "a0241");
         /*A0278*/
-        var roleA0278 = RoleConstants.A0278.Id; // GetRoleId("urn:altinn:rolecode:A0278", "A0278");
+        var roleA0278 = RoleConstants.PlanningAndConstruction.Id; // GetRoleId("urn:altinn:rolecode:a0278", "a0278");
         /*A0282*/
-        var roleA0282 = RoleConstants.A0282.Id; // GetRoleId("urn:altinn:rolecode:A0282", "A0282");
+        var roleA0282 = RoleConstants.PrivateTaxAffairs.Id; // GetRoleId("urn:altinn:rolecode:a0282", "a0282");
         /*A0286*/
-        var roleA0286 = RoleConstants.A0286.Id; // GetRoleId("urn:altinn:rolecode:A0286", "A0286");
+        var roleA0286 = RoleConstants.ConfidentialInformation.Id; // GetRoleId("urn:altinn:rolecode:a0286", "a0286");
         /*A0293*/
-        var roleA0293 = RoleConstants.A0293.Id; // GetRoleId("urn:altinn:rolecode:A0293", "A0293");
+        var roleA0293 = RoleConstants.AlgeaTestData.Id; // GetRoleId("urn:altinn:rolecode:a0293", "a0293");
         /*A0294*/
-        var roleA0294 = RoleConstants.A0294.Id; // GetRoleId("urn:altinn:rolecode:A0294", "A0294");
+        var roleA0294 = RoleConstants.TransportPermitGuarantee.Id; // GetRoleId("urn:altinn:rolecode:a0294", "a0294");
         /*A0298*/
-        var roleA0298 = RoleConstants.A0298.Id; // GetRoleId("urn:altinn:rolecode:A0298", "A0298");
+        var roleA0298 = RoleConstants.AuditorCertifier.Id; // GetRoleId("urn:altinn:rolecode:a0298", "a0298");
         /*ADMAI*/
-        var roleADMAI = RoleConstants.AccessManager.Id; // GetRoleId("urn:altinn:rolecode:ADMAI", "ADMAI");
+        var roleADMAI = RoleConstants.AccessManager.Id; // GetRoleId("urn:altinn:rolecode:admai", "admai");
         /*APIADM*/
-        var roleAPIADM = RoleConstants.APIADM.Id; // GetRoleId("urn:altinn:rolecode:APIADM", "APIADM");
+        var roleAPIADM = RoleConstants.APIAdministrator.Id; // GetRoleId("urn:altinn:rolecode:apiadm", "apiadm");
         /*APIADMNUF*/
-        var roleAPIADMNUF = RoleConstants.APIADMNUF.Id; // GetRoleId("urn:altinn:rolecode:APIADMNUF", "APIADMNUF");
+        var roleAPIADMNUF = RoleConstants.APIAdministratorForNuf.Id; // GetRoleId("urn:altinn:rolecode:apiadmnuf", "apiadmnuf");
         /*ATTST*/
-        var roleATTST = RoleConstants.Attst.Id; // GetRoleId("urn:altinn:rolecode:ATTST", "ATTST");
+        var roleATTST = RoleConstants.AuditorCertifiesValidityOfVATCompensation.Id; // GetRoleId("urn:altinn:rolecode:attst", "attst");
         /*BOADM*/
-        var roleBOADM = RoleConstants.Boadm.Id; // GetRoleId("urn:altinn:rolecode:BOADM", "BOADM");
+        var roleBOADM = RoleConstants.BankruptcyAdministrator.Id; // GetRoleId("urn:altinn:rolecode:boadm", "boadm");
         /*BOBEL*/
-        var roleBOBEL = RoleConstants.Bobel.Id; // GetRoleId("urn:altinn:rolecode:BOBEL", "BOBEL");
+        var roleBOBEL = RoleConstants.BankruptcyRead.Id; // GetRoleId("urn:altinn:rolecode:bobel", "bobel");
         /*BOBES*/
-        var roleBOBES = RoleConstants.Bobes.Id; // GetRoleId("urn:altinn:rolecode:BOBES", "BOBES");
+        var roleBOBES = RoleConstants.BankruptcyWrite.Id; // GetRoleId("urn:altinn:rolecode:bobes", "bobes");
         /*ECKEYROLE*/
-        var roleECKEYROLE = RoleConstants.Eckeyrole.Id; // GetRoleId("urn:altinn:rolecode:ECKEYROLE", "ECKEYROLE");
+        var roleECKEYROLE = RoleConstants.Eckeyrole.Id; // GetRoleId("urn:altinn:rolecode:eckeyrole", "eckeyrole");
         /*EKTJ*/
-        var roleEKTJ = RoleConstants.Ektj.Id; // GetRoleId("urn:altinn:rolecode:EKTJ", "EKTJ");
+        var roleEKTJ = RoleConstants.ExplicitServiceDelegation.Id; // GetRoleId("urn:altinn:rolecode:ektj", "ektj");
         /*HADM*/
-        var roleHADM = RoleConstants.Hadm.Id; // GetRoleId("urn:altinn:rolecode:HADM", "HADM");
+        var roleHADM = RoleConstants.MainAdministratorA2.Id; // GetRoleId("urn:altinn:rolecode:hadm", "hadm");
         /*HVASK*/
-        var roleHVASK = RoleConstants.Hvask.Id; // GetRoleId("urn:altinn:rolecode:HVASK", "HVASK");
+        var roleHVASK = RoleConstants.EconomicAndEnvironmentalCrimeReporting.Id; // GetRoleId("urn:altinn:rolecode:hvask", "hvask");
         /*KLADM*/
-        var roleKLADM = RoleConstants.Kladm.Id; // GetRoleId("urn:altinn:rolecode:KLADM", "KLADM");
+        var roleKLADM = RoleConstants.ClientAdministrator.Id; // GetRoleId("urn:altinn:rolecode:kladm", "kladm");
         /*KOMAB*/
-        var roleKOMAB = RoleConstants.Komab.Id; // GetRoleId("urn:altinn:rolecode:KOMAB", "KOMAB");
+        var roleKOMAB = RoleConstants.MunicipalServices.Id; // GetRoleId("urn:altinn:rolecode:komab", "komab");
         /*LOPER*/
-        var roleLOPER = RoleConstants.Loper.Id; // GetRoleId("urn:altinn:rolecode:LOPER", "LOPER");
+        var roleLOPER = RoleConstants.SalariesAndPersonnelEmployee.Id; // GetRoleId("urn:altinn:rolecode:loper", "loper");
         /*PASIG*/
-        var rolePASIG = RoleConstants.Pasig.Id; // GetRoleId("urn:altinn:rolecode:PASIG", "PASIG");
+        var rolePASIG = RoleConstants.ParallelSigning.Id; // GetRoleId("urn:altinn:rolecode:pasig", "pasig");
         /*PAVAD*/
-        var rolePAVAD = RoleConstants.Pavad.Id; // GetRoleId("urn:altinn:rolecode:PAVAD", "PAVAD");
+        var rolePAVAD = RoleConstants.PatentsTrademarksAndDesign.Id; // GetRoleId("urn:altinn:rolecode:pavad", "pavad");
         /*PRIUT*/
-        var rolePRIUT = RoleConstants.Priut.Id; // GetRoleId("urn:altinn:rolecode:PRIUT", "PRIUT");
+        var rolePRIUT = RoleConstants.LimitedRightsForAnIndividual.Id; // GetRoleId("urn:altinn:rolecode:priut", "priut");
         /*REGNA*/
-        var roleREGNA = RoleConstants.Regna.Id; // GetRoleId("urn:altinn:rolecode:REGNA", "REGNA");
+        var roleREGNA = RoleConstants.AccountingEmployee.Id; // GetRoleId("urn:altinn:rolecode:regna", "regna");
         /*SIGNE*/
-        var roleSIGNE = RoleConstants.Signe.Id; // GetRoleId("urn:altinn:rolecode:SIGNE", "SIGNE");
+        var roleSIGNE = RoleConstants.SignerOfCoordinatedRegisterNotification.Id; // GetRoleId("urn:altinn:rolecode:signe", "signe");
         /*SISKD*/
-        var roleSISKD = RoleConstants.Siskd.Id; // GetRoleId("urn:altinn:rolecode:SISKD", "SISKD");
+        var roleSISKD = RoleConstants.LimitedSigningRights.Id; // GetRoleId("urn:altinn:rolecode:siskd", "siskd");
         /*UIHTL*/
-        var roleUIHTL = RoleConstants.Uihtl.Id; // GetRoleId("urn:altinn:rolecode:UIHTL", "UIHTL");
+        var roleUIHTL = RoleConstants.HealthSocialAndWelfareServices.Id; // GetRoleId("urn:altinn:rolecode:uihtl", "uihtl");
         /*UILUF*/
-        var roleUILUF = RoleConstants.Uiluf.Id; // GetRoleId("urn:altinn:rolecode:UILUF", "UILUF");
+        var roleUILUF = RoleConstants.Transport.Id; // GetRoleId("urn:altinn:rolecode:uiluf", "uiluf");
         /*UTINN*/
-        var roleUTINN = RoleConstants.Utinn.Id; // GetRoleId("urn:altinn:rolecode:UTINN", "UTINN");
+        var roleUTINN = RoleConstants.ReporterSender.Id; // GetRoleId("urn:altinn:rolecode:utinn", "utinn");
         /*UTOMR*/
-        var roleUTOMR = RoleConstants.Utomr.Id; // GetRoleId("urn:altinn:rolecode:UTOMR", "UTOMR");
+        var roleUTOMR = RoleConstants.EnergyEnvironmentAndClimate.Id; // GetRoleId("urn:altinn:rolecode:utomr", "utomr");
 
         var roleMaps = new List<RoleMap>()
         {
@@ -476,28 +476,28 @@ public static partial class StaticDataIngest
 
             // Add delegable role mapping for Hovedadministrator
             new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.ManagingDirector.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Ektj.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.A0286.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.ExplicitServiceDelegation.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.ConfidentialInformation.Id },
 
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Loper.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Regna.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Siskd.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Uiluf.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Utinn.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Utomr.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Attst.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Hvask.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Pavad.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Signe.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Uihtl.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Komab.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Pasig.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.A0278.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.A0236.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.A0212.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.A0293.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.A0294.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.A0298.Id }
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.SalariesAndPersonnelEmployee.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.AccountingEmployee.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.LimitedSigningRights.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.Transport.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.ReporterSender.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.EnergyEnvironmentAndClimate.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.AuditorCertifiesValidityOfVATCompensation.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.EconomicAndEnvironmentalCrimeReporting.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.PatentsTrademarksAndDesign.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.SignerOfCoordinatedRegisterNotification.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.HealthSocialAndWelfareServices.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.MunicipalServices.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.ParallelSigning.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.PlanningAndConstruction.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.MailArchive.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.PrimaryIndustryAndFoodstuff.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.AlgeaTestData.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.TransportPermitGuarantee.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.AuditorCertifier.Id }
         };
 
         // Upsert RoleMap data

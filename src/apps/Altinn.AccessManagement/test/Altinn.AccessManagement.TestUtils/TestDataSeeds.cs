@@ -43,6 +43,7 @@ public static class TestDataSeeds
             TestData.HanSolo,
             TestData.BenSolo,
             TestData.LeiaOrgana,
+            TestData.LukeSkyWalker,
             TestData.BakerJohnsen,
             TestData.SvendsenAutomobil,
             TestData.FredriksonsFabrikk,

@@ -155,6 +155,11 @@ public static class AccessMgmtFeatureFlags
     public const string EnableRequestAssignmentResource = "AccessMgmt.Controller.RequestAssignment.Resource";
 
     /// <summary>
+    /// Enables Altinn 2 Revoke role endpoints in enduser APIs.
+    /// </summary>
+    public const string Altinn2RoleRevoke = "AccessMgmt.Controller.Connection.RevokeRole";
+
+    /// <summary>
     /// Enables request assignment package endpoints in enduser and serviceowner APIs.
     /// </summary>
     public const string EnableRequestAssignmentPackage = "AccessMgmt.Controller.RequestAssignment.Package";

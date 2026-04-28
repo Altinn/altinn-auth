@@ -473,6 +473,12 @@ module "appsettings" {
       value       = false
     },
     {
+      name        = "AccessMgmt.Controller.Connection.RevokeRole"
+      description = "Enables Altinn 2 Revoke role endpoints in enduser APIs."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
       name        = "AccessMgmt.Controller.RequestAssignment.Package"
       description = "Enables request assignment package endpoints in enduser and serviceowner APIs."
       label       = "${lower(var.environment)}-access-management"

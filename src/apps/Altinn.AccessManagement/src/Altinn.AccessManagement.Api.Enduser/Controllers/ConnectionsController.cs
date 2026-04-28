@@ -400,25 +400,19 @@ public class ConnectionsController(
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ApiExplorerSettings(IgnoreApi = true)] //// Should stay hidden/closed until role service is ready.
+    [FeatureGate(AccessMgmtFeatureFlags.Altinn2RoleRevoke)]    
     public async Task<IActionResult> RemoveRole(
         [Required][FromQuery(Name = "party")] Guid party,
+        [Required][FromQuery(Name = "from")] Guid from,
         [Required][FromQuery(Name = "to")] Guid to,
-        [FromQuery] string roleCode,
+        [Required][FromQuery(Name = "rolecode")] string roleCode,
         CancellationToken cancellationToken = default)
     {
-        return NotFound();
+        var result = await ConnectionService.RemoveRoleAssignment(from, to, roleCode, ConfigureConnections, cancellationToken);
 
-        async Task<ValidationProblemInstance> RemoveRole()
+        if (result.IsProblem)
         {
-            return await Task.FromResult<ValidationProblemInstance>(null); // ToDo: Implement when role service is ready
-        }
-
-        var problem = await RemoveRole();
-
-        if (problem is { })
-        {
-            return problem.ToActionResult();
+            return result.Problem.ToActionResult();
         }
 
         return NoContent();

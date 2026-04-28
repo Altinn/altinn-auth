@@ -1118,6 +1118,28 @@ public static class TestData
             VariantId = EntityVariantConstants.Person,
         }
     };
+
+    public static ConstantDefinition<Entity> LukeSkyWalker { get; } = new("758de848-89cd-4d92-b4e7-3697c22594e7")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1989, 7, 21),
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Luke Skywalker",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 50300005,
+            PersonIdentifier = "21078942743",
+            RefId = "07108640094",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 20300005,
+            Username = null,
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
     #endregion
 
     #region Assignments
@@ -1126,6 +1148,9 @@ public static class TestData
 
     // Han Solo Enterprise - personroller
     private static readonly Guid AssignHanSoloEnterpriseHanSoloMD = Guid.Parse("019d9613-c654-7a01-8998-a46f9c983067");
+    private static readonly Guid AssignHanSoloEnterpriseBenSoloRS = Guid.Parse("019dba1e-4b53-765b-b671-248cb31e3094");
+    private static readonly Guid AssignHanSoloEnterpriseLukeSkywalkerRS = Guid.Parse("019dba4a-6a75-7852-b595-d1d026169101");
+    private static readonly Guid AssignHanSoloEnterpriseLeiaOrganaCB = Guid.Parse("019dba3a-484e-70bd-b79a-231025c33c19");
 
     // Baker Johnsen - personroller
     private static readonly Guid AssignBakerJohnsenLarsBakkeMD = Guid.Parse("0196a0b1-0001-7001-8001-000000000001");
@@ -1184,7 +1209,11 @@ public static class TestData
     private static readonly Guid AssignJosephinePriv = Guid.Parse("0196a0b1-0001-7001-8001-000000000042");
     private static readonly Guid AssignMilenaPriv = Guid.Parse("0196a0b1-0001-7001-8001-000000000043");
     private static readonly Guid AssignJinxArcanePriv = Guid.Parse("0196a0b1-0001-7001-8001-000000000044");
-    private static readonly Guid AssignAlexTheArtistPriv = Guid.Parse("0196a0b1-0001-7001-8001-000000000045");
+    private static readonly Guid AssignAlexTheArtistPriv = Guid.Parse("0196a0b1-0001-7001-8001-000000000045");    
+    private static readonly Guid AssignHanSoloPriv = Guid.Parse("019dba34-78cc-7b38-b91b-393fc2488c4a");
+    private static readonly Guid AssignBenSoloPriv = Guid.Parse("019dba34-a7ce-7ec3-9cc7-beb6e3c7dbce");
+    private static readonly Guid AssignLeiaOrganaPriv = Guid.Parse("019dba34-bcf3-7285-8ad8-7709b37cd47a");
+    private static readonly Guid AssignLukeSkywalkerPriv = Guid.Parse("019dba4a-fa99-738e-aedd-5b324de37fc7");
 
     // Org-til-org assignments
     private static readonly Guid AssignBakerJohnsenRegnskapNorgeAcc = Guid.Parse("0196a0b1-0001-7001-8001-000000000016");
@@ -1202,7 +1231,10 @@ public static class TestData
     {
         // Han Solo Enterprise - personroller
         new Assignment() { Id = AssignHanSoloEnterpriseHanSoloMD, FromId = HanSoloEnterprise.Id, ToId = HanSolo.Id, RoleId = RoleConstants.ManagingDirector.Id },
-    
+        new Assignment() { Id = AssignHanSoloEnterpriseBenSoloRS, FromId = HanSoloEnterprise.Id, ToId = BenSolo.Id, RoleId = RoleConstants.ReporterSender.Id },
+        new Assignment() { Id = AssignHanSoloEnterpriseLukeSkywalkerRS, FromId = HanSoloEnterprise.Id, ToId = LukeSkyWalker.Id, RoleId = RoleConstants.ReporterSender.Id },
+        new Assignment() { Id = AssignHanSoloEnterpriseLeiaOrganaCB, FromId = HanSoloEnterprise.Id, ToId = LeiaOrgana.Id, RoleId = RoleConstants.ChairOfTheBoard.Id },
+            
         // Baker Johnsen - personroller
         new Assignment() { Id = AssignBakerJohnsenLarsBakkeMD, FromId = BakerJohnsen, ToId = LarsBakke, RoleId = RoleConstants.ManagingDirector },
         new Assignment() { Id = AssignBakerJohnsenHildeStrandCB, FromId = BakerJohnsen, ToId = HildeStrand, RoleId = RoleConstants.ChairOfTheBoard },
@@ -1255,7 +1287,11 @@ public static class TestData
         new Assignment() { Id = AssignMilenaPriv, FromId = Milena, ToId = Milena, RoleId = RoleConstants.PrivatePerson },
         new Assignment() { Id = AssignJinxArcanePriv, FromId = JinxArcane, ToId = JinxArcane, RoleId = RoleConstants.PrivatePerson },
         new Assignment() { Id = AssignAlexTheArtistPriv, FromId = AlexTheArtist, ToId = AlexTheArtist, RoleId = RoleConstants.PrivatePerson },
-
+        new Assignment() { Id = AssignHanSoloPriv, FromId = HanSolo, ToId = HanSolo, RoleId = RoleConstants.PrivatePerson },
+        new Assignment() { Id = AssignBenSoloPriv, FromId = BenSolo, ToId = BenSolo, RoleId = RoleConstants.PrivatePerson },
+        new Assignment() { Id = AssignLeiaOrganaPriv, FromId = LeiaOrgana, ToId = LeiaOrgana, RoleId = RoleConstants.PrivatePerson },
+        new Assignment() { Id = AssignLukeSkywalkerPriv, FromId = LukeSkyWalker, ToId = LukeSkyWalker, RoleId = RoleConstants.PrivatePerson },
+        
         // RPC AS - personroller
         new Assignment() { Id = AssignRpcOddHalvorsenMD, FromId = RpcAS, ToId = OddHalvorsen, RoleId = RoleConstants.ManagingDirector },
         new Assignment() { Id = AssignRpcLivKristiansenCB, FromId = RpcAS, ToId = LivKristiansen, RoleId = RoleConstants.ChairOfTheBoard },

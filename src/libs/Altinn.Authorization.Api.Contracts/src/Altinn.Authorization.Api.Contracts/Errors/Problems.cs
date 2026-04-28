@@ -157,4 +157,12 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor InvalidRightKey { get; }
     = _factory.Create(36, HttpStatusCode.BadRequest, "Policy does not contain all rightkeys in delegation request");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor InvalidRoleCode { get; }
+    = _factory.Create(37, HttpStatusCode.BadRequest, "The provided rolecode was not found");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor RoleAssignmentNotRevocable { get; }
+    = _factory.Create(40, HttpStatusCode.BadRequest, "Given the rules for revocation this role could not be revoked");
 }
