@@ -107,28 +107,57 @@ function Test-IsOwnedByVertical {
 $belowThreshold = @()
 $warningsBelow = @()
 
+# Phase 1 — aggregate per-assembly across all input cobertura files.
+# An assembly touched by multiple test projects appears as one
+# `<package>` entry per file; iterating naively (file × package) and
+# applying the threshold to each occurrence would produce one
+# false-positive failure per per-test-project view of an assembly
+# whose canonical (union) coverage actually passes. CI's single-pass
+# collection emits one merged cobertura, so this only matters for the
+# workstation flow / direct invocations with multi-file input.
+# `run-coverage.ps1` already calls `dotnet-coverage merge` upstream so
+# this script normally gets a single input — the aggregation below is
+# defense-in-depth (max line%/branch% is a sound conservative
+# upper-bound when the inputs do not overlap perfectly).
+$assemblies = @{}
 foreach ($file in $CoverageFiles) {
     [xml]$xml = Get-Content $file
     foreach ($pkg in $xml.coverage.packages.package) {
         $n = $pkg.name
+        if ($n -notmatch '^Altinn\.' -or $n -match 'Tests|TestUtils|Mocks') { continue }
         $lr = [math]::Round([double]$pkg.'line-rate' * 100, 2)
         $br = [math]::Round([double]$pkg.'branch-rate' * 100, 2)
-        if ($n -match '^Altinn\.' -and $n -notmatch 'Tests|TestUtils|Mocks') {
-            $owned = Test-IsOwnedByVertical -pkg $pkg -rootPrefix $ownedRootPrefix
-            $marker = if ($owned) { '' } else { ' (ref)' }
-            $c = if ($lr -lt 50) { 'Red' } elseif ($lr -lt 70) { 'Yellow' } else { 'Green' }
-            Write-Host ("  {0,-50} {1,7}% line  {2,7}% branch{3}" -f $n, $lr, $br, $marker) -ForegroundColor $c
-            if (-not $owned) { continue }
-            $floor = if ($assemblyThresholds.ContainsKey($n)) { $assemblyThresholds[$n] } else { $globalFloor }
-            if ($floor -gt 0 -and $lr -lt $floor) {
-                $belowThreshold += "$n ($lr% < $floor%)"
-            }
-            if ($assemblyWarnings.ContainsKey($n)) {
-                $warnFloor = $assemblyWarnings[$n]
-                if ($warnFloor -gt 0 -and $lr -lt $warnFloor) {
-                    $warningsBelow += "$n ($lr% < $warnFloor%)"
-                }
-            }
+        $owned = Test-IsOwnedByVertical -pkg $pkg -rootPrefix $ownedRootPrefix
+        if (-not $assemblies.ContainsKey($n)) {
+            $assemblies[$n] = [pscustomobject]@{ Line = $lr; Branch = $br; Owned = $owned }
+        }
+        else {
+            $a = $assemblies[$n]
+            if ($lr -gt $a.Line) { $a.Line = $lr }
+            if ($br -gt $a.Branch) { $a.Branch = $br }
+            # Owned status is the union: TRUE if any input cobertura
+            # marks it owned. Same compiled assembly across files
+            # should yield the same Owned verdict, but be defensive.
+            if ($owned) { $a.Owned = $true }
+        }
+    }
+}
+
+# Phase 2 — print + threshold-check each assembly exactly once.
+foreach ($n in ($assemblies.Keys | Sort-Object)) {
+    $a = $assemblies[$n]
+    $marker = if ($a.Owned) { '' } else { ' (ref)' }
+    $c = if ($a.Line -lt 50) { 'Red' } elseif ($a.Line -lt 70) { 'Yellow' } else { 'Green' }
+    Write-Host ("  {0,-50} {1,7}% line  {2,7}% branch{3}" -f $n, $a.Line, $a.Branch, $marker) -ForegroundColor $c
+    if (-not $a.Owned) { continue }
+    $floor = if ($assemblyThresholds.ContainsKey($n)) { $assemblyThresholds[$n] } else { $globalFloor }
+    if ($floor -gt 0 -and $a.Line -lt $floor) {
+        $belowThreshold += "$n ($($a.Line)% < $floor%)"
+    }
+    if ($assemblyWarnings.ContainsKey($n)) {
+        $warnFloor = $assemblyWarnings[$n]
+        if ($warnFloor -gt 0 -and $a.Line -lt $warnFloor) {
+            $warningsBelow += "$n ($($a.Line)% < $warnFloor%)"
         }
     }
 }

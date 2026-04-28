@@ -3,13 +3,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Platform.Authenticaiton.Extensions;
-using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Models.AccessManagement;
 using Altinn.Platform.Authorization.Services.Interface;
 using Altinn.Platform.Register.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.FeatureManagement;
 
 namespace Altinn.Platform.Authorization.Controllers
 {
@@ -20,18 +18,14 @@ namespace Altinn.Platform.Authorization.Controllers
     [ApiController]
     public class PartiesController : ControllerBase
     {
-        private readonly IParties _partiesWrapper;
         private readonly IAccessManagementWrapper _accessMgmt;
-        private readonly IFeatureManager _featureManager;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PartiesController"/> class
         /// </summary>
-        public PartiesController(IParties partiesWrapper, IAccessManagementWrapper accessManagement, IFeatureManager featureManager)
+        public PartiesController(IAccessManagementWrapper accessManagement)
         {
-            _partiesWrapper = partiesWrapper;
             _accessMgmt = accessManagement;
-            _featureManager = featureManager;
         }
 
         /// <summary>
@@ -47,31 +41,21 @@ namespace Altinn.Platform.Authorization.Controllers
             {
                 return NotFound();
             }
-            
+
             int? authnUserId = User.GetUserIdAsInt();
             if (userId != authnUserId)
             {
                 return Forbid();
             }
 
-            List<Party> partyList = null;
-            if (await _featureManager.IsEnabledAsync(FeatureFlags.AccessManagementAuthorizedParties))
-            {
-                partyList = await GetAuthorizedParties(cancellationToken);
-            }
-            else
-            {
-                partyList = await _partiesWrapper.GetParties(userId, cancellationToken);
-            }
+            List<Party> partyList = await GetAuthorizedParties(cancellationToken);
 
             if (partyList == null || partyList.Count == 0)
             {
                 return NotFound();
             }
-            else
-            {
-                return Ok(partyList);
-            }
+
+            return Ok(partyList);
         }
 
         /// <summary>
@@ -89,20 +73,13 @@ namespace Altinn.Platform.Authorization.Controllers
                 return NotFound();
             }
 
-            if (await _featureManager.IsEnabledAsync(FeatureFlags.AccessManagementAuthorizedParties))
+            int? authnUserId = User.GetUserIdAsInt();
+            if (userId != authnUserId)
             {
-                int? authnUserId = User.GetUserIdAsInt();
-                if (userId != authnUserId)
-                {
-                    return Forbid();
-                }
-            
-                return Ok(await ValidateSelectedAuthorizedParty(partyId, cancellationToken));
+                return Forbid();
             }
-            else
-            {
-                return Ok(await _partiesWrapper.ValidateSelectedParty(userId, partyId, cancellationToken));
-            }
+
+            return Ok(await ValidateSelectedAuthorizedParty(partyId, cancellationToken));
         }
 
         private async Task<List<Party>> GetAuthorizedParties(CancellationToken cancellationToken)

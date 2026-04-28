@@ -1,7 +1,4 @@
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Platform.Authorization.Models;
@@ -12,8 +9,6 @@ namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
 {
     public class PartiesMock : IParties
     {
-        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-
         public Task<List<int>> GetKeyRoleParties(int userId, CancellationToken cancellationToken = default)
         {
             List<int> result = new List<int>();
@@ -45,7 +40,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
                     default:
                         break;
                 }
-            }            
+            }
 
             return Task.FromResult(result);
         }
@@ -59,37 +54,6 @@ namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
             }
 
             return Task.FromResult(party);
-        }
-
-        public Task<List<Party>> GetParties(int userId, CancellationToken cancellationToken = default)
-        {
-            string authorizedPartiesPath = GetAuthorizedPartiesPath(userId);
-            if (File.Exists(authorizedPartiesPath))
-            {
-                string content = File.ReadAllText(authorizedPartiesPath);
-                return Task.FromResult((List<Party>)JsonSerializer.Deserialize(content, typeof(List<Party>), _jsonOptions));
-            }
-
-            return Task.FromResult<List<Party>>([]);
-        }
-
-        public async Task<bool> ValidateSelectedParty(int userId, int partyId, CancellationToken cancellationToken = default)
-        {
-            bool result = false;
-
-            List<Party> partyList = await GetParties(userId, cancellationToken);
-
-            if (partyList.Count > 0)
-            {
-                result = partyList.Any(p => p.PartyId == partyId) || partyList.Any(p => p.ChildParties != null && p.ChildParties.Count > 0 && p.ChildParties.Any(cp => cp.PartyId == partyId));
-            }
-
-            return result;
-        }
-
-        private static string GetAuthorizedPartiesPath(int userId)
-        {
-            return Path.Combine("Data", "Parties", $"{userId}.json");
         }
     }
 }

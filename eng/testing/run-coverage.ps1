@@ -116,11 +116,29 @@ if ($coverageFiles.Count -eq 0) {
     exit 1
 }
 
+# Merge per-project cobertura files into a single aggregate before
+# threshold checking. Without this, an assembly touched by multiple
+# test projects (e.g. AccessManagement.Core covered both directly by
+# AccessMgmt.Tests and transitively by Enduser.Api.Tests) shows up
+# as multiple separate package entries — the threshold check then
+# trips on whichever per-project view is below the floor, even when
+# the union coverage passes. CI does not hit this because it runs a
+# single-pass `dotnet-coverage collect -- dotnet test` that emits one
+# merged cobertura by construction.
+$mergedCoverage = Join-Path $resultsDir 'coverage.cobertura.xml'
+Write-Host "`nMerging $($coverageFiles.Count) per-project cobertura files into $mergedCoverage ..." -ForegroundColor DarkGray
+dotnet-coverage merge --output $mergedCoverage --output-format cobertura $coverageFiles
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Failed to merge cobertura files (dotnet-coverage merge exit $LASTEXITCODE)." -ForegroundColor Red
+    exit 1
+}
+
 # Delegate threshold enforcement + pretty summary to the parse-only script
 # (shared with CI, so there's no drift between local and CI output).
+# Pass only the merged file so each assembly appears exactly once.
 $checkScript = Join-Path $PSScriptRoot 'check-coverage-thresholds.ps1'
 $checkArgs = @{
-    CoverageFiles = $coverageFiles
+    CoverageFiles = @($mergedCoverage)
     OwnedRoot     = $OwnedRoot
 }
 if ($ThresholdsFile) { $checkArgs['ThresholdsFile'] = $ThresholdsFile }
@@ -131,7 +149,7 @@ $thresholdExit = $LASTEXITCODE
 $rg = Get-Command reportgenerator -ErrorAction SilentlyContinue
 if ($rg) {
     $rd = Join-Path $resultsDir 'Report'
-    reportgenerator "-reports:$($coverageFiles -join ';')" "-targetdir:$rd" "-reporttypes:Html;TextSummary"
+    reportgenerator "-reports:$mergedCoverage" "-targetdir:$rd" "-reporttypes:Html;TextSummary"
     Write-Host "`nReport: $rd\index.html" -ForegroundColor Cyan
 }
 else {

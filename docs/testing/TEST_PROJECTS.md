@@ -38,13 +38,23 @@ Grouped by the production vertical they cover.
 
 | Test project | Covers | Blocked? |
 |---|---|---|
-| `Altinn.Authorization.Host.Lease.Tests` | Distributed lease primitive | ⚠️ Needs Azurite — skipped in CI, see [steps/INDEX.md#blocked-items](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/INDEX.md#blocked-items) |
+| `Altinn.Authorization.Host.Lease.Tests` | Distributed lease primitive | ⚠️ Needs Azurite — skipped in CI, see [steps/INDEX.md#blocked-items](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_2/INDEX.md#blocked-items) |
+| `Altinn.Authorization.Host.Pipeline.Tests` | Pipeline hosted services, builders, segment/sink/source services | 🌱 Scaffold only — one smoke test against `PipelineMessage<T>`. Real coverage to follow under Phase D.1 of the [Part 2 plan](TESTING_INFRASTRUCTURE_OVERHAUL/TESTING_INFRASTRUCTURE_OVERHAUL_PART_2.md#4-improvement-plan--phases). |
 
 ### `pkg: ABAC`
 
-| Test project | Covers |
-|---|---|
-| `Altinn.Authorization.ABAC.Tests` | XACML parsing, evaluation, combining algorithms |
+No dedicated test project. `Altinn.Authorization.ABAC` is exercised
+indirectly by `Altinn.Authorization.Tests` (PEP → ABAC paths during
+the end-to-end XACML decision tests). Coverage typically lands around
+63 % line / 61 % branch — see the
+[`COVERAGE.md`](COVERAGE.md) ratchet (60 % enforced).
+
+If a direct ABAC unit-test suite is wanted later, recreate
+`src/pkgs/Altinn.Authorization.ABAC/test/` with the standard
+`Directory.Build.props` (`<XUnitVersion>v3</XUnitVersion>`,
+`<IsTestProject>true</IsTestProject>`) and a single test csproj. The
+prior empty shell was deleted in the Part 2 testing-infrastructure
+overhaul (audit ID `C1'`).
 
 ### `pkg: PEP`
 

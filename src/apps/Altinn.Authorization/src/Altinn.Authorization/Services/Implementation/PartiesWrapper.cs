@@ -38,32 +38,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             _logger = logger;
         }
 
-        /// <inheritdoc />
-        public async Task<List<Party>> GetParties(int userId, CancellationToken cancellationToken = default)
-        {
-            List<Party> partiesList = null;
-
-            try
-            {
-                string endpointUrl = $"authorization/api/parties?userid={userId}";
-                HttpResponseMessage response = await _partyClient.Client.GetAsync(endpointUrl, cancellationToken);
-                string partiesDataList = await response.Content.ReadAsStringAsync(cancellationToken);
-                if (response.IsSuccessStatusCode)
-                {
-                    return JsonConvert.DeserializeObject<List<Party>>(partiesDataList);
-                }
-
-                _logger.LogError("SBL-Bridge // PartiesWrapper // parties // Failed // Unexpected HttpStatusCode: {response.StatusCode}\n {jsonResponse}", response.StatusCode, partiesDataList);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "SBL-Bridge // PartiesWrapper // parties // Failed // Unexpected Exception");
-                throw;
-            }
-
-            return partiesList;
-        }
-
         /// <inheritdoc/>
         public async Task<Party> GetParty(int partyId, CancellationToken cancellationToken = default)
         {
@@ -147,21 +121,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             }
 
             return mainUnits;
-        }
-
-        /// <inheritdoc />
-        public async Task<bool> ValidateSelectedParty(int userId, int partyId, CancellationToken cancellationToken = default)
-        {
-            bool result = false;
-
-            List<Party> partyList = await GetParties(userId, cancellationToken);
-
-            if (partyList.Count > 0)
-            {
-                result = partyList.Any(p => p.PartyId == partyId) || partyList.Any(p => p.ChildParties != null && p.ChildParties.Count > 0 && p.ChildParties.Any(cp => cp.PartyId == partyId));
-            }
-
-            return result;
         }
     }
 }

@@ -12,14 +12,6 @@ namespace Altinn.Platform.Authorization.Services.Interface
     public interface IParties
     {
         /// <summary>
-        /// Method that fetches parties list based on user id
-        /// </summary>
-        /// <param name="userId">The user id</param>
-        /// <param name="cancellationToken">The cancellationToken</param>
-        /// <returns>list of parties that the logged in user can represent</returns>
-        Task<List<Party>> GetParties(int userId, CancellationToken cancellationToken = default);
-
-        /// <summary>
         /// Method that fetches a given party
         /// </summary>
         /// <param name="partyId">The party id</param>
@@ -42,14 +34,5 @@ namespace Altinn.Platform.Authorization.Services.Interface
         /// <param name="cancellationToken">The cancellationToken</param>
         /// <returns>list of main units</returns>
         Task<List<MainUnit>> GetMainUnits(MainUnitQuery subunitPartyIds, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Verifies that the selected party is contained in the user's party list
-        /// </summary>
-        /// <param name="userId">The user id"</param>
-        /// <param name="partyId">The party id"</param>
-        /// <param name="cancellationToken">The cancellationToken</param>
-        /// <returns> Boolean indicating whether or not the user can represent the selected party.</returns>
-        Task<bool> ValidateSelectedParty(int userId, int partyId, CancellationToken cancellationToken = default);
     }
 }

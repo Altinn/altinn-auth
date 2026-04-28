@@ -4,32 +4,21 @@ using System.Net.Http.Json;
 using Altinn.Platform.Authorization.IntegrationTests.Fixtures;
 using Altinn.Platform.Register.Models;
 using Altinn.Platform.Authorization.IntegrationTests.Util;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.FeatureManagement;
-using Moq;
 
 namespace Altinn.Platform.Authorization.IntegrationTests
 {
     public class PartiesControllerTest : IClassFixture<AuthorizationApiFixture>
     {
-        private readonly Mock<IFeatureManager> _featureManageMock = new Mock<IFeatureManager>();
         private readonly HttpClient _client;
 
         public PartiesControllerTest(AuthorizationApiFixture fixture)
         {
-            _featureManageMock
-                .Setup(m => m.IsEnabledAsync("AccessManagementAuthorizedParties"))
-                .Returns(Task.FromResult(true));
-            fixture.ConfigureServices(services =>
-            {
-                services.AddSingleton(_featureManageMock.Object);
-            });
             _client = fixture.BuildClient();
         }
 
         /// <summary>
-        /// Test case: Get the party list for for the authenticated user.
-        /// Expected: Should return status code 200 OK with the expected party list
+        /// Test case: Get the party list for the authenticated user.
+        /// Expected: Should return status code 200 OK with a non-null party list.
         /// </summary>
         [Fact]
         public async Task GetPartyList_AsAuthenticatedUser_Ok()
@@ -39,21 +28,12 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Act
-            HttpResponseMessage newResponse = await _client.GetAsync("authorization/api/v1/parties?userid=20000490");
-
-            _featureManageMock
-                .Setup(m => m.IsEnabledAsync("AccessManagementAuthorizedParties"))
-                .Returns(Task.FromResult(false));
-
-            HttpResponseMessage originalResponse = await _client.GetAsync("authorization/api/v1/parties?userid=20000490");
+            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties?userid=20000490");
 
             // Assert
-            Assert.Equal(HttpStatusCode.OK, newResponse.StatusCode);
-            Assert.Equal(HttpStatusCode.OK, originalResponse.StatusCode);
-
-            var originalPartiesList = await originalResponse.Content.ReadFromJsonAsync<List<Party>>();
-            var newPartiesList = await newResponse.Content.ReadFromJsonAsync<List<Party>>();
-            AssertionUtil.AssertCollections(originalPartiesList, newPartiesList, AssertionUtil.AssertParty);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var partiesList = await response.Content.ReadFromJsonAsync<List<Party>>();
+            Assert.NotNull(partiesList);
         }
 
         /// <summary>
