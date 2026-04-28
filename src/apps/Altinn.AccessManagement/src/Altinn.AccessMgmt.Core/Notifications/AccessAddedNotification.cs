@@ -211,7 +211,7 @@ public static class AccessAddedNotification
     {
         if (data is null)
         {
-            Activity.Current?.AddTag(nameof(RequestPendingNotification), $"Current outbox message {nameof(AccessAddedNotification)} is null? Creating new object.");
+            Activity.Current?.AddTag(nameof(AccessAddedNotification), $"Current outbox message {nameof(AccessAddedNotification)} is null? Creating new object.");
             return AddValue(fromId, toId, resourceId, packageId, msg, notifyInSeconds);
         }
 

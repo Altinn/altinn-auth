@@ -48,7 +48,7 @@ public static class AccessRemovedNotification
     /// </param>
     /// <param name="notifyInSeconds">
     /// The delay, in seconds, before the outbox message should be processed.
-    /// Defaults to 900 seconds (15 minutes).
+    /// Defaults to 600 seconds (10 minutes).
     /// </param>
     /// <param name="ct">
     /// A token used to observe cancellation while querying the database.
@@ -212,7 +212,7 @@ public static class AccessRemovedNotification
     {
         if (data is null)
         {
-            Activity.Current?.AddTag(nameof(RequestPendingNotification), $"Current outbox message {nameof(AccessRemovedNotification)} is null? Creating new object.");
+            Activity.Current?.AddTag(nameof(AccessRemovedNotification), $"Current outbox message {nameof(AccessRemovedNotification)} is null? Creating new object.");
             return AddValue(fromId, toId, resourceId, packageId, msg, notifyInSeconds);
         }
 

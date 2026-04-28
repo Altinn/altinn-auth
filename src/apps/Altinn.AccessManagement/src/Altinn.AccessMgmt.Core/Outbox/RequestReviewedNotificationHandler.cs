@@ -165,7 +165,8 @@ public class RequestReviewedNotificationHandler(
         var emailContent = new StringBuilder();
         AddEmailIngress(emailContent, reviewer);
         AddResourcesAndPackage(emailContent, resources, packages);
-        emailContent.AppendLine($"<p>Med vennlig hilsen<br>Altinn</p>");
+        emailContent.AppendLine($"<p>Med vennlig hilsen,<br>Altinn</p>");
+        emailContent.AppendLine(@"<em>Denne meldingen er automatisk generert. Svar til denne adressen vil ikke bli behandlet.</em>");
 
         if (recipient.TypeId == EntityTypeConstants.Person)
         {
