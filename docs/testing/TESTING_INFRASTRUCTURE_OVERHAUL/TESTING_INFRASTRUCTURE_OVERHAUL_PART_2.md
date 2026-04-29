@@ -1,16 +1,75 @@
 # Testing Infrastructure Overhaul — Part 2 (Audit & Plan)
 
+> ## ⚠ Plan realigned 2026-04-29 — read this before executing any phase
+>
+> The phase plan in §4 (Phase B "pure-logic coverage", Phase F
+> "coverage threshold ratchet") and the response-section framing
+> elsewhere are **partially superseded** by the standing testing
+> conventions below. The audit's per-assembly coverage-% targets are
+> not the planning lens for this overhaul. Two principles apply
+> globally:
+>
+> 1. **Mock tests must exercise real logic.** Pure unit tests whose
+>    only assertion is "mocked dependency returns X → SUT returns Y"
+>    do not earn their keep when the SUT is thin pass-through wiring.
+>    Mock tests *with real-logic assertions* (branching, validation,
+>    computation, error handling) are still fine — the line is "does
+>    the SUT have logic worth testing?", not "is a mock involved?"
+> 2. **Coverage % is informational, not a quality goal.** Tests are
+>    valued for the *bug classes they catch*, not for the line/branch
+>    numbers they produce. Reach for integration tests against
+>    real infrastructure (DB, Azurite, etc.) when the bug class lives
+>    below the controller / service-wiring layer (model mapping,
+>    translation, EF queries, etc.).
+>
+> Practical effect on what's below:
+>
+> - **Phase A** is unaffected (already merged; critical fixes,
+>   not coverage).
+> - **Phase B (M5'/M6'/M7') needs re-scoping** before any further
+>   Tasks open: filter every candidate assembly with
+>   *"is this real logic or pass-through wiring?"*. Real logic
+>   (validation rules, mappers, computational helpers, complex
+>   business rules) → unit tests still earn their keep — Part 1 Step 53
+>   remains the model. Pass-through → don't test in isolation; cover
+>   via integration tests against real infrastructure.
+> - **B.1** (Metadata controllers) was addressed at Step 7 via
+>   DB-backed integration tests + 4 production-bug fixes in
+>   `PackageService` ([apps#2984](https://github.com/Altinn/altinn-authorization-tmp/pull/2984)),
+>   not the originally-planned Moq pattern.
+> - **Phase F (L2'/L3') is deprioritized.** Adding more enforced
+>   coverage floors / raising existing floors entrenches
+>   coverage-as-quality-gate. Existing floors should be reframed as
+>   catastrophic-regression tripwires, not as quality gates. A
+>   specific Phase F Task only opens if a concrete tripwire-style
+>   reframing is scoped first.
+> - **Step-doc convention:** `bugClassesCovered` (a list of named
+>   bug classes the new tests defend against) is the new lead field;
+>   `coverageDelta` is informational, not the goal. See
+>   [`STEPS_PART_2/INDEX.md` § Step doc template](STEPS_PART_2/INDEX.md#step-doc-template).
+> - **Phases C, D, E and the housekeeping items (DOC/CI #21) are
+>   unaffected.** Live-DB tests, Azurite tests, mock consolidation,
+>   source-comment migration, and the structural-check script all
+>   produce value under the realigned framing.
+>
+> Decisions recorded in the [Decision Log](#decision-log) entry dated
+> 2026-04-29 (Step 7).
+
 > **Status:** 🟢 **Phase A complete (2026-04-27).** Audit sections 1–4
 > populated by Step 1; Phase A's bundled critical fixes (C1', C2', C3',
 > C5'; C4' dismissed) shipped under T1 issue
 > [#2947](https://github.com/Altinn/altinn-authorization-tmp/issues/2947)
 > in Steps 2–5; coverage baseline re-measured at Step 6 against the
-> post-C5'-fix merged-cobertura view. Phases B–F still pending. Workflow
-> lives in [`STEPS_PART_2/INDEX.md`](STEPS_PART_2/INDEX.md); the tracking
-> conventions adopted from
+> post-C5'-fix merged-cobertura view. **Phase B re-scoped at Step 7
+> (2026-04-29);** B.1 effectively addressed via integration tests +
+> bug fixes in [apps#2984](https://github.com/Altinn/altinn-authorization-tmp/pull/2984)
+> (Step 7) and [apps#2987](https://github.com/Altinn/altinn-authorization-tmp/pull/2987)
+> (Step 8 — CI fix); Step 9 covers `SearchPropertyBuilder` pure-logic.
+> Phases C / D / E unaffected and pending; Phase F deprioritized.
+> Workflow lives in [`STEPS_PART_2/INDEX.md`](STEPS_PART_2/INDEX.md);
+> the tracking conventions adopted from
 > [`TRACKING_RETROSPECTIVE.md`](TRACKING_RETROSPECTIVE.md) are documented
-> there. See the [Decision Log](#decision-log) below for what changed
-> between the scaffold and this populated revision.
+> there. See the [Decision Log](#decision-log) below for the realignment.
 >
 > **Predecessor:** [`TESTING_INFRASTRUCTURE_OVERHAUL_PART_1.md`](TESTING_INFRASTRUCTURE_OVERHAUL_PART_1.md)
 > (Steps 1–61, closed).
@@ -260,8 +319,8 @@ audit cleanly distinct from Part 1.
   Triage outcome: the failing test was hitting the legacy `else`
   branch of `PartiesController.ValidateSelectedParty`, which was
   gated by the `AccessManagementAuthorizedParties` feature flag. The
-  team architect confirmed the flag has been always-on in production
-  for some time and is ready to be removed entirely. Step 5 deletes
+  flag was confirmed always-on in production for some time and ready
+  to be removed entirely. Step 5 deletes
   the flag, the legacy code paths it gated (the `else` branches in
   both `GetPartyList` and `ValidateSelectedParty`), and the
   now-orphaned `IParties.GetParties` / `IParties.ValidateSelectedParty`
@@ -478,8 +537,8 @@ Block almost everything else until done. Small, well-scoped:
   `Altinn.Authorization.Tests`).
 - ~~**A.2** — Resolve **C2'** failing `ValidateParty` test: triage — real
   auth regression in `PartiesController` vs mock drift; fix root cause,
-  not the assertion.~~ — **Done in Part 2 Step 5** (architect confirmed
-  the gating feature flag is always-on in prod and removable; deleted
+  not the assertion.~~ — **Done in Part 2 Step 5** (the gating
+  feature flag was confirmed always-on in prod and removable; deleted
   flag + legacy code paths; test passes naturally).
 - ~~**A.3** — Resolve **C5'** `check-coverage-thresholds.ps1`
   false-positive: refactor to aggregate per-assembly across input files
@@ -493,6 +552,25 @@ Block almost everything else until done. Small, well-scoped:
   smoke test to avoid the C1' empty-project pattern).
 
 ### Phase B — Pure-logic coverage (M5', M6', M7')
+
+> ⚠ **Re-scope required before any further B.x Task opens** — see the
+> top-of-doc banner and the [Decision Log entry dated
+> 2026-04-29 (Step 7)](#decision-log). This section's original framing
+> ("highest ROI per hour", per-assembly coverage % targets) does not
+> match the standing testing conventions; the bullets below are kept
+> for historical reference only.
+>
+> **Re-scope rule:** for each candidate assembly, classify the
+> uncovered code into *real logic* (validation rules, mappers,
+> computational helpers, complex business rules — Part 1 Step 53 is
+> the pattern) vs *pass-through wiring* (controllers/services that
+> just delegate). Pure-logic unit tests are valuable for the
+> *real-logic* portion only. Pass-through wiring is covered by
+> integration tests against real infrastructure (Phase C / D.2
+> patterns), not by isolation tests with mocks. The right scope per
+> Task is therefore *"add unit tests for the following named bug
+> classes in <assembly>"*, not *"raise <assembly>'s coverage from X%
+> to Y%."*
 
 Highest ROI per hour. No container, no external dependencies. Continues
 the Part 1 6.7d pattern (Steps 42–60) of direct unit tests with
@@ -551,6 +629,19 @@ Interleavable with B–D, can batch into a single PR each:
 - **E.5** — Drop dead xUnit v2 package pins (L5').
 
 ### Phase F — Coverage threshold ratchet (L2', L3')
+
+> ⚠ **Deprioritized 2026-04-29 (Step 7)** — see the
+> [Decision Log entry](#decision-log). Adding more enforced coverage
+> floors / raising existing floors entrenches coverage-as-quality-gate,
+> which conflicts with the standing convention that coverage % is
+> informational rather than a planning lens. Do not open F.1 / F.2
+> Tasks as written. Existing `coverage-thresholds.json` floors should
+> be reframed (likely via a small separate Task) as
+> **catastrophic-regression tripwires** (e.g. floors at the *current
+> minus a meaningful margin* level so they catch large drops without
+> serving as quality gates), not as aspirational targets to ratchet
+> upward. SonarCloud's coverage exclusions for pass-through code are
+> tracked separately as an eventual follow-up.
 
 Last; codifies the gains from Phases B–D. Promotes assemblies into the
 enforced list and bumps existing floors. `Altinn.AccessManagement`
@@ -621,9 +712,10 @@ length.
 | 2026-04-27 (Part 2 scaffold) | Apply tracking improvements from [`TRACKING_RETROSPECTIVE.md`](TRACKING_RETROSPECTIVE.md) to the Part 2 scaffold *before* the kickoff audit | Cheaper than retrofitting mid-phase. Concrete changes: `Phase/Tag` + `CovΔ (line)` columns in the step-log table; YAML front matter required on every step doc; zero-padded step-doc filenames; `Last re-checked` column on Blocked Items; versioned (`v<date>`) handoff prompt; explicit ~50-step-per-part cap; short-form source-code cross-reference convention; structural-check script flagged as a recommended early step. Sidecar `steps.json` and an actual working linter script are deferred until a concrete consumer/incident motivates them. |
 | 2026-04-27 (Part 2 Step 1) | Use **max-across-files** as the canonical per-assembly coverage number for the §1.4 baseline, not a merged cobertura | Workstation `run-coverage.ps1` produces 11 separate cobertura files. Until issue **C5'** is fixed, max line% per package is the cheapest conservative-upper-bound aggregation. CI's single-cobertura output is the long-term ground truth; once C5' lands the local-dev numbers will agree by construction. |
 | 2026-04-27 (Part 2 Step 1) | Sequence Phase A (critical) before Phase F (ratchet promotion) | F (L2') depends on A.3 (C5' fix) — the threshold-check script is unreliable in workstation mode, so until it's fixed any ratchet promotion would be evaluated against false positives. |
-| 2026-04-27 (Part 2 Step 5 rectification) | Replace Step 5's original cross-user-check hoist with full removal of the `AccessManagementAuthorizedParties` flag and its dead-code paths | The team architect confirmed the flag has been always-on in production for some time and is ready to retire. The originally-flagged "auth regression" was a test-hits-dead-code artefact (the test class flipped the mocked flag to `false` mid-class, exposing the legacy `else` branch); in the field, the legacy path was never reachable. Patching dead code is wasted effort — the right move is to delete it. The original Step 5 commit was force-rebased out of the branch's history before this PR opened; the corrected Step 5 commit deletes the flag entirely (and the now-orphaned `IParties.GetParties` / `ValidateSelectedParty` methods + their `PartiesWrapper` and `PartiesMock` impls). **No security advisory needed.** |
+| 2026-04-27 (Part 2 Step 5 rectification) | Replace Step 5's original cross-user-check hoist with full removal of the `AccessManagementAuthorizedParties` flag and its dead-code paths | The flag was confirmed always-on in production for some time and ready to retire. The originally-flagged "auth regression" was a test-hits-dead-code artefact (the test class flipped the mocked flag to `false` mid-class, exposing the legacy `else` branch); in the field, the legacy path was never reachable. Patching dead code is wasted effort — the right move is to delete it. The original Step 5 commit was force-rebased out of the branch's history before this PR opened; the corrected Step 5 commit deletes the flag entirely (and the now-orphaned `IParties.GetParties` / `ValidateSelectedParty` methods + their `PartiesWrapper` and `PartiesMock` impls). **No security advisory needed.** |
 | 2026-04-27 (Part 2 Step 6) | Re-baseline §§1.1/1.4/1.5/1.6 against the post-C5'-fix merged-cobertura view; supersede the Step 1 max-across-files numbers | C5' is fixed (Step 2). Merged cobertura is the canonical view. Five assemblies were under-counted by 9pp+ purely from the Step 1 measurement bug — keeping Step 1's numbers would mis-direct Phase B effort (most notably toward `Api.Internal`, which is actually 73.63% not 48.56%). Original Step 1 numbers preserved in the Step 1 doc's `coverageDelta:` front-matter for historical reference. |
-| 2026-04-27 (Part 2 Step 6) | Bundle T1's PR α (Steps 1–4 infra/docs) and PR β (Step 5 dead-code removal) into a single PR per user direction | User explicitly preferred fewer review cycles given the tech-lead-approval cost. The Step 5 change is single-purpose (delete the flag + its dead paths) and clearly callable-out in the PR body, so review-isolation isn't structurally needed. Tradeoff: tech lead reviews everything in one shot, but with an explicit "Flag removal" header so the production diff is easy to find. |
+| 2026-04-27 (Part 2 Step 6) | Bundle T1's PR α (Steps 1–4 infra/docs) and PR β (Step 5 dead-code removal) into a single PR per user direction | Fewer review cycles given the per-PR review cost. The Step 5 change is single-purpose (delete the flag + its dead paths) and clearly callable-out in the PR body, so review-isolation isn't structurally needed. Tradeoff: everything reviewed in one shot, but with an explicit "Flag removal" header so the production diff is easy to find. |
+| 2026-04-29 (Part 2 Step 7) | **Realign the Part 2 plan around bug-class-driven framing instead of per-assembly coverage targets.** Close [PR apps#2978](https://github.com/Altinn/altinn-authorization-tmp/pull/2978) (B.1 / Task #2977) without merging; replace it with DB-backed integration tests + 4 production-bug fixes on `PackageService` ([PR apps#2984](https://github.com/Altinn/altinn-authorization-tmp/pull/2984)); banner Phase B as needing per-assembly re-scope under a "real logic vs pass-through wiring" filter; deprioritize Phase F (coverage-threshold ratchet); change the step-doc convention so `bugClassesCovered` leads and `coverageDelta` becomes informational. | Standing testing conventions adopted at this point: **(1)** mock-based unit tests must exercise real logic in the SUT (branching, validation, computation, error handling); pure pass-through wiring is not a worthwhile isolation-test target. **(2)** Coverage % is informational, not a planning lens — tests are picked / scoped by the *bug class they catch*, not by which percentage they push. The right test for a thin controller over a service+DB is an integration test that pins down model mapping, translation, joins, etc., against ingested seed data. **(3)** Tracking-doc edits ride along with code PRs; standalone docs-only PRs are not opened. Combined effect on the existing §4 plan: per-assembly coverage-target framing is replaced; Phase F's whole premise (lock more assemblies into coverage-% gates in CI) is counter-productive under the new framing. Specific decisions: B.1 closed in original Moq form, addressed in integration-test form (Step 7); Phase B requires the "real logic vs pass-through" filter before any further B.x Task opens; Phase F deprioritized (no F.x Task as written; existing floors should eventually be reframed as catastrophic-regression tripwires); step-doc front matter adds `bugClassesCovered` as the lead field; tracking-doc edits are bundled into code PRs. Phases A (already merged), C (live-DB), D (new test projects), E (housekeeping), and the DOC/CI items are unaffected. SonarCloud exclusions for pass-through code tracked as an eventual follow-up. |
 
 ---
 
