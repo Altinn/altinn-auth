@@ -207,11 +207,18 @@ jobs:
         shell: pwsh
         working-directory: ${{ inputs.path }}
         run: |
+          # The Test step passes `--results-directory TestResults/` to MTP,
+          # so the per-project logs land in `<vertical>/TestResults/` (and,
+          # for some configurations, in the per-project `bin/.../TestResults/`).
+          # Match either layout — the `Directory.Name -eq 'TestResults'`
+          # filter still keeps us off arbitrary `*.log` files elsewhere in
+          # the working tree, while the `*_net9.0_x64.log` filename pattern
+          # already constrains to MTP-shaped per-project logs.
           $logs = Get-ChildItem -Path . -Recurse -Filter '*_net9.0_x64.log' -ErrorAction SilentlyContinue |
-                  Where-Object { $_.FullName -match [regex]::Escape([IO.Path]::Combine('bin','Release','net9.0','TestResults')) }
+                  Where-Object { $_.Directory.Name -eq 'TestResults' }
 
           if (-not $logs) {
-              Write-Host "No MTP per-project logs found under bin/Release/net9.0/TestResults/." -ForegroundColor Yellow
+              Write-Host "No MTP per-project logs found in any TestResults/ directory under $(Get-Location)." -ForegroundColor Yellow
               exit 0
           }
 
