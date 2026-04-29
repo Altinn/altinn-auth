@@ -208,7 +208,7 @@ public class RequestPendingNotificationHandler(
         {
             if (resources.Any())
             {
-                emailContent.Append("<strong>Ressurser:</strong>");
+                emailContent.Append("<strong>Enkelttjenester:</strong>");
                 emailContent.AppendLine("<ul>");
                 foreach (var resource in resources)
                 {

@@ -255,7 +255,7 @@ public class RequestReviewedNotificationHandler(
 
                 if (approvedResources.Any())
                 {
-                    emailContent.Append("<strong>Ressurser:</strong>");
+                    emailContent.Append("<strong>Enkelttjenester::</strong>");
                     ListRefs(emailContent, approvedResources.Select(p => p.Ref.Name));
                 }
             }
@@ -271,7 +271,7 @@ public class RequestReviewedNotificationHandler(
 
                 if (rejectedResources.Any())
                 {
-                    emailContent.Append("<strong>Ressurser:</strong>");
+                    emailContent.Append("<strong>Enkelttjenester::</strong>");
                     ListRefs(emailContent, rejectedResources.Select(p => p.Ref.Name));
                 }
             }
