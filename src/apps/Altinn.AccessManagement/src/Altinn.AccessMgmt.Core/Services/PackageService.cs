@@ -116,7 +116,7 @@ public class PackageService : IPackageService
     /// <inheritdoc/>
     public async Task<PackageDto> GetPackage(Guid id, CancellationToken cancellationToken = default)
     {
-        var package = await DbContext.Packages.AsNoTracking().Include(t => t.Area).Include(t => t.EntityType).SingleAsync(t => t.Id == id, cancellationToken);
+        var package = await DbContext.Packages.AsNoTracking().Include(t => t.Area).Include(t => t.EntityType).SingleOrDefaultAsync(t => t.Id == id, cancellationToken);
 
         if (package == null)
         {
@@ -196,19 +196,21 @@ public class PackageService : IPackageService
     /// <inheritdoc/>
     public async Task<AreaGroupDto> GetAreaGroup(Guid id, CancellationToken cancellationToken = default)
     {
-        return DtoMapper.Convert(await DbContext.AreaGroups.AsNoTracking().Include(t => t.EntityType).SingleAsync(t => t.Id == id, cancellationToken));
+        var group = await DbContext.AreaGroups.AsNoTracking().Include(t => t.EntityType).SingleOrDefaultAsync(t => t.Id == id, cancellationToken);
+        return group == null ? null : DtoMapper.Convert(group);
     }
 
     /// <inheritdoc/>
     public async Task<IEnumerable<AreaDto>> GetAreas(Guid groupId, CancellationToken cancellationToken = default)
     {
-        return (await DbContext.Areas.AsNoTracking().ToListAsync(cancellationToken)).Select(DtoMapper.Convert);
+        return (await DbContext.Areas.AsNoTracking().Where(t => t.GroupId == groupId).ToListAsync(cancellationToken)).Select(DtoMapper.Convert);
     }
 
     /// <inheritdoc/>
     public async Task<AreaDto> GetArea(Guid id, CancellationToken cancellationToken = default)
     {
-        return DtoMapper.Convert(await DbContext.Areas.AsNoTracking().SingleAsync(t => t.Id == id, cancellationToken));
+        var area = await DbContext.Areas.AsNoTracking().SingleOrDefaultAsync(t => t.Id == id, cancellationToken);
+        return area == null ? null : DtoMapper.Convert(area);
     }
 
     /// <inheritdoc/>
