@@ -18,6 +18,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services;
 /// <inheritdoc />
 public partial class ResourceSyncService : IResourceSyncService
 {
+    private const string ResourceUrnPrefix = "urn:altinn:resource:";
     private readonly ILogger<ResourceSyncService> _logger;
     private readonly IAltinnResourceRegistry _resourceRegistry;
     private readonly IServiceProvider _serviceProvider;
@@ -220,7 +221,8 @@ public partial class ResourceSyncService : IResourceSyncService
 
     private async Task<Resource?> UpsertResource(AppDbContext dbContext, ResourceUpdatedModel resourceUpdated, CancellationToken cancellationToken)
     {
-        var response = await _resourceRegistry.GetResource(resourceUpdated.ResourceUrn.Split(":").Last(), cancellationToken: cancellationToken);
+        var identifier = ParseResourceIdentifier(resourceUpdated.ResourceUrn);
+        var response = await _resourceRegistry.GetResource(identifier, cancellationToken: cancellationToken);
         if (response.IsProblem)
         {
             Log.FailedToGetResource(_logger, resourceUpdated.ResourceUrn);
@@ -249,6 +251,17 @@ public partial class ResourceSyncService : IResourceSyncService
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return resource;
+    }
+
+    private static string ParseResourceIdentifier(string resourceUrn)
+    {
+        if (resourceUrn.StartsWith(ResourceUrnPrefix, StringComparison.InvariantCultureIgnoreCase))
+        {
+            return resourceUrn[ResourceUrnPrefix.Length..];
+        }
+
+        Activity.Current?.AddTag("ResourceUrn", "Couldn't parse urn suffix");
+        return string.Empty;
     }
 
     public IEnumerable<ResourceType> ResourceTypes { get; set; }
