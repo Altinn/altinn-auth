@@ -1,0 +1,54 @@
+meta {
+  name: POST_ServiceOwner_Conn_AccPkgs_Revoke
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/connections/accesspackages/revoke
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "from": "urn:altinn:person:identifier-no:27917995783",
+    "to": "urn:altinn:person:identifier-no:20876795923",
+    "packageurn": "urn:altinn:accesspackage:innbygger-skatteforhold-privatpersoner"
+  }
+}
+
+script:pre-request {
+  
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  
+  bru.setVar("requestName", "POST_ServiceOwner_Conn_AccPkgs_Revoke");
+  
+  var getTokenParameters = {
+    auth_org: sharedtestdata.serviceOwners.skd.org,
+    auth_orgNo: sharedtestdata.serviceOwners.skd.orgno,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.serviceownerConnectionsAccessPackages
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  
+  const body = res.getBody();
+  const requestName = bru.getVar("requestName");
+  
+  test(requestName + "|HttpStatus.NoContent", function() {
+    expect(res.status).to.equal(204);
+  });
+  
+}

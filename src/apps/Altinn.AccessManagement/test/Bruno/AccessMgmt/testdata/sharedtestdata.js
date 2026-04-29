@@ -23,8 +23,8 @@
         "serviceownerDelegationRequestWrite": "altinn:serviceowner/delegationrequests.write",
         "serviceownerDelegationRequestRead": "altinn:serviceowner/delegationrequests.read",
         "sluttbrukerdelegationrequestread" : "altinn:accessmanagement/enduser:requests.read",
-        "sluttbrukerdelegationrequestwrite" : "altinn:accessmanagement/enduser:requests.write"
-        
+        "sluttbrukerdelegationrequestwrite" : "altinn:accessmanagement/enduser:requests.write",
+        "serviceownerConnectionsAccessPackages" : "altinn:serviceowner/delegations:accesspackage.write"
     },
     "authTokenType": {
         "personal": "Personal",
@@ -43,6 +43,10 @@
         "digdir": {
             "org": "digdir",
             "orgno": "991825827"
+        },
+        "skd": {
+            "org": "skd",
+            "orgno": "974761076"
         }
     },
     "expectedDaglAccessPackageCount": 127
