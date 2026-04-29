@@ -1045,6 +1045,21 @@ namespace Altinn.AccessManagement.Core.Services
             return await _consentRepository.GetConsentRequestCountForParty(offeredByParty, status, cancellationToken);
         }
 
+        /// <inheritdoc/>
+        public async Task<Result<List<ConsentStatusChange>>> GetConsentStatusChangesForParty(ConsentPartyUrn consentReceiver, string? continuationToken, int pageSize, CancellationToken cancellationToken)
+        {
+            ConsentPartyUrn consentedToParty = await MapFromExternalIdenity(consentReceiver, cancellationToken);
+            consentedToParty.IsPartyUuid(out Guid partyUuid);
+            Result<List<ConsentStatusChange>> result = await _consentRepository.GetConsentStatusChangesForParty(partyUuid, continuationToken, pageSize, cancellationToken);
+
+            if (result.IsProblem)
+            {
+                return result.Problem;
+            }
+
+            return result.Value;
+        }
+
         private List<ConsentRequestEvent> AddExpiredEventIfConsentIsExpired(List<ConsentRequestEvent> consentRequestEvents, DateTimeOffset validTo,  ConsentPartyUrn to)
         {
             if (validTo < _timeProvider.GetUtcNow() && !consentRequestEvents.Exists(r => r.EventType.Equals(ConsentRequestEventType.Expired)))

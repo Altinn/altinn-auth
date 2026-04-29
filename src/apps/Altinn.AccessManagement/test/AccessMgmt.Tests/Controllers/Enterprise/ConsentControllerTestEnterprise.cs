@@ -1282,7 +1282,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             Assert.Empty(problemDetails.Errors);
             Assert.Single(problemDetails.Extensions);
         }
-
+    
         private HttpClient GetTestClient()
         {
             HttpClient client = _fixture.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });

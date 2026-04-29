@@ -80,5 +80,15 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         /// Returns the count of consent requests for a specific party and status.
         /// </summary>
         Task<Result<int>> GetConsentRequestCountForParty(Guid offeredByParty, ConsentRequestStatusType status, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Returns a list of consents that had status changes for a specific party, ordered by change date (newest first).
+        /// </summary>
+        /// <param name="consentReceiver">The consent receiver that checks for status changes</param>
+        /// <param name="continuationToken">Optional continuation token from previous response</param>
+        /// <param name="pageSize">Number of items to return</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>List of consent status changes</returns>
+        Task<Result<List<ConsentStatusChange>>> GetConsentStatusChangesForParty(ConsentPartyUrn consentReceiver, string? continuationToken, int pageSize, CancellationToken cancellationToken);
     }
 }
