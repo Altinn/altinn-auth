@@ -82,13 +82,20 @@ internal static class ErrorDbHelper
                 var tasks = new ConcurrentDictionary<string, ProgressTask>();
                 var progress = new Progress<JSONMessage>(msg =>
                 {
-                    var task = tasks.GetOrAdd(msg.ID, id =>
+                    ProgressTask task;
+                    if (msg.Status.StartsWith("Pulling fs layer"))
                     {
-                        var task = ctx.AddTask(id, autoStart: true);
-                        ////_ = FetchTaskInfo(task, msg.ID, cancellationToken);
+                        task = tasks.GetOrAdd(msg.ID, id =>
+                        {
+                            var task = ctx.AddTask(id, autoStart: true);
 
-                        return task;
-                    });
+                            return task;
+                        });
+                    }
+                    else if (!tasks.TryGetValue(msg.ID, out task))
+                    {
+                        return;
+                    }
 
                     if (msg.Progress.Total > 0)
                     {

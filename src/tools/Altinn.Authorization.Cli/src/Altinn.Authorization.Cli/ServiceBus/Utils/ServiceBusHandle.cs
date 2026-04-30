@@ -2,6 +2,7 @@
 using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
+using CommunityToolkit.Diagnostics;
 
 namespace Altinn.Authorization.Cli.ServiceBus.Utils;
 
@@ -9,6 +10,8 @@ internal class ServiceBusHandle
 {
     public static ServiceBusHandle Create(string connectionString)
     {
+        Guard.IsNotNullOrEmpty(connectionString);
+
         if (Uri.TryCreate(connectionString, UriKind.Absolute, out var uri)
             && uri.Scheme == "sb")
         {

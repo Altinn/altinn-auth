@@ -62,14 +62,15 @@ public sealed class CopyCommand(CancellationToken cancellationToken)
 
                 await CopyTables(source, target, plan.Tables, dir, cancellationToken);
                 ctx.Refresh();
+                await target.Commit(cancellationToken);
 
                 if (plan.Sequences is { } sequencesTask)
                 {
+                    await target.BeginTransaction(cancellationToken);
                     await UpdateSequences(target, sequencesTask, sequences, cancellationToken);
                     ctx.Refresh();
+                    await target.Commit(cancellationToken);
                 }
-
-                await target.Commit(cancellationToken);
             });
 
         dir.Delete();
@@ -120,8 +121,8 @@ public sealed class CopyCommand(CancellationToken cancellationToken)
             await using var writer = dir.CreateText(table.FileName);
 
             await copier.CopyLinesAsync(reader, writer, table, cancellationToken);
-            table.ExportTask.MaxValue = table.ExportedRows;
-            table.ExportTask.Value = table.ExportedRows;
+            table.ExportTask.MaxValue = Math.Min(1, table.ExportedRows);
+            table.ExportTask.Value = Math.Min(1, table.ExportedRows);
         }
 
         static async Task ImportTables(DbHelper db, ChannelReader<TableTask> reader, TempDir dir, CancellationToken cancellationToken)
@@ -136,13 +137,16 @@ public sealed class CopyCommand(CancellationToken cancellationToken)
 
         static async Task ImportTable(DbHelper db, TableTask table, TextCopier copier, TempDir dir, CancellationToken cancellationToken)
         {
-            table.ImportTask.MaxValue = table.ExportedRows;
+            table.ImportTask.MaxValue = Math.Min(1, table.ExportedRows);
 
             using var importTask = table.ImportTask.Run();
             using var reader = dir.OpenText(table.FileName);
             await using var writer = await db.BeginTextImport(table.ImportSql, cancellationToken);
 
             await copier.CopyLinesAsync(reader, writer, table.ImportTask.AsLineProgress(), cancellationToken);
+
+            table.ImportTask.Value = Math.Min(1, table.ImportTask.Value);
+            table.ImportTask.MaxValue = table.ImportTask.Value;
         }
     }
 

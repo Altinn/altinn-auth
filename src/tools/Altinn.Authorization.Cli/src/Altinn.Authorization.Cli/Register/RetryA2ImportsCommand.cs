@@ -34,11 +34,11 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
     // Note: order of queues is important
     private static readonly ImmutableArray<ErrorQueueHandler> ErrorQueues = [
         new A2ImportErrorQueueHandler(),
-        ////new ImportValidationQueueHandler(),
-        ////new ImportBatchErrorQueueHandler(),
+        new A2ProfileImportErrorQueueHandler(),
+        new ImportValidationQueueHandler(),
+        new ImportBatchErrorQueueHandler(),
         ////new A2ExternalRoleResolverErrorQueueHandler(),
         ////new UpsertUserRecordQueueHandler(),
-        ////new A2ProfileImportQueueHandler(),
     ];
 
     /// <inheritdoc/>
@@ -77,9 +77,11 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
                 var handled = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var queue in ErrorQueues)
                 {
-                    if (queueNames.Contains(queue.Name) || queueNames.Contains(queue.ErrorQueueName))
+                    if (queueNames.Contains(queue.Name) || queueNames.Contains(queue.ErrorQueueName) || queueNames.Contains(queue.SkippedQueueName))
                     {
                         handled.Add(queue.Name);
+                        handled.Add(queue.ErrorQueueName);
+                        handled.Add(queue.SkippedQueueName);
                         await Process(sb, context, queue, queueNames, ctx, cancellationToken);
                     }
                 }
@@ -125,6 +127,12 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
         if (queueNames.Contains(queue.Name))
         {
             await RetryDeadLetters(sb, context, queue, queue.Name, ctx, cancellationToken);
+        }
+
+        if (queueNames.Contains(queue.SkippedQueueName))
+        {
+            await DeadLetterMessages(sb, queue, queue.SkippedQueueName, ctx, cancellationToken);
+            await RetryDeadLetters(sb, context, queue, queue.SkippedQueueName, ctx, cancellationToken);
         }
 
         if (queueNames.Contains(queue.ErrorQueueName))
@@ -385,6 +393,8 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
 
         public string ErrorQueueName { get; } = $"{queueName}_error";
 
+        public string SkippedQueueName { get; } = $"{queueName}_skipped";
+
         public bool Handles(ServiceBusReceivedMessage message)
             => GetHandlers(message).Any();
 
@@ -442,477 +452,187 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
         }
     }
 
-    ////private sealed class A2ExternalRoleResolverErrorQueueHandler()
-    ////    : ErrorQueueHandler(
-    ////        "register-a2-external-role-resolver",
-    ////        [
-    ////            new ResolveAndUpsertA2CCRRoleAssignmentsCommandHandler(),
-    ////        ])
-    ////{
-    ////    private sealed class ResolveAndUpsertA2CCRRoleAssignmentsCommandHandler
-    ////        : ErrorQueueMessageHandler<ResolveAndUpsertA2CCRRoleAssignmentsCommand>
-    ////    {
-    ////        protected override async ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, ResolveAndUpsertA2CCRRoleAssignmentsCommand message, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            var partyId = message.FromPartyId;
-    ////            if (partyId == 0)
-    ////            {
-    ////                partyId = await sender.GetPartyIdFromUuid(message.FromPartyUuid, cancellationToken);
-    ////            }
-
-    ////            var command = new ImportA2CCRRolesCommand
-    ////            {
-    ////                PartyId = partyId,
-    ////                PartyUuid = message.FromPartyUuid,
-    ////                ChangeId = message.Tracking.Progress,
-    ////                ChangedTime = DateTimeOffset.UtcNow,
-    ////            };
-
-    ////            await sender.Send(command, cancellationToken);
-    ////            return true;
-    ////        }
-    ////    }
-
-    ////    private sealed record ResolveAndUpsertA2CCRRoleAssignmentsCommand
-    ////        : IFakeMassTransitMessage<ResolveAndUpsertA2CCRRoleAssignmentsCommand>
-    ////    {
-    ////        static Utf8String IFakeMassTransitMessage<ResolveAndUpsertA2CCRRoleAssignmentsCommand>.MessageUrn
-    ////            => "urn:message:Altinn.Register.PartyImport.A2:ResolveAndUpsertA2CCRRoleAssignmentsCommand"u8;
-
-    ////        static Guid IFakeMassTransitMessage<ResolveAndUpsertA2CCRRoleAssignmentsCommand>.MessageId(ResolveAndUpsertA2CCRRoleAssignmentsCommand message)
-    ////            => message.CommandId;
-
-    ////        public Guid CommandId { get; } = Guid.CreateVersion7();
-
-    ////        public JobTrackig Tracking { get; init; }
-
-    ////        public Guid FromPartyUuid { get; init; }
-
-    ////        public int FromPartyId { get; init; }
-    ////    }
-    ////}
-
-    ////private sealed class UpsertUserRecordQueueHandler()
-    ////    : ErrorQueueHandler(
-    ////        "register-upsert-user-record",
-    ////        [
-    ////            new UpsertUserRecordCommandHandler(),
-    ////        ])
-    ////{
-    ////    private sealed class UpsertUserRecordCommandHandler
-    ////        : ErrorQueueMessageHandler<UpsertUserRecordCommand>
-    ////    {
-    ////        protected override ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, UpsertUserRecordCommand message, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            // we only handle imports from A2
-    ////            if (message.Tracking.JobName != "a2-profile-import:profile-changes")
-    ////            {
-    ////                return ValueTask.FromResult(false);
-    ////            }
-
-    ////            var command = new ImportA2UserProfileCommand
-    ////            {
-    ////                UserId = message.UserId,
-    ////                OwnerPartyUuid = message.PartyUuid,
-    ////                IsDeleted = !message.IsActive,
-    ////                Tracking = message.Tracking,
-    ////            };
-
-    ////            return SendAndReturn(command, sender, cancellationToken);
-    ////        }
-
-    ////        private async ValueTask<bool> SendAndReturn(ImportA2UserProfileCommand command, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            await sender.Send(command, cancellationToken);
-    ////            return true;
-    ////        }
-    ////    }
-
-    ////    private sealed class UpsertUserRecordCommand
-    ////        : IFakeMassTransitMessage<UpsertUserRecordCommand>
-    ////    {
-    ////        static Utf8String IFakeMassTransitMessage<UpsertUserRecordCommand>.MessageUrn
-    ////            => "urn:message:Altinn.Register.PartyImport:UpsertUserRecordCommand"u8;
-
-    ////        static Guid IFakeMassTransitMessage<UpsertUserRecordCommand>.MessageId(UpsertUserRecordCommand message)
-    ////            => message.CommandId;
-
-    ////        public Guid CommandId { get; } = Guid.CreateVersion7();
-
-    ////        /// <summary>
-    ////        /// The owner party UUID.
-    ////        /// </summary>
-    ////        public required Guid PartyUuid { get; init; }
-
-    ////        /// <summary>
-    ////        /// Gets the user ID.
-    ////        /// </summary>
-    ////        public required ulong UserId { get; init; }
-
-    ////        /// <summary>
-    ////        /// Gets the username, if any.
-    ////        /// </summary>
-    ////        public required string? Username { get; init; }
-
-    ////        /// <summary>
-    ////        /// Gets whether the user is active.
-    ////        /// </summary>
-    ////        public required bool IsActive { get; init; }
-
-    ////        /// <summary>
-    ////        /// Gets the tracking information for the import.
-    ////        /// </summary>
-    ////        public JobTrackig Tracking { get; init; }
-    ////    }
-    ////}
-
-    ////private sealed class ImportBatchErrorQueueHandler()
-    ////    : ErrorQueueHandler(
-    ////        "register-party-import-batch",
-    ////        [
-    ////            new UpsertValidatedA2PartyCommandHandler(),
-    ////            new UpsertValidatedA2ProfileCommandHandler(),
-    ////            new UpsertExternalRoleAssignmentsCommandHandler(),
-    ////            new UpsertPartyUserCommandHandler(),
-    ////        ])
-    ////{
-    ////    private sealed class UpsertValidatedA2PartyCommandHandler
-    ////        : ErrorQueueMessageHandler<UpsertValidatedPartyCommand>
-    ////    {
-    ////        protected override ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, UpsertValidatedPartyCommand message, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            // we only handle imports from A2
-    ////            if (message.Tracking.JobName != "a2-party-import:party")
-    ////            {
-    ////                return ValueTask.FromResult(false);
-    ////            }
-
-    ////            var command = new ImportA2PartyCommand
-    ////            {
-    ////                PartyUuid = message.Party.PartyUuid,
-    ////                ChangeId = message.Tracking.Progress,
-    ////                ChangedTime = DateTimeOffset.UtcNow,
-    ////            };
-
-    ////            return SendAndReturn(command, sender, cancellationToken);
-    ////        }
-
-    ////        private async ValueTask<bool> SendAndReturn(ImportA2PartyCommand command, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            await sender.Send(command, cancellationToken);
-    ////            return true;
-    ////        }
-    ////    }
-
-    ////    private sealed class UpsertValidatedA2ProfileCommandHandler
-    ////        : ErrorQueueMessageHandler<UpsertValidatedPartyCommand>
-    ////    {
-    ////        protected override ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, UpsertValidatedPartyCommand message, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            // we only handle imports from A2
-    ////            if (message.Tracking.JobName != "a2-profile-import:profile-changes")
-    ////            {
-    ////                return ValueTask.FromResult(false);
-    ////            }
-
-    ////            if (message.Party.User is null)
-    ////            {
-    ////                return ValueTask.FromResult(false);
-    ////            }
-
-    ////            var command = new ImportA2UserProfileCommand
-    ////            {
-    ////                UserId = message.Party.User.UserId,
-    ////                OwnerPartyUuid = message.Party.OwnerUuid ?? message.Party.PartyUuid,
-    ////                IsDeleted = message.Party.IsDeleted,
-    ////                Tracking = message.Tracking,
-    ////            };
-
-    ////            return SendAndReturn(command, sender, cancellationToken);
-    ////        }
-
-    ////        private async ValueTask<bool> SendAndReturn(ImportA2UserProfileCommand command, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            await sender.Send(command, cancellationToken);
-    ////            return true;
-    ////        }
-    ////    }
-
-    ////    private sealed class UpsertExternalRoleAssignmentsCommandHandler
-    ////        : ErrorQueueMessageHandler<UpsertExternalRoleAssignmentsCommand>
-    ////    {
-    ////        protected override ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, UpsertExternalRoleAssignmentsCommand message, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            // we only handle imports from A2
-    ////            if (message.Tracking.JobName != "a2-party-import:ccr-roles")
-    ////            {
-    ////                return ValueTask.FromResult(false);
-    ////            }
-
-    ////            var command = new ImportA2CCRRolesCommand
-    ////            {
-    ////                PartyId = message.FromPartyId,
-    ////                PartyUuid = message.FromPartyUuid,
-    ////                ChangeId = message.Tracking.Progress,
-    ////                ChangedTime = DateTimeOffset.UtcNow,
-    ////            };
-
-    ////            return SendAndReturn(command, sender, cancellationToken);
-    ////        }
-
-    ////        private async ValueTask<bool> SendAndReturn(ImportA2CCRRolesCommand command, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            await sender.Send(command, cancellationToken);
-    ////            return true;
-    ////        }
-    ////    }
-
-    ////    private sealed class UpsertPartyUserCommandHandler
-    ////        : ErrorQueueMessageHandler<UpsertPartyUserCommand>
-    ////    {
-    ////        protected override ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, UpsertPartyUserCommand message, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            // we only handle imports from A2
-    ////            if (message.Tracking.JobName != "a2-party-userid-import:userid")
-    ////            {
-    ////                return ValueTask.FromResult(false);
-    ////            }
-
-    ////            return HandleInner(message, sender, cancellationToken);
-    ////        }
-
-    ////        private async ValueTask<bool> HandleInner(UpsertPartyUserCommand message, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            var isDeleted = await sender.GetPartyIsDeleted(message.PartyUuid, cancellationToken);
-
-    ////            var command = new ImportA2UserProfileCommand
-    ////            {
-    ////                UserId = message.User.UserId,
-    ////                OwnerPartyUuid = message.PartyUuid,
-    ////                IsDeleted = isDeleted,
-    ////                Tracking = message.Tracking,
-    ////            };
-
-    ////            await sender.Send(command, cancellationToken);
-    ////            return true;
-    ////        }
-    ////    }
-
-    ////    private sealed record UpsertValidatedPartyCommand
-    ////        : IFakeMassTransitMessage<UpsertValidatedPartyCommand>
-    ////    {
-    ////        static Utf8String IFakeMassTransitMessage<UpsertValidatedPartyCommand>.MessageUrn
-    ////            => "urn:message:Altinn.Register.PartyImport:UpsertValidatedPartyCommand"u8;
-
-    ////        static Guid IFakeMassTransitMessage<UpsertValidatedPartyCommand>.MessageId(UpsertValidatedPartyCommand message)
-    ////            => message.CommandId;
-
-    ////        public Guid CommandId { get; } = Guid.CreateVersion7();
-
-    ////        public JobTrackig Tracking { get; init; }
-
-    ////        public PartialParty Party { get; init; }
-    ////    }
-
-    ////    private sealed record UpsertExternalRoleAssignmentsCommand
-    ////        : IFakeMassTransitMessage<UpsertExternalRoleAssignmentsCommand>
-    ////    {
-    ////        static Utf8String IFakeMassTransitMessage<UpsertExternalRoleAssignmentsCommand>.MessageUrn
-    ////            => "urn:message:Altinn.Register.PartyImport:UpsertExternalRoleAssignmentsCommand"u8;
-
-    ////        static Guid IFakeMassTransitMessage<UpsertExternalRoleAssignmentsCommand>.MessageId(UpsertExternalRoleAssignmentsCommand message)
-    ////            => message.CommandId;
-
-    ////        public Guid CommandId { get; } = Guid.CreateVersion7();
-
-    ////        /// <summary>
-    ////        /// Gets the party from which to upsert the external roles from.
-    ////        /// </summary>
-    ////        public Guid FromPartyUuid { get; init; }
-
-    ////        /// <summary>
-    ////        /// Gets the party ID that the role assignments are from.
-    ////        /// </summary>
-    ////        /// <remarks>
-    ////        /// This was added later to make dealing with errors easier, as such, older messages
-    ////        /// does not contain this value and will default to 0. This is why this property is
-    ////        /// not marked as required as of now.
-    ////        /// </remarks>
-    ////        public int FromPartyId { get; init; }
-
-    ////        /// <summary>
-    ////        /// Gets the tracking information for the upsert.
-    ////        /// </summary>
-    ////        public JobTrackig Tracking { get; init; }
-    ////    }
-
-    ////    private sealed record UpsertPartyUserCommand
-    ////        : IFakeMassTransitMessage<UpsertPartyUserCommand>
-    ////    {
-    ////        static Utf8String IFakeMassTransitMessage<UpsertPartyUserCommand>.MessageUrn
-    ////            => "urn:message:Altinn.Register.PartyImport:UpsertPartyUserCommand"u8;
-
-    ////        static Guid IFakeMassTransitMessage<UpsertPartyUserCommand>.MessageId(UpsertPartyUserCommand message)
-    ////            => message.CommandId;
-
-    ////        public Guid CommandId { get; } = Guid.CreateVersion7();
-
-    ////        /// <summary>
-    ////        /// Gets the party UUID.
-    ////        /// </summary>
-    ////        public required Guid PartyUuid { get; init; }
-
-    ////        /// <summary>
-    ////        /// Gets the user record to upsert.
-    ////        /// </summary>
-    ////        public required PartialUser User { get; init; }
-
-    ////        /// <summary>
-    ////        /// Gets the tracking information for the import.
-    ////        /// </summary>
-    ////        public required JobTrackig Tracking { get; init; }
-    ////    }
-    ////}
-
-    ////private sealed class ImportValidationQueueHandler()
-    ////    : ErrorQueueHandler(
-    ////        "register-party-import-validation",
-    ////        [
-    ////            new UpsertPartyCommandFromA2PartyHandler(),
-    ////            new UpsertPartyCommandFromA2ProfileHandler(),
-    ////            new UpsertPartyCommandFromSystemUserHandler(),
-    ////        ])
-    ////{
-    ////    private sealed class UpsertPartyCommandFromA2PartyHandler
-    ////        : ErrorQueueMessageHandler<UpsertPartyComand>
-    ////    {
-    ////        protected override ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, UpsertPartyComand message, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            // we only handle imports from A2
-    ////            if (message.Tracking.JobName != "a2-party-import:party")
-    ////            {
-    ////                return ValueTask.FromResult(false);
-    ////            }
-
-    ////            var command = new ImportA2PartyCommand
-    ////            {
-    ////                PartyUuid = message.Party.PartyUuid,
-    ////                ChangeId = message.Tracking.Progress,
-    ////                ChangedTime = DateTimeOffset.UtcNow,
-    ////            };
-
-    ////            return SendAndReturn(command, sender, cancellationToken);
-    ////        }
-
-    ////        private async ValueTask<bool> SendAndReturn(ImportA2PartyCommand command, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            await sender.Send(command, cancellationToken);
-    ////            return true;
-    ////        }
-    ////    }
-
-    ////    private sealed class UpsertPartyCommandFromA2ProfileHandler
-    ////        : ErrorQueueMessageHandler<UpsertPartyComand>
-    ////    {
-    ////        protected override ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, UpsertPartyComand message, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            // we only handle imports from A2
-    ////            if (message.Tracking.JobName != "a2-profile-import:profile-changes")
-    ////            {
-    ////                return ValueTask.FromResult(false);
-    ////            }
-
-    ////            if (message.Party.User is null)
-    ////            {
-    ////                return ValueTask.FromResult(false);
-    ////            }
-
-    ////            var command = new ImportA2UserProfileCommand
-    ////            {
-    ////                UserId = message.Party.User.UserId,
-    ////                OwnerPartyUuid = message.Party.OwnerUuid ?? message.Party.PartyUuid,
-    ////                IsDeleted = message.Party.IsDeleted,
-    ////                Tracking = message.Tracking,
-    ////            };
-
-    ////            return SendAndReturn(command, sender, cancellationToken);
-    ////        }
-
-    ////        private async ValueTask<bool> SendAndReturn(ImportA2UserProfileCommand command, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            await sender.Send(command, cancellationToken);
-    ////            return true;
-    ////        }
-    ////    }
-
-    ////    private sealed class UpsertPartyCommandFromSystemUserHandler
-    ////        : ErrorQueueMessageHandler<UpsertPartyComand>
-    ////    {
-    ////        protected override ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, UpsertPartyComand message, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            // we only handle imports from A2
-    ////            if (message.Tracking.JobName != "systemuser-import:systemuser")
-    ////            {
-    ////                return ValueTask.FromResult(false);
-    ////            }
-
-    ////            return SendAndReturn(queueName, received, sender, cancellationToken);
-    ////        }
-
-    ////        private ValueTask<bool> SendAndReturn(string queueName, ServiceBusReceivedMessage command, Context sender, CancellationToken cancellationToken)
-    ////        {
-    ////            return new(sender.Resend(queueName, command, cancellationToken));
-    ////        }
-    ////    }
-
-    ////    private sealed record UpsertPartyComand
-    ////        : IFakeMassTransitMessage<UpsertPartyComand>
-    ////    {
-    ////        static Utf8String IFakeMassTransitMessage<UpsertPartyComand>.MessageUrn
-    ////            => "urn:message:Altinn.Register.PartyImport:UpsertPartyCommand"u8;
-
-    ////        static Guid IFakeMassTransitMessage<UpsertPartyComand>.MessageId(UpsertPartyComand message)
-    ////            => message.CommandId;
-
-    ////        public Guid CommandId { get; } = Guid.CreateVersion7();
-
-    ////        public JobTrackig Tracking { get; init; }
-
-    ////        public PartialParty Party { get; init; }
-    ////    }
-    ////}
+    private sealed class ImportValidationQueueHandler()
+        : ErrorQueueHandler(
+            "register-party-import-validation",
+            [
+                new UpsertA2PartyCommandHandler(),
+            ])
+    {
+        private sealed class UpsertA2PartyCommandHandler
+            : ErrorQueueMessageHandler<UpsertPartyCommand>
+        {
+            protected override async ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, UpsertPartyCommand message, Context sender, CancellationToken cancellationToken)
+            {
+                // we only handle imports from A2
+                if (message.Tracking.JobName != "a2-party-import:party")
+                {
+                    return false;
+                }
+
+                var command = new ImportA2PartyCommand
+                {
+                    PartyUuid = message.Party.PartyUuid,
+                    ChangeId = message.Tracking.Progress,
+                    ChangedTime = DateTimeOffset.UtcNow,
+                    Tracking = message.Tracking,
+                };
+
+                await sender.Send(command, cancellationToken);
+                return true;
+            }
+        }
+
+        private sealed record UpsertPartyCommand
+            : BaseCommand
+            , IFakeMassTransitMessage<UpsertPartyCommand>
+        {
+            static Utf8String IFakeMassTransitMessage<UpsertPartyCommand>.MessageUrn
+                => "urn:message:Altinn.Register.PartyImport:UpsertPartyCommand"u8;
+
+            static Guid IFakeMassTransitMessage<UpsertPartyCommand>.MessageId(UpsertPartyCommand message)
+                => message.CommandId;
+
+            static Guid IFakeMassTransitMessage<UpsertPartyCommand>.CorrelationId(UpsertPartyCommand message)
+                => message.CorrelationId;
+
+            public JobTrackig Tracking { get; init; }
+
+            public PartialParty Party { get; init; }
+        }
+    }
+
+    private sealed class ImportBatchErrorQueueHandler()
+        : ErrorQueueHandler(
+            "register-party-import-batch",
+            [
+                new UpsertValidatedA2PartyCommandHandler(),
+                new UpsertValidatedSystemUserPartyCommandHandler(),
+            ])
+    {
+        private sealed class UpsertValidatedA2PartyCommandHandler
+            : ErrorQueueMessageHandler<UpsertValidatedPartyCommand>
+        {
+            protected override async ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, UpsertValidatedPartyCommand message, Context sender, CancellationToken cancellationToken)
+            {
+                // we only handle imports from A2
+                if (message.Tracking.JobName != "a2-party-import:party")
+                {
+                    return false;
+                }
+
+                var command = new ImportA2PartyCommand
+                {
+                    PartyUuid = message.Party.PartyUuid,
+                    ChangeId = message.Tracking.Progress,
+                    ChangedTime = DateTimeOffset.UtcNow,
+                    Tracking = message.Tracking,
+                };
+
+                await sender.Send(command, cancellationToken);
+                return true;
+            }
+        }
+
+        private sealed class UpsertValidatedSystemUserPartyCommandHandler
+            : ErrorQueueMessageHandler<UpsertValidatedPartyCommand>
+        {
+            protected override async ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, UpsertValidatedPartyCommand message, Context sender, CancellationToken cancellationToken)
+            {
+                // we only handle imports from A2
+                if (message.Tracking.JobName != "systemuser-import:systemuser")
+                {
+                    return false;
+                }
+
+                var command = new ImportA2PartyCommand
+                {
+                    PartyUuid = message.Party.PartyUuid,
+                    ChangeId = message.Tracking.Progress,
+                    ChangedTime = DateTimeOffset.UtcNow,
+                    Tracking = message.Tracking,
+                };
+
+                await sender.Send(command, cancellationToken);
+                return true;
+            }
+        }
+
+        private sealed record UpsertValidatedPartyCommand
+            : BaseCommand
+            , IFakeMassTransitMessage<UpsertValidatedPartyCommand>
+        {
+            static Utf8String IFakeMassTransitMessage<UpsertValidatedPartyCommand>.MessageUrn
+                => "urn:message:Altinn.Register.PartyImport:UpsertValidatedPartyCommand"u8;
+
+            static Guid IFakeMassTransitMessage<UpsertValidatedPartyCommand>.MessageId(UpsertValidatedPartyCommand message)
+                => message.CommandId;
+
+            static Guid IFakeMassTransitMessage<UpsertValidatedPartyCommand>.CorrelationId(UpsertValidatedPartyCommand message)
+                => message.CorrelationId;
+
+            public JobTrackig Tracking { get; init; }
+
+            public PartialParty Party { get; init; }
+        }
+    }
 
     private sealed class A2ImportErrorQueueHandler()
         : ErrorQueueHandler(
             QueueName,
             [
-                ////new ImportA2PartyCommandHandler(),
-                ////new ImportA2CCRRolesCommandHandler(),
+                new ImportA2PartyCommandHandler(),
+                new ImportA2ProfileCommandHandler(),
+                new ImportA2CCRRolesCommandHandler(),
                 ////new ImportA2UserIdForPartyCommandHandler(),
+                new EnrichA2PartyImportSagaCommandHandler(),
                 new CompleteA2PartyImportSagaCommandHandler(),
+                new RetryA2PartyImportSagaCommandHandler(),
             ])
     {
         public const string QueueName = "register-a2-party-import";
 
-        ////private sealed class ImportA2PartyCommandHandler
-        ////    : ErrorQueueMessageHandler<ImportA2PartyCommand>
-        ////{
-        ////    protected override async ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, ImportA2PartyCommand message, Context sender, CancellationToken cancellationToken)
-        ////    {
-        ////        await sender.Send(message, cancellationToken);
-        ////        return true;
-        ////    }
-        ////}
+        private sealed class ImportA2PartyCommandHandler
+            : ErrorQueueMessageHandler<ImportA2PartyCommand>
+        {
+            protected override async ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, ImportA2PartyCommand message, Context sender, CancellationToken cancellationToken)
+            {
+                await sender.Send(message, cancellationToken);
+                return true;
+            }
+        }
 
-        ////private sealed class ImportA2CCRRolesCommandHandler
-        ////    : ErrorQueueMessageHandler<ImportA2CCRRolesCommand>
-        ////{
-        ////    protected override async ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, ImportA2CCRRolesCommand message, Context sender, CancellationToken cancellationToken)
-        ////    {
-        ////        await sender.Send(message, cancellationToken);
-        ////        return true;
-        ////    }
-        ////}
+        public sealed class ImportA2ProfileCommandHandler
+            : ErrorQueueMessageHandler<ImportA2UserProfileCommand>
+        {
+            protected override async ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, ImportA2UserProfileCommand message, Context sender, CancellationToken cancellationToken)
+            {
+                await sender.Send(message, cancellationToken);
+                return true;
+            }
+        }
+
+        private sealed class ImportA2CCRRolesCommandHandler
+            : ErrorQueueMessageHandler<ImportA2CCRRolesCommand>
+        {
+            protected override async ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, ImportA2CCRRolesCommand message, Context sender, CancellationToken cancellationToken)
+            {
+                var newCommand = new ImportA2PartyCommand
+                {
+                    PartyUuid = message.PartyUuid,
+                    ChangeId = 0,
+                    ChangedTime = message.ChangedTime,
+                    Tracking = new JobTrackig
+                    {
+                        JobName = "a2-party-import:party",
+                        Progress = 1,
+                    },
+                };
+
+                await sender.Send(newCommand, cancellationToken);
+                return true;
+            }
+        }
 
         ////private sealed class ImportA2UserIdForPartyCommandHandler
         ////    : ErrorQueueMessageHandler<ImportA2UserIdForPartyCommand>
@@ -924,10 +644,40 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
         ////    }
         ////}
 
+        private sealed class EnrichA2PartyImportSagaCommandHandler
+            : ErrorQueueMessageHandler<EnrichA2PartyImportSagaCommand>
+        {
+            protected override async ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, EnrichA2PartyImportSagaCommand message, Context sender, CancellationToken cancellationToken)
+            {
+                var retry = new RetryA2PartyImportSagaCommand
+                {
+                    CorrelationId = message.CorrelationId,
+                };
+
+                await sender.Send(retry, cancellationToken);
+                return true;
+            }
+        }
+
         private sealed class CompleteA2PartyImportSagaCommandHandler
             : ErrorQueueMessageHandler<CompleteA2PartyImportSagaCommand>
         {
             protected override async ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, CompleteA2PartyImportSagaCommand message, Context sender, CancellationToken cancellationToken)
+            {
+                var retry = new RetryA2PartyImportSagaCommand
+                {
+                    CorrelationId = message.CorrelationId,
+                };
+
+                await sender.Send(retry, cancellationToken);
+                return true;
+            }
+        }
+
+        private sealed class RetryA2PartyImportSagaCommandHandler
+            : ErrorQueueMessageHandler<RetryA2PartyImportSagaCommand>
+        {
+            protected override async ValueTask<bool> Handle(string queueName, ServiceBusReceivedMessage received, RetryA2PartyImportSagaCommand message, Context sender, CancellationToken cancellationToken)
             {
                 var retry = new RetryA2PartyImportSagaCommand
                 {
@@ -969,6 +719,20 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
         ////    }
         ////}
 
+        public sealed record EnrichA2PartyImportSagaCommand
+            : BaseCommand
+            , IFakeMassTransitMessage<EnrichA2PartyImportSagaCommand>
+        {
+            static Utf8String IFakeMassTransitMessage<EnrichA2PartyImportSagaCommand>.MessageUrn
+                => "urn:message:Altinn.Register.PartyImport.A2:EnrichA2PartyImportSagaCommand"u8;
+
+            static Guid IFakeMassTransitMessage<EnrichA2PartyImportSagaCommand>.MessageId(EnrichA2PartyImportSagaCommand message)
+                => message.CommandId;
+
+            static Guid IFakeMassTransitMessage<EnrichA2PartyImportSagaCommand>.CorrelationId(EnrichA2PartyImportSagaCommand message)
+                => message.CorrelationId;
+        }
+
         public sealed record CompleteA2PartyImportSagaCommand
             : BaseCommand
             , IFakeMassTransitMessage<CompleteA2PartyImportSagaCommand>
@@ -996,6 +760,16 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
             static Guid IFakeMassTransitMessage<RetryA2PartyImportSagaCommand>.CorrelationId(RetryA2PartyImportSagaCommand message)
                 => message.CorrelationId;
         }
+    }
+
+    private sealed class A2ProfileImportErrorQueueHandler()
+        : ErrorQueueHandler(
+            QueueName,
+            [
+                new A2ImportErrorQueueHandler.ImportA2ProfileCommandHandler(),
+            ])
+    {
+        public const string QueueName = "register-a2-profile-import";
     }
 
     private abstract record BaseCommand
@@ -1029,104 +803,115 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
     ////    }
     ////}
 
-    ////private sealed record ImportA2PartyCommand
-    ////    : IFakeMassTransitMessage<ImportA2PartyCommand>
-    ////{
-    ////    static Utf8String IFakeMassTransitMessage<ImportA2PartyCommand>.MessageUrn
-    ////        => "urn:message:Altinn.Register.PartyImport.A2:ImportA2PartyCommand"u8;
+    private sealed record ImportA2PartyCommand
+        : BaseCommand
+        , IFakeMassTransitMessage<ImportA2PartyCommand>
+    {
+        static Utf8String IFakeMassTransitMessage<ImportA2PartyCommand>.MessageUrn
+            => "urn:message:Altinn.Register.PartyImport.A2:ImportA2PartyCommand"u8;
 
-    ////    static Guid IFakeMassTransitMessage<ImportA2PartyCommand>.MessageId(ImportA2PartyCommand message)
-    ////        => message.CommandId;
+        static Guid IFakeMassTransitMessage<ImportA2PartyCommand>.MessageId(ImportA2PartyCommand message)
+                => message.CommandId;
 
-    ////    public Guid CommandId { get; } = Guid.CreateVersion7();
+        static Guid IFakeMassTransitMessage<ImportA2PartyCommand>.CorrelationId(ImportA2PartyCommand message)
+            => message.CorrelationId;
 
-    ////    /// <summary>
-    ////    /// Gets the party UUID.
-    ////    /// </summary>
-    ////    public required Guid PartyUuid { get; init; }
+        /// <summary>
+        /// Gets the party UUID.
+        /// </summary>
+        public required Guid PartyUuid { get; init; }
 
-    ////    /// <summary>
-    ////    /// Gets the change ID.
-    ////    /// </summary>
-    ////    public required uint ChangeId { get; init; }
+        /// <summary>
+        /// Gets the change ID.
+        /// </summary>
+        public required uint ChangeId { get; init; }
 
-    ////    /// <summary>
-    ////    /// Gets when the change was registered.
-    ////    /// </summary>
-    ////    public required DateTimeOffset ChangedTime { get; init; }
-    ////}
+        /// <summary>
+        /// Gets when the change was registered.
+        /// </summary>
+        public required DateTimeOffset ChangedTime { get; init; }
 
-    ////private sealed record ImportA2UserProfileCommand
-    ////    : IFakeMassTransitMessage<ImportA2UserProfileCommand>
-    ////{
-    ////    static Utf8String IFakeMassTransitMessage<ImportA2UserProfileCommand>.MessageUrn
-    ////        => "urn:message:Altinn.Register.PartyImport.A2:ImportA2UserProfileCommand"u8;
+        /// <summary>
+        /// Gets tracking information.
+        /// </summary>
+        public required JobTrackig Tracking { get; init; }
+    }
 
-    ////    static Guid IFakeMassTransitMessage<ImportA2UserProfileCommand>.MessageId(ImportA2UserProfileCommand message)
-    ////        => message.CommandId;
+    private sealed record ImportA2UserProfileCommand
+        : BaseCommand
+        , IFakeMassTransitMessage<ImportA2UserProfileCommand>
+    {
+        static Utf8String IFakeMassTransitMessage<ImportA2UserProfileCommand>.MessageUrn
+            => "urn:message:Altinn.Register.PartyImport.A2:ImportA2UserProfileCommand"u8;
 
-    ////    public Guid CommandId { get; } = Guid.CreateVersion7();
+        static Guid IFakeMassTransitMessage<ImportA2UserProfileCommand>.MessageId(ImportA2UserProfileCommand message)
+                => message.CommandId;
 
-    ////    /// <summary>
-    ////    /// Gets the user ID.
-    ////    /// </summary>
-    ////    public required ulong UserId { get; init; }
+        static Guid IFakeMassTransitMessage<ImportA2UserProfileCommand>.CorrelationId(ImportA2UserProfileCommand message)
+            => message.CorrelationId;
 
-    ////    /// <summary>
-    ////    /// Gets the owner party UUID.
-    ////    /// </summary>
-    ////    public required Guid OwnerPartyUuid { get; init; }
+        /// <summary>
+        /// Gets the user ID.
+        /// </summary>
+        public required ulong UserId { get; init; }
 
-    ////    /// <summary>
-    ////    /// Gets whether the user profile was deleted at the update time.
-    ////    /// </summary>
-    ////    public required bool IsDeleted { get; init; }
+        /// <summary>
+        /// Gets the owner party UUID.
+        /// </summary>
+        public required Guid OwnerPartyUuid { get; init; }
 
-    ////    /// <summary>
-    ////    /// Gets tracking information for the import job.
-    ////    /// </summary>
-    ////    public required JobTrackig Tracking { get; init; }
-    ////}
+        /// <summary>
+        /// Gets whether the user profile was deleted at the update time.
+        /// </summary>
+        public required bool IsDeleted { get; init; }
 
-    ////private sealed record ImportA2CCRRolesCommand
-    ////    : IFakeMassTransitMessage<ImportA2CCRRolesCommand>
-    ////{
-    ////    static Utf8String IFakeMassTransitMessage<ImportA2CCRRolesCommand>.MessageUrn
-    ////        => "urn:message:Altinn.Register.PartyImport.A2:ImportA2CCRRolesCommand"u8;
+        /// <summary>
+        /// Gets tracking information for the import job.
+        /// </summary>
+        public required JobTrackig Tracking { get; init; }
+    }
 
-    ////    static Guid IFakeMassTransitMessage<ImportA2CCRRolesCommand>.MessageId(ImportA2CCRRolesCommand message)
-    ////        => message.CommandId;
+    private sealed record ImportA2CCRRolesCommand
+        : BaseCommand
+        , IFakeMassTransitMessage<ImportA2CCRRolesCommand>
+    {
+        static Utf8String IFakeMassTransitMessage<ImportA2CCRRolesCommand>.MessageUrn
+            => "urn:message:Altinn.Register.PartyImport.A2:ImportA2CCRRolesCommand"u8;
 
-    ////    public Guid CommandId { get; } = Guid.CreateVersion7();
+        static Guid IFakeMassTransitMessage<ImportA2CCRRolesCommand>.MessageId(ImportA2CCRRolesCommand message)
+            => message.CommandId;
 
-    ////    /// <summary>
-    ////    /// Gets the party ID.
-    ////    /// </summary>
-    ////    /// <remarks>
-    ////    /// It's the callers responsibility to ensure that <see cref="PartyId"/> and <see cref="PartyUuid"/>
-    ////    /// is for the same party. Failing to do so will result in undefined behavior.
-    ////    /// </remarks>
-    ////    public required int PartyId { get; init; }
+        static Guid IFakeMassTransitMessage<ImportA2CCRRolesCommand>.CorrelationId(ImportA2CCRRolesCommand message)
+            => message.CorrelationId;
 
-    ////    /// <summary>
-    ////    /// Gets the party UUID.
-    ////    /// </summary>
-    ////    /// <remarks>
-    ////    /// It's the callers responsibility to ensure that <see cref="PartyId"/> and <see cref="PartyUuid"/>
-    ////    /// is for the same party. Failing to do so will result in undefined behavior.
-    ////    /// </remarks>
-    ////    public required Guid PartyUuid { get; init; }
+        /// <summary>
+        /// Gets the party ID.
+        /// </summary>
+        /// <remarks>
+        /// It's the callers responsibility to ensure that <see cref="PartyId"/> and <see cref="PartyUuid"/>
+        /// is for the same party. Failing to do so will result in undefined behavior.
+        /// </remarks>
+        public required int PartyId { get; init; }
 
-    ////    /// <summary>
-    ////    /// Gets the change ID.
-    ////    /// </summary>
-    ////    public required uint ChangeId { get; init; }
+        /// <summary>
+        /// Gets the party UUID.
+        /// </summary>
+        /// <remarks>
+        /// It's the callers responsibility to ensure that <see cref="PartyId"/> and <see cref="PartyUuid"/>
+        /// is for the same party. Failing to do so will result in undefined behavior.
+        /// </remarks>
+        public required Guid PartyUuid { get; init; }
 
-    ////    /// <summary>
-    ////    /// Gets when the change was registered.
-    ////    /// </summary>
-    ////    public required DateTimeOffset ChangedTime { get; init; }
-    ////}
+        /// <summary>
+        /// Gets the change ID.
+        /// </summary>
+        public required uint ChangeId { get; init; }
+
+        /// <summary>
+        /// Gets when the change was registered.
+        /// </summary>
+        public required DateTimeOffset ChangedTime { get; init; }
+    }
 
     ////private sealed record ImportA2UserIdForPartyCommand
     ////    : IFakeMassTransitMessage<ImportA2UserIdForPartyCommand>
@@ -1241,38 +1026,22 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
         DbHelper db,
         MessageSender sender)
     {
-        ////public async Task Send(ImportA2PartyCommand command, CancellationToken cancellationToken)
-        ////{
-        ////    var data = new BinaryData(FakeMassTransitEnvelope.Create(command), Options, typeof(FakeMassTransitEnvelope<ImportA2PartyCommand>));
-        ////    var message = new ServiceBusMessage(data);
-        ////    message.ContentType = "application/vnd.masstransit+json";
-        ////    await sender.SendMessageAsync("register-a2-party-import", message, cancellationToken);
-        ////}
+        public async Task Send(ImportA2PartyCommand command, CancellationToken cancellationToken)
+        {
+            var data = new BinaryData(FakeMassTransitEnvelope.Create(command), Options, typeof(FakeMassTransitEnvelope<ImportA2PartyCommand>));
+            var message = new ServiceBusMessage(data);
+            message.ContentType = "application/vnd.masstransit+json";
+            await sender.SendMessageAsync("register-a2-party-import", message, cancellationToken);
+        }
 
-        ////public async Task Send(ImportA2CCRRolesCommand command, CancellationToken cancellationToken)
-        ////{
-        ////    var data = new BinaryData(FakeMassTransitEnvelope.Create(command), Options, typeof(FakeMassTransitEnvelope<ImportA2CCRRolesCommand>));
-        ////    var message = new ServiceBusMessage(data);
-        ////    message.ContentType = "application/vnd.masstransit+json";
-        ////    await sender.SendMessageAsync("register-a2-party-import", message, cancellationToken);
-        ////}
+        public async Task Send(ImportA2UserProfileCommand command, CancellationToken cancellationToken)
+        {
+            var data = new BinaryData(FakeMassTransitEnvelope.Create(command), Options, typeof(FakeMassTransitEnvelope<ImportA2UserProfileCommand>));
+            var message = new ServiceBusMessage(data);
+            message.ContentType = "application/vnd.masstransit+json";
+            await sender.SendMessageAsync("register-a2-party-import", message, cancellationToken);
+        }
 
-        ////public async Task Send(ImportA2UserIdForPartyCommand command, CancellationToken cancellationToken)
-        ////{
-        ////    var data = new BinaryData(FakeMassTransitEnvelope.Create(command), Options, typeof(FakeMassTransitEnvelope<ImportA2UserIdForPartyCommand>));
-        ////    var message = new ServiceBusMessage(data);
-        ////    message.ContentType = "application/vnd.masstransit+json";
-        ////    await sender.SendMessageAsync("register-a2-party-import", message, cancellationToken);
-        ////}
-
-        ////public async Task Send(ImportA2UserProfileCommand command, CancellationToken cancellationToken)
-        ////{
-        ////    var data = new BinaryData(FakeMassTransitEnvelope.Create(command), Options, typeof(FakeMassTransitEnvelope<ImportA2UserProfileCommand>));
-        ////    var message = new ServiceBusMessage(data);
-        ////    message.ContentType = "application/vnd.masstransit+json";
-        ////    await sender.SendMessageAsync("register-a2-profile-import", message, cancellationToken);
-        ////}
-        
         public async Task Send(A2ImportErrorQueueHandler.RetryA2PartyImportSagaCommand command, CancellationToken cancellationToken)
         {
             var data = new BinaryData(FakeMassTransitEnvelope.Create(command), Options, typeof(FakeMassTransitEnvelope<A2ImportErrorQueueHandler.RetryA2PartyImportSagaCommand>));
