@@ -131,8 +131,8 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
         }
 
         /// <summary>
-        /// Get a list of consents that had status changes for the authenticated enterprise.
-        /// Returns consents ordered by when the status change occurred (newest first).
+        /// Get a list of consents that had recent status changes for the authenticated enterprise.
+        /// Returns consents ordered by the latest status change occurred for a consent request(newest first).
         /// Uses cursor-based pagination.
         /// </summary>
         [Authorize(Policy = AuthzConstants.POLICY_CONSENTREQUEST_READ)]
@@ -145,7 +145,6 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetConsentStatusChanges(
-            [FromQuery] Guid partyUuid,
             [FromQuery] string? continuationToken = null,
             [FromQuery] int pageSize = 100,
             CancellationToken cancellationToken = default)
@@ -177,7 +176,7 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
                 Guid consenteventid = changes.Last().ConsentEventId;
                 var token = $"{created:O}|{consenteventid}";
                 string nextToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(token));
-                nextLink = $"{Request.Scheme}://{Request.Host}{Request.Path}?partyUuid={partyUuid}&continuationToken={Uri.EscapeDataString(nextToken)}&pageSize={pageSize}";
+                nextLink = $"{Request.Scheme}://{Request.Host}{Request.Path}?continuationToken={Uri.EscapeDataString(nextToken)}&pageSize={pageSize}";
             }
 
             // Return paginated result
