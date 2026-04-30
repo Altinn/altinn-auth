@@ -17,5 +17,13 @@ configuration = {
   core = {
     request_notify_request_approved_in_seconds = 30
     request_notify_request_pending_in_seconds  = 30
+    notifications = {
+      access_added_notify_in_seconds        = 30
+      access_removed_notify_in_seconds      = 30
+      request_pending_notify_in_seconds     = 30
+      request_reviewed_notify_in_seconds    = 30
+      rightholder_added_notify_in_seconds   = 30
+      rightholder_removed_notify_in_seconds = 30
+    }
   }
 }
