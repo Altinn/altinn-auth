@@ -689,7 +689,7 @@ public partial class ConnectionService(
             ct: cancellationToken
         );
 
-        return assignablePackages.GroupBy(p => p.Package.Id).Select(group =>
+        var result = assignablePackages.GroupBy(p => p.Package.Id).Select(group =>
         {
             var firstPackage = group.First();
             return new AccessPackageDto.AccessPackageDtoCheck
@@ -717,6 +717,18 @@ public partial class ConnectionService(
                 })
             };
         }).ToList();
+
+        // If packageIds were provided, ensure that all requested packages are represented in the result, otherwise return problem details.
+        if (packageIds != null)
+        {
+            var missingPackageIds = packageIds.Except(result.Select(r => r.Package.Id)).ToList();
+            if (missingPackageIds.Any())
+            {
+                return Problems.DelegationCheckFailureInvalidPackage;
+            }
+        }
+
+        return result;
     }
 
     public async Task<Result<IEnumerable<AccessPackageDto.AccessPackageDtoCheck>>> CheckPackageForResource(Guid party, Guid authenticatedUserUuid, IEnumerable<Guid> packageIds = null, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
