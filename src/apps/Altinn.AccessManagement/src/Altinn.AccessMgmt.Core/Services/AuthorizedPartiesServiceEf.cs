@@ -50,7 +50,7 @@ public class AuthorizedPartiesServiceEf(
             return await Task.FromResult(new List<AuthorizedParty>());
         }
 
-        if (filter.ProviderCode != null || filter.AnyOfResourceIds?.Count() > 0)
+        if (filter.ProviderCode != null || filter.AnyOfResourceIds?.Length > 0)
         {
             filter = await ProcessProviderAndResourceFilters(filter, cancellationToken);
 
@@ -59,6 +59,9 @@ public class AuthorizedPartiesServiceEf(
                 // ServiceOwner or Resource filter specified, but no resources found matching.
                 return new List<AuthorizedParty>();
             }
+
+            // Provider/resource filtering relies entirely on the Altinn 3 ConnectionQuery; skip Altinn 2.
+            filter.IncludeAltinn2 = false;
         }
 
         filter = await ProcessAutoFilters(filter, subject, cancellationToken);
@@ -423,6 +426,12 @@ public class AuthorizedPartiesServiceEf(
     {
         List<ConnectionQueryExtendedRecord> connections = await repoService.GetConnectionsFromOthers(toId, filters: filter, ct: cancellationToken);
 
+        // Post-query filtering of connections when resource/provider filters are active
+        if (filter.ProviderCode != null || filter.AnyOfResourceIds?.Length > 0)
+        {
+            connections = FilterConnections(connections, filter);
+        }
+
         var fromUuids = connections.Select(c => c.FromId).Distinct();
         var fromParties = await repoService.GetEntities(fromUuids, cancellationToken);
         var fromSubUnits = await repoService.GetSubunits(fromUuids, cancellationToken);
@@ -513,11 +522,14 @@ public class AuthorizedPartiesServiceEf(
             {
                 if (filters.IncludeRoles && RoleConstants.TryGetById(connection.RoleId, out var role) && (role.Id != RoleConstants.Rightholder.Id && role.Id != RoleConstants.Agent.Id))
                 {
-                    party.EnrichWithRole(role.Entity.Code);
-
-                    if (role.Entity.LegacyCode != null)
+                    if (filters.RoleFilter == null || filters.RoleFilter.ContainsKey(role.Entity.Code) || (role.Entity.LegacyCode != null && filters.RoleFilter.ContainsKey(role.Entity.LegacyCode)))
                     {
-                        party.EnrichWithRole(role.Entity.LegacyCode);
+                        party.EnrichWithRole(role.Entity.Code);
+
+                        if (role.Entity.LegacyCode != null)
+                        {
+                            party.EnrichWithRole(role.Entity.LegacyCode);
+                        }
                     }
                 }
 
@@ -554,6 +566,93 @@ public class AuthorizedPartiesServiceEf(
                 Unreachable();
             }
         }
+    }
+
+    private static List<ConnectionQueryExtendedRecord> FilterConnections(List<ConnectionQueryExtendedRecord> connections, AuthorizedPartiesFilters filters)
+    {
+        bool hasResourceFilter = filters.ResourceFilter?.Count > 0;
+        bool hasPackageFilter = filters.PackageFilter?.Count > 0;
+        bool hasRoleFilter = filters.RoleFilter?.Count > 0;
+
+        if (!hasResourceFilter && !hasPackageFilter && !hasRoleFilter)
+        {
+            return connections;
+        }
+
+        List<ConnectionQueryExtendedRecord> filtered = new();
+        foreach (var connection in connections)
+        {
+            bool matchesFilter = false;
+
+            // Roles: keep the connection if the role matches, but do not trim the role here.
+            // Role filtering during enrichment is handled in EnrichWithPartiesWithAccessInfo.
+            if (hasRoleFilter && RoleConstants.TryGetById(connection.RoleId, out var role) &&
+                (filters.RoleFilter.ContainsKey(role.Entity.Code) || (role.Entity.LegacyCode != null && filters.RoleFilter.ContainsKey(role.Entity.LegacyCode))))
+            {
+                matchesFilter = true;
+            }
+
+            // Packages: trim to only matching packages
+            if (connection.Packages != null)
+            {
+                if (hasPackageFilter)
+                {
+                    connection.Packages = connection.Packages.Where(p => filters.PackageFilter.ContainsKey(p.Id)).ToList();
+                }
+                else
+                {
+                    connection.Packages = new();
+                }
+
+                if (connection.Packages.Count > 0)
+                {
+                    matchesFilter = true;
+                }
+            }
+
+            // Resources: trim to only matching resources
+            if (connection.Resources != null)
+            {
+                if (hasResourceFilter)
+                {
+                    connection.Resources = connection.Resources.Where(r => filters.ResourceFilter.ContainsKey(r.RefId)).ToList();
+                }
+                else
+                {
+                    connection.Resources = new();
+                }
+
+                if (connection.Resources.Count > 0)
+                {
+                    matchesFilter = true;
+                }
+            }
+
+            // Instances: trim to only matching instances
+            if (connection.Instances != null)
+            {
+                if (hasResourceFilter)
+                {
+                    connection.Instances = connection.Instances.Where(i => filters.ResourceFilter.ContainsKey(i.ResourceRefId)).ToList();
+                }
+                else
+                {
+                    connection.Instances = new();
+                }
+
+                if (connection.Instances.Count > 0)
+                {
+                    matchesFilter = true;
+                }
+            }
+
+            if (matchesFilter)
+            {
+                filtered.Add(connection);
+            }
+        }
+
+        return filtered;
     }
 
     private List<AuthorizedParty> GetFilteredA2Parties(IEnumerable<AuthorizedParty> parties, AuthorizedPartiesFilters filters)
@@ -676,24 +775,6 @@ public class AuthorizedPartiesServiceEf(
                 foreach (var roleCode in roleCodes)
                 {
                     filter.RoleFilter[roleCode] = roleCode;
-                }
-
-                // Find all Roles for the PackageResources found above, as we need to include roles giving access via packages as well.
-                List<RolePackage> rolePackages = await repoService.GetRolePackages(packageIds: filter.PackageFilter.Keys, ct: cancellationToken);
-                foreach (var group in rolePackages.GroupBy(rp => rp.PackageId))
-                {
-                    foreach (var role in group.Select(rp => rp.Role))
-                    {
-                        if (!filter.RoleFilter.ContainsKey(role.Code))
-                        {
-                            filter.RoleFilter[role.Code] = role.Code;
-                        }
-
-                        if (role.LegacyCode != null && !filter.RoleFilter.ContainsKey(role.LegacyCode))
-                        {
-                            filter.RoleFilter[role.LegacyCode] = role.LegacyCode;
-                        }
-                    }
                 }
 
                 cachedFilters.ResourceFilter = filter.ResourceFilter;

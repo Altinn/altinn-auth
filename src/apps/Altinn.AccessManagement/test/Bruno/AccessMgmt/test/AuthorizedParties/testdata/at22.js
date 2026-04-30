@@ -4,6 +4,7 @@ module.exports =
   "resources": {
     "clientDelgResourceId": "devtest_gar_bruno_client_resource",
     "directDelgResourceId": "devtest_gar_bruno_direct_resource",
+    "forretningsforer-eiendomResourceId": "devtest_gar_bruno_forretningsforer_eiendom",
     "appResourceId": "app_ttd_authz-bruno-testapp1",
     "appInstanceDelegation": {
             "resourceId": "app_ttd_authz-bruno-instancedelegation",
@@ -314,6 +315,25 @@ module.exports =
       "orgno": "212334782",
       "partyId": 51265690,
       "partyUuid": "4133091e-31c7-41b6-b7cb-251c44ff37e4"
+    }
+  },
+  "rightholderThroughDelegationToSubunitAndKeyRole": {
+    "name": "LATTERMILD LYDIG KATT FLAGG",
+    "orgno": "210367802",
+    "partyId": 51239663,
+    "partyUuid": "c2af12db-4a05-4f10-aa9a-834c280d24cc",
+    "dagligleder": {
+      "name": "FLINK PUSEKATT",
+      "pid": "27917995783",
+      "userId": 20347188,
+      "partyId": 50283018,
+      "partyUuid": "46b30689-b48c-4c30-9861-50b8302b6cc5"
+    },
+    "subunit": {
+      "name": "LATTERMILD LYDIG KATT FLAGG",
+      "orgno": "315703492",
+      "partyId": 51807792,
+      "partyUuid": "adfe37c7-d5a2-41a8-a3db-7268e9ba5926"
     }
   },
   "idportenEmailUser": {

@@ -113,7 +113,6 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
         {
             ToIds = [toId],
             FromIds = filters?.PartyFilter?.Keys.ToList(),
-            PackageIds = filters?.PackageFilter?.Keys.ToList(),
             EnrichEntities = false,
             IncludeSubConnections = true,
             IncludeKeyRole = filters?.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.True ? true : false,
@@ -207,6 +206,7 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
             .Include(rp => rp.Role)
             .WhereIf(roleIds != null, rp => roleIds.Contains(rp.RoleId))
             .WhereIf(packageIds != null, rp => packageIds.Contains(rp.PackageId))
+            .Where(t => t.HasAccess == true)
             .ToListAsync(ct);
     }
 }

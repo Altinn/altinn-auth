@@ -70,10 +70,12 @@ tests {
   
   test(requestName + "|Verify all expected parties exists", function() {    
     const allParties = body.flatMap(party => [party, ...(party.subunits || [])]);
-    const targetParty = allParties.find(party => party.partyUuid === testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+    const targetMainUnitParty = allParties.find(party => party.partyUuid === testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+    const targetSubUnitParty = allParties.find(party => party.partyUuid === testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.subunit.partyUuid);
   
-    assert.exists(targetParty, 'Expected MainUnit Party: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.name+' to exist');
-    expect(allParties.length, `Result should only contain the parties filtered`).to.equal(1);
+    assert.exists(targetMainUnitParty, 'Expected MainUnit Party: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.name+' to exist');
+    assert.exists(targetSubUnitParty, 'Expected SubUnit Party: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.subunit.name+' to exist');
+    expect(allParties.length, `Result should only contain the parties filtered`).to.equal(2);
   });
   
   test(requestName + "|Mainunit AuthorizedInstances not inherited to subunits", function() {  

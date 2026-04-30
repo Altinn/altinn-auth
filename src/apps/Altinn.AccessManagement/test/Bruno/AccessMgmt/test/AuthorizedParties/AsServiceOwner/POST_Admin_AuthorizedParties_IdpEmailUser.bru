@@ -52,6 +52,10 @@ tests {
   const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
   const body = res.getBody();
   const requestName = bru.getVar("requestName");
+  const {
+    toLowerArray,
+    assertIncludeMembersIgnoreCase
+  } = require('./utils/assertHelper');
   
   test(requestName + "|HttpStatus.OK", function() {
     expect(res.status).to.equal(200);
@@ -64,7 +68,7 @@ tests {
     const targetParty = allParties.find(party => party.partyUuid === testdata.idportenEmailUser.partyUuid);
   
     assert.exists(targetParty, 'Party with partyUuid '+testdata.idportenEmailUser.partyUuid+' should exist');
-    assert.includeMembers(targetParty.authorizedRoles, ["SELN"]);
+    assertIncludeMembersIgnoreCase(targetParty.authorizedRoles, ["SELN"]);
   
   });
 }
