@@ -65,8 +65,15 @@ public class RequestControllerTest
             Name = "CreateResourceTestType",
         };
 
+        private static readonly ResourceType TestMaskinportenSchemaResourceType = new()
+        {
+            Id = Guid.Parse("0196c001-0000-7000-8000-000000000002"),
+            Name = "MaskinportenSchema",
+        };
+
         private static readonly Guid TestResourceId = Guid.Parse("0196b001-0000-7000-8000-000000000002");
         private const string TestResourceRefId = "create-resource-test-1";
+        private const string TestMaskinportenSchemaResourceRefId = "create-resource-test-2";
 
         public CreateResourceRequest(ApiFixture fixture)
         {
@@ -75,6 +82,8 @@ public class RequestControllerTest
             fixture.EnsureSeedOnce<CreateResourceRequest>(db =>
             {
                 db.ResourceTypes.Add(TestResourceType);
+                db.ResourceTypes.Add(TestMaskinportenSchemaResourceType);
+
                 db.SaveChanges();
                 db.Resources.Add(new Resource
                 {
@@ -85,6 +94,17 @@ public class RequestControllerTest
                     ProviderId = ProviderConstants.ResourceRegistry,
                     TypeId = TestResourceType.Id,
                 });
+
+                db.Resources.Add(new Resource
+                {
+                    Id = Guid.CreateVersion7(),
+                    Name = "TestMaskinportenSchemaResource",
+                    Description = "Test resource for ServiceOwner API tests",
+                    RefId = TestMaskinportenSchemaResourceRefId,
+                    ProviderId = TestData.ServiceOwnerNAV,
+                    TypeId = TestMaskinportenSchemaResourceType.Id,
+                });
+
                 db.SaveChanges();
             });
         }
@@ -106,6 +126,20 @@ public class RequestControllerTest
 
             var obj = await response.Content.ReadFromJsonAsync<RequestDto>(TestContext.Current.CancellationToken);
             Assert.Equal(RequestStatus.Pending, obj.Status);
+        }
+
+        [Fact]
+        public async Task CreateRequest_WithMaskinportenSchemaResource_Returns400()
+        {
+            // KnutVik er styremedlem i BakerJohnsen (seeded via TestData.Assignments)
+            var client = CreateSystemClient(Fixture, TestData.KnutVik.Id);
+
+            var response = await client.PostAsync(
+                $"{Route}/resource?party={TestData.KnutVik.Id}&to={TestData.BakerJohnsen.Id}&resource={TestMaskinportenSchemaResourceRefId}",
+                null,
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
     }
 

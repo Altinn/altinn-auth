@@ -136,8 +136,11 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
     /// <inheritdoc/>
     public async Task<Result<RequestDto>> CreateResourceRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid resourceId, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
     {
+        var resource = await db.Resources.Include(r => r.Type).FirstOrDefaultAsync(r => r.Id == resourceId, ct);
+
         var problem = ValidationComposer.Validate(
-            PackageValidation.SelfAssignmentNotAllowed(fromId, toId)
+            PackageValidation.SelfAssignmentNotAllowed(fromId, toId),
+            PackageValidation.ResourceIsAssignable(resource)
         );
 
         if (problem is { })

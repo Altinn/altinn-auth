@@ -129,6 +129,12 @@ public class RequestControllerTest
             Name = "ServiceOwnerTestResourceType",
         };
 
+        private static readonly ResourceType TestMaskinportenSchemaResourceType = new()
+        {
+            Id = Guid.Parse("0196c001-0000-7000-8000-000000000002"),
+            Name = "MaskinportenSchema",
+        };
+
         public CreateResourceRequestTest(ApiFixture fixture)
         {
             Fixture = fixture;
@@ -136,6 +142,7 @@ public class RequestControllerTest
             fixture.EnsureSeedOnce<CreateResourceRequestTest>(db =>
             {
                 db.ResourceTypes.Add(TestResourceType);
+                db.ResourceTypes.Add(TestMaskinportenSchemaResourceType);
                 db.SaveChanges();
 
                 db.Resources.Add(new Resource
@@ -147,6 +154,17 @@ public class RequestControllerTest
                     ProviderId = TestData.ServiceOwnerNAV,
                     TypeId = TestResourceType.Id,
                 });
+
+                db.Resources.Add(new Resource
+                {
+                    Id = Guid.CreateVersion7(),
+                    Name = "TestMaskinportenSchemaResource",
+                    Description = "Test resource for ServiceOwner API tests",
+                    RefId = "test-resource-so-maskinporten-1",
+                    ProviderId = TestData.ServiceOwnerNAV,
+                    TypeId = TestMaskinportenSchemaResourceType.Id,
+                });
+
                 db.SaveChanges();
             });
         }
@@ -225,6 +243,28 @@ public class RequestControllerTest
                 From = from,
                 To = to,
                 Resource = "test-resource-so-1"
+            };
+
+            var response = await client.PostAsJsonAsync(
+                Route + "/resource",
+                body,
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task CreateRequest_WithMaskinportenSchemaResource_Returns400()
+        {
+            var client = CreateClient(Fixture, TestData.BakerJohnsen.Entity.OrganizationIdentifier);
+            var from = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
+            var to = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";
+
+            var body = new RequestResourceDto
+            {
+                From = from,
+                To = to,
+                Resource = "test-resource-so-maskinporten-1"
             };
 
             var response = await client.PostAsJsonAsync(

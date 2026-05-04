@@ -131,6 +131,23 @@ public static class PackageValidation
     };
 
     /// <summary>
+    /// Checks if resource is assignable.
+    /// </summary>
+    /// <param name="resource">resource</param>
+    /// <param name="paramName">name of the query parameter</param>
+    /// <returns></returns>
+    internal static RuleExpression ResourceIsAssignable(Resource resource, string paramName = "resource") => () =>
+    {
+        if (resource.Type.Name == "MaskinportenSchema")
+        {
+            return (ref ValidationErrorBuilder errors) =>
+                        errors.Add(ValidationErrors.ResourceIsNotDelegable, paramName, [new(paramName, $"Resource '{resource.Name}' is of type 'MaskinportenSchema' and cannot be requested.")]);
+        }
+
+        return null;
+    };
+
+    /// <summary>
     /// Checks if request is from self
     /// </summary>
     /// <param name="fromId">From</param>
