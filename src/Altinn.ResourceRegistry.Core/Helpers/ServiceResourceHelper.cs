@@ -17,6 +17,13 @@ namespace Altinn.ResourceRegistry.Core.Helpers
         internal static partial Regex ResourceIdentifierRegex();
 
         /// <summary>
+        /// Migrated Altinn1 app identifier regex.
+        /// Pattern: app_{org}_a1-{service}-{edition}:{version}
+        /// </summary>
+        [GeneratedRegex(@"^app_[a-z0-9]+_a1-.+:[a-z0-9.]+$", RegexOptions.IgnoreCase)]
+        internal static partial Regex MigratedAltinn1AppRegex();
+
+        /// <summary>
         /// Gets resources from the resourcelist that fits the search criteria
         /// </summary>
         /// <param name="resourceList">The resourceList that needs to be searched</param>
@@ -92,7 +99,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
                 isValid = false;
             }
 
-            if (isNew && !ResourceIdentifierRegex().IsMatch(serviceResource.Identifier))
+            if (isNew && !ResourceIdentifierRegex().IsMatch(serviceResource.Identifier) && !IsMigratedAltinn1App(serviceResource))
             {
                 AddValidationMessage(validationMessages, "Identifier", "Invalid id. Only a-z and 0-9 is allowed together with _ and -.  Minimum 4 characters");
                 isValid = false;
@@ -178,9 +185,9 @@ namespace Altinn.ResourceRegistry.Core.Helpers
             static bool IsInvalidAppResource(ServiceResource serviceResource)
             {
                 if (serviceResource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX)
-                    && serviceResource.ResourceType != ResourceType.AltinnApp)
+                    && serviceResource.ResourceType != ResourceType.AltinnApp && serviceResource.ResourceType != ResourceType.MigratedApp)
                 {
-                    // Uses app prefix without it being resourceType AltinnApp
+                    // Uses app prefix without it being resourceType AltinnApp or MigratedApp
                     return true;
                 }
 
@@ -191,7 +198,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
             {
                 string prefix = $"{ResourceConstants.APPLICATION_RESOURCE_PREFIX}{serviceResource.HasCompetentAuthority.Orgcode}_";
                 string appName = serviceResource.Identifier.Replace(prefix, string.Empty);
-                if (serviceResource.ResourceType == ResourceType.AltinnApp
+                if ((serviceResource.ResourceType == ResourceType.AltinnApp || serviceResource.ResourceType == ResourceType.MigratedApp)
                     && (serviceResource.ResourceReferences == null
                     || !serviceResource.ResourceReferences.Any()
                     || !serviceResource.ResourceReferences.Exists(rf =>
@@ -208,7 +215,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
 
             static bool IsInvalidAppIdentifier(ServiceResource serviceResource)
             {
-                if (serviceResource.ResourceType == ResourceType.AltinnApp
+                if ((serviceResource.ResourceType == ResourceType.AltinnApp || serviceResource.ResourceType == ResourceType.MigratedApp)
                     && !serviceResource.Identifier.StartsWith($"{ResourceConstants.APPLICATION_RESOURCE_PREFIX}{serviceResource.HasCompetentAuthority.Orgcode}", StringComparison.OrdinalIgnoreCase))
                 {
                     // Uses app ResourceType without having correct identifier prefix for app resource
@@ -216,6 +223,16 @@ namespace Altinn.ResourceRegistry.Core.Helpers
                 }
 
                 return false;
+            }
+
+            static bool IsMigratedAltinn1App(ServiceResource serviceResource)
+            {
+                if (string.IsNullOrEmpty(serviceResource.Identifier))
+                {
+                    return false;
+                }
+
+                return MigratedAltinn1AppRegex().IsMatch(serviceResource.Identifier);
             }
 
             // Validates that orgs that is not TTD needs to have orgnumber set.

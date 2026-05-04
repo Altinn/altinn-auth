@@ -390,6 +390,98 @@ namespace Altinn.ResourceRegistry.Tests
         }
 
         [Fact]
+        public async Task CreateMigratedAppResource_WithValidIdentifier()
+        {
+            var client = CreateClient();
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            ServiceResource resource = new ServiceResource()
+            {
+                Identifier = "app_skd_a2-1234-1",
+                HasCompetentAuthority = new CompetentAuthority()
+                {
+                    Organization = "974761076",
+                    Orgcode = "skd",
+                },
+                ResourceType = ResourceType.MigratedApp,
+                ResourceReferences = new ()
+                {
+                    new ()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn3,
+                        ReferenceType = ReferenceType.ApplicationId,
+                        Reference = "skd/a2-1234-1"
+                    }
+                },
+                Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+                Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+                RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+            };
+
+            string requestUri = "resourceregistry/api/v1/Resource/";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+            Assert.True(response.IsSuccessStatusCode);
+        }
+
+        [Fact]
+        public async Task CreateMigratedAltinn1App_WithValidIdentifier()
+        {
+            var client = CreateClient();
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            ServiceResource resource = new ServiceResource()
+            {
+                Identifier = "app_skd_a1-1234-1:1",
+                HasCompetentAuthority = new CompetentAuthority()
+                {
+                    Organization = "974761076",
+                    Orgcode = "skd",
+                },
+                ResourceType = ResourceType.MigratedApp,
+                ResourceReferences = new ()
+                {
+                    new ()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn3,
+                        ReferenceType = ReferenceType.ApplicationId,
+                        Reference = "skd/a1-1234-1:1"
+                    }
+                },
+                Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+                Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+                RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+            };
+
+            string requestUri = "resourceregistry/api/v1/Resource/";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+            Assert.True(response.IsSuccessStatusCode);
+        }
+
+        [Fact]
         public async Task CreateResource_WithAdminScope()
         {
             var client = CreateClient();
