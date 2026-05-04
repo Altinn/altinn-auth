@@ -1,7 +1,6 @@
 ﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Data;
 
@@ -80,7 +79,7 @@ public static partial class StaticDataIngest
             new RolePackage() { RoleId = roleInnh, PackageId = packageHA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleDtso, PackageId = packageHA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleDtpr, PackageId = packageHA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
-            new RolePackage() { RoleId = roleBobe, PackageId = packageHA, EntityVariantId = null, CanDelegate = true, HasAccess = false },
+            new RolePackage() { RoleId = roleBobe, PackageId = packageHA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
 
             new RolePackage() { RoleId = roleDagl, PackageId = packageMPA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleLede, PackageId = packageMPA, EntityVariantId = null, CanDelegate = true, HasAccess = true },
