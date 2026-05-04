@@ -14,13 +14,16 @@ internal static class ErrorDbHelper
     private const string DbVolumeName = "altinn-auth-cli.error-db.db";
     private const string ConfigDbVolumeName = "altinn-auth-cli.error-db.configdb";
     private const string ContainerName = "altinn-auth-cli.error-db";
-    private const string MongoDbImage = "docker.io/mongodb/mongodb-community-server";
+    private const string MongoDbImage = "mongodb/mongodb-community-server";
     private const string MongoDbVersion = "7.0-ubi9";
     private const string MongoDbImageSpecific = $"{MongoDbImage}:{MongoDbVersion}";
+    private const string MongoDbInstallRef = $"docker.io/{MongoDbImage}:{MongoDbVersion}";
     private const string HostPort = "19647";
     private const string MongoDbUser = "altinn-auth-cli";
     private const string MongoDbPassword = "altinn-auth-cli";
     private const string ConnectionString = "mongodb://altinn-auth-cli:altinn-auth-cli@localhost:19647/";
+
+    private static readonly string[] MongoDbImagePrefixes = [string.Empty, "docker.io/"];
 
     public static async Task<MongoClient> GetClient(CancellationToken cancellationToken = default)
     {
@@ -48,23 +51,17 @@ internal static class ErrorDbHelper
 
     private static async Task<string> EnsureImage(DockerClient client, CancellationToken cancellationToken)
     {
-        var imageList = await client.Images.ListImagesAsync(
-            new()
-            {
-                Filters = new Dictionary<string, IDictionary<string, bool>>
-                {
-                    { "reference", new Dictionary<string, bool> { { MongoDbImageSpecific, true } } },
-                },
-            },
-            cancellationToken);
-
-        if (imageList.Count > 1)
+        ImagesListParameters listParams = new()
         {
-            ThrowHelper.ThrowInvalidOperationException(
-                $"Found multiple images with name '{MongoDbImage}:{MongoDbVersion}'. This is unexpected and may cause issues.");
-        }
+            Filters = new Dictionary<string, IDictionary<string, bool>>
+            {
+                { "reference", MongoDbImagePrefixes.ToDictionary(prefix => $"{prefix}{MongoDbImageSpecific}", _ => true) },
+            },
+        };
 
-        if (imageList.Count == 1)
+        var imageList = await client.Images.ListImagesAsync(listParams, cancellationToken);
+
+        if (imageList.Count > 0)
         {
             return imageList[0].ID; // Image already exists
         }
@@ -92,7 +89,7 @@ internal static class ErrorDbHelper
                             return task;
                         });
                     }
-                    else if (!tasks.TryGetValue(msg.ID, out task))
+                    else if (msg.ID is null || !tasks.TryGetValue(msg.ID, out task))
                     {
                         return;
                     }
@@ -112,22 +109,14 @@ internal static class ErrorDbHelper
                 await client.Images.CreateImageAsync(
                     new()
                     {
-                        FromImage = MongoDbImageSpecific,
+                        FromImage = MongoDbInstallRef,
                     },
                     authConfig: null,
                     progress,
                     cancellationToken);
             });
 
-        imageList = await client.Images.ListImagesAsync(
-            new()
-            {
-                Filters = new Dictionary<string, IDictionary<string, bool>>
-                {
-                    { "reference", new Dictionary<string, bool> { { MongoDbImageSpecific, true } } },
-                },
-            },
-            cancellationToken);
+        imageList = await client.Images.ListImagesAsync(listParams, cancellationToken);
 
         if (imageList.Count != 1)
         {
@@ -167,7 +156,7 @@ internal static class ErrorDbHelper
         }
 
         var createResponse = await client.Containers.CreateContainerAsync(
-            new() 
+            new()
             {
                 Name = ContainerName,
                 Image = MongoDbImageSpecific,
@@ -195,9 +184,9 @@ internal static class ErrorDbHelper
                     {
                         { "27017/tcp", [new() { HostPort = HostPort }] }
                     },
-                    Mounts = 
+                    Mounts =
                     [
-                        new() 
+                        new()
                         {
                             Target = "/data/db",
                             Source = dbVolume.Name,
@@ -252,7 +241,7 @@ internal static class ErrorDbHelper
             cancellationToken);
 
         EnsureNoWarnings(volumeList.Warnings);
-        
+
         if (volumeList.Volumes.Count > 1)
         {
             ThrowHelper.ThrowInvalidOperationException(
