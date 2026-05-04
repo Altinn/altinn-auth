@@ -149,7 +149,14 @@ public static class AccessAddedNotification
         await db.OutboxMessages.UpsertOutboxAsync<AccessAddedNotificationMessage>(
             refId: $"{Handler}_{fromId}_{toId}",
             handler: Handler,
-            addValueFactory: msg => new(),
+            addValueFactory: msg => new()
+            {
+                FromId = fromId,
+                ToId = toId,
+                Updated = 0,
+                PackageIds = packageId.HasValue && packageId.Value != Guid.Empty ? [packageId.Value] : [],
+                ResourceIds = resourceId.HasValue && resourceId.Value != Guid.Empty ? [resourceId.Value] : []
+            },
             updateValueFactory: (msg, data) => RemoveValue(resourceId, packageId, data),
             cancellationToken: ct
         );
