@@ -234,6 +234,14 @@ module.exports =
           "partyUuid": "190d6c80-6476-4b7f-9cf6-6aa08620562c",
           "directPackageToDelegate": "post-til-virksomheten-med-taushetsbelagt-innhold",
           "directPackageInstanceDelegator": "tilgangsstyring-enkeltinstanser"
+        },
+        "employee_agent_enk": {
+          "name": "KUL KJENNING",
+          "lastname": "KJENNING",
+          "pid": "20876795923",
+          "userId": 21111470,
+          "partyId": 50795962,
+          "partyUuid": "e87a43c1-0e3d-4783-90f1-dfbd1c5c6170"
         }
     },
     "a2BrunoSIUser": {

@@ -236,6 +236,14 @@ module.exports =
       "directPackageInstanceDelegator": "tilgangsstyring-enkeltinstanser",
       "instanceThroughInstanceDelegation": "urn:altinn:instance-id:51235100/d64cdc13-8762-460c-9a9a-a727e3f8942e",
       "instanceThroughPackageAccess": ""
+    },
+    "employee_agent_enk": {
+      "name": "KUL KJENNING",
+      "lastname": "KJENNING",
+      "pid": "20876795923",
+      "userId": 2421354,
+      "partyId": 50929567,
+      "partyUuid": "da6649e7-969e-48c4-8f31-3749f6612cf3"
     }
   },
   "a2BrunoSIUser": {
