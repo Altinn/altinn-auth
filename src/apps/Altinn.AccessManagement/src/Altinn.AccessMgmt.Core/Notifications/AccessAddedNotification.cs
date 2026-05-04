@@ -1,8 +1,11 @@
 using System.Diagnostics;
+using System.Text.Json;
 using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Models.Base;
+using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.Core.Notifications;
 
@@ -146,20 +149,24 @@ public static class AccessAddedNotification
         CancellationToken ct = default
     )
     {
-        await db.OutboxMessages.UpsertOutboxAsync<AccessAddedNotificationMessage>(
-            refId: $"{Handler}_{fromId}_{toId}",
-            handler: Handler,
-            addValueFactory: msg => new()
-            {
-                FromId = fromId,
-                ToId = toId,
-                Updated = 0,
-                PackageIds = packageId.HasValue && packageId.Value != Guid.Empty ? [packageId.Value] : [],
-                ResourceIds = resourceId.HasValue && resourceId.Value != Guid.Empty ? [resourceId.Value] : []
-            },
-            updateValueFactory: (msg, data) => RemoveValue(resourceId, packageId, data),
-            cancellationToken: ct
-        );
+        var message = await db.OutboxMessages
+            .AsTracking()
+            .FirstOrDefaultAsync(
+                o =>
+                o.RefId == $"{Handler}_{fromId}_{toId}" &&
+                o.Handler == Handler &&
+                o.Status == OutboxStatus.Pending,
+                ct);
+
+        if (message is null)
+        {
+            return;
+        }
+
+        var data = JsonSerializer.Deserialize<AccessAddedNotificationMessage>(message.Data);
+        var updatedData = RemoveValue(resourceId, packageId, data);
+        updatedData.Updated++;
+        message.Data = JsonSerializer.Serialize(updatedData);
     }
 
     private static AccessAddedNotificationMessage RemoveValue(
