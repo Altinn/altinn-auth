@@ -1,9 +1,11 @@
-﻿using Altinn.AccessMgmt.Core.Services.Contracts;
+﻿using Altinn.AccessMgmt.Core.Extensions;
+using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.Core.Utils.Models;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Microsoft.EntityFrameworkCore;
@@ -15,15 +17,97 @@ public class PackageService : IPackageService
 {
     public AppDbContext DbContext { get; set; }
 
-    public PackageService(AppDbContext appDbContext)
+    public ITranslationService TranslationService { get; set; }
+
+    public PackageService(AppDbContext appDbContext, ITranslationService translationService)
     {
         DbContext = appDbContext;
+        TranslationService = translationService;
+    }
+
+    private const StringComparison Ic = StringComparison.InvariantCultureIgnoreCase;
+
+    private sealed record ScoringRule(
+        string FieldName,
+        Func<PackageDto, string> Field,
+        Func<string, string, bool> Match,
+        int Points);
+
+    private static readonly ScoringRule[] PackageRules =
+    [
+        new("name.prefix",      p => p.Name,             (f, t) => f.StartsWith(t, Ic), 100),
+        new("name",             p => p.Name,             (f, t) => f.Contains(t, Ic),    50),
+        new("description",      p => p.Description,      (f, t) => f.Contains(t, Ic),    10),
+        new("area.name.prefix", p => p.Area.Name,        (f, t) => f.StartsWith(t, Ic),  25),
+        new("area.description", p => p.Area.Description, (f, t) => f.Contains(t, Ic),     5),
+    ];
+
+    private static SearchObject<PackageDto> ScorePackage(
+    PackageDto package,
+    string term,
+    bool searchInResources)
+    {
+        var totalScore = 0;
+        var fields = new List<SearchField>();
+
+        foreach (var rule in PackageRules)
+        {
+            var value = rule.Field(package);
+            if (rule.Match(value, term))
+            {
+                totalScore += rule.Points;
+                fields.Add(new SearchField
+                {
+                    Field = rule.FieldName,
+                    Value = value,
+                    Score = rule.Points,
+                });
+            }
+        }
+
+        if (searchInResources)
+        {
+            foreach (var resource in package.Resources.Where(t => t.Name.Contains(term, Ic)))
+            {                
+                totalScore += 2;
+                fields.Add(new SearchField
+                {
+                    Field = "resources.name",
+                    Value = resource.Name,
+                    Score = 2,
+                });   
+            }
+        }
+
+        return new SearchObject<PackageDto>
+        {
+            Object = package,
+            Score = totalScore,
+            Fields = fields,
+        };
+    }
+
+    public async Task<IEnumerable<SearchObject<PackageDto>>> SimpleSearch(string term, List<string> resourceProviderCodes = null, bool searchInResources = false, Guid? typeId = null, string languageCode = "nob", bool allowPartialTranslation = true, CancellationToken cancellationToken = default)
+    {
+        var data = await GetSearchData(
+        resourceProviderCodes: resourceProviderCodes,
+        typeId: typeId,
+        languageCode: languageCode,
+        allowPartialTranslation: allowPartialTranslation,
+        cancellationToken: cancellationToken
+        );
+
+        return data
+            .Select(p => ScorePackage(p, term, searchInResources))
+            .Where(s => s.Score > 0)
+            .OrderByDescending(s => s.Score)
+            .ToList();
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<SearchObject<PackageDto>>> Search(string term, List<string> resourceProviderCodes = null, bool searchInResources = false, Guid? typeId = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<SearchObject<PackageDto>>> FuzzySearch(string term, List<string> resourceProviderCodes = null, bool searchInResources = false, Guid? typeId = null, string languageCode = "nob", bool allowPartialTranslation = true, CancellationToken cancellationToken = default)
     {
-        var data = await GetSearchData(resourceProviderCodes: resourceProviderCodes, typeId: typeId);
+        var data = await GetSearchData(resourceProviderCodes: resourceProviderCodes, typeId: typeId, languageCode: languageCode, allowPartialTranslation: allowPartialTranslation, cancellationToken: cancellationToken);
 
         if (string.IsNullOrEmpty(term))
         {
@@ -45,7 +129,7 @@ public class PackageService : IPackageService
                 ////.AddCollection(pkg => pkg.Resources, r => r.Description, 0.7, FuzzynessLevel.Low, detailed);
         }
 
-        var results = FuzzySearch.PerformFuzzySearch(data, term, builder);
+        var results = Utils.FuzzySearch.PerformFuzzySearch(data, term, builder);
 
         foreach (var res in results.OrderByDescending(t => t.Score))
         {
@@ -62,7 +146,7 @@ public class PackageService : IPackageService
         return results.OrderByDescending(t => t.Score).ToList();
     }
 
-    private async Task<List<PackageDto>> GetSearchData(List<string> resourceProviderCodes = null, Guid? typeId = null, CancellationToken cancellationToken = default)
+    private async Task<List<PackageDto>> GetSearchData(List<string> resourceProviderCodes = null, Guid? typeId = null, string languageCode = "nbNO", bool allowPartialTranslation = false, CancellationToken cancellationToken = default)
     {
         bool filterResourceProviders = resourceProviderCodes != null && resourceProviderCodes.Any();
 
@@ -87,6 +171,11 @@ public class PackageService : IPackageService
             }
 
             result.Add(DtoMapper.Convert(package, areas.First(t => t.Id == package.AreaId), packageResources.Where(t => t.PackageId == package.Id).Select(t => t.Resource)));
+        }
+
+        foreach (var t in result)
+        {
+            await t.TranslateDeepAsync(TranslationService, languageCode: languageCode, allowPartial: allowPartialTranslation);
         }
 
         return result;

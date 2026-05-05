@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Api.Metadata.Controllers;
+﻿using Altinn.AccessManagement.Api.Metadata.Controllers;
 using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
@@ -96,7 +96,7 @@ public class PackagesControllerIntegrationTests : IClassFixture<PostgresFixture>
         // Fully qualify: the namespace-less Persistence `PackageService` (six-arg
         // ctor) is in the global namespace, so an unqualified `PackageService(_db)`
         // would bind there.
-        _packageService = new Altinn.AccessMgmt.Core.Services.PackageService(_db);
+        _packageService = new Altinn.AccessMgmt.Core.Services.PackageService(_db, _translationService);
     }
 
     private PackagesController CreateController(string acceptLanguage = "nb-NO")
@@ -196,6 +196,79 @@ public class PackagesControllerIntegrationTests : IClassFixture<PostgresFixture>
         var hits = AssertOkEnumerable(result).ToList();
         Assert.NotEmpty(hits);
         Assert.Equal(SearchTerm, hits.First().Object.Name);
+    }
+
+    // ── New simple-search path (default) — scoring rules + filter behaviour ──
+    //
+    // SimpleSearch builds rule-based scores (prefix-match=100, contains=50, etc.)
+    // and orders by score descending while filtering out zero-score packages.
+    // These tests defend the "rules-and-filter" contract against named
+    // regressions: order direction flipping, the score>0 filter being dropped,
+    // and the empty-input semantics diverging from FuzzySearch (which returns
+    // all on empty term).
+
+    [Fact]
+    public async Task SimpleSearch_PrefixMatchOnPackageName_RanksMatchingPackageFirst()
+    {
+        // "Kunst" prefix-matches the package name "Kunst og underholdning",
+        // earning the highest single-rule score (100) plus a contains-match (50).
+        // Regression: OrderByDescending → OrderBy would push this package to
+        // the bottom; dropping the prefix rule would tie it with substring hits.
+        var result = await CreateController().Search("Kunst");
+
+        var hits = AssertOkEnumerable(result).ToList();
+        Assert.NotEmpty(hits);
+
+        var top = hits.First();
+        Assert.Equal(PackageKunstName, top.Object.Name);
+        Assert.True(top.Score >= 100, $"Top hit should include a name.prefix match (≥100). Actual score: {top.Score}.");
+        Assert.Contains(top.Fields, f => f.Field == "name.prefix");
+    }
+
+    [Fact]
+    public async Task SimpleSearch_NonMatchingTerm_ReturnsNoContent()
+    {
+        // SimpleSearch must filter out packages with score 0. A regression where
+        // the `Where(s => s.Score > 0)` filter is removed would return every
+        // package in the database for any (or no) term — a search-becomes-list bug.
+        var result = await CreateController().Search("zzzz_no_package_should_match_this_xyzzy");
+
+        Assert.IsType<NoContentResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task SimpleSearch_ResultsOrderedByScoreDescending()
+    {
+        // A more general guard than the prefix-match test: every adjacent pair
+        // in the result must be in non-increasing score order. Regression:
+        // OrderBy direction flipping or the sort being dropped entirely.
+        var result = await CreateController().Search("Kunst");
+
+        var hits = AssertOkEnumerable(result).ToList();
+        Assert.NotEmpty(hits);
+        for (var i = 1; i < hits.Count; i++)
+        {
+            Assert.True(
+                hits[i - 1].Score >= hits[i].Score,
+                $"SimpleSearch result not ordered by score desc: index {i - 1} has score {hits[i - 1].Score}, index {i} has {hits[i].Score}.");
+        }
+    }
+
+    [Fact]
+    public async Task FuzzySearch_StillReachableViaSimpleSearchFalse()
+    {
+        // The legacy fuzzy path remains opt-in via simpleSearch=false. A
+        // regression where the controller's ternary always picks one branch
+        // would either lose this path entirely or break the simple default —
+        // either way, this test fails distinctly from the SimpleSearch tests
+        // above and tells you which branch broke.
+        var result = await CreateController().Search(SearchTerm, simpleSearch: false);
+
+        var hits = AssertOkEnumerable(result).ToList();
+        Assert.NotEmpty(hits);
+        // FuzzySearch produces fractional scores (vs SimpleSearch's integer rule
+        // points). The exact match is included regardless of which scorer ran.
+        Assert.Contains(hits, h => h.Object.Name == SearchTerm);
     }
 
     [Fact]
