@@ -325,7 +325,7 @@ namespace Altinn.Platform.Authorization.Helpers
         public static XacmlRule BuildDelegationRule(string org, string app, int offeredByPartyId, int? coveredByPartyId, int? coveredByUserId, Rule rule)
         {
             rule.RuleId = Guid.NewGuid().ToString();
-            
+
             string coveredBy = coveredByPartyId.HasValue ? coveredByPartyId.Value.ToString() : coveredByUserId.Value.ToString();
             XacmlRule delegationRule = new XacmlRule(rule.RuleId, XacmlEffectType.Permit)
             {
@@ -514,7 +514,7 @@ namespace Altinn.Platform.Authorization.Helpers
                     if (action != null)
                     {
                         return new AttributeMatch { Id = action.AttributeDesignator.AttributeId.OriginalString, Value = action.AttributeValue.Value };
-                    }                    
+                    }
                 }
             }
 
@@ -530,7 +530,7 @@ namespace Altinn.Platform.Authorization.Helpers
                 {
                     foreach (XacmlMatch xacmlMatch in allOf.Matches.Where(m => m.AttributeDesignator.Category.Equals(XacmlConstants.MatchAttributeCategory.Resource)))
                     {
-                        result.Add(new AttributeMatch { Id = xacmlMatch.AttributeDesignator.AttributeId.OriginalString, Value = xacmlMatch.AttributeValue.Value });                        
+                        result.Add(new AttributeMatch { Id = xacmlMatch.AttributeDesignator.AttributeId.OriginalString, Value = xacmlMatch.AttributeValue.Value });
                     }
                 }
             }

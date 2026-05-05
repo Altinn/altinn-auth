@@ -56,7 +56,7 @@ public class PackageDto
     /// Construct from Package
     /// </summary>
     /// <param name="package"><see cref="Package"/>Package</param>
-    public PackageDto(Package package) 
+    public PackageDto(Package package)
     {
         Id = package.Id;
         Name = package.Name;

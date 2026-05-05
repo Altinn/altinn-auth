@@ -85,7 +85,7 @@ namespace Altinn.AccessManagement.Tests.Utils
                 AssertEqual(expected.Results.First(), actual.Results.First());
             }
         }
-        
+
         /// <summary>
         /// Assert that two <see cref="XacmlJsonResponse"/> have the same property values.
         /// </summary>
@@ -127,7 +127,7 @@ namespace Altinn.AccessManagement.Tests.Utils
                 AssertEqual(expectedEntry.Value, actualValue);
             }
         }
-        
+
         /// <summary>
         /// Assert that two lists of <see cref="DelegationChange"/> have the same property values.
         /// </summary>
@@ -145,17 +145,17 @@ namespace Altinn.AccessManagement.Tests.Utils
             foreach (DelegationChange expectedEntity in expected)
             {
                 DelegationChange actualentity =
-                    actual.FirstOrDefault(a => a.ResourceId == expectedEntity.ResourceId && 
-                                               a.ResourceType == expectedEntity.ResourceType && 
-                                               a.BlobStoragePolicyPath == expectedEntity.BlobStoragePolicyPath && 
-                                               a.CoveredByPartyId == expectedEntity.CoveredByPartyId && 
+                    actual.FirstOrDefault(a => a.ResourceId == expectedEntity.ResourceId &&
+                                               a.ResourceType == expectedEntity.ResourceType &&
+                                               a.BlobStoragePolicyPath == expectedEntity.BlobStoragePolicyPath &&
+                                               a.CoveredByPartyId == expectedEntity.CoveredByPartyId &&
                                                a.CoveredByUserId == expectedEntity.CoveredByUserId &&
                                                a.OfferedByPartyId == expectedEntity.OfferedByPartyId &&
                                                a.DelegationChangeType == expectedEntity.DelegationChangeType);
                 Assert.NotNull(actualentity);
             }
         }
-        
+
         /// <summary>
         /// Assert that two lists of <see cref="DelegationChange"/> have the same property values.
         /// </summary>
@@ -983,7 +983,7 @@ namespace Altinn.AccessManagement.Tests.Utils
             Assert.Equal(expected.Value, actual.Value);
         }
 
-        private static void AssertEqual(Delegation expected, Delegation actual) 
+        private static void AssertEqual(Delegation expected, Delegation actual)
         {
             Assert.Equal(expected.CoveredByPartyId, actual.CoveredByPartyId);
             Assert.Equal(expected.PerformedByUserId, actual.PerformedByUserId);
@@ -997,7 +997,7 @@ namespace Altinn.AccessManagement.Tests.Utils
             Assert.Equal(expected.Identifier, actual.Identifier);
             Assert.Equal(expected.Title, actual.Title);
         }
-        
+
         private static void AssertEqual(DelegationChangeExternal expected, DelegationChangeExternal actual)
         {
             Assert.Equal(expected.DelegationChangeId, actual.DelegationChangeId);

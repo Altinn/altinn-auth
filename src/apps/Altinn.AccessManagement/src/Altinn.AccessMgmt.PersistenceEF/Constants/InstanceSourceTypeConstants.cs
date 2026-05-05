@@ -99,5 +99,5 @@ public static class InstanceSourceTypeConstants
         },
         EN = TranslationEntryList.Create(KeyValuePair.Create("Name", "End User")),
         NN = TranslationEntryList.Create(KeyValuePair.Create("Name", "Sluttbrukar")),
-    };    
+    };
 }

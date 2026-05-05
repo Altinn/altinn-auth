@@ -68,7 +68,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                         try
                         {
                             await using var scope = _serviceProvider.CreateAsyncScope();
-                            IAssignmentService assignmentService = scope.ServiceProvider.GetRequiredService<IAssignmentService>();                            
+                            IAssignmentService assignmentService = scope.ServiceProvider.GetRequiredService<IAssignmentService>();
                             IRightImportProgressService rightImportProgressService = scope.ServiceProvider.GetRequiredService<IRightImportProgressService>();
 
                             bool alreadyProcessed = await rightImportProgressService.IsImportAlreadyProcessed(item.ResourceRegistryDelegationChangeId, "ResourceRegistry", cancellationToken);
@@ -98,7 +98,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                                 SystemEntityConstants.SingleRightImportSystem.Id,
                                 batchId.ToString(),
                                 item.Created?.ToUniversalTime() ?? DateTime.UtcNow);
-                        
+
                             if (item.DelegationChangeType == AccessManagement.Core.Models.DelegationChangeType.RevokeLast)
                             {
                                 int revokes = await assignmentService.RevokeImportedAssignmentResource(
@@ -175,7 +175,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                             {
                                 _logger.LogError(ex, "Error processing single resource registry right delegation from {FromParty} to {ToParty} for resource {ResourceId}", item.FromUuid, item.ToUuid, item.ResourceId);
                                 throw;
-                            }                                
+                            }
                         }
                     }
                 }
@@ -186,7 +186,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                 }
 
                 await lease.Update<SingleResourceRegistryRightLease>(d => d.SingleResourceRegistryRightStreamNextPageLink = page.Content.Links.Next, cancellationToken);
-            }            
+            }
         }
 
         public async Task SyncFailedSingleResourceRegistryRights(CancellationToken cancellationToken)

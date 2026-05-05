@@ -44,7 +44,7 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             .Options;
 
         _db = new AppDbContext(options);
-        
+
         // Set up audit accessor with test values
         _db.AuditAccessor = new AuditAccessor
         {
@@ -53,7 +53,7 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
                 changedBySystem: AuditDefaults.StaticDataIngest
             )
         };
-        
+
         _cache = new MemoryCache(new MemoryCacheOptions());
         _translationService = new TranslationService(_db, _cache, NullLogger<TranslationService>.Instance);
     }
@@ -528,10 +528,10 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
 
         // Act - First call (should query database) - Using normalized language code
         var result1 = await _translationService.TranslateAsync(role, "eng");
-        
+
         // Reset the object
         role.Name = "Original";
-        
+
         // Second call (should use cache)
         var result2 = await _translationService.TranslateAsync(role, "eng");
 

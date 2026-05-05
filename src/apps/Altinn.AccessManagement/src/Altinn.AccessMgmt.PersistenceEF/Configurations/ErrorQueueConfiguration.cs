@@ -10,7 +10,7 @@ public class ErrorQueueConfiguration : IEntityTypeConfiguration<ErrorQueue>
     public void Configure(EntityTypeBuilder<ErrorQueue> builder)
     {
         builder.ToDefaultTable();
-        
+
         builder.HasKey(p => p.Id);
     }
 }

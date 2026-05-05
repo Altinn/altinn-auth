@@ -233,7 +233,7 @@ public class MockDataService
                             RefId = resourceId.ToString().ToLower(),
                             TypeId = resourceTypes.OrderBy(t => Guid.NewGuid()).First().Id,
                             ProviderId = provider.Id
-                        }, 
+                        },
                         options: options
                     );
 

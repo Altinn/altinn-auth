@@ -145,7 +145,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
                 {
                     foreach (Guid refId in seenDeadPeople)
                     {
-                        await assignmentService.ClearAssignmentsInAfterLife(refId, options,  cancellationToken);
+                        await assignmentService.ClearAssignmentsInAfterLife(refId, options, cancellationToken);
                     }
                 }
 
@@ -160,7 +160,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
                 }
 
                 var mergedEntities = await ingestService.MergeTempData<Entity>(batchIdEntity, options, matchColumns: ["id"], ignoreColumnsToUpdate: ["parentid"], cancellationToken: cancellationToken);
-                int mergedAssignments = await ingestService.MergeTempData<Assignment>(batchIdAssignment, options, matchColumns: ["fromid","toid","roleid"], ignoreColumnsToUpdate: ["id", "audit_validfrom"], cancellationToken: cancellationToken);
+                int mergedAssignments = await ingestService.MergeTempData<Assignment>(batchIdAssignment, options, matchColumns: ["fromid", "toid", "roleid"], ignoreColumnsToUpdate: ["id", "audit_validfrom"], cancellationToken: cancellationToken);
 
                 _logger.LogInformation("Merge complete: Entity ({0}/{1})", mergedEntities, ingestedEntities);
                 return mergedEntities;
@@ -260,7 +260,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
                 { IsNull: true } => EntityVariantConstants.SI,
                 { IsUnset: true } => throw new UnreachableException("Missing selfidentfiedUserType from register. Should never happen."),
                 { Value.IsUnknown: true } => throw new InvalidOperationException("..."),
-                { Value.Value: SelfIdentifiedUserType rrr } => rrr switch 
+                { Value.Value: SelfIdentifiedUserType rrr } => rrr switch
                 {
                     SelfIdentifiedUserType.Legacy => EntityVariantConstants.SI,
                     SelfIdentifiedUserType.Educational => EntityVariantConstants.SI_EDU,

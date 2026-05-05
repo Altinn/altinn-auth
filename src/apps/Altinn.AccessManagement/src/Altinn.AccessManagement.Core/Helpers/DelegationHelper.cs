@@ -614,7 +614,7 @@ namespace Altinn.AccessManagement.Core.Helpers
                 }
 
                 bool matchingActionFound = MatchingActionFound(policyRule.Target.AnyOf, rule, out List<List<AttributeMatch>> policyResourceMatches);
-                
+
                 if (policyResourceMatches.Exists(resourceMatch => GetAttributeMatchKey(resourceMatch) == ruleResourceKey) && matchingActionFound)
                 {
                     rule.RuleId = policyRule.RuleId;
@@ -663,7 +663,7 @@ namespace Altinn.AccessManagement.Core.Helpers
                 foreach (XacmlAllOf allOf in anyOf.AllOf)
                 {
                     matchingActionFound = GetResourceMatch(allOf.Matches, rule, out List<AttributeMatch> resourceMatch);
-                    
+
                     if (resourceMatch.Count > 0)
                     {
                         policyResourceMatches.Add(resourceMatch);
@@ -784,7 +784,7 @@ namespace Altinn.AccessManagement.Core.Helpers
             if (performer == null)
             {
                 return false;
-            }   
+            }
 
             foreach (AttributeMatch match in performer)
             {
@@ -862,7 +862,7 @@ namespace Altinn.AccessManagement.Core.Helpers
                 type = UuidType.EnterpriseUser;
                 return true;
             }
-            
+
             if (org == null && app == null && person == null && organization == null && enterpriseUser == null && systemUser != null && counter == 1)
             {
                 id = systemUser;
@@ -1136,7 +1136,7 @@ namespace Altinn.AccessManagement.Core.Helpers
                     return UuidType.Party;
             }
         }
-            
+
         public static UuidType GetUuidTypeFromEntityType(Guid entityType)
         {
             if (entityType == EntityTypeConstants.Person.Id)

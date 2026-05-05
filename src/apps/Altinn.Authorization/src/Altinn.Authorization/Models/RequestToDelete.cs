@@ -39,7 +39,7 @@ namespace Altinn.Platform.Authorization.Models
 
             if (this.DeletedByUserId == 0)
             {
-                validationResult.Add(new ValidationResult("Not all RequestToDelete has a value for the user performing the delete"));                
+                validationResult.Add(new ValidationResult("Not all RequestToDelete has a value for the user performing the delete"));
             }
 
             return validationResult;

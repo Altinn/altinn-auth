@@ -4,7 +4,7 @@ using Altinn.AccessMgmt.PersistenceEF.Models.Base;
 namespace Altinn.AccessMgmt.PersistenceEF.Models.Audit;
 
 /// <inheritdoc />
-public class AuditRole : BaseRole, IAudit 
+public class AuditRole : BaseRole, IAudit
 {
     /// <inheritdoc />
     public DateTimeOffset Audit_ValidFrom { get; set; }

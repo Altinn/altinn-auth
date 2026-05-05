@@ -7,7 +7,7 @@ namespace Altinn.AccessManagement.Enums.ResourceRegistry
     /// </summary>
     public enum ReferenceSourceExternal : int
     {
-        [EnumMember(Value = "Default")]    
+        [EnumMember(Value = "Default")]
         Default = 0,
 
         [EnumMember(Value = "Altinn1")]

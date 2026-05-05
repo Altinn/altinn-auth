@@ -6,7 +6,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Extensions;
 public static class AuditExtensions
 {
     public const string AnnotationName = "Altinn:AuditVersion";
-    
+
     public static EntityTypeBuilder EnableAudit(this EntityTypeBuilder builder)
     {
         /*

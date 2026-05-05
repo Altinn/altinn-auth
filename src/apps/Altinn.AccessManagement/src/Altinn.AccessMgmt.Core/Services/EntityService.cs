@@ -88,7 +88,7 @@ public class EntityService : IEntityService
             .FirstOrDefaultAsync(cancellationToken);
 
     /// <inheritdoc/>
-    public async Task<Entity> GetByPersNo(string persNo, CancellationToken cancellationToken = default) => await 
+    public async Task<Entity> GetByPersNo(string persNo, CancellationToken cancellationToken = default) => await
         Db.Entities
             .AsNoTracking()
             .Where(e => e.PersonIdentifier == persNo)
@@ -100,7 +100,7 @@ public class EntityService : IEntityService
             .AsNoTracking()
             .Where(e => e.PartyId == partyId)
             .FirstOrDefaultAsync(ct);
-    
+
     /// <inheritdoc/>
     public async Task<Entity> GetByPartyId(string partyId, CancellationToken cancellationToken = default)
     {

@@ -211,6 +211,6 @@ namespace Altinn.AccessManagement.Integration.Clients
             {
                 throw new Exception($"Something went wrong when retrieving consent templates", ex);
             }
-        }        
+        }
     }
 }

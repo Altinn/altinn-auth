@@ -18,7 +18,7 @@ namespace Altinn.AccessManagement.Core.Helpers
     public static class PolicyHelper
     {
         private const string CoveredByNotDefined = "CoveredBy was not defined";
-        
+
         /// <summary>
         /// Extracts a list of all roles codes mentioned in a permit rule in a policy. 
         /// </summary>
@@ -142,7 +142,7 @@ namespace Altinn.AccessManagement.Core.Helpers
 
             return rule;
         }
-        
+
         /// <summary>
         /// Builds the delegation policy path based on org and app names, as well as identifiers for the delegating and receiving entities
         /// </summary>
@@ -318,7 +318,7 @@ namespace Altinn.AccessManagement.Core.Helpers
 
             return (coveredBy, coveredByType);
         }
-        
+
         /// <summary>
         /// Builds a XacmlPolicy <see cref="XacmlPolicy"/> representation based on the DelegationPolicy input
         /// </summary>
@@ -366,7 +366,7 @@ namespace Altinn.AccessManagement.Core.Helpers
                 PerformedById = rules.PerformedBy,
                 PerformedByType = rules.PerformedByType.EnumMemberAttributeValueOrName()
             };
-            
+
             return result;
         }
 
@@ -401,7 +401,7 @@ namespace Altinn.AccessManagement.Core.Helpers
         public static XacmlRule BuildDelegationInstanceRule(PolicyParameters policyData, InstanceRule rule)
         {
             rule.RuleId = Guid.NewGuid().ToString();
-            
+
             XacmlRule delegationRule = new XacmlRule(rule.RuleId, XacmlEffectType.Permit)
             {
                 Description = $"Delegation of a right/action from {policyData.FromType}:{policyData.FromId} to {policyData.ToType}:{policyData.ToId}, for the resourceId: {policyData.ResourceId} instanceId: {policyData.InstanceId}, by: {policyData.PerformedByType}:{policyData.PerformedById}",
@@ -424,7 +424,7 @@ namespace Altinn.AccessManagement.Core.Helpers
         public static XacmlRule BuildDelegationInstanceRule(string resourceId, string fromId, string fromType, string toId, string toType, string performedById, string performedByType, InstanceRule rule)
         {
             rule.RuleId = Guid.NewGuid().ToString();
-            
+
             XacmlRule delegationRule = new XacmlRule(rule.RuleId, XacmlEffectType.Permit)
             {
                 Description = $"Delegation of a right/action from {fromType}:{fromId} to {toType}:{toId}, for the resource: {resourceId}, by: {performedByType}:{performedById}",
@@ -444,7 +444,7 @@ namespace Altinn.AccessManagement.Core.Helpers
         public static XacmlRule BuildDelegationRule(string resourceId, int offeredByPartyId, string coveredBy, string toType, Rule rule)
         {
             rule.RuleId = Guid.NewGuid().ToString();
-            
+
             XacmlRule delegationRule = new XacmlRule(rule.RuleId, XacmlEffectType.Permit)
             {
                 Description = $"Delegation of a right/action from {offeredByPartyId} to {coveredBy}, for the resource: {resourceId}, by user; {rule.DelegatedByUserId}",
@@ -465,7 +465,7 @@ namespace Altinn.AccessManagement.Core.Helpers
 
             // Build Subject
             List<XacmlAllOf> subjectAllOfs = new List<XacmlAllOf>();
-            
+
             subjectAllOfs.Add(new XacmlAllOf(new List<XacmlMatch>
             {
                 new XacmlMatch(
@@ -473,7 +473,7 @@ namespace Altinn.AccessManagement.Core.Helpers
                     new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), coveredBy),
                     new XacmlAttributeDesignator(new Uri(XacmlConstants.MatchAttributeCategory.Subject), new Uri(toType), new Uri(XacmlConstants.DataTypes.XMLString), false))
             }));
-            
+
             // Build Resource
             List<XacmlMatch> resourceMatches = new List<XacmlMatch>();
             foreach (AttributeMatch resourceMatch in rule.Resource)
@@ -821,7 +821,7 @@ namespace Altinn.AccessManagement.Core.Helpers
                     {
                         ruleAttributeMatches.Add(anyOfAttributeMatches);
                     }
-                }                
+                }
             }
 
             return ruleAttributeMatches;
@@ -865,7 +865,7 @@ namespace Altinn.AccessManagement.Core.Helpers
                     Id = xacmlMatch.AttributeDesignator.AttributeId.OriginalString,
                     Value = xacmlMatch.AttributeValue.Value
                 });
-            }     
+            }
 
             return attributeMatches;
         }
@@ -939,7 +939,7 @@ namespace Altinn.AccessManagement.Core.Helpers
                     if (action != null)
                     {
                         return new AttributeMatch { Id = action.AttributeDesignator.AttributeId.OriginalString, Value = action.AttributeValue.Value };
-                    }                    
+                    }
                 }
             }
 
@@ -955,7 +955,7 @@ namespace Altinn.AccessManagement.Core.Helpers
                 {
                     foreach (XacmlMatch xacmlMatch in allOf.Matches.Where(m => m.AttributeDesignator.Category.Equals(XacmlConstants.MatchAttributeCategory.Resource)))
                     {
-                        result.Add(new AttributeMatch { Id = xacmlMatch.AttributeDesignator.AttributeId.OriginalString, Value = xacmlMatch.AttributeValue.Value });                        
+                        result.Add(new AttributeMatch { Id = xacmlMatch.AttributeDesignator.AttributeId.OriginalString, Value = xacmlMatch.AttributeValue.Value });
                     }
                 }
             }

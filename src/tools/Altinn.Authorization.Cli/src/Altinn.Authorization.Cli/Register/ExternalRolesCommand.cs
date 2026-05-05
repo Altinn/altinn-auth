@@ -32,7 +32,8 @@ public class ExternalRolesCommand(CancellationToken ct)
                 register.external_role_definition erd
             """);
 
-        IOutputBuilder builder = settings.Format switch {
+        IOutputBuilder builder = settings.Format switch
+        {
             OutputFormat.TABLE => new TableOutputBuilder(),
             OutputFormat.SQL => new SqlBuilder(),
             OutputFormat.HTML => new HtmlBuilder(),
@@ -106,7 +107,7 @@ public class ExternalRolesCommand(CancellationToken ct)
 
         public void Render()
         {
-            foreach (var (source, table) in _tables) 
+            foreach (var (source, table) in _tables)
             {
                 var panel = new Panel(table).Header(new PanelHeader(source, Justify.Center)).NoBorder().Expand();
                 AnsiConsole.Write(panel);

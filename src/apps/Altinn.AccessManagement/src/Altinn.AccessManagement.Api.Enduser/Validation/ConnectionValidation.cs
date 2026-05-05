@@ -71,7 +71,7 @@ internal static class ConnectionValidation
             ConnectionCombinationRules.ExclusivePackageReference(packageId, packageUrn),
             ConnectionCombinationRules.PartyEqualsFrom(party, from)
         );
-    
+
     /// <summary>
     /// Validation rule for removing an existing rightholder connection.
     /// </summary>

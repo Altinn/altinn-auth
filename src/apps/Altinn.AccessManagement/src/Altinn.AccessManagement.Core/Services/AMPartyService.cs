@@ -16,7 +16,7 @@ namespace Altinn.AccessManagement.Core.Services
         /// <inheritdoc />
         public async Task<MinimalParty> GetByOrgNo(Authorization.Api.Contracts.Register.OrganizationNumber orgNo, CancellationToken cancellationToken = default)
         {
-           return await _amPartyRepository.GetByOrgNo(orgNo, cancellationToken);
+            return await _amPartyRepository.GetByOrgNo(orgNo, cancellationToken);
         }
 
         /// <inheritdoc />

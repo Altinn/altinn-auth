@@ -569,16 +569,16 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         {
             HttpClient client = _factory.WithWebHostBuilder(builder =>
             {
-               builder.ConfigureTestServices(services =>
-                {
-                    services.AddScoped<IContextHandler, ContextHandlerMock>();
-                    services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
-                    services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
-                    services.AddSingleton<IRoles, RolesMock>();
-                    services.AddSingleton<IPolicyRepository, PolicyRepositoryMock>();
-                    services.AddSingleton<IDelegationChangeEventQueue, DelegationChangeEventQueueMock>();
-                    services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                });
+                builder.ConfigureTestServices(services =>
+                 {
+                     services.AddScoped<IContextHandler, ContextHandlerMock>();
+                     services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
+                     services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
+                     services.AddSingleton<IRoles, RolesMock>();
+                     services.AddSingleton<IPolicyRepository, PolicyRepositoryMock>();
+                     services.AddSingleton<IDelegationChangeEventQueue, DelegationChangeEventQueueMock>();
+                     services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
+                 });
             }).CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
             return client;

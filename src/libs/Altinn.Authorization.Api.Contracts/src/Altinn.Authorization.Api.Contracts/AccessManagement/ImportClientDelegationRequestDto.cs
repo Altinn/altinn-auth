@@ -49,6 +49,6 @@
         /// This field uses the urn notation, such as:
         /// urn:altinn:accesspackage:ansvarlig-revisor
         /// </summary>
-        public required string PackageUrn { get; set; }        
+        public required string PackageUrn { get; set; }
     }
 }

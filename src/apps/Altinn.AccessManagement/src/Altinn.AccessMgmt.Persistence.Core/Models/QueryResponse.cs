@@ -12,7 +12,7 @@ public class QueryResponse<T> : IEnumerable<T>
     /// Rows converted to objects
     /// </summary>
     public IEnumerable<T> Data { get; set; }
-    
+
     /// <summary>
     /// Page information
     /// </summary>

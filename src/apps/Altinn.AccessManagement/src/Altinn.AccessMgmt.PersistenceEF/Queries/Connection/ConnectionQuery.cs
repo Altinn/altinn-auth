@@ -56,7 +56,7 @@ public class ConnectionQuery(AppDbContext db)
         {
             var assignments = db.Assignments.AsNoTracking()
                 .Where(t => t.FromId == fromId && t.ToId == toId);
-        
+
             if (await assignments.AnyAsync())
             {
                 return (true, ConnectionReason.Assignment);
@@ -122,7 +122,7 @@ public class ConnectionQuery(AppDbContext db)
                 delayFromFilter = false;
             }
 
-            var baseQuery = direction == ConnectionQueryDirection.FromOthers 
+            var baseQuery = direction == ConnectionQueryDirection.FromOthers
                 ? useNewQuery ? BuildBaseQueryFromOthersNew(
                         db,
                         filter,

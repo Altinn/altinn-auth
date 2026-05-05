@@ -3,7 +3,7 @@
 /// <summary>
 /// Generated view for assignments and delegations
 /// </summary>
-public class Connection 
+public class Connection
 {
     /// <summary>
     /// Identity, either assignment og delegation

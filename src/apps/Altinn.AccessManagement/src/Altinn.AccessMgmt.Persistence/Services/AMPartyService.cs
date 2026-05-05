@@ -67,7 +67,7 @@ namespace Altinn.AccessMgmt.Persistence.Services
             Guid partyType = extEntityLookup.Entity.TypeId;
             string personId = null;
             string organizationId = null;
-            
+
             if (partyType == Guid.Parse("bfe09e70-e868-44b3-8d81-dfe0e13e058a"))
             {
                 personId = extEntityLookup.Entity.RefId;
@@ -176,12 +176,12 @@ namespace Altinn.AccessMgmt.Persistence.Services
             ExtEntityLookup extEntityLookup = res.First();
             Guid partyType = extEntityLookup.Entity.TypeId;
             string personId = null;
-            
-            if (partyType == Guid.Parse("bfe09e70-e868-44b3-8d81-dfe0e13e058a")) 
+
+            if (partyType == Guid.Parse("bfe09e70-e868-44b3-8d81-dfe0e13e058a"))
             {
                 personId = extEntityLookup.Entity.RefId;
             }
-            
+
             return new MinimalParty()
             {
                 Name = extEntityLookup.Entity.Name,

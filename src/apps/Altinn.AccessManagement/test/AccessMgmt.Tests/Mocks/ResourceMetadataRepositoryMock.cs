@@ -32,7 +32,7 @@ namespace Altinn.AccessManagement.Tests.Mocks
             {
                 PropertyNameCaseInsensitive = true
             };
-            
+
             result = JsonSerializer.Deserialize<AccessManagementResource>(dataStream, options);
             return Task.FromResult(result);
         }

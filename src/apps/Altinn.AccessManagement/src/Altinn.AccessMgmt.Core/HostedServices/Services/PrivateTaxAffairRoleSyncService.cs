@@ -116,7 +116,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                                     ErrorMessage = $"Failed to delete assignmentpackages for FromParty: {item.FromPartyUuid}, ToParty: {item.ToUserPartyUuid}, PackageUrns: {string.Join(", ", packageUrns)}"
                                 };
                                 await errorQueueService.AddErrorQueue(error, values, cancellationToken);
-                                continue;                                
+                                continue;
                             }
                         }
                         else
@@ -133,7 +133,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                                 await errorQueueService.AddErrorQueue(error, values, cancellationToken);
                                 continue;
                             }
-                            
+
                             if (item.ToUserPartyUuid == null)
                             {
                                 ErrorQueue error = new ErrorQueue

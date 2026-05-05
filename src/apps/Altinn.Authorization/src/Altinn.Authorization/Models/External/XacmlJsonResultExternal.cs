@@ -16,7 +16,7 @@ namespace Altinn.Platform.Authorization.Models.External
         /// <summary>
         /// Gets or sets the status.
         /// </summary>
-        public XacmlJsonStatusExternal Status { get; set;  }
+        public XacmlJsonStatusExternal Status { get; set; }
 
         /// <summary>
         /// Gets or sets any obligations of the result.
@@ -31,7 +31,7 @@ namespace Altinn.Platform.Authorization.Models.External
         /// <summary>
         /// Gets or sets category.
         /// </summary>
-        public List<XacmlJsonCategoryExternal> Category { get; set;  }
+        public List<XacmlJsonCategoryExternal> Category { get; set; }
 
         /// <summary>
         /// Gets or sets policy Identifyer list related to the result.

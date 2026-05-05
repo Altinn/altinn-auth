@@ -88,7 +88,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         public async Task CreateConsentRequest_Valid()
         {
             SetupMockPartyRepository();
-            
+
             Guid requestID = Guid.CreateVersion7();
             ConsentRequestDto consentRequest = new ConsentRequestDto
             {
@@ -119,7 +119,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
                 {
                     { "en", "Please approve this consent request" }
                 },
-                RedirectUrl = "https://www.dnb.no"   
+                RedirectUrl = "https://www.dnb.no"
             };
 
             HttpClient client = GetTestClient();
@@ -224,7 +224,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         public async Task CreateConsentRequestByOrg_Valid()
         {
             SetupMockPartyRepository();
-            
+
             Guid requestID = Guid.CreateVersion7();
             ConsentRequestDto consentRequest = new ConsentRequestDto
             {
@@ -293,7 +293,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         public async Task CreateConsentRequestByOrg_InvalidUrl()
         {
             SetupMockPartyRepository();
-            
+
             Guid requestID = Guid.CreateVersion7();
             ConsentRequestDto consentRequest = new ConsentRequestDto
             {
@@ -404,7 +404,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         public async Task CreateConsentRequestDuplicatePost_Valid()
         {
             SetupMockPartyRepository();
-            
+
             Guid requestID = Guid.CreateVersion7();
             ConsentRequestDto consentRequest = new ConsentRequestDto
             {
@@ -483,7 +483,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         public async Task CreateConsentRequestDuplicatePost_InvalidDifferentFrom()
         {
             SetupMockPartyRepository();
-            
+
             Guid requestID = Guid.CreateVersion7();
             ConsentRequestDto consentRequest = new ConsentRequestDto
             {
@@ -556,7 +556,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         public async Task CreateConsentRequest_AndCheckStatus_Valid()
         {
             SetupMockPartyRepository();
-            
+
             Guid requestID = Guid.CreateVersion7();
             ConsentRequestDto consentRequest = new ConsentRequestDto
             {
@@ -598,7 +598,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
 
             HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
             string responseContent = await response.Content.ReadAsStringAsync();
-            string location = response.Headers.Location.ToString();   
+            string location = response.Headers.Location.ToString();
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             Assert.NotNull(responseContent);
             ConsentRequestDetailsDto consentInfo = JsonSerializer.Deserialize<ConsentRequestDetailsDto>(responseContent, _jsonOptions);
@@ -637,7 +637,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         public async Task CreateConsentRequestRequiredDelegator_AndCheckStatus_Valid()
         {
             SetupMockPartyRepository();
-            
+
             Guid requestID = Guid.CreateVersion7();
             ConsentRequestDto consentRequest = new ConsentRequestDto
             {
@@ -719,7 +719,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         public async Task CreateConsentRequestHandledByParty_AndCheckStatus_Valid()
         {
             SetupMockPartyRepository();
-            
+
             Guid requestID = Guid.CreateVersion7();
             ConsentRequestDto consentRequest = new ConsentRequestDto
             {
@@ -805,7 +805,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         public async Task CreateConsentRequest_ValidWithoutMetadata()
         {
             SetupMockPartyRepository();
-            
+
             Guid requestID = Guid.CreateVersion7();
             ConsentRequestDto consentRequest = new ConsentRequestDto
             {
@@ -867,7 +867,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         public async Task CreateConsentRequest_IncompatibleTemplates()
         {
             SetupMockPartyRepository();
-            
+
             Guid requestID = Guid.CreateVersion7();
             ConsentRequestDto consentRequest = new ConsentRequestDto
             {
@@ -942,7 +942,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         public async Task CreateConsentRequest_MissingMetadata()
         {
             SetupMockPartyRepository();
-            
+
             Guid requestID = Guid.CreateVersion7();
             ConsentRequestDto consentRequest = new ConsentRequestDto
             {
@@ -995,7 +995,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         public async Task CreateConsentRequest_WrongNamingMetadata()
         {
             SetupMockPartyRepository();
-            
+
             Guid requestID = Guid.CreateVersion7();
             ConsentRequestDto consentRequest = new ConsentRequestDto
             {
@@ -1072,7 +1072,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         public async Task CreateConsentRequest_UnknownMetadata()
         {
             SetupMockPartyRepository();
-            
+
             Guid requestID = Guid.CreateVersion7();
             ConsentRequestDto consentRequest = new ConsentRequestDto
             {
@@ -1132,7 +1132,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         public async Task CreateConsentRequest_MissingRights()
         {
             SetupMockPartyRepository();
-            
+
             Guid requestID = Guid.CreateVersion7();
             ConsentRequestDto consentRequest = new ConsentRequestDto
             {
@@ -1171,7 +1171,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         public async Task CreateConsentRequest_MissingAction()
         {
             SetupMockPartyRepository();
-            
+
             Guid requestID = Guid.CreateVersion7();
             ConsentRequestDto consentRequest = new ConsentRequestDto
             {
@@ -1230,7 +1230,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         public async Task CreateConsentRequest_FromIsNonExistingPerson()
         {
             SetupMockPartyRepository();
-            
+
             Guid requestID = Guid.CreateVersion7();
             ConsentRequestDto consentRequest = new ConsentRequestDto
             {
@@ -1261,7 +1261,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
                 {
                     { "en", "Please approve this consent request" }
                 },
-                RedirectUrl = "https://www.dnb.no"  
+                RedirectUrl = "https://www.dnb.no"
             };
 
             HttpClient client = GetTestClient();
@@ -1282,7 +1282,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             Assert.Empty(problemDetails.Errors);
             Assert.Single(problemDetails.Extensions);
         }
-    
+
         private HttpClient GetTestClient()
         {
             HttpClient client = _fixture.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });

@@ -128,12 +128,12 @@ public class ConsentMigrationServiceTests
         var consentId = Guid.NewGuid();
         using CancellationTokenSource cts = new CancellationTokenSource();
         _consentServiceMock.Setup(x => x.GetAndStoreAltinn2Consent(consentId, It.IsAny<CancellationToken>()))
-            .Callback(() => 
-            { 
+            .Callback(() =>
+            {
                 cts.Cancel();
                 cts.Token.ThrowIfCancellationRequested();
             });
-        
+
         var service = CreateService();
 
         // Act & Assert

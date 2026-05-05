@@ -283,7 +283,7 @@ public class AssignmentService(
             cancellationToken: cancellationToken
         );
 
-        return true;        
+        return true;
     }
 
     /// <inheritdoc/>

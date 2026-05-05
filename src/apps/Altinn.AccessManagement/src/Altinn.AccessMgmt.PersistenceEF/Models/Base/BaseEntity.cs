@@ -61,5 +61,5 @@ public class BaseEntity : BaseAudit, IEntityId, IEntityName
 
     public DateTimeOffset? DeletedAt { get; set; }
 
-    public bool IsDeleted { get; set; } 
+    public bool IsDeleted { get; set; }
 }

@@ -36,7 +36,7 @@
                 {
                     Metadata.Add(item.Key, item.Value);
                 }
-            }   
+            }
         }
-     }
+    }
 }

@@ -2379,7 +2379,7 @@ public partial class ConnectionService
         {
             return false;
         }
-        
+
         // Remove and save revoked assignment
         dbContext.Remove(existingAssignment);
 

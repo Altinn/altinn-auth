@@ -174,7 +174,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                     {
                         packages.Add("urn:altinn:accesspackage:tilgangsstyrer");
                     }
-                    
+
                     break;
                 case "APIADM":
                     packages.Add("urn:altinn:accesspackage:maskinporten-administrator");

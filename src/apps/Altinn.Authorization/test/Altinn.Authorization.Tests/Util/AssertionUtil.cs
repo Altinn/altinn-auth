@@ -80,7 +80,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Util
                 AssertEqual(expected.Results.First(), actual.Results.First());
             }
         }
-        
+
         /// <summary>
         /// Assert that two <see cref="XacmlJsonResponse"/> have the same property values.
         /// </summary>
@@ -253,7 +253,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Util
             {
                 AssertCollections(expected.ResourcePolicies, actual.ResourcePolicies, AssertResourcePolicyEqual);
             }
-            
+
             AssertCollections(expected.AppId, actual.AppId, AssertAttributeMatchEqual);
             Assert.Equal(expected.MinimumAuthenticationLevel, actual.MinimumAuthenticationLevel);
 
@@ -308,7 +308,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Util
                                                     q.SubjectOrgCode == expectedAuthorizationEvent.SubjectOrgCode &&
                                                     q.SubjectOrgNumber == expectedAuthorizationEvent.SubjectOrgNumber &&
                                                     q.SubjectUserId == expectedAuthorizationEvent.SubjectUserId),
-                    It.IsAny<CancellationToken>()), 
+                    It.IsAny<CancellationToken>()),
                 numberOfTimes);
         }
 

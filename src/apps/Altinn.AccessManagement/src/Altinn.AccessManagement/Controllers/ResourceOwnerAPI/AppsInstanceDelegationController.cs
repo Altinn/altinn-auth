@@ -170,7 +170,7 @@ public class AppsInstanceDelegationController : ControllerBase
 
         AppsInstanceGetRequest request = new()
         {
-            InstanceDelegationSource = Core.Enums.InstanceDelegationSource.App,            
+            InstanceDelegationSource = Core.Enums.InstanceDelegationSource.App,
             PerformingResourceId = performer,
             ResourceId = resourceId,
             InstanceId = instanceId,
@@ -271,8 +271,8 @@ public class AppsInstanceDelegationController : ControllerBase
             return Forbid();
         }
 
-        AppsInstanceGetRequest request = new AppsInstanceGetRequest 
-        { 
+        AppsInstanceGetRequest request = new AppsInstanceGetRequest
+        {
             ResourceId = resourceId,
             InstanceId = instanceId,
             PerformingResourceId = performer,
@@ -291,7 +291,7 @@ public class AppsInstanceDelegationController : ControllerBase
 
         Paginated<AppsInstanceRevokeResponseDto> result = new(links, items);
 
-        return Ok(result);        
+        return Ok(result);
     }
 
     /// <summary>

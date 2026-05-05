@@ -165,5 +165,5 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
 
-            }
-        }
+    }
+}

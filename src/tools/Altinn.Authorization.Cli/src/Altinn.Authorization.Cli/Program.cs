@@ -5,7 +5,7 @@ using Spectre.Console.Cli;
 
 using Database = Altinn.Authorization.Cli.Database;
 using Register = Altinn.Authorization.Cli.Register;
-using ServiceBus=Altinn.Authorization.Cli.ServiceBus;
+using ServiceBus = Altinn.Authorization.Cli.ServiceBus;
 
 using var cancellationTokenSource = new CancellationTokenSource();
 using var sigInt = PosixSignalRegistration.Create(PosixSignal.SIGINT, OnSignal);
@@ -20,7 +20,7 @@ app.Configure(config =>
 {
     config.PropagateExceptions();
     config.Settings.Registrar.RegisterInstance(cancellationTokenSource.Token);
-    
+
     config.AddBranch("db", db =>
     {
         db.SetDescription("Commands for working with databases.");
@@ -29,7 +29,7 @@ app.Configure(config =>
         db.AddCommand<Database.CredentialsCommand>("cred");
         db.AddCommand<Database.BootstapCommand>("bootstrap");
     });
-    
+
     config.AddBranch("sb", sb =>
     {
         sb.SetDescription("Commands for working with service bus.");

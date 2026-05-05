@@ -127,7 +127,7 @@ namespace Altinn.AccessMgmt.Core.Services
 
             // Remove assignment if we now deleted the last connection to the assignment.
             await RemoveAssignment(assignment, false, cancellationToken);
-            
+
             return true;
         }
 

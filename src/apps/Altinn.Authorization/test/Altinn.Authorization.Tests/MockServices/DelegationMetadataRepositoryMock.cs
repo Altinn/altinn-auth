@@ -48,7 +48,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
                 BlobStorageVersionId = delegationChange.BlobStorageVersionId,
                 Created = DateTime.Now
             };
-    
+
             current.Add(currentDelegationChange);
 
             if (string.IsNullOrEmpty(delegationChange.AltinnAppId) || delegationChange.AltinnAppId == "error/postgrewritechangefail")

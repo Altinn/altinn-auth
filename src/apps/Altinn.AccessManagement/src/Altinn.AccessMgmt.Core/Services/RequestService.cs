@@ -31,7 +31,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
             .Include(r => r.Resource)
             .FirstOrDefaultAsync(t => t.Id == requestId, ct);
 
-        if (requestResource != null)    
+        if (requestResource != null)
         {
             return DtoMapper.Convert(requestResource);
         }

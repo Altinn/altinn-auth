@@ -52,7 +52,7 @@ public static partial class AccessManagementEnduserHost
             });
             options.OperationFilter<SecurityRequirementsOperationFilter>();
             options.EnableAnnotations();
-            
+
             var originalIdSelector = options.SchemaGeneratorOptions.SchemaIdSelector;
             options.SchemaGeneratorOptions.SchemaIdSelector = (Type t) =>
             {

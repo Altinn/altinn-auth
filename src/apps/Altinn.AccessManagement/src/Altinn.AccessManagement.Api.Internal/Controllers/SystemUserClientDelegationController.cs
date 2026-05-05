@@ -20,8 +20,8 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers;
 [ApiExplorerSettings(IgnoreApi = false)]
 public class SystemUserClientDelegationController(
         IAssignmentService assignmentService
-        ,IConnectionService connectionService
-        ,IDelegationService delegationService
+        , IConnectionService connectionService
+        , IDelegationService delegationService
     ) : ControllerBase
 {
     private readonly string[] validClientRoles = [RoleConstants.Accountant.Entity.Code, RoleConstants.Auditor.Entity.Code, RoleConstants.BusinessManager.Entity.Code, RoleConstants.Rightholder.Entity.Code];

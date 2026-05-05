@@ -44,7 +44,7 @@ namespace Altinn.AccessManagement.Core.Clients.Interfaces
         /// <summary>
         /// Returns a consent template by its id and version
         /// </summary>
-        Task<ConsentTemplate> GetConsentTemplate(string templateId,int? version, CancellationToken cancellationToken = default);
+        Task<ConsentTemplate> GetConsentTemplate(string templateId, int? version, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Fetch resource policy rights for a given resource from the Resource Registry. This includes decomposing the resource's policy rules and returning the rights in a structured format that can be used for access management decisions.

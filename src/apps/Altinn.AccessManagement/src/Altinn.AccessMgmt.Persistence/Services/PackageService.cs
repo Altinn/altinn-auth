@@ -44,7 +44,7 @@ public class PackageService(
         {
             builder
                 .AddCollection(pkg => pkg.Resources, r => r.Name, 1.2, FuzzynessLevel.High, detailed);
-                //// .AddCollection(pkg => pkg.Resources, r => r.Description, 0.7, FuzzynessLevel.Low, detailed);
+            //// .AddCollection(pkg => pkg.Resources, r => r.Description, 0.7, FuzzynessLevel.Low, detailed);
         }
 
         var results = FuzzySearch.PerformFuzzySearch(data, term, builder);

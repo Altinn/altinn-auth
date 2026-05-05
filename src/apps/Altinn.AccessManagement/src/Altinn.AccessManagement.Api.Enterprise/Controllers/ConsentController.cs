@@ -167,7 +167,7 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
             }
 
             List<ConsentStatusChange> changes = result.Value;
-            
+
             // Convert to DTOs
             List<ConsentStatusChangeDto> dtos = changes.Select(c => c.ToDto()).ToList();
 

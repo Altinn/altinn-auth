@@ -50,7 +50,7 @@ public class TranslationMiddleware
         }
 
         var languages = ParseAcceptLanguageHeader(acceptLanguage.ToString());
-        
+
         // Try to normalize each language code in order of preference
         foreach (var lang in languages)
         {
@@ -73,7 +73,7 @@ public class TranslationMiddleware
         var languages = new List<(string Language, double Quality)>();
 
         var parts = acceptLanguageHeader.Split(',', StringSplitOptions.RemoveEmptyEntries);
-        
+
         foreach (var part in parts)
         {
             var segments = part.Trim().Split(';');
@@ -145,7 +145,7 @@ public class TranslationMiddleware
         }
 
         var value = headerValue.ToString().ToLowerInvariant();
-        
+
         return value switch
         {
             "true" or "1" or "yes" => true,

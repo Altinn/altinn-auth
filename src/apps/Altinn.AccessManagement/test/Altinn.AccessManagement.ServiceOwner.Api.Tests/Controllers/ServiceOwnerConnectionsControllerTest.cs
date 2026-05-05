@@ -201,7 +201,7 @@ public class ServiceOwnerConnectionsControllerTest
 
             // Assert - The current implementation only handles person identifiers, so organization identifiers should return BadRequest
             var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            
+
             // Update this assertion once organization support is added
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }

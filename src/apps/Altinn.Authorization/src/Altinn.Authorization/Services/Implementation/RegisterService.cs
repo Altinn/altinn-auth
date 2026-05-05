@@ -141,7 +141,7 @@ namespace Altinn.Platform.Authorization.Services
             {
                 return parties;
             }
-            
+
             string endpointUrl = $"parties/partylist?fetchSubUnits={includeSubunits}";
             string token = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _generalSettings.RuntimeCookieName);
             string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "authorization");

@@ -35,7 +35,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             ServiceCollection services = new ServiceCollection();
             services.AddMemoryCache();
             ServiceProvider serviceProvider = services.BuildServiceProvider();
-            
+
             IMemoryCache memoryCache = serviceProvider.GetService<IMemoryCache>();
 
             _prp = new PolicyRetrievalPoint(
@@ -203,7 +203,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             xacmlContext.Attributes.Add(xacmlAttributeOrg);
 
             xacmlContexts.Add(xacmlContext);
-            
+
             return xacmlContexts;
         }
     }

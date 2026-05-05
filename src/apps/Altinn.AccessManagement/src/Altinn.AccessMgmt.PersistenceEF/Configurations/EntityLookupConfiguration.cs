@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Configurations;
 
-public class EntityLookupConfiguration : IEntityTypeConfiguration<EntityLookup> 
+public class EntityLookupConfiguration : IEntityTypeConfiguration<EntityLookup>
 {
     public void Configure(EntityTypeBuilder<EntityLookup> builder)
     {

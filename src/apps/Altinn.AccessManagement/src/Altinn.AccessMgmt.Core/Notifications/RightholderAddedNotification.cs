@@ -123,7 +123,7 @@ public static class RightholderAddedNotification
         var processAfter = DateTime.UtcNow.Add(TimeSpan.FromSeconds(notifyInSeconds));
         msg.Schedule = processAfter;
         msg.Timeout = TimeSpan.FromMinutes(1);
-        
+
         return new()
         {
             FromId = fromId,

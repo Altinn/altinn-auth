@@ -62,9 +62,9 @@ namespace Altinn.AccessMgmt.Persistence.Services
                 if (res > 0)
                 {
                     result.PartyCreated = true;
-                }                
+                }
             }
-            
+
             return result;
         }
     }

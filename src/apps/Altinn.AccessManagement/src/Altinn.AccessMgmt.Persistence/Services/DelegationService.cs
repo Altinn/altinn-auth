@@ -74,7 +74,7 @@ public class DelegationService(
         var toAssignment = await assignmentRepository.GetExtended(toAssignmentId);
 
         // Sjekk om from og to deler en felles entitet
-        if (fromAssignment.ToId != toAssignment.FromId) 
+        if (fromAssignment.ToId != toAssignment.FromId)
         {
             throw new InvalidOperationException("Assignments are not connected. FromAssignment.ToId != ToAssignment.FromId");
         }
@@ -120,14 +120,14 @@ public class DelegationService(
         var assignmentPackages = await assignmentPackageRepository.GetB(fromAssignment.Id);
         var rolePackages = await rolePackageRepository.Get(t => t.RoleId, fromAssignment.RoleId);
 
-        if (assignmentPackages.Count(t => t.Id == packageId) == 0 && rolePackages.Count(t => t.Id == packageId) == 0) 
+        if (assignmentPackages.Count(t => t.Id == packageId) == 0 && rolePackages.Count(t => t.Id == packageId) == 0)
         {
             throw new Exception($"The source assignment does not have the package '{package.Name}'");
         }
 
         var res = await delegationPackageRepository.Create(
-            new DelegationPackage() 
-            { 
+            new DelegationPackage()
+            {
                 DelegationId = delegationId,
                 PackageId = packageId
             },
@@ -167,7 +167,7 @@ public class DelegationService(
             rolePackageResources.Add(package.Id, [.. await roleResourceRepository.GetB(resourceId)]);
         }
 
-        if (assignmentResources.Count(t => t.Id == resourceId) == 0 
+        if (assignmentResources.Count(t => t.Id == resourceId) == 0
             && roleResources.Count(t => t.Id == resourceId) == 0
             && rolePackageResources.SelectMany(t => t.Value).Count(t => t.Id == resourceId) == 0
             )
@@ -270,7 +270,7 @@ public class DelegationService(
 
                     // Revoke DelegationPackage
                     var revoked = await RevokeDelegationPackage(delegation.Id, package.Id, options, cancellationToken);
-                    
+
                     if (revoked)
                     {
                         packagesRevoked++;
@@ -616,7 +616,7 @@ public class DelegationService(
         delegationFilter.Equal(t => t.FromId, from.Id);
         delegationFilter.Equal(t => t.ToId, to.Id);
         delegationFilter.Equal(t => t.FacilitatorId, facilitator.Id);
-        return (await delegationRepository.Get(delegationFilter)).FirstOrDefault();        
+        return (await delegationRepository.Get(delegationFilter)).FirstOrDefault();
     }
 
     private async Task<Entity> GetOrCreateEntity(Guid id, string name, string refId, string type, string variant, ChangeRequestOptions options)
@@ -627,7 +627,7 @@ public class DelegationService(
         variantFilter.Equal(t => t.TypeId, entityType.Id);
         variantFilter.Equal(t => t.Name, variant);
         var entityVariant = (await entityVariantRepository.Get(variantFilter)).First() ?? throw new Exception(string.Format("Variant not found '{0}'", type));
-        
+
         var entity = await entityRepository.Get(id);
         if (entity != null)
         {
@@ -702,7 +702,7 @@ public class DelegationService(
         else
         {
             var roleProvider = await providerRepository.Get(role.ProviderId);
-            
+
             // Get system from token
             if (roleProvider.Code != "sys-altinn3")
             {
@@ -715,7 +715,7 @@ public class DelegationService(
                     FromId = from.Id,
                     ToId = to.Id,
                     RoleId = role.Id
-                }, 
+                },
                 options: options
             );
         }

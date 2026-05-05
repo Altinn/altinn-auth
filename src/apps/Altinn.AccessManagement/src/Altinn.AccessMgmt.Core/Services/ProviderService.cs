@@ -26,7 +26,7 @@ public class ProviderService : IProviderService
         {
             throw new ArgumentException("Organization ID cannot be null or empty.", nameof(organizationId));
         }
-        
+
         return await Db.Providers.AsNoTracking().SingleOrDefaultAsync(p => p.RefId == organizationId, cancellationToken);
     }
 

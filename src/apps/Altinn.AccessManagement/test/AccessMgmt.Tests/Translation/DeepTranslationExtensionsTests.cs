@@ -69,7 +69,7 @@ public class DeepTranslationExtensionsTests : IClassFixture<PostgresFixture>
         Assert.Equal("Property registration", translated.Name);
         Assert.NotNull(translated.Area);
         Assert.Equal("Construction, Infrastructure and Real Estate", translated.Area.Name);
-        Assert.Equal("This authorization area includes access packages related to construction, infrastructure and real estate.", 
+        Assert.Equal("This authorization area includes access packages related to construction, infrastructure and real estate.",
             translated.Area.Description);
     }
 
@@ -183,11 +183,11 @@ public class DeepTranslationExtensionsTests : IClassFixture<PostgresFixture>
 
         // Assert
         Assert.Equal(2, translated.Count);
-        
+
         // First package
         Assert.Equal("Property registration", translated[0].Name);
         Assert.Equal("Construction, Infrastructure and Real Estate", translated[0].Area.Name);
-        
+
         // Second package
         Assert.Equal("Agriculture", translated[1].Name);
         Assert.Equal("Agriculture, Forestry, Hunting, Fishing and Aquaculture", translated[1].Area.Name);
@@ -369,10 +369,10 @@ public class DeepTranslationExtensionsTests : IClassFixture<PostgresFixture>
                 Id = ProviderConstants.Altinn3.Id,
                 Name = "Resource 1",
                 Description = "Test resource 1",
-                Provider = new ProviderDto 
-                { 
-                    Id = ProviderConstants.Altinn3.Id, 
-                    Name = "Altinn 3" 
+                Provider = new ProviderDto
+                {
+                    Id = ProviderConstants.Altinn3.Id,
+                    Name = "Altinn 3"
                 }
             },
             new ResourceDto
@@ -380,10 +380,10 @@ public class DeepTranslationExtensionsTests : IClassFixture<PostgresFixture>
                 Id = ProviderConstants.Altinn2.Id,
                 Name = "Resource 2",
                 Description = "Test resource 2",
-                Provider = new ProviderDto 
-                { 
-                    Id = ProviderConstants.Altinn2.Id, 
-                    Name = "Altinn 2" 
+                Provider = new ProviderDto
+                {
+                    Id = ProviderConstants.Altinn2.Id,
+                    Name = "Altinn 2"
                 }
             }
         };
@@ -445,10 +445,10 @@ public class DeepTranslationExtensionsTests : IClassFixture<PostgresFixture>
                 Id = RoleConstants.MainAdministrator.Id,
                 Name = "Hovedadministrator",
                 Description = "Intern rolle beskrivelse",
-                Provider = new ProviderDto 
-                { 
-                    Id = ProviderConstants.Altinn3.Id, 
-                    Name = "Altinn 3" 
+                Provider = new ProviderDto
+                {
+                    Id = ProviderConstants.Altinn3.Id,
+                    Name = "Altinn 3"
                 }
             },
             new RoleDto
@@ -456,10 +456,10 @@ public class DeepTranslationExtensionsTests : IClassFixture<PostgresFixture>
                 Id = RoleConstants.DeputyLeader.Id,
                 Name = "Nestleder",
                 Description = "Nestleder beskrivelse",
-                Provider = new ProviderDto 
-                { 
-                    Id = ProviderConstants.CentralCoordinatingRegister.Id, 
-                    Name = "Enhetsregisteret" 
+                Provider = new ProviderDto
+                {
+                    Id = ProviderConstants.CentralCoordinatingRegister.Id,
+                    Name = "Enhetsregisteret"
                 }
             }
         };
@@ -540,7 +540,7 @@ public class DeepTranslationExtensionsTests : IClassFixture<PostgresFixture>
         // Assert - Should complete within reasonable time (parallel processing should help)
         Assert.Equal(50, translated.Count());
         Assert.True(duration.TotalSeconds < 10, $"Translation took {duration.TotalSeconds} seconds, expected < 10 seconds");
-        
+
         // Verify translations actually happened
         var firstPackage = translated.First();
         Assert.Equal("Property registration", firstPackage.Name);

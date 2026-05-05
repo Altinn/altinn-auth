@@ -168,7 +168,7 @@ public partial class ConnectionsControllerTest
 
                 foreach (XacmlMatch match in subjectMatches)
                 {
-                   Assert.Equal(TestData.MilleHundefrisor.Entity.PartyId.ToString(),match.AttributeValue.Value);
+                    Assert.Equal(TestData.MilleHundefrisor.Entity.PartyId.ToString(), match.AttributeValue.Value);
                 }
             }
 

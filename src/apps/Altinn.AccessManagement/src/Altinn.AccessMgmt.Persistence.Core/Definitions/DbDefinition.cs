@@ -91,20 +91,20 @@ public class DbDefinition(Type type)
 /// <summary>
 /// Type of definition
 /// </summary>
-public enum DbDefinitionType 
+public enum DbDefinitionType
 {
     /// <summary>
     /// Standard database table
     /// </summary>
-    Table, 
+    Table,
 
     /// <summary>
     /// Database view. Query contains create view script
     /// </summary>
-    View, 
+    View,
 
     /// <summary>
     /// Query to be run, Query contains query
     /// </summary>
-    Query 
+    Query
 }

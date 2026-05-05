@@ -12,7 +12,7 @@ public static class RoleValidation
     internal static RuleExpression RoleExists(Role party, string paramName) => () =>
     {
         if (party is { })
-        { 
+        {
             return null;
         }
 

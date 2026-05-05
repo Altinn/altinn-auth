@@ -7,7 +7,7 @@ namespace Altinn.AccessManagement.Api.Internal.Extensions
     /// <summary>
     /// Provides extension methods for transforming ConsentRequestDetails to ConsentRequestDetailsBFF.
     /// </summary>
-    public static class ConsentRequestEventExtensions   
+    public static class ConsentRequestEventExtensions
     {
         /// <summary>
         /// Converts a ConsentRequestEvent object to a ConsentRequestEventExternal object.

@@ -37,7 +37,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
         /// </summary>
         [HttpGet]
         [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
-        [Route("consentrequests/{requestId}", Name ="bffgetconsentrequest")]
+        [Route("consentrequests/{requestId}", Name = "bffgetconsentrequest")]
         public async Task<IActionResult> GetConsentRequest([FromRoute] Guid requestId, CancellationToken cancellationToken = default)
         {
             Guid? performedBy = UserUtil.GetUserUuid(User);
@@ -309,7 +309,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
             return Ok(result.Value);
         }
 
-        private async Task<bool> AuthorizeResourceAccess(string resource, Guid resourceParty, ClaimsPrincipal userPrincipal,  string action)
+        private async Task<bool> AuthorizeResourceAccess(string resource, Guid resourceParty, ClaimsPrincipal userPrincipal, string action)
         {
             XacmlJsonRequestRoot request = DecisionHelper.CreateDecisionRequestForResourceRegistryResource(resource, resourceParty, userPrincipal, action);
             XacmlJsonResponse response = await Pdp.GetDecisionForRequest(request);

@@ -27,7 +27,7 @@ namespace Altinn.AccessMgmt.Core.Services
 
             db.RightImportProgress.Add(processed);
             var res = await db.SaveChangesAsync(audit, cancellationToken);
-            return res > 0; 
+            return res > 0;
         }
     }
 }

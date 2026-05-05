@@ -844,7 +844,7 @@ public class DbDataMigrationService(
 
             new RoleLookup() { RoleId = roles.First(t => t.Code == "privatperson").Id, Key = "Urn", Value = "urn:altinn:role:privatperson" },
             new RoleLookup() { RoleId = roles.First(t => t.Code == "selvregistrert").Id, Key = "Urn", Value = "urn:altinn:role:selvregistrert" },
-            
+
             new RoleLookup() { RoleId = roles.First(t => t.Code == "A0212").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0212" },
             new RoleLookup() { RoleId = roles.First(t => t.Code == "A0236").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0236" },
             new RoleLookup() { RoleId = roles.First(t => t.Code == "A0237").Id, Key = "Urn", Value = "urn:altinn:rolecode:A0237" },
@@ -957,7 +957,7 @@ public class DbDataMigrationService(
 
             new RoleLookup() { RoleId = roles.First(t => t.Code == "privatperson").Id, Key = "LegacyCode", Value = "PRIV" },
             new RoleLookup() { RoleId = roles.First(t => t.Code == "selvregistrert").Id, Key = "LegacyCode", Value = "SELN" },
-            
+
             new RoleLookup() { RoleId = roles.First(t => t.Code == "A0212").Id, Key = "LegacyCode", Value = "A0212" },
             new RoleLookup() { RoleId = roles.First(t => t.Code == "A0236").Id, Key = "LegacyCode", Value = "A0236" },
             new RoleLookup() { RoleId = roles.First(t => t.Code == "A0237").Id, Key = "LegacyCode", Value = "A0237" },
@@ -1067,7 +1067,7 @@ public class DbDataMigrationService(
         var roleSens = (await roleService.Get(t => t.Urn, "urn:altinn:rolecode:SENS")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("Role not found '{0}'", "Sensitive-tjenester"));
         /*SREVA*/
         var roleSreva = (await roleService.Get(t => t.Urn, "urn:altinn:external-role:ccr:kontaktperson-revisor")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("Role not found '{0}'", "kontaktperson-revisor"));
-        
+
         /*A0212*/
         var roleA0212 = (await roleService.Get(t => t.Urn, "urn:altinn:rolecode:A0212")).FirstOrDefault()?.Id ?? throw new KeyNotFoundException(string.Format("Role not found '{0}'", "A0212"));
         /*A0236*/

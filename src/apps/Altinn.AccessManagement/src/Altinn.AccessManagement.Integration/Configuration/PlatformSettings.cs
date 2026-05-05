@@ -40,7 +40,7 @@
         /// Gets or sets the SubscriptionKeyHeaderName
         /// </summary>
         public string? SubscriptionKeyHeaderName { get; set; }
-        
+
         /// <summary>
         /// Endpoint for authentication
         /// </summary>

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc />
-public class RoleService: IRoleService
+public class RoleService : IRoleService
 {
     public RoleService(AppDbContext appDbContext)
     {
@@ -114,7 +114,7 @@ public class RoleService: IRoleService
         {
             return roleResources;
         }
-        
+
         return roleResources.Concat(packageResources).DistinctBy(t => t.Id);
     }
 

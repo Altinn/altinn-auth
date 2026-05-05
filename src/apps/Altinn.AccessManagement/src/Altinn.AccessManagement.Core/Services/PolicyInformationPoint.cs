@@ -313,7 +313,7 @@ namespace Altinn.AccessManagement.Core.Services
             {
                 throw new ValidationException($"Multiple from parties found for instance delegations: {string.Join(", ", fromParties)}");
             }
-            
+
             foreach (InstanceDelegationChange delegation in delegations)
             {
                 AppsInstanceDelegationResponse appsInstanceDelegationResponse = new AppsInstanceDelegationResponse
@@ -341,7 +341,7 @@ namespace Altinn.AccessManagement.Core.Services
             {
                 result.Add(GetInstanceRightDelegationResultFromPolicyRule(xacmlRule));
             }
-            
+
             return result;
         }
 
@@ -489,22 +489,22 @@ namespace Altinn.AccessManagement.Core.Services
         {
             IEnumerable<InstanceDelegationChange> instanceDelegations = await _delegationRepository.GetActiveInstanceDelegations(resourceIds, from, to, cancellationToken);
             return from InstanceDelegationChange instanceDelegation in instanceDelegations
-                    let delegationChange = new DelegationChange
-                    {
-                        ResourceId = instanceDelegation.ResourceId,
-                        InstanceId = instanceDelegation.InstanceId,
-                        FromUuidType = instanceDelegation.FromUuidType,
-                        FromUuid = instanceDelegation.FromUuid,
-                        ToUuidType = instanceDelegation.ToUuidType,
-                        ToUuid = instanceDelegation.ToUuid,
-                        PerformedByUuidType = instanceDelegation.PerformedByType,
-                        PerformedByUuid = instanceDelegation.PerformedBy,
-                        DelegationChangeType = instanceDelegation.DelegationChangeType,
-                        BlobStoragePolicyPath = instanceDelegation.BlobStoragePolicyPath,
-                        BlobStorageVersionId = instanceDelegation.BlobStorageVersionId,
-                        Created = instanceDelegation.Created
-                    }
-                    select delegationChange;
+                   let delegationChange = new DelegationChange
+                   {
+                       ResourceId = instanceDelegation.ResourceId,
+                       InstanceId = instanceDelegation.InstanceId,
+                       FromUuidType = instanceDelegation.FromUuidType,
+                       FromUuid = instanceDelegation.FromUuid,
+                       ToUuidType = instanceDelegation.ToUuidType,
+                       ToUuid = instanceDelegation.ToUuid,
+                       PerformedByUuidType = instanceDelegation.PerformedByType,
+                       PerformedByUuid = instanceDelegation.PerformedBy,
+                       DelegationChangeType = instanceDelegation.DelegationChangeType,
+                       BlobStoragePolicyPath = instanceDelegation.BlobStoragePolicyPath,
+                       BlobStorageVersionId = instanceDelegation.BlobStorageVersionId,
+                       Created = instanceDelegation.Created
+                   }
+                   select delegationChange;
         }
 
         private static List<Rule> GetRulesFromPolicyAndDelegationChange(ICollection<XacmlRule> xacmlRules, DelegationChange delegationChange)

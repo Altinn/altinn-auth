@@ -226,6 +226,6 @@
             /// The minimum authentication level for organization category
             /// </summary>
             public const string MinimumAuthenticationLevelOrg = "urn:altinn:minimum-authenticationlevel-org";
-        }        
+        }
     }
 }

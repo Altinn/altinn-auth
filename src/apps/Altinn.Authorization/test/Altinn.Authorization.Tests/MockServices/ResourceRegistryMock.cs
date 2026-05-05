@@ -123,7 +123,7 @@ public class ResourceRegistryMock : IResourceRegistry
         string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(AltinnApps_DecisionTests).Assembly.Location).LocalPath);
         return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "Xacml", "3.0", "ResourceRegistry", resourceId);
     }
-    
+
     public static XacmlPolicy ParsePolicy(string policyDocumentTitle, string policyPath)
     {
         XmlDocument policyDocument = new XmlDocument();

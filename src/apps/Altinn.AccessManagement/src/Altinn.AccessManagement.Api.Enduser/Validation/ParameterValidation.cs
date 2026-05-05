@@ -116,14 +116,14 @@ internal static class ParameterValidation
         if (to.HasValue && toInput != null)
         {
             return (ref ValidationErrorBuilder errors) =>
-                errors.Add(ValidationErrors.InvalidQueryParameter, "$QUERY/to", 
+                errors.Add(ValidationErrors.InvalidQueryParameter, "$QUERY/to",
                     [new("to", ValidationErrorMessageTexts.ToParameterConflict)]);
         }
 
         if (!to.HasValue && toInput == null)
         {
             return (ref ValidationErrorBuilder errors) =>
-                errors.Add(ValidationErrors.InvalidQueryParameter, "$QUERY/to", 
+                errors.Add(ValidationErrors.InvalidQueryParameter, "$QUERY/to",
                     [new("to", ValidationErrorMessageTexts.ToParameterRequired)]);
         }
 
@@ -131,7 +131,7 @@ internal static class ParameterValidation
         if (to.HasValue && to.Value == Guid.Empty)
         {
             return (ref ValidationErrorBuilder errors) =>
-                errors.Add(ValidationErrors.InvalidQueryParameter, "$QUERY/to", 
+                errors.Add(ValidationErrors.InvalidQueryParameter, "$QUERY/to",
                     [new("to", ValidationErrorMessageTexts.InvalidPartyValue)]);
         }
 

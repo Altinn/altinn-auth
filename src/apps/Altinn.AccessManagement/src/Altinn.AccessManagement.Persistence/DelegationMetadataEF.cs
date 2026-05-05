@@ -114,19 +114,19 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
         {
             ToUuidType = ConvertEntityTypeToUuidType(assignmentInstance.Assignment.To.TypeId),
             ToUuid = assignmentInstance.Assignment.ToId,
-            
+
             PerformedBy = assignmentInstance.Audit_ChangedBy.ToString(),
             PerformedByType = UuidType.NotSpecified,
 
             FromUuid = assignmentInstance.Assignment.FromId,
             FromUuidType = ConvertEntityTypeToUuidType(assignmentInstance.Assignment.From.TypeId),
-            
+
             BlobStoragePolicyPath = assignmentInstance.PolicyPath,
             BlobStorageVersionId = assignmentInstance.PolicyVersion,
-            
+
             ResourceId = assignmentInstance.Resource.RefId,
             InstanceId = assignmentInstance.InstanceId,
-            
+
             InstanceDelegationMode = InstanceDelegationMode.ParallelSigning,
             InstanceDelegationChangeId = assignmentInstance.DelegationChangeId,
 
@@ -197,10 +197,10 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
 
     /// <inheritdoc/>
     public async Task<List<DelegationChange>> GetAllCurrentAppDelegationChanges(
-        List<int> offeredByPartyIds, 
-        List<string> altinnAppIds, 
-        List<int> coveredByPartyIds = null, 
-        List<int> coveredByUserIds = null, 
+        List<int> offeredByPartyIds,
+        List<string> altinnAppIds,
+        List<int> coveredByPartyIds = null,
+        List<int> coveredByUserIds = null,
         CancellationToken cancellationToken = default
         )
     {
@@ -237,10 +237,10 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
 
     /// <inheritdoc/>
     public async Task<List<DelegationChange>> GetAllCurrentAppDelegationChanges(
-        List<string> altinnAppIds, 
-        List<int> fromPartyIds, 
-        UuidType toUuidType, 
-        Guid toUuid, 
+        List<string> altinnAppIds,
+        List<int> fromPartyIds,
+        UuidType toUuidType,
+        Guid toUuid,
         CancellationToken cancellationToken = default
         )
     {
@@ -298,7 +298,7 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
         }
 
         var from = await DbContext.Entities.AsNoTracking().FirstOrDefaultAsync(t => t.PartyId == offeredByPartyId, cancellationToken);
-        
+
         if (from == null)
         {
             throw new Exception($"OfferedBy not found with partyId '{offeredByPartyId}'");
@@ -316,7 +316,7 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
             .WhereIf(toUuid.HasValue, t => t.Assignment.ToId == toUuid.Value)
             .SingleOrDefaultAsync(cancellationToken);
 
-        return result == null 
+        return result == null
             ? null
             : Convert(result);
     }
@@ -487,8 +487,8 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
         {
             return null;
         }
-            
-        return Convert(result);                
+
+        return Convert(result);
     }
 
     /// <inheritdoc />
@@ -575,7 +575,7 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
             }
 
             return dummyResultForRevokeLast; // Must emulate that a 'revoke last' row still exists, as it no longer exists after revoke last is performed.
-        }        
+        }
 
         return await GetAssignmentInstance(assignmentInstance.Id);
     }
@@ -672,7 +672,7 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
                 }
 
                 var assignmentInstance = await DbContext.AssignmentInstances.FirstOrDefaultAsync(t => t.AssignmentId == assignment.Id && t.ResourceId == resource.Id && t.InstanceId == policy.Rules.InstanceId, cancellationToken);
-                
+
                 if (assignmentInstance is null)
                 {
                     assignmentInstance = new AssignmentInstance()

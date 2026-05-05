@@ -44,13 +44,13 @@ public static class ProviderConstants
     /// <summary>
     /// Get all constants as a read-only collection.
     /// </summary>
-    public static IReadOnlyCollection<ConstantDefinition<Provider>> AllEntities() 
+    public static IReadOnlyCollection<ConstantDefinition<Provider>> AllEntities()
         => ConstantLookup.AllEntities<Provider>(typeof(ProviderConstants));
 
     /// <summary>
     /// Get all translations as read-only collection.
     /// </summary>
-    public static IReadOnlyCollection<TranslationEntry> AllTranslations() 
+    public static IReadOnlyCollection<TranslationEntry> AllTranslations()
         => ConstantLookup.AllTranslations<Provider>(typeof(ProviderConstants));
 
     /// <summary>

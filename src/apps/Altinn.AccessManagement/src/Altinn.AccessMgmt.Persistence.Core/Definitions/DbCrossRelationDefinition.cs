@@ -52,11 +52,11 @@ public class DbCrossRelationDefinition
     public DbCrossRelationDefinition(
         Type crossType,
         Type crossExtendedType,
-        Type AType, 
-        string AIdentityProperty, 
+        Type AType,
+        string AIdentityProperty,
         string AReferenceProperty,
-        Type BType, 
-        string BIdentityProperty, 
+        Type BType,
+        string BIdentityProperty,
         string BReferenceProperty)
     {
         this.CrossType = crossType;

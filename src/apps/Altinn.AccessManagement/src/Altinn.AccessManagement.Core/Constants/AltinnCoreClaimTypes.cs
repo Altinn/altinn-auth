@@ -9,7 +9,7 @@
         /// AuthenticationLevel.
         /// </summary>
         public const string AuthenticationLevel = "urn:altinn:authlevel";
-        
+
         /// <summary>
         /// User id.
         /// </summary>

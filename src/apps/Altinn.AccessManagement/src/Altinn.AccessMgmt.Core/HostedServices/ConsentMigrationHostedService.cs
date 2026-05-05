@@ -62,7 +62,7 @@ public partial class ConsentMigrationHostedService : BackgroundService
                 if (lease is null)
                 {
                     Log.LeaseUnavailable(_logger);
-                    
+
                     // Add jitter to avoid thundering herd when multiple pods retry simultaneously
                     var delayWithJitter = TimeSpan.FromMilliseconds(migrationSettings.EmptyFeedDelayMs) + RandomJitter();
                     await _timeProvider.Delay(delayWithJitter, stoppingToken);

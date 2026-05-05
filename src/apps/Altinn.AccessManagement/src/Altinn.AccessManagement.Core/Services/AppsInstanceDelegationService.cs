@@ -227,7 +227,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
             });
         }
 
-        return await Task.FromResult(result);        
+        return await Task.FromResult(result);
     }
 
     private async Task<MinimalParty> GetMinimalParty(PartyUrn urn, CancellationToken cancellationToken)
@@ -254,7 +254,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
             // Create instance urn and use it for the internal processing but reset it for response as we should not change the contract
             MinimalParty party = await GetMinimalParty(request.From, cancellationToken);
 
-            if (party == null) 
+            if (party == null)
             {
                 ValidationErrorBuilder errors = default;
                 errors.Add(ValidationErrors.InvalidPartyUrn, "From");
@@ -296,7 +296,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
     public async Task<Result<List<AppsInstanceRevokeResponse>>> RevokeAll(AppsInstanceGetRequest request, CancellationToken cancellationToken = default)
     {
         ValidationErrorBuilder errors = default;
-        
+
         // Fetch rights valid for delegation
         ServiceResource resource = (await _resourceRegistryClient.GetResourceList(cancellationToken)).Find(r => r.Identifier == request.ResourceId);
         List<Right> delegableRights = null;
@@ -306,7 +306,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
             errors.Add(ValidationErrors.InvalidResource, "ResourceId");
         }
         else
-        {        
+        {
             RightsQuery rightsQueryForApp = new RightsQuery
             {
                 Type = RightsQueryType.AltinnApp,
@@ -333,7 +333,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
         // Fetch all existing delegations
         List<AppsInstanceDelegationResponse> delegations;
         try
-        { 
+        {
             delegations = await _pip.GetInstanceDelegations(request, cancellationToken);
         }
         catch (ValidationException)
@@ -358,7 +358,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
         if (rightsToRevoke.Count == 0)
         {
             errors.Add(ValidationErrors.MissingDelegableRights, "ResourceId");
-        
+
             if (errors.TryBuild(out errorResult))
             {
                 return errorResult;
@@ -523,7 +523,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
         {
             return errorResult;
         }
-        
+
         request.InstanceId = instanceId;
 
         AppsInstanceRevokeResponse result = new()
@@ -538,7 +538,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
         List<InstanceRightRevokeResult> rights = await RevokeRights(input.RulesToHandle, input.RightsAppCantHandle, cancellationToken);
         result.Rights = rights;
         result = RemoveInstanceIdFromResourceForRevokeResponse(result);
-        
+
         return result;
     }
 
@@ -722,10 +722,10 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
         }
 
         List<AppsInstanceDelegationResponse> result;
-        try 
+        try
         {
             result = await _pip.GetInstanceDelegations(request, cancellationToken);
-        } 
+        }
         catch (ValidationException)
         {
             errors.Add(ValidationErrors.InvalidInstanceId, "request.InstanceId");
@@ -780,7 +780,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
         }
 
         return input;
-    }    
+    }
 
     private static List<AppsInstanceDelegationResponse> RemoveInstanceIdFromResourceForDelegationResponseList(List<AppsInstanceDelegationResponse> input)
     {

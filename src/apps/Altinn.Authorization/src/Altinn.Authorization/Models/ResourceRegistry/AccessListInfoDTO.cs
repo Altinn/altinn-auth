@@ -12,7 +12,7 @@ namespace Altinn.ResourceRegistry.Models;
 /// <param name="Name">The access list name</param>
 /// <param name="Description">The access list description</param>
 public record AccessListInfoDto(
-    AccessListUrn Urn, 
+    AccessListUrn Urn,
     string Identifier,
     string Name,
     string Description

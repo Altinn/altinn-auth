@@ -10,7 +10,7 @@ namespace Altinn.Authorization.Api.Contracts.AccessManagement
     public sealed record AccessPackageIdentifier(string Value)
 : IFormattable
 , IParsable<AccessPackageIdentifier>
-        ,ISpanParsable<AccessPackageIdentifier>
+        , ISpanParsable<AccessPackageIdentifier>
     {
         public static AccessPackageIdentifier Parse(string s, IFormatProvider? provider)
             => new(s);

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Configurations;
 
-public class DelegationResourceConfiguration : IEntityTypeConfiguration<DelegationResource> 
+public class DelegationResourceConfiguration : IEntityTypeConfiguration<DelegationResource>
 {
     public void Configure(EntityTypeBuilder<DelegationResource> builder)
     {

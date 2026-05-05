@@ -49,7 +49,7 @@ public class ConsentMigrationSyncServiceTests
             MaxDegreeOfParallelism = 10
         };
 
-        _settingsMonitorMock = new Mock<IOptionsMonitor<ConsentMigrationSettings>>();        
+        _settingsMonitorMock = new Mock<IOptionsMonitor<ConsentMigrationSettings>>();
         _settingsMonitorMock.Setup(x => x.CurrentValue).Returns(_settings);
 
         // Setup meter factory

@@ -66,7 +66,7 @@ public static class DeepTranslationExtensions
             var translated = await package.TranslateDeepAsync(translationService, languageCode, allowPartial);
             result.Add(translated);
         }
-        
+
         return result;
     }
 
@@ -101,7 +101,7 @@ public static class DeepTranslationExtensions
             {
                 // Translate package but avoid re-translating the area (circular reference)
                 var translatedPackage = await translationService.TranslateAsync(package, languageCode, allowPartial);
-                
+
                 // Translate nested Type
                 if (translatedPackage.Type != null)
                 {
@@ -143,7 +143,7 @@ public static class DeepTranslationExtensions
             var translated = await area.TranslateDeepAsync(translationService, languageCode, allowPartial);
             result.Add(translated);
         }
-        
+
         return result;
     }
 
@@ -193,7 +193,7 @@ public static class DeepTranslationExtensions
             var translated = await areaGroup.TranslateDeepAsync(translationService, languageCode, allowPartial);
             result.Add(translated);
         }
-        
+
         return result;
     }
 
@@ -249,7 +249,7 @@ public static class DeepTranslationExtensions
             var translated = await resource.TranslateDeepAsync(translationService, languageCode, allowPartial);
             result.Add(translated);
         }
-        
+
         return result;
     }
 
@@ -351,7 +351,7 @@ public static class DeepTranslationExtensions
             var translated = await role.TranslateDeepAsync(translationService, languageCode, allowPartial);
             result.Add(translated);
         }
-        
+
         return result;
     }
 }

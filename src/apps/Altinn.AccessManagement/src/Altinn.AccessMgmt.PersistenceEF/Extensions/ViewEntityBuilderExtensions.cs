@@ -9,7 +9,7 @@ public static class ViewEntityBuilderExtensions
     public static EntityTypeBuilder<T> ConfigureAsView<T>(
         this EntityTypeBuilder<T> builder,
         string viewName,
-        string schema = "dbo") 
+        string schema = "dbo")
         where T : class
     {
         builder.ToTable(viewName, schema, t => t.ExcludeFromMigrations());

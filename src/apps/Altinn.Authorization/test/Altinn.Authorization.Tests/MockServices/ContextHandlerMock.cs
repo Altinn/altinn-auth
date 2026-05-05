@@ -79,7 +79,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
             string appresourceAttributeValue = string.Empty;
 
             XacmlContextAttributes resourceContextAttributes = request.GetResourceAttributes();
-      
+
             foreach (XacmlAttribute attribute in resourceContextAttributes.Attributes)
             {
                 if (attribute.AttributeId.OriginalString.Equals(_orgAttributeId))
@@ -191,7 +191,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
 
             if (subjectUserId == 0)
             {
-                return; 
+                return;
             }
 
             List<Role> roleList = await _rolesWrapper.GetDecisionPointRolesForUser(subjectUserId, resourcePartyId) ?? new List<Role>();
@@ -248,7 +248,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
 
         private string GetTestId(HttpContext context)
         {
-           return context.Request.Headers["testcase"];
+            return context.Request.Headers["testcase"];
         }
 
         private string GetAltinnAppsPath()

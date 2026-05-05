@@ -123,7 +123,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                 var result = 0;
                 result += await SetParents(appDbContextFactory, addParent, cancellationToken);
                 result += await IngestAssigments(ingestService, addAssignments, options, cancellationToken);
-                
+
                 result += await RemoveParents(appDbContextFactory, removeParent, cancellationToken);
                 result += await RemoveAssignments(appDbContextFactory, removeAssignments, cancellationToken);
 

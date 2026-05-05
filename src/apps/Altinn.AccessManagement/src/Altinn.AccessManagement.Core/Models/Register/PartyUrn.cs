@@ -24,5 +24,5 @@ public abstract partial record PartyUrn
     /// <param name="organizationNumber">The resulting organization number.</param>
     /// <returns><see langword="true"/> if this party reference is an organization number, otherwise <see langword="false"/>.</returns>
     [UrnKey("altinn:organization:identifier-no")]
-    public partial bool IsOrganizationIdentifier(out OrganizationNumber organizationNumber);        
+    public partial bool IsOrganizationIdentifier(out OrganizationNumber organizationNumber);
 }

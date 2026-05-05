@@ -15,7 +15,7 @@ namespace Altinn.Authorization.ABAC.Xacml.JsonProfile
         /// <summary>
         /// Gets or sets the status.
         /// </summary>
-        public XacmlJsonStatus Status { get; set;  }
+        public XacmlJsonStatus Status { get; set; }
 
         /// <summary>
         /// Gets or sets any obligations of the result.
@@ -30,7 +30,7 @@ namespace Altinn.Authorization.ABAC.Xacml.JsonProfile
         /// <summary>
         /// Gets or sets category.
         /// </summary>
-        public List<XacmlJsonCategory> Category { get; set;  }
+        public List<XacmlJsonCategory> Category { get; set; }
 
         /// <summary>
         /// Gets or sets policy Identifyer list related to the result.

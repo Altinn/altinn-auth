@@ -10,7 +10,7 @@ namespace Altinn.Platform.Authorization.Clients
     /// Client configuration for actor api
     /// </summary>
     public class SBLClient
-    {        
+    {
         /// <summary>
         /// Gets an instance of httpclient from httpclientfactory
         /// </summary>

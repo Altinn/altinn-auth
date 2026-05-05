@@ -87,7 +87,7 @@ public class ResourceOwnerAuthorizedPartiesController(
             if (orgCode != null)
             {
                 orgCode = orgCode.Trim().ToLower();
-                if (! await IsAuthorizedForOrgCode(orgCode, cancellationToken))
+                if (!await IsAuthorizedForOrgCode(orgCode, cancellationToken))
                 {
                     ModelState.AddModelError(orgCode, $"Authenticated service owner organization is not authorized/owner of org code: {orgCode}.");
                     return new ObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState));

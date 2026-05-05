@@ -43,6 +43,6 @@ namespace Altinn.AccessManagement.Core.Configuration
         /// <summary>
         /// Gets or sets the cache timeout (in minutes) for lookup of a rights
         /// </summary>
-        public int RightsCacheTimeout { get; set; }        
+        public int RightsCacheTimeout { get; set; }
     }
 }

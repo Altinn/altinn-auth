@@ -59,7 +59,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Data
                     OfferedByPartyId = offeredByPartyId,
                     Resource = new List<AttributeMatch> { new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute, Value = org }, new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute, Value = app } }
                 },
-                
+
                 RuleIds = ruleIds
             };
 

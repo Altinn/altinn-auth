@@ -49,7 +49,7 @@ internal static partial class PipelineTelemetry
     internal static void RecordSinkFailure(PipelineArgs args)
     {
         var tags = BuildTags(args, "sink");
-        PipelineFailures.Add(1, [.. tags]); 
+        PipelineFailures.Add(1, [.. tags]);
         PipelinesRunSuccessfully.Record(0, [.. tags]);
     }
 

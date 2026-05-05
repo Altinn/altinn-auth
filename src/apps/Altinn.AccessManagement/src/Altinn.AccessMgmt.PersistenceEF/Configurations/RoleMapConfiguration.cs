@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Configurations;
 
-public class RoleMapConfiguration : IEntityTypeConfiguration<RoleMap> 
+public class RoleMapConfiguration : IEntityTypeConfiguration<RoleMap>
 {
     public void Configure(EntityTypeBuilder<RoleMap> builder)
     {

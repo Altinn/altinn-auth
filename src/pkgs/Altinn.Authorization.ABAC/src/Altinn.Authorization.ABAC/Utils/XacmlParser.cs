@@ -874,7 +874,7 @@ namespace Altinn.Authorization.ABAC.Utils
             {
                 if (!ReadChoiceElement(reader, readerActions, isRequired))
                 {
-                   break;
+                    break;
                 }
             }
         }
@@ -1190,7 +1190,7 @@ namespace Altinn.Authorization.ABAC.Utils
                     attribute.Attributes.Add(new System.Xml.Linq.XAttribute(item.Key, item.Value));
                 }
                 catch
-                {                    
+                {
                 }
             }
 
@@ -1318,7 +1318,7 @@ namespace Altinn.Authorization.ABAC.Utils
             return new XmlException(message, null, info != null ? info.LineNumber : 0, info != null ? info.LinePosition : 0);
         }
 
-           /// <summary>
+        /// <summary>
         /// Validates if the next element Xacml XLM is of a given type.
         /// Throws exception if not.
         /// </summary>

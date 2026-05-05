@@ -366,7 +366,7 @@ namespace Altinn.Platform.Authorization.Controllers
             decisionRequest = await this._contextHandler.Enrich(decisionRequest, isExernalRequest, _appInstanceInfo);
 
             XacmlPolicy policy = await _prp.GetPolicyAsync(decisionRequest);
-            
+
             if (policy == null)
             {
                 throw new ArgumentException("Policy not found for resource");

@@ -45,8 +45,8 @@ namespace Altinn.AccessManagement.Api.Metadata.Controllers
 
             // Translate the collection with deep translation for nested Provider
             var translated = await res.TranslateDeepAsync(
-                translationService, 
-                this.GetLanguageCode(), 
+                translationService,
+                this.GetLanguageCode(),
                 this.AllowPartialTranslation());
 
             return Ok(translated.ToList());
@@ -81,7 +81,7 @@ namespace Altinn.AccessManagement.Api.Metadata.Controllers
         [HttpGet("packages")]
         [ProducesResponseType(typeof(PackageDto), StatusCodes.Status200OK)]
         public async ValueTask<ActionResult<IEnumerable<PackageDto>>> GetPackages([Required][FromQuery] string role, [Required][FromQuery] string variant, [FromQuery] bool includeResources = false)
-        {            
+        {
             if (!RoleConstants.TryGetByCode(string.IsNullOrEmpty(role) ? "_" : role, out var roleDef))
             {
                 return NotFound($"Role '{role}' not found");
@@ -93,7 +93,7 @@ namespace Altinn.AccessManagement.Api.Metadata.Controllers
             }
 
             var packages = await roleService.GetRolePackages(roleDef.Id, variantDef.Id, includeResources);
-            
+
             // Translate the packages with deep translation for nested Area and Resources
             var translated = await packages.TranslateDeepAsync(
                 translationService,
@@ -121,7 +121,7 @@ namespace Altinn.AccessManagement.Api.Metadata.Controllers
             }
 
             var resources = await roleService.GetRoleResources(roleDef.Id, variantDef.Id, includePackageResources);
-            
+
             // Translate the resources with deep translation for nested Provider and Type
             var translated = await resources.TranslateDeepAsync(
                 translationService,
@@ -145,7 +145,7 @@ namespace Altinn.AccessManagement.Api.Metadata.Controllers
             }
 
             var packages = await roleService.GetRolePackages(id, variantDef.Id, includeResources);
-            
+
             // Translate the packages with deep translation for nested Area and Resources
             var translated = await packages.TranslateDeepAsync(
                 translationService,
@@ -168,7 +168,7 @@ namespace Altinn.AccessManagement.Api.Metadata.Controllers
             }
 
             var resources = await roleService.GetRoleResources(id, variantDef.Id, includePackageResources);
-            
+
             // Translate the resources with deep translation for nested Provider and Type
             var translated = await resources.TranslateDeepAsync(
                 translationService,

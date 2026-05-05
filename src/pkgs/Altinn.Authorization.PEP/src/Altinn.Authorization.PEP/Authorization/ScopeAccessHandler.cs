@@ -20,7 +20,7 @@ namespace Altinn.Common.PEP.Authorization
         protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, IScopeAccessRequirement requirement)
         {
             // get scope parameter from  user claims
-            string contextScope = context.User?.Identities 
+            string contextScope = context.User?.Identities
                 ?.FirstOrDefault(i => i.AuthenticationType != null && i.AuthenticationType.Equals("AuthenticationTypes.Federation"))?.Claims
                 .Where(c => c.Type.Equals("urn:altinn:scope"))?
                 .Select(c => c.Value).FirstOrDefault();

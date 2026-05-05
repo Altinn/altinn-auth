@@ -107,7 +107,7 @@ public sealed class RetryA2ImportsCommand(CancellationToken ct)
         QueueRuntimeProperties props)
     {
         var errorCount = props.DeadLetterMessageCount;
-        
+
         if (props.Name.EndsWith("_error", StringComparison.Ordinal))
         {
             errorCount += props.ActiveMessageCount;

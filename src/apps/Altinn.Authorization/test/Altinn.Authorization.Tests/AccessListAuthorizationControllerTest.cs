@@ -57,7 +57,7 @@ public class AccessListAuthorizationControllerTest : IClassFixture<Authorization
 
     private static HttpRequestMessage GetPostRequestMessage(string testCase, string platformAccessToken = null)
     {
-        string requestPath = Path.Combine(Path.GetDirectoryName(new Uri(typeof(AccessListAuthorizationControllerTest).Assembly.Location).LocalPath),  "Data", "Json", "AccessListAuthorization");
+        string requestPath = Path.Combine(Path.GetDirectoryName(new Uri(typeof(AccessListAuthorizationControllerTest).Assembly.Location).LocalPath), "Data", "Json", "AccessListAuthorization");
         string requestText = File.ReadAllText(Path.Combine(requestPath, testCase + "_Request.json"));
 
         HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Post, "authorization/api/v1/accesslist/accessmanagement/authorization")

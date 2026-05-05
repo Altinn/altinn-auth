@@ -45,7 +45,7 @@ public sealed class ExportDatabaseCommand(CancellationToken cancellationToken)
 
                 List<ExportTask> tasks = new(selected.Tables.Length);
                 await source.BeginTransaction(cancellationToken);
-                
+
                 if (!settings.NoClear)
                 {
                     clearTask = ctx.AddTask("clear output directory", autoStart: false, maxValue: 1);
@@ -75,7 +75,7 @@ public sealed class ExportDatabaseCommand(CancellationToken cancellationToken)
                 if (clearTask is not null)
                 {
                     clearTask.StartTask();
-                    
+
                     foreach (var subdir in settings.OutputDirectory.EnumerateDirectories())
                     {
                         subdir.Delete(recursive: true);

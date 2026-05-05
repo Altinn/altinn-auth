@@ -98,7 +98,7 @@ public class InternalConnectionsController(IConnectionService connectionService)
     #endregion
 
     #region Packages
-    
+
     /// <summary>
     /// Lists all packages assigned from to / systemuser and organization. 
     /// </summary>

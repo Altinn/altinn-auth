@@ -7,11 +7,11 @@ internal class PipelineSegmentBuilder<TIn>(
     ) : ISegmentBuilder<TIn>
 {
     internal string Name { get; private set; }
-    
+
     internal object Func { get; private set; }
-    
+
     internal object? Segment { get; private set; }
-    
+
     internal object? Sink { get; private set; }
 
     /// <inheritdoc/>

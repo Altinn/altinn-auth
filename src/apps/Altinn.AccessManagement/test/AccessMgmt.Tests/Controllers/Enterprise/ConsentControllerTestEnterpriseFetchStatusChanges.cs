@@ -189,7 +189,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
         }
 
         public async ValueTask InitializeAsync()
-        {            
+        {
             _fixture = new LegacyApiFixture();
             _fixture.ConfigureServices(services =>
             {
@@ -327,7 +327,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
                 // All returned events should be the latest for their consentrequest
                 var allItems = resultPage1.Items.Concat(resultPage2.Items).ToList();
                 Assert.Equal(numberOfConsents, allItems.Count);
-                
+
                 Assert.Equal(revoked, allItems.FindAll(i => i.EventType.Equals("revoked", StringComparison.OrdinalIgnoreCase)).Count());
                 Assert.Equal(rejected, allItems.FindAll(i => i.EventType.Equals("rejected", StringComparison.OrdinalIgnoreCase)).Count());
                 Assert.Equal(accepted - revoked, allItems.FindAll(i => i.EventType.Equals("accepted", StringComparison.OrdinalIgnoreCase)).Count());
@@ -561,14 +561,14 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
                 if (acceptedConsentIdsToBeRevoked.Count < 3)
                 {
                     acceptedConsentIdsToBeRevoked.Add(consentId);
-                }                   
+                }
             }
 
             foreach (var consentId in createdConsentIds.Skip(skip).Take(rejectTake))
             {
                 HttpClient rejectClient = GetTestClient();
                 IConsentRepository repositgo = _fixture.Services.GetRequiredService<IConsentRepository>();
-               
+
                 string token = PrincipalUtil.GetToken(20001337, 50003899, 2, Guid.Parse("d5b861c8-8e3b-44cd-9952-5315e5990cf5"), AuthzConstants.SCOPE_PORTAL_ENDUSER);
                 rejectClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 HttpResponseMessage rejectResponse = await rejectClient.PostAsync($"accessmanagement/api/v1/bff/consentrequests/{consentId}/reject/", null);

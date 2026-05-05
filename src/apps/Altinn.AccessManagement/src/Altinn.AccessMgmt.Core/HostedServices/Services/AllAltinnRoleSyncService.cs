@@ -76,7 +76,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                     foreach (var item in page.Content.Data)
                     {
                         if (item.ToUserType != UserType.EnterpriseIdentified && item.RoleTypeCode == RoleConstants.Eckeyrole.Entity.Code)
-                        {                             
+                        {
                             // Skip ECKEYROLE for non-enterprise users
                             continue;
                         }
@@ -175,7 +175,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                     RoleId = role.Id,
                     Audit_ValidFrom = model.DelegationChangeDateTime?.UtcDateTime ?? DateTime.UtcNow
                 };
-                
+
                 AuditValues options = new AuditValues(model.PerformedByPartyUuid ?? model.PerformedByUserUuid ?? SystemEntityConstants.Altinn2RoleImportSystem, SystemEntityConstants.Altinn2RoleImportSystem, batchId, model.DelegationChangeDateTime ?? DateTimeOffset.UtcNow);
 
                 return (assignment, options);

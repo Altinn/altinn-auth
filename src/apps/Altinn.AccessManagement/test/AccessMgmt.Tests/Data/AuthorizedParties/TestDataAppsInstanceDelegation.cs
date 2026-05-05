@@ -147,7 +147,7 @@ public static class TestDataAppsInstanceDelegation
             AppId,
             RevokeAllInstance
         }
-    }; 
+    };
 
     public static TheoryData<string, AppsInstanceDelegationRequestDto, string, string, AppsInstanceRevokeResponseDto> RevokeReadForAppNoExistingPolicyRevokeLast() => new()
     {
@@ -159,7 +159,7 @@ public static class TestDataAppsInstanceDelegation
             GetExpectedResponse<AppsInstanceRevokeResponseDto>("Revoke", AppId, InstanceIdNewPolicyNoResponceOnWrite)
         }
     };
-    
+
     /// <summary>
     /// Test case:  POST v1/apps/instancedelegation/{resourceId}/{instanceId}
     ///             with: 
@@ -279,7 +279,7 @@ public static class TestDataAppsInstanceDelegation
         Assert.Equal(expected.Type, actual.Type);
         Assert.Equal(expected.Title, actual.Title);
         Assert.Equal(expected.ErrorCode, actual.ErrorCode);
-        AssertionUtil.AssertCollections(expected.Extensions.ToDictionary(), actual.Extensions.ToDictionary(), AssertProblemDetailsExtensionEqual);        
+        AssertionUtil.AssertCollections(expected.Extensions.ToDictionary(), actual.Extensions.ToDictionary(), AssertProblemDetailsExtensionEqual);
     }
 
     public static void AssertProblemDetailsExtensionEqual(KeyValuePair<string, object> expected, KeyValuePair<string, object> actual)
@@ -287,7 +287,7 @@ public static class TestDataAppsInstanceDelegation
         Assert.Equal(expected.Key, actual.Key);
         JsonElement? actualJson = actual.Value as JsonElement?;
         JsonElement? expectedJson = expected.Value as JsonElement?;
-        
+
         if (actualJson == null)
         {
             Assert.Null(expectedJson);
@@ -296,18 +296,18 @@ public static class TestDataAppsInstanceDelegation
 
         Assert.NotNull(actualJson);
         Assert.NotNull(expectedJson);
-        
+
         var actualExtensionList = actualJson.Value.EnumerateArray().ToList();
         var expectedExtensionList = expectedJson.Value.EnumerateArray().ToList();
         Assert.Equal(expectedExtensionList.Count, actualExtensionList.Count);
-        
+
         for (int i = 0; i < actualExtensionList.Count; i++)
         {
             ErrorDetails expectedDetail = JsonSerializer.Deserialize<ErrorDetails>(expectedExtensionList[i].GetRawText(), JsonOptions);
             ErrorDetails actualDetail = JsonSerializer.Deserialize<ErrorDetails>(actualExtensionList[i].GetRawText(), JsonOptions);
             Assert.Equal(expectedDetail.Code, actualDetail.Code);
             Assert.Equal(expectedDetail.Detail, actualDetail.Detail);
-            
+
             if (expectedDetail.Paths == null)
             {
                 Assert.Null(expectedDetail.Paths);

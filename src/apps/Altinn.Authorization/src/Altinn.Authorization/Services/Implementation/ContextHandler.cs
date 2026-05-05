@@ -230,7 +230,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             if (resourceAttributes.ResourceInstanceValue != null && resourceAttributes.AppInstanceIdValue != null)
             {
                 // Missing resource registry instanceId attribute, add both old and new attribute for backward compatibility.
-                requestResourceAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.ResourceRegistryInstanceAttribute, resourceAttributes.AppInstanceIdValue));           
+                requestResourceAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.ResourceRegistryInstanceAttribute, resourceAttributes.AppInstanceIdValue));
                 requestResourceAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.ResourceRegistryInstanceAttribute, resourceAttributes.ResourceInstanceValue));
             }
 
@@ -750,7 +750,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         protected XacmlAttribute GetPartyTypeAttribute(PartyType partyType)
         {
             XacmlAttribute attribute = new XacmlAttribute(new Uri(XacmlRequestAttribute.PartyTypeAttribute), false);
-           
+
             if (partyType == PartyType.Organisation)
             {
                 attribute.AttributeValues.Add(new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), XacmlRequestAttribute.PartyTypeOrganizationValue));

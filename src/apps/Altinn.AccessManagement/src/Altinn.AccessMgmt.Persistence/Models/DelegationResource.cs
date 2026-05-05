@@ -43,7 +43,7 @@ public class DelegationResource
     /// Resource identifier
     /// </summary>
     public Guid ResourceId { get; set; }
-    
+
     //// public Guid DependencyId { get; set; }
 }
 

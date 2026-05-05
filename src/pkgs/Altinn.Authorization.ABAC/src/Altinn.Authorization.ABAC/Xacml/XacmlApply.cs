@@ -43,9 +43,9 @@ namespace Altinn.Authorization.ABAC.Xacml
             this.functionId = functionId;
         }
 
-       /// <summary>
-       /// Gets the collection of parameters for the Apply object.
-       /// </summary>
+        /// <summary>
+        /// Gets the collection of parameters for the Apply object.
+        /// </summary>
         public ICollection<IXacmlExpression> Parameters
         {
             get
@@ -83,7 +83,7 @@ namespace Altinn.Authorization.ABAC.Xacml
             XacmlApply xacmlApply = null;
 
             foreach (IXacmlExpression xacmlExpression in this.Parameters)
-           {
+            {
                 if (xacmlExpression.GetType() == typeof(XacmlAttributeValue))
                 {
                     policyConditionAttributeValue = xacmlExpression as XacmlAttributeValue;
@@ -117,12 +117,12 @@ namespace Altinn.Authorization.ABAC.Xacml
             ICollection<XacmlContextAttributes> xacmlContextAttributes = new Collection<XacmlContextAttributes>();
 
             foreach (XacmlContextAttributes attributes in contextRequest.Attributes)
-           {
-               if (attributes.Category.Equals(attributeDesignator.Category))
+            {
+                if (attributes.Category.Equals(attributeDesignator.Category))
                 {
                     xacmlContextAttributes.Add(attributes);
                 }
-           }
+            }
 
             if (xacmlContextAttributes.Count == 0)
             {

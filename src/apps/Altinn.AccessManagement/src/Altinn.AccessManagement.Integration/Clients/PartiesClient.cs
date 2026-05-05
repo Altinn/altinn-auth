@@ -40,10 +40,10 @@ public class PartiesClient : IPartiesClient
     /// <param name="platformSettings">the platform setttings</param>
     /// <param name="accessTokenGenerator">An instance of the AccessTokenGenerator service.</param>
     public PartiesClient(
-        HttpClient httpClient, 
-        IOptions<SblBridgeSettings> sblBridgeSettings, 
-        ILogger<PartiesClient> logger, 
-        IHttpContextAccessor httpContextAccessor, 
+        HttpClient httpClient,
+        IOptions<SblBridgeSettings> sblBridgeSettings,
+        ILogger<PartiesClient> logger,
+        IHttpContextAccessor httpContextAccessor,
         IOptions<PlatformSettings> platformSettings,
         IAccessTokenGenerator accessTokenGenerator)
     {
@@ -74,7 +74,7 @@ public class PartiesClient : IPartiesClient
             {
                 return JsonSerializer.Deserialize<Party>(responseContent, _serializerOptions);
             }
-            
+
             _logger.LogError("AccessManagement // PartiesClient // GetPartyAsync // Unexpected HttpStatusCode: {StatusCode}\n {responseContent}", response.StatusCode, responseContent);
             return null;
         }
@@ -94,7 +94,7 @@ public class PartiesClient : IPartiesClient
             string token = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _platformSettings.JwtCookieName);
             var accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "access-management");
             StringContent requestBody = new StringContent(JsonSerializer.Serialize(partyIds), Encoding.UTF8, "application/json");
-            
+
             HttpResponseMessage response = await _client.PostAsync(token, endpointUrl, requestBody, accessToken, cancellationToken);
             string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 

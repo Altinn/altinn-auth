@@ -7,8 +7,8 @@ internal static class QueryWrapper
     public static QueryResponse<T> WrapQueryResponse<T>(IEnumerable<T> data)
     {
         var resultCount = data.Count();
-        return new QueryResponse<T> 
-        { 
+        return new QueryResponse<T>
+        {
             Data = data,
             Page = new QueryPageInfo()
             {

@@ -183,7 +183,7 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
 
         private bool IsServiceOwnerAuthorizedForPackage(string packageIdentifier, out OrganizationNumber? organizationNumber)
         {
-            var consumerParty = OrgUtil.GetAuthenticatedParty(User);            
+            var consumerParty = OrgUtil.GetAuthenticatedParty(User);
             if (consumerParty is null || !consumerParty.IsOrganizationId(out organizationNumber))
             {
                 organizationNumber = null;

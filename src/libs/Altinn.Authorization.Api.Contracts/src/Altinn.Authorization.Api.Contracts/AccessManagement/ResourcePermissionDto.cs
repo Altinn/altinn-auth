@@ -13,5 +13,5 @@ public class ResourcePermissionDto
     /// <summary>
     /// Parties with permissions
     /// </summary>
-    public IEnumerable<PermissionDto> Permissions { get; set; } 
+    public IEnumerable<PermissionDto> Permissions { get; set; }
 }

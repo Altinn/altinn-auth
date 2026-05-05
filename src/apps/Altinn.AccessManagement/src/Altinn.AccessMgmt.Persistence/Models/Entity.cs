@@ -106,7 +106,7 @@ public class CompactEntity
     /// <summary>
     /// Values from entityLoookup
     /// </summary>
-    public Dictionary<string,string> KeyValues { get; set; }
+    public Dictionary<string, string> KeyValues { get; set; }
 
     /// <summary>
     /// Parent

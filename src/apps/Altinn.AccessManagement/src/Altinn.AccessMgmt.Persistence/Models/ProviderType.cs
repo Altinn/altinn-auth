@@ -19,7 +19,7 @@ public class ProviderType
 /// <summary>
 /// Define the types of Providers
 /// </summary>
-public class ExtProviderType: ProviderType { }
+public class ExtProviderType : ProviderType { }
 
 /// <summary>
 /// Define the types of Providers

@@ -31,7 +31,7 @@ public partial class StorageAccountLeaseService(ILogger<StorageAccountLeaseServi
 
         try
         {
-            var lease = await LeaseTelemetry.RecordLeaseAcquire(Logger,leaseName,async () => await leaseClient.AcquireAsync(MaxLeaseTime, default, cancellationToken));
+            var lease = await LeaseTelemetry.RecordLeaseAcquire(Logger, leaseName, async () => await leaseClient.AcquireAsync(MaxLeaseTime, default, cancellationToken));
             return new StorageAccountLease(Logger, client, leaseClient, lease);
         }
         catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.LeaseAlreadyPresent)

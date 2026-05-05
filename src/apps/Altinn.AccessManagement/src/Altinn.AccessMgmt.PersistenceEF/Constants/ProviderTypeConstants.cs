@@ -9,7 +9,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Constants;
 /// Each constant represents a type of provider (e.g., system provider or service owner)
 /// with a fixed unique identifier (GUID), name, and multilingual translations.
 /// </summary>
-public static class ProviderTypeConstants 
+public static class ProviderTypeConstants
 {
     /// <summary>
     /// Try to get <see cref="ProviderType"/> by any identifier: Name or Guid.
@@ -44,13 +44,13 @@ public static class ProviderTypeConstants
     /// <summary>
     /// Get all constants as a read-only collection.
     /// </summary>
-    public static IReadOnlyCollection<ConstantDefinition<ProviderType>> AllEntities() 
+    public static IReadOnlyCollection<ConstantDefinition<ProviderType>> AllEntities()
         => ConstantLookup.AllEntities<ProviderType>(typeof(ProviderTypeConstants));
 
     /// <summary>
     /// Get all translations as read-only collection.
     /// </summary>
-    public static IReadOnlyCollection<TranslationEntry> AllTranslations() 
+    public static IReadOnlyCollection<TranslationEntry> AllTranslations()
         => ConstantLookup.AllTranslations<ProviderType>(typeof(ProviderTypeConstants));
 
     /// <summary>

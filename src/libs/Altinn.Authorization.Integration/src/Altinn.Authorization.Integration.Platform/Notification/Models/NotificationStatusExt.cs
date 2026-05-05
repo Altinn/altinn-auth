@@ -16,7 +16,7 @@ public abstract class NotificationStatusExt
     /// <summary>
     /// Gets or sets the number of generated notifications
     /// </summary>    
-    [JsonPropertyName("generated")] 
+    [JsonPropertyName("generated")]
     public int Generated { get; set; }
 
     /// <summary>

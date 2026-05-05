@@ -28,7 +28,7 @@ public static class EntityTypeValidation
         {
             entityTypeName = e.Entity.Name;
         }
-        
+
         return (ref ValidationErrorBuilder errors) => errors.Add(ValidationErrors.DisallowedEntityType, $"QUERY/{paramName}", [new("type", $"Got '{entityTypeName}', expected one of: '{allowedEntityTypes}'.")]);
     };
 

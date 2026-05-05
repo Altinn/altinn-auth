@@ -62,7 +62,7 @@ public partial class AltinnAccessManagementClient(
         ];
 
         var response = await HttpClient.SendAsync(RequestComposer.New([.. request]), cancellationToken);
-        
+
         return new PaginatorStream<DelegationChange>(HttpClient, response, request);
     }
 }

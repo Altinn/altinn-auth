@@ -127,7 +127,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                                     };
 
                                     await errorQueueService.AddErrorQueue(error, values, cancellationToken);
-                                    continue;                                    
+                                    continue;
                                 }
                             }
                             else
@@ -155,7 +155,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                                     };
 
                                     await errorQueueService.AddErrorQueue(error, values, cancellationToken);
-                                    continue;                                    
+                                    continue;
                                 }
                             }
 
@@ -280,7 +280,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                         if (adds == 0)
                         {
                             await errorQueueService.UpdateErrorMessage(item.Id, values, $"Failed to import delegation for FromParty: {element.FromUuid}, ToParty: {element.ToUuid}, Resource: {element.ResourceId}, Instance: {element.InstanceId}", cancellationToken);
-                            continue;                            
+                            continue;
                         }
                     }
 

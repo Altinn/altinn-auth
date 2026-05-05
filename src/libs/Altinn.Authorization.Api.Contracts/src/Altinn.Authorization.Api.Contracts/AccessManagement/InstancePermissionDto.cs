@@ -18,5 +18,5 @@ public class InstancePermissionDto
     /// <summary>
     /// Parties with permissions
     /// </summary>
-    public IEnumerable<PermissionDto> Permissions { get; set; } 
+    public IEnumerable<PermissionDto> Permissions { get; set; }
 }

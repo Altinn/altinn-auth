@@ -474,5 +474,5 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             return policies;
         }
 
-            }
-        }
+    }
+}

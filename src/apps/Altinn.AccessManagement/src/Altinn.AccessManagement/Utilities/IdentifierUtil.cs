@@ -12,12 +12,12 @@ public static class IdentifierUtil
 {
     private const string PersonHeaderTrigger = "person";
     private const string OrganizationHeaderTrigger = "organization";
-        
+
     /// <summary>
     /// Default HTTP header for SSN input
     /// </summary>
     public const string PersonHeader = "Altinn-Party-SocialSecurityNumber";
-        
+
     /// <summary>
     /// Default HTTP header for Organization number input
     /// </summary>
@@ -105,7 +105,7 @@ public static class IdentifierUtil
 
             return new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.OrganizationNumberAttribute, Value = context.Request.Headers[OrganizationNumberHeader] };
         }
-            
+
         if (party.Equals(PersonHeaderTrigger))
         {
             if (!context.Request.Headers.ContainsKey(PersonHeader))
@@ -120,7 +120,7 @@ public static class IdentifierUtil
 
             return new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.PersonId, Value = context.Request.Headers[PersonHeader] };
         }
-            
+
         if (int.TryParse(party, out int partyId) && partyId != 0)
         {
             return new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, Value = partyId.ToString() };

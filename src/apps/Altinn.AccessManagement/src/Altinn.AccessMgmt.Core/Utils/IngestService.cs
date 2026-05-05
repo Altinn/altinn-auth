@@ -11,7 +11,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Utils;
 public class IngestService : IIngestService
 {
     public AppDbContext DbContext { get; set; }
-    
+
     public IngestService(AppDbContext dbContext)
     {
         DbContext = dbContext;
@@ -119,7 +119,7 @@ public class IngestService : IIngestService
             sb.AppendLine($"WHEN MATCHED AND ({mergeUpdateUnMatchStatement}) THEN ");
             sb.AppendLine($"UPDATE SET {mergeUpdateStatement}");
         }
-        
+
         sb.AppendLine($"WHEN NOT MATCHED THEN ");
         //// sb.AppendLine($"INSERT ({insertColumns}) VALUES ({insertValues});");
         sb.AppendLine($"INSERT ({insertColumns},audit_changedby,audit_changedbysystem,audit_changeoperation) VALUES ({insertValues},'{auditValues.ChangedBy}','{auditValues.ChangedBySystem}','{auditValues.OperationId}');");
@@ -216,25 +216,25 @@ public class IngestService : IIngestService
         var table = GetTableName<T>(entityModel);
 
         var entityTypes = entityModel.GetEntityTypes();
-        if (entityTypes is null || !entityTypes.Any()) 
-        { 
-            return null; 
+        if (entityTypes is null || !entityTypes.Any())
+        {
+            return null;
         }
 
         var et = entityTypes.FirstOrDefault(x => x.GetTableName() == table.TableName && x.GetSchema() == BaseConfiguration.BaseSchema);
         var storeObject = StoreObjectIdentifier.Table(table.TableName, BaseConfiguration.BaseSchema);
 
-        if (et is null) 
-        { 
-            return null; 
+        if (et is null)
+        {
+            return null;
         }
 
         return et.GetProperties()
             .Where(n => (!n.Name.StartsWith("audit_", StringComparison.OrdinalIgnoreCase)) || n.Name.Equals("audit_validfrom", StringComparison.OrdinalIgnoreCase))
-            .Select(p => new IngestColumnDefinition() 
-            { 
-                Name = p.GetColumnName(storeObject), 
-                Property = p.PropertyInfo, 
+            .Select(p => new IngestColumnDefinition()
+            {
+                Name = p.GetColumnName(storeObject),
+                Property = p.PropertyInfo,
                 DbTypeName = p.GetColumnType(),
                 IsFK = p.IsForeignKey(),
                 IsPK = p.IsPrimaryKey()
@@ -247,7 +247,7 @@ public class IngestService : IIngestService
     {
         return (typeof(T).Name.ToLower(), BaseConfiguration.BaseSchema);
     }
-    
+
     private static string GetAuditVariables(AuditValues auditValues)
     {
         return string.Format("SET LOCAL app.changed_by = '{0}'; SET LOCAL app.changed_by_system = '{1}'; SET LOCAL app.change_operation_id = '{2}';", auditValues.ChangedBy, auditValues.ChangedBySystem, auditValues.OperationId);

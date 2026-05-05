@@ -23,10 +23,10 @@ public sealed class AccessReason
 
     public AccessReasonFlag ToEnum() => flag;
 
-    public AccessReason Add(AccessReasonFlag additional) => 
+    public AccessReason Add(AccessReasonFlag additional) =>
         new(flag | additional);
 
-    public AccessReason Remove(AccessReasonFlag remove) => 
+    public AccessReason Remove(AccessReasonFlag remove) =>
         new(flag & ~remove);
 
     public bool Contains(AccessReasonFlag f) =>

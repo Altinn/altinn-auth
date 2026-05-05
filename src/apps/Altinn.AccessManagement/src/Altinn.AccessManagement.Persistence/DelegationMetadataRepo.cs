@@ -1810,8 +1810,8 @@ namespace Altinn.AccessManagement.Persistence
                 {
                     DelegationChangeId = await reader.GetFieldValueAsync<int>("delegationchangeid"),
                     DelegationChangeType = await reader.GetFieldValueAsync<DelegationChangeType>(DelegationChangeType),
-                    ResourceId = mapAppResourceId 
-                        ? MapAppIdToResourceId(await reader.GetFieldValueAsync<string>("altinnappid")) 
+                    ResourceId = mapAppResourceId
+                        ? MapAppIdToResourceId(await reader.GetFieldValueAsync<string>("altinnappid"))
                         : await reader.GetFieldValueAsync<string>("altinnappid"),
                     ResourceType = ResourceAttributeMatchType.AltinnAppId.ToString(),
                     OfferedByPartyId = await reader.GetFieldValueAsync<int>("offeredbypartyid"),

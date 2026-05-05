@@ -39,7 +39,7 @@ namespace Altinn.AccessManagement.Tests.Mocks
         public async Task<XacmlJsonResponse> GetDecisionForRequest(XacmlJsonRequestRoot xacmlJsonRequest, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             return await Authorize(xacmlJsonRequest.Request, cancellationToken);
         }
 

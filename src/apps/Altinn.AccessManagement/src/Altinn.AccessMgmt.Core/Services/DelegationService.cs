@@ -149,11 +149,11 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
             {
                 DelegationId = delegationId,
                 ResourceId = resourceId
-            }, 
+            },
             cancellationToken
         );
         var result = await db.SaveChangesAsync(cancellationToken);
-        
+
         return result > 0;
     }
 
@@ -208,7 +208,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
     private async Task<int> RevokeImportedClientDelegations(ImportClientDelegationRequestDto request, Entity client, Entity facilitator, AuditValues audit, bool onlyRemoveA2Packages = true, CancellationToken cancellationToken = default)
     {
         int packagesRevoked = 0;
-        
+
         // Find Agent Role
         var agentRole = await db.Roles.AsNoTracking().FirstOrDefaultAsync(t => string.Equals(t.Code.ToLower(), request.AgentRole.ToLower()), cancellationToken) ?? throw new Exception(string.Format("Role not found '{0}'", request.AgentRole));
 
@@ -275,20 +275,20 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
                 await assignmentService.DeleteAssignment(agentAssignment.Id, false, audit, cancellationToken);
             }
         }
-        
+
         return packagesRevoked;
     }
 
     private async Task<bool> RevokeDelegationPackage(Guid delegationId, Guid packageId, AuditValues audit, bool onlyRemoveA2, CancellationToken cancellationToken = default)
     {
         DelegationPackage delegationPackage = null;
-        
+
         delegationPackage = await db.DelegationPackages
             .AsTracking()
             .Where(t => t.DelegationId == delegationId && t.PackageId == packageId)
             .Where(t => !onlyRemoveA2 || t.Audit_ChangedBySystem == SystemEntityConstants.Altinn2RoleImportSystem.Id) // Remove only A2 packages if flag is set
             .FirstOrDefaultAsync(cancellationToken);
-        
+
         if (delegationPackage != null)
         {
             db.DelegationPackages.Remove(delegationPackage);
@@ -538,7 +538,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
                 },
                 cancellationToken
             );
-            
+
             if (audit == null)
             {
                 await db.SaveChangesAsync(cancellationToken);
@@ -623,7 +623,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
         else
         {
             var roleProvider = await db.Providers.AsNoTracking().FirstOrDefaultAsync(t => t.Id == role.ProviderId);
-            
+
             // Get system from token
             if (roleProvider.Code != "sys-altinn3")
             {
@@ -632,5 +632,5 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
 
             return await assignmentService.GetOrCreateAssignment(from.Id, to.Id, role.Id, audit, cancellationToken);
         }
-    }    
+    }
 }

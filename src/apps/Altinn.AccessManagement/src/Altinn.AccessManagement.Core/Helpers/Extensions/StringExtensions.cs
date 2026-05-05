@@ -25,7 +25,7 @@ namespace Altinn.AccessManagement.Core.Helpers.Extensions
             if (throwExceptionOnInvalidCharacters)
             {
                 if (illegalFileNameCharacters.Any(ic => input.Any(i => ic == i)))
-                {                    
+                {
                     throw new ArgumentOutOfRangeException(nameof(input));
                 }
 
@@ -66,15 +66,15 @@ namespace Altinn.AccessManagement.Core.Helpers.Extensions
         {
             string normalizedText;
 
-            // Å is not a special character in Norwegian hence handling this character differently
-            if (text.ToUpper().Contains('Å'))
+            // Ã… is not a special character in Norwegian hence handling this character differently
+            if (text.ToUpper().Contains('Ã…'))
             {
                 StringBuilder firstPassBuilder = new();
                 foreach (char ch in text)
                 {
-                    if (ch == 'Å' || ch == 'å')
+                    if (ch == 'Ã…' || ch == 'Ã¥')
                     {
-                        // NormalizationForm C doesn't convert Å to A
+                        // NormalizationForm C doesn't convert Ã… to A
                         firstPassBuilder.Append(ch.ToString().Normalize(NormalizationForm.FormC));
                     }
                     else

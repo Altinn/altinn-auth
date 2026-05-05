@@ -302,7 +302,7 @@ namespace Altinn.AccessManagement.Core.Services
             if (altinn2ConsentRequest != null)
             {
                 ConsentRequest mappedConsentFromA2 = await MapA2ConsentToA3Consent(altinn2ConsentRequest, cancellationToken);
-                
+
                 start = _timeProvider.GetTimestamp();
                 Result<ConsentRequestDetailsWrapper> result = await CreateRequest(mappedConsentFromA2, mappedConsentFromA2.From, true, cancellationToken);
                 dur = _timeProvider.GetElapsedTime(start).TotalSeconds;
@@ -1072,7 +1072,7 @@ namespace Altinn.AccessManagement.Core.Services
             return result.Value;
         }
 
-        private List<ConsentRequestEvent> AddExpiredEventIfConsentIsExpired(List<ConsentRequestEvent> consentRequestEvents, DateTimeOffset validTo,  ConsentPartyUrn to)
+        private List<ConsentRequestEvent> AddExpiredEventIfConsentIsExpired(List<ConsentRequestEvent> consentRequestEvents, DateTimeOffset validTo, ConsentPartyUrn to)
         {
             if (validTo < _timeProvider.GetUtcNow() && !consentRequestEvents.Exists(r => r.EventType.Equals(ConsentRequestEventType.Expired)))
             {
@@ -1084,7 +1084,7 @@ namespace Altinn.AccessManagement.Core.Services
                 };
                 return [.. consentRequestEvents, newEvent];
             }
-            
+
             return consentRequestEvents;
         }
 
@@ -1138,7 +1138,7 @@ namespace Altinn.AccessManagement.Core.Services
                 else
                 {
                     resourceDetails = await _resourceRegistryClient.GetResources(cancellationToken, searchParam);
-                    
+
                     if (resourceDetails != null && resourceDetails.Count > 0)
                     {
                         _memoryCache.Set(cacheKey, resourceDetails, TimeSpan.FromHours(24));

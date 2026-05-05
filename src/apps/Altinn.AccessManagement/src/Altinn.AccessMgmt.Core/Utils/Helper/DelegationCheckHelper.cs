@@ -91,7 +91,7 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
                     current.ResourceAllowAccess = [];
 
                     result.Add(current);
-                }                
+                }
             }
 
             return result;
@@ -354,7 +354,7 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
                 else if (urn.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.AccessPackageAttribute))
                 {
                     result.Add(urn);
-                }                
+                }
             }
 
             return result;

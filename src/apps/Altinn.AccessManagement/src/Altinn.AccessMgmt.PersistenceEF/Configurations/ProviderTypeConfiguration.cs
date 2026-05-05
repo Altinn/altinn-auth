@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Configurations;
 
-public class ProviderTypeConfiguration : IEntityTypeConfiguration<ProviderType> 
+public class ProviderTypeConfiguration : IEntityTypeConfiguration<ProviderType>
 {
     public void Configure(EntityTypeBuilder<ProviderType> builder)
     {

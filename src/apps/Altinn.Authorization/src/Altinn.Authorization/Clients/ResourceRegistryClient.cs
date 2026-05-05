@@ -10,7 +10,7 @@ namespace Altinn.Platform.Authorization.Clients
     /// Client configuration for resource registry
     /// </summary>
     public class ResourceRegistryClient
-    {        
+    {
         /// <summary>
         /// Gets an instance of httpclient from httpclientfactory
         /// </summary>

@@ -102,7 +102,7 @@ public partial class ConnectionsControllerTest
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
             return client;
         }
-        
+
         /// <summary>
         /// Verdiq queries connections where it is the receiver (to=Verdiq) using from-others read scope.
         /// Expects OK.

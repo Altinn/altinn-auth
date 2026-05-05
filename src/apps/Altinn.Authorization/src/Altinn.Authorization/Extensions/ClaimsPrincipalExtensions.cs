@@ -2,7 +2,7 @@ using System.Security.Claims;
 using AltinnCore.Authentication.Constants;
 
 namespace Altinn.Platform.Authenticaiton.Extensions
-{ 
+{
     /// <summary>
     /// Helper methods to extend ClaimsPrincipal. 
     /// </summary>

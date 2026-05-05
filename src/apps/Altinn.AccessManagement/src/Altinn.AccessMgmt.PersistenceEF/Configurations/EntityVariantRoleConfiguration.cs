@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Configurations;
 
-public class EntityVariantRoleConfiguration : IEntityTypeConfiguration<EntityVariantRole> 
+public class EntityVariantRoleConfiguration : IEntityTypeConfiguration<EntityVariantRole>
 {
     public void Configure(EntityTypeBuilder<EntityVariantRole> builder)
     {

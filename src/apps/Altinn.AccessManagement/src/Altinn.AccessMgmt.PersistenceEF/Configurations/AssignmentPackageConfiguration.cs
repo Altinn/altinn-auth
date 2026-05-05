@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Configurations;
 
-public class AssignmentPackageConfiguration : IEntityTypeConfiguration<AssignmentPackage> 
+public class AssignmentPackageConfiguration : IEntityTypeConfiguration<AssignmentPackage>
 {
     public void Configure(EntityTypeBuilder<AssignmentPackage> builder)
     {
@@ -18,7 +18,7 @@ public class AssignmentPackageConfiguration : IEntityTypeConfiguration<Assignmen
 
         builder.PropertyWithReference(navKey: t => t.Assignment, foreignKey: t => t.AssignmentId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Cascade);
         builder.PropertyWithReference(navKey: t => t.Package, foreignKey: t => t.PackageId, principalKey: t => t.Id, deleteBehavior: DeleteBehavior.Restrict);
-        
+
         builder
             .HasMany(b => b.DelegationPackages)
             .WithOne(b => b.AssignmentPackage)

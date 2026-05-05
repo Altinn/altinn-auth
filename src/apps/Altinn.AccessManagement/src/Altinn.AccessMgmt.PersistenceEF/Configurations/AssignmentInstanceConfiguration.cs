@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Configurations;
 
-public class AssignmentInstanceConfiguration : IEntityTypeConfiguration<AssignmentInstance> 
+public class AssignmentInstanceConfiguration : IEntityTypeConfiguration<AssignmentInstance>
 {
     public void Configure(EntityTypeBuilder<AssignmentInstance> builder)
     {

@@ -48,7 +48,7 @@ public class Altinn2RightsClient : IAltinn2RightsClient
     public async Task<DelegationCheckResponse> PostDelegationCheck(int authenticatedUserId, int reporteePartyId, string serviceCode, string serviceEditionCode)
     {
         UriBuilder uriBuilder = new UriBuilder($"{_sblBridgeSettings.BaseApiUrl}authorization/api/rights/delegation/userdelegationcheck?userId={authenticatedUserId}&partyId={reporteePartyId}&serviceCode={serviceCode}&serviceEditionCode={serviceEditionCode}");
-            
+
         HttpResponseMessage response = await _client.GetAsync(uriBuilder.Uri);
         string responseContent = await response.Content.ReadAsStringAsync();
 

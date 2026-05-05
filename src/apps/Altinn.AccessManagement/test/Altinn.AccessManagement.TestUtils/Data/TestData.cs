@@ -1209,7 +1209,7 @@ public static class TestData
     private static readonly Guid AssignJosephinePriv = Guid.Parse("0196a0b1-0001-7001-8001-000000000042");
     private static readonly Guid AssignMilenaPriv = Guid.Parse("0196a0b1-0001-7001-8001-000000000043");
     private static readonly Guid AssignJinxArcanePriv = Guid.Parse("0196a0b1-0001-7001-8001-000000000044");
-    private static readonly Guid AssignAlexTheArtistPriv = Guid.Parse("0196a0b1-0001-7001-8001-000000000045");    
+    private static readonly Guid AssignAlexTheArtistPriv = Guid.Parse("0196a0b1-0001-7001-8001-000000000045");
     private static readonly Guid AssignHanSoloPriv = Guid.Parse("019dba34-78cc-7b38-b91b-393fc2488c4a");
     private static readonly Guid AssignBenSoloPriv = Guid.Parse("019dba34-a7ce-7ec3-9cc7-beb6e3c7dbce");
     private static readonly Guid AssignLeiaOrganaPriv = Guid.Parse("019dba34-bcf3-7285-8ad8-7709b37cd47a");

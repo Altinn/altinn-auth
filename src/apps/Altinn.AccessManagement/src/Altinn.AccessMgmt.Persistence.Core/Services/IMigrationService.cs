@@ -34,7 +34,7 @@ public interface IMigrationService
     /// </summary>
     /// <returns></returns>
     bool NeedAnyMigration(Dictionary<Type, List<string>> typeKeys);
-    
+
     /// <summary>
     /// Check if any key for type is needed
     /// </summary>

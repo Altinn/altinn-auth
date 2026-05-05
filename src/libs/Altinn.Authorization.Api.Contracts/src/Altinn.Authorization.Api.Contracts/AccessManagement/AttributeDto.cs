@@ -41,7 +41,7 @@ namespace Altinn.Authorization.Api.Contracts.AccessManagement
         /// </summary>
         public string Urn()
         {
-            return $"{Type}:{Value}";            
+            return $"{Type}:{Value}";
         }
     }
 }

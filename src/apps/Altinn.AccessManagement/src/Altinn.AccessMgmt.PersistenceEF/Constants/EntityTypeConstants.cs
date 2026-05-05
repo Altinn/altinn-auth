@@ -50,7 +50,7 @@ public static class EntityTypeConstants
     /// <summary>
     /// Get all constants as a read-only collection.
     /// </summary>
-    public static IReadOnlyCollection<ConstantDefinition<EntityType>> AllEntities() 
+    public static IReadOnlyCollection<ConstantDefinition<EntityType>> AllEntities()
         => ConstantLookup.AllEntities<EntityType>(typeof(EntityTypeConstants));
 
     /// <summary>

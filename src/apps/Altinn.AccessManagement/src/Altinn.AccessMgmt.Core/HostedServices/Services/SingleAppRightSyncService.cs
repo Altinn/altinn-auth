@@ -281,6 +281,6 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                     await errorQueueService.UpdateErrorMessage(item.Id, values, errorMessage, cancellationToken);
                 }
             }
-        }        
+        }
     }
 }

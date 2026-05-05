@@ -10,11 +10,11 @@ public class OutboxMessageLogConfiguration : IEntityTypeConfiguration<OutboxMess
     public void Configure(EntityTypeBuilder<OutboxMessageLog> builder)
     {
         builder.ToDefaultTable();
-        
+
         builder.HasKey(p => p.Id);
         builder.Property(p => p.Attempt);
         builder.Property(p => p.Log);
-        
+
         builder.Property(p => p.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("NOW()")

@@ -9,7 +9,7 @@ public class SubjectResources
     /// <summary>
     /// The subject
     /// </summary>
-    public required BaseAttribute Subject { get; set; }    
+    public required BaseAttribute Subject { get; set; }
 
     /// <summary>
     /// List of resources that the given subject has access to

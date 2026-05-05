@@ -13,8 +13,8 @@ public record AuditValues(Guid ChangedBy, Guid ChangedBySystem, string Operation
 
     public AuditValues(Guid changedBy, Guid changedBySystem)
         : this(changedBy, changedBySystem, Activity.Current?.TraceId.ToString() ?? Guid.CreateVersion7().ToString(), DateTimeOffset.UtcNow) { }
-    
-    public AuditValues(Guid changedBy) 
+
+    public AuditValues(Guid changedBy)
         : this(changedBy, changedBy, Activity.Current?.TraceId.ToString() ?? Guid.CreateVersion7().ToString(), DateTimeOffset.UtcNow) { }
 }
 
@@ -66,9 +66,9 @@ public class ReadOnlyInterceptor : SaveChangesInterceptor
 
     private void ThrowIfHasChanges(DbContext? context)
     {
-        if (context == null) 
+        if (context == null)
         {
-            return;        
+            return;
         }
 
         var hasModifications = context.ChangeTracker.Entries()

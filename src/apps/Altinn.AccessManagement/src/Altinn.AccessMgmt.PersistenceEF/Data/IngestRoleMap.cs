@@ -8,7 +8,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Data;
 /// <summary>
 /// Partial StaticDataIngest
 /// </summary>
-public static partial class StaticDataIngest 
+public static partial class StaticDataIngest
 {
     /// <summary>
     /// Ingest RoleMap data

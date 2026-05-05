@@ -254,8 +254,8 @@ public class RequestController(
             errorBuilder.Add(ValidationErrorDescriptors.RequestedResourceNotFound, paramName, [new(paramName, $"Resource with reference ID '{resourceRef.ReferenceId}' was not found.")]);
         }
 
-        try 
-        { 
+        try
+        {
             var serviceResource = await resourceRegistryClient.GetResource(resourceRef.ReferenceId, ct);
 
             if (!serviceResource.Delegable)

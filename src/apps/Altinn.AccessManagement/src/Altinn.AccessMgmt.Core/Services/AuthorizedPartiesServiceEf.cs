@@ -321,7 +321,7 @@ public class AuthorizedPartiesServiceEf(
             a2Task = Task.Run(async () =>
             {
                 var a2AuthorizedParties = await altinnRolesClient.GetAuthorizedPartiesWithRoles(userSubject.UserId.Value, filter.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.True, cancellationToken);
-                
+
                 if (filter.PartyFilter?.Count > 0)
                 {
                     a2AuthorizedParties = GetFilteredA2Parties(a2AuthorizedParties, filter);
@@ -669,7 +669,7 @@ public class AuthorizedPartiesServiceEf(
                 {
                     continue;
                 }
-                
+
                 subunits.Add(subunit);
             }
 

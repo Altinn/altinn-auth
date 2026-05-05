@@ -17,7 +17,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
 
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        private readonly ILogger<PolicyRetrievalPointMock> _logger;   
+        private readonly ILogger<PolicyRetrievalPointMock> _logger;
 
         private readonly string _orgAttributeId = "urn:altinn:org";
 
@@ -182,7 +182,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
                 XmlDocument policyDocument = new XmlDocument();
 
                 policyDocument.Load(Path.Combine(policyPath, policyDocumentTitle));
-                
+
                 using (XmlReader reader = XmlReader.Create(new StringReader(policyDocument.OuterXml)))
                 {
                     policy = XacmlParser.ParseXacmlPolicy(reader);

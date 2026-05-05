@@ -8,7 +8,7 @@ namespace Altinn.AccessMgmt.Core.Authorization;
 /// <remarks>
 /// https://github.com/Altinn/altinn-authorization-utils/blob/main/src/Altinn.Authorization.ServiceDefaults/src/ServiceDefaults.Authorization/Scopes/DefaultAuthorizationScopeProvider.cs"
 /// </remarks>
-internal sealed class DefaultAuthorizationScopeProvider: IAuthorizationScopeProvider
+internal sealed class DefaultAuthorizationScopeProvider : IAuthorizationScopeProvider
 {
     /// <inheritdoc/>
     public IEnumerable<string> GetScopeStrings(AuthorizationHandlerContext context)

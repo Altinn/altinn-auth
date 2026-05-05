@@ -9,11 +9,11 @@ namespace Altinn.Authorization.Host.Pipeline;
 internal class PipelineDescriptor(PipelineGroup descriptor) : IPipelineDescriptor
 {
     /// <inheritdoc/>
-    public string? Name { get; private set; } 
+    public string? Name { get; private set; }
 
     /// <inheritdoc/>
     public Func<IServiceProvider, IServiceScope>? ServiceScope { get; set; }
-    
+
     internal PipelineSourceBuilder? Source { get; private set; }
 
     internal string? LeaseName { get; private set; }

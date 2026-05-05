@@ -22,6 +22,6 @@ namespace Altinn.AccessManagement.Api.Internal.Utils
             }
 
             return null;
-        }    
+        }
     }
 }

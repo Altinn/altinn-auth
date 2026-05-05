@@ -106,11 +106,11 @@ internal static partial class AccessManagementHost
             options.AppConnectionString = connectionStrings.AppSource;
             options.MigrationConnectionString = connectionStrings.MigrationSource;
             options.Source = appsettings.RunInitOnly ? SourceType.Migration : SourceType.App;
-            
+
             // Request
             options.AddOutboxHandler<RequestReviewedNotificationHandler>(RequestReviewedNotification.Handler);
             options.AddOutboxHandler<RequestPendingNotificationHandler>(RequestPendingNotification.Handler);
-            
+
             // Connections
             options.AddOutboxHandler<RightholderAddedNotificationHandler>(RightholderAddedNotification.Handler);
             options.AddOutboxHandler<RightholderRemovedNotificationHandler>(RightholderRemovedNotification.Handler);

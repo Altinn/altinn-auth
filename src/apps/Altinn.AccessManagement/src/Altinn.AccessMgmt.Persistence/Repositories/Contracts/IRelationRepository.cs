@@ -4,6 +4,6 @@ using Altinn.AccessMgmt.Persistence.Models;
 namespace Altinn.AccessMgmt.Persistence.Repositories.Contracts;
 
 /// <inheritdoc/>
-public interface IRelationRepository : IDbExtendedRepository<CompactRelation, ExtCompactRelation> 
+public interface IRelationRepository : IDbExtendedRepository<CompactRelation, ExtCompactRelation>
 {
 }

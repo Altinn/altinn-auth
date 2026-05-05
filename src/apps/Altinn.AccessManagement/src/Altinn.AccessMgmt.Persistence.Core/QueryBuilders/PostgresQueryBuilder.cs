@@ -891,8 +891,8 @@ public class PostgresQueryBuilder : IDbQueryBuilder
             string idxQuery =
                 $"CREATE UNIQUE INDEX IF NOT EXISTS {idxName}" +
                 $" ON {tableName} ({columnsList})" +
-                $"{(constraint.IncludedProperties.Any() 
-                    ? $" INCLUDE ({string.Join(',', constraint.IncludedProperties.Keys)})" 
+                $"{(constraint.IncludedProperties.Any()
+                    ? $" INCLUDE ({string.Join(',', constraint.IncludedProperties.Keys)})"
                     : string.Empty)}" +
                 $" WHERE {whereClause};";
 

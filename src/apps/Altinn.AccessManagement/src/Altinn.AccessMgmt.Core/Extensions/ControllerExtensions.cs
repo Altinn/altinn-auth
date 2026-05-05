@@ -17,7 +17,7 @@ public static class ControllerExtensions
     public static string GetLanguageCode(this ControllerBase controller)
     {
         // First, try to get the language code set by TranslationMiddleware
-        if (controller.HttpContext.Items.TryGetValue(TranslationConstants.LanguageCodeKey, out var languageCode) 
+        if (controller.HttpContext.Items.TryGetValue(TranslationConstants.LanguageCodeKey, out var languageCode)
             && languageCode is string code && !string.IsNullOrEmpty(code))
         {
             return code;
@@ -37,7 +37,7 @@ public static class ControllerExtensions
                 return MapLanguageCode(firstLanguage);
             }
         }
-        
+
         return TranslationConstants.DefaultLanguageCode;
     }
 
@@ -56,7 +56,7 @@ public static class ControllerExtensions
             }
 
             return true; // Default to allowing partial translations
-        } 
+        }
         catch
         {
             return true;

@@ -840,7 +840,7 @@ public class ClientDelegationControllerTest
 
                 db.DelegationPackages.Add(delegationPackageFromNordisToPaula);
                 db.DelegationPackages.Add(delegationPackageFromNordisToOrjan);
-      
+
                 db.SaveChanges();
             });
         }

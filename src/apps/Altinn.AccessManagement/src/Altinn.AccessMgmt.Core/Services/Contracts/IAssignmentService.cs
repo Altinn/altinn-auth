@@ -101,7 +101,7 @@ public interface IAssignmentService
     /// </summary>
     /// <returns></returns>
     Task<bool> RemoveAssignmentPackage(Guid userId, Guid assignmentId, Guid packageId, CancellationToken cancellationToken = default);
-   
+
     /// <summary>
     /// Adds a resource to the delegation
     /// </summary>
@@ -182,7 +182,7 @@ public interface IAssignmentService
     /// </summary>
     /// <returns></returns>
     Task<IEnumerable<AssignmentInstance>> GetAssignmentInstances(Guid assignmentId, Guid resourceId, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Revokes access to an imported assignment resource for a specified from, to and audit info.
     /// </summary>

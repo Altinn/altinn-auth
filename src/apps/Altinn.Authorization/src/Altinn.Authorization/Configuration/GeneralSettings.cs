@@ -49,8 +49,8 @@ namespace Altinn.Platform.Authorization.Configuration
         /// <summary>
         /// Gets or sets the cache timeout
         /// </summary>
-        public int PolicyCacheTimeout { get; set;  }
-        
+        public int PolicyCacheTimeout { get; set; }
+
         /// <summary>
         /// Name of the cookie for runtime
         /// </summary>

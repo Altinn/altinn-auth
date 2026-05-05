@@ -136,7 +136,7 @@ namespace Altinn.Platform.Authorization.Controllers
         /// <returns>A list resourcePolicyResponses</returns>
         [AllowAnonymous]
         [HttpPost("/authorization/api/v1/policies/GetPolicies")]
-        public async Task<ActionResult> GetResourcePolicies([FromBody]List<List<AttributeMatch>> appIdList, [FromQuery] string language)
+        public async Task<ActionResult> GetResourcePolicies([FromBody] List<List<AttributeMatch>> appIdList, [FromQuery] string language)
         {
             List<ResourcePolicyResponse> resourcePolicyResponses = new List<ResourcePolicyResponse>();
             foreach (var attributeMatches in appIdList)

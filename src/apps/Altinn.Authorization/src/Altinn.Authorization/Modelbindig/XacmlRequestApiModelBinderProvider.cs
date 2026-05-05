@@ -24,7 +24,7 @@ namespace Altinn.Platform.Authorization.ModelBinding
 
             if (modelType.Equals(typeof(XacmlRequestApiModel)))
             {
-               return new XacmlRequestApiModelBinder();
+                return new XacmlRequestApiModelBinder();
             }
 
             return null;

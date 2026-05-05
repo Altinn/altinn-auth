@@ -22,9 +22,9 @@ public static class InstanceUrnConstants
     public const string CorrespondencePrefix = "urn:altinn:correspondence-id:";
 
     /// <summary>
-/// URN prefix for Dialog instance identifiers.
-/// Format: urn:altinn:dialog-id:{id}
-/// </summary>
+    /// URN prefix for Dialog instance identifiers.
+    /// Format: urn:altinn:dialog-id:{id}
+    /// </summary>
     public const string DialogPrefix = "urn:altinn:dialog-id:";
 
     /// <summary>

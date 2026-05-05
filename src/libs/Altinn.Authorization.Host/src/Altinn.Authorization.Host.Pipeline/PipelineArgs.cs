@@ -16,7 +16,7 @@ public class PipelineArgs
     /// Descriptor
     /// </summary>
     public IPipelineDescriptor Descriptor { get; internal set; }
-    
+
     /// <summary>
     /// The distributed lease associated with this pipeline, if configured.
     /// </summary>

@@ -105,7 +105,7 @@ public class MetadataTests : IClassFixture<PostgresFixture>
         {
             await db.SaveChangesAsync(new Altinn.AccessMgmt.PersistenceEF.Extensions.AuditValues(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest));
         }
-        catch (Exception ex) 
+        catch (Exception ex)
         {
             Console.WriteLine(ex.ToString());
         }
@@ -410,11 +410,11 @@ public class MetadataTests : IClassFixture<PostgresFixture>
     private RolesController CreateController(IRoleService roleService, string acceptLanguage = "nb-NO")
     {
         var controller = new RolesController(roleService, _translationService);
-        
+
         // Create a mock HTTP context with Accept-Language header
         var httpContext = new DefaultHttpContext();
         httpContext.Request.Headers["Accept-Language"] = acceptLanguage;
-        
+
         controller.ControllerContext = new ControllerContext()
         {
             HttpContext = httpContext

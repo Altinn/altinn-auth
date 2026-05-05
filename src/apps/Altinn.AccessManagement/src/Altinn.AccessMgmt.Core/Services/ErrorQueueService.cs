@@ -23,7 +23,7 @@ namespace Altinn.AccessMgmt.Core.Services
             .Where(t => t.OriginType == type && t.ReProcess && !t.Processed)
             .OrderBy(t => t.Id)
             .ToListAsync(cancellationToken);
-            
+
             return items;
         }
 
@@ -39,7 +39,7 @@ namespace Altinn.AccessMgmt.Core.Services
 
             var result = await db.SaveChangesAsync(values, cancellationToken);
 
-            return result > 0;            
+            return result > 0;
         }
 
         /// <inheritdoc />

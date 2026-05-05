@@ -176,7 +176,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
         }
 
         // Fetch client assignments
-        var clientAssignmentResult = 
+        var clientAssignmentResult =
             await db.Assignments.AsNoTracking()
                 .Include(t => t.From)
                 .Where(t => t.ToId == toId && filterRoleIds.Contains(t.RoleId))
@@ -315,7 +315,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
         var result = await db.Assignments.AsNoTracking()
             .Where(t => t.FromId == fromId && t.RoleId == roleResult.First().Id)
             .ToListAsync(cancellationToken);
-        
+
         if (result == null)
         {
             return new List<Assignment>();
@@ -407,10 +407,10 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
             {
                 AssignmentId = assignmentId,
                 PackageId = packageId
-            }, 
+            },
             cancellationToken
             );
-        
+
         var result = await db.SaveChangesAsync(cancellationToken);
         if (result == 0)
         {
@@ -438,7 +438,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
         {
             throw new Exception(string.Format("User '{0}' does not have resource '{1}' for '{2}'", user.Name, resource.Name, assignment.FromId));
         }
-       
+
         db.AssignmentResources.Add(new AssignmentResource()
         {
             Id = Guid.CreateVersion7(),
@@ -614,7 +614,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
         var resource = await db.Resources.AsNoTracking().SingleAsync(t => t.Id == resourceId, cancellationToken);
 
         var res = await db.AssignmentInstances.AsTracking().FirstOrDefaultAsync(t => t.AssignmentId == assignmentId && t.ResourceId == resource.Id && t.InstanceId == instanceId, cancellationToken);
-        
+
         if (res != null)
         {
             res.PolicyPath = policyPath;
@@ -766,7 +766,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
 
         var fromEntity = await db.Entities.FirstOrDefaultAsync(t => t.Id == fromEntityId, cancellationToken);
         var toEntity = await db.Entities.FirstOrDefaultAsync(t => t.Id == toEntityId, cancellationToken);
-        
+
         if (toEntity is null || fromEntity is null)
         {
             return null;
@@ -787,7 +787,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
                 return errorResult;
             }
         }
-        
+
         var existingAssignment = await GetAssignment(fromEntityId, toEntityId, role.Id, cancellationToken: cancellationToken);
         if (existingAssignment == null)
         {
@@ -1026,7 +1026,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
             RoleId = role.Id,
             Audit_ValidFrom = audit?.ValidFrom ?? DateTimeOffset.UtcNow,
         };
-        
+
         await db.Assignments.AddAsync(assignment, cancellationToken);
         int result;
 
@@ -1409,7 +1409,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
             {
                 db.Assignments.Remove(assignment);
                 await db.SaveChangesAsync(audit, cancellationToken);
-            }   
+            }
         }
         finally
         {
@@ -1711,7 +1711,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
         catch (Exception)
         {
         }
-        
+
         if (newPath == null)
         {
             throw new InvalidOperationException($"Failed to generate new policy path for instance assignment. fromId: {fromId}, toId: {toId}, resourceName: {resourceName}, instanceId: {instanceId}, partyId: {partyId}");
@@ -1742,7 +1742,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
                 using (MemoryStream emptyStream = new MemoryStream())
                 {
                     await newPolicyClient.WritePolicyAsync(emptyStream, cancellationToken);
-                }                
+                }
             }
 
             newLeaseId = await newPolicyClient.TryAcquireBlobLease(cancellationToken);
@@ -1788,7 +1788,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
             {
                 await originalPolicyClient.ReleaseBlobLease(originalLeaseId, cancellationToken);
             }
-        }        
+        }
     }
 
     /// <inheritdoc />

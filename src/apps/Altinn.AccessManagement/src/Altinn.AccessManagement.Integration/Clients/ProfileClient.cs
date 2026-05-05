@@ -53,7 +53,7 @@ namespace Altinn.AccessManagement.Integration.Clients
 
             StringContent requestBody = new StringContent(JsonSerializer.Serialize(userProfileLookup), Encoding.UTF8, "application/json");
             HttpResponseMessage response = await _client.PostAsync(endpoint.Uri, requestBody, cancellationToken);
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);

@@ -21,7 +21,7 @@ public class ConnectionQueryBaseRecord
     /// Connection role identity
     /// </summary>
     public Guid RoleId { get; init; }
-    
+
     /// <summary>
     /// Connection Assignment Identity
     /// </summary>
@@ -159,11 +159,11 @@ public static class ConnectionDiffHelper
     private static readonly ConnectionCoreComparer Comparer = new();
 
     public static (
-        List<ConnectionQueryBaseRecord> OnlyInA, 
+        List<ConnectionQueryBaseRecord> OnlyInA,
         List<ConnectionQueryBaseRecord> OnlyInB
-        ) 
+        )
             Diff(
-                IEnumerable<ConnectionQueryBaseRecord> a, 
+                IEnumerable<ConnectionQueryBaseRecord> a,
                 IEnumerable<ConnectionQueryBaseRecord> b
             )
     {

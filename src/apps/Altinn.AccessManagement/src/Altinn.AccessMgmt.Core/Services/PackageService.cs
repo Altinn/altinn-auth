@@ -68,14 +68,14 @@ public class PackageService : IPackageService
         if (searchInResources)
         {
             foreach (var resource in package.Resources.Where(t => t.Name.Contains(term, Ic)))
-            {                
+            {
                 totalScore += 2;
                 fields.Add(new SearchField
                 {
                     Field = "resources.name",
                     Value = resource.Name,
                     Score = 2,
-                });   
+                });
             }
         }
 
@@ -125,13 +125,13 @@ public class PackageService : IPackageService
             .Add(pkg => pkg.Name, 2.0, FuzzynessLevel.High)
             .Add(pkg => pkg.Description, 0.8, FuzzynessLevel.Low)
             .Add(pkg => pkg.Area.Name, 1.5, FuzzynessLevel.Medium);
-            ////.Add(pkg => pkg.Area.Group.Name, 1.3, FuzzynessLevel.Medium);
+        ////.Add(pkg => pkg.Area.Group.Name, 1.3, FuzzynessLevel.Medium);
 
         if (searchInResources)
         {
             builder
                 .AddCollection(pkg => pkg.Resources, r => r.Name, 1.2, FuzzynessLevel.High, detailed);
-                ////.AddCollection(pkg => pkg.Resources, r => r.Description, 0.7, FuzzynessLevel.Low, detailed);
+            ////.AddCollection(pkg => pkg.Resources, r => r.Description, 0.7, FuzzynessLevel.Low, detailed);
         }
 
         var results = Utils.FuzzySearch.PerformFuzzySearch(data, term, builder);

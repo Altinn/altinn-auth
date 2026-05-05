@@ -807,9 +807,9 @@ namespace Altinn.Authorization.ABAC.Constants
             public const string DateTimeBagSize = "urn:oasis:names:tc:xacml:1.0:function:dateTime-bag-size";
         }
 
-            /// <summary>
-            /// Prefixed used in namespaces when writing to XML.
-            /// </summary>
+        /// <summary>
+        /// Prefixed used in namespaces when writing to XML.
+        /// </summary>
         public sealed class Prefixes
         {
             /// <summary>

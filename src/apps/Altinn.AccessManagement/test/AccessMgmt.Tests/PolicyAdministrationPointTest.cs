@@ -45,7 +45,7 @@ namespace Altinn.AccessManagement.Tests
             ServiceProvider serviceProvider = services.BuildServiceProvider();
 
             IMemoryCache memoryCache = serviceProvider.GetService<IMemoryCache>();
-            
+
             _logger = new Mock<ILogger<IPolicyAdministrationPoint>>();
             _delegationMetadataRepositoryMock = new DelegationMetadataRepositoryMock();
             _prp = new PolicyFactoryMock(new Mock<ILogger<PolicyRepositoryMock>>().Object);

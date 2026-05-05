@@ -215,7 +215,7 @@ public class ContextRetrievalService : IContextRetrievalService
         return parties;
     }
 
- /// <inheritdoc/>
+    /// <inheritdoc/>
     public async Task<Party> GetPartyForOrganization(string organizationNumber, CancellationToken cancellationToken = default)
     {
         string cacheKey = $"orgNo:{organizationNumber}";

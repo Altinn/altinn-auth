@@ -11,7 +11,7 @@ namespace Altinn.AccessManagement.Core.Models
         /// The path the policy is written to
         /// </summary>
         public string PolicyPath { get; set; }
-        
+
         /// <summary>
         /// The Version id of the written Policy file
         /// </summary>

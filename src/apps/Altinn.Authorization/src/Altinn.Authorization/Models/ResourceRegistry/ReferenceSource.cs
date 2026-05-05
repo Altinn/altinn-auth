@@ -7,7 +7,7 @@ namespace Altinn.Authorization.Models.ResourceRegistry;
 /// </summary>
 public enum ReferenceSource
 {
-    [EnumMember(Value = "Default")]    
+    [EnumMember(Value = "Default")]
     Default = 0,
 
     [EnumMember(Value = "Altinn1")]

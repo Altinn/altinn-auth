@@ -104,7 +104,7 @@ internal sealed class DbHelper
     }
 
     async ValueTask IAsyncDisposable.DisposeAsync()
-    { 
+    {
         if (_transaction is { } t)
         {
             await t.DisposeAsync();

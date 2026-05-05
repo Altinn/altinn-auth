@@ -247,8 +247,8 @@ public sealed class ExportErrorsCommand(CancellationToken cancellationToken)
         task.StartTask();
 
         await using var receiver = sb.Client.CreateReceiver(
-            queue, 
-            new ServiceBusReceiverOptions 
+            queue,
+            new ServiceBusReceiverOptions
             {
                 ReceiveMode = ServiceBusReceiveMode.PeekLock,
                 PrefetchCount = Math.Clamp((int)stats.ActiveMessageCount, 100, 10_000),
@@ -352,7 +352,7 @@ public sealed class ExportErrorsCommand(CancellationToken cancellationToken)
     {
         var tasks = after.Where(t => t is not null).Select(t => t!.WaitAsync(cancellationToken));
         await Task.WhenAll(tasks);
-        
+
         if (disposable is IAsyncDisposable asyncDisposable)
         {
             await asyncDisposable.DisposeAsync();

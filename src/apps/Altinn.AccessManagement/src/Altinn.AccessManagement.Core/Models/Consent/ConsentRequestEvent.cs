@@ -13,7 +13,7 @@
         /// <summary>
         /// When the event was created.
         /// </summary>
-        public DateTimeOffset Created { get; set; } 
+        public DateTimeOffset Created { get; set; }
 
         /// <summary>
         /// Who made the event happen

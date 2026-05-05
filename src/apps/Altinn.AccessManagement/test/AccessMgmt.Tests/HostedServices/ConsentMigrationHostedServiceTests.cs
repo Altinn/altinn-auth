@@ -118,7 +118,7 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         var serviceTask = service.StartAsync(testCts.Token);
 
         await Task.Delay(10);
-        
+
         // Advance by EmptyFeedDelayMs + max jitter (2000ms)
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.EmptyFeedDelayMs + 2000));
         await Task.Delay(10);
@@ -312,7 +312,7 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         // Act
         var serviceTask = service.StartAsync(testCts.Token);
         await Task.Delay(10);
-        
+
         testCts.Cancel();
         await Task.WhenAny(serviceTask, Task.Delay(1000));
 
@@ -586,7 +586,7 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         var serviceTask = service.StartAsync(testCts.Token);
 
         await Task.Delay(10);
-        
+
         // The jitter adds 1000-2000ms to the EmptyFeedDelayMs
         // So we need to advance by at least EmptyFeedDelayMs + 1000ms to guarantee triggering
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.EmptyFeedDelayMs + 1000));

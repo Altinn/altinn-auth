@@ -96,7 +96,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             eventQueue.Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()));
             AuthorizationEvent expectedAuthorizationEvent = TestSetupUtil.GetAuthorizationEvent(testCase);
 
-            HttpClient client = GetTestClient(eventQueue.Object, featureManageMock.Object, timeProviderMock.Object);            
+            HttpClient client = GetTestClient(eventQueue.Object, featureManageMock.Object, timeProviderMock.Object);
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
             XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
 
@@ -278,7 +278,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         [Fact]
         public async Task PDP_Decision_AltinnApps0028()
         {
-            string testCase = "AltinnApps0028"; 
+            string testCase = "AltinnApps0028";
 
             Mock<IFeatureManager> featureManageMock = new Mock<IFeatureManager>();
             featureManageMock.Setup(m => m.IsEnabledAsync("DecisionRequestLogRequestOnError", It.IsAny<CancellationToken>())).Returns(Task.FromResult(true));
@@ -598,10 +598,10 @@ namespace Altinn.Platform.Authorization.IntegrationTests
         }
 
         private void SetupFeatureMock(bool featureFlag)
-        {            
+        {
             featureManageMock
                 .Setup(m => m.IsEnabledAsync("AuditLog"))
-                .Returns(Task.FromResult(featureFlag));            
+                .Returns(Task.FromResult(featureFlag));
         }
 
         private void SetupDateTimeMock()

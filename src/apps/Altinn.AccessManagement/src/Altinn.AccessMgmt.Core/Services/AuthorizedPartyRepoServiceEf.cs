@@ -29,14 +29,14 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
             .FirstOrDefaultAsync(ct);
 
     /// <inheritdoc/>
-    public async Task<Entity?> GetEntityByOrganizationId(string organizationId, CancellationToken ct = default) => 
+    public async Task<Entity?> GetEntityByOrganizationId(string organizationId, CancellationToken ct = default) =>
         await db.Entities
             .AsNoTracking()
             .Where(e => e.OrganizationIdentifier == organizationId)
             .FirstOrDefaultAsync(ct);
 
     /// <inheritdoc/>
-    public async Task<Entity?> GetEntityByPersonId(string personId, CancellationToken ct = default) => 
+    public async Task<Entity?> GetEntityByPersonId(string personId, CancellationToken ct = default) =>
         await db.Entities
             .AsNoTracking()
             .Where(e => e.PersonIdentifier == personId)
@@ -181,7 +181,7 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
             .Select(rr => new { rr.Role.Code, rr.Role.LegacyCode })
             .Distinct()
             .ToListAsync(ct);
-        
+
         return results.SelectMany(r => new[] { r.Code, r.LegacyCode })
             .Where(code => !string.IsNullOrEmpty(code))
             .Distinct()

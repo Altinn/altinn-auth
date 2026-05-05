@@ -42,7 +42,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
         {
             var leaseData = await lease.Get<AltinnClientRoleLease>(cancellationToken);
             var clientDelegations = await _role.StreamRoles("12", leaseData.AltinnClientRoleStreamNextPageLink, cancellationToken);
-            
+
             await foreach (var page in clientDelegations)
             {
                 if (cancellationToken.IsCancellationRequested)
@@ -67,7 +67,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                         // Do not process client roles for EC-Users
                         if (item.ToUserType == UserType.EnterpriseIdentified)
                         {
-                           continue;
+                            continue;
                         }
 
                         await using var scope = _serviceProivider.CreateAsyncScope();

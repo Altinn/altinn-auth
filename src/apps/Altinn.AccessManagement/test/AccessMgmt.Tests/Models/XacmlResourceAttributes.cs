@@ -34,7 +34,7 @@ public class XacmlResourceAttributes
     /// Gets or sets the value for app resource. 
     /// </summary>
     public string AppResourceValue { get; set; }
-    
+
     /// <summary>
     /// Gets or sets the resource registry Id
     /// </summary>

@@ -229,7 +229,7 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor RequestFromSelfNotAllowed { get; }
         = _factory.Create(45, $"Self-targeted requests are not allowed.");
-    
+
     /// <summary>
     /// Either Resource or Package must be included in the request, but not both.
     /// </summary>

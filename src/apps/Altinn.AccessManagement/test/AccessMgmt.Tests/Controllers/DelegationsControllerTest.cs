@@ -1627,5 +1627,5 @@ namespace Altinn.AccessManagement.Tests.Controllers
             return delegations;
         }
 
-            }
-        }
+    }
+}

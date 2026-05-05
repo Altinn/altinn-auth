@@ -99,7 +99,7 @@ namespace Altinn.AccessManagement.Tests.Util
         /// <param name="supplier">The supplier</param>
         /// <param name="consumerPrefix">If maskinporten token sets the scope prefixes the organization owns or authorized for</param>
         /// <returns>Claims principal</returns>
-        public static ClaimsPrincipal GetClaimsPrincipal(string org, string orgNumber, string scope = null, string supplier = null,  string[] consumerPrefix = null, bool includeAltinnClaims = true)
+        public static ClaimsPrincipal GetClaimsPrincipal(string org, string orgNumber, string scope = null, string supplier = null, string[] consumerPrefix = null, bool includeAltinnClaims = true)
         {
             string issuer = "https://platform.altinn.cloud/authentication/api/v1/openid/";
 
@@ -128,7 +128,7 @@ namespace Altinn.AccessManagement.Tests.Util
             }
 
             claims.Add(new Claim("consumer", GetOrgNoObject(orgNumber)));
-            
+
             if (includeAltinnClaims)
             {
                 claims.Add(new Claim(AltinnCoreClaimTypes.OrgNumber, orgNumber.ToString(), ClaimValueTypes.Integer32, issuer));

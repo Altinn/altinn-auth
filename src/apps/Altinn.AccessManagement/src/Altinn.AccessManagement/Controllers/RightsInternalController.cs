@@ -577,9 +577,9 @@ namespace Altinn.AccessManagement.Controllers
                 }
 
                 // Delegation performed
-                return Created();                
+                return Created();
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 _logger.LogError(StatusCodes.Status500InternalServerError, ex, "Internal exception occurred during Instance Right Import");
                 var problem = new ProblemDetails
@@ -589,7 +589,7 @@ namespace Altinn.AccessManagement.Controllers
                     Status = StatusCodes.Status500InternalServerError
                 };
                 return problem.ToActionResult();
-            }            
+            }
         }
 
         /// <summary>
@@ -640,5 +640,5 @@ namespace Altinn.AccessManagement.Controllers
                 return problem.ToActionResult();
             }
         }
-    }    
+    }
 }
