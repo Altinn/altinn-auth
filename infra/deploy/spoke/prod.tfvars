@@ -27,7 +27,7 @@ appconfiguration = {
 
 services = {
   altinn2 = {
-    host = "altinn.no"
+    host = "www.altinn.no"
   }
 
   altinn-authentication = {

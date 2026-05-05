@@ -31,6 +31,9 @@ features = {
 
   party_import = {
     system_users = true
+    npr = {
+      guardianships = true
+    }
   }
 
   ccr_proxy = {
