@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Altinn.AccessManagement.Api.Enterprise.Extensions;
 using Altinn.AccessManagement.Api.Enterprise.Utils;
+using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
@@ -15,6 +16,7 @@ using Altinn.Common.PEP.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Altinn.AccessManagement.Api.Enterprise.Controllers
 {
@@ -23,10 +25,11 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
     /// </summary>
     [Route("accessmanagement/api/v1/enterprise")]
     [ApiController]
-    public class ConsentController(IConsent consentService, IPDP Pdp) : ControllerBase
+    public class ConsentController(IConsent consentService, IPDP Pdp, IOptionsMonitor<ConsentSettings> consentSettings) : ControllerBase
     {
         private readonly IConsent _consentService = consentService;
         private readonly IPDP _pdp = Pdp;
+        private readonly IOptionsMonitor<ConsentSettings> _consentSettings = consentSettings;
 
         private const string CreateRouteName = "enterprisecreateconsentrequest";
         private const string GetRouteName = "enterprisegetconsentrequest";
@@ -146,9 +149,9 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetConsentStatusChanges(
             [FromQuery] string? continuationToken = null,
-            [FromQuery] int pageSize = 100,
             CancellationToken cancellationToken = default)
         {
+            int pageSize = _consentSettings.CurrentValue.LatestChangesPageSize;
             Core.Models.Consent.ConsentPartyUrn? authenticatedParty = OrgUtil.GetAuthenticatedParty(User);
 
             if (authenticatedParty == null)
@@ -176,7 +179,7 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
                 Guid consenteventid = changes.Last().ConsentEventId;
                 var token = $"{created:O}|{consenteventid}";
                 string nextToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(token));
-                nextLink = $"{Request.Scheme}://{Request.Host}{Request.Path}?continuationToken={Uri.EscapeDataString(nextToken)}&pageSize={pageSize}";
+                nextLink = $"{Request.Scheme}://{Request.Host}{Request.Path}?continuationToken={Uri.EscapeDataString(nextToken)}";
             }
 
             // Return paginated result

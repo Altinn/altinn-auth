@@ -88,6 +88,7 @@ variable "configuration" {
     consent = optional(object({
       batch_size                = optional(number, 5)
       max_degree_of_parallelism = optional(number, 5)
+      latest_changes_page_size  = optional(number, 5)
     }), {})
     core = optional(object({
       request_notify_request_approved_in_seconds = optional(number, 60 * 15) # Deprecated

@@ -588,13 +588,7 @@ namespace Altinn.AccessManagement.Persistence.Consent
         }
         
         public async Task<Result<List<ConsentStatusChange>>> GetConsentStatusChangesForParty(Guid partyUuid, string? continuationToken, int pageSize, CancellationToken cancellationToken)
-        {
-            // Limit page size to prevent abuse
-            if (pageSize < 1 || pageSize > 1000)
-            {
-                pageSize = 100; // default
-            }
-           
+        {          
             // Parse continuation token to get cursor UUID
             Guid cursorEventId = default;
             DateTimeOffset cursorCreated = default;

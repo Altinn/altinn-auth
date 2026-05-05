@@ -297,6 +297,7 @@ internal static partial class AccessManagementHost
         builder.Services.Configure<OidcProviderSettings>(config.GetSection("OidcProviders"));
         builder.Services.Configure<UserProfileLookupSettings>(config.GetSection("UserProfileLookupSettings"));
         builder.Services.Configure<AppsInstanceDelegationSettings>(config.GetSection("AppsInstanceDelegationSettings"));
+        builder.Services.Configure<ConsentSettings>(config.GetSection("Consent"));
     }
 
     private static void ConfigureAuthorization(this WebApplicationBuilder builder)
