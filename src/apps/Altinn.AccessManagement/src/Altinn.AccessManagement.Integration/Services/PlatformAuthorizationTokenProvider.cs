@@ -55,7 +55,7 @@ public class PlatformAuthorizationTokenProvider : IPlatformAuthorizationTokenPro
                 _accessToken = _accessTokenGenerator.GenerateAccessToken(
                     _oidcProviderSettings["altinn"].Issuer,
                     "platform.authorization",
-                    new X509Certificate2(Convert.FromBase64String(certBase64), (string)null, X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable));
+                    X509CertificateLoader.LoadPkcs12(Convert.FromBase64String(certBase64), (string)null, X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable));
 
                 _cacheTokenUntil = DateTime.UtcNow.AddSeconds(_accessTokenSettings.TokenLifetimeInSeconds - 2); // Add some slack to avoid tokens expiring in transit
             }
