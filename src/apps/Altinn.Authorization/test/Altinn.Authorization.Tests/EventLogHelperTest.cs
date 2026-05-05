@@ -30,7 +30,6 @@ public class EventLogHelperTest
     }
 
     // --- GetResourceAttributes ---
-
     [Fact]
     public void GetResourceAttributes_WithResourceRegistryAttribute_ReturnsResource()
     {
@@ -75,7 +74,6 @@ public class EventLogHelperTest
     }
 
     // --- GetSubjectInformation ---
-
     [Fact]
     public void GetSubjectInformation_WithAllAttributes_ReturnsAll()
     {
@@ -126,7 +124,6 @@ public class EventLogHelperTest
     }
 
     // --- GetActionInformation ---
-
     [Fact]
     public void GetActionInformation_WithAction_ReturnsActionId()
     {
@@ -160,7 +157,6 @@ public class EventLogHelperTest
     }
 
     // --- GetClientIpAddress ---
-
     [Fact]
     public void GetClientIpAddress_NullContext_ReturnsNull()
     {
@@ -186,7 +182,6 @@ public class EventLogHelperTest
     }
 
     // --- MapAuthorizationEventFromContextRequest ---
-
     [Fact]
     public void MapAuthorizationEventFromContextRequest_MapsAllFieldsCorrectly()
     {

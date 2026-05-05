@@ -10,7 +10,6 @@ namespace Altinn.Authorization.Integration.Tests;
 public class RequestComposerTest
 {
     // ── New ──────────────────────────────────────────────────────────────────
-
     [Fact]
     public void New_NoActions_ReturnsEmptyHttpRequestMessage()
     {
@@ -31,7 +30,6 @@ public class RequestComposerTest
     }
 
     // ── WithHttpVerb ─────────────────────────────────────────────────────────
-
     [Fact]
     public void WithHttpVerb_SetsMethod()
     {
@@ -40,7 +38,6 @@ public class RequestComposerTest
     }
 
     // ── WithSetUri (string) ──────────────────────────────────────────────────
-
     [Fact]
     public void WithSetUri_String_SetsUri()
     {
@@ -58,7 +55,6 @@ public class RequestComposerTest
     }
 
     // ── WithSetUri (Uri + segments) ───────────────────────────────────────────
-
     [Fact]
     public void WithSetUri_BaseUriWithSegments_CombinesPath()
     {
@@ -75,7 +71,6 @@ public class RequestComposerTest
     }
 
     // ── WithJSONPayload ───────────────────────────────────────────────────────
-
     [Fact]
     public void WithJSONPayload_NonNull_SetsJsonContent()
     {
@@ -92,7 +87,6 @@ public class RequestComposerTest
     }
 
     // ── WithAppendQueryParam (IEnumerable) ────────────────────────────────────
-
     [Fact]
     public void WithAppendQueryParam_Enumerable_AppendsCommaSeparatedValues()
     {
@@ -125,7 +119,6 @@ public class RequestComposerTest
     }
 
     // ── WithAppendQueryParam (single value) ───────────────────────────────────
-
     [Fact]
     public void WithAppendQueryParam_SingleValue_AppendsQuery()
     {
@@ -148,7 +141,6 @@ public class RequestComposerTest
     }
 
     // ── WithPlatformAccessToken (string) ──────────────────────────────────────
-
     [Fact]
     public void WithPlatformAccessToken_NonEmpty_SetsHeader()
     {
@@ -167,7 +159,6 @@ public class RequestComposerTest
     }
 
     // ── WithPlatformAccessToken (Func) ────────────────────────────────────────
-
     [Fact]
     public void WithPlatformAccessToken_Func_SetsHeader()
     {
@@ -177,7 +168,6 @@ public class RequestComposerTest
     }
 
     // ── WithJWTToken ──────────────────────────────────────────────────────────
-
     [Fact]
     public void WithJWTToken_NonEmpty_SetsAuthorizationBearerHeader()
     {

@@ -6,10 +6,10 @@ using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Models.Party;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
-using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services;
 using Altinn.AccessManagement.Core.Services.Interfaces;
+using Altinn.Authorization.Api.Contracts.Register;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -365,7 +365,6 @@ public class ConsentServiceTests
     // Test naming follows MethodUnderTest_Scenario_ExpectedResult; assertions
     // use FluentAssertions (`.Should()`).
     // =======================================================================
-
     [Fact]
     public async Task GetConsentStatusChangesForParty_RepositoryReturnsList_ReturnsValueUnchanged()
     {
@@ -546,7 +545,6 @@ public class ConsentServiceTests
     //    docs/testing/FIXTURES.md "EFPostgresFactory" for the seeding
     //    strategy.
     // -----------------------------------------------------------------------
-
     private ConsentService CreateService()
     {
         return new ConsentService(

@@ -41,7 +41,6 @@ public class PackagesControllerTest
     // service. These tests guard the routing branch (calls the right method,
     // never the other) and the parameter-forwarding contract — bug classes
     // that no test covered after the FuzzySearch→SimpleSearch split.
-
     [Fact]
     public async Task Search_DefaultIsSimpleSearch_RoutesToSimpleSearchAndNotFuzzy()
     {
@@ -59,6 +58,7 @@ public class PackagesControllerTest
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var items = Assert.IsAssignableFrom<IEnumerable<SearchObject<PackageDto>>>(ok.Value);
         Assert.NotEmpty(items);
+
         // Strict mock would have thrown if FuzzySearch had been invoked.
         serviceMock.Verify(
             s => s.SimpleSearch(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<bool>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
@@ -222,7 +222,6 @@ public class PackagesControllerTest
     }
 
     // ── GetHierarchy ────────────────────────────────────────────────────────
-
     [Fact]
     public async Task GetHierarchy_WhenResultsFound_Returns200Ok()
     {
@@ -256,7 +255,6 @@ public class PackagesControllerTest
     }
 
     // ── GetGroups ───────────────────────────────────────────────────────────
-
     [Fact]
     public async Task GetGroups_WhenResultsFound_Returns200Ok()
     {
@@ -290,7 +288,6 @@ public class PackagesControllerTest
     }
 
     // ── GetGroup ────────────────────────────────────────────────────────────
-
     [Fact]
     public async Task GetGroup_WhenFound_Returns200Ok()
     {

@@ -24,7 +24,6 @@ public class AuthenticationHelperTest
     private static HttpContext CtxWithNoUser() => new DefaultHttpContext { User = null };
 
     // ── GetUserId ─────────────────────────────────────────────────────────────
-
     [Fact]
     public void GetUserId_NoClaim_ReturnsZero()
     {
@@ -52,7 +51,6 @@ public class AuthenticationHelperTest
     }
 
     // ── GetPartyUuid ──────────────────────────────────────────────────────────
-
     [Fact]
     public void GetPartyUuid_NoClaim_ReturnsEmpty()
     {
@@ -73,7 +71,6 @@ public class AuthenticationHelperTest
     }
 
     // ── GetPartyId ────────────────────────────────────────────────────────────
-
     [Fact]
     public void GetPartyId_NoClaim_ReturnsZero()
     {
@@ -87,7 +84,6 @@ public class AuthenticationHelperTest
     }
 
     // ── GetUserAuthenticationLevel ────────────────────────────────────────────
-
     [Fact]
     public void GetUserAuthenticationLevel_NoClaim_ReturnsZero()
     {
@@ -101,7 +97,6 @@ public class AuthenticationHelperTest
     }
 
     // ── GetSystemUserUuid / GetSystemUserUuidString ──────────────────────────
-
     [Fact]
     public void GetSystemUserUuid_NoAuthorizationDetailsClaim_ReturnsEmpty()
     {
@@ -140,7 +135,6 @@ public class AuthenticationHelperTest
     }
 
     // ── GetAuthenticatedPartyUuid composition ────────────────────────────────
-
     [Fact]
     public void GetAuthenticatedPartyUuid_PartyUuidPresent_ReturnsPartyUuid()
     {

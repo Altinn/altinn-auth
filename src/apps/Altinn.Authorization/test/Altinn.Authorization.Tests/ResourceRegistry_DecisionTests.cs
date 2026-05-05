@@ -325,7 +325,6 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             AssertionUtil.AssertEqual(expected, contextResponse);
         }
 
-
         /// <summary>
         /// This scenario uses a resource that only requires that it is an organization that is requesting consent.
         /// 

@@ -9,7 +9,6 @@ public class TypesControllerTest
 
     // GetOrganizationSubTypes returns the List<SubTypeDto> directly (not wrapped
     // in Ok()), so ActionResult<T>.Value holds the payload while .Result is null.
-
     [Fact]
     public void GetOrganizationSubTypes_ReturnsNonNullValue()
     {

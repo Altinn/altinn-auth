@@ -518,7 +518,6 @@ namespace Altinn.Common.PEP.Helpers
             return ValidateDecisionResult(results.First(), user);
         }
 
-
         /// <summary>
         /// Validate the response from PDP but do not check obligations like authentication level. Use with casution.
         /// </summary>

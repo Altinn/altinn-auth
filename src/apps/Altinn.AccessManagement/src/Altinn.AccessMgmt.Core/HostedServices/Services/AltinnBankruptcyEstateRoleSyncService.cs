@@ -1,4 +1,5 @@
-﻿using Altinn.AccessManagement.Core.Models.Party;
+﻿using System.Text.Json;
+using Altinn.AccessManagement.Core.Models.Party;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.HostedServices.Contracts;
 using Altinn.AccessMgmt.Core.HostedServices.Leases;
@@ -12,7 +13,6 @@ using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Integration.Platform.SblBridge;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace Altinn.AccessMgmt.Core.HostedServices.Services
 {
@@ -35,7 +35,6 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
 
         public async Task SyncBankruptcyEstateRoles(ILease lease, CancellationToken cancellationToken)
         {
-
             var leaseData = await lease.Get<AltinnBankruptcyEstateRoleLease>(cancellationToken);
             var adminDelegations = await _role.StreamRoles("13", leaseData.AltinnBankruptcyEstateRoleStreamNextPageLink, cancellationToken);
 

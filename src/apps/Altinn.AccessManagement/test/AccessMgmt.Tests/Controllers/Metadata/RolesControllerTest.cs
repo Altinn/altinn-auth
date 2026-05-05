@@ -54,7 +54,6 @@ public class RolesControllerTest
     }
 
     // ── GetAll ──────────────────────────────────────────────────────────────
-
     [Fact]
     public async Task GetAll_WhenResultsFound_Returns200Ok()
     {
@@ -86,7 +85,6 @@ public class RolesControllerTest
     }
 
     // ── GetId ───────────────────────────────────────────────────────────────
-
     [Fact]
     public async Task GetId_WhenFound_Returns200Ok()
     {
@@ -117,7 +115,6 @@ public class RolesControllerTest
     }
 
     // ── GetPackages (by role code + variant) ────────────────────────────────
-
     [Fact]
     public async Task GetPackagesByCode_WhenRoleCodeNotFound_Returns404NotFound()
     {
@@ -157,7 +154,6 @@ public class RolesControllerTest
     }
 
     // ── GetResources (by role code + variant) ───────────────────────────────
-
     [Fact]
     public async Task GetResourcesByCode_WhenRoleCodeNotFound_Returns404NotFound()
     {
@@ -197,7 +193,6 @@ public class RolesControllerTest
     }
 
     // ── GetPackages (by role id + variant) ──────────────────────────────────
-
     [Fact]
     public async Task GetPackagesById_WhenVariantNotFound_Returns404NotFound()
     {
@@ -225,7 +220,6 @@ public class RolesControllerTest
     }
 
     // ── GetResources (by role id + variant) ─────────────────────────────────
-
     [Fact]
     public async Task GetResourcesById_WhenVariantNotFound_Returns404NotFound()
     {

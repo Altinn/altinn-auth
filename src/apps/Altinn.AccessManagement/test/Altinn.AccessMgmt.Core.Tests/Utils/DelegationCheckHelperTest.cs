@@ -13,7 +13,6 @@ namespace Altinn.AccessMgmt.Core.Tests.Utils;
 public class DelegationCheckHelperTest
 {
     // ── IsAccessListModeEnabledAndApplicable ─────────────────────────────────
-
     [Fact]
     public void IsAccessListModeEnabledAndApplicable_EnabledAndOrg_ReturnsTrue()
     {
@@ -65,7 +64,6 @@ public class DelegationCheckHelperTest
     }
 
     // ── XACML helpers ─────────────────────────────────────────────────────────
-
     private static XacmlMatch MakeXacmlMatch(string category, string attributeId, string value) =>
         new(
             new Uri(XacmlConstants.AttributeMatchFunction.StringEqualIgnoreCase),
@@ -131,7 +129,6 @@ public class DelegationCheckHelperTest
     }
 
     // ── GetFirstAccessorValuesFromPolicy ──────────────────────────────────────
-
     [Fact]
     public void GetFirstAccessorValuesFromPolicy_EmptyTarget_ReturnsEmpty()
     {
@@ -193,7 +190,6 @@ public class DelegationCheckHelperTest
     }
 
     // ── DecomposePolicy ────────────────────────────────────────────────────────
-
     [Fact]
     public void DecomposePolicy_MatchingResourceAndRoleSubject_ReturnsOneRight()
     {
@@ -256,7 +252,6 @@ public class DelegationCheckHelperTest
     }
 
     // ── BuildDelegationRuleTarget ──────────────────────────────────────────────
-
     [Fact]
     public void BuildDelegationRuleTarget_ReturnsTargetWithThreeAnyOfs()
     {
@@ -300,7 +295,6 @@ public class DelegationCheckHelperTest
     }
 
     // ── CalculateRightKeys ────────────────────────────────────────────────────
-
     [Fact]
     public void CalculateRightKeys_RegularResource_MatchingResourceId_ReturnsHashedKey()
     {
@@ -359,7 +353,6 @@ public class DelegationCheckHelperTest
     }
 
     // ── IsAppResource ──────────────────────────────────────────────────────────
-
     [Fact]
     public void IsAppResource_AppPrefixedThreePart_ReturnsTrueWithOrgAndApp()
     {
@@ -391,7 +384,6 @@ public class DelegationCheckHelperTest
     }
 
     // ── CheckIfErrorShouldBePushedToErrorQueue ─────────────────────────────────
-
     [Fact]
     public void CheckIfErrorShouldBePushedToErrorQueue_ResourceNotFoundMessage_ReturnsTrue()
     {

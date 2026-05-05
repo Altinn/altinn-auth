@@ -13,7 +13,6 @@ public class ClaimsPrincipalExtensionsTest
     }
 
     // --- GetUserOrOrgId ---
-
     [Fact]
     public void GetUserOrOrgId_HasUserId_ReturnsUserId()
     {
@@ -45,7 +44,6 @@ public class ClaimsPrincipalExtensionsTest
     }
 
     // --- GetOrg ---
-
     [Fact]
     public void GetOrg_HasClaim_ReturnsValue()
     {
@@ -61,7 +59,6 @@ public class ClaimsPrincipalExtensionsTest
     }
 
     // --- GetOrgNumber ---
-
     [Fact]
     public void GetOrgNumber_ValidInt_ReturnsValue()
     {
@@ -84,7 +81,6 @@ public class ClaimsPrincipalExtensionsTest
     }
 
     // --- GetUserIdAsInt ---
-
     [Fact]
     public void GetUserIdAsInt_ValidInt_ReturnsValue()
     {
@@ -107,7 +103,6 @@ public class ClaimsPrincipalExtensionsTest
     }
 
     // --- GetAuthenticationLevel ---
-
     [Fact]
     public void GetAuthenticationLevel_ValidLevel_ReturnsValue()
     {

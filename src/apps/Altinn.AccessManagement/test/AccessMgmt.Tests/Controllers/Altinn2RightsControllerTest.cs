@@ -11,9 +11,9 @@ using Altinn.AccessManagement.Core.Resolvers;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Mocks;
+using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
-using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.Utilities;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
@@ -28,7 +28,6 @@ using Microsoft.Extensions.Options;
 // single-configuration migrations). All tests share a single mock set (WithServiceMoq),
 // so the DI can be registered once in the constructor; per-test HttpClients are built
 // via fixture.CreateClient(). See docs/testing/TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
-
 namespace Altinn.AccessManagement.Tests.Controllers;
 
 /// <summary>

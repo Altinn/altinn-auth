@@ -12,13 +12,16 @@ namespace Altinn.AccessMgmt.Core.Tests.PersistenceCore;
 public class SearchPropertyBuilderTest
 {
     // ── test models ──────────────────────────────────────────────────────────
-
     private class Sample
     {
         public string Name { get; set; }
+
         public int Count { get; set; }
+
         public string Description { get; set; }
+
         public Inner Area { get; set; }
+
         public IEnumerable<Resource> Resources { get; set; }
 
         public string ComputeKey() => Name + Count;
@@ -27,6 +30,7 @@ public class SearchPropertyBuilderTest
     private class Inner
     {
         public string Name { get; set; }
+
         public Group Group { get; set; }
     }
 
@@ -41,7 +45,6 @@ public class SearchPropertyBuilderTest
     }
 
     // ── Add — happy path & key derivation ────────────────────────────────────
-
     [Fact]
     public void Add_SingleProperty_RegistersUnderPropertyName()
     {
@@ -172,7 +175,6 @@ public class SearchPropertyBuilderTest
     }
 
     // ── AddCollection — combined vs detailed mode ────────────────────────────
-
     [Fact]
     public void AddCollection_DefaultMode_RegistersUnderPropertyNameSuffixedCombined()
     {
@@ -257,7 +259,6 @@ public class SearchPropertyBuilderTest
     }
 
     // ── Fluent contract ──────────────────────────────────────────────────────
-
     [Fact]
     public void Add_ReturnsSameBuilderInstance_ForChaining()
     {
@@ -277,7 +278,6 @@ public class SearchPropertyBuilderTest
     }
 
     // ── Build() — empty + structural ─────────────────────────────────────────
-
     [Fact]
     public void Build_OnEmptyBuilder_ReturnsEmptyDictionary()
     {

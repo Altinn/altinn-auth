@@ -8,8 +8,8 @@ using Altinn.AccessManagement.Core.Resolvers.Extensions;
 using Altinn.AccessManagement.Core.Services;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Resolvers;
-using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessManagement.Tests.Mocks;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.Common.AccessToken.Services;
 using Microsoft.Extensions.DependencyInjection;
 

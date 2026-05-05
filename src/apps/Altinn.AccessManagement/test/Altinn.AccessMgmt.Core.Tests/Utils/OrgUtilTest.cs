@@ -6,7 +6,6 @@ namespace Altinn.AccessMgmt.Core.Tests.Utils;
 public class OrgUtilTest
 {
     // ── GetMaskinportenScopes ────────────────────────────────────────────────
-
     [Fact]
     public void GetMaskinportenScopes_ClaimPresent_ReturnsValue()
     {
@@ -29,7 +28,6 @@ public class OrgUtilTest
     }
 
     // ── GetAuthenticatedParty ────────────────────────────────────────────────
-
     [Fact]
     public void GetAuthenticatedParty_ValidConsumerClaim_ReturnsUrn()
     {
@@ -76,7 +74,6 @@ public class OrgUtilTest
     }
 
     // ── GetSupplierParty ─────────────────────────────────────────────────────
-
     [Fact]
     public void GetSupplierParty_ValidSupplierClaim_ReturnsUrn()
     {
@@ -109,7 +106,6 @@ public class OrgUtilTest
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
-
     private static ClaimsPrincipal MakePrincipal(params (string type, string value)[] claims)
     {
         var identity = new ClaimsIdentity(claims.Select(c => new Claim(c.type, c.value)));

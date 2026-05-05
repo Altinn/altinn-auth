@@ -149,4 +149,3 @@ public static class ValidationErrors
     public static ValidationErrorDescriptor PolicyClearFailed { get; }
         = _factory.Create(34, "Failed to clear delegation policy rules.");
 }
-

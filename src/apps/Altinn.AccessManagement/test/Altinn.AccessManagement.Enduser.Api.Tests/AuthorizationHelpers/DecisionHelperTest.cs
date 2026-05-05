@@ -24,7 +24,6 @@ public class DecisionHelperTest
     }
 
     // ── Claim accessors (mirror AuthenticationHelper but live in this helper) ─
-
     [Fact]
     public void GetUserPartyUuid_NoClaim_ReturnsEmpty()
         => DecisionHelper.GetUserPartyUuid(CtxWith()).Should().Be(Guid.Empty);
@@ -54,7 +53,6 @@ public class DecisionHelperTest
         => DecisionHelper.GetUserId(CtxWith(new Claim(AltinnCoreClaimTypes.UserId, "abc"))).Should().Be(0);
 
     // ── Querystring accessors ────────────────────────────────────────────────
-
     [Fact]
     public void GetFromParam_ValidGuid_ReturnsParsed()
     {
@@ -98,7 +96,6 @@ public class DecisionHelperTest
     }
 
     // ── ValidatePdpDecision ──────────────────────────────────────────────────
-
     [Fact]
     public void ValidatePdpDecision_NullResponse_Throws()
     {

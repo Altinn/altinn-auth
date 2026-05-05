@@ -1,4 +1,7 @@
-﻿using Altinn.AccessManagement.Core.Extensions;
+﻿using System.Data;
+using System.Globalization;
+using System.Text;
+using Altinn.AccessManagement.Core.Extensions;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Persistence.Extensions;
@@ -6,10 +9,6 @@ using Altinn.Authorization.ProblemDetails;
 using Newtonsoft.Json.Linq;
 using Npgsql;
 using NpgsqlTypes;
-using System.Data;
-using System.Diagnostics.Tracing;
-using System.Globalization;
-using System.Text;
 
 namespace Altinn.AccessManagement.Persistence.Consent
 {

@@ -11,7 +11,6 @@ namespace Altinn.AccessManagement.Tests.Utilities;
 public class IdentifierUtilTest
 {
     // ── IsValidOrganizationNumber ─────────────────────────────────────────────
-
     [Fact]
     public void IsValidOrganizationNumber_KnownValid_ReturnsTrue()
     {
@@ -51,7 +50,6 @@ public class IdentifierUtilTest
     }
 
     // ── MaskSSN ──────────────────────────────────────────────────────────────
-
     [Fact]
     public void MaskSSN_ReturnsFirstSixDigitsPlusFiveAsterisks()
     {
@@ -59,7 +57,6 @@ public class IdentifierUtilTest
     }
 
     // ── GetIdentifierAsAttributeMatch — "organization" path ──────────────────
-
     [Fact]
     public void GetIdentifierAsAttributeMatch_OrgPath_ValidOrgNumber_ReturnsOrgMatch()
     {
@@ -93,7 +90,6 @@ public class IdentifierUtilTest
     }
 
     // ── GetIdentifierAsAttributeMatch — "person" path ────────────────────────
-
     [Fact]
     public void GetIdentifierAsAttributeMatch_PersonPath_ValidSsn_ReturnsPersonMatch()
     {
@@ -128,7 +124,6 @@ public class IdentifierUtilTest
     }
 
     // ── GetIdentifierAsAttributeMatch — numeric party-id path ────────────────
-
     [Fact]
     public void GetIdentifierAsAttributeMatch_ValidPartyId_ReturnsPartyMatch()
     {
@@ -155,7 +150,6 @@ public class IdentifierUtilTest
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
-
     private static DefaultHttpContext MakeContextWithHeader(string headerName, string headerValue)
     {
         var ctx = new DefaultHttpContext();

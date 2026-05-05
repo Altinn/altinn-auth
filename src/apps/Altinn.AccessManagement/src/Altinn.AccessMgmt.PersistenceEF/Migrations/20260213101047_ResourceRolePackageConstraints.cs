@@ -28,7 +28,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 table: "resource",
                 type: "text",
                 nullable: false,
-                defaultValue: "",
+                defaultValue: string.Empty,
                 oldClrType: typeof(string),
                 oldType: "text",
                 oldNullable: true);
@@ -39,7 +39,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 table: "package",
                 type: "text",
                 nullable: false,
-                defaultValue: "",
+                defaultValue: string.Empty,
                 oldClrType: typeof(string),
                 oldType: "text",
                 oldNullable: true);
@@ -50,7 +50,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 table: "package",
                 type: "text",
                 nullable: false,
-                defaultValue: "",
+                defaultValue: string.Empty,
                 oldClrType: typeof(string),
                 oldType: "text",
                 oldNullable: true);

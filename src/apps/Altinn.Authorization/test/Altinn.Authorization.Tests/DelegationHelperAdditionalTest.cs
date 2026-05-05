@@ -13,7 +13,6 @@ namespace Altinn.Platform.Authorization.IntegrationTests;
 public class DelegationHelperAdditionalTest
 {
     // --- TryGetCoveredByPartyIdFromMatch ---
-
     [Fact]
     public void TryGetCoveredByPartyIdFromMatch_ValidPartyId_ReturnsTrue()
     {
@@ -76,7 +75,6 @@ public class DelegationHelperAdditionalTest
     }
 
     // --- TryGetCoveredByUserIdFromMatch ---
-
     [Fact]
     public void TryGetCoveredByUserIdFromMatch_ValidUserId_ReturnsTrue()
     {
@@ -105,7 +103,6 @@ public class DelegationHelperAdditionalTest
     }
 
     // --- GetCoveredByFromMatch ---
-
     [Fact]
     public void GetCoveredByFromMatch_ValidUserId_ReturnsUserIdString()
     {
@@ -152,7 +149,6 @@ public class DelegationHelperAdditionalTest
     }
 
     // --- TryGetResourceFromAttributeMatch ---
-
     [Fact]
     public void TryGetResourceFromAttributeMatch_ValidOrgApp_ReturnsTrue()
     {
@@ -183,7 +179,6 @@ public class DelegationHelperAdditionalTest
     }
 
     // --- GetAttributeMatchKey ---
-
     [Fact]
     public void GetAttributeMatchKey_SortsByIdAndConcatenates()
     {
@@ -199,7 +194,6 @@ public class DelegationHelperAdditionalTest
     }
 
     // --- GetPolicyCount ---
-
     [Fact]
     public void GetPolicyCount_TwoDistinctPolicies_ReturnsTwo()
     {
@@ -229,7 +223,6 @@ public class DelegationHelperAdditionalTest
     }
 
     // --- GetRulesCountToDeleteFromRequestToDelete ---
-
     [Fact]
     public void GetRulesCountToDeleteFromRequestToDelete_ReturnsSum()
     {
@@ -245,7 +238,6 @@ public class DelegationHelperAdditionalTest
     }
 
     // --- TryGetDelegationParamsFromRule ---
-
     [Fact]
     public void TryGetDelegationParamsFromRule_ValidRule_ReturnsTrue()
     {
@@ -273,7 +265,6 @@ public class DelegationHelperAdditionalTest
     }
 
     // --- SetRuleType ---
-
     [Fact]
     public void SetRuleType_DirectlyDelegated_SetsCorrectType()
     {

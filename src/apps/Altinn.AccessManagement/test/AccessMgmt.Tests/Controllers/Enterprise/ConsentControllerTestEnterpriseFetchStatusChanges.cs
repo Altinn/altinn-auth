@@ -1,4 +1,10 @@
-﻿using AccessMgmt.Tests.Mocks;
+﻿using System;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
+using AccessMgmt.Tests.Mocks;
 using AccessMgmt.Tests.Moqdata;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Configuration;
@@ -34,12 +40,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.DataCollection;
 using Moq;
-using System;
-using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
 using static Altinn.AccessMgmt.Persistence.Services.Models.SystemUserClientConnectionDto;
 
 namespace AccessMgmt.Tests.Controllers.Enterprise
@@ -383,12 +383,12 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
 
                 // NOTE: Tie-breaker by ConsentEventId cannot be tested as ConsentEventId is not exposed in the DTO.
                 // Only ordering by ChangedDate descending is asserted here.
-                //else if (dateCompare == 0)
-                //{
+                // else if (dateCompare == 0)
+                // {
                 //    // Tie-breaker: ConsentEventId descending
                 //    Assert.True(string.CompareOrdinal(prev.ConsentEventId.ToString(), curr.ConsentEventId.ToString()) > 0,
                 //        $"ConsentEventId {prev.ConsentEventId} should be after {curr.ConsentEventId} when timestamps are equal.");
-                //}
+                // }
             }
         }
 
@@ -449,6 +449,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
                 await response.Content.ReadAsStringAsync(), _jsonOptions);
 
             Assert.NotNull(result.Links.Next);
+
             // pageSize is no longer a valid query param — it should not appear in the next link
             Assert.DoesNotContain("pageSize", result.Links.Next, StringComparison.OrdinalIgnoreCase);
         }

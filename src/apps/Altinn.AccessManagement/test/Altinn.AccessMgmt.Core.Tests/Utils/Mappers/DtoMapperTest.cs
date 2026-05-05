@@ -94,7 +94,6 @@ public class DtoMapperTest
     };
 
     // ── DtoMapper.Convert(Entity) ─────────────────────────────────────────────
-
     [Fact]
     public void Convert_Entity_MapsAllScalarFields()
     {
@@ -151,7 +150,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapper.ConvertCompactRole ──────────────────────────────────────────
-
     [Fact]
     public void ConvertCompactRole_NonNull_MapsFields()
     {
@@ -172,7 +170,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapper.ConvertCompactPackage ───────────────────────────────────────
-
     [Fact]
     public void ConvertCompactPackage_NonNull_MapsFields()
     {
@@ -198,7 +195,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapperAssignmentDto ─────────────────────────────────────────────────
-
     [Fact]
     public void Convert_Assignment_MapsFields()
     {
@@ -212,7 +208,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapperAssignmentPackageDto ─────────────────────────────────────────
-
     [Fact]
     public void Convert_AssignmentPackage_MapsFields()
     {
@@ -236,7 +231,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapper.Simplified ──────────────────────────────────────────────────
-
     [Fact]
     public void ToSimplifiedParty_Null_ReturnsNull()
     {
@@ -304,7 +298,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapperPermissionDto ────────────────────────────────────────────────
-
     [Fact]
     public void ConvertToPermission_Assignment_MapsFromAndToAndRole()
     {
@@ -340,7 +333,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapperDelegationDto ────────────────────────────────────────────────
-
     [Fact]
     public void ConvertToDelegationDto_Delegation_MapsIds()
     {
@@ -388,7 +380,6 @@ public class DtoMapperTest
     }
 
     // ── CreateDelegationResponseDtoMapper ─────────────────────────────────────
-
     [Fact]
     public void Convert_Delegation_MapsDelegationIdAndFromEntityId()
     {
@@ -410,7 +401,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapperRolePackage — Package ────────────────────────────────────────
-
     [Fact]
     public void Convert_Package_Null_ReturnsNull()
     {
@@ -454,7 +444,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapperRolePackage — Role ───────────────────────────────────────────
-
     [Fact]
     public void Convert_Role_Null_ReturnsNull()
     {
@@ -476,7 +465,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapperRolePackage — RolePackage ────────────────────────────────────
-
     [Fact]
     public void Convert_RolePackage_Null_ReturnsNull()
     {
@@ -497,7 +485,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapperRolePackage — Area ───────────────────────────────────────────
-
     [Fact]
     public void Convert_Area_Null_ReturnsNull()
     {
@@ -536,7 +523,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapperRolePackage — AreaGroup ──────────────────────────────────────
-
     [Fact]
     public void Convert_AreaGroup_Null_ReturnsNull()
     {
@@ -574,7 +560,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapperRolePackage — EntityType ─────────────────────────────────────
-
     [Fact]
     public void Convert_EntityType_Null_ReturnsNull()
     {
@@ -592,7 +577,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapperRolePackage — EntityVariant ──────────────────────────────────
-
     [Fact]
     public void Convert_EntityVariant_Null_ReturnsNull()
     {
@@ -631,7 +615,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapperRolePackage — Resource ───────────────────────────────────────
-
     [Fact]
     public void Convert_Resource_Null_ReturnsNull()
     {
@@ -648,7 +631,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapperAccessPackageDto ─────────────────────────────────────────────
-
     [Fact]
     public void Convert_PackageDto_MapsFields()
     {
@@ -662,7 +644,6 @@ public class DtoMapperTest
     }
 
     // ── DtoMapperAuthorizedPartyDto ───────────────────────────────────────────
-
     [Fact]
     public void ConvertToAuthorizedPartyDto_MapsScalars()
     {
@@ -718,7 +699,6 @@ public class DtoMapperTest
     }
 
     // ── RequestMapper — RequestAssignmentPackage ───────────────────────────────
-
     [Fact]
     public void Convert_RequestAssignmentPackage_MapsTypeAndStatus()
     {
@@ -765,7 +745,6 @@ public class DtoMapperTest
     }
 
     // ── RequestMapper — ConvertToPartyEntityDto ────────────────────────────────
-
     [Fact]
     public void ConvertToPartyEntityDto_MapsKnownTypeAndVariant()
     {

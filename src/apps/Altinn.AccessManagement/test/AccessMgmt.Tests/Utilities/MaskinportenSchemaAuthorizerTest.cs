@@ -28,7 +28,6 @@ public class MaskinportenSchemaAuthorizerTest
         new(new ClaimsIdentity(claims, "test"));
 
     // ── Admin scope short-circuit ─────────────────────────────────────────────
-
     [Fact]
     public void HasAdminScope_AuthorizesAnyScope()
     {
@@ -55,7 +54,6 @@ public class MaskinportenSchemaAuthorizerTest
     }
 
     // ── Empty / whitespace requested scope without admin → unauthorized ───────
-
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -68,7 +66,6 @@ public class MaskinportenSchemaAuthorizerTest
     }
 
     // ── Prefix matching ───────────────────────────────────────────────────────
-
     [Fact]
     public void RequestedScopeStartsWithConsumerPrefixColon_Authorizes()
     {

@@ -54,6 +54,7 @@ public class InternalConnectionsController(IConnectionService connectionService)
     }
 
     #region Assignments
+
     /// <summary>
     /// Creates "rettighetshaver" relation between an organization and systemuser.
     /// </summary>

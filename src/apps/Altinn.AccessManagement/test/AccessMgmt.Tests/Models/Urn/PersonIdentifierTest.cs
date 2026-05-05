@@ -14,7 +14,6 @@ namespace Altinn.AccessMgmt.Tests.Models.Urn;
 public class PersonIdentifierTest
 {
     // ── Length and content guards ─────────────────────────────────────────────
-
     [Theory]
     [InlineData("")]
     [InlineData("0123456789")]    // 10 digits
@@ -41,7 +40,6 @@ public class PersonIdentifierTest
     }
 
     // ── Modulo-11 algorithm ──────────────────────────────────────────────────
-
     [Theory]
     [InlineData("02013299997")]
     [InlineData("30108299939")]
@@ -71,7 +69,6 @@ public class PersonIdentifierTest
     }
 
     // ── Equality ──────────────────────────────────────────────────────────────
-
     [Fact]
     public void Equality_TwoIdentifiersWithSameValue_AreEqual()
     {
@@ -109,7 +106,6 @@ public class PersonIdentifierTest
     }
 
     // ── JSON round-trip ───────────────────────────────────────────────────────
-
     [Fact]
     public void Json_RoundTrip_PreservesValue()
     {
@@ -128,7 +124,6 @@ public class PersonIdentifierTest
     }
 
     // ── TryFormat ─────────────────────────────────────────────────────────────
-
     [Fact]
     public void TryFormat_BufferTooSmall_ReturnsFalse()
     {

@@ -7,9 +7,9 @@ using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using AuditDefaults = Altinn.AccessMgmt.Persistence.Data.AuditDefaults;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using AuditDefaults = Altinn.AccessMgmt.Persistence.Data.AuditDefaults;
 
 // Audit:
 //   Pattern: A-isolated
@@ -23,7 +23,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 //          this could technically share a fixture, but because the constructor
 //          builds its own AppDbContext instance it is simpler to keep as
 //          IClassFixture<ApiFixture> (Pattern A-isolated).
-
 namespace AccessMgmt.Tests.Services;
 
 /// <summary>

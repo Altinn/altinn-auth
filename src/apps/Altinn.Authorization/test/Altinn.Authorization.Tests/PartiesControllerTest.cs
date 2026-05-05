@@ -2,8 +2,8 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Altinn.Platform.Authorization.IntegrationTests.Fixtures;
-using Altinn.Platform.Register.Models;
 using Altinn.Platform.Authorization.IntegrationTests.Util;
+using Altinn.Platform.Register.Models;
 
 namespace Altinn.Platform.Authorization.IntegrationTests
 {
@@ -164,6 +164,5 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             // Assert
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
-
     }
 }

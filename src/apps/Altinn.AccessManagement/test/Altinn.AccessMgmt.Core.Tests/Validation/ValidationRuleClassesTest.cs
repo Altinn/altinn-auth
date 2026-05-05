@@ -20,7 +20,6 @@ public class ValidationRuleClassesTest
     private static bool Passes(RuleExpression rule) => rule() is null;
 
     // ── EntityValidation.ReadOp (public) ─────────────────────────────────────
-
     [Fact]
     public void ReadOp_PartyMatchesFrom_ReturnsNull()
     {
@@ -57,7 +56,6 @@ public class ValidationRuleClassesTest
     }
 
     // ── EntityValidation.EntityExists (internal) ─────────────────────────────
-
     [Fact]
     public void EntityExists_NonNullEntity_ReturnsNull()
     {
@@ -72,7 +70,6 @@ public class ValidationRuleClassesTest
     }
 
     // ── EntityValidation.FromExists / ToExists (internal) ────────────────────
-
     [Fact]
     public void FromExists_NonNullEntity_ReturnsNull()
     {
@@ -100,7 +97,6 @@ public class ValidationRuleClassesTest
     }
 
     // ── EntityValidation.FromIsNotTo (internal) ───────────────────────────────
-
     [Fact]
     public void FromIsNotTo_DifferentGuids_ReturnsNull()
     {
@@ -115,7 +111,6 @@ public class ValidationRuleClassesTest
     }
 
     // ── EntityTypeValidation.IsOfType (internal) ─────────────────────────────
-
     [Fact]
     public void IsOfType_EntityTypeInAllowedList_ReturnsNull()
     {
@@ -138,7 +133,6 @@ public class ValidationRuleClassesTest
     }
 
     // ── EntityTypeValidation.FromIsOfType / ToIsOfType (internal) ────────────
-
     [Fact]
     public void FromIsOfType_MatchingType_ReturnsNull()
     {
@@ -170,7 +164,6 @@ public class ValidationRuleClassesTest
     }
 
     // ── RoleValidation.RoleExists (internal) ─────────────────────────────────
-
     [Fact]
     public void RoleExists_NonNullRole_ReturnsNull()
     {
@@ -185,7 +178,6 @@ public class ValidationRuleClassesTest
     }
 
     // ── AssignmentPackageValidation.HasAssignedPackages (internal) ────────────
-
     [Fact]
     public void HasAssignedPackages_EmptyCollection_ReturnsNull()
     {
@@ -206,7 +198,6 @@ public class ValidationRuleClassesTest
     }
 
     // ── DelegationValidation.HasDelegationsAssigned (internal) ───────────────
-
     [Fact]
     public void HasDelegationsAssigned_EmptyCollection_ReturnsNull()
     {
@@ -227,7 +218,6 @@ public class ValidationRuleClassesTest
     }
 
     // ── PackageValidation.PackageExists (internal) ────────────────────────────
-
     [Fact]
     public void PackageExists_NonNullPackage_ReturnsNull()
     {

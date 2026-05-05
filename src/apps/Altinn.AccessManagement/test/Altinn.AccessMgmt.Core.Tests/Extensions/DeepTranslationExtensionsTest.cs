@@ -51,7 +51,6 @@ public class DeepTranslationExtensionsTest
     }
 
     // ── Null short-circuits (parametric across the public surface) ────────────
-
     [Fact]
     public async Task TranslateDeepAsync_Package_Null_NoServiceCalls()
     {
@@ -117,7 +116,6 @@ public class DeepTranslationExtensionsTest
     }
 
     // ── Topology: PackageDto recurses into Area, Type, Resources ──────────────
-
     [Fact]
     public async Task TranslateDeepAsync_Package_NoNested_TranslatesPackageOnly()
     {
@@ -180,7 +178,6 @@ public class DeepTranslationExtensionsTest
     }
 
     // ── Topology: AreaDto cycle avoidance — does NOT re-translate Package.Area ──
-
     [Fact]
     public async Task TranslateDeepAsync_Area_WithNestedPackages_DoesNotReRecurseIntoPackagesArea()
     {
@@ -224,7 +221,6 @@ public class DeepTranslationExtensionsTest
     }
 
     // ── Provider→Type (ProviderTypeDto leaf) is shallow; Type→Provider is deep ─
-
     [Fact]
     public async Task TranslateDeepAsync_Provider_WithType_TranslatesProviderTypeShallow()
     {
@@ -278,7 +274,6 @@ public class DeepTranslationExtensionsTest
     }
 
     // ── RoleDto recurses into Provider (deep) ────────────────────────────────
-
     [Fact]
     public async Task TranslateDeepAsync_Role_WithProvider_RecursesIntoProvider()
     {
@@ -296,7 +291,6 @@ public class DeepTranslationExtensionsTest
     }
 
     // ── Collection variants ───────────────────────────────────────────────────
-
     [Fact]
     public async Task TranslateDeepAsync_PackageCollection_TranslatesEachItem()
     {

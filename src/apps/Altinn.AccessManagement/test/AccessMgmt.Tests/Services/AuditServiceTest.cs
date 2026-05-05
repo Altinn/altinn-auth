@@ -53,7 +53,8 @@ public class AuditServiceTest
         var (middleware, auditSvc) = MakeSut();
         var ctx = MakeContext();
         var nextCalled = false;
-        RequestDelegate next = _ => { nextCalled = true; return Task.CompletedTask; };
+        RequestDelegate next = _ => { nextCalled = true;
+            return Task.CompletedTask; };
 
         await middleware.InvokeAsync(ctx, next);
 
@@ -67,7 +68,8 @@ public class AuditServiceTest
         var (middleware, auditSvc) = MakeSut();
         var ctx = MakeContext(endpoint: MakeEndpoint());
         var nextCalled = false;
-        RequestDelegate next = _ => { nextCalled = true; return Task.CompletedTask; };
+        RequestDelegate next = _ => { nextCalled = true;
+            return Task.CompletedTask; };
 
         await middleware.InvokeAsync(ctx, next);
 
@@ -115,7 +117,8 @@ public class AuditServiceTest
         auditSvc.Setup(a => a.Set(It.IsAny<ChangeRequestOptions>()))
                 .Callback<ChangeRequestOptions>(o => capturedOptions = o);
         var nextCalled = false;
-        RequestDelegate next = _ => { nextCalled = true; return Task.CompletedTask; };
+        RequestDelegate next = _ => { nextCalled = true;
+            return Task.CompletedTask; };
 
         await middleware.InvokeAsync(ctx, next);
 

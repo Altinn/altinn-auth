@@ -12,13 +12,11 @@ namespace Altinn.AccessMgmt.Core.Tests.Validation;
 public class ResourceValidationTest
 {
     // ── helpers ──────────────────────────────────────────────────────────────
-
     private static bool Fails(RuleExpression rule) => rule() is not null;
 
     private static bool Passes(RuleExpression rule) => rule() is null;
 
     // ── ResourceExists ───────────────────────────────────────────────────────
-
     [Fact]
     public void ResourceExists_NonNullResource_Passes()
     {
@@ -33,7 +31,6 @@ public class ResourceValidationTest
     }
 
     // ── AuthorizeResourceAssignment ──────────────────────────────────────────
-
     [Fact]
     public void AuthorizeResourceAssignment_AllResultTrue_Passes()
     {
@@ -57,7 +54,6 @@ public class ResourceValidationTest
     }
 
     // ── PackageIsAssignableToRecipient ───────────────────────────────────────
-
     [Fact]
     public void PackageIsAssignableToRecipient_OrgWithMainAdminPackage_Fails()
     {
@@ -83,7 +79,6 @@ public class ResourceValidationTest
     }
 
     // ── PackageUrnLookup ─────────────────────────────────────────────────────
-
     [Fact]
     public void PackageUrnLookup_EmptyLookupResult_Fails()
     {
@@ -109,7 +104,6 @@ public class ResourceValidationTest
     }
 
     // ── HasAssignedResources ─────────────────────────────────────────────────
-
     [Fact]
     public void HasAssignedResources_EmptyList_Passes()
     {
@@ -124,7 +118,6 @@ public class ResourceValidationTest
     }
 
     // ── ResourceTypeIs ───────────────────────────────────────────────────────
-
     [Fact]
     public void ResourceTypeIs_TypeNameMatches_Passes()
     {
@@ -146,7 +139,6 @@ public class ResourceValidationTest
     }
 
     // ── PolicyClearFailed ────────────────────────────────────────────────────
-
     [Fact]
     public void PolicyClearFailed_VersionNotNull_Passes()
     {
@@ -160,7 +152,6 @@ public class ResourceValidationTest
     }
 
     // ── PolicyCascadeClearFailed ─────────────────────────────────────────────
-
     [Fact]
     public void PolicyCascadeClearFailed_VersionNotNull_Passes()
     {

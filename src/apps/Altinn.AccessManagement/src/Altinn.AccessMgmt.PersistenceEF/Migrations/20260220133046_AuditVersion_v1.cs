@@ -17,7 +17,6 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-
         }
     }
 }

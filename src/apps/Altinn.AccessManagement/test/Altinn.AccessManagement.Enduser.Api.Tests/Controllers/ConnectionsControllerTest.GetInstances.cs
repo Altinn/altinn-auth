@@ -221,6 +221,7 @@ public partial class ConnectionsControllerTest
 
             // All returned instances should be for SiriusSkattemelding only
             Assert.All(result.Items, i => Assert.Equal("app_skd_sirius-skattemelding-v1", i.Resource.RefId));
+
             // Should not contain the MattilsynetBakeryService instance
             Assert.DoesNotContain(result.Items, i => i.Resource.RefId == "app_mat_mattilsynet-baker-konditorvare");
         }

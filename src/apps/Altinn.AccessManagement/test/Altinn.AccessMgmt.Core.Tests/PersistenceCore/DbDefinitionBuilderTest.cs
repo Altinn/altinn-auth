@@ -8,16 +8,16 @@ namespace Altinn.AccessMgmt.Core.Tests.PersistenceCore;
 public class DbDefinitionBuilderTest
 {
     // ── test model ───────────────────────────────────────────────────────────
-
     private class SampleModel
     {
         public Guid Id { get; set; }
+
         public string Name { get; set; }
+
         public int Count { get; set; }
     }
 
     // ── Build() ──────────────────────────────────────────────────────────────
-
     [Fact]
     public void Build_DefaultBuilder_ReturnsDefinitionWithCorrectModelType()
     {
@@ -43,7 +43,6 @@ public class DbDefinitionBuilderTest
     }
 
     // ── SetVersion ───────────────────────────────────────────────────────────
-
     [Fact]
     public void SetVersion_CustomVersion_IsReflectedInDefinition()
     {
@@ -55,7 +54,6 @@ public class DbDefinitionBuilderTest
     }
 
     // ── SetType ──────────────────────────────────────────────────────────────
-
     [Fact]
     public void SetType_View_IsReflectedInDefinition()
     {
@@ -67,7 +65,6 @@ public class DbDefinitionBuilderTest
     }
 
     // ── SetQuery ─────────────────────────────────────────────────────────────
-
     [Fact]
     public void SetQuery_WithQuery_IsReflectedInDefinition()
     {
@@ -93,7 +90,6 @@ public class DbDefinitionBuilderTest
     }
 
     // ── EnableTranslation ────────────────────────────────────────────────────
-
     [Fact]
     public void EnableTranslation_Default_DisabledByDefault()
     {
@@ -122,7 +118,6 @@ public class DbDefinitionBuilderTest
     }
 
     // ── EnableAudit ──────────────────────────────────────────────────────────
-
     [Fact]
     public void EnableAudit_True_IsReflectedInDefinition()
     {
@@ -134,7 +129,6 @@ public class DbDefinitionBuilderTest
     }
 
     // ── RegisterProperty ─────────────────────────────────────────────────────
-
     [Fact]
     public void RegisterProperty_SinglePrimitive_AddsOneProperty()
     {
@@ -183,7 +177,6 @@ public class DbDefinitionBuilderTest
     }
 
     // ── AddManualDependency ───────────────────────────────────────────────────
-
     [Fact]
     public void AddManualDependency_AddsTypeToManualDependencies()
     {
@@ -195,7 +188,6 @@ public class DbDefinitionBuilderTest
     }
 
     // ── fluent chaining returns same builder ─────────────────────────────────
-
     [Fact]
     public void FluentChaining_MultipleOperations_AllApplied()
     {

@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 
 namespace Altinn.AccessManagement.Core.Models.ResourceRegistry
 {

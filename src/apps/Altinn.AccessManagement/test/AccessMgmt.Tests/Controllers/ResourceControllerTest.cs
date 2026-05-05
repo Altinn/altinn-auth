@@ -27,7 +27,6 @@ using Microsoft.Extensions.Options;
 // - IResourceMetadataRepository is mocked, so the real Postgres DB created by
 //   ApiFixture is unused by these tests. The container overhead is acceptable
 //   and already paid by other AccessMgmt.Tests consumers.
-
 namespace Altinn.AccessManagement.Tests.Controllers
 {
     /// <summary>

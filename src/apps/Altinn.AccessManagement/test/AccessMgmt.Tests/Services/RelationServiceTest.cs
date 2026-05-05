@@ -300,6 +300,7 @@ public class RelationServiceTest
     public async Task GetResourcePermissionsFromOthers_NullPackageOrResource_IsExcluded()
     {
         var (svc, _, fullRepo) = MakeSut();
+
         // resource non-null but package null → excluded by `r.Resource is { } && r.Package is { }`
         var relation = FullRelation(Party(), Party(), "Direct", package: null, resource: Resource());
         SetupFullGetExtended(fullRepo, Resp(relation));

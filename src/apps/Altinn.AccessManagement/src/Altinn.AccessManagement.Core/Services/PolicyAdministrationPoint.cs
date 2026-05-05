@@ -1072,7 +1072,5 @@ namespace Altinn.AccessManagement.Core.Services
 
             return currentRules;
         }
-
-
     }
 }

@@ -6,13 +6,13 @@ using System.Xml;
 using Altinn.AccessManagement.Api.Enduser.Controllers;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
-using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
@@ -127,7 +127,6 @@ public partial class ConnectionsControllerTest
         /// - Each rule targets the correct org/app resource attributes
         /// - Each rule contains exactly one action
         /// </summary>
-
         [Fact(Skip = "Failing with 500 error during delegation - requires investigation")]
         public async Task AddInstanceRights_AsMalinForDumboToKaos_WithValidRightKeys_ReturnsCreated()
         {

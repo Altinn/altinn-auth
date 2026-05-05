@@ -262,7 +262,6 @@ public class ConsentMigrationSyncServiceTests
     }
 
     // ADD THESE 12 NEW TESTS to the existing ConsentMigrationSyncServiceTests class
-
     [Fact]
     public async Task ProcessBatch_ParallelProcessing_ProcessesConsentsInParallel()
     {
@@ -411,6 +410,7 @@ public class ConsentMigrationSyncServiceTests
           .Returns(async () =>
           {
               await Task.Delay(1);
+
               // Randomly succeed or fail
               var success = Guid.NewGuid().GetHashCode() % 2 == 0;
               if (success)
@@ -530,6 +530,7 @@ public class ConsentMigrationSyncServiceTests
           .Returns(() =>
           {
               var count = Interlocked.Increment(ref callCount);
+
               // Every 3rd consent fails
               if (count % 3 == 0)
               {
@@ -567,6 +568,7 @@ public class ConsentMigrationSyncServiceTests
           .Returns(() =>
           {
               var count = Interlocked.Increment(ref callCount);
+
               // Throw exception on every 3rd call
               if (count % 3 == 0)
               {

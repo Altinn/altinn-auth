@@ -1,4 +1,8 @@
-﻿using AccessMgmt.Tests.Mocks;
+﻿using System.Net;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using AccessMgmt.Tests.Mocks;
 using AccessMgmt.Tests.Moqdata;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Errors;
@@ -6,14 +10,14 @@ using Altinn.AccessManagement.Core.Models.Party;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Tests.Fixtures;
-using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Util;
+using Altinn.AccessManagement.TestUtils.Fixtures;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.Authorization.Api.Contracts.Consent;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.ProblemDetails;
-using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
@@ -22,10 +26,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Moq;
-using System.Net;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
 
 // Migrated from WebApplicationFixture to LegacyApiFixture as part of
 // sub-step 16.4a (Phase 2.2). The consent flow goes through the Dapper-backed

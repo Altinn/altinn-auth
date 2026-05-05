@@ -1,13 +1,13 @@
-﻿using Altinn.Authorization.ABAC.Utils;
+﻿using System.Text;
+using System.Text.Json;
+using System.Xml;
+using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Platform.Authorization.Models.EventLog;
 using Altinn.Platform.Storage.Interface.Models;
 using Authorization.Platform.Authorization.Models;
 using Newtonsoft.Json;
-using System.Text;
-using System.Text.Json;
-using System.Xml;
 
 namespace Altinn.Platform.Authorization.IntegrationTests.Util
 {

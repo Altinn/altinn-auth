@@ -9,10 +9,10 @@ using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Data;
-using Altinn.AccessManagement.TestUtils.Fixtures;
-using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Utils;
+using Altinn.AccessManagement.TestUtils.Fixtures;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
@@ -28,7 +28,6 @@ using Microsoft.Extensions.Options;
 // `WithPDPMock` extension point was dead code), so DI is registered once in the
 // constructor; per-test HttpClients are built via fixture.CreateClient().
 // See: overhaul part-1 step 16
-
 namespace Altinn.AccessManagement.Tests.Controllers;
 
 public class AppsInstanceDelegationControllerTest : IClassFixture<ApiFixture>

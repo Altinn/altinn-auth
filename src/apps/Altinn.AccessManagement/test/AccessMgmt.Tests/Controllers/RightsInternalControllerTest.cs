@@ -29,7 +29,6 @@ using Microsoft.Extensions.Options;
 // on top of the default PdpPermitMock are relocated to the sibling class
 // RightsInternalControllerWithPdpMockTest (recipe rule 6: one mutually-exclusive DI
 // configuration per class). See docs/testing/TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
-
 namespace Altinn.AccessManagement.Tests.Controllers
 {
     /// <summary>

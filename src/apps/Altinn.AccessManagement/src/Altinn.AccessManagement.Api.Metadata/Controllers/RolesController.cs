@@ -128,7 +128,6 @@ namespace Altinn.AccessManagement.Api.Metadata.Controllers
                 this.GetLanguageCode(),
                 this.AllowPartialTranslation());
 
-
             return Ok(translated);
         }
 

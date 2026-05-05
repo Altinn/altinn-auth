@@ -14,7 +14,6 @@ public class DtoMapperEntityVariantTest
     private static readonly Guid OrganizationTypeId = new("8c216e2f-afdd-4234-9ba2-691c727bb33d");
 
     // ── Convert(EntityVariant) — explicit Type ────────────────────────────────
-
     [Fact]
     public void Convert_EntityVariant_WithExplicitType_MapsAllFields()
     {
@@ -55,13 +54,13 @@ public class DtoMapperEntityVariantTest
 
         dto.Id.Should().Be(variant.Id);
         dto.TypeId.Should().Be(OrganizationTypeId);
+
         // Type must be populated via EntityTypeConstants fallback
         dto.Type.Should().NotBeNull();
         dto.Type.Name.Should().Be("Organisasjon");
     }
 
     // ── Convert(EntityType) ───────────────────────────────────────────────────
-
     [Fact]
     public void Convert_EntityType_MapsIdNameAndProviderId()
     {

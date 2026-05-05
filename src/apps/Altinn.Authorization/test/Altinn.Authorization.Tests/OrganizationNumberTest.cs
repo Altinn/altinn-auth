@@ -6,7 +6,6 @@ namespace Altinn.Platform.Authorization.Tests;
 public class OrganizationNumberTest
 {
     // --- Parse(string) ---
-
     [Fact]
     public void Parse_ValidNineDigitString_ReturnsOrganizationNumber()
     {
@@ -21,7 +20,6 @@ public class OrganizationNumberTest
     }
 
     // --- Parse(ReadOnlySpan<char>) ---
-
     [Fact]
     public void Parse_ValidSpan_ReturnsOrganizationNumber()
     {
@@ -37,7 +35,6 @@ public class OrganizationNumberTest
     }
 
     // --- TryParse ---
-
     [Fact]
     public void TryParse_ValidString_ReturnsTrueAndResult()
     {
@@ -88,7 +85,6 @@ public class OrganizationNumberTest
     }
 
     // --- CreateUnchecked ---
-
     [Fact]
     public void CreateUnchecked_ReturnsInstanceWithValue()
     {
@@ -97,7 +93,6 @@ public class OrganizationNumberTest
     }
 
     // --- ToString overloads ---
-
     [Fact]
     public void ToString_WithFormat_ReturnsValue()
     {
@@ -113,7 +108,6 @@ public class OrganizationNumberTest
     }
 
     // --- TryFormat ---
-
     [Fact]
     public void TryFormat_SufficientBuffer_WritesValueAndReturnsTrue()
     {
@@ -138,7 +132,6 @@ public class OrganizationNumberTest
     }
 
     // --- JSON serialization ---
-
     [Fact]
     public void JsonRoundTrip_ValidOrgNumber_PreservesValue()
     {
@@ -156,7 +149,6 @@ public class OrganizationNumberTest
     }
 
     // --- GetExamples ---
-
     [Fact]
     public void GetExamples_ReturnsNonEmptyCollection()
     {

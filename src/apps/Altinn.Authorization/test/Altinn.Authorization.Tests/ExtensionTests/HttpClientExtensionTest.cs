@@ -6,7 +6,6 @@ namespace Altinn.Platform.Authorization.Tests.ExtensionTests;
 public class HttpClientExtensionTest
 {
     // --- PostAsync ---
-
     [Fact]
     public async Task PostAsync_WithNoTokens_SendsRequestWithoutAuthHeaders()
     {
@@ -68,7 +67,6 @@ public class HttpClientExtensionTest
     }
 
     // --- GetAsync ---
-
     [Fact]
     public async Task GetAsync_WithNoTokens_SendsRequestWithoutAuthHeaders()
     {

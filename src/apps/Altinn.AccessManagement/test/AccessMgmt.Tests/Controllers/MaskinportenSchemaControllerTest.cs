@@ -40,7 +40,6 @@ using Xunit;
 // Per-test HttpContextAccessor route-value customization is supported without
 // rebuilding DI by using a shared MutableHttpContextAccessor (AsyncLocal-based override).
 // See: overhaul part-1 step 16
-
 namespace Altinn.AccessManagement.Tests.Controllers
 {
     /// <summary>
@@ -170,7 +169,6 @@ namespace Altinn.AccessManagement.Tests.Controllers
             repo.MetadataChanges = new Dictionary<string, List<DelegationChange>>();
             return repo;
         }
-
 
         /// <summary>
         /// Test case: GetOfferedMaskinportenSchemaDelegations returns a list of delegations offeredby has given coveredby

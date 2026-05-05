@@ -8,11 +8,11 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
-using Altinn.AccessManagement.TestUtils.Fixtures;
-using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.Tests.Utils;
+using Altinn.AccessManagement.TestUtils.Fixtures;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
@@ -28,7 +28,6 @@ using Microsoft.Extensions.Options;
 // The tests mock the delegation repositories, the PDP and the policy retrieval/factory, so
 // the Postgres DB that ApiFixture provisions is unused by this class.
 // See: overhaul part-1 step 16
-
 namespace Altinn.AccessManagement.Tests.Controllers
 {
     /// <summary>
@@ -1626,6 +1625,5 @@ namespace Altinn.AccessManagement.Tests.Controllers
             delegations = TestDataUtil.GetAdminDelegations(supplierOrg, consumerOrg, resourceIds);
             return delegations;
         }
-
     }
 }

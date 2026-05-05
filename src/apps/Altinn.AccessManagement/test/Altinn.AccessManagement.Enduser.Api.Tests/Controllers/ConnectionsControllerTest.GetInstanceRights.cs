@@ -204,6 +204,7 @@ public partial class ConnectionsControllerTest
 
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         }
+
         /// <summary>
         /// Sends a malformed instance URN (missing the required prefix).
         /// Expects 400 BadRequest with a validation error.

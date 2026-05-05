@@ -12,7 +12,6 @@ public class PersistenceCoreFuzzySearchTest
         => new SearchPropertyBuilder<Item>().Add(x => x.Name, 1.0, level);
 
     // ── FuzzySearch.PerformFuzzySearch ─────────────────────────────────────
-
     [Fact]
     public void PerformFuzzySearch_EmptyTerm_ReturnsEmpty()
     {
@@ -120,7 +119,6 @@ public class PersistenceCoreFuzzySearchTest
     }
 
     // ── SearchPropertyBuilder<T> ────────────────────────────────────────────
-
     [Fact]
     public void SearchPropertyBuilder_Add_RegistersProperty()
     {

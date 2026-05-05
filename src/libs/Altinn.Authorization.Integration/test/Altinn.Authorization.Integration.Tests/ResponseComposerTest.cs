@@ -11,7 +11,6 @@ namespace Altinn.Authorization.Integration.Tests;
 public class ResponseComposerTest
 {
     // ── Handle ────────────────────────────────────────────────────────────────
-
     [Fact]
     public void Handle_SuccessResponse_IsSuccessfulTrueAndStatusCodeSet()
     {
@@ -49,7 +48,6 @@ public class ResponseComposerTest
     }
 
     // ── DeserializeResponseOnSuccess ──────────────────────────────────────────
-
     [Fact]
     public void DeserializeResponseOnSuccess_SuccessWithJsonContent_DeserializesContent()
     {
@@ -81,7 +79,6 @@ public class ResponseComposerTest
     }
 
     // ── DeserializeProblemDetailsOnUnsuccessStatusCode ────────────────────────
-
     [Fact]
     public void DeserializeProblemDetailsOnUnsuccessStatusCode_FailedWithValidJson_SetsProblemDetails()
     {
@@ -129,7 +126,6 @@ public class ResponseComposerTest
     }
 
     // ── DeserilizeProblemDetailsOnStatusCode ─────────────────────────────────
-
     [Fact]
     public void DeserilizeProblemDetailsOnStatusCode_MatchingStatus_SetsProblemDetails()
     {
@@ -162,7 +158,6 @@ public class ResponseComposerTest
     }
 
     // ── SetBodyAsStringResultIfSuccesful ──────────────────────────────────────
-
     [Fact]
     public void SetBodyAsStringResultIfSuccesful_Success_SetsContentToBody()
     {
@@ -194,7 +189,6 @@ public class ResponseComposerTest
     }
 
     // ── ConfigureResultIfSuccessful ───────────────────────────────────────────
-
     [Fact]
     public void ConfigureResultIfSuccessful_Success_InvokesCallback()
     {

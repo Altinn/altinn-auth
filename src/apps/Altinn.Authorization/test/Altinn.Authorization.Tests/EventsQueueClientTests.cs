@@ -105,7 +105,7 @@ namespace Altinn.Authorization.Tests
             Assert.True(receipt.Success);
             Assert.NotNull(sentData);
 
-            //var bytes = sentData.ToArray();
+            // var bytes = sentData.ToArray();
 
             // Decompress the payload (skip the first two bytes for version header)
             using var ms = new MemoryStream(sentData, 2, sentData.Length - 2);

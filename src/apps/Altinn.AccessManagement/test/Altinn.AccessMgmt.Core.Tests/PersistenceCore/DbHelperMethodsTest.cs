@@ -6,7 +6,6 @@ namespace Altinn.AccessMgmt.Core.Tests.PersistenceCore;
 public class DbHelperMethodsTest
 {
     // ── GetPostgresType(Type) ─────────────────────────────────────────────────
-
     [Fact]
     public void GetPostgresType_String_ReturnsText()
         => DbHelperMethods.GetPostgresType(typeof(string)).Should().Be(NpgsqlDbType.Text);
@@ -67,7 +66,6 @@ public class DbHelperMethodsTest
     }
 
     // ── GetPostgresType(PropertyInfo) ─────────────────────────────────────────
-
     [Fact]
     public void GetPostgresType_PropertyInfo_String_ReturnsText()
     {
@@ -85,6 +83,7 @@ public class DbHelperMethodsTest
     private class SampleModel
     {
         public Guid Id { get; set; }
+
         public string Name { get; set; }
     }
 }

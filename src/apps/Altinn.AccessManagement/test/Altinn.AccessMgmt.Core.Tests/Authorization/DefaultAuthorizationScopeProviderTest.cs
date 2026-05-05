@@ -1,6 +1,6 @@
+using System.Security.Claims;
 using Altinn.AccessMgmt.Core.Authorization;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 
 // See: overhaul part-2 step 13
 namespace Altinn.AccessMgmt.Core.Tests.Authorization;

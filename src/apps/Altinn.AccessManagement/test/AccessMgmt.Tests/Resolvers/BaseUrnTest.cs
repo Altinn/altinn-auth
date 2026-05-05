@@ -22,7 +22,6 @@ public class BaseUrnTest
         => BaseUrn.Altinn.String().Should().Be("urn:altinn");
 
     // ── Person ────────────────────────────────────────────────────────────────
-
     [Fact]
     public void Person_String_IsLowercase()
         => BaseUrn.Altinn.Person.String().Should().Be("urn:altinn:person");
@@ -45,7 +44,6 @@ public class BaseUrnTest
     }
 
     // ── Organization ──────────────────────────────────────────────────────────
-
     [Fact]
     public void Organization_String_IsLowercase()
         => BaseUrn.Altinn.Organization.String().Should().Be("urn:altinn:organization");
@@ -60,7 +58,6 @@ public class BaseUrnTest
     }
 
     // ── EnterpriseUser ────────────────────────────────────────────────────────
-
     [Fact]
     public void EnterpriseUser_String_IsLowercase()
         => BaseUrn.Altinn.EnterpriseUser.String().Should().Be("urn:altinn:enterpriseuser");
@@ -81,7 +78,6 @@ public class BaseUrnTest
     }
 
     // ── Resource (mixed: ResourceRegistryId/AppOwner/AppId are hardcoded) ────
-
     [Fact]
     public void Resource_HardcodedConstants_PinAll()
     {
@@ -99,7 +95,6 @@ public class BaseUrnTest
     }
 
     // ── InternalIds collection — pin set membership ──────────────────────────
-
     [Fact]
     public void InternalIds_ContainsExpectedAttributeIdentifiers()
     {

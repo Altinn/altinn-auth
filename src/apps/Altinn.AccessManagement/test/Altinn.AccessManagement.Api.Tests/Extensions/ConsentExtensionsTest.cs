@@ -11,7 +11,6 @@ namespace Altinn.AccessManagement.Api.Tests.Extensions;
 public class ConsentExtensionsTest
 {
     // ── ConsentResourceAttributeExtensions ──────────────────────────────────
-
     [Fact]
     public void ToConsentResourceAttributeExternal_MapsTypeAndValue()
     {
@@ -24,7 +23,6 @@ public class ConsentExtensionsTest
     }
 
     // ── ConsentRightExtensions ───────────────────────────────────────────────
-
     [Fact]
     public void ToConsentRightExternal_EmptyResourceList_MapsToEmptyList()
     {
@@ -58,7 +56,6 @@ public class ConsentExtensionsTest
     }
 
     // ── ConsentContextExternalExtensions ────────────────────────────────────
-
     [Fact]
     public void ToConsentContext_MapsLanguage()
     {
@@ -70,7 +67,6 @@ public class ConsentExtensionsTest
     }
 
     // ── ConsentRequestEventExtensions ───────────────────────────────────────
-
     [Fact]
     public void ToConsentRequestEventExternal_PerformedByOrganizationId_MapsToOrganizationIdUrn()
     {
@@ -146,7 +142,6 @@ public class ConsentExtensionsTest
     }
 
     // ── ConsentRequestDetailsExtensions ─────────────────────────────────────
-
     [Fact]
     public void ToConsentRequestDetailsBFF_HappyPath_MapsAllScalars()
     {
@@ -238,7 +233,6 @@ public class ConsentExtensionsTest
     }
 
     // ── UserUtil ─────────────────────────────────────────────────────────────
-
     [Fact]
     public void GetUserUuid_NullPrincipal_ReturnsNull()
     {
@@ -268,7 +262,6 @@ public class ConsentExtensionsTest
     }
 
     // ── PagingInput ──────────────────────────────────────────────────────────
-
     [Fact]
     public void ToOpaqueToken_RoundTrip_RestoresValues()
     {
@@ -302,7 +295,6 @@ public class ConsentExtensionsTest
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
-
     private static ConsentRequestDetails BuildMinimalDetails(Guid toUuid, Guid fromUuid) =>
         new()
         {

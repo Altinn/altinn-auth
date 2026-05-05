@@ -402,7 +402,6 @@ public class RightsInternalDelegateAndRevokeInstanceDelegation : IClassFixture<A
             ResourceId = resourceId,
             InstanceId = InstanceId,
             Actions = new List<string> { "read", "subscribe" }
-
         };
 
         var content = new StringContent(

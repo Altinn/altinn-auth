@@ -10,26 +10,26 @@ namespace Altinn.AccessMgmt.Core.Tests.PersistenceCore;
 public class DbConverterTest
 {
     // ── test models ───────────────────────────────────────────────────────────
-
     private sealed class FlatModel
     {
         public Guid Id { get; set; }
+
         public string Name { get; set; }
+
         public int Count { get; set; }
     }
 
     private sealed class NullableModel
     {
         public Guid? OptionalId { get; set; }
+
         public string Label { get; set; }
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
-
     private static IDataReader MakeReader(DataTable table) => table.CreateDataReader();
 
     // ── tests ─────────────────────────────────────────────────────────────────
-
     [Fact]
     public void ConvertToResult_EmptyReader_ReturnsEmptyData()
     {

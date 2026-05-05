@@ -101,7 +101,6 @@ public class AuditMiddleware : IMiddleware
                         appid = $"app_{jwtSecurityToken.Issuer}_{appidentifier.Value}";
                     }
                 }
-
             }
         }
         catch (Exception)

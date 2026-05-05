@@ -9,7 +9,6 @@ namespace Altinn.Platform.Authorization.Tests;
 public class PolicyHelperTest
 {
     // --- GetAltinnAppsPolicyPath ---
-
     [Fact]
     public void GetAltinnAppsPolicyPath_ValidInput_ReturnsExpectedPath()
     {
@@ -26,11 +25,10 @@ public class PolicyHelperTest
     [Fact]
     public void GetAltinnAppsPolicyPath_EmptyApp_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() => PolicyHelper.GetAltinnAppsPolicyPath("ttd", ""));
+        Assert.Throws<ArgumentException>(() => PolicyHelper.GetAltinnAppsPolicyPath("ttd", string.Empty));
     }
 
     // --- GetAltinnAppDelegationPolicyPath ---
-
     [Fact]
     public void GetAltinnAppDelegationPolicyPath_CoveredByPartyId_ReturnsPathWithPPrefix()
     {
@@ -70,7 +68,6 @@ public class PolicyHelperTest
     }
 
     // --- GetPolicyResourceType ---
-
     [Fact]
     public void GetPolicyResourceType_OrgAndApp_ReturnsAltinnApps()
     {
@@ -122,7 +119,6 @@ public class PolicyHelperTest
     }
 
     // --- GetPolicyPath ---
-
     [Fact]
     public void GetPolicyPath_OrgAndApp_ReturnsExpected()
     {
@@ -136,7 +132,6 @@ public class PolicyHelperTest
     }
 
     // --- GetRolesWithAccess ---
-
     [Fact]
     public void GetRolesWithAccess_PolicyWithRoles_ReturnsUniqueRoles()
     {
@@ -189,7 +184,6 @@ public class PolicyHelperTest
     }
 
     // --- BuildDelegationPolicy ---
-
     [Fact]
     public void BuildDelegationPolicy_SingleRule_ReturnsPolicy()
     {
@@ -217,7 +211,6 @@ public class PolicyHelperTest
     }
 
     // --- ParsePolicy / GetXmlMemoryStreamFromXacmlPolicy round-trip ---
-
     [Fact]
     public void ParsePolicy_RoundTrip_PreservesPolicy()
     {
@@ -243,7 +236,6 @@ public class PolicyHelperTest
     }
 
     // --- GetMinimumAuthenticationLevelFromXacmlPolicy ---
-
     [Fact]
     public void GetMinimumAuthenticationLevelFromXacmlPolicy_NoObligation_ReturnsZero()
     {
@@ -257,7 +249,6 @@ public class PolicyHelperTest
     }
 
     // Helper
-
     private static XacmlContextRequest CreateContextRequestWithResource(params (string attributeId, string value)[] attributes)
     {
         var contextAttributes = new XacmlContextAttributes(new Uri(XacmlConstants.MatchAttributeCategory.Resource));

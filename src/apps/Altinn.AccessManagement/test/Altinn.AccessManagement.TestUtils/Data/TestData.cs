@@ -1307,7 +1307,6 @@ public static class TestData
         new Assignment() { Id = AssignFredriksonRpcAud, FromId = FredriksonsFabrikk, ToId = RpcAS, RoleId = RoleConstants.Auditor },
         new Assignment() { Id = AssignRegnskapNorgeRpcAud, FromId = RegnskapNorge, ToId = RpcAS, RoleId = RoleConstants.Auditor },
         new Assignment() { Id = AssignMittRegnskapRpcAud, FromId = MittRegnskap, ToId = RpcAS, RoleId = RoleConstants.Auditor },
-
     };
 
     #endregion

@@ -7,7 +7,6 @@ namespace Altinn.AccessMgmt.Core.Tests.Validation;
 public class ValidationComposerTest
 {
     // ── helpers ──────────────────────────────────────────────────────────────
-
     private static RuleExpression Pass() => () => null;
 
     private static RuleExpression Fail() => () =>
@@ -15,7 +14,6 @@ public class ValidationComposerTest
             errors.Add(ValidationErrors.InvalidPartyUrn, "QUERY/test");
 
     // ── ValidationComposer.Validate ──────────────────────────────────────────
-
     [Fact]
     public void Validate_NoRules_ReturnsNull()
     {
@@ -59,7 +57,6 @@ public class ValidationComposerTest
     }
 
     // ── ValidationComposer.All ───────────────────────────────────────────────
-
     [Fact]
     public void All_NoRules_InvokeReturnsNull()
     {
@@ -89,7 +86,6 @@ public class ValidationComposerTest
     }
 
     // ── ValidationComposer.Any ───────────────────────────────────────────────
-
     [Fact]
     public void Any_AllPassingRules_InvokeReturnsNull()
     {
@@ -118,6 +114,7 @@ public class ValidationComposerTest
         // This is the actual behaviour of the implementation.
         var rule = ValidationComposer.Any();
         var result = rule();
+
         // 0 failures == 0 total → treated as "all failed" → non-null (matches actual Any logic)
         result.Should().NotBeNull();
     }

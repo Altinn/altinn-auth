@@ -11,7 +11,6 @@ public class DelegationCheckDtoMapperTest
     private static readonly DtoMapper Mapper = new();
 
     // ── single package, single row ───────────────────────────────────────────
-
     [Fact]
     public void Convert_SingleRow_ReturnsSingleDto()
     {
@@ -31,7 +30,6 @@ public class DelegationCheckDtoMapperTest
     }
 
     // ── multiple rows for the same package are grouped ───────────────────────
-
     [Fact]
     public void Convert_MultipleRowsSamePackage_Grouped()
     {
@@ -66,7 +64,6 @@ public class DelegationCheckDtoMapperTest
     }
 
     // ── two distinct packages produce two DTOs ───────────────────────────────
-
     [Fact]
     public void Convert_TwoDistinctPackages_ReturnsTwoDtos()
     {
@@ -86,7 +83,6 @@ public class DelegationCheckDtoMapperTest
     }
 
     // ── reason fields are mapped ─────────────────────────────────────────────
-
     [Fact]
     public void Convert_ReasonFields_AreMapped()
     {
@@ -124,7 +120,6 @@ public class DelegationCheckDtoMapperTest
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
-
     private static PackageDelegationCheck MakeCheck(Guid packageId, bool result, string description) =>
         new()
         {

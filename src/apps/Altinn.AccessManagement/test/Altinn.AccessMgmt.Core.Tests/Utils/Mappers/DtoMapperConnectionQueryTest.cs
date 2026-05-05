@@ -20,7 +20,6 @@ public class DtoMapperConnectionQueryTest
     private static readonly Guid UtbgVariantId = new("99a54a28-52d3-4608-9298-94081bb3f3d2");
 
     // ── helpers ───────────────────────────────────────────────────────────────
-
     private static Entity MakeEntity(string name = "Corp") => new()
     {
         Id = Guid.NewGuid(),
@@ -97,7 +96,6 @@ public class DtoMapperConnectionQueryTest
     // ══════════════════════════════════════════════════════════════════════════
     // ConvertToOthers
     // ══════════════════════════════════════════════════════════════════════════
-
     [Fact]
     public void ConvertToOthers_EmptyInput_ReturnsEmptyList()
     {
@@ -204,7 +202,6 @@ public class DtoMapperConnectionQueryTest
     // ══════════════════════════════════════════════════════════════════════════
     // ConvertFromOthers
     // ══════════════════════════════════════════════════════════════════════════
-
     [Fact]
     public void ConvertFromOthers_EmptyInput_ReturnsEmptyList()
     {
@@ -271,7 +268,6 @@ public class DtoMapperConnectionQueryTest
     // ══════════════════════════════════════════════════════════════════════════
     // ConvertSubConnectionsToOthers
     // ══════════════════════════════════════════════════════════════════════════
-
     [Fact]
     public void ConvertSubConnectionsToOthers_NullInput_ReturnsEmptyList()
     {
@@ -306,7 +302,6 @@ public class DtoMapperConnectionQueryTest
     // ══════════════════════════════════════════════════════════════════════════
     // ConvertSubConnectionsFromOthers
     // ══════════════════════════════════════════════════════════════════════════
-
     [Fact]
     public void ConvertSubConnectionsFromOthers_EmptyInput_ReturnsEmptyList()
     {
@@ -335,7 +330,6 @@ public class DtoMapperConnectionQueryTest
     // ══════════════════════════════════════════════════════════════════════════
     // ConvertPackages
     // ══════════════════════════════════════════════════════════════════════════
-
     [Fact]
     public void ConvertPackages_SinglePackage_ReturnsSinglePackagePermissionDtoWithPermission()
     {
@@ -372,7 +366,6 @@ public class DtoMapperConnectionQueryTest
     // ══════════════════════════════════════════════════════════════════════════
     // ConvertResources (from ConnectionQueryExtendedRecord)
     // ══════════════════════════════════════════════════════════════════════════
-
     [Fact]
     public void ConvertResources_FromExtendedRecord_SingleResource_MapsWithPermission()
     {
@@ -392,7 +385,6 @@ public class DtoMapperConnectionQueryTest
     // ══════════════════════════════════════════════════════════════════════════
     // ConvertToAgentDto
     // ══════════════════════════════════════════════════════════════════════════
-
     [Fact]
     public void ConvertToAgentDto_SingleAgent_MapsPartyRolesAndPackages()
     {
@@ -428,7 +420,6 @@ public class DtoMapperConnectionQueryTest
     // ══════════════════════════════════════════════════════════════════════════
     // Convert(ConnectionQueryPackage) / Convert(ConnectionQueryResource)
     // ══════════════════════════════════════════════════════════════════════════
-
     [Fact]
     public void Convert_ConnectionQueryPackage_MapsIdUrnAndAreaId()
     {
@@ -458,7 +449,6 @@ public class DtoMapperConnectionQueryTest
     // ══════════════════════════════════════════════════════════════════════════
     // Extract* instance methods (DtoMapper.cs — use old Connection model)
     // ══════════════════════════════════════════════════════════════════════════
-
     [Fact]
     public void ExtractRelationDtoToOthers_OnlyDirectConnectionsReturned()
     {

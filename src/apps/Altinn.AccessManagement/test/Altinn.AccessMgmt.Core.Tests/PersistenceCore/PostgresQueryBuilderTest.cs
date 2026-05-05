@@ -12,7 +12,6 @@ namespace Altinn.AccessMgmt.Core.Tests.PersistenceCore;
 public class PostgresQueryBuilderTest
 {
     // ── fixtures ──────────────────────────────────────────────────────────────
-
     private static readonly IOptions<AccessMgmtPersistenceOptions> DefaultOptions =
         Options.Create(new AccessMgmtPersistenceOptions
         {
@@ -40,7 +39,6 @@ public class PostgresQueryBuilderTest
     };
 
     // ── GetTableName ──────────────────────────────────────────────────────────
-
     [Fact]
     public void GetTableName_NoAlias_ContainsSchemaAndModelName()
     {
@@ -59,7 +57,6 @@ public class PostgresQueryBuilderTest
     }
 
     // ── BuildInsertQuery ──────────────────────────────────────────────────────
-
     [Fact]
     public void BuildInsertQuery_ContainsInsertKeyword()
     {
@@ -98,7 +95,6 @@ public class PostgresQueryBuilderTest
     }
 
     // ── BuildUpdateQuery ──────────────────────────────────────────────────────
-
     [Fact]
     public void BuildUpdateQuery_ContainsUpdateKeyword()
     {
@@ -130,7 +126,6 @@ public class PostgresQueryBuilderTest
     }
 
     // ── BuildSingleNullUpdateQuery ────────────────────────────────────────────
-
     [Fact]
     public void BuildSingleNullUpdateQuery_ContainsSetNull()
     {
@@ -152,7 +147,6 @@ public class PostgresQueryBuilderTest
     }
 
     // ── BuildBasicSelectQuery ─────────────────────────────────────────────────
-
     [Fact]
     public void BuildBasicSelectQuery_ContainsSelectFrom()
     {
@@ -162,10 +156,10 @@ public class PostgresQueryBuilderTest
     }
 
     // ── model ─────────────────────────────────────────────────────────────────
-
     private class SimpleModel
     {
         public Guid Id { get; set; }
+
         public string Name { get; set; }
     }
 }

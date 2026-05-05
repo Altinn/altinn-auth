@@ -13,8 +13,8 @@ using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
-using Microsoft.Extensions.DependencyInjection;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Controllers;
 

@@ -10,7 +10,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 
-
 namespace AccessMgmt.Tests.Controllers.Metadata;
 
 /// <summary>
@@ -109,7 +108,6 @@ public class PackagesControllerIntegrationTests : IClassFixture<PostgresFixture>
     }
 
     // ── Mapping correctness — DTO field values match seeded data (mirrors Bruno) ──
-
     [Fact]
     public async Task GetPackage_Skattegrunnlag_ReturnsExpectedUrn()
     {
@@ -206,7 +204,6 @@ public class PackagesControllerIntegrationTests : IClassFixture<PostgresFixture>
     // regressions: order direction flipping, the score>0 filter being dropped,
     // and the empty-input semantics diverging from FuzzySearch (which returns
     // all on empty term).
-
     [Fact]
     public async Task SimpleSearch_PrefixMatchOnPackageName_RanksMatchingPackageFirst()
     {
@@ -266,6 +263,7 @@ public class PackagesControllerIntegrationTests : IClassFixture<PostgresFixture>
 
         var hits = AssertOkEnumerable(result).ToList();
         Assert.NotEmpty(hits);
+
         // FuzzySearch produces fractional scores (vs SimpleSearch's integer rule
         // points). The exact match is included regardless of which scorer ran.
         Assert.Contains(hits, h => h.Object.Name == SearchTerm);
@@ -286,7 +284,6 @@ public class PackagesControllerIntegrationTests : IClassFixture<PostgresFixture>
     }
 
     // ── DTO mapping completeness — IsAssignable on a per-package basis ──
-
     [Fact]
     public async Task GetPackage_AssignablePackage_ReturnsIsAssignableTrue()
     {
@@ -306,7 +303,6 @@ public class PackagesControllerIntegrationTests : IClassFixture<PostgresFixture>
     }
 
     // ── TranslateDeepAsync recursion — nested DTOs populated, not dropped ──
-
     [Fact]
     public async Task GetPackage_NestedAreaIsPopulated()
     {
@@ -334,7 +330,6 @@ public class PackagesControllerIntegrationTests : IClassFixture<PostgresFixture>
     }
 
     // ── Accept-Language locale handling — controller doesn't NRE on fallback ──
-
     [Fact]
     public async Task GetPackage_WithEnglishAcceptLanguage_ReturnsPopulatedDto()
     {
@@ -364,7 +359,6 @@ public class PackagesControllerIntegrationTests : IClassFixture<PostgresFixture>
     }
 
     // ── NotFound paths — random GUIDs / unknown URNs return 404 against live DB ──
-
     [Fact]
     public async Task GetPackage_RandomGuid_ReturnsNotFound()
     {
@@ -415,7 +409,6 @@ public class PackagesControllerIntegrationTests : IClassFixture<PostgresFixture>
     }
 
     // ── Helpers ──
-
     private static PackageDto AssertOkPackage(ActionResult<PackageDto> result) =>
         AssertOk<PackageDto>(result);
 

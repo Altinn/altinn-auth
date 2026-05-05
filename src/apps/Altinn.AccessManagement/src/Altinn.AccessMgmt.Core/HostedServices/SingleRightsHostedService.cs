@@ -126,7 +126,6 @@ namespace Altinn.AccessMgmt.Core.HostedServices
             {
                 Log.SyncError(_logger, ex);
             }
-
         }
 
         private async Task SyncSingleResourceRegistryRights(ILease lease, CancellationToken cancellationToken)
@@ -163,7 +162,6 @@ namespace Altinn.AccessMgmt.Core.HostedServices
             {
                 Log.SyncError(_logger, ex);
             }
-
         }
 
         private async Task SyncFailedSingleResourceRegistryRights(CancellationToken cancellationToken)

@@ -26,7 +26,6 @@ using Microsoft.Extensions.Options;
 //          as-is. Each test seeds a unique Resource to avoid inter-test
 //          interference so the class must remain IClassFixture<ApiFixture>
 //          (Pattern A-isolated) — not eligible for sharing.
-
 namespace AccessMgmt.Tests.Services;
 
 public class RequestServiceTests : IClassFixture<PostgresFixture>

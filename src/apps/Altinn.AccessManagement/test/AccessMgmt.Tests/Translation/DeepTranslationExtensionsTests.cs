@@ -284,6 +284,7 @@ public class DeepTranslationExtensionsTests : IClassFixture<PostgresFixture>
         Assert.NotNull(translated.Packages);
         Assert.Single(translated.Packages);
         Assert.Equal("Property registration", translated.Packages.First().Name);
+
         // The nested area in package should not be re-translated (circular reference handling)
     }
 

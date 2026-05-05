@@ -12,7 +12,6 @@ public class SearchCacheTest
         new SearchCache<T>(new MemoryCache(new MemoryCacheOptions()));
 
     // ── GetData before SetData ────────────────────────────────────────────────
-
     [Fact]
     public void GetData_BeforeSetData_ReturnsNull()
     {
@@ -21,7 +20,6 @@ public class SearchCacheTest
     }
 
     // ── SetData + GetData ────────────────────────────────────────────────────
-
     [Fact]
     public void GetData_AfterSetData_ReturnsStoredItems()
     {
@@ -47,7 +45,6 @@ public class SearchCacheTest
     }
 
     // ── value-type items ─────────────────────────────────────────────────────
-
     [Fact]
     public void GetData_IntList_RoundTripsCorrectly()
     {
@@ -58,7 +55,6 @@ public class SearchCacheTest
     }
 
     // ── empty list ───────────────────────────────────────────────────────────
-
     [Fact]
     public void GetData_EmptyList_ReturnsEmptyList()
     {
@@ -69,7 +65,6 @@ public class SearchCacheTest
     }
 
     // ── overwrite ────────────────────────────────────────────────────────────
-
     [Fact]
     public void SetData_CalledTwice_LatestDataWins()
     {

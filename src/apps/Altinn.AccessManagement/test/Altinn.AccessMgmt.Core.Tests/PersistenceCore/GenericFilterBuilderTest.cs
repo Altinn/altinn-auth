@@ -7,7 +7,6 @@ public class GenericFilterBuilderTest
     private record SampleEntity(string Name, int Age);
 
     // ── Empty ───────────────────────────────────────────────────────────────
-
     [Fact]
     public void Empty_WhenNoFilters_ReturnsTrue()
     {
@@ -24,7 +23,6 @@ public class GenericFilterBuilderTest
     }
 
     // ── Add ─────────────────────────────────────────────────────────────────
-
     [Fact]
     public void Add_CreatesFilterWithCorrectPropertyAndValue()
     {
@@ -68,7 +66,6 @@ public class GenericFilterBuilderTest
     }
 
     // ── Equal ───────────────────────────────────────────────────────────────
-
     [Fact]
     public void Equal_CreatesEqualsFilter()
     {
@@ -82,7 +79,6 @@ public class GenericFilterBuilderTest
     }
 
     // ── NotSet ──────────────────────────────────────────────────────────────
-
     [Fact]
     public void NotSet_CreatesNullEqualsFilter()
     {
@@ -96,7 +92,6 @@ public class GenericFilterBuilderTest
     }
 
     // ── In ──────────────────────────────────────────────────────────────────
-
     [Fact]
     public void In_AddsOneEqualsFilterPerValue()
     {
@@ -124,7 +119,6 @@ public class GenericFilterBuilderTest
     }
 
     // ── NotIn ───────────────────────────────────────────────────────────────
-
     [Fact]
     public void NotIn_AddsOneNotEqualFilterPerValue()
     {
@@ -144,7 +138,6 @@ public class GenericFilterBuilderTest
     }
 
     // ── IEnumerable ─────────────────────────────────────────────────────────
-
     [Fact]
     public void IEnumerable_IteratesAllFilters()
     {
