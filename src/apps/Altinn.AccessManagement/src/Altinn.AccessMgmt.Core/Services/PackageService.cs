@@ -97,6 +97,11 @@ public class PackageService : IPackageService
         cancellationToken: cancellationToken
         );
 
+        if (string.IsNullOrEmpty(term))
+        {
+            return data.Select(t => new SearchObject<PackageDto>() { Object = t, Score = 0, Fields = [] });
+        }
+
         return data
             .Select(p => ScorePackage(p, term, searchInResources))
             .Where(s => s.Score > 0)
