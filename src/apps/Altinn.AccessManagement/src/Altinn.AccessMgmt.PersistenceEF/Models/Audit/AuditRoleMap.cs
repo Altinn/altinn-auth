@@ -7,19 +7,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Models.Audit;
 public class AuditRoleMap : BaseRoleMap, IAudit
 {
     /// <inheritdoc />
-    public DateTimeOffset Audit_ValidFrom { get; set; }
-
-    /// <inheritdoc />
     public DateTimeOffset? Audit_ValidTo { get; set; }
-
-    /// <inheritdoc />
-    public Guid? Audit_ChangedBy { get; set; }
-
-    /// <inheritdoc />
-    public Guid? Audit_ChangedBySystem { get; set; }
-
-    /// <inheritdoc />
-    public string Audit_ChangeOperation { get; set; }
 
     /// <inheritdoc />
     public Guid? Audit_DeletedBy { get; set; }
