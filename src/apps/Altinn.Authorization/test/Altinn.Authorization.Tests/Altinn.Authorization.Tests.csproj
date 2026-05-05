@@ -10,6 +10,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
         <PackageReference Include="Moq" />
+        <PackageReference Include="Testcontainers.PostgreSql" />
     </ItemGroup>
 
     <ItemGroup>
@@ -27,6 +28,12 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <Content Include="xunit.runner.json" CopyToOutputDirectory="Always" />
+        <!-- Authorization Yuniql migrations, copied next to the test binary so the
+             AuthorizationDbFixture can play them against a Testcontainers Postgres. -->
+        <Content Include="..\..\src\Altinn.Authorization\Migration\**\*.sql">
+            <Link>Migration\%(RecursiveDir)%(Filename)%(Extension)</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
     </Project>

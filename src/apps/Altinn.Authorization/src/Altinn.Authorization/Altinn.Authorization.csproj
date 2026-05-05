@@ -33,6 +33,7 @@
         <PackageReference Include="Microsoft.FeatureManagement.AspNetCore" />
         <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" />
         <PackageReference Include="Npgsql" />
+        <PackageReference Include="Npgsql.DependencyInjection" />
         <PackageReference Include="Swashbuckle.AspNetCore" />
         <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
         <PackageReference Include="Swashbuckle.AspNetCore.Filters" />

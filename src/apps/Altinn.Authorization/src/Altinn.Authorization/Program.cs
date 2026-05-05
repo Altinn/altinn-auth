@@ -15,6 +15,7 @@ using Altinn.Platform.Authorization.Extensions;
 using Altinn.Platform.Authorization.Filters;
 using Altinn.Platform.Authorization.Health;
 using Altinn.Platform.Authorization.ModelBinding;
+using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Repositories;
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Authorization.Services;
@@ -217,6 +218,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.Configure<AzureStorageConfiguration>(config.GetSection("AzureStorageConfiguration"));
     services.Configure<AzureCosmosSettings>(config.GetSection("AzureCosmosSettings"));
     services.Configure<PostgreSQLSettings>(config.GetSection("PostgreSQLSettings"));
+    AddAuthorizationDbDataSource(services, config);
     services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
     services.Configure<KeyVaultSettings>(config.GetSection("kvSetting"));
     OedAuthzMaskinportenClientSettings oedAuthzMaskinportenClientSettings = config.GetSection("OedAuthzMaskinportenClientSettings").Get<OedAuthzMaskinportenClientSettings>();
@@ -376,6 +378,15 @@ static string GetXmlCommentsPathForControllers()
     string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
     return xmlPath;
+}
+
+static void AddAuthorizationDbDataSource(IServiceCollection services, IConfiguration config)
+{
+    PostgreSQLSettings pgSettings = config.GetSection("PostgreSQLSettings").Get<PostgreSQLSettings>() ?? new PostgreSQLSettings();
+    string connectionString = string.Format(pgSettings.ConnectionString ?? string.Empty, pgSettings.AuthorizationDbPwd);
+    services.AddNpgsqlDataSource(
+        connectionString,
+        builder => builder.MapEnum<DelegationChangeType>("delegation.delegationchangetype"));
 }
 
 void Configure()

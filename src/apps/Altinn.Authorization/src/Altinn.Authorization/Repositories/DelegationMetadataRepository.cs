@@ -2,12 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Extensions;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Npgsql;
 
 namespace Altinn.Platform.Authorization.Repositories
@@ -18,7 +16,7 @@ namespace Altinn.Platform.Authorization.Repositories
     [ExcludeFromCodeCoverage]
     public class DelegationMetadataRepository : IDelegationMetadataRepository
     {
-        private readonly string _connectionString;
+        private readonly NpgsqlDataSource _dataSource;
         private readonly ILogger _logger;
         private readonly string insertDelegationChangeFunc = "select * from delegation.insert_delegationchange(@_delegationChangeType, @_altinnAppId, @_offeredByPartyId, @_coveredByUserId, @_coveredByPartyId, @_performedByUserId, @_blobStoragePolicyPath, @_blobStorageVersionId)";
         private readonly string getCurrentDelegationChangeSql = "select * from delegation.get_current_change(@_altinnAppId, @_offeredByPartyId, @_coveredByUserId, @_coveredByPartyId)";
@@ -30,17 +28,14 @@ namespace Altinn.Platform.Authorization.Repositories
         /// <summary>
         /// Initializes a new instance of the <see cref="DelegationMetadataRepository"/> class
         /// </summary>
-        /// <param name="postgresSettings">The postgreSQL configurations for AuthorizationDB</param>
+        /// <param name="dataSource">The Npgsql data source for AuthorizationDB, with the <c>delegation.delegationchangetype</c> enum mapped at startup.</param>
         /// <param name="logger">logger</param>
         public DelegationMetadataRepository(
-            IOptions<PostgreSQLSettings> postgresSettings,
+            NpgsqlDataSource dataSource,
             ILogger<DelegationMetadataRepository> logger)
         {
+            _dataSource = dataSource;
             _logger = logger;
-            _connectionString = string.Format(
-                postgresSettings.Value.ConnectionString,
-                postgresSettings.Value.AuthorizationDbPwd);
-            NpgsqlConnection.GlobalTypeMapper.MapEnum<DelegationChangeType>("delegation.delegationchangetype");
         }
 
         /// <inheritdoc/>
@@ -48,8 +43,7 @@ namespace Altinn.Platform.Authorization.Repositories
         {
             try
             {
-                await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
-                await conn.OpenAsync();
+                await using NpgsqlConnection conn = await _dataSource.OpenConnectionAsync();
 
                 NpgsqlCommand pgcom = new NpgsqlCommand(insertDelegationChangeFunc, conn);
                 pgcom.Parameters.AddWithValue("_delegationChangeType", delegationChange.DelegationChangeType);
@@ -81,8 +75,7 @@ namespace Altinn.Platform.Authorization.Repositories
         {
             try
             {
-                await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
-                await conn.OpenAsync();
+                await using NpgsqlConnection conn = await _dataSource.OpenConnectionAsync();
 
                 NpgsqlCommand pgcom = new NpgsqlCommand(getCurrentDelegationChangeSql, conn);
                 pgcom.Parameters.AddWithValue("_altinnAppId", altinnAppId);
@@ -110,8 +103,7 @@ namespace Altinn.Platform.Authorization.Repositories
         {
             try
             {
-                await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
-                await conn.OpenAsync();
+                await using NpgsqlConnection conn = await _dataSource.OpenConnectionAsync();
 
                 NpgsqlCommand pgcom = new NpgsqlCommand(getAllDelegationChangesSql, conn);
                 pgcom.Parameters.AddWithValue("_altinnAppId", altinnAppId);
@@ -168,8 +160,7 @@ namespace Altinn.Platform.Authorization.Repositories
             try
             {
                 List<DelegationChange> delegationChanges = new List<DelegationChange>();
-                await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
-                await conn.OpenAsync();
+                await using NpgsqlConnection conn = await _dataSource.OpenConnectionAsync();
 
                 NpgsqlCommand pgcom = new NpgsqlCommand("select * from delegation.select_delegationchanges_by_id_range(@_startId)", conn);
                 if (endId != 0)
@@ -228,8 +219,7 @@ namespace Altinn.Platform.Authorization.Repositories
         {
             try
             {
-                await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
-                await conn.OpenAsync();
+                await using NpgsqlConnection conn = await _dataSource.OpenConnectionAsync();
 
                 NpgsqlCommand pgcom = new NpgsqlCommand(getAllCurrentDelegationChangesPartyIdsSql, conn);
                 pgcom.Parameters.AddWithValue("_altinnAppIds", NpgsqlTypes.NpgsqlDbType.Array | NpgsqlTypes.NpgsqlDbType.Text, altinnAppIds?.Count > 0 ? altinnAppIds : DBNull.Value);
@@ -257,8 +247,7 @@ namespace Altinn.Platform.Authorization.Repositories
         {
             try
             {
-                await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
-                await conn.OpenAsync();
+                await using NpgsqlConnection conn = await _dataSource.OpenConnectionAsync();
 
                 NpgsqlCommand pgcom = new NpgsqlCommand(getAllCurrentDelegationChangesUserIdsSql, conn);
                 pgcom.Parameters.AddWithValue("_altinnAppIds", NpgsqlTypes.NpgsqlDbType.Array | NpgsqlTypes.NpgsqlDbType.Text, altinnAppIds?.Count > 0 ? altinnAppIds : DBNull.Value);
@@ -286,8 +275,7 @@ namespace Altinn.Platform.Authorization.Repositories
         {
             try
             {
-                await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
-                await conn.OpenAsync();
+                await using NpgsqlConnection conn = await _dataSource.OpenConnectionAsync();
 
                 NpgsqlCommand pgcom = new NpgsqlCommand(getAllCurrentDelegationChangesOfferedByPartyIdOnlysSql, conn);
                 pgcom.Parameters.AddWithValue("_altinnAppIds", NpgsqlTypes.NpgsqlDbType.Array | NpgsqlTypes.NpgsqlDbType.Text, altinnAppIds?.Count > 0 ? altinnAppIds : DBNull.Value);
