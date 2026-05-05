@@ -204,7 +204,7 @@ namespace Altinn.AccessManagement.Tests.Helpers
         {
             // Arrange
             Rule rule = TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "write", "org1", "app1");
-            XacmlPolicy policy = await _prpMock.GetPolicyAsync("org1", "app1");
+            XacmlPolicy policy = await _prpMock.GetPolicyAsync("org1", "app1", TestContext.Current.CancellationToken);
 
             // Act
             bool actual = DelegationHelper.PolicyContainsMatchingRule(policy, rule);
@@ -228,7 +228,7 @@ namespace Altinn.AccessManagement.Tests.Helpers
         {
             // Arrange
             Rule rule = TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org1", "unorderedresources");
-            XacmlPolicy policy = await _prpMock.GetPolicyAsync("org1", "unorderedresources");
+            XacmlPolicy policy = await _prpMock.GetPolicyAsync("org1", "unorderedresources", TestContext.Current.CancellationToken);
 
             // Act
             bool actual = DelegationHelper.PolicyContainsMatchingRule(policy, rule);
@@ -253,7 +253,7 @@ namespace Altinn.AccessManagement.Tests.Helpers
         {
             // Arrange
             Rule rule = TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "eat", "org1", "singlecomplexrule", appresource: "banana");
-            XacmlPolicy policy = await _prpMock.GetPolicyAsync("org1", "singlecomplexrule");
+            XacmlPolicy policy = await _prpMock.GetPolicyAsync("org1", "singlecomplexrule", TestContext.Current.CancellationToken);
 
             // Act
             bool actual = DelegationHelper.PolicyContainsMatchingRule(policy, rule);
@@ -277,7 +277,7 @@ namespace Altinn.AccessManagement.Tests.Helpers
         {
             // Arrange
             Rule rule = TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "sign", "org1", "app1", task: "task1");
-            XacmlPolicy policy = await _prpMock.GetPolicyAsync("org1", "app1");
+            XacmlPolicy policy = await _prpMock.GetPolicyAsync("org1", "app1", TestContext.Current.CancellationToken);
 
             // Act
             bool actual = DelegationHelper.PolicyContainsMatchingRule(policy, rule);
@@ -301,7 +301,7 @@ namespace Altinn.AccessManagement.Tests.Helpers
         {
             // Arrange
             Rule rule = TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "sign", "org1", "app1");
-            XacmlPolicy policy = await _prpMock.GetPolicyAsync("org1", "app1");
+            XacmlPolicy policy = await _prpMock.GetPolicyAsync("org1", "app1", TestContext.Current.CancellationToken);
 
             // Act
             bool actual = DelegationHelper.PolicyContainsMatchingRule(policy, rule);
@@ -325,7 +325,7 @@ namespace Altinn.AccessManagement.Tests.Helpers
         {
             // Arrange
             Rule rule = TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org2", "app1");
-            XacmlPolicy policy = await _prpMock.GetPolicyAsync("org1", "app1");
+            XacmlPolicy policy = await _prpMock.GetPolicyAsync("org1", "app1", TestContext.Current.CancellationToken);
 
             // Act
             bool actual = DelegationHelper.PolicyContainsMatchingRule(policy, rule);
@@ -349,7 +349,7 @@ namespace Altinn.AccessManagement.Tests.Helpers
         {
             // Arrange
             Rule rule = TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "read", "org2", "app1");
-            XacmlPolicy policy = await _prpMock.GetPolicyAsync("org1", "app1");
+            XacmlPolicy policy = await _prpMock.GetPolicyAsync("org1", "app1", TestContext.Current.CancellationToken);
 
             // Act
             bool actual = DelegationHelper.PolicyContainsMatchingRule(policy, rule);
@@ -374,7 +374,7 @@ namespace Altinn.AccessManagement.Tests.Helpers
         {
             // Arrange
             Rule rule = TestDataUtil.GetRuleModel(20001337, 50001337, "20001336", AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, "eat", "org1", "singlecomplexrule");
-            XacmlPolicy policy = await _prpMock.GetPolicyAsync("org1", "singlecomplexrule");
+            XacmlPolicy policy = await _prpMock.GetPolicyAsync("org1", "singlecomplexrule", TestContext.Current.CancellationToken);
 
             // Act
             bool actual = DelegationHelper.PolicyContainsMatchingRule(policy, rule);

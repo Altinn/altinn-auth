@@ -31,8 +31,8 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Health
         {
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "/health");
 
-            HttpResponseMessage response = await _client.SendAsync(httpRequestMessage);
-            string content = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await _client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+            string content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
     }

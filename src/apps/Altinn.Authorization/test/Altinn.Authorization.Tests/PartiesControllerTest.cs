@@ -28,11 +28,11 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Act
-            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties?userid=20000490");
+            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties?userid=20000490", TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            var partiesList = await response.Content.ReadFromJsonAsync<List<Party>>();
+            var partiesList = await response.Content.ReadFromJsonAsync<List<Party>>(cancellationToken: TestContext.Current.CancellationToken);
             Assert.NotNull(partiesList);
         }
 
@@ -48,7 +48,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Act
-            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties");
+            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties", TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -66,7 +66,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Act
-            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties?userid=1337");
+            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties?userid=1337", TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
@@ -84,11 +84,11 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Act
-            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties/50002598/validate?userid=20000490");
+            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties/50002598/validate?userid=20000490", TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.True(await response.Content.ReadFromJsonAsync<bool>());
+            Assert.True(await response.Content.ReadFromJsonAsync<bool>(cancellationToken: TestContext.Current.CancellationToken));
         }
 
         /// <summary>
@@ -103,11 +103,11 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Act
-            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties/50074838/validate?userid=20000490");
+            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties/50074838/validate?userid=20000490", TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.True(await response.Content.ReadFromJsonAsync<bool>());
+            Assert.True(await response.Content.ReadFromJsonAsync<bool>(cancellationToken: TestContext.Current.CancellationToken));
         }
 
         /// <summary>
@@ -122,11 +122,11 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Act
-            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties/1337/validate?userid=20000490");
+            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties/1337/validate?userid=20000490", TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.False(await response.Content.ReadFromJsonAsync<bool>());
+            Assert.False(await response.Content.ReadFromJsonAsync<bool>(cancellationToken: TestContext.Current.CancellationToken));
         }
 
         /// <summary>
@@ -141,7 +141,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Act
-            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties/50002598/validate?userid=1337");
+            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties/50002598/validate?userid=1337", TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
@@ -159,7 +159,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Act
-            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties/50002598/validate");
+            HttpResponseMessage response = await _client.GetAsync("authorization/api/v1/parties/50002598/validate", TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);

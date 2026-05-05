@@ -50,7 +50,7 @@ public class PartyControllerTest
     [Fact]
     public async Task AddParty_NullToken_ReturnsUnauthorized()
     {
-        var result = await CreateSut(new Mock<IPartyService>().Object).AddParty(SampleParty, null);
+        var result = await CreateSut(new Mock<IPartyService>().Object).AddParty(SampleParty, null, TestContext.Current.CancellationToken);
 
         Assert.IsType<UnauthorizedObjectResult>(result.Result);
     }
@@ -60,7 +60,7 @@ public class PartyControllerTest
     {
         var token = MakeToken(appClaimValue: null);
 
-        var result = await CreateSut(new Mock<IPartyService>().Object).AddParty(SampleParty, token);
+        var result = await CreateSut(new Mock<IPartyService>().Object).AddParty(SampleParty, token, TestContext.Current.CancellationToken);
 
         Assert.IsType<UnauthorizedObjectResult>(result.Result);
     }
@@ -70,7 +70,7 @@ public class PartyControllerTest
     {
         var token = MakeToken("not-authentication");
 
-        var result = await CreateSut(new Mock<IPartyService>().Object).AddParty(SampleParty, token);
+        var result = await CreateSut(new Mock<IPartyService>().Object).AddParty(SampleParty, token, TestContext.Current.CancellationToken);
 
         Assert.IsType<UnauthorizedObjectResult>(result.Result);
     }
@@ -83,7 +83,7 @@ public class PartyControllerTest
         svc.Setup(s => s.AddParty(SampleParty, It.IsAny<CancellationToken>()))
            .ReturnsAsync(new Result<AddPartyResultDto>(MakeValidationProblem()));
 
-        var result = await CreateSut(svc.Object).AddParty(SampleParty, token);
+        var result = await CreateSut(svc.Object).AddParty(SampleParty, token, TestContext.Current.CancellationToken);
 
         Assert.IsNotType<OkObjectResult>(result.Result);
         Assert.IsNotType<CreatedAtActionResult>(result.Result);
@@ -98,7 +98,7 @@ public class PartyControllerTest
         svc.Setup(s => s.AddParty(SampleParty, It.IsAny<CancellationToken>()))
            .ReturnsAsync(new Result<AddPartyResultDto>(dto));
 
-        var result = await CreateSut(svc.Object).AddParty(SampleParty, token);
+        var result = await CreateSut(svc.Object).AddParty(SampleParty, token, TestContext.Current.CancellationToken);
 
         Assert.IsType<CreatedAtActionResult>(result.Result);
     }
@@ -112,7 +112,7 @@ public class PartyControllerTest
         svc.Setup(s => s.AddParty(SampleParty, It.IsAny<CancellationToken>()))
            .ReturnsAsync(new Result<AddPartyResultDto>(dto));
 
-        var result = await CreateSut(svc.Object).AddParty(SampleParty, token);
+        var result = await CreateSut(svc.Object).AddParty(SampleParty, token, TestContext.Current.CancellationToken);
 
         Assert.IsType<OkObjectResult>(result.Result);
     }

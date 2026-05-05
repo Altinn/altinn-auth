@@ -39,7 +39,7 @@ public class InternalConnectionsControllerTest
         svc.Setup(s => s.Get(Party, Party, To, true, true, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(new Result<IEnumerable<ConnectionDto>>([]));
 
-        var result = await CreateSut(svc.Object).GetConnections(Connection, new PagingInput());
+        var result = await CreateSut(svc.Object).GetConnections(Connection, new PagingInput(), TestContext.Current.CancellationToken);
 
         Assert.IsType<OkObjectResult>(result);
     }
@@ -51,7 +51,7 @@ public class InternalConnectionsControllerTest
         svc.Setup(s => s.Get(Party, Party, To, true, true, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(MakeValidationProblem());
 
-        var result = await CreateSut(svc.Object).GetConnections(Connection, new PagingInput());
+        var result = await CreateSut(svc.Object).GetConnections(Connection, new PagingInput(), TestContext.Current.CancellationToken);
 
         Assert.IsNotType<OkObjectResult>(result);
     }
@@ -67,7 +67,7 @@ public class InternalConnectionsControllerTest
         svc.Setup(s => s.AddRightholder(Party, To, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(new Result<AssignmentDto>(new AssignmentDto()));
 
-        var result = await CreateSut(svc.Object).AddAssignment(Connection);
+        var result = await CreateSut(svc.Object).AddAssignment(Connection, TestContext.Current.CancellationToken);
 
         Assert.IsType<OkObjectResult>(result);
     }
@@ -79,7 +79,7 @@ public class InternalConnectionsControllerTest
         svc.Setup(s => s.AddRightholder(Party, To, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(MakeValidationProblem());
 
-        var result = await CreateSut(svc.Object).AddAssignment(Connection);
+        var result = await CreateSut(svc.Object).AddAssignment(Connection, TestContext.Current.CancellationToken);
 
         Assert.IsNotType<OkObjectResult>(result);
     }
@@ -95,7 +95,7 @@ public class InternalConnectionsControllerTest
         svc.Setup(s => s.RemoveAssignment(Party, To, false, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync((ValidationProblemInstance)null);
 
-        var result = await CreateSut(svc.Object).RemoveAssignment(Connection);
+        var result = await CreateSut(svc.Object).RemoveAssignment(Connection, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.IsType<NoContentResult>(result);
     }
@@ -107,7 +107,7 @@ public class InternalConnectionsControllerTest
         svc.Setup(s => s.RemoveAssignment(Party, To, false, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(MakeValidationProblem());
 
-        var result = await CreateSut(svc.Object).RemoveAssignment(Connection);
+        var result = await CreateSut(svc.Object).RemoveAssignment(Connection, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.IsNotType<NoContentResult>(result);
     }
@@ -123,7 +123,7 @@ public class InternalConnectionsControllerTest
         svc.Setup(s => s.GetPackages(Party, Party, To, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(new Result<IEnumerable<PackagePermissionDto>>([]));
 
-        var result = await CreateSut(svc.Object).GetPackages(Connection, new PagingInput());
+        var result = await CreateSut(svc.Object).GetPackages(Connection, new PagingInput(), TestContext.Current.CancellationToken);
 
         Assert.IsType<OkObjectResult>(result);
     }
@@ -135,7 +135,7 @@ public class InternalConnectionsControllerTest
         svc.Setup(s => s.GetPackages(Party, Party, To, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(MakeValidationProblem());
 
-        var result = await CreateSut(svc.Object).GetPackages(Connection, new PagingInput());
+        var result = await CreateSut(svc.Object).GetPackages(Connection, new PagingInput(), TestContext.Current.CancellationToken);
 
         Assert.IsNotType<OkObjectResult>(result);
     }
@@ -152,7 +152,7 @@ public class InternalConnectionsControllerTest
         svc.Setup(s => s.AddPackage(Party, To, packageId, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(new Result<AssignmentPackageDto>(new AssignmentPackageDto()));
 
-        var result = await CreateSut(svc.Object).AddPackages(Connection, packageId, null);
+        var result = await CreateSut(svc.Object).AddPackages(Connection, packageId, null, TestContext.Current.CancellationToken);
 
         Assert.IsType<OkObjectResult>(result);
     }
@@ -164,7 +164,7 @@ public class InternalConnectionsControllerTest
         svc.Setup(s => s.AddPackage(Party, To, "urn:some:package", It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(new Result<AssignmentPackageDto>(new AssignmentPackageDto()));
 
-        var result = await CreateSut(svc.Object).AddPackages(Connection, null, "urn:some:package");
+        var result = await CreateSut(svc.Object).AddPackages(Connection, null, "urn:some:package", TestContext.Current.CancellationToken);
 
         Assert.IsType<OkObjectResult>(result);
     }
@@ -176,7 +176,7 @@ public class InternalConnectionsControllerTest
         svc.Setup(s => s.AddPackage(Party, To, "urn:some:package", It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(MakeValidationProblem());
 
-        var result = await CreateSut(svc.Object).AddPackages(Connection, null, "urn:some:package");
+        var result = await CreateSut(svc.Object).AddPackages(Connection, null, "urn:some:package", TestContext.Current.CancellationToken);
 
         Assert.IsNotType<OkObjectResult>(result);
     }
@@ -193,7 +193,7 @@ public class InternalConnectionsControllerTest
         svc.Setup(s => s.RemovePackage(Party, To, packageId, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync((ValidationProblemInstance)null);
 
-        var result = await CreateSut(svc.Object).RemovePackages(Connection, packageId, null);
+        var result = await CreateSut(svc.Object).RemovePackages(Connection, packageId, null, TestContext.Current.CancellationToken);
 
         Assert.IsType<NoContentResult>(result);
     }
@@ -205,7 +205,7 @@ public class InternalConnectionsControllerTest
         svc.Setup(s => s.RemovePackage(Party, To, "urn:some:package", It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync((ValidationProblemInstance)null);
 
-        var result = await CreateSut(svc.Object).RemovePackages(Connection, null, "urn:some:package");
+        var result = await CreateSut(svc.Object).RemovePackages(Connection, null, "urn:some:package", TestContext.Current.CancellationToken);
 
         Assert.IsType<NoContentResult>(result);
     }
@@ -217,7 +217,7 @@ public class InternalConnectionsControllerTest
         svc.Setup(s => s.RemovePackage(Party, To, "urn:some:package", It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(MakeValidationProblem());
 
-        var result = await CreateSut(svc.Object).RemovePackages(Connection, null, "urn:some:package");
+        var result = await CreateSut(svc.Object).RemovePackages(Connection, null, "urn:some:package", TestContext.Current.CancellationToken);
 
         Assert.IsNotType<NoContentResult>(result);
     }

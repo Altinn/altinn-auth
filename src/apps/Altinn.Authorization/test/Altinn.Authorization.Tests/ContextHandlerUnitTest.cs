@@ -318,7 +318,7 @@ public class ContextHandlerUnitTest : IDisposable
         var resourceAttrs = new XacmlResourceAttributes { OrganizationNumber = "910514318" };
         var contextAttrs = CreateResourceAttributes();
 
-        await _sut.TestEnrichResourceParty(contextAttrs, resourceAttrs, false);
+        await _sut.TestEnrichResourceParty(contextAttrs, resourceAttrs, false, TestContext.Current.CancellationToken);
 
         Assert.Equal("50001337", resourceAttrs.ResourcePartyValue);
         Assert.Contains(contextAttrs.Attributes, a =>
@@ -337,7 +337,7 @@ public class ContextHandlerUnitTest : IDisposable
         var resourceAttrs = new XacmlResourceAttributes { PersonId = "01017012345" };
         var contextAttrs = CreateResourceAttributes();
 
-        await _sut.TestEnrichResourceParty(contextAttrs, resourceAttrs, true);
+        await _sut.TestEnrichResourceParty(contextAttrs, resourceAttrs, true, TestContext.Current.CancellationToken);
 
         Assert.Equal("50001338", resourceAttrs.ResourcePartyValue);
     }
@@ -349,7 +349,7 @@ public class ContextHandlerUnitTest : IDisposable
         var contextAttrs = CreateResourceAttributes();
 
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            _sut.TestEnrichResourceParty(contextAttrs, resourceAttrs, false));
+            _sut.TestEnrichResourceParty(contextAttrs, resourceAttrs, false, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -364,7 +364,7 @@ public class ContextHandlerUnitTest : IDisposable
         var resourceAttrs = new XacmlResourceAttributes { PartyUuid = uuid };
         var contextAttrs = CreateResourceAttributes();
 
-        await _sut.TestEnrichResourceParty(contextAttrs, resourceAttrs, false);
+        await _sut.TestEnrichResourceParty(contextAttrs, resourceAttrs, false, TestContext.Current.CancellationToken);
 
         Assert.Equal("50001339", resourceAttrs.ResourcePartyValue);
     }
@@ -375,7 +375,7 @@ public class ContextHandlerUnitTest : IDisposable
         var resourceAttrs = new XacmlResourceAttributes { ResourcePartyValue = "50001337" };
         var contextAttrs = CreateResourceAttributes();
 
-        await _sut.TestEnrichResourceParty(contextAttrs, resourceAttrs, false);
+        await _sut.TestEnrichResourceParty(contextAttrs, resourceAttrs, false, TestContext.Current.CancellationToken);
 
         _registerServiceMock.Verify(r => r.PartyLookup(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -407,13 +407,13 @@ public class ContextHandlerUnitTest : IDisposable
         };
         _profileMock.Setup(p => p.GetUserProfile(42, It.IsAny<CancellationToken>())).ReturnsAsync(profile);
 
-        var result = await _sut.TestGetUserProfileByUserId(42);
+        var result = await _sut.TestGetUserProfileByUserId(42, TestContext.Current.CancellationToken);
 
         Assert.Equal(42, result.UserId);
         _profileMock.Verify(p => p.GetUserProfile(42, It.IsAny<CancellationToken>()), Times.Once);
 
         // Second call should come from cache
-        var cached = await _sut.TestGetUserProfileByUserId(42);
+        var cached = await _sut.TestGetUserProfileByUserId(42, TestContext.Current.CancellationToken);
         Assert.Same(result, cached);
         _profileMock.Verify(p => p.GetUserProfile(42, It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -428,12 +428,12 @@ public class ContextHandlerUnitTest : IDisposable
         };
         _profileMock.Setup(p => p.GetUserProfileByPersonId("01017012345", It.IsAny<CancellationToken>())).ReturnsAsync(profile);
 
-        var result = await _sut.TestGetUserProfileByPersonId("01017012345");
+        var result = await _sut.TestGetUserProfileByPersonId("01017012345", TestContext.Current.CancellationToken);
 
         Assert.Equal(42, result.UserId);
 
         // Second call should come from cache
-        var cached = await _sut.TestGetUserProfileByPersonId("01017012345");
+        var cached = await _sut.TestGetUserProfileByPersonId("01017012345", TestContext.Current.CancellationToken);
         Assert.Same(result, cached);
         _profileMock.Verify(p => p.GetUserProfileByPersonId("01017012345", It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -443,8 +443,8 @@ public class ContextHandlerUnitTest : IDisposable
     {
         _partiesMock.Setup(p => p.GetKeyRoleParties(1, It.IsAny<CancellationToken>())).ReturnsAsync(new List<int> { 100, 200 });
 
-        var first = await _sut.TestGetKeyRolePartyIds(1);
-        var second = await _sut.TestGetKeyRolePartyIds(1);
+        var first = await _sut.TestGetKeyRolePartyIds(1, TestContext.Current.CancellationToken);
+        var second = await _sut.TestGetKeyRolePartyIds(1, TestContext.Current.CancellationToken);
 
         Assert.Same(first, second);
         _partiesMock.Verify(p => p.GetKeyRoleParties(1, It.IsAny<CancellationToken>()), Times.Once);
@@ -456,8 +456,8 @@ public class ContextHandlerUnitTest : IDisposable
         _partiesMock.Setup(p => p.GetMainUnits(It.IsAny<MainUnitQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<MainUnit> { new MainUnit { PartyId = 10 } });
 
-        var first = await _sut.TestGetMainUnits(1);
-        var second = await _sut.TestGetMainUnits(1);
+        var first = await _sut.TestGetMainUnits(1, TestContext.Current.CancellationToken);
+        var second = await _sut.TestGetMainUnits(1, TestContext.Current.CancellationToken);
 
         Assert.Same(first, second);
         _partiesMock.Verify(p => p.GetMainUnits(It.IsAny<MainUnitQuery>(), It.IsAny<CancellationToken>()), Times.Once);

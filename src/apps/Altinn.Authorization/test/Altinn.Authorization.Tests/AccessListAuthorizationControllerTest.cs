@@ -29,7 +29,7 @@ public class AccessListAuthorizationControllerTest : IClassFixture<Authorization
     public async Task AccessList_Authorization_Unauthorized_MissingPlatformAccessToken()
     {
         // Act
-        HttpResponseMessage response = await _client.SendAsync(GetPostRequestMessage("Permit_WithoutActionFilter"));
+        HttpResponseMessage response = await _client.SendAsync(GetPostRequestMessage("Permit_WithoutActionFilter"), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -45,8 +45,8 @@ public class AccessListAuthorizationControllerTest : IClassFixture<Authorization
         AccessListAuthorizationResponse expected = GetExpectedResponse("Permit_WithoutActionFilter");
 
         // Act
-        HttpResponseMessage response = await _client.SendAsync(GetPostRequestMessage(testCase, PrincipalUtil.GetAccessToken("access-management", "platform")));
-        string responseContent = await response.Content.ReadAsStringAsync();
+        HttpResponseMessage response = await _client.SendAsync(GetPostRequestMessage(testCase, PrincipalUtil.GetAccessToken("access-management", "platform")), TestContext.Current.CancellationToken);
+        string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

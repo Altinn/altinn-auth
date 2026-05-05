@@ -44,7 +44,7 @@ public class SystemUserClientDelegationControllerTest
     [Fact]
     public async Task GetClients_InvalidRole_ReturnsBadRequest()
     {
-        var result = await CreateSut().GetClients(Party, roles: ["not-a-valid-role"]);
+        var result = await CreateSut().GetClients(Party, roles: ["not-a-valid-role"], cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.IsType<BadRequestObjectResult>(result.Result);
     }
@@ -57,7 +57,7 @@ public class SystemUserClientDelegationControllerTest
                      .ReturnsAsync([]);
 
         var result = await CreateSut(assignmentSvc: assignmentSvc.Object)
-            .GetClients(Party, roles: [RoleConstants.Accountant.Entity.Code]);
+            .GetClients(Party, roles: [RoleConstants.Accountant.Entity.Code], cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.IsType<OkObjectResult>(result.Result);
     }
@@ -69,7 +69,7 @@ public class SystemUserClientDelegationControllerTest
         assignmentSvc.Setup(s => s.GetClients(Party, It.IsAny<string[]>(), It.IsAny<string[]>(), It.IsAny<CancellationToken>()))
                      .ReturnsAsync([]);
 
-        var result = await CreateSut(assignmentSvc: assignmentSvc.Object).GetClients(Party);
+        var result = await CreateSut(assignmentSvc: assignmentSvc.Object).GetClients(Party, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.IsType<OkObjectResult>(result.Result);
     }
@@ -86,7 +86,7 @@ public class SystemUserClientDelegationControllerTest
                      .ReturnsAsync([]);
 
         var result = await CreateSut(connectionSvc: connectionSvc.Object)
-            .GetClientDelegations(Party, SystemUser, Client);
+            .GetClientDelegations(Party, SystemUser, Client, TestContext.Current.CancellationToken);
 
         Assert.IsType<OkObjectResult>(result.Result);
     }
@@ -103,7 +103,7 @@ public class SystemUserClientDelegationControllerTest
                      .ReturnsAsync([]);
 
         var result = await CreateSut(delegationSvc: delegationSvc.Object)
-            .PostClientDelegation(Party, new CreateSystemDelegationRequestDto());
+            .PostClientDelegation(Party, new CreateSystemDelegationRequestDto(), TestContext.Current.CancellationToken);
 
         Assert.IsType<OkObjectResult>(result.Result);
     }
@@ -120,7 +120,7 @@ public class SystemUserClientDelegationControllerTest
                      .Returns(Task.FromResult<Delegation>(null));
 
         var result = await CreateSut(delegationSvc: delegationSvc.Object)
-            .DeleteDelegation(Party, DelegationId);
+            .DeleteDelegation(Party, DelegationId, TestContext.Current.CancellationToken);
 
         Assert.IsType<BadRequestObjectResult>(result);
     }
@@ -134,7 +134,7 @@ public class SystemUserClientDelegationControllerTest
                      .Returns(Task.FromResult(delegation));
 
         var result = await CreateSut(delegationSvc: delegationSvc.Object)
-            .DeleteDelegation(Party, DelegationId);
+            .DeleteDelegation(Party, DelegationId, TestContext.Current.CancellationToken);
 
         Assert.IsType<BadRequestObjectResult>(result);
     }
@@ -154,7 +154,7 @@ public class SystemUserClientDelegationControllerTest
                      .Returns(Task.FromResult(assignment));
 
         var result = await CreateSut(assignmentSvc: assignmentSvc.Object, delegationSvc: delegationSvc.Object)
-            .DeleteDelegation(Party, DelegationId);
+            .DeleteDelegation(Party, DelegationId, TestContext.Current.CancellationToken);
 
         Assert.IsType<BadRequestObjectResult>(result);
     }
@@ -176,7 +176,7 @@ public class SystemUserClientDelegationControllerTest
                      .Returns(Task.FromResult(assignment));
 
         var result = await CreateSut(assignmentSvc: assignmentSvc.Object, delegationSvc: delegationSvc.Object)
-            .DeleteDelegation(Party, DelegationId);
+            .DeleteDelegation(Party, DelegationId, TestContext.Current.CancellationToken);
 
         Assert.IsType<OkResult>(result);
     }
@@ -193,7 +193,7 @@ public class SystemUserClientDelegationControllerTest
                      .Returns(Task.FromResult<Assignment>(null));
 
         var result = await CreateSut(assignmentSvc: assignmentSvc.Object)
-            .DeleteAssignment(Party, AssignmentId);
+            .DeleteAssignment(Party, AssignmentId, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.IsType<BadRequestObjectResult>(result);
     }
@@ -207,7 +207,7 @@ public class SystemUserClientDelegationControllerTest
                      .Returns(Task.FromResult(assignment));
 
         var result = await CreateSut(assignmentSvc: assignmentSvc.Object)
-            .DeleteAssignment(Party, AssignmentId);
+            .DeleteAssignment(Party, AssignmentId, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.IsType<BadRequestObjectResult>(result);
     }
@@ -226,7 +226,7 @@ public class SystemUserClientDelegationControllerTest
                      .Returns(Task.FromResult<Assignment>(assignment));
 
         var result = await CreateSut(assignmentSvc: assignmentSvc.Object)
-            .DeleteAssignment(Party, AssignmentId);
+            .DeleteAssignment(Party, AssignmentId, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.IsType<ObjectResult>(result);
     }
@@ -247,7 +247,7 @@ public class SystemUserClientDelegationControllerTest
                      .Returns(Task.FromResult<ProblemInstance>(null));
 
         var result = await CreateSut(assignmentSvc: assignmentSvc.Object)
-            .DeleteAssignment(Party, AssignmentId);
+            .DeleteAssignment(Party, AssignmentId, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.IsType<OkResult>(result);
     }
@@ -268,7 +268,7 @@ public class SystemUserClientDelegationControllerTest
                      .Returns(Task.FromResult<ProblemInstance>(MakeProblem()));
 
         var result = await CreateSut(assignmentSvc: assignmentSvc.Object)
-            .DeleteAssignment(Party, AssignmentId);
+            .DeleteAssignment(Party, AssignmentId, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.IsType<ObjectResult>(result);
     }

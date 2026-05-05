@@ -70,7 +70,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             XacmlContextRequest expectedEnrichedRequest = TestSetupUtil.GetEnrichedRequest(testCase);
 
             // Act
-            XacmlContextRequest enrichedRequest = await _contextHandler.Enrich(request, false, null);
+            XacmlContextRequest enrichedRequest = await _contextHandler.Enrich(request, false, null, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(enrichedRequest);
@@ -99,7 +99,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             XacmlContextRequest expectedEnrichedRequest = TestSetupUtil.GetEnrichedRequest(testCase);
 
             // Act
-            XacmlContextRequest enrichedRequest = await _contextHandler.Enrich(request, false, null);
+            XacmlContextRequest enrichedRequest = await _contextHandler.Enrich(request, false, null, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(enrichedRequest);
@@ -128,7 +128,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             XacmlContextRequest expectedEnrichedRequest = TestSetupUtil.GetEnrichedRequest(testCase);
 
             // Act
-            XacmlContextRequest enrichedRequest = await _contextHandler.Enrich(request, false, null);
+            XacmlContextRequest enrichedRequest = await _contextHandler.Enrich(request, false, null, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(enrichedRequest);
@@ -157,7 +157,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             XacmlContextRequest expectedEnrichedRequest = TestSetupUtil.GetEnrichedRequest(testCase);
 
             // Act
-            XacmlContextRequest enrichedRequest = await _contextHandler.Enrich(request, false, null);
+            XacmlContextRequest enrichedRequest = await _contextHandler.Enrich(request, false, null, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(enrichedRequest);
@@ -186,7 +186,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             XacmlContextRequest expectedEnrichedRequest = TestSetupUtil.GetEnrichedRequest(testCase);
 
             // Act
-            XacmlContextRequest enrichedRequest = await _contextHandler.Enrich(request, false, null);
+            XacmlContextRequest enrichedRequest = await _contextHandler.Enrich(request, false, null, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(enrichedRequest);
@@ -215,7 +215,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             XacmlContextRequest expectedEnrichedRequest = TestSetupUtil.GetEnrichedRequest(testCase);
 
             // Act
-            XacmlContextRequest enrichedRequest = await _contextHandler.Enrich(request, false, null);
+            XacmlContextRequest enrichedRequest = await _contextHandler.Enrich(request, false, null, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(enrichedRequest);

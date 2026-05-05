@@ -68,7 +68,7 @@ namespace Altinn.AccessManagement.Tests
             Stream dataStream = File.OpenRead("Data/Policies/policy.xml");
 
             // Act
-            bool successfullyStored = await _pap.WritePolicyAsync("org", "app", dataStream);
+            bool successfullyStored = await _pap.WritePolicyAsync("org", "app", dataStream, TestContext.Current.CancellationToken);
             SetupUtils.DeleteAppBlobData("org", "app");
 
             // Assert
@@ -83,7 +83,7 @@ namespace Altinn.AccessManagement.Tests
         public async Task WritePolicy_TC02()
         {
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _pap.WritePolicyAsync(string.Empty, "app", new MemoryStream()));
+            await Assert.ThrowsAsync<ArgumentException>(() => _pap.WritePolicyAsync(string.Empty, "app", new MemoryStream(), TestContext.Current.CancellationToken));
         }
 
         /// <summary>
@@ -94,7 +94,7 @@ namespace Altinn.AccessManagement.Tests
         public async Task WritePolicy_TC03()
         {
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _pap.WritePolicyAsync("org", string.Empty, new MemoryStream()));
+            await Assert.ThrowsAsync<ArgumentException>(() => _pap.WritePolicyAsync("org", string.Empty, new MemoryStream(), TestContext.Current.CancellationToken));
         }
 
         /// <summary>
@@ -105,7 +105,7 @@ namespace Altinn.AccessManagement.Tests
         public async Task WritePolicy_TC04()
         {
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _pap.WritePolicyAsync("org", "app", null));
+            await Assert.ThrowsAsync<ArgumentException>(() => _pap.WritePolicyAsync("org", "app", null, TestContext.Current.CancellationToken));
         }
 
         /// <summary>
@@ -116,7 +116,7 @@ namespace Altinn.AccessManagement.Tests
         public async Task WritePolicy_TC05()
         {
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _pap.WritePolicyAsync("org", "app", null));
+            await Assert.ThrowsAsync<ArgumentException>(() => _pap.WritePolicyAsync("org", "app", null, TestContext.Current.CancellationToken));
         }
 
         /// <summary>
@@ -162,7 +162,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -209,7 +209,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -266,7 +266,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -321,7 +321,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -372,7 +372,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -423,7 +423,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -482,7 +482,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -541,7 +541,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -601,7 +601,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -659,7 +659,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -714,7 +714,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -762,7 +762,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -821,7 +821,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -881,7 +881,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -933,7 +933,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -986,7 +986,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -1046,7 +1046,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -1106,7 +1106,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess);
+            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -1159,7 +1159,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules);
+            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules, cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -1206,7 +1206,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules);
+            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules, cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -1261,7 +1261,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules);
+            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules, cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -1314,7 +1314,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules);
+            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules, cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -1367,7 +1367,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules);
+            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules, cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -1414,7 +1414,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules);
+            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules, cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -1461,7 +1461,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules);
+            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules, cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -1508,7 +1508,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules);
+            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules, cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -1555,7 +1555,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules);
+            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules, cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);
@@ -1602,7 +1602,7 @@ namespace Altinn.AccessManagement.Tests
             };
 
             // Act
-            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules);
+            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules, cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expected.Count, actual.Count);

@@ -32,8 +32,8 @@ namespace Altinn.AccessManagement.Tests.Health
         {
             var request = new HttpRequestMessage(HttpMethod.Get, "/health");
 
-            HttpResponseMessage response = await _client.SendAsync(request);
-            Assert.Equal("Healthy", await response.Content.ReadAsStringAsync());
+            HttpResponseMessage response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+            Assert.Equal("Healthy", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
@@ -46,8 +46,8 @@ namespace Altinn.AccessManagement.Tests.Health
         {
             var request = new HttpRequestMessage(HttpMethod.Get, "/alive");
 
-            HttpResponseMessage response = await _client.SendAsync(request);
-            await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+            await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
     }

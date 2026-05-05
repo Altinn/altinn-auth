@@ -58,18 +58,18 @@ namespace Altinn.Authorization.Host.Lease.Tests
         [Fact(Skip = "Need a valid storage account")]
         public async Task TestLeaseAutoRefresh()
         {
-            await using var lease = await Lease.TryAcquireNonBlocking("lease_test");
+            await using var lease = await Lease.TryAcquireNonBlocking("lease_test", TestContext.Current.CancellationToken);
 
             for (var i = 0; i < 100; i++)
             {
                 await lease.Update(new LeaseData()
                 {
                     Counter = i,
-                });
+                }, TestContext.Current.CancellationToken);
             }
 
             await Task.Delay(TimeSpan.FromSeconds(90), CancellationToken.None);
-            var result = await lease.Get<LeaseData>(default);
+            var result = await lease.Get<LeaseData>(TestContext.Current.CancellationToken);
             Assert.Equal(99, result.Counter);
         }
     }

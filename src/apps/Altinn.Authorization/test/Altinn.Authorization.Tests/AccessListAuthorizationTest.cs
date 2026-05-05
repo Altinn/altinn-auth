@@ -38,7 +38,7 @@ public class AccessListAuthorizationTest
             .ReturnsAsync((IEnumerable<AccessListResourceMembershipWithActionFilterDto>)null);
 
         // Act
-        var result = await _sut.Authorize(request);
+        var result = await _sut.Authorize(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -55,7 +55,7 @@ public class AccessListAuthorizationTest
             .ReturnsAsync(Array.Empty<AccessListResourceMembershipWithActionFilterDto>());
 
         // Act
-        var result = await _sut.Authorize(request);
+        var result = await _sut.Authorize(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -73,7 +73,7 @@ public class AccessListAuthorizationTest
             .ReturnsAsync(new[] { membership });
 
         // Act
-        var result = await _sut.Authorize(request);
+        var result = await _sut.Authorize(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -91,7 +91,7 @@ public class AccessListAuthorizationTest
             .ReturnsAsync(new[] { membership });
 
         // Act
-        var result = await _sut.Authorize(request);
+        var result = await _sut.Authorize(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -109,7 +109,7 @@ public class AccessListAuthorizationTest
             .ReturnsAsync(new[] { membership });
 
         // Act
-        var result = await _sut.Authorize(request);
+        var result = await _sut.Authorize(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess);

@@ -78,12 +78,12 @@ public class AppsInstanceDelegationControllerTest : IClassFixture<ApiFixture>
         var client = GetTestClient(platformToken);
 
         // Act
-        HttpResponseMessage response = await client.GetAsync($"accessmanagement/api/v1/app/delegationcheck/resource/{resourceId}/instance/{instanceId}");
+        HttpResponseMessage response = await client.GetAsync($"accessmanagement/api/v1/app/delegationcheck/resource/{resourceId}/instance/{instanceId}", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        Paginated<ResourceRightDelegationCheckResultDto> actual = JsonSerializer.Deserialize<Paginated<ResourceRightDelegationCheckResultDto>>(await response.Content.ReadAsStringAsync(), options);
+        Paginated<ResourceRightDelegationCheckResultDto> actual = JsonSerializer.Deserialize<Paginated<ResourceRightDelegationCheckResultDto>>(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), options);
 
         AssertionUtil.AssertPagination(expected, actual, AssertionUtil.AssertResourceRightDelegationCheckResultDto);
     }
@@ -105,12 +105,12 @@ public class AppsInstanceDelegationControllerTest : IClassFixture<ApiFixture>
         var client = GetTestClient(platformToken);
 
         // Act
-        HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/app/delegations/resource/{resourceId}/instance/{instanceId}", new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, MediaTypeNames.Application.Json));
+        HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/app/delegations/resource/{resourceId}/instance/{instanceId}", new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, MediaTypeNames.Application.Json), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        AppsInstanceDelegationResponseDto actual = JsonSerializer.Deserialize<AppsInstanceDelegationResponseDto>(await response.Content.ReadAsStringAsync(), options);
+        AppsInstanceDelegationResponseDto actual = JsonSerializer.Deserialize<AppsInstanceDelegationResponseDto>(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), options);
         AssertionUtil.AssertAppsInstanceDelegationResponseDto(expected, actual);
     }
 
@@ -129,12 +129,12 @@ public class AppsInstanceDelegationControllerTest : IClassFixture<ApiFixture>
         var client = GetTestClient(platformToken);
 
         // Act
-        HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/app/delegationrevoke/resource/{resourceId}/instance/{instanceId}", new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, MediaTypeNames.Application.Json));
+        HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/app/delegationrevoke/resource/{resourceId}/instance/{instanceId}", new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, MediaTypeNames.Application.Json), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        AppsInstanceRevokeResponseDto actual = JsonSerializer.Deserialize<AppsInstanceRevokeResponseDto>(await response.Content.ReadAsStringAsync(), options);
+        AppsInstanceRevokeResponseDto actual = JsonSerializer.Deserialize<AppsInstanceRevokeResponseDto>(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), options);
         AssertionUtil.AssertAppsInstanceRevokeResponseDto(expected, actual);
     }
 
@@ -145,12 +145,12 @@ public class AppsInstanceDelegationControllerTest : IClassFixture<ApiFixture>
         var client = GetTestClient(platformToken);
 
         // Act
-        HttpResponseMessage response = await client.DeleteAsync($"accessmanagement/api/v1/app/delegationrevoke/resource/{resourceId}/instance/{instanceId}");
+        HttpResponseMessage response = await client.DeleteAsync($"accessmanagement/api/v1/app/delegationrevoke/resource/{resourceId}/instance/{instanceId}", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        Paginated<AppsInstanceRevokeResponseDto> actual = JsonSerializer.Deserialize<Paginated<AppsInstanceRevokeResponseDto>>(await response.Content.ReadAsStringAsync(), options);
+        Paginated<AppsInstanceRevokeResponseDto> actual = JsonSerializer.Deserialize<Paginated<AppsInstanceRevokeResponseDto>>(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), options);
         AssertionUtil.AssertPagination(expected, actual, AssertionUtil.AssertAppsInstanceRevokeResponseDto);
     }
 
@@ -161,12 +161,12 @@ public class AppsInstanceDelegationControllerTest : IClassFixture<ApiFixture>
         var client = GetTestClient(platformToken);
 
         // Act
-        HttpResponseMessage response = await client.DeleteAsync($"accessmanagement/api/v1/app/delegationrevoke/resource/{resourceId}/instance/{instanceId}");
+        HttpResponseMessage response = await client.DeleteAsync($"accessmanagement/api/v1/app/delegationrevoke/resource/{resourceId}/instance/{instanceId}", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
-        AltinnProblemDetails actual = JsonSerializer.Deserialize<AltinnProblemDetails>(await response.Content.ReadAsStringAsync(), options);
+        AltinnProblemDetails actual = JsonSerializer.Deserialize<AltinnProblemDetails>(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), options);
         TestDataAppsInstanceDelegation.AssertAltinnProblemDetailsEqual(expected, actual);
     }
 
@@ -177,7 +177,7 @@ public class AppsInstanceDelegationControllerTest : IClassFixture<ApiFixture>
         var client = GetTestClient(null);
 
         // Act
-        HttpResponseMessage response = await client.DeleteAsync($"accessmanagement/api/v1/app/delegationrevoke/resource/{resourceId}/instance/{instanceId}");
+        HttpResponseMessage response = await client.DeleteAsync($"accessmanagement/api/v1/app/delegationrevoke/resource/{resourceId}/instance/{instanceId}", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -196,12 +196,12 @@ public class AppsInstanceDelegationControllerTest : IClassFixture<ApiFixture>
         var client = GetTestClient(platformToken);
 
         // Act
-        HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/app/delegations/resource/{resourceId}/instance/{instanceId}", new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, MediaTypeNames.Application.Json));
+        HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/app/delegations/resource/{resourceId}/instance/{instanceId}", new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, MediaTypeNames.Application.Json), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.PartialContent, response.StatusCode);
 
-        AppsInstanceDelegationResponseDto actual = JsonSerializer.Deserialize<AppsInstanceDelegationResponseDto>(await response.Content.ReadAsStringAsync(), options);
+        AppsInstanceDelegationResponseDto actual = JsonSerializer.Deserialize<AppsInstanceDelegationResponseDto>(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), options);
         AssertionUtil.AssertAppsInstanceDelegationResponseDto(expected, actual);
     }
 
@@ -218,12 +218,12 @@ public class AppsInstanceDelegationControllerTest : IClassFixture<ApiFixture>
         var client = GetTestClient(platformToken);
 
         // Act
-        HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/app/delegations/resource/{resourceId}/instance/{instanceId}", new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, MediaTypeNames.Application.Json));
+        HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/app/delegations/resource/{resourceId}/instance/{instanceId}", new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, MediaTypeNames.Application.Json), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
-        AltinnProblemDetails actual = JsonSerializer.Deserialize<AltinnProblemDetails>(await response.Content.ReadAsStringAsync(), options);
+        AltinnProblemDetails actual = JsonSerializer.Deserialize<AltinnProblemDetails>(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), options);
         TestDataAppsInstanceDelegation.AssertAltinnProblemDetailsEqual(expected, actual);
     }
 
@@ -234,12 +234,12 @@ public class AppsInstanceDelegationControllerTest : IClassFixture<ApiFixture>
         var client = GetTestClient(platformToken);
 
         // Act
-        HttpResponseMessage response = await client.GetAsync($"accessmanagement/api/v1/app/delegations/resource/{resourceId}/instance/{instanceId}");
+        HttpResponseMessage response = await client.GetAsync($"accessmanagement/api/v1/app/delegations/resource/{resourceId}/instance/{instanceId}", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        Paginated<AppsInstanceDelegationResponseDto> actual = JsonSerializer.Deserialize<Paginated<AppsInstanceDelegationResponseDto>>(await response.Content.ReadAsStringAsync(), options);
+        Paginated<AppsInstanceDelegationResponseDto> actual = JsonSerializer.Deserialize<Paginated<AppsInstanceDelegationResponseDto>>(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), options);
         AssertionUtil.AssertPagination(expected, actual, AssertionUtil.AssertAppsInstanceDelegationResponseDto);
     }
 

@@ -91,7 +91,7 @@ public class PartyServiceTest
         var (svc, mocks) = MakeSut();
         SetupEntityExists(mocks.EntityRepo, exists: true);
 
-        var result = await svc.AddParty(MakeParty(), options: null);
+        var result = await svc.AddParty(MakeParty(), options: null, cancellationToken: TestContext.Current.CancellationToken);
 
         result.IsProblem.Should().BeFalse();
         result.Value.PartyCreated.Should().BeFalse();
@@ -103,7 +103,7 @@ public class PartyServiceTest
         var (svc, mocks) = MakeSut();
         SetupEntityExists(mocks.EntityRepo, exists: false);
 
-        var result = await svc.AddParty(MakeParty(entityType: "Organisation"), options: null);
+        var result = await svc.AddParty(MakeParty(entityType: "Organisation"), options: null, cancellationToken: TestContext.Current.CancellationToken);
 
         result.IsProblem.Should().BeTrue();
     }
@@ -115,7 +115,7 @@ public class PartyServiceTest
         SetupEntityExists(mocks.EntityRepo, exists: false);
         SetupEntityType(mocks.TypeRepo, type: null);
 
-        var result = await svc.AddParty(MakeParty(), options: null);
+        var result = await svc.AddParty(MakeParty(), options: null, cancellationToken: TestContext.Current.CancellationToken);
 
         result.IsProblem.Should().BeTrue();
     }
@@ -128,7 +128,7 @@ public class PartyServiceTest
         SetupEntityType(mocks.TypeRepo, new EntityType { Id = EntityTypeId, Name = "Systembruker" });
         SetupEntityVariant(mocks.VariantRepo, variant: null);
 
-        var result = await svc.AddParty(MakeParty(), options: null);
+        var result = await svc.AddParty(MakeParty(), options: null, cancellationToken: TestContext.Current.CancellationToken);
 
         result.IsProblem.Should().BeTrue();
     }
@@ -150,7 +150,7 @@ public class PartyServiceTest
                 It.IsAny<string>()))
             .ReturnsAsync(1);
 
-        var result = await svc.AddParty(party, options: null);
+        var result = await svc.AddParty(party, options: null, cancellationToken: TestContext.Current.CancellationToken);
 
         result.IsProblem.Should().BeFalse();
         result.Value.PartyCreated.Should().BeTrue();

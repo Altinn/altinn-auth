@@ -50,7 +50,7 @@ namespace Altinn.Authorization.Tests
             };
 
             // Act
-            var receipt = await client.EnqueueAuthorizationEvent(evt);
+            var receipt = await client.EnqueueAuthorizationEvent(evt, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.True(receipt.Success);
@@ -99,7 +99,7 @@ namespace Altinn.Authorization.Tests
             };
 
             // Act
-            var receipt = await client.EnqueueAuthorizationEvent(evt);
+            var receipt = await client.EnqueueAuthorizationEvent(evt, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.True(receipt.Success);
@@ -147,7 +147,7 @@ namespace Altinn.Authorization.Tests
             };
 
             // Act
-            var receipt = await client.EnqueueAuthorizationEvent(evt);
+            var receipt = await client.EnqueueAuthorizationEvent(evt, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.True(receipt.Success);

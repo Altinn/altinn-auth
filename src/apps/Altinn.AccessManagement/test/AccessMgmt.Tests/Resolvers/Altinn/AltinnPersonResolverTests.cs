@@ -29,7 +29,7 @@ public class AltinnPersonResolverTests
     {
         var resolver = ResolverServiceCollection.ConfigureServices(ResolverServiceCollection.DefaultServiceCollection);
 
-        var result = await resolver.Resolve(attributes, wants, default);
+        var result = await resolver.Resolve(attributes, wants, TestContext.Current.CancellationToken);
 
         assert(result);
     }

@@ -61,7 +61,7 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                 }
             };
 
-            HttpResponseMessage response = await GetClient().SendAsync(httpRequestMessage);
+            HttpResponseMessage response = await GetClient().SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
 
@@ -83,7 +83,7 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                 }
             };
 
-            HttpResponseMessage response = await GetClient().SendAsync(httpRequestMessage);
+            HttpResponseMessage response = await GetClient().SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
 
@@ -105,11 +105,11 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                 }
             };
 
-            HttpResponseMessage response = await GetClient().SendAsync(httpRequestMessage);
+            HttpResponseMessage response = await GetClient().SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
             AltinnProblemDetails actual = JsonSerializer.Deserialize<AltinnProblemDetails>(
-                await response.Content.ReadAsStringAsync(), _jsonOptions)!;
+                await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions)!;
             Assert.Equal("The Entitytype is not supported", actual.Detail);
         }
 
@@ -131,11 +131,11 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                 }
             };
 
-            HttpResponseMessage response = await GetClient().SendAsync(httpRequestMessage);
+            HttpResponseMessage response = await GetClient().SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
             AltinnProblemDetails actual = JsonSerializer.Deserialize<AltinnProblemDetails>(
-                await response.Content.ReadAsStringAsync(), _jsonOptions)!;
+                await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions)!;
             Assert.Equal("The EntityVariant is not found or not valid for the given EntityType", actual.Detail);
         }
 
@@ -157,10 +157,10 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                 }
             };
 
-            HttpResponseMessage response = await GetClient().SendAsync(httpRequestMessage);
+            HttpResponseMessage response = await GetClient().SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
-            var result = await response.Content.ReadFromJsonAsync<AddPartyResultDto>();
+            var result = await response.Content.ReadFromJsonAsync<AddPartyResultDto>(cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(result!.PartyCreated);
         }
 
@@ -182,10 +182,10 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                 }
             };
 
-            HttpResponseMessage response = await GetClient().SendAsync(httpRequestMessage);
+            HttpResponseMessage response = await GetClient().SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
-            var result = await response.Content.ReadFromJsonAsync<AddPartyResultDto>();
+            var result = await response.Content.ReadFromJsonAsync<AddPartyResultDto>(cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(result!.PartyCreated);
         }
     }

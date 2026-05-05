@@ -466,11 +466,11 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
         };
 
         // Act
-        await _translationService.UpsertTranslationAsync(translationEntry, AuditDefaults.StaticDataIngest, AuditDefaults.StaticDataIngest);
+        await _translationService.UpsertTranslationAsync(translationEntry, AuditDefaults.StaticDataIngest, AuditDefaults.StaticDataIngest, TestContext.Current.CancellationToken);
 
         // Assert
         var saved = await _db.TranslationEntries
-            .FirstOrDefaultAsync(t => t.Id == customId && t.LanguageCode == "eng" && t.FieldName == "Name");
+            .FirstOrDefaultAsync(t => t.Id == customId && t.LanguageCode == "eng" && t.FieldName == "Name", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("Test Translation", saved.Value);
     }
@@ -489,17 +489,17 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             Value = "Original"
         };
 
-        await _translationService.UpsertTranslationAsync(translationEntry, AuditDefaults.StaticDataIngest, AuditDefaults.StaticDataIngest);
+        await _translationService.UpsertTranslationAsync(translationEntry, AuditDefaults.StaticDataIngest, AuditDefaults.StaticDataIngest, TestContext.Current.CancellationToken);
 
         // Update the value
         translationEntry.Value = "Updated";
 
         // Act
-        await _translationService.UpsertTranslationAsync(translationEntry, AuditDefaults.StaticDataIngest, AuditDefaults.StaticDataIngest);
+        await _translationService.UpsertTranslationAsync(translationEntry, AuditDefaults.StaticDataIngest, AuditDefaults.StaticDataIngest, TestContext.Current.CancellationToken);
 
         // Assert
         var saved = await _db.TranslationEntries
-            .FirstOrDefaultAsync(t => t.Id == customId && t.LanguageCode == "eng" && t.FieldName == "Name");
+            .FirstOrDefaultAsync(t => t.Id == customId && t.LanguageCode == "eng" && t.FieldName == "Name", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("Updated", saved.Value);
     }
@@ -517,7 +517,7 @@ public class TranslationServiceTests : IClassFixture<PostgresFixture>
             FieldName = "Name",
             Value = "Cached Translation"
         };
-        await _translationService.UpsertTranslationAsync(translationEntry, AuditDefaults.StaticDataIngest, AuditDefaults.StaticDataIngest);
+        await _translationService.UpsertTranslationAsync(translationEntry, AuditDefaults.StaticDataIngest, AuditDefaults.StaticDataIngest, TestContext.Current.CancellationToken);
 
         var role = new RoleDto
         {

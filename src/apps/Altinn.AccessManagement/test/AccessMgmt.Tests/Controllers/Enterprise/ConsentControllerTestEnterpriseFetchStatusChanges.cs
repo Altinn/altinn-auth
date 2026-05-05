@@ -231,7 +231,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             HttpClient client = GetTestClient();
 
             string url = $"/accessmanagement/api/v1/enterprise/consentrequests/latestchanges";
-            HttpResponseMessage response = await client.GetAsync(url);
+            HttpResponseMessage response = await client.GetAsync(url, TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
@@ -249,7 +249,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             string url = $"/accessmanagement/api/v1/enterprise/consentrequests/latestchanges";
-            HttpResponseMessage response = await client.GetAsync(url);
+            HttpResponseMessage response = await client.GetAsync(url, TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         }
@@ -267,8 +267,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             string url = $"/accessmanagement/api/v1/enterprise/consentrequests/latestchanges";
-            HttpResponseMessage response = await client.GetAsync(url);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.GetAsync(url, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.NotNull(responseContent);
@@ -277,8 +277,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             if (result.Links.Next != null)
             {
                 // Fetch next page
-                var nextResponse = await client.GetAsync(result.Links.Next);
-                PaginatedResult<ConsentStatusChangeDto> nextResult = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(await nextResponse.Content.ReadAsStringAsync(), _jsonOptions);
+                var nextResponse = await client.GetAsync(result.Links.Next, TestContext.Current.CancellationToken);
+                PaginatedResult<ConsentStatusChangeDto> nextResult = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(await nextResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
                 AssertResponseForGetStatusChanges(nextResult);
             }
         }
@@ -299,8 +299,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             string readToken = PrincipalUtil.GetMaskinportenToken("810419512", "altinn:consentrequests.read");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", readToken);
             string url = $"/accessmanagement/api/v1/enterprise/consentrequests/latestchanges";
-            HttpResponseMessage responsePage1 = await client.GetAsync(url);
-            string responseContent1 = await responsePage1.Content.ReadAsStringAsync();
+            HttpResponseMessage responsePage1 = await client.GetAsync(url, TestContext.Current.CancellationToken);
+            string responseContent1 = await responsePage1.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, responsePage1.StatusCode);
             var resultPage1 = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(responseContent1, _jsonOptions);
@@ -312,8 +312,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             // Fetch next page using continuation token
             if (resultPage1.Links.Next != null)
             {
-                HttpResponseMessage responsePage2 = await client.GetAsync(resultPage1.Links.Next);
-                string responseContent2 = await responsePage2.Content.ReadAsStringAsync();
+                HttpResponseMessage responsePage2 = await client.GetAsync(resultPage1.Links.Next, TestContext.Current.CancellationToken);
+                string responseContent2 = await responsePage2.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
                 Assert.Equal(HttpStatusCode.OK, responsePage2.StatusCode);
                 var resultPage2 = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(responseContent2, _jsonOptions);
 
@@ -346,15 +346,15 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
 
             // Fetch first page
             string url = $"/accessmanagement/api/v1/enterprise/consentrequests/latestchanges";
-            HttpResponseMessage responsePage1 = await client.GetAsync(url);
-            string responseContent1 = await responsePage1.Content.ReadAsStringAsync();
+            HttpResponseMessage responsePage1 = await client.GetAsync(url, TestContext.Current.CancellationToken);
+            string responseContent1 = await responsePage1.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, responsePage1.StatusCode);
             var resultPage1 = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(responseContent1, _jsonOptions);
 
             // Fetch next page
             Assert.NotNull(resultPage1.Links.Next);
-            HttpResponseMessage responsePage2 = await client.GetAsync(resultPage1.Links.Next);
-            string responseContent2 = await responsePage2.Content.ReadAsStringAsync();
+            HttpResponseMessage responsePage2 = await client.GetAsync(resultPage1.Links.Next, TestContext.Current.CancellationToken);
+            string responseContent2 = await responsePage2.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, responsePage2.StatusCode);
             var resultPage2 = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(responseContent2, _jsonOptions);
 
@@ -404,11 +404,11 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             string urlWithParam = $"/accessmanagement/api/v1/enterprise/consentrequests/latestchanges?pageSize=100";
             string urlWithoutParam = $"/accessmanagement/api/v1/enterprise/consentrequests/latestchanges";
 
-            var responseWith = await client.GetAsync(urlWithParam);
-            var responseWithout = await client.GetAsync(urlWithoutParam);
+            var responseWith = await client.GetAsync(urlWithParam, TestContext.Current.CancellationToken);
+            var responseWithout = await client.GetAsync(urlWithoutParam, TestContext.Current.CancellationToken);
 
-            var resultWith = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(await responseWith.Content.ReadAsStringAsync(), _jsonOptions);
-            var resultWithout = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(await responseWithout.Content.ReadAsStringAsync(), _jsonOptions);
+            var resultWith = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(await responseWith.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
+            var resultWithout = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(await responseWithout.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
 
             // Both should return config-driven page size (5), not 100
             Assert.Equal(resultWithout.Items.Count(), resultWith.Items.Count());
@@ -424,11 +424,11 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             string url = $"/accessmanagement/api/v1/enterprise/consentrequests/latestchanges";
-            HttpResponseMessage response = await client.GetAsync(url);
+            HttpResponseMessage response = await client.GetAsync(url, TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var result = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(
-                await response.Content.ReadAsStringAsync(), _jsonOptions);
+                await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
 
             // LatestChangesPageSize is set to 5 in PostConfigure — assert exactly that
             Assert.Equal(5, result.Items.Count());
@@ -443,10 +443,10 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             string url = $"/accessmanagement/api/v1/enterprise/consentrequests/latestchanges";
-            HttpResponseMessage response = await client.GetAsync(url);
+            HttpResponseMessage response = await client.GetAsync(url, TestContext.Current.CancellationToken);
 
             var result = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(
-                await response.Content.ReadAsStringAsync(), _jsonOptions);
+                await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
 
             Assert.NotNull(result.Links.Next);
 
@@ -464,23 +464,23 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Page 1
-            var response1 = await client.GetAsync("/accessmanagement/api/v1/enterprise/consentrequests/latestchanges");
+            var response1 = await client.GetAsync("/accessmanagement/api/v1/enterprise/consentrequests/latestchanges", TestContext.Current.CancellationToken);
             var page1 = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(
-                await response1.Content.ReadAsStringAsync(), _jsonOptions);
+                await response1.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
             Assert.Equal(5, page1.Items.Count());
             Assert.NotNull(page1.Links.Next);
 
             // Page 2
-            var response2 = await client.GetAsync(page1.Links.Next);
+            var response2 = await client.GetAsync(page1.Links.Next, TestContext.Current.CancellationToken);
             var page2 = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(
-                await response2.Content.ReadAsStringAsync(), _jsonOptions);
+                await response2.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
             Assert.Equal(5, page2.Items.Count());
             Assert.NotNull(page2.Links.Next); // Full page → link exists (accepted extra round-trip behavior)
 
             // Page 3 - empty, terminates pagination
-            var response3 = await client.GetAsync(page2.Links.Next);
+            var response3 = await client.GetAsync(page2.Links.Next, TestContext.Current.CancellationToken);
             var page3 = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(
-                await response3.Content.ReadAsStringAsync(), _jsonOptions);
+                await response3.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
             Assert.Empty(page3.Items);
             Assert.Null(page3.Links.Next); // No more data → terminates correctly
         }

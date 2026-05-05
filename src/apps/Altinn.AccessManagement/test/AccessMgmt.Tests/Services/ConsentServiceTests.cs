@@ -217,7 +217,7 @@ public class ConsentServiceTests
         var result = await service.GetAndStoreAltinn2Consent(consentRequestId, CancellationToken.None);
 
         // Allow listener to process
-        await Task.Delay(20);
+        await Task.Delay(20, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.IsProblem);
@@ -261,7 +261,7 @@ public class ConsentServiceTests
 
         var result = await service.GetAndStoreAltinn2Consent(consentRequestId, CancellationToken.None);
 
-        await Task.Delay(20);
+        await Task.Delay(20, TestContext.Current.CancellationToken);
 
         Assert.False(result.IsProblem);
         Assert.NotNull(result.Value);
@@ -297,7 +297,7 @@ public class ConsentServiceTests
 
         var result = await service.GetAndStoreAltinn2Consent(consentRequestId, CancellationToken.None);
 
-        await Task.Delay(20);
+        await Task.Delay(20, TestContext.Current.CancellationToken);
 
         Assert.True(result.IsProblem || result.Value == null);
         Assert.True(collector.GetMeasurements("consent_migration_update_a2_duration_seconds").Any());
@@ -339,7 +339,7 @@ public class ConsentServiceTests
         var result = await service.GetAndStoreAltinn2Consent(consentRequestId, CancellationToken.None);
 
         // Allow listener to process
-        await Task.Delay(20);
+        await Task.Delay(20, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.IsProblem);

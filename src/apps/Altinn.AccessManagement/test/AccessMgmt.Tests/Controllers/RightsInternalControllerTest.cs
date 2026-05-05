@@ -92,8 +92,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("jks_audi_etron_gt", "p50005545", "u20000095");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<RightExternal> actualRights = JsonSerializer.Deserialize<List<RightExternal>>(responseContent, options);
 
             // Assert
@@ -117,8 +117,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("jks_audi_etron_gt", "p50005545", "u20000095");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/?returnAllPolicyRights=true", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/?returnAllPolicyRights=true", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<RightExternal> actualRights = JsonSerializer.Deserialize<List<RightExternal>>(responseContent, options);
 
             // Assert
@@ -142,9 +142,9 @@ namespace Altinn.AccessManagement.Tests.Controllers
             // Act
             var client = GetTestClient(sblInternalToken);
 
-            var response = await client.PostAsync($"accessmanagement/api/v1/internal/query/rights/", requestContent);
+            var response = await client.PostAsync($"accessmanagement/api/v1/internal/query/rights/", requestContent, TestContext.Current.CancellationToken);
 
-            string responseContent = await response.Content.ReadAsStringAsync();
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<RightExternal> actualRights = JsonSerializer.Deserialize<List<RightExternal>>(responseContent, options);
 
             // Assert
@@ -167,9 +167,9 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("jks_audi_etron_gt", "p50005545", "u20000490");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/?returnAllPolicyRights=true", requestContent);
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/?returnAllPolicyRights=true", requestContent, TestContext.Current.CancellationToken);
 
-            string responseContent = await response.Content.ReadAsStringAsync();
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<RightExternal> actualRights = JsonSerializer.Deserialize<List<RightExternal>>(responseContent, options);
 
             // Assert
@@ -191,8 +191,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("digdirs_company_car", "p50005545", "u20001337");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -216,8 +216,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("digdirs_company_car", "p50005545", "u20001337");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/?returnAllPolicyRights=true", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/?returnAllPolicyRights=true", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -243,8 +243,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("jks_audi_etron_gt", "p50004221", "u20000490");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<RightExternal> actualRights = JsonSerializer.Deserialize<List<RightExternal>>(responseContent, options);
 
             // Assert
@@ -270,8 +270,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("jks_audi_etron_gt", "p50004221", "u20000490");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/?returnAllPolicyRights=true", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/?returnAllPolicyRights=true", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<RightExternal> actualRights = JsonSerializer.Deserialize<List<RightExternal>>(responseContent, options);
 
             // Assert
@@ -294,8 +294,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("org1_app1", "p50001337", "u20001337");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<RightExternal> actualRights = JsonSerializer.Deserialize<List<RightExternal>>(responseContent, options);
 
             // Assert
@@ -319,8 +319,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("org1_app1", "p50001337", "u20001337");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/?returnAllPolicyRights=true", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/?returnAllPolicyRights=true", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<RightExternal> actualRights = JsonSerializer.Deserialize<List<RightExternal>>(responseContent, options);
 
             // Assert
@@ -342,8 +342,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("ttd_rf-0002", "p50005545", "u20000490");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<RightExternal> actualRights = JsonSerializer.Deserialize<List<RightExternal>>(responseContent, options);
 
             // Assert
@@ -366,8 +366,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("ttd_rf-0002", "p50005545", "u20000490");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/?returnAllPolicyRights=true", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/rights/?returnAllPolicyRights=true", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<RightExternal> actualRights = JsonSerializer.Deserialize<List<RightExternal>>(responseContent, options);
 
             // Assert
@@ -389,8 +389,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("ttd_rf-0002", "p50005545", "u20000490");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/delegablerights/", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/delegablerights/", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<RightExternal> actualRights = JsonSerializer.Deserialize<List<RightExternal>>(responseContent, options);
 
             // Assert
@@ -413,8 +413,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("ttd_rf-0002", "p50005545", "u20000490");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/delegablerights/?returnAllPolicyRights=true", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/delegablerights/?returnAllPolicyRights=true", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<RightExternal> actualRights = JsonSerializer.Deserialize<List<RightExternal>>(responseContent, options);
 
             // Assert
@@ -439,8 +439,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("jks_audi_etron_gt", "p50004221", "u20000490");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/delegablerights/", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/delegablerights/", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<RightExternal> actualRights = JsonSerializer.Deserialize<List<RightExternal>>(responseContent, options);
 
             // Assert
@@ -466,8 +466,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("jks_audi_etron_gt", "p50004221", "u20000490");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/delegablerights/?returnAllPolicyRights=true", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/delegablerights/?returnAllPolicyRights=true", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<RightExternal> actualRights = JsonSerializer.Deserialize<List<RightExternal>>(responseContent, options);
 
             // Assert
@@ -489,8 +489,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("digdirs_company_car", "p50005545", "u20001337");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/delegablerights/", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/delegablerights/", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -514,8 +514,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("digdirs_company_car", "p50005545", "u20001337");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/delegablerights/?returnAllPolicyRights=true", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/delegablerights/?returnAllPolicyRights=true", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -539,8 +539,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("org1_app1", "p50001337", "u20001337");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/delegablerights/", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/delegablerights/", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<RightExternal> actualRights = JsonSerializer.Deserialize<List<RightExternal>>(responseContent, options);
 
             // Assert
@@ -564,8 +564,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsQueryRequestContent("org1_app1", "p50001337", "u20001337");
 
             // Act
-            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/delegablerights/?returnAllPolicyRights=true", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(sblInternalToken).PostAsync($"accessmanagement/api/v1/internal/query/delegablerights/?returnAllPolicyRights=true", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<RightExternal> actualRights = JsonSerializer.Deserialize<List<RightExternal>>(responseContent, options);
 
             // Assert
@@ -600,8 +600,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetDelegationCheckContent(resourceId);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -625,8 +625,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetDelegationCheckContent(resourceId);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -650,8 +650,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetDelegationCheckContent(resourceId);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -675,8 +675,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetDelegationCheckContent(resourceId);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -721,8 +721,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetDelegationCheckContent(resourceId);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -767,8 +767,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetDelegationCheckContent(resourceId);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -803,8 +803,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetDelegationCheckContent(resourceId);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -840,8 +840,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetDelegationCheckContent(resourceId);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -875,8 +875,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetDelegationCheckContent(resourceId);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -906,8 +906,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetDelegationCheckContent(resourceId);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -937,8 +937,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetDelegationCheckContent(resourceId);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -967,8 +967,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetDelegationCheckContent(resourceId);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -997,8 +997,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetDelegationCheckContent(resourceId);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{reporteePartyId}/rights/delegation/delegationcheck", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -1034,8 +1034,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Ssn, by.Ssn, scenario);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -1071,8 +1071,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Uuid, by.Ssn, scenario);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -1108,8 +1108,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Uuid, by.Ssn, scenario);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -1142,8 +1142,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Uuid, by.Ssn, scenario);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -1177,8 +1177,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Uuid, by.Ssn, scenario);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -1207,8 +1207,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Ssn, by.Ssn, scenario);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -1242,8 +1242,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.Ssn, to.Ssn, by.Ssn, scenario);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -1278,8 +1278,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.Ssn, to.Uuid, by.Ssn, scenario);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -1317,8 +1317,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Ssn, by.Ssn, scenario);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -1354,8 +1354,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.OrgNo, by.Ssn, scenario);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -1388,8 +1388,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Username, by.Ssn, scenario);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -1423,8 +1423,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Uuid, by.Ssn, scenario);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -1460,8 +1460,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.OrgNo, by.Ssn, scenario);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -1497,8 +1497,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.Ssn, by.Ssn, scenario);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -1529,8 +1529,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.OrgNo, by.Ssn, scenario);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -1561,8 +1561,8 @@ namespace Altinn.AccessManagement.Tests.Controllers
             StreamContent requestContent = GetRightsDelegationContent(resourceId, from.OrgNo, to.OrgNo, by.Ssn, scenario);
 
             // Act
-            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await GetTestClient(token).PostAsync($"accessmanagement/api/v1/internal/{from.PartyId}/rights/delegation/offered", requestContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -1706,7 +1706,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
                 client.DefaultRequestHeaders.Add(headerKey, headerValue);
             }
 
-            HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/internal/{partyRouteValue}/rights/delegation/offered/revoke", new StringContent(JsonSerializer.Serialize(input), new MediaTypeHeaderValue(MediaTypeNames.Application.Json)));
+            HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/internal/{partyRouteValue}/rights/delegation/offered/revoke", new StringContent(JsonSerializer.Serialize(input), new MediaTypeHeaderValue(MediaTypeNames.Application.Json)), TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
         }
@@ -1728,7 +1728,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
                 client.DefaultRequestHeaders.Add(headerKey, headerValue);
             }
 
-            HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/internal/{partyRouteValue}/rights/delegation/received/revoke", new StringContent(JsonSerializer.Serialize(input), new MediaTypeHeaderValue(MediaTypeNames.Application.Json)));
+            HttpResponseMessage response = await client.PostAsync($"accessmanagement/api/v1/internal/{partyRouteValue}/rights/delegation/received/revoke", new StringContent(JsonSerializer.Serialize(input), new MediaTypeHeaderValue(MediaTypeNames.Application.Json)), TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
         }

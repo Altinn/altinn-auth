@@ -65,7 +65,7 @@ public class Altinn2RightsControllerTest : IClassFixture<ApiFixture>
     {
         var client = NewDefaultClient(WithHeader(header, value));
 
-        var response = await client.GetAsync($"internal/{GetUrlParameter(header, value)}/rights/delegation/offered");
+        var response = await client.GetAsync($"internal/{GetUrlParameter(header, value)}/rights/delegation/offered", TestContext.Current.CancellationToken);
 
         assert(response);
     }
@@ -102,7 +102,7 @@ public class Altinn2RightsControllerTest : IClassFixture<ApiFixture>
     {
         var client = NewDefaultClient(WithHeader(header, value));
 
-        var response = await client.GetAsync($"internal/{GetUrlParameter(header, value)}/rights/delegation/received");
+        var response = await client.GetAsync($"internal/{GetUrlParameter(header, value)}/rights/delegation/received", TestContext.Current.CancellationToken);
 
         assert(response);
     }
@@ -134,7 +134,7 @@ public class Altinn2RightsControllerTest : IClassFixture<ApiFixture>
         var client = NewClient(WithClientRoute("accessmanagement/api/v1/"));
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authnUserToken);
 
-        HttpResponseMessage response = await client.PutAsync($"internal/{party}/accesscache/clear", new StringContent(JsonSerializer.Serialize(toAttribute), Encoding.UTF8, MediaTypeNames.Application.Json));
+        HttpResponseMessage response = await client.PutAsync($"internal/{party}/accesscache/clear", new StringContent(JsonSerializer.Serialize(toAttribute), Encoding.UTF8, MediaTypeNames.Application.Json), TestContext.Current.CancellationToken);
 
         assert(response);
     }
@@ -177,7 +177,7 @@ public class Altinn2RightsControllerTest : IClassFixture<ApiFixture>
         var client = NewClient(WithClientRoute("accessmanagement/api/v1/"));
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authnUserToken);
 
-        HttpResponseMessage response = await client.PutAsync($"internal/{party}/accesscache/clear", new StringContent(JsonSerializer.Serialize(toAttribute), Encoding.UTF8, MediaTypeNames.Application.Json));
+        HttpResponseMessage response = await client.PutAsync($"internal/{party}/accesscache/clear", new StringContent(JsonSerializer.Serialize(toAttribute), Encoding.UTF8, MediaTypeNames.Application.Json), TestContext.Current.CancellationToken);
 
         assert(response);
     }

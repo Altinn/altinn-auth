@@ -49,7 +49,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies?org=org&app=app", content);
+            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies?org=org&app=app", content, TestContext.Current.CancellationToken);
 
             TestSetupUtil.DeleteAppBlobData("org", "app");
 
@@ -73,7 +73,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies?org=org&app=app", content);
+            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies?org=org&app=app", content, TestContext.Current.CancellationToken);
 
             TestSetupUtil.DeleteAppBlobData("org", "app");
 
@@ -92,7 +92,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Arrange & Act
-            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies?org=org&app=app", null);
+            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies?org=org&app=app", null, TestContext.Current.CancellationToken);
             TestSetupUtil.DeleteAppBlobData("org", "app");
 
             // Assert
@@ -115,7 +115,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies?app=app", content);
+            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies?app=app", content, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -137,7 +137,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies?org=org", content);
+            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies?org=org", content, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -159,7 +159,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies?org=org&app=app", content);
+            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies?org=org&app=app", content, TestContext.Current.CancellationToken);
 
             TestSetupUtil.DeleteAppBlobData("org", "app");
 
@@ -179,8 +179,8 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             string app = "taxreport";
 
             // Act
-            HttpResponseMessage response = await _client.GetAsync($"authorization/api/v1/policies/roleswithaccess/{org}/{app}");
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await _client.GetAsync($"authorization/api/v1/policies/roleswithaccess/{org}/{app}", TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<string> roleCodes = (List<string>)JsonConvert.DeserializeObject(responseContent, typeof(List<string>));
 
             // Assert
@@ -202,7 +202,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             string app = "doesntexisit";
 
             // Act
-            HttpResponseMessage response = await _client.GetAsync($"authorization/api/v1/policies/roleswithaccess/{org}/{app}");
+            HttpResponseMessage response = await _client.GetAsync($"authorization/api/v1/policies/roleswithaccess/{org}/{app}", TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -220,7 +220,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             string app = "doesntexisit";
 
             // Act
-            HttpResponseMessage response = await _client.GetAsync($"authorization/api/v1/policies/roleswithaccess/{org}/{app}");
+            HttpResponseMessage response = await _client.GetAsync($"authorization/api/v1/policies/roleswithaccess/{org}/{app}", TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -238,8 +238,8 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             string app = "testapp";
 
             // Act
-            HttpResponseMessage response = await _client.GetAsync($"authorization/api/v1/policies/roleswithaccess/{org}/{app}");
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await _client.GetAsync($"authorization/api/v1/policies/roleswithaccess/{org}/{app}", TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<string> roleCodes = (List<string>)JsonConvert.DeserializeObject(responseContent, typeof(List<string>));
 
             // Assert
@@ -274,8 +274,8 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             };
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies/GetPolicies", content);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies/GetPolicies", content, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<ResourcePolicyResponse> actualResourcePolicyResponses = JsonConvert.DeserializeObject<List<ResourcePolicyResponse>>(responseContent);
 
             // Assert
@@ -309,8 +309,8 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             };
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies/GetPolicies", content);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies/GetPolicies", content, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<ResourcePolicyResponse> actualResourcePolicyResponses = JsonConvert.DeserializeObject<List<ResourcePolicyResponse>>(responseContent);
 
             // Assert
@@ -343,8 +343,8 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             };
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies/GetPolicies", content);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies/GetPolicies", content, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<ResourcePolicyResponse> actualResourcePolicyResponses = JsonConvert.DeserializeObject<List<ResourcePolicyResponse>>(responseContent);
 
             // Assert
@@ -377,8 +377,8 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             };
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies/GetPolicies", content);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies/GetPolicies", content, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<ResourcePolicyResponse> actualResourcePolicyResponses = JsonConvert.DeserializeObject<List<ResourcePolicyResponse>>(responseContent);
 
             // Assert
@@ -413,8 +413,8 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             };
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies/GetPolicies", content);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies/GetPolicies", content, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<ResourcePolicyResponse> actualResourcePolicyResponses = JsonConvert.DeserializeObject<List<ResourcePolicyResponse>>(responseContent);
 
             // Assert
@@ -435,8 +435,8 @@ namespace Altinn.Platform.Authorization.IntegrationTests
             content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies/GetPolicies", content);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await _client.PostAsync("authorization/api/v1/policies/GetPolicies", content, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             List<ResourcePolicyResponse> actualResourcePolicyResponses = JsonConvert.DeserializeObject<List<ResourcePolicyResponse>>(responseContent);
 
             // Assert

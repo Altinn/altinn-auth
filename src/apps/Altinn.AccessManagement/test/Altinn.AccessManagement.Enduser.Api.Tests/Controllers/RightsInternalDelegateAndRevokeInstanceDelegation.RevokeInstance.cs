@@ -104,7 +104,7 @@ public class RightsInternalDelegateAndRevokeInstanceDelegation : IClassFixture<A
         var client = CreateClient();
 
         // Create the delegation first
-        var delegationResponse = await client.PostAsync(RouteDelegation, delegationContent);
+        var delegationResponse = await client.PostAsync(RouteDelegation, delegationContent, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Created, delegationResponse.StatusCode);
 
         // Verify

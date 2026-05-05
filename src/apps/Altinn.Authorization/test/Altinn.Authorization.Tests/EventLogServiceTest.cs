@@ -31,7 +31,7 @@ public class EventLogServiceTest
         var httpContext = new DefaultHttpContext();
 
         var service = CreateService();
-        await service.CreateAuthorizationEvent(_featureManagerMock.Object, request, httpContext, response);
+        await service.CreateAuthorizationEvent(_featureManagerMock.Object, request, httpContext, response, TestContext.Current.CancellationToken);
 
         _queueClientMock.Verify(
             q => q.EnqueueAuthorizationEvent(It.IsAny<Altinn.Platform.Authorization.Models.EventLog.AuthorizationEvent>(), It.IsAny<CancellationToken>()),
@@ -48,7 +48,7 @@ public class EventLogServiceTest
         var httpContext = new DefaultHttpContext();
 
         var service = CreateService();
-        await service.CreateAuthorizationEvent(_featureManagerMock.Object, request, httpContext, response);
+        await service.CreateAuthorizationEvent(_featureManagerMock.Object, request, httpContext, response, TestContext.Current.CancellationToken);
 
         _queueClientMock.Verify(
             q => q.EnqueueAuthorizationEvent(It.IsAny<Altinn.Platform.Authorization.Models.EventLog.AuthorizationEvent>(), It.IsAny<CancellationToken>()),

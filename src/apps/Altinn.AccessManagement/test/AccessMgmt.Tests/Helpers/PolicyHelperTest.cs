@@ -63,7 +63,7 @@ namespace Altinn.AccessManagement.Tests.Helpers
         public async Task GetRolesWithAccess()
         {
             // Arrange
-            XacmlPolicy policy = await _policyRetrievalPointMock.GetPolicyAsync("resource1");
+            XacmlPolicy policy = await _policyRetrievalPointMock.GetPolicyAsync("resource1", TestContext.Current.CancellationToken);
 
             List<string> expected = TestDataUtil.GetRolesWithAccess();
 

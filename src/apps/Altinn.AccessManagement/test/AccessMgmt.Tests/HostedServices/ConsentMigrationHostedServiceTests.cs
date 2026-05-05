@@ -83,12 +83,12 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         // Act
         var serviceTask = service.StartAsync(testCts.Token);
 
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.FeatureDisabledDelayMs * 2));
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         testCts.Cancel();
-        await Task.WhenAny(serviceTask, Task.Delay(1000));
+        await Task.WhenAny(serviceTask, Task.Delay(1000, TestContext.Current.CancellationToken));
 
         // Assert
         _leaseServiceMock.Verify(
@@ -117,14 +117,14 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         // Act
         var serviceTask = service.StartAsync(testCts.Token);
 
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         // Advance by EmptyFeedDelayMs + max jitter (2000ms)
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.EmptyFeedDelayMs + 2000));
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         testCts.Cancel();
-        await Task.WhenAny(serviceTask, Task.Delay(1000));
+        await Task.WhenAny(serviceTask, Task.Delay(1000, TestContext.Current.CancellationToken));
 
         // Assert
         _leaseServiceMock.Verify(
@@ -157,12 +157,12 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         // Act
         var serviceTask = service.StartAsync(testCts.Token);
 
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.NormalDelayMs));
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         testCts.Cancel();
-        await Task.WhenAny(serviceTask, Task.Delay(1000));
+        await Task.WhenAny(serviceTask, Task.Delay(1000, TestContext.Current.CancellationToken));
 
         // Assert
         _leaseServiceMock.Verify(
@@ -195,12 +195,12 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         // Act
         var serviceTask = service.StartAsync(testCts.Token);
 
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.EmptyFeedDelayMs));
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         testCts.Cancel();
-        await Task.WhenAny(serviceTask, Task.Delay(1000));
+        await Task.WhenAny(serviceTask, Task.Delay(1000, TestContext.Current.CancellationToken));
 
         // Assert
         _syncServiceMock.Verify(
@@ -230,12 +230,12 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         // Act
         var serviceTask = service.StartAsync(testCts.Token);
 
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.NormalDelayMs));
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         testCts.Cancel();
-        await Task.WhenAny(serviceTask, Task.Delay(1000));
+        await Task.WhenAny(serviceTask, Task.Delay(1000, TestContext.Current.CancellationToken));
 
         // Assert
         _syncServiceMock.Verify(
@@ -275,14 +275,14 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         // Act
         var serviceTask = service.StartAsync(testCts.Token);
 
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
         _timeProvider.Advance(TimeSpan.FromMinutes(1)); // Error delay
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.NormalDelayMs));
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         testCts.Cancel();
-        await Task.WhenAny(serviceTask, Task.Delay(1000));
+        await Task.WhenAny(serviceTask, Task.Delay(1000, TestContext.Current.CancellationToken));
 
         // Assert - Service continues after exception
         _syncServiceMock.Verify(
@@ -311,10 +311,10 @@ public class ConsentMigrationHostedServiceTests : IDisposable
 
         // Act
         var serviceTask = service.StartAsync(testCts.Token);
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         testCts.Cancel();
-        await Task.WhenAny(serviceTask, Task.Delay(1000));
+        await Task.WhenAny(serviceTask, Task.Delay(1000, TestContext.Current.CancellationToken));
 
         // Assert - no exception thrown, service stops cleanly
         Assert.True(true);
@@ -342,12 +342,12 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         // Act
         var serviceTask = service.StartAsync(testCts.Token);
 
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.NormalDelayMs));
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         testCts.Cancel();
-        await Task.WhenAny(serviceTask, Task.Delay(1000));
+        await Task.WhenAny(serviceTask, Task.Delay(1000, TestContext.Current.CancellationToken));
 
         // Assert
         _leaseMock.Verify(x => x.DisposeAsync(), Times.AtLeastOnce);
@@ -375,18 +375,18 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         // Act
         var serviceTask = service.StartAsync(testCts.Token);
 
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         // Trigger first iteration
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.NormalDelayMs));
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         // Trigger second iteration
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.NormalDelayMs));
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         testCts.Cancel();
-        await Task.WhenAny(serviceTask, Task.Delay(1000));
+        await Task.WhenAny(serviceTask, Task.Delay(1000, TestContext.Current.CancellationToken));
 
         // Assert - Lease acquired multiple times (one per iteration)
         _leaseServiceMock.Verify(
@@ -425,7 +425,7 @@ public class ConsentMigrationHostedServiceTests : IDisposable
 
         // Wait for ProcessBatch to be called before asserting
         await processBatchCalled.Task;
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
 
         // Assert - The service should throw OperationCanceledException when cancellation is requested
         await Assert.ThrowsAsync<OperationCanceledException>(async () => await serviceTask);
@@ -469,12 +469,12 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         // Act
         var serviceTask = service.StartAsync(testCts.Token);
 
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.NormalDelayMs));
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         testCts.Cancel();
-        await Task.WhenAny(serviceTask, Task.Delay(1000));
+        await Task.WhenAny(serviceTask, Task.Delay(1000, TestContext.Current.CancellationToken));
 
         // Assert
         _leaseServiceMock.Verify(
@@ -496,17 +496,17 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         // Act
         var serviceTask = service.StartAsync(testCts.Token);
 
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         // Advance by FeatureDisabledDelayMs multiple times
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.FeatureDisabledDelayMs));
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.FeatureDisabledDelayMs));
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         testCts.Cancel();
-        await Task.WhenAny(serviceTask, Task.Delay(1000));
+        await Task.WhenAny(serviceTask, Task.Delay(1000, TestContext.Current.CancellationToken));
 
         // Assert - Should not acquire lease when feature is disabled
         _leaseServiceMock.Verify(
@@ -541,22 +541,22 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         // Act
         var serviceTask = service.StartAsync(testCts.Token);
 
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         // First attempt - no lease (includes jitter up to 2000ms)
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.EmptyFeedDelayMs + 2000));
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         // Second attempt - no lease (includes jitter up to 2000ms)
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.EmptyFeedDelayMs + 2000));
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         // Third attempt - lease acquired
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.NormalDelayMs));
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         testCts.Cancel();
-        await Task.WhenAny(serviceTask, Task.Delay(1000));
+        await Task.WhenAny(serviceTask, Task.Delay(1000, TestContext.Current.CancellationToken));
 
         // Assert
         _leaseServiceMock.Verify(
@@ -585,15 +585,15 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         // Act
         var serviceTask = service.StartAsync(testCts.Token);
 
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         // The jitter adds 1000-2000ms to the EmptyFeedDelayMs
         // So we need to advance by at least EmptyFeedDelayMs + 1000ms to guarantee triggering
         _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.EmptyFeedDelayMs + 1000));
-        await Task.Delay(10);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
 
         testCts.Cancel();
-        await Task.WhenAny(serviceTask, Task.Delay(1000));
+        await Task.WhenAny(serviceTask, Task.Delay(1000, TestContext.Current.CancellationToken));
 
         // Assert - Verify lease was attempted (jitter doesn't prevent retry)
         _leaseServiceMock.Verify(

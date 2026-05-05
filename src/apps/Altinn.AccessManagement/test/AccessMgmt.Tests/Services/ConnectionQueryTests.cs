@@ -63,7 +63,7 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
             EnrichPackageResources = false
         };
 
-        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true);
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true, TestContext.Current.CancellationToken);
         var connections = DtoMapper.ConvertFromOthers(dbResult, false);
 
         Assert.Single<ConnectionDto>(connections, t => t.Party.Id == orgId);
@@ -95,7 +95,7 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
             EnrichPackageResources = false
         };
 
-        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true);
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true, TestContext.Current.CancellationToken);
         var connections = DtoMapper.ConvertFromOthers(dbResult, false);
 
         Assert.Single<ConnectionDto>(connections, t => t.Party.Id == orgId);
@@ -127,7 +127,7 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
             EnrichPackageResources = false
         };
 
-        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true);
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true, TestContext.Current.CancellationToken);
         var connections = DtoMapper.ConvertFromOthers(dbResult, false);
 
         Assert.Single<ConnectionDto>(connections, t => t.Party.Id == orgId);
@@ -152,7 +152,7 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
             EnrichPackageResources = false
         };
 
-        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true);
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true, TestContext.Current.CancellationToken);
         var connections = DtoMapper.ConvertFromOthers(dbResult, false);
 
         Assert.Single<ConnectionDto>(connections, t => t.Party.Id == orgId);
@@ -182,7 +182,7 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
             EnrichPackageResources = false
         };
 
-        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true);
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true, TestContext.Current.CancellationToken);
         var connections = DtoMapper.ConvertFromOthers(dbResult, false);
 
         Assert.Single<ConnectionDto>(connections, t => t.Party.Id == orgId);
@@ -203,7 +203,7 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
             IncludeKeyRole = true
         };
 
-        var result = await _query.GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers, true);
+        var result = await _query.GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers, true, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.True(result.Any(), "Expected a connections, but none were found.");
@@ -219,7 +219,7 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
             IncludeKeyRole = false
         };
 
-        var result = await _query.GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers);
+        var result = await _query.GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers, ct: TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.False(result.Any(), "Expected no connections, but some were found.");
@@ -228,7 +228,7 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task Baker_ShouldExist()
     {
-        var petter = await _db.Entities.AsNoTracking().SingleAsync(t => t.RefId == "ORG-01");
+        var petter = await _db.Entities.AsNoTracking().SingleAsync(t => t.RefId == "ORG-01", cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(petter);
         Assert.Equal("Baker Johnsen", petter.Name);
@@ -237,7 +237,7 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task Organization_ShouldExist()
     {
-        var orgType = await _db.EntityTypes.AsNoTracking().SingleAsync(t => t.Id == EntityTypeConstants.Organization);
+        var orgType = await _db.EntityTypes.AsNoTracking().SingleAsync(t => t.Id == EntityTypeConstants.Organization, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(orgType);
         Assert.Equal("Organisasjon", orgType.Name);
@@ -264,7 +264,7 @@ public class ConnectionQueryTests : IClassFixture<PostgresFixture>
             OnlyUniqueResults = flags[7]
         };
 
-        await _query.GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers);
+        await _query.GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers, ct: TestContext.Current.CancellationToken);
     }
 
     public static IEnumerable<object[]> GetFilterCombinations()

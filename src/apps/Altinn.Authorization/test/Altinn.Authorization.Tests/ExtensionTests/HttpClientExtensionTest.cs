@@ -12,7 +12,7 @@ public class HttpClientExtensionTest
         var handler = new RecordingHandler(new HttpResponseMessage(HttpStatusCode.OK));
         using var client = new HttpClient(handler) { BaseAddress = new Uri("https://example.com") };
 
-        await client.PostAsync("/api/test", new StringContent("body"));
+        await client.PostAsync("/api/test", new StringContent("body"), TestContext.Current.CancellationToken);
 
         Assert.NotNull(handler.Request);
         Assert.False(handler.Request.Headers.Contains("Authorization"));
@@ -25,7 +25,7 @@ public class HttpClientExtensionTest
         var handler = new RecordingHandler(new HttpResponseMessage(HttpStatusCode.OK));
         using var client = new HttpClient(handler) { BaseAddress = new Uri("https://example.com") };
 
-        await client.PostAsync("/api/test", new StringContent("body"), authorizationToken: "jwt-token");
+        await client.PostAsync("/api/test", new StringContent("body"), authorizationToken: "jwt-token", cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.True(handler.Request.Headers.Contains("Authorization"));
         Assert.Equal("Bearer jwt-token", handler.Request.Headers.GetValues("Authorization").Single());
@@ -37,7 +37,7 @@ public class HttpClientExtensionTest
         var handler = new RecordingHandler(new HttpResponseMessage(HttpStatusCode.OK));
         using var client = new HttpClient(handler) { BaseAddress = new Uri("https://example.com") };
 
-        await client.PostAsync("/api/test", new StringContent("body"), platformAccessToken: "platform-token");
+        await client.PostAsync("/api/test", new StringContent("body"), platformAccessToken: "platform-token", cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.True(handler.Request.Headers.Contains("PlatformAccessToken"));
         Assert.Equal("platform-token", handler.Request.Headers.GetValues("PlatformAccessToken").Single());
@@ -49,7 +49,7 @@ public class HttpClientExtensionTest
         var handler = new RecordingHandler(new HttpResponseMessage(HttpStatusCode.OK));
         using var client = new HttpClient(handler) { BaseAddress = new Uri("https://example.com") };
 
-        await client.PostAsync("/api/test", new StringContent("body"), "jwt-token", "platform-token");
+        await client.PostAsync("/api/test", new StringContent("body"), "jwt-token", "platform-token", cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.True(handler.Request.Headers.Contains("Authorization"));
         Assert.True(handler.Request.Headers.Contains("PlatformAccessToken"));
@@ -61,7 +61,7 @@ public class HttpClientExtensionTest
         var handler = new RecordingHandler(new HttpResponseMessage(HttpStatusCode.OK));
         using var client = new HttpClient(handler) { BaseAddress = new Uri("https://example.com") };
 
-        await client.PostAsync("/api/test", new StringContent("body"));
+        await client.PostAsync("/api/test", new StringContent("body"), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpMethod.Post, handler.Request.Method);
     }
@@ -73,7 +73,7 @@ public class HttpClientExtensionTest
         var handler = new RecordingHandler(new HttpResponseMessage(HttpStatusCode.OK));
         using var client = new HttpClient(handler) { BaseAddress = new Uri("https://example.com") };
 
-        await client.GetAsync("https://example.com/api/test");
+        await client.GetAsync("https://example.com/api/test", TestContext.Current.CancellationToken);
 
         Assert.NotNull(handler.Request);
         Assert.False(handler.Request.Headers.Contains("Authorization"));
@@ -86,7 +86,7 @@ public class HttpClientExtensionTest
         var handler = new RecordingHandler(new HttpResponseMessage(HttpStatusCode.OK));
         using var client = new HttpClient(handler) { BaseAddress = new Uri("https://example.com") };
 
-        await client.GetAsync("https://example.com/api/test", authorizationToken: "jwt-token");
+        await client.GetAsync("https://example.com/api/test", authorizationToken: "jwt-token", cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.True(handler.Request.Headers.Contains("Authorization"));
         Assert.Equal("Bearer jwt-token", handler.Request.Headers.GetValues("Authorization").Single());
@@ -98,7 +98,7 @@ public class HttpClientExtensionTest
         var handler = new RecordingHandler(new HttpResponseMessage(HttpStatusCode.OK));
         using var client = new HttpClient(handler) { BaseAddress = new Uri("https://example.com") };
 
-        await client.GetAsync("https://example.com/api/test", platformAccessToken: "platform-token");
+        await client.GetAsync("https://example.com/api/test", platformAccessToken: "platform-token", cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.True(handler.Request.Headers.Contains("PlatformAccessToken"));
         Assert.Equal("platform-token", handler.Request.Headers.GetValues("PlatformAccessToken").Single());
@@ -110,7 +110,7 @@ public class HttpClientExtensionTest
         var handler = new RecordingHandler(new HttpResponseMessage(HttpStatusCode.OK));
         using var client = new HttpClient(handler) { BaseAddress = new Uri("https://example.com") };
 
-        await client.GetAsync("https://example.com/api/test");
+        await client.GetAsync("https://example.com/api/test", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpMethod.Get, handler.Request.Method);
     }

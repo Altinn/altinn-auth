@@ -65,7 +65,7 @@ public class RelationServiceTest
         var (svc, _, fullRepo) = MakeSut();
         SetupFullGetExtended(fullRepo, Resp<ExtRelation>());
 
-        var result = await svc.GetConnectionsToOthers(Guid.NewGuid(), packageId: null);
+        var result = await svc.GetConnectionsToOthers(Guid.NewGuid(), packageId: null, cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().BeEmpty();
     }
@@ -79,7 +79,7 @@ public class RelationServiceTest
         var relation = FullRelation(from, to, "Direct");
         SetupFullGetExtended(fullRepo, Resp(relation));
 
-        var result = await svc.GetConnectionsToOthers(from.Id, packageId: null);
+        var result = await svc.GetConnectionsToOthers(from.Id, packageId: null, cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().ContainSingle(r => r.Party.Id == to.Id);
     }
@@ -93,7 +93,7 @@ public class RelationServiceTest
         var relation = FullRelation(from, to, "Delegated");
         SetupFullGetExtended(fullRepo, Resp(relation));
 
-        var result = await svc.GetConnectionsToOthers(from.Id, packageId: null);
+        var result = await svc.GetConnectionsToOthers(from.Id, packageId: null, cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().BeEmpty();
     }
@@ -109,7 +109,7 @@ public class RelationServiceTest
         var r2 = new ExtRelation { From = from, To = to, Role = new CompactRole { Id = roleId }, Reason = "Direct" };
         SetupFullGetExtended(fullRepo, Resp(r1, r2));
 
-        var result = await svc.GetConnectionsToOthers(from.Id, packageId: null);
+        var result = await svc.GetConnectionsToOthers(from.Id, packageId: null, cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().ContainSingle().Which.Roles.Should().ContainSingle();
     }
@@ -124,7 +124,7 @@ public class RelationServiceTest
         var (svc, _, fullRepo) = MakeSut();
         SetupFullGetExtended(fullRepo, Resp<ExtRelation>());
 
-        var result = await svc.GetConnectionsFromOthers(Guid.NewGuid(), packageId: null);
+        var result = await svc.GetConnectionsFromOthers(Guid.NewGuid(), packageId: null, cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().BeEmpty();
     }
@@ -138,7 +138,7 @@ public class RelationServiceTest
         var relation = FullRelation(from, to, "Direct");
         SetupFullGetExtended(fullRepo, Resp(relation));
 
-        var result = await svc.GetConnectionsFromOthers(to.Id, packageId: null);
+        var result = await svc.GetConnectionsFromOthers(to.Id, packageId: null, cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().ContainSingle(r => r.Party.Id == from.Id);
     }
@@ -222,7 +222,7 @@ public class RelationServiceTest
         var (svc, _, fullRepo) = MakeSut();
         SetupFullGetExtended(fullRepo, Resp<ExtRelation>());
 
-        var result = await svc.GetPackagePermissionsFromOthers(Guid.NewGuid());
+        var result = await svc.GetPackagePermissionsFromOthers(Guid.NewGuid(), cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().BeEmpty();
     }
@@ -234,7 +234,7 @@ public class RelationServiceTest
         var relation = FullRelation(Party(), Party(), "Direct", package: null);
         SetupFullGetExtended(fullRepo, Resp(relation));
 
-        var result = await svc.GetPackagePermissionsFromOthers(Guid.NewGuid());
+        var result = await svc.GetPackagePermissionsFromOthers(Guid.NewGuid(), cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().BeEmpty();
     }
@@ -248,7 +248,7 @@ public class RelationServiceTest
         var r2 = FullRelation(Party(), Party(), "Direct", package: pkg);
         SetupFullGetExtended(fullRepo, Resp(r1, r2));
 
-        var result = await svc.GetPackagePermissionsFromOthers(Guid.NewGuid());
+        var result = await svc.GetPackagePermissionsFromOthers(Guid.NewGuid(), cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().ContainSingle(p => p.Package.Id == pkg.Id)
             .Which.Permissions.Should().HaveCount(2);
@@ -264,7 +264,7 @@ public class RelationServiceTest
         var (svc, _, fullRepo) = MakeSut();
         SetupFullGetExtended(fullRepo, Resp<ExtRelation>());
 
-        var result = await svc.GetPackagePermissionsToOthers(Guid.NewGuid());
+        var result = await svc.GetPackagePermissionsToOthers(Guid.NewGuid(), cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().BeEmpty();
     }
@@ -276,7 +276,7 @@ public class RelationServiceTest
         var pkg = Package();
         SetupFullGetExtended(fullRepo, Resp(FullRelation(Party(), Party(), "Direct", package: pkg)));
 
-        var result = await svc.GetPackagePermissionsToOthers(Guid.NewGuid());
+        var result = await svc.GetPackagePermissionsToOthers(Guid.NewGuid(), cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().ContainSingle(p => p.Package.Id == pkg.Id);
     }
@@ -291,7 +291,7 @@ public class RelationServiceTest
         var (svc, _, fullRepo) = MakeSut();
         SetupFullGetExtended(fullRepo, Resp<ExtRelation>());
 
-        var result = await svc.GetResourcePermissionsFromOthers(Guid.NewGuid());
+        var result = await svc.GetResourcePermissionsFromOthers(Guid.NewGuid(), cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().BeEmpty();
     }
@@ -305,7 +305,7 @@ public class RelationServiceTest
         var relation = FullRelation(Party(), Party(), "Direct", package: null, resource: Resource());
         SetupFullGetExtended(fullRepo, Resp(relation));
 
-        var result = await svc.GetResourcePermissionsFromOthers(Guid.NewGuid());
+        var result = await svc.GetResourcePermissionsFromOthers(Guid.NewGuid(), cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().BeEmpty();
     }
@@ -318,7 +318,7 @@ public class RelationServiceTest
         var res = Resource();
         SetupFullGetExtended(fullRepo, Resp(FullRelation(Party(), Party(), "Direct", package: pkg, resource: res)));
 
-        var result = await svc.GetResourcePermissionsFromOthers(Guid.NewGuid());
+        var result = await svc.GetResourcePermissionsFromOthers(Guid.NewGuid(), cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().ContainSingle(r => r.Resource.Id == res.Id);
     }
@@ -333,7 +333,7 @@ public class RelationServiceTest
         var (svc, _, fullRepo) = MakeSut();
         SetupFullGetExtended(fullRepo, Resp<ExtRelation>());
 
-        var result = await svc.GetResourcePermissionsToOthers(Guid.NewGuid());
+        var result = await svc.GetResourcePermissionsToOthers(Guid.NewGuid(), cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().BeEmpty();
     }
@@ -346,7 +346,7 @@ public class RelationServiceTest
         var res = Resource();
         SetupFullGetExtended(fullRepo, Resp(FullRelation(Party(), Party(), "Direct", package: pkg, resource: res)));
 
-        var result = await svc.GetResourcePermissionsToOthers(Guid.NewGuid());
+        var result = await svc.GetResourcePermissionsToOthers(Guid.NewGuid(), cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().ContainSingle(r => r.Resource.Id == res.Id);
     }
@@ -365,7 +365,7 @@ public class RelationServiceTest
         fullRepo.Setup(r => r.GetAssignableAccessPackages(fromId, partyId, It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
 
-        var result = await svc.GetAssignablePackagePermissions(partyId, fromId);
+        var result = await svc.GetAssignablePackagePermissions(partyId, fromId, cancellationToken: TestContext.Current.CancellationToken);
 
         result.Should().BeEquivalentTo(expectedResult);
     }

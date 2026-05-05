@@ -128,8 +128,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             string token = PrincipalUtil.GetMaskinportenToken("810419512", "altinn:consentrequests.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             StringContent stringContent = new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json");
-            HttpResponseMessage response = await client.PostAsync(url, stringContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, stringContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             Assert.NotNull(responseContent);
             ConsentRequestDetailsDto consentInfo = JsonSerializer.Deserialize<ConsentRequestDetailsDto>(responseContent, _jsonOptions);
@@ -196,8 +196,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             string token = PrincipalUtil.GetMaskinportenToken("810419512", "altinn:consentrequests.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             StringContent stringContent = new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json");
-            HttpResponseMessage response = await client.PostAsync(url, stringContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, stringContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             Assert.NotNull(responseContent);
             ConsentRequestDetailsDto consentInfo = JsonSerializer.Deserialize<ConsentRequestDetailsDto>(responseContent, _jsonOptions);
@@ -264,8 +264,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             string token = PrincipalUtil.GetOrgToken(null, "991825827", "altinn:consentrequests.org");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             StringContent stringContent = new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json");
-            HttpResponseMessage response = await client.PostAsync(url, stringContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, stringContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             Assert.NotNull(responseContent);
             ConsentRequestDetailsDto consentInfo = JsonSerializer.Deserialize<ConsentRequestDetailsDto>(responseContent, _jsonOptions);
@@ -333,8 +333,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             string token = PrincipalUtil.GetOrgToken(null, "991825827", "altinn:consentrequests.org");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             StringContent stringContent = new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json");
-            HttpResponseMessage response = await client.PostAsync(url, stringContent);
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, stringContent, TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             Assert.NotNull(responseContent);
             AltinnValidationProblemDetails problemDetails = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(responseContent, _jsonOptions);
@@ -392,7 +392,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             string token = PrincipalUtil.GetOrgToken(null, "991825827", "altinn:consentrequests.org");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             StringContent stringContent = new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json");
-            HttpResponseMessage response = await client.PostAsync(url, stringContent);
+            HttpResponseMessage response = await client.PostAsync(url, stringContent, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         }
 
@@ -444,8 +444,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             Assert.NotNull(responseContent);
             ConsentRequestDetailsDto consentInfo = JsonSerializer.Deserialize<ConsentRequestDetailsDto>(responseContent, _jsonOptions);
@@ -461,8 +461,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             Assert.Equal(ConsentPartyUrn.OrganizationId.Create(OrganizationNumber.Parse("810419512")), consentInfo.ConsentRequestEvents[0].PerformedBy);
 
             // Post again. Expects 200 ok since everyhing is the same
-            HttpResponseMessage response2 = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
-            string responseContent2 = await response2.Content.ReadAsStringAsync();
+            HttpResponseMessage response2 = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            string responseContent2 = await response2.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response2.StatusCode);
             Assert.NotNull(responseContent2);
             ConsentRequestDetailsDto consentInfo2 = JsonSerializer.Deserialize<ConsentRequestDetailsDto>(responseContent, _jsonOptions);
@@ -523,8 +523,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             Assert.NotNull(responseContent);
             ConsentRequestDetailsDto consentInfo = JsonSerializer.Deserialize<ConsentRequestDetailsDto>(responseContent, _jsonOptions);
@@ -541,8 +541,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
 
             // Post again but changes from. Should cause problem
             consentRequest.From = ConsentPartyUrn.PersonId.Create(PersonIdentifier.Parse("01025181049"));
-            HttpResponseMessage response2 = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
-            string responseContent2 = await response2.Content.ReadAsStringAsync();
+            HttpResponseMessage response2 = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            string responseContent2 = await response2.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             // TODO This need to ve created
             Assert.Equal(HttpStatusCode.BadRequest, response2.StatusCode);
@@ -596,8 +596,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             string location = response.Headers.Location.ToString();
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             Assert.NotNull(responseContent);
@@ -615,8 +615,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             Assert.Equal(ConsentRequestStatusType.Created, consentInfo.Status);
 
             string getUrl = $"/accessmanagement/api/v1/enterprise/consentrequests/{consentInfo.Id}";
-            HttpResponseMessage getResponse = await client.GetAsync(location);
-            string getResponseConsent = await getResponse.Content.ReadAsStringAsync();
+            HttpResponseMessage getResponse = await client.GetAsync(location, TestContext.Current.CancellationToken);
+            string getResponseConsent = await getResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             Assert.NotNull(getResponseConsent);
             ConsentRequestDetailsDto consentInfoFromGet = JsonSerializer.Deserialize<ConsentRequestDetailsDto>(getResponseConsent, _jsonOptions);
@@ -678,8 +678,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             string location = response.Headers.Location.ToString();
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             Assert.NotNull(responseContent);
@@ -696,8 +696,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             Assert.Equal(ConsentPartyUrn.OrganizationId.Create(OrganizationNumber.Parse("810419512")), consentInfo.ConsentRequestEvents[0].PerformedBy);
 
             string getUrl = $"/accessmanagement/api/v1/enterprise/consentrequests/{consentInfo.Id}";
-            HttpResponseMessage getResponse = await client.GetAsync(location);
-            string getResponseConsent = await getResponse.Content.ReadAsStringAsync();
+            HttpResponseMessage getResponse = await client.GetAsync(location, TestContext.Current.CancellationToken);
+            string getResponseConsent = await getResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             Assert.NotNull(getResponseConsent);
             ConsentRequestDetailsDto consentInfoFromGet = JsonSerializer.Deserialize<ConsentRequestDetailsDto>(getResponseConsent, _jsonOptions);
@@ -759,8 +759,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.write", "810418192");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             string location = response.Headers.Location.ToString();
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             Assert.NotNull(responseContent);
@@ -779,8 +779,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             string getUrl = $"/accessmanagement/api/v1/enterprise/consentrequests/{consentInfo.Id}";
             token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.read", "810418192");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage getResponse = await client.GetAsync(location);
-            string getResponseConsent = await getResponse.Content.ReadAsStringAsync();
+            HttpResponseMessage getResponse = await client.GetAsync(location, TestContext.Current.CancellationToken);
+            string getResponseConsent = await getResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
             Assert.NotNull(getResponseConsent);
             ConsentRequestDetailsDto consentInfoFromGet = JsonSerializer.Deserialize<ConsentRequestDetailsDto>(getResponseConsent, _jsonOptions);
@@ -842,8 +842,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             Assert.NotNull(responseContent);
             ConsentRequestDetailsDto consentInfo = JsonSerializer.Deserialize<ConsentRequestDetailsDto>(responseContent, _jsonOptions);
@@ -924,8 +924,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
 
             string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             Assert.NotNull(responseContent);
             AltinnValidationProblemDetails problemDetails = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(responseContent, _jsonOptions);
@@ -978,8 +978,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             Assert.NotNull(responseContent);
             AltinnValidationProblemDetails problemDetails = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(responseContent, _jsonOptions);
@@ -1052,8 +1052,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
             Assert.NotNull(responseContent);
             AltinnMultipleProblemDetails problemDetails = JsonSerializer.Deserialize<AltinnMultipleProblemDetails>(responseContent, _jsonOptions);
@@ -1112,8 +1112,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             Assert.NotNull(responseContent);
             AltinnValidationProblemDetails problemDetails = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(responseContent, _jsonOptions);
@@ -1156,8 +1156,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             Assert.NotNull(responseContent);
             AltinnValidationProblemDetails problemDetails = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(responseContent, _jsonOptions);
@@ -1211,8 +1211,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             Assert.NotNull(responseContent);
             AltinnValidationProblemDetails problemDetails = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(responseContent, _jsonOptions);
@@ -1272,8 +1272,8 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
             string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"));
-            string responseContent = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             Assert.NotNull(responseContent);
             AltinnValidationProblemDetails problemDetails = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(responseContent, _jsonOptions);

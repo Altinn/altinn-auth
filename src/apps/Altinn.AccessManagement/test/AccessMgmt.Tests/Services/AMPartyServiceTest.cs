@@ -67,7 +67,7 @@ public class AMPartyServiceTest
         var (svc, repo) = MakeSut();
         SetupFilterResult(repo, Lookup());
 
-        var result = await svc.GetByOrgNo(OrganizationNumber.Parse("937884117"));
+        var result = await svc.GetByOrgNo(OrganizationNumber.Parse("937884117"), TestContext.Current.CancellationToken);
 
         result.Should().BeNull();
     }
@@ -79,7 +79,7 @@ public class AMPartyServiceTest
         var (svc, repo) = MakeSut();
         SetupFilterResult(repo, Lookup(MakeLookup("OrganizationIdentifier", "937884117", entityId, "Test Org", OrgTypeId)));
 
-        var result = await svc.GetByOrgNo(OrganizationNumber.Parse("937884117"));
+        var result = await svc.GetByOrgNo(OrganizationNumber.Parse("937884117"), TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
         result!.PartyUuid.Should().Be(entityId);
@@ -95,7 +95,7 @@ public class AMPartyServiceTest
             MakeLookup("OrganizationIdentifier", "937884117", Guid.NewGuid(), "Org A", OrgTypeId),
             MakeLookup("OrganizationIdentifier", "937884117", Guid.NewGuid(), "Org B", OrgTypeId)));
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.GetByOrgNo(OrganizationNumber.Parse("937884117")));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.GetByOrgNo(OrganizationNumber.Parse("937884117"), TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -108,7 +108,7 @@ public class AMPartyServiceTest
         var (svc, repo) = MakeSut();
         SetupFilterResult(repo, Lookup());
 
-        var result = await svc.GetByPartyId(12345);
+        var result = await svc.GetByPartyId(12345, TestContext.Current.CancellationToken);
 
         result.Should().BeNull();
     }
@@ -121,7 +121,7 @@ public class AMPartyServiceTest
             MakeLookup("PartyId", "12345", Guid.NewGuid(), "A", OrgTypeId),
             MakeLookup("PartyId", "12345", Guid.NewGuid(), "B", OrgTypeId)));
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.GetByPartyId(12345));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.GetByPartyId(12345, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -131,7 +131,7 @@ public class AMPartyServiceTest
         var (svc, repo) = MakeSut();
         SetupFilterResult(repo, Lookup(MakeLookup("PartyId", "99001", entityId, "Person Name", PersonTypeId, "12345678901")));
 
-        var result = await svc.GetByPartyId(99001);
+        var result = await svc.GetByPartyId(99001, TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
         result!.PersonId.Should().Be("12345678901");
@@ -146,7 +146,7 @@ public class AMPartyServiceTest
         var (svc, repo) = MakeSut();
         SetupFilterResult(repo, Lookup(MakeLookup("PartyId", "99002", entityId, "Org Name", OrgTypeId, "919272567")));
 
-        var result = await svc.GetByPartyId(99002);
+        var result = await svc.GetByPartyId(99002, TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
         result!.OrganizationId.Should().Be("919272567");
@@ -160,7 +160,7 @@ public class AMPartyServiceTest
         var (svc, repo) = MakeSut();
         SetupFilterResult(repo, Lookup(MakeLookup("PartyId", "99003", entityId, "Unknown", UnknownTypeId, "some-ref")));
 
-        var result = await svc.GetByPartyId(99003);
+        var result = await svc.GetByPartyId(99003, TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
         result!.PersonId.Should().BeNull();
@@ -177,7 +177,7 @@ public class AMPartyServiceTest
         var (svc, repo) = MakeSut();
         SetupFilterResult(repo, Lookup());
 
-        var result = await svc.GetByPersonNo(PersonIdentifier.Parse("02013299997"));
+        var result = await svc.GetByPersonNo(PersonIdentifier.Parse("02013299997"), TestContext.Current.CancellationToken);
 
         result.Should().BeNull();
     }
@@ -190,7 +190,7 @@ public class AMPartyServiceTest
             MakeLookup("PersonIdentifier", "02013299997", Guid.NewGuid(), "A", PersonTypeId),
             MakeLookup("PersonIdentifier", "02013299997", Guid.NewGuid(), "B", PersonTypeId)));
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.GetByPersonNo(PersonIdentifier.Parse("02013299997")));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.GetByPersonNo(PersonIdentifier.Parse("02013299997"), TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -200,7 +200,7 @@ public class AMPartyServiceTest
         var (svc, repo) = MakeSut();
         SetupFilterResult(repo, Lookup(MakeLookup("PersonIdentifier", "02013299997", entityId, "John Doe", PersonTypeId)));
 
-        var result = await svc.GetByPersonNo(PersonIdentifier.Parse("02013299997"));
+        var result = await svc.GetByPersonNo(PersonIdentifier.Parse("02013299997"), TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
         result!.PartyUuid.Should().Be(entityId);
@@ -218,7 +218,7 @@ public class AMPartyServiceTest
         var (svc, repo) = MakeSut();
         SetupExpressionResult(repo, Lookup());
 
-        var result = await svc.GetByUuid(Guid.NewGuid());
+        var result = await svc.GetByUuid(Guid.NewGuid(), TestContext.Current.CancellationToken);
 
         result.Should().BeNull();
     }
@@ -231,7 +231,7 @@ public class AMPartyServiceTest
         SetupExpressionResult(repo, Lookup(
             MakeLookup("OrganizationIdentifier", "919272567", partyUuid, "Org Name", OrgTypeId)));
 
-        var result = await svc.GetByUuid(partyUuid);
+        var result = await svc.GetByUuid(partyUuid, TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
         result!.OrganizationId.Should().Be("919272567");
@@ -246,7 +246,7 @@ public class AMPartyServiceTest
         SetupExpressionResult(repo, Lookup(
             MakeLookup("PersonIdentifier", "02013299997", partyUuid, "John Doe", PersonTypeId)));
 
-        var result = await svc.GetByUuid(partyUuid);
+        var result = await svc.GetByUuid(partyUuid, TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
         result!.PersonId.Should().Be("02013299997");
@@ -261,7 +261,7 @@ public class AMPartyServiceTest
         SetupExpressionResult(repo, Lookup(
             MakeLookup("Name", "Display Name Override", partyUuid, "Entity Name", UnknownTypeId)));
 
-        var result = await svc.GetByUuid(partyUuid);
+        var result = await svc.GetByUuid(partyUuid, TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
         result!.Name.Should().Be("Display Name Override");
@@ -277,7 +277,7 @@ public class AMPartyServiceTest
         var (svc, repo) = MakeSut();
         SetupFilterResult(repo, Lookup());
 
-        var result = await svc.GetByUserId(42);
+        var result = await svc.GetByUserId(42, TestContext.Current.CancellationToken);
 
         result.Should().BeNull();
     }
@@ -290,7 +290,7 @@ public class AMPartyServiceTest
             MakeLookup("UserId", "42", Guid.NewGuid(), "A", PersonTypeId),
             MakeLookup("UserId", "42", Guid.NewGuid(), "B", PersonTypeId)));
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.GetByUserId(42));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.GetByUserId(42, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -300,7 +300,7 @@ public class AMPartyServiceTest
         var (svc, repo) = MakeSut();
         SetupFilterResult(repo, Lookup(MakeLookup("UserId", "42", entityId, "Person Name", PersonTypeId, "02013299997")));
 
-        var result = await svc.GetByUserId(42);
+        var result = await svc.GetByUserId(42, TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
         result!.PersonId.Should().Be("02013299997");
@@ -313,7 +313,7 @@ public class AMPartyServiceTest
         var (svc, repo) = MakeSut();
         SetupFilterResult(repo, Lookup(MakeLookup("UserId", "42", entityId, "Unknown Name", UnknownTypeId, "some-ref")));
 
-        var result = await svc.GetByUserId(42);
+        var result = await svc.GetByUserId(42, TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
         result!.PersonId.Should().BeNull();
