@@ -27,7 +27,7 @@ using Microsoft.Extensions.Options;
 // single-configuration migrations). All tests share a single mock set (the previous
 // `WithPDPMock` extension point was dead code), so DI is registered once in the
 // constructor; per-test HttpClients are built via fixture.CreateClient().
-// See docs/testing/TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
+// See: overhaul part-1 step 16
 
 namespace Altinn.AccessManagement.Tests.Controllers;
 

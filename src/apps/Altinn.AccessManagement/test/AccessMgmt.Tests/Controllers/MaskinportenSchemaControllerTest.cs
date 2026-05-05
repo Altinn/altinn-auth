@@ -39,7 +39,7 @@ using Xunit;
 // PepWithPDPAuthorizationMock live in the sibling class MaskinportenSchemaPdpPermitControllerTest.
 // Per-test HttpContextAccessor route-value customization is supported without
 // rebuilding DI by using a shared MutableHttpContextAccessor (AsyncLocal-based override).
-// See docs/testing/TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
+// See: overhaul part-1 step 16
 
 namespace Altinn.AccessManagement.Tests.Controllers
 {

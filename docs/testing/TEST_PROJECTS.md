@@ -39,7 +39,7 @@ Grouped by the production vertical they cover.
 | Test project | Covers | Blocked? |
 |---|---|---|
 | `Altinn.Authorization.Host.Lease.Tests` | Distributed lease primitive | ⚠️ Needs Azurite — skipped in CI, see [steps/INDEX.md#blocked-items](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_2/INDEX.md#blocked-items) |
-| `Altinn.Authorization.Host.Pipeline.Tests` | Pipeline hosted services, builders, segment/sink/source services | 🌱 Scaffold only — one smoke test against `PipelineMessage<T>`. Real coverage to follow under Phase D.1 of the [Part 2 plan](TESTING_INFRASTRUCTURE_OVERHAUL/TESTING_INFRASTRUCTURE_OVERHAUL_PART_2.md#4-improvement-plan--phases). |
+| `Altinn.Authorization.Host.Pipeline.Tests` | Pipeline hosted services, builders, segment/sink/source services | 🌱 Scaffold only — one smoke test against `PipelineMessage<T>`. Real coverage to follow under [Part 2 § Open work](TESTING_INFRASTRUCTURE_OVERHAUL/TESTING_INFRASTRUCTURE_OVERHAUL_PART_2.md#open-work). |
 
 ### `pkg: ABAC`
 
