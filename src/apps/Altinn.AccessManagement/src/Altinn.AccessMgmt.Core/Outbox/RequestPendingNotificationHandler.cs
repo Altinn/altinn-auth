@@ -155,7 +155,7 @@ public class RequestPendingNotificationHandler(
             AddResourcesAndPackage(resources, packages, emailContent);
 
             emailContent.AppendLine("<p>Logg inn i Altinn, gå til tilgangsstyring og forespørsler for å behandle forespørselen.</p>");
-            emailContent.AppendLine($"<p>Med vennlig hilsen,</br>Altinn</p>");
+            emailContent.AppendLine($"<p>Med vennlig hilsen,<br>Altinn</p>");
 
             return new NotificationRecipientExt
             {
@@ -181,7 +181,7 @@ public class RequestPendingNotificationHandler(
             AddResourcesAndPackage(resources, packages, emailContent);
 
             emailContent.AppendLine($"<p>Du mottar denne forespørselen fordi du er hovedadministrator for {recipient.Name} i Altinn. Logg inn i Altinn velg riktig aktør og gå til tilgangsstyring og forespørsler for å behandle forespørselen.</p>");
-            emailContent.AppendLine($"<p>Med vennlig hilsen,</br>Altinn</p>");
+            emailContent.AppendLine($"<p>Med vennlig hilsen,<br>Altinn</p>");
             emailContent.AppendLine(@"<em>Denne meldingen er automatisk generert. Svar til denne adressen vil ikke bli behandlet.</em>");
 
             return new NotificationRecipientExt
