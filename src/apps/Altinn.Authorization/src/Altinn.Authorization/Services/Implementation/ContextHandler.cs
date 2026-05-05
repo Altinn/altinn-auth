@@ -72,6 +72,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="prp">service handling policy retireval</param>
         /// <param name="accessManagementWrapper">accessmanagement pip api wrapper</param>
         /// <param name="featureManager">Feature manager</param>
+        /// <param name="resourceRegistry">Resource registry client</param>
         public ContextHandler(
             IInstanceMetadataRepository policyInformationRepository, IRoles rolesWrapper, IOedRoleAssignmentWrapper oedRolesWrapper, IParties partiesWrapper, IProfile profileWrapper, IMemoryCache memoryCache, IOptions<GeneralSettings> settings, IRegisterService registerService, IPolicyRetrievalPoint prp, IAccessManagementWrapper accessManagementWrapper, IFeatureManager featureManager, IResourceRegistry resourceRegistry)
         {

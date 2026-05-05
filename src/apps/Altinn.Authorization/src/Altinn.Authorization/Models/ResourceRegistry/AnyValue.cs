@@ -3,9 +3,17 @@ using Altinn.Urn;
 
 namespace Altinn.Authorization.Models.ResourceRegistry
 {
+    /// <summary>
+    /// URN representing an Altinn access list reference.
+    /// </summary>
     [KeyValueUrn]
     public abstract partial record AccessListUrn
     {
+        /// <summary>
+        /// Tries to parse this URN as an access-list reference.
+        /// </summary>
+        /// <param name="value">The parsed access-list value, when the URN is of that kind.</param>
+        /// <returns><c>true</c> if the URN is an access-list reference; otherwise <c>false</c>.</returns>
         [UrnKey("altinn:access-list")]
         public partial bool IsAccessList(out AnyValue value);
     }

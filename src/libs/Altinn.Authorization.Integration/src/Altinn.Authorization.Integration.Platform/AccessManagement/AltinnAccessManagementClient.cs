@@ -7,13 +7,11 @@ namespace Altinn.Authorization.Integration.Platform.AccessManagement;
 /// Client for interacting with the Altinn Register service.
 /// </summary>
 /// <param name="HttpClientFactory">Factory for creating HTTP clients.</param>
-/// <param name="Options">Configuration options for the Altinn Register service.</param>
 /// <param name="PlatformOptions">Options for configuring platform integration services.</param>
 /// <param name="AccessManagementOptions">Options for configuring access management services.</param>
 /// <param name="TokenGenerator">Service for generating platform access tokens.</param>
 public partial class AltinnAccessManagementClient(
     IHttpClientFactory HttpClientFactory,
-    IOptions<AltinnAccessManagementClient> Options,
     IOptions<AltinnIntegrationOptions> PlatformOptions,
     IOptions<AltinnAccessManagementOptions> AccessManagementOptions,
     ITokenGenerator TokenGenerator

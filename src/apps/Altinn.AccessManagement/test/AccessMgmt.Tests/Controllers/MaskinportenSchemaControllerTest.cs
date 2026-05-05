@@ -49,6 +49,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
     /// inner <see cref="HttpContextAccessor"/> otherwise so the ambient request
     /// context continues to flow during normal request handling.
     /// </summary>
+#pragma warning disable SA1649 // helper colocated with test class below
     internal sealed class MutableHttpContextAccessor : IHttpContextAccessor
     {
         private readonly Dictionary<string, object> _routeOverrides = new();

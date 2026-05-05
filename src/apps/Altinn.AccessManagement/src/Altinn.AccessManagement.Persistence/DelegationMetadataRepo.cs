@@ -40,7 +40,14 @@ namespace Altinn.AccessManagement.Persistence
             _conn = conn;
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Returns all delegation changes for the given Altinn app delegation.
+        /// </summary>
+        /// <param name="altinnAppId">The Altinn app id.</param>
+        /// <param name="offeredByPartyId">The party id that offered the delegation.</param>
+        /// <param name="coveredByPartyId">Optional party id that was covered by the delegation.</param>
+        /// <param name="coveredByUserId">Optional user id that was covered by the delegation.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         public async Task<List<DelegationChange>> GetAllAppDelegationChanges(string altinnAppId, int offeredByPartyId, int? coveredByPartyId, int? coveredByUserId, CancellationToken cancellationToken = default)
         {
             using var activity = TelemetryConfig.ActivitySource.StartActivity(ActivityKind.Client);

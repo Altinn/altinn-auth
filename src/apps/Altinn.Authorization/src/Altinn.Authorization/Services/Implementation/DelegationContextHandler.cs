@@ -40,6 +40,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="prp">the policy retrieval point service</param>
         /// <param name="accMgmt">Access Management PIP API wrapper</param>
         /// <param name="featureManager">Feature manager for reading feature flags.</param>
+        /// <param name="resourceRegistry">Resource registry client</param>
         public DelegationContextHandler(IInstanceMetadataRepository policyInformationRepository, IRoles rolesWrapper, IOedRoleAssignmentWrapper oedRolesWrapper, IParties partiesWrapper, IProfile profileWrapper, IMemoryCache memoryCache, IOptions<GeneralSettings> settings, IRegisterService registerService, IPolicyRetrievalPoint prp, IAccessManagementWrapper accMgmt, IFeatureManager featureManager, IResourceRegistry resourceRegistry)
             : base(policyInformationRepository, rolesWrapper, oedRolesWrapper, partiesWrapper, profileWrapper, memoryCache, settings, registerService, prp, accMgmt, featureManager, resourceRegistry)
         {

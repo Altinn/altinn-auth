@@ -330,8 +330,9 @@ namespace Altinn.AccessManagement.Core.Services
                     Value = entity.UserId.Value.ToString()
                 });
             }
-            else if (entity.PartyId.HasValue) // Party
+            else if (entity.PartyId.HasValue)
             {
+                // Party
                 matches.Add(new AttributeMatch
                 {
                     Id = AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute,

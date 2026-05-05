@@ -26,7 +26,6 @@ public class ConsentServiceTests
     private readonly Mock<IConsentRepository> _consentRepositoryMock;
     private readonly Mock<IAltinn2ConsentClient> _altinn2ConsentClientMock;
     private readonly Mock<IPartiesClient> _partiesClientMock;
-    private readonly Mock<ISingleRightsService> _singleRightsServiceMock;
     private readonly Mock<IResourceRegistryClient> _resourceRegistryClientMock;
     private readonly Mock<IAMPartyService> _amPartyServiceMock;
     private readonly Mock<IMemoryCache> _memoryCacheMock;

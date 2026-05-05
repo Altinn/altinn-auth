@@ -59,8 +59,6 @@ public class RequestServiceTests : IClassFixture<PostgresFixture>
     private readonly AppDbContext _db;
     private readonly RequestService _requestService;
 
-    private readonly IOptions<CoreAppsettings> _coreSettings;
-
     public RequestServiceTests(PostgresFixture fixture)
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()

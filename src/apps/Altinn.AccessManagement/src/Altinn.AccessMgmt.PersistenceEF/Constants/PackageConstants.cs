@@ -4605,7 +4605,6 @@ public static class PackageConstants
     /// - <c>URN:</c> urn:altinn:accesspackage:mva-kompensasjon-revisorattesterer
     /// - <c>Provider:</c> Altinn3
     /// - <c>Description:</c> Denne fullmakten gir statsautoriserte revisorer tilgang til å attestere "Kompensasjonsmelding for merverdiavgift". Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.
-
     /// </remarks>
     public static ConstantDefinition<Package> VATCompensationAuditorCertifies { get; } = new ConstantDefinition<Package>("8402518e-fc2d-4f16-8b67-299b98910ab3")
     {

@@ -156,8 +156,9 @@ public class GenericFilterBuilderTest
 
         // Exercise the non-generic IEnumerable path
         var count = 0;
-        foreach (object _ in (System.Collections.IEnumerable)builder)
+        foreach (var item in (System.Collections.IEnumerable)builder)
         {
+            _ = item;
             count++;
         }
 

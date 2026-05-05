@@ -565,7 +565,7 @@ public class MaskinportenSupplierService(
         return resource;
     }
 
-    private async Task<(Result<bool> Validation, (Entity Consumer, Entity Supplier))> GetAndValidateOrganizations(
+    private async Task<(Result<bool> Validation, (Entity Consumer, Entity Supplier) Organizations)> GetAndValidateOrganizations(
         Guid consumerId,
         Guid supplierId,
         CancellationToken cancellationToken)
