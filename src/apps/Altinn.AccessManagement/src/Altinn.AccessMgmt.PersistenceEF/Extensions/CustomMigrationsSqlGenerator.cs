@@ -11,10 +11,30 @@ namespace Altinn.AccessMgmt.PersistenceEF.Extensions;
 
 public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
 {
+    /// <summary>
+    /// Initializes the custom migration SQL generator. The audit-trigger DDL
+    /// emitted alongside each operation has no public-API equivalent in EF Core
+    /// (annotations, conventions, and value converters all run at a different
+    /// layer than per-operation SQL emission), so subclassing the Npgsql
+    /// generator is the only available extension point.
+    /// </summary>
+    /// <param name="dependencies">Standard EF Core migration-generator dependencies.</param>
+    /// <param name="npgsqlOptions">
+    /// The Npgsql provider's singleton-options surface. The interface lives in
+    /// <c>Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal</c> and is
+    /// flagged internal API by Npgsql (EF1001) — it can move or be removed across
+    /// minor / patch upgrades of <c>Npgsql.EntityFrameworkCore.PostgreSQL</c>. The
+    /// reference is unavoidable: the base constructor only accepts this type.
+    /// <c>CustomMigrationsSqlGeneratorContractTests.NpgsqlMigrationsSqlGenerator_keeps_INpgsqlSingletonOptions_constructor</c>
+    /// pins the contract and fails loudly if a future package upgrade breaks it,
+    /// at which point this class needs to be re-shaped (or the package pinned).
+    /// </param>
+#pragma warning disable EF1001 // Internal Npgsql provider API — see XML doc above; covered by a regression test in PersistenceEF.Tests.
     public CustomMigrationsSqlGenerator(
         MigrationsSqlGeneratorDependencies dependencies,
         INpgsqlSingletonOptions npgsqlOptions)
         : base(dependencies, npgsqlOptions) { }
+#pragma warning restore EF1001
 
     protected override void Generate(CreateTableOperation operation, IModel? model, MigrationCommandListBuilder builder, bool terminate = true)
     {
