@@ -705,12 +705,12 @@ public class ConnectionQuery(AppDbContext db)
             };
 
         /*
-        Combine main and subunit assignments 
+        Combine direct and mainunit assignments based on filter request
         */
-        var allAssignments = direct.Union(mainAssignments);
+        var allAssignments = filter.IncludeMainUnitConnections ? direct.Union(mainAssignments) : direct;
 
         /*
-        Add RoleMpa roles to allAssignments 
+        Add RoleMap roles to allAssignments 
         */
         var roleMapAssignments =
            from assignment in allAssignments
@@ -733,7 +733,7 @@ public class ConnectionQuery(AppDbContext db)
         /*
         Add Delegations from AllAssignments
         */
-        var directDelegations =
+        var clientDelegations =
            from delegation in db.Delegations
            join fromAssignment in allAssignments on delegation.FromId equals fromAssignment.AssignmentId
            join toAssignment in db.Assignments.WhereIf(!FeatureFlags.UseInstanceDelegationEF, t => t.Audit_ChangedBySystem != SystemEntityConstants.InstanceRightImportSystem) on delegation.ToId equals toAssignment.Id
@@ -778,10 +778,18 @@ public class ConnectionQuery(AppDbContext db)
         /*
         Combine everything
         */
-        return allAssignments
-            .Union(roleMapAssignments)
-            .Union(directDelegations)
-            .Union(keyRoleAssignments)
+        IQueryable<ConnectionQueryBaseRecord> allCombined = allAssignments.Union(roleMapAssignments);
+        if (filter.IncludeDelegation)
+        {
+            allCombined = allCombined.Union(clientDelegations);
+        }
+
+        if (filter.IncludeKeyRole)
+        {
+            allCombined = allCombined.Union(keyRoleAssignments);
+        }
+
+        return allCombined
             .ToIdContains(toSet)
             .ViaIdContains(viaSet)
             .ViaRoleIdContains(viaRoleSet)

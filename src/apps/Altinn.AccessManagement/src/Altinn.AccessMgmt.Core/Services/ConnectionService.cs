@@ -925,7 +925,7 @@ public partial class ConnectionService(
         };
 
         var connections = await connectionQuery.GetConnectionsAsync(filter, direction, true, cancellationToken);
-        return connections.GroupBy(r => r.RoleId).Select(connection =>
+        return connections.Where(c => c.AssignmentId.HasValue).GroupBy(r => r.RoleId).Select(connection =>
         {
             var role = connection.First().Role;
             return new RolePermissionDto
