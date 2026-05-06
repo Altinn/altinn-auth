@@ -39,6 +39,12 @@ AS $BODY$
 $BODY$;
 
 -- Function: update delegation.get_current_change for correct select order coveredByPartyId before coveredByUserId to match delegation.delegationchanges column order
+-- The previous v0.04 definition declared `RETURNS SETOF delegation.delegationchanges`; this version
+-- switches to a `RETURNS TABLE(...)` clause, which Postgres treats as a return-type change and
+-- rejects via `CREATE OR REPLACE FUNCTION` (42P13). Drop the existing function first so a fresh-DB
+-- replay (new environments, integration tests) succeeds.
+DROP FUNCTION IF EXISTS delegation.get_current_change(character varying, integer, integer, integer);
+
 CREATE OR REPLACE FUNCTION delegation.get_current_change(
 	_altinnappid character varying,
 	_offeredbypartyid integer,

@@ -15,9 +15,13 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Fixtures;
 /// to exercise <c>DelegationMetadataRepository</c> against a real database.
 /// </summary>
 /// <remarks>
-/// On hosts where Docker / Testcontainers is unavailable (e.g. CI runners with
-/// the daemon down) <see cref="InitializeAsync"/> calls <c>Assert.Skip</c> so
-/// every test using this fixture is reported as skipped rather than failing.
+/// On hosts where Docker / Testcontainers is unavailable, <see cref="SkipReason"/>
+/// is populated and <see cref="ApplicationConnectionString"/> is left empty.
+/// Tests should call <c>Assert.SkipWhen(fixture.SkipReason is not null, fixture.SkipReason!)</c>
+/// at the top of their body — <c>Assert.Skip</c> raised from
+/// <see cref="IAsyncLifetime.InitializeAsync"/> propagates as a fixture-init
+/// failure rather than a test skip in xUnit v3, so the check has to live on the
+/// per-test path.
 /// </remarks>
 public sealed class AuthorizationDbFixture : IAsyncLifetime
 {
@@ -26,27 +30,45 @@ public sealed class AuthorizationDbFixture : IAsyncLifetime
     private const string Password = "Password";
     private const string DatabaseName = "authorizationdb";
 
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
-        .WithImage("docker.io/postgres:16.1-alpine")
-        .WithCleanUp(true)
-        .Build();
+    private PostgreSqlContainer? _container;
 
     /// <summary>
     /// Connection string for the application-level <c>platform_authorization</c>
     /// user, scoped to the bootstrapped <c>authorizationdb</c> database.
+    /// Empty when <see cref="SkipReason"/> is set.
     /// </summary>
     public string ApplicationConnectionString { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// Set when the fixture cannot provision a real PostgreSQL container
+    /// (typically: Docker daemon not running). Tests that depend on the
+    /// fixture should call <c>Assert.SkipWhen</c> on this value before doing
+    /// any work that requires <see cref="ApplicationConnectionString"/>.
+    /// </summary>
+    public string? SkipReason { get; private set; }
 
     /// <inheritdoc />
     public async ValueTask InitializeAsync()
     {
         try
         {
+            // Both the builder's `.Build()` and `StartAsync` reach for the Docker
+            // daemon, so the construction has to live inside the try/catch — running
+            // it as a field initializer would surface a fixture-construction
+            // failure that no test-level skip can intercept.
+            _container = new PostgreSqlBuilder()
+                .WithImage("docker.io/postgres:16.1-alpine")
+                .WithCleanUp(true)
+                .Build();
             await _container.StartAsync();
         }
         catch (Exception ex)
         {
-            Assert.Skip($"Docker/Testcontainers unavailable: {ex.GetBaseException().Message}");
+            // Throwing — including via Assert.Skip — from IAsyncLifetime.InitializeAsync
+            // surfaces as a fixture-init failure (every dependent test is reported
+            // failed with "Class fixture type ... threw"), not as a skip. Stash the
+            // reason and let each test convert it to a skip via Assert.SkipWhen.
+            SkipReason = $"Docker/Testcontainers unavailable: {ex.GetBaseException().Message}";
             return;
         }
 
@@ -104,7 +126,10 @@ public sealed class AuthorizationDbFixture : IAsyncLifetime
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
-        await _container.DisposeAsync();
+        if (_container is not null)
+        {
+            await _container.DisposeAsync();
+        }
     }
 
     private static System.Collections.Generic.IEnumerable<string> EnumerateMigrationFiles()
@@ -119,16 +144,7 @@ public sealed class AuthorizationDbFixture : IAsyncLifetime
 
         // Only versioned directories ('v0.00', 'v0.01', ...) are migration sources;
         // '_draft', '_erase', '_init', '_post', '_pre' are convention-only README holders.
-        //
-        // Replay is capped at v0.07: v0.08 redefines `delegation.get_current_change` with a
-        // TABLE(...) return clause where v0.04 declared it as SETOF delegation.delegationchanges,
-        // and the new statement lacks a `DROP FUNCTION IF EXISTS` step — Postgres then refuses
-        // the change with `42P13: cannot change return type`. The columns the repository reads
-        // are identical between the v0.04 and v0.08 forms, so capping here exercises the
-        // production stored-procedure path the integration test cares about (enum round-trip
-        // through `insert_delegationchange` and `get_current_change`).
         return Directory.EnumerateDirectories(migrationDir, "v*")
-            .Where(d => string.Compare(Path.GetFileName(d), "v0.07", StringComparison.Ordinal) <= 0)
             .OrderBy(d => d, StringComparer.Ordinal)
             .SelectMany(d => Directory.EnumerateFiles(d, "*.sql").OrderBy(f => f, StringComparer.Ordinal));
     }

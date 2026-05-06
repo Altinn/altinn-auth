@@ -31,6 +31,8 @@ public class DelegationMetadataRepositoryIntegrationTests : IClassFixture<Author
     [InlineData(DelegationChangeType.RevokeLast)]
     public async Task InsertDelegation_then_GetCurrentDelegationChange_round_trips_DelegationChangeType(DelegationChangeType changeType)
     {
+        Assert.SkipWhen(_db.SkipReason is not null, _db.SkipReason ?? string.Empty);
+
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(_db.ApplicationConnectionString);
         dataSourceBuilder.MapEnum<DelegationChangeType>("delegation.delegationchangetype");
         await using var dataSource = dataSourceBuilder.Build();
