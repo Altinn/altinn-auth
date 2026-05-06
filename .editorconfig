@@ -33,6 +33,186 @@ dotnet_diagnostic.FAA0002.severity = none
 # CA1822: Mark members as static
 dotnet_diagnostic.CA1822.severity = none
 
+# ----------------------------------------------------------------------------
+# SonarAnalyzer (csharpsquid) severity map.
+#
+# Triaged from a live SonarCloud snapshot of `Authorization_AccessManagement`
+# (2,177 issues) and `Authorization_Authorization` (371 issues). Covers the
+# top rules by occurrence count plus every bug-class rule. Lower-volume
+# rules (each <10 instances) keep their default severity.
+#
+# Categories:
+#   warning    — bug-class defects + code smells worth fixing; visible in
+#                build output. SonarCloud's quality gate still enforces these
+#                on new code at PR time.
+#   suggestion — IDE-only nudge; doesn't add to build noise
+#   none       — accepted convention / false-positive-prone for this codebase
+#
+# `error` severity is intentionally NOT used here. With dotnet-sonarscanner
+# loading these analyzers in CI, an `error` on a rule that fires on existing
+# code would fail every PR's build until the underlying violations are
+# cleared — blocking the whole team. Each followup sweep PR (one rule per PR,
+# mechanical fix of every occurrence) flips its rule from `warning` to
+# `error` in the same commit so enforcement tightens gradually instead of
+# being switched on top-down.
+# ----------------------------------------------------------------------------
+
+# --- Bug-class rules (warning for now — promote to error per-rule once the
+#     existing violations are cleared in a sweep PR) ---
+
+# S2259: Null pointers should not be dereferenced (17 existing instances)
+dotnet_diagnostic.S2259.severity = warning
+
+# S6678: Use PascalCase for named placeholders in logging templates
+# (Microsoft.Extensions.Logging — mismatched / wrong-cased templates produce
+# wrong structured-log output, real defect; 112 existing instances)
+dotnet_diagnostic.S6678.severity = warning
+
+# S6674: Logger arguments should match the placeholders in the template
+# (12 existing instances)
+dotnet_diagnostic.S6674.severity = warning
+
+# S2955: Generic parameters not constrained to reference types should not be
+# compared to "null" (silent runtime mismatch; 4 existing instances)
+dotnet_diagnostic.S2955.severity = warning
+
+# S3265: Non-flags enums should not be used in bitwise operations
+# (58 existing instances)
+dotnet_diagnostic.S3265.severity = warning
+
+# S1699: Constructors should only call non-overridable methods (virtual call
+# in ctor is a known C# footgun; 17 existing instances)
+dotnet_diagnostic.S1699.severity = warning
+
+# S3949: Calculations on integers should not overflow (1 existing instance)
+dotnet_diagnostic.S3949.severity = warning
+
+# S2583: Conditionally executed code should be reachable (1 existing instance)
+dotnet_diagnostic.S2583.severity = warning
+
+# --- Mechanical / high-volume code smells (worth fixing, visible in build) ---
+
+# S1192: String literals should not be duplicated → extract to constants
+dotnet_diagnostic.S1192.severity = warning
+
+# S125: Sections of code should not be commented out
+dotnet_diagnostic.S125.severity = warning
+
+# S1481: Unused local variables should be removed
+dotnet_diagnostic.S1481.severity = warning
+
+# S1144: Unused private types or members should be removed
+dotnet_diagnostic.S1144.severity = warning
+
+# S2325: Methods and properties that don't access instance data should be static
+dotnet_diagnostic.S2325.severity = warning
+
+# S1854: Dead stores (unread assignments) should be removed
+dotnet_diagnostic.S1854.severity = warning
+
+# S1118: Utility classes should not have public constructors
+dotnet_diagnostic.S1118.severity = warning
+
+# S2094: Classes should not be empty
+dotnet_diagnostic.S2094.severity = warning
+
+# S1006: Method overrides should not change parameter defaults
+dotnet_diagnostic.S1006.severity = warning
+
+# S2589: Boolean expressions should not be gratuitous
+# (some false positives from null-flow analysis; warning is the right
+# starting point — suppress individual cases with `[SuppressMessage(...)]`
+# or `#pragma warning disable S2589` if needed)
+dotnet_diagnostic.S2589.severity = warning
+
+# S927: Parameter names should match the base / interface declaration
+dotnet_diagnostic.S927.severity = warning
+
+# S2479: Whitespace and control characters in string literals should be explicit
+dotnet_diagnostic.S2479.severity = warning
+
+# S3358: Ternary operators should not be nested
+dotnet_diagnostic.S3358.severity = warning
+
+# S6580: Use a format provider when parsing dates/numbers
+dotnet_diagnostic.S6580.severity = warning
+
+# S6664: Use compile-time logging source generators where possible
+dotnet_diagnostic.S6664.severity = warning
+
+# S101: Types should be named in PascalCase
+dotnet_diagnostic.S101.severity = warning
+
+# S2139: Exceptions should be either logged or rethrown but not both
+dotnet_diagnostic.S2139.severity = warning
+
+# S1155: "Any()" should be used instead of ".Count == 0"
+dotnet_diagnostic.S1155.severity = warning
+
+# S6960: Controllers should not have mixed responsibilities (multiple actions
+# on the same HTTP verb / route)
+dotnet_diagnostic.S6960.severity = warning
+
+# S3236: Methods with caller info attributes should not be invoked with explicit args
+dotnet_diagnostic.S3236.severity = warning
+
+# S1125: Boolean literals should not be redundant
+dotnet_diagnostic.S1125.severity = warning
+
+# S2292: Trivial properties should be auto-implemented
+dotnet_diagnostic.S2292.severity = warning
+
+# --- Design / refactoring rules (suggestion — IDE nudge only) ---
+
+# S3776: Cognitive complexity of methods should not be too high
+# (real code-quality signal but each fix is a thoughtful refactor; doesn't
+# belong in mechanical sweep PRs)
+dotnet_diagnostic.S3776.severity = suggestion
+
+# S107: Methods should not have too many parameters
+# (DI-heavy ctors regularly exceed the threshold; bumping to suggestion
+# stops it from drowning out signal)
+dotnet_diagnostic.S107.severity = suggestion
+
+# S112: General exceptions should not be thrown by user code
+# (sometimes pragmatic in middleware / fallback paths; visible in IDE but
+# not in build)
+dotnet_diagnostic.S112.severity = suggestion
+
+# S3267: Loops should be simplified with LINQ where possible (style choice)
+dotnet_diagnostic.S3267.severity = suggestion
+
+# S1066: Mergeable "if" statements should be combined
+dotnet_diagnostic.S1066.severity = suggestion
+
+# S3878: Arrays should not be created for params arguments
+dotnet_diagnostic.S3878.severity = suggestion
+
+# S6608: Prefer indexing over LINQ "First/Last" for indexable collections
+dotnet_diagnostic.S6608.severity = suggestion
+
+# S6966: Use async overloads where available
+dotnet_diagnostic.S6966.severity = suggestion
+
+# S6672: Use the LoggerMessage source generator instead of ILogger extension methods
+dotnet_diagnostic.S6672.severity = suggestion
+
+# S1133: Deprecated code should be removed (just a remind-by date, not actionable today)
+dotnet_diagnostic.S1133.severity = suggestion
+
+# S1172: Unused method parameters should be removed
+# (interface-required params don't fit this rule's check; suggestion avoids noise)
+dotnet_diagnostic.S1172.severity = suggestion
+
+# S4136: Method overloads should be grouped together
+dotnet_diagnostic.S4136.severity = suggestion
+
+# --- Accepted convention (none — won't show up at all) ---
+
+# S1135: Track uses of "TODO" tags
+# (TODO is the team's normal way to mark deferred work in code)
+dotnet_diagnostic.S1135.severity = none
+
 # Test projects: documentation not required (test names are self-documenting)
 [**/test/**/*.cs]
 
