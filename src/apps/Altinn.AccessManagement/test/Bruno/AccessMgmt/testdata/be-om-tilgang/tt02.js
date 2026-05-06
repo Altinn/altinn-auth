@@ -15,6 +15,11 @@
     package_id_privatperson_reject:
       "urn:altinn:accesspackage:innbygger-byggesoknad",
     package_id_virksomhet: "urn:altinn:accesspackage:posttjenester",
+    hadm: "urn:altinn:accesspackage:hovedadministrator",
+    regn_not_assignable:
+      "urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet",
+    eksplisitt: "urn:altinn:accesspackage:eksplisitt",
+    konkbotilg: "urn:altinn:accesspackage:konkursbo-tilgangsstyrer"
   },
   Bot_person: {
     lastname: "INGREDIENS",
@@ -143,4 +148,17 @@
       partyuuid: "d81601e7-b56e-452d-a5f2-5360f5e26f70",
     },
   },
+    Bot_package_Org_B: {
+    name: "UNGT URETTFERDIG TIGER AS",
+    org_no: "211155892",
+    partyid: 584976156,
+    partyuuid: "982b2c89-c383-4329-939a-02bed2e76106",
+    innehaver: {
+      name: "SNAKKESALIG NATTHEGRE",
+      pid: "02928498746",
+      partyid: 50667533,
+      userid: 2458450,
+      partyuuid: "e2cc83b6-4342-41f4-b5c2-446e32165593",
+    },
+  }
 };

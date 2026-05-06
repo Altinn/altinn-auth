@@ -1,0 +1,58 @@
+meta {
+  name: POST_EndUser_PackageDelegationRequest_Org_Cannot_Request_REGN
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/package?party={{party}}&to={{toUser}}&package={{package}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{toUser}}
+  package: {{package}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    bru.setVar("party", testdata.Bot_package_Org_B.partyuuid);
+    bru.setVar("toUser", testdata.Bot_package_Org.partyuuid);
+    bru.setVar("package", testdata.package_to_delegate.regn_not_assignable);
+    
+    var getTokenParameters = {
+      auth_userId: testdata.Bot_package_Org_B.innehaver.userid,
+      auth_partyId: testdata.Bot_package_Org_B.innehaver.partyid,
+      auth_partyUuid: testdata.Bot_package_Org_B.innehaver.partyuuid,
+      auth_ssn: testdata.Bot_package_Org_B.innehaver.pid,
+      
+      
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.sluttbrukerdelegationrequestwrite
+    }
+    
+    
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    test("POST_EndUser_PackageDelegationRequest_Org_Cannot_Request_REGN", function() {
+      const data = res.getBody();
+      expect(res.status).to.equal(400);
+      expect(data.validationErrors[0]).to.have.property("packageId", "Package 'urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet' is not assignable.");
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

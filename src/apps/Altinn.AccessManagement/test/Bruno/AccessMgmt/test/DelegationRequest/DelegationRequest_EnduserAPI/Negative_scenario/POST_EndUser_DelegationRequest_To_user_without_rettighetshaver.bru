@@ -53,7 +53,7 @@ tests {
       expect(validationError).to.have.property("detail", "Initial connection between parties not found.");
       expect(validationError).to.have.property("paths");
       expect(validationError.paths).to.be.an("array").with.length.greaterThan(0);
-      expect(validationError.paths[0]).to.equal("$QUERY/to");
+      expect(validationError.paths[0]).to.equal("/to");
       expect(validationError).to.have.property("to", expectedTo);
       
     });
