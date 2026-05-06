@@ -81,7 +81,7 @@ public partial class ConnectionService(
                 IncludeKeyRole = true,
                 IncludeMainUnitConnections = true,
                 IncludeDelegation = includeClientDelegations,
-                IncludePackages = true,
+                IncludePackages = false,
                 IncludeResources = false,
                 EnrichPackageResources = false,
                 ExcludeDeleted = false,
