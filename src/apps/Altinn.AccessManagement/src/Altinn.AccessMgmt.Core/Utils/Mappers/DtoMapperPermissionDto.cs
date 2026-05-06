@@ -28,7 +28,7 @@ public partial class DtoMapper : IDtoMapper
             To = Convert(connection.To),
             Via = Convert(connection.Via),
             ViaRole = ConvertCompactRole(connection.ViaRole),
-            Role = ConvertCompactRole(connection.Role)
+            Role = connection.AssignmentId.HasValue ? ConvertCompactRole(connection.Role) : null
         };
     }
 

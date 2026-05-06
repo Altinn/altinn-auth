@@ -31,7 +31,7 @@ public partial class DtoMapper : IDtoMapper
             return new ConnectionDto()
             {
                 Party = Convert(connection.To),
-                Roles = [.. c.Select(c => ConvertCompactRole(c.Role)).Where(ro => ro is not null).DistinctBy(t => t.Id)],
+                Roles = [.. c.Where(c => c.AssignmentId.HasValue).Select(c => ConvertCompactRole(c.Role)).Where(ro => ro is not null).DistinctBy(t => t.Id)],
                 Resources = [.. c.SelectMany(c => c.Resources).Select(r => Convert(r)).Where(re => re is not null).DistinctBy(t => t.Id)],
                 Packages = [.. c.SelectMany(c => c.Packages).Select(p => Convert(p)).Where(pa => pa is not null).DistinctBy(t => t.Id)],
                 Connections = ConvertSubConnectionsToOthers(subconnections),
@@ -64,7 +64,7 @@ public partial class DtoMapper : IDtoMapper
             return new ConnectionDto()
             {
                 Party = Convert(connection.From),
-                Roles = [.. c.Select(c => ConvertCompactRole(c.Role)).Where(ro => ro is not null).DistinctBy(t => t.Id)],
+                Roles = [.. c.Where(c => c.AssignmentId.HasValue).Select(c => ConvertCompactRole(c.Role)).Where(ro => ro is not null).DistinctBy(t => t.Id)],
                 Resources = [.. c.SelectMany(c => c.Resources).Select(r => Convert(r)).Where(re => re is not null).DistinctBy(t => t.Id)],
                 Packages = [.. c.SelectMany(c => c.Packages).Select(p => Convert(p)).Where(pa => pa is not null).DistinctBy(t => t.Id)],
                 Connections = ConvertSubConnectionsFromOthers(subconnections),
@@ -143,7 +143,7 @@ public partial class DtoMapper : IDtoMapper
             {
                 Party = Convert(connection.From),
                 Roles = res
-                    .Where(t => t.FromId == connection.FromId)
+                    .Where(t => t.AssignmentId.HasValue && t.FromId == connection.FromId)
                     .Select(t => ConvertCompactRole(t.Role))
                     .Where(ro => ro is not null)
                     .DistinctBy(t => t.Id).ToList(),
@@ -181,7 +181,7 @@ public partial class DtoMapper : IDtoMapper
             {
                 Party = Convert(connection.To),
                 Roles = res
-                    .Where(t => t.ToId == connection.ToId && t.Role != null)
+                    .Where(t => t.AssignmentId.HasValue && t.ToId == connection.ToId && t.Role != null)
                     .Select(t => ConvertCompactRole(t.Role))
                     .Where(r => r is not null)
                     .DistinctBy(t => t.Id)

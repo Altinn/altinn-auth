@@ -63,6 +63,7 @@ public class DtoMapperConnectionQueryTest
             FromId = from.Id,
             ToId = to.Id,
             RoleId = role.Id,
+            AssignmentId = Guid.NewGuid(),
             ViaId = viaId,
             Reason = reason,
             From = from,

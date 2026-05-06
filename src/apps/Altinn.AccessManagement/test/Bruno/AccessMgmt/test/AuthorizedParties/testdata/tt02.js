@@ -5,6 +5,7 @@ module.exports =
         "clientDelgResourceId": "devtest_gar_bruno_client_resource",
         "directDelgResourceId": "devtest_gar_bruno_direct_resource",
         "forretningsforer-eiendomResourceId": "devtest_gar_bruno_forretningsforer_eiendom",
+        "regnskapsforer": "devtest_gar_bruno_client_resource",
         "appResourceId": "app_ttd_authz-bruno-testapp1",
         "appInstanceDelegation": {
             "resourceId": "app_ttd_authz-bruno-instancedelegation",
@@ -303,6 +304,32 @@ module.exports =
                 "partyUuid": "??"
             }
         }
+    },
+    "regnVennligProaktivTiger": {
+      "name": "VENNLIG PROAKTIV TIGER AS",
+      "orgno": "314063945",
+      "partyId": 51451282,
+      "partyUuid": "00832e9b-7100-4e6c-8d7d-d21fb19d0aee",
+      "dagligleder": {
+        "name": "STRENG INFORMASJON",
+        "pid": "13847599221",
+        "userId": 1711398,
+        "partyId": 50670747,
+        "partyUuid": "39b418de-32db-457c-931e-1fd04148d225"
+      },
+      "enkClient": {
+        "name": "FALSK UAVHENGIG KATT LERKETRE",
+        "orgno": "313079422",
+        "partyId": 51674823,
+        "partyUuid": "00a9ab9b-42cf-4121-9086-8b423b0d644f",
+        "innehaver": {
+          "name": "PARODISK KANIN",
+          "pid": "30847798161",
+          "userId": 2203099,
+          "partyId": 51025583,
+          "partyUuid": "a8dbe5a4-55d9-418b-9a9f-3179b9f48a6f"
+        },
+      }
     },
     "regnskapsforerShowClientUnitsFalse": {
         "name": "FROM TYPISK TIGER AS",

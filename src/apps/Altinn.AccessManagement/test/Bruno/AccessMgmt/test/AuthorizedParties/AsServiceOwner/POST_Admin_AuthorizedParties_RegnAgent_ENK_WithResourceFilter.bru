@@ -1,0 +1,222 @@
+meta {
+  name: POST_Admin_AuthorizedParties_RegnAgent_ENK_WithResourceFilter
+  type: http
+  seq: 20
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAltinn2=true&includeAltinn3=true&includeAccessPackages=true&includeRoles=true&anyOfResourceIds=devtest_gar_bruno_client_resource
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAltinn2: true
+  includeAltinn3: true
+  includeAccessPackages: true
+  includeRoles: true
+  anyOfResourceIds: devtest_gar_bruno_client_resource
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{personId}}",
+    "partyFilter": [
+      {
+        "type": "urn:altinn:organization:identifier-no",
+        "value": "{{enk}}"
+      },
+      {
+        "type": "urn:altinn:organization:identifier-no",
+        "value": "{{enkSubUnit}}"
+      },
+      {
+        "type": "urn:altinn:person:identifier-no",
+        "value": "{{innehaver}}"
+      }
+    ]
+  }
+}
+
+script:pre-request {
+  
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "POST_Admin_AuthorizedParties_RegnAgent_ENK");
+  bru.setVar("personId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.employee_agent_enk.pid);
+  bru.setVar("enk", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.orgno);
+  bru.setVar("enkSubUnit", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.subunit.orgno);
+  bru.setVar("innehaver", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.pid);
+  
+  var getTokenParameters = {
+    auth_org: sharedtestdata.serviceOwners.digdir.org,
+    auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.authorizedPartiesAdmin
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const body = res.getBody();
+  const requestName = bru.getVar("requestName");
+  const {
+    toLowerArray,
+    assertIncludeMembersIgnoreCase,
+    expectArrayResult
+  } = require('./utils/assertHelper');
+  
+  test(requestName + "|HttpStatus.OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test(requestName + "|Verify all expected parties exists with correct access info", function() {    
+    const allParties = body.flatMap(party => [party, ...(party.subunits || [])]);
+    const targetPartyEnk = allParties.find(party => party.partyUuid === testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.partyUuid);
+    const targetPartyEnkSubUnit = allParties.find(party => party.partyUuid === testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.subunit.partyUuid);
+    const targetPartyInnh = allParties.find(party => party.partyUuid === testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.partyUuid);
+  
+    assert.exists(targetPartyEnk, 'Expected Enk Party: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.name+' to exist');
+    assert.exists(targetPartyEnkSubUnit, 'Expected Enk Subunit Party: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.subunit.name+' to exist');
+    assert.exists(targetPartyInnh, 'Expected Innehaver Party: '+testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver.name+' to exist');
+    expect(allParties.length, `Result should only contain the parties filtered`).to.equal(3);
+    
+    // Expect correct access packages pr. party
+    expectArrayResult(
+        targetPartyEnk.authorizedAccessPackages,
+        ['regnskapsforer-lonn'],
+        'ENK MainUnit authorizedAccessPackages mismatch'
+      );
+    expectArrayResult(
+        targetPartyEnkSubUnit.authorizedAccessPackages,
+        ['regnskapsforer-lonn'],
+        'ENK SubUnit authorizedAccessPackages mismatch'
+      );
+    expectArrayResult(
+        targetPartyInnh.authorizedAccessPackages,
+        ['regnskapsforer-lonn'],
+        'ENK Innehaver authorizedAccessPackages mismatch'
+      );
+    
+    // Expect correct roles (empty) pr. party
+    expectArrayResult(
+        targetPartyEnk.authorizedRoles,
+        [],
+        'ENK MainUnit authorizedRoles should be empty'
+      );
+    expectArrayResult(
+        targetPartyEnkSubUnit.authorizedRoles,
+        [],
+        'ENK SubUnit authorizedRoles should be empty'
+      );
+    expectArrayResult(
+        targetPartyInnh.authorizedRoles,
+        [],
+        'ENK Innehaver authorizedRoles should be empty'
+      );
+  
+  });
+  
+  test(requestName + "|Inherits all mainunit accesses on subunits", function() {  
+    // Test that all authorized rights on main units also exists on all subunits
+    body.forEach((party, partyIndex) => {
+      if (party.subunits && party.subunits.length > 0) {
+        party.subunits.forEach((subunit, subunitIndex) => {
+          try {
+            assert.includeMembers(
+              subunit.authorizedAccessPackages,
+              party.authorizedAccessPackages,
+              `Subunit ${subunitIndex} of party ${partyIndex} does not include all authorizedAccessPackages`
+            );
+  
+            assert.includeMembers(
+              subunit.authorizedResources,
+              party.authorizedResources,
+              `Subunit ${subunitIndex} of party ${partyIndex} does not include all authorizedResources`
+            );
+  
+            assert.includeMembers(
+              subunit.authorizedRoles,
+              party.authorizedRoles,
+              `Subunit ${subunitIndex} of party ${partyIndex} does not include all authorizedRoles`
+            );
+          } catch (error) {
+            console.error(error.message);
+            throw error; // Re-throw to make sure Bruno registers the test as failed
+          }
+        });
+      }
+    });
+    
+  });
+  
+  test(requestName + "|Mainunit AuthorizedInstances not inheirited to subunits", function() {  
+    // Test that any authorized instances on main units does not exist on any subunits
+    body.forEach((party, partyIndex) => {
+      const parentInstances = party.authorizedInstances || [];
+  
+      if (party.subunits && party.subunits.length > 0 && parentInstances.length > 0) {
+        party.subunits.forEach((subunit, subunitIndex) => {
+          const subunitInstances = subunit.authorizedInstances || [];
+  
+          const overlappingInstances = parentInstances.filter(instance =>
+            subunitInstances.includes(instance)
+          );
+  
+          try {
+            assert.strictEqual(
+              overlappingInstances.length,
+              0,
+              `Subunit ${subunitIndex} of party ${partyIndex} contains one or more parent authorizedInstances: ${overlappingInstances.join(', ')}`
+            );
+          } catch (error) {
+            console.error(error.message);
+            throw error;
+          }
+        });
+      }
+    });
+  
+  });
+  
+  test(requestName + "|Check for duplicate parties in the response", function() {  
+    // Step 1: Collect all partyUuids
+    const allPartyUuids = [];
+  
+    body.forEach(party => {
+      allPartyUuids.push(party.partyUuid);
+      if (party.subunits && party.subunits.length > 0) {
+        party.subunits.forEach(subunit => {
+          allPartyUuids.push(subunit.partyUuid);
+        });
+      }
+    });
+  
+    // Step 2: Find duplicates
+    const uuidCount = {};
+    const duplicates = [];
+  
+    allPartyUuids.forEach(uuid => {
+      uuidCount[uuid] = (uuidCount[uuid] || 0) + 1;
+      if (uuidCount[uuid] === 2) {
+        duplicates.push(uuid); // only push once when it becomes a duplicate
+      }
+    });
+  
+    // Step 3: Assert no duplicates
+    expect(duplicates.length, `Duplicate partyUuid(s) found: ${duplicates.join(', ')}`).to.equal(0);
+  
+  });
+  
+}

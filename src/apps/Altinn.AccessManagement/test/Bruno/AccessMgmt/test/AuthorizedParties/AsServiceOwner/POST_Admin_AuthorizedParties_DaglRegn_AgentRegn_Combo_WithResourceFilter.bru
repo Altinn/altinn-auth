@@ -1,0 +1,120 @@
+meta {
+  name: POST_Admin_AuthorizedParties_DaglRegn_AgentRegn_Combo_WithResourceFilter
+  type: http
+  seq: 22
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAltinn2=true&includeAltinn3=true&includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true&includePartiesViaKeyRoles=true&includeSubParties=true&includeInactiveParties=true&anyOfResourceIds=devtest_gar_bruno_client_resource
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAltinn2: true
+  includeAltinn3: true
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+  includePartiesViaKeyRoles: true
+  includeSubParties: true
+  includeInactiveParties: true
+  anyOfResourceIds: devtest_gar_bruno_client_resource
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{personId}}",
+      "partyFilter": [
+      {
+        "type": "urn:altinn:organization:identifier-no",
+        "value": "{{enk}}"
+      },
+      {
+        "type": "urn:altinn:person:identifier-no",
+        "value": "{{innehaver}}"
+      }
+    ]
+  }
+}
+
+script:pre-request {
+  
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "POST_Admin_AuthorizedParties_DaglRegn_AgentRegn_Combo");
+  bru.setVar("personId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+  bru.setVar("enk", testdata.regnVennligProaktivTiger.enkClient.orgno);
+  bru.setVar("innehaver", testdata.regnVennligProaktivTiger.enkClient.innehaver.pid);
+  
+  var getTokenParameters = {
+    auth_org: sharedtestdata.serviceOwners.digdir.org,
+    auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.authorizedPartiesAdmin
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const body = res.getBody();
+  const requestName = bru.getVar("requestName");
+  const {
+    toLowerArray,
+    assertIncludeMembersIgnoreCase,
+    expectArrayResult
+  } = require('./utils/assertHelper');
+  
+  test(requestName + "|HttpStatus.OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test(requestName + "|Verify all expected parties exists with correct access info", function() {    
+    const allParties = body.flatMap(party => [party, ...(party.subunits || [])]);
+    const targetPartyEnk = allParties.find(party => party.partyUuid === testdata.regnVennligProaktivTiger.enkClient.partyUuid);
+    const targetPartyInnh = allParties.find(party => party.partyUuid === testdata.regnVennligProaktivTiger.enkClient.innehaver.partyUuid);
+  
+    assert.exists(targetPartyEnk, 'Expected Enk Party: '+testdata.regnVennligProaktivTiger.enkClient.name+' to exist');
+    assert.exists(targetPartyInnh, 'Expected Innehaver Party: '+testdata.regnVennligProaktivTiger.enkClient.innehaver.name+' to exist');
+    
+    // Expect correct access packages pr. party
+    expectArrayResult(
+        targetPartyEnk.authorizedAccessPackages,
+        ['regnskapsforer-lonn'],
+        'ENK MainUnit authorizedAccessPackages mismatch'
+      );
+    expectArrayResult(
+        targetPartyInnh.authorizedAccessPackages,
+        ['regnskapsforer-lonn'],
+        'ENK Innehaver authorizedAccessPackages mismatch'
+      );
+    
+    // Expect correct roles (empty) pr. party
+    expectArrayResult(
+        targetPartyEnk.authorizedRoles,
+        [],
+        'ENK MainUnit authorizedRoles should be empty'
+      );
+    expectArrayResult(
+        targetPartyInnh.authorizedRoles,
+        [],
+        'ENK Innehaver authorizedRoles should be empty'
+      );
+  
+  });
+  
+}

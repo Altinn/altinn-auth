@@ -974,7 +974,7 @@ public class ConnectionQuery(AppDbContext db)
         var packageSet = filter.PackageIds?.Count > 0 ? new HashSet<Guid>(filter.PackageIds) : null;
         var index = new ConnectionIndex<ConnectionQueryPackage>();
 
-        var assignmentPackageKeys = keys.Where(k => k.RoleId == RoleConstants.Rightholder).Select(k => k.AssignmentId).Distinct().ToList();
+        var assignmentPackageKeys = keys.Where(k => k.AssignmentId.HasValue && k.RoleId == RoleConstants.Rightholder).Select(k => k.AssignmentId).Distinct().ToList();
 
         SortedList<Guid, List<Guid>> assignmentPackages = [];
         SortedSet<Guid> assignmentPackageIds = [];
@@ -999,7 +999,8 @@ public class ConnectionQuery(AppDbContext db)
             }
         }
 
-        var rolePackagesRaw = await db.RolePackages.Where(r => r.HasAccess && keys.Select(k => k.RoleId).Distinct().ToList().Contains(r.RoleId))
+        var rolePackageKeys = keys.Where(k => k.AssignmentId.HasValue).Select(k => k.RoleId).Distinct().ToList();
+        var rolePackagesRaw = await db.RolePackages.Where(r => r.HasAccess && rolePackageKeys.Contains(r.RoleId))
             .WhereIf(packageSet is not null, p => packageSet!.Contains(p.PackageId))
             .Select(rp => new { rp.PackageId, rp.RoleId, rp.EntityVariantId })
             .ToListAsync(ct);
@@ -1041,7 +1042,7 @@ public class ConnectionQuery(AppDbContext db)
         }
 
         SortedList<Guid, Guid> entityVariants = [];
-        var entityKeys = keys.Where(k => rolePackagesForEntity.ContainsKey(k.RoleId)).Select(k => k.FromId).Distinct().ToList();
+        var entityKeys = keys.Where(k => k.AssignmentId.HasValue && rolePackagesForEntity.ContainsKey(k.RoleId)).Select(k => k.FromId).Distinct().ToList();
         if (entityKeys.Count > 0)
         {
             var entityVariantsRaw = await db.Entities.Where(e => entityKeys.Contains(e.Id))
@@ -1089,25 +1090,39 @@ public class ConnectionQuery(AppDbContext db)
 
         foreach (var key in keys)
         {
-            List<Guid> rolePackagesForEntityForKey = [];
-            if (rolePackagesForEntity.TryGetValue(key.RoleId, out var entityDict)
-                && entityDict.TryGetValue(entityVariants[key.FromId], out var entityIds))
+            IEnumerable<Guid> keyPackageIds = [];
+
+            if (!key.AssignmentId.HasValue)
             {
-                rolePackagesForEntityForKey = entityIds;
-            }
-
-            var rolePackages = (rolePackagesForAll.TryGetValue(key.RoleId, out List<Guid> packagesForAll) ? packagesForAll : [])
-                    .Union(rolePackagesForEntityForKey).ToList();
-
-            var p1 = key.AssignmentId.HasValue
-                 ? assignmentPackages.ContainsKey((Guid)key.AssignmentId) ? assignmentPackages[(Guid)key.AssignmentId] : []
-                 : [];
-
-            var p2 = key.DelegationId.HasValue
+                // if connection record is a client delegation, we only need to consider delegationpackages, and not from assignment or role packages.
+                var clientDelegationPackages = key.DelegationId.HasValue
                  ? (key.DelegationId != null && delegationPackages.ContainsKey((Guid)key.DelegationId)) ? delegationPackages[(Guid)key.DelegationId] : []
                  : [];
 
-            var keyPackageIds = rolePackages.Union(p1).Union(p2).Distinct();
+                keyPackageIds = clientDelegationPackages.Distinct();
+            }
+            else if (key.AssignmentId.HasValue && key.RoleId == RoleConstants.Rightholder.Id)
+            {
+                // if connection is for rightholder we only need to consider assignment packages and not role packages or client delegations
+                var assPackages = key.AssignmentId.HasValue
+                     ? assignmentPackages.ContainsKey((Guid)key.AssignmentId) ? assignmentPackages[(Guid)key.AssignmentId] : []
+                     : [];
+
+                keyPackageIds = assPackages.Distinct();
+            }
+            else
+            {
+                // else we need to consider check for role packages
+                List<Guid> rolePackagesForEntityForKey = [];
+                if (rolePackagesForEntity.TryGetValue(key.RoleId, out var entityDict)
+                    && entityDict.TryGetValue(entityVariants[key.FromId], out var entityIds))
+                {
+                    rolePackagesForEntityForKey = entityIds;
+                }
+
+                keyPackageIds = (rolePackagesForAll.TryGetValue(key.RoleId, out List<Guid> packagesForAll) ? packagesForAll : [])
+                        .Union(rolePackagesForEntityForKey).Distinct();
+            }
 
             if (!keyPackageIds.Any())
             {
