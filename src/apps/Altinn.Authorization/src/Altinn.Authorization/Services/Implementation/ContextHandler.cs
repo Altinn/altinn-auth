@@ -93,6 +93,10 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <inheritdoc/>
         public async Task<XacmlContextRequest> Enrich(XacmlContextRequest request, bool isExternalRequest, SortedDictionary<string, AuthInfo> appInstanceInfo, CancellationToken cancellationToken = default)
         {
+            // The cache is per-request scratch space; callers that don't have one
+            // (notably standalone unit tests of EnrichResourceAttributes) are
+            // semantically equivalent to "start from an empty cache".
+            appInstanceInfo ??= new SortedDictionary<string, AuthInfo>(StringComparer.Ordinal);
             await EnrichResourceAttributes(request, isExternalRequest, appInstanceInfo);
             return await Task.FromResult(request);
         }
@@ -114,43 +118,30 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
             if (!resourceAttributeComplete && !string.IsNullOrEmpty(resourceAttributes.InstanceValue))
             {
-                Instance instanceData = null;
-                if (!_generalSettings.UseStorageApiForInstanceAuthInfo)
+                if (!appInstanceInfo.TryGetValue(resourceAttributes.InstanceValue, out AuthInfo authInfo))
                 {
-                    instanceData = await _policyInformationRepository.GetInstance(resourceAttributes.InstanceValue);
-                }
-                else
-                {
-                    instanceData = new();
-                    if (!appInstanceInfo.TryGetValue(resourceAttributes.InstanceValue, out AuthInfo authInfo))
-                    {
-                        authInfo = await _policyInformationRepository.GetAuthInfo(resourceAttributes.InstanceValue);
-                        appInstanceInfo[resourceAttributes.InstanceValue] = authInfo;
-                    }
-
-                    instanceData.Process = authInfo.Process;
-                    instanceData.AppId = authInfo.AppId;
-                    instanceData.Org = instanceData.AppId.Split('/')[0];
+                    authInfo = await _policyInformationRepository.GetAuthInfo(resourceAttributes.InstanceValue);
+                    appInstanceInfo[resourceAttributes.InstanceValue] = authInfo;
                 }
 
-                if (instanceData != null)
-                {
-                    AddIfValueDoesNotExist(resourceContextAttributes, XacmlRequestAttribute.OrgAttribute, resourceAttributes.OrgValue, instanceData.Org);
-                    string app = instanceData.AppId.Split("/")[1];
-                    AddIfValueDoesNotExist(resourceContextAttributes, XacmlRequestAttribute.AppAttribute, resourceAttributes.AppValue, app);
-                    if (instanceData.Process?.CurrentTask != null)
-                    {
-                        AddIfValueDoesNotExist(resourceContextAttributes, XacmlRequestAttribute.TaskAttribute, resourceAttributes.TaskValue, instanceData.Process.CurrentTask.ElementId);
-                    }
-                    else if (instanceData.Process?.EndEvent != null)
-                    {
-                        AddIfValueDoesNotExist(resourceContextAttributes, XacmlRequestAttribute.EndEventAttribute, null, instanceData.Process.EndEvent);
-                    }
+                string[] appIdParts = authInfo.AppId.Split('/');
+                string org = appIdParts[0];
+                string app = appIdParts[1];
 
-                    string partyId = resourceAttributes.InstanceValue.Split('/')[0];
-                    AddIfValueDoesNotExist(resourceContextAttributes, XacmlRequestAttribute.PartyAttribute, resourceAttributes.ResourcePartyValue, partyId);
-                    resourceAttributes.ResourcePartyValue = partyId;
+                AddIfValueDoesNotExist(resourceContextAttributes, XacmlRequestAttribute.OrgAttribute, resourceAttributes.OrgValue, org);
+                AddIfValueDoesNotExist(resourceContextAttributes, XacmlRequestAttribute.AppAttribute, resourceAttributes.AppValue, app);
+                if (authInfo.Process?.CurrentTask != null)
+                {
+                    AddIfValueDoesNotExist(resourceContextAttributes, XacmlRequestAttribute.TaskAttribute, resourceAttributes.TaskValue, authInfo.Process.CurrentTask.ElementId);
                 }
+                else if (authInfo.Process?.EndEvent != null)
+                {
+                    AddIfValueDoesNotExist(resourceContextAttributes, XacmlRequestAttribute.EndEventAttribute, null, authInfo.Process.EndEvent);
+                }
+
+                string partyId = resourceAttributes.InstanceValue.Split('/')[0];
+                AddIfValueDoesNotExist(resourceContextAttributes, XacmlRequestAttribute.PartyAttribute, resourceAttributes.ResourcePartyValue, partyId);
+                resourceAttributes.ResourcePartyValue = partyId;
             }
 
             // Resource must be enriched after getting instance data which resolves org/app through the instance id

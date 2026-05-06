@@ -76,10 +76,5 @@ namespace Altinn.Platform.Authorization.Configuration
                 return Environment.GetEnvironmentVariable("GeneralSettings__SBLBaseAdress") ?? SBLBaseAdress;
             }
         }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether to use the storage component to get instance auth info
-        /// </summary>
-        public bool UseStorageApiForInstanceAuthInfo { get; set; }
     }
 }
