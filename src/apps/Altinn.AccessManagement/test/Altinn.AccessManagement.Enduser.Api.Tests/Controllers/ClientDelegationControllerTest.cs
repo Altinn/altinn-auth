@@ -1311,6 +1311,123 @@ public class ClientDelegationControllerTest
         }
     }
 
+    /// <summary>
+    /// <see cref="ClientDelegationController.DelegateAccessPackageToAgent(Guid, Guid, Guid, DelegationBatchInputDto, CancellationToken)"/>
+    /// Tests that delegating to a system user without an existing Agent Assignment creates the assignment automatically.
+    /// </summary>
+    public class DelegateAccessPackageToSystemUserWithoutAgentAssignment : IClassFixture<ApiFixture>
+    {
+        public DelegateAccessPackageToSystemUserWithoutAgentAssignment(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            Fixture.EnsureSeedOnce<DelegateAccessPackageToSystemUserWithoutAgentAssignment>(db =>
+            {
+                var rightholderfromNordisToVerdiq = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationNordisAS.Id,
+                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+
+                db.Assignments.Add(rightholderfromNordisToVerdiq);
+
+                db.AssignmentPackages.Add(new()
+                {
+                    AssignmentId = rightholderfromNordisToVerdiq.Id,
+                    PackageId = PackageConstants.Customs.Id,
+                });
+
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private HttpClient CreateClient()
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestEntities.OrganizationVerdiqAS.Id.ToString()));
+                claims.Add(new Claim("scope", $"{AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ} {AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE}"));
+            });
+
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            return client;
+        }
+
+        [Fact]
+        public async Task DelegateAccessPackageToSystemUser_WithoutExistingAgentAssignment_CreatesAssignmentAndSucceeds()
+        {
+            var client = CreateClient();
+
+            // Verify no agent assignment exists before delegation
+            await Fixture.QueryDb(async db =>
+            {
+                var existingAssignment = await db.Assignments
+                    .Where(a => a.FromId == TestEntities.OrganizationVerdiqAS.Id
+                        && a.ToId == TestEntities.SystemUserClient.Id
+                        && a.RoleId == RoleConstants.Agent.Id)
+                    .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+
+                Assert.Null(existingAssignment);
+            });
+
+            // Delegate to system user without existing agent assignment
+            var response = await client.PostAsJsonAsync(
+                $"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&from={TestEntities.OrganizationNordisAS}&to={TestEntities.SystemUserClient}",
+                new DelegationBatchInputDto()
+                {
+                    Values = [
+                        new()
+                        {
+                            Role = RoleConstants.Rightholder.Entity.Code,
+                            Packages = [PackageConstants.Customs.Entity.Urn]
+                        }
+                    ]
+                },
+                TestContext.Current.CancellationToken
+            );
+
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            var delegationResult = JsonSerializer.Deserialize<List<DelegationDto>>(data);
+            Assert.NotEmpty(delegationResult);
+            Assert.True(delegationResult.All(d => d.Changed));
+            Assert.Equal(TestEntities.OrganizationNordisAS.Id, delegationResult.First().FromId);
+            Assert.Equal(TestEntities.SystemUserClient.Id, delegationResult.First().ToId);
+            Assert.Equal(TestEntities.OrganizationVerdiqAS.Id, delegationResult.First().ViaId);
+
+            // Verify agent assignment was automatically created
+            await Fixture.QueryDb(async db =>
+            {
+                var createdAssignment = await db.Assignments
+                    .Where(a => a.FromId == TestEntities.OrganizationVerdiqAS.Id
+                        && a.ToId == TestEntities.SystemUserClient.Id
+                        && a.RoleId == RoleConstants.Agent.Id)
+                    .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+
+                Assert.NotNull(createdAssignment);
+            });
+
+            // Verify delegation was created
+            await Fixture.QueryDb(async db =>
+            {
+                var delegation = await db.Delegations
+                    .Include(d => d.DelegationPackages)
+                    .Where(d => d.FacilitatorId == TestEntities.OrganizationVerdiqAS.Id
+                        && d.To.ToId == TestEntities.SystemUserClient.Id
+                        && d.From.FromId == TestEntities.OrganizationNordisAS.Id)
+                    .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+
+                Assert.NotNull(delegation);
+                Assert.NotEmpty(delegation.DelegationPackages);
+                Assert.Contains(delegation.DelegationPackages, dp => dp.PackageId == PackageConstants.Customs.Id);
+            });
+        }
+    }
+
     #endregion
 
     #region DELETE accessmanagement/api/v1/enduser/clientdelegations/agents/accesspackages
