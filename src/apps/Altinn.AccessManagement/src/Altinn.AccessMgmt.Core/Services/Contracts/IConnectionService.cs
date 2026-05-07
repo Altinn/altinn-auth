@@ -1,5 +1,6 @@
 ﻿using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Persistence.Services.Models;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
@@ -416,4 +417,12 @@ public interface IConnectionService
     /// <returns>A result indicating whether the role was successfully removed. The result value is true if the role was removed, false if nothing was removed and a 
     /// problem if something is wrong.</returns>
     Task<Result<bool>> RemoveRoleAssignment(Guid fromId, Guid toId, string roleCode, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Creates assignment with role <see cref="RoleConstants.SelfRegisteredUser"/> from a self identified user to a email user.
+    /// </summary>
+    /// <param name="fromId">The unique identifier of the self identified user.</param>
+    /// <param name="toId">The unique identifier of the email user the <see cref="RoleConstants.SelfRegisteredUser"/> is given to.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    Task<Result<AssignmentDto>> ConnectSIUserAndEmailUser(Guid fromId, Guid toId, CancellationToken cancellationToken = default);
 }

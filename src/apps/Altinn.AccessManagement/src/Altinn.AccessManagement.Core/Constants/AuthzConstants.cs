@@ -26,6 +26,11 @@
         public const string PLATFORM_ACCESSTOKEN_ISSUER_ISPLATFORM = "platform";
 
         /// <summary>
+        /// Access Management BFF issuer.
+        /// </summary>
+        public const string PLATFORM_ACCESSTOKEN_ISSUER_BFF = "amui";
+
+        /// <summary>
         /// Policy tag for reading an maskinporten delegation
         /// </summary>
         public const string POLICY_MASKINPORTEN_DELEGATION_READ = "MaskinportenDelegationRead";

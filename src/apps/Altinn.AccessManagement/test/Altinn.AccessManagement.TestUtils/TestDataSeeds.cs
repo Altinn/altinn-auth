@@ -33,7 +33,9 @@ public static class TestDataSeeds
             TestEntities.OrganizationVerdiqAS,
             TestEntities.SystemUserClient,
             TestEntities.SystemUserStandard,
-            TestEntities.OrganizationOkernBorettslag
+            TestEntities.OrganizationOkernBorettslag,
+            TestEntities.SIUserMarius,
+            TestEntities.EmailUserMarius,
         ]);
         #endregion
 

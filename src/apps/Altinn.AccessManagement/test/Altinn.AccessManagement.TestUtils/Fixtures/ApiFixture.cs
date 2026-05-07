@@ -65,7 +65,7 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     /// the test host is built. These actions are executed inside
     /// <see cref="ConfigureWebHost(IWebHostBuilder)"/>.
     /// </summary>
-    private List<Action<IServiceCollection>> _configureServicesActions { get; } = [];
+    private List<Action<IServiceCollection>> ConfigureServicesActions { get; } = [];
 
     /// <summary>
     /// Builds an <see cref="HttpClient"/> from the test server and applies
@@ -134,7 +134,8 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 
             services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProviderMock>();
             services.AddSingleton<IPDP, PermitPdpMock>();
-            foreach (var configure in _configureServicesActions)
+
+            foreach (var configure in ConfigureServicesActions)
             {
                 configure(services);
             }
@@ -171,7 +172,7 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     /// </remarks>
     public void ConfigureServices(Action<IServiceCollection> configureServices)
     {
-        _configureServicesActions.Add(configureServices);
+        ConfigureServicesActions.Add(configureServices);
     }
 
     /// <summary>
@@ -293,7 +294,9 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
             using var scope = Services.CreateEFScope(audit);
             using var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             foreach (var configure in configureDb)
+            {
                 configure(db);
+            }
         }
     }
 

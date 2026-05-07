@@ -90,6 +90,21 @@ public static class TestTokenGenerator
     /// <returns>A serialized JWT as a string.</returns>
     public static string CreateToken(ClaimsIdentity claimsIdentity, params Action<List<Claim>>[] configureClaims)
     {
+        return CreateToken(Issuer, claimsIdentity, configureClaims);
+    }
+
+    /// <summary>
+    /// Creates a signed JWT using the specified issuer, test audience, and the provided
+    /// claims. Additional claims can be supplied via the <paramref name="configureClaims"/>
+    /// callbacks which receive a mutable list that should be populated with
+    /// <see cref="Claim"/> instances.
+    /// </summary>
+    /// <param name="issuer">The issuer to use for the token (e.g., "platform" for platform access tokens).</param>
+    /// <param name="claimsIdentity">Base identity for the token (not used to add claims by default).</param>
+    /// <param name="configureClaims">Zero or more delegates that populate additional claims.</param>
+    /// <returns>A serialized JWT as a string.</returns>
+    public static string CreateToken(string issuer, ClaimsIdentity claimsIdentity, params Action<List<Claim>>[] configureClaims)
+    {
         var claims = new List<Claim>();
         foreach (var configure in configureClaims)
         {
@@ -99,7 +114,7 @@ public static class TestTokenGenerator
         var creds = new SigningCredentials(new RsaSecurityKey(RootCertificateKey), SecurityAlgorithms.RsaSha256);
         var now = DateTime.UtcNow;
         var token = new JwtSecurityToken(
-            issuer: Issuer,
+            issuer: issuer,
             audience: Audience,
             claims: claims,
             notBefore: now,

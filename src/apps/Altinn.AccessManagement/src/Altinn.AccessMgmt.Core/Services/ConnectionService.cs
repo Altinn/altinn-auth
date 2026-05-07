@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using System.Net.Http.Headers;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
 using Altinn.AccessManagement.Core.Errors;
@@ -1688,6 +1689,60 @@ public partial class ConnectionService(
         }
 
         return policy;
+    }
+
+    public async Task<Result<AssignmentDto>> ConnectSIUserAndEmailUser(Guid fromId, Guid toId, CancellationToken cancellationToken = default)
+    {
+        var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
+        ValidationErrorBuilder errorBuilder = default;
+
+        if (from is null)
+        {
+            errorBuilder.Add(ValidationErrors.EntityNotExists, "$QUERY/from");
+        }
+
+        if (to is null)
+        {
+            errorBuilder.Add(ValidationErrors.EntityNotExists, "$QUERY/to");
+        }
+
+        if (errorBuilder.TryBuild(out var problem))
+        {
+            return problem;
+        }
+
+        if (from.VariantId != EntityVariantConstants.SI)
+        {
+            errorBuilder.Add(ValidationErrors.DisallowedEntityType, "$QUERY/from", [new($"{fromId}", $"Entity must be variant '{EntityVariantConstants.SI.Entity.Name}'.")]);
+        }
+
+        if (to.VariantId != EntityVariantConstants.SI_EMAIL)
+        {
+            errorBuilder.Add(ValidationErrors.DisallowedEntityType, "$QUERY/to", [new($"{toId}", $"Entity must be variant '{EntityVariantConstants.SI_EMAIL.Entity.Name}'.")]);
+        }
+
+        if (errorBuilder.TryBuild(out problem))
+        {
+            return problem;
+        }
+
+        var existingAssignment = await dbContext.Assignments.FirstOrDefaultAsync(a => a.FromId == fromId && a.ToId == toId && a.RoleId == RoleConstants.SelfRegisteredUser, cancellationToken);
+        if (existingAssignment is { })
+        {
+            return DtoMapper.Convert(existingAssignment);
+        }
+
+        var newAssignment = new Assignment()
+        {
+            FromId = from.Id,
+            ToId = to.Id,
+            RoleId = RoleConstants.SelfRegisteredUser,
+        };
+
+        dbContext.Assignments.Add(newAssignment);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return DtoMapper.Convert(newAssignment);
     }
 }
 

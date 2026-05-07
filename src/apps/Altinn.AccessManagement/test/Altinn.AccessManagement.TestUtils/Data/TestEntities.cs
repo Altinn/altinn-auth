@@ -1,5 +1,6 @@
 ﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Azure.Storage.Blobs.Models;
 
 namespace Altinn.AccessManagement.TestUtils.Data;
 
@@ -142,6 +143,9 @@ public static class TestEntities
         }
     };
 
+    #endregion
+
+    #region Systemusers
     public static ConstantDefinition<Entity> SystemUserStandard { get; } = new("2cacc11b-6960-413f-9894-c330f99ed7e4")
     {
         Entity = new()
@@ -183,6 +187,56 @@ public static class TestEntities
             UserId = null,
             Username = null,
             VariantId = EntityVariantConstants.AgentSystem,
+        }
+    };
+
+    #endregion
+
+    #region Self Identified Users
+
+    public static ConstantDefinition<Entity> SIUserMarius { get; } = new("892106fe-337e-4121-a61b-e937552b4280")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Marius",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = null,
+            EmailIdentifier = "marius@gmail.com",
+            PersonIdentifier = null,
+            RefId = "marius@gmail.com",
+            TypeId = EntityTypeConstants.SelfIdentified,
+            UserId = null,
+            Username = "marius@gmail.com",
+            VariantId = EntityVariantConstants.SI,
+        }
+    };
+
+    public static ConstantDefinition<Entity> EmailUserMarius { get; } = new("f43198c9-81ec-4e62-9913-4fef2b69e7d5")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Marius",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = null,
+            EmailIdentifier = "marius@gmail.com",
+            PersonIdentifier = null,
+            RefId = "epost:marius@gmail.com",
+            TypeId = EntityTypeConstants.SelfIdentified,
+            UserId = null,
+            Username = "epost:marius@gmail.com",
+            VariantId = EntityVariantConstants.SI_EMAIL,
         }
     };
 

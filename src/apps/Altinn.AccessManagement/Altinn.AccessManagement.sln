@@ -81,6 +81,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.Ser
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.Api.Tests", "test\Altinn.AccessManagement.Api.Tests\Altinn.AccessManagement.Api.Tests.csproj", "{DA9E72D7-CB2A-4170-9D86-38C0E1913490}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.AccessManagement.Api.Internal.Tests", "test\Altinn.AccessManagement.Api.Internal.Tests\Altinn.AccessManagement.Api.Internal.Tests.csproj", "{B0C04487-9E4D-4747-B6FA-50ABA7519A12}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -463,6 +465,18 @@ Global
 		{DA9E72D7-CB2A-4170-9D86-38C0E1913490}.Release|x64.Build.0 = Release|Any CPU
 		{DA9E72D7-CB2A-4170-9D86-38C0E1913490}.Release|x86.ActiveCfg = Release|Any CPU
 		{DA9E72D7-CB2A-4170-9D86-38C0E1913490}.Release|x86.Build.0 = Release|Any CPU
+		{B0C04487-9E4D-4747-B6FA-50ABA7519A12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0C04487-9E4D-4747-B6FA-50ABA7519A12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0C04487-9E4D-4747-B6FA-50ABA7519A12}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B0C04487-9E4D-4747-B6FA-50ABA7519A12}.Debug|x64.Build.0 = Debug|Any CPU
+		{B0C04487-9E4D-4747-B6FA-50ABA7519A12}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B0C04487-9E4D-4747-B6FA-50ABA7519A12}.Debug|x86.Build.0 = Debug|Any CPU
+		{B0C04487-9E4D-4747-B6FA-50ABA7519A12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0C04487-9E4D-4747-B6FA-50ABA7519A12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0C04487-9E4D-4747-B6FA-50ABA7519A12}.Release|x64.ActiveCfg = Release|Any CPU
+		{B0C04487-9E4D-4747-B6FA-50ABA7519A12}.Release|x64.Build.0 = Release|Any CPU
+		{B0C04487-9E4D-4747-B6FA-50ABA7519A12}.Release|x86.ActiveCfg = Release|Any CPU
+		{B0C04487-9E4D-4747-B6FA-50ABA7519A12}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -503,6 +517,7 @@ Global
 		{4A17447C-71F7-47B1-A602-76657250D549} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
 		{8BE62361-DD30-4A69-938B-45E171E6254B} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
 		{DA9E72D7-CB2A-4170-9D86-38C0E1913490} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
+		{B0C04487-9E4D-4747-B6FA-50ABA7519A12} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7E091FE0-EC9B-410B-9087-FB89517072B5}

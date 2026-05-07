@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<!-- Clear the singular TargetFramework inherited from src/Directory.Build.props so
+			 dotnet test routes to the Microsoft Testing Platform (required for xUnit v3). -->
+		<TargetFramework></TargetFramework>
+		<TargetFrameworks>net9.0</TargetFrameworks>
+		<IsTestProject>true</IsTestProject>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Moq" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Altinn.AccessManagement.TestUtils\Altinn.AccessManagement.TestUtils.csproj" />
+    <ProjectReference Include="..\..\src\Altinn.AccessManagement.Api.Internal\Altinn.AccessManagement.Api.Internal.csproj" />
+  </ItemGroup>
+
+</Project>
