@@ -79,7 +79,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     return JsonConvert.DeserializeObject<List<int>>(responseBody);
                 }
 
-                _logger.LogError("SBL-Bridge // PartiesWrapper // partieswithkeyroleaccess // Failed // Unexpected HttpStatusCode: {response.StatusCode}\n {responseBody}", response.StatusCode, responseBody);
+                _logger.LogError("SBL-Bridge // PartiesWrapper // partieswithkeyroleaccess // Failed // Unexpected HttpStatusCode: {StatusCode}\n {ResponseBody}", response.StatusCode, responseBody);
             }
             catch (Exception ex)
             {
@@ -112,7 +112,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     return JsonConvert.DeserializeObject<List<MainUnit>>(responseBody);
                 }
 
-                _logger.LogError("SBL-Bridge // PartiesWrapper // partyparents // Failed // Unexpected HttpStatusCode: {response.StatusCode}\n {responseBody}", response.StatusCode, responseBody);
+                _logger.LogError("SBL-Bridge // PartiesWrapper // partyparents // Failed // Unexpected HttpStatusCode: {StatusCode}\n {ResponseBody}", response.StatusCode, responseBody);
             }
             catch (Exception ex)
             {

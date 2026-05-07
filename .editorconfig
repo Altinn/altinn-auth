@@ -48,17 +48,18 @@ dotnet_diagnostic.CA1822.severity = none
 #   suggestion — IDE-only nudge; doesn't add to build noise
 #   none       — accepted convention / false-positive-prone for this codebase
 #
-# `error` severity is intentionally NOT used here. With dotnet-sonarscanner
-# loading these analyzers in CI, an `error` on a rule that fires on existing
-# code would fail every PR's build until the underlying violations are
-# cleared — blocking the whole team. Each followup sweep PR (one rule per PR,
-# mechanical fix of every occurrence) flips its rule from `warning` to
-# `error` in the same commit so enforcement tightens gradually instead of
-# being switched on top-down.
+# `error` severity is intentionally not used here. The longer-term plan is
+# to curate the SonarCloud ruleset itself (quality profile, server-side) so
+# the rules surfacing in this file are the ones the team has agreed to
+# enforce, rather than escalating individual rules to `error` from the
+# client side. Sweep PRs that clear a rule's existing violations leave the
+# severity here at whatever this map already set — they don't promote to
+# `error`. Strict CI enforcement of any given rule belongs in the
+# SonarCloud quality profile.
 # ----------------------------------------------------------------------------
 
-# --- Bug-class rules (warning for now — promote to error per-rule once the
-#     existing violations are cleared in a sweep PR) ---
+# --- Bug-class rules (each cleared by per-rule sweep PRs; severity stays
+#     here, ruleset curation happens server-side) ---
 
 # S2259: Null pointers should not be dereferenced (17 existing instances)
 dotnet_diagnostic.S2259.severity = warning
@@ -69,7 +70,8 @@ dotnet_diagnostic.S2259.severity = warning
 dotnet_diagnostic.S6678.severity = warning
 
 # S6674: Logger arguments should match the placeholders in the template
-# (12 existing instances)
+# (cleared by the sweep in #3077; severity stays at `warning` per the
+# convention at the top of this section)
 dotnet_diagnostic.S6674.severity = warning
 
 # S2955: Generic parameters not constrained to reference types should not be

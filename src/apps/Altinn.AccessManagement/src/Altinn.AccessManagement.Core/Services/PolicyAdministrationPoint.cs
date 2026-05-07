@@ -734,7 +734,7 @@ namespace Altinn.AccessManagement.Core.Services
                     Response httpResponse = blobResponse.GetRawResponse();
                     if (httpResponse.Status != (int)HttpStatusCode.Created)
                     {
-                        _logger.LogError("Writing of delegation policy at path: {policyPath} failed. Response Status Code:\n{httpResponse.Status}. Response Reason Phrase:\n{httpResponse.ReasonPhrase}", policyPath, httpResponse.Status, httpResponse.ReasonPhrase);
+                        _logger.LogError("Writing of delegation policy at path: {PolicyPath} failed. Response Status Code:\n{HttpStatus}. Response Reason Phrase:\n{HttpReasonPhrase}", policyPath, httpResponse.Status, httpResponse.ReasonPhrase);
                         return false;
                     }
 
@@ -928,7 +928,7 @@ namespace Altinn.AccessManagement.Core.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Not possible to build policy path for: {resourceId} CoveredBy: {coveredBy} OfferedBy: {policyToDelete.PolicyMatch.OfferedByPartyId}", resourceId, coveredBy, policyToDelete.PolicyMatch.OfferedByPartyId);
+                _logger.LogError(ex, "Not possible to build policy path for: {ResourceId} CoveredBy: {CoveredBy} OfferedBy: {OfferedByPartyId}", resourceId, coveredBy, policyToDelete.PolicyMatch.OfferedByPartyId);
                 return null;
             }
 
@@ -952,7 +952,7 @@ namespace Altinn.AccessManagement.Core.Services
 
                 if (currentChange.DelegationChangeType == DelegationChangeType.RevokeLast)
                 {
-                    _logger.LogWarning("The policy is already deleted for: {resourceId} CoveredBy: {coveredBy} OfferedBy: {policyToDelete.PolicyMatch.OfferedByPartyId}", resourceId, coveredBy, policyToDelete.PolicyMatch.OfferedByPartyId);
+                    _logger.LogWarning("The policy is already deleted for: {ResourceId} CoveredBy: {CoveredBy} OfferedBy: {OfferedByPartyId}", resourceId, coveredBy, policyToDelete.PolicyMatch.OfferedByPartyId);
                     return null;
                 }
 
@@ -1048,7 +1048,7 @@ namespace Altinn.AccessManagement.Core.Services
             catch (Exception ex)
             {
                 string rulesToDeleteString = string.Join(", ", rulesToDelete.RuleIds);
-                _logger.LogError(ex, "Not possible to build policy path for: {resourceId} CoveredBy: {coveredBy} OfferedBy: {policyToDelete.PolicyMatch.OfferedByPartyId} RuleIds: {rulesToDeleteString}", resourceId, coveredBy, rulesToDelete.PolicyMatch.OfferedByPartyId, rulesToDeleteString);
+                _logger.LogError(ex, "Not possible to build policy path for: {ResourceId} CoveredBy: {CoveredBy} OfferedBy: {OfferedByPartyId} RuleIds: {RuleIds}", resourceId, coveredBy, rulesToDelete.PolicyMatch.OfferedByPartyId, rulesToDeleteString);
                 return null;
             }
 
