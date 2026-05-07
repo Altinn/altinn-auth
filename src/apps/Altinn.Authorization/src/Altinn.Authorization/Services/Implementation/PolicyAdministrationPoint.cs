@@ -75,7 +75,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "An exception occured while processing authorization rules for delegation on delegation policy path: {delegationPolicypath}", delegationPolicypath);
+                    _logger.LogError(ex, "An exception occured while processing authorization rules for delegation on delegation policy path: {DelegationPolicypath}", delegationPolicypath);
                 }
 
                 foreach (Rule rule in delegationDict[delegationPolicypath])
@@ -97,7 +97,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             if (unsortables.Count > 0)
             {
                 string unsortablesJson = JsonSerializer.Serialize(unsortables);
-                _logger.LogError("One or more rules could not be processed because of incomplete input:\n{unsortablesJson}", unsortablesJson);
+                _logger.LogError("One or more rules could not be processed because of incomplete input:\n{UnsortablesJson}", unsortablesJson);
                 result.AddRange(unsortables);
             }
 
@@ -166,7 +166,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             }
             catch (Exception ex)
             {
-                _logger.LogError(new EventId(delegationChangeEventQueueErrorId, "DelegationChangeEventQueue.Push.Error"), ex, "ReplayDelegationChangeEvents could not push DelegationChangeEvent to DelegationChangeEventQueue. StartId: {startId}, EndId: {endId}, CurrentId: {currentId}", startId, endId, currentId);
+                _logger.LogError(new EventId(delegationChangeEventQueueErrorId, "DelegationChangeEventQueue.Push.Error"), ex, "ReplayDelegationChangeEvents could not push DelegationChangeEvent to DelegationChangeEventQueue. StartId: {StartId}, EndId: {EndId}, CurrentId: {CurrentId}", startId, endId, currentId);
                 return false;
             }
         }
@@ -175,14 +175,14 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         {
             if (!DelegationHelper.TryGetDelegationParamsFromRule(rules.First(), out string org, out string app, out int offeredByPartyId, out int? coveredByPartyId, out int? coveredByUserId, out int delegatedByUserId))
             {
-                _logger.LogWarning("This should not happen. Incomplete rule model received for delegation to delegation policy at: {policyPath}. Incomplete model should have been returned in unsortable rule set by TryWriteDelegationPolicyRules. DelegationHelper.SortRulesByDelegationPolicyPath might be broken.", policyPath);
+                _logger.LogWarning("This should not happen. Incomplete rule model received for delegation to delegation policy at: {PolicyPath}. Incomplete model should have been returned in unsortable rule set by TryWriteDelegationPolicyRules. DelegationHelper.SortRulesByDelegationPolicyPath might be broken.", policyPath);
                 return false;
             }
 
             XacmlPolicy appPolicy = await _prp.GetPolicyAsync(org, app);
             if (appPolicy == null)
             {
-                _logger.LogWarning("No valid App policy found for delegation policy path: {policyPath}", policyPath);
+                _logger.LogWarning("No valid App policy found for delegation policy path: {PolicyPath}", policyPath);
                 return false;
             }
 
@@ -190,7 +190,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             {
                 if (!DelegationHelper.PolicyContainsMatchingRule(appPolicy, rule))
                 {
-                    _logger.LogWarning("Matching rule not found in app policy. Action might not exist for Resource, or Resource itself might not exist. Delegation policy path: {policyPath}. Rule: {rule}", policyPath, rule);
+                    _logger.LogWarning("Matching rule not found in app policy. Action might not exist for Resource, or Resource itself might not exist. Delegation policy path: {PolicyPath}. Rule: {Rule}", policyPath, rule);
                     return false;
                 }
             }
@@ -261,7 +261,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                         // Comment:
                         // This means that the current version of the root blob is no longer in sync with changes in authorization postgresql delegation.delegatedpolicy table.
                         // The root blob is in effect orphaned/ignored as the delegation policies are always to be read by version, and will be overritten by the next delegation change.
-                        _logger.LogError("Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {policyPath}", policyPath);
+                        _logger.LogError("Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {PolicyPath}", policyPath);
                         return false;
                     }
 
@@ -271,7 +271,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogCritical(new EventId(delegationChangeEventQueueErrorId, "DelegationChangeEventQueue.Push.Error"), ex, "AddRules could not push DelegationChangeEvent to DelegationChangeEventQueue. DelegationChangeEvent must be retried for successful sync with SBL Authorization. DelegationChange: {change}", change);
+                        _logger.LogCritical(new EventId(delegationChangeEventQueueErrorId, "DelegationChangeEventQueue.Push.Error"), ex, "AddRules could not push DelegationChangeEvent to DelegationChangeEventQueue. DelegationChangeEvent must be retried for successful sync with SBL Authorization. DelegationChange: {Change}", change);
                     }
 
                     return true;
@@ -282,7 +282,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 }
             }
 
-            _logger.LogInformation("Could not acquire blob lease lock on delegation policy at path: {policyPath}", policyPath);
+            _logger.LogInformation("Could not acquire blob lease lock on delegation policy at path: {PolicyPath}", policyPath);
             return false;
         }
 
@@ -292,7 +292,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             string leaseId = await _policyRepository.TryAcquireBlobLease(policyPath);
             if (leaseId == null)
             {
-                _logger.LogError("Could not acquire blob lease lock on delegation policy at path: {policyPath}", policyPath);
+                _logger.LogError("Could not acquire blob lease lock on delegation policy at path: {PolicyPath}", policyPath);
                 return null;
             }
 
@@ -306,7 +306,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 XacmlPolicy existingDelegationPolicy = null;
                 if (currentChange.DelegationChangeType == DelegationChangeType.RevokeLast)
                 {
-                    _logger.LogWarning("The policy is already deleted for App: {org}/{app} CoveredBy: {coveredBy} OfferedBy: {offeredBy}", org, app, coveredBy, offeredBy);
+                    _logger.LogWarning("The policy is already deleted for App: {Org}/{App} CoveredBy: {CoveredBy} OfferedBy: {OfferedBy}", org, app, coveredBy, offeredBy);
                     return null;
                 }
 
@@ -317,7 +317,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     XacmlRule xacmlRuleToRemove = existingDelegationPolicy.Rules.FirstOrDefault(r => r.RuleId == ruleId);
                     if (xacmlRuleToRemove == null)
                     {
-                        _logger.LogWarning("The rule with id: {ruleId} does not exist in policy with path: {policyPath}", ruleId, policyPath);
+                        _logger.LogWarning("The rule with id: {RuleId} does not exist in policy with path: {PolicyPath}", ruleId, policyPath);
                         continue;
                     }
 
@@ -340,7 +340,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Writing of delegation policy at path: {policyPath} failed. Is delegation blob storage account alive and well?", policyPath);
+                        _logger.LogError(ex, "Writing of delegation policy at path: {PolicyPath} failed. Is delegation blob storage account alive and well?", policyPath);
                         return null;
                     }
 
@@ -363,7 +363,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                         // Comment:
                         // This means that the current version of the root blob is no longer in sync with changes in authorization postgresql delegation.delegatedpolicy table.
                         // The root blob is in effect orphaned/ignored as the delegation policies are always to be read by version, and will be overritten by the next delegation change.
-                        _logger.LogError("Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {policyPath}. is authorization postgresql database alive and well?", policyPath);
+                        _logger.LogError("Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {PolicyPath}. is authorization postgresql database alive and well?", policyPath);
                         return null;
                     }
 
@@ -373,13 +373,13 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogCritical(new EventId(delegationChangeEventQueueErrorId, "DelegationChangeEventQueue.Push.Error"), ex, "DeleteRules could not push DelegationChangeEvent to DelegationChangeEventQueue. DelegationChangeEvent must be retried for successful sync with SBL Authorization. DelegationChange: {change}", change);
+                        _logger.LogCritical(new EventId(delegationChangeEventQueueErrorId, "DelegationChangeEventQueue.Push.Error"), ex, "DeleteRules could not push DelegationChangeEvent to DelegationChangeEventQueue. DelegationChangeEvent must be retried for successful sync with SBL Authorization. DelegationChange: {Change}", change);
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An exception occured while processing rules to delete in policy: {policyPath}", policyPath);
+                _logger.LogError(ex, "An exception occured while processing rules to delete in policy: {PolicyPath}", policyPath);
                 return null;
             }
             finally
@@ -408,14 +408,14 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
             if (!await _policyRepository.PolicyExistsAsync(policyPath))
             {
-                _logger.LogWarning("No blob was found for the expected path: {policyPath} this must be removed without upading the database", policyPath);
+                _logger.LogWarning("No blob was found for the expected path: {PolicyPath} this must be removed without upading the database", policyPath);
                 return null;
             }
 
             string leaseId = await _policyRepository.TryAcquireBlobLease(policyPath);
             if (leaseId == null)
             {
-                _logger.LogError("Could not acquire blob lease on delegation policy at path: {policyPath}", policyPath);
+                _logger.LogError("Could not acquire blob lease on delegation policy at path: {PolicyPath}", policyPath);
                 return null;
             }
 
@@ -446,7 +446,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Writing of delegation policy at path: {policyPath} failed. Is delegation blob storage account alive and well?}", policyPath);
+                    _logger.LogError(ex, "Writing of delegation policy at path: {PolicyPath} failed. Is delegation blob storage account alive and well?}", policyPath);
                     return null;
                 }
 
@@ -468,7 +468,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     // Comment:
                     // This means that the current version of the root blob is no longer in sync with changes in authorization postgresql delegation.delegatedpolicy table.
                     // The root blob is in effect orphaned/ignored as the delegation policies are always to be read by version, and will be overritten by the next delegation change.
-                    _logger.LogError("Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {policyPath}. is authorization postgresql database alive and well?", policyPath);
+                    _logger.LogError("Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {PolicyPath}. is authorization postgresql database alive and well?", policyPath);
                     return null;
                 }
 
@@ -478,14 +478,14 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogCritical(new EventId(delegationChangeEventQueueErrorId, "DelegationChangeEventQueue.Push.Error"), ex, "DeletePolicy could not push DelegationChangeEvent to DelegationChangeEventQueue. DelegationChangeEvent must be retried for successful sync with SBL Authorization. DelegationChange: {change}", change);
+                    _logger.LogCritical(new EventId(delegationChangeEventQueueErrorId, "DelegationChangeEventQueue.Push.Error"), ex, "DeletePolicy could not push DelegationChangeEvent to DelegationChangeEventQueue. DelegationChangeEvent must be retried for successful sync with SBL Authorization. DelegationChange: {Change}", change);
                 }
 
                 return currentPolicyRules;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An exception occured while processing rules to delete in policy: {policyPath}", policyPath);
+                _logger.LogError(ex, "An exception occured while processing rules to delete in policy: {PolicyPath}", policyPath);
                 return null;
             }
             finally
@@ -514,7 +514,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
             if (!await _policyRepository.PolicyExistsAsync(policyPath))
             {
-                _logger.LogWarning("No blob was found for the expected path: {policyPath} this must be removed without upading the database", policyPath);
+                _logger.LogWarning("No blob was found for the expected path: {PolicyPath} this must be removed without upading the database", policyPath);
                 return null;
             }
 

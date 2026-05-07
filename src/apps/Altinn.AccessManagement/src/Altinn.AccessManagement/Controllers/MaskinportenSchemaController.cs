@@ -258,7 +258,7 @@ namespace Altinn.AccessManagement.Controllers
             catch (Exception ex)
             {
                 string errorMessage = ex.Message;
-                _logger.LogError(ex, "Failed to fetch offered delegations, See the error message for more details {errorMessage}", errorMessage);
+                _logger.LogError(ex, "Failed to fetch offered delegations, See the error message for more details {ErrorMessage}", errorMessage);
                 return new ObjectResult(ProblemDetailsFactory.CreateProblemDetails(HttpContext));
             }
         }
@@ -350,7 +350,7 @@ namespace Altinn.AccessManagement.Controllers
             catch (Exception ex)
             {
                 string errorMessage = ex.Message;
-                _logger.LogError(ex, "Failed to fetch received delegations, See the error message for more details {errorMessage}", errorMessage);
+                _logger.LogError(ex, "Failed to fetch received delegations, See the error message for more details {ErrorMessage}", errorMessage);
                 return new ObjectResult(ProblemDetailsFactory.CreateProblemDetails(HttpContext));
             }
         }

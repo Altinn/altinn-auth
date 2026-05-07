@@ -57,7 +57,7 @@ namespace Altinn.AccessManagement.Integration.Clients
             if (!response.IsSuccessStatusCode)
             {
                 string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError("Getting user profile failed with unexpected HttpStatusCode: {StatusCode}\n {responseContent}", response.StatusCode, responseContent);
+                _logger.LogError("Getting user profile failed with unexpected HttpStatusCode: {StatusCode}\n {ResponseContent}", response.StatusCode, responseContent);
                 return null;
             }
 

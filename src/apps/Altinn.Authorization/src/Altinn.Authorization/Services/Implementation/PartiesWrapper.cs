@@ -53,7 +53,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     return System.Text.Json.JsonSerializer.Deserialize<Party>(responseContent, _serializerOptions);
                 }
 
-                _logger.LogError("SBL-Bridge // PartiesWrapper // GetParty // Failed // Unexpected HttpStatusCode: {statusCode}\n {responseContent}", response.StatusCode, responseContent);
+                _logger.LogError("SBL-Bridge // PartiesWrapper // GetParty // Failed // Unexpected HttpStatusCode: {StatusCode}\n {ResponseContent}", response.StatusCode, responseContent);
                 return null;
             }
             catch (Exception ex)

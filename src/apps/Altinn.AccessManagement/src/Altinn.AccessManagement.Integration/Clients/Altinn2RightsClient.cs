@@ -60,7 +60,7 @@ public class Altinn2RightsClient : IAltinn2RightsClient
             return delegationCheckResponse;
         }
 
-        _logger.LogError("AccessManagement // Altinn2RightsClient // PostDelegationCheck // Unexpected HttpStatusCode: {StatusCode}\n {responseContent}", response.StatusCode, responseContent);
+        _logger.LogError("AccessManagement // Altinn2RightsClient // PostDelegationCheck // Unexpected HttpStatusCode: {StatusCode}\n {ResponseContent}", response.StatusCode, responseContent);
         if (response.StatusCode == HttpStatusCode.BadRequest)
         {
             SblValidationProblemResponse validationError = JsonSerializer.Deserialize<SblValidationProblemResponse>(responseContent, _serializerOptions);
@@ -95,7 +95,7 @@ public class Altinn2RightsClient : IAltinn2RightsClient
             return delegationResult;
         }
 
-        _logger.LogError("AccessManagement // Altinn2RightsClient // PostDelegation // Unexpected HttpStatusCode: {StatusCode}\n {responseContent}", response.StatusCode, responseContent);
+        _logger.LogError("AccessManagement // Altinn2RightsClient // PostDelegation // Unexpected HttpStatusCode: {StatusCode}\n {ResponseContent}", response.StatusCode, responseContent);
         if (response.StatusCode == HttpStatusCode.BadRequest)
         {
             SblValidationProblemResponse validationError = JsonSerializer.Deserialize<SblValidationProblemResponse>(responseContent, _serializerOptions);

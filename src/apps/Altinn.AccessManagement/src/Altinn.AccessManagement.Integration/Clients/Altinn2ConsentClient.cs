@@ -77,7 +77,7 @@ public class Altinn2ConsentClient : IAltinn2ConsentClient
                 return JsonSerializer.Deserialize<List<Guid>>(responseContent, _serializerOptions);
             }
 
-            _logger.LogError("AccessManagement // Altinn2ConsentClient // GetConsent // Unexpected HttpStatusCode: {StatusCode}\n {responseContent}", response.StatusCode, responseContent);
+            _logger.LogError("AccessManagement // Altinn2ConsentClient // GetConsent // Unexpected HttpStatusCode: {StatusCode}\n {ResponseContent}", response.StatusCode, responseContent);
             return null;
         }
         catch (Exception ex)
@@ -107,7 +107,7 @@ public class Altinn2ConsentClient : IAltinn2ConsentClient
                 return altinn2Consents;
             }
 
-            _logger.LogError("AccessManagement // Altinn2ConsentClient // GetConsent // Unexpected HttpStatusCode: {StatusCode}\n {responseContent}", response.StatusCode, responseContent);
+            _logger.LogError("AccessManagement // Altinn2ConsentClient // GetConsent // Unexpected HttpStatusCode: {StatusCode}\n {ResponseContent}", response.StatusCode, responseContent);
             return null;
         }
         catch (Exception ex)
@@ -133,7 +133,7 @@ public class Altinn2ConsentClient : IAltinn2ConsentClient
                 return altinn2ConsentRequest;
             }
 
-            _logger.LogError("AccessManagement // Altinn2ConsentClient // GetConsent // Unexpected HttpStatusCode: {StatusCode}\n {responseContent}", response.StatusCode, responseContent);
+            _logger.LogError("AccessManagement // Altinn2ConsentClient // GetConsent // Unexpected HttpStatusCode: {StatusCode}\n {ResponseContent}", response.StatusCode, responseContent);
             return null;
         }
         catch (Exception ex)

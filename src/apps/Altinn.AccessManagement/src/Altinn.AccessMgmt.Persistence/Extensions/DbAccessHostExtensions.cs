@@ -206,7 +206,7 @@ public static partial class DbAccessHostExtensions
     /// </summary>
     static partial class Log
     {
-        [LoggerMessage(EventId = 0, Level = LogLevel.Debug, Message = "Configuring {dbtype} database for access management")]
+        [LoggerMessage(EventId = 0, Level = LogLevel.Debug, Message = "Configuring {Dbtype} database for access management")]
         internal static partial void ConfigureDbType(ILogger logger, MgmtDbType dbtype);
 
         [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = $"Database is not enabled make sure it's initialized by calling IHostApplicationBuilder.AddAccessMgmtDb.")]

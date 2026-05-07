@@ -321,7 +321,7 @@ public partial class ResourceSyncService : IResourceSyncService
 
     private static partial class Log
     {
-        [LoggerMessage(EventId = 1, Level = LogLevel.Error, Message = "Unable to retrieve resource '{resource}' from the resource registry.")]
+        [LoggerMessage(EventId = 1, Level = LogLevel.Error, Message = "Unable to retrieve resource '{Resource}' from the resource registry.")]
         internal static partial void FailedToGetResource(ILogger logger, string resource);
 
         [LoggerMessage(EventId = 2, Level = LogLevel.Error, Message = "Failed to read stream of updated resources from the resource registry.")]
@@ -330,7 +330,7 @@ public partial class ResourceSyncService : IResourceSyncService
         [LoggerMessage(EventId = 3, Level = LogLevel.Error, Message = "Failed to retrieve list of service owners from the resource registry.")]
         internal static partial void FailedToReadResourceOwners(ILogger logger);
 
-        [LoggerMessage(EventId = 4, Level = LogLevel.Error, Message = "failed to write update subject {subjectUrn} for resource {resourceId} .")]
+        [LoggerMessage(EventId = 4, Level = LogLevel.Error, Message = "failed to write update subject {SubjectUrn} for resource {ResourceId} .")]
         internal static partial void FailedToWriteUpdateSubjectForResource(ILogger logger, Exception ex, string subjectUrn, string resourceId);
     }
 }

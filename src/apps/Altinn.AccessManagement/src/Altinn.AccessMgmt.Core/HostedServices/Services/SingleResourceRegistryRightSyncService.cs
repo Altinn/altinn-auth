@@ -111,7 +111,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                                 if (revokes == 0)
                                 {
                                     _logger.LogWarning(
-                                        "Failed to delete assignmentresource for FromParty: {FromParty}, ToParty: {ToParty}, Resource: {resource}",
+                                        "Failed to delete assignmentresource for FromParty: {FromParty}, ToParty: {ToParty}, Resource: {Resource}",
                                         item.FromUuid,
                                         item.ToUuid,
                                         item.ResourceId);
@@ -132,7 +132,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                                 if (adds == 0)
                                 {
                                     _logger.LogWarning(
-                                        "Failed to import delegation for FromParty: {FromParty}, ToParty: {ToParty}, Resource: {resource}",
+                                        "Failed to import delegation for FromParty: {FromParty}, ToParty: {ToParty}, Resource: {Resource}",
                                         item.FromUuid,
                                         item.ToUuid,
                                         item.ResourceId);
@@ -241,7 +241,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                         if (revokes == 0)
                         {
                             _logger.LogWarning(
-                                "Failed to delete assignmentresource for FromParty: {FromParty}, ToParty: {ToParty}, Resource: {resource}",
+                                "Failed to delete assignmentresource for FromParty: {FromParty}, ToParty: {ToParty}, Resource: {Resource}",
                                 element.FromUuid,
                                 element.ToUuid,
                                 element.ResourceId);
@@ -262,7 +262,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                         if (adds == 0)
                         {
                             _logger.LogWarning(
-                                "Failed to import delegation for FromParty: {FromParty}, ToParty: {ToParty}, Resource: {resource}",
+                                "Failed to import delegation for FromParty: {FromParty}, ToParty: {ToParty}, Resource: {Resource}",
                                 element.FromUuid,
                                 element.ToUuid,
                                 element.ResourceId);

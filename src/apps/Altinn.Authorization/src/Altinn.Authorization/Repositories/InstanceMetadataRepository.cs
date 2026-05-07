@@ -47,7 +47,7 @@ namespace Altinn.Platform.Authorization.Repositories
             else
             {
                 string reason = await response.Content.ReadAsStringAsync();
-                logger.LogError("// InstanceMetadataRepository // GetAuthInfo // Failed to lookup auth info from storage. Response {response}. \n Reason {reason}.", response, reason);
+                logger.LogError("// InstanceMetadataRepository // GetAuthInfo // Failed to lookup auth info from storage. Response {Response}. \n Reason {Reason}.", response, reason);
 
                 throw await PlatformHttpException.CreateAsync(response);
             }

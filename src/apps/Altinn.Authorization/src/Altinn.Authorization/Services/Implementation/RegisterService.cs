@@ -214,7 +214,7 @@ namespace Altinn.Platform.Authorization.Services
                 else
                 {
                     string reason = await response.Content.ReadAsStringAsync(cancellationToken);
-                    _logger.LogError("// RegisterService // PartyLookup // Failed to lookup party in platform register. Response {response}. \n Reason {reason}.", response, reason);
+                    _logger.LogError("// RegisterService // PartyLookup // Failed to lookup party in platform register. Response {Response}. \n Reason {Reason}.", response, reason);
 
                     throw await PlatformHttpException.CreateAsync(response);
                 }

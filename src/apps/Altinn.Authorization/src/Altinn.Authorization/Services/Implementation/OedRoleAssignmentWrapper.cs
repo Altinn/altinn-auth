@@ -71,7 +71,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 }
                 else
                 {
-                    _logger.LogError("OedAuthz // OedRoleAssignmentWrapper // GetOedRoleAssignments // Failed // Unexpected Exception // Unexpected HttpStatusCode: {statusCode}\n {responseContent}", response.StatusCode, responseContent);
+                    _logger.LogError("OedAuthz // OedRoleAssignmentWrapper // GetOedRoleAssignments // Failed // Unexpected Exception // Unexpected HttpStatusCode: {StatusCode}\n {ResponseContent}", response.StatusCode, responseContent);
                 }
 
                 return oedRoleAssignmentResponse.RoleAssignments;

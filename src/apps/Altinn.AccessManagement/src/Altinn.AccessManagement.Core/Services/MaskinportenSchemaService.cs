@@ -170,7 +170,7 @@ namespace Altinn.AccessManagement.Core.Services
             else if (delegationResult.Any(r => r.CreatedSuccessfully))
             {
                 // Partial delegation of rules should not really be possible. Return success but log error?
-                _logger.LogError("One or more rules could not be delegated.\n{result}", delegationResult);
+                _logger.LogError("One or more rules could not be delegated.\n{Result}", delegationResult);
                 result.Rights = DelegationHelper.GetRightDelegationResultsFromRules(delegationResult);
                 return await Task.FromResult(result);
             }

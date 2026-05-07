@@ -46,7 +46,7 @@ namespace Altinn.AccessManagement.Core.Services
             if (failedAttempts >= _userProfileLookupSettings.MaximumFailedAttempts)
             {
                 _logger.LogInformation(
-                    "User {userId} has performed too many failed UserProfile lookup attempts.", authnUserId);
+                    "User {UserId} has performed too many failed UserProfile lookup attempts.", authnUserId);
 
                 throw new TooManyFailedLookupsException();
             }

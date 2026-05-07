@@ -58,7 +58,7 @@ namespace Altinn.AccessManagement.Controllers
             }
 
             string resourcesJson = JsonSerializer.Serialize(resources);
-            _logger.LogInformation("Delegation could not be completed. None of the rules could be processed, indicating invalid or incomplete input:\n{resourcesJson}", resourcesJson);
+            _logger.LogInformation("Delegation could not be completed. None of the rules could be processed, indicating invalid or incomplete input:\n{ResourcesJson}", resourcesJson);
             return BadRequest("Delegation could not be completed");
         }
     }

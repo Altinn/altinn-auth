@@ -75,7 +75,7 @@ public class PartiesClient : IPartiesClient
                 return JsonSerializer.Deserialize<Party>(responseContent, _serializerOptions);
             }
 
-            _logger.LogError("AccessManagement // PartiesClient // GetPartyAsync // Unexpected HttpStatusCode: {StatusCode}\n {responseContent}", response.StatusCode, responseContent);
+            _logger.LogError("AccessManagement // PartiesClient // GetPartyAsync // Unexpected HttpStatusCode: {StatusCode}\n {ResponseContent}", response.StatusCode, responseContent);
             return null;
         }
         catch (Exception ex)
@@ -103,7 +103,7 @@ public class PartiesClient : IPartiesClient
                 return JsonSerializer.Deserialize<List<Party>>(responseContent, _serializerOptions);
             }
 
-            _logger.LogError("AccessManagement // PartiesClient // GetPartiesAsync // Unexpected HttpStatusCode: {StatusCode}\n {responseContent}", response.StatusCode, responseContent);
+            _logger.LogError("AccessManagement // PartiesClient // GetPartiesAsync // Unexpected HttpStatusCode: {StatusCode}\n {ResponseContent}", response.StatusCode, responseContent);
             return new();
         }
         catch (Exception ex)
@@ -131,7 +131,7 @@ public class PartiesClient : IPartiesClient
                 return JsonSerializer.Deserialize<List<Party>>(responseContent, _serializerOptions);
             }
 
-            _logger.LogError("AccessManagement // PartiesClient // GetPartiesAsync // Unexpected HttpStatusCode: {StatusCode}\n {responseContent}", response.StatusCode, responseContent);
+            _logger.LogError("AccessManagement // PartiesClient // GetPartiesAsync // Unexpected HttpStatusCode: {StatusCode}\n {ResponseContent}", response.StatusCode, responseContent);
             return new();
         }
         catch (Exception ex)
@@ -158,7 +158,7 @@ public class PartiesClient : IPartiesClient
                 return JsonSerializer.Deserialize<List<Party>>(responseContent, _serializerOptions);
             }
 
-            _logger.LogError("AccessManagement // PartiesClient // GetPartiesForUserAsync // Unexpected HttpStatusCode: {StatusCode}\n {responseContent}", response.StatusCode, responseContent);
+            _logger.LogError("AccessManagement // PartiesClient // GetPartiesForUserAsync // Unexpected HttpStatusCode: {StatusCode}\n {ResponseContent}", response.StatusCode, responseContent);
             return new();
         }
         catch (Exception ex)
@@ -182,7 +182,7 @@ public class PartiesClient : IPartiesClient
                 return JsonSerializer.Deserialize<List<int>>(responseBody, _serializerOptions);
             }
 
-            _logger.LogError("AccessManagement // PartiesClient // GetKeyRoleParties // Failed // Unexpected HttpStatusCode: {StatusCode}\n {responseBody}", response.StatusCode, responseBody);
+            _logger.LogError("AccessManagement // PartiesClient // GetKeyRoleParties // Failed // Unexpected HttpStatusCode: {StatusCode}\n {ResponseBody}", response.StatusCode, responseBody);
             return new();
         }
         catch (Exception ex)
@@ -214,7 +214,7 @@ public class PartiesClient : IPartiesClient
                 return JsonSerializer.Deserialize<List<MainUnit>>(responseBody, _serializerOptions);
             }
 
-            _logger.LogError("AccessManagement // PartiesClient // GetMainUnits // Failed // Unexpected HttpStatusCode: {StatusCode}\n {responseBody}", response.StatusCode, responseBody);
+            _logger.LogError("AccessManagement // PartiesClient // GetMainUnits // Failed // Unexpected HttpStatusCode: {StatusCode}\n {ResponseBody}", response.StatusCode, responseBody);
             return new();
         }
         catch (Exception ex)
@@ -242,7 +242,7 @@ public class PartiesClient : IPartiesClient
                 return JsonSerializer.Deserialize<Party>(responseContent, _serializerOptions);
             }
 
-            _logger.LogError("AccessManagement // PartiesClient // LookupPartyBySSNOrOrgNo // Unexpected HttpStatusCode: {StatusCode}\n {responseBody}", response.StatusCode, responseContent);
+            _logger.LogError("AccessManagement // PartiesClient // LookupPartyBySSNOrOrgNo // Unexpected HttpStatusCode: {StatusCode}\n {ResponseBody}", response.StatusCode, responseContent);
             return null;
         }
         catch (Exception ex)

@@ -101,11 +101,11 @@ namespace Altinn.Platform.Authorization.Repositories
             }
             catch (RequestFailedException ex)
             {
-                _logger.LogError(ex, "Failed to acquire blob lease for policy file at {filepath}. RequestFailedException", filepath);
+                _logger.LogError(ex, "Failed to acquire blob lease for policy file at {Filepath}. RequestFailedException", filepath);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to acquire blob lease for policy file at {filepath}. Unexpected error", filepath);
+                _logger.LogError(ex, "Failed to acquire blob lease for policy file at {Filepath}. Unexpected error", filepath);
             }
 
             return null;
@@ -129,7 +129,7 @@ namespace Altinn.Platform.Authorization.Repositories
             }
             catch (RequestFailedException ex)
             {
-                _logger.LogError(ex, "Failed to check if blob exists for policy file at {filepath}. RequestFailedException", filepath);
+                _logger.LogError(ex, "Failed to check if blob exists for policy file at {Filepath}. RequestFailedException", filepath);
             }
 
             return false;
@@ -148,16 +148,16 @@ namespace Altinn.Platform.Authorization.Repositories
             {
                 if (ex.Status == (int)HttpStatusCode.Forbidden && ex.ErrorCode == "OperationNotAllowedOnRootBlob")
                 {
-                    _logger.LogError(ex, "Failed to delete version {version} of policy file at {filepath}. Not allowed to delete current version.", version, filepath);
+                    _logger.LogError(ex, "Failed to delete version {Version} of policy file at {Filepath}. Not allowed to delete current version.", version, filepath);
                     throw;
                 }
 
-                _logger.LogError(ex, "Failed to delete version {version} of policy file at {filepath}. RequestFailedException", version, filepath);
+                _logger.LogError(ex, "Failed to delete version {Version} of policy file at {Filepath}. RequestFailedException", version, filepath);
                 throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to delete version {version} of policy file at {filepath}. Unexpected error", version, filepath);
+                _logger.LogError(ex, "Failed to delete version {Version} of policy file at {Filepath}. Unexpected error", version, filepath);
                 throw;
             }
         }

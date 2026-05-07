@@ -77,7 +77,7 @@ namespace Altinn.AccessManagement.Integration.Clients
                 else
                 {
                     string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                    _logger.LogError("AccessManagement // AccessListAuthorizationClient // AuthorizePartyForAccessList  // Unexpected HttpStatusCode: {StatusCode}\n {responseContent}", response.StatusCode, responseContent);
+                    _logger.LogError("AccessManagement // AccessListAuthorizationClient // AuthorizePartyForAccessList  // Unexpected HttpStatusCode: {StatusCode}\n {ResponseContent}", response.StatusCode, responseContent);
                     return new() { Result = AccessListAuthorizationResult.NotAuthorized };
                 }
             }

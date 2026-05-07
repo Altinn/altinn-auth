@@ -78,7 +78,7 @@ namespace Altinn.AccessManagement.Integration.Clients
                 else
                 {
                     string content = await response.Content.ReadAsStringAsync(cancellationToken);
-                    _logger.LogError("Fetching system user failed with status code: {statusCode}, details: {responseContent}", response.StatusCode, content);
+                    _logger.LogError("Fetching system user failed with status code: {StatusCode}, details: {ResponseContent}", response.StatusCode, content);
                 }
             }
             catch (Exception ex)
@@ -109,7 +109,7 @@ namespace Altinn.AccessManagement.Integration.Clients
                 else
                 {
                     string content = await response.Content.ReadAsStringAsync(cancellationToken);
-                    _logger.LogError("Fetching system user default rights failed with status code: {statusCode}, content: {content}", response.StatusCode, content);
+                    _logger.LogError("Fetching system user default rights failed with status code: {StatusCode}, content: {Content}", response.StatusCode, content);
                 }
             }
             catch (Exception ex)

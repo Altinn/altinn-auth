@@ -89,7 +89,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                             if (deleted <= 0)
                             {
                                 _logger.LogWarning(
-                                    "Failed to delete delegation for FromParty: {FromParty}, ToParty: {ToParty}, Facilitator: {Facilitator}, PackageUrn: {packageUrn}",
+                                    "Failed to delete delegation for FromParty: {FromParty}, ToParty: {ToParty}, Facilitator: {Facilitator}, PackageUrn: {PackageUrn}",
                                     item.FromPartyUuid,
                                     item.ToUserPartyUuid,
                                     item.PerformedByPartyUuid,

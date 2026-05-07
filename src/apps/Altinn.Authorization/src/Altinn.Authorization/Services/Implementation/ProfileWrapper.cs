@@ -48,7 +48,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     return JsonSerializer.Deserialize<UserProfile>(responseContent, _serializerOptions);
                 }
 
-                _logger.LogError("ProfileAPI // ProfileWrapper // GetUserProfile // Failed // Unexpected HttpStatusCode: {statusCode}\n {responseContent}", response.StatusCode, responseContent);
+                _logger.LogError("ProfileAPI // ProfileWrapper // GetUserProfile // Failed // Unexpected HttpStatusCode: {StatusCode}\n {ResponseContent}", response.StatusCode, responseContent);
                 return null;
             }
             catch (Exception ex)
@@ -73,7 +73,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     return JsonSerializer.Deserialize<UserProfile>(responseContent, _serializerOptions);
                 }
 
-                _logger.LogError("ProfileAPI // ProfileWrapper // GetUserProfile // Failed // Unexpected HttpStatusCode: {statusCode}\n {responseContent}", response.StatusCode, responseContent);
+                _logger.LogError("ProfileAPI // ProfileWrapper // GetUserProfile // Failed // Unexpected HttpStatusCode: {StatusCode}\n {ResponseContent}", response.StatusCode, responseContent);
                 return null;
             }
             catch (Exception ex)

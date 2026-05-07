@@ -416,7 +416,7 @@ internal static partial class AccessManagementHost
         [LoggerMessage(EventId = 0, Level = LogLevel.Debug, Message = "Creating Altinn host.")]
         internal static partial void CreateAltinnHost(ILogger logger);
 
-        [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Configuration setting '{field}' is null or empty.")]
+        [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Configuration setting '{Field}' is null or empty.")]
         internal static partial void ConfigValueIsNullOrEmpty(ILogger logger, string field);
 
         [LoggerMessage(EventId = 2, Level = LogLevel.Debug, Message = "Connection string(s) for pgsql server are missing")]

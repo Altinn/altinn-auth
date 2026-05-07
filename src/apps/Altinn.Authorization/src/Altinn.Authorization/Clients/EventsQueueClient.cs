@@ -168,7 +168,7 @@ namespace Altinn.Platform.Authorization.Clients
 
         private static partial class Log
         {
-            [LoggerMessage(1, LogLevel.Warning, "Authorization event size {size} bytes exceeds maximum allowed size for queue messages.")]
+            [LoggerMessage(1, LogLevel.Warning, "Authorization event size {Size} bytes exceeds maximum allowed size for queue messages.")]
             public static partial void AuthorizationEventTooLarge(ILogger logger, long size);
 
             [LoggerMessage(2, LogLevel.Warning, "Operation was canceled.")]

@@ -45,7 +45,7 @@ namespace Altinn.Common.PEP.Implementation
             }
             catch (Exception e)
             {
-                _logger.LogError("Unable to retrieve Xacml Json response. An error occured {message}", e.Message);
+                _logger.LogError("Unable to retrieve Xacml Json response. An error occured {Message}", e.Message);
             }
 
             return xacmlJsonResponse;

@@ -298,7 +298,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             .WithMetrics(metrics => metrics
                 .AddAzureMonitorMetricExporter(options => options.ConnectionString = applicationInsightsConnectionString));
 
-        logger.LogInformation("Startup // ApplicationInsightsConnectionString = {applicationInsightsConnectionString}", applicationInsightsConnectionString);
+        logger.LogInformation("Startup // ApplicationInsightsConnectionString = {ApplicationInsightsConnectionString}", applicationInsightsConnectionString);
     }
 
     services.AddSingleton<DecisionTelemetry>();
