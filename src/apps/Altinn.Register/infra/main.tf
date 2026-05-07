@@ -203,6 +203,8 @@ module "appsettings" {
           "A2PartyImport:BridgeApiEndpoint"                      = { value = var.sbl_endpoint }
 
           // features
+          "Altinn:register:Party:CreatePartyId" = { value = var.features.party.create_party_id }
+
           "Altinn:register:PartyImport:A2:Enable"                = { value = var.features.a2_party_import.parties }
           "Altinn:register:PartyImport:A2:PartyUserId:Enable"    = { value = var.features.a2_party_import.user_ids }
           "Altinn:register:PartyImport:A2:Profiles:Enable"       = { value = var.features.a2_party_import.profiles }

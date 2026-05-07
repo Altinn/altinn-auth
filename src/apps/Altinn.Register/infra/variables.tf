@@ -85,6 +85,10 @@ variable "features" {
   type = object({
     maskinporten = optional(bool, false),
 
+    party = optional(object({
+      create_party_id = optional(bool, false)
+    }), {})
+
     a2_party_import = optional(object({
       parties  = optional(bool, false),
       user_ids = optional(bool, false),
