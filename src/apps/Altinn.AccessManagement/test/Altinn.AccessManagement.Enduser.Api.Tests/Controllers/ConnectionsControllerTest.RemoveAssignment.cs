@@ -14,6 +14,7 @@ using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Controllers;
@@ -37,10 +38,14 @@ public partial class ConnectionsControllerTest
     /// <para>
     /// Pre-seeded via TestData:
     /// - Assignment: Dumbo Adventures -> Thea (Rightholder) with SalarySpecialCategory package
+    /// - Assignment: HanSoloEnterprise -> BenSolo (ReporterSender / Altinn2 role)
+    /// - Assignment: HanSoloEnterprise -> LukeSkyWalker (ReporterSender / Altinn2 role)
+    /// - Assignment: HanSoloEnterprise -> LeiaOrgana (ChairOfTheBoard / CCR role, NOT Altinn2)
     /// </para>
     /// <para>
     /// Actors:
     /// - Malin Emilie: MD of Dumbo Adventures (to-others perspective)
+    /// - Han Solo: MD of HanSoloEnterprise
     /// </para>
     /// </remarks>
     public class RemoveAssignment : IClassFixture<ApiFixture>
@@ -52,6 +57,7 @@ public partial class ConnectionsControllerTest
             {
                 services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
             });
+            Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.Altinn2RoleRevoke);
             Fixture.EnsureSeedOnce<RemoveAssignment>(db =>
             {
                 // Create a clean rightholder for basic remove test
@@ -242,6 +248,147 @@ public partial class ConnectionsControllerTest
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+
+        /// <summary>
+        /// When revoking a rightholder assignment (HanSoloEnterprise -> BenSolo),
+        /// the Altinn2RoleRevoke feature flag is enabled and BenSolo already has
+        /// an Altinn2 ReporterSender role assigned by HanSoloEnterprise.
+        /// Expects 204 NoContent, and verifies that the Altinn2 role assignment
+        /// is also deleted from the database along with the rightholder assignment.
+        /// </summary>
+        [Fact]
+        public async Task RemoveAssignment_WithAltinn2RolePresent_RevokesAltinn2RoleToo()
+        {
+            // Seed a rightholder connection between HanSoloEnterprise and BenSolo
+            // (BenSolo already has a pre-seeded Altinn2 ReporterSender role from HanSoloEnterprise)
+            Guid rightholderAssignmentId = Guid.Empty;
+            await Fixture.QueryDb(async db =>
+            {
+                var existing = await db.Assignments
+                    .Where(a => a.FromId == TestData.HanSoloEnterprise.Id)
+                    .Where(a => a.ToId == TestData.BenSolo.Id)
+                    .Where(a => a.RoleId == RoleConstants.Rightholder.Id)
+                    .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+
+                if (existing is null)
+                {
+                    var rightholder = new Assignment
+                    {
+                        FromId = TestData.HanSoloEnterprise.Id,
+                        ToId = TestData.BenSolo.Id,
+                        RoleId = RoleConstants.Rightholder,
+                    };
+                    db.Assignments.Add(rightholder);
+                    await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+                }
+            });
+
+            // Verify Altinn2 ReporterSender role exists before removal
+            await Fixture.QueryDb(async db =>
+            {
+                var a2Role = await db.Assignments
+                    .Where(a => a.FromId == TestData.HanSoloEnterprise.Id)
+                    .Where(a => a.ToId == TestData.BenSolo.Id)
+                    .Where(a => a.RoleId == RoleConstants.ReporterSender.Id)
+                    .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+                Assert.NotNull(a2Role);
+            });
+
+            // Remove the rightholder assignment
+            HttpClient client = CreateClient(TestData.HanSolo.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
+            HttpResponseMessage response = await client.DeleteAsync(
+                $"{Route}?party={TestData.HanSoloEnterprise.Id}&from={TestData.HanSoloEnterprise.Id}&to={TestData.BenSolo.Id}",
+                TestContext.Current.CancellationToken);
+
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.NoContent, $"Expected NoContent but got {response.StatusCode}. Body: {responseContent}");
+
+            // Verify the Altinn2 ReporterSender role assignment is also removed
+            await Fixture.QueryDb(async db =>
+            {
+                var a2Role = await db.Assignments
+                    .Where(a => a.FromId == TestData.HanSoloEnterprise.Id)
+                    .Where(a => a.ToId == TestData.BenSolo.Id)
+                    .Where(a => a.RoleId == RoleConstants.ReporterSender.Id)
+                    .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+                Assert.Null(a2Role);
+            });
+
+            // Verify the rightholder assignment itself is also removed
+            await Fixture.QueryDb(async db =>
+            {
+                var rightholder = await db.Assignments
+                    .Where(a => a.FromId == TestData.HanSoloEnterprise.Id)
+                    .Where(a => a.ToId == TestData.BenSolo.Id)
+                    .Where(a => a.RoleId == RoleConstants.Rightholder.Id)
+                    .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+                Assert.Null(rightholder);
+            });
+        }
+
+        /// <summary>
+        /// When revoking a rightholder assignment (HanSoloEnterprise -> LeiaOrgana),
+        /// LeiaOrgana has a ChairOfTheBoard role which is a CCR (CentralCoordinatingRegister)
+        /// role — NOT an Altinn2 role. The Altinn2RoleRevoke feature flag is enabled, but
+        /// only Altinn2 roles should be revoked. Expects 204 NoContent, and verifies that
+        /// the CCR ChairOfTheBoard role assignment is NOT deleted from the database.
+        /// </summary>
+        [Fact]
+        public async Task RemoveAssignment_WithNonAltinn2RolePresent_DoesNotRevokeNonAltinn2Role()
+        {
+            // Seed a rightholder connection between HanSoloEnterprise and LeiaOrgana
+            // (LeiaOrgana already has a pre-seeded CCR ChairOfTheBoard role from HanSoloEnterprise)
+            await Fixture.QueryDb(async db =>
+            {
+                var existing = await db.Assignments
+                    .Where(a => a.FromId == TestData.HanSoloEnterprise.Id)
+                    .Where(a => a.ToId == TestData.LeiaOrgana.Id)
+                    .Where(a => a.RoleId == RoleConstants.Rightholder.Id)
+                    .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+
+                if (existing is null)
+                {
+                    db.Assignments.Add(new Assignment
+                    {
+                        FromId = TestData.HanSoloEnterprise.Id,
+                        ToId = TestData.LeiaOrgana.Id,
+                        RoleId = RoleConstants.Rightholder,
+                    });
+                    await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+                }
+            });
+
+            // Verify CCR ChairOfTheBoard role exists before removal
+            await Fixture.QueryDb(async db =>
+            {
+                var ccrRole = await db.Assignments
+                    .Where(a => a.FromId == TestData.HanSoloEnterprise.Id)
+                    .Where(a => a.ToId == TestData.LeiaOrgana.Id)
+                    .Where(a => a.RoleId == RoleConstants.ChairOfTheBoard.Id)
+                    .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+                Assert.NotNull(ccrRole);
+            });
+
+            // Remove the rightholder assignment
+            HttpClient client = CreateClient(TestData.HanSolo.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
+            HttpResponseMessage response = await client.DeleteAsync(
+                $"{Route}?party={TestData.HanSoloEnterprise.Id}&from={TestData.HanSoloEnterprise.Id}&to={TestData.LeiaOrgana.Id}",
+                TestContext.Current.CancellationToken);
+
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.NoContent, $"Expected NoContent but got {response.StatusCode}. Body: {responseContent}");
+
+            // Verify the CCR ChairOfTheBoard role assignment is NOT removed
+            await Fixture.QueryDb(async db =>
+            {
+                var ccrRole = await db.Assignments
+                    .Where(a => a.FromId == TestData.HanSoloEnterprise.Id)
+                    .Where(a => a.ToId == TestData.LeiaOrgana.Id)
+                    .Where(a => a.RoleId == RoleConstants.ChairOfTheBoard.Id)
+                    .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+                Assert.NotNull(ccrRole);
+            });
         }
     }
 }
