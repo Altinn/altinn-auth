@@ -6,6 +6,7 @@ using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.HostedServices;
 using Altinn.AccessMgmt.Persistence.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.Authorization.Host.Lease;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
@@ -55,10 +56,6 @@ await app.RunAsync();
 
 async Task Init()
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await dbContext.Database.MigrateAsync();
-    await Altinn.AccessMgmt.PersistenceEF.Data.StaticDataIngest.IngestAll(dbContext);
-
     using var cts = new CancellationTokenSource();
     AppDomain.CurrentDomain.ProcessExit += (s, e) =>
     {
@@ -71,6 +68,12 @@ async Task Init()
             // Terminated by itself.
         }
     };
+
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var leaseService = scope.ServiceProvider.GetRequiredService<ILeaseService>();
+    await using var lease = await leaseService.AcquireBlocking("access_management_init", cts.Token);
+    await dbContext.Database.MigrateAsync();
+    await Altinn.AccessMgmt.PersistenceEF.Data.StaticDataIngest.IngestAll(dbContext);
 
     var registerImport = scope.ServiceProvider.GetRequiredService<RegisterHostedService>();
     await registerImport.EnsureDbIsIngestWithRegisterData(cts.Token);

@@ -23,7 +23,7 @@ public partial class StorageAccountLeaseService(ILogger<StorageAccountLeaseServi
     private static TimeSpan MaxLeaseTime { get; } = TimeSpan.FromSeconds(60);
 
     /// <inheritdoc/>
-    public async Task<ILease> TryAcquireNonBlocking(string leaseName, CancellationToken cancellationToken = default)
+    public async Task<ILease?> TryAcquireNonBlocking(string leaseName, CancellationToken cancellationToken = default)
     {
         var client = CreateClient(leaseName);
         await CreateEmptyFileIfNotExists(client, cancellationToken);
@@ -61,4 +61,25 @@ public partial class StorageAccountLeaseService(ILogger<StorageAccountLeaseServi
 
     internal BlobClient CreateClient(string blobName) =>
         Factory.CreateClient(AltinnLeaseOptions.StorageAccountLease.Name).GetBlobContainerClient(AltinnLeaseOptions.StorageAccountLease.Container).GetBlobClient(blobName);
+
+    /// <inheritdoc/>
+    public async Task<ILease> AcquireBlocking(string leaseName, CancellationToken cancellationToken = default)
+    {
+        return await AcquireBlocking(leaseName, TimeSpan.FromSeconds(1), cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<ILease> AcquireBlocking(string leaseName, TimeSpan retry, CancellationToken cancellationToken = default)
+    {
+        while (true)
+        {
+            var lease = await TryAcquireNonBlocking(leaseName, cancellationToken);
+            if (lease is { })
+            {
+                return lease;
+            }
+
+            await Task.Delay(retry, cancellationToken);
+        }
+    }
 }
