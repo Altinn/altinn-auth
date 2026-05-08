@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Net.Http;
 using System.Net.Mime;
 using System.Security.Claims;
 using Altinn.AccessManagement.Api.Enduser.Models;
@@ -360,18 +361,24 @@ public class RequestController(
             errorBuilder.Add(ValidationErrors.ResourceNotExists, "/resource", [new("resource", $"Unable to get resource '{resource}'")]);
         }
 
-        try
+        if (resourceObj is { })
         {
-            var serviceResource = await resourceRegistryClient.GetResource(resourceObj.RefId, ct);
-
-            if (!serviceResource.Delegable)
+            try
             {
-                errorBuilder.Add(ValidationErrors.ResourceIsNotDelegable, "/resource", [new("resource", $"Resource with reference ID '{resourceObj.RefId}' is not delegable.")]);
+                var serviceResource = await resourceRegistryClient.GetResource(resourceObj.RefId, ct);
+
+                if (serviceResource is { Delegable: false })
+                {
+                    errorBuilder.Add(ValidationErrors.ResourceIsNotDelegable, "/resource", [new("resource", $"Resource with reference ID '{resourceObj.RefId}' is not delegable.")]);
+                }
             }
-        }
-        catch
-        {
-            // errorBuilder.Add(ValidationErrors.ResourceNotExists, "/resource", [new("resource", $"Unable to get resource '{resource}'")]);
+            catch (HttpRequestException)
+            {
+                // Registry unreachable: don't gate the user's request on registry availability.
+                // The earlier `resourceObj is not null` check already validated that the resource
+                // is known to us locally. Only fail when the registry positively confirms the
+                // resource is non-delegable (the `Delegable: false` arm above).
+            }
         }
 
         if (errorBuilder.TryBuild(out var problem))

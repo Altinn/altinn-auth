@@ -331,7 +331,7 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
             var performedByValid = Guid.TryParse(delegationChange.PerformedByUuid, out var performedById);
             var changedBy = performedByValid ? performedById : AuditAccessor.AuditValues.ChangedBy;
             var validFrom = delegationChange.Created.HasValue ? delegationChange.Created.Value : AuditAccessor.AuditValues.ValidFrom;
-            var operationId = AuditAccessor.AuditValues.OperationId; // delegationChange.DelegationChangeId > 1 ? delegationChange.DelegationChangeId.ToString() : AuditAccessor.AuditValues.OperationId;
+            var operationId = AuditAccessor.AuditValues.OperationId;
 
             AuditAccessor.AuditValues = new AuditValues(changedBy, SystemEntityConstants.Altinn2AddRulesApi, operationId, validFrom);
         }
@@ -501,7 +501,7 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
             var performedByValid = Guid.TryParse(instanceDelegationChange.PerformedBy, out var performedById);
             var changedBy = performedByValid ? performedById : AuditAccessor.AuditValues.ChangedBy;
             var validFrom = instanceDelegationChange.Created.HasValue ? instanceDelegationChange.Created.Value : AuditAccessor.AuditValues.ValidFrom;
-            var operationId = AuditAccessor.AuditValues.OperationId; // delegationChange.DelegationChangeId > 1 ? delegationChange.DelegationChangeId.ToString() : AuditAccessor.AuditValues.OperationId;
+            var operationId = AuditAccessor.AuditValues.OperationId;
 
             AuditAccessor.AuditValues = new AuditValues(changedBy, SystemEntityConstants.Altinn2AddRulesApi, operationId, validFrom);
         }

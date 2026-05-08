@@ -146,7 +146,6 @@ namespace Altinn.AccessManagement.Persistence.Consent
                 command.Parameters.Add<DateTimeOffset?>("created", NpgsqlDbType.TimestampTz).TypedValue = consentRequest.CreatedTime?.ToOffset(TimeSpan.Zero);
             }
 
-            // command.Parameters.Add<ConsentRequestStatusType>("status", NpgsqlDbType.Integer).TypedValue = consentRequest.ConsentRequestStatus;
             command.Parameters.Add(new NpgsqlParameter<ConsentRequestStatusType>("status", consentRequest.ConsentRequestStatus));
 
             if (consentRequest.From.IsPartyUuid(out Guid fromPartyGuid))
