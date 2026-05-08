@@ -1,44 +1,85 @@
-﻿module.exports = 
-{
-  "env": "at22",
-  "package_to_delegate": {
-    "package_urn": "urn:altinn:accesspackage:skattegrunnlag",
-    "invalid_pkg": "12345",
-    "innbygger_pacakage_urn" : "urn:altinn:accesspackage:innbygger-straffesak"
+﻿module.exports = {
+  env: "at22",
+  package_to_delegate: {
+    package_urn: "urn:altinn:accesspackage:skattegrunnlag",
+    invalid_pkg: "12345",
+    innbygger_pacakage_urn: "urn:altinn:accesspackage:innbygger-straffesak",
+    skatteforhold_priv:
+      "urn:altinn:accesspackage:innbygger-skatteforhold-privatpersoner",
   },
-  "vassen_riktig_tiger_as": {
-    "orgno": "311013823",
-    "name": "VASSEN RIKTIG TIGER AS",
-    "partyid": 51400826,
-    "partyuuid": "B0DC6D79-84B0-4158-B50D-D30F594A4595",
-    "dagl": {
-      "pid": "26926498354",
-      "name": "OPPJAGET TEVLING",
-      "userid": 20254339,
-      "partyid": 50873382,
-      "partyuuid": "32F169FC-AECC-440D-8929-03C9ED12018C"      
+  vassen_riktig_tiger_as: {
+    orgno: "311013823",
+    name: "VASSEN RIKTIG TIGER AS",
+    partyid: 51400826,
+    partyuuid: "B0DC6D79-84B0-4158-B50D-D30F594A4595",
+    dagl: {
+      pid: "26926498354",
+      name: "OPPJAGET TEVLING",
+      userid: 20254339,
+      partyid: 50873382,
+      partyuuid: "32F169FC-AECC-440D-8929-03C9ED12018C",
     },
-    "person1": {
-      "pid": "11899497823",
-      "lastname":"MUFFINS",
-      "userid": 20120371,
-      "partyid": 50846985,
-      "partyuuid": "16A6E0B2-B29E-4B96-AB24-4DDB00AD1156",
-      "username": "sunn_muffins"
-    }
+    person1: {
+      pid: "11899497823",
+      lastname: "MUFFINS",
+      userid: 20120371,
+      partyid: 50846985,
+      partyuuid: "16A6E0B2-B29E-4B96-AB24-4DDB00AD1156",
+      username: "sunn_muffins",
+    },
   },
-  "privat_person_A": {
-      "lastname": "BRU",
-      "pid": "16870299188",
-      "partyid": 50128209,
-      "userid": 20904930,
-      "partyuuid": "bcc4091e-f4a4-4410-8974-c95b2b2d789e"
+  privat_person_A: {
+    lastname: "BRU",
+    pid: "16870299188",
+    partyid: 50128209,
+    userid: 20904930,
+    partyuuid: "bcc4091e-f4a4-4410-8974-c95b2b2d789e",
+  },
+  privat_person_B: {
+    lastname: "TALLTEGN",
+    pid: "16880649047",
+    partyid: 50708081,
+    userid: 20948470,
+    partyuuid: "c5f4a493-1706-4610-8199-6b8030894152",
+  },
+  privat_person_C: {
+    lastname: "LARM",
+    pid: "08865598557",
+    partyid: 51147813,
+    userid: 20941499,
+    partyuuid: "c47945c9-6e2c-4cb4-9ccc-37c4fb5c36e2",
+  },
+  privat_person_D: {
+    lastname: "AVTALE",
+    pid: "06906298714",
+    partyid: 50758664,
+    userid: 20740813,
+    partyuuid: "9a15cca9-de56-4ecc-92bf-6f8fde74fb59",
+  },
+  virksomhet_A: {
+    orgno: "312472384",
+    name: "NYTTIG UVIRKSOM TIGER AS",
+    partyid: 51564826,
+    partyuuid: "c2bd1e30-737d-46d1-9ee1-4b2b66eb40f3",
+    dagl: {
+      pid: "24833747912",
+      name: "OPPRØMT KATAPULT",
+      userid: 50624777,
+      partyid: 20276205,
+      partyuuid: "379ddeb0-1718-4693-94ea-d9d679658980",
     },
-    "privat_person_B": {
-      "lastname": "TALLTEGN",
-      "pid": "16880649047",
-      "partyid": 50708081,
-      "userid": 20948470,
-      "partyuuid": "c5f4a493-1706-4610-8199-6b8030894152"
+  },
+  virksomhet_B: {
+    orgno: "313619613",
+    name: "VELDIG SENSITIV TIGER AS",
+    partyid: 51478627,
+    partyuuid: "73841a83-e966-49df-93bc-e165838054d6",
+    dagl: {
+      pid: "15916398252",
+      name: "SENSITIV NETTVERKSKABEL",
+      userid: 20718561,
+      partyid: 50242671,
+      partyuuid: "956221a3-826a-4ac0-be93-db7ad47d6dd5",
     },
+  },
 };

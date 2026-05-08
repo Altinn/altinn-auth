@@ -1,0 +1,63 @@
+meta {
+  name: POST_Enduser_Conn_AccPcks_Org_Skatteforhold_priv_toOrg
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toOrg}}&packageId&package={{package}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toOrg}}
+  packageId: 
+  package: {{package}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.virksomhet_A.partyuuid);
+  bru.setVar("toOrg", testdata.virksomhet_B.partyuuid);
+  bru.setVar("package", testdata.package_to_delegate.skatteforhold_priv);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.virksomhet_A.dagl.userid,
+    auth_partyId: testdata.virksomhet_A.dagl.partyid,
+    auth_partyUuid: testdata.virksomhet_A.dagl.partyuuid,
+    auth_ssn: testdata.virksomhet_A.dagl.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+script:post-response {
+  const data = res.getBody();
+  const packageId = data.packageId;
+  bru.setEnvVar("packageId", packageId);
+}
+
+tests {
+  
+  test("POST_Enduser_Conn_AccPcks_Org_Skatteforhold_priv_toOrg", function() {
+    expect(res.status).to.equal(400);
+  });
+}
+
+docs {
+  Gir tilgangspakke fra organisasjon til organisasjon
+}

@@ -1,0 +1,43 @@
+meta {
+  name: POST_Enduser_Connections_Virksomhet_Skatteforhold_Priv_Til_Virksomhet_Negative
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{toOrg}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toOrg}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.virksomhet_A.partyuuid);
+  bru.setVar("toOrg", testdata.virksomhet_B.partyuuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.virksomhet_A.dagl.userid,
+    auth_partyId: testdata.virksomhet_A.dagl.partyid,
+    auth_partyUuid: testdata.virksomhet_A.dagl.partyuuid,
+    auth_ssn: testdata.virksomhet_A.dagl.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+docs {
+  Lager connection til virksomhet
+}

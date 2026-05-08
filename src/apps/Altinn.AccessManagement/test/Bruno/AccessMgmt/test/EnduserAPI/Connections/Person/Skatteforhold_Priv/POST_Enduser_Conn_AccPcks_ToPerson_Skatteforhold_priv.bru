@@ -1,0 +1,77 @@
+meta {
+  name: POST_Enduser_Conn_AccPcks_ToPerson_Skatteforhold_priv
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toPersonPartyUuid}}&packageId&package={{package}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toPersonPartyUuid}}
+  packageId: 
+  package: {{package}}
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+   {
+    "personidentifier": "{{toPerson}}", // fnr or username
+    "lastName": "{{toPersonLastName}}"
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("party", testdata.privat_person_C.partyuuid);
+  bru.setVar("toPerson", testdata.privat_person_D.pid);
+  bru.setVar("toPersonLastName", testdata.privat_person_D.lastname);
+  bru.setVar("toPersonPartyUuid", testdata.privat_person_D.partyuuid);
+  bru.setVar("package", testdata.package_to_delegate.skatteforhold_priv);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.privat_person_C.userid,
+    auth_partyId: testdata.privat_person_C.partyid,
+    auth_partyUuid: testdata.privat_person_C.partyuuid,
+    auth_ssn: testdata.privat_person_C.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+script:post-response {
+  const data = res.getBody();
+  const packageId = data.packageId;
+  bru.setEnvVar("packageId", packageId);
+}
+
+tests {
+  
+  test("POST_Enduser_Conn_AccPcks_ToPerson_Skatteforhold_priv", function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(200);
+    assert.isOk(data, "Expected response body to return created assignment package");
+    expect(data.packageId).to.equal("6b4c19ff-250a-4625-a4f7-d9684db537f4");
+    
+  });
+}
+
+docs {
+  Gir tilgangspakke til person
+}

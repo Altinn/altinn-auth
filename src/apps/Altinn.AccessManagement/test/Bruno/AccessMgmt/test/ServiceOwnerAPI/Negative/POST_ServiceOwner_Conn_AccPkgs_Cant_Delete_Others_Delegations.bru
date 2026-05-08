@@ -1,0 +1,57 @@
+meta {
+  name: POST_ServiceOwner_Conn_AccPkgs_Cant_Delete_Others_Delegations
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/connections/accesspackages/revoke
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "from": "urn:altinn:person:identifier-no:{{personA}}",
+    "to": "urn:altinn:person:identifier-no:{{personB}}",
+    "packageurn": "urn:altinn:accesspackage:innbygger-skatteforhold-privatpersoner"
+  }
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/serviceowner/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  
+  bru.setVar("personA", testdata.privat_person_A.pid);
+  bru.setVar("personB", testdata.privat_person_B.pid);
+  bru.setVar("requestName", "POST_ServiceOwner_Conn_AccPkgs_Cant_Delete_Others_Delegations");
+  
+  var getTokenParameters = {
+    auth_org: sharedtestdata.serviceOwners.skd.org,
+    auth_orgNo: sharedtestdata.serviceOwners.skd.orgno,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.serviceownerConnectionsAccessPackages
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  
+  const body = res.getBody();
+  const requestName = bru.getVar("requestName");
+  
+  test(requestName + "|HttpStatus.BadRequest", function() {
+    expect(res.status).to.equal(400);
+    expect(body.detail).to.equal('The package is not delegated by the entity trying to revoke so it is denied');
+  });
+  
+}
