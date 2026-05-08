@@ -421,14 +421,18 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         var service = CreateService();
 
         // Act
-        var serviceTask = service.StartAsync(testCts.Token);
+        await service.StartAsync(testCts.Token);
 
         // Wait for ProcessBatch to be called before asserting
         await processBatchCalled.Task;
         await Task.Delay(50, TestContext.Current.CancellationToken);
 
-        // Assert - The service should throw OperationCanceledException when cancellation is requested
-        await Assert.ThrowsAsync<OperationCanceledException>(async () => await serviceTask);
+        // Assert - ExecuteAsync should rethrow OperationCanceledException once the
+        // stoppingToken is cancelled. We await BackgroundService.ExecuteTask rather
+        // than the StartAsync return value: as of .NET 10, StartAsync returns a
+        // completed Task even when ExecuteAsync has already faulted synchronously,
+        // so the propagated OCE is observable on ExecuteTask only.
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => await service.ExecuteTask!);
     }
 
     [Fact]

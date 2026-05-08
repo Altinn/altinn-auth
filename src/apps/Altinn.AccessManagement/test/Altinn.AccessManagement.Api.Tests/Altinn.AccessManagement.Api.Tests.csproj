@@ -4,7 +4,7 @@
 		<!-- Clear the singular TargetFramework inherited from src/Directory.Build.props so
 			 dotnet test routes to the Microsoft Testing Platform (required for xUnit v3). -->
 		<TargetFramework></TargetFramework>
-		<TargetFrameworks>net9.0</TargetFrameworks>
+		<TargetFrameworks>net10.0</TargetFrameworks>
 		<IsTestProject>true</IsTestProject>
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>

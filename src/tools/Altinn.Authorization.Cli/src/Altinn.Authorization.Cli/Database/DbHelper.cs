@@ -76,11 +76,11 @@ internal sealed class DbHelper
         return cmd;
     }
 
-    public Task<TextReader> BeginTextExport(string copyToCommand, CancellationToken cancellationToken)
-        => _conn.BeginTextExportAsync(copyToCommand, cancellationToken);
+    public async Task<TextReader> BeginTextExport(string copyToCommand, CancellationToken cancellationToken)
+        => await _conn.BeginTextExportAsync(copyToCommand, cancellationToken);
 
-    public Task<TextWriter> BeginTextImport(string copyFromCommand, CancellationToken cancellationToken)
-        => _conn.BeginTextImportAsync(copyFromCommand, cancellationToken);
+    public async Task<TextWriter> BeginTextImport(string copyFromCommand, CancellationToken cancellationToken)
+        => await _conn.BeginTextImportAsync(copyFromCommand, cancellationToken);
 
     public async Task BeginTransaction(CancellationToken cancellationToken)
     {

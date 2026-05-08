@@ -4,7 +4,7 @@
         <!-- Clear the singular TargetFramework inherited from src/Directory.Build.props so
              dotnet test routes to the Microsoft Testing Platform (required for xUnit v3). -->
         <TargetFramework></TargetFramework>
-        <TargetFrameworks>net9.0</TargetFrameworks>
+        <TargetFrameworks>net10.0</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -28,9 +28,14 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <Content Include="xunit.runner.json" CopyToOutputDirectory="Always" />
-        <!-- Authorization Yuniql migrations, copied next to the test binary so the
-             AuthorizationDbFixture can play them against a Testcontainers Postgres. -->
-        <Content Include="..\..\src\Altinn.Authorization\Migration\**\*.sql">
+        <!-- Authorization Yuniql workspace, copied next to the test binary so the
+             AuthorizationDbFixture and the WebApplicationFactory-hosted app can run
+             migrations against a Testcontainers Postgres. The glob is `**\*` (not
+             `**\*.sql`) because Yuniql validates that the workspace's placeholder
+             subfolders (_init, _pre, _draft, _post, _erase) exist; those folders
+             only contain README.md markers in the source tree, so a *.sql-only
+             include would skip them and Yuniql would refuse to start. -->
+        <Content Include="..\..\src\Altinn.Authorization\Migration\**\*">
             <Link>Migration\%(RecursiveDir)%(Filename)%(Extension)</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>

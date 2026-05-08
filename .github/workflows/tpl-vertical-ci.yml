@@ -76,7 +76,7 @@ jobs:
         with:
           dotnet-version: |
             8.0.x
-            9.0.x
+            10.0.x
 
       - name: Restore dotnet workloads
         run: dotnet workload restore
@@ -212,9 +212,9 @@ jobs:
           # for some configurations, in the per-project `bin/.../TestResults/`).
           # Match either layout — the `Directory.Name -eq 'TestResults'`
           # filter still keeps us off arbitrary `*.log` files elsewhere in
-          # the working tree, while the `*_net9.0_x64.log` filename pattern
+          # the working tree, while the `*_net10.0_x64.log` filename pattern
           # already constrains to MTP-shaped per-project logs.
-          $logs = Get-ChildItem -Path . -Recurse -Filter '*_net9.0_x64.log' -ErrorAction SilentlyContinue |
+          $logs = Get-ChildItem -Path . -Recurse -Filter '*_net10.0_x64.log' -ErrorAction SilentlyContinue |
                   Where-Object { $_.Directory.Name -eq 'TestResults' }
 
           if (-not $logs) {

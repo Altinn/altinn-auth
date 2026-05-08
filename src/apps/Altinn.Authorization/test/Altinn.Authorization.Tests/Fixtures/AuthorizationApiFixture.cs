@@ -10,6 +10,7 @@ using AltinnCore.Authentication.JwtCookie;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -46,6 +47,23 @@ public class AuthorizationApiFixture : WebApplicationFactory<Program>
         // provider and silently growing the list across test-class instances
         // would be a source of flakiness.
         Interlocked.Exchange(ref _hostBuilt, 1);
+
+        // Disable Yuniql migrations for tests that use this fixture. The app's
+        // own appsettings.json sets EnableDBConnection=true; without this
+        // override, every fixture that boots the host runs Yuniql against the
+        // app's configured Postgres. All tests that consume this fixture use
+        // mock repositories (registered below), so the DB layer is never
+        // exercised — running Yuniql is both unnecessary and racy when
+        // multiple test classes hit the same shared Postgres concurrently
+        // (duplicate-key on __yuniql_schema_version). Tests that need a real
+        // DB use AuthorizationDbFixture, which manages its own container.
+        builder.ConfigureAppConfiguration((_, config) =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["PostgreSQLSettings:EnableDBConnection"] = "false",
+            });
+        });
 
         builder.ConfigureTestServices(services =>
         {

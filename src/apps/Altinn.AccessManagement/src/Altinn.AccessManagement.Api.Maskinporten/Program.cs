@@ -11,3 +11,13 @@ app.UseAuthorization();
 app.MapControllers();
 
 await app.RunAsync();
+
+/// <summary>
+/// Startup class.
+/// </summary>
+internal sealed partial class Program
+{
+    private Program()
+    {
+    }
+}

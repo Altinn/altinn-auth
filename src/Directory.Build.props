@@ -2,9 +2,9 @@
 
     <PropertyGroup>
         <UserSecretsId>Altinn.Authorization</UserSecretsId>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
-        <LangVersion>12.0</LangVersion>
+        <LangVersion>latest</LangVersion>
         <EnableStyleCop>true</EnableStyleCop>
         <BaseArtifactsPath Condition=" '$(BaseArtifactsPath)' == '' ">$(MSBuildThisFileDirectory)..\artifacts\</BaseArtifactsPath>
         <CopyArtifactsAfterTargets>Pack</CopyArtifactsAfterTargets>
