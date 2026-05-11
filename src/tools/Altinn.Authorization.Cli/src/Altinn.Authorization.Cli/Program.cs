@@ -4,6 +4,7 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 
 using Database = Altinn.Authorization.Cli.Database;
+using Proxy = Altinn.Authorization.Cli.Proxy;
 using Register = Altinn.Authorization.Cli.Register;
 using ServiceBus = Altinn.Authorization.Cli.ServiceBus;
 
@@ -43,6 +44,8 @@ app.Configure(config =>
         register.AddCommand<Register.RetryA2ImportsCommand>("retry");
         register.AddCommand<Register.ExternalRolesCommand>("roles");
     });
+
+    config.AddCommand<Proxy.ProxyCommand>("proxy");
 });
 
 try

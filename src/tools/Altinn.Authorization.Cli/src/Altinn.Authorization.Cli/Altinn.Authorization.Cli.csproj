@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Altinn.Authorization.ServiceDefaults.HttpClient.MaskinPorten" />
         <PackageReference Include="Azure.Identity" />
         <PackageReference Include="Azure.Messaging.ServiceBus" />
         <PackageReference Include="Azure.ResourceManager.KeyVault" />
@@ -24,6 +25,7 @@
         <PackageReference Include="Spectre.Console.Cli" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
         <PackageReference Include="System.Linq.Async" />
+        <PackageReference Include="Yarp.ReverseProxy" />
     </ItemGroup>
 
 </Project>
