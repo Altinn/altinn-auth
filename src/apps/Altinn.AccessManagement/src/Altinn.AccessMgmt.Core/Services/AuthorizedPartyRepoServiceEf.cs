@@ -119,8 +119,35 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
             IncludeMainUnitConnections = true,
             IncludeDelegation = true,
             IncludePackages = filters?.IncludeAccessPackages == true || filters?.PackageFilter?.Keys?.Count > 0,
-            IncludeResources = AuthorizedPartiesSettings.UsingConnectionQueryOnly ? filters?.IncludeResources == true || filters?.ResourceFilter?.Keys?.Count > 0 : false,
-            IncludeInstances = AuthorizedPartiesSettings.UsingConnectionQueryOnly ? filters?.IncludeInstances == true || filters?.ResourceFilter?.Keys?.Count > 0 : false,
+            IncludeResources = filters?.IncludeResources == true || filters?.ResourceFilter?.Keys?.Count > 0,
+            IncludeInstances = filters?.IncludeInstances == true || filters?.ResourceFilter?.Keys?.Count > 0,
+            EnrichPackageResources = false,
+            ExcludeDeleted = false
+        },
+        ConnectionQueryDirection.FromOthers,
+        useNewQuery: true,
+        ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthersOld(
+        Guid toId,
+        AuthorizedPartiesFilters filters = null,
+        CancellationToken ct = default)
+    {
+        return await connectionQuery.GetConnectionsAsync(
+        new ConnectionQueryFilter()
+        {
+            ToIds = [toId],
+            FromIds = filters?.PartyFilter?.Keys.ToList(),
+            PackageIds = filters?.PackageFilter?.Keys.ToList(),
+            EnrichEntities = false,
+            IncludeSubConnections = true,
+            IncludeKeyRole = filters?.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.True ? true : false,
+            IncludeMainUnitConnections = true,
+            IncludeDelegation = true,
+            IncludePackages = filters?.IncludeAccessPackages == true || filters?.PackageFilter?.Keys?.Count > 0,
+            IncludeResources = false,
             EnrichPackageResources = false,
             ExcludeDeleted = false
         },

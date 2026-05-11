@@ -485,7 +485,7 @@ public class AuthorizedPartiesServiceEfOld(
         bool resourceFilterSpecified = filter.ProviderCode != null || filter.AnyOfResourceIds?.Count() > 0;
         if (!resourceFilterSpecified || filter.PackageFilter?.Count > 0)
         {
-            connections = await repoService.GetConnectionsFromOthers(toId, filters: filter, ct: cancellationToken);
+            connections = await repoService.GetConnectionsFromOthersOld(toId, filters: filter, ct: cancellationToken);
         }
 
         // Get App, Resource and Instance delegations
@@ -842,24 +842,6 @@ public class AuthorizedPartiesServiceEfOld(
                 foreach (var roleCode in roleCodes)
                 {
                     filter.RoleFilter[roleCode] = roleCode;
-                }
-
-                // Find all Roles for the PackageResources found above, as we need to include roles giving access via packages as well.
-                List<RolePackage> rolePackages = await repoService.GetRolePackages(packageIds: filter.PackageFilter.Keys, ct: cancellationToken);
-                foreach (var group in rolePackages.GroupBy(rp => rp.PackageId))
-                {
-                    foreach (var role in group.Select(rp => rp.Role))
-                    {
-                        if (!filter.RoleFilter.ContainsKey(role.Code))
-                        {
-                            filter.RoleFilter[role.Code] = role.Code;
-                        }
-
-                        if (role.LegacyCode != null && !filter.RoleFilter.ContainsKey(role.LegacyCode))
-                        {
-                            filter.RoleFilter[role.LegacyCode] = role.LegacyCode;
-                        }
-                    }
                 }
 
                 cachedFilters.ResourceFilter = filter.ResourceFilter;
