@@ -1,11 +1,11 @@
 meta {
-  name: POST_Serviceowner_request_For_Be_om_tilgang
+  name: Negative_POST_Serviceowner_request_For_Be_om_tilgang_skd
   type: http
-  seq: 1
+  seq: 4
 }
 
 post {
-  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests/resource
   body: json
   auth: inherit
 }
@@ -18,11 +18,9 @@ headers {
 body:json {
   {
   "from": "urn:altinn:person:identifier-no:{{from}}",
-    "to": "urn:altinn:organization:identifier-no:{{toOrg}}",
-    "resource": { 
-      "referenceid": "{{resource}}"
-    },
-    "package": null
+  "to": "urn:altinn:organization:identifier-no:{{toOrg}}",
+  "resource": "{{resource}}"
+    
   }
 }
 
@@ -32,10 +30,10 @@ script:pre-request {
     
     bru.setVar("from", testdata.Bot_person_serviceowner.pid);
     bru.setVar("toOrg", testdata.Bot_Org_for_serviceowner.org_no);
-    bru.setVar("resource", testdata.resource_to_delegate.resource_id_privatperson);
+    bru.setVar("resource", testdata.resource_to_delegate.skattetaten_ressurs);
     
     var getTokenParameters = {
-      auth_org: sharedtestdata.serviceOwners.ttd.org,
+      auth_org: sharedtestdata.serviceOwners.digdir.org,
       auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
       auth_tokenType: sharedtestdata.authTokenType.enterprise,
       auth_scopes: sharedtestdata.auth_scopes.serviceownerDelegationRequestWrite
@@ -49,21 +47,10 @@ script:pre-request {
 tests {
   const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
     
-    test("Person_A request for access on resources to Org_user via serviceowner API", function() {
+    test("Person_A request for access on resources to serviceOwner", function() {
       const data = res.getBody();
       
-      expect(res.status).to.equal(202);
-      expect(data).to.exist;
-      expect(data.id).to.exist;
-      expect(data.status).to.exist;
-      
-       // 2. Verify and save requestId
-     expect(data).to.have.property("id");
-     bru.setEnvVar("serviceowner_requestId", data.id);
-      
-      // 3. Verify and save status
-    expect(data).to.have.property("status");
-    bru.setEnvVar("expectedStatus", data.status);
+      expect(res.status).to.equal(400);
       
     });
 }

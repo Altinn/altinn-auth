@@ -1,19 +1,19 @@
 meta {
-  name: POST_Enduser_Connections_Be_Om_tilgang_Resource_Add_Org
+  name: POST_EndUser_DelegationRequest_To_user_Maskinporten_ressurs
   type: http
-  seq: 11
+  seq: 14
 }
 
 post {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{to}}
-  body: json
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/resource?party={{party}}&to={{toUser}}&resource={{resource}}
+  body: none
   auth: inherit
 }
 
 params:query {
   party: {{party}}
-  from: {{party}}
-  to: {{to}}
+  to: {{toUser}}
+  resource: {{resource}}
 }
 
 script:pre-request {
@@ -21,8 +21,8 @@ script:pre-request {
     const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
     
     bru.setVar("party", testdata.Bot_Org.partyuuid);
-    bru.setVar("to", testdata.Bot_Org_2.partyuuid);
-    bru.setVar("resource", testdata.resource_to_delegate.resource_id_privatperson);
+    bru.setVar("toUser", testdata.Bot_person.partyuuid);
+    bru.setVar("resource", testdata.resource_to_delegate.maskinporten_ressurs);
     
     var getTokenParameters = {
       auth_userId: testdata.Bot_Org.innehaver.userid,
@@ -30,8 +30,10 @@ script:pre-request {
       auth_partyUuid: testdata.Bot_Org.innehaver.partyuuid,
       auth_ssn: testdata.Bot_Org.innehaver.pid,
       auth_tokenType: sharedtestdata.authTokenType.personal,
-      auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+      auth_scopes: sharedtestdata.auth_scopes.sluttbrukerdelegationrequestwrite
     }
+    
+    
     
     const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
     const token = await testTokenGenerator.getToken(getTokenParameters);
@@ -41,16 +43,12 @@ script:pre-request {
 tests {
   const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
     
-    test("Add Org_User as rettighetshaver for Be_om_Tilgang", function() {
+    test("Person_A request for access on maskinporten resources to Org_user", function() {
       const data = res.getBody();
       
-      expect(res.status).to.equal(200);
-      assert.isOk(data, "Expected response body to return created assignment");
-      
-      assert.equal(data.fromId, bru.getVar("party").toLowerCase());
-      assert.equal(data.toId, testdata.Bot_Org_2.partyuuid.toLowerCase());
-      assert.equal(data.roleId, "42cae370-2dc1-4fdc-9c67-c2f4b0f0f829"); // rettighetshaver uuid
-      
+      expect(res.status).to.equal(400);
+      expect(data.validationErrors[0].resource).to.include("Resource 'ttd-bruno-maskinporten-ressurs' is of type 'MaskinportenSchema' and cannot be requested");
+     
     });
 }
 

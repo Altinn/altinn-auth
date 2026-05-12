@@ -7,6 +7,7 @@
       "ttd-test-bruno-enkelttjenestedelegering-virksomhet",
     app_id: "app_ttd_test-bruno-app-for-delegation",
     skattetaten_ressurs: "ske-informasjon-om-trekkpaalegg",
+    maskinporten_ressurs : "ttd-bruno-maskinporten-ressurs"
   },
   package_to_delegate: {
     package_id_privatperson: "urn:altinn:accesspackage:innbygger-samliv",
@@ -19,7 +20,7 @@
     regn_not_assignable:
       "urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet",
     eksplisitt: "urn:altinn:accesspackage:eksplisitt",
-    konkbotilg: "urn:altinn:accesspackage:konkursbo-tilgangsstyrer"
+    konkbotilg: "urn:altinn:accesspackage:konkursbo-tilgangsstyrer",
   },
   Bot_person: {
     lastname: "INGREDIENS",

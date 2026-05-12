@@ -1,0 +1,62 @@
+meta {
+  name: POST_serviceOwner_AccPkg_DelegationRequest_create_HADM_package_Org_to_org
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests/package
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+  "from": "urn:altinn:person:identifier-no:{{from}}",
+    "to": "urn:altinn:organization:identifier-no:{{toOrg}}",
+    "package": "{{package}}"
+  }
+  
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+   
+    bru.setVar("from", testdata.Bot_Org_2.org_no);
+    bru.setVar("toOrg", testdata.Bot_package_Org.org_no);
+    bru.setVar("package", testdata.package_to_delegate.hadm);
+    
+    var getTokenParameters = {
+      auth_org: sharedtestdata.serviceOwners.ttd.org,
+      auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
+      auth_tokenType: sharedtestdata.authTokenType.enterprise,
+      auth_scopes: sharedtestdata.auth_scopes.serviceownerDelegationRequestWrite
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    test("Org_A request for access on hovedaministrator package to Org_B via serviceowner API should give 400 error", function() {
+      const data = res.getBody();
+      
+      expect(res.status).to.equal(400);
+     
+      
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

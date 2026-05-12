@@ -1,18 +1,19 @@
 meta {
-  name: PUT_Approve_Received_Request_On_Resource
+  name: POST_EndUser_Connection_DelegationRequest_Add_user_Negative_scenario
   type: http
-  seq: 6
+  seq: 14
 }
 
-put {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/received/approve?party={{party}}&id={{resourcerequestId}}
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{to}}
   body: none
   auth: inherit
 }
 
 params:query {
   party: {{party}}
-  id: {{resourcerequestId}}
+  from: {{party}}
+  to: {{to}}
 }
 
 script:pre-request {
@@ -20,6 +21,8 @@ script:pre-request {
     const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
     
     bru.setVar("party", testdata.Bot_person.partyuuid);
+    bru.setVar("to", testdata.Bot_Org.partyuuid);
+    bru.setVar("resource", testdata.resource_to_delegate.resource_id_privatperson);
     
     var getTokenParameters = {
       auth_userId: testdata.Bot_person.userid,
@@ -27,7 +30,7 @@ script:pre-request {
       auth_partyUuid: testdata.Bot_person.partyuuid,
       auth_ssn: testdata.Bot_person.pid,
       auth_tokenType: sharedtestdata.authTokenType.personal,
-      auth_scopes: sharedtestdata.auth_scopes.sluttbrukerdelegationrequestwrite
+      auth_scopes: sharedtestdata.auth_scopes.portalEnduser
     }
     
     const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
@@ -36,27 +39,23 @@ script:pre-request {
   
 }
 
-script:post-response {
-  const data = res.getBody();
-    expect(data).to.exist;
-      expect(data.id).to.exist;
-    bru.setEnvVar("resourcerequestidapprove", data.id);
-}
-
 tests {
   const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
     
-    test("PUT_Approve_Received_Request_On_Resource", function() {
-      expect(res.status).to.be.oneOf([200, 204], "Expected 200 or 204 for approve request");
+    test("Add Org_User as rettighetshaver for Be_om_Tilgang on maskinporten ressurs", function() {
+      const data = res.getBody();
       
-      // If we get 200 with body, verify it
-      if(res.status === 200) {
-        const data = res.getBody();
-        if(data) {
-          expect(data).to.have.property("status", "Approved");
-        }
-      }
+      expect(res.status).to.equal(200);
+      assert.isOk(data, "Expected response body to return created assignment");
+      
+      assert.equal(data.fromId, bru.getVar("party").toLowerCase());
+      assert.equal(data.toId, testdata.Bot_Org.partyuuid.toLowerCase());
+      assert.equal(data.roleId, "42cae370-2dc1-4fdc-9c67-c2f4b0f0f829"); // rettighetshaver uuid
+      
     });
+  
+      
+  
 }
 
 settings {
