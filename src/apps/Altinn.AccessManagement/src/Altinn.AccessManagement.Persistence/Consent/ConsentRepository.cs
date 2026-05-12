@@ -31,7 +31,6 @@ namespace Altinn.AccessManagement.Persistence.Consent
         private const string PARAM_REVOKED = "revokedTime";
         private const string PARAM_CONSENT_RIGHT_ID = "consentRightId";
         private const string PARAM_CONSENT_CONTEXT_ID = "contextId";
-        private const string PARAM_CONTEXT = "context";
         private const string PARAM_LANGAUGE = "language";
 
         private const string EventQuery = /*strpsql*/@"

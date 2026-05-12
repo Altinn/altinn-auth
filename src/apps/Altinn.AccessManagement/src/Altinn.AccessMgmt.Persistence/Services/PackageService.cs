@@ -11,7 +11,6 @@ public class PackageService(
     IAreaGroupRepository areaGroupRepository,
     IAreaRepository areaRepository,
     IPackageResourceRepository packageResourceRepository,
-    IResourceRepository resourceRepository,
     ISearchCache<PackageDto> searchPackageCache
     ) : IPackageService
 {
@@ -19,7 +18,6 @@ public class PackageService(
     private readonly IAreaGroupRepository areaGroupRepository = areaGroupRepository;
     private readonly IAreaRepository areaRepository = areaRepository;
     private readonly IPackageResourceRepository packageResourceRepository = packageResourceRepository;
-    private readonly IResourceRepository resourceRepository = resourceRepository;
     private readonly ISearchCache<PackageDto> searchPackageCache = searchPackageCache;
 
     /// <inheritdoc/>

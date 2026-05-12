@@ -6,7 +6,6 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Extensions;
@@ -32,7 +31,6 @@ namespace Altinn.AccessManagement.Integration.Clients
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly PlatformSettings _platformSettings;
         private readonly IAccessTokenGenerator _accessTokenGenerator;
-        private readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() } };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AccessListAuthorizationClient"/> class.

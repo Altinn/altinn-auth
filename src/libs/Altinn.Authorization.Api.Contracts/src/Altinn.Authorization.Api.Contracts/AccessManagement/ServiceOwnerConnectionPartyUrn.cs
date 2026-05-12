@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using Altinn.Authorization.Api.Contracts.Register;
+﻿using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Urn;
 
 namespace Altinn.Authorization.Api.Contracts.AccessManagement
@@ -36,9 +35,5 @@ namespace Altinn.Authorization.Api.Contracts.AccessManagement
         /// <returns><see langword="true"/> if this party reference is an person identifier, otherwise <see langword="false"/>.</returns>
         [UrnKey("altinn:person:identifier-no", Canonical = true)]
         public partial bool IsPersonId(out PersonIdentifier personIdentifier);
-
-        // Manually overridden to disallow negative party ids
-        private static bool TryParsePartyId(ReadOnlySpan<char> segment, IFormatProvider? provider, out int value)
-            => int.TryParse(segment, NumberStyles.None, provider, out value);
     }
 }

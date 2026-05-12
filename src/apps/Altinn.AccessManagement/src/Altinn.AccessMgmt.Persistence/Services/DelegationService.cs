@@ -21,11 +21,9 @@ public class DelegationService(
     IDelegationResourceRepository delegationResourceRepository,
     IAssignmentService assignmentService,
     IEntityRepository entityRepository,
-    IConnectionRepository connectionRepository,
     IEntityTypeRepository entityTypeRepository,
     IEntityVariantRepository entityVariantRepository,
     IProviderRepository providerRepository,
-    IEntityLookupRepository entityLookupRepository,
     IConnectionPackageRepository connectionPackageRepository
     ) : IDelegationService
 {
@@ -42,30 +40,9 @@ public class DelegationService(
     private readonly IDelegationResourceRepository delegationResourceRepository = delegationResourceRepository;
     private readonly IAssignmentService assignmentService = assignmentService;
     private readonly IEntityRepository entityRepository = entityRepository;
-    private readonly IConnectionRepository connectionRepository = connectionRepository;
     private readonly IEntityTypeRepository entityTypeRepository = entityTypeRepository;
     private readonly IEntityVariantRepository entityVariantRepository = entityVariantRepository;
-    private readonly IEntityLookupRepository entityLookupRepository = entityLookupRepository;
     private readonly IConnectionPackageRepository connectionPackageRepository = connectionPackageRepository;
-
-    private async Task<bool> CheckIfEntityHasRole(string roleCode, Guid fromId, Guid toId)
-    {
-        var role = (await roleRepository.Get(t => t.Code, roleCode)).First();
-
-        var filter = assignmentRepository.CreateFilterBuilder();
-        filter.Equal(t => t.FromId, fromId);
-        filter.Equal(t => t.ToId, toId);
-        filter.Equal(t => t.RoleId, role.Id);
-
-        var userAssignments = await assignmentRepository.Get(filter);
-
-        if (userAssignments == null || !userAssignments.Any())
-        {
-            return false;
-        }
-
-        return true;
-    }
 
     /// <inheritdoc/>
     public async Task<ExtDelegation> CreateDelgation(Guid userId, Guid fromAssignmentId, Guid toAssignmentId, ChangeRequestOptions options)
@@ -654,15 +631,6 @@ public class DelegationService(
         filter.Equal(t => t.ToId, to);
 
         return (await assignmentRepository.Get(filter)).FirstOrDefault();
-    }
-
-    private async Task<Delegation> GetAssignment(Guid from, Guid to)
-    {
-        var filter = assignmentRepository.CreateFilterBuilder();
-        filter.Equal(t => t.FromId, from);
-        filter.Equal(t => t.ToId, to);
-
-        return (await delegationRepository.Get(filter)).FirstOrDefault();
     }
 
     private async Task<IEnumerable<ExtConnectionPackage>> GetConnectionPackages(Guid from, Guid to)

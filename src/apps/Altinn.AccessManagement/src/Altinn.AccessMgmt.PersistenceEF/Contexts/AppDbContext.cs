@@ -359,24 +359,5 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     INSERT INTO session_audit_context (changed_by, changed_by_system, change_operation_id)
     VALUES ({a.ChangedBy}, {a.ChangedBySystem}, {a.OperationId});
     ";
-
-    private static FormattableString AuditContextSqlOld(AuditValues a) => $"""
-    -- SET LOCAL expects text
-    SET LOCAL app.changed_by = '{a.ChangedBy.ToString()}';
-    SET LOCAL app.changed_by_system = '{a.ChangedBySystem.ToString()}';
-    SET LOCAL app.change_operation_id = '{a.OperationId}';
-
-    -- Temp table to carry values through ON DELETE CASCADE
-    CREATE TEMP TABLE IF NOT EXISTS session_audit_context(
-        changed_by uuid,
-        changed_by_system uuid,
-        change_operation_id text
-    ) ON COMMIT DROP;
-
-    TRUNCATE session_audit_context;
-
-    INSERT INTO session_audit_context (changed_by, changed_by_system, change_operation_id)
-    VALUES ({a.ChangedBy}, {a.ChangedBySystem}, {a.OperationId});
-    """;
     #endregion
 }

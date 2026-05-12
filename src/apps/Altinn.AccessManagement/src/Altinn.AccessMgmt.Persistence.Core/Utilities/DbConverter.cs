@@ -275,47 +275,4 @@ public sealed class DbConverter : IDbConverter
         }
     }
 
-    private void SetPropertyValueOld(PropertyInfo property, object target, object value)
-    {
-        if (value != null)
-        {
-            if (property.PropertyType == typeof(Guid))
-            {
-                // Set Guid directly og parse from string
-                property.SetValue(target, value is Guid ? value : Guid.Parse(value.ToString()));
-            }
-            else if (property.PropertyType == typeof(Guid?))
-            {
-                // Handle nullable Guid and set null if string is empty or if Guid is Guid.Empty
-                if (value is Guid guidValue)
-                {
-                    property.SetValue(target, guidValue == Guid.Empty ? null : (Guid?)guidValue);
-                }
-                else if (string.IsNullOrWhiteSpace(value.ToString()))
-                {
-                    property.SetValue(target, null);
-                }
-                else
-                {
-                    property.SetValue(target, (Guid?)Guid.Parse(value.ToString()));
-                }
-            }
-            else if (property.PropertyType == typeof(DateTimeOffset))
-            {
-                if (string.IsNullOrWhiteSpace(value.ToString()))
-                {
-                    property.SetValue(target, null);
-                }
-                else
-                {
-                    property.SetValue(target, DateTimeOffset.Parse(value.ToString()));
-                }
-            }
-            else
-            {
-                // Generic convert for other types
-                property.SetValue(target, Convert.ChangeType(value, property.PropertyType));
-            }
-        }
-    }
 }

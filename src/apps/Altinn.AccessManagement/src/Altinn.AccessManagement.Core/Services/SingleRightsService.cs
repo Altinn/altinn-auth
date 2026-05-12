@@ -343,56 +343,6 @@ namespace Altinn.AccessManagement.Core.Services
             return matches;
         }
 
-        private static List<AttributeMatch> ConvertResourceToAttributeMatches(Resource resource)
-        {
-            /*
-            |GenericAccessResource| ResourceRegistry | urn:altinn:resource
-            |Systemresource       | ResourceRegistry | urn:altinn:resource
-            |MaskinportenSchema   | ResourceRegistry | urn:altinn:resource
-            |CorrespondenceService| ResourceRegistry | urn:altinn:resource
-            |Consent              | ResourceRegistry | urn:altinn:resource
-            |AltinnApp            | AltinnApp  | urn:altinn:org + urn:altinn:app
-            |AltinnApp            | AltinnApp  | urn:altinn:resource with value/resourceId app_{orgcode}_{appname}
-            |MigratedApp          | AltinnApp  | urn:altinn:org + urn:altinn:app
-
-            dbo.Resource.RefId : app_ttd_signering-brukerstyrt
-            */
-
-            switch (resource.Type.Name)
-            {
-                default:
-                case "GenericAccessResource":
-                case "Systemresource":
-                case "MaskinportenSchema":
-                case "CorrespondenceService":
-                case "Consent":
-                    return
-                    [
-                        new AttributeMatch
-                        {
-                            Id = AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute,
-                            Value = resource.RefId
-                        }
-                    ];
-                case "AltinnApp":
-                case "MigratedApp":
-                    return
-                    [
-                        new AttributeMatch
-                        {
-                            Id = AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute,
-                            Value = resource.Provider.Code
-                        },
-                        new AttributeMatch
-                        {
-                            // TODO: Verify
-                            Id = AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute,
-                            Value = resource.RefId.Replace("app_", string.Empty).Replace('_', '/')
-                        }
-                    ];
-            }
-        }
-
         private async Task<List<Rule>> EnrichRulesWithUuidInformation(List<Rule> rules, CancellationToken cancellationToken)
         {
             Dictionary<int, (UuidType, Guid)> partyIds = [];

@@ -725,28 +725,6 @@ namespace Altinn.Common.PEP.Helpers
             }
         }
 
-        /// <summary>
-        /// Return supplier party from the claims principal.
-        /// </summary>
-        private static string? GetSupplierParty(Claim supplierClaim)
-        {
-            string? consumerJson = supplierClaim.Value;
-            if (string.IsNullOrWhiteSpace(consumerJson))
-            {
-                return null;
-            }
-
-            try
-            {
-                using JsonDocument doc = JsonDocument.Parse(consumerJson);
-                return GetOrg(doc);
-            }
-            catch (JsonException)
-            {
-                return null;
-            }
-        }
-
         private static string? GetOrg(JsonDocument doc)
         {
             var root = doc.RootElement;

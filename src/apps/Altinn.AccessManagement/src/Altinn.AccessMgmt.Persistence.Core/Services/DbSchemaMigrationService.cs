@@ -229,12 +229,6 @@ public class DbSchemaMigrationService
         }
     }
 
-    private void Generate(Type type)
-    {
-        var q = definitionRegistry.GetQueryBuilder(type);
-        Scripts.Add(type, q.GetMigrationScripts());
-    }
-
     private async Task ExecuteMigration(int maxRetry = 10, CancellationToken cancellationToken = default)
     {
         var status = new Dictionary<Type, bool>();

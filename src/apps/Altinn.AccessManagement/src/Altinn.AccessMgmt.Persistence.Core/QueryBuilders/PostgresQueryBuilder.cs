@@ -525,11 +525,6 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         return string.Join(',', values.OrderBy(t => t).Select(t => $"@{t}").ToList());
     }
 
-    private string MergeUpdateMatchStatement(List<GenericParameter> values)
-    {
-        return MergeUpdateMatchStatement(values.Select(t => t.Key));
-    }
-
     private string MergeUpdateMatchStatement(IEnumerable<string> values)
     {
         return string.Join(" OR ", values.OrderBy(t => t).Select(t => $"T.{t} <> @{t}").ToList());

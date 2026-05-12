@@ -396,31 +396,4 @@ public static class PackageDelegationCheckQuery
             (array_length(@packageIds, 1) IS NULL OR p.packageid = ANY(@packageIds))
         """;
 
-    private static async ValueTask<PackageDelegationCheck> GetPackageDelegationCheck(NpgsqlDataReader reader)
-    {
-        return new PackageDelegationCheck
-        {
-            Package = new()
-            {
-                Id = await reader.GetFieldValueAsync<Guid>("packageid"),
-                Urn = await reader.GetFieldValueAsync<string>("packageurn"),
-                AreaId = await reader.GetFieldValueAsync<Guid>("areaid"),
-            },
-            Result = await reader.GetFieldValueAsync<bool>("isassignable") && await reader.GetFieldValueAsync<bool>("candelegate"),
-            Reason = new()
-            {
-                Description = await reader.GetFieldValueAsync<string>("reason"),
-                RoleId = await reader.GetFieldValueOrDefaultAsync<Guid?>("roleid", null),
-                RoleUrn = await reader.GetFieldValueOrDefaultAsync<string?>("roleurn", null),
-                FromId = await reader.GetFieldValueOrDefaultAsync<Guid?>("fromid", null),
-                FromName = await reader.GetFieldValueOrDefaultAsync<string?>("fromname", null),
-                ToId = await reader.GetFieldValueOrDefaultAsync<Guid?>("toid", null),
-                ToName = await reader.GetFieldValueOrDefaultAsync<string?>("toname", null),
-                ViaId = await reader.GetFieldValueOrDefaultAsync<Guid?>("viaid", null),
-                ViaName = await reader.GetFieldValueOrDefaultAsync<string?>("vianame", null),
-                ViaRoleId = await reader.GetFieldValueOrDefaultAsync<Guid?>("viaroleid", null),
-                ViaRoleUrn = await reader.GetFieldValueOrDefaultAsync<string?>("viaroleurn", null)
-            }
-        };
-    }
 }
