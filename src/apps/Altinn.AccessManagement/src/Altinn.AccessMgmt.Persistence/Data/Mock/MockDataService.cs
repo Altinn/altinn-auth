@@ -58,8 +58,8 @@ public class MockDataService
         var variantSys = variants.First(t => t.TypeId == sysType.Id);
 
         var roles = await roleRepository.Get();
-        var roleRegnskap = roles.FirstOrDefault(t => t.Code == "regnskapsforer");
-        var roleAgent = roles.FirstOrDefault(t => t.Code == "agent");
+        var roleRegnskap = roles.FirstOrDefault(t => t.Code == "regnskapsforer") ?? throw new Exception("Could not find role 'regnskapsforer'");
+        var roleAgent = roles.FirstOrDefault(t => t.Code == "agent") ?? throw new Exception("Could not find role 'agent'");
 
         var greenIT = new Entity() { Id = Guid.Parse("0195efb8-7c80-783b-a21b-6dc365681ff2"), Name = "Green IT AS", RefId = "9-ORG-001", TypeId = orgType.Id, VariantId = variantAS.Id };
         var blueAccounts = new Entity() { Id = Guid.Parse("0195efb8-7c80-721c-b4a7-bc140a51baca"), Name = "Blue Accounts AS", RefId = "9-ORG-002", TypeId = orgType.Id, VariantId = variantAS.Id };

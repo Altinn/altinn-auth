@@ -66,12 +66,12 @@ namespace Altinn.Platform.Authorization.Helpers
                 {
                     if (asd.AttributeId.OriginalString.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute))
                     {
-                        org = asd.AttributeValues.FirstOrDefault().Value;
+                        org = asd.AttributeValues.FirstOrDefault()?.Value ?? string.Empty;
                     }
 
                     if (asd.AttributeId.OriginalString.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute))
                     {
-                        app = asd.AttributeValues.FirstOrDefault().Value;
+                        app = asd.AttributeValues.FirstOrDefault()?.Value ?? string.Empty;
                     }
                 }
             }

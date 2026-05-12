@@ -531,20 +531,23 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
 
         if (assignmentInstance == null)
         {
-            if (instanceDelegationChange.DelegationChangeType != DelegationChangeType.RevokeLast)
+            if (instanceDelegationChange.DelegationChangeType == DelegationChangeType.RevokeLast)
             {
-                assignmentInstance = new AssignmentInstance()
-                {
-                    Id = Guid.CreateVersion7(),
-                    AssignmentId = assignment.Id,
-                    ResourceId = resource.Id,
-                    InstanceId = instanceDelegationChange.InstanceId,
-                    PolicyPath = instanceDelegationChange.BlobStoragePolicyPath,
-                    PolicyVersion = instanceDelegationChange.BlobStorageVersionId,
-                    DelegationChangeId = instanceDelegationChange.InstanceDelegationChangeId,
-                };
-                DbContext.AssignmentInstances.Add(assignmentInstance);
+                // Nothing to revoke — the assignment instance never existed.
+                return null;
             }
+
+            assignmentInstance = new AssignmentInstance()
+            {
+                Id = Guid.CreateVersion7(),
+                AssignmentId = assignment.Id,
+                ResourceId = resource.Id,
+                InstanceId = instanceDelegationChange.InstanceId,
+                PolicyPath = instanceDelegationChange.BlobStoragePolicyPath,
+                PolicyVersion = instanceDelegationChange.BlobStorageVersionId,
+                DelegationChangeId = instanceDelegationChange.InstanceDelegationChangeId,
+            };
+            DbContext.AssignmentInstances.Add(assignmentInstance);
         }
         else
         {

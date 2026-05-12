@@ -44,7 +44,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
     public async Task SyncParty(ILease lease, bool isInit = false, CancellationToken cancellationToken = default)
     {
         var options = new AuditValues(SystemEntityConstants.RegisterImportSystem);
-        var leaseData = await lease.Get<RegisterLease>(cancellationToken);
+        var leaseData = await lease.Get<RegisterLease>(cancellationToken) ?? new RegisterLease();
         if (isInit == false && leaseData.IsDbIngested == false)
         {
             return;

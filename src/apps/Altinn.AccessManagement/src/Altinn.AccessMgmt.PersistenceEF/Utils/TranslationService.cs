@@ -59,7 +59,7 @@ public class TranslationService : ITranslationService
     /// <inheritdoc />
     public async ValueTask<(bool Success, T Result)> TryTranslateAsync<T>(T source, string languageCode)
     {
-        if (source == null)
+        if (EqualityComparer<T>.Default.Equals(source, default))
         {
             return (false, source);
         }

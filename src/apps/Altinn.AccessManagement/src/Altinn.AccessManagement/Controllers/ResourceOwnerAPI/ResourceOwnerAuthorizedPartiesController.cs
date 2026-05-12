@@ -114,7 +114,7 @@ public class ResourceOwnerAuthorizedPartiesController(
                 var partyFilters = subject.PartyFilter?.Select(attr => new BaseAttribute(attr.Type, attr.Value)).ToList();
                 var partyUuids = await authorizedPartiesService.GetPartyFilterUuids(partyFilters, cancellationToken);
                 filters.PartyFilter = new SortedDictionary<Guid, Guid>();
-                foreach (var partyUuid in partyUuids?.Distinct())
+                foreach (var partyUuid in partyUuids?.Distinct() ?? [])
                 {
                     filters.PartyFilter[partyUuid] = partyUuid;
                 }

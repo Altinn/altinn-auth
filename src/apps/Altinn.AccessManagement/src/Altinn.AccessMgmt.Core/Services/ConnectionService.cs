@@ -1259,12 +1259,17 @@ public partial class ConnectionService(
     /// <inheritdoc />
     public async Task<Result<bool>> AddResource(Entity from, Entity to, Resource resourceObj, RightKeyListDto rightKeys, Entity by, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
+        if (resourceObj is null)
+        {
+            return Problems.InvalidResource;
+        }
+
         if (rightKeys?.DirectRightKeys is null || !rightKeys.DirectRightKeys.Any())
         {
             return Problems.MissingRightKey;
         }
 
-        var canDelegate = await ResourceDelegationCheck(by.Id, from.Id, resourceObj?.RefId, configureConnection, cancellationToken: cancellationToken);
+        var canDelegate = await ResourceDelegationCheck(by.Id, from.Id, resourceObj.RefId, configureConnection, cancellationToken: cancellationToken);
         if (canDelegate.IsProblem)
         {
             return canDelegate.Problem;
@@ -1677,12 +1682,13 @@ public partial class ConnectionService(
             return problem;
         }
 
-        if (from.VariantId != EntityVariantConstants.SI)
+        // Guaranteed non-null here: TryBuild above returned false, so both from/to passed their null guards.
+        if (from!.VariantId != EntityVariantConstants.SI)
         {
             errorBuilder.Add(ValidationErrors.DisallowedEntityType, "$QUERY/from", [new($"{fromId}", $"Entity must be variant '{EntityVariantConstants.SI.Entity.Name}'.")]);
         }
 
-        if (to.VariantId != EntityVariantConstants.SI_EMAIL)
+        if (to!.VariantId != EntityVariantConstants.SI_EMAIL)
         {
             errorBuilder.Add(ValidationErrors.DisallowedEntityType, "$QUERY/to", [new($"{toId}", $"Entity must be variant '{EntityVariantConstants.SI_EMAIL.Entity.Name}'.")]);
         }

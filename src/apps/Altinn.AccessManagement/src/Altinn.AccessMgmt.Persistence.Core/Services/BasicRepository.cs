@@ -300,7 +300,7 @@ public abstract class BasicRepository<T> : IDbBasicRepository<T>
             throw new Exception($"'{Definition.ModelType.Name}' is not defined as a table");
         }
 
-        if (value == null)
+        if (EqualityComparer<TProperty>.Default.Equals(value, default))
         {
             var queryBuilder = definitionRegistry.GetQueryBuilder<T>();
             string query = queryBuilder.BuildSingleNullUpdateQuery(new GenericParameter(ExtractPropertyInfo(property).Name, value), options: options);

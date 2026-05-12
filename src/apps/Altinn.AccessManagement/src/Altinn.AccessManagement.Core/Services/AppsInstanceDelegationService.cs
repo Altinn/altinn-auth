@@ -258,10 +258,8 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
             {
                 ValidationErrorBuilder errors = default;
                 errors.Add(ValidationErrors.InvalidPartyUrn, "From");
-                if (errors.TryBuild(out var invalidParty))
-                {
-                    return invalidParty;
-                }
+                errors.TryBuild(out var invalidParty);
+                return invalidParty!;
             }
 
             string instanceUrn = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.InstanceAttribute}:{party.PartyId}/{instanceId}";
@@ -507,10 +505,8 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
             {
                 ValidationErrorBuilder errors = default;
                 errors.Add(ValidationErrors.InvalidPartyUrn, "From");
-                if (errors.TryBuild(out var invalidParty))
-                {
-                    return invalidParty;
-                }
+                errors.TryBuild(out var invalidParty);
+                return invalidParty!;
             }
 
             string instanceUrn = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.InstanceAttribute}:{party.PartyId}/{instanceId}";

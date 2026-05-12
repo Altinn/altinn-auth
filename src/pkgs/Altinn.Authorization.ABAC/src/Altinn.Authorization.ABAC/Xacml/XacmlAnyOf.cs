@@ -48,6 +48,7 @@ namespace Altinn.Authorization.ABAC.Xacml
         /// </summary>
         /// <typeparam name="T">The type.</typeparam>
         private class NoNullCollection<T> : Collection<T>
+            where T : class
         {
             protected override void InsertItem(int index, T item)
             {

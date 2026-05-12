@@ -296,7 +296,8 @@ public class RequestController(
 
         var authUserUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
 
-        return request.Type switch
+        // Guaranteed non-null here: TryBuild above returned false, so the null/auth check passed.
+        return request!.Type switch
         {
             "resource" => await ApproveResourceRequest(party, authUserUuid, request, rightKeys, ct),
             "package" => await ApprovePackageRequest(party, request, ct),
@@ -391,12 +392,13 @@ public class RequestController(
         ==
         Per (by) ber om tilgang for Kari (for) til App (resource) hos Org (at).
         */
+        // Guaranteed non-null here: TryBuild above returned false, so the GetResource lookup succeeded.
         var result = await requestService.CreateResourceRequest(
             toId: to,
             fromId: party,
             byId: authUserUuid,
             roleId: RoleConstants.Rightholder.Id,
-            resourceId: resourceObj.Id,
+            resourceId: resourceObj!.Id,
             status: RequestStatus.Pending,
             ct: ct
             );

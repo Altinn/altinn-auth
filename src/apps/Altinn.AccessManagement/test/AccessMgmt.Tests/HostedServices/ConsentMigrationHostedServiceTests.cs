@@ -545,8 +545,14 @@ public class ConsentMigrationHostedServiceTests : IDisposable
             .Setup(x => x.IsEnabledAsync(AccessMgmtFeatureFlags.HostedServicesConsentMigration))
             .ReturnsAsync(true);
 
+        // FakeTimeProvider.Advance only fires timers registered at the call site, and the SUT
+        // registers its next-iteration timer only after ProcessBatch (or the lease-unavailable
+        // delay) returns. A fixed real-clock wait between Advance calls is racy on slow CI —
+        // pump time until the third attempt fires (or 2s deadline).
+        using var leaseAttempted = new SemaphoreSlim(0, int.MaxValue);
         _leaseServiceMock
             .Setup(x => x.TryAcquireNonBlocking("access_management_consent_migration", It.IsAny<CancellationToken>()))
+            .Callback(() => leaseAttempted.Release())
             .ReturnsAsync(() =>
             {
                 attempts++;
@@ -563,24 +569,31 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         // Act
         var serviceTask = service.StartAsync(testCts.Token);
 
-        await Task.Delay(10, TestContext.Current.CancellationToken);
+        // First attempt fires immediately on service start.
+        Assert.True(
+            await leaseAttempted.WaitAsync(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken),
+            "First lease attempt did not fire within 2s");
 
-        // First attempt - no lease (includes jitter up to 2000ms)
-        _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.EmptyFeedDelayMs + 2000));
-        await Task.Delay(10, TestContext.Current.CancellationToken);
-
-        // Second attempt - no lease (includes jitter up to 2000ms)
-        _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.EmptyFeedDelayMs + 2000));
-        await Task.Delay(10, TestContext.Current.CancellationToken);
-
-        // Third attempt - lease acquired
-        _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.NormalDelayMs));
-        await Task.Delay(10, TestContext.Current.CancellationToken);
+        // Pump time forward until the third attempt fires (two retries needed: first two return null).
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(2);
+        var totalAttempts = 1;
+        while (totalAttempts < 3 && DateTime.UtcNow < deadline)
+        {
+            var advance = totalAttempts < 2
+                ? _settings.EmptyFeedDelayMs + 2000 // lease-unavailable delay + max jitter
+                : _settings.NormalDelayMs;          // last attempt succeeds, normal delay
+            _timeProvider.Advance(TimeSpan.FromMilliseconds(advance));
+            if (await leaseAttempted.WaitAsync(TimeSpan.FromMilliseconds(50), TestContext.Current.CancellationToken))
+            {
+                totalAttempts++;
+            }
+        }
 
         testCts.Cancel();
         await Task.WhenAny(serviceTask, Task.Delay(1000, TestContext.Current.CancellationToken));
 
         // Assert
+        Assert.True(totalAttempts >= 3, $"Expected at least 3 lease attempts within 2s, observed {totalAttempts}");
         _leaseServiceMock.Verify(
             x => x.TryAcquireNonBlocking("access_management_consent_migration", It.IsAny<CancellationToken>()),
             Times.AtLeast(3));

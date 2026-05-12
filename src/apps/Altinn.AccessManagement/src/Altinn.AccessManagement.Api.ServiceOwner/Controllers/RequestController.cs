@@ -155,13 +155,14 @@ public class RequestController(
         ==
         NAV (by) ber om tilgang for Kari (for) til App (resource) hos Org (at).
         */
+        // Guaranteed non-null here: TryBuild above returned false, so TryGetByAll succeeded and packageObj was set.
         return await CreatePackageRequest(
             toId: toResult.Entity.Id,
             fromId: fromResult.Entity.Id,
             byId: auditAccessor.AuditValues.ChangedBy,
             roleId: RoleConstants.Rightholder.Id,
             status: RequestStatus.Draft,
-            package: new RequestReferenceDto() { Id = packageObj.Id, ReferenceId = packageObj.Entity.Urn },
+            package: new RequestReferenceDto() { Id = packageObj!.Id, ReferenceId = packageObj.Entity.Urn },
             ct: ct
             );
     }
@@ -280,8 +281,9 @@ public class RequestController(
         // Fetch provider claim from token
         var providerClaim = User.FindFirst(AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute)?.Value;
 
+        // Guaranteed non-null here: TryBuild above returned false, so the GetResource lookup succeeded.
         var byEntity = await entityService.GetEntity(byId, ct);
-        if (resource.Provider.RefId != byEntity.OrganizationIdentifier
+        if (resource!.Provider.RefId != byEntity.OrganizationIdentifier
             && !string.Equals(resource.Provider.Code, providerClaim, StringComparison.OrdinalIgnoreCase))
         {
             errorBuilder.Add(ValidationErrorDescriptors.RequestedResourceNotByServiceOwner, paramName, [new(paramName, $"Resource with reference ID '{resourceRef.ReferenceId}' is not owned by serviceowner.")]);
