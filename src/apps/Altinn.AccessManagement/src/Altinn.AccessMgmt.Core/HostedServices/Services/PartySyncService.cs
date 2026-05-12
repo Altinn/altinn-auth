@@ -57,7 +57,6 @@ public class PartySyncService : BaseSyncService, IPartySyncService
         HashSet<Guid> seenDeadPeople = [];
 
         using IServiceScope scope = _serviceProvider.CreateEFScope(options);
-        var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var ingestService = scope.ServiceProvider.GetRequiredService<IIngestService>();
         IAssignmentService assignmentService = scope.ServiceProvider.GetRequiredService<IAssignmentService>();
 
@@ -127,7 +126,6 @@ public class PartySyncService : BaseSyncService, IPartySyncService
             var batchNameEntity = batchIdEntity.ToString("N");
 
             var batchIdAssignment = Guid.CreateVersion7();
-            var batchNameAssignment = batchIdAssignment.ToString("N");
 
             if (ingestEntities.Count == 0)
             {
@@ -160,7 +158,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
                 }
 
                 var mergedEntities = await ingestService.MergeTempData<Entity>(batchIdEntity, options, matchColumns: ["id"], ignoreColumnsToUpdate: ["parentid"], cancellationToken: cancellationToken);
-                int mergedAssignments = await ingestService.MergeTempData<Assignment>(batchIdAssignment, options, matchColumns: ["fromid", "toid", "roleid"], ignoreColumnsToUpdate: ["id", "audit_validfrom"], cancellationToken: cancellationToken);
+                await ingestService.MergeTempData<Assignment>(batchIdAssignment, options, matchColumns: ["fromid", "toid", "roleid"], ignoreColumnsToUpdate: ["id", "audit_validfrom"], cancellationToken: cancellationToken);
 
                 _logger.LogInformation("Merge complete: Entity ({0}/{1})", mergedEntities, ingestedEntities);
                 return mergedEntities;

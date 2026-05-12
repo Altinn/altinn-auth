@@ -1,6 +1,7 @@
 ﻿using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
+using Altinn.AccessMgmt.Core.Validation;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
@@ -19,7 +20,15 @@ namespace Altinn.AccessMgmt.Core.Services
         /// <inheritdoc />
         public async Task<Result<AssignmentPackageDto>> AddPackage(Guid fromId, Guid toId, Guid packageId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
         {
-            ConnectionOptions options = new(configureConnection);
+            var options = new ConnectionOptions(configureConnection);
+
+            // Validate From / To entity types against the configured options.
+            var (fromEntity, toEntity) = await ConnectionWriteValidation.GetFromAndToEntitiesAsync(dbContext, fromId, toId, cancellationToken);
+            var problem = ConnectionWriteValidation.ValidateWriteOpInput(fromEntity, toEntity, options);
+            if (problem is not null)
+            {
+                return problem;
+            }
 
             // Look for existing direct rightholder assignment
             Assignment assignment = await dbContext.Assignments

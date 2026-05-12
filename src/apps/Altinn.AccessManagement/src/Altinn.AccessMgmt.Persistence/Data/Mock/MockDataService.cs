@@ -52,18 +52,12 @@ public class MockDataService
         };
 
         var orgType = (await entityTypeRepository.Get(t => t.Name, "Organisasjon")).FirstOrDefault() ?? throw new Exception("Could not find type 'Organisasjon'");
-        var persType = (await entityTypeRepository.Get(t => t.Name, "Person")).FirstOrDefault() ?? throw new Exception("Could not find type 'Person'");
         var sysType = (await entityTypeRepository.Get(t => t.Name, "Systembruker")).FirstOrDefault() ?? throw new Exception("Could not find type 'Systembruker'");
         var variants = await entityVariantRepository.Get();
         var variantAS = variants.First(t => t.TypeId == orgType.Id && t.Name == "AS");
-        var variantPers = variants.First(t => t.TypeId == persType.Id && t.Name == "Person");
         var variantSys = variants.First(t => t.TypeId == sysType.Id);
 
         var roles = await roleRepository.Get();
-        var roleDagligLeder = roles.FirstOrDefault(t => t.Code == "daglig-leder");
-        var roleStyreLeder = roles.FirstOrDefault(t => t.Code == "styreleder");
-        var roleStyreMedlem = roles.FirstOrDefault(t => t.Code == "styremedlem");
-        var roleRevisor = roles.FirstOrDefault(t => t.Code == "revisor");
         var roleRegnskap = roles.FirstOrDefault(t => t.Code == "regnskapsforer");
         var roleAgent = roles.FirstOrDefault(t => t.Code == "agent");
 
@@ -223,7 +217,6 @@ public class MockDataService
             {
                 for (int i = 0; i < 5; i++)
                 {
-                    string title = GetRandomResourceTitle(i);
                     var resourceId = Guid.NewGuid();
                     await resourceRepository.Create(
                         new Resource()

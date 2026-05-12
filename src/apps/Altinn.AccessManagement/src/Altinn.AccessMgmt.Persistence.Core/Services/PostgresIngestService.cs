@@ -88,7 +88,6 @@ public class PostgresIngestService(IAltinnDatabase databaseFactory, IDbExecutor 
         var queryBuilder = definitionRegistry.GetQueryBuilder<T>();
 
         var ingestColumns = GetColumns(definition, queryBuilder);
-        string columnStatement = string.Join(',', ingestColumns.Select(t => t.Name));
 
         string tableName = queryBuilder.GetTableName(includeAlias: false);
         var ingestName = ingestId.ToString().Replace("-", string.Empty);

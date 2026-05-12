@@ -91,7 +91,6 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
 
         var delegation = await GetDelegation(delegationId, cancellationToken);
         var fromAssignment = await assignmentService.GetAssignment(delegation.FromId, cancellationToken);
-        var toAssignment = await assignmentService.GetAssignment(delegation.ToId, cancellationToken);
         var assignmentPackages = await assignmentService.GetPackagesForAssignment(fromAssignment.Id, cancellationToken);
         var rolePackages = await roleService.GetRolePackages(fromAssignment.RoleId, variantId: null, includeResources: false, cancellationToken: cancellationToken);
 
@@ -130,7 +129,6 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
 
         var delegation = await GetDelegation(delegationId, cancellationToken);
         var fromAssignment = await assignmentService.GetAssignment(delegation.FromId, cancellationToken);
-        var toAssignment = await assignmentService.GetAssignment(delegation.ToId, cancellationToken);
 
         var assignmentResources = await assignmentService.GetAssignmentResources(fromAssignment.Id, cancellationToken);
 

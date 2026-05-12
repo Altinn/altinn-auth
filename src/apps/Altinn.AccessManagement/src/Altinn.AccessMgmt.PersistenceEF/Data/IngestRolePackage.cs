@@ -38,7 +38,6 @@ public static partial class StaticDataIngest
         var packageTS = PackageConstants.AccessManager.Id;
         var packageHA = PackageConstants.MainAdministrator.Id;
         var packageMPA = PackageConstants.MaskinportenAdministrator.Id;
-        var packageKTS = PackageConstants.KonkursboAdministrator.Id;
 
         var data = new List<RolePackage>()
         {

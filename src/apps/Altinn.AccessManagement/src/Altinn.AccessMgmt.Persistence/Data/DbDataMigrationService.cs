@@ -1852,7 +1852,6 @@ public class DbDataMigrationService(
         var packageTS = packages["urn:altinn:accesspackage:tilgangsstyrer"];
         var packageHA = packages["urn:altinn:accesspackage:hovedadministrator"];
         var packageMPA = packages["urn:altinn:accesspackage:maskinporten-administrator"];
-        var packageKTS = packages["urn:altinn:accesspackage:konkursbo-tilgangsstyrer"];
 
         var rolePackages = new List<RolePackage>()
         {

@@ -109,7 +109,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                                 continue;
                             }
 
-                            IEnumerable<CreateDelegationResponseDto> delegations = await delegationService.ImportClientDelegation(delegationData, audit, cancellationToken);
+                            await delegationService.ImportClientDelegation(delegationData, audit, cancellationToken);
                         }
                     }
                 }

@@ -108,8 +108,6 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
                 return Unauthorized();
             }
 
-            Core.Models.Consent.ConsentPartyUrn performedByParty = Core.Models.Consent.ConsentPartyUrn.PartyUuid.Create(performedBy.Value);
-
             // Check if the user is authorized to view the consent request. Anyone with read access to access management can view the list of consent request details.
             bool isAuthorized = await AuthorizeResourceAccess(accessManagementResource, partyUuid, User, "read");
             if (!isAuthorized)

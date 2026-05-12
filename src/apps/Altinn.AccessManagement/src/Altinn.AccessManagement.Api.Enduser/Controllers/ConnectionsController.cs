@@ -253,7 +253,7 @@ public class ConnectionsController(
         [FromBody] PersonInput? person,
         CancellationToken cancellationToken = default)
     {
-        var entity = await inputValidation.SanitizeToInput(
+        await inputValidation.SanitizeToInput(
             party,
             to,
             person,
@@ -680,7 +680,6 @@ public class ConnectionsController(
         [FromQuery(Name = "resource")] string resource,
         CancellationToken cancellationToken = default)
     {
-        var byId = AuthenticationHelper.GetPartyUuid(HttpContext);
         var problem = await ConnectionService.RemoveResource(from, to, resource, ConfigureConnections, cancellationToken);
 
         if (problem is { })

@@ -751,9 +751,7 @@ public class PostgresQueryBuilder : IDbQueryBuilder
         {
             if (isTranslation)
             {
-                string foreignKey = $"FK_{_definition.ModelType.Name}_id";
                 script.AppendLine($", CONSTRAINT PK_{_definition.ModelType.Name} PRIMARY KEY ({string.Join(',', _definition.Constraints.First(t => t.IsPrimaryKey).Properties.Select(t => $"{t.Key}"))}, language)");
-                var query = $"ALTER TABLE {GetSchemaName(useTranslation: true)}.{GetTableName(includeAlias: false, includeSchema: false)} DROP CONSTRAINT IF EXISTS {foreignKey}; ALTER TABLE {GetSchemaName(useTranslation: true)}.{GetTableName(includeAlias: false, includeSchema: false)} ADD CONSTRAINT {foreignKey} FOREIGN KEY (id) REFERENCES {GetSchemaName()}.{GetTableName(includeAlias: false, includeSchema: false)} (id) ON DELETE CASCADE;";
             }
             else
             {
@@ -1078,7 +1076,6 @@ public class PostgresQueryBuilder : IDbQueryBuilder
     {
         var scripts = new OrderedDictionary<string, string>();
 
-        string tableName = GetTableName(includeAlias: false, useTranslation: isTranslation);
         string historyTableName = GetTableName(includeAlias: false, useHistory: true, useTranslation: isTranslation);
         string modelName = _definition.ModelType.Name;
         string schema = GetSchemaName(useHistory: false, useTranslation: isTranslation);
@@ -1117,7 +1114,6 @@ public class PostgresQueryBuilder : IDbQueryBuilder
     {
         var scripts = new OrderedDictionary<string, string>();
 
-        string tableName = GetTableName(includeAlias: false, useTranslation: isTranslation);
         string historyTableName = GetTableName(includeAlias: false, useHistory: true, useTranslation: isTranslation);
         string modelName = _definition.ModelType.Name;
         string schema = GetSchemaName(useHistory: false, useTranslation: isTranslation);

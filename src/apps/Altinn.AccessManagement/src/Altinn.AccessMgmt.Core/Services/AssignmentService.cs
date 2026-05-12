@@ -388,14 +388,15 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
         [ ] Check if package can be delegated
         */
 
-        /* TODO: Future Sjekk om bruker er Tilgangsstyrer */
         var user = await db.Entities.AsNoTracking().SingleAsync(t => t.Id == userId, cancellationToken);
         var assignment = await db.Assignments.SingleAsync(t => t.Id == assignmentId, cancellationToken);
         var package = await db.Packages.SingleAsync(t => t.Id == packageId, cancellationToken);
 
-        var userAssignments = await db.Assignments.AsNoTracking()
-            .Where(t => t.FromId == assignment.FromId && t.ToId == userId)
-            .ToListAsync(cancellationToken);
+        // Sjekk om bruker er Tilgangsstyrer for From-parten
+        if (!await HasRole(assignment.FromId, userId, RoleConstants.AccessManager, cancellationToken))
+        {
+            throw new UnauthorizedAccessException(string.Format("User '{0}' does not have permission to add package to assignment", user.Name));
+        }
 
         if (!await HasPackage(assignment.FromId, userId, package.Id, cancellationToken))
         {

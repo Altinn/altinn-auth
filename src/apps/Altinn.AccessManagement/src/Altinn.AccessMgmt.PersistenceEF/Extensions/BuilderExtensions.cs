@@ -158,10 +158,10 @@ public static class BuilderExtensions
     where TEntity : class
     where TRelated : class
     {
-        var rel = builder.HasMany<TRelated>(collectionNav)
-                         .WithOne(referenceNav)
-                         .HasForeignKey(foreignKey)
-                         .OnDelete(deleteBehavior);
+        builder.HasMany<TRelated>(collectionNav)
+               .WithOne(referenceNav)
+               .HasForeignKey(foreignKey)
+               .OnDelete(deleteBehavior);
 
         return builder;
     }

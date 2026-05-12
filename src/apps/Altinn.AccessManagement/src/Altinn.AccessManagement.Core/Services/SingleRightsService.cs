@@ -78,7 +78,7 @@ namespace Altinn.AccessManagement.Core.Services
             }
 
             RightsQuery rightsQuery;
-            DelegationHelper.TryGetResourceFromAttributeMatch(request.Resource, out ResourceAttributeMatchType resourceMatchType, out string resourceRegistryId, out string org, out string app, out string serviceCode, out string serviceEditionCode);
+            DelegationHelper.TryGetResourceFromAttributeMatch(request.Resource, out _, out _, out _, out _, out string serviceCode, out string serviceEditionCode);
             if (resource.ResourceType == Models.ResourceRegistry.ResourceType.Altinn2Service)
             {
                 return await _altinn2RightsClient.PostDelegationCheck(authenticatedUserId, fromParty.PartyId, serviceCode, serviceEditionCode);

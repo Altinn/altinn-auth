@@ -73,8 +73,6 @@ public class IngestService : IIngestService
             ingestColumnsToInsert.RemoveAll(t => ignoreColumnsToInsert.Contains(t.Name));
         }
 
-        string columnUpdateStatement = string.Join(',', ingestColumnsToUpdate.Select(t => t.Name));
-
         var ingestName = ingestId.ToString().Replace("-", string.Empty);
         string ingestTableName = "ingest." + table.TableName + "_" + ingestName;
 

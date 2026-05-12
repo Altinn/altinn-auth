@@ -36,18 +36,6 @@ public class EntityService(IEntityRepository entityRepository, IEntityLookupRepo
     /// <inheritdoc/>
     public Task<Entity> GetByPersNo(string persNo)
     {
-        var res = entityRepository.Get(new RequestOptions()
-        {
-            AsOf = DateTimeOffset.Now.AddHours(-1),
-
-            Language = "eng",
-
-            OrderBy = "name",
-            PageNumber = 1,
-            PageSize = 10,
-            UsePaging = true,
-        });
-
         throw new NotImplementedException();
     }
 

@@ -38,7 +38,6 @@ public class DbDefinitionRegistry(IOptions<AccessMgmtPersistenceOptions> configu
         return _queryBuilders.GetOrAdd(type, t =>
             new Lazy<IDbQueryBuilder>(() =>
             {
-                var definition = TryGetDefinition(type);
                 return configuration.Value.DbType switch
                 {
                     MgmtDbType.Postgres => new PostgresQueryBuilder(configuration, type, this),

@@ -502,8 +502,6 @@ public class RequestController(
 
     private async Task<IActionResult> ApproveResourceRequest(Guid partyUuid, Guid authUserId, RequestDto request, IEnumerable<string> rightKeys, CancellationToken ct)
     {
-        var party = await entityService.GetEntity(partyUuid, ct); // valg avgiver
-
         var delegationCheck = await connectionService.ResourceDelegationCheck(
             authenticatedUserUuid: authUserId,
             party: partyUuid,

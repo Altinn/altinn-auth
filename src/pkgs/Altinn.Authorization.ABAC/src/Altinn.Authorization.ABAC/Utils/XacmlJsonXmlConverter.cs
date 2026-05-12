@@ -138,8 +138,6 @@ namespace Altinn.Authorization.ABAC.Utils
 
                 XacmlContextAttributes xacmlContextAttributes = new XacmlContextAttributes(new Uri(categoryId));
 
-                ICollection<XacmlAttributeValue> attributeValues = new Collection<XacmlAttributeValue>();
-
                 Dictionary<string, XacmlAttribute> attributeDictionary = new Dictionary<string, XacmlAttribute>();
 
                 foreach (XacmlJsonAttribute jsonAttribute in category.Attribute)

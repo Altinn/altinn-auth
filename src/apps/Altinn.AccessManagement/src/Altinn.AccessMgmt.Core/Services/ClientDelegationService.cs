@@ -426,7 +426,6 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
 
             var pkgs = string.Join(", ", existingDelegation.Select(p => p.DelegationPackage.PackageId));
             var fromId = first.Delegation.FromId;
-            var delegationId = first.Delegation.Id;
 
             if (!cascade)
             {

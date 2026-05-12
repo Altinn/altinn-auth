@@ -269,7 +269,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                         }
                     }
 
-                    var result = await errorQueueService.MarkErrorQueueElementProcessed(item.Id, values, cancellationToken);
+                    await errorQueueService.MarkErrorQueueElementProcessed(item.Id, values, cancellationToken);
                 }
                 catch (OperationCanceledException)
                 {

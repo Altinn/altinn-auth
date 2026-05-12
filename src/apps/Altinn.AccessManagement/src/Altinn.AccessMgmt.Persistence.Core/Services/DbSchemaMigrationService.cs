@@ -367,7 +367,7 @@ public class DbSchemaMigrationService
 
     private async Task<bool> ExecuteMigration(Type type, DbMigrationScriptCollection collection, int retryAttempt)
     {
-        var dbDefinition = definitionRegistry.TryGetDefinition(type) ?? throw new Exception($"GetOrAddDefinition for '{type.Name}' not found.");
+        _ = definitionRegistry.TryGetDefinition(type) ?? throw new Exception($"GetOrAddDefinition for '{type.Name}' not found.");
 
         bool allGood = true;
 

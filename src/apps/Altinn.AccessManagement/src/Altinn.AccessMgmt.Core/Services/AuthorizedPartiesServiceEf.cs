@@ -383,7 +383,7 @@ public class AuthorizedPartiesServiceEf(
 
                 foreach (AuthorizedParty a2SubUnit in a2Party.Subunits)
                 {
-                    if (allParties.TryGetValue(a2SubUnit.PartyUuid, out AuthorizedParty existingSubUnit))
+                    if (allParties.TryGetValue(a2SubUnit.PartyUuid, out _))
                     {
                         // No longer need to enrich with role info, so can just continue
                         continue;
@@ -458,7 +458,7 @@ public class AuthorizedPartiesServiceEf(
                 allPartiesDict[party.Id] = subUnit;
 
                 // Either add to existing parent or create parent if not exists
-                if (allPartiesDict.TryGetValue(party.ParentId.Value, out AuthorizedParty parent))
+                if (allPartiesDict.TryGetValue(party.ParentId.Value, out _))
                 {
                     allPartiesDict[party.ParentId.Value].Subunits.Add(subUnit);
                 }
@@ -492,7 +492,7 @@ public class AuthorizedPartiesServiceEf(
             if (!allPartiesDict.TryGetValue(subunit.Id, out AuthorizedParty _))
             {
                 var subunitAuthParty = BuildAuthorizedPartyFromEntity(subunit);
-                if (allPartiesDict.TryGetValue(subunit.ParentId.Value, out AuthorizedParty parent))
+                if (allPartiesDict.TryGetValue(subunit.ParentId.Value, out _))
                 {
                     allPartiesDict[subunit.ParentId.Value].Subunits.Add(subunitAuthParty);
                 }

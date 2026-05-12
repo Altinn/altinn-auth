@@ -152,13 +152,13 @@ public class ConnectionService(
 
         if (assignment != null)
         {
-            var res = await GetOrCreateAssignmentPackage(connectionId, packageId, options, cancellationToken: cancellationToken);
+            await GetOrCreateAssignmentPackage(connectionId, packageId, options, cancellationToken: cancellationToken);
             return true;
         }
 
         if (delegation != null)
         {
-            var res = await GetOrCreateDelegationPackage(connectionId, packageId, options, cancellationToken: cancellationToken);
+            await GetOrCreateDelegationPackage(connectionId, packageId, options, cancellationToken: cancellationToken);
             return true;
         }
 
@@ -175,13 +175,13 @@ public class ConnectionService(
 
         if (assignment != null)
         {
-            var res = await RemoveAssignmentPackage(connectionId, packageId, options, cancellationToken: cancellationToken);
+            await RemoveAssignmentPackage(connectionId, packageId, options, cancellationToken: cancellationToken);
             return true;
         }
 
         if (delegation != null)
         {
-            var res = await RemoveDelegationPackage(connectionId, packageId, options, cancellationToken: cancellationToken);
+            await RemoveDelegationPackage(connectionId, packageId, options, cancellationToken: cancellationToken);
             return true;
         }
 

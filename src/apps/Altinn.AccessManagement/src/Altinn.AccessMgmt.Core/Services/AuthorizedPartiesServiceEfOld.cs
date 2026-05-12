@@ -539,7 +539,7 @@ public class AuthorizedPartiesServiceEfOld(
                 allPartiesDict[party.Id] = subUnit;
 
                 // Either add to existing parent or create parent if not exists
-                if (allPartiesDict.TryGetValue(party.ParentId.Value, out AuthorizedParty parent))
+                if (allPartiesDict.TryGetValue(party.ParentId.Value, out _))
                 {
                     allPartiesDict[party.ParentId.Value].Subunits.Add(subUnit);
                 }
@@ -573,7 +573,7 @@ public class AuthorizedPartiesServiceEfOld(
             if (!allPartiesDict.TryGetValue(subunit.Id, out AuthorizedParty _))
             {
                 var subunitAuthParty = BuildAuthorizedPartyFromEntity(subunit);
-                if (allPartiesDict.TryGetValue(subunit.ParentId.Value, out AuthorizedParty parent))
+                if (allPartiesDict.TryGetValue(subunit.ParentId.Value, out _))
                 {
                     allPartiesDict[subunit.ParentId.Value].Subunits.Add(subunitAuthParty);
                 }

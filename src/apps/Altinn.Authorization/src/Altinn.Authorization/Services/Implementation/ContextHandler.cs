@@ -199,7 +199,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         private static XacmlContextAttributes EnrichRequestResourceAttributes(XacmlContextAttributes requestResourceAttributes, XacmlResourceAttributes resourceAttributes)
         {
             XacmlAttribute resourceAttribute = requestResourceAttributes.Attributes.FirstOrDefault(a => a.AttributeId.OriginalString.Equals(XacmlRequestAttribute.ResourceRegistryAttribute));
-            XacmlAttribute resourceInstanceAttribute = requestResourceAttributes.Attributes.FirstOrDefault(a => a.AttributeId.OriginalString.Equals(XacmlRequestAttribute.ResourceRegistryInstanceAttribute));
             XacmlAttribute orgAttribute = requestResourceAttributes.Attributes.FirstOrDefault(a => a.AttributeId.OriginalString.Equals(XacmlRequestAttribute.OrgAttribute));
             XacmlAttribute appAttribute = requestResourceAttributes.Attributes.FirstOrDefault(a => a.AttributeId.OriginalString.Equals(XacmlRequestAttribute.AppAttribute));
             if (resourceAttribute != null && orgAttribute == null && appAttribute == null)

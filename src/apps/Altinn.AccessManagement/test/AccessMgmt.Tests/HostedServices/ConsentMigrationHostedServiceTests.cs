@@ -361,8 +361,15 @@ public class ConsentMigrationHostedServiceTests : IDisposable
             .Setup(x => x.IsEnabledAsync(AccessMgmtFeatureFlags.HostedServicesConsentMigration))
             .ReturnsAsync(true);
 
+        // FakeTimeProvider.Advance only fires timers that exist at the call site.
+        // The SUT registers its NormalDelayMs timer only after `ProcessBatch` returns,
+        // so a fixed real-clock wait between Advance calls is racy on slow CI runners.
+        // Use a semaphore released on each lease acquisition and pump time until the
+        // second iteration actually fires.
+        using var leaseAcquired = new SemaphoreSlim(0, int.MaxValue);
         _leaseServiceMock
             .Setup(x => x.TryAcquireNonBlocking("access_management_consent_migration", It.IsAny<CancellationToken>()))
+            .Callback(() => leaseAcquired.Release())
             .ReturnsAsync(_leaseMock.Object);
 
         _syncServiceMock
@@ -375,20 +382,31 @@ public class ConsentMigrationHostedServiceTests : IDisposable
         // Act
         var serviceTask = service.StartAsync(testCts.Token);
 
-        await Task.Delay(10, TestContext.Current.CancellationToken);
+        // First iteration runs immediately on service start (no preceding delay).
+        Assert.True(
+            await leaseAcquired.WaitAsync(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken),
+            "First lease acquisition did not fire within 2s");
 
-        // Trigger first iteration
-        _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.NormalDelayMs));
-        await Task.Delay(10, TestContext.Current.CancellationToken);
-
-        // Trigger second iteration
-        _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.NormalDelayMs));
-        await Task.Delay(10, TestContext.Current.CancellationToken);
+        // Pump time until the second iteration fires. Advance does nothing if the
+        // loop hasn't reached its next `await _timeProvider.Delay(...)` yet, so we
+        // retry every ~50ms until the semaphore is released or we hit the deadline.
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(2);
+        var secondAcquired = false;
+        while (DateTime.UtcNow < deadline)
+        {
+            _timeProvider.Advance(TimeSpan.FromMilliseconds(_settings.NormalDelayMs));
+            if (await leaseAcquired.WaitAsync(TimeSpan.FromMilliseconds(50), TestContext.Current.CancellationToken))
+            {
+                secondAcquired = true;
+                break;
+            }
+        }
 
         testCts.Cancel();
         await Task.WhenAny(serviceTask, Task.Delay(1000, TestContext.Current.CancellationToken));
 
         // Assert - Lease acquired multiple times (one per iteration)
+        Assert.True(secondAcquired, "Second lease acquisition did not fire within 2s");
         _leaseServiceMock.Verify(
             x => x.TryAcquireNonBlocking("access_management_consent_migration", It.IsAny<CancellationToken>()),
             Times.AtLeast(2));

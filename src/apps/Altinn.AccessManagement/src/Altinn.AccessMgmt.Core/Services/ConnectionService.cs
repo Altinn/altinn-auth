@@ -814,59 +814,11 @@ public partial class ConnectionService(
 
     #endregion
 
-    private async Task<(Entity From, Entity To)> GetFromAndToEntities(Guid? fromId, Guid? toId, CancellationToken cancellationToken)
-    {
-        if (fromId is null && toId is null)
-        {
-            throw new UnreachableException();
-        }
+    private Task<(Entity From, Entity To)> GetFromAndToEntities(Guid? fromId, Guid? toId, CancellationToken cancellationToken) =>
+        ConnectionWriteValidation.GetFromAndToEntitiesAsync(dbContext, fromId, toId, cancellationToken);
 
-        var entities = await dbContext.Entities
-            .AsNoTracking()
-            .Where(e => e.Id == fromId || e.Id == toId)
-            .Include(e => e.Type)
-            .ToListAsync(cancellationToken);
-
-        var fromEntity = entities.FirstOrDefault(e => e.Id == fromId);
-        var toEntity = entities.FirstOrDefault(e => e.Id == toId);
-
-        return (fromEntity, toEntity);
-    }
-
-    private ValidationProblemInstance? ValidateWriteOpInput(Entity from, Entity to, ConnectionOptions options)
-    {
-        var problem = ValidationComposer.Validate(
-            EntityValidation.FromExists(from),
-            EntityValidation.ToExists(to)
-        );
-
-        if (problem is { })
-        {
-            return problem;
-        }
-
-        if (options.AllowedWriteFromEntityTypes.Any() && options.AllowedWriteToEntityTypes.Any())
-        {
-            problem = ValidationComposer.Validate(
-                EntityTypeValidation.FromIsOfType(from.TypeId, [.. options.AllowedWriteFromEntityTypes]),
-                EntityTypeValidation.ToIsOfType(to.TypeId, [.. options.AllowedWriteToEntityTypes])
-            );
-        }
-        else if (options.AllowedWriteFromEntityTypes.Any())
-        {
-            problem = ValidationComposer.Validate(
-                EntityTypeValidation.FromIsOfType(from.TypeId, [.. options.AllowedWriteFromEntityTypes])
-            );
-        }
-        else if (options.AllowedWriteToEntityTypes.Any())
-        {
-            problem = ValidationComposer.Validate(
-                EntityTypeValidation.ToIsOfType(to.TypeId, [.. options.AllowedWriteToEntityTypes])
-            );
-        }
-
-        return problem;
-    }
+    private static ValidationProblemInstance ValidateWriteOpInput(Entity from, Entity to, ConnectionOptions options) =>
+        ConnectionWriteValidation.ValidateWriteOpInput(from, to, options);
 
     private ProblemInstance ValidateReadOpInput(Guid? fromId, Entity? from, Guid? toId, Entity? to, ConnectionOptions options)
     {
@@ -2017,12 +1969,6 @@ public partial class ConnectionService
         }
 
         #region Data
-
-        var baseQuery = dbContext.AssignmentResources.AsNoTracking()
-            .WhereIf(fromId.HasValue, t => t.Assignment.FromId == fromId.Value)
-            .WhereIf(toId.HasValue, t => t.Assignment.ToId == toId.Value)
-            .WhereIf(roleId.HasValue, t => t.Assignment.RoleId == roleId.Value)
-            .WhereIf(resourceId.HasValue, t => t.ResourceId == resourceId.Value);
 
         // Direct
         var direct = dbContext.AssignmentResources.AsNoTracking()
