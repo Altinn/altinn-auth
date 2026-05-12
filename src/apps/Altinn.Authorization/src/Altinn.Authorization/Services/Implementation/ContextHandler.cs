@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Altinn.Authorization.ABAC.Constants;
+﻿using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
-using Altinn.Authorization.Models;
+using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Authorization.Models.Register;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Constants;
@@ -555,12 +550,11 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
                 if (await _featureManager.IsEnabledAsync(FeatureFlags.SystemUserAccessPackageAuthorization) && subjectSystemUser != Guid.Empty)
                 {
-                    await AddAccessPackageAttributes(subjectContextAttributes, subjectSystemUser, resourceAttr.PartyUuid);
+                    await AddAccessPackageAttributes(subjectContextAttributes, subjectSystemUser, resourceAttr.PartyUuid, cancellationToken);
                 }
                 else if (await _featureManager.IsEnabledAsync(FeatureFlags.UserAccessPackageAuthorization) && subjectPartyUuid != Guid.Empty)
                 {
-                    // ToDo: check that subject and resource party is not privat person on behalf of themselves
-                    await AddAccessPackageAttributes(subjectContextAttributes, subjectPartyUuid, resourceAttr.PartyUuid);
+                    await AddAccessPackageAttributes(subjectContextAttributes, subjectPartyUuid, resourceAttr.PartyUuid, cancellationToken);
                 }
             }
 
@@ -630,10 +624,20 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
             if (policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute))
             {
-                List<Role> roleList = await GetRoles(subjectUserId, resourcePartyId);
-                if (roleList.Count != 0)
+                if (await _featureManager.IsEnabledAsync(FeatureFlags.AccessManagementAsPipForRoles))
                 {
-                    subjectContextAttributes.Attributes.Add(GetRoleAttribute(roleList));
+                    if (subjectPartyUuid != Guid.Empty && resourceAttr.PartyUuid != Guid.Empty)
+                    {
+                        await AddRoleAttributes(subjectContextAttributes, subjectPartyUuid, resourceAttr.PartyUuid, cancellationToken);
+                    }
+                }
+                else
+                {
+                    List<Role> roleList = await GetRoles(subjectUserId, resourcePartyId);
+                    if (roleList.Count != 0)
+                    {
+                        subjectContextAttributes.Attributes.Add(GetRoleAttribute(roleList));
+                    }
                 }
             }
         }
@@ -644,12 +648,39 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="subjectContextAttributes">The subject attribute collection to enrich with access packages (if any) the subject user has for the party</param>
         /// <param name="toSubjectPartyUuid">The subject party uuid to check if has any access packages for the party</param>
         /// <param name="resourceParty">The party to check if subject party has any access packages for.</param>
-        protected async Task AddAccessPackageAttributes(XacmlContextAttributes subjectContextAttributes, Guid toSubjectPartyUuid, Guid resourceParty)
+        /// <param name="cancellationToken">The cancellation token</param>
+        protected async Task AddAccessPackageAttributes(XacmlContextAttributes subjectContextAttributes, Guid toSubjectPartyUuid, Guid resourceParty, CancellationToken cancellationToken = default)
         {
-            IEnumerable<AccessPackageUrn> accessPackages = await _accessManagementWrapper.GetAccessPackages(toSubjectPartyUuid, resourceParty);
+            IEnumerable<AccessPackageUrn> accessPackages;
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.AccessManagementAsPipForRoles))
+            {
+                var result = await _accessManagementWrapper.GetRolesAndAccessPackages(toSubjectPartyUuid, resourceParty, cancellationToken);
+                accessPackages = result.AccessPackages;
+            }
+            else
+            {
+                accessPackages = await _accessManagementWrapper.GetAccessPackages(toSubjectPartyUuid, resourceParty, cancellationToken);
+            }
+
             foreach (AccessPackageUrn accessPackage in accessPackages)
             {
                 subjectContextAttributes.Attributes.Add(GetStringAttribute(accessPackage.PrefixSpan.ToString(), accessPackage.ValueSpan.ToString()));
+            }
+        }
+
+        /// <summary>
+        /// Enriches the context with all roles attributes the given subject has access to on behalf of the party
+        /// </summary>
+        /// <param name="subjectContextAttributes">The subject attribute collection to enrich with roles (if any) the subject user has for the party</param>
+        /// <param name="toSubjectPartyUuid">The subject party uuid to check if has any roles for the party</param>
+        /// <param name="resourceParty">The party to check if subject party has any roles for.</param>
+        /// <param name="cancellationToken">The cancellation token</param>
+        protected async Task AddRoleAttributes(XacmlContextAttributes subjectContextAttributes, Guid toSubjectPartyUuid, Guid resourceParty, CancellationToken cancellationToken = default)
+        {
+            var result = await _accessManagementWrapper.GetRolesAndAccessPackages(toSubjectPartyUuid, resourceParty, cancellationToken);
+            foreach (RoleUrn role in result.Roles)
+            {
+                subjectContextAttributes.Attributes.Add(GetStringAttribute(role.PrefixSpan.ToString(), role.ValueSpan.ToString()));
             }
         }
 

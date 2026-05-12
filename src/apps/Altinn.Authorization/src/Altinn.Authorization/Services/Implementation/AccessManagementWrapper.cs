@@ -2,7 +2,7 @@
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using Altinn.Authorization.Models;
+using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Platform.Authorization.Clients;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Models;
@@ -138,6 +138,39 @@ public class AccessManagementWrapper : IAccessManagementWrapper
                 _memoryCache.Set(cacheKey, result, cacheEntryOptions);
 
                 return result;
+            }
+
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException(content == string.Empty ? $"received status code {response.StatusCode}" : content);
+        }
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
+    {   
+        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}";
+
+        if (!_memoryCache.TryGetValue(cacheKey, out PipResponseDto result))
+        {
+            var response = await _client.Client.SendAsync(
+                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/roles-and-accesspackages?to={to}&from={from}")),
+                cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                result = await response.Content.ReadFromJsonAsync<PipResponseDto>(_serializerOptions, cancellationToken);
+
+                if (result != null)
+                {
+                    var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    .SetPriority(CacheItemPriority.High)
+                    .SetAbsoluteExpiration(new TimeSpan(0, 0, _generalSettings.RoleCacheTimeout, 0));
+
+                    _memoryCache.Set(cacheKey, result, cacheEntryOptions);
+                    return result;
+                }
             }
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);

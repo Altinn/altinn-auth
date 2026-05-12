@@ -1,8 +1,7 @@
 ﻿using System.Text.Json;
+using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Authorization.Enums;
-using Altinn.Authorization.Models;
 using Altinn.Platform.Authenticaiton.Extensions;
-using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.IntegrationTests.Data;
 using Altinn.Platform.Authorization.Models;
@@ -10,7 +9,6 @@ using Altinn.Platform.Authorization.Models.AccessManagement;
 using Altinn.Platform.Authorization.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
 using Microsoft.VisualBasic;
 
 namespace Altinn.Platform.Authorization.IntegrationTests.MockServices;
@@ -200,5 +198,39 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         }
 
         return null;
+    }
+
+    public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
+    {
+        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}";
+
+        if (!_memoryCache.TryGetValue(cacheKey, out PipResponseDto result))
+        {
+            result = new PipResponseDto();
+
+            if (from.ToString() == "066148fe-7077-4484-b7ea-44b5ede0014e" && to.ToString() == "e2eba2c3-b369-4ff9-8418-99a810d6bb58")
+            {
+                result.Roles.AddRange(new List<RoleUrn>
+                {
+                    RoleUrn.Parse("urn:altinn:external-role:ccr:daglig-leder"),
+                    RoleUrn.Parse("urn:altinn:rolecode:dagl"),
+                });
+
+                result.AccessPackages.AddRange(new List<AccessPackageUrn>
+                {
+                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("skatt-naering")),
+                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("ansettelsesforhold")),
+                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("maskinporten-scopes")),
+                });
+            }
+
+            var cacheEntryOptions = new MemoryCacheEntryOptions()
+            .SetPriority(CacheItemPriority.High)
+            .SetAbsoluteExpiration(new TimeSpan(0, 0, 5, 0));
+
+            _memoryCache.Set(cacheKey, result, cacheEntryOptions);
+        }
+
+        return Task.FromResult(result);
     }
 }

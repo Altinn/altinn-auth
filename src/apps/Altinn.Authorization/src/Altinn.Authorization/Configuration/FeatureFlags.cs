@@ -29,5 +29,10 @@
         /// Feature flag for whether decision multi requests should be logged on error
         /// </summary>
         public const string DecisionRequestLogRequestOnErrorMultiRequest = nameof(DecisionRequestLogRequestOnErrorMultiRequest);
+
+        /// <summary>
+        /// Feature flag for whether Access Management should be used as PIP for roles.
+        /// </summary>
+        public const string AccessManagementAsPipForRoles = nameof(AccessManagementAsPipForRoles);
     }
 }

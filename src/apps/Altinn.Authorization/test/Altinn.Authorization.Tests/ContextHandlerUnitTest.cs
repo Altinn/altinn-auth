@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Altinn.Authorization.ABAC.Constants;
+﻿using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
+using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Models;
+using Altinn.Platform.Authorization.Models.AccessManagement;
 using Altinn.Platform.Authorization.Models.Oed;
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Authorization.Services.Implementation;
@@ -16,13 +13,11 @@ using Altinn.Platform.Authorization.Services.Interfaces;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
-using Altinn.ResourceRegistry.Models;
 using Authorization.Platform.Authorization.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Moq;
-using Xunit;
 
 namespace Altinn.Platform.Authorization.UnitTests;
 
@@ -43,6 +38,7 @@ public class ContextHandlerUnitTest : IDisposable
     private readonly Mock<IFeatureManager> _featureManagerMock = new();
     private readonly Mock<IResourceRegistry> _resourceRegistryMock = new();
     private readonly TestableContextHandler _sut;
+    private TestableContextHandler _cachingSut;
 
     public ContextHandlerUnitTest()
     {
@@ -521,6 +517,294 @@ public class ContextHandlerUnitTest : IDisposable
 
     #endregion
 
+    #region EnrichSubjectAttributes with AccessManagementAsPipForRoles
+
+    [Fact]
+    public async Task EnrichSubjectAttributes_WithFeatureFlag_EnrichesRolesFromAccessManagement()
+    {
+        // Arrange
+        int subjectUserId = 1001;
+        int resourcePartyId = 50001337;
+        Guid subjectPartyUuid = Guid.Parse("00000000-0000-0000-0000-000000001001");
+        Guid resourcePartyUuid = Guid.Parse("00000000-0000-0000-0000-000000050001");
+
+        var pipResponse = new PipResponseDto
+        {
+            Roles =
+            [
+                RoleUrn.Parse("urn:altinn:external-role:ccr:daglig-leder"),
+                RoleUrn.Parse("urn:altinn:rolecode:dagl"),
+                RoleUrn.Parse("urn:altinn:rolecode:hadm"),
+            ],
+            AccessPackages = [],
+        };
+
+        var cachingWrapper = SetupEnrichSubjectWithCachingWrapper(subjectUserId, resourcePartyId, subjectPartyUuid, resourcePartyUuid, pipResponse, policyHasRoles: true, policyHasAccessPackages: false);
+
+        var (request, resourceAttrs) = CreateEnrichSubjectRequest(subjectUserId, resourcePartyId, resourcePartyUuid);
+
+        // Act
+        await _cachingSut.TestEnrichSubjectAttributes(request, resourceAttrs, isExternalRequest: false, TestContext.Current.CancellationToken);
+
+        // Assert
+        var subjectAttrs = request.GetSubjectAttributes();
+        AssertContainsAttributeValue(subjectAttrs, "urn:altinn:external-role:ccr", "daglig-leder");
+        AssertContainsAttributeValue(subjectAttrs, "urn:altinn:rolecode", "dagl");
+        AssertContainsAttributeValue(subjectAttrs, "urn:altinn:rolecode", "hadm");
+
+        Assert.Equal(1, cachingWrapper.GetRolesAndAccessPackagesCallCount);
+    }
+
+    [Fact]
+    public async Task EnrichSubjectAttributes_WithFeatureFlag_EnrichesAccessPackagesFromAccessManagement()
+    {
+        // Arrange
+        int subjectUserId = 1001;
+        int resourcePartyId = 50001337;
+        Guid subjectPartyUuid = Guid.Parse("00000000-0000-0000-0000-000000001001");
+        Guid resourcePartyUuid = Guid.Parse("00000000-0000-0000-0000-000000050001");
+
+        var pipResponse = new PipResponseDto
+        {
+            Roles = [],
+            AccessPackages =
+            [
+                AccessPackageUrn.Parse("urn:altinn:accesspackage:klientadministrator"),
+                AccessPackageUrn.Parse("urn:altinn:accesspackage:tilgangsstyrer"),
+            ],
+        };
+
+        var cachingWrapper = SetupEnrichSubjectWithCachingWrapper(subjectUserId, resourcePartyId, subjectPartyUuid, resourcePartyUuid, pipResponse, policyHasRoles: false, policyHasAccessPackages: true);
+
+        var (request, resourceAttrs) = CreateEnrichSubjectRequest(subjectUserId, resourcePartyId, resourcePartyUuid);
+
+        // Act
+        await _cachingSut.TestEnrichSubjectAttributes(request, resourceAttrs, isExternalRequest: false, TestContext.Current.CancellationToken);
+
+        // Assert
+        var subjectAttrs = request.GetSubjectAttributes();
+        AssertContainsAttributeValue(subjectAttrs, "urn:altinn:accesspackage", "klientadministrator");
+        AssertContainsAttributeValue(subjectAttrs, "urn:altinn:accesspackage", "tilgangsstyrer");
+
+        Assert.Equal(1, cachingWrapper.GetRolesAndAccessPackagesCallCount);
+    }
+
+    [Fact]
+    public async Task EnrichSubjectAttributes_WithFeatureFlag_EnrichesRolesAndAccessPackages_CacheEnsuresSingleApiCall()
+    {
+        // Arrange
+        int subjectUserId = 1001;
+        int resourcePartyId = 50001337;
+        Guid subjectPartyUuid = Guid.Parse("00000000-0000-0000-0000-000000001001");
+        Guid resourcePartyUuid = Guid.Parse("00000000-0000-0000-0000-000000050001");
+
+        var pipResponse = new PipResponseDto
+        {
+            Roles =
+            [
+                RoleUrn.Parse("urn:altinn:external-role:ccr:daglig-leder"),
+                RoleUrn.Parse("urn:altinn:rolecode:dagl"),
+            ],
+            AccessPackages =
+            [
+                AccessPackageUrn.Parse("urn:altinn:accesspackage:hovedadministrator"),
+            ],
+        };
+
+        var cachingWrapper = SetupEnrichSubjectWithCachingWrapper(subjectUserId, resourcePartyId, subjectPartyUuid, resourcePartyUuid, pipResponse, policyHasRoles: true, policyHasAccessPackages: true);
+
+        var (request, resourceAttrs) = CreateEnrichSubjectRequest(subjectUserId, resourcePartyId, resourcePartyUuid);
+
+        // Act
+        await _cachingSut.TestEnrichSubjectAttributes(request, resourceAttrs, isExternalRequest: false, TestContext.Current.CancellationToken);
+
+        // Assert
+        var subjectAttrs = request.GetSubjectAttributes();
+        AssertContainsAttributeValue(subjectAttrs, "urn:altinn:external-role:ccr", "daglig-leder");
+        AssertContainsAttributeValue(subjectAttrs, "urn:altinn:rolecode", "dagl");
+        AssertContainsAttributeValue(subjectAttrs, "urn:altinn:accesspackage", "hovedadministrator");
+
+        // Both AddRoleAttributes and AddAccessPackageAttributes call GetRolesAndAccessPackages,
+        // but the cache ensures only one actual fetch occurs
+        Assert.Equal(1, cachingWrapper.GetRolesAndAccessPackagesCallCount);
+    }
+
+    [Fact]
+    public async Task EnrichSubjectAttributes_WithoutFeatureFlag_UsesLegacyRolesEndpoint()
+    {
+        // Arrange
+        int subjectUserId = 1001;
+        int resourcePartyId = 50001337;
+        Guid subjectPartyUuid = Guid.Parse("00000000-0000-0000-0000-000000001001");
+
+        var legacyRoles = new List<Role> { new() { Value = "DAGL" }, new() { Value = "HADM" } };
+
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AccessManagementAsPipForRoles)).ReturnsAsync(false);
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.UserAccessPackageAuthorization)).ReturnsAsync(false);
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.SystemUserAccessPackageAuthorization)).ReturnsAsync(false);
+
+        _profileMock.Setup(p => p.GetUserProfile(subjectUserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new UserProfile { UserId = subjectUserId, Party = new Party { SSN = "01017012345", PartyTypeName = PartyType.Person, PartyUuid = subjectPartyUuid } });
+
+        _rolesMock.Setup(r => r.GetDecisionPointRolesForUser(subjectUserId, resourcePartyId)).ReturnsAsync(legacyRoles);
+
+        var policy = CreatePolicyWithSubjectAttributes(policyHasRoles: true, policyHasAccessPackages: false);
+        _prpMock.Setup(p => p.GetPolicyAsync(It.IsAny<XacmlContextRequest>())).ReturnsAsync(policy);
+
+        var (request, resourceAttrs) = CreateEnrichSubjectRequest(subjectUserId, resourcePartyId);
+
+        // Act
+        await _sut.TestEnrichSubjectAttributes(request, resourceAttrs, isExternalRequest: false, TestContext.Current.CancellationToken);
+
+        // Assert
+        var subjectAttrs = request.GetSubjectAttributes();
+        AssertContainsAttributeValue(subjectAttrs, XacmlRequestAttribute.RoleAttribute, "DAGL");
+        AssertContainsAttributeValue(subjectAttrs, XacmlRequestAttribute.RoleAttribute, "HADM");
+
+        _accessMgmtMock.Verify(a => a.GetRolesAndAccessPackages(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        _rolesMock.Verify(r => r.GetDecisionPointRolesForUser(subjectUserId, resourcePartyId), Times.Once);
+    }
+
+    [Fact]
+    public async Task EnrichSubjectAttributes_WithFeatureFlag_EmptyPipResponse_NoAttributesAdded()
+    {
+        // Arrange
+        int subjectUserId = 1001;
+        int resourcePartyId = 50001337;
+        Guid subjectPartyUuid = Guid.Parse("00000000-0000-0000-0000-000000001001");
+        Guid resourcePartyUuid = Guid.Parse("00000000-0000-0000-0000-000000050001");
+
+        var pipResponse = new PipResponseDto { Roles = [], AccessPackages = [] };
+
+        SetupEnrichSubjectWithCachingWrapper(subjectUserId, resourcePartyId, subjectPartyUuid, resourcePartyUuid, pipResponse, policyHasRoles: true, policyHasAccessPackages: true);
+
+        var (request, resourceAttrs) = CreateEnrichSubjectRequest(subjectUserId, resourcePartyId, resourcePartyUuid);
+
+        // Act
+        await _cachingSut.TestEnrichSubjectAttributes(request, resourceAttrs, isExternalRequest: false, TestContext.Current.CancellationToken);
+
+        // Assert: only the original user attribute should remain (no role/accesspackage attributes added)
+        var subjectAttrs = request.GetSubjectAttributes();
+        Assert.Single(subjectAttrs.Attributes);
+        Assert.Equal(XacmlRequestAttribute.UserAttribute, subjectAttrs.Attributes.First().AttributeId.OriginalString);
+    }
+
+    /// <summary>
+    /// Sets up mocks and creates a <see cref="TestableContextHandler"/> backed by a
+    /// <see cref="CachingAccessManagementWrapperStub"/> so that cache behaviour can be verified.
+    /// </summary>
+    private CachingAccessManagementWrapperStub SetupEnrichSubjectWithCachingWrapper(
+        int subjectUserId, int resourcePartyId, Guid subjectPartyUuid, Guid resourcePartyUuid,
+        PipResponseDto pipResponse, bool policyHasRoles, bool policyHasAccessPackages)
+    {
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AccessManagementAsPipForRoles)).ReturnsAsync(true);
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.UserAccessPackageAuthorization)).ReturnsAsync(true);
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.SystemUserAccessPackageAuthorization)).ReturnsAsync(false);
+
+        _profileMock.Setup(p => p.GetUserProfile(subjectUserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new UserProfile { UserId = subjectUserId, Party = new Party { SSN = "01017012345", PartyTypeName = PartyType.Person, PartyUuid = subjectPartyUuid } });
+
+        _registerServiceMock.Setup(r => r.GetPartiesAsync(It.Is<List<int>>(l => l.Contains(resourcePartyId)), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Party> { new() { PartyId = resourcePartyId, PartyUuid = resourcePartyUuid } });
+
+        var policy = CreatePolicyWithSubjectAttributes(policyHasRoles, policyHasAccessPackages);
+        _prpMock.Setup(p => p.GetPolicyAsync(It.IsAny<XacmlContextRequest>())).ReturnsAsync(policy);
+
+        var cachingWrapper = new CachingAccessManagementWrapperStub(_memoryCache, pipResponse);
+
+        _cachingSut = new TestableContextHandler(
+            _policyInfoRepoMock.Object,
+            _rolesMock.Object,
+            _oedRolesMock.Object,
+            _partiesMock.Object,
+            _profileMock.Object,
+            _memoryCache,
+            Options.Create(new GeneralSettings { RoleCacheTimeout = 5, MainUnitCacheTimeout = 5 }),
+            _registerServiceMock.Object,
+            _prpMock.Object,
+            cachingWrapper,
+            _featureManagerMock.Object,
+            _resourceRegistryMock.Object);
+
+        return cachingWrapper;
+    }
+
+    private static (XacmlContextRequest request, XacmlResourceAttributes resourceAttrs) CreateEnrichSubjectRequest(int subjectUserId, int resourcePartyId, Guid? resourcePartyUuid = null)
+    {
+        var subjectCategory = new XacmlContextAttributes(new Uri(XacmlConstants.MatchAttributeCategory.Subject));
+        var userAttr = new XacmlAttribute(new Uri(XacmlRequestAttribute.UserAttribute), false);
+        userAttr.AttributeValues.Add(new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), subjectUserId.ToString()));
+        subjectCategory.Attributes.Add(userAttr);
+
+        var resourceCategory = new XacmlContextAttributes(new Uri(XacmlConstants.MatchAttributeCategory.Resource));
+        var request = new XacmlContextRequest(false, false, new[] { subjectCategory, resourceCategory });
+
+        var resourceAttrs = new XacmlResourceAttributes
+        {
+            ResourcePartyValue = resourcePartyId.ToString(),
+            ResourceRegistryId = "test-resource",
+            PartyUuid = resourcePartyUuid ?? Guid.Empty,
+        };
+
+        return (request, resourceAttrs);
+    }
+
+    private static XacmlPolicy CreatePolicyWithSubjectAttributes(bool policyHasRoles, bool policyHasAccessPackages)
+    {
+        var matches = new List<XacmlMatch>();
+
+        if (policyHasRoles)
+        {
+            matches.Add(CreateSubjectMatch(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "DAGL"));
+        }
+
+        if (policyHasAccessPackages)
+        {
+            matches.Add(CreateSubjectMatch(AltinnXacmlConstants.MatchAttributeIdentifiers.AccessPackageAttribute, "klientadministrator"));
+        }
+
+        if (matches.Count == 0)
+        {
+            // Policy with no rules
+            return new XacmlPolicy(new Uri("urn:test:policy"), new Uri("urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-overrides"), new XacmlTarget(Enumerable.Empty<XacmlAnyOf>()));
+        }
+
+        var allOf = new XacmlAllOf(matches);
+        var anyOf = new XacmlAnyOf(new[] { allOf });
+        var target = new XacmlTarget(new[] { anyOf });
+        var rule = new XacmlRule("rule1", XacmlEffectType.Permit) { Target = target };
+
+        var policy = new XacmlPolicy(new Uri("urn:test:policy"), new Uri("urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-overrides"), new XacmlTarget(Enumerable.Empty<XacmlAnyOf>()));
+        policy.Rules.Add(rule);
+
+        return policy;
+    }
+
+    private static XacmlMatch CreateSubjectMatch(string attributeId, string value)
+    {
+        var attrValue = new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), value);
+        var designator = new XacmlAttributeDesignator(
+            new Uri(XacmlConstants.MatchAttributeCategory.Subject),
+            new Uri(attributeId),
+            new Uri(XacmlConstants.DataTypes.XMLString),
+            false);
+
+        return new XacmlMatch(new Uri("urn:oasis:names:tc:xacml:1.0:function:string-equal"), attrValue, designator);
+    }
+
+    private static void AssertContainsAttributeValue(XacmlContextAttributes contextAttributes, string attributeId, string expectedValue)
+    {
+        var matchingAttrs = contextAttributes.Attributes
+            .Where(a => a.AttributeId.OriginalString == attributeId)
+            .SelectMany(a => a.AttributeValues)
+            .Where(v => v.Value == expectedValue)
+            .ToList();
+
+        Assert.True(matchingAttrs.Count > 0, $"Expected attribute '{attributeId}' with value '{expectedValue}' not found in subject attributes.");
+    }
+
+    #endregion
+
     #region Helpers
 
     private static XacmlContextAttributes CreateResourceAttributes(params (string id, string value)[] attributes)
@@ -591,6 +875,9 @@ public class ContextHandlerUnitTest : IDisposable
         public Task<List<OedRoleAssignment>> TestGetOedRoleAssignments(string from, string to)
             => GetOedRoleAssignments(from, to);
 
+        public Task TestEnrichSubjectAttributes(XacmlContextRequest request, XacmlResourceAttributes resourceAttrs, bool isExternalRequest, CancellationToken ct = default)
+            => EnrichSubjectAttributes(request, resourceAttrs, isExternalRequest, ct);
+
         public XacmlAttribute TestGetRoleAttribute(List<Role> roles)
             => GetRoleAttribute(roles);
 
@@ -599,5 +886,59 @@ public class ContextHandlerUnitTest : IDisposable
 
         public XacmlAttribute TestGetPartyIdsAttribute(List<int> partyIds)
             => GetPartyIdsAttribute(partyIds);
+    }
+
+    /// <summary>
+    /// A test double for <see cref="IAccessManagementWrapper"/> that wraps <see cref="GetRolesAndAccessPackages"/>
+    /// with the same <see cref="IMemoryCache"/> logic as the real <see cref="AccessManagementWrapper"/>.
+    /// Tracks how many times the underlying data source was actually consulted (cache misses).
+    /// </summary>
+    private sealed class CachingAccessManagementWrapperStub : IAccessManagementWrapper
+    {
+        private readonly IMemoryCache _memoryCache;
+        private readonly PipResponseDto _pipResponse;
+        private int _getRolesAndAccessPackagesCallCount;
+
+        public int GetRolesAndAccessPackagesCallCount => _getRolesAndAccessPackagesCallCount;
+
+        public CachingAccessManagementWrapperStub(IMemoryCache memoryCache, PipResponseDto pipResponse)
+        {
+            _memoryCache = memoryCache;
+            _pipResponse = pipResponse;
+        }
+
+        public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
+        {
+            var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}";
+
+            if (!_memoryCache.TryGetValue(cacheKey, out PipResponseDto result))
+            {
+                Interlocked.Increment(ref _getRolesAndAccessPackagesCallCount);
+                result = _pipResponse;
+
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    .SetPriority(CacheItemPriority.High)
+                    .SetAbsoluteExpiration(new TimeSpan(0, 5, 0));
+
+                _memoryCache.Set(cacheKey, result, cacheEntryOptions);
+            }
+
+            return Task.FromResult(result);
+        }
+
+        public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
+
+        public Task<IEnumerable<DelegationChangeExternal>> GetAllDelegationChanges(DelegationChangeInput input, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
+
+        public Task<IEnumerable<DelegationChangeExternal>> GetAllDelegationChanges(CancellationToken cancellationToken = default, params Action<DelegationChangeInput>[] actions)
+            => throw new NotImplementedException();
+
+        public Task<IEnumerable<AuthorizedPartyDto>> GetAuthorizedParties(CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
+
+        public Task<AuthorizedPartyDto> GetAuthorizedParty(int partyId, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
     }
 }

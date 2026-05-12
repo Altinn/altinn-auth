@@ -1,13 +1,12 @@
-﻿using System.Text.Json;
-using Altinn.AccessManagement.Tests.Fixtures;
+﻿using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
-using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
+using DelegationPackage = Altinn.AccessMgmt.PersistenceEF.Models.DelegationPackage;
 
 namespace AccessMgmt.Tests.Services;
 
@@ -335,6 +334,7 @@ internal static class TestDataSet
         new Assignment() { Id = Guid.Parse("0195efb8-7c80-717a-85a5-0e127816ed69"), FromId = Entities.First(t => t.Name == "Regnskaperne").Id, ToId = Entities.First(t => t.Name == "Revi").Id, RoleId = RoleConstants.Auditor }, // Revisor 
         new Assignment() { Id = Guid.Parse("0195efb8-7c80-708d-beec-13141fd0fae3"), FromId = Entities.First(t => t.Name == "Revi").Id, ToId = Entities.First(t => t.Name == "William").Id, RoleId = RoleConstants.ManagingDirector }, // Daglig leder
         new Assignment() { Id = Guid.Parse("0195efb8-7c80-759a-8a59-ce8abd161c1b"), FromId = Entities.First(t => t.Name == "Revi").Id, ToId = Entities.First(t => t.Name == "Terje").Id, RoleId = RoleConstants.ChairOfTheBoard }, // Styreleder
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7311-a2df-21bd3352ba24"), FromId = Entities.First(t => t.Name == "Terje").Id, ToId = Entities.First(t => t.Name == "Terje").Id, RoleId = RoleConstants.PrivatePerson }, // Privatperson (self)
     };
 
     internal static Assignment GetAssignment(string fromName, string toName, Guid roleId)
@@ -349,8 +349,36 @@ internal static class TestDataSet
     internal static List<Delegation> Delegations = new()
     #pragma warning restore SA1401 // Fields should be private
     {
-        new Delegation() { FromId = GetAssignment("Baker Johnsen", "Regnskaperne", RoleConstants.Accountant).Id, ToId = GetAssignment("Regnskaperne", "Gunnar", RoleConstants.Agent).Id, FacilitatorId = GetEntity("Regnskaperne").Id },
-        new Delegation() { FromId = GetAssignment("Baker Johnsen", "Regnskaperne", RoleConstants.Accountant).Id, ToId = GetAssignment("Regnskaperne", "Revi", RoleConstants.Auditor).Id, FacilitatorId = GetEntity("Regnskaperne").Id },
+        new Delegation() { Id = Guid.Parse("0195efb8-7c80-7bda-9f72-4ef5c897f619"), FromId = GetAssignment("Baker Johnsen", "Regnskaperne", RoleConstants.Accountant).Id, ToId = GetAssignment("Regnskaperne", "Gunnar", RoleConstants.Agent).Id, FacilitatorId = GetEntity("Regnskaperne").Id },
+        new Delegation() { Id = Guid.Parse("0195efb8-7c80-7743-b054-e946a946c44a"), FromId = GetAssignment("Baker Johnsen", "Regnskaperne", RoleConstants.Accountant).Id, ToId = GetAssignment("Regnskaperne", "Revi", RoleConstants.Auditor).Id, FacilitatorId = GetEntity("Regnskaperne").Id },
+    };
+
+    internal static Delegation GetDelegation(string fromEntityName, string toEntityName)
+    {
+        var fromEntity = Entities.First(t => t.Name == fromEntityName);
+        var toEntity = Entities.First(t => t.Name == toEntityName);
+
+        return Delegations.First(t =>
+            Assignments.Any(fa => fa.Id == t.FromId && fa.FromId == fromEntity.Id) &&
+            Assignments.Any(ta => ta.Id == t.ToId && ta.ToId == toEntity.Id));
+    }
+
+#pragma warning disable SA1401 // Fields should be private
+    internal static List<AssignmentPackage> AssignmentPackages = new()
+    #pragma warning restore SA1401 // Fields should be private
+    {
+        // AOrderSystem package assigned to Nina's Rightholder assignment from Skrik Frisør
+        new AssignmentPackage() { AssignmentId = Assignments.First(t => t.FromId == GetEntity("Skrik Frisør").Id && t.ToId == GetEntity("Nina").Id && t.RoleId == RoleConstants.Rightholder).Id, PackageId = PackageConstants.AOrderSystem.Id },
+    };
+
+#pragma warning disable SA1401 // Fields should be private
+    internal static List<DelegationPackage> DelegationPackages = new()
+    #pragma warning restore SA1401 // Fields should be private
+    {
+        // Accountant packages delegated from Baker Johnsen to Gunnar via Regnskaperne
+        new DelegationPackage() { DelegationId = Guid.Parse("0195efb8-7c80-7bda-9f72-4ef5c897f619"), PackageId = PackageConstants.AccountantWithSigningRights.Id },
+        new DelegationPackage() { DelegationId = Guid.Parse("0195efb8-7c80-7bda-9f72-4ef5c897f619"), PackageId = PackageConstants.AccountantSalary.Id },
+        new DelegationPackage() { DelegationId = Guid.Parse("0195efb8-7c80-7bda-9f72-4ef5c897f619"), PackageId = PackageConstants.AccountantWithoutSigningRights.Id },
     };
 }
 

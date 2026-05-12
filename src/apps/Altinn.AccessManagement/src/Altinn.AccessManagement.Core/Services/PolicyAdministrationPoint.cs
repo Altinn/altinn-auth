@@ -608,7 +608,7 @@ namespace Altinn.AccessManagement.Core.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Writing of delegation policy at path: {PolicyPath} failed. Is delegation blob storage account alive and well?}", policyPath);
+                    _logger.LogError(ex, "Writing of delegation policy at path: {PolicyPath} failed. Is delegation blob storage account alive and well?", policyPath);
                     return null;
                 }
 
@@ -973,7 +973,7 @@ namespace Altinn.AccessManagement.Core.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Writing of delegation policy at path: {PolicyPath} failed. Is delegation blob storage account alive and well?}", policyPath);
+                    _logger.LogError(ex, "Writing of delegation policy at path: {PolicyPath} failed. Is delegation blob storage account alive and well?", policyPath);
                     return null;
                 }
 

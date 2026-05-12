@@ -2,7 +2,7 @@
 
 using Altinn.Urn;
 
-namespace Altinn.Authorization.Models;
+namespace Altinn.Authorization.Api.Contracts.Authorization;
 
 /// <summary>
 /// A unique reference to an access pacakage in the form of an URN.

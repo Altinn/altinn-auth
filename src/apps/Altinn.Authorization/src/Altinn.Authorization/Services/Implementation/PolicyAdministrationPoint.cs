@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -446,7 +446,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Writing of delegation policy at path: {PolicyPath} failed. Is delegation blob storage account alive and well?}", policyPath);
+                    _logger.LogError(ex, "Writing of delegation policy at path: {PolicyPath} failed. Is delegation blob storage account alive and well?", policyPath);
                     return null;
                 }
 
