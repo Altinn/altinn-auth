@@ -306,7 +306,8 @@ public class ContextHandlerUnitTest : IDisposable
     [Fact]
     public async Task EnrichResourceParty_OrgNumber_LooksUpParty()
     {
-        var party = new Party { PartyId = 50001337 };
+        var partyUuid = Guid.NewGuid();
+        var party = new Party { PartyId = 50001337, PartyUuid = partyUuid };
         _registerServiceMock
             .Setup(r => r.PartyLookup("910514318", null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(party);
@@ -325,7 +326,8 @@ public class ContextHandlerUnitTest : IDisposable
     [Fact]
     public async Task EnrichResourceParty_PersonId_ExternalRequest_LooksUpParty()
     {
-        var party = new Party { PartyId = 50001338 };
+        var partyUuid = Guid.NewGuid();
+        var party = new Party { PartyId = 50001338, PartyUuid = partyUuid };
         _registerServiceMock
             .Setup(r => r.PartyLookup(null, "01017012345", It.IsAny<CancellationToken>()))
             .ReturnsAsync(party);
@@ -352,7 +354,7 @@ public class ContextHandlerUnitTest : IDisposable
     public async Task EnrichResourceParty_PartyUuid_LooksUpParty()
     {
         var uuid = Guid.NewGuid();
-        var party = new Party { PartyId = 50001339 };
+        var party = new Party { PartyId = 50001339, PartyUuid = uuid };
         _registerServiceMock
             .Setup(r => r.GetPartiesAsync(It.Is<List<Guid>>(l => l.Contains(uuid)), false, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Party> { party });
@@ -366,14 +368,31 @@ public class ContextHandlerUnitTest : IDisposable
     }
 
     [Fact]
-    public async Task EnrichResourceParty_AlreadyHasParty_NoLookup()
+    public async Task EnrichResourceParty_AlreadyHasPartyAndUuid_NoLookup()
     {
-        var resourceAttrs = new XacmlResourceAttributes { ResourcePartyValue = "50001337" };
+        var resourceAttrs = new XacmlResourceAttributes { ResourcePartyValue = "50001337", PartyUuid = Guid.NewGuid() };
         var contextAttrs = CreateResourceAttributes();
 
         await _sut.TestEnrichResourceParty(contextAttrs, resourceAttrs, false, TestContext.Current.CancellationToken);
 
         _registerServiceMock.Verify(r => r.PartyLookup(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _registerServiceMock.Verify(r => r.GetPartiesAsync(It.IsAny<List<int>>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task EnrichResourceParty_HasPartyValue_NoPartyUuid_ResolvesUuid()
+    {
+        var uuid = Guid.NewGuid();
+        _registerServiceMock
+            .Setup(r => r.GetPartiesAsync(It.Is<List<int>>(l => l.Contains(50001337)), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Party> { new() { PartyId = 50001337, PartyUuid = uuid } });
+
+        var resourceAttrs = new XacmlResourceAttributes { ResourcePartyValue = "50001337" };
+        var contextAttrs = CreateResourceAttributes();
+
+        await _sut.TestEnrichResourceParty(contextAttrs, resourceAttrs, false, TestContext.Current.CancellationToken);
+
+        Assert.Equal(uuid, resourceAttrs.PartyUuid);
     }
 
     #endregion
@@ -687,6 +706,51 @@ public class ContextHandlerUnitTest : IDisposable
         var subjectAttrs = request.GetSubjectAttributes();
         Assert.Single(subjectAttrs.Attributes);
         Assert.Equal(XacmlRequestAttribute.UserAttribute, subjectAttrs.Attributes.First().AttributeId.OriginalString);
+    }
+
+    [Fact]
+    public async Task EnrichSubjectAttributes_WithFeatureFlag_NoPartyUuidOnRequest_ResolvesViaEnrichResourceParty_AndEnrichesRoles()
+    {
+        // Arrange: ResourcePartyValue is set but PartyUuid is NOT (Guid.Empty).
+        // This simulates a request that only specifies the integer party id.
+        // The fix ensures EnrichResourceParty resolves the PartyUuid so that role enrichment succeeds.
+        int subjectUserId = 1001;
+        int resourcePartyId = 50001337;
+        Guid subjectPartyUuid = Guid.Parse("00000000-0000-0000-0000-000000001001");
+        Guid resourcePartyUuid = Guid.Parse("00000000-0000-0000-0000-000000050001");
+
+        var pipResponse = new PipResponseDto
+        {
+            Roles =
+            [
+                RoleUrn.Parse("urn:altinn:external-role:ccr:daglig-leder"),
+                RoleUrn.Parse("urn:altinn:rolecode:dagl"),
+            ],
+            AccessPackages = [],
+        };
+
+        var cachingWrapper = SetupEnrichSubjectWithCachingWrapper(subjectUserId, resourcePartyId, subjectPartyUuid, resourcePartyUuid, pipResponse, policyHasRoles: true, policyHasAccessPackages: false);
+
+        // Create request WITHOUT resourcePartyUuid (left as Guid.Empty)
+        var (request, resourceAttrs) = CreateEnrichSubjectRequest(subjectUserId, resourcePartyId);
+        Assert.Equal(Guid.Empty, resourceAttrs.PartyUuid);
+
+        // Act: First call EnrichResourceParty to resolve PartyUuid from ResourcePartyValue (the fix)
+        var contextAttrs = CreateResourceAttributes();
+        await _cachingSut.TestEnrichResourceParty(contextAttrs, resourceAttrs, false, TestContext.Current.CancellationToken);
+
+        // Verify that EnrichResourceParty resolved the PartyUuid
+        Assert.Equal(resourcePartyUuid, resourceAttrs.PartyUuid);
+
+        // Now enrich subject attributes - this should succeed because PartyUuid is now resolved
+        await _cachingSut.TestEnrichSubjectAttributes(request, resourceAttrs, isExternalRequest: false, TestContext.Current.CancellationToken);
+
+        // Assert: roles are enriched
+        var subjectAttrs = request.GetSubjectAttributes();
+        AssertContainsAttributeValue(subjectAttrs, "urn:altinn:external-role:ccr", "daglig-leder");
+        AssertContainsAttributeValue(subjectAttrs, "urn:altinn:rolecode", "dagl");
+
+        Assert.Equal(1, cachingWrapper.GetRolesAndAccessPackagesCallCount);
     }
 
     /// <summary>

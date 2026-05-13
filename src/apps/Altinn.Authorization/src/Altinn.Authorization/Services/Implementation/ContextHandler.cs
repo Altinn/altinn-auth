@@ -236,6 +236,8 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 {
                     resourceAttributes.ResourcePartyValue = party.PartyId.ToString();
                     requestResourceAttributes.Attributes.Add(GetPartyIdsAttribute(new List<int> { party.PartyId }));
+
+                    resourceAttributes.PartyUuid = party.PartyUuid.Value;
                 }
             }
             else if (string.IsNullOrEmpty(resourceAttributes.ResourcePartyValue) && !string.IsNullOrEmpty(resourceAttributes.PersonId))
@@ -250,6 +252,8 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 {
                     resourceAttributes.ResourcePartyValue = party.PartyId.ToString();
                     requestResourceAttributes.Attributes.Add(GetPartyIdsAttribute(new List<int> { party.PartyId }));
+
+                    resourceAttributes.PartyUuid = party.PartyUuid.Value;
                 }
             }
             else if (string.IsNullOrEmpty(resourceAttributes.ResourcePartyValue) && resourceAttributes.PartyUuid != Guid.Empty)
@@ -260,6 +264,17 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     Party party = parties.FirstOrDefault();
                     resourceAttributes.ResourcePartyValue = party.PartyId.ToString();
                     requestResourceAttributes.Attributes.Add(GetPartyIdsAttribute(new List<int> { party.PartyId }));
+
+                    resourceAttributes.PartyUuid = party.PartyUuid.Value;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(resourceAttributes.ResourcePartyValue) && resourceAttributes.PartyUuid == Guid.Empty && int.TryParse(resourceAttributes.ResourcePartyValue, out int partyId))
+            {
+                List<Party> party = await _registerService.GetPartiesAsync(new List<int> { partyId }, cancellationToken: cancellationToken);
+                if (party.Count == 1 && party[0].PartyUuid.HasValue)
+                {
+                    resourceAttributes.PartyUuid = party[0].PartyUuid.Value;
                 }
             }
         }
@@ -534,20 +549,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             // Enrich with access package attributes if policy contains rules for access packages and request has a specified resource party id
             if (policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.AccessPackageAttribute) && resourcePartyId != 0)
             {
-                if (resourceAttr.PartyUuid == Guid.Empty)
-                {
-                    List<Party> party = await _registerService.GetPartiesAsync(new List<int> { resourcePartyId }, cancellationToken: cancellationToken);
-
-                    if (party.Count == 1 && party[0].PartyUuid.HasValue)
-                    {
-                        resourceAttr.PartyUuid = party[0].PartyUuid.Value;
-                    }
-                    else
-                    {
-                        return;
-                    }
-                }
-
                 if (await _featureManager.IsEnabledAsync(FeatureFlags.SystemUserAccessPackageAuthorization) && subjectSystemUser != Guid.Empty)
                 {
                     await AddAccessPackageAttributes(subjectContextAttributes, subjectSystemUser, resourceAttr.PartyUuid, cancellationToken);
