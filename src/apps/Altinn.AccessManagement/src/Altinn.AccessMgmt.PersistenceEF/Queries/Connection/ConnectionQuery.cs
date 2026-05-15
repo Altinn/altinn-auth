@@ -14,6 +14,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 /// </summary>
 public class ConnectionQuery(AppDbContext db)
 {
+    // This is a workaround to prevent Postgres from choosing a bad join order when there is a filter on FromId in delegations.
+    // It looks like the same join order is chosen no matter if we use a low value (1) or a very large value. A very large value is
+    // chosen to ensure that the cutoff doesn't really reduce the result set.
+    private const int PostgresPlanHintTakeLimit = 100_000_000;
     private List<ConnectionQueryExtendedRecord>? _rightholderAssignments = null;
 
     public async Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthersAsync(ConnectionQueryFilter filter, bool useNewQuery = true, CancellationToken ct = default)
@@ -204,11 +208,23 @@ public class ConnectionQuery(AppDbContext db)
     {
         var toId = filter.ToIds.First();
         var fromSet = filter.FromIds?.Count > 0 ? new HashSet<Guid>(filter.FromIds) : null;
+        var fromSetForDelegation = fromSet != null && filter.IncludeDelegation ? new HashSet<Guid>(fromSet) : [];
         var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
         var roleSetExclude = filter.ExcludeRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ExcludeRoleIds) : [];
         roleSetExclude.Add(RoleConstants.Supplier.Id); // Supplier role should never be included in results as it is only used for maskinporten schemas.
         var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
         var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
+
+        if (fromSet != null && filter.IncludeDelegation)
+        {
+            var parentIds = db.Entities
+                .Where(e => fromSet.Distinct().Contains(e.Id) && e.ParentId != null)
+                .AsNoTracking()
+                .Select(e => e.ParentId.Value)
+                .Distinct()
+                .ToList();
+            fromSetForDelegation.UnionWith(parentIds);
+        }
 
         var reviRegnRoleSet = new HashSet<Guid>
         {
@@ -295,33 +311,42 @@ public class ConnectionQuery(AppDbContext db)
 
         var delegations =
             db.Assignments
-                .Where(t => t.ToId == toId)
-                .Where(t => t.RoleId == RoleConstants.Agent.Id)
+                .WhereIf(fromSetForDelegation.Count > 0, x => fromSetForDelegation.Contains(x.FromId))
                 .WhereIf(!FeatureFlags.UseInstanceDelegationEF, t => t.Audit_ChangedBySystem != SystemEntityConstants.InstanceRightImportSystem)
                 .Join(
                     db.Delegations,
-                    dkr => dkr.Id,
-                    d => d.ToId,
-                    (dkr, d) => new { dkr, d }
-                )
-                .Join(
-                    db.Assignments.WhereIf(!FeatureFlags.UseInstanceDelegationEF, t => t.Audit_ChangedBySystem != SystemEntityConstants.InstanceRightImportSystem),
-                    x => x.d.FromId,
                     fa => fa.Id,
-                    (x, fa) => new ConnectionQueryBaseRecord
-                    {
-                        AssignmentId = null,
-                        DelegationId = x.d.Id,
-                        FromId = fa.FromId,
-                        ToId = x.dkr.ToId,
-                        RoleId = fa.RoleId,
-                        ViaId = fa.ToId,
-                        ViaRoleId = x.dkr.RoleId,
-                        Reason = ConnectionReason.Delegation,
-                        IsKeyRoleAccess = false,
-                        IsMainUnitAccess = false,
-                        IsRoleMap = false,
-                    });
+                    d => d.FromId,
+                    (fa, d) => new { fa, d }
+                )
+                //// Generate a postgres limit to force a better execution plan when there's a party filter. Ref. comment on constant PostgresPlanHintTakeLimit.
+                .TakeIf(fromSetForDelegation.Count > 0, PostgresPlanHintTakeLimit)
+                .Join(
+                    db.Assignments,
+                    x => x.d.ToId,
+                    dkr => dkr.Id,
+                    (x, dkr) => new { x, dkr }
+                )
+                .Where(t =>
+                    t.dkr.ToId == toId &&
+                    t.dkr.RoleId == RoleConstants.Agent.Id &&
+                    (FeatureFlags.UseInstanceDelegationEF ||
+                     t.dkr.Audit_ChangedBySystem != SystemEntityConstants.InstanceRightImportSystem)
+                )
+                .Select(t => new ConnectionQueryBaseRecord
+                {
+                    AssignmentId = null,
+                    DelegationId = t.x.d.Id,
+                    FromId = t.x.fa.FromId,
+                    ToId = t.dkr.ToId,
+                    RoleId = t.x.fa.RoleId,
+                    ViaId = t.x.fa.ToId,
+                    ViaRoleId = t.dkr.RoleId,
+                    Reason = ConnectionReason.Delegation,
+                    IsKeyRoleAccess = false,
+                    IsMainUnitAccess = false,
+                    IsRoleMap = false,
+                });
 
         var a2 = filter.IncludeDelegation
             ? a1.Concat(rolemap).Concat(delegations)

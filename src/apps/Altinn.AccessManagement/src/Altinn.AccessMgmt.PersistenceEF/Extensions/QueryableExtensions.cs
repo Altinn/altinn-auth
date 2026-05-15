@@ -13,6 +13,14 @@ public static class QueryableExtensions
         return condition ? source.Where(predicate) : source;
     }
 
+    public static IQueryable<T> TakeIf<T>(
+        this IQueryable<T> source,
+        bool condition,
+        int count)
+    {
+        return condition ? source.Take(count) : source;
+    }
+
     public static IQueryable<T> WhereMatchIfSet<T>(
     this IQueryable<T> query,
     HashSet<Guid>? ids,
