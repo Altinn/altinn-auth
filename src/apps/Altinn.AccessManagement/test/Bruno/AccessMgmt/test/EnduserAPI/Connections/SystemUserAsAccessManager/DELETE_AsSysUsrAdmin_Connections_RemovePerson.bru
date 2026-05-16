@@ -1,0 +1,54 @@
+meta {
+  name: DELETE_AsSysUsrAdmin_Connections_RemovePerson
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{toPersonUuid}}&cascade=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toPersonUuid}}
+  cascade: true
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./test/EnduserAPI/Connections/SystemUserAsAccessManager/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "DELETE_AsSysUsrAdmin_Connections_RemovePerson");
+  
+  bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+  bru.setVar("toPersonUuid", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.personRightholderToAdd.partyUuid);
+  
+  var getTokenParameters = {
+    auth_systemUserId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.partyUuid,
+    auth_orgNo: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.orgno,
+    auth_clientId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.clientId,
+    auth_tokenType: sharedtestdata.authTokenType.systemUser,
+    auth_scopes: sharedtestdata.auth_scopes.enduserSystemToOthersWrite
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./test/EnduserAPI/Connections/SystemUserAsAccessManager/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  test(bru.getVar("requestName"), function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(204);  
+  });
+}
+
+docs {
+  Lager connection til person
+}

@@ -1,0 +1,63 @@
+meta {
+  name: POST_AsSysUsrAdmin_Resource_ToPerson
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/rights?party={{party}}&from={{party}}&to={{toPersonUuid}}&resource={{resource}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{toPersonUuid}}
+  resource: {{resource}}
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "DirectRightKeys": [
+      "01dc6fefd5fb4b227cc3c3a2a54770552d8d70bbfd92904b64830605827c6ce7a7", 
+      "0106eba799a182fa816d64d80160f6571ead1e44ccf9cfb0377712e791e00d8e00"
+    ]
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./test/EnduserAPI/Connections/SystemUserAsAccessManager/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "POST_AsSysUsrAdmin_Resource_ToPerson");
+  
+  bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+  bru.setVar("toPersonUuid", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.personRightholderToAdd.partyUuid);
+  bru.setVar("resource", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.hasResource);
+  
+  var getTokenParameters = {
+    auth_systemUserId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.partyUuid,
+    auth_orgNo: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.orgno,
+    auth_clientId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.clientId,
+    auth_tokenType: sharedtestdata.authTokenType.systemUser,
+    auth_scopes: sharedtestdata.auth_scopes.enduserSystemToOthersWrite
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  
+  test(bru.getVar("requestName"), function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(201);
+  });
+}

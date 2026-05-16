@@ -1,0 +1,88 @@
+meta {
+  name: GET_AsSysUsrAdmin_Resource_DelegationCheck
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/delegationcheck?party={{party}}&resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  resource: {{resource}}
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+vars:pre-request {
+  party: 08cb10ee-4f3d-461a-8b11-a6604fdf2cc2
+  resource: ttd-test-enkeltjeneste-ressurs-at22
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./test/EnduserAPI/Connections/SystemUserAsAccessManager/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "GET_AsSysUsrAdmin_Resource_DelegationCheck");
+  
+  bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+  bru.setVar("resource", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.hasResource);
+  
+  var getTokenParameters = {
+    auth_systemUserId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.partyUuid,
+    auth_orgNo: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.orgno,
+    auth_clientId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.clientId,
+    auth_tokenType: sharedtestdata.authTokenType.systemUser,
+    auth_scopes: sharedtestdata.auth_scopes.enduserSystemToOthersWrite
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+script:post-response {
+  
+  
+}
+
+tests {
+  const testdata = require(`./test/EnduserAPI/Connections/SystemUserAsAccessManager/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  test(bru.getVar("requestName"), function() {
+  
+    const data = res.getBody();
+    const expectedActions = ["read", "write"];
+  
+    expect(data.rights).to.be.an("array");
+    expect(data.rights.length).to.equal(expectedActions.length);
+    
+    const actualActions = data.rights.map(r => r.right.action.value);
+  
+    expect(actualActions).to.have.members(expectedActions);
+  
+    data.rights.forEach(r => {
+      expect(r.result).to.equal(true);
+      expect(r.reasonCodes).to.include("DelegationAccess");
+  
+      // Key should exist
+      expect(r.right.key).to.exist;
+  
+      // Resource in right should match the same resource refId
+      expect(r.right.resource).to.be.an("array");
+      expect(r.right.resource[0]).to.have.property("value", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.hasResource);
+  
+    });
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

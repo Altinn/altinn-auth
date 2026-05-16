@@ -1,0 +1,66 @@
+meta {
+  name: POST_AsSysUsrAdmin_Connections_AddPerson
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+}
+
+body:json {
+   {
+    "personidentifier": "{{pid}}", // fnr or username
+    "lastName": "{{lastName}}"
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./test/EnduserAPI/Connections/SystemUserAsAccessManager/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "POST_AsSysUsrAdmin_Connections_AddPerson");
+  
+  bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+  bru.setVar("pid", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.personRightholderToAdd.pid);
+  bru.setVar("lastName", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.personRightholderToAdd.lastName);
+  
+  var getTokenParameters = {
+    auth_systemUserId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.partyUuid,
+    auth_orgNo: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.orgno,
+    auth_clientId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.clientId,
+    auth_tokenType: sharedtestdata.authTokenType.systemUser,
+    auth_scopes: sharedtestdata.auth_scopes.enduserSystemToOthersWrite
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./test/EnduserAPI/Connections/SystemUserAsAccessManager/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  test(bru.getVar("requestName"), function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(200);
+    assert.isOk(data, "Expected response body to return created assignment");
+    
+    assert.equal(data.fromId, bru.getVar("party").toLowerCase());
+    assert.equal(data.toId, testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.personRightholderToAdd.partyUuid);
+    assert.equal(data.roleId, "42cae370-2dc1-4fdc-9c67-c2f4b0f0f829"); //Rettighetshaver
+    
+  });
+}
+
+docs {
+  Lager connection til person
+}
