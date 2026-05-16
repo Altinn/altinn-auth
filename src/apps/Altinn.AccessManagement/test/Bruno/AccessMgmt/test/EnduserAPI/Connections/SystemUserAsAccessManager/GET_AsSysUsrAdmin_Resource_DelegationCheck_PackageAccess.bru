@@ -1,7 +1,7 @@
 meta {
-  name: GET_AsSysUsrAdmin_Resource_DelegationCheck
+  name: GET_AsSysUsrAdmin_Resource_DelegationCheck_PackageAccess
   type: http
-  seq: 4
+  seq: 6
 }
 
 get {
@@ -29,10 +29,10 @@ script:pre-request {
   const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   const testdata = require(`./test/EnduserAPI/Connections/SystemUserAsAccessManager/testdata/${bru.getEnvVar("tokenEnv")}.js`);
   
-  bru.setVar("requestName", "GET_AsSysUsrAdmin_Resource_DelegationCheck");
+  bru.setVar("requestName", "GET_AsSysUsrAdmin_Resource_DelegationCheck_PackageAccess");
   
   bru.setVar("party", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
-  bru.setVar("resource", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.hasResource);
+  bru.setVar("resource", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.hasPackageResource);
   
   var getTokenParameters = {
     auth_systemUserId: testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.partyUuid,
@@ -58,7 +58,7 @@ tests {
   test(bru.getVar("requestName"), function() {
   
     const data = res.getBody();
-    const expectedActions = ["read", "write"];
+    const expectedActions = ["read", "write", "delete", "instantiate", "sign", "confirm"];
   
     expect(data.rights).to.be.an("array");
     expect(data.rights.length).to.equal(expectedActions.length);
@@ -69,14 +69,14 @@ tests {
   
     data.rights.forEach(r => {
       expect(r.result).to.equal(true);
-      expect(r.reasonCodes).to.include("DelegationAccess");
+      expect(r.reasonCodes).to.include("PackageAccess");
   
       // Key should exist
       expect(r.right.key).to.exist;
   
       // Resource in right should match the same resource refId
       expect(r.right.resource).to.be.an("array");
-      expect(r.right.resource[0]).to.have.property("value", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.hasResource);
+      expect(r.right.resource[0]).to.have.property("value", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.hasPackageResource);
   
     });
   });

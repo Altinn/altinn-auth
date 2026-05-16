@@ -1297,6 +1297,11 @@ public partial class ConnectionService(
 
         List<Rule> result = await singleRightsService.TryWriteDelegationPolicyRules(from, to, resourceObj, keys, by, ignoreExistingPolicy: false, cancellationToken: cancellationToken);
 
+        if (!result.All(r => r.CreatedSuccessfully))
+        {
+            return Problems.DelegationPolicyRuleWriteFailed;
+        }
+
         await AccessAddedNotification.Upsert(
             dbContext,
             from.Id,
@@ -1306,11 +1311,6 @@ public partial class ConnectionService(
             appsettings?.Value?.Notifications?.AccessAddedNotifyInSeconds ?? AccessAddedNotification.DefaultNotifyInSeconds,
             cancellationToken
         );
-
-        if (!result.All(r => r.CreatedSuccessfully))
-        {
-            return Problems.DelegationPolicyRuleWriteFailed;
-        }
 
         return true;
     }

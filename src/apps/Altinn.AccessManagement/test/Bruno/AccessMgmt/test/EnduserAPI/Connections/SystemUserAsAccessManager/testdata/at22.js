@@ -207,6 +207,7 @@ module.exports =
       "clientId": "76db1f73-9895-41c0-8f76-09e8ebaee6c9",
       "partyUuid": "171bd27b-31d2-409b-89b7-b88cb5b6bae3",
       "hasPackage": "posttjenester",
+      "hasPackageResource": "tilgangspakke_delegering_ressurs",
       "hasResource": "authz_bruno_gar_resource1",
       "personRightholderToAdd": {
         "name": "UMUSIKALSK SEPTEMBER KARTLEGGING",

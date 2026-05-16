@@ -438,7 +438,7 @@ namespace Altinn.AccessManagement.Core.Helpers
                 if (resourceMatchType != ResourceAttributeMatchType.None
                     && offeredByPartyId != 0
                     && (coveredByPartyId.HasValue || coveredByUserId.HasValue || toUuid.HasValue)
-                    && (delegatedByUserId.HasValue || delegatedByPartyId.HasValue))
+                    && (delegatedByUserId.HasValue || delegatedByPartyId.HasValue || performedByUuid.HasValue))
                 {
                     return true;
                 }
