@@ -50,7 +50,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
 
         if (result == 0)
         {
-            throw new Exception("Failed to create delegation");
+            throw new InvalidOperationException("Failed to create delegation");
         }
 
         return await db.Delegations.AsNoTracking().SingleAsync(t => t.Id == delegation.Id, cancellationToken);
@@ -85,7 +85,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
 
         if (assignmentPackages.Count(t => t.AssignmentPackageId == packageId) == 0 && rolePackages.Count(t => t.Id == packageId) == 0)
         {
-            throw new Exception($"The source assignment does not have the package '{package.Name}'");
+            throw new InvalidOperationException($"The source assignment does not have the package '{package.Name}'");
         }
 
         db.DelegationPackages.Add(new DelegationPackage()
@@ -128,7 +128,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
             && roleResources.Count(t => t.Id == resourceId) == 0
             )
         {
-            throw new Exception($"The source assignment does not have the resource '{resource.Name}'");
+            throw new InvalidOperationException($"The source assignment does not have the resource '{resource.Name}'");
         }
 
         await db.DelegationResources.AddAsync(
@@ -148,10 +148,10 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
     public async Task<IEnumerable<CreateDelegationResponseDto>> CreateClientDelegation(CreateSystemDelegationRequestDto request, Guid facilitatorPartyId, CancellationToken cancellationToken)
     {
         // Find Facilitator
-        var facilitator = await entityService.GetEntity(facilitatorPartyId, cancellationToken) ?? throw new Exception(string.Format("Party not found '{0}' for facilitator", facilitatorPartyId));
+        var facilitator = await entityService.GetEntity(facilitatorPartyId, cancellationToken) ?? throw new KeyNotFoundException($"Party not found '{facilitatorPartyId}' for facilitator");
 
         // Find Client
-        var client = await entityService.GetEntity(request.ClientId, cancellationToken) ?? throw new Exception(string.Format("Party not found '{0}' for client", request.ClientId));
+        var client = await entityService.GetEntity(request.ClientId, cancellationToken) ?? throw new KeyNotFoundException($"Party not found '{request.ClientId}' for client");
 
         // Create Delegation and DelegationPackage(s)
         var delegations = await CreateClientDelegations(request, client, facilitator, cancellationToken);
@@ -164,13 +164,13 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
     public async Task<int> RevokeImportedClientDelegation(ImportClientDelegationRequestDto request, AuditValues audit, bool onlyRemoveA2Packages = true, CancellationToken cancellationToken = default)
     {
         // Find Client
-        var client = await entityService.GetEntity(request.ClientId, cancellationToken) ?? throw new Exception(string.Format("Party not found '{0}' for client", request.ClientId));
+        var client = await entityService.GetEntity(request.ClientId, cancellationToken) ?? throw new KeyNotFoundException($"Party not found '{request.ClientId}' for client");
 
         Entity facilitator = null;
         if (request.Facilitator.HasValue)
         {
             // Find Facilitator
-            facilitator = await entityService.GetEntity(request.Facilitator.Value, cancellationToken) ?? throw new Exception(string.Format("Party not found '{0}' for facilitator", request.Facilitator.Value));
+            facilitator = await entityService.GetEntity(request.Facilitator.Value, cancellationToken) ?? throw new KeyNotFoundException($"Party not found '{request.Facilitator.Value}' for facilitator");
 
             // Delete Delegation
             return await RevokeImportedClientDelegations(request, client, facilitator, audit, onlyRemoveA2Packages, cancellationToken);
@@ -197,7 +197,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
         int packagesRevoked = 0;
 
         // Find Agent Role
-        var agentRole = await db.Roles.AsNoTracking().FirstOrDefaultAsync(t => string.Equals(t.Code.ToLower(), request.AgentRole.ToLower()), cancellationToken) ?? throw new Exception(string.Format("Role not found '{0}'", request.AgentRole));
+        var agentRole = await db.Roles.AsNoTracking().FirstOrDefaultAsync(t => string.Equals(t.Code.ToLower(), request.AgentRole.ToLower()), cancellationToken) ?? throw new KeyNotFoundException($"Role not found '{request.AgentRole}'");
 
         // Verify Delegation Packages
         Dictionary<string, List<PackageDto>> rolepacks = await VerifyDelegationPackages(request);
@@ -220,7 +220,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
 
             var clientPackages = await assignmentService.GetPackagesForAssignment(clientAssignment.Id);
 
-            var agent = await entityService.GetEntity(request.AgentId, cancellationToken) ?? throw new Exception(string.Format("Could not find party '{0}'", request.AgentId));
+            var agent = await entityService.GetEntity(request.AgentId, cancellationToken) ?? throw new KeyNotFoundException($"Could not find party '{request.AgentId}'");
             var agentAssignment = await assignmentService.GetAssignment(facilitator.Id, agent.Id, agentRole.Id, cancellationToken);
             if (agentAssignment == null)
             {
@@ -293,10 +293,10 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
     public async Task<IEnumerable<CreateDelegationResponseDto>> ImportClientDelegation(ImportClientDelegationRequestDto request, AuditValues audit, CancellationToken cancellationToken)
     {
         // Find Facilitator
-        var facilitator = await entityService.GetEntity(request.Facilitator.Value, cancellationToken) ?? throw new Exception(string.Format("Party not found '{0}' for facilitator", request.Facilitator.Value));
+        var facilitator = await entityService.GetEntity(request.Facilitator.Value, cancellationToken) ?? throw new KeyNotFoundException($"Party not found '{request.Facilitator.Value}' for facilitator");
 
         // Find Client
-        var client = await entityService.GetEntity(request.ClientId, cancellationToken) ?? throw new Exception(string.Format("Party not found '{0}' for client", request.ClientId));
+        var client = await entityService.GetEntity(request.ClientId, cancellationToken) ?? throw new KeyNotFoundException($"Party not found '{request.ClientId}' for client");
 
         // Create Delegation and DelegationPackage(s)
         var delegations = await ImportClientDelegations(request, client, facilitator, audit, cancellationToken);
@@ -310,7 +310,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
         var result = new List<Delegation>();
 
         // Find Agent Role
-        var agentRole = await db.Roles.AsNoTracking().FirstOrDefaultAsync(t => t.Code == request.AgentRole, cancellationToken) ?? throw new Exception(string.Format("Role not found '{0}'", request.AgentRole));
+        var agentRole = await db.Roles.AsNoTracking().FirstOrDefaultAsync(t => t.Code == request.AgentRole, cancellationToken) ?? throw new KeyNotFoundException($"Role not found '{request.AgentRole}'");
 
         // Verify Delegation Packages
         Dictionary<string, List<PackageDto>> rolepacks = await VerifyDelegationPackages(request);
@@ -319,10 +319,10 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
         foreach (var rp in rolepacks)
         {
             // Find ClientPartyId Role
-            var clientRole = (await roleService.GetByCode(rp.Key)).First() ?? throw new Exception(string.Format("Role not found '{0}'", rp.Key));
+            var clientRole = (await roleService.GetByCode(rp.Key)).FirstOrDefault() ?? throw new KeyNotFoundException($"Role not found '{rp.Key}'");
 
             // Find ClientAssignment
-            var clientAssignment = await assignmentService.GetAssignment(client.Id, facilitator.Id, clientRole.Id, cancellationToken) ?? throw new Exception(string.Format("Could not find client assignment '{0}' - {1} - {2}", client.Name, clientRole.Code, facilitator.Name));
+            var clientAssignment = await assignmentService.GetAssignment(client.Id, facilitator.Id, clientRole.Id, cancellationToken) ?? throw new KeyNotFoundException($"Could not find client assignment '{client.Name}' - {clientRole.Code} - {facilitator.Name}");
             var clientPackages = await assignmentService.GetPackagesForAssignment(clientAssignment.Id);
 
             Delegation delegation = null;
@@ -332,7 +332,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
                 var clientPackage = clientPackages.FirstOrDefault(t => t.PackageId == package.Id);
                 if (clientPackage == null)
                 {
-                    throw new Exception(string.Format("Party does not have the package '{0}'", package.Urn));
+                    throw new InvalidOperationException($"Party does not have the package '{package.Urn}'");
                 }
 
                 if (delegation == null)
@@ -340,14 +340,14 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
                     if (agentAssignment == null)
                     {
                         // Find Agent Entity
-                        var agent = await entityService.GetEntity(request.AgentId, cancellationToken) ?? throw new Exception(string.Format("Could not find party '{0}'", request.AgentId));
+                        var agent = await entityService.GetEntity(request.AgentId, cancellationToken) ?? throw new KeyNotFoundException($"Could not find party '{request.AgentId}'");
 
                         // Find or Create Agent Assignment
-                        agentAssignment = await GetOrCreateAssignment(facilitator, agent, agentRole, audit, cancellationToken) ?? throw new Exception(string.Format("Could not find or create assignment '{0}' - {1} - {2}", facilitator.Name, agentRole.Code, agent.Name));
+                        agentAssignment = await GetOrCreateAssignment(facilitator, agent, agentRole, audit, cancellationToken) ?? throw new InvalidOperationException($"Could not find or create assignment '{facilitator.Name}' - {agentRole.Code} - {agent.Name}");
                     }
 
                     // Find or Create Delegation
-                    delegation = await GetOrCreateDelegation(clientAssignment, agentAssignment, facilitator, audit, cancellationToken) ?? throw new Exception(string.Format("Could not find or create delegation '{0}' - {1} - {2}", client.Name, facilitator.Name, agentAssignment.Id));
+                    delegation = await GetOrCreateDelegation(clientAssignment, agentAssignment, facilitator, audit, cancellationToken) ?? throw new InvalidOperationException($"Could not find or create delegation '{client.Name}' - {facilitator.Name} - {agentAssignment.Id}");
                 }
 
                 // Find AssignmentPackageId or RolePackageId
@@ -358,7 +358,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
                 var delegationPackage = await GetOrCreateDelegationPackage(delegation.Id, package.Id, assignmentPackageId, rolePackageId, audit, cancellationToken);
                 if (delegationPackage == null)
                 {
-                    throw new Exception("Unable to add package to delegation");
+                    throw new InvalidOperationException("Unable to add package to delegation");
                 }
             }
 
@@ -395,7 +395,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
         var result = new List<Delegation>();
 
         // Find Agent Role
-        var agentRole = await db.Roles.AsNoTracking().FirstOrDefaultAsync(t => t.Code == request.AgentRole, cancellationToken) ?? throw new Exception(string.Format("Role not found '{0}'", request.AgentRole));
+        var agentRole = await db.Roles.AsNoTracking().FirstOrDefaultAsync(t => t.Code == request.AgentRole, cancellationToken) ?? throw new KeyNotFoundException($"Role not found '{request.AgentRole}'");
 
         // Verify Delegation Packages
         Dictionary<string, List<PackageDto>> rolepacks = await VerifyDelegationPackages(request);
@@ -404,10 +404,10 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
         foreach (var rp in rolepacks)
         {
             // Find ClientPartyId Role
-            var clientRole = (await roleService.GetByCode(rp.Key)).First() ?? throw new Exception(string.Format("Role not found '{0}'", rp.Key));
+            var clientRole = (await roleService.GetByCode(rp.Key)).FirstOrDefault() ?? throw new KeyNotFoundException($"Role not found '{rp.Key}'");
 
             // Find ClientAssignment
-            var clientAssignment = await assignmentService.GetAssignment(client.Id, facilitator.Id, clientRole.Id, cancellationToken) ?? throw new Exception(string.Format("Could not find client assignment '{0}' - {1} - {2}", client.Name, clientRole.Code, facilitator.Name));
+            var clientAssignment = await assignmentService.GetAssignment(client.Id, facilitator.Id, clientRole.Id, cancellationToken) ?? throw new KeyNotFoundException($"Could not find client assignment '{client.Name}' - {clientRole.Code} - {facilitator.Name}");
             var clientPackages = await assignmentService.GetPackagesForAssignment(clientAssignment.Id);
 
             Delegation delegation = null;
@@ -419,7 +419,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
                 var clientPackage = clientPackages.FirstOrDefault(t => t.PackageId == package.Id);
                 if (clientPackage == null)
                 {
-                    throw new Exception(string.Format("Party does not have the package '{0}'", package.Urn));
+                    throw new InvalidOperationException($"Party does not have the package '{package.Urn}'");
                 }
 
                 if (delegation == null)
@@ -427,20 +427,20 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
                     if (agentAssignment == null)
                     {
                         // Find or Create Agent Entity
-                        var agent = await entityService.GetOrCreateEntity(request.AgentId, request.AgentName, request.AgentId.ToString(), EntityTypeConstants.SystemUser.Entity.Name, EntityVariantConstants.AgentSystem.Entity.Name, cancellationToken) ?? throw new Exception(string.Format("Could not find or create party '{0}' for agent", request.AgentId));
+                        var agent = await entityService.GetOrCreateEntity(request.AgentId, request.AgentName, request.AgentId.ToString(), EntityTypeConstants.SystemUser.Entity.Name, EntityVariantConstants.AgentSystem.Entity.Name, cancellationToken) ?? throw new InvalidOperationException($"Could not find or create party '{request.AgentId}' for agent");
 
                         // Handle existing agent entity found with different type or variant
                         if (agent.TypeId != EntityTypeConstants.SystemUser.Id || agent.VariantId != EntityVariantConstants.AgentSystem.Id)
                         {
-                            throw new Exception(string.Format("An entity with id '{0}' already exists and is not a valid agent SystemUser", request.AgentId));
+                            throw new InvalidOperationException($"An entity with id '{request.AgentId}' already exists and is not a valid agent SystemUser");
                         }
 
                         // Find or Create Agent Assignment
-                        agentAssignment = await GetOrCreateAssignment(facilitator, agent, agentRole) ?? throw new Exception(string.Format("Could not find or create assignment '{0}' - {1} - {2}", facilitator.Name, agentRole.Code, agent.Name));
+                        agentAssignment = await GetOrCreateAssignment(facilitator, agent, agentRole) ?? throw new InvalidOperationException($"Could not find or create assignment '{facilitator.Name}' - {agentRole.Code} - {agent.Name}");
                     }
 
                     // Find or Create Delegation
-                    delegation = await GetOrCreateDelegation(clientAssignment, agentAssignment, facilitator) ?? throw new Exception(string.Format("Could not find or create delegation '{0}' - {1} - {2}", client.Name, facilitator.Name, agentAssignment.Id));
+                    delegation = await GetOrCreateDelegation(clientAssignment, agentAssignment, facilitator) ?? throw new InvalidOperationException($"Could not find or create delegation '{client.Name}' - {facilitator.Name} - {agentAssignment.Id}");
                 }
 
                 // Find AssignmentPackageId or RolePackageId
@@ -451,7 +451,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
                 var delegationPackage = await GetOrCreateDelegationPackage(delegation.Id, package.Id, assignmentPackageId, rolePackageId);
                 if (delegationPackage == null)
                 {
-                    throw new Exception("Unable to add package to delegation");
+                    throw new InvalidOperationException("Unable to add package to delegation");
                 }
             }
 
@@ -472,7 +472,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
                 var package = await packageService.GetPackageByUrnValue(packageUrn);
                 if (package == null)
                 {
-                    throw new Exception(string.Format("Package not found '{0}'", packageUrn));
+                    throw new KeyNotFoundException($"Package not found '{packageUrn}'");
                 }
 
                 rolepacks[role].Add(package);
@@ -493,7 +493,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
                 var package = await packageService.GetPackageByUrnValue(packageUrn);
                 if (package == null)
                 {
-                    throw new Exception(string.Format("Package not found '{0}'", packageUrn));
+                    throw new KeyNotFoundException($"Package not found '{packageUrn}'");
                 }
 
                 rolepacks[role].Add(package);
@@ -605,7 +605,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
             // Get system from token
             if (roleProvider.Code != "sys-altinn3")
             {
-                throw new Exception(string.Format("You cannot create assignment with the role '{0}' ({1})", role.Name, role.Code));
+                throw new InvalidOperationException($"You cannot create assignment with the role '{role.Name}' ({role.Code})");
             }
 
             return await assignmentService.GetOrCreateAssignment(from.Id, to.Id, role.Id, audit, cancellationToken);
