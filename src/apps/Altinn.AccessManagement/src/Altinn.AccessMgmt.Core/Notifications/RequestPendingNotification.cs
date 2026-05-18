@@ -1,8 +1,11 @@
 using System.Diagnostics;
+using System.Text.Json;
 using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Models.Base;
+using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.Core.Notifications;
 
@@ -144,13 +147,24 @@ public static class RequestPendingNotification
         CancellationToken ct = default
     )
     {
-        await db.OutboxMessages.UpsertOutboxAsync<ResourceRequestPendingNotificationMessage>(
-            refId: $"{Handler}_{requesterId}_{recipientId}",
-            handler: Handler,
-            addValueFactory: msg => new(),
-            updateValueFactory: (msg, data) => RemoveValue(resourceId, packageId, data),
-            cancellationToken: ct
-        );
+        var message = await db.OutboxMessages
+            .AsTracking()
+            .FirstOrDefaultAsync(
+                o =>
+                o.RefId == $"{Handler}_{requesterId}_{recipientId}" &&
+                o.Handler == Handler &&
+                o.Status == OutboxStatus.Pending,
+                ct);
+        
+        if (message is null)
+        {
+            return;
+        }
+
+        var data = JsonSerializer.Deserialize<ResourceRequestPendingNotificationMessage>(message.Data);
+        var updatedData = RemoveValue(resourceId, packageId, data);
+        updatedData.Updated++;
+        message.Data = JsonSerializer.Serialize(updatedData);
     }
 
     private static ResourceRequestPendingNotificationMessage RemoveValue(
