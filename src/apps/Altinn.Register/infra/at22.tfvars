@@ -50,4 +50,13 @@ config = {
   api_source = {
     default = "db"
   }
+
+  ccr = {
+    clients = {
+      e2e-test-at22 = {
+        password = "ccr-e2e-test-hash"
+        networks = ["0.0.0.0/0", "::/0"]
+      }
+    }
+  }
 }

@@ -126,6 +126,13 @@ variable "config" {
 
       endpoints = optional(map(string), {})
     }), {})
+
+    ccr = optional(object({
+      clients = optional(map(object({ # map key is username
+        password = string             # key vault secret name
+        networks = list(string)       # whitelist of CIDR ranges allowed to use this client
+      })), {})
+    }), {})
   })
   default = {}
 }
