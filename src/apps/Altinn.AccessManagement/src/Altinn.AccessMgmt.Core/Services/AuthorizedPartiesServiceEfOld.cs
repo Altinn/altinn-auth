@@ -412,7 +412,7 @@ public class AuthorizedPartiesServiceEfOld(
         ).ToList();
     }
 
-    private IEnumerable<AuthorizedParty> MergeAuthorizePartyLists(IEnumerable<AuthorizedParty> a2AuthorizedParties, Dictionary<Guid, Entity> allA2Parties, IEnumerable<AuthorizedParty> a3AuthorizedParties, Dictionary<Guid, AuthorizedParty> allParties, AuthorizedPartiesFilters filters)
+    private static IEnumerable<AuthorizedParty> MergeAuthorizePartyLists(IEnumerable<AuthorizedParty> a2AuthorizedParties, Dictionary<Guid, Entity> allA2Parties, IEnumerable<AuthorizedParty> a3AuthorizedParties, Dictionary<Guid, AuthorizedParty> allParties, AuthorizedPartiesFilters filters)
     {
         List<AuthorizedParty> result = a3AuthorizedParties.ToList();
 
@@ -640,7 +640,7 @@ public class AuthorizedPartiesServiceEfOld(
         }
     }
 
-    private async Task EnrichWithResourceAndInstanceParties(Dictionary<Guid, AuthorizedParty> parties, List<DelegationChange> resourceDelegations, AuthorizedPartiesFilters filters)
+    private static async Task EnrichWithResourceAndInstanceParties(Dictionary<Guid, AuthorizedParty> parties, List<DelegationChange> resourceDelegations, AuthorizedPartiesFilters filters)
     {
         if (!filters.IncludeResources && !filters.IncludeInstances)
         {
@@ -681,7 +681,7 @@ public class AuthorizedPartiesServiceEfOld(
         }
     }
 
-    private List<AuthorizedParty> GetFilteredA2Parties(IEnumerable<AuthorizedParty> parties, AuthorizedPartiesFilters filters)
+    private static List<AuthorizedParty> GetFilteredA2Parties(IEnumerable<AuthorizedParty> parties, AuthorizedPartiesFilters filters)
     {
         bool filterParties = filters.PartyFilter?.Count > 0;
 

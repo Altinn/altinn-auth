@@ -64,7 +64,7 @@ public class ReadOnlyInterceptor : SaveChangesInterceptor
         return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
-    private void ThrowIfHasChanges(DbContext? context)
+    private static void ThrowIfHasChanges(DbContext? context)
     {
         if (context == null)
         {

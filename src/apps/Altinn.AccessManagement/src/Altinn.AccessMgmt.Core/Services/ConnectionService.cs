@@ -820,7 +820,7 @@ public partial class ConnectionService(
     private static ValidationProblemInstance ValidateWriteOpInput(Entity from, Entity to, ConnectionOptions options) =>
         ConnectionWriteValidation.ValidateWriteOpInput(from, to, options);
 
-    private ProblemInstance ValidateReadOpInput(Guid? fromId, Entity? from, Guid? toId, Entity? to, ConnectionOptions options)
+    private static ProblemInstance ValidateReadOpInput(Guid? fromId, Entity? from, Guid? toId, Entity? to, ConnectionOptions options)
     {
         if (from is { })
         {

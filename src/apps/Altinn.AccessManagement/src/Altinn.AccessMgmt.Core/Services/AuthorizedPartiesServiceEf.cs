@@ -366,7 +366,7 @@ public class AuthorizedPartiesServiceEf(
         );
     }
 
-    private List<AuthorizedParty> MergeAuthorizePartyLists(IEnumerable<AuthorizedParty> a2AuthorizedParties, Dictionary<Guid, Entity> allA2Parties, IEnumerable<AuthorizedParty> a3AuthorizedParties, Dictionary<Guid, AuthorizedParty> allParties)
+    private static List<AuthorizedParty> MergeAuthorizePartyLists(IEnumerable<AuthorizedParty> a2AuthorizedParties, Dictionary<Guid, Entity> allA2Parties, IEnumerable<AuthorizedParty> a3AuthorizedParties, Dictionary<Guid, AuthorizedParty> allParties)
     {
         List<AuthorizedParty> result = a3AuthorizedParties.ToList();
 
@@ -509,7 +509,7 @@ public class AuthorizedPartiesServiceEf(
         return Tuple.Create(allPartiesDict, authorizedParties.AsEnumerable());
     }
 
-    private void EnrichWithPartiesWithAccessInfo(Dictionary<Guid, AuthorizedParty> parties, List<ConnectionQueryExtendedRecord> connections, AuthorizedPartiesFilters filters)
+    private static void EnrichWithPartiesWithAccessInfo(Dictionary<Guid, AuthorizedParty> parties, List<ConnectionQueryExtendedRecord> connections, AuthorizedPartiesFilters filters)
     {
         if (!filters.IncludeRoles && !filters.IncludeAccessPackages && !filters.IncludeResources && !filters.IncludeInstances)
         {
@@ -655,7 +655,7 @@ public class AuthorizedPartiesServiceEf(
         return filtered;
     }
 
-    private List<AuthorizedParty> GetFilteredA2Parties(IEnumerable<AuthorizedParty> parties, AuthorizedPartiesFilters filters)
+    private static List<AuthorizedParty> GetFilteredA2Parties(IEnumerable<AuthorizedParty> parties, AuthorizedPartiesFilters filters)
     {
         bool filterParties = filters.PartyFilter?.Count > 0;
 

@@ -115,7 +115,7 @@ public class AuditMiddleware : IMiddleware
         return TraceId(context);
     }
 
-    private async Task<Entity> GetEntityFromConsumerClaim(AppDbContext db, HttpContext context, ConsentPartyUrn party)
+    private static async Task<Entity> GetEntityFromConsumerClaim(AppDbContext db, HttpContext context, ConsentPartyUrn party)
     {
         if (party.IsOrganizationId(out var organizationIdentifier))
         {
@@ -128,7 +128,7 @@ public class AuditMiddleware : IMiddleware
     /// <summary>
     /// Find the special system user claim and return it as standard claim if available
     /// </summary>
-    private Claim? GetSystemUserClaim(IEnumerable<Claim>? claims)
+    private static Claim? GetSystemUserClaim(IEnumerable<Claim>? claims)
     {
         Claim? authorizationDetails = claims?.FirstOrDefault(c => c.Type.Equals("authorization_details"));
 

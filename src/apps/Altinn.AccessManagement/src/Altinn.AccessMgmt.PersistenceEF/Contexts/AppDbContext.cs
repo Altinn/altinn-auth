@@ -154,7 +154,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.HasAnnotation(AuditExtensions.AnnotationName, AuditEFConfiguration.Version);
     }
 
-    private void ApplyViewConfiguration(ModelBuilder modelBuilder)
+    private static void ApplyViewConfiguration(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration<Connection>(new ConnectionConfiguration());
 
@@ -168,7 +168,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         */
     }
 
-    private void ApplyAuditConfiguration(ModelBuilder modelBuilder)
+    private static void ApplyAuditConfiguration(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration<AuditArea>(new AuditAreaConfiguration());
         modelBuilder.ApplyConfiguration<AuditAreaGroup>(new AuditAreaGroupConfiguration());
@@ -201,7 +201,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<AuditRequestAssignmentResource>(new AuditRequestAssignmentResourceConfiguration());
     }
 
-    private void ApplyConfiguration(ModelBuilder modelBuilder)
+    private static void ApplyConfiguration(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration<TranslationEntry>(new TranslationEntryConfiguration());
 
@@ -335,7 +335,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         }
     }
 
-    private void ValidateAuditValues(AuditValues audit)
+    private static void ValidateAuditValues(AuditValues audit)
     {
         if (audit == null || audit.ChangedBy == Guid.Empty || audit.ChangedBySystem == Guid.Empty || string.IsNullOrWhiteSpace(audit.OperationId))
         {

@@ -292,7 +292,7 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
             .ToList();
     }
 
-    private string GenerateAuditInsertFunctionAndTrigger(string schema, string name, List<string> columns)
+    private static string GenerateAuditInsertFunctionAndTrigger(string schema, string name, List<string> columns)
     {
         var sb = new StringBuilder();
 
@@ -323,7 +323,7 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
         return sb.ToString();
     }
 
-    private string GenerateAuditUpdateFunctionAndTrigger(string schema, string name, List<string> columns)
+    private static string GenerateAuditUpdateFunctionAndTrigger(string schema, string name, List<string> columns)
     {
         var sb = new StringBuilder();
 
@@ -351,7 +351,7 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
         return sb.ToString();
     }
 
-    private string GenerateAuditDeleteFunctionAndTrigger(string schema, string name, List<string> columns)
+    private static string GenerateAuditDeleteFunctionAndTrigger(string schema, string name, List<string> columns)
     {
         var sb = new StringBuilder();
 
@@ -383,7 +383,7 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
         return sb.ToString();
     }
 
-    private string GenerateGrants(string schema, string table)
+    private static string GenerateGrants(string schema, string table)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE {schema}.{table} TO platform_authorization;");
