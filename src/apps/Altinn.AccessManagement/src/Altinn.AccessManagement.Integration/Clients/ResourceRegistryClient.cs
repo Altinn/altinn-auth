@@ -149,7 +149,7 @@ namespace Altinn.AccessManagement.Integration.Clients
             ConsentTemplate consentTemplate = templates.FirstOrDefault(t => t.Id.Equals(templateId, StringComparison.OrdinalIgnoreCase));
             if (consentTemplate == null)
             {
-                throw new Exception($"Consent template with id {templateId} and version {version} not found.");
+                throw new KeyNotFoundException($"Consent template with id {templateId} and version {version} not found.");
             }
 
             return consentTemplate;
@@ -209,7 +209,7 @@ namespace Altinn.AccessManagement.Integration.Clients
             }
             catch (Exception ex)
             {
-                throw new Exception($"Something went wrong when retrieving consent templates", ex);
+                throw new InvalidOperationException("Something went wrong when retrieving consent templates", ex);
             }
         }
     }

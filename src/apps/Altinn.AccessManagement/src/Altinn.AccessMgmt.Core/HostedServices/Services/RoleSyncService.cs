@@ -57,7 +57,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
             if (page.IsProblem)
             {
                 Log.ResponseError(_logger, page.StatusCode);
-                throw new Exception("Stream page is not successful");
+                throw new InvalidOperationException("Stream page is not successful");
             }
 
             _logger.LogInformation("Starting proccessing party page ({0}-{1})", page.Content.Stats.PageStart, page.Content.Stats.PageEnd);
@@ -183,8 +183,8 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to ingest and/or merge Assignment and EntityLookup batch {0} to db", batchId.ToString());
-            throw new Exception(string.Format("Failed to ingest and/or merge Assignment and EntityLookup batch {0} to db", batchId.ToString()), ex);
+            _logger.LogError(ex, "Failed to ingest and/or merge Assignment batch {0} to db", batchId.ToString());
+            throw new InvalidOperationException($"Failed to ingest and/or merge Assignment batch {batchId} to db", ex);
         }
     }
 
@@ -241,6 +241,6 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
             };
         }
 
-        throw new Exception(string.Format("Failed to convert model to Assignment. From:{0} To:{1} Role:{2}", model.FromParty, model.ToParty, model.RoleIdentifier));
+        throw new InvalidOperationException($"Failed to convert model to Assignment. From:{model.FromParty} To:{model.ToParty} Role:{model.RoleIdentifier}");
     }
 }

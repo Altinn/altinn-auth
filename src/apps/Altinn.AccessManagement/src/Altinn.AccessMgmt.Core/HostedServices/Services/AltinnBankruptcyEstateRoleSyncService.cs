@@ -48,7 +48,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                 if (!page.IsSuccessful)
                 {
                     Log.ResponseError(_logger, page.StatusCode);
-                    throw new Exception("Stream page is not successful");
+                    throw new InvalidOperationException("Stream page is not successful");
                 }
 
                 Guid batchId = Guid.CreateVersion7();

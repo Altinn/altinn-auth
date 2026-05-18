@@ -31,7 +31,7 @@ public class IngestService : IIngestService
     {
         if (ingestId.Equals(Guid.Empty))
         {
-            throw new Exception(string.Format("Ingest id '{0}' not valid", ingestId.ToString()));
+            throw new ArgumentException($"Ingest id '{ingestId}' not valid", nameof(ingestId));
         }
 
         var table = GetTableName<T>(DbContext.Model);

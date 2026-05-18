@@ -63,7 +63,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                 if (!page.IsSuccessful)
                 {
                     Log.ResponseError(_logger, page.StatusCode);
-                    throw new Exception("Stream page is not successful");
+                    throw new InvalidOperationException("Stream page is not successful");
                 }
 
                 var batchName = batchId.ToString().ToLower().Replace("-", string.Empty);
@@ -84,7 +84,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                         var assignment = await ConvertRoleDelegationModelToAssignment(appDbContext, item, batchId.ToString(), cancellationToken);
                         if (assignment.Assignment == null)
                         {
-                            throw new Exception("Failed to convert RoleModel to Assignment");
+                            throw new InvalidOperationException("Failed to convert RoleModel to Assignment");
                         }
 
                         currentOptions = assignment.Options;
@@ -147,8 +147,8 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Failed to ingest and/or merge Assignment and EntityLookup batch {0} to db", batchName);
-                        throw new Exception(string.Format("Failed to ingest and/or merge Assignment and EntityLookup batch {0} to db", batchName), ex);
+                        _logger.LogError(ex, "Failed to ingest and/or merge Assignment batch {0} to db", batchName);
+                        throw new InvalidOperationException($"Failed to ingest and/or merge Assignment batch {batchName} to db", ex);
                     }
                     finally
                     {
@@ -182,7 +182,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
             }
             catch (Exception ex)
             {
-                throw new Exception(string.Format("Failed to convert model to Assignment. From:{0} To:{1} Role:{2}", model.FromPartyUuid, model.ToUserPartyUuid, model.RoleTypeCode), ex);
+                throw new InvalidOperationException($"Failed to convert model to Assignment. From:{model.FromPartyUuid} To:{model.ToUserPartyUuid} Role:{model.RoleTypeCode}", ex);
             }
         }
 
@@ -202,7 +202,7 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services
 
             if (role == null)
             {
-                throw new Exception(string.Format("Unable to get role '{0}'", roleIdentifier));
+                throw new InvalidOperationException($"Unable to get role '{roleIdentifier}'");
             }
 
             Roles.Add(roleIdentifier, role);

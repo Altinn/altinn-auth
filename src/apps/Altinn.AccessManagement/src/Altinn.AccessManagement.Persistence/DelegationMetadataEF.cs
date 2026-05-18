@@ -301,7 +301,7 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
 
         if (from == null)
         {
-            throw new Exception($"OfferedBy not found with partyId '{offeredByPartyId}'");
+            throw new KeyNotFoundException($"OfferedBy not found with partyId '{offeredByPartyId}'");
         }
 
         var result = await DbContext.AssignmentResources.AsNoTracking()
@@ -671,7 +671,7 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
 
                     await DbContext.SaveChangesAsync(cancellationToken);
 
-                    throw new Exception("Assignment or resource not found for given policy");
+                    throw new KeyNotFoundException("Assignment or resource not found for given policy");
                 }
 
                 var assignmentInstance = await DbContext.AssignmentInstances.FirstOrDefaultAsync(t => t.AssignmentId == assignment.Id && t.ResourceId == resource.Id && t.InstanceId == policy.Rules.InstanceId, cancellationToken);

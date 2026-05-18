@@ -202,7 +202,7 @@ public partial class ResourceSyncService : IResourceSyncService
         var role = await dbContext.Roles
             .AsNoTracking()
             .Where(r => EF.Functions.ILike(r.LegacyUrn, updatedResource.SubjectUrn) || EF.Functions.ILike(r.Urn, updatedResource.SubjectUrn))
-            .SingleOrDefaultAsync(cancellationToken) ?? throw new Exception(string.Format("Role not found '{0}'", subjectUrnPart));
+            .SingleOrDefaultAsync(cancellationToken) ?? throw new KeyNotFoundException($"Role not found '{subjectUrnPart}'");
 
         var roleResource = await dbContext.RoleResources.FirstOrDefaultAsync(t => t.RoleId == role.Id && t.ResourceId == resource.Id, cancellationToken);
         if (roleResource == null)
@@ -276,7 +276,7 @@ public partial class ResourceSyncService : IResourceSyncService
             return null;
         }
 
-        var resourceType = await GetOrCreateResourceType(dbContext, model, cancellationToken) ?? throw new Exception("Unable to get or create resourcetype");
+        var resourceType = await GetOrCreateResourceType(dbContext, model, cancellationToken) ?? throw new InvalidOperationException("Unable to get or create resourcetype");
         return new Resource()
         {
             Name = model.Title?.Nb ?? model.Identifier,

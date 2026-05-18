@@ -65,7 +65,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
             if (page.IsProblem)
             {
                 Log.ResponseError(_logger, page.StatusCode);
-                throw new Exception("Stream page is not successful");
+                throw new InvalidOperationException("Stream page is not successful");
             }
 
             _logger.LogInformation("Starting proccessing party page ({0}-{1})", page.Content.Stats.PageStart, page.Content.Stats.PageEnd);
