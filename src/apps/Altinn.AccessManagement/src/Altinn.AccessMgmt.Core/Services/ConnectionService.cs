@@ -895,10 +895,17 @@ public partial class ConnectionService(
         return connections.Where(c => c.AssignmentId.HasValue).GroupBy(r => r.RoleId).Select(connection =>
         {
             var role = connection.First().Role;
+            var permissions = connection.Select(c => DtoMapper.ConvertToPermission(c)).ToList();
+            bool revocable = false;
+            if (role.ProviderId == ProviderConstants.Altinn2.Id)
+            {
+                revocable = permissions.Any(p => p.Reason.Contains(AccessReasonFlag.Direct));
+            }
+
             return new RolePermissionDto
             {
-                Role = DtoMapper.Convert(role),
-                Permissions = connection.Select(connection => DtoMapper.ConvertToPermission(connection)),
+                Role = DtoMapper.Convert(role, revocable),
+                Permissions = permissions,
             };
         }).ToList();
     }
@@ -2368,6 +2375,7 @@ public partial class ConnectionService
 
     /// <inheritdoc />
     public async Task<Result<bool>> RemoveRoleAssignment(
+        Guid partyId,
         Guid fromId,
         Guid toId,
         string roleCode,
@@ -2408,7 +2416,35 @@ public partial class ConnectionService
 
         if (existingAssignment is null)
         {
-            return false;
+            // Check if connection exists and return problem if connection is not a direct revocable
+            var direction = partyId == fromId
+            ? ConnectionQueryDirection.ToOthers
+            : ConnectionQueryDirection.FromOthers;
+
+            var filter = new ConnectionQueryFilter()
+            {
+                FromIds = [fromId],
+                ToIds = [toId],
+                EnrichEntities = false,
+                IncludeSubConnections = true,
+                IncludeKeyRole = true,
+                IncludeMainUnitConnections = true,
+                IncludeDelegation = false,
+                IncludePackages = false,
+                IncludeResources = false,
+                EnrichPackageResources = false,
+                ExcludeDeleted = false,
+                RoleIds = [role.Id]
+            };
+
+            var connections = await connectionQuery.GetConnectionsAsync(filter, direction, true, cancellationToken);
+
+            if (connections.Count == 0)
+            {
+                return false;
+            }
+
+            return Problems.RoleAssignmentNotRevocable;
         }
 
         // Remove and save revoked assignment

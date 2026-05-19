@@ -1,4 +1,6 @@
-﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
+﻿using System.Text.Json.Serialization;
+
+namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 
 /// <summary>
 /// Represents a group of areas, categorized under a specific entity type.
@@ -59,4 +61,13 @@ public class RoleDto
     /// Provider
     /// </summary>
     public ProviderDto Provider { get; set; }
+
+    /// <summary>
+    /// Indicates whether the role assignment can be revoked through <c>DELETE /connections/roles</c>.
+    /// For example, this is <see langword="true"/> for Altinn2 role assignments that have at least one direct permission.
+    /// A value of <see langword="false"/> means the assignment is known not to be revocable, while <see langword="null"/>
+    /// means that revocability has not been provided or evaluated for the consumer.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? IsRevocable { get; set; } = null;
 }

@@ -67,6 +67,19 @@ public partial class DtoMapper : IDtoMapper
             IsResourcePolicyAvailable = obj.IsAvailableForServiceOwners
         };
 
+    /// <summary>Convert Role to RoleDto including revocable information.</summary>
+    public static RoleDto? Convert(Role? obj, bool revocable)
+    {
+        RoleDto? dto = Convert(obj);
+        if (dto is null)
+        {
+            return null;
+        }
+
+        dto.IsRevocable = revocable;
+        return dto;
+    }
+
     /// <summary>Convert AreaGroup to AreaGroupDto.</summary>
     public static AreaGroupDto? Convert(AreaGroup? areaGroup) =>
         areaGroup is null ? null : new AreaGroupDto

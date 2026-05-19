@@ -408,7 +408,7 @@ public class ConnectionsController(
         [Required][FromQuery(Name = "rolecode")] string roleCode,
         CancellationToken cancellationToken = default)
     {
-        var result = await ConnectionService.RemoveRoleAssignment(from, to, roleCode, ConfigureConnections, cancellationToken);
+        var result = await ConnectionService.RemoveRoleAssignment(party, from, to, roleCode, ConfigureConnections, cancellationToken);
 
         if (result.IsProblem)
         {
