@@ -17,7 +17,7 @@ configuration = {
   consent = {
     batch_size                = 5000,
     max_degree_of_parallelism = 20,
-    latest_changes_page_size  = 1000
+    events_page_size          = 1000
   }
   core = {
     request_notify_request_approved_in_seconds = 600
