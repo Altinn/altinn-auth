@@ -50,6 +50,14 @@ public class DtoMapperConnectionQueryTest
         RefId = "ref-1",
     };
 
+    private static ConnectionQueryInstance MakeQueryInstance(string resourceRefId = "urn:altinn:resource:dialog", string instanceId = "51599233/df333e75") => new()
+    {
+        Id = Guid.NewGuid(),
+        ResourceId = Guid.NewGuid(),
+        InstanceId = instanceId,
+        ResourceRefId = resourceRefId,
+    };
+
     private static ConnectionQueryExtendedRecord MakeRecord(
         Entity from,
         Entity to,
@@ -57,7 +65,8 @@ public class DtoMapperConnectionQueryTest
         ConnectionReason reason = ConnectionReason.Assignment,
         Guid? viaId = null,
         List<ConnectionQueryPackage>? packages = null,
-        List<ConnectionQueryResource>? resources = null) =>
+        List<ConnectionQueryResource>? resources = null,
+        List<ConnectionQueryInstance>? instances = null) =>
         new()
         {
             FromId = from.Id,
@@ -71,6 +80,7 @@ public class DtoMapperConnectionQueryTest
             Role = role,
             Packages = packages ?? [],
             Resources = resources ?? [],
+            Instances = instances ?? [],
         };
 
     /// <summary>Creates a <see cref="Connection"/> (old model, Reason is string).</summary>
@@ -200,6 +210,61 @@ public class DtoMapperConnectionQueryTest
         result[0].Packages.Should().ContainSingle(p => p.Id == pkg.Id);
     }
 
+    [Fact]
+    public void ConvertToOthers_InstancesOnRecord_MappedToDto()
+    {
+        var from = MakeEntity();
+        var to = MakeEntity();
+        var role = MakeRole();
+        var inst = MakeQueryInstance("urn:altinn:resource:dialog", "51599233/df333e75");
+        var rec = MakeRecord(from, to, role, instances: [inst]);
+
+        var result = DtoMapper.ConvertToOthers([rec]);
+
+        result.Should().ContainSingle();
+        result[0].Instances.Should().ContainSingle();
+        result[0].Instances[0].ResourceRefId.Should().Be("urn:altinn:resource:dialog");
+        result[0].Instances[0].InstanceId.Should().Be("51599233/df333e75");
+    }
+
+    [Fact]
+    public void ConvertToOthers_SameInstanceIdAcrossDifferentResources_BothPreserved()
+    {
+        // InstanceId is scoped to a resource (see ConnectionQueryInstance docs),
+        // so the same string can legitimately appear under two different RefIds.
+        // Deduping on InstanceId alone would silently drop one of them.
+        var from = MakeEntity();
+        var to = MakeEntity();
+        var role = MakeRole();
+        var instA = MakeQueryInstance("urn:altinn:resource:dialog-a", "shared-instance-id");
+        var instB = MakeQueryInstance("urn:altinn:resource:dialog-b", "shared-instance-id");
+        var rec = MakeRecord(from, to, role, instances: [instA, instB]);
+
+        var result = DtoMapper.ConvertToOthers([rec]);
+
+        result.Should().ContainSingle();
+        result[0].Instances.Should().HaveCount(2);
+        result[0].Instances.Select(i => i.ResourceRefId).Should().BeEquivalentTo(
+            ["urn:altinn:resource:dialog-a", "urn:altinn:resource:dialog-b"]);
+    }
+
+    [Fact]
+    public void ConvertToOthers_DuplicateInstanceOnSameResource_Deduplicated()
+    {
+        var from = MakeEntity();
+        var to = MakeEntity();
+        var role = MakeRole();
+        var instA = MakeQueryInstance("urn:altinn:resource:dialog", "instance-1");
+        var instB = MakeQueryInstance("urn:altinn:resource:dialog", "instance-1");
+        var rec1 = MakeRecord(from, to, role, instances: [instA]);
+        var rec2 = MakeRecord(from, to, role, instances: [instB]);
+
+        var result = DtoMapper.ConvertToOthers([rec1, rec2]);
+
+        result.Should().ContainSingle();
+        result[0].Instances.Should().ContainSingle();
+    }
+
     // ══════════════════════════════════════════════════════════════════════════
     // ConvertFromOthers
     // ══════════════════════════════════════════════════════════════════════════
@@ -266,6 +331,23 @@ public class DtoMapperConnectionQueryTest
         result[0].Roles.Should().ContainSingle();
     }
 
+    [Fact]
+    public void ConvertFromOthers_InstancesOnRecord_MappedToDto()
+    {
+        var from = MakeEntity();
+        var to = MakeEntity();
+        var role = MakeRole();
+        var inst = MakeQueryInstance("urn:altinn:resource:dialog", "51599233/df333e75");
+        var rec = MakeRecord(from, to, role, instances: [inst]);
+
+        var result = DtoMapper.ConvertFromOthers([rec]);
+
+        result.Should().ContainSingle();
+        result[0].Instances.Should().ContainSingle();
+        result[0].Instances[0].ResourceRefId.Should().Be("urn:altinn:resource:dialog");
+        result[0].Instances[0].InstanceId.Should().Be("51599233/df333e75");
+    }
+
     // ══════════════════════════════════════════════════════════════════════════
     // ConvertSubConnectionsToOthers
     // ══════════════════════════════════════════════════════════════════════════
@@ -300,6 +382,27 @@ public class DtoMapperConnectionQueryTest
         result[0].Packages.Should().ContainSingle(p => p.Id == pkg.Id);
     }
 
+    [Fact]
+    public void ConvertSubConnectionsToOthers_InstancesFilteredByToId()
+    {
+        var from = MakeEntity("From");
+        var toA = MakeEntity("ToA");
+        var toB = MakeEntity("ToB");
+        var role = MakeRole();
+        var instA = MakeQueryInstance("urn:altinn:resource:a", "inst-a");
+        var instB = MakeQueryInstance("urn:altinn:resource:b", "inst-b");
+        var recA = MakeRecord(from, toA, role, instances: [instA]);
+        var recB = MakeRecord(from, toB, role, instances: [instB]);
+
+        var result = DtoMapper.ConvertSubConnectionsToOthers([recA, recB]);
+
+        result.Should().HaveCount(2);
+        var dtoA = result.Single(c => c.Party!.Id == toA.Id);
+        var dtoB = result.Single(c => c.Party!.Id == toB.Id);
+        dtoA.Instances.Should().ContainSingle(i => i.InstanceId == "inst-a");
+        dtoB.Instances.Should().ContainSingle(i => i.InstanceId == "inst-b");
+    }
+
     // ══════════════════════════════════════════════════════════════════════════
     // ConvertSubConnectionsFromOthers
     // ══════════════════════════════════════════════════════════════════════════
@@ -326,6 +429,27 @@ public class DtoMapperConnectionQueryTest
         result[0].Party!.Id.Should().Be(from.Id);
         result[0].Roles.Should().HaveCount(2);
         result[0].Resources.Should().ContainSingle(r => r.Id == res.Id);
+    }
+
+    [Fact]
+    public void ConvertSubConnectionsFromOthers_InstancesFilteredByFromId()
+    {
+        var fromA = MakeEntity("FromA");
+        var fromB = MakeEntity("FromB");
+        var to = MakeEntity("To");
+        var role = MakeRole();
+        var instA = MakeQueryInstance("urn:altinn:resource:a", "inst-a");
+        var instB = MakeQueryInstance("urn:altinn:resource:b", "inst-b");
+        var recA = MakeRecord(fromA, to, role, instances: [instA]);
+        var recB = MakeRecord(fromB, to, role, instances: [instB]);
+
+        var result = DtoMapper.ConvertSubConnectionsFromOthers([recA, recB]);
+
+        result.Should().HaveCount(2);
+        var dtoA = result.Single(c => c.Party!.Id == fromA.Id);
+        var dtoB = result.Single(c => c.Party!.Id == fromB.Id);
+        dtoA.Instances.Should().ContainSingle(i => i.InstanceId == "inst-a");
+        dtoB.Instances.Should().ContainSingle(i => i.InstanceId == "inst-b");
     }
 
     // ══════════════════════════════════════════════════════════════════════════

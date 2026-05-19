@@ -16,7 +16,7 @@ public interface IConnectionService
     /// <summary>
     /// Get Connections
     /// </summary>
-    Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, bool includeClientDelegations = true, bool includeAgentConnections = true, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default);
+    Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, bool includeClientDelegations = true, bool includeAgentConnections = true, bool includeAccessPackages = false, bool includeResources = false, bool includeInstances = false, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Creates a role assignment between two entities.

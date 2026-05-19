@@ -55,7 +55,7 @@ public partial class ConnectionService(
     ISingleRightsService singleRightsService,
     IFeatureManager featureManager) : IConnectionService
 {
-    public async Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, bool includeClientDelegations = true, bool includeAgentConnections = true, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
+    public async Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, bool includeClientDelegations = true, bool includeAgentConnections = true, bool includeAccessPackages = false, bool includeResources = false, bool includeInstances = false, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
     {
         var options = new ConnectionOptions(configureConnections);
         var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
@@ -84,8 +84,9 @@ public partial class ConnectionService(
                 IncludeKeyRole = true,
                 IncludeMainUnitConnections = true,
                 IncludeDelegation = includeClientDelegations,
-                IncludePackages = false,
-                IncludeResources = false,
+                IncludePackages = includeAccessPackages,
+                IncludeResources = includeResources,
+                IncludeInstances = includeInstances,
                 EnrichPackageResources = false,
                 ExcludeDeleted = false,
                 ExcludeRoleIds = includeAgentConnections ? null : [RoleConstants.Agent.Id],

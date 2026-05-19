@@ -63,6 +63,9 @@ public class ConnectionsController(
         [FromQuery, FromHeader] PagingInput paging,
         [FromQuery] bool includeClientDelegations = true,
         [FromQuery] bool includeAgentConnections = true,
+        [FromQuery] bool includeAccessPackages = false,
+        [FromQuery] bool includeResources = false,
+        [FromQuery] bool includeInstances = false,
         CancellationToken cancellationToken = default)
     {
         var validationErrors = ValidationComposer.Validate(ConnectionValidation.ValidateReadConnection(party.ToString(), from?.ToString(), to?.ToString()));
@@ -77,6 +80,9 @@ public class ConnectionsController(
             to,
             includeClientDelegations,
             includeAgentConnections,
+            includeAccessPackages,
+            includeResources,
+            includeInstances,
             ConfigureConnections,
             cancellationToken
         );
@@ -118,8 +124,8 @@ public class ConnectionsController(
             null,
             includeClientDelegations: true,
             includeAgentConnections: true,
-            ConfigureConnections,
-            cancellationToken
+            configureConnections: ConfigureConnections,
+            cancellationToken: cancellationToken
         );
 
         if (result.IsProblem)

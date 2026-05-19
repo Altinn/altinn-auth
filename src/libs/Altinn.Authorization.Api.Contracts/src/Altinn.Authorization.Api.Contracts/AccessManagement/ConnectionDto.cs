@@ -26,6 +26,11 @@ public class ConnectionDto
     public List<ResourceDto> Resources { get; set; } = new();
 
     /// <summary>
+    /// Resource instance accesses for the given party
+    /// </summary>
+    public List<ConnectionInstanceDto> Instances { get; set; } = new();
+
+    /// <summary>
     /// Sub-connections of the party where the same access applies
     /// </summary>
     public List<ConnectionDto> Connections { get; set; } = new();
