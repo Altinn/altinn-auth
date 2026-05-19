@@ -224,6 +224,15 @@ public class ConnectionQuery(AppDbContext db)
                 .Distinct()
                 .ToList();
             fromSetForDelegation.UnionWith(parentIds);
+
+            var enksOfInnh = db.Assignments
+                .AsNoTracking()
+                .Where(a => fromSet.Distinct().Contains(a.ToId))
+                .Where(a => a.RoleId == RoleConstants.Innehaver.Id)
+                .Select(a => a.FromId)
+                .Distinct()
+                .ToList();
+            fromSetForDelegation.UnionWith(enksOfInnh);
         }
 
         var reviRegnRoleSet = new HashSet<Guid>
