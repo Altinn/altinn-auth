@@ -27,7 +27,7 @@
         <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
         <PackageReference Include="OpenTelemetry.Exporter.Console" />
         <PackageReference Include="Swashbuckle.AspNetCore" />
-        <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
         <PackageReference Include="Swashbuckle.AspNetCore.Filters" />
         <PackageReference Include="Yuniql.AspNetCore" />
         <PackageReference Include="Yuniql.PostgreSql" />

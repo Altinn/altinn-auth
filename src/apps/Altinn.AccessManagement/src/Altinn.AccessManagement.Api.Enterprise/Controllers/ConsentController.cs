@@ -1,10 +1,8 @@
-﻿using System.Net.Mime;
-using System.Security.Claims;
-using System.Text;
-using Altinn.AccessManagement.Api.Enterprise.Extensions;
+﻿using Altinn.AccessManagement.Api.Enterprise.Extensions;
 using Altinn.AccessManagement.Api.Enterprise.Utils;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Services.Interfaces;
@@ -17,6 +15,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using System.Net.Mime;
+using System.Security.Claims;
+using System.Text;
 
 namespace Altinn.AccessManagement.Api.Enterprise.Controllers
 {
@@ -33,6 +34,7 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
 
         private const string CreateRouteName = "enterprisecreateconsentrequest";
         private const string GetRouteName = "enterprisegetconsentrequest";
+        private const string ROUTE_CONSENTEVENTS = "consentrequests/events";
 
         /// <summary>
         /// Endpoint to create a consent request for
@@ -134,24 +136,37 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
         }
 
         /// <summary>
-        /// Get a list of consents that had recent status changes for the authenticated enterprise.
-        /// Returns consents ordered by the latest status change occurred for a consent request(newest first).
-        /// Uses cursor-based pagination.
+        /// Get a list of consent events for the authenticated enterprise.
+        /// Results are ordered oldest first (ascending by event ID). When paginating, the oldest events are returned first and the newest last.
+        /// Only events created more than 5 minutes ago are returned, to ensure consistency and avoid returning events that are still being processed.
+        /// Uses cursor-based pagination via the <c>continuationToken</c> parameter. If a <c>nextLink</c> is present in the response, follow it to retrieve the next page.
         /// </summary>
+        /// <param name="continuationToken">Opaque cursor token returned in the <c>nextLink</c> of a previous response. Pass this to retrieve the next page of results.</param>
+        /// <param name="createdAfter">Optional. Filters events created at or after this timestamp.</param>
+        /// <param name="createdBefore">Optional. Filters events created before this timestamp.</param>
+        /// <param name="eventTypes">Optional. Filters results to one or more specific event types. Can be specified multiple times, e.g. <c>eventType=accepted&amp;eventType=revoked</c>.</param>
+        /// <param name="consentRequestId">Optional. Filters results to events belonging to a specific consent request.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         [Authorize(Policy = AuthzConstants.POLICY_CONSENTREQUEST_READ)]
         [HttpGet]
-        [Route("consentrequests/latestchanges")]
+        [Route("consentrequests/events", Name = ROUTE_CONSENTEVENTS)]
         [Produces(MediaTypeNames.Application.Json)]
         [ProducesResponseType(typeof(PaginatedResult<ConsentStatusChangeDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetConsentStatusChanges(
-            [FromQuery] string? continuationToken = null,
+        public async Task<IActionResult> GetConsentEvents(
+            [FromQuery(Name = "continuationToken")] string? continuationToken = null,
+            [FromQuery(Name = "createdAfter")] DateTimeOffset? createdAfter = null,
+            [FromQuery(Name = "createdBefore")] DateTimeOffset? createdBefore = null,
+            [FromQuery(Name = "eventType")] string[]? eventTypes = null,
+            [FromQuery(Name = "consentRequestId")] Guid? consentRequestId = null, 
             CancellationToken cancellationToken = default)
         {
-            int pageSize = _consentSettings.CurrentValue.LatestChangesPageSize;
+            int pageSize = _consentSettings.CurrentValue.EventsPageSize;
+
+            Guid? continueFrom = null;
             Core.Models.Consent.ConsentPartyUrn? authenticatedParty = OrgUtil.GetAuthenticatedParty(User);
 
             if (authenticatedParty == null)
@@ -159,7 +174,63 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
                 return Unauthorized();
             }
 
-            Result<List<ConsentStatusChange>> result = await _consentService.GetConsentStatusChangesForParty(authenticatedParty, continuationToken, pageSize, cancellationToken);
+            ValidationErrorBuilder errors = default;
+
+            if (createdAfter.HasValue && createdBefore.HasValue && createdAfter >= createdBefore)
+            {
+                errors.Add(ValidationErrors.InvalidDateRange, "$QUERY/createdAfter");
+            }
+
+            if (eventTypes is { Length: > 0 })
+            {
+                var validEventTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    "rejected", "accepted", "revoked", "deleted", "used"
+                };
+
+                foreach (string eventType in eventTypes)
+                {
+                    if (!validEventTypes.Contains(eventType))
+                    {
+                        errors.Add(ValidationErrors.InvalidEventType, "$QUERY/eventType");
+                        break;
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(continuationToken))
+            {
+                try
+                {
+                    byte[] bytes = Convert.FromBase64String(continuationToken);                    
+                    if (bytes.Length != 16)
+                    {
+                        errors.Add(ValidationErrors.InvalidContinuationToken, "$QUERY/continuationToken");
+                    }
+                    else
+                    {
+                        continueFrom = new Guid(bytes);
+                    }                    
+                }
+                catch (FormatException)
+                {
+                    errors.Add(ValidationErrors.InvalidContinuationToken, "$QUERY/continuationToken");
+                }
+            }
+
+            if (errors.TryBuild(out var errorResult))
+            {
+                return errorResult.ToActionResult();
+            }
+
+            ConsentEventsQuery query = new ConsentEventsQuery(
+                ConsentRequestId: consentRequestId,
+                EventTypes: eventTypes,
+                CreatedAfter: createdAfter.HasValue ? createdAfter.Value.UtcDateTime : (DateTime?)null,
+                CreatedBefore: createdBefore.HasValue ? createdBefore.Value.UtcDateTime : (DateTime?)null,
+                ContinueFrom: continueFrom);
+
+            Result<List<ConsentStatusChange>> result = await _consentService.GetConsentEventsForParty(authenticatedParty, query, pageSize, cancellationToken);
 
             if (result.IsProblem)
             {
@@ -175,11 +246,35 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
             string? nextLink = null;
             if (dtos.Count == pageSize)
             {
-                DateTimeOffset created = changes.Last().ChangedDate;
-                Guid consenteventid = changes.Last().ConsentEventId;
-                var token = $"{created:O}|{consenteventid}";
-                string nextToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(token));
-                nextLink = $"{Request.Scheme}://{Request.Host}{Request.Path}?continuationToken={Uri.EscapeDataString(nextToken)}";
+                Guid consentEventId = changes.Last().ConsentEventId;
+                string nextToken = Convert.ToBase64String(consentEventId.ToByteArray());
+
+                var routeValues = new RouteValueDictionary
+                {
+                    { "continuationToken", nextToken }
+                };
+
+                if (Request.Query.ContainsKey("consentRequestId"))
+                {
+                    routeValues["consentRequestId"] = query.ConsentRequestId?.ToString();
+                }
+
+                if (Request.Query.ContainsKey("createdAfter"))
+                {
+                    routeValues["createdAfter"] = query.CreatedAfter?.ToString("O");
+                }
+
+                if (Request.Query.ContainsKey("createdBefore"))
+                {
+                    routeValues["createdBefore"] = query.CreatedBefore?.ToString("O");
+                }
+
+                if (Request.Query.ContainsKey("eventType"))
+                {
+                    routeValues["eventType"] = query.EventTypes;
+                }
+
+                nextLink = Url.Link(ROUTE_CONSENTEVENTS, routeValues);
             }
 
             // Return paginated result

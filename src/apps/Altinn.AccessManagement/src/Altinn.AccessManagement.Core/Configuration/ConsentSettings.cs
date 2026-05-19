@@ -8,6 +8,9 @@ namespace Altinn.AccessManagement.Core.Configuration
 {
     public class ConsentSettings
     {
-        public int LatestChangesPageSize { get; set; } = 1000;
+        /// <summary>
+        /// The number of consent events to retrieve per page when querying the consent events
+        /// </summary>
+        public int EventsPageSize { get; set; } = 100;        
     }
 }

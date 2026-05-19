@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.Authorization.ProblemDetails;
@@ -69,7 +70,7 @@ namespace AccessMgmt.Tests.Mocks
             throw new NotImplementedException();
         }
 
-        public Task<Result<List<ConsentStatusChange>>> GetConsentStatusChangesForParty(Guid partyUuid, string continuationToken, int pageSize, CancellationToken cancellationToken)
+        public Task<Result<List<ConsentStatusChange>>> GetConsentEventsForParty(Guid partyUuid, ConsentEventsQuery query, int pageSize, CancellationToken cancellationToken)
         {
             // Return test data based on partyUuid
             // Empty party UUID returns empty list
@@ -106,11 +107,11 @@ namespace AccessMgmt.Tests.Mocks
 
             // Apply continuation token filtering (items older than the cursor)
             IEnumerable<ConsentStatusChange> filtered = allChanges;
-            if (!string.IsNullOrEmpty(continuationToken))
+            if (query.ContinueFrom.HasValue)
             {
                 try
                 {
-                    byte[] data = Convert.FromBase64String(continuationToken);
+                    byte[] data = Convert.FromBase64String(query.ContinueFrom.Value.ToString());
                     long ticks = BitConverter.ToInt64(data, 0);
                     DateTimeOffset cursorTimestamp = new DateTimeOffset(ticks, TimeSpan.Zero);
                     filtered = allChanges.Where(c => c.ChangedDate < cursorTimestamp);

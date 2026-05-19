@@ -1,12 +1,14 @@
 ﻿#nullable enable
 
 using Altinn.Authorization.ProblemDetails;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Altinn.AccessManagement.Core.Errors;
 
 /// <summary>
 /// Validation errors for the Access Management.
 /// </summary>
+[ExcludeFromCodeCoverage]
 public static class ValidationErrors
 {
     private static readonly ValidationErrorDescriptorFactory _factory
@@ -255,8 +257,26 @@ public static class ValidationErrors
         = _factory.Create(49, $"One or more resources is not delegable.");
 
     /// <summary>
-    /// Invalid page size for consent status changes. The page size must be between 1 and 1000
+    /// Invalid page size for consent events. The page size must be between 1 and 1000
     /// </summary>
-    public static ValidationErrorDescriptor InvalidPageSizeForConsentStatusChanges { get; }
+    public static ValidationErrorDescriptor InvalidPageSizeForConsentEvents { get; }
     = _factory.Create(50, $"Page size must be between 1 and 1000.");
+
+    /// <summary>
+    /// createdAfter must be before createdBefore when both are specified.
+    /// </summary>
+    public static ValidationErrorDescriptor InvalidDateRange { get; }
+    = _factory.Create(51, $"'createdAfter' must be earlier than 'createdBefore'.");
+
+    /// <summary>
+    /// One or more of the provided event types are not valid.
+    /// </summary>
+    public static ValidationErrorDescriptor InvalidEventType { get; }
+    = _factory.Create(52, $"One or more event types are invalid. Valid values are: rejected, accepted, revoked, deleted, used.");
+
+    /// <summary>
+    /// The continuation token is not valid.
+    /// </summary>
+    public static ValidationErrorDescriptor InvalidContinuationToken { get; }
+    = _factory.Create(53, $"The continuation token is invalid.");
 }

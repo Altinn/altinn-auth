@@ -1046,13 +1046,13 @@ namespace Altinn.AccessManagement.Core.Services
         }
 
         /// <inheritdoc/>
-        public async Task<Result<List<ConsentStatusChange>>> GetConsentStatusChangesForParty(ConsentPartyUrn consentReceiver, string? continuationToken, int pageSize, CancellationToken cancellationToken)
+        public async Task<Result<List<ConsentStatusChange>>> GetConsentEventsForParty(ConsentPartyUrn consentReceiver, ConsentEventsQuery query, int pageSize, CancellationToken cancellationToken)
         {
             ValidationErrorBuilder validationErrorBuilder = default;
 
             if (pageSize <= 0 || pageSize > 1000)
             {
-                validationErrorBuilder.Add(ValidationErrors.InvalidPageSizeForConsentStatusChanges, "pageSize");
+                validationErrorBuilder.Add(ValidationErrors.InvalidPageSizeForConsentEvents, "pageSize");
             }
 
             if (validationErrorBuilder.TryBuild(out var errorResult))
@@ -1062,7 +1062,7 @@ namespace Altinn.AccessManagement.Core.Services
 
             ConsentPartyUrn consentedToParty = await MapFromExternalIdenity(consentReceiver, cancellationToken);
             consentedToParty.IsPartyUuid(out Guid partyUuid);
-            Result<List<ConsentStatusChange>> result = await _consentRepository.GetConsentStatusChangesForParty(partyUuid, continuationToken, pageSize, cancellationToken);
+            Result<List<ConsentStatusChange>> result = await _consentRepository.GetConsentEventsForParty(partyUuid, query, pageSize, cancellationToken);
 
             if (result.IsProblem)
             {
