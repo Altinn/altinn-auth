@@ -98,6 +98,10 @@ variable "features" {
     party_import = optional(object({
       system_users = optional(bool, false),
       npr = optional(object({
+        # note: this also gates whether the "CreatePartyId" feature flag is applied, since NPR import requires the ability to create parties.
+        enable = optional(bool, false),
+
+        # legacy - remove after A2 is fully decommissioned
         guardianships = optional(bool, false),
       }), {})
     }), {})
