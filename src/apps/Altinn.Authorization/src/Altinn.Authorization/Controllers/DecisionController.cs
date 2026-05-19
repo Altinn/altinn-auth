@@ -394,7 +394,7 @@ namespace Altinn.Platform.Authorization.Controllers
             // Recorded before the access-list early-return below so that every exit path with a
             // computed decision is counted. The metric is dimensioned on the request, not the
             // response, so its placement does not depend on which response is ultimately returned.
-            await RecordPdpDecisionMetric(decisionRequest, cancellationToken);
+            await RecordPdpDecisionMetric(decisionRequest, isExernalRequest, cancellationToken);
 
             if (finalResult.Decision.Equals(XacmlContextDecision.Permit) && !await IsAccessListAuthorized(decisionRequest, cancellationToken))
             {
@@ -420,9 +420,9 @@ namespace Altinn.Platform.Authorization.Controllers
         /// <summary>
         /// Resolves the resource owner and resource identifier for the current decision request and records
         /// a PDP decision counter increment so that PDP usage can be attributed back to the service owner of
-        /// the resource being protected.
+        /// the resource being protected, dimensioned on which PDP API (internal or external) served it.
         /// </summary>
-        private async Task RecordPdpDecisionMetric(XacmlContextRequest decisionRequest, CancellationToken cancellationToken)
+        private async Task RecordPdpDecisionMetric(XacmlContextRequest decisionRequest, bool isExternalRequest, CancellationToken cancellationToken)
         {
             try
             {
@@ -452,7 +452,11 @@ namespace Altinn.Platform.Authorization.Controllers
                         break;
                 }
 
-                _decisionTelemetry.RecordDecision(ownerOrg, resourceId);
+                string apiKind = isExternalRequest
+                    ? DecisionTelemetry.ExternalApiDimensionValue
+                    : DecisionTelemetry.InternalApiDimensionValue;
+
+                _decisionTelemetry.RecordDecision(ownerOrg, resourceId, apiKind);
             }
             catch (Exception ex)
             {

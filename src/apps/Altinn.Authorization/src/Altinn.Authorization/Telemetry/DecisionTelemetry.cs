@@ -20,8 +20,21 @@ namespace Altinn.Platform.Authorization.Telemetry
         /// </summary>
         public const string UnknownDimensionValue = "unknown";
 
+        /// <summary>
+        /// Dimension value for requests arriving on the internal PDP API
+        /// (<c>authorization/api/v1/decision</c>).
+        /// </summary>
+        public const string InternalApiDimensionValue = "internal";
+
+        /// <summary>
+        /// Dimension value for requests arriving on the external PDP API
+        /// (<c>authorization/api/v1/authorize</c>).
+        /// </summary>
+        public const string ExternalApiDimensionValue = "external";
+
         private const string OwnerOrgTag = "resource.owner.org";
         private const string ResourceIdTag = "resource.id";
+        private const string ApiKindTag = "pdp.api.kind";
 
         private readonly Counter<long> _pdpDecisions;
 
@@ -42,12 +55,19 @@ namespace Altinn.Platform.Authorization.Telemetry
         /// <summary>
         /// Records a single PDP decision with the given owner and resource identifier.
         /// </summary>
-        public void RecordDecision(string ownerOrg, string resourceId)
+        /// <param name="ownerOrg">Resource owner org code, or <see cref="UnknownDimensionValue"/>.</param>
+        /// <param name="resourceId">Resource identifier, or <see cref="UnknownDimensionValue"/>.</param>
+        /// <param name="apiKind">
+        /// Which PDP API the request arrived on, either <see cref="InternalApiDimensionValue"/> or
+        /// <see cref="ExternalApiDimensionValue"/>.
+        /// </param>
+        public void RecordDecision(string ownerOrg, string resourceId, string apiKind)
         {
             _pdpDecisions.Add(
                 1,
                 new KeyValuePair<string, object?>(OwnerOrgTag, ownerOrg.ToLowerInvariant()),
-                new KeyValuePair<string, object?>(ResourceIdTag, resourceId.ToLowerInvariant()));
+                new KeyValuePair<string, object?>(ResourceIdTag, resourceId.ToLowerInvariant()),
+                new KeyValuePair<string, object?>(ApiKindTag, apiKind));
         }
     }
 }
