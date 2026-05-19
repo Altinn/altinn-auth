@@ -4219,6 +4219,40 @@ public static class PackageConstants
         ),
     };
 
+    /// <summary>
+    /// Represents the 'Oppgi nærmeste leder for sykmeldt ansatt' access package.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> f1ac0592-47aa-4f5e-8529-f09bb4ed34d9
+    /// - <c>URN:</c> urn:altinn:accesspackage:oppgi-naermeste-leder
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Description:</c> Denne tilgangspakken gir fullmakt til å fylle ut hvem som er nærmeste leder for en sykmeldt ansatt i bedriften. Tilgangen gjør at man også mottar varsler fra Nav når informasjonen om hvem som er nærmeste leder, mangler.
+    /// </remarks>
+    public static ConstantDefinition<Package> OppgiNaermesteLeder { get; } = new ConstantDefinition<Package>("f1ac0592-47aa-4f5e-8529-f09bb4ed34d9")
+    {
+        Entity = new()
+        {
+            Name = "Oppgi nærmeste leder for sykmeldt ansatt",
+            Description = "Denne tilgangspakken gir fullmakt til å fylle ut hvem som er nærmeste leder for en sykmeldt ansatt i bedriften. Tilgangen gjør at man også mottar varsler fra Nav når informasjonen om hvem som er nærmeste leder, mangler.",
+            Urn = "urn:altinn:accesspackage:oppgi-naermeste-leder",
+            Code = "oppgi-naermeste-leder",
+            IsDelegable = true,
+            IsAvailableForServiceOwners = true,
+            IsAssignable = true,
+            EntityTypeId = EntityTypeConstants.Organization,
+            ProviderId = ProviderConstants.Altinn3,
+            AreaId = AreaConstants.Personnel,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Provide the immediate supervisor for the sick-listed employee"),
+            KeyValuePair.Create("Description", "This access package grants authorization to fill out who the immediate supervisor is for an employee on sick leave in the company. The access also allows you to receive notifications from Nav when the information about who the nearest supervisor is missing.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Oppgi næraste leiar for sjukmeld tilsett"),
+            KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakt til å fylla ut kven som er næraste leiar for ein sjukmeld tilsett i bedrifta. Tilgangen gjer at ein også får varsel frå Nav når informasjonen om kven som er næraste leiar, manglar.")
+        ),
+    };
+
     #endregion
 
     #region Skatt, avgift, regnskap og toll
