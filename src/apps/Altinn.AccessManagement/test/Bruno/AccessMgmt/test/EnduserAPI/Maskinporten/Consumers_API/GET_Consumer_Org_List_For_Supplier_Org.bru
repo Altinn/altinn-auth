@@ -1,0 +1,61 @@
+meta {
+  name: GET_Consumer_Org_List_For_Supplier_Org
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/maskinportenconsumers?party={{supplierParty}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{supplierParty}}
+  ~consumer: {{consumerOrg}}
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/maksinporten-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+    const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    
+    bru.setVar("supplierParty", testdata.supplier_Org2.partyuuid);
+    bru.setVar("consumerOrg", testdata.consumer_Org2.orgno);
+    
+  
+    
+    var getTokenParameters = {
+      auth_userId: testdata.supplier_Org2.maskinportenbruker_supplier_Org2.userid,
+      auth_partyId: testdata.supplier_Org2.maskinportenbruker_supplier_Org2.partyid,
+      auth_partyUuid: testdata.supplier_Org2.maskinportenbruker_supplier_Org2.partyuuid,
+      auth_ssn: testdata.supplier_Org2.maskinportenbruker_supplier_Org2.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token)
+}
+
+tests {
+  const testdata = require(`./testdata/maksinporten-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  test("GET consumer Org list for supplier org- consumer Org who added supplier org is in List", function () {
+    const data = res.getBody();
+  
+    const item = data[0];
+    expect(item.party.type).to.equal("Organisasjon");
+    expect(item.party.organizationIdentifier).to.equal(testdata.consumer_Org2.orgno);
+    expect(item.party.personIdentifier).to.equal(null);
+    expect(item.roles).to.be.an("array");
+    expect(item.roles.some(r =>
+      r.code === "supplier" &&
+      r.urn === "urn:altinn:role:supplier"
+    )).to.equal(true);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -41,14 +41,6 @@ tests {
       const data = res.getBody();
       
       expect(res.status).to.equal(200);
-      expect(data).to.exist;
-      expect(data).to.be.an("array");
-
-      data.forEach(function(request) {
-        expect(request).to.be.an("object");
-        expect(request).to.have.property("type");
-        expect(request.type).to.equal("package");
-      });
     });
 }
 

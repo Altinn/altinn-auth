@@ -1,0 +1,55 @@
+meta {
+  name: Negative_POST_legge_Leverandør_org_for_Maskinporten_delegering
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/maskinportensuppliers?party={{party}}&supplier={{orgno}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  supplier: {{orgno}}
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/maksinporten-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+    const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    
+    bru.setVar("party", testdata.consumer_Org.partyuuid);
+    bru.setVar("orgno", testdata.supplier_Org.orgno);
+    
+    var getTokenParameters = {
+      auth_userId: testdata.consumer_Org.dagligleder.userid,
+      auth_partyId: testdata.consumer_Org.dagligleder.partyid,
+      auth_partyUuid: testdata.consumer_Org.dagligleder.partyuuid,
+      auth_ssn: testdata.consumer_Org.dagligleder.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token)
+}
+
+tests {
+  const testdata = require(`./testdata/maksinporten-delegation/${bru.getEnvVar("tokenEnv")}.js`); 
+  test("Add maskinporten supplier organization", function() {
+     const data = res.getBody();
+    expect(res.status).to.equal(200);
+     assert.equal(data.fromId, bru.getVar("party").toLowerCase());
+    assert.equal(data.toId, testdata.supplier_Org.partyuuid);
+    assert.equal(data.roleId, "961f6ebb-ecf7-4fc6-ab5a-ca0841db4931");
+     });
+     
+   
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

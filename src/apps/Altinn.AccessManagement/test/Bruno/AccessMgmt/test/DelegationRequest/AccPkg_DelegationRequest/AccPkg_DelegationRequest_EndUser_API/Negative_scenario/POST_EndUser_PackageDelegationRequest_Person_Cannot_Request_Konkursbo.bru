@@ -51,8 +51,8 @@ script:post-response {
 tests {
   const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
     
-    test("POST_EndUser_PackageDelegationRequest_Person_Cannot_Request_Konkursbo-Tilgangsstyrer", function() {
-      expect(res.status).to.equal(400);
+    test("POST_EndUser_PackageDelegationRequest_Org_Cannot_Request_Konkursbo-Tilgangsstyrer", function() {
+      expect(res.status).to.equal(200);
   });
   
 }

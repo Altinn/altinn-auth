@@ -1,0 +1,68 @@
+meta {
+  name: GET_Delegated_Maskinporten_Resource_For_Consumer
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/maskinportenconsumers/resources?party={{supplierParty}}&consumer={{consumerOrg}}&resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{supplierParty}}
+  consumer: {{consumerOrg}}
+  resource: {{resource}}
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/maksinporten-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+    const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    
+    bru.setVar("supplierParty", testdata.supplier_Org2.partyuuid);
+    bru.setVar("consumerOrg", testdata.consumer_Org2.orgno);
+  bru.setVar("resource", testdata.resource_to_delegate.maskinporten_ressurs);
+    
+  
+    
+    var getTokenParameters = {
+      auth_userId: testdata.supplier_Org2.maskinportenbruker_supplier_Org2.userid,
+      auth_partyId: testdata.supplier_Org2.maskinportenbruker_supplier_Org2.partyid,
+      auth_partyUuid: testdata.supplier_Org2.maskinportenbruker_supplier_Org2.partyuuid,
+      auth_ssn: testdata.supplier_Org2.maskinportenbruker_supplier_Org2.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token)
+}
+
+tests {
+  const testdata = require(`./testdata/maksinporten-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  test("GET delegated maskinporten resources to supplier org for consumers", function () {
+    const data = res.getBody();
+    expect(res.status).to.equal(200);
+    expect(res.getBody()[0].resource.type.name)
+      .to.equal("MaskinportenSchema");
+  });
+  
+    expect(res.getBody()[0].permissions[0].from.type)
+      .to.equal("Organisasjon");
+     expect(res.getBody()[0].permissions[0].to.type)
+      .to.equal("Organisasjon")
+    expect(res.getBody()[0].permissions[0].role.code)
+      .to.equal("supplier")
+  
+    expect(res.getBody()[0].permissions[0].from.organizationIdentifier).to.equal(testdata.consumer_Org2.orgno)
+  
+    expect(res.getBody()[0].permissions[0].to.organizationIdentifier)
+      .to.equal(testdata.supplier_Org2.orgno)
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

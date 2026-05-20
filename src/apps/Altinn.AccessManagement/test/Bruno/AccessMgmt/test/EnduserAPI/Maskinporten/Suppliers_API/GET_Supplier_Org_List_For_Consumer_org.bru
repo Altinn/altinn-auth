@@ -1,0 +1,58 @@
+meta {
+  name: GET_Supplier_Org_List_For_Consumer_org
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/maskinportensuppliers?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/maksinporten-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+    const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    
+    bru.setVar("party", testdata.consumer_Org.partyuuid);
+  
+    
+    var getTokenParameters = {
+      auth_userId: testdata.consumer_Org.dagligleder.userid,
+      auth_partyId: testdata.consumer_Org.dagligleder.partyid,
+      auth_partyUuid: testdata.consumer_Org.dagligleder.partyuuid,
+      auth_ssn: testdata.consumer_Org.dagligleder.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token)
+}
+
+tests {
+  const testdata = require(`./testdata/maksinporten-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  test("GET supplier Org list for consumer org- Supplier Org which is added is in List", function () {
+    const data = res.getBody();
+  
+    const item = data[0];
+    expect(item.party.type).to.equal("Organisasjon");
+    expect(item.party.organizationIdentifier).to.equal(testdata.supplier_Org.orgno);
+    expect(item.party.personIdentifier).to.equal(null);
+    expect(item.roles).to.be.an("array");
+    expect(item.roles.some(r =>
+      r.code === "supplier" &&
+      r.urn === "urn:altinn:role:supplier"
+    )).to.equal(true);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

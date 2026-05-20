@@ -110,11 +110,11 @@
     partyuuid: "ab9e642d-ffe3-4e6e-811e-305b5add04d7",
   },
   Bot_package_person_reject: {
-    lastname: "PLATINA",
-    pid: "06889774566",
-    partyid: 50435470,
-    userid: 1962309,
-    partyuuid: "728e4901-035d-40db-9bdd-7dec07400ead",
+   lastname: "KALV",
+    pid: "27920999617",
+    partyid: 50886468,
+    userid: 1457390,
+    partyuuid: "000124da-184f-44bf-9618-d3dfeea3e23c",
   },
   Bot_package_from_person: {
     lastname: "JUVEL",

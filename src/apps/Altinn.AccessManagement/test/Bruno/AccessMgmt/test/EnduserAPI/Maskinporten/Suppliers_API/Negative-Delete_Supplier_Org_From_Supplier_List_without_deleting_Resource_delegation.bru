@@ -1,0 +1,60 @@
+meta {
+  name: Negative-Delete_Supplier_Org_From_Supplier_List_without_deleting_Resource_delegation
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/maskinportensuppliers?party={{party}}&supplier={{supplier_orgno}}&cascade=false
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  supplier: {{supplier_orgno}}
+  cascade: false
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/maksinporten-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+    const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    
+    bru.setVar("party", testdata.consumer_Org.partyuuid);
+    bru.setVar("supplier_orgno", testdata.supplier_Org.orgno);
+    bru.setVar("resource", testdata.resource_to_delegate.maskinporten_ressurs);
+  
+    
+    var getTokenParameters = {
+      auth_userId: testdata.consumer_Org.dagligleder.userid,
+      auth_partyId: testdata.consumer_Org.dagligleder.partyid,
+      auth_partyUuid: testdata.consumer_Org.dagligleder.partyuuid,
+      auth_ssn: testdata.consumer_Org.dagligleder.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token)
+}
+
+tests {
+  test(bru.getVar("requestName"), function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(400);
+  
+    expect(res.getBody().validationErrors[0].detail)
+      .to.equal("Assignment has resources delegated.");
+  
+    expect(res.getBody().validationErrors[0].assignmentResources)
+      .to.equal("Cannot remove supplier assignment while resources are still delegated. Use cascade=true or remove resources first.");
+    
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

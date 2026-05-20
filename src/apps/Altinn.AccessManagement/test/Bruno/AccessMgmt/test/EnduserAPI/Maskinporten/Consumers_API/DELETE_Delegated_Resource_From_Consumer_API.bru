@@ -1,0 +1,32 @@
+meta {
+  name: DELETE_Delegated_Resource_From_Consumer_API
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/maskinportenconsumers/resources?party={{supplierParty}}&consumer={{consumerOrg}}&resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{supplierParty}}
+  consumer: {{consumerOrg}}
+  resource: {{resource}}
+}
+
+tests {
+  test(bru.getVar("requestName"), function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(204);
+    assert.isNotOk(data, "Expected response body to be empty");
+    
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

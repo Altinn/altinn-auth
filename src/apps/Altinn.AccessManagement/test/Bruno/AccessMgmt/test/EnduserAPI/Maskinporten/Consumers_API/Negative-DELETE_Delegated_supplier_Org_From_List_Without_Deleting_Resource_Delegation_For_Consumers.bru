@@ -1,0 +1,37 @@
+meta {
+  name: Negative-DELETE_Delegated_supplier_Org_From_List_Without_Deleting_Resource_Delegation_For_Consumers
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/maskinportenconsumers?party={{supplierParty}}&consumer={{consumerOrg}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{supplierParty}}
+  consumer: {{consumerOrg}}
+  ~resource: {{resource}}
+}
+
+tests {
+  test(bru.getVar("requestName"), function() {
+    const data = res.getBody();
+    
+    expect(res.status).to.equal(400);
+  
+    expect(res.getBody().validationErrors[0].detail)
+      .to.equal("Assignment has resources delegated.");
+  
+    expect(res.getBody().validationErrors[0].assignmentResources)
+      .to.equal("Cannot remove supplier assignment while resources are still delegated. Use cascade=true or remove resources first.");
+    
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

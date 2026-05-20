@@ -19,15 +19,15 @@ script:pre-request {
   const sharedtestdata = require(`./testdata/sharedtestdata.js`);
     const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
     
-    bru.setVar("party", testdata.Bot_Org_for_serviceowner.partyuuid);
+    bru.setVar("party", testdata.Bot_person_serviceowner.partyuuid);
     
     var getTokenParameters = {
-      auth_userId: testdata.Bot_Org_for_serviceowner.dagligleder.userid,
-      auth_partyId: testdata.Bot_Org_for_serviceowner.dagligleder.partyid,
-      auth_partyUuid: testdata.Bot_Org_for_serviceowner.dagligleder.partyuuid,
-      auth_ssn: testdata.Bot_Org_for_serviceowner.dagligleder.pid,
+      auth_userId: testdata.Bot_person_serviceowner.userid,
+      auth_partyId: testdata.Bot_person_serviceowner.partyid,
+      auth_partyUuid: testdata.Bot_person_serviceowner.partyuuid,
+      auth_ssn: testdata.Bot_person_serviceowner.pid,
       auth_tokenType: sharedtestdata.authTokenType.personal,
-      auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+      auth_scopes: sharedtestdata.auth_scopes.sluttbrukerdelegationrequestwrite
     }
     
     const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
