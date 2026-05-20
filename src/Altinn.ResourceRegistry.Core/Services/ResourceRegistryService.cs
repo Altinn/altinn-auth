@@ -269,6 +269,13 @@ namespace Altinn.ResourceRegistry.Core.Services
 
                 List<ServiceResource> resources = await Search(resourceSearch, includeAllVersions, cancellationToken);
 
+                if (!includeMigratedApps)
+                {
+                    resources = resources
+                        .Where(resource => !IsMigratedApplicationResource(resource))
+                        .ToList();
+                }
+
                 foreach (ServiceResource resource in resources)
                 {
                     // For app resources, use org/app format like Storage apps do
@@ -305,6 +312,11 @@ namespace Altinn.ResourceRegistry.Core.Services
                 }
 
                 return resources;
+
+                static bool IsMigratedApplicationResource(ServiceResource resource)
+                {
+                    return resource.ResourceType == Enums.ResourceType.MigratedApp;
+                }
             }
 
             async Task<List<ServiceResource>> GetAltinn3Applications(bool includeMigratedApps, CancellationToken cancellationToken = default)
