@@ -34,6 +34,11 @@ services = {
     host     = "altinn-authentication.default.svc.cluster.local"
   }
 
+  altinn-access-management = {
+    protocol = "http"
+    host     = "altinn-access-management.default.svc.cluster.local"
+  }
+
   altinn-resource-registry = {
     protocol = "http"
     host     = "altinn-resource-registry.default.svc.cluster.local"
