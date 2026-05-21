@@ -103,11 +103,11 @@
     partyuuid: "1ee055c5-53ae-4e35-8c47-1ab1d30cbc29",
   },
   Bot_package_person_withdraw: {
-    lastname: "ADAPTER",
-    pid: "18919173986",
-    partyid: 50465896,
-    userid: 20785410,
-    partyuuid: "a38a3b1e-8c8f-4fd4-8789-38f45837b1b3",
+    lastname: "FAMILIEBARNEHAGE",
+    pid: "13859797622",
+    partyid: 50299613,
+    userid: 20317790,
+    partyuuid: "406891e0-2237-4a16-96af-ef8505704afc",
   },
   Bot_package_person_reject: {
     lastname: "KALV",
