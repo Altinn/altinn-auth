@@ -230,4 +230,3 @@ Josephine has been given access to two specific instances on behalf of Kaos. The
 | `UserProfileLookupServiceMock` | Handles person lookup by SSN + last name for the PersonInput flow (AddRightholder, AddAssignmentPackage). |
 | `AltinnRolesClientMock` | Provides Altinn 2 role definitions. Required for AuthorizedParties tests that include roles. |
 | `ProfileClientMock` | Provides user profile data. Required for AuthorizedParties tests. |
-| `DelegationChangeEventQueueMock` | Captures delegation change events. Used in RemoveResource tests. |

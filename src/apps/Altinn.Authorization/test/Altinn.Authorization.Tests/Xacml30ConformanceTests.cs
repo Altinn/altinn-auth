@@ -576,7 +576,6 @@ namespace Altinn.Platform.Authorization.IntegrationTests
                      services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
                      services.AddSingleton<IRoles, RolesMock>();
                      services.AddSingleton<IPolicyRepository, PolicyRepositoryMock>();
-                     services.AddSingleton<IDelegationChangeEventQueue, DelegationChangeEventQueueMock>();
                      services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
                  });
             }).CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });

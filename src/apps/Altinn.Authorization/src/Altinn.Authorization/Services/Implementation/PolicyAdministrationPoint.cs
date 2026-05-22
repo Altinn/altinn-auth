@@ -21,12 +21,10 @@ namespace Altinn.Platform.Authorization.Services.Implementation
     /// </summary>
     public class PolicyAdministrationPoint : IPolicyAdministrationPoint
     {
-        private readonly ILogger<IPolicyAdministrationPoint> _logger;
+        private readonly ILogger<PolicyAdministrationPoint> _logger;
         private readonly IPolicyRetrievalPoint _prp;
         private readonly IPolicyRepository _policyRepository;
         private readonly IDelegationMetadataRepository _delegationRepository;
-        private readonly IDelegationChangeEventQueue _eventQueue;
-        private readonly int delegationChangeEventQueueErrorId = 911;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PolicyAdministrationPoint"/> class.
@@ -34,14 +32,12 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="policyRetrievalPoint">The policy retrieval point</param>
         /// <param name="policyRepository">The policy repository (blob storage)</param>
         /// <param name="delegationRepository">The delegation change repository (postgresql)</param>
-        /// <param name="eventQueue">The delegation change event queue service to post events for any delegation change</param>
         /// <param name="logger">Logger instance</param>
-        public PolicyAdministrationPoint(IPolicyRetrievalPoint policyRetrievalPoint, IPolicyRepository policyRepository, IDelegationMetadataRepository delegationRepository, IDelegationChangeEventQueue eventQueue, ILogger<IPolicyAdministrationPoint> logger)
+        public PolicyAdministrationPoint(IPolicyRetrievalPoint policyRetrievalPoint, IPolicyRepository policyRepository, IDelegationMetadataRepository delegationRepository, ILogger<PolicyAdministrationPoint> logger)
         {
             _prp = policyRetrievalPoint;
             _policyRepository = policyRepository;
             _delegationRepository = delegationRepository;
-            _eventQueue = eventQueue;
             _logger = logger;
         }
 
@@ -138,39 +134,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             return result;
         }
 
-        /// <summary>
-        /// Operation for triggering a replay of delegationchange events pushing them to the delegationevents queue for syncronization with Altinn 2.0
-        /// </summary>
-        /// <param name="startId">The first id in the range to replay</param>
-        /// <param name="endId">The last id in the range to replay. If left to 0 all events after the startId will be replayed</param>
-        /// <returns>bool</returns>
-        public async Task<bool> ReplayDelegationChangeEvents(int startId, int endId)
-        {
-            int currentId = 0;
-            try
-            {
-                List<DelegationChange> delegationChanges = await _delegationRepository.GetDelegationChangesByIdRange(startId, endId);
-
-                if (!delegationChanges.Any())
-                {
-                    return false;
-                }
-
-                foreach (DelegationChange change in delegationChanges)
-                {
-                    currentId = change.DelegationChangeId;
-                    await _eventQueue.Push(change);
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(new EventId(delegationChangeEventQueueErrorId, "DelegationChangeEventQueue.Push.Error"), ex, "ReplayDelegationChangeEvents could not push DelegationChangeEvent to DelegationChangeEventQueue. StartId: {StartId}, EndId: {EndId}, CurrentId: {CurrentId}", startId, endId, currentId);
-                return false;
-            }
-        }
-
         private async Task<bool> WriteDelegationPolicyInternal(string policyPath, List<Rule> rules)
         {
             if (!DelegationHelper.TryGetDelegationParamsFromRule(rules.First(), out string org, out string app, out int offeredByPartyId, out int? coveredByPartyId, out int? coveredByUserId, out int delegatedByUserId))
@@ -265,15 +228,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                         return false;
                     }
 
-                    try
-                    {
-                        await _eventQueue.Push(change);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogCritical(new EventId(delegationChangeEventQueueErrorId, "DelegationChangeEventQueue.Push.Error"), ex, "AddRules could not push DelegationChangeEvent to DelegationChangeEventQueue. DelegationChangeEvent must be retried for successful sync with SBL Authorization. DelegationChange: {Change}", change);
-                    }
-
                     return true;
                 }
                 finally
@@ -365,15 +319,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                         // The root blob is in effect orphaned/ignored as the delegation policies are always to be read by version, and will be overritten by the next delegation change.
                         _logger.LogError("Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {PolicyPath}. is authorization postgresql database alive and well?", policyPath);
                         return null;
-                    }
-
-                    try
-                    {
-                        await _eventQueue.Push(change);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogCritical(new EventId(delegationChangeEventQueueErrorId, "DelegationChangeEventQueue.Push.Error"), ex, "DeleteRules could not push DelegationChangeEvent to DelegationChangeEventQueue. DelegationChangeEvent must be retried for successful sync with SBL Authorization. DelegationChange: {Change}", change);
                     }
                 }
             }
@@ -470,15 +415,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     // The root blob is in effect orphaned/ignored as the delegation policies are always to be read by version, and will be overritten by the next delegation change.
                     _logger.LogError("Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {PolicyPath}. is authorization postgresql database alive and well?", policyPath);
                     return null;
-                }
-
-                try
-                {
-                    await _eventQueue.Push(change);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogCritical(new EventId(delegationChangeEventQueueErrorId, "DelegationChangeEventQueue.Push.Error"), ex, "DeletePolicy could not push DelegationChangeEvent to DelegationChangeEventQueue. DelegationChangeEvent must be retried for successful sync with SBL Authorization. DelegationChange: {Change}", change);
                 }
 
                 return currentPolicyRules;

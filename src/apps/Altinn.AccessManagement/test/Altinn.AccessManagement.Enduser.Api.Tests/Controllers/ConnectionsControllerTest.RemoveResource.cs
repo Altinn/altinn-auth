@@ -68,7 +68,6 @@ public partial class ConnectionsControllerTest
                 services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
                 services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
-                services.AddSingleton<IDelegationChangeEventQueue, DelegationChangeEventQueueMock>();
             });
             Fixture.EnsureSeedOnce<RemoveResource>(db =>
             {

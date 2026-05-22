@@ -172,65 +172,6 @@ namespace Altinn.AccessManagement.Tests.Utils
         }
 
         /// <summary>
-        /// Assert that two <see cref="DelegationChangeEventList"/> have the same property values.
-        /// </summary>
-        /// <param name="expected">An instance with the expected values.</param>
-        /// <param name="actual">The instance to verify.</param>
-        public static void AssertEqual(DelegationChangeEventList expected, DelegationChangeEventList actual)
-        {
-            if (expected == null)
-            {
-                Assert.Null(actual);
-                return;
-            }
-
-            Assert.Equal(expected.DelegationChangeEvents.Count, actual.DelegationChangeEvents.Count);
-            for (int i = 0; i < expected.DelegationChangeEvents.Count; i++)
-            {
-                AssertEqual(expected.DelegationChangeEvents[i], actual.DelegationChangeEvents[i]);
-            }
-        }
-
-        /// <summary>
-        /// Assert that two <see cref="DelegationChangeEvent"/> have the same property values.
-        /// </summary>
-        /// <param name="expected">An instance with the expected values.</param>
-        /// <param name="actual">The instance to verify.</param>
-        public static void AssertEqual(DelegationChangeEvent expected, DelegationChangeEvent actual)
-        {
-            if (expected == null)
-            {
-                Assert.Null(actual);
-                return;
-            }
-
-            Assert.Equal(expected.EventType, actual.EventType);
-            AssertEqual(expected.DelegationChange, actual.DelegationChange);
-        }
-
-        /// <summary>
-        /// Assert that two <see cref="SimpleDelegationChange"/> have the same property values.
-        /// </summary>
-        /// <param name="expected">An instance with the expected values.</param>
-        /// <param name="actual">The instance to verify.</param>
-        public static void AssertEqual(SimpleDelegationChange expected, SimpleDelegationChange actual)
-        {
-            if (expected == null)
-            {
-                Assert.Null(actual);
-                return;
-            }
-
-            Assert.Equal(expected.DelegationChangeId, actual.DelegationChangeId);
-            Assert.Equal(expected.AltinnAppId, actual.AltinnAppId);
-            Assert.Equal(expected.OfferedByPartyId, actual.OfferedByPartyId);
-            Assert.Equal(expected.CoveredByPartyId, actual.CoveredByPartyId);
-            Assert.Equal(expected.CoveredByUserId, actual.CoveredByUserId);
-            Assert.Equal(expected.PerformedByUserId, actual.PerformedByUserId);
-            Assert.Equal(expected.Created, actual.Created);
-        }
-
-        /// <summary>
         /// Assert that two <see cref="XacmlContextRequest"/> have the same property values.
         /// </summary>
         /// <param name="expected">An instance with the expected values.</param>

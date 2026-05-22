@@ -55,7 +55,6 @@ namespace Altinn.AccessManagement.Tests.Controllers
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
                 services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
                 services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
-                services.AddSingleton<IDelegationChangeEventQueue, DelegationChangeEventQueueMock>();
                 services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
                 services.AddSingleton<IPartiesClient, PartiesClientMock>();
                 services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();

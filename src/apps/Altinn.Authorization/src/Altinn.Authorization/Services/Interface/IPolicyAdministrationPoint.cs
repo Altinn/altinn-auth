@@ -39,13 +39,5 @@ namespace Altinn.Platform.Authorization.Services.Interface
         /// <param name="policiesToDelete">entity containing match for all the policies to delete</param>
         /// <returns>A list containing all the policies that is deleted</returns>
         Task<List<Rule>> TryDeleteDelegationPolicies(List<RequestToDelete> policiesToDelete);
-
-        /// <summary>
-        /// Endpoint for triggering a replay of delegationchange events pushing them to the delegationevents queue for syncronization with Altinn 2.0
-        /// </summary>
-        /// <param name="startId">The first id in the range to replay</param>
-        /// <param name="endId">The last id in the range to replay. If left/set to 0 all events found after the startId will be replayed</param>
-        /// <returns>bool</returns>
-        Task<bool> ReplayDelegationChangeEvents(int startId, int endId);
     }
 }

@@ -24,12 +24,10 @@ namespace Altinn.AccessManagement.Core.Services
     /// </summary>
     public class PolicyAdministrationPoint : IPolicyAdministrationPoint
     {
-        private readonly ILogger<IPolicyAdministrationPoint> _logger;
+        private readonly ILogger<PolicyAdministrationPoint> _logger;
         private readonly IPolicyRetrievalPoint _prp;
         private readonly IPolicyFactory _policyFactory;
         private readonly IDelegationMetadataRepository _delegationRepository;
-        private readonly IDelegationChangeEventQueue _eventQueue;
-        private readonly int delegationChangeEventQueueErrorId = 911;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PolicyAdministrationPoint"/> class.
@@ -37,14 +35,12 @@ namespace Altinn.AccessManagement.Core.Services
         /// <param name="policyRetrievalPoint">The policy retrieval point.</param>
         /// <param name="policyFactory">The policy repository (blob storage).</param>
         /// <param name="delegationRepository">The delegation change repository (postgresql).</param>
-        /// <param name="eventQueue">The delegation change event queue service to post events for any delegation change.</param>
         /// <param name="logger">Logger instance.</param>
-        public PolicyAdministrationPoint(IPolicyRetrievalPoint policyRetrievalPoint, IPolicyFactory policyFactory, IDelegationMetadataRepository delegationRepository, IDelegationChangeEventQueue eventQueue, ILogger<IPolicyAdministrationPoint> logger)
+        public PolicyAdministrationPoint(IPolicyRetrievalPoint policyRetrievalPoint, IPolicyFactory policyFactory, IDelegationMetadataRepository delegationRepository, ILogger<PolicyAdministrationPoint> logger)
         {
             _prp = policyRetrievalPoint;
             _policyFactory = policyFactory;
             _delegationRepository = delegationRepository;
-            _eventQueue = eventQueue;
             _logger = logger;
         }
 
@@ -769,18 +765,6 @@ namespace Altinn.AccessManagement.Core.Services
                         return false;
                     }
 
-                    if (resourceMatchType == ResourceAttributeMatchType.AltinnAppId)
-                    {
-                        try
-                        {
-                            await _eventQueue.Push(change);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogCritical(new EventId(delegationChangeEventQueueErrorId, "DelegationChangeEventQueue.Push.Error"), ex, "AddRules could not push DelegationChangeEvent to DelegationChangeEventQueue. DelegationChangeEvent must be retried for successful sync with SBL Authorization. DelegationChange: {Change}", change);
-                        }
-                    }
-
                     return true;
                 }
                 finally
@@ -882,18 +866,6 @@ namespace Altinn.AccessManagement.Core.Services
                         // The root blob is in effect orphaned/ignored as the delegation policies are always to be read by version, and will be overritten by the next delegation change.
                         _logger.LogError("Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {PolicyPath}. is authorization postgresql database alive and well?", policyPath);
                         return null;
-                    }
-
-                    if (resourceMatchType == ResourceAttributeMatchType.AltinnAppId)
-                    {
-                        try
-                        {
-                            await _eventQueue.Push(change);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogCritical(new EventId(delegationChangeEventQueueErrorId, "DelegationChangeEventQueue.Push.Error"), ex, "DeleteRules could not push DelegationChangeEvent to DelegationChangeEventQueue. DelegationChangeEvent must be retried for successful sync with SBL Authorization. DelegationChange: {Change}", change);
-                        }
                     }
                 }
             }
@@ -1003,18 +975,6 @@ namespace Altinn.AccessManagement.Core.Services
                     // The root blob is in effect orphaned/ignored as the delegation policies are always to be read by version, and will be overritten by the next delegation change.
                     _logger.LogError("Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {PolicyPath}. is authorization postgresql database alive and well?", policyPath);
                     return null;
-                }
-
-                if (resourceMatchType == ResourceAttributeMatchType.AltinnAppId)
-                {
-                    try
-                    {
-                        await _eventQueue.Push(change);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogCritical(new EventId(delegationChangeEventQueueErrorId, "DelegationChangeEventQueue.Push.Error"), ex, "DeletePolicy could not push DelegationChangeEvent to DelegationChangeEventQueue. DelegationChangeEvent must be retried for successful sync with SBL Authorization. DelegationChange: {Change}", change);
-                    }
                 }
 
                 return currentPolicyRules;

@@ -29,8 +29,7 @@ namespace Altinn.AccessManagement.Tests
     {
         private readonly IPolicyAdministrationPoint _pap;
         private readonly IPolicyFactory _prp;
-        private readonly IDelegationChangeEventQueue _eventQueue;
-        private readonly Mock<ILogger<IPolicyAdministrationPoint>> _logger;
+        private readonly Mock<ILogger<PolicyAdministrationPoint>> _logger;
         private DelegationMetadataRepositoryMock _delegationMetadataRepositoryMock;
 
         /// <summary>
@@ -44,16 +43,14 @@ namespace Altinn.AccessManagement.Tests
 
             IMemoryCache memoryCache = serviceProvider.GetService<IMemoryCache>();
 
-            _logger = new Mock<ILogger<IPolicyAdministrationPoint>>();
+            _logger = new Mock<ILogger<PolicyAdministrationPoint>>();
             _delegationMetadataRepositoryMock = new DelegationMetadataRepositoryMock();
             _prp = new PolicyFactoryMock(new Mock<ILogger<PolicyRepositoryMock>>().Object);
-            _eventQueue = new DelegationChangeEventQueueMock();
 
             _pap = new PolicyAdministrationPoint(
                 new PolicyRetrievalPoint(_prp, memoryCache, Options.Create(new CacheConfig { PolicyCacheTimeout = 1 })),
                 _prp,
                 _delegationMetadataRepositoryMock,
-                _eventQueue,
                 _logger.Object);
         }
 
@@ -170,60 +167,6 @@ namespace Altinn.AccessManagement.Tests
             Assert.True(actual.All(r => !string.IsNullOrEmpty(r.RuleId)));
             AssertionUtil.AssertEqual(expected, actual);
             AssertionUtil.AssertEqual(expectedDbUpdates, _delegationMetadataRepositoryMock.MetadataChanges);
-        }
-
-        /// <summary>
-        /// Scenario:
-        /// Tests the TryWriteDelegationPolicyRules function, where all rules are deleted the db is updated with RevokeLast status,
-        /// but pushing RevokeLast event to DelegationChangeEventQueue fails which should trigger crittical error logging
-        /// Input:
-        /// List of unordered rules for deletion multiple apps same OfferedBy to one CoveredBy user, and one coveredBy organization/partyid
-        /// Expected Result:
-        /// List of all rules are deleted from policy and delegationchange stored in postgresql, critical error is logged
-        /// Success Criteria:
-        /// All returned rules match expected, and critical error has been logged
-        /// </summary>
-        [Fact]
-        public async Task TryDeleteDelegationPolicyRules_Valid_DelegationEventQueue_Push_Exception()
-        {
-            // Arrange
-            int performedByUserId = 20001337;
-            int offeredByPartyId = 50001337;
-            int coveredBy = 20001336;
-            string coveredByType = AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute;
-            _delegationMetadataRepositoryMock.MetadataChanges = new Dictionary<string, List<DelegationChange>>();
-
-            List<RequestToDelete> inputRuleMatchess = new List<RequestToDelete>
-            {
-                TestDataUtil.GetRequestToDeleteModel(performedByUserId, offeredByPartyId, "error", "delegationeventfail", new List<string> { "c73079c1-ed67-4958-91e3-a388ee355097" }, coveredByUserId: coveredBy)
-            };
-
-            List<Rule> expected = new List<Rule>
-            {
-                TestDataUtil.GetRuleModel(performedByUserId, offeredByPartyId, coveredBy.ToString(), coveredByType, "read", "error", "delegationeventfail", createdSuccessfully: true)
-            };
-
-            Dictionary<string, List<DelegationChange>> expectedDbUpdates = new Dictionary<string, List<DelegationChange>>
-            {
-                { "error/delegationeventfail/50001337/u20001336", new List<DelegationChange> { TestDataUtil.GetAltinnAppDelegationChange("error/delegationeventfail", offeredByPartyId, performedByUserId: performedByUserId, coveredByUserId: coveredBy, changeType: DelegationChangeType.Revoke) } }
-            };
-
-            // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicyRules(inputRuleMatchess, TestContext.Current.CancellationToken);
-
-            // Assert
-            Assert.Equal(expected.Count, actual.Count);
-            Assert.True(actual.All(r => !string.IsNullOrEmpty(r.RuleId)));
-            AssertionUtil.AssertEqual(expected, actual);
-            AssertionUtil.AssertEqual(expectedDbUpdates, _delegationMetadataRepositoryMock.MetadataChanges);
-            _logger.Verify(
-                x => x.Log(
-                    LogLevel.Critical,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((@object, @type) => @object.ToString().StartsWith("DeleteRules could not push DelegationChangeEvent to DelegationChangeEventQueue. DelegationChangeEvent must be retried for successful sync with SBL Authorization. DelegationChange:") && @type.Name == "FormattedLogValues"),
-                    It.IsAny<Exception>(),
-                    (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
-                Times.Once);
         }
 
         /// <summary>
@@ -722,61 +665,6 @@ namespace Altinn.AccessManagement.Tests
             Assert.True(actual.All(r => !string.IsNullOrEmpty(r.RuleId)));
             AssertionUtil.AssertEqual(expected, actual);
             AssertionUtil.AssertEqual(expectedDbUpdates, _delegationMetadataRepositoryMock.MetadataChanges);
-        }
-
-        /// <summary>
-        /// Scenario:
-        /// Tests the TryDeleteDelegationPolicies operation, where all rules in a given delegation policy are deleted and stored in delegationchange database with RevokeLast status,
-        /// but pushing RevokeLast event to DelegationChangeEventQueue fails which should trigger crittical error logging
-        /// Input:
-        /// List of RequestToDelete models identifying the delegation policies to be deleted
-        /// Expected Result:
-        /// List of all rules are deleted from policy and delegationchange stored in postgresql, critical error is logged
-        /// Success Criteria:
-        /// All returned rules match expected, and critical error has been logged
-        /// </summary>
-        [Fact]
-        public async Task TryDeleteDelegationPolicies_Valid_DelegationEventQueue_Push_Exception()
-        {
-            // Arrange
-            int performedByUserId = 20001337;
-            int offeredByPartyId = 50001337;
-            int coveredBy = 20001336;
-            string coveredByType = AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute;
-            _delegationMetadataRepositoryMock.MetadataChanges = new Dictionary<string, List<DelegationChange>>();
-
-            List<RequestToDelete> inputRuleMatchess = new List<RequestToDelete>
-            {
-                TestDataUtil.GetRequestToDeleteModel(performedByUserId, offeredByPartyId, "error", "delegationeventfail", coveredByUserId: coveredBy)
-            };
-
-            List<Rule> expected = new List<Rule>
-            {
-                TestDataUtil.GetRuleModel(performedByUserId, offeredByPartyId, coveredBy.ToString(), coveredByType, "read", "error", "delegationeventfail", createdSuccessfully: true),
-                TestDataUtil.GetRuleModel(performedByUserId, offeredByPartyId, coveredBy.ToString(), coveredByType, "write", "error", "delegationeventfail", createdSuccessfully: true)
-            };
-
-            Dictionary<string, List<DelegationChange>> expectedDbUpdates = new Dictionary<string, List<DelegationChange>>
-            {
-                { "error/delegationeventfail/50001337/u20001336", new List<DelegationChange> { TestDataUtil.GetAltinnAppDelegationChange("error/delegationeventfail", offeredByPartyId, performedByUserId: performedByUserId, coveredByUserId: coveredBy, changeType: DelegationChangeType.RevokeLast) } }
-            };
-
-            // Act
-            List<Rule> actual = await _pap.TryDeleteDelegationPolicies(inputRuleMatchess, TestContext.Current.CancellationToken);
-
-            // Assert
-            Assert.Equal(expected.Count, actual.Count);
-            Assert.True(actual.All(r => !string.IsNullOrEmpty(r.RuleId)));
-            AssertionUtil.AssertEqual(expected, actual);
-            AssertionUtil.AssertEqual(expectedDbUpdates, _delegationMetadataRepositoryMock.MetadataChanges);
-            _logger.Verify(
-                x => x.Log(
-                    LogLevel.Critical,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((@object, @type) => @object.ToString().StartsWith("DeletePolicy could not push DelegationChangeEvent to DelegationChangeEventQueue. DelegationChangeEvent must be retried for successful sync with SBL Authorization. DelegationChange:") && @type.Name == "FormattedLogValues"),
-                    It.IsAny<Exception>(),
-                    (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
-                Times.Once);
         }
 
         /// <summary>
@@ -1572,51 +1460,5 @@ namespace Altinn.AccessManagement.Tests
                 Times.Once);
         }
 
-        /// <summary>
-        /// Scenario:
-        /// Tests the TryWriteDelegationPolicyRules function, but pushing the delegation event to the queue fails.
-        /// Input:
-        /// List with a rule for delegation of the app error/delegationeventfail between for a single offeredby/coveredby combination resulting in a single delegation policy.
-        /// Expected Result:
-        /// Internal exception cause pushing delegation event to fail, after delegation has been stored.
-        /// Success Criteria:
-        /// TryWriteDelegationPolicyRules returns rules as created, but a Critical Error has been logged
-        /// </summary>
-        [Fact]
-        public async Task TryWriteDelegationPolicyRules_DelegationEventQueue_Push_Exception()
-        {
-            // Arrange
-            int delegatedByUserId = 20001337;
-            int offeredByPartyId = 50001337;
-            string coveredBy = "20001336";
-            string coveredByType = AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute;
-
-            List<Rule> unsortedRules = new List<Rule>
-            {
-                TestDataUtil.GetRuleModel(delegatedByUserId, offeredByPartyId, coveredBy, coveredByType, "read", "error", "delegationeventfail"),
-            };
-
-            List<Rule> expected = new List<Rule>
-            {
-                TestDataUtil.GetRuleModel(delegatedByUserId, offeredByPartyId, coveredBy, coveredByType, "read", "error", "delegationeventfail", createdSuccessfully: true),
-            };
-
-            // Act
-            List<Rule> actual = await _pap.TryWriteDelegationPolicyRules(unsortedRules, cancellationToken: TestContext.Current.CancellationToken);
-
-            // Assert
-            Assert.Equal(expected.Count, actual.Count);
-            Assert.True(actual.All(r => r.CreatedSuccessfully));
-            Assert.True(actual.All(r => !string.IsNullOrEmpty(r.RuleId)));
-            AssertionUtil.AssertEqual(expected, actual);
-            _logger.Verify(
-                x => x.Log(
-                    LogLevel.Critical,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((@object, @type) => @object.ToString().StartsWith("AddRules could not push DelegationChangeEvent to DelegationChangeEventQueue. DelegationChangeEvent must be retried for successful sync with SBL Authorization. DelegationChange:") && @type.Name == "FormattedLogValues"),
-                    It.IsAny<Exception>(),
-                    (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
-                Times.Once);
-        }
     }
 }

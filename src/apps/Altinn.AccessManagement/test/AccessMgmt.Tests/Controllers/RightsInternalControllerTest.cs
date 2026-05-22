@@ -71,7 +71,6 @@ namespace Altinn.AccessManagement.Tests.Controllers
                 services.RemoveAll<IPDP>();
                 services.AddSingleton<IPDP, PdpPermitMock>();
                 services.AddSingleton<IAltinn2RightsClient, Tests.Mocks.Altinn2RightsClientMock>();
-                services.AddSingleton<IDelegationChangeEventQueue>(new DelegationChangeEventQueueMock());
                 services.AddSingleton<IAuthenticationClient>(new AuthenticationMock());
                 services.AddSingleton<IAccessListsAuthorizationClient>(new AccessListsAuthorizationClientMock());
             });
@@ -1679,7 +1678,6 @@ namespace Altinn.AccessManagement.Tests.Controllers
                 services.RemoveAll<IPDP>();
                 services.AddSingleton<IPDP, PdpPermitMock>();
                 services.AddSingleton<IAltinn2RightsClient, Tests.Mocks.Altinn2RightsClientMock>();
-                services.AddSingleton<IDelegationChangeEventQueue>(new DelegationChangeEventQueueMock());
                 services.AddSingleton<IAuthenticationClient>(new AuthenticationMock());
                 services.AddSingleton<IAccessListsAuthorizationClient>(new AccessListsAuthorizationClientMock());
 

@@ -208,8 +208,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IResourceRegistry, ResourceRegistryWrapper>();
     services.AddSingleton<IInstanceMetadataRepository, InstanceMetadataRepository>();
     services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepository>();
-    services.AddSingleton<IDelegationChangeEventQueue, DelegationChangeEventQueue>();
-    services.AddSingleton<IEventMapperService, EventMapperService>();
     services.AddSingleton<IAccessManagementWrapper, AccessManagementWrapper>();
     services.AddSingleton<IAccessListAuthorization, AccessListAuthorization>();
     services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProvider>();

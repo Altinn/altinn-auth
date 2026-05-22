@@ -25,7 +25,6 @@ public static class IntegrationDependencyInjectionExtensions
         builder.Services.AddSingleton<IKeyVaultService, KeyVaultService>();
         builder.Services.AddSingleton<IPlatformAuthorizationTokenProvider, PlatformAuthorizationTokenProvider>();
         builder.Services.AddHttpClient<IDelegationRequestsWrapper, DelegationRequestProxy>();
-        builder.Services.AddSingleton<IEventMapperService, EventMapperService>();
 
         builder.Services.AddHttpClient<IPartiesClient, PartiesClient>();
         builder.Services.AddHttpClient<IProfileClient, ProfileClient>();

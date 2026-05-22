@@ -154,38 +154,6 @@ namespace Altinn.Platform.Authorization.Repositories
             return delegationChanges;
         }
 
-        /// <inheritdoc/>
-        public async Task<List<DelegationChange>> GetDelegationChangesByIdRange(int startId, int endId)
-        {
-            try
-            {
-                List<DelegationChange> delegationChanges = new List<DelegationChange>();
-                await using NpgsqlConnection conn = await _dataSource.OpenConnectionAsync();
-
-                NpgsqlCommand pgcom = new NpgsqlCommand("select * from delegation.select_delegationchanges_by_id_range(@_startId)", conn);
-                if (endId != 0)
-                {
-                    pgcom.CommandText = "select * from delegation.select_delegationchanges_by_id_range(@_startId, @_endId)";
-                    pgcom.Parameters.AddWithValue("_endId", endId);
-                }
-
-                pgcom.Parameters.AddWithValue("_startId", startId);
-
-                using NpgsqlDataReader reader = pgcom.ExecuteReader();
-                while (reader.Read())
-                {
-                    delegationChanges.Add(GetDelegationChange(reader));
-                }
-
-                return delegationChanges;
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Authorization // DelegationMetadataRepository // GetDelegationChangesByIdRange // Exception");
-                throw;
-            }
-        }
-
         private static void CheckIfOfferedbyPartyIdsHasValue(List<int> offeredByPartyIds)
         {
             if (offeredByPartyIds == null)

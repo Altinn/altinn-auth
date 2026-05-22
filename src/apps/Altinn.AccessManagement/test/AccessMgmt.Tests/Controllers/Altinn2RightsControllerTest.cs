@@ -282,7 +282,6 @@ public class Altinn2RightsControllerTest : IClassFixture<ApiFixture>
         services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
         services.AddSingleton<IPDP, PdpPermitMock>();
         services.AddSingleton<IAltinn2RightsClient, Tests.Mocks.Altinn2RightsClientMock>();
-        services.AddSingleton<IDelegationChangeEventQueue>(new DelegationChangeEventQueueMock());
 
         // ApiFixture registers PublicSigningKeyProviderMock by default, but these
         // tests sign tokens via PrincipalUtil.GetAccessToken which requires the

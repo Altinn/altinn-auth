@@ -157,23 +157,5 @@ namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
 
             return Task.FromResult(result);
         }
-
-        public Task<List<DelegationChange>> GetDelegationChangesByIdRange(int startId, int endId)
-        {
-            List<DelegationChange> allTestDataDelegationChanges = GetTestDataFromFile("delegationchanges_replay");
-            if (endId == 0)
-            {
-                return Task.FromResult(allTestDataDelegationChanges.Where(dc => dc.DelegationChangeId >= startId).ToList());
-            }
-
-            return Task.FromResult(allTestDataDelegationChanges.Where(dc => dc.DelegationChangeId >= startId && dc.DelegationChangeId <= endId).ToList());
-        }
-
-        private static List<DelegationChange> GetTestDataFromFile(string fileName)
-        {
-            string responsePath = $"Data/Json/DelegationChanges/{fileName}.json";
-            string content = File.ReadAllText(responsePath);
-            return (List<DelegationChange>)JsonSerializer.Deserialize(content, typeof(List<DelegationChange>), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        }
     }
 }
