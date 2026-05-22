@@ -5,7 +5,7 @@
     <ItemGroup>
         <PackageVersion Include="coverlet.collector" Version="6.0.4" />
         <PackageVersion Include="coverlet.msbuild" Version="6.0.4" />
-        <PackageVersion Include="FluentAssertions" Version="7.0.0" />
+        <PackageVersion Include="FluentAssertions" Version="7.2.2" />
         <PackageVersion Include="Microsoft.Build.Artifacts" Version="6.1.63" />
         <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
         <PackageVersion Include="Moq" Version="4.20.72" />

@@ -19,7 +19,7 @@ namespace Altinn.Authorization.Cli.Proxy;
 public class ProxyCommand(CancellationToken cancellationToken)
     : BaseCommand<ProxyCommand.Settings>(cancellationToken)
 {
-    public override async Task<int> ExecuteAsync(
+    protected override async Task<int> ExecuteAsync(
         CommandContext context,
         Settings settings,
         CancellationToken cancellationToken)

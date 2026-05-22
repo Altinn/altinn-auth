@@ -19,7 +19,7 @@ public sealed class RetryCommand(CancellationToken cancellationToken)
     : BaseCommand<RetryCommand.Settings>(cancellationToken)
 {
     /// <inheritdoc/>
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var adminClient = new ServiceBusAdministrationClient(settings.ConnectionString);
 
