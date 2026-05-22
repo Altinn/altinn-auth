@@ -97,7 +97,7 @@ public interface IAuthorizedPartyRepoServiceEf
     /// Get all connections the to party has any access to in one query, for usage in the new AuthorizedPartiesServiceEf implementation.
     /// </summary>
     /// <returns>Enumerable of package permissions</returns>
-    Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthers(Guid toId, AuthorizedPartiesFilters filters = null, CancellationToken ct = default);
+    Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthers(Guid toId, AuthorizedPartiesFilters filters = null, bool enrichEntities = false, CancellationToken ct = default);
 
     /// <summary>
     /// Get all connections the to party has any access packages for, for usage in the AuthorizedPartiesServiceEfOld implementation.

@@ -68,6 +68,7 @@ tests {
     const targetParty = allParties.find(party => party.partyUuid === testdata.idportenEmailUser.partyUuid);
   
     assert.exists(targetParty, 'Party with partyUuid '+testdata.idportenEmailUser.partyUuid+' should exist');
+    assert.equal(targetParty.emailId, testdata.idportenEmailUser.emailId, "Expected EmailId should exist");
     assertIncludeMembersIgnoreCase(targetParty.authorizedRoles, ["SELN"]);
   
   });

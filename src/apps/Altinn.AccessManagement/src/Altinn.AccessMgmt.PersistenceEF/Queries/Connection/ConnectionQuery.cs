@@ -874,6 +874,7 @@ public class ConnectionQuery(AppDbContext db)
                 Username = e.Username,
                 TypeId = e.TypeId,
                 VariantId = e.VariantId,
+                EmailIdentifier = e.EmailIdentifier,
                 Parent = e.Parent != null ? new Entity()
                 {
                     Id = e.Parent.Id,
@@ -889,7 +890,8 @@ public class ConnectionQuery(AppDbContext db)
                     UserId = e.Parent.UserId,
                     Username = e.Parent.Username,
                     TypeId = e.Parent.TypeId,
-                    VariantId = e.Parent.VariantId
+                    VariantId = e.Parent.VariantId,
+                    EmailIdentifier = e.Parent.EmailIdentifier
                 }
                 : null
             })
@@ -925,7 +927,7 @@ public class ConnectionQuery(AppDbContext db)
                     UserId = e.UserId,
                     Username = e.Username,
                     TypeId = e.TypeId,
-                    VariantId = e.VariantId,
+                    VariantId = e.VariantId
                 })
                 .Distinct()
                 .AsNoTracking()

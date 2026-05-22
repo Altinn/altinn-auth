@@ -106,6 +106,7 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
     public async Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthers(
         Guid toId,
         AuthorizedPartiesFilters filters = null,
+        bool enrichEntities = false,
         CancellationToken ct = default)
     {
         return await connectionQuery.GetConnectionsAsync(
@@ -113,7 +114,7 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
         {
             ToIds = [toId],
             FromIds = filters?.PartyFilter?.Keys.ToList(),
-            EnrichEntities = false,
+            EnrichEntities = enrichEntities,
             IncludeSubConnections = true,
             IncludeKeyRole = filters?.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.True ? true : false,
             IncludeMainUnitConnections = true,
