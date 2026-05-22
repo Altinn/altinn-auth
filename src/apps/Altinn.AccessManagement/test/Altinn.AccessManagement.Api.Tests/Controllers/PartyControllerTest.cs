@@ -116,4 +116,18 @@ public class PartyControllerTest
 
         Assert.IsType<OkObjectResult>(result.Result);
     }
+
+    [Fact]
+    public async Task AddParty_ValidToken_Register_ReturnsOk()
+    {
+        var token = MakeToken("register");
+        var dto = new AddPartyResultDto { PartyUuid = Guid.NewGuid(), PartyCreated = false };
+        var svc = new Mock<IPartyService>();
+        svc.Setup(s => s.AddParty(SampleParty, It.IsAny<CancellationToken>()))
+           .ReturnsAsync(new Result<AddPartyResultDto>(dto));
+
+        var result = await CreateSut(svc.Object).AddParty(SampleParty, token, TestContext.Current.CancellationToken);
+
+        Assert.IsType<OkObjectResult>(result.Result);
+    }
 }

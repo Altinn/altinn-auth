@@ -57,10 +57,13 @@ namespace Altinn.AccessManagement.Controllers
                 var handler = new JwtSecurityTokenHandler();
                 var jwtSecurityToken = handler.ReadJwtToken(token);
                 var appidentifier = jwtSecurityToken.Claims.FirstOrDefault(c => c.Type == AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute);
-                if (appidentifier != null)
+                string appClaimValue = appidentifier?.Value?.ToLowerInvariant() ?? string.Empty;
+
+                return appClaimValue switch
                 {
-                    return appidentifier.Value.Equals("authentication", StringComparison.OrdinalIgnoreCase);
-                }
+                    "authentication" or "register" => true,
+                    _ => false,
+                };
             }
 
             return false;

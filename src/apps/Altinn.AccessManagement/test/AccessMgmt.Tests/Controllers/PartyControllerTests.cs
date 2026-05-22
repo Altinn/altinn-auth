@@ -13,6 +13,8 @@ using Altinn.Common.AccessToken.Services;
 using AltinnCore.Authentication.JwtCookie;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Altinn.AccessMgmt.PersistenceEF;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
@@ -26,9 +28,11 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
     {
         private readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
         private readonly HttpClient _client;
+        private readonly ApiFixture _fixture;
 
         public PartyControllerTests(ApiFixture fixture)
         {
+            _fixture = fixture;
             fixture.WithAppsettings(builder => builder.AddJsonFile("appsettings.test.json", optional: false));
             fixture.ConfigureServices(services =>
             {
@@ -167,11 +171,12 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
         [Fact]
         public async Task AddParty_ValidParty_AgentSystem_ReturnsOkAndTrue()
         {
+            var partyUuid = Guid.NewGuid();
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "/accessmanagement/api/v1/internal/party")
             {
                 Content = JsonContent.Create(new PartyBaseDto
                 {
-                    PartyUuid = Guid.NewGuid(),
+                    PartyUuid = partyUuid,
                     EntityType = EntityTypeConstants.SystemUser.Entity.Name,
                     EntityVariantType = EntityVariantConstants.AgentSystem.Entity.Name,
                     DisplayName = "Test User"
@@ -187,6 +192,81 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
 
             var result = await response.Content.ReadFromJsonAsync<AddPartyResultDto>(cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(result!.PartyCreated);
+
+            await _fixture.QueryDb(async db =>
+            {
+                var entity = await db.Entities.FirstOrDefaultAsync(e => e.Id == partyUuid, TestContext.Current.CancellationToken);
+                Assert.NotNull(entity);
+                Assert.Equal(partyUuid.ToString(), entity.RefId);
+            });
+        }
+
+        [Fact]
+        public async Task AddParty_ValidParty_SelfIdentified_SI_EMAIL_WithRegisterToken_ReturnsCreated()
+        {
+            var partyUuid = Guid.NewGuid();
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "/accessmanagement/api/v1/internal/party")
+            {
+                Content = JsonContent.Create(new PartyBaseDto
+                {
+                    PartyUuid = partyUuid,
+                    EntityType = EntityTypeConstants.SelfIdentified.Entity.Name,
+                    EntityVariantType = EntityVariantConstants.SI_EMAIL.Entity.Name,
+                    DisplayName = "Self Identified Epost User"
+                }),
+                Headers =
+                {
+                    { "PlatformAccessToken", PrincipalUtil.GetAccessToken("platform", "register") }
+                }
+            };
+
+            HttpResponseMessage response = await GetClient().SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+            var result = await response.Content.ReadFromJsonAsync<AddPartyResultDto>(cancellationToken: TestContext.Current.CancellationToken);
+            Assert.NotNull(result);
+            Assert.True(result.PartyCreated);
+
+            await _fixture.QueryDb(async db =>
+            {
+                var entity = await db.Entities.FirstOrDefaultAsync(e => e.Id == partyUuid, TestContext.Current.CancellationToken);
+                Assert.NotNull(entity);
+                Assert.Null(entity.RefId);
+            });
+        }
+
+        [Fact]
+        public async Task AddParty_ValidParty_SelfIdentified_SI_EDU_WithRegisterToken_ReturnsCreated()
+        {
+            var partyUuid = Guid.NewGuid();
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "/accessmanagement/api/v1/internal/party")
+            {
+                Content = JsonContent.Create(new PartyBaseDto
+                {
+                    PartyUuid = partyUuid,
+                    EntityType = EntityTypeConstants.SelfIdentified.Entity.Name,
+                    EntityVariantType = EntityVariantConstants.SI_EDU.Entity.Name,
+                    DisplayName = "Self Identified Educational User"
+                }),
+                Headers =
+                {
+                    { "PlatformAccessToken", PrincipalUtil.GetAccessToken("platform", "register") }
+                }
+            };
+
+            HttpResponseMessage response = await GetClient().SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+            var result = await response.Content.ReadFromJsonAsync<AddPartyResultDto>(cancellationToken: TestContext.Current.CancellationToken);
+            Assert.NotNull(result);
+            Assert.True(result.PartyCreated);
+
+            await _fixture.QueryDb(async db =>
+            {
+                var entity = await db.Entities.FirstOrDefaultAsync(e => e.Id == partyUuid, TestContext.Current.CancellationToken);
+                Assert.NotNull(entity);
+                Assert.Null(entity.RefId);
+            });
         }
     }
 }
