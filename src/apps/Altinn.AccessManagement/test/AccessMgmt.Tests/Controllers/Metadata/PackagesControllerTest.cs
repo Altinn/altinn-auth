@@ -45,7 +45,7 @@ public class PackagesControllerTest
     public async Task Search_DefaultIsSimpleSearch_RoutesToSimpleSearchAndNotFuzzy()
     {
         var serviceMock = new Mock<IPackageService>(MockBehavior.Strict);
-        serviceMock.Setup(s => s.SimpleSearch(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<bool>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        serviceMock.Setup(s => s.SimpleSearch(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<List<string>>(), It.IsAny<bool>(), It.IsAny<Guid?>(), It.IsAny<TranslationOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<SearchObject<PackageDto>>
             {
                 new() { Object = new PackageDto { Id = Guid.NewGuid(), Name = "Tax" }, Score = 100 },
@@ -61,7 +61,7 @@ public class PackagesControllerTest
 
         // Strict mock would have thrown if FuzzySearch had been invoked.
         serviceMock.Verify(
-            s => s.SimpleSearch(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<bool>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
+            s => s.SimpleSearch(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<List<string>>(), It.IsAny<bool>(), It.IsAny<Guid?>(), It.IsAny<TranslationOptions>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -96,12 +96,12 @@ public class PackagesControllerTest
         bool? capturedAllowPartial = null;
 
         var serviceMock = new Mock<IPackageService>();
-        serviceMock.Setup(s => s.SimpleSearch(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<bool>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .Callback<string, List<string>, bool, Guid?, string, bool, CancellationToken>(
-                (_, _, _, _, lang, allowPartial, _) =>
+        serviceMock.Setup(s => s.SimpleSearch(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<List<string>>(), It.IsAny<bool>(), It.IsAny<Guid?>(), It.IsAny<TranslationOptions>(), It.IsAny<CancellationToken>()))
+            .Callback<string, bool, List<string>, bool, Guid?, TranslationOptions, CancellationToken>(
+                (_, _, _, _, _, translation, _) =>
                 {
-                    capturedLanguageCode = lang;
-                    capturedAllowPartial = allowPartial;
+                    capturedLanguageCode = translation.LanguageCode;
+                    capturedAllowPartial = translation.AllowPartial;
                 })
             .ReturnsAsync(new List<SearchObject<PackageDto>>
             {
@@ -146,9 +146,9 @@ public class PackagesControllerTest
         // silently ignore the type filter and return cross-type results.
         Guid? capturedTypeId = null;
         var serviceMock = new Mock<IPackageService>();
-        serviceMock.Setup(s => s.SimpleSearch(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<bool>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .Callback<string, List<string>, bool, Guid?, string, bool, CancellationToken>(
-                (_, _, _, id, _, _, _) => capturedTypeId = id)
+        serviceMock.Setup(s => s.SimpleSearch(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<List<string>>(), It.IsAny<bool>(), It.IsAny<Guid?>(), It.IsAny<TranslationOptions>(), It.IsAny<CancellationToken>()))
+            .Callback<string, bool, List<string>, bool, Guid?, TranslationOptions, CancellationToken>(
+                (_, _, _, _, id, _, _) => capturedTypeId = id)
             .ReturnsAsync(new List<SearchObject<PackageDto>>
             {
                 new() { Object = new PackageDto { Id = Guid.NewGuid() }, Score = 1 },
@@ -168,7 +168,7 @@ public class PackagesControllerTest
     {
         // Default (simpleSearch=true) hits SimpleSearch — empty maps to NoContent.
         var serviceMock = new Mock<IPackageService>();
-        serviceMock.Setup(s => s.SimpleSearch(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<bool>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        serviceMock.Setup(s => s.SimpleSearch(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<List<string>>(), It.IsAny<bool>(), It.IsAny<Guid?>(), It.IsAny<TranslationOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Enumerable.Empty<SearchObject<PackageDto>>());
 
         var controller = CreateController(serviceMock.Object, PassThroughTranslation().Object);
@@ -182,7 +182,7 @@ public class PackagesControllerTest
     public async Task Search_DefaultPath_WhenServiceReturnsNull_Returns204NoContent()
     {
         var serviceMock = new Mock<IPackageService>();
-        serviceMock.Setup(s => s.SimpleSearch(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<bool>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        serviceMock.Setup(s => s.SimpleSearch(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<List<string>>(), It.IsAny<bool>(), It.IsAny<Guid?>(), It.IsAny<TranslationOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((IEnumerable<SearchObject<PackageDto>>)null);
 
         var controller = CreateController(serviceMock.Object, PassThroughTranslation().Object);

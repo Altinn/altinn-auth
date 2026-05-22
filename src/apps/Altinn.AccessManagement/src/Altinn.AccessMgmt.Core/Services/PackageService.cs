@@ -43,68 +43,103 @@ public class PackageService : IPackageService
     ];
 
     private static SearchObject<PackageDto> ScorePackage(
-    PackageDto package,
-    string term,
-    bool searchInResources)
+        PackageDto package,
+        string[] tokens,
+        bool searchInResources)
     {
-        var totalScore = 0;
         var fields = new List<SearchField>();
 
-        foreach (var rule in PackageRules)
+        if (tokens.Length > 1)
         {
-            var value = rule.Field(package);
-            if (rule.Match(value, term))
-            {
-                totalScore += rule.Points;
-                fields.Add(new SearchField
-                {
-                    Field = rule.FieldName,
-                    Value = value,
-                    Score = rule.Points,
-                });
-            }
+            fields.AddRange(ScorePhrase(package, string.Join(' ', tokens)));
         }
+
+        fields.AddRange(ScoreTokens(package, tokens));
 
         if (searchInResources)
         {
-            foreach (var resource in package.Resources.Where(t => t.Name.Contains(term, Ic)))
-            {
-                totalScore += 2;
-                fields.Add(new SearchField
-                {
-                    Field = "resources.name",
-                    Value = resource.Name,
-                    Score = 2,
-                });
-            }
+            fields.AddRange(ScoreResources(package.Resources, tokens));
         }
 
         return new SearchObject<PackageDto>
         {
             Object = package,
-            Score = totalScore,
+            Score = fields.Sum(f => f.Score),
             Fields = fields,
         };
     }
 
-    public async Task<IEnumerable<SearchObject<PackageDto>>> SimpleSearch(string term, List<string> resourceProviderCodes = null, bool searchInResources = false, Guid? typeId = null, string languageCode = "nob", bool allowPartialTranslation = true, CancellationToken cancellationToken = default)
-    {
-        var data = await GetSearchData(
-        resourceProviderCodes: resourceProviderCodes,
-        typeId: typeId,
-        languageCode: languageCode,
-        allowPartialTranslation: allowPartialTranslation,
-        cancellationToken: cancellationToken
-        );
+    private static IEnumerable<SearchField> ScorePhrase(PackageDto package, string phrase) =>
+        PackageRules
+            .Select(rule => (rule, value: rule.Field(package)))
+            .Where(t => t.rule.Match(t.value, phrase))
+            .Select(t => new SearchField
+            {
+                Field = t.rule.FieldName + ".phrase",
+                Value = t.value,
+                Score = t.rule.Points * 2,
+            });
 
-        if (string.IsNullOrEmpty(term))
+    private static IEnumerable<SearchField> ScoreTokens(PackageDto package, string[] tokens) =>
+        PackageRules.SelectMany(rule =>
         {
-            return data.Select(t => new SearchObject<PackageDto>() { Object = t, Score = 0, Fields = [] });
+            var value = rule.Field(package);
+            return tokens
+                .Where(token => rule.Match(value, token))
+                .Select(_ => new SearchField
+                {
+                    Field = rule.FieldName,
+                    Value = value,
+                    Score = rule.Points,
+                });
+        });
+
+    private static IEnumerable<SearchField> ScoreResources(IEnumerable<ResourceDto> resources, string[] tokens) =>
+        resources.SelectMany(resource => tokens
+            .Where(token => resource.Name.Contains(token, Ic))
+            .Select(_ => new SearchField
+            {
+                Field = "resources.name",
+                Value = resource.Name,
+                Score = 2,
+            }));
+
+    public async Task<IEnumerable<SearchObject<PackageDto>>> SimpleSearch(
+        string term,
+        bool strict = false,
+        List<string> resourceProviderCodes = null,
+        bool searchInResources = false,
+        Guid? typeId = null,
+        TranslationOptions translation = null,
+        CancellationToken cancellationToken = default)
+    {
+        translation ??= new TranslationOptions();
+
+        var data = await GetSearchData(
+            resourceProviderCodes: resourceProviderCodes,
+            typeId: typeId,
+            languageCode: translation.LanguageCode,
+            allowPartialTranslation: translation.AllowPartial,
+            cancellationToken: cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(term))
+        {
+            return data.Select(t => new SearchObject<PackageDto> { Object = t, Score = 0, Fields = [] });
         }
 
-        return data
-            .Select(p => ScorePackage(p, term, searchInResources))
-            .Where(s => s.Score > 0)
+        var tokens = term.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        var scored = data
+            .Select(p => ScorePackage(p, tokens, searchInResources))
+            .Where(s => s.Score > 0);
+
+        if (strict && tokens.Length > 1)
+        {
+            scored = scored.Where(s => tokens.All(tok =>
+                s.Fields.Any(f => f.Value.Contains(tok, Ic))));
+        }
+
+        return scored
             .OrderByDescending(s => s.Score)
             .ToList();
     }

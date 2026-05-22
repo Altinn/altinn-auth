@@ -251,6 +251,99 @@ public class PackagesControllerIntegrationTests : IClassFixture<PostgresFixture>
         }
     }
 
+    // ── Multi-token SimpleSearch — phrase bonus, per-token scoring, strict filter ──
+    //
+    // The SimpleSearch scorer tokenizes on whitespace and applies two scoring
+    // passes: a phrase pass (only when tokens.Length > 1) and a per-token pass.
+    // The `strict` flag additionally requires every token to appear in at least
+    // one matched field's value. Single-token tests above never exercise the
+    // tokens.Length > 1 branches, so these tests target those code paths
+    // directly and guard against regressions in the multi-word search added
+    // to support phrase queries.
+    [Fact]
+    public async Task SimpleSearch_MultiTokenPhraseMatch_AddsPhraseBonusField()
+    {
+        // "Kunst og" is a strict prefix of the seeded package name "Kunst og
+        // underholdning", so the name.prefix rule fires on the full phrase
+        // and contributes a ".phrase" field to the result. A regression that
+        // dropped the phrase pass would still rank the package via per-token
+        // matches, but no `name.prefix.phrase` field would appear.
+        var result = await CreateController().Search("Kunst og");
+
+        var hits = AssertOkEnumerable(result).ToList();
+        Assert.NotEmpty(hits);
+
+        var kunst = hits.FirstOrDefault(h => h.Object.Name == PackageKunstName);
+        Assert.NotNull(kunst);
+        Assert.Contains(kunst.Fields, f => f.Field.EndsWith(".phrase"));
+    }
+
+    [Fact]
+    public async Task SimpleSearch_MultiTokenNoPhraseMatch_NoPhraseFieldButPackageStillScored()
+    {
+        // "Kunst underholdning" (tokens in unnatural order) does NOT appear
+        // verbatim in any field, so the phrase pass produces zero hits while
+        // the per-token pass still scores both tokens against the package
+        // name. Guards against a regression that conflates phrase-presence
+        // with token-presence and overcredits the package.
+        var result = await CreateController().Search("Kunst underholdning");
+
+        var hits = AssertOkEnumerable(result).ToList();
+        var kunst = hits.FirstOrDefault(h => h.Object.Name == PackageKunstName);
+        Assert.NotNull(kunst);
+        Assert.DoesNotContain(kunst.Fields, f => f.Field.EndsWith(".phrase"));
+        Assert.True(kunst.Score > 0);
+    }
+
+    [Fact]
+    public async Task SimpleSearch_StrictTrue_ExcludesPackagesMissingAToken()
+    {
+        // Without strict, "Kunst og underholdning" matches "Kunst" and is
+        // returned even though the second token matches nothing. With strict
+        // and tokens.Length > 1, every token must appear in some matched
+        // field's value, so the package is filtered out. Regression target:
+        // strict flag silently ignored, or the All/Any predicate inverted.
+        const string nonExistentToken = "zzz_no_field_contains_this_xyzzy";
+
+        var withoutStrict = await CreateController().Search($"Kunst {nonExistentToken}");
+        var withoutHits = AssertOkEnumerable(withoutStrict).ToList();
+        Assert.Contains(withoutHits, h => h.Object.Name == PackageKunstName);
+
+        // Every other potential hit also lacks the non-existent token, so the
+        // strict filter wipes the whole result set → NoContent.
+        var withStrict = await CreateController().Search($"Kunst {nonExistentToken}", strict: true);
+        Assert.IsType<NoContentResult>(withStrict.Result);
+    }
+
+    [Fact]
+    public async Task SimpleSearch_StrictTrue_KeepsPackagesWhereAllTokensMatch()
+    {
+        // Both "Kunst" and "underholdning" appear in the package name
+        // "Kunst og underholdning", so strict-mode must keep this package.
+        // Pairs with the exclusion test above to pin the strict predicate
+        // direction (All-of, not Any-of).
+        var result = await CreateController().Search("Kunst underholdning", strict: true);
+
+        var hits = AssertOkEnumerable(result).ToList();
+        Assert.Contains(hits, h => h.Object.Name == PackageKunstName);
+    }
+
+    [Fact]
+    public async Task SimpleSearch_WhitespaceOnlyTerm_ReturnsAllPackagesWithScoreZero()
+    {
+        // The empty/whitespace short-circuit returns every package with
+        // Score=0 and empty Fields — the controller does not treat this as
+        // NoContent. Regression target: a switch from IsNullOrWhiteSpace
+        // back to IsNullOrEmpty would let "   " fall through to tokenization
+        // and return an empty result instead of the listing behavior.
+        var result = await CreateController().Search("   ");
+
+        var hits = AssertOkEnumerable(result).ToList();
+        Assert.NotEmpty(hits);
+        Assert.All(hits, h => Assert.Equal(0, h.Score));
+        Assert.All(hits, h => Assert.Empty(h.Fields));
+    }
+
     [Fact]
     public async Task FuzzySearch_StillReachableViaSimpleSearchFalse()
     {

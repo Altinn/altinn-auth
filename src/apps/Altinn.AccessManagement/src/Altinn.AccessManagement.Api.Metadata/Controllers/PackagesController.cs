@@ -37,10 +37,11 @@ public class PackagesController : ControllerBase
     /// <param name="searchInResources">Søk i ressurs verdier</param>
     /// <param name="typeName">Package for type (e.g. Organization, Person)</param>
     /// <param name="simpleSearch">Use new simple search</param>
+    /// <param name="strict">All tokens in term must match in some degree</param>
     /// <returns>Liste over søkeresultater.</returns>
     [Route("search")]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<SearchObject<PackageDto>>>> Search([FromQuery] string term, [FromQuery] List<string> resourceProviderCode = null, [FromQuery] bool searchInResources = false, [FromQuery] string? typeName = null, [FromQuery] bool simpleSearch = true)
+    public async Task<ActionResult<IEnumerable<SearchObject<PackageDto>>>> Search([FromQuery] string term, [FromQuery] List<string> resourceProviderCode = null, [FromQuery] bool searchInResources = false, [FromQuery] string? typeName = null, [FromQuery] bool simpleSearch = true, [FromQuery] bool strict = false)
     {
         Guid? typeId = null;
         if (!string.IsNullOrEmpty(typeName))
@@ -56,11 +57,11 @@ public class PackagesController : ControllerBase
         var res = simpleSearch
             ? await packageService.SimpleSearch(
                 term: term,
+                strict: strict,
                 resourceProviderCodes: resourceProviderCode,
                 searchInResources: searchInResources,
                 typeId: typeId,
-                languageCode: this.GetLanguageCode(),
-                allowPartialTranslation: this.AllowPartialTranslation()
+                translation: new TranslationOptions(this.GetLanguageCode(), this.AllowPartialTranslation())
                 )
             : await packageService.FuzzySearch(
                 term: term,
