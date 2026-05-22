@@ -182,14 +182,6 @@ internal static partial class AccessManagementHost
 
     private static WebApplicationBuilder ConfigureLibsHost(this WebApplicationBuilder builder)
     {
-        builder.AddAzureAppConfigurationDefaults(opts =>
-        {
-            var appsettings = new AccessManagementAppsettings(builder.Configuration);
-            opts.Endpoint = appsettings.AppConfiguration.Endpoint;
-            opts.Enabled = appsettings.AppConfiguration.Enabled;
-            opts.AddDefaultLabels(appsettings.Environment, builder.GetAltinnServiceDescriptor().Name);
-        });
-
         builder.AddAltinnLease(opts =>
         {
             var appsettings = new AccessManagementAppsettings(builder.Configuration);

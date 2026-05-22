@@ -27,7 +27,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 nullable: false,
                 defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
 
-            migrationBuilder.Sql(@"""
+            migrationBuilder.Sql("""
             SET LOCAL app.changed_by = '0195efb8-7c80-7262-b616-7d9eb843bcaa';
             SET LOCAL app.changed_by_system = '0195efb8-7c80-7262-b616-7d9eb843bcaa';
             SET LOCAL app.change_operation_id = 'Add RequestedBy';
