@@ -20,6 +20,8 @@ using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.Tests.Utils;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Entity = Altinn.AccessMgmt.PersistenceEF.Models.Entity;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Register.Models;
@@ -149,12 +151,62 @@ namespace Altinn.AccessManagement.Tests.Controllers
                 services.AddSingleton<IPDP, PepWithPDPAuthorizationMock>();
             });
 
+            fixture.EnsureSeedOnce<MaskinportenSchemaControllerTest>(db =>
+            {
+                db.Entities.AddRange(MaskinportenSchemaTestEntities);
+                db.SaveChanges();
+            });
+
             _client = _fixture.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             string token = PrincipalUtil.GetAccessToken("sbl.authorization");
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
+
+        private static readonly Entity[] MaskinportenSchemaTestEntities =
+        [
+            new()
+            {
+                Id = Guid.Parse("A1000000-0000-0000-0000-000000004219"),
+                Name = "Test org 810418192",
+                OrganizationIdentifier = "810418192",
+                RefId = "810418192",
+                PartyId = 50004219,
+                TypeId = EntityTypeConstants.Organization,
+                VariantId = EntityVariantConstants.AS,
+            },
+            new()
+            {
+                Id = Guid.Parse("A1000000-0000-0000-0000-000000004220"),
+                Name = "Test org 810418362",
+                OrganizationIdentifier = "810418362",
+                RefId = "810418362",
+                PartyId = 50004220,
+                TypeId = EntityTypeConstants.Organization,
+                VariantId = EntityVariantConstants.AS,
+            },
+            new()
+            {
+                Id = Guid.Parse("A1000000-0000-0000-0000-000000004221"),
+                Name = "Test org 810418532",
+                OrganizationIdentifier = "810418532",
+                RefId = "810418532",
+                PartyId = 50004221,
+                TypeId = EntityTypeConstants.Organization,
+                VariantId = EntityVariantConstants.AS,
+            },
+            new()
+            {
+                Id = Guid.Parse("A1000000-0000-0000-0000-000000004222"),
+                Name = "Test org 810418672",
+                OrganizationIdentifier = "810418672",
+                RefId = "810418672",
+                PartyId = 50004222,
+                TypeId = EntityTypeConstants.Organization,
+                VariantId = EntityVariantConstants.AS,
+            },
+        ];
 
         private HttpClient NewClient()
         {

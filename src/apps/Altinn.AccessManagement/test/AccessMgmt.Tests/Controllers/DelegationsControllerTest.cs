@@ -13,6 +13,8 @@ using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.Tests.Utils;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
@@ -70,12 +72,62 @@ namespace Altinn.AccessManagement.Tests.Controllers
                 services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
             });
 
+            fixture.EnsureSeedOnce<DelegationsControllerTest>(db =>
+            {
+                db.Entities.AddRange(MaskinportenSchemaTestEntities);
+                db.SaveChanges();
+            });
+
             _client = fixture.CreateClient(new() { AllowAutoRedirect = false });
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             string token = PrincipalUtil.GetAccessToken("sbl.authorization");
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
+
+        private static readonly Entity[] MaskinportenSchemaTestEntities =
+        [
+            new()
+            {
+                Id = Guid.Parse("A1000000-0000-0000-0000-000000004219"),
+                Name = "Test org 810418192",
+                OrganizationIdentifier = "810418192",
+                RefId = "810418192",
+                PartyId = 50004219,
+                TypeId = EntityTypeConstants.Organization,
+                VariantId = EntityVariantConstants.AS,
+            },
+            new()
+            {
+                Id = Guid.Parse("A1000000-0000-0000-0000-000000004220"),
+                Name = "Test org 810418362",
+                OrganizationIdentifier = "810418362",
+                RefId = "810418362",
+                PartyId = 50004220,
+                TypeId = EntityTypeConstants.Organization,
+                VariantId = EntityVariantConstants.AS,
+            },
+            new()
+            {
+                Id = Guid.Parse("A1000000-0000-0000-0000-000000004221"),
+                Name = "Test org 810418532",
+                OrganizationIdentifier = "810418532",
+                RefId = "810418532",
+                PartyId = 50004221,
+                TypeId = EntityTypeConstants.Organization,
+                VariantId = EntityVariantConstants.AS,
+            },
+            new()
+            {
+                Id = Guid.Parse("A1000000-0000-0000-0000-000000004222"),
+                Name = "Test org 810418672",
+                OrganizationIdentifier = "810418672",
+                RefId = "810418672",
+                PartyId = 50004222,
+                TypeId = EntityTypeConstants.Organization,
+                VariantId = EntityVariantConstants.AS,
+            },
+        ];
 
         /// <summary>
         /// Test case: Calling the POST operation for DeleteRules to perform a valid deletion of org1/app3

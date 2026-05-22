@@ -7,17 +7,23 @@ using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Enums;
+using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
 using static Altinn.AccessManagement.Core.Constants.AltinnXacmlConstants;
+using Delegation = Altinn.AccessManagement.Core.Models.Delegation;
+using ResourceType = Altinn.AccessManagement.Core.Models.ResourceRegistry.ResourceType;
 
 namespace Altinn.AccessManagement.Core.Services
 {
     /// <inheritdoc/>
     public class MaskinportenSchemaService : IMaskinportenSchemaService
     {
+        private AppDbContext _db;
         private readonly ILogger<IMaskinportenSchemaService> _logger;
         private readonly IDelegationMetadataRepository _delegationRepository;
         private readonly IContextRetrievalService _contextRetrievalService;
@@ -30,15 +36,17 @@ namespace Altinn.AccessManagement.Core.Services
         /// Initializes a new instance of the <see cref="MaskinportenSchemaService"/> class.
         /// </summary>
         /// <param name="logger">handler for logger</param>
+        /// <param name="dbContext">App db context</param>
         /// <param name="delegationRepository">delegation change handler</param>
         /// <param name="contextRetrievalService">Service for retrieving context information</param>
         /// <param name="resourceAdministrationPoint">handler for resource registry</param>
         /// <param name="pip">Service implementation for policy information point</param>
         /// <param name="pap">Service implementation for policy administration point</param>
         /// <param name="featureManager">Feature manager</param>
-        public MaskinportenSchemaService(ILogger<IMaskinportenSchemaService> logger, IDelegationMetadataRepository delegationRepository, IContextRetrievalService contextRetrievalService, IResourceAdministrationPoint resourceAdministrationPoint, IPolicyInformationPoint pip, IPolicyAdministrationPoint pap, IFeatureManager featureManager)
+        public MaskinportenSchemaService(ILogger<IMaskinportenSchemaService> logger, AppDbContext dbContext, IDelegationMetadataRepository delegationRepository, IContextRetrievalService contextRetrievalService, IResourceAdministrationPoint resourceAdministrationPoint, IPolicyInformationPoint pip, IPolicyAdministrationPoint pap, IFeatureManager featureManager)
         {
             _logger = logger;
+            _db = dbContext;
             _delegationRepository = delegationRepository;
             _contextRetrievalService = contextRetrievalService;
             _resourceAdministrationPoint = resourceAdministrationPoint;
@@ -227,32 +235,52 @@ namespace Altinn.AccessManagement.Core.Services
         public async Task<List<Delegation>> GetMaskinportenDelegations(string supplierOrg, string consumerOrg, string scope, CancellationToken cancellationToken = default)
         {
             int consumerPartyId = 0;
-            Party consumerParty = null;
+            Entity consumerParty = null;
             if (!string.IsNullOrEmpty(consumerOrg))
             {
-                consumerParty = await _contextRetrievalService.GetPartyForOrganization(consumerOrg, cancellationToken);
-                if (consumerParty == null)
+                consumerParty = await _db.Entities
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.OrganizationIdentifier == consumerOrg, cancellationToken);
+
+                if (consumerParty is null)
                 {
                     throw new ArgumentException($"The specified consumerOrg: {consumerOrg}, is not a valid organization number", nameof(consumerOrg));
                 }
 
-                consumerPartyId = consumerParty.PartyId;
+                if (consumerParty.PartyId is { } partyId && partyId > 0)
+                {
+                    consumerPartyId = partyId;
+                }
+                else
+                {
+                    throw new ArgumentException($"The specified consumerOrg: {consumerOrg}, is not associated with a valid party", nameof(consumerOrg));
+                }
             }
 
             int supplierPartyId = 0;
-            Party supplierParty = null;
+            Entity supplierEntity = null;
             if (!string.IsNullOrEmpty(supplierOrg))
             {
-                supplierParty = await _contextRetrievalService.GetPartyForOrganization(supplierOrg, cancellationToken);
-                if (supplierParty == null)
+                supplierEntity = await _db.Entities
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.OrganizationIdentifier == supplierOrg, cancellationToken);
+
+                if (supplierEntity is null)
                 {
                     throw new ArgumentException($"The specified supplierOrg: {supplierOrg}, is not a valid organization number", nameof(supplierOrg));
                 }
 
-                supplierPartyId = supplierParty.PartyId;
+                if (supplierEntity.PartyId is { } partyId && partyId > 0)
+                {
+                    supplierPartyId = partyId;
+                }
+                else
+                {
+                    throw new ArgumentException($"The specified supplierOrg: {supplierOrg}, is not associated with a valid party", nameof(supplierOrg));
+                }
             }
 
-            return await GetAllMaskinportenSchemaDelegations(supplierPartyId, supplierParty?.PartyUuid, consumerPartyId, consumerParty?.PartyUuid, scope, cancellationToken);
+            return await GetAllMaskinportenSchemaDelegations(supplierPartyId, supplierEntity?.Id, consumerPartyId, consumerParty?.Id, scope, cancellationToken);
         }
 
         /// <inheritdoc/>
