@@ -4,7 +4,6 @@ using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.HostedServices;
-using Altinn.AccessMgmt.Persistence.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.Authorization.Host.Lease;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +18,6 @@ WebApplication app = AccessManagementHost.Create(args);
 using var scope = app.Services.CreateScope();
 var appsettings = scope.ServiceProvider.GetRequiredService<IOptions<AccessManagementAppsettings>>().Value;
 var featureManager = scope.ServiceProvider.GetRequiredService<FeatureManager>();
-await app.DefineAccessMgmtDbModels();
 await PersistenceFeatures();
 
 if (appsettings.RunInitOnly)
@@ -46,7 +44,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseDbAudit();
 app.UseEfAudit();
 
 app.MapControllers();

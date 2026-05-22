@@ -1,71 +1,66 @@
-﻿using System.Linq.Expressions;
-using Altinn.AccessManagement.Core.Models.Party;
-using Altinn.AccessMgmt.Persistence.Core.Helpers;
-using Altinn.AccessMgmt.Persistence.Core.Models;
-using Altinn.AccessMgmt.Persistence.Models;
-using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
-using Altinn.AccessMgmt.Persistence.Services;
+using Altinn.AccessMgmt.Core.Services;
+using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.Register;
 using Moq;
 
 namespace AccessMgmt.Tests.Services;
 
 /// <summary>
-/// Unit tests for <see cref="AMPartyService"/> — pure Moq, no database.
+/// Unit tests for <see cref="AMPartyService"/>.
+/// The service is a thin mapping layer on top of <see cref="IEntityService"/>;
+/// the tests cover the TypeId-based Person/Organization branch and null
+/// propagation. Heavier DB-bound logic is left to integration tests against
+/// <c>EntityService</c> at the controller level.
 /// </summary>
 public class AMPartyServiceTest
 {
-    private static readonly Guid PersonTypeId = Guid.Parse("bfe09e70-e868-44b3-8d81-dfe0e13e058a");
-    private static readonly Guid OrgTypeId = Guid.Parse("8c216e2f-afdd-4234-9ba2-691c727bb33d");
-    private static readonly Guid UnknownTypeId = Guid.NewGuid();
+    private static readonly Guid PersonTypeId = EntityTypeConstants.Person.Id;
+    private static readonly Guid OrgTypeId = EntityTypeConstants.Organization.Id;
+    private static readonly Guid UnknownTypeId = Guid.Parse("00000000-0000-0000-0000-000000000099");
 
-    private static (AMPartyService svc, Mock<IEntityLookupRepository> repo) MakeSut()
+    private static (AMPartyService svc, Mock<IEntityService> entityService) MakeSut()
     {
-        var repo = new Mock<IEntityLookupRepository>();
-        repo.Setup(r => r.CreateFilterBuilder()).Returns(new GenericFilterBuilder<EntityLookup>());
-        return (new AMPartyService(repo.Object), repo);
+        var entityService = new Mock<IEntityService>();
+        return (new AMPartyService(entityService.Object), entityService);
     }
 
-    private static QueryResponse<ExtEntityLookup> Lookup(params ExtEntityLookup[] items)
-        => new() { Data = items };
-
-    private static ExtEntityLookup MakeLookup(string key, string value, Guid entityId, string name, Guid typeId, string refId = "ref")
+    private static Entity OrgEntity(int? partyId = 12345, string orgNo = "937884117", string name = "Test Org")
         => new()
         {
-            EntityId = entityId,
-            Key = key,
-            Value = value,
-            Entity = new Entity { Id = entityId, Name = name, TypeId = typeId, RefId = refId }
+            Id = Guid.NewGuid(),
+            Name = name,
+            TypeId = OrgTypeId,
+            PartyId = partyId,
+            OrganizationIdentifier = orgNo,
         };
 
-    private static void SetupFilterResult(Mock<IEntityLookupRepository> repo, QueryResponse<ExtEntityLookup> result)
-    {
-        repo.Setup(r => r.GetExtended(
-                It.IsAny<IEnumerable<GenericFilter>>(),
-                It.IsAny<RequestOptions>(),
-                It.IsAny<CancellationToken>(),
-                It.IsAny<string>()))
-            .ReturnsAsync(result);
-    }
+    private static Entity PersonEntity(int? partyId = 12345, string persNo = "02013299997", string name = "Test Person")
+        => new()
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            TypeId = PersonTypeId,
+            PartyId = partyId,
+            PersonIdentifier = persNo,
+        };
 
-    private static void SetupExpressionResult(Mock<IEntityLookupRepository> repo, QueryResponse<ExtEntityLookup> result)
-    {
-        repo.Setup(r => r.GetExtended(
-                It.IsAny<Expression<Func<ExtEntityLookup, Guid>>>(),
-                It.IsAny<Guid>(),
-                It.IsAny<RequestOptions>(),
-                It.IsAny<CancellationToken>(),
-                It.IsAny<string>()))
-            .ReturnsAsync(result);
-    }
-
-    #region GetByOrgNo
+    private static Entity UnknownEntity()
+        => new()
+        {
+            Id = Guid.NewGuid(),
+            Name = "Other",
+            TypeId = UnknownTypeId,
+            PartyId = 99,
+        };
 
     [Fact]
-    public async Task GetByOrgNo_EmptyResult_ReturnsNull()
+    public async Task GetByOrgNo_EntityNotFound_ReturnsNull()
     {
-        var (svc, repo) = MakeSut();
-        SetupFilterResult(repo, Lookup());
+        var (svc, entityService) = MakeSut();
+        entityService.Setup(s => s.GetByOrgNo(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Entity)null);
 
         var result = await svc.GetByOrgNo(OrganizationNumber.Parse("937884117"), TestContext.Current.CancellationToken);
 
@@ -73,40 +68,28 @@ public class AMPartyServiceTest
     }
 
     [Fact]
-    public async Task GetByOrgNo_SingleResult_ReturnsMinimalPartyWithOrgId()
+    public async Task GetByOrgNo_EntityFound_ReturnsPartyWithOrgId()
     {
-        var entityId = Guid.NewGuid();
-        var (svc, repo) = MakeSut();
-        SetupFilterResult(repo, Lookup(MakeLookup("OrganizationIdentifier", "937884117", entityId, "Test Org", OrgTypeId)));
+        var entity = OrgEntity();
+        var (svc, entityService) = MakeSut();
+        entityService.Setup(s => s.GetByOrgNo("937884117", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
 
         var result = await svc.GetByOrgNo(OrganizationNumber.Parse("937884117"), TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
-        result!.PartyUuid.Should().Be(entityId);
+        result!.PartyUuid.Should().Be(entity.Id);
         result.OrganizationId.Should().Be("937884117");
         result.Name.Should().Be("Test Org");
+        result.PartyType.Should().Be(OrgTypeId);
     }
 
     [Fact]
-    public async Task GetByOrgNo_MultipleResults_ThrowsInvalidOperationException()
+    public async Task GetByPartyId_EntityNotFound_ReturnsNull()
     {
-        var (svc, repo) = MakeSut();
-        SetupFilterResult(repo, Lookup(
-            MakeLookup("OrganizationIdentifier", "937884117", Guid.NewGuid(), "Org A", OrgTypeId),
-            MakeLookup("OrganizationIdentifier", "937884117", Guid.NewGuid(), "Org B", OrgTypeId)));
-
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.GetByOrgNo(OrganizationNumber.Parse("937884117"), TestContext.Current.CancellationToken));
-    }
-
-    #endregion
-
-    #region GetByPartyId
-
-    [Fact]
-    public async Task GetByPartyId_EmptyResult_ReturnsNull()
-    {
-        var (svc, repo) = MakeSut();
-        SetupFilterResult(repo, Lookup());
+        var (svc, entityService) = MakeSut();
+        entityService.Setup(s => s.GetByPartyId(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Entity)null);
 
         var result = await svc.GetByPartyId(12345, TestContext.Current.CancellationToken);
 
@@ -114,37 +97,28 @@ public class AMPartyServiceTest
     }
 
     [Fact]
-    public async Task GetByPartyId_MultipleResults_ThrowsInvalidOperationException()
+    public async Task GetByPartyId_PersonType_SetsPersonIdOnly()
     {
-        var (svc, repo) = MakeSut();
-        SetupFilterResult(repo, Lookup(
-            MakeLookup("PartyId", "12345", Guid.NewGuid(), "A", OrgTypeId),
-            MakeLookup("PartyId", "12345", Guid.NewGuid(), "B", OrgTypeId)));
-
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.GetByPartyId(12345, TestContext.Current.CancellationToken));
-    }
-
-    [Fact]
-    public async Task GetByPartyId_PersonType_SetsPersonId()
-    {
-        var entityId = Guid.NewGuid();
-        var (svc, repo) = MakeSut();
-        SetupFilterResult(repo, Lookup(MakeLookup("PartyId", "99001", entityId, "Person Name", PersonTypeId, "12345678901")));
+        var entity = PersonEntity(partyId: 99001);
+        var (svc, entityService) = MakeSut();
+        entityService.Setup(s => s.GetByPartyId("99001", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
 
         var result = await svc.GetByPartyId(99001, TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
-        result!.PersonId.Should().Be("12345678901");
+        result!.PersonId.Should().Be("02013299997");
         result.OrganizationId.Should().BeNull();
         result.PartyId.Should().Be(99001);
     }
 
     [Fact]
-    public async Task GetByPartyId_OrgType_SetsOrganizationId()
+    public async Task GetByPartyId_OrgType_SetsOrganizationIdOnly()
     {
-        var entityId = Guid.NewGuid();
-        var (svc, repo) = MakeSut();
-        SetupFilterResult(repo, Lookup(MakeLookup("PartyId", "99002", entityId, "Org Name", OrgTypeId, "919272567")));
+        var entity = OrgEntity(partyId: 99002, orgNo: "919272567");
+        var (svc, entityService) = MakeSut();
+        entityService.Setup(s => s.GetByPartyId("99002", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
 
         var result = await svc.GetByPartyId(99002, TestContext.Current.CancellationToken);
 
@@ -156,26 +130,23 @@ public class AMPartyServiceTest
     [Fact]
     public async Task GetByPartyId_UnknownType_BothIdsNull()
     {
-        var entityId = Guid.NewGuid();
-        var (svc, repo) = MakeSut();
-        SetupFilterResult(repo, Lookup(MakeLookup("PartyId", "99003", entityId, "Unknown", UnknownTypeId, "some-ref")));
+        var (svc, entityService) = MakeSut();
+        entityService.Setup(s => s.GetByPartyId(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(UnknownEntity());
 
-        var result = await svc.GetByPartyId(99003, TestContext.Current.CancellationToken);
+        var result = await svc.GetByPartyId(99, TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
         result!.PersonId.Should().BeNull();
         result.OrganizationId.Should().BeNull();
     }
 
-    #endregion
-
-    #region GetByPersonNo
-
     [Fact]
-    public async Task GetByPersonNo_EmptyResult_ReturnsNull()
+    public async Task GetByPersonNo_EntityNotFound_ReturnsNull()
     {
-        var (svc, repo) = MakeSut();
-        SetupFilterResult(repo, Lookup());
+        var (svc, entityService) = MakeSut();
+        entityService.Setup(s => s.GetByPersNo(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Entity)null);
 
         var result = await svc.GetByPersonNo(PersonIdentifier.Parse("02013299997"), TestContext.Current.CancellationToken);
 
@@ -183,141 +154,75 @@ public class AMPartyServiceTest
     }
 
     [Fact]
-    public async Task GetByPersonNo_MultipleResults_ThrowsInvalidOperationException()
+    public async Task GetByPersonNo_EntityFound_ReturnsPartyWithPersonId()
     {
-        var (svc, repo) = MakeSut();
-        SetupFilterResult(repo, Lookup(
-            MakeLookup("PersonIdentifier", "02013299997", Guid.NewGuid(), "A", PersonTypeId),
-            MakeLookup("PersonIdentifier", "02013299997", Guid.NewGuid(), "B", PersonTypeId)));
-
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.GetByPersonNo(PersonIdentifier.Parse("02013299997"), TestContext.Current.CancellationToken));
-    }
-
-    [Fact]
-    public async Task GetByPersonNo_SingleResult_SetsPersonId()
-    {
-        var entityId = Guid.NewGuid();
-        var (svc, repo) = MakeSut();
-        SetupFilterResult(repo, Lookup(MakeLookup("PersonIdentifier", "02013299997", entityId, "John Doe", PersonTypeId)));
+        var entity = PersonEntity(persNo: "02013299997");
+        var (svc, entityService) = MakeSut();
+        entityService.Setup(s => s.GetByPersNo("02013299997", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
 
         var result = await svc.GetByPersonNo(PersonIdentifier.Parse("02013299997"), TestContext.Current.CancellationToken);
-
-        result.Should().NotBeNull();
-        result!.PartyUuid.Should().Be(entityId);
-        result.PersonId.Should().Be("02013299997");
-        result.Name.Should().Be("John Doe");
-    }
-
-    #endregion
-
-    #region GetByUuid
-
-    [Fact]
-    public async Task GetByUuid_EmptyResult_ReturnsNull()
-    {
-        var (svc, repo) = MakeSut();
-        SetupExpressionResult(repo, Lookup());
-
-        var result = await svc.GetByUuid(Guid.NewGuid(), TestContext.Current.CancellationToken);
-
-        result.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task GetByUuid_OrgIdentifierInDict_SetsOrganizationId()
-    {
-        var partyUuid = Guid.NewGuid();
-        var (svc, repo) = MakeSut();
-        SetupExpressionResult(repo, Lookup(
-            MakeLookup("OrganizationIdentifier", "919272567", partyUuid, "Org Name", OrgTypeId)));
-
-        var result = await svc.GetByUuid(partyUuid, TestContext.Current.CancellationToken);
-
-        result.Should().NotBeNull();
-        result!.OrganizationId.Should().Be("919272567");
-        result.PersonId.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task GetByUuid_PersonIdentifierInDict_SetsPersonId()
-    {
-        var partyUuid = Guid.NewGuid();
-        var (svc, repo) = MakeSut();
-        SetupExpressionResult(repo, Lookup(
-            MakeLookup("PersonIdentifier", "02013299997", partyUuid, "John Doe", PersonTypeId)));
-
-        var result = await svc.GetByUuid(partyUuid, TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
         result!.PersonId.Should().Be("02013299997");
         result.OrganizationId.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task GetByUuid_NameInDict_OverridesEntityName()
-    {
-        var partyUuid = Guid.NewGuid();
-        var (svc, repo) = MakeSut();
-        SetupExpressionResult(repo, Lookup(
-            MakeLookup("Name", "Display Name Override", partyUuid, "Entity Name", UnknownTypeId)));
-
-        var result = await svc.GetByUuid(partyUuid, TestContext.Current.CancellationToken);
-
-        result.Should().NotBeNull();
-        result!.Name.Should().Be("Display Name Override");
-    }
-
-    #endregion
-
-    #region GetByUserId
-
-    [Fact]
-    public async Task GetByUserId_EmptyResult_ReturnsNull()
-    {
-        var (svc, repo) = MakeSut();
-        SetupFilterResult(repo, Lookup());
-
-        var result = await svc.GetByUserId(42, TestContext.Current.CancellationToken);
-
-        result.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task GetByUserId_MultipleResults_ThrowsInvalidOperationException()
-    {
-        var (svc, repo) = MakeSut();
-        SetupFilterResult(repo, Lookup(
-            MakeLookup("UserId", "42", Guid.NewGuid(), "A", PersonTypeId),
-            MakeLookup("UserId", "42", Guid.NewGuid(), "B", PersonTypeId)));
-
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.GetByUserId(42, TestContext.Current.CancellationToken));
+        result.PartyType.Should().Be(PersonTypeId);
     }
 
     [Fact]
     public async Task GetByUserId_PersonType_SetsPersonId()
     {
-        var entityId = Guid.NewGuid();
-        var (svc, repo) = MakeSut();
-        SetupFilterResult(repo, Lookup(MakeLookup("UserId", "42", entityId, "Person Name", PersonTypeId, "02013299997")));
+        var entity = PersonEntity();
+        var (svc, entityService) = MakeSut();
+        entityService.Setup(s => s.GetByUserId("42", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
 
         var result = await svc.GetByUserId(42, TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
-        result!.PersonId.Should().Be("02013299997");
+        result!.PersonId.Should().Be(entity.PersonIdentifier);
+        result.OrganizationId.Should().BeNull();
     }
 
     [Fact]
-    public async Task GetByUserId_OtherType_PersonIdNull()
+    public async Task GetByUuid_PersonType_SetsPersonIdOnly()
     {
-        var entityId = Guid.NewGuid();
-        var (svc, repo) = MakeSut();
-        SetupFilterResult(repo, Lookup(MakeLookup("UserId", "42", entityId, "Unknown Name", UnknownTypeId, "some-ref")));
+        var entity = PersonEntity();
+        var (svc, entityService) = MakeSut();
+        entityService.Setup(s => s.GetEntity(entity.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
 
-        var result = await svc.GetByUserId(42, TestContext.Current.CancellationToken);
+        var result = await svc.GetByUuid(entity.Id, TestContext.Current.CancellationToken);
 
         result.Should().NotBeNull();
-        result!.PersonId.Should().BeNull();
+        result!.PersonId.Should().Be(entity.PersonIdentifier);
+        result.OrganizationId.Should().BeNull();
     }
 
-    #endregion
+    [Fact]
+    public async Task GetByUuid_OrgType_SetsOrganizationIdOnly()
+    {
+        var entity = OrgEntity();
+        var (svc, entityService) = MakeSut();
+        entityService.Setup(s => s.GetEntity(entity.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
+
+        var result = await svc.GetByUuid(entity.Id, TestContext.Current.CancellationToken);
+
+        result.Should().NotBeNull();
+        result!.OrganizationId.Should().Be(entity.OrganizationIdentifier);
+        result.PersonId.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetByUuid_EntityNotFound_ReturnsNull()
+    {
+        var (svc, entityService) = MakeSut();
+        entityService.Setup(s => s.GetEntity(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Entity)null);
+
+        var result = await svc.GetByUuid(Guid.NewGuid(), TestContext.Current.CancellationToken);
+
+        result.Should().BeNull();
+    }
 }

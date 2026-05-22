@@ -1,4 +1,4 @@
-﻿using Altinn.AccessMgmt.Persistence.Models;
+﻿using Altinn.AccessMgmt.PersistenceEF.Models;
 
 namespace Altinn.AccessManagement.Tests.Models
 {

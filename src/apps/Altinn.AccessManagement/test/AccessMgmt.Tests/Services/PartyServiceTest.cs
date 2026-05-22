@@ -1,161 +1,134 @@
-﻿using System.Linq.Expressions;
-using Altinn.AccessManagement.Core.Models.Party;
-using Altinn.AccessMgmt.Persistence.Core.Models;
-using Altinn.AccessMgmt.Persistence.Models;
-using Altinn.AccessMgmt.Persistence.Repositories.Contracts;
-using Altinn.AccessMgmt.Persistence.Services;
-using Altinn.AccessMgmt.Persistence.Services.Models;
-using Altinn.Authorization.ProblemDetails;
-using Moq;
+using Altinn.AccessManagement.Tests.Fixtures;
+using Altinn.AccessMgmt.Core.Services;
+using Altinn.AccessMgmt.PersistenceEF.Audit;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.AccessMgmt.PersistenceEF.Extensions;
+using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.Authorization.Api.Contracts.Party;
+using Microsoft.EntityFrameworkCore;
 
 namespace AccessMgmt.Tests.Services;
 
 /// <summary>
-/// Unit tests for <see cref="PartyService"/> — pure Moq, no database.
+/// Integration tests for <see cref="PartyService.AddParty"/> using
+/// <see cref="PostgresFixture"/>. The service interacts with
+/// <see cref="AppDbContext"/> directly, so mock-based unit tests are not
+/// meaningful; these tests verify the validation branches against a real
+/// (seeded) database.
 /// </summary>
-public class PartyServiceTest
+public class PartyServiceTest : IClassFixture<PostgresFixture>
 {
-    private static readonly Guid EntityTypeId = Guid.NewGuid();
-    private static readonly Guid EntityVariantId = Guid.NewGuid();
+    private readonly AppDbContext _db;
+    private readonly PartyService _service;
 
-    private record Mocks(
-        Mock<IEntityRepository> EntityRepo,
-        Mock<IEntityTypeRepository> TypeRepo,
-        Mock<IEntityVariantRepository> VariantRepo);
-
-    private static (PartyService svc, Mocks mocks) MakeSut()
+    public PartyServiceTest(PostgresFixture fixture)
     {
-        var mocks = new Mocks(
-            new Mock<IEntityRepository>(),
-            new Mock<IEntityTypeRepository>(),
-            new Mock<IEntityVariantRepository>());
-        var svc = new PartyService(mocks.EntityRepo.Object, mocks.TypeRepo.Object, mocks.VariantRepo.Object);
-        return (svc, mocks);
-    }
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(fixture.SharedDb.Admin.ToString())
+            .Options;
 
-    private static QueryResponse<T> Response<T>(params T[] items) => new() { Data = items };
-
-    private static PartyBaseInternal MakeParty(string entityType = "Systembruker", string variantType = "Default")
-        => new()
+        _db = new AppDbContext(options)
         {
-            PartyUuid = Guid.NewGuid(),
-            EntityType = entityType,
-            EntityVariantType = variantType,
-            DisplayName = "Test Party"
+            AuditAccessor = new AuditAccessor
+            {
+                AuditValues = new AuditValues(
+                    changedBy: Guid.NewGuid(),
+                    changedBySystem: SystemEntityConstants.StaticDataIngest),
+            },
         };
 
-    private static void SetupEntityExists(Mock<IEntityRepository> repo, bool exists)
-    {
-        var data = exists
-            ? new[] { new Entity { Id = Guid.NewGuid() } }
-            : Array.Empty<Entity>();
-
-        repo.Setup(r => r.Get(
-                It.IsAny<Expression<Func<Entity, Guid>>>(),
-                It.IsAny<Guid>(),
-                It.IsAny<RequestOptions>(),
-                It.IsAny<CancellationToken>(),
-                It.IsAny<string>()))
-            .ReturnsAsync(Response(data));
+        _service = new PartyService(_db);
     }
 
-    private static void SetupEntityType(Mock<IEntityTypeRepository> repo, EntityType type)
-    {
-        var data = type != null ? new[] { type } : Array.Empty<EntityType>();
-        repo.Setup(r => r.Get(
-                It.IsAny<Expression<Func<EntityType, string>>>(),
-                It.IsAny<string>(),
-                It.IsAny<RequestOptions>(),
-                It.IsAny<CancellationToken>(),
-                It.IsAny<string>()))
-            .ReturnsAsync(Response(data));
-    }
-
-    private static void SetupEntityVariant(Mock<IEntityVariantRepository> repo, EntityVariant variant)
-    {
-        var data = variant != null ? new[] { variant } : Array.Empty<EntityVariant>();
-        repo.Setup(r => r.Get(
-                It.IsAny<Expression<Func<EntityVariant, Guid>>>(),
-                It.IsAny<Guid>(),
-                It.IsAny<RequestOptions>(),
-                It.IsAny<CancellationToken>(),
-                It.IsAny<string>()))
-            .ReturnsAsync(Response(data));
-    }
-
-    #region AddParty
+    private static PartyBaseDto SystemUserParty(Guid? id = null, string variant = "StandardSystem")
+        => new()
+        {
+            PartyUuid = id ?? Guid.CreateVersion7(),
+            EntityType = "Systembruker",
+            EntityVariantType = variant,
+            DisplayName = "Integration Test Party",
+        };
 
     [Fact]
-    public async Task AddParty_EntityAlreadyExists_ReturnsSuccessWithPartyCreatedFalse()
+    public async Task AddParty_EntityAlreadyExists_ReturnsSuccess_PartyCreatedFalse()
     {
-        var (svc, mocks) = MakeSut();
-        SetupEntityExists(mocks.EntityRepo, exists: true);
+        var existingId = Guid.CreateVersion7();
+        _db.Entities.Add(new Entity
+        {
+            Id = existingId,
+            Name = "Existing",
+            TypeId = EntityTypeConstants.SystemUser,
+            VariantId = EntityVariantConstants.StandardSystem,
+            RefId = existingId.ToString(),
+        });
+        await _db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var result = await svc.AddParty(MakeParty(), options: null, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await _service.AddParty(
+            SystemUserParty(existingId),
+            TestContext.Current.CancellationToken);
 
         result.IsProblem.Should().BeFalse();
+        result.Value.PartyUuid.Should().Be(existingId);
         result.Value.PartyCreated.Should().BeFalse();
     }
 
     [Fact]
-    public async Task AddParty_EntityNotExists_UnsupportedType_ReturnsProblem()
+    public async Task AddParty_UnsupportedEntityType_ReturnsProblem()
     {
-        var (svc, mocks) = MakeSut();
-        SetupEntityExists(mocks.EntityRepo, exists: false);
+        var party = SystemUserParty();
+        party.EntityType = "Organisation";
 
-        var result = await svc.AddParty(MakeParty(entityType: "Organisation"), options: null, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await _service.AddParty(party, TestContext.Current.CancellationToken);
 
         result.IsProblem.Should().BeTrue();
+        result.Problem!.ErrorCode.ToString().Should().Be(
+            Altinn.AccessManagement.Core.Errors.Problems.UnsupportedEntityType.ErrorCode.ToString());
     }
 
     [Fact]
-    public async Task AddParty_EntityNotExists_TypeNotFound_ReturnsProblem()
+    public async Task AddParty_EntityTypeNotFound_ReturnsProblem()
     {
-        var (svc, mocks) = MakeSut();
-        SetupEntityExists(mocks.EntityRepo, exists: false);
-        SetupEntityType(mocks.TypeRepo, type: null);
+        // "systembruker" passes the case-insensitive check but the DB lookup
+        // is case-sensitive against the seeded "Systembruker", so it misses.
+        var party = SystemUserParty();
+        party.EntityType = "systembruker";
 
-        var result = await svc.AddParty(MakeParty(), options: null, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await _service.AddParty(party, TestContext.Current.CancellationToken);
 
         result.IsProblem.Should().BeTrue();
+        result.Problem!.ErrorCode.ToString().Should().Be(
+            Altinn.AccessManagement.Core.Errors.Problems.EntityTypeNotFound.ErrorCode.ToString());
     }
 
     [Fact]
-    public async Task AddParty_EntityNotExists_VariantNotFound_ReturnsProblem()
+    public async Task AddParty_EntityVariantNotFound_ReturnsProblem()
     {
-        var (svc, mocks) = MakeSut();
-        SetupEntityExists(mocks.EntityRepo, exists: false);
-        SetupEntityType(mocks.TypeRepo, new EntityType { Id = EntityTypeId, Name = "Systembruker" });
-        SetupEntityVariant(mocks.VariantRepo, variant: null);
+        var party = SystemUserParty(variant: "NoSuchVariant_xyz123");
 
-        var result = await svc.AddParty(MakeParty(), options: null, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await _service.AddParty(party, TestContext.Current.CancellationToken);
 
         result.IsProblem.Should().BeTrue();
+        result.Problem!.ErrorCode.ToString().Should().Be(
+            Altinn.AccessManagement.Core.Errors.Problems.EntityVariantNotFoundOrInvalid.ErrorCode.ToString());
     }
 
     [Fact]
-    public async Task AddParty_EntityNotExists_AllValid_ReturnsSuccessWithPartyCreatedTrue()
+    public async Task AddParty_ValidSystemUser_CreatesEntity_ReturnsPartyCreatedTrue()
     {
-        var (svc, mocks) = MakeSut();
-        var party = MakeParty();
+        var party = SystemUserParty();
 
-        SetupEntityExists(mocks.EntityRepo, exists: false);
-        SetupEntityType(mocks.TypeRepo, new EntityType { Id = EntityTypeId, Name = "Systembruker" });
-        SetupEntityVariant(mocks.VariantRepo, new EntityVariant { Id = EntityVariantId, TypeId = EntityTypeId, Name = "Default" });
-
-        mocks.EntityRepo.Setup(r => r.Create(
-                It.IsAny<Entity>(),
-                It.IsAny<ChangeRequestOptions>(),
-                It.IsAny<CancellationToken>(),
-                It.IsAny<string>()))
-            .ReturnsAsync(1);
-
-        var result = await svc.AddParty(party, options: null, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await _service.AddParty(party, TestContext.Current.CancellationToken);
 
         result.IsProblem.Should().BeFalse();
-        result.Value.PartyCreated.Should().BeTrue();
         result.Value.PartyUuid.Should().Be(party.PartyUuid);
-    }
+        result.Value.PartyCreated.Should().BeTrue();
 
-    #endregion
+        var inserted = await _db.Entities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == party.PartyUuid, TestContext.Current.CancellationToken);
+        inserted.Should().NotBeNull();
+        inserted!.TypeId.Should().Be(EntityTypeConstants.SystemUser);
+        inserted.VariantId.Should().Be(EntityVariantConstants.StandardSystem);
+    }
 }

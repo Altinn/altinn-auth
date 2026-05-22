@@ -1,4 +1,4 @@
-﻿using Altinn.AccessMgmt.Persistence.Core.Utilities.Search;
+﻿using Altinn.AccessMgmt.Core.Utils;
 
 namespace Altinn.AccessMgmt.Core.Tests.PersistenceCore;
 
