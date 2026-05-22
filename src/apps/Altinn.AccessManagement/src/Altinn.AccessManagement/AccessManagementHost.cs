@@ -125,6 +125,9 @@ internal static partial class AccessManagementHost
             // Client
             options.AddOutboxHandler<ClientAddedNotificationHandler>(ClientAddedNotification.Handler);
             options.AddOutboxHandler<ClientRemovedNotificationHandler>(ClientRemovedNotification.Handler);
+
+            options.AddOutboxHandler<InstanceAddedNotificationHandler>(InstanceAddedNotification.Handler);
+            options.AddOutboxHandler<InstanceRemovedNotificationHandler>(InstanceRemovedNotification.Handler);
         });
 
         builder.Services.AddAccessMgmtCore(builder.Configuration, options =>

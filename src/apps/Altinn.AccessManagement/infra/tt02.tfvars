@@ -28,6 +28,8 @@ configuration = {
       request_reviewed_notify_in_seconds    = 600
       rightholder_added_notify_in_seconds   = 120
       rightholder_removed_notify_in_seconds = 120
+      instance_added_notify_in_seconds      = 960
+      instance_removed_notify_in_seconds    = 960
     }
   }
 }

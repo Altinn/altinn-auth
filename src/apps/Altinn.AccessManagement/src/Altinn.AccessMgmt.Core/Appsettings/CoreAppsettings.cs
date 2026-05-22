@@ -84,6 +84,18 @@ public class CoreAppsettings
         /// </summary>
         /// <seealso cref="ClientRemovedNotification"/>
         public int ClientRemovedNotifyInSeconds { get; set; } = ClientRemovedNotification.DefaultNotifyInSeconds;
+
+        /// <summary>
+        /// Gets or sets the delay in seconds before notifying when access is added.
+        /// </summary>
+        /// <seealso cref="InstanceAddedNotification"/>
+        public int InstanceAddedNotifyInSeconds { get; set; } = InstanceAddedNotification.DefaultNotifyInSeconds;
+
+        /// <summary>
+        /// Gets or sets the delay in seconds before notifying when access is added.
+        /// </summary>
+        /// <seealso cref="InstanceRemovedNotification"/>
+        public int InstanceRemovedNotifyInSeconds { get; set; } = InstanceRemovedNotification.DefaultNotifyInSeconds;
     }
 
     /// <summary>

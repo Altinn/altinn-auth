@@ -101,6 +101,8 @@ variable "configuration" {
         rightholder_removed_notify_in_seconds = optional(number, 60 * 15)
         access_added_notify_in_seconds        = optional(number, 60 * 15)
         access_removed_notify_in_seconds      = optional(number, 60 * 15)
+        instance_added_notify_in_seconds      = optional(number, 60 * 15)
+        instance_removed_notify_in_seconds    = optional(number, 60 * 15)
       }), {})
     }), {})
   })

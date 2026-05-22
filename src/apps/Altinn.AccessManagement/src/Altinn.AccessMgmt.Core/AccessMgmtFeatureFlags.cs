@@ -142,6 +142,16 @@ public static class AccessMgmtFeatureFlags
     /// </summary>
     public const string OutboxClientRemovedNotify = $"AccessMgmt.Core.Outbox.ClientRemovedNotify";
 
+    /// <summary>
+    /// Specifies if notifications should be sent if instance is added.
+    /// </summary>
+    public const string OutboxInstanceAddedNotify = $"AccessMgmt.Core.Outbox.InstanceAddedNotify";
+
+    /// <summary>
+    /// Specifies if notifications should be sent if instance is removed.
+    /// </summary>
+    public const string OutboxInstanceRemovedNotify = $"AccessMgmt.Core.Outbox.InstanceRemovedNotify";
+
     #endregion
 
     /// <summary>

@@ -178,5 +178,10 @@
         <Rule Id="SA1648" Action="Warning" />
         <Rule Id="SA1649" Action="Warning" />
         <Rule Id="SA1651" Action="Warning" />
+        <Rule Id="CA1860" Action="None" />
+        <Rule Id="IDE0305" Action="None" />
+        <Rule Id="IDE0029" Action="None" />
+        <Rule Id="IDE0030" Action="None" />
+        <Rule Id="IDE0270" Action="None" />
     </Rules>
 </RuleSet>

@@ -72,6 +72,9 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ClientAddedNotificationHandler>();
         services.AddTransient<ClientRemovedNotificationHandler>();
 
+        services.AddTransient<InstanceAddedNotificationHandler>();
+        services.AddTransient<InstanceRemovedNotificationHandler>();
+
         services.AddSingleton<AuditMiddleware>();
 
         services.AddOptions<CoreAppsettings>()

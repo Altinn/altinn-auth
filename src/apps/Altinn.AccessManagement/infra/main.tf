@@ -206,6 +206,8 @@ module "appsettings" {
         "Core:Notifications:RightholderRemovedNotifyInSeconds" = { value = tostring(var.configuration.core.notifications.rightholder_removed_notify_in_seconds) }
         "Core:Notifications:AccessAddedNotifyInSeconds"        = { value = tostring(var.configuration.core.notifications.access_added_notify_in_seconds) }
         "Core:Notifications:AccessRemovedNotifyInSeconds"      = { value = tostring(var.configuration.core.notifications.access_removed_notify_in_seconds) }
+        "Core:Notifications:InstanceAddedNotifyInSeconds"        = { value = tostring(var.configuration.core.notifications.instance_added_notify_in_seconds) }
+        "Core:Notifications:InstanceRemovedNotifyInSeconds"      = { value = tostring(var.configuration.core.notifications.instance_removed_notify_in_seconds) }
       }
     }
   }
@@ -224,26 +226,6 @@ module "appsettings" {
   ]
 
   feature_flags = [
-    ## BEGIN -- Deprecated
-    {
-      name        = "AccessMgmt.Core.Outbox.RequestNotifyPending"
-      description = "Specifies if notifications for pending requests are enabled."
-      label       = "${lower(var.environment)}-access-management"
-      value       = false
-    },
-    {
-      name        = "AccessMgmt.Core.Outbox.RequestNotifyReviewed"
-      description = "Specifies if notifications for reviewed requests are enabled."
-      label       = "${lower(var.environment)}-access-management"
-      value       = false
-    },
-    {
-      name        = "AccessMgmt.Core.Outbox.RequestNotifyApproved"
-      description = "Specifies if notifications for approved requests are enabled."
-      label       = "${lower(var.environment)}-access-management"
-      value       = false
-    },
-    ## END
     ## Notifications
     {
       name        = "AccessMgmt.Core.Outbox.RequestPendingNotify"
@@ -302,6 +284,18 @@ module "appsettings" {
     {
       name        = "AccessMgmt.Core.Outbox.ClientRemovedNotify"
       description = "Specifies if notifications should be sent when an agent is removed from a client."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Core.Outbox.InstanceAddedNotify"
+      description = "Specifies if notifications should be sent when an instance is added."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Core.Outbox.InstanceRemovedNotify"
+      description = "Specifies if notifications should be sent when an instance is removed."
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },
