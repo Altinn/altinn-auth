@@ -6,12 +6,15 @@ using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Appsettings;
+using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
-using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.FeatureManagement.Mvc;
 
 namespace Altinn.AccessManagement.Controllers;
@@ -24,9 +27,10 @@ namespace Altinn.AccessManagement.Controllers;
 public class InternalAuthorizedPartiesController(
     ILogger<InternalAuthorizedPartiesController> logger,
     IMapper mapper,
+    IAuthorizedPartyRepoServiceEf authorizedPartyRepoService,
     [FromKeyedServices("newConnectionQueryOnlyImplementation")] IAuthorizedPartiesService newConnectionQueryOnlyImplementation,
-    [FromKeyedServices("oldDelegationMetadataEfImplementation")] IAuthorizedPartiesService oldDelegationMetadataEfImplementation,
-    IContextRetrievalService contextRetrievalService) : ControllerBase
+    [FromKeyedServices("oldDelegationMetadataEfImplementation")] IAuthorizedPartiesService oldDelegationMetadataEfImplementation
+    ) : ControllerBase
 {
     /// <summary>
     /// Endpoint for retrieving all authorized parties (with option to include Authorized Parties, aka Reportees, from Altinn 2) for the authenticated user
@@ -281,15 +285,13 @@ public class InternalAuthorizedPartiesController(
             };
 
             int authenticatedUserPartyId = AuthenticationHelper.GetPartyId(HttpContext);
-
-            Party subject = await contextRetrievalService.GetPartyAsync(party, cancellationToken);
-            if (subject.PartyTypeName == PartyType.Person && subject.PartyId != authenticatedUserPartyId)
+            var entity = await authorizedPartyRepoService.GetEntityByPartyId(party, cancellationToken);
+            if (entity == null || (entity.TypeId == EntityTypeConstants.Person && entity.PartyId != authenticatedUserPartyId))
             {
                 return Forbid();
             }
 
-            List<AuthorizedParty> authorizedParties = await authorizedPartiesService.GetAuthorizedPartiesByPartyId(subject.PartyId, filters, cancellationToken);
-
+            List<AuthorizedParty> authorizedParties = await authorizedPartiesService.GetAuthorizedPartiesByPartyId(entity.PartyId.Value, filters, cancellationToken);
             return mapper.Map<List<AuthorizedPartyExternal>>(authorizedParties);
         }
         catch (ArgumentException ex)
