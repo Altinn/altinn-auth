@@ -316,6 +316,7 @@ internal static partial class AccessManagementHost
             .AddPolicy(AuthzConstants.PLATFORM_ACCESS_AUTHORIZATION, policy => policy.Requirements.Add(new AccessTokenRequirement()))
             .AddPolicy(AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_ISPLATFORM, policy => policy.Requirements.Add(new AccessTokenRequirement(AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_ISPLATFORM)))
             .AddPolicy(AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_BFF, policy => policy.Requirements.Add(new AccessTokenRequirement(AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_BFF)))
+            .AddPolicy(AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_BFF_OR_PLATFORM, policy => policy.Requirements.Add(new AccessTokenRequirement([AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_BFF, AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_ISPLATFORM])))
             .AddPolicy(AuthzConstants.ALTINNII_AUTHORIZATION, policy => policy.Requirements.Add(new ClaimAccessRequirement("urn:altinn:app", "sbl.authorization")))
             .AddPolicy(AuthzConstants.INTERNAL_AUTHORIZATION, policy => policy.Requirements.Add(new ClaimAccessRequirement("urn:altinn:app", "internal.authorization")))
             .AddPolicy(AuthzConstants.POLICY_MASKINPORTEN_DELEGATION_READ, policy => policy.Requirements.Add(new ResourceAccessRequirement("read", "altinn_maskinporten_scope_delegation")))

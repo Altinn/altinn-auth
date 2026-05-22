@@ -1,6 +1,7 @@
 ﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Azure.Storage.Blobs.Models;
+using Moq;
 
 namespace Altinn.AccessManagement.TestUtils.Data;
 
@@ -237,6 +238,75 @@ public static class TestEntities
             UserId = null,
             Username = "epost:marius@gmail.com",
             VariantId = EntityVariantConstants.SI_EMAIL,
+        }
+    };
+
+    public static ConstantDefinition<Entity> EmailUserHarryPotter { get; } = new("3b3578fb-6ba0-4320-8f24-09895a9921ac")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "harry.potter@hogwarts.com",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = null,
+            EmailIdentifier = null,
+            PersonIdentifier = null,
+            RefId = null,
+            TypeId = EntityTypeConstants.SelfIdentified,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.SI_EMAIL,
+        }
+    };
+
+    public static ConstantDefinition<Entity> EduUserHermioneGranger { get; } = new("ac81168a-7b22-4037-acba-5dea31d3a512")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "hermione.granger@hogwarts.com",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = null,
+            EmailIdentifier = null,
+            PersonIdentifier = null,
+            RefId = null,
+            TypeId = EntityTypeConstants.SelfIdentified,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.SI_EDU,
+        }
+    };
+
+    public static ConstantDefinition<Entity> UserRonWeasley { get; } = new("ee421389-a54a-4772-ae8e-784d6d43f599")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "ron.weasley@hogwarts.com",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = null,
+            EmailIdentifier = null,
+            PersonIdentifier = null,
+            RefId = null,
+            TypeId = EntityTypeConstants.SelfIdentified,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.SI,
         }
     };
 

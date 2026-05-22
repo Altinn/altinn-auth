@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Mime;
 using Altinn.AccessManagement.Api.Internal.Models;
 using Altinn.AccessManagement.Core.Constants;
@@ -33,7 +34,7 @@ public class InternalConnectionsController(IConnectionService connectionService)
     };
 
     [HttpPost("selfidentifiedusers")]
-    [Authorize(Policy = AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_BFF)]
+    [Authorize(Policy = AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_BFF_OR_PLATFORM)]
     [AuditStaticDb(System = AuditDefaults.InternalApi)]
     [ProducesResponseType<AssignmentDto>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
@@ -42,9 +43,15 @@ public class InternalConnectionsController(IConnectionService connectionService)
     public async Task<IActionResult> PostSelfIdentifiedUsers(
         [FromQuery(Name = "from")][Required] Guid from,
         [FromQuery(Name = "to")][Required] Guid to,
+        [FromHeader(Name = "PlatformAccessToken")] string token,
         CancellationToken cancellationToken = default)
     {
-        var result = await connectionService.ConnectSIUserAndEmailUser(from, to, cancellationToken);
+        if (!CheckValidAppClaim(token))
+        {
+            return Unauthorized("Invalid app claim in platform access token.");
+        }
+
+        var result = await connectionService.AddSelfRegisteredUserRole(from, to, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();
@@ -208,6 +215,38 @@ public class InternalConnectionsController(IConnectionService connectionService)
         }
 
         return NoContent();
+    }
+
+    #endregion
+
+    #region Private methods
+
+    /// <summary>
+    /// Validate app-claim from the platform token
+    /// </summary>
+    private static bool CheckValidAppClaim(string token)
+    {
+        if (!string.IsNullOrEmpty(token))
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwtSecurityToken = handler.ReadJwtToken(token);
+            
+            if (jwtSecurityToken.Issuer.Equals(AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_BFF, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            var appidentifier = jwtSecurityToken.Claims.FirstOrDefault(c => c.Type == AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute);
+            string appClaimValue = appidentifier?.Value?.ToLowerInvariant() ?? string.Empty;
+
+            return appClaimValue switch
+            {
+                "register" => true,
+                _ => false,
+            };
+        }
+
+        return false;
     }
 
     #endregion

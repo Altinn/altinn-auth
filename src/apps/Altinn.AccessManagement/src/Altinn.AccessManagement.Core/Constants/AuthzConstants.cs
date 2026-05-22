@@ -31,6 +31,11 @@
         public const string PLATFORM_ACCESSTOKEN_ISSUER_BFF = "amui";
 
         /// <summary>
+        /// Policy used to authorize that platform access token is issued by either Access Management BFF or Altinn Platform
+        /// </summary>
+        public const string PLATFORM_ACCESSTOKEN_ISSUER_BFF_OR_PLATFORM = "amuiOrplatform";
+
+        /// <summary>
         /// Policy tag for reading an maskinporten delegation
         /// </summary>
         public const string POLICY_MASKINPORTEN_DELEGATION_READ = "MaskinportenDelegationRead";

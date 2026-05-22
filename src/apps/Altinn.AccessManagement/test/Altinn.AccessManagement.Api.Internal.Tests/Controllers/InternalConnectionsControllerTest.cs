@@ -1,13 +1,14 @@
-using System.Net;
-using System.Security.Claims;
-using System.Text.Json;
-using Altinn.AccessManagement.Api.Internal.Controllers;
+﻿using Altinn.AccessManagement.Api.Internal.Controllers;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.ProblemDetails;
+using System.Net;
+using System.Security.Claims;
+using System.Text.Json;
 
 namespace Altinn.AccessManagement.Api.Internal.Tests.Controllers;
 
@@ -37,6 +38,17 @@ public class InternalConnectionsControllerTest
             return client;
         }
 
+        private HttpClient CreateClientWithPlatformToken(string app)
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_ISPLATFORM, new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim("urn:altinn:app", app));
+            });
+            client.DefaultRequestHeaders.Add("PlatformAccessToken", token);
+            return client;
+        }
+
         [Fact]
         public async Task PostSelfIdentifiedUser_FromSIUserToPerson_ReturnsOk()
         {
@@ -62,6 +74,69 @@ public class InternalConnectionsControllerTest
             var response = await client.PostAsync($"{Route}/selfidentifiedusers?from={TestEntities.PersonPaula}&to={TestEntities.PersonOrjan}", null, TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task PostSelfIdentifiedUser_SameGuidFromAndTo_Email_PlatformIssuerWithRegisterAppClaim_ReturnsOk()
+        {
+            var client = CreateClientWithPlatformToken("register");
+            
+            var entityId = TestEntities.EmailUserHarryPotter.Id;
+            var response = await client.PostAsync($"{Route}/selfidentifiedusers?from={entityId}&to={entityId}", null, TestContext.Current.CancellationToken);
+
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            var result = JsonSerializer.Deserialize<AssignmentDto>(data);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(entityId, result.FromId);
+            Assert.Equal(entityId, result.ToId);
+            Assert.Equal(RoleConstants.SelfRegisteredUser, result.RoleId);
+        }
+
+        [Fact]
+        public async Task PostSelfIdentifiedUser_SameGuidFromAndTo_Edu_PlatformIssuerWithRegisterAppClaim_ReturnsOk()
+        {
+            var client = CreateClientWithPlatformToken("register");
+
+            var entityId = TestEntities.EduUserHermioneGranger.Id;
+            var response = await client.PostAsync($"{Route}/selfidentifiedusers?from={entityId}&to={entityId}", null, TestContext.Current.CancellationToken);
+
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            var result = JsonSerializer.Deserialize<AssignmentDto>(data);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(entityId, result.FromId);
+            Assert.Equal(entityId, result.ToId);
+            Assert.Equal(RoleConstants.SelfRegisteredUser, result.RoleId);
+        }
+
+        [Fact]
+        public async Task PostSelfIdentifiedUser_SameGuidFromAndTo_PlatformIssuerWithRegisterAppClaim_ReturnsProblem()
+        {
+            var client = CreateClientWithPlatformToken("register");
+
+            var entityId = TestEntities.UserRonWeasley.Id;
+            var response = await client.PostAsync($"{Route}/selfidentifiedusers?from={entityId}&to={entityId}", null, TestContext.Current.CancellationToken);
+
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            var result = JsonSerializer.Deserialize<AltinnProblemDetails>(data);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            var errors = (JsonElement)result.Extensions.FirstOrDefault(e => e.Key == "validationErrors").Value;
+            var error = errors[0];
+            var errorCode = error.GetProperty("code").GetString();
+            Assert.Equal("AM.VLD-00008", errorCode);
+        }
+
+        [Fact]
+        public async Task PostSelfIdentifiedUser_SameGuidFromAndTo_PlatformIssuerWithNotRegisterAppClaim_ReturnsUnauthorized()
+        {
+            var client = CreateClientWithPlatformToken("not-register");
+
+            var entityId = TestEntities.UserRonWeasley.Id;
+            var response = await client.PostAsync($"{Route}/selfidentifiedusers?from={entityId}&to={entityId}", null, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
 
     #endregion

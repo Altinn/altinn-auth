@@ -36,6 +36,9 @@ public static class TestDataSeeds
             TestEntities.OrganizationOkernBorettslag,
             TestEntities.SIUserMarius,
             TestEntities.EmailUserMarius,
+            TestEntities.EmailUserHarryPotter,
+            TestEntities.EduUserHermioneGranger,
+            TestEntities.UserRonWeasley
         ]);
         #endregion
 
