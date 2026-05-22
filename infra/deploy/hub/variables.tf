@@ -34,6 +34,11 @@ variable "spoke_principal_ids" {
   type = list(string)
 }
 
+variable "cd_principal_ids" {
+  description = "Principal IDs of Entra ID applications and/or users that run the continous deployment pipelines."
+  type        = list(string)
+}
+
 variable "developer_prod_principal_ids" {
   type = list(string)
 }
