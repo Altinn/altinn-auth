@@ -8,6 +8,7 @@ using Altinn.AccessManagement.Core.Models.Party;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Enums;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Platform.Register.Enums;
@@ -1059,17 +1060,22 @@ namespace Altinn.AccessManagement.Core.Helpers
         /// <summary>
         /// Evaluates the party type in order to return the correct uuid type and value for a party
         /// </summary>
-        /// <param name="party">The party to get uuid info from</param>
+        /// <param name="entity">The party to get uuid info from</param>
         /// <returns>UuidType and Uuid</returns>
-        public static (UuidType DelegationType, Guid Uuid) GetUuidTypeAndValueFromParty(Party party)
+        public static (UuidType DelegationType, Guid Uuid) GetUuidTypeAndValueFromParty(Entity entity)
         {
-            if (party?.Organization != null)
+            if (entity == null)
             {
-                return (UuidType.Organization, party.PartyUuid.Value);
+                return (UuidType.NotSpecified, Guid.Empty);
             }
-            else if (party?.Person != null)
+
+            if (entity.TypeId == EntityTypeConstants.Organization)
             {
-                return (UuidType.Person, party.PartyUuid.Value);
+                return (UuidType.Organization, entity.Id);
+            }
+            else if (entity.TypeId == EntityTypeConstants.Person)
+            {
+                return (UuidType.Person, entity.Id);
             }
 
             return (UuidType.NotSpecified, Guid.Empty);

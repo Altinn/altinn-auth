@@ -13,6 +13,8 @@ using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Utils;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
@@ -63,7 +65,69 @@ public class AppsInstanceDelegationControllerTest : IClassFixture<ApiFixture>
             services.RemoveAll<IPublicSigningKeyProvider>();
             services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
         });
+
+        fixture.EnsureSeedOnce<AppsInstanceDelegationControllerTest>(db =>
+        {
+            db.Entities.AddRange(TestEntities);
+            db.SaveChanges();
+        });
     }
+
+    // Entities referenced by test data: parties used as From/To in delegation requests
+    // and delegation changes returned by DelegationMetadataRepositoryMock.
+    private static readonly Entity[] TestEntities =
+    [
+        new()
+        {
+            Id = Guid.Parse("0268B99A-5817-4BBF-9B62-D90B16D527EA"),
+            Name = "KOLBJØRNSVIK OG ROAN",
+            OrganizationIdentifier = "810419342",
+            RefId = "810419342",
+            PartyId = 50004226,
+            TypeId = EntityTypeConstants.Organization,
+            VariantId = EntityVariantConstants.AS,
+            IsDeleted = false,
+        },
+        new()
+        {
+            Id = Guid.Parse("CE4BA72B-D111-404F-95B5-313FB3847FA1"),
+            Name = "MARGRETHE THORUD",
+            PersonIdentifier = "01025181049",
+            RefId = "01025181049",
+            PartyId = 50002115,
+            TypeId = EntityTypeConstants.Person,
+            VariantId = EntityVariantConstants.Person,
+            IsDeleted = false,
+        },
+        // From party used by DelegationMetadataRepositoryMock for RevokeAll/Get tests
+        new()
+        {
+            Id = Guid.Parse("B537C953-03C4-4822-B028-C15182ADC356"),
+            Name = "Test App Delegator",
+            OrganizationIdentifier = "000000001",
+            RefId = "000000001",
+            TypeId = EntityTypeConstants.Organization,
+            VariantId = EntityVariantConstants.AS,
+            IsDeleted = false,
+        },
+        // Synthetic To parties used by DelegationMetadataRepositoryMock for RevokeAll test
+        new()
+        {
+            Id = Guid.Parse("00000000-0000-0000-0001-000000000010"),
+            Name = "Test Person 10",
+            TypeId = EntityTypeConstants.Person,
+            VariantId = EntityVariantConstants.Person,
+            IsDeleted = false,
+        },
+        new()
+        {
+            Id = Guid.Parse("00000000-0000-0000-0001-000000000012"),
+            Name = "Test Person 12",
+            TypeId = EntityTypeConstants.Person,
+            VariantId = EntityVariantConstants.Person,
+            IsDeleted = false,
+        },
+    ];
 
     /// <summary>
     /// Test case:  GET apps/instancedelegation/{resourceId}/{instanceId}/delegationcheck

@@ -52,6 +52,6 @@ public static class CoreDependencyInjectionExtensions
         builder.Services.AddScoped<ISingleRightsService, SingleRightsService>();
         builder.Services.AddSingleton<IUserProfileLookupService, UserProfileLookupService>();
         builder.Services.AddScoped<IAltinn2RightsService, Altinn2RightsService>();
-        builder.Services.AddScoped<IAppsInstanceDelegationService, AppsInstanceDelegationService>();
+        builder.Services.AddTransient<IAppsInstanceDelegationService, AppsInstanceDelegationService>();
     }
 }
