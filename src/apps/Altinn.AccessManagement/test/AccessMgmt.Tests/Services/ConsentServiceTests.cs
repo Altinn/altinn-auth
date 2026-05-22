@@ -10,7 +10,7 @@ using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services;
 using Altinn.AccessManagement.Core.Services.Interfaces;
-using Altinn.Authorization.Api.Contracts.Register;
+using ContractsOrganizationNumber = Altinn.Authorization.Api.Contracts.Register.OrganizationNumber;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -26,7 +26,6 @@ public class ConsentServiceTests
     private readonly Mock<ILogger<ConsentService>> _loggerMock;
     private readonly Mock<IConsentRepository> _consentRepositoryMock;
     private readonly Mock<IAltinn2ConsentClient> _altinn2ConsentClientMock;
-    private readonly Mock<IPartiesClient> _partiesClientMock;
     private readonly Mock<IResourceRegistryClient> _resourceRegistryClientMock;
     private readonly Mock<IAMPartyService> _amPartyServiceMock;
     private readonly Mock<IMemoryCache> _memoryCacheMock;
@@ -41,7 +40,6 @@ public class ConsentServiceTests
         _loggerMock = new Mock<ILogger<ConsentService>>();
         _consentRepositoryMock = new Mock<IConsentRepository>();
         _altinn2ConsentClientMock = new Mock<IAltinn2ConsentClient>();
-        _partiesClientMock = new Mock<IPartiesClient>();
         _resourceRegistryClientMock = new Mock<IResourceRegistryClient>();
         _amPartyServiceMock = new Mock<IAMPartyService>();
         _memoryCacheMock = new Mock<IMemoryCache>();
@@ -414,7 +412,7 @@ public class ConsentServiceTests
         // IAMPartyService.GetByOrgNo before calling the repository. This
         // mapping is the only non-trivial step the service performs, so it
         // gets its own focused test.
-        var orgNumber = OrganizationNumber.Parse("810419512");
+        var orgNumber = ContractsOrganizationNumber.Parse("810419512");
         var receiver = ConsentPartyUrn.OrganizationId.Create(orgNumber);
         var resolvedPartyUuid = Guid.NewGuid();
 
@@ -552,10 +550,10 @@ public class ConsentServiceTests
     private ConsentService CreateService()
     {
         return new ConsentService(
+            null, // AppDbContext not needed for these tests
             _loggerMock.Object,
             _consentRepositoryMock.Object,
             _altinn2ConsentClientMock.Object,
-            _partiesClientMock.Object,
             _resourceRegistryClientMock.Object,
             _amPartyServiceMock.Object,
             _memoryCacheMock.Object,
