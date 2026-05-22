@@ -107,7 +107,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         {
             XacmlContextAttributes resourceContextAttributes = request.GetResourceAttributes();
             XacmlResourceAttributes resourceAttributes = GetResourceAttributeValues(resourceContextAttributes);
-            await EnrichResourceParty(resourceContextAttributes, resourceAttributes, isExternalRequest, cancellationToken);
 
             bool resourceAttributeComplete = IsResourceComplete(resourceAttributes);
 
@@ -140,6 +139,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             }
 
             // Resource must be enriched after getting instance data which resolves org/app through the instance id
+            await EnrichResourceParty(resourceContextAttributes, resourceAttributes, isExternalRequest, cancellationToken);
             resourceContextAttributes = EnrichRequestResourceAttributes(resourceContextAttributes, resourceAttributes);
 
             await EnrichSubjectAttributes(request, resourceAttributes, isExternalRequest, cancellationToken);
