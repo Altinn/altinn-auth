@@ -49,6 +49,17 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.AuthorizationHandler
                 return;
             }
 
+            if (DecisionHelper.GetPartyParam(httpContext) is null)
+            {
+                // The 'party' query parameter is missing or not a valid GUID. A valid party is
+                // always required: AllowAllowUnauthorizedParty only governs whether the user must
+                // be authorized for an otherwise valid party, it does not excuse a missing or
+                // malformed party. Fail here instead of letting CreateDecisionRequest throw and
+                // surface as a 500.
+                context.Fail();
+                return;
+            }
+
             XacmlJsonRequestRoot request = DecisionHelper.CreateDecisionRequest(context, requirement, httpContext.Request.Query);
 
             XacmlJsonResponse response = await _pdp.GetDecisionForRequest(request);
