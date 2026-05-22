@@ -28,6 +28,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
             .Include(r => r.Assignment).ThenInclude(a => a.From)
             .Include(r => r.Assignment).ThenInclude(a => a.To)
             .Include(r => r.Assignment).ThenInclude(a => a.Role)
+            .Include(r => r.Assignment).ThenInclude(a => a.By)
             .Include(r => r.Resource)
             .FirstOrDefaultAsync(t => t.Id == requestId, ct);
 
@@ -40,6 +41,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
             .Include(r => r.Assignment).ThenInclude(a => a.From)
             .Include(r => r.Assignment).ThenInclude(a => a.To)
             .Include(r => r.Assignment).ThenInclude(a => a.Role)
+            .Include(r => r.Assignment).ThenInclude(a => a.By)
             .Include(r => r.Package)
             .FirstOrDefaultAsync(t => t.Id == requestId, ct);
 
@@ -152,6 +154,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
            fromId: fromId,
            toId: toId,
            roleId: roleId,
+           byId: byId,
            ct: ct
            );
         var requestAssignment = requestAssignmentResult.Value;
@@ -183,6 +186,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
             fromId: fromId,
             toId: toId,
             roleId: roleId,
+            byId: byId,
             ct: ct
         );
 
@@ -493,6 +497,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
             .Include(r => r.Assignment).ThenInclude(a => a.From)
             .Include(r => r.Assignment).ThenInclude(a => a.To)
             .Include(r => r.Assignment).ThenInclude(a => a.Role)
+            .Include(r => r.Assignment).ThenInclude(a => a.By)
             .Include(r => r.Resource)
             .ToListAsync(cancellationToken: ct);
     }
@@ -505,6 +510,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
             .Include(r => r.Assignment).ThenInclude(a => a.From)
             .Include(r => r.Assignment).ThenInclude(a => a.To)
             .Include(r => r.Assignment).ThenInclude(a => a.Role)
+            .Include(r => r.Assignment).ThenInclude(a => a.By)
             .Include(r => r.Package)
             .ToListAsync(cancellationToken: ct);
     }
@@ -545,14 +551,14 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
         }
     }
 
-    private async Task<Result<RequestAssignment>> GetOrCreateRequestAssignment(Guid fromId, Guid toId, Guid roleId, CancellationToken ct = default)
+    private async Task<Result<RequestAssignment>> GetOrCreateRequestAssignment(Guid fromId, Guid toId, Guid roleId, Guid byId, CancellationToken ct = default)
     {
         /*
         A Request from Kari by NAV to BakerAS for AppResource01.
         Will create an Assignment from BakerAS to Kari with an AssignmentResource for AppResource01.
         */
 
-        var request = await db.RequestAssignments.FirstOrDefaultAsync(r => r.FromId == fromId && r.ToId == toId && r.RoleId == roleId, ct);
+        var request = await db.RequestAssignments.FirstOrDefaultAsync(r => r.FromId == fromId && r.ToId == toId && r.RoleId == roleId && r.ById == byId, ct);
         if (request == null)
         {
             request = new RequestAssignment
@@ -560,6 +566,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
                 FromId = fromId,
                 ToId = toId,
                 RoleId = roleId,
+                ById = byId
             };
             db.RequestAssignments.Add(request);
 

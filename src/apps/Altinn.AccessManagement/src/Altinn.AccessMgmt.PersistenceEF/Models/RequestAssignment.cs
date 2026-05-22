@@ -21,4 +21,9 @@ public class RequestAssignment : BaseRequestAssignment
     /// ActiveTo (Entity)
     /// </summary>
     public Entity To { get; set; }
+
+    /// <summary>
+    /// Request Created By (Entity)
+    /// </summary>
+    public Entity By { get; set; }
 }

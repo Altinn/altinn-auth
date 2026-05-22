@@ -1,5 +1,4 @@
 ﻿using System.Net.Mime;
-using System.Net.Http;
 using Altinn.AccessManagement.Api.ServiceOwner.Validation;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Configuration;
@@ -63,6 +62,52 @@ public class RequestController(
     {
         var result = await requestService.GetRequest(id, ct);
         return result.IsSuccess ? Ok(result.Value.Status) : result.Problem.ToActionResult();
+    }
+
+    /// <summary>
+    /// Withdraw a delegation request
+    /// </summary>
+    [HttpPut("{id}/withdraw")]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
+    [Authorize(Policy = AuthzConstants.ALTINN_SERVICEOWNER_DELEGATIONREQUESTS_WRITE)]
+    [AuditServiceOwnerConsumer]
+    [ProducesResponseType<RequestStatus>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> WithdrawRequest([FromRoute] Guid id, CancellationToken ct = default)
+    {
+        var result = await requestService.GetRequest(id, ct);
+        if (!result.IsSuccess)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        var request = result.Value;
+
+        if (request.By.Id == auditAccessor.AuditValues.ChangedBy)
+        {
+            if (request.Status == RequestStatus.Draft || request.Status == RequestStatus.Pending)
+            {
+                var res = await requestService.UpdateRequest(request.From.Id, request.Id, RequestStatus.Withdrawn, ct);
+                if (res.IsSuccess)
+                {
+                    return Ok(res.Value.Status);
+                }
+
+                return res.Problem.ToActionResult();
+            }
+
+            ValidationErrorBuilder errorBuilder = default;
+            errorBuilder.Add(ValidationErrors.RequestUnsupportedStatusUpdate, "/status", [new("status", $"Unable to withdraw request with status '{request.Status}'")]);
+            errorBuilder.TryBuild(out var problem);
+            if (problem != null)
+            {
+                return problem.ToActionResult();
+            }
+        }
+
+        return Forbid();
     }
 
     /// <summary>

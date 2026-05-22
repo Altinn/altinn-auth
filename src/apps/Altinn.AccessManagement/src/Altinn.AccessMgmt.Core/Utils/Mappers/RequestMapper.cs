@@ -18,8 +18,10 @@ public partial class DtoMapper : IDtoMapper
             Id = request.Id,
             Type = "package",
             LastUpdated = request.Audit_ValidFrom,
+            LastUpdatedBy = request.Audit_ChangedBy,
             From = ConvertToPartyEntityDto(request.Assignment.From),
             To = ConvertToPartyEntityDto(request.Assignment.To),
+            By = ConvertToPartyEntityDtoOrStub(request.Assignment.By, request.Assignment.ById),
             Status = request.Status,
             Package = new RequestReferenceDto() { Id = request.PackageId, ReferenceId = request.Package?.Urn },
         };
@@ -32,8 +34,10 @@ public partial class DtoMapper : IDtoMapper
             Id = request.Id,
             Type = "resource",
             LastUpdated = request.Audit_ValidFrom,
+            LastUpdatedBy = request.Audit_ChangedBy,
             From = ConvertToPartyEntityDto(request.Assignment.From),
             To = ConvertToPartyEntityDto(request.Assignment.To),
+            By = ConvertToPartyEntityDtoOrStub(request.Assignment.By, request.Assignment.ById),
             Status = request.Status,
             Resource = new RequestReferenceDto() { Id = request.ResourceId, ReferenceId = request.Resource?.RefId },
         };
@@ -50,5 +54,15 @@ public partial class DtoMapper : IDtoMapper
             OrganizationIdentifier = entity.OrganizationIdentifier?.ToString(),
             PersonIdentifier = entity.PersonIdentifier?.ToString()
         };
+    }
+
+    public static PartyEntityDto? ConvertToPartyEntityDtoOrStub(Entity? entity, Guid? fallbackId)
+    {
+        if (entity is not null)
+        {
+            return ConvertToPartyEntityDto(entity);
+        }
+
+        return fallbackId is { } id ? new PartyEntityDto { Id = id } : null;
     }
 }

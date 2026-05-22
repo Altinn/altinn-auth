@@ -51,4 +51,9 @@ public class BaseRequestAssignment : BaseAudit
     /// ToId
     /// </summary>
     public Guid ToId { get; set; }
+
+    /// <summary>
+    /// Created By Identity
+    /// </summary>
+    public Guid ById { get; set; }
 }

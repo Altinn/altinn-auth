@@ -1539,6 +1539,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("audit_deletedbysystem");
 
+                    b.Property<Guid>("ById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("byid");
+
                     b.Property<Guid>("FromId")
                         .HasColumnType("uuid")
                         .HasColumnName("fromid");
@@ -3095,6 +3099,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("audit_validfrom");
 
+                    b.Property<Guid>("ById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("byid");
+
                     b.Property<Guid>("FromId")
                         .HasColumnType("uuid")
                         .HasColumnName("fromid");
@@ -3109,6 +3117,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_requestassignment");
+
+                    b.HasIndex("ById")
+                        .HasDatabaseName("ix_requestassignment_byid");
 
                     b.HasIndex("FromId")
                         .HasDatabaseName("ix_requestassignment_fromid");
@@ -4119,6 +4130,13 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.RequestAssignment", b =>
                 {
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Entity", "By")
+                        .WithMany()
+                        .HasForeignKey("ById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_requestassignment_entity_byid");
+
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Entity", "From")
                         .WithMany()
                         .HasForeignKey("FromId")
@@ -4139,6 +4157,8 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_requestassignment_entity_toid");
+
+                    b.Navigation("By");
 
                     b.Navigation("From");
 

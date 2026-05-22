@@ -206,6 +206,7 @@ public class RequestControllerTest
                 {
                     FromId = TestData.LarsBakke.Id,
                     ToId = TestData.BakerJohnsen.Id,
+                    ById = TestData.LarsBakke.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.RequestAssignments.Add(reqAssignment);
@@ -291,6 +292,7 @@ public class RequestControllerTest
                 {
                     FromId = TestData.MortenDahl.Id,
                     ToId = TestData.SvendsenAutomobil.Id,
+                    ById = TestData.MortenDahl.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.RequestAssignments.Add(reqAssignment);
@@ -376,6 +378,7 @@ public class RequestControllerTest
                 {
                     FromId = TestData.MortenDahl.Id,
                     ToId = TestData.SvendsenAutomobil.Id,
+                    ById = TestData.MortenDahl.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.RequestAssignments.Add(reqAssignment);
@@ -429,6 +432,7 @@ public class RequestControllerTest
                 {
                     FromId = TestData.HildeStrand.Id,
                     ToId = TestData.BakerJohnsen.Id,
+                    ById = TestData.HildeStrand.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.RequestAssignments.Add(reqAssignment);
@@ -482,6 +486,7 @@ public class RequestControllerTest
                 {
                     ToId = TestData.BakerJohnsen.Id,
                     FromId = TestData.LarsBakke.Id,
+                    ById = TestData.LarsBakke.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.RequestAssignments.Add(reqAssignment);
@@ -540,6 +545,7 @@ public class RequestControllerTest
                 {
                     FromId = TestData.TrondLarsen.Id,
                     ToId = TestData.BakerJohnsen.Id,
+                    ById = TestData.TrondLarsen.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.RequestAssignments.Add(reqAssignment);
@@ -627,6 +633,7 @@ public class RequestControllerTest
                 {
                     FromId = TestData.MaritEriksen.Id,
                     ToId = TestData.BakerJohnsen.Id,
+                    ById = TestData.MaritEriksen.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.RequestAssignments.Add(reqAssignment);
@@ -678,6 +685,7 @@ public class RequestControllerTest
                 {
                     FromId = TestData.OddHalvorsen.Id,
                     ToId = TestData.BakerJohnsen.Id,
+                    ById = TestData.OddHalvorsen.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.RequestAssignments.Add(reqAssignment);
@@ -779,6 +787,7 @@ public class RequestControllerTest
                 {
                     FromId = TestData.LivKristiansen.Id,
                     ToId = TestData.SvendsenAutomobil.Id,
+                    ById = TestData.LivKristiansen.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.RequestAssignments.Add(reqAssignment);
@@ -836,6 +845,7 @@ public class RequestControllerTest
                 {
                     FromId = TestData.GeirPedersen.Id,
                     ToId = TestData.SvendsenAutomobil.Id,
+                    ById = TestData.GeirPedersen.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.RequestAssignments.Add(reqAssignment);

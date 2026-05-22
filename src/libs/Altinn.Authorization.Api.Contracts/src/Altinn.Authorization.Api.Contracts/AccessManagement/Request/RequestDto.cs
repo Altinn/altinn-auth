@@ -26,6 +26,11 @@ public class RequestDto
     public DateTimeOffset LastUpdated { get; set; }
 
     /// <summary>
+    /// Last updated by
+    /// </summary>
+    public Guid? LastUpdatedBy { get; set; }
+
+    /// <summary>
     /// Requested resource
     /// </summary>
     public RequestReferenceDto Resource { get; set; }
@@ -49,4 +54,9 @@ public class RequestDto
     /// Party that access is requested for
     /// </summary>
     public PartyEntityDto To { get; set; }
+
+    /// <summary>
+    /// Party that created the request
+    /// </summary>
+    public PartyEntityDto By { get; set; }
 }
