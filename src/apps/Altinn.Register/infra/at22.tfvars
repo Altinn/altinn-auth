@@ -55,7 +55,10 @@ config = {
   ccr = {
     federate = {
       enable = true
-      source = "ccr-updates-at22"
+      source = {
+        queue  = "ccr-updates-at22"
+        poison = "ccr-updates-at22-poison"
+      }
     }
 
     clients = {

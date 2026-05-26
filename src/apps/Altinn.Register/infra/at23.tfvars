@@ -50,7 +50,10 @@ config = {
   ccr = {
     federate = {
       enable = true
-      source = "ccr-updates-at23"
+      source = {
+        queue  = "ccr-updates-at23"
+        poison = "ccr-updates-at23-poison"
+      }
     }
   }
 }

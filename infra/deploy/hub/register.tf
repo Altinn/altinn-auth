@@ -9,8 +9,11 @@ module "register_shared_storage_account" {
   location            = azurerm_resource_group.hub.location
 
   queues = {
-    "ccr-updates-at22" = {}
-    "ccr-updates-at23" = {}
+    "ccr-updates-at22"        = {}
+    "ccr-updates-at22-poison" = {}
+
+    "ccr-updates-at23"        = {}
+    "ccr-updates-at23-poison" = {}
   }
 
   tags = merge({}, local.default_tags)

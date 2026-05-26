@@ -217,7 +217,7 @@ data "azurerm_storage_account" "ccr_federate_storage_account" {
 data "azurerm_storage_queue" "ccr_federate_source" {
   for_each = (
     var.config.ccr.federate.enable && var.config.ccr.federate.source != null
-    ? toset([var.config.ccr.federate.source])
+    ? toset([var.config.ccr.federate.source.queue])
     : toset([])
   )
 
@@ -232,13 +232,42 @@ data "azurerm_storage_queue" "ccr_federate_source" {
 resource "azurerm_role_assignment" "ccr_federate_queue_reader" {
   for_each = (
     var.config.ccr.federate.enable && var.config.ccr.federate.source != null
-    ? toset([var.config.ccr.federate.source])
+    ? toset([var.config.ccr.federate.source.queue])
     : toset([])
   )
 
   scope                = data.azurerm_storage_queue.ccr_federate_source[each.key].id
   principal_id         = azurerm_user_assigned_identity.register.principal_id
   role_definition_name = "Storage Queue Data Message Processor"
+
+  provider = azurerm.hub
+}
+
+data "azurerm_storage_queue" "ccr_federate_source_poison" {
+  for_each = (
+    var.config.ccr.federate.enable && var.config.ccr.federate.source != null
+    ? toset([var.config.ccr.federate.source.poison])
+    : toset([])
+  )
+
+  name = each.value
+  storage_account_id = data.azurerm_storage_account.ccr_federate_storage_account[
+    local.reg_federate_storage_account_name
+  ].id
+
+  provider = azurerm.hub
+}
+
+resource "azurerm_role_assignment" "ccr_federate_poison_writer" {
+  for_each = (
+    var.config.ccr.federate.enable && var.config.ccr.federate.source != null
+    ? toset([var.config.ccr.federate.source.poison])
+    : toset([])
+  )
+
+  scope                = data.azurerm_storage_queue.ccr_federate_source_poison[each.key].id
+  principal_id         = azurerm_user_assigned_identity.register.principal_id
+  role_definition_name = "Storage Queue Data Message Sender"
 
   provider = azurerm.hub
 }
@@ -333,7 +362,8 @@ module "appsettings" {
             "Altinn:register:Ccr:Federate:Targets:${index}:QueueName" => { value = target }
           },
           var.config.ccr.federate.source != null ? {
-            "Altinn:register:Ccr:Federate:Source:QueueName" = { value = var.config.ccr.federate.source }
+            "Altinn:register:Ccr:Federate:Source:QueueName"       = { value = var.config.ccr.federate.source.queue }
+            "Altinn:register:Ccr:Federate:Source:PoisonQueueName" = { value = var.config.ccr.federate.source.poison }
           } : {}
         ) : {}
       )

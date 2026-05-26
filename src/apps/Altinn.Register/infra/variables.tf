@@ -140,7 +140,10 @@ variable "config" {
       federate = optional(object({
         enable  = optional(bool, false),
         targets = optional(list(string), []) # list of environments to federate ccr updates to
-        source  = optional(string)
+        source = optional(object({
+          queue  = string
+          poison = string
+        }))
       }), {})
     }), {})
   })
