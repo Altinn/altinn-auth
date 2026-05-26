@@ -206,8 +206,8 @@ module "appsettings" {
         "Core:Notifications:RightholderRemovedNotifyInSeconds" = { value = tostring(var.configuration.core.notifications.rightholder_removed_notify_in_seconds) }
         "Core:Notifications:AccessAddedNotifyInSeconds"        = { value = tostring(var.configuration.core.notifications.access_added_notify_in_seconds) }
         "Core:Notifications:AccessRemovedNotifyInSeconds"      = { value = tostring(var.configuration.core.notifications.access_removed_notify_in_seconds) }
-        "Core:Notifications:InstanceAddedNotifyInSeconds"        = { value = tostring(var.configuration.core.notifications.instance_added_notify_in_seconds) }
-        "Core:Notifications:InstanceRemovedNotifyInSeconds"      = { value = tostring(var.configuration.core.notifications.instance_removed_notify_in_seconds) }
+        "Core:Notifications:InstanceAddedNotifyInSeconds"      = { value = tostring(var.configuration.core.notifications.instance_added_notify_in_seconds) }
+        "Core:Notifications:InstanceRemovedNotifyInSeconds"    = { value = tostring(var.configuration.core.notifications.instance_removed_notify_in_seconds) }
       }
     }
   }

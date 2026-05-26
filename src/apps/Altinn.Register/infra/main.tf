@@ -32,13 +32,17 @@ provider "azurerm" {
 }
 
 locals {
-  hub_suffix                = lower("${var.organization}${var.product_name}${var.instance}hub")
-  hub_resource_group_name   = lower("rg${local.hub_suffix}")
+  hub_suffix              = lower("${var.organization}${var.product_name}${var.instance}hub")
+  hub_resource_group_name = lower("rg${local.hub_suffix}")
+
   spoke_suffix              = lower("${var.organization}${var.product_name}${var.instance}${var.environment}")
   spoke_resource_group_name = lower("rg${local.spoke_suffix}")
-  suffix                    = lower("${var.organization}${var.product_name}${var.name}${var.instance}${var.environment}")
-  conf_json                 = jsondecode(file(local.conf_json_path))
-  conf_json_path            = abspath("${path.module}/../conf.json")
+
+  suffix         = lower("${var.organization}${var.product_name}${var.name}${var.instance}${var.environment}")
+  conf_json      = jsondecode(file(local.conf_json_path))
+  conf_json_path = abspath("${path.module}/../conf.json")
+
+  reg_federate_storage_account_name = lower("st${var.organization}${var.product_name}reg${var.instance}")
 
   default_tags = {
     ProductName = var.product_name
@@ -197,6 +201,77 @@ data "azurerm_key_vault_secret" "ccr_client_password_hash" {
   name         = each.value.password
 }
 
+data "azurerm_storage_account" "ccr_federate_storage_account" {
+  for_each = (
+    var.config.ccr.federate.enable
+    ? toset([local.reg_federate_storage_account_name])
+    : toset([])
+  )
+
+  name                = each.value
+  resource_group_name = local.hub_resource_group_name
+
+  provider = azurerm.hub
+}
+
+data "azurerm_storage_queue" "ccr_federate_source" {
+  for_each = (
+    var.config.ccr.federate.enable && var.config.ccr.federate.source != null
+    ? toset([var.config.ccr.federate.source])
+    : toset([])
+  )
+
+  name = each.value
+  storage_account_id = data.azurerm_storage_account.ccr_federate_storage_account[
+    local.reg_federate_storage_account_name
+  ].id
+
+  provider = azurerm.hub
+}
+
+resource "azurerm_role_assignment" "ccr_federate_queue_reader" {
+  for_each = (
+    var.config.ccr.federate.enable && var.config.ccr.federate.source != null
+    ? toset([var.config.ccr.federate.source])
+    : toset([])
+  )
+
+  scope                = data.azurerm_storage_queue.ccr_federate_source[each.key].id
+  principal_id         = azurerm_user_assigned_identity.register.principal_id
+  role_definition_name = "Storage Queue Data Message Processor"
+
+  provider = azurerm.hub
+}
+
+data "azurerm_storage_queue" "ccr_federate_target" {
+  for_each = (
+    var.config.ccr.federate.enable
+    ? toset(var.config.ccr.federate.targets)
+    : toset([])
+  )
+
+  name = each.value
+  storage_account_id = data.azurerm_storage_account.ccr_federate_storage_account[
+    local.reg_federate_storage_account_name
+  ].id
+
+  provider = azurerm.hub
+}
+
+resource "azurerm_role_assignment" "ccr_federate_queue_writer" {
+  for_each = (
+    var.config.ccr.federate.enable
+    ? toset(var.config.ccr.federate.targets)
+    : toset([])
+  )
+
+  scope                = data.azurerm_storage_queue.ccr_federate_target[each.key].id
+  principal_id         = azurerm_user_assigned_identity.register.principal_id
+  role_definition_name = "Storage Queue Data Message Sender"
+
+  provider = azurerm.hub
+}
+
 module "appsettings" {
   source     = "../../../../infra/modules/appsettings"
   hub_suffix = local.hub_suffix
@@ -246,7 +321,21 @@ module "appsettings" {
             for network_index, network_value in client.networks :
             "Altinn:register:Ccr:Clients:${client_key}:AllowedSourceNetworks:${network_index}" => { value = network_value }
           }
-        ]...)
+        ]...),
+        // ccr federation config
+        var.config.ccr.federate.enable ? merge(
+          {
+            "Altinn:register:Ccr:Federate:Enable"             = { value = true }
+            "Altinn:register:Ccr:Federate:StorageAccountName" = { value = local.reg_federate_storage_account_name }
+          },
+          {
+            for index, target in var.config.ccr.federate.targets :
+            "Altinn:register:Ccr:Federate:Targets:${index}:QueueName" => { value = target }
+          },
+          var.config.ccr.federate.source != null ? {
+            "Altinn:register:Ccr:Federate:Source:QueueName" = { value = var.config.ccr.federate.source }
+          } : {}
+        ) : {}
       )
 
       vault_references = merge(

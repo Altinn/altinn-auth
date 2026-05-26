@@ -136,6 +136,12 @@ variable "config" {
         password = string             # key vault secret name
         networks = list(string)       # whitelist of CIDR ranges allowed to use this client
       })), {})
+
+      federate = optional(object({
+        enable  = optional(bool, false),
+        targets = optional(list(string), []) # list of environments to federate ccr updates to
+        source  = optional(string)
+      }), {})
     }), {})
   })
   default = {}

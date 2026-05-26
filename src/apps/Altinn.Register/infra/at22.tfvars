@@ -53,6 +53,11 @@ config = {
   }
 
   ccr = {
+    federate = {
+      enable = true
+      source = "ccr-updates-at22"
+    }
+
     clients = {
       e2e-test-at22 = {
         password = "ccr-e2e-test-hash"

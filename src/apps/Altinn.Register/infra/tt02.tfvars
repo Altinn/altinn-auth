@@ -54,4 +54,11 @@ config = {
   api_source = {
     default = "db"
   }
+
+  ccr = {
+    federate = {
+      enable  = true
+      targets = ["ccr-updates-at22", "ccr-updates-at23"]
+    }
+  }
 }

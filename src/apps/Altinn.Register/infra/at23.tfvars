@@ -46,4 +46,11 @@ config = {
   api_source = {
     default = "db"
   }
+
+  ccr = {
+    federate = {
+      enable = true
+      source = "ccr-updates-at23"
+    }
+  }
 }
