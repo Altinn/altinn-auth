@@ -4,6 +4,7 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 
 using Database = Altinn.Authorization.Cli.Database;
+using Identity = Altinn.Authorization.Cli.Identity;
 using Proxy = Altinn.Authorization.Cli.Proxy;
 using Register = Altinn.Authorization.Cli.Register;
 using ServiceBus = Altinn.Authorization.Cli.ServiceBus;
@@ -36,6 +37,7 @@ app.Configure(config =>
         sb.SetDescription("Commands for working with service bus.");
         sb.AddCommand<ServiceBus.RetryCommand>("retry");
         sb.AddCommand<ServiceBus.ExportErrorsCommand>("export-errors");
+        sb.AddCommand<ServiceBus.SyncErrorsCommand>("sync-errors");
     });
 
     config.AddBranch("register", register =>
@@ -43,6 +45,12 @@ app.Configure(config =>
         register.SetDescription("Commands for working with altinn-register.");
         register.AddCommand<Register.RetryA2ImportsCommand>("retry");
         register.AddCommand<Register.ExternalRolesCommand>("roles");
+    });
+
+    config.AddBranch("identity", identity =>
+    {
+        identity.SetDescription("Commands for working with identities.");
+        identity.AddCommand<Identity.HashCommand>("hash");
     });
 
     config.AddCommand<Proxy.ProxyCommand>("proxy");

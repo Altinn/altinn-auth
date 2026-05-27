@@ -20,6 +20,7 @@
         <PackageReference Include="Docker.DotNet" />
         <PackageReference Include="MongoDB.Driver" />
         <PackageReference Include="MongoDB.Driver.Core" />
+        <PackageReference Include="Nerdbank.Streams" />
         <PackageReference Include="Npgsql" />
         <PackageReference Include="Spectre.Console" />
         <PackageReference Include="Spectre.Console.Cli" />

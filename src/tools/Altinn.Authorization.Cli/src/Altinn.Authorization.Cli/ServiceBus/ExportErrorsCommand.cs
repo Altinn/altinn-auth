@@ -56,8 +56,6 @@ public sealed class ExportErrorsCommand(CancellationToken cancellationToken)
             info.Add(kind, serverQueue);
         }
 
-        var filter = Builders<BsonDocument>.Filter.Eq(doc => doc["_id"], "5");
-
         await AnsiConsole.Progress()
             .Columns([
                 new TaskDescriptionColumn(),
@@ -191,11 +189,9 @@ public sealed class ExportErrorsCommand(CancellationToken cancellationToken)
                     BsonDeserializationContext context = BsonDeserializationContext.CreateRoot(jsonReader);
                     BsonDocument body = BsonDocumentSerializer.Instance.Deserialize(context);
 
-                    var id = msg.MessageId;
-                    var filter = Builders<BsonDocument>.Filter.Eq("_id", id);
-                    var update = Builders<BsonDocument>.Update
-                        .Set("sequenceNumber", msg.SequenceNumber)
-                        .Set("body", body);
+                    var id = msg.SequenceNumber;
+                    var filter = Builders<BsonDocument>.Filter.Eq("_id", $"{queue}/{id}");
+                    var update = Builders<BsonDocument>.Update.Set("body", body);
 
                     var headerDoc = new BsonDocument();
                     foreach (var kv in msg.ApplicationProperties)

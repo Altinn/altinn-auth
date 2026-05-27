@@ -12,8 +12,14 @@ cli := "dotnet run --project './Altinn.Authorization.Cli/src/Altinn.Authorizatio
 @default:
   just --choose
 
+@hash-identity USERNAME PASSWORD:
+  {{cli}} identity hash '{{USERNAME}}' '{{PASSWORD}}'
+
 @register-export-errors ENV='at22':
   {{cli}} sb export-errors '${REGISTER_SB_{{uppercase(ENV)}}}'
+
+@register-sync-errors ENV='at22':
+  {{cli}} sb sync-errors '${REGISTER_SB_{{uppercase(ENV)}}}'
 
 @register-retry-errors ENV='at22':
   {{cli}} register retry '${REGISTER_SB_{{uppercase(ENV)}}}' '${REGISTER_DB_{{uppercase(ENV)}}}'
