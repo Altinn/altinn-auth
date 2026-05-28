@@ -9,19 +9,19 @@ using Altinn.AccessManagement.Core.Models.Profile;
 using Altinn.AccessManagement.Core.Models.Register;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Models.Rights;
-using Altinn.AccessManagement.Core.Models.SblBridge;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Enums;
+using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.Authorization.ABAC;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
-using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
 using Altinn.Urn;
 using Altinn.Urn.Json;
 using Authorization.Platform.Authorization.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Altinn.AccessManagement.Core.Services
@@ -31,6 +31,7 @@ namespace Altinn.AccessManagement.Core.Services
     /// </summary>
     public class PolicyInformationPoint : IPolicyInformationPoint
     {
+        private readonly AppDbContext _dbContext;
         private readonly ILogger _logger;
         private readonly IPolicyRetrievalPoint _prp;
         private readonly IDelegationMetadataRepository _delegationRepository;
@@ -45,13 +46,15 @@ namespace Altinn.AccessManagement.Core.Services
         /// <param name="delegationRepository">The delegation change repository</param>
         /// <param name="contextRetrievalService">Service for retrieving context information</param>
         /// <param name="profile">Service for retrieving user profile information</param>
-        public PolicyInformationPoint(ILogger<IPolicyInformationPoint> logger, IPolicyRetrievalPoint policyRetrievalPoint, IDelegationMetadataRepository delegationRepository, IContextRetrievalService contextRetrievalService, IProfileClient profile)
+        /// <param name="dbContext">The database context</param>
+        public PolicyInformationPoint(ILogger<IPolicyInformationPoint> logger, IPolicyRetrievalPoint policyRetrievalPoint, IDelegationMetadataRepository delegationRepository, IContextRetrievalService contextRetrievalService, IProfileClient profile, AppDbContext dbContext)
         {
             _logger = logger;
             _prp = policyRetrievalPoint;
             _delegationRepository = delegationRepository;
             _contextRetrievalService = contextRetrievalService;
             _profile = profile;
+            _dbContext = dbContext;
         }
 
         /// <inheritdoc/>
@@ -405,21 +408,30 @@ namespace Altinn.AccessManagement.Core.Services
             List<int> offeredByPartyIds = reporteePartyId.SingleToList();
             List<string> resourceIds = resourceId.SingleToList();
 
-            // Check if request should include instance delegations, which will require lookup of reportee party uuid
             Guid? fromParty = null;
             List<Guid> toParties = null;
+
+            var from = await _dbContext.Entities
+                    .AsNoTracking()
+                    .Where(e => e.PartyId == reporteePartyId)
+                    .FirstOrDefaultAsync(cancellationToken);
             if (includeInstanceDelegations)
             {
-                Party reporteeParty = await _contextRetrievalService.GetPartyAsync(reporteePartyId, cancellationToken);
-                fromParty = reporteeParty?.PartyUuid;
+                fromParty = from?.Id;
                 toParties = new List<Guid>();
             }
 
             // Check if mainunit exists
-            MainUnit mainunit = await _contextRetrievalService.GetMainUnit(reporteePartyId, cancellationToken);
-            if (mainunit?.PartyId > 0)
+            if (from?.ParentId.HasValue == true)
             {
-                offeredByPartyIds.Add(mainunit.PartyId.Value);
+                var parent = await _dbContext.Entities
+                    .AsNoTracking()
+                    .Where(e => e.Id == from.ParentId.Value)
+                    .FirstOrDefaultAsync(cancellationToken);
+                if (parent?.PartyId.HasValue == true)
+                {
+                    offeredByPartyIds.Add(parent.PartyId.Value);
+                }
             }
 
             // 1. Direct user delegations
@@ -450,7 +462,20 @@ namespace Altinn.AccessManagement.Core.Services
 
             if (subjectUserId > 0)
             {
-                coveredByPartyIds = await _contextRetrievalService.GetKeyRolePartyIds(subjectUserId, cancellationToken);
+                var subject = await _dbContext.Entities
+                    .AsNoTracking()
+                    .Where(e => e.UserId == subjectUserId)
+                    .FirstOrDefaultAsync(cancellationToken);
+                if (subject != null)
+                {
+                    var keyRoleAssignments = await _dbContext.Assignments.AsNoTracking()
+                        .Where(t => t.ToId == subject.Id)
+                        .Include(t => t.Role)
+                        .Include(t => t.From)
+                        .Where(t => t.Role.IsKeyRole)
+                        .ToListAsync(cancellationToken);
+                    coveredByPartyIds = keyRoleAssignments.Where(t => t.From.PartyId.HasValue).Select(t => t.From.PartyId.Value).Distinct().ToList();
+                }
             }
 
             if (coveredByPartyIds.Count > 0)

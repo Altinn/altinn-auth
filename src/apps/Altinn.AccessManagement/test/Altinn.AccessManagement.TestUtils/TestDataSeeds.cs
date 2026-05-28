@@ -38,7 +38,11 @@ public static class TestDataSeeds
             TestEntities.EmailUserMarius,
             TestEntities.EmailUserHarryPotter,
             TestEntities.EduUserHermioneGranger,
-            TestEntities.UserRonWeasley
+            TestEntities.UserRonWeasley,
+            TestEntities.MainUnitKarlstad,
+            TestEntities.SubunitKarlstad,
+            TestEntities.OrganizationOrsta,
+            TestEntities.PersonKasper
         ]);
         #endregion
 
@@ -102,6 +106,24 @@ public static class TestDataSeeds
                 FromId = TestEntities.OrganizationNordisAS,
                 ToId = TestEntities.MainUnitNordis,
                 RoleId = RoleConstants.HasAsRegistrationUnitBEDR,
+            },
+            new()
+            {
+                FromId = TestEntities.OrganizationOrsta,
+                ToId = TestEntities.PersonKasper,
+                RoleId = RoleConstants.ManagingDirector,
+            },
+            new()
+            {
+                FromId = TestEntities.MainUnitKarlstad,
+                ToId = TestEntities.PersonPaula,
+                RoleId = RoleConstants.ManagingDirector,
+            },
+            new()
+            {
+                FromId = TestEntities.SubunitKarlstad,
+                ToId = TestEntities.PersonPaula,
+                RoleId = RoleConstants.ManagingDirector,
             },
         ]);
         #endregion

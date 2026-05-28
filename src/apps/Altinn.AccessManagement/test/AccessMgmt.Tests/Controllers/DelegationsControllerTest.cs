@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Altinn.AccessManagement.Controllers;
@@ -104,26 +104,6 @@ namespace Altinn.AccessManagement.Tests.Controllers
                 OrganizationIdentifier = "810418362",
                 RefId = "810418362",
                 PartyId = 50004220,
-                TypeId = EntityTypeConstants.Organization,
-                VariantId = EntityVariantConstants.AS,
-            },
-            new()
-            {
-                Id = Guid.Parse("A1000000-0000-0000-0000-000000004221"),
-                Name = "Test org 810418532",
-                OrganizationIdentifier = "810418532",
-                RefId = "810418532",
-                PartyId = 50004221,
-                TypeId = EntityTypeConstants.Organization,
-                VariantId = EntityVariantConstants.AS,
-            },
-            new()
-            {
-                Id = Guid.Parse("A1000000-0000-0000-0000-000000004222"),
-                Name = "Test org 810418672",
-                OrganizationIdentifier = "810418672",
-                RefId = "810418672",
-                PartyId = 50004222,
                 TypeId = EntityTypeConstants.Organization,
                 VariantId = EntityVariantConstants.AS,
             },

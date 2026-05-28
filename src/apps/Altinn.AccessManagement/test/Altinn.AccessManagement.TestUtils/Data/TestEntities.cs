@@ -144,6 +144,94 @@ public static class TestEntities
         }
     };
 
+    public static ConstantDefinition<Entity> MainUnitKarlstad { get; } = new("a1b2c3d4-0001-0001-0001-000000000001")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "KARLSTAD OG ULØYBUKT REGNSKAP",
+            OrganizationIdentifier = "810418672",
+            Parent = null,
+            ParentId = null,
+            PartyId = 50004222,
+            PersonIdentifier = null,
+            RefId = "810418672",
+            TypeId = EntityTypeConstants.Organization,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.AS,
+        }
+    };
+
+    public static ConstantDefinition<Entity> SubunitKarlstad { get; } = new("a1b2c3d4-0001-0001-0001-000000000002")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "KARLSTAD OG ULØYBUKT REGNSKAP SUBUNIT",
+            OrganizationIdentifier = "810418532",
+            Parent = null,
+            ParentId = MainUnitKarlstad,
+            PartyId = 50004221,
+            PersonIdentifier = null,
+            RefId = "810418532",
+            TypeId = EntityTypeConstants.Organization,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.BEDR,
+        }
+    };
+
+    public static ConstantDefinition<Entity> OrganizationOrsta { get; } = new("a1b2c3d4-0001-0001-0001-000000000003")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "ØRSTA ACCOUNTING",
+            OrganizationIdentifier = "910459880",
+            Parent = null,
+            ParentId = null,
+            PartyId = 50005545,
+            PersonIdentifier = null,
+            RefId = "910459880",
+            TypeId = EntityTypeConstants.Organization,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.AS,
+        }
+    };
+
+    public static ConstantDefinition<Entity> PersonKasper { get; } = new("a1b2c3d4-0001-0001-0001-000000000004")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1949, 12, 7),
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "KASPER BØRSTAD",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 50002598,
+            PersonIdentifier = "07124912037",
+            RefId = "07124912037",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 20000490,
+            Username = null,
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+
     #endregion
 
     #region Systemusers
