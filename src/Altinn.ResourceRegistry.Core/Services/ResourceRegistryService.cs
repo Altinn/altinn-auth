@@ -6,6 +6,7 @@ using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.Platform.Storage.Interface.Models;
 using Altinn.ResourceRegistry.Core.Clients.Interfaces;
+using Altinn.ResourceRegistry.Core.Configuration;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Exceptions;
 using Altinn.ResourceRegistry.Core.Extensions;
@@ -16,6 +17,7 @@ using Altinn.ResourceRegistry.Core.ServiceOwners;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Azure;
 using Azure.Storage.Blobs.Models;
+using Microsoft.Extensions.Options;
 using Nerdbank.Streams;
 
 namespace Altinn.ResourceRegistry.Core.Services
@@ -31,6 +33,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         private readonly IAltinn2Services _altinn2ServicesClient;
         private readonly IApplications _applicationsClient;
         private readonly IServiceOwnerService _serviceOwnerService;
+        private readonly ResourceRegistrySettings _resourceRegistrySettings;
 
         /// <summary>
         /// Creates a new instance of the <see cref="ResourceRegistryService"/> service.
@@ -42,7 +45,8 @@ namespace Altinn.ResourceRegistry.Core.Services
             IAccessManagementClient accessManagementClient,
             IAltinn2Services altinn2ServicesClient,
             IApplications applicationsClient,
-            IServiceOwnerService serviceOwnerService)
+            IServiceOwnerService serviceOwnerService,
+            IOptions<ResourceRegistrySettings> resourceRegistrySettings)
         {
             _repository = repository;
             _policyRepository = policyRepository;
@@ -50,6 +54,7 @@ namespace Altinn.ResourceRegistry.Core.Services
             _altinn2ServicesClient = altinn2ServicesClient;
             _applicationsClient = applicationsClient;
             _serviceOwnerService = serviceOwnerService;
+            _resourceRegistrySettings = resourceRegistrySettings.Value;
         }
 
         /// <inheritdoc/>
@@ -219,7 +224,7 @@ namespace Altinn.ResourceRegistry.Core.Services
 
             if (includeApps || includeAltinn2)
             {
-                if (includeAltinn2)
+                if (includeAltinn2 && _resourceRegistrySettings.EnableAltinn2Resources)
                 {
                     tasks.Add(GetAltinn2AvailableServices(includeExpired: false, cancellationToken));
                 }
