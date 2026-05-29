@@ -104,6 +104,16 @@ variable "features" {
         # legacy - remove after A2 is fully decommissioned
         guardianships = optional(bool, false),
       }), {})
+      sire = optional(object({
+        # gates the other two
+        enable = optional(bool, false)
+
+        # whether to listen to SIRE events (requires "CreatePartyId" to be enabled as well)
+        listen = optional(bool, false)
+
+        # whether to enrich SIRE organizations with data from SIRE during party import
+        enrich = optional(bool, true)
+      }), {})
     }), {})
 
     ccr_proxy = optional(object({

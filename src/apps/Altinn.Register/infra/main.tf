@@ -321,6 +321,8 @@ module "appsettings" {
           "Altinn:register:PartyImport:SystemUsers:Enable"       = { value = var.features.party_import.system_users }
           "Altinn:register:PartyImport:Npr:Guardianships:Enable" = { value = var.features.party_import.npr.guardianships }
           "Altinn:register:PartyImport:Npr:Enable"               = { value = var.features.party_import.npr.enable }
+          "Altinn:register:PartyImport:Sire:Enrich"              = { value = var.features.party_import.sire.enable && var.features.party_import.sire.enrich }
+          "Altinn:register:PartyImport:Sire:Listen"              = { value = var.features.party_import.sire.enable && var.features.party_import.sire.listen }
 
           "Altinn:register:Ccr:Update:Enabled" = { value = var.features.ccr_proxy.enable }
           "Altinn:register:Ccr:Update:Record"  = { value = var.features.ccr_proxy.record }
