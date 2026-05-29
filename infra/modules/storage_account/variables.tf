@@ -25,3 +25,8 @@ variable "queues" {
   type    = map(object({}))
   default = {}
 }
+
+variable "sftp_enabled" {
+  type    = bool
+  default = false
+}

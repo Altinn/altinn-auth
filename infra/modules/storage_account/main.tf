@@ -16,6 +16,9 @@ resource "azurerm_storage_account" "storage" {
   allow_nested_items_to_be_public = false
   public_network_access_enabled   = true
 
+  is_hns_enabled = var.sftp_enabled # SFTP requires hierarchical namespace to be enabled
+  sftp_enabled   = var.sftp_enabled
+
   # Must be enabled otherwise terraform can't create sub-resources like queues/blobs/files
   shared_access_key_enabled = true
   identity {

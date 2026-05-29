@@ -8,6 +8,8 @@ module "register_shared_storage_account" {
   resource_group_name = azurerm_resource_group.hub.name
   location            = azurerm_resource_group.hub.location
 
+  sftp_enabled = true
+
   queues = {
     "ccr-updates-at22"        = {}
     "ccr-updates-at22-poison" = {}
@@ -21,6 +23,18 @@ module "register_shared_storage_account" {
   providers = {
     azurerm = azurerm
   }
+}
+
+resource "azurerm_storage_container" "register_ccr_at22_files" {
+  name                  = "ccr-at22-files"
+  storage_account_id    = module.register_shared_storage_account.id
+  container_access_type = "private"
+}
+
+resource "azurerm_storage_container" "register_ccr_at23_files" {
+  name                  = "ccr-at23-files"
+  storage_account_id    = module.register_shared_storage_account.id
+  container_access_type = "private"
 }
 
 # Terraform deploys for the environments needs to be able to maintain role-assignments on the storage account
