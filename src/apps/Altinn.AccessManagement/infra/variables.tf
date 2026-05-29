@@ -87,6 +87,7 @@ variable "configuration" {
   type = object({
     consent = optional(object({
       batch_size                = optional(number, 5)
+      only_expired_consents     = optional(bool, true)
       max_degree_of_parallelism = optional(number, 5)
       events_page_size          = optional(number, 100)
     }), {})
