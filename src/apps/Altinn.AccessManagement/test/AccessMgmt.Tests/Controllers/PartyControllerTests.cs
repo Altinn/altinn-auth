@@ -205,6 +205,8 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
         public async Task AddParty_ValidParty_SelfIdentified_SI_EMAIL_WithRegisterToken_ReturnsCreated()
         {
             var partyUuid = Guid.NewGuid();
+            int partyUserId = 1000041;
+
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "/accessmanagement/api/v1/internal/party")
             {
                 Content = JsonContent.Create(new PartyBaseDto
@@ -212,7 +214,9 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                     PartyUuid = partyUuid,
                     EntityType = EntityTypeConstants.SelfIdentified.Entity.Name,
                     EntityVariantType = EntityVariantConstants.SI_EMAIL.Entity.Name,
-                    DisplayName = "Self Identified Epost User"
+                    DisplayName = "Self Identified Epost User",
+                    PartyId = partyUserId,
+                    UserId = partyUserId
                 }),
                 Headers =
                 {
@@ -232,6 +236,8 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                 var entity = await db.Entities.FirstOrDefaultAsync(e => e.Id == partyUuid, TestContext.Current.CancellationToken);
                 Assert.NotNull(entity);
                 Assert.Null(entity.RefId);
+                Assert.Equal(partyUserId, entity.PartyId);
+                Assert.Equal(partyUserId, entity.UserId);
             });
         }
 
@@ -239,6 +245,8 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
         public async Task AddParty_ValidParty_SelfIdentified_SI_EDU_WithRegisterToken_ReturnsCreated()
         {
             var partyUuid = Guid.NewGuid();
+            int partyUserId = 1000042;
+
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "/accessmanagement/api/v1/internal/party")
             {
                 Content = JsonContent.Create(new PartyBaseDto
@@ -246,7 +254,9 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                     PartyUuid = partyUuid,
                     EntityType = EntityTypeConstants.SelfIdentified.Entity.Name,
                     EntityVariantType = EntityVariantConstants.SI_EDU.Entity.Name,
-                    DisplayName = "Self Identified Educational User"
+                    DisplayName = "Self Identified Educational User",
+                    PartyId = partyUserId,
+                    UserId = partyUserId
                 }),
                 Headers =
                 {
@@ -266,6 +276,8 @@ namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
                 var entity = await db.Entities.FirstOrDefaultAsync(e => e.Id == partyUuid, TestContext.Current.CancellationToken);
                 Assert.NotNull(entity);
                 Assert.Null(entity.RefId);
+                Assert.Equal(partyUserId, entity.PartyId);
+                Assert.Equal(partyUserId, entity.UserId);
             });
         }
     }
