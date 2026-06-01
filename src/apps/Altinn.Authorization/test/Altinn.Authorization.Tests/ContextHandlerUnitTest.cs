@@ -454,31 +454,6 @@ public class ContextHandlerUnitTest : IDisposable
     }
 
     [Fact]
-    public async Task GetKeyRolePartyIds_CachesResult()
-    {
-        _partiesMock.Setup(p => p.GetKeyRoleParties(1, It.IsAny<CancellationToken>())).ReturnsAsync(new List<int> { 100, 200 });
-
-        var first = await _sut.TestGetKeyRolePartyIds(1, TestContext.Current.CancellationToken);
-        var second = await _sut.TestGetKeyRolePartyIds(1, TestContext.Current.CancellationToken);
-
-        Assert.Same(first, second);
-        _partiesMock.Verify(p => p.GetKeyRoleParties(1, It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task GetMainUnits_CachesResult()
-    {
-        _partiesMock.Setup(p => p.GetMainUnits(It.IsAny<MainUnitQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<MainUnit> { new MainUnit { PartyId = 10 } });
-
-        var first = await _sut.TestGetMainUnits(1, TestContext.Current.CancellationToken);
-        var second = await _sut.TestGetMainUnits(1, TestContext.Current.CancellationToken);
-
-        Assert.Same(first, second);
-        _partiesMock.Verify(p => p.GetMainUnits(It.IsAny<MainUnitQuery>(), It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
     public async Task GetOedRoleAssignments_CachesResult()
     {
         var assignments = new List<OedRoleAssignment> { new OedRoleAssignment { OedRoleCode = "role1" } };
@@ -929,12 +904,6 @@ public class ContextHandlerUnitTest : IDisposable
 
         public Task<UserProfile> TestGetUserProfileByPersonId(string personId, CancellationToken ct = default)
             => GetUserProfileByPersonId(personId, ct);
-
-        public Task<List<int>> TestGetKeyRolePartyIds(int userId, CancellationToken ct = default)
-            => GetKeyRolePartyIds(userId, ct);
-
-        public Task<List<MainUnit>> TestGetMainUnits(int partyId, CancellationToken ct = default)
-            => GetMainUnits(partyId, ct);
 
         public Task<List<OedRoleAssignment>> TestGetOedRoleAssignments(string from, string to)
             => GetOedRoleAssignments(from, to);

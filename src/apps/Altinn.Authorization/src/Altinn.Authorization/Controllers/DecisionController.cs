@@ -669,8 +669,11 @@ namespace Altinn.Platform.Authorization.Controllers
                 });
             }
 
+            // trust AccessManagement lookup to not return delegations with coveredByPartyId unless the subject userId actually has keyrole access to these
+            var keyRoleParties = delegations.Where(d => d.CoveredByPartyId.HasValue).Select(d => d.CoveredByPartyId.Value).Distinct().ToList(); 
+
             XacmlContextAttributes subjectContextAttributes = decisionRequest.GetSubjectAttributes();
-            await _delegationContextHandler.EnrichRequestSubjectAttributes(subjectContextAttributes, isInstanceAccessRequest, cancellationToken);
+            await _delegationContextHandler.EnrichRequestSubjectAttributes(subjectContextAttributes, keyRoleParties, isInstanceAccessRequest, cancellationToken);
 
             return await ProcessDelegationResult(decisionRequest, delegations, resourcePolicy, cancellationToken);
         }

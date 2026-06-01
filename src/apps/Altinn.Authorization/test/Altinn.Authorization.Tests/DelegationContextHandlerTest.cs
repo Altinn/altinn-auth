@@ -183,10 +183,8 @@ public class DelegationContextHandlerTest : IDisposable
 
         _profileMock.Setup(p => p.GetUserProfile(100, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new UserProfile { Party = new Party { PartyTypeName = PartyType.Person, PartyUuid = userUuid } });
-        _partiesMock.Setup(p => p.GetKeyRoleParties(100, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<int>());
 
-        await _sut.EnrichRequestSubjectAttributes(attrs, true, CancellationToken.None);
+        await _sut.EnrichRequestSubjectAttributes(attrs, new List<int>(), true, CancellationToken.None);
 
         Assert.Contains(attrs.Attributes, a =>
             a.AttributeId.OriginalString == XacmlRequestAttribute.PersonUuidAttribute &&
@@ -200,10 +198,8 @@ public class DelegationContextHandlerTest : IDisposable
 
         _profileMock.Setup(p => p.GetUserProfile(100, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new UserProfile { Party = new Party { PartyTypeName = PartyType.Person, PartyUuid = Guid.NewGuid() } });
-        _partiesMock.Setup(p => p.GetKeyRoleParties(100, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<int>());
 
-        await _sut.EnrichRequestSubjectAttributes(attrs, false, CancellationToken.None);
+        await _sut.EnrichRequestSubjectAttributes(attrs, new List<int>(), false, CancellationToken.None);
 
         Assert.DoesNotContain(attrs.Attributes, a =>
             a.AttributeId.OriginalString == XacmlRequestAttribute.PersonUuidAttribute);
@@ -216,16 +212,8 @@ public class DelegationContextHandlerTest : IDisposable
 
         _profileMock.Setup(p => p.GetUserProfile(100, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new UserProfile { Party = new Party { PartyTypeName = PartyType.Person } });
-        _partiesMock.Setup(p => p.GetKeyRoleParties(100, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<int> { 200, 300 });
-        _registerServiceMock.Setup(r => r.GetPartiesAsync(It.IsAny<List<int>>(), false, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<Party>
-            {
-                new() { PartyUuid = Guid.NewGuid() },
-                new() { PartyUuid = Guid.NewGuid() },
-            });
 
-        await _sut.EnrichRequestSubjectAttributes(attrs, false, CancellationToken.None);
+        await _sut.EnrichRequestSubjectAttributes(attrs, new List<int> { 200, 300 }, false, CancellationToken.None);
 
         Assert.Contains(attrs.Attributes, a =>
             a.AttributeId.OriginalString == XacmlRequestAttribute.PartyAttribute);
@@ -240,7 +228,7 @@ public class DelegationContextHandlerTest : IDisposable
         _registerServiceMock.Setup(r => r.GetParty(500, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Party { PartyTypeName = PartyType.Person, PartyUuid = partyUuid });
 
-        await _sut.EnrichRequestSubjectAttributes(attrs, true, CancellationToken.None);
+        await _sut.EnrichRequestSubjectAttributes(attrs, new List<int>(), true, CancellationToken.None);
 
         Assert.Contains(attrs.Attributes, a =>
             a.AttributeId.OriginalString == XacmlRequestAttribute.PersonUuidAttribute &&
@@ -256,7 +244,7 @@ public class DelegationContextHandlerTest : IDisposable
         _registerServiceMock.Setup(r => r.GetParty(600, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Party { PartyTypeName = PartyType.Organisation, PartyUuid = orgUuid });
 
-        await _sut.EnrichRequestSubjectAttributes(attrs, true, CancellationToken.None);
+        await _sut.EnrichRequestSubjectAttributes(attrs, new List<int>(), true, CancellationToken.None);
 
         Assert.Contains(attrs.Attributes, a =>
             a.AttributeId.OriginalString == XacmlRequestAttribute.OrganizationUuidAttribute &&
@@ -268,7 +256,7 @@ public class DelegationContextHandlerTest : IDisposable
     {
         var attrs = CreateSubjectAttributes((XacmlRequestAttribute.PartyAttribute, "600"));
 
-        await _sut.EnrichRequestSubjectAttributes(attrs, false, CancellationToken.None);
+        await _sut.EnrichRequestSubjectAttributes(attrs, new List<int>(), false, CancellationToken.None);
 
         _registerServiceMock.Verify(r => r.GetParty(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -278,7 +266,7 @@ public class DelegationContextHandlerTest : IDisposable
     {
         var attrs = CreateSubjectAttributes();
 
-        await _sut.EnrichRequestSubjectAttributes(attrs, true, CancellationToken.None);
+        await _sut.EnrichRequestSubjectAttributes(attrs, new List<int>(), true, CancellationToken.None);
 
         // Only the initial (empty) attributes collection
         Assert.Empty(attrs.Attributes);

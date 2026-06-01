@@ -15,9 +15,10 @@ namespace Altinn.Platform.Authorization.Services.Interface
         /// Updates needed subject information for the Context Request for a specific delegation
         /// </summary>
         /// <param name="requestSubjectAttributes">The current collection of subject attributes on the request to be enriched</param>
+        /// <param name="keyRolePartyIds">The list of key role party IDs</param>
         /// <param name="isInstanceAccessRequest">Whether the request is for a specific instance, which needs additional uuid information</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-        public Task EnrichRequestSubjectAttributes(XacmlContextAttributes requestSubjectAttributes, bool isInstanceAccessRequest, CancellationToken cancellationToken);
+        public Task EnrichRequestSubjectAttributes(XacmlContextAttributes requestSubjectAttributes, List<int> keyRolePartyIds, bool isInstanceAccessRequest, CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets the value of the first found attribute matching the prioritized order of xacmlRequestAttributes provided, from the XacmlContextRequest subjects.
@@ -54,21 +55,5 @@ namespace Altinn.Platform.Authorization.Services.Interface
         /// <param name="request">The Xacml Context Request</param>
         /// <returns>Action attribute string value</returns>
         public string GetActionString(XacmlContextRequest request);
-
-        /// <summary>
-        /// Gets the list of mainunits for a subunit
-        /// </summary>
-        /// <param name="subUnitPartyId">The subunit partyId to check and retrieve mainunits for</param>
-        /// <param name="cancellationToken">The cancellationToken</param>
-        /// <returns>List of mainunits</returns>
-        public Task<List<MainUnit>> GetMainUnits(int subUnitPartyId, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Gets the list of keyrole unit partyIds for a user
-        /// </summary>
-        /// <param name="subjectUserId">The userid to retrieve keyrole unit for</param>
-        /// <param name="cancellationToken">The cancellationToken</param>
-        /// <returns>List of partyIds for units where user has keyrole</returns>
-        public Task<List<int>> GetKeyRolePartyIds(int subjectUserId, CancellationToken cancellationToken = default);
     }
 }

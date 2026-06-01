@@ -50,9 +50,10 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// Updates needed subject information for the Context Request for a specific delegation
         /// </summary>
         /// <param name="requestSubjectAttributes">The current collection of subject attributes on the request to be enriched</param>
+        /// <param name="keyRolePartyIds">The list of key role party IDs</param>
         /// <param name="isInstanceAccessRequest">Whether the request is for a specific instance, which needs additional uuid information</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-        public async Task EnrichRequestSubjectAttributes(XacmlContextAttributes requestSubjectAttributes, bool isInstanceAccessRequest, CancellationToken cancellationToken)
+        public async Task EnrichRequestSubjectAttributes(XacmlContextAttributes requestSubjectAttributes, List<int> keyRolePartyIds, bool isInstanceAccessRequest, CancellationToken cancellationToken)
         {
             int subjectUserId = GetSubjectUserId(requestSubjectAttributes);
             if (subjectUserId > 0)
@@ -68,7 +69,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     }
                 }
 
-                List<int> keyRolePartyIds = await GetKeyRolePartyIds(subjectUserId, cancellationToken);
                 if (keyRolePartyIds.Count > 0)
                 {
                     requestSubjectAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.PartyAttribute, keyRolePartyIds.Select(s => s.ToString())));
@@ -159,28 +159,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         {
             XacmlContextAttributes actionAttributes = request.Attributes.FirstOrDefault(a => a.Category.OriginalString.Equals(XacmlConstants.MatchAttributeCategory.Action));
             return actionAttributes?.Attributes.FirstOrDefault(a => a.AttributeId.OriginalString.Equals(XacmlConstants.MatchAttributeIdentifiers.ActionId))?.AttributeValues.FirstOrDefault()?.Value;
-        }
-
-        /// <summary>
-        /// Gets the list of mainunits for a subunit
-        /// </summary>
-        /// <param name="subUnitPartyId">The subunit partyIds to check and retrieve mainunits for</param>
-        /// <param name="cancellationToken">The cancellationToken</param>
-        /// <returns>List of mainunits</returns>
-        public async new Task<List<MainUnit>> GetMainUnits(int subUnitPartyId, CancellationToken cancellationToken = default)
-        {
-            return await base.GetMainUnits(subUnitPartyId, cancellationToken);
-        }
-
-        /// <summary>
-        /// Gets the list of keyrole unit partyIds for a user
-        /// </summary>
-        /// <param name="subjectUserId">The userid to retrieve keyrole unit for</param>
-        /// <param name="cancellationToken">The cancellationToken</param>
-        /// <returns>List of partyIds for units where user has keyrole</returns>
-        public async new Task<List<int>> GetKeyRolePartyIds(int subjectUserId, CancellationToken cancellationToken = default)
-        {
-            return await base.GetKeyRolePartyIds(subjectUserId, cancellationToken);
         }
     }
 }
