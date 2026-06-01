@@ -63,7 +63,7 @@ jobs:
         run: echo "TF_VARS_FILE=$(echo ${{ inputs.environment }} | tr '[:upper:]' '[:lower:]').tfvars" >> $GITHUB_ENV
 
       - name: Terraform Plan
-        uses: altinn/altinn-platform/actions/terraform/plan@2bceb335950b6d3520b7d8931653b963c191c93e # main
+        uses: altinn/altinn-platform/actions/terraform/plan@f7850849b3b3f98fdedf545cf46ffe77766939d1 # main
         with:
           working_directory: ${{ inputs.working_dir }}
           oidc_type: environment
@@ -112,7 +112,7 @@ jobs:
           echo "nameserver ${{ secrets.OVPN_NAMESERVER }}" | sudo tee /etc/resolv.conf > /dev/null
 
       - name: Terraform Apply
-        uses: altinn/altinn-platform/actions/terraform/apply@2bceb335950b6d3520b7d8931653b963c191c93e # main
+        uses: altinn/altinn-platform/actions/terraform/apply@f7850849b3b3f98fdedf545cf46ffe77766939d1 # main
         id: apply
         with:
           working_directory: ${{ inputs.working_dir }}
