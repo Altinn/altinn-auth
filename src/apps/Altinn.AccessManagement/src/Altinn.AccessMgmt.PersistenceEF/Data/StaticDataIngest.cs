@@ -54,6 +54,7 @@ public static partial class StaticDataIngest
             (entity, seed) =>
             {
                 entity.Name = seed.Entity.Name;
+                entity.Description = seed.Entity.Description;
             },
             cancellationToken);
 
