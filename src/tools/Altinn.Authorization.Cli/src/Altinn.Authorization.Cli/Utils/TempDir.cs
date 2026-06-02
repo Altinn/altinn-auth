@@ -60,7 +60,14 @@ internal sealed class TempDir
     {
         if (_deleteOnDispose)
         {
-            Delete();
+            try
+            {
+                Delete();
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Failed to delete temp dir '{_dir.FullName}': {ex}");
+            }
         }
     }
 }
