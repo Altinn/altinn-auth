@@ -459,6 +459,7 @@ namespace Altinn.AccessManagement.Core.Services
 
             // 2. Direct party delegations incl. any keyrole units
             List<int> coveredByPartyIds = subjectPartyId > 0 ? new List<int> { subjectPartyId } : new List<int>();
+            List<Guid> coveredByPartyUuids = new List<Guid>();
 
             if (subjectUserId > 0)
             {
@@ -468,13 +469,22 @@ namespace Altinn.AccessManagement.Core.Services
                     .FirstOrDefaultAsync(cancellationToken);
                 if (subject != null)
                 {
-                    var keyRoleAssignments = await _dbContext.Assignments.AsNoTracking()
+                    var keyRoleAssignments = await _dbContext.Assignments
+                        .AsNoTracking()
                         .Where(t => t.ToId == subject.Id)
                         .Include(t => t.Role)
                         .Include(t => t.From)
                         .Where(t => t.Role.IsKeyRole)
                         .ToListAsync(cancellationToken);
-                    coveredByPartyIds = keyRoleAssignments.Where(t => t.From.PartyId.HasValue).Select(t => t.From.PartyId.Value).Distinct().ToList();
+                    var keyRoleSubUnits = await _dbContext.Entities
+                        .AsNoTracking()
+                        .Where(e => e.ParentId.HasValue && keyRoleAssignments.Select(k => k.FromId).Distinct().Contains(e.ParentId.Value))
+                        .ToListAsync(cancellationToken);
+
+                    coveredByPartyIds.AddRange(keyRoleAssignments.Where(t => t.From.PartyId.HasValue).Select(t => t.From.PartyId.Value).Distinct().ToList());
+                    coveredByPartyIds.AddRange(keyRoleSubUnits.Where(s => s.PartyId.HasValue).Select(s => s.PartyId.Value));
+                    coveredByPartyUuids = keyRoleAssignments.Select(t => t.FromId).Distinct().ToList();
+                    coveredByPartyUuids.AddRange(keyRoleSubUnits.Select(s => s.Id).ToList());
                 }
             }
 
@@ -487,10 +497,9 @@ namespace Altinn.AccessManagement.Core.Services
 
                 if (includeInstanceDelegations)
                 {
-                    List<Party> coveredByPartys = await _contextRetrievalService.GetPartiesAsync(coveredByPartyIds, cancellationToken: cancellationToken);
-                    if (coveredByPartys.Count > 0)
+                    if (coveredByPartyUuids.Any())
                     {
-                        toParties.AddRange(coveredByPartys.Select(p => p.PartyUuid.Value));
+                        toParties.AddRange(coveredByPartyUuids);
                     }
                 }
             }

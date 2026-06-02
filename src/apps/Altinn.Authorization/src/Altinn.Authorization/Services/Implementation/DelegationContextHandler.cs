@@ -51,9 +51,10 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// </summary>
         /// <param name="requestSubjectAttributes">The current collection of subject attributes on the request to be enriched</param>
         /// <param name="keyRolePartyIds">The list of key role party IDs</param>
+        /// <param name="keyRolePartyUuids">The list of key role party uuids</param>
         /// <param name="isInstanceAccessRequest">Whether the request is for a specific instance, which needs additional uuid information</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-        public async Task EnrichRequestSubjectAttributes(XacmlContextAttributes requestSubjectAttributes, List<int> keyRolePartyIds, bool isInstanceAccessRequest, CancellationToken cancellationToken)
+        public async Task EnrichRequestSubjectAttributes(XacmlContextAttributes requestSubjectAttributes, List<int> keyRolePartyIds, List<Guid> keyRolePartyUuids, bool isInstanceAccessRequest, CancellationToken cancellationToken)
         {
             int subjectUserId = GetSubjectUserId(requestSubjectAttributes);
             if (subjectUserId > 0)
@@ -72,13 +73,12 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 if (keyRolePartyIds.Count > 0)
                 {
                     requestSubjectAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.PartyAttribute, keyRolePartyIds.Select(s => s.ToString())));
+                }
 
-                    if (isInstanceAccessRequest)
-                    {
-                        // Instance delegation policies use uuid as subject, meaning the request needs to be enriched with the uuids of all keyrole parties
-                        IEnumerable<Party> parties = await _registerService.GetPartiesAsync(keyRolePartyIds, cancellationToken: cancellationToken);
-                        requestSubjectAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.OrganizationUuidAttribute, parties.Select(p => p.PartyUuid.ToString())));
-                    }
+                if (isInstanceAccessRequest && keyRolePartyUuids.Count > 0)
+                {
+                    // Instance delegation policies use uuid as subject, meaning the request needs to be enriched with the uuids of all keyrole parties
+                    requestSubjectAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.OrganizationUuidAttribute, keyRolePartyUuids.Select(p => p.ToString())));
                 }
             }
 

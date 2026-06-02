@@ -16,9 +16,10 @@ namespace Altinn.Platform.Authorization.Services.Interface
         /// </summary>
         /// <param name="requestSubjectAttributes">The current collection of subject attributes on the request to be enriched</param>
         /// <param name="keyRolePartyIds">The list of key role party IDs</param>
+        /// <param name="keyRolePartyUuids">The list of key role party UUIDs</param>
         /// <param name="isInstanceAccessRequest">Whether the request is for a specific instance, which needs additional uuid information</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-        public Task EnrichRequestSubjectAttributes(XacmlContextAttributes requestSubjectAttributes, List<int> keyRolePartyIds, bool isInstanceAccessRequest, CancellationToken cancellationToken);
+        public Task EnrichRequestSubjectAttributes(XacmlContextAttributes requestSubjectAttributes, List<int> keyRolePartyIds, List<Guid> keyRolePartyUuids, bool isInstanceAccessRequest, CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets the value of the first found attribute matching the prioritized order of xacmlRequestAttributes provided, from the XacmlContextRequest subjects.
