@@ -46,29 +46,42 @@ public partial class ResourceSyncService : IResourceSyncService
             return false;
         }
 
-        var options = new AuditValues(SystemEntityConstants.ResourceRegistryImportSystem);
-
         using var scope = _serviceProvider.CreateScope();
-        var ingestService = scope.ServiceProvider.GetRequiredService<IIngestService>();
+        var dbContext = scope.ServiceProvider.GetService<AppDbContext>();
+        var dbProviders = await dbContext.Providers.ToListAsync(cancellationToken);
 
-        var resourceOwners = new List<Provider>();
         foreach (var serviceOwner in serviceOwners.Content.Orgs)
         {
-            // Check if exists without Id => RefId/Code
-            resourceOwners.Add(new Provider()
+            var provider = dbProviders.FirstOrDefault(provider => provider.Id == serviceOwner.Value.Id);
+            if (provider is { })
             {
-                Id = serviceOwner.Value.Id,
-                LogoUrl = serviceOwner.Value.Logo,
-                Name = serviceOwner.Value.Name.Nb,
-                RefId = serviceOwner.Value.Orgnr,
-                Code = serviceOwner.Key,
-                TypeId = ProviderTypeConstants.ServiceOwner,
-            });
+                if (provider.Name != serviceOwner.Value.Name.Nb ||
+                   provider.LogoUrl != serviceOwner.Value.Logo ||
+                   provider.RefId != serviceOwner.Value.Orgnr ||
+                   provider.Code != serviceOwner.Key)
+                {
+                    provider.Name = serviceOwner.Value.Name.Nb;
+                    provider.LogoUrl = serviceOwner.Value.Logo;
+                    provider.RefId = serviceOwner.Value.Orgnr;
+                    provider.Code = serviceOwner.Key;
+                    dbContext.Providers.Update(provider);
+                }
+            }
+            else
+            {
+                dbContext.Providers.Add(new Provider()
+                {
+                    Id = serviceOwner.Value.Id,
+                    LogoUrl = serviceOwner.Value.Logo,
+                    Name = serviceOwner.Value.Name.Nb,
+                    RefId = serviceOwner.Value.Orgnr,
+                    Code = serviceOwner.Key,
+                    TypeId = ProviderTypeConstants.ServiceOwner,
+                });
+            }
         }
-
-        // IngestService will map in Id property and update properties not matchaed
-        await ingestService.IngestAndMergeData(resourceOwners, options, ["Id"], ignoreColumnsToUpdate: ["audit_validfrom"], cancellationToken: cancellationToken);
-
+        
+        await dbContext.SaveChangesAsync(new AuditValues(SystemEntityConstants.ResourceRegistryImportSystem), cancellationToken);
         return true;
     }
 
@@ -92,7 +105,6 @@ public partial class ResourceSyncService : IResourceSyncService
 
             foreach (var updatedResource in page.Content.Data)
             {
-                leaseData.Since = updatedResource.UpdatedAt;
                 try
                 {
                     var resource = await UpsertResource(dbContext, updatedResource, cancellationToken);
@@ -109,10 +121,13 @@ public partial class ResourceSyncService : IResourceSyncService
                     {
                         await UpsertUpdatedSubject(dbContext, updatedResource, resource, cancellationToken);
                     }
+
+                    leaseData.Since = updatedResource.UpdatedAt;
                 }
                 catch (Exception ex)
                 {
                     Log.FailedToWriteUpdateSubjectForResource(_logger, ex, updatedResource.SubjectUrn, updatedResource.ResourceUrn);
+                    return;
                 }
             }
 

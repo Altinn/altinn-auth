@@ -125,17 +125,23 @@ public class IngestService : IIngestService
 
         string mergeStatement = sb.ToString();
 
-        Console.WriteLine("Starting MERGE");
-
-        var res = await ExecuteMigrationCommand(mergeStatement, cancellationToken: cancellationToken);
-
-        Console.WriteLine("Cleanup");
-        var dropIngestTable = $"DROP TABLE IF EXISTS {ingestTableName};";
-        await ExecuteMigrationCommand(dropIngestTable, cancellationToken: cancellationToken);
-
-        Console.WriteLine($"Merged {res}");
-
-        return res;
+        try
+        {
+            Console.WriteLine("Starting MERGE");
+            var res = await ExecuteMigrationCommand(mergeStatement, cancellationToken: cancellationToken);
+            Console.WriteLine($"Merged {res}");
+            return res;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Failed to execute merge statement. " + ex.Message, ex);
+        }
+        finally
+        {
+            Console.WriteLine("Cleanup");
+            var dropIngestTable = $"DROP TABLE IF EXISTS {ingestTableName};";
+            await ExecuteMigrationCommand(dropIngestTable, cancellationToken: cancellationToken);
+        }
     }
 
     /// <inheritdoc />
