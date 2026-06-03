@@ -67,6 +67,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                         userProfile.Party.PartyTypeName == PartyType.Person && userProfile.Party.PartyUuid.HasValue)
                     {
                         requestSubjectAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.PersonUuidAttribute, userProfile.Party.PartyUuid.Value.ToString()));
+                        requestSubjectAttributes.Attributes.Add(GetStringAttribute(XacmlRequestAttribute.PartyUuidAttribute, userProfile.Party.PartyUuid.Value.ToString()));
                     }
                 }
 
