@@ -734,7 +734,7 @@ public static class PackageConstants
     };
 
     /// <summary>
-    /// Represents the 'Eksplisitt tjenestedelegering' access package.
+    /// Represents the 'Teknisk samhandling med Skatteetaten' access package.
     /// </summary>
     /// <remarks>
     /// - <c>Id:</c> 1e36b4e3-2eff-4613-9f52-52cde5c1c0f3
@@ -764,6 +764,40 @@ public static class PackageConstants
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Teknisk samhandling med Skatteetaten"),
             KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester for å forvalta og koordinera tekniske grensesnitt mot Skatteetaten. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Teknisk samhandling med Digdir' access package.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> c6d39448-2ccb-4630-8185-67420aca9191
+    /// - <c>URN:</c> urn:altinn:accesspackage:teknisk-samhandling-digdir
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Description:</c> Denne tilgangspakken gir fullmakter til tjenester for å forvalte virksomhetens kundeforhold til Digdir, inkludert tekniske grensesnitt, integrasjoner og tilhørende oppsett. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.
+    /// </remarks>
+    public static ConstantDefinition<Package> TechnicalInteractionWithDigdir { get; } = new ConstantDefinition<Package>("c6d39448-2ccb-4630-8185-67420aca9191")
+    {
+        Entity = new()
+        {
+            Name = "Teknisk samhandling med Digdir",
+            Description = "Denne tilgangspakken gir fullmakter til tjenester for å forvalte virksomhetens kundeforhold til Digdir, inkludert tekniske grensesnitt, integrasjoner og tilhørende oppsett. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.",
+            Urn = "urn:altinn:accesspackage:teknisk-samhandling-digdir",
+            Code = "teknisk-samhandling-digdir",
+            IsDelegable = true,
+            IsAvailableForServiceOwners = true,
+            IsAssignable = true,
+            EntityTypeId = EntityTypeConstants.Organization,
+            ProviderId = ProviderConstants.Altinn3,
+            AreaId = AreaConstants.BusinessAffairs,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Technical interaction with Digdir"),
+            KeyValuePair.Create("Description", "This access package provides authorizations for services to manage the company's customer relationship with Digdir, including technical interfaces, integrations and associated setup. Changes in regulations or the introduction of new digital services may result in changes to the access granted by the authorization.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Teknisk samhandling med Digdir"),
+            KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester for å forvalta kundeforholdet verksemda har til Digdir, inkludert tekniske grensesnitt, integrasjonar og tilhøyrande oppsett. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
 
@@ -798,6 +832,40 @@ public static class PackageConstants
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Beredskap"),
             KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakt til tenester knytte til etablering, rapportering og varsling av beredskap. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Reelle rettighetshavere - avviksrapportering og EU-oppslag' access package.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 685f52aa-66a0-4039-8514-686a441a464f
+    /// - <c>URN:</c> urn:altinn:accesspackage:reelle-rettighetshavere-avvik-eu-oppslag
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Description:</c> Denne tilgangspakken gir tilgang til å sende inn varsel om uoverensstemmelse i Register over reelle rettighetshavere og søke i registre over reelle rettighetshavere i EU/EØS-land via BORIS-portalen for enkelte offentlige myndigheter og rapporteringspliktige. De som kan sende inn varsel om uoverensstemmelse er de som er nevnt i forskrift til lov om register over reelle rettighetshavere § 3-10 første ledd. I tillegg til de som er nevnt i forrige setning, kan alle rapporteringspliktige etter hvitvaskingsloven § 4 søke i BORIS-portalen.
+    /// </remarks>
+    public static ConstantDefinition<Package> BeneficialOwnersNonComplianceReportingAndEUNotices { get; } = new ConstantDefinition<Package>("685f52aa-66a0-4039-8514-686a441a464f")
+    {
+        Entity = new()
+        {
+            Name = "Reelle rettighetshavere - avviksrapportering og EU-oppslag",
+            Description = "Denne tilgangspakken gir tilgang til å sende inn varsel om uoverensstemmelse i Register over reelle rettighetshavere og søke i registre over reelle rettighetshavere i EU/EØS-land via BORIS-portalen for enkelte offentlige myndigheter og rapporteringspliktige. De som kan sende inn varsel om uoverensstemmelse er de som er nevnt i forskrift til lov om register over reelle rettighetshavere § 3-10 første ledd. I tillegg til de som er nevnt i forrige setning, kan alle rapporteringspliktige etter hvitvaskingsloven § 4 søke i BORIS-portalen.",
+            Urn = "urn:altinn:accesspackage:reelle-rettighetshavere-avvik-eu-oppslag",
+            Code = "reelle-rettighetshavere-avvik-eu-oppslag",
+            IsDelegable = true,
+            IsAvailableForServiceOwners = true,
+            IsAssignable = true,
+            EntityTypeId = EntityTypeConstants.Organization,
+            ProviderId = ProviderConstants.Altinn3,
+            AreaId = AreaConstants.BusinessAffairs,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Beneficial owners - non-compliance reporting and EU lookups"),
+            KeyValuePair.Create("Description", "This access package provides access to submit a notice of discrepancy in the Register of Beneficial Owners and search in registers of beneficial owners in EU/EEA countries via the BORIS portal for certain public authorities and reporting entities. Those who can submit a notice of discrepancy are those mentioned in the regulations to the Register of Beneficial Owners Act, section 3-10, first paragraph. In addition to those mentioned in the previous sentence, all reporting entities under the Money Laundering Act, section 4, can search in the BORIS portal.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Reelle rettshavarar - avviksrapportering og EU-oppslag"),
+            KeyValuePair.Create("Description", "Denne tilgangspakken gir tilgang til å senda inn varsel om avvik i Register over reelle rettshavarar og søkja i register over reelle rettshavarar i EU/EØS-land via Boris-portalen for enkelte offentlege styresmakter og rapporteringspliktige. Dei som kan senda inn varsel om usemje er dei som er nemnde i forskrift til lov om register over reelle rettshavarar § 3-10 første ledd. I tillegg til dei som er nemnde i førre setning, kan alle rapporteringspliktige etter kvitvaskingslova § 4 søkja i Boris-portalen.")
         ),
     };
 
@@ -4836,6 +4904,74 @@ public static class PackageConstants
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Køyretøy"),
             KeyValuePair.Create("Description", "Denne fullmakta gir tilgang til tenester knytte til køyretøy og køyretøykontroll. Dette inkluderer kjøp og sal av køyretøy. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i kva tilgangar denne fullmakta gir.")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Omregistrering av kjøretøy' access package.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 6d15b13d-7cd6-4db8-856b-488815233ccd
+    /// - <c>URN:</c> urn:altinn:accesspackage:omregistrering
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Description:</c> Denne tilgangspakken inneholder enkelttjenester som gir tilgang til å administrere kjøretøy og utføre handlinger knyttet til omregistrering av kjøretøy. Dette inkluderer oppgaver som av- og påregistrering, gjennomføring av eierskifte, omregistrering av brukte kjøretøy, samt bestilling av køyretøykontroll, prøveskilt og erstatningskjennemerke. Ved innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmaktene gir.
+    /// </remarks>
+    public static ConstantDefinition<Package> RegistrationTransferOfVehicles { get; } = new ConstantDefinition<Package>("6d15b13d-7cd6-4db8-856b-488815233ccd")
+    {
+        Entity = new()
+        {
+            Name = "Omregistrering av kjøretøy",
+            Description = "Denne tilgangspakken inneholder enkelttjenester som gir tilgang til å administrere kjøretøy og utføre handlinger knyttet til omregistrering av kjøretøy. Dette inkluderer oppgaver som av- og påregistrering, gjennomføring av eierskifte, omregistrering av brukte kjøretøy, samt bestilling av køyretøykontroll, prøveskilt og erstatningskjennemerke. Ved innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmaktene gir.",
+            Urn = "urn:altinn:accesspackage:omregistrering",
+            Code = "omregistrering",
+            IsDelegable = true,
+            IsAvailableForServiceOwners = true,
+            IsAssignable = true,
+            EntityTypeId = EntityTypeConstants.Organization,
+            ProviderId = ProviderConstants.Altinn3,
+            AreaId = AreaConstants.TransportAndStorage,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Registration transfer of vehicles"),
+            KeyValuePair.Create("Description", "This authorization gives access to services related to vehicles and vehicle control. This includes the purchase and sale of vehicles. In the event of regulatory changes or the introduction of new digital services, there may be changes in which access this authorization provides.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Omregistrering av køyretøy"),
+            KeyValuePair.Create("Description", "Denne tilgangspakken inneheld enkelttenester som gir tilgang til å administrere køyretøy og utføre handlingar knytte til omregistrering av køyretøy. Dette omfattar oppgåver som av- og påregistrering, gjennomføring av eigarskifte, omregistrering av brukte køyretøy, samt bestilling av køyretøykontroll, prøveskilt og erstatningskjennemerke. Ved innføring av nye digitale tenester kan det bli endringar i tilgangane som fullmaktene gir.")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Førstegangsregistrering av kjøretøy' access package.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 014555f3-3fa7-476a-805d-7f1ec1be1336
+    /// - <c>URN:</c> urn:altinn:accesspackage:forstegangsregistrering
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Description:</c> Denne tilgangspakken inneholder enkelttjenester som gir tilgang til å administrere kjøretøy og utføre handlinger knyttet til førstegangsregistrering av kjøretøy. I tillegg til alle tilganger som inngår i tilgangspakken Omregistrering av kjøretøy, inkluderer pakken førstegangsregistrering av kjøretøy og betaling av engangsavgifter og vrakpantavgift. Ved innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmaktene gir.
+    /// </remarks>
+    public static ConstantDefinition<Package> FirstTimeVehicleRegistration { get; } = new ConstantDefinition<Package>("014555f3-3fa7-476a-805d-7f1ec1be1336")
+    {
+        Entity = new()
+        {
+            Name = "Førstegangsregistrering av kjøretøy",
+            Description = "Denne tilgangspakken inneholder enkelttjenester som gir tilgang til å administrere kjøretøy og utføre handlinger knyttet til førstegangsregistrering av kjøretøy. I tillegg til alle tilganger som inngår i tilgangspakken Omregistrering av kjøretøy, inkluderer pakken førstegangsregistrering av kjøretøy og betaling av engangsavgifter og vrakpantavgift. Ved innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmaktene gir.",
+            Urn = "urn:altinn:accesspackage:forstegangsregistrering",
+            Code = "forstegangsregistrering",
+            IsDelegable = true,
+            IsAvailableForServiceOwners = true,
+            IsAssignable = true,
+            EntityTypeId = EntityTypeConstants.Organization,
+            ProviderId = ProviderConstants.Altinn3,
+            AreaId = AreaConstants.TransportAndStorage,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "First-time vehicle registration"),
+            KeyValuePair.Create("Description", "This access package includes single services that provide access to vehicle administration and tasks related to first-time vehicle registration. In addition to all the access rights included in the Registration transfer of vehicles access package this package includes first-time vehicle registration of vehicles and payment of the one-off registration tax and the scrap deposit tax. When new digital services are introduced, the access rights included in this package may be subject to change.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Førstegongsregistrering av køyretøy"),
+            KeyValuePair.Create("Description", "Denne tilgangspakka inneheld enkelttenester som gir tilgang til å administrere køyretøy og utføre handlingar knytte til førstegongsregistrering av køyretøy. I tillegg til alle tilgangane som inngår i tilgangspakken Omregistrering av køyretøy, inkluderer denne pakka førstegongsregistrering av køyretøy og betaling av eingongsavgifter og vrakpantavgift. Ved innføring av nye digitale tenester kan det bli endringar i tilgangane i denne pakka.")
         ),
     };
 
