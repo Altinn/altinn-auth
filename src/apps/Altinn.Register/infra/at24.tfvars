@@ -41,8 +41,9 @@ features = {
   }
 
   ccr_proxy = {
-    enable = true
-    record = true
+    enable  = true
+    record  = true
+    process = true
   }
 }
 

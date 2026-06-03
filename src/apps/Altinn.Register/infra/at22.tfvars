@@ -38,12 +38,14 @@ features = {
 
     sire = {
       enable = true
+      listen = true
     }
   }
 
   ccr_proxy = {
-    enable = true
-    record = true
+    enable  = true
+    record  = true
+    process = true
   }
 }
 

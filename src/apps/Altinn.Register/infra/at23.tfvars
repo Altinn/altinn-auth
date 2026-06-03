@@ -38,12 +38,14 @@ features = {
 
     sire = {
       enable = true
+      listen = true
     }
   }
 
   ccr_proxy = {
-    enable = true
-    record = true
+    enable  = true
+    record  = true
+    process = true
   }
 }
 
@@ -67,7 +69,7 @@ config = {
     }
 
     clients = {
-      e2e-test-at22 = {
+      e2e-test-at23 = {
         password = "ccr-e2e-test-hash"
         networks = ["0.0.0.0/0", "::/0"]
       }
