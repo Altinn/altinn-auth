@@ -1598,12 +1598,13 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
     {
         List<InstanceRule> rules = [];
         List<UrnJsonTypeValue> resourceList = new();
+        string instanceUrnValue = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.CorrespondenceInstanceAttribute}:{input.InstanceId.ToLowerInvariant()}";
         UrnJsonTypeValue resourceUrn = KeyValueUrn.CreateUnchecked(
             $"{AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute}:{input.ResourceId}",
             AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute.Length + 1);
         UrnJsonTypeValue instanceUrn = KeyValueUrn.CreateUnchecked(
-            $"{AltinnXacmlConstants.MatchAttributeIdentifiers.CorrespondenceInstanceAttribute}:{input.InstanceId.ToLowerInvariant()}",
-            AltinnXacmlConstants.MatchAttributeIdentifiers.CorrespondenceInstanceAttribute.Length + 1);
+            $"{AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceInstanceAttribute}:{instanceUrnValue}",
+            AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceInstanceAttribute.Length + 1);
 
         resourceList.Add(resourceUrn);
         resourceList.Add(instanceUrn);
@@ -1624,7 +1625,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
             FromType = AccessManagement.Enums.UuidType.Party,
             FromUuid = input.FromUuid,
             InstanceDelegationMode = AccessManagement.Core.Enums.InstanceDelegationMode.Normal,
-            InstanceId = instanceUrn.ToString().ToLowerInvariant(),
+            InstanceId = instanceUrnValue,
             InstanceDelegationSource = AccessManagement.Core.Enums.InstanceDelegationSource.User,
             InstanceRules = rules,
             PerformedByType = AccessManagement.Enums.UuidType.Party,

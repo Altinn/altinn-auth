@@ -126,6 +126,37 @@ public class RightsInternalDelegateAndRevokeInstanceDelegation : IClassFixture<A
                 cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(existingAssignmentInstance);
 
+        // Verify that the written policy contains the instance urn reference
+        var policyFactory = scope.ServiceProvider.GetRequiredService<IPolicyFactory>() as PolicyFactoryMock;
+        Assert.NotNull(policyFactory);
+
+        var policyEntry = policyFactory.WrittenPolicies
+            .FirstOrDefault(kvp => kvp.Key.Contains(InstanceId, StringComparison.OrdinalIgnoreCase));
+
+        if (policyEntry.Value != null)
+        {
+            using var stream = new MemoryStream(policyEntry.Value);
+            using var reader = System.Xml.XmlReader.Create(stream);
+            var policy = Altinn.Authorization.ABAC.Utils.XacmlParser.ParseXacmlPolicy(reader);
+
+            // After delegation there should exist two rules (Action: read, subscribe) reffering the instance urn.
+            var rulesWithInstanceId = policy.Rules
+                .Where(r => r.Target?.AnyOf
+                    .SelectMany(anyOf => anyOf.AllOf)
+                    .SelectMany(allOf => allOf.Matches)
+                    .Any(match =>
+                        match.AttributeDesignator.AttributeId.OriginalString == AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceInstanceAttribute &&
+                        match.AttributeValue.Value == InstanceUrn) == true)
+                .ToList();
+
+            Assert.NotEmpty(rulesWithInstanceId);
+            Assert.Equal(2, rulesWithInstanceId.Count);
+        }
+        else
+        {
+            Assert.Fail("No policy was written for the instance delegation.");
+        }
+
         // Now create the revoke request
         var revokeRequest = new InstanceRevokeRequest
         {
