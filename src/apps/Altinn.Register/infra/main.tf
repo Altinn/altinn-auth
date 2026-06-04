@@ -202,11 +202,8 @@ data "azurerm_key_vault_secret" "ccr_client_password_hash" {
 }
 
 data "azurerm_storage_account" "ccr_federate_storage_account" {
-  for_each = (
-    var.config.ccr.federate.enable
-    ? toset([local.reg_federate_storage_account_name])
-    : toset([])
-  )
+  # this should always exist - keeping for_each for backwards compatibility
+  for_each = toset([local.reg_federate_storage_account_name])
 
   name                = each.value
   resource_group_name = local.hub_resource_group_name
@@ -323,6 +320,7 @@ module "appsettings" {
           "Altinn:register:PartyImport:Npr:Enable"               = { value = var.features.party_import.npr.enable }
           "Altinn:register:PartyImport:Sire:Enrich"              = { value = var.features.party_import.sire.enable && var.features.party_import.sire.enrich }
           "Altinn:register:PartyImport:Sire:Listen"              = { value = var.features.party_import.sire.enable && var.features.party_import.sire.listen }
+          "Altinn:register:PartyImport:Ccr:Enable"               = { value = var.config.ccr.flatfiles.enable }
 
           "Altinn:register:Ccr:Update:Enabled" = { value = var.features.ccr_proxy.enable }
           "Altinn:register:Ccr:Update:Record"  = { value = var.features.ccr_proxy.record }
@@ -368,7 +366,7 @@ module "appsettings" {
             "Altinn:register:Ccr:Federate:Source:QueueName"       = { value = var.config.ccr.federate.source.queue }
             "Altinn:register:Ccr:Federate:Source:PoisonQueueName" = { value = var.config.ccr.federate.source.poison }
           } : {}
-        ) : {}
+        ) : {},
       )
 
       vault_references = merge(
@@ -382,7 +380,14 @@ module "appsettings" {
         {
           for client_key, client in var.config.ccr.clients :
           "Altinn:register:Ccr:Clients:${client_key}:PasswordHash" => { vault_key_reference = data.azurerm_key_vault_secret.ccr_client_password_hash[client_key].versionless_id }
-        }
+        },
+        // ccr flatfiles local config
+        var.config.ccr.flatfiles.enable && var.config.ccr.flatfiles.local != null ? {
+          "Altinn:register:PartyImport:Ccr:Sftp:Host"       = { vault_key_reference = resource.azurerm_key_vault_secret.ccr_flatfile_local_host["local"].versionless_id }
+          "Altinn:register:PartyImport:Ccr:Sftp:User"       = { vault_key_reference = resource.azurerm_key_vault_secret.ccr_flatfile_local_user["local"].versionless_id }
+          "Altinn:register:PartyImport:Ccr:Sftp:Password"   = { vault_key_reference = resource.azurerm_key_vault_secret.ccr_flatfile_local_pass["local"].versionless_id }
+          "Altinn:register:PartyImport:Ccr:Sftp:RemotePath" = { vault_key_reference = resource.azurerm_key_vault_secret.ccr_flatfile_local_path["local"].versionless_id }
+        } : {},
       )
     }
   }

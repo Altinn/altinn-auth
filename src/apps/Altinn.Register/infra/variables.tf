@@ -148,6 +148,21 @@ variable "config" {
         networks = list(string)       # whitelist of CIDR ranges allowed to use this client
       })), {})
 
+      flatfiles = optional(object({
+        enable = optional(bool, false)
+        local = optional(object({
+          user      = string
+          container = string
+        }))
+        remote = optional(object({
+          host = string # key-vault reference
+          user = string # key-vault reference
+          pass = string # key-vault reference
+          path = string # key-vault reference
+          port = optional(number, 22)
+        }))
+      }), {})
+
       federate = optional(object({
         enable  = optional(bool, false),
         targets = optional(list(string), []) # list of environments to federate ccr updates to

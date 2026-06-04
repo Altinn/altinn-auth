@@ -68,6 +68,14 @@ config = {
       }
     }
 
+    flatfiles = {
+      enable = true
+      local = {
+        user      = "ccrflatfilesat23"
+        container = "ccr-flatfiles-at23"
+      }
+    }
+
     clients = {
       e2e-test-at23 = {
         password = "ccr-e2e-test-hash"
