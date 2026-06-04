@@ -24,7 +24,14 @@ public class SystemUserClientDelegationController(
         , IDelegationService delegationService
     ) : ControllerBase
 {
-    private readonly string[] validClientRoles = [RoleConstants.Accountant.Entity.Code, RoleConstants.Auditor.Entity.Code, RoleConstants.BusinessManager.Entity.Code, RoleConstants.Rightholder.Entity.Code];
+    private readonly string[] validClientRoles = [
+        RoleConstants.Accountant.Entity.Code,
+        RoleConstants.Auditor.Entity.Code,
+        RoleConstants.BusinessManager.Entity.Code,
+        RoleConstants.Rightholder.Entity.Code,
+        RoleConstants.ParticipantSharedResponsibility.Entity.Code,
+        RoleConstants.ParticipantFullResponsibility.Entity.Code
+    ];
 
     /// <summary>
     /// Gets all clients for a given facilitator
