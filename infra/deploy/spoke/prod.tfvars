@@ -53,6 +53,14 @@ services = {
   folkeregisteret = {
     host = "folkeregisteret.api.skatteetaten.no"
   }
+
+  sire = {
+    host = "skatteetatenregistrertselskap.api.skatteetaten.no"
+  }
+
+  sire-events = {
+    host = "skatteetatenregistrertselskaphendelser.api.skatteetaten.no"
+  }
 }
 
 logging = {

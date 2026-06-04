@@ -52,6 +52,14 @@ services = {
   folkeregisteret = {
     host = "folkeregisteret-api-konsument.sits.no"
   }
+
+  sire = {
+    host = "skatteetatenregistrertselskap.api.skatteetaten-test.no"
+  }
+
+  sire-events = {
+    host = "skatteetatenregistrertselskaphendelser.api.skatteetaten-test.no"
+  }
 }
 
 logging = {
