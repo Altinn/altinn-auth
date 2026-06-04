@@ -31,4 +31,11 @@ configuration = {
       instance_removed_notify_in_seconds    = 30
     }
   }
+  serviceowner_delegations = {
+    package_whitelist = {
+      "974761076" = [ # SKATTEETATEN
+        "innbygger-skatteforhold-privatpersoner"
+      ]
+    }
+  }
 }

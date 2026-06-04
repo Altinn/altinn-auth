@@ -193,7 +193,7 @@ module "appsettings" {
 
   labels = {
     "${var.environment}-access-management" = {
-      values = {
+      values = merge({
         "ConsentMigration:BatchSize"                  = { value = tostring(var.configuration.consent.batch_size) }
         "ConsentMigration:OnlyExpiredConsents"        = { value = tostring(var.configuration.consent.only_expired_consents) }
         "ConsentMigration:MaxDegreeOfParallelism"     = { value = tostring(var.configuration.consent.max_degree_of_parallelism) }
@@ -209,7 +209,19 @@ module "appsettings" {
         "Core:Notifications:AccessRemovedNotifyInSeconds"      = { value = tostring(var.configuration.core.notifications.access_removed_notify_in_seconds) }
         "Core:Notifications:InstanceAddedNotifyInSeconds"      = { value = tostring(var.configuration.core.notifications.instance_added_notify_in_seconds) }
         "Core:Notifications:InstanceRemovedNotifyInSeconds"    = { value = tostring(var.configuration.core.notifications.instance_removed_notify_in_seconds) }
-      }
+        },
+        {
+          for kv in flatten([
+            for orgnumber, packages in var.configuration.serviceowner_delegations.package_whitelist :
+            [
+              for i, package in packages :
+              {
+                key   = "ServiceownerDelegations:PackageWhitelist:${orgnumber}:${i}"
+                value = package
+              }
+            ]
+          ]) : kv.key => { value = kv.value }
+      })
     }
   }
 
