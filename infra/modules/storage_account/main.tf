@@ -38,3 +38,10 @@ resource "azurerm_storage_queue" "queues" {
   name               = each.key
   storage_account_id = azurerm_storage_account.storage.id
 }
+
+resource "azurerm_storage_container" "containers" {
+  for_each = var.containers
+
+  name               = each.key
+  storage_account_id = azurerm_storage_account.storage.id
+}

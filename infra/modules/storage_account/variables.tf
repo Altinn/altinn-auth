@@ -26,6 +26,11 @@ variable "queues" {
   default = {}
 }
 
+variable "containers" {
+  type    = map(object({}))
+  default = {}
+}
+
 variable "sftp_enabled" {
   type    = bool
   default = false

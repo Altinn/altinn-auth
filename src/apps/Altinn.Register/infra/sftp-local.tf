@@ -1,5 +1,5 @@
 
-resource "azurerm_storage_container" "ccr_flatfiles" {
+data "azurerm_storage_container" "ccr_flatfiles" {
   for_each = (
     var.config.ccr.flatfiles.enable && var.config.ccr.flatfiles.local != null
     ? toset(["local"])
@@ -39,10 +39,10 @@ resource "azurerm_storage_account_local_user" "ccr_sftp_local_user" {
     }
 
     service       = "blob"
-    resource_name = azurerm_storage_container.ccr_flatfiles["local"].name
+    resource_name = data.azurerm_storage_container.ccr_flatfiles["local"].name
   }
 
-  home_directory = azurerm_storage_container.ccr_flatfiles["local"].name
+  home_directory = data.azurerm_storage_container.ccr_flatfiles["local"].name
 
   provider = azurerm.hub
 }

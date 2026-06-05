@@ -18,23 +18,16 @@ module "register_shared_storage_account" {
     "ccr-updates-at23-poison" = {}
   }
 
+  containers = {
+    "ccr-flatfiles-at22" = {}
+    "ccr-flatfiles-at23" = {}
+  }
+
   tags = merge({}, local.default_tags)
 
   providers = {
     azurerm = azurerm
   }
-}
-
-resource "azurerm_storage_container" "register_ccr_at22_files" {
-  name                  = "ccr-at22-files"
-  storage_account_id    = module.register_shared_storage_account.id
-  container_access_type = "private"
-}
-
-resource "azurerm_storage_container" "register_ccr_at23_files" {
-  name                  = "ccr-at23-files"
-  storage_account_id    = module.register_shared_storage_account.id
-  container_access_type = "private"
 }
 
 # Terraform deploys for the environments needs to be able to maintain role-assignments on the storage account
@@ -44,6 +37,15 @@ resource "azurerm_role_assignment" "register_storage_account_cd" {
   scope                = module.register_shared_storage_account.id
   principal_id         = each.value
   role_definition_name = "User Access Administrator"
+}
+
+# Required to make the local-users
+resource "azurerm_role_assignment" "register_storage_account_cd_contributor" {
+  for_each = toset(var.cd_principal_ids)
+
+  scope                = module.register_shared_storage_account.id
+  principal_id         = each.value
+  role_definition_name = "Storage Account Contributor"
 }
 
 # Maintainers have permissions to manage the queues
