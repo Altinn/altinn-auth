@@ -107,7 +107,7 @@ variable "configuration" {
       }), {})
     }), {})
     serviceowner_delegations = optional(object({
-      package_whitelist = optional(map(list(string)), [])
+      package_whitelist = optional(map(list(string)), {})
     }), {})
   })
   default = {}
