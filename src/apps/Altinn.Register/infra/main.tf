@@ -229,12 +229,12 @@ data "azurerm_storage_queue" "ccr_federate_source" {
 resource "azurerm_role_assignment" "ccr_federate_queue_reader" {
   for_each = (
     var.config.ccr.federate.enable && var.config.ccr.federate.source != null
-    ? toset([var.config.ccr.federate.source.queue])
+    ? toset(var.platform_workflow_principal_ids)
     : toset([])
   )
 
-  scope                = data.azurerm_storage_queue.ccr_federate_source[each.key].id
-  principal_id         = azurerm_user_assigned_identity.register.principal_id
+  scope                = data.azurerm_storage_queue.ccr_federate_source[var.config.ccr.federate.source.queue].id
+  principal_id         = each.value
   role_definition_name = "Storage Queue Data Message Processor"
 
   provider = azurerm.hub
@@ -258,12 +258,12 @@ data "azurerm_storage_queue" "ccr_federate_source_poison" {
 resource "azurerm_role_assignment" "ccr_federate_poison_writer" {
   for_each = (
     var.config.ccr.federate.enable && var.config.ccr.federate.source != null
-    ? toset([var.config.ccr.federate.source.poison])
+    ? toset(var.platform_workflow_principal_ids)
     : toset([])
   )
 
-  scope                = data.azurerm_storage_queue.ccr_federate_source_poison[each.key].id
-  principal_id         = azurerm_user_assigned_identity.register.principal_id
+  scope                = data.azurerm_storage_queue.ccr_federate_source_poison[var.config.ccr.federate.source.poison].id
+  principal_id         = each.value
   role_definition_name = "Storage Queue Data Message Sender"
 
   provider = azurerm.hub
@@ -287,12 +287,18 @@ data "azurerm_storage_queue" "ccr_federate_target" {
 resource "azurerm_role_assignment" "ccr_federate_queue_writer" {
   for_each = (
     var.config.ccr.federate.enable
-    ? toset(var.config.ccr.federate.targets)
-    : toset([])
+    ? {
+      for assignment in setproduct(toset(var.config.ccr.federate.targets), toset(var.platform_workflow_principal_ids)) :
+      "${assignment[0]}:${assignment[1]}" => {
+        queue        = assignment[0]
+        principal_id = assignment[1]
+      }
+    }
+    : {}
   )
 
-  scope                = data.azurerm_storage_queue.ccr_federate_target[each.key].id
-  principal_id         = azurerm_user_assigned_identity.register.principal_id
+  scope                = data.azurerm_storage_queue.ccr_federate_target[each.value.queue].id
+  principal_id         = each.value.principal_id
   role_definition_name = "Storage Queue Data Message Sender"
 
   provider = azurerm.hub
