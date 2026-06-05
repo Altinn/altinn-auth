@@ -217,6 +217,41 @@ public partial class ConnectionsControllerTest
         }
 
         /// <summary>
+        /// Test of GetRoles endpoint without specifying 'to' parameter. This should return all roles from the 'from' party to any 'to' party.
+        /// </summary>
+        [Fact]
+        public async Task GetRoles_WithNoToDefined()
+        {
+            HttpClient client = CreateClient(TestData.HanSolo.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
+
+            HttpResponseMessage response = await client.GetAsync(
+                $"{Route}/roles?party={TestData.HanSoloEnterprise.Id}&from={TestData.HanSoloEnterprise.Id}",
+                TestContext.Current.CancellationToken);
+
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {responseContent}");
+
+            var result = JsonSerializer.Deserialize<PaginatedResult<RolePermissionDto>>(responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            Assert.NotNull(result);
+
+            HashSet<Guid> toIds = [];
+foreach (var role in result.Items)
+{
+    foreach (var permission in role.Permissions)
+    {
+        toIds.Add(permission.To.Id);
+    }
+}
+
+            Assert.NotEmpty(toIds);
+            Assert.Equal(4, toIds.Count);
+            Assert.Contains(TestData.HanSolo.Id, toIds);
+            Assert.Contains(TestData.LeiaOrgana.Id, toIds);
+            Assert.Contains(TestData.BenSolo.Id, toIds);
+            Assert.Contains(TestData.LukeSkyWalker.Id, toIds);
+        }
+
+        /// <summary>
         /// Thea uses to-others scope when querying from-others direction (wrong scope for direction).
         /// Expects 403 Forbidden.
         /// </summary>

@@ -381,11 +381,17 @@ public class ConnectionsController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetRoles(
         [Required][FromQuery(Name = "party")] Guid party,
-        [Required][FromQuery(Name = "from")] Guid from,
-        [Required][FromQuery(Name = "to")] Guid to,
+        [FromQuery(Name = "from")] Guid? from,
+        [FromQuery(Name = "to")] Guid? to,
         [FromQuery, FromHeader] PagingInput paging,
         CancellationToken cancellationToken = default)
     {
+        var validationErrors = ValidationComposer.Validate(ConnectionValidation.ValidateReadConnection(party.ToString(), from?.ToString(), to?.ToString()));
+        if (validationErrors is { })
+        {
+            return validationErrors.ToActionResult();
+        }
+
         var result = await ConnectionService.GetRoles(party, from, to, ConfigureConnections, cancellationToken);
         if (result.IsProblem)
         {
