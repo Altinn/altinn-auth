@@ -212,11 +212,11 @@ module "appsettings" {
         },
         {
           for kv in flatten([
-            for orgnumber, packages in var.configuration.serviceowner_delegations.package_whitelist :
+            for orgnumber, packages in var.configuration.serviceowner_delegation.package_whitelist :
             [
               for i, package in packages :
               {
-                key   = "ServiceownerDelegations:PackageWhitelist:${orgnumber}:${i}"
+                key   = "ServiceOwnerDelegation:PackageWhitelist:${orgnumber}:${i}"
                 value = package
               }
             ]

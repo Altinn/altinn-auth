@@ -106,7 +106,7 @@ variable "configuration" {
         instance_removed_notify_in_seconds    = optional(number, 60 * 15)
       }), {})
     }), {})
-    serviceowner_delegations = optional(object({
+    serviceowner_delegation = optional(object({
       package_whitelist = optional(map(list(string)), {})
     }), {})
   })
