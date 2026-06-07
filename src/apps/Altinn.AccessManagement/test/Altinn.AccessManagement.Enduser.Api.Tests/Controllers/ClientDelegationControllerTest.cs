@@ -265,6 +265,13 @@ public class ClientDelegationControllerTest
                     RoleId = RoleConstants.BusinessManager,
                 };
 
+                var forretningsforerFromNufToVerdiq = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationNufExampleNUF.Id,
+                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    RoleId = RoleConstants.BusinessManager,
+                };
+
                 var agentFromPaulaToNordis = new Assignment()
                 {
                     FromId = TestEntities.OrganizationNordisAS.Id,
@@ -276,6 +283,7 @@ public class ClientDelegationControllerTest
                 db.Assignments.Add(accountantFromNordisToVerdiq);
                 db.Assignments.Add(forretningsforerFromOkernBrlToVerdiq);
                 db.Assignments.Add(forretningsforerNordisToVerdiq);
+                db.Assignments.Add(forretningsforerFromNufToVerdiq);
                 db.Assignments.Add(agentFromPaulaToNordis);
 
                 db.AssignmentPackages.Add(new()
@@ -412,6 +420,43 @@ public class ClientDelegationControllerTest
             {
                 return package.Id == PackageConstants.BusinessManagerRealEstate;
             });
+        }
+
+        [Fact]
+        public async Task ListClient_ForBusinessManagerWithNufClient_ReturnsNufPackagesOnly()
+        {
+            var client = CreateClient();
+
+            var response = await client.GetAsync($"{Route}/clients?party={TestEntities.OrganizationVerdiqAS.Id}&roles=forretningsforer", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            var result = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(data);
+
+            Assert.NotEmpty(result.Items);
+
+            // NUF client should have the NUF-specific packages
+            var nufClient = result.Items.FirstOrDefault(c => c.Client.Id == TestEntities.OrganizationNufExampleNUF);
+            Assert.NotNull(nufClient);
+            var nufClientAccess = nufClient.Access.FirstOrDefault(r => r.Role.Id == RoleConstants.BusinessManager);
+            Assert.NotNull(nufClientAccess);
+            Assert.Contains(nufClientAccess.Packages, package => package.Id == PackageConstants.ServicesNUF);
+            Assert.Contains(nufClientAccess.Packages, package => package.Id == PackageConstants.BusinessAndAccessManagementNUF);
+
+            // Non-NUF clients (BRL, BEDR) should NOT have the NUF-specific packages
+            var brlClient = result.Items.FirstOrDefault(c => c.Client.Id == TestEntities.OrganizationOkernBorettslag);
+            Assert.NotNull(brlClient);
+            var brlClientAccess = brlClient.Access.FirstOrDefault(r => r.Role.Id == RoleConstants.BusinessManager);
+            Assert.NotNull(brlClientAccess);
+            Assert.DoesNotContain(brlClientAccess.Packages, package => package.Id == PackageConstants.ServicesNUF);
+            Assert.DoesNotContain(brlClientAccess.Packages, package => package.Id == PackageConstants.BusinessAndAccessManagementNUF);
+
+            var bedrClient = result.Items.FirstOrDefault(c => c.Client.Id == TestEntities.MainUnitNordis);
+            Assert.NotNull(bedrClient);
+            var bedrClientAccess = bedrClient.Access.FirstOrDefault(r => r.Role.Id == RoleConstants.BusinessManager);
+            Assert.NotNull(bedrClientAccess);
+            Assert.DoesNotContain(bedrClientAccess.Packages, package => package.Id == PackageConstants.ServicesNUF);
+            Assert.DoesNotContain(bedrClientAccess.Packages, package => package.Id == PackageConstants.BusinessAndAccessManagementNUF);
         }
     }
     #endregion

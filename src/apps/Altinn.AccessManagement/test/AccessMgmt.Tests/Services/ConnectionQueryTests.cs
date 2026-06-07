@@ -320,6 +320,12 @@ internal static class TestDataSet
         new Entity() { Id = Guid.Parse("0195efb8-7c80-7d2c-b030-1d1c205d5400"), Name = "Kari", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "04018412345", RefId = "04018412345", DateOfBirth = DateOnly.Parse("1984-01-04") },
         new Entity() { Id = Guid.Parse("0195efb8-7c80-7911-bf6c-67713e9fe4f8"), Name = "William", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "05018412345", RefId = "05018412345", DateOfBirth = DateOnly.Parse("1984-01-05") },
         new Entity() { Id = Guid.Parse("0195efb8-7c80-706b-9e0e-87f73c5b3ed0"), Name = "Terje", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "06018412345", RefId = "06018412345", DateOfBirth = DateOnly.Parse("1984-01-06") },
+
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000001"), Name = "NUF International Corp", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.NUF, OrganizationIdentifier = "ORG-05", ParentId = null, RefId = "ORG-05" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000002"), Name = "Non-NUF Client AS", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "ORG-06", ParentId = null, RefId = "ORG-06" },
+
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000003"), Name = "Siri", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "07018412345", RefId = "07018412345", DateOfBirth = DateOnly.Parse("1984-01-07") },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000004"), Name = "Lars", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "08018412345", RefId = "08018412345", DateOfBirth = DateOnly.Parse("1984-01-08") },
     };
 
 #pragma warning disable SA1401 // Fields should be private
@@ -335,6 +341,10 @@ internal static class TestDataSet
         new Assignment() { Id = Guid.Parse("0195efb8-7c80-708d-beec-13141fd0fae3"), FromId = Entities.First(t => t.Name == "Revi").Id, ToId = Entities.First(t => t.Name == "William").Id, RoleId = RoleConstants.ManagingDirector }, // Daglig leder
         new Assignment() { Id = Guid.Parse("0195efb8-7c80-759a-8a59-ce8abd161c1b"), FromId = Entities.First(t => t.Name == "Revi").Id, ToId = Entities.First(t => t.Name == "Terje").Id, RoleId = RoleConstants.ChairOfTheBoard }, // Styreleder
         new Assignment() { Id = Guid.Parse("0195efb8-7c80-7311-a2df-21bd3352ba24"), FromId = Entities.First(t => t.Name == "Terje").Id, ToId = Entities.First(t => t.Name == "Terje").Id, RoleId = RoleConstants.PrivatePerson }, // Privatperson (self)
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000010"), FromId = Entities.First(t => t.Name == "NUF International Corp").Id, ToId = Entities.First(t => t.Name == "Regnskaperne").Id, RoleId = RoleConstants.BusinessManager }, // Forretningsfører from NUF client
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000011"), FromId = Entities.First(t => t.Name == "Non-NUF Client AS").Id, ToId = Entities.First(t => t.Name == "Regnskaperne").Id, RoleId = RoleConstants.BusinessManager }, // Forretningsfører from non-NUF client
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000012"), FromId = Entities.First(t => t.Name == "NUF International Corp").Id, ToId = Entities.First(t => t.Name == "Siri").Id, RoleId = RoleConstants.ContactPersonNUF }, // Kontaktperson NUF
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000013"), FromId = Entities.First(t => t.Name == "NUF International Corp").Id, ToId = Entities.First(t => t.Name == "Lars").Id, RoleId = RoleConstants.NorwegianRepresentativeForeignEntity }, // Norsk representant for utenlandsk foretak
     };
 
     internal static Assignment GetAssignment(string fromName, string toName, Guid roleId)

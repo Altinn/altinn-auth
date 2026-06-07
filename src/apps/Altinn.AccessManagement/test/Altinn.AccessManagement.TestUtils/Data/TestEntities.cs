@@ -122,6 +122,28 @@ public static class TestEntities
         }
     };
 
+    public static ConstantDefinition<Entity> OrganizationNufExampleNUF { get; } = new("d4a7e3b1-9c2f-4a8e-b6d5-1f3e7a9c2b4d")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "NUF Example International",
+            OrganizationIdentifier = "915493001",
+            Parent = null,
+            ParentId = null,
+            PartyId = 50068512,
+            PersonIdentifier = null,
+            RefId = "915493001",
+            TypeId = EntityTypeConstants.Organization,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.NUF,
+        }
+    };
+
     public static ConstantDefinition<Entity> OrganizationVerdiqAS { get; } = new("77362379-847f-412e-8937-de6172188020")
     {
         Entity = new()

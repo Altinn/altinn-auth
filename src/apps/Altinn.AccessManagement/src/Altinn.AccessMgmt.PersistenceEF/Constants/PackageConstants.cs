@@ -7746,4 +7746,78 @@ public static class PackageConstants
     };
 
     #endregion
+
+    #region NUF
+
+    /// <summary>
+    /// Tjenester NUF
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> bec67f18-1e4a-4761-955e-6a8b242aa7b1
+    /// - <c>URN:</c> urn:altinn:accesspackage:tjenester-nuf
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Code:</c> tjenester-nuf
+    /// - <c>Description:</c> Tjenester NUF
+    /// </remarks>
+    public static ConstantDefinition<Package> ServicesNUF { get; } = new ConstantDefinition<Package>("bec67f18-1e4a-4761-955e-6a8b242aa7b1")
+    {
+        Entity = new()
+        {
+            Name = "Tjenester NUF",
+            Code = "tjenester-nuf",
+            Description = "Denne tilgangspakken gir fullmakter til tjenester som kontaktperson, norsk representant og forretningsfører for NUF skal kunne benytte og videredelegere fullmakt til. Ved regelverksendringer, endrede vurderinger fra tjenesteeiere eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.",
+            Urn = "urn:altinn:accesspackage:tjenester-nuf",
+            IsDelegable = true,
+            IsAssignable = true,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Organization,
+            ProviderId = ProviderConstants.Altinn3,
+            AreaId = AreaConstants.ManageAccess,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Services NUF"),
+            KeyValuePair.Create("Description", "This access package provides authorizations for services that a contact person, Norwegian representative or business manager for a NUF should be able to use and delegate authorization for. In the event of regulatory changes, new deliberations by service owners or the introduction of new digital services, there may be changes in the access that the authorization provides.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Tenester NUF"),
+            KeyValuePair.Create("Description", "Denne tilgangspakka gir fullmakter til tenester som kontaktperson, norsk representant og forretningsførar for NUF skal kunne nytte og vidaredelegere fullmakt til. Ved regelverksendringar, endra vurderingar frå tenesteeigarar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
+        ),
+    };
+
+    /// <summary>
+    /// Forretningsfører-tilgangsstyrer NUF
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> e9f54b59-b25d-42a2-9543-38bb5e71c5cc
+    /// - <c>URN:</c> urn:altinn:accesspackage:ffor-tilgangsstyrer-nuf
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Code:</c> ffor-tilgangsstyrer-nuf
+    /// - <c>Description:</c> Forretningsfører-tilgangsstyrer NUF
+    /// </remarks>
+    public static ConstantDefinition<Package> BusinessAndAccessManagementNUF { get; } = new ConstantDefinition<Package>("e9f54b59-b25d-42a2-9543-38bb5e71c5cc")
+    {
+        Entity = new()
+        {
+            Name = "Forretningsfører-tilgangsstyrer NUF",
+            Code = "ffor-tilgangsstyrer-nuf",
+            Description = "Denne tilgangspakken gir forretningsfører for NUF mulighet til å gi videre tilganger for virksomheten som man selv innehar.",
+            Urn = "urn:altinn:accesspackage:ffor-tilgangsstyrer-nuf",
+            IsDelegable = true,
+            IsAssignable = true,
+            IsAvailableForServiceOwners = true,
+            EntityTypeId = EntityTypeConstants.Organization,
+            ProviderId = ProviderConstants.Altinn3,
+            AreaId = AreaConstants.ManageAccess,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Business manager-Access manager NUF"),
+            KeyValuePair.Create("Description", "This access package allows business managers for NUF to delegate access rights within the organization for roles they hold themselves.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Forretningsfører-tilgangsstyrar NUF"),
+            KeyValuePair.Create("Description", "Denne tilgangspakken gir forretningsfører for NUF mulighet til å gi videre tilganger for virksomheten som man sjølv innehar.")
+        ),
+    };
+
+    #endregion
 }
