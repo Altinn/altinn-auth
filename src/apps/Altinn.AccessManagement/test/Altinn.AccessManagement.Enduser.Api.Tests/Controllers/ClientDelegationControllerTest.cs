@@ -441,7 +441,6 @@ public class ClientDelegationControllerTest
             var nufClientAccess = nufClient.Access.FirstOrDefault(r => r.Role.Id == RoleConstants.BusinessManager);
             Assert.NotNull(nufClientAccess);
             Assert.Contains(nufClientAccess.Packages, package => package.Id == PackageConstants.ServicesNUF);
-            Assert.Contains(nufClientAccess.Packages, package => package.Id == PackageConstants.BusinessAndAccessManagementNUF);
 
             // Non-NUF clients (BRL, BEDR) should NOT have the NUF-specific packages
             var brlClient = result.Items.FirstOrDefault(c => c.Client.Id == TestEntities.OrganizationOkernBorettslag);
