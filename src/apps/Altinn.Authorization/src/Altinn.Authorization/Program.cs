@@ -195,7 +195,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddControllers().AddXmlSerializerFormatters();
     services.AddHealthChecks().AddCheck<HealthCheck>("authorization_health_check");
     services.AddSingleton(config);
-    services.AddSingleton<IParties, PartiesWrapper>();
     services.AddSingleton<IProfile, ProfileWrapper>();
     services.AddSingleton<IRoles, RolesWrapper>();
     services.AddSingleton<IOedRoleAssignmentWrapper, OedRoleAssignmentWrapper>();
@@ -224,10 +223,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.Configure<QueueStorageSettings>(config.GetSection("QueueStorageSettings"));
     services.AddHttpClient<AccessManagementClient>();
     services.AddHttpClient<IRegisterService, RegisterService>();
-    services.AddHttpClient<PartyClient>();
     services.AddHttpClient<ProfileClient>();
     services.AddHttpClient<RolesClient>();
-    services.AddHttpClient<SBLClient>();
     services.AddHttpClient<ResourceRegistryClient>();
     services.AddHttpClient<OedAuthzClient>();
     services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();

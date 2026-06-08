@@ -38,7 +38,6 @@ namespace Altinn.Platform.Authorization.IntegrationTests
                 new InstanceMetadataRepositoryMock(),
                 new RolesMock(),
                 new OedRoleAssignmentWrapperMock(),
-                new PartiesMock(),
                 new ProfileMock(),
                 memoryCache,
                 Options.Create(new GeneralSettings { RoleCacheTimeout = 5 }),

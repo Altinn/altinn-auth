@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -30,7 +30,6 @@ public class DelegationContextHandlerTest : IDisposable
     private readonly Mock<IInstanceMetadataRepository> _policyInfoRepoMock = new();
     private readonly Mock<IRoles> _rolesMock = new();
     private readonly Mock<IOedRoleAssignmentWrapper> _oedRolesMock = new();
-    private readonly Mock<IParties> _partiesMock = new();
     private readonly Mock<IProfile> _profileMock = new();
     private readonly IMemoryCache _memoryCache = new MemoryCache(new MemoryCacheOptions());
     private readonly Mock<IRegisterService> _registerServiceMock = new();
@@ -45,7 +44,7 @@ public class DelegationContextHandlerTest : IDisposable
     {
         var settings = Options.Create(new GeneralSettings { RoleCacheTimeout = 5, MainUnitCacheTimeout = 5 });
         _sut = new DelegationContextHandler(
-            _policyInfoRepoMock.Object, _rolesMock.Object, _oedRolesMock.Object, _partiesMock.Object,
+            _policyInfoRepoMock.Object, _rolesMock.Object, _oedRolesMock.Object,
             _profileMock.Object, _memoryCache, settings, _registerServiceMock.Object,
             _prpMock.Object, _accMgmtMock.Object, _featureManagerMock.Object, _resourceRegistryMock.Object);
     }

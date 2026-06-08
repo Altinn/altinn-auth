@@ -41,7 +41,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         protected readonly IInstanceMetadataRepository _policyInformationRepository;
         protected readonly IRoles _rolesWrapper;
         protected readonly IOedRoleAssignmentWrapper _oedRolesWrapper;
-        protected readonly IParties _partiesWrapper;
         protected readonly IProfile _profileWrapper;
         protected readonly IMemoryCache _memoryCache;
         protected readonly GeneralSettings _generalSettings;
@@ -59,7 +58,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="policyInformationRepository">the policy information repository handler</param>
         /// <param name="rolesWrapper">the roles handler</param>
         /// <param name="oedRolesWrapper">service handling oed role retireval</param>
-        /// <param name="partiesWrapper">the party information handler</param>
         /// <param name="profileWrapper">the user profile information handler</param>
         /// <param name="memoryCache">The cache handler </param>
         /// <param name="settings">The app settings</param>
@@ -69,12 +67,11 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="featureManager">Feature manager</param>
         /// <param name="resourceRegistry">Resource registry client</param>
         public ContextHandler(
-            IInstanceMetadataRepository policyInformationRepository, IRoles rolesWrapper, IOedRoleAssignmentWrapper oedRolesWrapper, IParties partiesWrapper, IProfile profileWrapper, IMemoryCache memoryCache, IOptions<GeneralSettings> settings, IRegisterService registerService, IPolicyRetrievalPoint prp, IAccessManagementWrapper accessManagementWrapper, IFeatureManager featureManager, IResourceRegistry resourceRegistry)
+            IInstanceMetadataRepository policyInformationRepository, IRoles rolesWrapper, IOedRoleAssignmentWrapper oedRolesWrapper, IProfile profileWrapper, IMemoryCache memoryCache, IOptions<GeneralSettings> settings, IRegisterService registerService, IPolicyRetrievalPoint prp, IAccessManagementWrapper accessManagementWrapper, IFeatureManager featureManager, IResourceRegistry resourceRegistry)
         {
             _policyInformationRepository = policyInformationRepository;
             _rolesWrapper = rolesWrapper;
             _oedRolesWrapper = oedRolesWrapper;
-            _partiesWrapper = partiesWrapper;
             _profileWrapper = profileWrapper;
             _memoryCache = memoryCache;
             _generalSettings = settings.Value;
@@ -611,7 +608,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     subjectSsn = await GetPersonIdForUser(subjectUserId, cancellationToken);
                 }
 
-                string resourceSsn = await GetSSnForParty(resourcePartyId);
+                string resourceSsn = await GetSSnForParty(resourcePartyId, cancellationToken);
 
                 if (!string.IsNullOrWhiteSpace(subjectSsn) && !string.IsNullOrWhiteSpace(resourceSsn))
                 {
@@ -949,13 +946,13 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             return userProfile?.Party?.SSN;
         }
 
-        private async Task<string> GetSSnForParty(int partyId)
+        private async Task<string> GetSSnForParty(int partyId, CancellationToken cancellationToken = default)
         {
             string cacheKey = $"p:{partyId}";
 
             if (!_memoryCache.TryGetValue(cacheKey, out Party party))
             {
-                party = await _partiesWrapper.GetParty(partyId);
+                party = await _registerService.GetParty(partyId, cancellationToken);
 
                 var cacheEntryOptions = new MemoryCacheEntryOptions()
                .SetPriority(CacheItemPriority.High)

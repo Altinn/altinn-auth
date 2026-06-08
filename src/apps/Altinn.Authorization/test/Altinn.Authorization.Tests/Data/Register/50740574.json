@@ -1,0 +1,14 @@
+﻿{
+  "PartyTypeName": 2,
+  "SSN": "11895696716",
+  "OrgNumber": null,
+  "Person": null,
+  "Organization": null,
+  "PartyId": 50740574,
+  "PartyUuid": "00000000-0000-0000-0005-000000740574",
+  "UnitType": null,
+  "Name": "UKJENT TESTPERSON",
+  "IsDeleted": false,
+  "OnlyHierarchyElementWithNoAccess": false,
+  "ChildParties": null
+}
