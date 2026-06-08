@@ -46,36 +46,67 @@ tests {
   test(bru.getVar("requestName"), function() {
     const body = res.getBody();
     const data = body.data;
-    
+
     expect(res.status).to.equal(200);
     assert.isNotEmpty(data, "Expected data in response body to NOT be empty array");
-  
-    // Required prefix
-    const requiredPrefix = 'urn:altinn:accesspackage:innbygger-';
-  
-    // Collect any URNs that do NOT match the required prefix
-    const mismatches = body.data
-      .map((item, idx) => ({ idx, urn: item?.package?.urn }))
-      .filter(x => typeof x.urn !== 'string' || !x.urn.startsWith(requiredPrefix));
-  
-    // Assert that there are no mismatches; show details if failing
+
+    // The delegation check returns every package valid for the party's entity type
+    // (Person). For a private person that is the delegable "innbygger-" packages plus
+    // the non-delegable guardianship ("vergemal-") packages, which the guardianship
+    // authority manages and which can never be delegated. The endpoint returns those
+    // too, with result=false. No other package category (e.g. business packages) should
+    // appear for a private person. So the contract is:
+    //   - every item carries a string package.urn
+    //   - only innbygger- and guardianship (vergemal-) packages appear
+    //   - "urn:altinn:accesspackage:innbygger-" packages => result === true
+    //   - guardianship packages                          => result === false
+    const innbyggerPrefix = 'urn:altinn:accesspackage:innbygger-';
+    const vergemalPrefix = 'urn:altinn:accesspackage:vergemal-';
+
+    // One guardianship package's seed URN is missing the "vergemal-" prefix; treat it as
+    // guardianship until the seed data is corrected so this test does not depend on the typo.
+    const guardianshipUrnExceptions = ['urn:altinn:accesspackage:namsmannen-tvangsfullbyrdelse-forliksradet'];
+
+    const items = body.data.map((item, idx) => ({ idx, urn: item?.package?.urn, result: item?.result }));
+
+    // Every item must carry a string package.urn (guards against malformed payloads).
+    const missingUrn = items.filter(x => typeof x.urn !== 'string');
     expect(
-      mismatches,
-      `All packages should have the prefix "${requiredPrefix}", ` +
-      `but ${mismatches.length} packages in response has mismatch: ` +
-      mismatches.map(o => `[${o.idx}] urn=${String(o.urn)}`).join(', ')
+      missingUrn,
+      `Every item must have a string package.urn, but ${missingUrn.length} did not: ` +
+      missingUrn.map(o => `[${o.idx}]`).join(', ')
     ).to.be.empty;
-  
-    // --- Check: all "result" properties are strictly true ---
-    const nonTrueResults = body.data
-      .map((item, idx) => ({ idx, result: item?.result }))
-      .filter(x => x.result !== true);
-  
+
+    const isInnbygger = x => x.urn.startsWith(innbyggerPrefix);
+    const isGuardianship = x => x.urn.startsWith(vergemalPrefix) || guardianshipUrnExceptions.includes(x.urn);
+
+    // Only innbygger and guardianship packages are expected for a private person. Anything
+    // else (e.g. a business package leaking in) must fail the test.
+    const unexpected = items.filter(x => !isInnbygger(x) && !isGuardianship(x));
     expect(
-      nonTrueResults,
-      `All "result" properties must be true, but ${nonTrueResults.length} item(s) deviated: ` +
-      nonTrueResults.map(o => `[${o.idx}] result=${String(o.result)}`).join(', ')
+      unexpected,
+      `Only innbygger- and vergemal- packages are expected for a private person, but ${unexpected.length} other package(s) appeared: ` +
+      unexpected.map(o => `[${o.idx}] urn=${String(o.urn)}`).join(', ')
     ).to.be.empty;
-  
+
+    // Every innbygger package must be delegable (result === true).
+    const innbyggerNotTrue = items.filter(x => isInnbygger(x) && x.result !== true);
+    expect(
+      innbyggerNotTrue,
+      `All "${innbyggerPrefix}" packages must have result=true, but ${innbyggerNotTrue.length} deviated: ` +
+      innbyggerNotTrue.map(o => `[${o.idx}] urn=${String(o.urn)} result=${String(o.result)}`).join(', ')
+    ).to.be.empty;
+
+    // Every guardianship package must be non-delegable (result === false).
+    const guardianshipNotFalse = items.filter(x => isGuardianship(x) && x.result !== false);
+    expect(
+      guardianshipNotFalse,
+      `All guardianship packages must have result=false, but ${guardianshipNotFalse.length} deviated: ` +
+      guardianshipNotFalse.map(o => `[${o.idx}] urn=${String(o.urn)} result=${String(o.result)}`).join(', ')
+    ).to.be.empty;
+
+    // Sanity: the response must actually contain delegable innbygger packages.
+    assert.isNotEmpty(items.filter(isInnbygger), `Expected at least one "${innbyggerPrefix}" package in the response`);
+
   });
 }
