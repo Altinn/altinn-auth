@@ -11,6 +11,7 @@ using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Host.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 
@@ -18,8 +19,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    private static readonly SortedSet<ulong> _sqlHashes = [];
+    private static readonly IMemoryCache _sqlHashCache = new MemoryCache(new MemoryCacheOptions());
     private static bool _configureTracing = false;
+    private static readonly MemoryCacheEntryOptions _cacheOptions = new()
+    {
+        SlidingExpiration = TimeSpan.FromHours(6)
+    };
 
     public static IServiceCollection AddAccessManagementDatabase(this IServiceCollection services, Action<AccessManagementDatabaseOptions> configureOptions)
     {
@@ -73,6 +78,7 @@ public static class ServiceCollectionExtensions
                         activity.SetTag("net.peer.ip", null);
                         activity.SetTag("net.peer.name", null);
                         activity.SetTag("net.transport", null);
+                        activity.SetTag("db.query.text", null);
 
                         // Change statement tag to hash large queries and log the full query once per application lifetime
                         // Tags get truncated if # > 8192 by some component before they reach the app insights GUI (remember this happens only
@@ -80,20 +86,26 @@ public static class ServiceCollectionExtensions
                         // not follow the otel standard for tag (span) names, so the npgsql standard is expanded by adding a number
                         // to "db.statement". This name without a number is recognized by app insights and translated to "Command".
                         // The names with a number are shown as custom properties in app insights.
-                        var commandSpan = GetCommandTextHash(command.CommandText).AsSpan();
-                        int maxTags = 8; // Arbitrary max number of tags. Effective total is maxTags * maxTagLength
-                        int maxTagLength = 8192; // Truncation limit observed in the value chain before the app insights GUI
-                        for (int i = 0; i < maxTags; i++)
+                        (var hash, var firstHash) = GetCommandTextHash(command.CommandText);
+                        if (firstHash)
                         {
-                            activity.SetTag(
-                                $"db.statement{(i > 0 ? i : null)}",
-                                commandSpan.Slice(i * maxTagLength, Math.Min(maxTagLength, commandSpan.Length - (i * maxTagLength))).ToString());
-                            if ((i + 1) * maxTagLength >= commandSpan.Length)
+                            activity.AddBaggage("firsthash", "true");
+                            var commandSpan = command.CommandText.AsSpan();
+                            int maxTags = 8; // Arbitrary max number of tags. Effective total is maxTags * maxTagLength
+                            int maxTagLength = 8192; // Truncation limit observed in the value chain before the app insights GUI
+                            for (int i = 0; i < maxTags; i++)
                             {
-                                break;
+                                activity.SetTag(
+                                    $"db.statement{(i > 0 ? i : null)}",
+                                    commandSpan.Slice(i * maxTagLength, Math.Min(maxTagLength, commandSpan.Length - (i * maxTagLength))).ToString());
+                                if ((i + 1) * maxTagLength >= commandSpan.Length)
+                                {
+                                    break;
+                                }
                             }
                         }
 
+                        activity.AddTag("db.hash", hash.ToString());
                         if (command.Parameters.Count > 0)
                         {
                             activity.AddTag("db.command.parameters", GetParametersForLogging(command));
@@ -104,33 +116,17 @@ public static class ServiceCollectionExtensions
         }
     }
 
-    private static string GetCommandTextHash(string commandText)
+    private static (ulong Hash, bool FirstHash) GetCommandTextHash(string commandText)
     {
-        if (commandText.Length < 1000)
-        {
-            return commandText;
-        }
-
         ulong hash = XxHash64Utf8(commandText);
-        lock (_sqlHashes)
+        string cacheKey = $"S_{hash}";
+        if (_sqlHashCache.TryGetValue(cacheKey, out _))
         {
-            if (_sqlHashes.Count > 4000)
-            {
-                // Can't keep track of more than 4000 unique SQL statement hashes
-                return commandText;
-            }
-
-            if (!_sqlHashes.Contains(hash))
-            {
-                _sqlHashes.Add(hash);
-
-                // Log the full command text first occurrence of this hash
-                return hash + ":" + commandText;
-            }
+            return (hash, false);
         }
 
-        // Return hash + truncated command text
-        return hash + "-" + commandText.Substring(0, 200);
+        _sqlHashCache.Set(cacheKey, 0, _cacheOptions);
+        return (hash, true);
     }
 
     private static string GetParametersForLogging(Npgsql.NpgsqlCommand command)
@@ -150,7 +146,7 @@ public static class ServiceCollectionExtensions
             return "Could not format parameters: " + ex.Message;
         }
 
-        if (parameters[parameters.Length - 1] == ';')
+        if (parameters[^1] == ';')
         {
             parameters.Length--; // Remove trailing ';'
         }
@@ -168,6 +164,7 @@ public static class ServiceCollectionExtensions
 
         int i = 0;
         int maxToLog = 5;
+        parameters.Append('{');
         if (parameter.Value is System.Collections.IEnumerable enumerable)
         {
             foreach (var parameterValue in enumerable)
@@ -185,10 +182,12 @@ public static class ServiceCollectionExtensions
             throw new NotImplementedException($"Array parameter logging not implemented for type {parameter.Value?.GetType().FullName}");
         }
 
-        if (parameters[parameters.Length - 1] == ':')
+        if (parameters[^1] == ':')
         {
             parameters.Length--; // Remove trailing ':'
         }
+
+        parameters.Append('}');
     }
 
     private static string MaskSensitiveValue(string value)
