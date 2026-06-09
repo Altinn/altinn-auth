@@ -277,6 +277,14 @@ public class AuthorizedPartiesServiceEf(
                     }
 
                     break;
+                case AltinnXacmlConstants.MatchAttributeIdentifiers.IdPortenEmail:
+                    var emailUser = await repoService.GetEntityByIdPortenEmailId(partyAttribute.Value, cancellationToken);
+                    if (emailUser != null)
+                    {
+                        partyUuids.Add(emailUser.Id);
+                    }
+
+                    break;
                 case AltinnXacmlConstants.MatchAttributeIdentifiers.EnterpriseUserName:
                     var enterpriseUserEntity = await repoService.GetEntityByUsername(partyAttribute.Value, cancellationToken);
                     if (enterpriseUserEntity != null)
