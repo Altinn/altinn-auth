@@ -23,6 +23,7 @@ using Xunit;
 namespace Altinn.Platform.Authorization.IntegrationTests
 {
     [Collection("Our Test Collection #1")]
+    [UnitTest]
     public class PolicyRetrievalPointTest
     {
         private const string ORG = "ttd";

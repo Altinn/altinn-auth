@@ -7,6 +7,7 @@ using Altinn.Platform.Register.Models;
 
 namespace Altinn.Platform.Authorization.IntegrationTests
 {
+    [IntegrationTest]
     public class PartiesControllerTest : IClassFixture<AuthorizationApiFixture>
     {
         private readonly HttpClient _client;

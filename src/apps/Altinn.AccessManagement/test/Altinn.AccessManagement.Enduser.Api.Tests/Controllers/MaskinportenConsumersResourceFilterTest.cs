@@ -25,6 +25,7 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Controllers;
 /// Without filters the endpoint returns both resources (A with two permissions). The tests assert
 /// that supplying <c>consumer</c> and/or <c>resource</c> narrows the result accordingly.
 /// </remarks>
+[IntegrationTest]
 public class MaskinportenConsumersResourceFilterTest : IClassFixture<ApiFixture>
 {
     private const string Route = "accessmanagement/api/v1/enduser/maskinportenconsumers";

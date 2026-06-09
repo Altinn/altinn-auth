@@ -43,6 +43,7 @@ public partial class ConnectionsControllerTest
     /// Scope enforcement tests ensure only to-others write scope is accepted.
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class AddRightholder : IClassFixture<ApiFixture>
     {
         public AddRightholder(ApiFixture fixture)

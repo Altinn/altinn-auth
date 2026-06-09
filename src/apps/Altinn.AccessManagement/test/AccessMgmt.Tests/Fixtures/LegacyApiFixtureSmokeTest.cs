@@ -22,6 +22,7 @@ namespace Altinn.AccessManagement.Tests.Fixtures;
 /// Migration of the six remaining <c>WebApplicationFixture</c> consumers
 /// is tracked as follow-up sub-steps 16.4a/b.
 /// </remarks>
+[IntegrationTest]
 public class LegacyApiFixtureSmokeTest(LegacyApiFixture fixture) : IClassFixture<LegacyApiFixture>
 {
     private LegacyApiFixture Fixture { get; } = fixture;

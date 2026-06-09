@@ -14,6 +14,7 @@ using ValidationErrors = Altinn.AccessMgmt.Core.Utils.Models.ValidationErrors;
 
 namespace Altinn.AccessManagement.Api.Tests.Controllers;
 
+[UnitTest]
 public class PartyControllerTest
 {
     private static PartyController CreateSut(IPartyService svc)

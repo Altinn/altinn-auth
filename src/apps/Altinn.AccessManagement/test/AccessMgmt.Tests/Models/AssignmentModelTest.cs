@@ -2,6 +2,7 @@
 
 namespace Altinn.AccessManagement.Tests.Models
 {
+    [UnitTest]
     [Collection("Models Test")]
     public class AssignmentModelTest
     {

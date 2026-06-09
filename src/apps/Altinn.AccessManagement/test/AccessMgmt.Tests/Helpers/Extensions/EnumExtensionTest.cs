@@ -3,6 +3,7 @@ using Altinn.AccessManagement.Enums;
 
 namespace Altinn.AccessManagement.Tests.Helpers.Extensions
 {
+    [UnitTest]
     public class EnumExtensionTest
     {
         [Fact]

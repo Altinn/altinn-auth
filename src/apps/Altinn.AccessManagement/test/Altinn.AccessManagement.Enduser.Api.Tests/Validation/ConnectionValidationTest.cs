@@ -12,6 +12,7 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Validation;
 /// (see <see cref="ConnectionCombinationRulesTest"/>). Here we exercise the
 /// happy path plus at least one failing path to cover the composition.
 /// </summary>
+[UnitTest]
 public class ConnectionValidationTest
 {
     private static readonly string PartyA = Guid.NewGuid().ToString();

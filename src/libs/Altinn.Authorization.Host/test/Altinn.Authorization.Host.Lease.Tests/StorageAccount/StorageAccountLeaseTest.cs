@@ -10,6 +10,7 @@ namespace Altinn.Authorization.Host.Lease.Tests
     /// This class contains tests for acquiring leases on an Azure Storage Account using Altinn Lease.
     /// The tests validate the proper functionality of lease acquisition and management in a multithreaded environment.
     /// </summary>
+    [IntegrationTest]
     public class StorageAccountLeaseTest : FanoutTests
     {
         /// <summary>

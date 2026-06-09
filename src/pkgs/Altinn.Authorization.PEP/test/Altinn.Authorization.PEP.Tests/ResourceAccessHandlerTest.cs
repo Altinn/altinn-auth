@@ -19,6 +19,7 @@ using Xunit;
 
 namespace Altinn.Authorization.PEP.Tests
 {
+    [UnitTest]
     public class ResourceAccessHandlerTest
     {
         private readonly Mock<IHttpContextAccessor> _httpContextAccessorMock;

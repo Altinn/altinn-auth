@@ -12,6 +12,7 @@ using Xunit;
 
 namespace Altinn.Authorization.PEP.Tests
 {
+    [UnitTest]
     public class DecisionHelperTest
     {
         private const string Org = "Altinn";

@@ -3,6 +3,7 @@ using Altinn.Authorization.Models.Register;
 
 namespace Altinn.Platform.Authorization.Tests;
 
+[UnitTest]
 public class OrganizationNumberTest
 {
     // --- Parse(string) ---

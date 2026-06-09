@@ -9,6 +9,7 @@ namespace Altinn.AccessManagement.Tests.Helpers;
 /// Pins the cookie-first / Authorization-header-fallback resolution chain
 /// and the "Bearer " prefix stripping rules.
 /// </summary>
+[UnitTest]
 public class JwtTokenUtilTest
 {
     private const string CookieName = "AltinnStudioRuntime";

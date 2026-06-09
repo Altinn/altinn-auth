@@ -38,6 +38,7 @@ public partial class ConnectionsControllerTest
     /// - Jinx Arcane: MD of Kaos (queries who has access to Kaos's instances)
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class GetInstanceUsers : IClassFixture<ApiFixture>
     {
         private const string SiriusInstanceId = "urn:altinn:instance-id:50315678/b1a2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d";

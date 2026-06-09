@@ -12,6 +12,7 @@ using ValidationErrors = Altinn.AccessMgmt.Core.Utils.Models.ValidationErrors;
 
 namespace Altinn.AccessManagement.Api.Tests.Controllers;
 
+[UnitTest]
 public class InternalConnectionsControllerTest
 {
     private static readonly Guid Party = Guid.NewGuid();

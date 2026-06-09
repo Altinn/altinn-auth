@@ -10,6 +10,7 @@ namespace Altinn.Authorization.Integration.Tests;
 /// only exercised via live external Register / ResourceRegister calls, which
 /// <c>SkipIfMissingConfiguration</c> in CI without those env configs.
 /// </summary>
+[UnitTest]
 public class PaginatorStreamTest
 {
     private sealed record Item(string Name);

@@ -13,6 +13,7 @@ using ValidationErrors = Altinn.AccessMgmt.Core.Utils.Models.ValidationErrors;
 
 namespace Altinn.AccessManagement.Api.Tests.Controllers;
 
+[UnitTest]
 public class SystemUserClientDelegationControllerTest
 {
     private static ProblemInstance MakeProblem() =>

@@ -3,6 +3,7 @@ using Altinn.Platform.Authorization.Extensions;
 
 namespace Altinn.Platform.Authorization.Tests.ExtensionTests;
 
+[UnitTest]
 public class HttpClientExtensionTest
 {
     // --- PostAsync ---

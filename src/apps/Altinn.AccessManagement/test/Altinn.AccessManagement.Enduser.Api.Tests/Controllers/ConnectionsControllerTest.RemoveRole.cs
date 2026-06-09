@@ -28,6 +28,7 @@ public partial class ConnectionsControllerTest
     /// The endpoint is marked with [ApiExplorerSettings(IgnoreApi = true)] and returns NotFound()
     /// unconditionally. The tests verify this behavior and scope enforcement.
     /// </remarks>
+    [IntegrationTest]
     public class RemoveRole : IClassFixture<ApiFixture>
     {
         public RemoveRole(ApiFixture fixture)

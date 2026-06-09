@@ -18,6 +18,7 @@ namespace Altinn.AccessMgmt.Core.Tests.Utils.Mappers;
 ///   DtoMapperRolePackage.cs, DtoMapperAccessPackageDto.cs,
 ///   DtoMapperAuthorizedPartyDto.cs, RequestMapper.cs
 /// </summary>
+[UnitTest]
 public class DtoMapperTest
 {
     // ── helpers ──────────────────────────────────────────────────────────────

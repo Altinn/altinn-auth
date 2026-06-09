@@ -29,6 +29,7 @@ public partial class ConnectionsControllerTest
     /// <summary>
     /// Tests for <see cref="ConnectionsController.RemovePackages(Guid, Guid, Guid, Guid?, string, CancellationToken)"/>.
     /// </summary>
+    [IntegrationTest]
     public class RemovePackages : IClassFixture<ApiFixture>
     {
         public RemovePackages(ApiFixture fixture)

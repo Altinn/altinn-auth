@@ -18,6 +18,7 @@ namespace Altinn.AccessManagement.Tests.Controllers;
 /// Integration tests for the GetAllDelegationChanges endpoint in PolicyInformationPointController.
 /// Tests resource delegations using the database container.
 /// </summary>
+[IntegrationTest]
 public class PolicyInformationPointResourcesAndInstancesTest : IClassFixture<ApiFixture>
 {
     private readonly HttpClient _client;

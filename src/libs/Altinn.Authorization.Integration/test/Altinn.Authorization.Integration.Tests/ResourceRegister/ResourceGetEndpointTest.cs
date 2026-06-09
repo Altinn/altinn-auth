@@ -6,6 +6,7 @@ namespace Altinn.Authorization.Integration.Tests.ResourceRegistry;
 /// <summary>
 /// Contains test cases for the ResourceGetEndpoint.
 /// </summary>
+[IntegrationTest]
 public class ResourceGetEndpointTest : IClassFixture<PlatformFixture>
 {
     public ResourceGetEndpointTest(PlatformFixture fixture)

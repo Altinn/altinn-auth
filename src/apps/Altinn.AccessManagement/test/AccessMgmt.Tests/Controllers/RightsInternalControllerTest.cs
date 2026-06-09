@@ -34,6 +34,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
     /// <summary>
     /// Test class for <see cref="RightsInternalController"></see>
     /// </summary>
+    [IntegrationTest]
     public class RightsInternalControllerTest : IClassFixture<ApiFixture>
     {
         private readonly ApiFixture _fixture;
@@ -1649,6 +1650,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
     /// <see cref="IPDP"/>. Split out per recipe rule 6 (one mutually-exclusive DI
     /// configuration per class).
     /// </summary>
+    [IntegrationTest]
     public class RightsInternalControllerWithPdpMockTest : IClassFixture<ApiFixture>
     {
         private readonly ApiFixture _fixture;

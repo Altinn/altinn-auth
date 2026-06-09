@@ -3,6 +3,7 @@ using Altinn.AccessMgmt.Core.Utils.Models;
 
 namespace Altinn.AccessMgmt.Core.Tests.Utils;
 
+[UnitTest]
 public class FuzzySearchTest
 {
     private record Item(string Name, string Description);

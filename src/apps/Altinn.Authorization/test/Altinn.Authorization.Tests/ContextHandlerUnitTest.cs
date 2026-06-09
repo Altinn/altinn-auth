@@ -24,6 +24,7 @@ namespace Altinn.Platform.Authorization.UnitTests;
 /// <summary>
 /// Unit tests for <see cref="ContextHandler"/> protected methods via a testable subclass.
 /// </summary>
+[UnitTest]
 public class ContextHandlerUnitTest : IDisposable
 {
     private readonly Mock<IInstanceMetadataRepository> _policyInfoRepoMock = new();

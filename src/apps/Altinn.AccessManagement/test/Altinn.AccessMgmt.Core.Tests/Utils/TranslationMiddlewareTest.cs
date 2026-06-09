@@ -12,6 +12,7 @@ namespace Altinn.AccessMgmt.Core.Tests.Utils;
 /// X-Accept-Partial-Translation parsing, and the Content-Language
 /// response-header set behavior.
 /// </summary>
+[UnitTest]
 public class TranslationMiddlewareTest
 {
     private static async Task<HttpContext> Run(

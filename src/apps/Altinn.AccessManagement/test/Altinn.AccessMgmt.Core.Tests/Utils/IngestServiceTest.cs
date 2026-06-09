@@ -12,6 +12,7 @@ namespace Altinn.AccessMgmt.Core.Tests.Utils;
 /// <summary>
 /// <see cref="IngestService"/>
 /// </summary>
+[IntegrationTest]
 public class IngestServiceTest : IClassFixture<ApiFixture>
 {
     public ApiFixture Fixture { get; }

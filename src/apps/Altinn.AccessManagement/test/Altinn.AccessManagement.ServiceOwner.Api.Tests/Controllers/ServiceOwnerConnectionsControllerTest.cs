@@ -28,6 +28,7 @@ public class ServiceOwnerConnectionsControllerTest
     /// <summary>
     /// Tests for <see cref="ConnectionsController.AddPackages(ServiceOwnerAccessPackageDelegation, CancellationToken)"/>
     /// </summary>
+    [IntegrationTest]
     public class AddRevokePackages : IClassFixture<ApiFixture>
     {
         public AddRevokePackages(ApiFixture fixture)
@@ -733,6 +734,7 @@ public class ServiceOwnerConnectionsControllerTest
     /// A separate fixture class is required because the host is sealed before test methods run,
     /// so the flag must be configured from the constructor.
     /// </summary>
+    [IntegrationTest]
     public class RevokePackages_Altinn2RoleFlagDisabled : IClassFixture<ApiFixture>
     {
         public RevokePackages_Altinn2RoleFlagDisabled(ApiFixture fixture)

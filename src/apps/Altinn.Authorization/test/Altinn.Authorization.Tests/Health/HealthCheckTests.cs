@@ -9,6 +9,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Health
     /// <summary>
     /// Health check 
     /// </summary>
+    [IntegrationTest]
     public class HealthCheckTests : IClassFixture<AuthorizationApiFixture>
     {
         private readonly HttpClient _client;

@@ -43,6 +43,7 @@ namespace AccessMgmt.Tests.Controllers.Bff
     /// <c>WebApplicationFixture</c> provided via
     /// <c>PostgresServer.NewEFDatabase()</c>.
     /// </summary>
+    [IntegrationTest]
     public class ConsentControllerTestBFF : IAsyncLifetime
     {
         private LegacyApiFixture _fixture = null!;

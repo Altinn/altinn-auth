@@ -49,6 +49,7 @@ public partial class ConnectionsControllerTest
     /// package-only access, partial access (some rights granted, some denied), and scope enforcement.
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class CheckResource : IClassFixture<ApiFixture>
     {
         public CheckResource(ApiFixture fixture)

@@ -2,6 +2,7 @@
 
 namespace Altinn.AccessMgmt.Core.Tests.PersistenceCore;
 
+[UnitTest]
 public class PersistenceCoreFuzzySearchTest
 {
     private record Item(string Name, string Description);

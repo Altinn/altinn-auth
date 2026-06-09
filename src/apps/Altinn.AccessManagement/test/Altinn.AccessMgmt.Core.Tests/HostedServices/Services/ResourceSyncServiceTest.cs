@@ -20,6 +20,7 @@ namespace Altinn.AccessMgmt.Core.Tests.HostedServices.Services;
 /// <summary>
 /// <see cref="Altinn.AccessMgmt.Core.HostedServices.Services.ResourceSyncService"/>
 /// </summary>
+[IntegrationTest]
 public class ResourceSyncServiceTest : IClassFixture<ApiFixture>
 {
     private static readonly FakeResourceRegistry Registry = new();

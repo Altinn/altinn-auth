@@ -32,6 +32,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Tests.Extensions;
 /// the generator around a replacement type, find a public-surface
 /// alternative, or pin the package version.
 /// </remarks>
+[UnitTest]
 public class CustomMigrationsSqlGeneratorContractTests
 {
     private const string InternalOptionsTypeFullName =

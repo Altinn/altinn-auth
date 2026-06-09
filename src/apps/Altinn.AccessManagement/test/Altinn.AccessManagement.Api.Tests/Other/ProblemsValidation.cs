@@ -2,6 +2,7 @@
 
 namespace Altinn.AccessManagement.Api.Tests.Other;
 
+[UnitTest]
 public class ProblemsValidation
 {
     [Fact]

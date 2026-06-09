@@ -16,6 +16,7 @@ using Xunit;
 
 namespace Altinn.Platform.Authorization.IntegrationTests
 {
+    [IntegrationTest]
     public class Xacml30ConformanceTests : IClassFixture<WebApplicationFactory<DecisionController>>
     {
         private readonly WebApplicationFactory<DecisionController> _factory;

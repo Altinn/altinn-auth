@@ -22,6 +22,7 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Controllers;
 /// As in the suppliers integration tests, ApiFixture's permissive PDP means the access-based 403 is not reproduced
 /// here (covered by EndUserResourceAccessHandlerTest); the scope-based 403 is asserted.
 /// </summary>
+[IntegrationTest]
 public class MaskinportenConsumersControllerIntegrationTest : IClassFixture<ApiFixture>
 {
     private const string Route = "accessmanagement/api/v1/enduser/maskinportenconsumers";

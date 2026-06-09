@@ -6,6 +6,7 @@ namespace Altinn.AccessMgmt.Core.Tests.Utils;
 /// <summary>
 /// Pure unit tests for <see cref="QueryWrapper.WrapQueryResponse{T}"/>.
 /// </summary>
+[UnitTest]
 public class QueryWrapperTest
 {
     [Fact]

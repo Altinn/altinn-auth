@@ -11,6 +11,7 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.AuthorizationHelpers;
 /// Pure-unit tests for the Api.Enduser-specific
 /// <see cref="DecisionHelper"/>'s accessors and PDP validation.
 /// </summary>
+[UnitTest]
 public class DecisionHelperTest
 {
     private static HttpContext CtxWith(params Claim[] claims)

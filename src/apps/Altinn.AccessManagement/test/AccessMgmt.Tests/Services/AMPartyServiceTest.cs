@@ -14,6 +14,7 @@ namespace AccessMgmt.Tests.Services;
 /// propagation. Heavier DB-bound logic is left to integration tests against
 /// <c>EntityService</c> at the controller level.
 /// </summary>
+[UnitTest]
 public class AMPartyServiceTest
 {
     private static readonly Guid PersonTypeId = EntityTypeConstants.Person.Id;

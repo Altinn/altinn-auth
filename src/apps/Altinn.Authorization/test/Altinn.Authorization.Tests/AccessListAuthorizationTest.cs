@@ -14,6 +14,7 @@ using Xunit;
 
 namespace Altinn.Platform.Authorization.UnitTests;
 
+[UnitTest]
 public class AccessListAuthorizationTest
 {
     private static readonly Guid PartyUuid = Guid.NewGuid();

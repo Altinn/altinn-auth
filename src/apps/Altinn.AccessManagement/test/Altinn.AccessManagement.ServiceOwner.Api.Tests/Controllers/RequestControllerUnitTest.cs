@@ -22,6 +22,7 @@ namespace Altinn.AccessManagement.ServiceOwner.Api.Tests.Controllers;
 /// the ApiFixture (no Postgres / migrations), so they cover the branches even when
 /// the integration fixture is unavailable.
 /// </summary>
+[UnitTest]
 public class RequestControllerUnitTest
 {
     private static RequestController CreateController(

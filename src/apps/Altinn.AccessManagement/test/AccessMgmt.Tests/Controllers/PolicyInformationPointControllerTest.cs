@@ -22,6 +22,7 @@ namespace Altinn.AccessManagement.Tests.Controllers;
 /// <summary>
 /// Test class for <see cref="PolicyInformationPointController"></see>
 /// </summary>
+[IntegrationTest]
 public class PolicyInformationPointControllerTest : IClassFixture<ApiFixture>
 {
     private readonly HttpClient _client;

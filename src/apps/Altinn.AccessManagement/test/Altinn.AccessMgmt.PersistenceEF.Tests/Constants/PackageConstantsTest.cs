@@ -2,6 +2,7 @@
 
 namespace Altinn.AccessMgmt.PersistenceEF.Tests.Constants;
 
+[UnitTest]
 public class PackageConstantsTest
 {
     [Fact]

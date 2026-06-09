@@ -15,6 +15,7 @@ namespace Altinn.Authorization.Host.Pipeline.Tests;
 /// InvalidOperationException after exhaustion) and the outer-handler /
 /// finally-block contract in <c>Run</c>.
 /// </summary>
+[UnitTest]
 public class PipelineSinkServiceTest
 {
     private sealed class StubDescriptor(string? pipelineName) : IPipelineDescriptor

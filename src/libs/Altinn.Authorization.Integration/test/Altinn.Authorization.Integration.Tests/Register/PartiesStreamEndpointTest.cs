@@ -4,6 +4,7 @@ using Altinn.Register.Contracts;
 
 namespace Altinn.Authorization.Integration.Tests.Register;
 
+[IntegrationTest]
 public class PartiesStreamEndpointTest : IClassFixture<PlatformFixture>
 {
     public PartiesStreamEndpointTest(PlatformFixture fixture)

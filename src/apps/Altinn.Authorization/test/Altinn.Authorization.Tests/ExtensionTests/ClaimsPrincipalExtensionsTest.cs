@@ -4,6 +4,7 @@ using AltinnCore.Authentication.Constants;
 
 namespace Altinn.Platform.Authorization.Tests.ExtensionTests;
 
+[UnitTest]
 public class ClaimsPrincipalExtensionsTest
 {
     private static ClaimsPrincipal CreatePrincipal(params Claim[] claims)

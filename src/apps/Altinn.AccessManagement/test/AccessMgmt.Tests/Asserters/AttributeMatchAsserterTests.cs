@@ -11,6 +11,7 @@ namespace Altinn.AccessManagement.Tests.Asserters;
 /// <summary>
 /// summary
 /// </summary>
+[UnitTest]
 public class AttributeMatchAsserterTests
 {
     /// <summary>

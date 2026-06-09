@@ -10,6 +10,7 @@ namespace Altinn.AccessMgmt.Core.Tests.Extensions;
 /// null/default short-circuit behavior on every overload and the
 /// service-delegation contract for non-null inputs.
 /// </summary>
+[UnitTest]
 public class TranslationExtensionsTest
 {
     private sealed record Dto(string Name);

@@ -27,6 +27,7 @@ using Xunit;
 namespace Altinn.Platform.Authorization.IntegrationTests
 {
     [Collection("PolicyAdministrationPointTest")]
+    [UnitTest]
     public class PolicyAdministrationPointTest
     {
         private readonly IPolicyAdministrationPoint _pap;

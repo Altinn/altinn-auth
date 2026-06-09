@@ -8,6 +8,7 @@ namespace Altinn.AccessManagement.Tests.Utilities;
 /// Pure-logic unit tests for <see cref="IdentifierUtil"/>.
 /// All methods are static; no DI or containers required.
 /// </summary>
+[UnitTest]
 public class IdentifierUtilTest
 {
     // ── IsValidOrganizationNumber ─────────────────────────────────────────────

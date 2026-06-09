@@ -7,6 +7,7 @@ using Moq;
 
 namespace Altinn.Platform.Authorization.Tests;
 
+[UnitTest]
 public class XacmlRequestApiModelBinderTest
 {
     [Fact]

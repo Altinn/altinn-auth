@@ -32,6 +32,7 @@ using Microsoft.Extensions.Options;
 // See: overhaul part-1 step 16
 namespace Altinn.AccessManagement.Tests.Controllers;
 
+[IntegrationTest]
 public class AppsInstanceDelegationControllerTest : IClassFixture<ApiFixture>
 {
     private readonly ApiFixture _fixture;

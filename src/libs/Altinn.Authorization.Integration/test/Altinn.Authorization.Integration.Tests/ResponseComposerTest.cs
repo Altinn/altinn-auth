@@ -8,6 +8,7 @@ namespace Altinn.Authorization.Integration.Tests;
 /// <summary>
 /// Pure-unit tests for <see cref="ResponseComposer"/> (no external dependencies).
 /// </summary>
+[UnitTest]
 public class ResponseComposerTest
 {
     // ── Handle ────────────────────────────────────────────────────────────────

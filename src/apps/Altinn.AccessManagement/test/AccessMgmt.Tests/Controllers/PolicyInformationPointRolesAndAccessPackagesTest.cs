@@ -12,6 +12,7 @@ namespace Altinn.AccessManagement.Tests.Controllers;
 /// Integration tests for the GetRolesAndAccessPackages endpoint in PolicyInformationPointController.
 /// Reuses test data from <see cref="TestData"/>.
 /// </summary>
+[IntegrationTest]
 public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<ApiFixture>
 {
     private readonly HttpClient _client;

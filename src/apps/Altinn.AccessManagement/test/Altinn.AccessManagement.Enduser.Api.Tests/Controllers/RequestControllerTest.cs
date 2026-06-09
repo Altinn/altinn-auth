@@ -57,6 +57,7 @@ public class RequestControllerTest
 
     #region POST — Create resource request
 
+    [IntegrationTest]
     public class CreateResourceRequest : IClassFixture<ApiFixture>
     {
         private static readonly ResourceType TestResourceType = new()
@@ -147,6 +148,7 @@ public class RequestControllerTest
 
     #region POST — Create request forbidden (no connection)
 
+    [IntegrationTest]
     public class CreateRequestForbidden : IClassFixture<ApiFixture>
     {
         public CreateRequestForbidden(ApiFixture fixture)
@@ -192,6 +194,7 @@ public class RequestControllerTest
 
     #region GET /sent — Sender sees sent requests
 
+    [IntegrationTest]
     public class GetSentRequests : IClassFixture<ApiFixture>
     {
         private static readonly Guid PendingPackageRequestId = Guid.Parse("0196b002-0000-7000-8000-000000000001");
@@ -258,6 +261,7 @@ public class RequestControllerTest
 
     #region GET /received — Receiver sees resource requests
 
+    [IntegrationTest]
     public class GetReceivedResourceRequests : IClassFixture<ApiFixture>
     {
         private static readonly ResourceType TestResourceType = new()
@@ -344,6 +348,7 @@ public class RequestControllerTest
 
     #region PUT /received/reject — Reject resource request
 
+    [IntegrationTest]
     public class RejectResourceRequest : IClassFixture<ApiFixture>
     {
         private static readonly ResourceType TestResourceType = new()
@@ -418,6 +423,7 @@ public class RequestControllerTest
 
     #region PUT /sent/withdraw — Withdraw request
 
+    [IntegrationTest]
     public class WithdrawRequest : IClassFixture<ApiFixture>
     {
         private static readonly Guid PendingPackageRequestId = Guid.Parse("0196b007-0000-7000-8000-000000000001");
@@ -472,6 +478,7 @@ public class RequestControllerTest
 
     #region PUT /sent/confirm — Confirm draft request
 
+    [IntegrationTest]
     public class ConfirmDraftRequest : IClassFixture<ApiFixture>
     {
         private static readonly Guid DraftPackageRequestId = Guid.Parse("0196b008-0000-7000-8000-000000000001");
@@ -531,6 +538,7 @@ public class RequestControllerTest
 
     #region GET /?party=&id= — GetRequest
 
+    [IntegrationTest]
     public class GetRequestById : IClassFixture<ApiFixture>
     {
         private static readonly Guid PendingPackageRequestId = Guid.Parse("0196b00a-0000-7000-8000-000000000001");
@@ -619,6 +627,7 @@ public class RequestControllerTest
 
     #region GET /sent/count — GetSentRequestsCount
 
+    [IntegrationTest]
     public class GetSentRequestsCountTest : IClassFixture<ApiFixture>
     {
         private static readonly Guid PendingPackageRequestId = Guid.Parse("0196b00b-0000-7000-8000-000000000001");
@@ -671,6 +680,7 @@ public class RequestControllerTest
 
     #region PUT /received/approve — ApproveRequest
 
+    [IntegrationTest]
     public class ApprovePackageRequestTest : IClassFixture<ApiFixture>
     {
         private static readonly Guid PendingPackageRequestId = Guid.Parse("0196b00d-0000-7000-8000-000000000001");
@@ -753,6 +763,7 @@ public class RequestControllerTest
         }
     }
 
+    [IntegrationTest]
     public class ApproveResourceRequestTest : IClassFixture<ApiFixture>
     {
         private static readonly ResourceType TestResourceType = new()
@@ -831,6 +842,7 @@ public class RequestControllerTest
 
     #region GET /received/count — GetReceivedRequestsCount
 
+    [IntegrationTest]
     public class GetReceivedRequestsCountTest : IClassFixture<ApiFixture>
     {
         private static readonly Guid PendingPackageRequestId = Guid.Parse("0196b00c-0000-7000-8000-000000000001");

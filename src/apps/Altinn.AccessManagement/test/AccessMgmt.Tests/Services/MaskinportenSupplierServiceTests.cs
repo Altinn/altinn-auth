@@ -26,6 +26,7 @@ namespace AccessMgmt.Tests.Services;
 /// This class owns an isolated, additively-seeded set of entities so each mutating test uses a distinct
 /// consumer/supplier pair and the tests stay independent of execution order.
 /// </summary>
+[IntegrationTest]
 public class MaskinportenSupplierServiceTests : IClassFixture<ApiFixture>
 {
     // Distinct org pairs so order-independent: each mutating test owns its own pair.

@@ -11,6 +11,7 @@ namespace Altinn.AccessMgmt.Core.Tests.Authorization;
 /// `urn:altinn:scope` claims (one scope per claim) and top-level "scope" claims
 /// (space-separated values, split by the provider).
 /// </summary>
+[UnitTest]
 public class DefaultAuthorizationScopeProviderTest
 {
     private static AuthorizationHandlerContext MakeContext(ClaimsPrincipal user) =>

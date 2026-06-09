@@ -2,6 +2,7 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Tests.Constants;
 
+[UnitTest]
 public class ProviderConstantsTest
 {
     [Fact]

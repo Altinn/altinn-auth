@@ -9,6 +9,7 @@ using Moq;
 
 namespace AccessMgmt.Tests.Controllers.Metadata;
 
+[UnitTest]
 public class PackagesControllerTest
 {
     private static PackagesController CreateController(

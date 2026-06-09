@@ -10,6 +10,7 @@ using DelegationPackage = Altinn.AccessMgmt.PersistenceEF.Models.DelegationPacka
 
 namespace AccessMgmt.Tests.Services;
 
+[IntegrationTest]
 public class ConnectionQueryTests : IClassFixture<PostgresFixture>
 {
     private readonly AppDbContext _db;

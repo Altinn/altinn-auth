@@ -115,6 +115,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
     /// <summary>
     /// Test class for <see cref="MaskinportenSchemaController"></see>
     /// </summary>
+    [IntegrationTest]
     public class MaskinportenSchemaControllerTest : IClassFixture<ApiFixture>
     {
         private readonly ApiFixture _fixture;
@@ -1877,6 +1878,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
     /// <see cref="PepWithPDPAuthorizationMock"/>. Split per recipe rule 6 (one
     /// mutually-exclusive DI configuration per class).
     /// </summary>
+    [IntegrationTest]
     public class MaskinportenSchemaPdpPermitControllerTest : IClassFixture<ApiFixture>
     {
         private readonly ApiFixture _fixture;

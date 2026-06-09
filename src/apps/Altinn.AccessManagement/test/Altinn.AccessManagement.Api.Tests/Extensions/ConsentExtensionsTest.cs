@@ -8,6 +8,7 @@ using Altinn.Authorization.Api.Contracts.Register;
 
 namespace Altinn.AccessManagement.Api.Tests.Extensions;
 
+[UnitTest]
 public class ConsentExtensionsTest
 {
     // ── ConsentResourceAttributeExtensions ──────────────────────────────────

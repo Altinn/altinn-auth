@@ -31,6 +31,7 @@ public partial class ConnectionsControllerTest
     /// - Assignment: HanSoloEnterprise -> LukeSkyWalker (ReporterSender / Altinn2 role)
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class RemoveAssignmentAltinn2FeatureFlagDisabled : IClassFixture<ApiFixture>
     {
         public RemoveAssignmentAltinn2FeatureFlagDisabled(ApiFixture fixture)

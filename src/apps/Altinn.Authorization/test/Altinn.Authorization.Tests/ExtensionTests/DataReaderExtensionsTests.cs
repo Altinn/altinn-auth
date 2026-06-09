@@ -7,6 +7,7 @@ using Xunit;
 
 namespace Altinn.Platform.Authorization.Tests.ExtensionTests
 {
+    [UnitTest]
     public class DataReaderExtensionsTests
     {
         private const string ColumnName = "Column";

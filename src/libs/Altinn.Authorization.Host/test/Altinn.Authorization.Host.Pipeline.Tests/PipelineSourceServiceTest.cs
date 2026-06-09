@@ -19,6 +19,7 @@ namespace Altinn.Authorization.Host.Pipeline.Tests;
 /// when a full pipeline runs in a host, so these tests pin behavior that would
 /// otherwise regress silently.
 /// </summary>
+[UnitTest]
 public class PipelineSourceServiceTest
 {
     private sealed class StubDescriptor(string? pipelineName) : IPipelineDescriptor

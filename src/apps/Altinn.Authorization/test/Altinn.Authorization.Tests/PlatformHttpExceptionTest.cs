@@ -3,6 +3,7 @@ using Altinn.Platform.Authorization.Exceptions;
 
 namespace Altinn.Platform.Authorization.Tests;
 
+[UnitTest]
 public class PlatformHttpExceptionTest
 {
     [Fact]

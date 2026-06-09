@@ -16,6 +16,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AccessMgmt.Tests.Controllers.Metadata;
 
+[IntegrationTest]
 public class MetadataTests : IClassFixture<PostgresFixture>
 {
     private readonly AppDbContext _db;

@@ -3,6 +3,7 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 
 namespace Altinn.AccessManagement.Tests.Models
 {
+    [UnitTest]
     [Collection("Models Test")]
     public class DelegationModelTest
     {

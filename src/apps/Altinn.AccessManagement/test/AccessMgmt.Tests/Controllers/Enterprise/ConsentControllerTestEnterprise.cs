@@ -36,6 +36,7 @@ namespace AccessMgmt.Tests.Controllers.Enterprise
     /// <summary>
     /// Tests for maskinporten controller for consent
     /// </summary>
+    [IntegrationTest]
     public class ConsentControllerTestEnterprise : IClassFixture<LegacyApiFixture>
     {
         private readonly Mock<IAmPartyRepository> _mockAmPartyRepository;

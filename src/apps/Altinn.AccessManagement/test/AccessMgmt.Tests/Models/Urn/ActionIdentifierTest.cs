@@ -3,6 +3,7 @@ using Altinn.AccessManagement.Core.Models.Rights;
 
 namespace Altinn.AccessManagement.Tests.Models.Urn
 {
+    [UnitTest]
     public class ActionIdentifierTest
     {
         private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };

@@ -16,6 +16,7 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Validation;
 /// Driven via <see cref="ValidationComposer"/> so we exercise exactly the same
 /// execution path as controller-level validation.
 /// </summary>
+[UnitTest]
 public class ParameterValidationTest
 {
     private static readonly string PartyA = Guid.NewGuid().ToString();

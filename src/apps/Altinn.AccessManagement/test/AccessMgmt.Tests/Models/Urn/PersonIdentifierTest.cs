@@ -11,6 +11,7 @@ namespace Altinn.AccessMgmt.Tests.Models.Urn;
 /// PersonIdentifier algorithm), length and content guards, JSON
 /// round-tripping, and equality semantics.
 /// </summary>
+[UnitTest]
 public class PersonIdentifierTest
 {
     // ── Length and content guards ─────────────────────────────────────────────

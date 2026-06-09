@@ -13,6 +13,7 @@ namespace Altinn.AccessMgmt.Core.Tests.Extensions;
 /// fallback chain and the standalone Accept-Language parser used when
 /// TranslationMiddleware hasn't run.
 /// </summary>
+[UnitTest]
 public class ControllerExtensionsTest
 {
     private sealed class TestController : ControllerBase

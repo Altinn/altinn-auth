@@ -42,6 +42,7 @@ public partial class ConnectionsControllerTest
     /// - Jinx Arcane: MD of Kaos Magic Design and Arts (receiver, from-others perspective)
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class RemoveInstance : IClassFixture<ApiFixture>
     {
         private const string SiriusInstanceIdForRemove = "urn:altinn:instance-id:50083510/e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8091";

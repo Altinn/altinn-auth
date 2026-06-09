@@ -5,6 +5,7 @@ using Xunit;
 
 namespace Altinn.Authorization.PEP.Tests
 {
+    [UnitTest]
     public class IDFormatDeterminatorTest
     {
         [Fact]

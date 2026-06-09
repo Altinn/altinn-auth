@@ -16,6 +16,7 @@ namespace AccessMgmt.Tests.Services;
 /// <see cref="AuditServiceOwnerConsumerAttribute"/> branch needs an
 /// <c>AppDbContext</c> lookup and is left to integration tests.
 /// </summary>
+[UnitTest]
 public class AuditServiceTest
 {
     private const string SystemGuid = "00000000-0000-0000-0000-000000000001";

@@ -29,6 +29,7 @@ namespace AccessMgmt.Tests.Services;
 /// NOTE: All tests now use normalized ISO 639-2 language codes (eng, nob, nno).
 /// Language code normalization should happen in the middleware before reaching the service.
 /// </summary>
+[IntegrationTest]
 public class TranslationServiceTests : IClassFixture<PostgresFixture>
 {
     private readonly AppDbContext _db;

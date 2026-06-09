@@ -35,6 +35,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
     /// <summary>
     /// Test class for <see cref="DelegationsController"></see>
     /// </summary>
+    [IntegrationTest]
     [Collection("DelegationController Tests")]
     public class DelegationsControllerTest : IClassFixture<ApiFixture>
     {

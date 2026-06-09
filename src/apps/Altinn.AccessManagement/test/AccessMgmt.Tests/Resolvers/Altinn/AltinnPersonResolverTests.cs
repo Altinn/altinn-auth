@@ -11,6 +11,7 @@ namespace Altinn.AccessManagement.Tests.Resolvers.Altinn;
 /// <summary>
 /// Resolver tests
 /// </summary>
+[UnitTest]
 [Collection(nameof(AttributeResolver))]
 public class AltinnPersonResolverTests
 {

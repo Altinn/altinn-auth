@@ -29,6 +29,7 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Controllers;
 /// - Validation of input parameters
 /// - Database persistence of revocation operations
 /// </remarks>
+[IntegrationTest]
 public class RightsInternalDelegateAndRevokeInstanceDelegation : IClassFixture<ApiFixture>
 {
     private const string InstanceId = "fa0678ad-960d-4307-aba2-ba29c9804c9d";

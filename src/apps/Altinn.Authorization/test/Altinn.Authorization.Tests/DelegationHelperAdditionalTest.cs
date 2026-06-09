@@ -10,6 +10,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests;
 /// Additional unit tests for <see cref="DelegationHelper"/> methods not covered
 /// by the existing <see cref="Altinn.Platform.Authorization.IntegrationTests.DelegationHelperTest"/>.
 /// </summary>
+[UnitTest]
 public class DelegationHelperAdditionalTest
 {
     // --- TryGetCoveredByPartyIdFromMatch ---

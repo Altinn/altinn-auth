@@ -27,6 +27,7 @@ public class ClientDelegationControllerTest
     /// <summary>
     /// <see cref="ClientDelegationController.GetMyClients(List{Guid}?, AccessManagement.Api.Enduser.Models.PagingInput, CancellationToken)"/>
     /// </summary>
+    [IntegrationTest]
     public class GetMyClients : IClassFixture<ApiFixture>
     {
         public GetMyClients(ApiFixture fixture)
@@ -230,6 +231,7 @@ public class ClientDelegationControllerTest
     /// <summary>
     /// <see cref="ClientDelegationController.GetClients(Guid, AccessManagement.Api.Enduser.Models.PagingInput, CancellationToken)"/>
     /// </summary>
+    [IntegrationTest]
     public class GetClients : IClassFixture<ApiFixture>
     {
         public GetClients(ApiFixture fixture)
@@ -465,6 +467,7 @@ public class ClientDelegationControllerTest
     /// <summary>
     /// <see cref="ClientDelegationController.GetAgents(Guid, AccessManagement.Api.Enduser.Models.PagingInput, CancellationToken)"/>
     /// </summary>
+    [IntegrationTest]
     public class GetAgents : IClassFixture<ApiFixture>
     {
         public GetAgents(ApiFixture fixture)
@@ -583,6 +586,7 @@ public class ClientDelegationControllerTest
     /// <summary>
     /// <see cref="ClientDelegationController.AddAgent(Guid, Guid?, AccessManagement.Api.Enduser.Models.PersonInput?, CancellationToken)"/>
     /// </summary>
+    [IntegrationTest]
     public class AddAgent : IClassFixture<ApiFixture>
     {
         public AddAgent(ApiFixture fixture)
@@ -669,6 +673,7 @@ public class ClientDelegationControllerTest
     /// <summary>
     /// <see cref="ClientDelegationController.RemoveAgent(Guid, Guid, bool, CancellationToken)"/>
     /// </summary>
+    [IntegrationTest]
     public class DeleteAgent : IClassFixture<ApiFixture>
     {
         public DeleteAgent(ApiFixture fixture)
@@ -797,6 +802,7 @@ public class ClientDelegationControllerTest
     /// <summary>
     /// <see cref="ClientDelegationController.RemoveAgentsClient(Guid, Guid, Guid, bool, CancellationToken)/>
     /// </summary>
+    [IntegrationTest]
     public class RemoveAnAgentsClient : IClassFixture<ApiFixture>
     {
         public RemoveAnAgentsClient(ApiFixture fixture)
@@ -967,6 +973,7 @@ public class ClientDelegationControllerTest
     /// <summary>
     /// <see cref="ClientDelegationController.DelegateAccessPackageToAgent(Guid, Guid, Guid, DelegationBatchInputDto, CancellationToken)"/>
     /// </summary>
+    [IntegrationTest]
     public class DelegateAccessPackageToAgentWithAgentRole : IClassFixture<ApiFixture>
     {
         public DelegateAccessPackageToAgentWithAgentRole(ApiFixture fixture)
@@ -1161,6 +1168,7 @@ public class ClientDelegationControllerTest
         }
     }
 
+    [IntegrationTest]
     public class DelegateAccessPackageToAgentWithCCRRole : IClassFixture<ApiFixture>
     {
         public DelegateAccessPackageToAgentWithCCRRole(ApiFixture fixture)
@@ -1359,6 +1367,7 @@ public class ClientDelegationControllerTest
     /// <see cref="ClientDelegationController.DelegateAccessPackageToAgent(Guid, Guid, Guid, DelegationBatchInputDto, CancellationToken)"/>
     /// Tests that delegating to a system user without an existing Agent Assignment creates the assignment automatically.
     /// </summary>
+    [IntegrationTest]
     public class DelegateAccessPackageToSystemUserWithoutAgentAssignment : IClassFixture<ApiFixture>
     {
         public DelegateAccessPackageToSystemUserWithoutAgentAssignment(ApiFixture fixture)
@@ -1479,6 +1488,7 @@ public class ClientDelegationControllerTest
     /// <summary>
     /// <see cref="ClientDelegationController.DeleteAgentAccessPackage(Guid, Guid, Guid, DelegationBatchInputDto, CancellationToken)"/>
     /// </summary>
+    [IntegrationTest]
     public class DeleteAgentAccessPackageAndDelegation : IClassFixture<ApiFixture>
     {
         public DeleteAgentAccessPackageAndDelegation(ApiFixture fixture)
@@ -1743,6 +1753,7 @@ public class ClientDelegationControllerTest
     /// <summary>
     /// <see cref="ClientDelegationController.DeleteAgentAccessPackage(Guid, Guid, Guid, DelegationBatchInputDto, CancellationToken)"/>
     /// </summary>
+    [IntegrationTest]
     public class DeleteAgentAccessPackage : IClassFixture<ApiFixture>
     {
         public DeleteAgentAccessPackage(ApiFixture fixture)

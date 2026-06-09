@@ -24,6 +24,7 @@ using Microsoft.Extensions.Options;
 // provides one host per IClassFixture<ApiFixture> instance.
 namespace Altinn.AccessManagement.Api.Internal.IntegrationTests.Controllers
 {
+    [IntegrationTest]
     public class PartyControllerTests : IClassFixture<ApiFixture>
     {
         private readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };

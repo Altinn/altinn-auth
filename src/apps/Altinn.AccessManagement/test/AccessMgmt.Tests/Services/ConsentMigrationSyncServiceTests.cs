@@ -14,6 +14,7 @@ namespace AccessMgmt.Tests.Services;
 /// <summary>
 /// Tests for <see cref="ConsentMigrationSyncService"/>
 /// </summary>
+[UnitTest]
 public class ConsentMigrationSyncServiceTests
 {
     private readonly Mock<IServiceProvider> _serviceProviderMock;

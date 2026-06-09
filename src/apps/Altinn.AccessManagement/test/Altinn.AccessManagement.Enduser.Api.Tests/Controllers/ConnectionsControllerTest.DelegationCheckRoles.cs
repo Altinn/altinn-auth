@@ -23,6 +23,7 @@ public partial class ConnectionsControllerTest
     /// <summary>
     /// Tests for <see cref="ConnectionsController.DelegationCheckRoles(Guid, CancellationToken)"/>.
     /// </summary>
+    [IntegrationTest]
     public class DelegationCheckRoles : IClassFixture<ApiFixture>
     {
         public DelegationCheckRoles(ApiFixture fixture)

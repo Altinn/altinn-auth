@@ -3,6 +3,7 @@ using Altinn.Authorization.Api.Contracts.AccessManagement;
 
 namespace AccessMgmt.Tests.Controllers.Metadata;
 
+[UnitTest]
 public class TypesControllerTest
 {
     private static TypesController CreateController() => new TypesController();

@@ -15,6 +15,7 @@ namespace Altinn.AccessManagement.Tests.Helpers
     /// <summary>
     /// Test class for <see cref="DelegationHelper"></see>
     /// </summary>
+    [UnitTest]
     public class DelegationHelperTest
     {
         private PolicyRetrievalPointMock _prpMock = new PolicyRetrievalPointMock(new HttpContextAccessor(), new Mock<ILogger<PolicyRetrievalPointMock>>().Object);

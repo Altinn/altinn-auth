@@ -9,6 +9,7 @@ using Moq;
 
 namespace Altinn.Platform.Authorization.Tests;
 
+[UnitTest]
 public class PolicyInformationPointTest
 {
     private readonly Mock<IPolicyRetrievalPoint> _prpMock = new();

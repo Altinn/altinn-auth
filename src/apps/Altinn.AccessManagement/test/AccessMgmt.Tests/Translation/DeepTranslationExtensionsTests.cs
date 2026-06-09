@@ -13,6 +13,7 @@ namespace AccessMgmt.Tests.Translation;
 /// <summary>
 /// Tests for DeepTranslationExtensions to ensure nested objects are properly translated.
 /// </summary>
+[IntegrationTest]
 public class DeepTranslationExtensionsTests : IClassFixture<PostgresFixture>
 {
     private readonly PostgresFixture _fixture;

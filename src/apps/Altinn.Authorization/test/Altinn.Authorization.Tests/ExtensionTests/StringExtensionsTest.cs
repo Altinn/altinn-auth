@@ -2,6 +2,7 @@
 
 namespace Altinn.Platform.Authorization.Tests.ExtensionTests;
 
+[UnitTest]
 public class StringExtensionsTest
 {
     [Fact]

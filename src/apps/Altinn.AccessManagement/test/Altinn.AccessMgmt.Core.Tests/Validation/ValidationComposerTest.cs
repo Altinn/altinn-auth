@@ -4,6 +4,7 @@ using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.AccessMgmt.Core.Tests.Validation;
 
+[UnitTest]
 public class ValidationComposerTest
 {
     // ── helpers ──────────────────────────────────────────────────────────────

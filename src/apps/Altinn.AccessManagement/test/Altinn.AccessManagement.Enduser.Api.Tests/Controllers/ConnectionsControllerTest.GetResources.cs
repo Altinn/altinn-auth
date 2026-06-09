@@ -43,6 +43,7 @@ public partial class ConnectionsControllerTest
     /// result in HTTP 403 Forbidden.
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class GetResources : IClassFixture<ApiFixture>
     {
         public GetResources(ApiFixture fixture)

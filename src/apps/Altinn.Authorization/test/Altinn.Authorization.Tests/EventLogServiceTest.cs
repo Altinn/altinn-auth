@@ -10,6 +10,7 @@ using Moq;
 
 namespace Altinn.Platform.Authorization.Tests;
 
+[UnitTest]
 public class EventLogServiceTest
 {
     private readonly Mock<IEventsQueueClient> _queueClientMock = new();

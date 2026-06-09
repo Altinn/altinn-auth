@@ -44,6 +44,7 @@ public partial class ConnectionsControllerTest
     /// - Jinx Arcane: private person delegating instance rights from herself to Thea
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class UpdateInstanceRights : IClassFixture<ApiFixture>
     {
         private const string SiriusInstanceIdForUpdate = "urn:altinn:instance-id:50401001/d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f80";

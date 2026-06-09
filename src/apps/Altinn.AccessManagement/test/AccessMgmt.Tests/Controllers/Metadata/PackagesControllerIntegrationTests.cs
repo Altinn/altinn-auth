@@ -27,6 +27,7 @@ namespace AccessMgmt.Tests.Controllers.Metadata;
 /// <c>TranslateDeepAsync</c> not recursing into nested DTOs; <c>Accept-Language</c>
 /// locale fallback; empty-vs-missing disambiguation in multi-branch actions.
 /// </summary>
+[IntegrationTest]
 public class PackagesControllerIntegrationTests : IClassFixture<PostgresFixture>
 {
     // Seed-data IDs / URNs / names — kept in sync with the Bruno collection so a

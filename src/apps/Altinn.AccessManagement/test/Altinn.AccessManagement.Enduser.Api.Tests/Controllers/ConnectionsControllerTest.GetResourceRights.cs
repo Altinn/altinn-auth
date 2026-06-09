@@ -44,6 +44,7 @@ public partial class ConnectionsControllerTest
     /// the direction of the query (to-others vs from-others). Mismatched scopes result in HTTP 403 Forbidden.
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class GetResourceRights : IClassFixture<ApiFixture>
     {
         public GetResourceRights(ApiFixture fixture)

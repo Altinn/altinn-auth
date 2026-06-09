@@ -27,6 +27,7 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Controllers;
 /// Reuses the pre-seeded <see cref="TestEntities"/> organizations and seeds only the supplier
 /// assignments needed by the list/remove cases, using distinct pairs so the tests stay order-independent.
 /// </summary>
+[IntegrationTest]
 public class MaskinportenSuppliersControllerIntegrationTest : IClassFixture<ApiFixture>
 {
     private const string Route = "accessmanagement/api/v1/enduser/maskinportensuppliers";

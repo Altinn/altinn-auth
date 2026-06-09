@@ -23,6 +23,7 @@ using Xunit;
 
 namespace Altinn.Platform.Authorization.UnitTests;
 
+[UnitTest]
 public class DelegationContextHandlerTest : IDisposable
 {
     private static readonly Uri StringDataType = new("http://www.w3.org/2001/XMLSchema#string");

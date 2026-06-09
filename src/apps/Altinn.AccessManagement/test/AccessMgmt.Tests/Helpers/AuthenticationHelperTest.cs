@@ -13,6 +13,7 @@ namespace Altinn.AccessManagement.Tests.Helpers;
 /// path for system-user uuids, and the GetAuthenticatedPartyUuid
 /// composition (PartyUuid wins over SystemUserUuid when both present).
 /// </summary>
+[UnitTest]
 public class AuthenticationHelperTest
 {
     private static HttpContext CtxWith(params Claim[] claims)

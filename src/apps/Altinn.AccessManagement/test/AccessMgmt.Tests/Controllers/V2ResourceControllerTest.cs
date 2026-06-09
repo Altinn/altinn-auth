@@ -24,6 +24,7 @@ namespace Altinn.AccessManagement.Tests.Controllers;
 /// <summary>
 /// <see cref="ResourceController"/>
 /// </summary>
+[IntegrationTest]
 public class V2ResourceControllerTest : IClassFixture<LegacyApiFixture>
 {
     private readonly HttpClient _client;

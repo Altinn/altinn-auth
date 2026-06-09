@@ -40,6 +40,7 @@ public partial class ConnectionsControllerTest
     /// - Josephine Yvonnesdottir: rightholder for Kaos (views from her perspective, from-others)
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class GetInstanceRights : IClassFixture<ApiFixture>
     {
         private const string SiriusInstanceId = "urn:altinn:instance-id:50315678/b1a2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d";

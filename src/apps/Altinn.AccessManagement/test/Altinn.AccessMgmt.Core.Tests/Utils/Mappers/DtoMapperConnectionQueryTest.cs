@@ -13,6 +13,7 @@ namespace Altinn.AccessMgmt.Core.Tests.Utils.Mappers;
 /// <c>ConvertToAgentDto</c>, and all <c>Extract*</c> instance methods.
 /// No database or container required.
 /// </summary>
+[UnitTest]
 public class DtoMapperConnectionQueryTest
 {
     // ── known EntityTypeConstants / EntityVariantConstants ids ────────────────

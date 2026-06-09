@@ -9,6 +9,7 @@ namespace Altinn.AccessMgmt.Core.Tests.PersistenceCore;
 /// produces are load-bearing: a wrong key silently misweights real search
 /// results.
 /// </summary>
+[UnitTest]
 public class SearchPropertyBuilderTest
 {
     // ── test models ──────────────────────────────────────────────────────────

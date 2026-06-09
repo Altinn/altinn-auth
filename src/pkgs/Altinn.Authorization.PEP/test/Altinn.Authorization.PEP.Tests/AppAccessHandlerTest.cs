@@ -15,6 +15,7 @@ using Moq;
 
 namespace Altinn.Authorization.PEP.Tests
 {
+    [UnitTest]
     public class AppAccessHandlerTest
     {
         private readonly Mock<IHttpContextAccessor> _httpContextAccessorMock;

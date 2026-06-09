@@ -38,6 +38,7 @@ public partial class ConnectionsControllerTest
     /// - Jinx Arcane: MD of Kaos (can add packages to Kaos's rightholder connections)
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class AddAssignmentPackage : IClassFixture<ApiFixture>
     {
         public AddAssignmentPackage(ApiFixture fixture)

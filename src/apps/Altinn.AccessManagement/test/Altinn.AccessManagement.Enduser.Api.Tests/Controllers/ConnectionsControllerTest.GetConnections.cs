@@ -34,6 +34,7 @@ public partial class ConnectionsControllerTest
     /// that don't match from/to result in 403 Forbidden.
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class GetConnections : IClassFixture<ApiFixture>
     {
         public GetConnections(ApiFixture fixture)

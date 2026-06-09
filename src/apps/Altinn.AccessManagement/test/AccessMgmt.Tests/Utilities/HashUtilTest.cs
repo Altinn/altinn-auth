@@ -5,6 +5,7 @@ namespace Altinn.AccessManagement.Tests.Utilities;
 /// <summary>
 /// Pure-logic unit tests for <see cref="HashUtil.GetOrderIndependentHashCode{T}"/>.
 /// </summary>
+[UnitTest]
 public class HashUtilTest
 {
     [Fact]

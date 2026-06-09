@@ -14,6 +14,7 @@ using ValidationErrors = Altinn.AccessMgmt.Core.Utils.Models.ValidationErrors;
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Controllers;
 
 #pragma warning disable SA1649 // file holds both Consumers/Suppliers controller tests
+[UnitTest]
 public class MaskinportenConsumersControllerTest
 {
     private static readonly Guid Party = Guid.NewGuid();
@@ -245,6 +246,7 @@ public class MaskinportenConsumersControllerTest
     #endregion
 }
 
+[UnitTest]
 public class MaskinportenSuppliersControllerTest
 {
     private static readonly Guid Party = Guid.NewGuid();

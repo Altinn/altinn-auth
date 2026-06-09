@@ -52,6 +52,7 @@ public partial class ConnectionsControllerTest
     /// - Malin Emilie: managing director of Dumbo Adventures (has DAGL role, can delegate)
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class AddInstanceRights : IClassFixture<ApiFixture>
     {
         private const string SiriusInstanceId = "urn:altinn:instance-id:50083510/c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f";

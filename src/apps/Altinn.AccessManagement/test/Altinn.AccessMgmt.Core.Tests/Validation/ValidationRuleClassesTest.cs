@@ -10,6 +10,7 @@ namespace Altinn.AccessMgmt.Core.Tests.Validation;
 /// <see cref="RoleValidation"/>, <see cref="AssignmentPackageValidation"/>,
 /// <see cref="DelegationValidation"/> and <see cref="PackageValidation"/>.
 /// </summary>
+[UnitTest]
 public class ValidationRuleClassesTest
 {
     // ── helpers ──────────────────────────────────────────────────────────────

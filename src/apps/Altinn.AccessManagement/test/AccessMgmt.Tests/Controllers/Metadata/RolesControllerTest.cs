@@ -8,6 +8,7 @@ using Moq;
 
 namespace AccessMgmt.Tests.Controllers.Metadata;
 
+[UnitTest]
 public class RolesControllerTest
 {
     // A valid role code that exists in RoleConstants (rettighetshaver).

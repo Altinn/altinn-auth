@@ -12,6 +12,7 @@ using Xunit;
 
 namespace Altinn.Platform.Authorization.IntegrationTests;
 
+[IntegrationTest]
 public class AccessListAuthorizationControllerTest : IClassFixture<AuthorizationApiFixture>
 {
     private static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };

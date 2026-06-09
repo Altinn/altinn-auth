@@ -57,6 +57,7 @@ public partial class ConnectionsControllerTest
     /// that correct scopes are enforced, and that missing delegations or invalid resources produce appropriate errors.
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class UpdateResourceRights : IClassFixture<ApiFixture>
     {
         public UpdateResourceRights(ApiFixture fixture)

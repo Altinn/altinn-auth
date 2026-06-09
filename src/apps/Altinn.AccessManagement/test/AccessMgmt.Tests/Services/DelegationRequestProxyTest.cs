@@ -10,6 +10,7 @@ using Moq;
 
 namespace AccessMgmt.Tests.Services;
 
+[UnitTest]
 public class DelegationRequestProxyTest
 {
     private static DelegationRequestProxy CreateSut(

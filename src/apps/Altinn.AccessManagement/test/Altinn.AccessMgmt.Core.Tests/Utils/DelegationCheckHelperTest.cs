@@ -10,6 +10,7 @@ namespace Altinn.AccessMgmt.Core.Tests.Utils;
 /// <summary>
 /// Pure unit tests for <see cref="DelegationCheckHelper"/>.
 /// </summary>
+[UnitTest]
 public class DelegationCheckHelperTest
 {
     // ── IsAccessListModeEnabledAndApplicable ─────────────────────────────────

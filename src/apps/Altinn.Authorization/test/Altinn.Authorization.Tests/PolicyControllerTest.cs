@@ -20,6 +20,7 @@ using Xunit;
 namespace Altinn.Platform.Authorization.IntegrationTests
 {
     [Collection("Our Test Collection #1")]
+    [IntegrationTest]
     public class PolicyControllerTest : IClassFixture<AuthorizationApiFixture>
     {
         private readonly HttpClient _client;

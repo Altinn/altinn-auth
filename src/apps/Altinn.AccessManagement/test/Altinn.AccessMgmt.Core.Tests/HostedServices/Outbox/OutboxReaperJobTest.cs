@@ -10,6 +10,7 @@ namespace Altinn.AccessMgmt.Core.Tests.HostedServices.Outbox;
 /// <summary>
 /// <see cref="OutboxReaperJob"/>
 /// </summary>
+[IntegrationTest]
 public class OutboxReaperJobTest : IClassFixture<ApiFixture>
 {
     public ApiFixture Fixture { get; }

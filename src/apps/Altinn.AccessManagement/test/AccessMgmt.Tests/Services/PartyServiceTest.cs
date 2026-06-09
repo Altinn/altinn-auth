@@ -17,6 +17,7 @@ namespace AccessMgmt.Tests.Services;
 /// meaningful; these tests verify the validation branches against a real
 /// (seeded) database.
 /// </summary>
+[IntegrationTest]
 public class PartyServiceTest : IClassFixture<PostgresFixture>
 {
     private readonly AppDbContext _db;

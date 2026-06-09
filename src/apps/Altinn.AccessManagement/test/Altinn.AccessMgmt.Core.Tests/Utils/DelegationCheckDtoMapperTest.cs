@@ -6,6 +6,7 @@ namespace Altinn.AccessMgmt.Core.Tests.Utils;
 /// <summary>
 /// Pure unit tests for <see cref="DtoMapper.Convert(IEnumerable{PackageDelegationCheck})"/>.
 /// </summary>
+[UnitTest]
 public class DelegationCheckDtoMapperTest
 {
     private static readonly DtoMapper Mapper = new();

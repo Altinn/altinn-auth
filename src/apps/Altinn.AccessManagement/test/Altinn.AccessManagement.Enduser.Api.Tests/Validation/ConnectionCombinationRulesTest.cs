@@ -12,6 +12,7 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Validation;
 /// exercised through controller integration tests. See
 /// <c>docs/testing/TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/Coverage_Enduser_Api.md</c> for the coverage rationale.
 /// </summary>
+[UnitTest]
 public class ConnectionCombinationRulesTest
 {
     private static readonly string PartyA = Guid.NewGuid().ToString();

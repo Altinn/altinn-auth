@@ -2,6 +2,7 @@
 
 namespace Altinn.AccessManagement.Tests.Helpers.Extensions
 {
+    [UnitTest]
     public class GuidExtensionTest
     {
         [Fact]

@@ -21,6 +21,7 @@ public class InternalConnectionsControllerTest
     /// <summary>
     /// <see cref="InternalConnectionsController.PostSelfIdentifiedUsers(Guid, Guid, CancellationToken)"/>
     /// </summary>
+    [IntegrationTest]
     public class PostSelfIdentifiedUsers : IClassFixture<ApiFixture>
     {
         public PostSelfIdentifiedUsers(ApiFixture fixture)

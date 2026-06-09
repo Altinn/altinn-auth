@@ -24,6 +24,7 @@ namespace Altinn.AccessManagement.Tests
     /// <summary>
     /// Test class for <see cref="PolicyAdministrationPoint"></see>
     /// </summary>
+    [UnitTest]
     [Collection("PolicyAdministrationPointTest")]
     public class PolicyAdministrationPointTest
     {

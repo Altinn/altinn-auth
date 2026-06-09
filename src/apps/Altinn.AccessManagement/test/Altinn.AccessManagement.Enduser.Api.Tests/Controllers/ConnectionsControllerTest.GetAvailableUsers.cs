@@ -49,6 +49,7 @@ public partial class ConnectionsControllerTest
     /// to the party and are eligible for new delegations, and that the correct write scope is required.
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class GetAvailableUsers : IClassFixture<ApiFixture>
     {
         public GetAvailableUsers(ApiFixture fixture)

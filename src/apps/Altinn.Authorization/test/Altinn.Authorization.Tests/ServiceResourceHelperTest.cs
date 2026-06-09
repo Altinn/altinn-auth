@@ -2,6 +2,7 @@
 
 namespace Altinn.Platform.Authorization.Tests;
 
+[UnitTest]
 public class ServiceResourceHelperTest
 {
     [Theory]

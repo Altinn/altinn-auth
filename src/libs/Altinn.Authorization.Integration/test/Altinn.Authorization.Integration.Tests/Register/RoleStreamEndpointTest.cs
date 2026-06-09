@@ -3,6 +3,7 @@ using Altinn.Authorization.Integration.Platform.Register;
 
 namespace Altinn.Authorization.Integration.Tests.Register;
 
+[IntegrationTest]
 public class RoleStreamEndpointTest : IClassFixture<PlatformFixture>
 {
     public RoleStreamEndpointTest(PlatformFixture fixture)

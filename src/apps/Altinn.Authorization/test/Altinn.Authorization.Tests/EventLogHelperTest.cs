@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Altinn.Platform.Authorization.Tests;
 
+[UnitTest]
 public class EventLogHelperTest
 {
     private static XacmlContextRequest CreateContextRequest(

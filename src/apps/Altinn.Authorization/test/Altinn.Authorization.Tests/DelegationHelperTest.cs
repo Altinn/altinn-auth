@@ -17,6 +17,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
     /// <summary>
     /// Test class for <see cref="ContextHandler"></see>
     /// </summary>
+    [UnitTest]
     public class DelegationHelperTest
     {
         private PolicyRetrievalPointMock _prpMock;

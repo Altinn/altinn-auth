@@ -10,6 +10,7 @@ using Moq;
 
 namespace Altinn.Authorization.Tests
 {
+    [UnitTest]
     public class EventsQueueClientTests
     {
         private EventsQueueClient CreateClient()

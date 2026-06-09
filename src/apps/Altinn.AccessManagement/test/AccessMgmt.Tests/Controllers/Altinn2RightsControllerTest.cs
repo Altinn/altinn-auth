@@ -33,6 +33,7 @@ namespace Altinn.AccessManagement.Tests.Controllers;
 /// <summary>
 /// Controller test for <see cref="RightsInternalController"/>
 /// </summary>
+[IntegrationTest]
 public class Altinn2RightsControllerTest : IClassFixture<ApiFixture>
 {
     private readonly ApiFixture _fixture;

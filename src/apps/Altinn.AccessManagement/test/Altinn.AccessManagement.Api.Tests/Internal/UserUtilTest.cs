@@ -10,6 +10,7 @@ namespace Altinn.AccessManagement.Api.Tests.Internal;
 /// would NRE on missing claims or default to <c>Guid.Empty</c> instead
 /// of returning <see langword="null"/>.
 /// </summary>
+[UnitTest]
 public class UserUtilTest
 {
     private const string PartyUuidClaim = "urn:altinn:party:uuid";

@@ -21,6 +21,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests
     /// the request: <c>internal</c> for <c>authorization/api/v1/decision</c> and
     /// <c>external</c> for <c>authorization/api/v1/authorize</c>.
     /// </summary>
+    [IntegrationTest]
     public class PdpDecisionTelemetryTests : IClassFixture<AuthorizationApiFixture>
     {
         private const string ApiKindTag = "pdp.api.kind";

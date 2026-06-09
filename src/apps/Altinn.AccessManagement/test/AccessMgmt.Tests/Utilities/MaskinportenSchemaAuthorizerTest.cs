@@ -18,6 +18,7 @@ namespace Altinn.AccessManagement.Tests.Utilities;
 /// delegations, and a false-negative would block legitimate
 /// supplier/admin lookups.
 /// </summary>
+[UnitTest]
 public class MaskinportenSchemaAuthorizerTest
 {
     private const string AdminScope = AuthzConstants.SCOPE_MASKINPORTEN_DELEGATIONS_ADMIN;

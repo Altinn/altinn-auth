@@ -8,6 +8,7 @@ namespace Altinn.AccessMgmt.Core.Tests.Utils.Mappers;
 /// Pure-logic unit tests for <see cref="DtoMapperEntityVariant"/>.
 /// No containers required.
 /// </summary>
+[UnitTest]
 public class DtoMapperEntityVariantTest
 {
     // Organization TypeId from EntityTypeConstants

@@ -56,6 +56,7 @@ public partial class ConnectionsControllerTest
     /// that correct scopes are enforced, and that missing connections or invalid resources produce appropriate errors.
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class AddResourceRights : IClassFixture<ApiFixture>
     {
         public AddResourceRights(ApiFixture fixture)

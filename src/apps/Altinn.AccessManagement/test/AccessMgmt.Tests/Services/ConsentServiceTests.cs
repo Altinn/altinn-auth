@@ -21,6 +21,7 @@ namespace AccessMgmt.Tests.Services;
 /// <summary>
 /// Tests for <see cref="ConsentService"/>
 /// </summary>
+[UnitTest]
 public class ConsentServiceTests
 {
     private readonly Mock<ILogger<ConsentService>> _loggerMock;

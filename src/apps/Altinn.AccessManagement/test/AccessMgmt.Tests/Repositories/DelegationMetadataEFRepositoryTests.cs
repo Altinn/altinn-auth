@@ -20,6 +20,7 @@ namespace Altinn.AccessManagement.Tests.Repositories;
 /// Repository tests for <see cref="DelegationMetadataEF"/> focusing on cascading 
 /// assignment revoke logic for MaskinportenSchema resources and Supplier role assignments.
 /// </summary>
+[IntegrationTest]
 public class DelegationMetadataEFRepositoryTests : IAsyncLifetime
 {
     private PostgresDatabase? _database;

@@ -18,6 +18,7 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Controllers;
 /// <summary>
 /// Tests for <see cref="Altinn.AccessManagement.Api.Enduser.Controllers.AuthorizedPartiesController"/>
 /// </summary>
+[IntegrationTest]
 public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
 {
     public const string Route = "accessmanagement/api/v1/enduser/authorizedparties";

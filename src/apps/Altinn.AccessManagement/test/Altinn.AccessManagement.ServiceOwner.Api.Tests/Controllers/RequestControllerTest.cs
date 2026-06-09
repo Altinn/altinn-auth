@@ -69,6 +69,7 @@ public class RequestControllerTest
 
     #region GET _meta/urns/party
 
+    [IntegrationTest]
     public class GetValidUrnsTest : IClassFixture<ApiFixture>
     {
         public GetValidUrnsTest(ApiFixture fixture)
@@ -121,6 +122,7 @@ public class RequestControllerTest
 
     #region POST (create request with resource)
 
+    [IntegrationTest]
     public class CreateResourceRequestTest : IClassFixture<ApiFixture>
     {
         private static readonly ResourceType TestResourceType = new()
@@ -302,6 +304,7 @@ public class RequestControllerTest
 
     #region POST (create request with package)
 
+    [IntegrationTest]
     public class CreatePackageRequestTest : IClassFixture<ApiFixture>
     {
         public CreatePackageRequestTest(ApiFixture fixture)
@@ -510,6 +513,7 @@ public class RequestControllerTest
 
     #region End-to-end: GetValidUrns then Create Request
 
+    [IntegrationTest]
     public class GetValidUrnsThenCreateRequestTest : IClassFixture<ApiFixture>
     {
         private static readonly ResourceType TestResourceType = new()
@@ -625,6 +629,7 @@ public class RequestControllerTest
 
     #region GET {id}/status
 
+    [IntegrationTest]
     public class GetRequestStatusTest : IClassFixture<ApiFixture>
     {
         private static readonly ResourceType TestResourceType = new()
@@ -719,6 +724,7 @@ public class RequestControllerTest
 
     #region POST /resource (query-param overload)
 
+    [IntegrationTest]
     public class CreateResourceRequestByQueryTest : IClassFixture<ApiFixture>
     {
         private static readonly ResourceType TestResourceType = new()
@@ -803,6 +809,7 @@ public class RequestControllerTest
 
     #region POST /package (query-param overload)
 
+    [IntegrationTest]
     public class CreatePackageRequestByQueryTest : IClassFixture<ApiFixture>
     {
         public CreatePackageRequestByQueryTest(ApiFixture fixture)

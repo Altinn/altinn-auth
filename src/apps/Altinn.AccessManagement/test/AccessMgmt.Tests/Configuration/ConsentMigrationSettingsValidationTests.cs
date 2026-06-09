@@ -6,6 +6,7 @@ namespace AccessMgmt.Tests.Configuration;
 /// <summary>
 /// Tests for <see cref="ConsentMigrationSettings"/> validation
 /// </summary>
+[UnitTest]
 public class ConsentMigrationSettingsValidationTests
 {
     [Fact]

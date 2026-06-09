@@ -16,6 +16,7 @@ namespace Altinn.Platform.Authorization.IntegrationTests.Repositories;
 /// silently break inserts/reads, and that codepath is bypassed by the
 /// in-process test fixture which substitutes a mock repository.
 /// </summary>
+[IntegrationTest]
 public class DelegationMetadataRepositoryIntegrationTests : IClassFixture<AuthorizationDbFixture>
 {
     private readonly AuthorizationDbFixture _db;

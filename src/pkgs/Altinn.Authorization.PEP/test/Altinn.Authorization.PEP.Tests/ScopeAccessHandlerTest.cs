@@ -11,6 +11,7 @@ using Xunit;
 
 namespace Altinn.Authorization.PEP.Tests
 {
+    [UnitTest]
     public class ScopeAccessHandlerTest
     {
         private readonly ScopeAccessHandler _sah;

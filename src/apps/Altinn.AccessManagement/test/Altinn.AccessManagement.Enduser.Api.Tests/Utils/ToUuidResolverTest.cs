@@ -27,6 +27,7 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Utils;
 /// The class is <see langword="internal"/> and accessible via
 /// <c>InternalsVisibleTo</c> on the Api.Enduser project.
 /// </summary>
+[UnitTest]
 public class ToUuidResolverTest
 {
     private static readonly Guid PersonTypeId = EntityTypeConstants.Person.Id;

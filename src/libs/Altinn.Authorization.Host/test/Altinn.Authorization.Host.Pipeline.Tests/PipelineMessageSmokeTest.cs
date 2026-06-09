@@ -9,6 +9,7 @@ namespace Altinn.Authorization.Host.Pipeline.Tests;
 /// recurrence of the empty-test-project problem (audit ID C1') that this Task
 /// just fixed for ABAC. Real Pipeline coverage tests follow under Phase D.1.
 /// </summary>
+[UnitTest]
 public class PipelineMessageSmokeTest
 {
     [Fact]

@@ -17,6 +17,7 @@ using Xunit;
 
 namespace Altinn.Platform.Authorization.IntegrationTests
 {
+    [IntegrationTest]
     public class ResourceRegistry_DecisionTests : IClassFixture<AuthorizationApiFixture>
     {
         private readonly AuthorizationApiFixture _fixture;

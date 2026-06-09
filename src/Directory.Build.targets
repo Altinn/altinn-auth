@@ -42,6 +42,16 @@
                 </PackageReference>
             </ItemGroup>
 
+            <!-- Shared [UnitTest] / [IntegrationTest] category markers, compiled
+                 into every test assembly (linked, so no project reference needed).
+                 Only meaningful for xUnit v3 (ITraitAttribute). -->
+            <ItemGroup Condition=" '$(IsTestProject)' == 'true' And '$(XUnitVersion)' == 'v3' ">
+                <Compile Include="$(MSBuildThisFileDirectory)testing\TestCategories.cs">
+                    <Link>Properties\TestCategories.cs</Link>
+                </Compile>
+                <Using Include="Altinn.Authorization.Testing" />
+            </ItemGroup>
+
             <ItemGroup Condition=" '$(IsTestLibrary)' == 'true' ">
                 <PackageReference Include="xunit.assert" Condition=" '$(XUnitVersion)' == 'v2' " />
                 <PackageReference Include="xunit.extensibility.core" Condition=" '$(XUnitVersion)' == 'v2' " />

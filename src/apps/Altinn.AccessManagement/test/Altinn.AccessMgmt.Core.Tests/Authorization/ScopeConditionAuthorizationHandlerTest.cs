@@ -12,6 +12,7 @@ namespace Altinn.AccessMgmt.Core.Tests.Authorization;
 /// matches the current request *and* the user has at least one of the rule's
 /// required scopes.
 /// </summary>
+[UnitTest]
 public class ScopeConditionAuthorizationHandlerTest
 {
     private sealed class StubAccessor(HttpContext? context) : IHttpContextAccessor

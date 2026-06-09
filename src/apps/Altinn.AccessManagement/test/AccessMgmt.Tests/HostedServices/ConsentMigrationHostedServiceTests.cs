@@ -14,6 +14,7 @@ namespace AccessMgmt.Tests.HostedServices;
 /// <summary>
 /// Tests for <see cref="ConsentMigrationHostedService"/>
 /// </summary>
+[UnitTest]
 public class ConsentMigrationHostedServiceTests : IDisposable
 {
     private readonly Mock<IConsentMigrationSyncService> _syncServiceMock;

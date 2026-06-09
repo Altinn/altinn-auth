@@ -3,6 +3,7 @@ using Altinn.AccessMgmt.Core.Utils;
 
 namespace Altinn.AccessMgmt.Core.Tests.Utils;
 
+[UnitTest]
 public class OrgUtilTest
 {
     // ── GetMaskinportenScopes ────────────────────────────────────────────────

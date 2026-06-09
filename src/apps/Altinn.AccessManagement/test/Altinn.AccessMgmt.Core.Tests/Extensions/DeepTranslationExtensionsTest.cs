@@ -17,6 +17,7 @@ namespace Altinn.AccessMgmt.Core.Tests.Extensions;
 /// ProviderTypeDto, ResourceDto.Type as ResourceTypeDto) are translated
 /// via the singular <see cref="ITranslationService.TranslateAsync"/> only.
 /// </summary>
+[UnitTest]
 public class DeepTranslationExtensionsTest
 {
     private sealed class CountingTranslationService : ITranslationService

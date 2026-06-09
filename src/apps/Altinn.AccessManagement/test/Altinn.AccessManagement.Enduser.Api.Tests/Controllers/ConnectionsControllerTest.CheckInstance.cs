@@ -36,6 +36,7 @@ public partial class ConnectionsControllerTest
     /// for the sirius-skattemelding-v1 resource, and that scope and authorization enforcement works.
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class CheckInstance : IClassFixture<ApiFixture>
     {
         private const string SiriusInstanceIdForCheck = "urn:altinn:instance-id:50083510/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5f";

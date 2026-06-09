@@ -32,6 +32,7 @@ namespace Altinn.AccessManagement.Tests.Controllers
     /// <summary>
     /// Tests for AccessManagmet Resource metadata
     /// </summary>
+    [IntegrationTest]
     [Collection("ResourceController Tests")]
     public class ResourceControllerTest : IClassFixture<ApiFixture>
     {

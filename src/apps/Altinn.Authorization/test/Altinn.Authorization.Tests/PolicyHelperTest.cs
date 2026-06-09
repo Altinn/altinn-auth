@@ -6,6 +6,7 @@ using Altinn.Platform.Authorization.Models;
 
 namespace Altinn.Platform.Authorization.Tests;
 
+[UnitTest]
 public class PolicyHelperTest
 {
     // --- GetAltinnAppsPolicyPath ---

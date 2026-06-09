@@ -9,6 +9,7 @@ namespace Altinn.AccessMgmt.Core.Tests.Authorization;
 /// by <c>ScopeConditionAuthorizationHandler</c> to decide whether a given access
 /// rule applies to the current request based on querystring inspection.
 /// </summary>
+[UnitTest]
 public class ConditionalScopeTest
 {
     private sealed class StubAccessor(HttpContext? context) : IHttpContextAccessor

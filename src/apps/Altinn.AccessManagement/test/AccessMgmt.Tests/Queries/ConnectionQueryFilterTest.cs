@@ -12,6 +12,7 @@ namespace Altinn.AccessMgmt.Tests.Queries;
 /// unsafe broad-scan queries through Validate or block legitimate
 /// instance-only queries.
 /// </summary>
+[UnitTest]
 public class ConnectionQueryFilterTest
 {
     [Fact]

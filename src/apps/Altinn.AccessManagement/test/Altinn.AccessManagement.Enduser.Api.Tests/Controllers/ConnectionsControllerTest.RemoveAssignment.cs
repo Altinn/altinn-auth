@@ -48,6 +48,7 @@ public partial class ConnectionsControllerTest
     /// - Han Solo: MD of HanSoloEnterprise
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class RemoveAssignment : IClassFixture<ApiFixture>
     {
         public RemoveAssignment(ApiFixture fixture)

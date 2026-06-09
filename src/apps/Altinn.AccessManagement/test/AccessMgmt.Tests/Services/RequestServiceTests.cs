@@ -28,6 +28,7 @@ using Microsoft.Extensions.Options;
 //          (Pattern A-isolated) — not eligible for sharing.
 namespace AccessMgmt.Tests.Services;
 
+[IntegrationTest]
 public class RequestServiceTests : IClassFixture<PostgresFixture>
 {
     private static readonly AuditValues TestAudit = new(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest);

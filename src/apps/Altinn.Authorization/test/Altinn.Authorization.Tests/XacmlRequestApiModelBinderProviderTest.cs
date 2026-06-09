@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 
 namespace Altinn.Platform.Authorization.Tests;
 
+[UnitTest]
 public class XacmlRequestApiModelBinderProviderTest
 {
     [Fact]

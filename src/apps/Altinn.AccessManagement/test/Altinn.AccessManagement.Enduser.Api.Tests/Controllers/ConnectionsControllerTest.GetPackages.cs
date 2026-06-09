@@ -35,6 +35,7 @@ public partial class ConnectionsControllerTest
     /// - Thea BFF: Rightholder at Dumbo, MD of Mille (from-others perspective, querying what she receives from Dumbo)
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class GetPackages : IClassFixture<ApiFixture>
     {
         public GetPackages(ApiFixture fixture)

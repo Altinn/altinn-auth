@@ -11,6 +11,7 @@ namespace Altinn.AccessManagement.Tests.Resolvers;
 /// <c>urn:altinn:person:userid</c>) would silently break URN matching
 /// across the entire access-management surface.
 /// </summary>
+[UnitTest]
 public class BaseUrnTest
 {
     [Fact]

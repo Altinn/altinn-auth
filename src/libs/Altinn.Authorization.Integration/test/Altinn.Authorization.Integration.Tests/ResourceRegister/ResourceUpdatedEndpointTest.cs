@@ -7,6 +7,7 @@ namespace Altinn.Authorization.Integration.Tests.ResourceRegistry;
 /// Tests for the ResourceUpdatedEndpoint.
 /// </summary>
 /// <param name="fixture">The platform fixture to provide necessary services.</param>
+[IntegrationTest]
 public class ResourceUpdatedEndpointTest : IClassFixture<PlatformFixture>
 {
     public ResourceUpdatedEndpointTest(PlatformFixture fixture)

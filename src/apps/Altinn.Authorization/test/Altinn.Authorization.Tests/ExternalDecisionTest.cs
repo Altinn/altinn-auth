@@ -18,6 +18,7 @@ using Xunit;
 
 namespace Altinn.Platform.Authorization.IntegrationTests
 {
+    [IntegrationTest]
     public class ExternalDecisionTest : IClassFixture<AuthorizationApiFixture>
     {
         private readonly AuthorizationApiFixture _fixture;

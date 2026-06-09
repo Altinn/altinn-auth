@@ -37,6 +37,7 @@ public partial class ConnectionsControllerTest
     /// - Jinx Arcane: MD of Kaos (to-others perspective)
     /// </para>
     /// </remarks>
+    [IntegrationTest]
     public class GetRoles : IClassFixture<ApiFixture>
     {
         public GetRoles(ApiFixture fixture)

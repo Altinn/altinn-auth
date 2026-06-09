@@ -14,6 +14,7 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.AuthorizationHelpers;
 /// Tests for <see cref="EndUserResourceAccessHandler"/>, focused on the handling of a
 /// missing or malformed <c>party</c> query parameter (which previously surfaced as a 500).
 /// </summary>
+[UnitTest]
 public class EndUserResourceAccessHandlerTest
 {
     private static (EndUserResourceAccessHandler Handler, Mock<IPDP> Pdp, HttpContext HttpContext) CreateSut(string queryString)

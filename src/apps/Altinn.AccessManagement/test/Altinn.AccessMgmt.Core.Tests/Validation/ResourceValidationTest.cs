@@ -9,6 +9,7 @@ namespace Altinn.AccessMgmt.Core.Tests.Validation;
 /// <summary>
 /// Direct unit tests for the internal validation-rule factory methods in <see cref="ResourceValidation"/>.
 /// </summary>
+[UnitTest]
 public class ResourceValidationTest
 {
     // ── helpers ──────────────────────────────────────────────────────────────

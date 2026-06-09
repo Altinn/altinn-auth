@@ -26,6 +26,7 @@ namespace AccessMgmt.Tests.Helpers.Extensions;
 //    FluentAssertions are global usings via Directory.Build.targets, so no
 //    `using` directives are needed for them.
 // ---------------------------------------------------------------------------
+[UnitTest]
 public class ConsentStatusChangeExtensionsTests
 {
     [Fact]
