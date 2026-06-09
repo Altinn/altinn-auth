@@ -89,18 +89,6 @@ internal static partial class AccessManagementHost
                 var npgsqlMinDurationMs = builder.Configuration.GetValue("Telemetry:NpgsqlMinimumDurationMs", 100);
 
                 builder.Services.AddOpenTelemetry()
-                    .ConfigureResource(resource =>
-                    {
-                        resource
-                            .AddService(
-                                serviceName: builder.Environment.ApplicationName,
-                                serviceInstanceId: Environment.MachineName)
-                            .AddAttributes(
-                            [
-                                new KeyValuePair<string, object>("service.name", builder.Environment.ApplicationName),
-                                new KeyValuePair<string, object>("service.instance.id", Environment.MachineName)
-                            ]);
-                    })
                     .UseAzureMonitor(m =>
                     {
                         m.ConnectionString = string.Format("InstrumentationKey={0}", key);
