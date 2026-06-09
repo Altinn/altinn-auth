@@ -11,7 +11,19 @@ For each vertical the pipeline runs:
 
 1. **SonarCloud begin** *(verticals that opt in via `conf.json`)* — `dotnet-sonarscanner begin` wraps the build/test that follow so the scanner can hook MSBuild's analyzers.
 2. **Restore + build** — `dotnet build -c Release --no-incremental`. The build inside Sonar's begin/end window is what gives the scanner its data.
-3. **Test + coverage (single pass)** — `dotnet-coverage collect` wraps `dotnet test` once, writing TRX reports plus a native `.coverage` binary. See
+3. **Test + coverage (two lanes off one build)** — tests run in two
+   sequential lanes selected by the `Category` trait: a fast **unit** lane
+   (`--filter-trait "Category=Unit"`) then a slower **integration** lane
+   (`--filter-trait "Category=Integration"`). Both reuse the single build (`--no-build`) and
+   each is wrapped by `dotnet-coverage collect` into its own `.coverage`
+   binary (`coverage.unit.coverage` / `coverage.integration.coverage`) and
+   writes TRX into a per-lane `TestResults/<lane>/` subdir. The integration
+   lane runs even if the unit lane failed (but not if the build failed) so
+   coverage spans the whole suite. The Convert steps below merge
+   `TestResults/*.coverage` into one report, so the threshold gate and Sonar
+   still see whole-suite coverage. A lane that selects 0 tests in a
+   single-type vertical (e.g. `pkg: PEP` has no integration tests) exits 8,
+   which `--ignore-exit-code 8` treats as success. See
    [`TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/41_CI_Coverage_Single_Run.md`](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/41_CI_Coverage_Single_Run.md).
 4. **Convert coverage** — two `dotnet-coverage merge` calls turn the binary into cobertura (for the threshold check) and VSCoverage XML (for Sonar). No re-running tests.
 5. **SonarCloud end** *(verticals that opt in)* — uploads the analysis. Runs even if tests failed so issues found by the scanner are still posted. See [../SONARCLOUD.md](../SONARCLOUD.md).
@@ -32,7 +44,8 @@ xUnit v3 is self-hosted on MTP. A few things the pipeline relies on:
   [`TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/37_CI_MTP_Routing_TargetFramework_Clear.md`](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/37_CI_MTP_Routing_TargetFramework_Clear.md).
 - MTP exit codes:
   - `0` — all tests passed
-  - `8` — all tests were `[Skip]`ped (treated as success via
+  - `8` — no tests ran: either all were `[Skip]`ped, or a `--filter-trait`
+    lane selected 0 tests in a single-type vertical (treated as success via
     `--ignore-exit-code 8`)
   - non-zero — failures
 
