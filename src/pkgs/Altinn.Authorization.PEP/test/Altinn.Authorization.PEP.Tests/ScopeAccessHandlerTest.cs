@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 
 using Xunit;
 
-namespace UnitTests
+namespace Altinn.Authorization.PEP.Tests
 {
     public class ScopeAccessHandlerTest
     {

@@ -10,7 +10,7 @@ using Altinn.Common.PEP.Models;
 
 using Xunit;
 
-namespace UnitTests
+namespace Altinn.Authorization.PEP.Tests
 {
     public class DecisionHelperTest
     {
