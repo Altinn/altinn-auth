@@ -3,7 +3,7 @@ using System.Text;
 using Altinn.Authorization.Integration.Platform;
 
 // See: overhaul part-2 step 10
-namespace Altinn.Authorization.Integration.Tests;
+namespace Altinn.Authorization.Integration.Tests.Unit;
 
 /// <summary>
 /// Pure-unit tests for <see cref="PaginatorStream{T}"/>. The class is otherwise

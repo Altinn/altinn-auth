@@ -14,7 +14,7 @@ using Altinn.Authorization.Api.Contracts.Register;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Altinn.AccessManagement.ServiceOwner.Api.Tests.Controllers;
+namespace Altinn.AccessManagement.ServiceOwner.Api.Tests.Integration.Controllers;
 
 /// <summary>
 /// Tests for <see cref="ConnectionsController"/> in the ServiceOwner API.

@@ -1,7 +1,7 @@
 using Altinn.Authorization.Integration.Platform;
 using Altinn.Authorization.Integration.Platform.ResourceRegistry;
 
-namespace Altinn.Authorization.Integration.Tests.ResourceRegistry;
+namespace Altinn.Authorization.Integration.Tests.Integration.ResourceRegistry;
 
 /// <summary>
 /// Tests for the ResourceUpdatedEndpoint.

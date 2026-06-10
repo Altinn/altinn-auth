@@ -13,7 +13,7 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Microsoft.EntityFrameworkCore;
 
-namespace Altinn.AccessManagement.ServiceOwner.Api.Tests.Controllers;
+namespace Altinn.AccessManagement.ServiceOwner.Api.Tests.Integration.Controllers;
 
 public class RequestControllerTest
 {

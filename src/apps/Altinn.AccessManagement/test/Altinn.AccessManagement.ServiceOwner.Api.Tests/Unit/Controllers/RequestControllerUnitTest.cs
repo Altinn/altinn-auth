@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Moq;
 
-namespace Altinn.AccessManagement.ServiceOwner.Api.Tests.Controllers;
+namespace Altinn.AccessManagement.ServiceOwner.Api.Tests.Unit.Controllers;
 
 /// <summary>
 /// Pure unit tests for <see cref="RequestController.WithdrawRequest"/> that bypass the

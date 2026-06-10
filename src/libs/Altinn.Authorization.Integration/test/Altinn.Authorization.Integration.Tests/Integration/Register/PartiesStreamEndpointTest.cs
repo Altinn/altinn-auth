@@ -2,7 +2,7 @@ using Altinn.Authorization.Integration.Platform;
 using Altinn.Authorization.Integration.Platform.Register;
 using Altinn.Register.Contracts;
 
-namespace Altinn.Authorization.Integration.Tests.Register;
+namespace Altinn.Authorization.Integration.Tests.Integration.Register;
 
 [IntegrationTest]
 public class PartiesStreamEndpointTest : IClassFixture<PlatformFixture>

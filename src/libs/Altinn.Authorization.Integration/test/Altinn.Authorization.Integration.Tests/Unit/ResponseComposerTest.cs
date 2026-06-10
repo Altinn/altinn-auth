@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Altinn.Authorization.Integration.Platform;
 
-namespace Altinn.Authorization.Integration.Tests;
+namespace Altinn.Authorization.Integration.Tests.Unit;
 
 /// <summary>
 /// Pure-unit tests for <see cref="ResponseComposer"/> (no external dependencies).
