@@ -10,7 +10,7 @@ using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
+namespace Altinn.Authorization.Tests.MockServices
 {
     public class PolicyRepositoryMock : IPolicyRepository
     {

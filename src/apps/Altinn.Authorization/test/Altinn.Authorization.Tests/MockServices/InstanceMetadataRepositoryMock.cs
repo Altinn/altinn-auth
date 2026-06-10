@@ -2,12 +2,14 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
+using Altinn.Authorization.Tests.Integration;
+
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Storage.Interface.Models;
 
 using Newtonsoft.Json;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
+namespace Altinn.Authorization.Tests.MockServices
 {
     public class InstanceMetadataRepositoryMock : IInstanceMetadataRepository
     {

@@ -4,7 +4,7 @@ using System.Security.Claims;
 
 using Microsoft.IdentityModel.Tokens;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.Util
+namespace Altinn.Authorization.Tests.Util
 {
     /// <summary>
     /// Represents a mechanism for creating JSON Web tokens for use in integration tests.

@@ -6,7 +6,7 @@ using Npgsql;
 using Testcontainers.PostgreSql;
 using Xunit;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.Fixtures;
+namespace Altinn.Authorization.Tests.Fixtures;
 
 /// <summary>
 /// Provisions a PostgreSQL container, bootstraps the AuthorizationDB roles +

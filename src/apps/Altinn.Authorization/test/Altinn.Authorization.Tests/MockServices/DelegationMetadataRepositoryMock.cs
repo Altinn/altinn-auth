@@ -4,11 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Altinn.Platform.Authorization.IntegrationTests.Data;
+using Altinn.Authorization.Tests.Data;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Repositories.Interface;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
+namespace Altinn.Authorization.Tests.MockServices
 {
     public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
     {

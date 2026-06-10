@@ -2,7 +2,7 @@ using System;
 using Altinn.Authorization.Enums;
 using Altinn.Platform.Authorization.Models;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.Data;
+namespace Altinn.Authorization.Tests.Data;
 
 public static class DelegationChangesTestData
 {

@@ -8,7 +8,7 @@ using Altinn.Platform.Authorization.Services.Interface;
 
 using Authorization.Platform.Authorization.Models;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
+namespace Altinn.Authorization.Tests.MockServices
 {
     public class RolesMock : IRoles
     {

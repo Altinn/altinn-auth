@@ -3,7 +3,7 @@ using System.Security.Cryptography.X509Certificates;
 
 using Microsoft.IdentityModel.Tokens;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.Util;
+namespace Altinn.Authorization.Tests.Util;
 
 /// <summary>
 /// Provides in-memory, self-signed X.509 certificates for use in integration tests.

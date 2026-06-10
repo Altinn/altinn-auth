@@ -6,7 +6,7 @@ using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Models;
 using Microsoft.AspNetCore.Mvc.ActionConstraints;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.Data
+namespace Altinn.Authorization.Tests.Data
 {
     public static class TestDataHelper
     {

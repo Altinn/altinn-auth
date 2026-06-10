@@ -16,7 +16,7 @@ using Altinn.Platform.Register.Models;
 using Moq;
 using Xunit;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.Util
+namespace Altinn.Authorization.Tests.Util
 {
     /// <summary>
     /// Class with methods that can help with assertions of larger objects.

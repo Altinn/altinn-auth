@@ -10,11 +10,12 @@ using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Models.Register;
 using Altinn.Authorization.Models.ResourceRegistry;
+using Altinn.Authorization.Tests.Integration;
 using Altinn.Platform.Authorization.Services.Interface;
 using Altinn.ResourceRegistry.Models;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.MockServices;
+namespace Altinn.Authorization.Tests.MockServices;
 
 public class ResourceRegistryMock : IResourceRegistry
 {

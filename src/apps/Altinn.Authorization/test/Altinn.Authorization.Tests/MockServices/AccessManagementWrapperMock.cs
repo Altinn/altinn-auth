@@ -3,7 +3,7 @@ using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Authorization.Enums;
 using Altinn.Platform.Authenticaiton.Extensions;
 using Altinn.Platform.Authorization.Constants;
-using Altinn.Platform.Authorization.IntegrationTests.Data;
+using Altinn.Authorization.Tests.Data;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Models.AccessManagement;
 using Altinn.Platform.Authorization.Services.Interface;
@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.VisualBasic;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.MockServices;
+namespace Altinn.Authorization.Tests.MockServices;
 
 public class AccessManagementWrapperMock : IAccessManagementWrapper
 {

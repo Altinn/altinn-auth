@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Altinn.Platform.Authorization.IntegrationTests.Util;
+using Altinn.Authorization.Tests.Util;
 
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
+namespace Altinn.Authorization.Tests.MockServices
 {
     /// <summary>
     /// Represents a stub of <see cref="ConfigurationManager{OpenIdConnectConfiguration}"/> to be used in integration tests.

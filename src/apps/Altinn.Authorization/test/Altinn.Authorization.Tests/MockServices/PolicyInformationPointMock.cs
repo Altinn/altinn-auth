@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Altinn.Platform.Authorization.Constants;
-using Altinn.Platform.Authorization.IntegrationTests.Data;
+using Altinn.Authorization.Tests.Data;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Authorization.Services.Interface;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
+namespace Altinn.Authorization.Tests.MockServices
 {
     public class PolicyInformationPointMock : IPolicyInformationPoint
     {

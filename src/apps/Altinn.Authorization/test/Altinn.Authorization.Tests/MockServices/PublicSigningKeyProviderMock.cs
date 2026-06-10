@@ -3,11 +3,11 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Services;
-using Altinn.Platform.Authorization.IntegrationTests.Util;
+using Altinn.Authorization.Tests.Util;
 
 using Microsoft.IdentityModel.Tokens;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.MockServices;
+namespace Altinn.Authorization.Tests.MockServices;
 
 public class PublicSigningKeyProviderMock : IPublicSigningKeyProvider
 {

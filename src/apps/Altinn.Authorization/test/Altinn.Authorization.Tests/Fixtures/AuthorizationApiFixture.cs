@@ -1,6 +1,6 @@
 ﻿using Altinn.Common.AccessToken.Services;
 using Altinn.Common.Authentication.Configuration;
-using Altinn.Platform.Authorization.IntegrationTests.MockServices;
+using Altinn.Authorization.Tests.MockServices;
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Authorization.Services.Interface;
 using Altinn.Platform.Authorization.Services.Interfaces;
@@ -14,7 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.Fixtures;
+namespace Altinn.Authorization.Tests.Fixtures;
 
 /// <summary>
 /// Shared test fixture for Authorization API integration tests.

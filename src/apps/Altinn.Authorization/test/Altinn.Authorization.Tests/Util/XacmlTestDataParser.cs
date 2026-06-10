@@ -4,7 +4,7 @@ using System.Xml;
 using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.Util
+namespace Altinn.Authorization.Tests.Util
 {
     public static class XacmlTestDataParser
     {

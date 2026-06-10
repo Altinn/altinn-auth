@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Altinn.Platform.Authorization.Models.Oed;
 using Altinn.Platform.Authorization.Services.Interface;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
+namespace Altinn.Authorization.Tests.MockServices
 {
     public class OedRoleAssignmentWrapperMock : IOedRoleAssignmentWrapper
     {

@@ -4,8 +4,9 @@ using System.Threading.Tasks;
 using Altinn.Platform.Authorization.Services.Interface;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Register.Models;
+using Register = Altinn.Platform.Register;
 
-namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
+namespace Altinn.Authorization.Tests.MockServices
 {
     public class ProfileMock : IProfile
     {
