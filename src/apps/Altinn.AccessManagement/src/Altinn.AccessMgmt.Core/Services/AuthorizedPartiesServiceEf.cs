@@ -285,6 +285,14 @@ public class AuthorizedPartiesServiceEf(
                     }
 
                     break;
+                case AltinnXacmlConstants.MatchAttributeIdentifiers.LegacySelfIdentified:
+                    var legacySiUser = await repoService.GetEntityByUsername(partyAttribute.Value, cancellationToken);
+                    if (legacySiUser != null && legacySiUser.TypeId == EntityTypeConstants.SelfIdentified.Id && legacySiUser.VariantId == EntityVariantConstants.SI.Id)
+                    {
+                        partyUuids.Add(legacySiUser.Id);
+                    }
+
+                    break;
                 case AltinnXacmlConstants.MatchAttributeIdentifiers.EnterpriseUserName:
                     var enterpriseUserEntity = await repoService.GetEntityByUsername(partyAttribute.Value, cancellationToken);
                     if (enterpriseUserEntity != null)

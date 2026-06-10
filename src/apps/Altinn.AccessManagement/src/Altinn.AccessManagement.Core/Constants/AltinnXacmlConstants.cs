@@ -187,6 +187,11 @@
             public const string IdPortenEmail = "urn:altinn:person:idporten-email";
 
             /// <summary>
+            /// Legacy self-identified user
+            /// </summary>
+            public const string LegacySelfIdentified = "urn:altinn:person:legacy-selfidentified";
+
+            /// <summary>
             /// Attribute Matching Identity.
             /// </summary>
             public const string ActionId = "urn:oasis:names:tc:xacml:1.0:action:action-id";
