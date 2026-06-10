@@ -242,6 +242,7 @@ public class InternalConnectionsController(IConnectionService connectionService)
             return appClaimValue switch
             {
                 "register" => true,
+                "authentication" => true,
                 _ => false,
             };
         }
