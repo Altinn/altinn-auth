@@ -4,7 +4,7 @@ using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.Authorization.ProblemDetails;
 
-namespace AccessMgmt.Tests.Mocks
+namespace Altinn.AccessManagement.Tests.Mocks
 {
     public class ConsentRepositoryMock : IConsentRepository
     {

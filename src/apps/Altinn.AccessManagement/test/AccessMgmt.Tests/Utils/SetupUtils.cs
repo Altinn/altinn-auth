@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Net.Http;
-using Altinn.AccessManagement.Tests.Controllers;
+using Altinn.AccessManagement.Tests.Integration.Controllers;
 
 namespace Altinn.AccessManagement.Tests.Utils
 {

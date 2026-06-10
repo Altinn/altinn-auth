@@ -1,6 +1,6 @@
 ﻿using Altinn.AccessManagement.Core.Models;
 
-namespace AccessMgmt.Tests.Models.ResourceRegistry
+namespace Altinn.AccessManagement.Tests.Models.ResourceRegistry
 {
     /// <summary>
     /// Copy from Resource Registry Right model, but with AccessorUrns instead of HasPermit and CanDelegate, as this is the model used in the ResourceRegistryClientMock

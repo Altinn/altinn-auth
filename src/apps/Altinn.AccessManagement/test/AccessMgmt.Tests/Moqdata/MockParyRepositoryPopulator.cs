@@ -4,7 +4,7 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.Authorization.Api.Contracts.Register;
 using Moq;
 
-namespace AccessMgmt.Tests.Moqdata
+namespace Altinn.AccessManagement.Tests.Moqdata
 {
     /// <summary>
     /// Utility class for populating a mock IAmPartyRepository with test data
