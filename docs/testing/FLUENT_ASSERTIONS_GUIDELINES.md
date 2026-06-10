@@ -1,6 +1,6 @@
 ﻿# FluentAssertions Usage Guidelines
 
-**Status:** Adopted (see [14_Add_FluentAssertions_Package.md](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/14_Add_FluentAssertions_Package.md))
+**Status:** Adopted.
 **Scope:** All test projects in this repository.
 **Package:** `FluentAssertions` 7.0.0, globally imported via `Directory.Build.targets`.
 
@@ -21,8 +21,7 @@ needed.
 
 ## Why FluentAssertions
 
-Rationale captured in [13_FluentAssertions_Evaluation.md](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/13_FluentAssertions_Evaluation.md).
-In short: more readable assertions, better failure messages, rich built-in
+More readable assertions, better failure messages, rich built-in
 support for collections / equivalence / exceptions / dates, and it lets us
 retire ~1,300 lines of bespoke `AssertionUtil` code over time.
 
@@ -221,7 +220,4 @@ omit it.
 ## References
 
 - [FluentAssertions docs](https://fluentassertions.com/)
-- [Step 13 — Evaluation](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/13_FluentAssertions_Evaluation.md)
-- [Step 14 — Package install](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/14_Add_FluentAssertions_Package.md)
 - [TEST_NAMING_CONVENTION.md](TEST_NAMING_CONVENTION.md)
-- [TESTING_INFRASTRUCTURE_OVERHAUL.md — Phase 4.2](TESTING_INFRASTRUCTURE_OVERHAUL/TESTING_INFRASTRUCTURE_OVERHAUL_PART_1.md)

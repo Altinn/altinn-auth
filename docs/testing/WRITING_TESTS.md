@@ -16,10 +16,26 @@ Choose the simplest thing that exercises the code:
 | Repository / EF Core query | **Integration test** with `ApiFixture` (template-cloned DB). |
 
 **Default to unit tests.** They're orders of magnitude faster and more
-precise. The [coverage steps 42–60](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/INDEX.md) demonstrate that almost
-all controller and service coverage can be achieved with Moq-based unit
-tests; integration tests are reserved for the cases that genuinely need the
-pipeline.
+precise. Almost all controller and service coverage can be achieved with
+Moq-based unit tests; integration tests are reserved for the cases that
+genuinely need the pipeline.
+
+## Tag and place each test
+
+Every test class must carry a category marker:
+
+- `[UnitTest]` — pure/fast, no fixture.
+- `[IntegrationTest]` — uses `ApiFixture` / a database / the real pipeline.
+
+The markers (`src/testing/TestCategories.cs`) emit a `Category` trait that CI
+uses to run unit and integration as separate lanes, so an **untagged test runs
+in neither lane**. Put the marker on the test class (and on each nested test
+class, where that pattern is used).
+
+In a project that has both kinds, place the file under the `Unit/` or
+`Integration/` folder matching its marker; the namespace gains the matching
+`.Unit` / `.Integration` segment (namespace = folder). Single-type projects
+stay flat.
 
 ## xUnit v3 specifics
 
@@ -38,6 +54,7 @@ All projects are on **xUnit v3**. A few things differ from v2:
 ## Integration test template
 
 ```csharp
+[IntegrationTest]
 public class ConnectionsControllerTest : IClassFixture<ApiFixture>
 {
     private readonly HttpClient _client;
@@ -82,6 +99,7 @@ public class ConnectionsControllerTest : IClassFixture<ApiFixture>
 ## Unit test template
 
 ```csharp
+[UnitTest]
 public class RoleServiceTests
 {
     private readonly Mock<IRoleRepository> _repo = new();

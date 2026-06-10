@@ -20,8 +20,8 @@ reasons.
 ## Canonical mocks
 
 The table below lists the mocks owned by `TestUtils`. Each has a single
-implementation that every test project uses — duplicates were removed in
-[`TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/15_Mock_Deduplication_Implementation.md`](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/15_Mock_Deduplication_Implementation.md).
+implementation that every test project uses — earlier per-project duplicates
+have been removed.
 
 | Mock | Interface it implements |
 |---|---|

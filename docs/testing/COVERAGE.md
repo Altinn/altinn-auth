@@ -96,10 +96,9 @@ pwsh eng/testing/check-coverage-thresholds.ps1 \
     -ThresholdsFile eng/testing/coverage-thresholds.json
 ```
 
-Design rationale: see
-[`TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/41_CI_Coverage_Single_Run.md`](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/41_CI_Coverage_Single_Run.md).
-Before Step 41, tests ran twice (once for Test, once for Coverage), which
-doubled pipeline time.
+Running the tests twice (once for Test, once for Coverage) would double
+pipeline time, so the suite runs once and the coverage report is parsed from
+that single pass.
 
 ## Adjusting a threshold
 
@@ -111,11 +110,5 @@ doubled pipeline time.
 - **Lowering** a threshold: discouraged. Include a short rationale in the PR
   description (e.g. "deleted an entire well-covered module"). Prefer adding
   tests.
-
-## Current coverage
-
-See the *Final Coverage (measured)* table at the bottom of
-[`TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/INDEX.md`](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/INDEX.md) for the latest measured numbers per
-assembly.
 
 ## Next: [CI.md](CI.md)

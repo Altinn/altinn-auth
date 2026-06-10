@@ -112,7 +112,6 @@ haven't been rewritten against EF seed data yet.
 This fixture exists as an explicit bridge. New tests should **not** use it —
 prefer `ApiFixture`. The expected outcome is that the last `LegacyApiFixture`
 consumers get rewritten on EF seed data over time and the fixture is retired.
-See [`TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/22_AccessMgmt_WAF_Group_B_16_4_Prep_LegacyApiFixture.md`](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/22_AccessMgmt_WAF_Group_B_16_4_Prep_LegacyApiFixture.md).
 
 ---
 
@@ -136,8 +135,18 @@ uses; it is not intended for direct consumption by new tests.
 
 Both `EFPostgresFactory` and `PostgresFixture` detect the absence of a Docker /
 Podman socket and call `Assert.Skip(...)` so the suite doesn't fail on
-developer machines without a runtime. See
-[`TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/40_CI_First_Green_Run_Hardening.md`](TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/40_CI_First_Green_Run_Hardening.md).
+developer machines without a runtime.
+
+## Other fixtures
+
+- **`AuthorizationDbFixture`** (`Altinn.Authorization.Tests`) — a Testcontainers
+  PostgreSQL fixture used directly by the Authorization delegation-metadata
+  repository tests. (`AuthorizationApiFixture` itself is mock-backed and needs
+  no container.)
+- **`PlatformFixture`** (`Altinn.Authorization.Integration.Tests`) — wires up the
+  platform-integration clients against the **live** platform; its tests
+  `Assert.Skip(...)` when credentials/config are missing, so they don't run in a
+  plain local or CI build.
 
 ---
 
