@@ -39,7 +39,7 @@ configuration = {
         "innbygger-skatteforhold-privatpersoner"
       ]
       "991825827" = [ # DIGDIR
-        "innbygger-stotte-tilskudd"
+        "innbygger-stotte-tilskudd",
         "teknisk-samhandling-digdir"
       ]
     }
