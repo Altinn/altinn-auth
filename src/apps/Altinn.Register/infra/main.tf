@@ -388,11 +388,18 @@ module "appsettings" {
           "Altinn:register:Ccr:Clients:${client_key}:PasswordHash" => { vault_key_reference = data.azurerm_key_vault_secret.ccr_client_password_hash[client_key].versionless_id }
         },
         // ccr flatfiles local config
-        var.config.ccr.flatfiles.enable && var.config.ccr.flatfiles.local != null ? {
+        var.config.ccr.flatfiles.local != null ? {
           "Altinn:register:PartyImport:Ccr:Sftp:Host"       = { vault_key_reference = resource.azurerm_key_vault_secret.ccr_flatfile_local_host["local"].versionless_id }
           "Altinn:register:PartyImport:Ccr:Sftp:User"       = { vault_key_reference = resource.azurerm_key_vault_secret.ccr_flatfile_local_user["local"].versionless_id }
           "Altinn:register:PartyImport:Ccr:Sftp:Password"   = { vault_key_reference = resource.azurerm_key_vault_secret.ccr_flatfile_local_pass["local"].versionless_id }
           "Altinn:register:PartyImport:Ccr:Sftp:RemotePath" = { vault_key_reference = resource.azurerm_key_vault_secret.ccr_flatfile_local_path["local"].versionless_id }
+        } : {},
+        // ccr flatfiles remote config
+        var.config.ccr.flatfiles.remote != null ? {
+          "Altinn:register:PartyImport:Ccr:Sftp:Host"       = { vault_key_reference = data.azurerm_key_vault_secret.ccr_flatfile_remote_host["remote"].versionless_id }
+          "Altinn:register:PartyImport:Ccr:Sftp:User"       = { vault_key_reference = data.azurerm_key_vault_secret.ccr_flatfile_remote_user["remote"].versionless_id }
+          "Altinn:register:PartyImport:Ccr:Sftp:Password"   = { vault_key_reference = data.azurerm_key_vault_secret.ccr_flatfile_remote_pass["remote"].versionless_id }
+          "Altinn:register:PartyImport:Ccr:Sftp:RemotePath" = { vault_key_reference = data.azurerm_key_vault_secret.ccr_flatfile_remote_path["remote"].versionless_id }
         } : {},
       )
     }

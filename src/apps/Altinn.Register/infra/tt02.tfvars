@@ -64,6 +64,16 @@ config = {
       targets = ["ccr-updates-at22", "ccr-updates-at23"]
     }
 
+    flatfiles = {
+      enable = true
+      remote = {
+        host = "ccr-flatfile-remote-host"
+        user = "ccr-flatfile-remote-user"
+        pass = "ccr-flatfile-remote-pass"
+        path = "ccr-flatfile-remote-path"
+      }
+    }
+
     clients = {
       BRG = {
         password = "ccr-brg-hash"

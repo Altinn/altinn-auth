@@ -1,7 +1,7 @@
 
 data "azurerm_storage_container" "ccr_flatfiles" {
   for_each = (
-    var.config.ccr.flatfiles.enable && var.config.ccr.flatfiles.local != null
+    var.config.ccr.flatfiles.local != null
     ? toset(["local"])
     : toset([])
   )
@@ -16,7 +16,7 @@ data "azurerm_storage_container" "ccr_flatfiles" {
 
 resource "azurerm_storage_account_local_user" "ccr_sftp_local_user" {
   for_each = (
-    var.config.ccr.flatfiles.enable && var.config.ccr.flatfiles.local != null
+    var.config.ccr.flatfiles.local != null
     ? toset(["local"])
     : toset([])
   )
@@ -49,7 +49,7 @@ resource "azurerm_storage_account_local_user" "ccr_sftp_local_user" {
 
 resource "azurerm_key_vault_secret" "ccr_flatfile_local_user" {
   for_each = (
-    var.config.ccr.flatfiles.enable && var.config.ccr.flatfiles.local != null
+    var.config.ccr.flatfiles.local != null
     ? toset(["local"])
     : toset([])
   )
@@ -65,7 +65,7 @@ resource "azurerm_key_vault_secret" "ccr_flatfile_local_user" {
 
 resource "azurerm_key_vault_secret" "ccr_flatfile_local_pass" {
   for_each = (
-    var.config.ccr.flatfiles.enable && var.config.ccr.flatfiles.local != null
+    var.config.ccr.flatfiles.local != null
     ? toset(["local"])
     : toset([])
   )
@@ -79,7 +79,7 @@ resource "azurerm_key_vault_secret" "ccr_flatfile_local_pass" {
 
 resource "azurerm_key_vault_secret" "ccr_flatfile_local_host" {
   for_each = (
-    var.config.ccr.flatfiles.enable && var.config.ccr.flatfiles.local != null
+    var.config.ccr.flatfiles.local != null
     ? toset(["local"])
     : toset([])
   )
@@ -95,7 +95,7 @@ resource "azurerm_key_vault_secret" "ccr_flatfile_local_host" {
 
 resource "azurerm_key_vault_secret" "ccr_flatfile_local_path" {
   for_each = (
-    var.config.ccr.flatfiles.enable && var.config.ccr.flatfiles.local != null
+    var.config.ccr.flatfiles.local != null
     ? toset(["local"])
     : toset([])
   )
