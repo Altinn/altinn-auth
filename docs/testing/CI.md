@@ -4,13 +4,16 @@ Tests run per-vertical in parallel jobs. Each vertical (app/lib/pkg) has its
 own CI job driven by a shared template: `tpl-vertical-ci.yml`. Build, test,
 threshold enforcement, and SonarCloud analysis all happen in one job per
 vertical (`build-test-analyze`) so the test suite executes exactly once.
+Only the verticals affected by a change run (dependency-aware change
+detection), and a `concurrency` group cancels a superseded run when a PR is
+pushed again — `main`-push runs always run to completion.
 
 ## Job structure
 
 For each vertical the pipeline runs:
 
 1. **SonarCloud begin** *(verticals that opt in via `conf.json`)* — `dotnet-sonarscanner begin` wraps the build/test that follow so the scanner can hook MSBuild's analyzers.
-2. **Restore + build** — `dotnet build -c Release --no-incremental`. The build inside Sonar's begin/end window is what gives the scanner its data.
+2. **Restore + build** — `dotnet build -c Release --no-incremental`. The build inside Sonar's begin/end window is what gives the scanner its data. `dotnet workload restore` runs **only** in verticals that contain an Aspire AppHost (detected from the csprojs); the rest skip it.
 3. **Test + coverage (two lanes off one build)** — tests run in two
    sequential lanes selected by the `Category` trait: a fast **unit** lane
    (`--filter-trait "Category=Unit"`) then a slower **integration** lane
@@ -70,6 +73,10 @@ On failure, each job uploads:
 
 - `TestResults/*.log` — MTP stdout per test project
 - `TestResults/*.trx` — machine-readable test results
+- `binlog/*.binlog` — MSBuild binary log of the build/test/pack steps (retained 1 day)
+
+All three are **failure-only**: a green run uploads nothing, since these are
+debugging aids nobody fetches when the job passes.
 
 Coverage artifacts (`*.cobertura.xml`) are **not** uploaded — the pipeline
 uses them in-process for threshold checks and the raw data isn't valuable

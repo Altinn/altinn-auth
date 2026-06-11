@@ -79,8 +79,16 @@ jobs:
             10.0.x
 
       - name: Restore dotnet workloads
-        run: dotnet workload restore
+        # Only verticals that contain an Aspire AppHost (currently AccessManagement)
+        # need a workload restore; skip the ~20s on every other vertical.
         working-directory: ${{ inputs.path }}
+        shell: bash
+        run: |
+          if grep -rql "Aspire.AppHost.Sdk" --include=*.csproj .; then
+            dotnet workload restore
+          else
+            echo "No Aspire AppHost in this vertical; skipping workload restore."
+          fi
 
       - name: Detect SonarCloud config
         # Single source of truth for "should Sonar run?". Exposed as a step
@@ -167,8 +175,18 @@ jobs:
         # `--no-incremental` keeps the output deterministic between this run
         # and any local rebuild — important when the SonarCloud scanner is
         # wrapping the build, which is sensitive to stale analyzer outputs.
+        #
+        # Collapse the ~900 lines of restore + per-project + analyzer-warning
+        # output behind a log group. The full build is captured in build.binlog
+        # (uploaded as an artifact on failure), warnings are tracked by
+        # SonarCloud, and a build error still fails the step (bash `set -e` exits
+        # before `::endgroup::`; GitHub auto-closes the open group).
         id: build
-        run: dotnet build -c Release --no-incremental -bl:binlog/build.binlog
+        shell: bash
+        run: |
+          echo "::group::dotnet build (full output is in build.binlog, uploaded as an artifact on failure)"
+          dotnet build -c Release --no-incremental -bl:binlog/build.binlog
+          echo "::endgroup::"
         working-directory: ${{ inputs.path }}
 
       # Tests run in two lanes off the single build above (#3363): a fast unit
@@ -317,12 +335,21 @@ jobs:
         # found by the scanner are still useful when tests are red. Gated on
         # `sonar-begin succeeded` so the matching `end` is only invoked when
         # there's something to close out.
+        #
+        # The scanner emits ~2000 lines of INFO during the upload; collapse it
+        # behind a log group so the job log stays readable. The gate result and
+        # dashboard link live on the SonarCloud PR check, not here, so nothing
+        # useful is hidden. A non-zero `end` still fails the step (bash `set -e`
+        # exits before `::endgroup::`; GitHub auto-closes the open group).
         if: always() && steps.sonar-begin.outcome == 'success'
         working-directory: ${{ inputs.path }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         shell: bash
-        run: dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+        run: |
+          echo "::group::dotnet-sonarscanner end (full scanner log — expand if needed)"
+          dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+          echo "::endgroup::"
 
       - name: Coverage threshold check
         # Parse-only: reads TestResults/coverage.cobertura.xml produced by
@@ -370,9 +397,16 @@ jobs:
           retention-days: 3
 
       - name: Create binlog artifact
+        # Failure-only, mirroring the test-results upload above: the binlog is a
+        # debugging aid for a red build/test/pack, so uploading it on every green
+        # run just spends upload time and storage for an artifact nobody fetches.
+        # `if-no-files-found: ignore` because a failure can occur before any
+        # binlog is written (e.g. checkout / setup-dotnet), in which case there's
+        # nothing to upload and that's fine.
+        if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ inputs.slug }}-binlog
           path: ${{ inputs.path }}/binlog/*.binlog
-          if-no-files-found: error
+          if-no-files-found: ignore
           retention-days: 1

@@ -10,6 +10,11 @@ on:
 permissions:
   contents: read
 
+# Cancel a superseded run when a PR is pushed again; let main-push runs finish.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   find-verticals:
     uses: ./.github/workflows/tpl-find-verticals.yml
