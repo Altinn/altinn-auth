@@ -1,4 +1,5 @@
-﻿using System.Net.Mime;
+﻿using System.Diagnostics;
+using System.Net.Mime;
 using Altinn.AccessManagement.Api.Enterprise.Utils;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
@@ -30,7 +31,8 @@ public class ResourceOwnerAuthorizedPartiesController(
     [FromKeyedServices("oldDelegationMetadataEfImplementation")] IAuthorizedPartiesService oldDelegationMetadataEfImplementation,
     IProviderService providerService,
     AuthorizedPartiesTelemetry authorizedPartiesTelemetry,
-    IMemoryCache memoryCache) : ControllerBase
+    IMemoryCache memoryCache,
+    IConfiguration configuration) : ControllerBase
 {
     /// <summary>
     /// Endpoint for retrieving all authorized parties (with option to include Authorized Parties, aka Reportees, from Altinn 2) for a given user or organization 
@@ -79,6 +81,26 @@ public class ResourceOwnerAuthorizedPartiesController(
     {
         try
         {
+            // Loop for AKS scaling test. Will be enabled by adding CpuLoadLoopCount to the yaml config in the azure portal
+            var loopCountString = configuration["GeneralSettings:CpuLoadLoopCount"];
+            if (long.TryParse(loopCountString, out var loopCount) && loopCount > 0)
+            {
+                Stopwatch sw = Stopwatch.StartNew();
+                double result = 0;
+                for (long i = 0; i < loopCount; i++)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    result += Math.Sqrt(i) * Math.Sin(i);
+                }
+
+                sw.Stop();
+                logger.LogError("CpuLoadLoopCount debug: elapsed for {LoopCount}: {ElapsedMilliseconds:N0} ms", loopCount, sw.ElapsedMilliseconds);
+            }
+
             var authorizedPartiesService = AuthorizedPartiesSettings.UsingConnectionQueryOnly ? newConnectionQueryOnlyImplementation : oldDelegationMetadataEfImplementation;
             BaseAttribute subjectAttribute = new BaseAttribute(subject.Type, subject.Value);
 
