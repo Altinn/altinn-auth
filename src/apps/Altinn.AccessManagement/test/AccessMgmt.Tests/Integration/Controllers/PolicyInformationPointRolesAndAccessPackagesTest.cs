@@ -296,6 +296,16 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
         // Should contain the NUF-specific packages inherited via keyrole
         Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:tjenester-nuf"));
         Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:ffor-tilgangsstyrer-nuf"));
+
+        // Should contain the NUF-restricted tax/reporting packages inherited via keyrole
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:skatt-naering"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:skattegrunnlag"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:merverdiavgift"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:saeravgifter"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:krav-og-utlegg"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:a-ordning"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:lonn-personopplysninger-saerlig-kategori"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:oppgi-naermeste-leder"));
     }
 
     [Fact]
@@ -317,6 +327,14 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
         // Should NOT contain the NUF-specific packages
         Assert.DoesNotContain(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:tjenester-nuf"));
         Assert.DoesNotContain(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:ffor-tilgangsstyrer-nuf"));
+        Assert.DoesNotContain(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:skatt-naering"));
+        Assert.DoesNotContain(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:skattegrunnlag"));
+        Assert.DoesNotContain(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:merverdiavgift"));
+        Assert.DoesNotContain(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:saeravgifter"));
+        Assert.DoesNotContain(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:krav-og-utlegg"));
+        Assert.DoesNotContain(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:a-ordning"));
+        Assert.DoesNotContain(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:lonn-personopplysninger-saerlig-kategori"));
+        Assert.DoesNotContain(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:oppgi-naermeste-leder"));
     }
 
     [Fact]
@@ -336,6 +354,14 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
 
         Assert.Contains(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:tjenester-nuf"));
         Assert.Contains(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:ffor-tilgangsstyrer-nuf"));
+        Assert.Contains(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:skatt-naering"));
+        Assert.Contains(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:skattegrunnlag"));
+        Assert.Contains(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:merverdiavgift"));
+        Assert.Contains(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:saeravgifter"));
+        Assert.Contains(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:krav-og-utlegg"));
+        Assert.Contains(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:a-ordning"));
+        Assert.Contains(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:lonn-personopplysninger-saerlig-kategori"));
+        Assert.Contains(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:oppgi-naermeste-leder"));
     }
 
     [Fact]
@@ -355,6 +381,14 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
 
         Assert.DoesNotContain(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:tjenester-nuf"));
         Assert.DoesNotContain(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:ffor-tilgangsstyrer-nuf"));
+        Assert.DoesNotContain(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:skatt-naering"));
+        Assert.DoesNotContain(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:skattegrunnlag"));
+        Assert.DoesNotContain(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:merverdiavgift"));
+        Assert.DoesNotContain(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:saeravgifter"));
+        Assert.DoesNotContain(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:krav-og-utlegg"));
+        Assert.DoesNotContain(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:a-ordning"));
+        Assert.DoesNotContain(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:lonn-personopplysninger-saerlig-kategori"));
+        Assert.DoesNotContain(result, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:oppgi-naermeste-leder"));
     }
 
     [Fact]
@@ -381,6 +415,16 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
 
         // RolePackage: ContactPersonNUF should get AccessManager (tilgangsstyrer)
         Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:tilgangsstyrer"));
+
+        // RolePackage: ContactPersonNUF should get the tax/reporting packages (no entity variant filter)
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:skatt-naering"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:skattegrunnlag"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:merverdiavgift"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:saeravgifter"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:krav-og-utlegg"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:a-ordning"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:lonn-personopplysninger-saerlig-kategori"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:oppgi-naermeste-leder"));
     }
 
     [Fact]
@@ -407,5 +451,15 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
 
         // RolePackage: NorwegianRepresentativeForeignEntity should get AccessManager (tilgangsstyrer)
         Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:tilgangsstyrer"));
+
+        // RolePackage: NorwegianRepresentativeForeignEntity should get the tax/reporting packages (no entity variant filter)
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:skatt-naering"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:skattegrunnlag"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:merverdiavgift"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:saeravgifter"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:krav-og-utlegg"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:a-ordning"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:lonn-personopplysninger-saerlig-kategori"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:oppgi-naermeste-leder"));
     }
 }

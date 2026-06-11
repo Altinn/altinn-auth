@@ -443,6 +443,14 @@ public class ClientDelegationControllerTest
             var nufClientAccess = nufClient.Access.FirstOrDefault(r => r.Role.Id == RoleConstants.BusinessManager);
             Assert.NotNull(nufClientAccess);
             Assert.Contains(nufClientAccess.Packages, package => package.Id == PackageConstants.ServicesNUF);
+            Assert.Contains(nufClientAccess.Packages, package => package.Id == PackageConstants.BusinessTax);
+            Assert.Contains(nufClientAccess.Packages, package => package.Id == PackageConstants.TaxBase);
+            Assert.Contains(nufClientAccess.Packages, package => package.Id == PackageConstants.ValueAddedTax);
+            Assert.Contains(nufClientAccess.Packages, package => package.Id == PackageConstants.SpecialTaxes);
+            Assert.Contains(nufClientAccess.Packages, package => package.Id == PackageConstants.ClaimsPaymentsAndEnforcement);
+            Assert.Contains(nufClientAccess.Packages, package => package.Id == PackageConstants.AOrderSystem);
+            Assert.Contains(nufClientAccess.Packages, package => package.Id == PackageConstants.SalarySpecialCategory);
+            Assert.Contains(nufClientAccess.Packages, package => package.Id == PackageConstants.OppgiNaermesteLeder);
 
             // Non-NUF clients (BRL, BEDR) should NOT have the NUF-specific packages
             var brlClient = result.Items.FirstOrDefault(c => c.Client.Id == TestEntities.OrganizationOkernBorettslag);
@@ -451,6 +459,14 @@ public class ClientDelegationControllerTest
             Assert.NotNull(brlClientAccess);
             Assert.DoesNotContain(brlClientAccess.Packages, package => package.Id == PackageConstants.ServicesNUF);
             Assert.DoesNotContain(brlClientAccess.Packages, package => package.Id == PackageConstants.BusinessAndAccessManagementNUF);
+            Assert.DoesNotContain(brlClientAccess.Packages, package => package.Id == PackageConstants.BusinessTax);
+            Assert.DoesNotContain(brlClientAccess.Packages, package => package.Id == PackageConstants.TaxBase);
+            Assert.DoesNotContain(brlClientAccess.Packages, package => package.Id == PackageConstants.ValueAddedTax);
+            Assert.DoesNotContain(brlClientAccess.Packages, package => package.Id == PackageConstants.SpecialTaxes);
+            Assert.DoesNotContain(brlClientAccess.Packages, package => package.Id == PackageConstants.ClaimsPaymentsAndEnforcement);
+            Assert.DoesNotContain(brlClientAccess.Packages, package => package.Id == PackageConstants.AOrderSystem);
+            Assert.DoesNotContain(brlClientAccess.Packages, package => package.Id == PackageConstants.SalarySpecialCategory);
+            Assert.DoesNotContain(brlClientAccess.Packages, package => package.Id == PackageConstants.OppgiNaermesteLeder);
 
             var bedrClient = result.Items.FirstOrDefault(c => c.Client.Id == TestEntities.MainUnitNordis);
             Assert.NotNull(bedrClient);
@@ -458,6 +474,14 @@ public class ClientDelegationControllerTest
             Assert.NotNull(bedrClientAccess);
             Assert.DoesNotContain(bedrClientAccess.Packages, package => package.Id == PackageConstants.ServicesNUF);
             Assert.DoesNotContain(bedrClientAccess.Packages, package => package.Id == PackageConstants.BusinessAndAccessManagementNUF);
+            Assert.DoesNotContain(bedrClientAccess.Packages, package => package.Id == PackageConstants.BusinessTax);
+            Assert.DoesNotContain(bedrClientAccess.Packages, package => package.Id == PackageConstants.TaxBase);
+            Assert.DoesNotContain(bedrClientAccess.Packages, package => package.Id == PackageConstants.ValueAddedTax);
+            Assert.DoesNotContain(bedrClientAccess.Packages, package => package.Id == PackageConstants.SpecialTaxes);
+            Assert.DoesNotContain(bedrClientAccess.Packages, package => package.Id == PackageConstants.ClaimsPaymentsAndEnforcement);
+            Assert.DoesNotContain(bedrClientAccess.Packages, package => package.Id == PackageConstants.AOrderSystem);
+            Assert.DoesNotContain(bedrClientAccess.Packages, package => package.Id == PackageConstants.SalarySpecialCategory);
+            Assert.DoesNotContain(bedrClientAccess.Packages, package => package.Id == PackageConstants.OppgiNaermesteLeder);
         }
     }
     #endregion
