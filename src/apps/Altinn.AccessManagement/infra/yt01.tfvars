@@ -39,6 +39,10 @@ configuration = {
       "974761076" = [ # SKATTEETATEN
         "innbygger-skatteforhold-privatpersoner"
       ]
+      "991825827" = [ # DIGDIR
+        "innbygger-stotte-tilskudd"
+        "teknisk-samhandling-digdir"
+      ]
     }
   }
 }
