@@ -1,0 +1,87 @@
+name: SonarCloud (nightly, main)
+
+# SonarCloud analysis runs here — once a day against main — rather than on
+# every push of every PR. The per-push model contended for consistently busy
+# runners while adding little per-change value: the quality gate is
+# non-blocking, security is covered by CodeQL, and code smells / coverage
+# floors are already enforced in-build (Roslyn + StyleCop) and by
+# check-coverage-thresholds.ps1. Sonar's unique value (duplication, the
+# maintainability/tech-debt dashboard, coverage trend) is a property of main,
+# so a daily off-peak scan is sufficient. See docs/SONARCLOUD.md.
+
+on:
+  schedule:
+    # 02:00 UTC daily (~03:00/04:00 Europe/Oslo) — off-peak, when
+    # GitHub-hosted runners are least contended. Scheduled workflows always
+    # run against the default branch (main) HEAD, which is the ref we analyze.
+    - cron: "0 2 * * *"
+  workflow_dispatch: {} # allow an on-demand main scan
+
+permissions:
+  contents: read
+
+# Never let two nightly scans overlap (a slow run must not stack on the next
+# day's), but don't cancel an in-progress scan — let it finish.
+concurrency:
+  group: sonar-nightly
+  cancel-in-progress: false
+
+jobs:
+  # Full vertical list (changed: none → every vertical).
+  #
+  # Guard: only ever analyze `main`. A scheduled run already targets the
+  # default branch, but workflow_dispatch runs on whatever ref the UI selects
+  # — without this, a manual dispatch on a feature branch would scan that
+  # branch (burning Sonar minutes and creating junk branch analyses). A
+  # skipped first job cascades to the downstream `needs:` jobs.
+  find-verticals:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/tpl-find-verticals.yml
+    with:
+      type: all
+      changed: none
+      checkSlns: false
+
+  # Narrow to the verticals that actually opt into SonarCloud so we don't
+  # build/test the disabled ones (Register, Api.Contracts) every night for a
+  # scan that would be skipped anyway.
+  select-sonar:
+    needs: find-verticals
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.filter.outputs.matrix }}
+      any: ${{ steps.filter.outputs.any }}
+    steps:
+      - name: Keep only SonarCloud-enabled verticals
+        id: filter
+        shell: bash
+        env:
+          MATRIX: ${{ needs.find-verticals.outputs.matrix }}
+        run: |
+          filtered=$(jq -c '
+            { displayName: [ .include[] | select(.sonarcloud != "false") | .displayName ],
+              include:     [ .include[] | select(.sonarcloud != "false") ] }
+          ' <<< "$MATRIX")
+          echo "matrix=$filtered" >> "$GITHUB_OUTPUT"
+          count=$(jq '.include | length' <<< "$filtered")
+          echo "any=$([ "$count" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+  analyze:
+    needs: select-sonar
+    if: needs.select-sonar.outputs.any == 'true'
+    strategy:
+      matrix: ${{ fromJson(needs.select-sonar.outputs.matrix) }}
+      fail-fast: false
+    uses: ./.github/workflows/tpl-vertical-ci.yml
+    secrets: inherit
+    with:
+      analyze: true
+      id: ${{ matrix.id }}
+      slug: ${{ matrix.slug }}
+      type: ${{ matrix.type }}
+      displayName: ${{ matrix.displayName }}
+      path: ${{ matrix.path }}
+      shortName: ${{ matrix.shortName }}
+      name: ${{ matrix.name }}
+      sonarProjectKey: ${{ matrix.sonarcloud }}
+      sonarProjectName: ${{ matrix.sonarcloudName }}

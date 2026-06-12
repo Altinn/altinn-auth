@@ -48,6 +48,15 @@ on:
         type: string
         description: The SonarCloud project name for the vertical
 
+      analyze:
+        required: false
+        type: boolean
+        default: false
+        description: >-
+          When true, run the SonarCloud analysis steps. Only the scheduled
+          nightly main scan (sonar-nightly.yml) sets this; PR and push-to-main
+          CI leave it false, so Sonar never runs on the per-push critical path.
+
 permissions:
   contents: read
 
@@ -67,9 +76,12 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
-          # Sonar needs full git history for accurate blame, SCM authors,
-          # and "new code" period detection on PRs.
-          fetch-depth: 0
+          # Full history (fetch-depth 0) only on the analyze (nightly) run,
+          # which Sonar needs for blame / SCM authors / "new code" detection;
+          # PR/main CI checks out shallow to save clone time. The depths are
+          # quoted strings on purpose: an unquoted 0 is falsy in GitHub Actions
+          # expressions, so `analyze && 0 || 1` would always evaluate to 1.
+          fetch-depth: ${{ inputs.analyze && '0' || '1' }}
 
       - name: Install .NET
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
@@ -94,22 +106,18 @@ jobs:
         # Single source of truth for "should Sonar run?". Exposed as a step
         # output so the conditional Sonar steps below all reference one
         # condition instead of repeating the checks inline.
-        # Sonar is disabled when:
-        #   - the vertical opted out (sonarProjectKey == 'false')
-        #   - the PR is from a fork (no SONAR_TOKEN access on forks)
-        #   - the PR was opened by Renovate / Dependabot — bot PRs only
-        #     touch dependency manifests and produce no useful Sonar
-        #     findings, so analysing them just burns Sonar minutes per
-        #     vertical. On push events `github.event.pull_request.user.login`
-        #     is null, so the bot checks pass and Sonar still runs on
-        #     merges to main (including the merge of a bot-authored PR).
+        # Sonar runs only when BOTH hold:
+        #   - the caller opted in (`analyze == true`) — only the scheduled
+        #     nightly main scan (sonar-nightly.yml) does; PR/main CI leaves it
+        #     false, so Sonar never runs on the per-push critical path.
+        #   - the vertical opted in (`sonarProjectKey != 'false'`).
+        # The nightly scan runs against main HEAD, so the fork/bot/PR-author
+        # guards the per-push model needed are no longer relevant here.
         id: sonar
         shell: bash
         run: |
-          if [[ "${{ inputs.sonarProjectKey }}" != "false" \
-             && "${{ github.event.pull_request.head.repo.fork }}" != "true" \
-             && "${{ github.event.pull_request.user.login }}" != "renovate[bot]" \
-             && "${{ github.event.pull_request.user.login }}" != "dependabot[bot]" ]]; then
+          if [[ "${{ inputs.analyze }}" == "true" \
+             && "${{ inputs.sonarProjectKey }}" != "false" ]]; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
           else
             echo "enabled=false" >> "$GITHUB_OUTPUT"

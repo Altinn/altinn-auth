@@ -2,18 +2,25 @@
 
 Tests run per-vertical in parallel jobs. Each vertical (app/lib/pkg) has its
 own CI job driven by a shared template: `tpl-vertical-ci.yml`. Build, test,
-threshold enforcement, and SonarCloud analysis all happen in one job per
-vertical (`build-test-analyze`) so the test suite executes exactly once.
-Only the verticals affected by a change run (dependency-aware change
-detection), and a `concurrency` group cancels a superseded run when a PR is
-pushed again — `main`-push runs always run to completion.
+and threshold enforcement happen in one job per vertical (`build-test-analyze`)
+so the test suite executes exactly once. Only the verticals affected by a
+change run (dependency-aware change detection), and a `concurrency` group
+cancels a superseded run when a PR is pushed again — `main`-push runs always
+run to completion.
+
+SonarCloud analysis is **not** part of PR/main CI — it runs once a day against
+`main` via [`sonar-nightly.yml`](../../.github/workflows/sonar-nightly.yml),
+which reuses this same template with `analyze: true`. See
+[../SONARCLOUD.md](../SONARCLOUD.md).
 
 ## Job structure
 
-For each vertical the pipeline runs:
+For each vertical the pipeline runs (the SonarCloud `begin` / `end` steps in
+steps 1 and 5 are gated on the `analyze` input and only execute on the nightly
+scan; on PR/main CI they are skipped):
 
-1. **SonarCloud begin** *(verticals that opt in via `conf.json`)* — `dotnet-sonarscanner begin` wraps the build/test that follow so the scanner can hook MSBuild's analyzers.
-2. **Restore + build** — `dotnet build -c Release --no-incremental`. The build inside Sonar's begin/end window is what gives the scanner its data. `dotnet workload restore` runs **only** in verticals that contain an Aspire AppHost (detected from the csprojs); the rest skip it.
+1. **SonarCloud begin** *(analyze run only, verticals that opt in via `conf.json`)* — `dotnet-sonarscanner begin` wraps the build/test that follow so the scanner can hook MSBuild's analyzers.
+2. **Restore + build** — `dotnet build -c Release --no-incremental`. On the analyze run the build inside Sonar's begin/end window is what gives the scanner its data. `dotnet workload restore` runs **only** in verticals that contain an Aspire AppHost (detected from the csprojs); the rest skip it.
 3. **Test + coverage (two lanes off one build)** — tests run in two
    sequential lanes selected by the `Category` trait: a fast **unit** lane
    (`--filter-trait "Category=Unit"`) then a slower **integration** lane
@@ -27,8 +34,8 @@ For each vertical the pipeline runs:
    still see whole-suite coverage. A lane that selects 0 tests in a
    single-type vertical (e.g. `pkg: PEP` has no integration tests) exits 8,
    which `--ignore-exit-code 8` treats as success.
-4. **Convert coverage** — two `dotnet-coverage merge` calls turn the binary into cobertura (for the threshold check) and VSCoverage XML (for Sonar). No re-running tests.
-5. **SonarCloud end** *(verticals that opt in)* — uploads the analysis. Runs even if tests failed so issues found by the scanner are still posted. See [../SONARCLOUD.md](../SONARCLOUD.md).
+4. **Convert coverage** — `dotnet-coverage merge` into cobertura (for the threshold check) on every run; a second merge into VSCoverage XML (for Sonar) runs only on the analyze run. No re-running tests.
+5. **SonarCloud end** *(analyze run only, verticals that opt in)* — uploads the analysis. Runs even if tests failed so issues found by the scanner are still posted. See [../SONARCLOUD.md](../SONARCLOUD.md).
 6. **Coverage threshold check** — parses the cobertura XML and fails the job if any enforced assembly is below its floor. See [COVERAGE.md](COVERAGE.md).
 7. **Pack** — `dotnet pack` for `pkg`-type verticals only.
 8. **Report failed tests** — post-test step that parses MTP logs and emits per-failure `::group::` + `::error title::` annotations on GitHub Actions.
