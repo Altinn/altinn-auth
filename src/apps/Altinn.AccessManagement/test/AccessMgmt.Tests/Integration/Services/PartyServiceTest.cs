@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Tests.Fixtures;
+using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -12,21 +12,21 @@ namespace Altinn.AccessManagement.Tests.Integration.Services;
 
 /// <summary>
 /// Integration tests for <see cref="PartyService.AddParty"/> using
-/// <see cref="PostgresFixture"/>. The service interacts with
+/// <see cref="EfDatabaseFixture"/>. The service interacts with
 /// <see cref="AppDbContext"/> directly, so mock-based unit tests are not
 /// meaningful; these tests verify the validation branches against a real
 /// (seeded) database.
 /// </summary>
 [IntegrationTest]
-public class PartyServiceTest : IClassFixture<PostgresFixture>
+public class PartyServiceTest : IClassFixture<EfDatabaseFixture>
 {
     private readonly AppDbContext _db;
     private readonly PartyService _service;
 
-    public PartyServiceTest(PostgresFixture fixture)
+    public PartyServiceTest(EfDatabaseFixture fixture)
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(fixture.SharedDb.Admin.ToString())
+            .UseNpgsql(fixture.Db.Admin.ToString())
             .Options;
 
         _db = new AppDbContext(options)

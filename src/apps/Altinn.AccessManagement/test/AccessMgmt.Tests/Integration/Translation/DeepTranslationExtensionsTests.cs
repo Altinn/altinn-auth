@@ -1,4 +1,4 @@
-﻿using Altinn.AccessManagement.Tests.Fixtures;
+﻿using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
@@ -14,12 +14,12 @@ namespace Altinn.AccessManagement.Tests.Integration.Translation;
 /// Tests for DeepTranslationExtensions to ensure nested objects are properly translated.
 /// </summary>
 [IntegrationTest]
-public class DeepTranslationExtensionsTests : IClassFixture<PostgresFixture>
+public class DeepTranslationExtensionsTests : IClassFixture<EfDatabaseFixture>
 {
-    private readonly PostgresFixture _fixture;
+    private readonly EfDatabaseFixture _fixture;
     private readonly IMemoryCache _cache;
 
-    public DeepTranslationExtensionsTests(PostgresFixture fixture)
+    public DeepTranslationExtensionsTests(EfDatabaseFixture fixture)
     {
         _fixture = fixture;
         _cache = new MemoryCache(new MemoryCacheOptions());
@@ -33,7 +33,7 @@ public class DeepTranslationExtensionsTests : IClassFixture<PostgresFixture>
     private ITranslationService CreateTranslationService()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(_fixture.SharedDb.Admin.ToString())
+            .UseNpgsql(_fixture.Db.Admin.ToString())
             .EnableThreadSafetyChecks(false) // Disable for parallel translation tests
             .Options;
 

@@ -1,5 +1,5 @@
 ﻿using Altinn.AccessManagement.Api.Metadata.Controllers;
-using Altinn.AccessManagement.Tests.Fixtures;
+using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -17,15 +17,15 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Altinn.AccessManagement.Tests.Integration.Controllers.Metadata;
 
 [IntegrationTest]
-public class MetadataTests : IClassFixture<PostgresFixture>
+public class MetadataTests : IClassFixture<EfDatabaseFixture>
 {
     private readonly AppDbContext _db;
     private readonly ITranslationService _translationService;
 
-    public MetadataTests(PostgresFixture fixture)
+    public MetadataTests(EfDatabaseFixture fixture)
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(fixture.SharedDb.Admin.ToString())
+            .UseNpgsql(fixture.Db.Admin.ToString())
             .Options;
 
         _db = new AppDbContext(options);

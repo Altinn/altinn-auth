@@ -40,8 +40,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Bff
     /// <see cref="LegacyApiFixture"/> (hence a fresh per-test EF database,
     /// cloned from the shared EFPostgresFactory template) for every
     /// <c>[Fact]</c> — matching the per-test isolation the legacy
-    /// <c>WebApplicationFixture</c> provided via
-    /// <c>PostgresServer.NewEFDatabase()</c>.
+    /// <c>WebApplicationFixture</c> provided.
     /// </summary>
     [IntegrationTest]
     public class ConsentControllerTestBFF : IAsyncLifetime

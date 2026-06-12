@@ -14,7 +14,7 @@ Grouped by the production vertical they cover.
 
 | Test project | Covers | Fixture | Needs container |
 |---|---|---|---|
-| `AccessMgmt.Tests` | Legacy controller/integration tests being migrated off Yuniql; `LegacyApiFixture` for the small tail still needing the Yuniql schema, `ApiFixture` for the rest. | `ApiFixture`, `LegacyApiFixture`, `PostgresFixture` | ✅ |
+| `AccessMgmt.Tests` | Legacy controller/integration tests being migrated off Yuniql; `LegacyApiFixture` for the small tail still needing the Yuniql schema, `ApiFixture` for the rest, `EfDatabaseFixture` for no-host EF service/repository tests. | `ApiFixture`, `LegacyApiFixture`, `EfDatabaseFixture` | ✅ |
 | `Altinn.AccessManagement.Api.Tests` | Cross-cutting API **unit** tests (controllers via Moq, extensions, helpers) plus an end-to-end request-scenario scaffold. | — (Moq) | ❌ |
 | `Altinn.AccessManagement.Api.Internal.Tests` | Internal API controller (`InternalConnections`) integration test. | `ApiFixture` | ✅ |
 | `Altinn.AccessManagement.Enduser.Api.Tests` | Enduser API controllers (`Connections`, `MaskinportenConsumers/Suppliers`, `Request`, …). | `ApiFixture` + direct Moq unit tests | Partial |

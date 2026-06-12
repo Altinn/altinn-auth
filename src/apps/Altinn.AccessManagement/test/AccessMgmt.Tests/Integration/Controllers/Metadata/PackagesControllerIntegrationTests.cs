@@ -1,5 +1,5 @@
 ﻿using Altinn.AccessManagement.Api.Metadata.Controllers;
-using Altinn.AccessManagement.Tests.Fixtures;
+using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
@@ -20,7 +20,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Metadata;
 /// asserts on populated DTO fields rather than just response types. Runs in-process against
 /// a Postgres Testcontainer with the real <see cref="PackageService"/>, real
 /// <see cref="TranslationService"/>, and the static-data ingest performed by
-/// <see cref="PostgresFixture"/>.
+/// <see cref="EfDatabaseFixture"/>.
 ///
 /// Bug classes the suite defends against: wrong joins / EF query producing wrong shape;
 /// DTO mapping forgetting fields after a model change (notably <c>IsAssignable</c>);
@@ -28,7 +28,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Metadata;
 /// locale fallback; empty-vs-missing disambiguation in multi-branch actions.
 /// </summary>
 [IntegrationTest]
-public class PackagesControllerIntegrationTests : IClassFixture<PostgresFixture>
+public class PackagesControllerIntegrationTests : IClassFixture<EfDatabaseFixture>
 {
     // Seed-data IDs / URNs / names — kept in sync with the Bruno collection so a
     // breakage in either layer points at the same row in the static-data ingest.
@@ -82,10 +82,10 @@ public class PackagesControllerIntegrationTests : IClassFixture<PostgresFixture>
     private readonly ITranslationService _translationService;
     private readonly IPackageService _packageService;
 
-    public PackagesControllerIntegrationTests(PostgresFixture fixture)
+    public PackagesControllerIntegrationTests(EfDatabaseFixture fixture)
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(fixture.SharedDb.Admin.ToString())
+            .UseNpgsql(fixture.Db.Admin.ToString())
             .Options;
 
         _db = new AppDbContext(options);

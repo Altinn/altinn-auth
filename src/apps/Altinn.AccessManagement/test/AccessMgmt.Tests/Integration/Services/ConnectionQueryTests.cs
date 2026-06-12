@@ -1,4 +1,4 @@
-﻿using Altinn.AccessManagement.Tests.Fixtures;
+﻿using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
@@ -11,15 +11,15 @@ using DelegationPackage = Altinn.AccessMgmt.PersistenceEF.Models.DelegationPacka
 namespace Altinn.AccessManagement.Tests.Integration.Services;
 
 [IntegrationTest]
-public class ConnectionQueryTests : IClassFixture<PostgresFixture>
+public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>
 {
     private readonly AppDbContext _db;
     private readonly ConnectionQuery _query;
 
-    public ConnectionQueryTests(PostgresFixture fixture)
+    public ConnectionQueryTests(EfDatabaseFixture fixture)
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(fixture.SharedDb.Admin.ToString())
+            .UseNpgsql(fixture.Db.Admin.ToString())
             .Options;
 
         _db = new AppDbContext(options);

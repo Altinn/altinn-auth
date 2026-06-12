@@ -128,14 +128,18 @@ Under the hood, `ApiFixture` delegates database provisioning to
    TEMPLATE <template>`. Cloning is ~100–500 ms, vs ~10+ seconds for
    re-running migrations.
 
-`PostgresFixture` (a thin Testcontainers wrapper) is what `LegacyApiFixture`
-uses; it is not intended for direct consumption by new tests.
+For tests that exercise EF services or repositories directly (no web host),
+`EfDatabaseFixture` exposes the same template-cloned database as a plain
+`IClassFixture<EfDatabaseFixture>` — build an `AppDbContext` from `Db`
+(`Db.Admin.ToString()`; `PostgresDatabase` exposes separate `Admin`/`User`
+connection-string builders). It reuses the single shared container, so no second
+PostgreSQL container is needed.
 
 ### Graceful skip when no container runtime is available
 
-Both `EFPostgresFactory` and `PostgresFixture` detect the absence of a Docker /
-Podman socket and call `Assert.Skip(...)` so the suite doesn't fail on
-developer machines without a runtime.
+`EFPostgresFactory` detects the absence of a Docker / Podman socket and calls
+`Assert.Skip(...)` so the suite doesn't fail on developer machines without a
+runtime.
 
 ## Other fixtures
 

@@ -1,5 +1,5 @@
 ﻿using System.Security.Cryptography;
-using Altinn.AccessManagement.Tests.Fixtures;
+using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
@@ -14,22 +14,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-// Audit:
-//   Pattern: A-isolated
-//   Mocks: (none — pure service test, no web host)
-//   Writes: Yes (seeds entities/resources and creates/updates requests)
-//   Notes: Does NOT use a web server. Constructs AppDbContext directly from
-//          PostgresFixture.SharedDb connection string, then instantiates
-//          RequestService by hand. Migrate to ApiFixture: replace
-//          PostgresFixture.SharedDb with ApiFixture.Services.CreateEFScope
-//          to obtain an AppDbContext; keep the service-under-test construction
-//          as-is. Each test seeds a unique Resource to avoid inter-test
-//          interference so the class must remain IClassFixture<ApiFixture>
-//          (Pattern A-isolated) — not eligible for sharing.
+// No web host: builds an AppDbContext directly from the EfDatabaseFixture
+// database (a clone of the shared migrated + seeded template), then instantiates
+// RequestService by hand. Each test seeds a unique Resource to avoid inter-test
+// interference, so the class keeps its own per-class fixture.
 namespace Altinn.AccessManagement.Tests.Integration.Services;
 
 [IntegrationTest]
-public class RequestServiceTests : IClassFixture<PostgresFixture>
+public class RequestServiceTests : IClassFixture<EfDatabaseFixture>
 {
     private static readonly AuditValues TestAudit = new(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest);
 
@@ -60,10 +52,10 @@ public class RequestServiceTests : IClassFixture<PostgresFixture>
     private readonly AppDbContext _db;
     private readonly RequestService _requestService;
 
-    public RequestServiceTests(PostgresFixture fixture)
+    public RequestServiceTests(EfDatabaseFixture fixture)
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(fixture.SharedDb.Admin.ToString())
+            .UseNpgsql(fixture.Db.Admin.ToString())
             .Options;
 
         _db = new AppDbContext(options)

@@ -1,4 +1,4 @@
-﻿using Altinn.AccessManagement.Tests.Fixtures;
+﻿using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
@@ -10,18 +10,9 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-// Audit:
-//   Pattern: A-isolated
-//   Mocks: (none — pure service test, no web host)
-//   Writes: No (reads only — queries translations from seeded static data)
-//   Notes: Does NOT use a web server. Constructs AppDbContext directly from
-//          PostgresFixture.SharedDb and instantiates TranslationService by hand.
-//          Migrate to ApiFixture: replace PostgresFixture.SharedDb with
-//          ApiFixture.Services.CreateEFScope to obtain an AppDbContext; keep
-//          the TranslationService construction as-is. Read-only access means
-//          this could technically share a fixture, but because the constructor
-//          builds its own AppDbContext instance it is simpler to keep as
-//          IClassFixture<ApiFixture> (Pattern A-isolated).
+// No web host: builds an AppDbContext directly from the EfDatabaseFixture
+// database (a clone of the shared migrated + seeded template) and instantiates
+// TranslationService by hand. Read-only.
 namespace Altinn.AccessManagement.Tests.Integration.Services;
 
 /// <summary>
@@ -30,16 +21,16 @@ namespace Altinn.AccessManagement.Tests.Integration.Services;
 /// Language code normalization should happen in the middleware before reaching the service.
 /// </summary>
 [IntegrationTest]
-public class TranslationServiceTests : IClassFixture<PostgresFixture>
+public class TranslationServiceTests : IClassFixture<EfDatabaseFixture>
 {
     private readonly AppDbContext _db;
     private readonly IMemoryCache _cache;
     private readonly TranslationService _translationService;
 
-    public TranslationServiceTests(PostgresFixture fixture)
+    public TranslationServiceTests(EfDatabaseFixture fixture)
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(fixture.SharedDb.Admin.ToString())
+            .UseNpgsql(fixture.Db.Admin.ToString())
             .Options;
 
         _db = new AppDbContext(options);

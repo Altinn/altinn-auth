@@ -2,7 +2,6 @@
 using Altinn.AccessManagement.Core.Models.Profile;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Models.SblBridge;
-using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.Platform.Register.Models;
 
 namespace Altinn.AccessManagement.Tests.Contexts;
@@ -58,9 +57,4 @@ public class MockContext
     /// JWT token.
     /// </summary>
     public IDictionary<string, string> HttpHeaders { get; set; } = new Dictionary<string, string>();
-
-    /// <summary>
-    /// A list of Db seed functation that are executed after database has been migrated.
-    /// </summary>
-    public List<Func<RepositoryContainer, Task>> DbSeeds { get; } = [];
 }
