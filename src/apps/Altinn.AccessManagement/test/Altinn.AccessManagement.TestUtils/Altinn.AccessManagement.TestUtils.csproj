@@ -8,6 +8,8 @@
              discovered). -->
         <IsTestProject>false</IsTestProject>
         <IsTestLibrary>true</IsTestLibrary>
+        <!-- Link the shared PostgreSQL test engine (src/testing/PostgresTestEngine.cs). -->
+        <IncludePostgresTestEngine>true</IncludePostgresTestEngine>
     </PropertyGroup>
 
     <ItemGroup>

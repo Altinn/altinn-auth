@@ -1,37 +1,26 @@
-﻿using Altinn.AccessManagement.Persistence.Configuration;
+using Altinn.AccessManagement.Persistence.Configuration;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.Authorization.Host.Database;
+using Altinn.Authorization.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Npgsql;
-using Testcontainers.PostgreSql;
-using Xunit.Sdk;
+using Xunit;
 
 namespace Altinn.AccessManagement.TestUtils.Factories;
 
 /// <summary>
-/// Test helper that provisions a PostgreSQL container and provides per-test
-/// databases. On first use the factory starts a PostgreSQL container, creates
-/// a migrated and seeded template database, and thereafter returns cloned
-/// databases based on that template to provide isolation between tests.
+/// Test helper that provisions per-test databases backed by the shared
+/// <see cref="PostgresTestEngine"/>: on first use it starts a PostgreSQL
+/// container, builds a migrated and seeded template database, and thereafter
+/// returns fast clones of that template.
 /// </summary>
 public static class EFPostgresFactory
 {
-    private static PostgreSqlContainer Server { get; } = new PostgreSqlBuilder()
-        .WithCleanUp(true)
-        .WithImage("docker.io/postgres:16.1-alpine")
-        .Build();
-
-    private static readonly SemaphoreSlim _semaphore = new(1, 1);
-
-    private static bool _isInitialized = false;
-
-    private static int _databaseInstance = 0;
-
     /// <summary>
     /// Password used for the test database users.
     /// </summary>
@@ -47,95 +36,53 @@ public static class EFPostgresFactory
     /// </summary>
     public static readonly string DbAdminName = "platform_authorization_admin";
 
+    private static readonly PostgresTestEngine _engine = new(new PostgresTestEngineOptions
+    {
+        ApplicationUser = DbUserName,
+        AdminUser = DbAdminName,
+        Password = DbPassword,
+        // AccessManagement's test app role has always been a superuser; keep it.
+        ApplicationUserIsSuperuser = true,
+        BuildTemplateAsync = BuildTemplateAsync,
+    });
+
     /// <summary>
-    /// Creates and returns a new database instance for a test. The first call
-    /// initializes the container, sets up roles and a migrated template database
-    /// named <c>test_primary</c>, and seeds it with test data. Subsequent calls
-    /// create cloned databases using <c>CREATE DATABASE ... WITH TEMPLATE test_primary</c>.
+    /// Creates and returns a new database instance for a test, cloned from the
+    /// shared migrated + seeded template. The first call starts the container and
+    /// builds the template; subsequent calls only clone.
     /// </summary>
     /// <returns>A <see cref="PostgresDatabase"/> describing the newly created database.</returns>
-    /// <exception cref="XunitException">Thrown when bootstrapping the primary database or roles fails.</exception>
     public static async Task<PostgresDatabase> Create()
     {
-        await _semaphore.WaitAsync();
-        try
+        var database = await _engine.CreateDatabaseAsync();
+        if (database is null)
         {
-            if (!_isInitialized)
+            // No container runtime. The engine records the reason rather than
+            // throwing; surface it as a skip here (note: a skip thrown from a
+            // fixture's InitializeAsync still reports as a fixture-init failure in
+            // xUnit v3 — converting ApiFixture to a per-test skip is tracked
+            // separately).
+            Assert.Skip(_engine.SkipReason ?? "Docker/Testcontainers unavailable");
+            return null!;
+        }
+
+        return new PostgresDatabase(database.Name, database.Admin.ToString());
+    }
+
+    private static async Task BuildTemplateAsync(PostgresTestDatabase template)
+    {
+        using var sp = new ServiceCollection()
+            .AddAccessManagementDatabase(opts =>
             {
-                try
-                {
-                    await Server.StartAsync();
-                }
-                catch (Exception ex)
-                {
-                    // On Linux CI runners a Docker daemon outage or image-pull
-                    // failure (rate limiting, network) would otherwise surface
-                    // as an opaque Testcontainers timeout. Convert to a clear
-                    // xUnit v3 skip so all-skipped verticals exit 8, which the
-                    // `Test` workflow step already tolerates via
-                    // `--ignore-exit-code 8`.
-                    Assert.Skip($"Docker/Testcontainers unavailable: {ex.GetBaseException().Message}");
-                }
+                opts.MigrationConnectionString = template.Admin.ToString();
+                opts.Source = SourceType.Migration;
+                opts.EnableEFPooling = false;
+            }).BuildServiceProvider();
 
-                const string templateDb = "test_primary";
-
-                var roleResult = await Server.ExecScriptAsync($@"
-                DO $$
-                    BEGIN
-                    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '{DbUserName}') THEN
-                        CREATE ROLE {DbUserName} LOGIN PASSWORD '{DbPassword}' SUPERUSER INHERIT;
-                    END IF;
-                    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '{DbAdminName}') THEN
-                        CREATE ROLE {DbAdminName} LOGIN PASSWORD '{DbPassword}' SUPERUSER INHERIT;
-                    END IF;
-                END $$;
-                ");
-
-                if (roleResult.ExitCode != 0 || !string.IsNullOrEmpty(roleResult.Stderr))
-                {
-                    throw new XunitException($"Role init failed. Exitcode {roleResult.ExitCode}, Error {roleResult.Stderr}");
-                }
-
-                var createDbResult = await Server.ExecScriptAsync($@"CREATE DATABASE {templateDb};");
-                if (createDbResult.ExitCode != 0 || !string.IsNullOrEmpty(createDbResult.Stderr))
-                {
-                    throw new XunitException($"Create Db failed. Exitcode {createDbResult.ExitCode}, Error {createDbResult.Stderr}");
-                }
-
-                var connString = new PostgresDatabase(templateDb, Server.GetConnectionString());
-
-                using var sp = new ServiceCollection()
-                    .AddAccessManagementDatabase(opts =>
-                    {
-                        opts.MigrationConnectionString = connString.Admin.ToString();
-                        opts.Source = SourceType.Migration;
-                        opts.EnableEFPooling = false;
-                    }).BuildServiceProvider();
-
-                var audit = new AuditValues(SystemEntityConstants.StaticDataIngest);
-                using var db = sp.CreateEFScope(audit).ServiceProvider.GetRequiredService<AppDbContext>();
-                await db.Database.MigrateAsync();
-                await TestDataSeeds.Exec(db);
-                NpgsqlConnection.ClearAllPools();
-                _isInitialized = true;
-            }
-        }
-        finally
-        {
-            _semaphore.Release();
-        }
-
-        var dbInstance = Interlocked.Increment(ref _databaseInstance);
-        var dbName = $"test_{dbInstance}";
-
-        var cloneResult = await Server.ExecScriptAsync($"CREATE DATABASE {dbName} WITH TEMPLATE test_primary OWNER {DbUserName};");
-
-        if (cloneResult.ExitCode != 0 || !string.IsNullOrEmpty(cloneResult.Stderr))
-        {
-            throw new XunitException($"create database with template failed. Exitcode {cloneResult.ExitCode}, Error {cloneResult.Stderr}");
-        }
-
-        return new PostgresDatabase(dbName, Server.GetConnectionString());
+        var audit = new AuditValues(SystemEntityConstants.StaticDataIngest);
+        using var db = sp.CreateEFScope(audit).ServiceProvider.GetRequiredService<AppDbContext>();
+        await db.Database.MigrateAsync();
+        await TestDataSeeds.Exec(db);
     }
 }
 

@@ -118,7 +118,10 @@ consumers get rewritten on EF seed data over time and the fixture is retired.
 ## `EFPostgresFactory` — how the DB is provisioned
 
 Under the hood, `ApiFixture` delegates database provisioning to
-`EFPostgresFactory`. The strategy:
+`EFPostgresFactory`, a thin wrapper over the shared
+[`PostgresTestEngine`](../../src/testing/PostgresTestEngine.cs) (linked into test
+assemblies that set `IncludePostgresTestEngine`, the same mechanism as the
+`[UnitTest]`/`[IntegrationTest]` markers). The strategy:
 
 1. A **single** PostgreSQL container is shared across every fixture in the
    test run (reference counted).
@@ -137,16 +140,22 @@ PostgreSQL container is needed.
 
 ### Graceful skip when no container runtime is available
 
-`EFPostgresFactory` detects the absence of a Docker / Podman socket and calls
-`Assert.Skip(...)` so the suite doesn't fail on developer machines without a
-runtime.
+When no Docker / Podman socket is reachable, `PostgresTestEngine` records a
+`SkipReason` instead of throwing — a skip raised from a fixture's
+`InitializeAsync` surfaces as a fixture-init *failure*, not a skip, in xUnit v3.
+Fixtures convert that reason to a per-test skip: `AuthorizationDbFixture` exposes
+`SkipReason` and its tests call `Assert.SkipWhen(...)`. `ApiFixture` /
+`EFPostgresFactory` still surface a missing runtime as a failure (converting its
+many test classes to the per-test-skip pattern is tracked separately); in CI a
+runtime is always present.
 
 ## Other fixtures
 
-- **`AuthorizationDbFixture`** (`Altinn.Authorization.Tests`) — a Testcontainers
-  PostgreSQL fixture used directly by the Authorization delegation-metadata
-  repository tests. (`AuthorizationApiFixture` itself is mock-backed and needs
-  no container.)
+- **`AuthorizationDbFixture`** (`Altinn.Authorization.Tests`) — provides a
+  PostgreSQL database with the Authorization Yuniql schema for the
+  delegation-metadata repository tests. Backed by the shared `PostgresTestEngine`
+  (the Yuniql scripts are replayed once into a template; each test class gets a
+  clone). (`AuthorizationApiFixture` itself is mock-backed and needs no container.)
 - **`PlatformFixture`** (`Altinn.Authorization.Integration.Tests`) — wires up the
   platform-integration clients against the **live** platform; its tests
   `Assert.Skip(...)` when credentials/config are missing, so they don't run in a

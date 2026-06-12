@@ -5,6 +5,8 @@
              dotnet test routes to the Microsoft Testing Platform (required for xUnit v3). -->
         <TargetFramework></TargetFramework>
         <TargetFrameworks>net10.0</TargetFrameworks>
+        <!-- Link the shared PostgreSQL test engine (src/testing/PostgresTestEngine.cs). -->
+        <IncludePostgresTestEngine>true</IncludePostgresTestEngine>
     </PropertyGroup>
 
     <ItemGroup>

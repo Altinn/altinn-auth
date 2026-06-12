@@ -52,6 +52,18 @@
                 <Using Include="Altinn.Authorization.Testing" />
             </ItemGroup>
 
+            <!-- Shared PostgreSQL test engine (template-clone provisioning + the
+                 correct xUnit v3 Docker-skip). Opt-in because it pulls Testcontainers
+                 + Npgsql: set <IncludePostgresTestEngine>true</IncludePostgresTestEngine>
+                 in projects that provision a real PostgreSQL for tests (they must
+                 already reference Testcontainers.PostgreSql and Npgsql). Linked
+                 source, like the category markers above — no project reference. -->
+            <ItemGroup Condition=" '$(IncludePostgresTestEngine)' == 'true' ">
+                <Compile Include="$(MSBuildThisFileDirectory)testing\PostgresTestEngine.cs">
+                    <Link>Properties\PostgresTestEngine.cs</Link>
+                </Compile>
+            </ItemGroup>
+
             <ItemGroup Condition=" '$(IsTestLibrary)' == 'true' ">
                 <PackageReference Include="xunit.assert" Condition=" '$(XUnitVersion)' == 'v2' " />
                 <PackageReference Include="xunit.extensibility.core" Condition=" '$(XUnitVersion)' == 'v2' " />
