@@ -62,6 +62,16 @@ project key. Two shapes:
 { "sonarcloud": false }
 ```
 
+> **Default is enabled — set `false` explicitly to opt out.** When `conf.json`
+> omits `sonarcloud` entirely (or the vertical has no `conf.json`),
+> [`_meta.mts`](../.github/scripts/_meta.mts) defaults it to
+> `{ enabled: true }` with a *derived* key `authorization-<slug>`. If no
+> SonarCloud project exists for that derived key, the scanner still runs
+> begin/end and "succeeds", but the upload lands nowhere ("Project not found")
+> — so the steps burn ~78s per scan for no dashboard. A vertical that should
+> **not** be scanned must say so explicitly with `"sonarcloud": false`; this is
+> why every non-scanned vertical carries that line.
+
 Current state — the verticals that are scanned:
 
 | Vertical | Project key |
@@ -138,9 +148,18 @@ nightly job does not fail on a red gate — the dashboard is the signal. To be
 alerted on a gate breach, configure SonarCloud's own notifications for the
 project rather than failing the cron.
 
-Because "new code" can no longer mean "this PR's diff", set each project's
-**New Code definition** in the SonarCloud UI to a day-based window (e.g. "last
-30 days") or "previous version".
+### New Code definition
+
+Because "new code" can no longer mean "this PR's diff", the New Code period is
+a rolling time window instead. Both scanned projects
+(`Authorization_AccessManagement`, `Authorization_Authorization`) are set to
+**Number of days = 30** in the SonarCloud UI — the gate's new-code conditions
+evaluate against issues introduced on `main` in the last 30 days.
+
+This is project-scoped UI state, not source-controlled. To change it: project →
+**Administration → New Code** (or the org-level default under the `altinn`
+organization). Avoid "Previous version" here — it keys off `sonar.projectVersion`
+release tags, which this pipeline doesn't set.
 
 ## Common operations
 
