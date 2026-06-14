@@ -101,10 +101,11 @@
     <PackageVersion Include="MongoDB.Driver.Core" Version="2.30.0" />
     <PackageVersion Include="Moq" Version="4.20.72" />
     <PackageVersion Include="Nerdbank.Streams" Version="2.13.16" />
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
-    <PackageVersion Include="Npgsql.OpenTelemetry" Version="10.0.3" />
-    <PackageVersion Include="Npgsql.DependencyInjection" Version="10.0.3" />
-    <PackageVersion Include="Npgsql" Version="10.0.3" />
+    <!-- Issues with Npgsql versions including 10.0.2 causing ObjectDisposed exceptions -->
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageVersion Include="Npgsql.OpenTelemetry" Version="10.0.0" />
+    <PackageVersion Include="Npgsql.DependencyInjection" Version="10.0.0" />
+    <PackageVersion Include="Npgsql" Version="10.0.0" />
     <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.15.3" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version=" 1.15.2" />
