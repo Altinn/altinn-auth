@@ -96,7 +96,7 @@ public static class ServiceCollectionExtensions
                             for (int i = 0; i < maxTags; i++)
                             {
                                 activity.SetTag(
-                                    $"db.statement{(i > 0 ? i : null)}",
+                                    $"db.statement{i}",
                                     commandSpan.Slice(i * maxTagLength, Math.Min(maxTagLength, commandSpan.Length - (i * maxTagLength))).ToString());
                                 if ((i + 1) * maxTagLength >= commandSpan.Length)
                                 {
