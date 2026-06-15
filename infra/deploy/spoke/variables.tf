@@ -82,3 +82,7 @@ variable "logging" {
     min_level = map(string)
   })
 }
+
+variable "maintainers_principal_ids" {
+  type = list(string)
+}

@@ -62,5 +62,31 @@ config = {
         path = "ccr-flatfile-remote-path"
       }
     }
+
+    clients = {
+      BRG = {
+        password = "ccr-brg-hash"
+        networks = [
+          "195.43.63.25/32",
+          "89.162.38.236/32",
+          "195.43.60.20/32",
+          "51.13.20.208/30", # 208-211
+          "195.43.63.150/32",
+          "195.43.63.156/32",
+          "195.43.63.20/32",
+        ]
+      }
+
+      auth-support-prod = {
+        password = "ccr-auth-support-hash"
+        networks = [
+          # Tatt fra hvem som fikk lov til å kalle SBLbridge i AT
+          "78.41.45.0/24",
+          "78.41.46.0/24",
+          "78.41.47.0/24",
+          "77.110.216.160/32", # kanskje Vegard
+        ]
+      }
+    }
   }
 }

@@ -91,3 +91,11 @@ resource "azurerm_monitor_diagnostic_setting" "service_bus_diagnostics" {
     category = "AllMetrics"
   }
 }
+
+resource "azurerm_role_assignment" "service_bus_data_owner" {
+  for_each = toset(var.maintainers_principal_ids)
+
+  scope                = azurerm_servicebus_namespace.service_bus.id
+  role_definition_name = "Azure Service Bus Data Owner"
+  principal_id         = each.value
+}
