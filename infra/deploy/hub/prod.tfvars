@@ -19,6 +19,7 @@ client_certs = [
   "ivart",
   "marting",
   "henningnormann",
+  "rogerkjaernsrod",
   "github",
 ]
 hub_principal_ids = [
