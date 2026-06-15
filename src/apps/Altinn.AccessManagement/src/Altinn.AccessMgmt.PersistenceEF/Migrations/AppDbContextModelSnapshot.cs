@@ -18,7 +18,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Altinn:AuditVersion", 3)
-                .HasAnnotation("ProductVersion", "9.0.10")
+                .HasAnnotation("ProductVersion", "10.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -2372,6 +2372,14 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_entity");
+
+                    b.HasIndex("EmailIdentifier")
+                        .IsUnique()
+                        .HasDatabaseName("ix_entity_emailidentifier")
+                        .HasFilter("EmailIdentifier IS NOT NULL")
+                        .HasAnnotation("Npgsql:CreatedConcurrently", true);
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("EmailIdentifier"), new[] { "Id" });
 
                     b.HasIndex("OrganizationIdentifier")
                         .IsUnique()

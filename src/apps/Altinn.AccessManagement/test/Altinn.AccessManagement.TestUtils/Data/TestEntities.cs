@@ -341,12 +341,12 @@ public static class TestEntities
             Parent = null,
             ParentId = null,
             PartyId = null,
-            EmailIdentifier = "marius@gmail.com",
+            EmailIdentifier = "marius2@gmail.com",
             PersonIdentifier = null,
-            RefId = "epost:marius@gmail.com",
+            RefId = "epost:marius2@gmail.com",
             TypeId = EntityTypeConstants.SelfIdentified,
             UserId = null,
-            Username = "epost:marius@gmail.com",
+            Username = "epost:marius2@gmail.com",
             VariantId = EntityVariantConstants.SI_EMAIL,
         }
     };

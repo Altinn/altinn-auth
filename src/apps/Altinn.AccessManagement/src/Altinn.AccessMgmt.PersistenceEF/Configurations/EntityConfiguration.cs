@@ -41,6 +41,7 @@ public class EntityConfiguration : IEntityTypeConfiguration<Entity>
         builder.HasIndex(e => e.Username).HasFilter("Username IS NOT NULL").IncludeProperties(["Id"]).IsUnique().IsCreatedConcurrently();
         builder.HasIndex(e => e.OrganizationIdentifier).HasFilter("OrganizationIdentifier IS NOT NULL").IncludeProperties(["Id"]).IsUnique().IsCreatedConcurrently();
         builder.HasIndex(e => e.PersonIdentifier).HasFilter("PersonIdentifier IS NOT NULL").IncludeProperties(["Id"]).IsUnique().IsCreatedConcurrently();
+        builder.HasIndex(e => e.EmailIdentifier).HasFilter("EmailIdentifier IS NOT NULL").IncludeProperties(["Id"]).IsUnique().IsCreatedConcurrently();
     }
 }
 
