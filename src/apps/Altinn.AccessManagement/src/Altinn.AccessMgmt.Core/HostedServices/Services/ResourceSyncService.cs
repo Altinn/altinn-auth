@@ -100,7 +100,7 @@ public partial class ResourceSyncService : IResourceSyncService
         ResourceTypes = await dbContext.ResourceTypes.ToListAsync(cancellationToken);
         var leaseData = await lease.Get<ResourceRegistryLease>(cancellationToken);
 
-        using var activity = CoreTelemetry.ActivitySource.CreateActivity(nameof(ResourceSyncService), ActivityKind.Internal);
+        using var activity = CoreTelemetry.ActivitySource.StartActivity(nameof(ResourceSyncService), ActivityKind.Internal);
         await foreach (var page in await _resourceRegistry.StreamResources(leaseData.Since, leaseData.ResourceNextPageLink, cancellationToken))
         {
             try

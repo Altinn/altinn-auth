@@ -60,7 +60,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
         var ingestService = scope.ServiceProvider.GetRequiredService<IIngestService>();
         IAssignmentService assignmentService = scope.ServiceProvider.GetRequiredService<IAssignmentService>();
 
-        using var activity = CoreTelemetry.ActivitySource.CreateActivity(nameof(PartySyncService), ActivityKind.Internal);
+        using var activity = CoreTelemetry.ActivitySource.StartActivity(nameof(PartySyncService), ActivityKind.Internal);
         await foreach (var page in await _register.StreamParties(AltinnRegisterClient.DefaultFields, leaseData?.PartyStreamNextPageLink, cancellationToken))
         {
             try

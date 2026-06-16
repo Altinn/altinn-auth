@@ -56,7 +56,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
             return;
         }
 
-        using var activity = CoreTelemetry.ActivitySource.CreateActivity(nameof(RoleSyncService), ActivityKind.Internal);
+        using var activity = CoreTelemetry.ActivitySource.StartActivity(nameof(RoleSyncService), ActivityKind.Internal);
         await foreach (var page in await _register.StreamRoles([], leaseData.RoleStreamNextPageLink, cancellationToken))
         {
             try
