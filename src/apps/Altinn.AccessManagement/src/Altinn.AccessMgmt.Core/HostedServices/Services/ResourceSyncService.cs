@@ -169,6 +169,10 @@ public partial class ResourceSyncService : IResourceSyncService
                 await dbContext.SaveChangesAsync(cancellationToken);
             }
         }
+        else
+        {
+            Activity.Current?.AddTag("role", $"{updatedResource.SubjectUrn} does not exist.");
+        }
     }
 
     private async Task DeleteAccessPackageResource(AppDbContext dbContext, ResourceUpdatedModel updatedResource, Resource resource, CancellationToken cancellationToken)
@@ -217,19 +221,28 @@ public partial class ResourceSyncService : IResourceSyncService
         var role = await dbContext.Roles
             .AsNoTracking()
             .Where(r => EF.Functions.ILike(r.LegacyUrn, updatedResource.SubjectUrn) || EF.Functions.ILike(r.Urn, updatedResource.SubjectUrn))
-            .SingleOrDefaultAsync(cancellationToken) ?? throw new KeyNotFoundException($"Role not found '{subjectUrnPart}'");
-
-        var roleResource = await dbContext.RoleResources.FirstOrDefaultAsync(t => t.RoleId == role.Id && t.ResourceId == resource.Id, cancellationToken);
-        if (roleResource == null)
+            .FirstOrDefaultAsync(cancellationToken);
+        
+        if (role is { })
         {
-            roleResource = new RoleResource
+            var roleResource = await dbContext.RoleResources.FirstOrDefaultAsync(t => t.RoleId == role.Id && t.ResourceId == resource.Id, cancellationToken);
+            if (roleResource == null)
             {
-                RoleId = role.Id,
-                ResourceId = resource.Id,
-            };
+                roleResource = new RoleResource
+                {
+                    RoleId = role.Id,
+                    ResourceId = resource.Id,
+                };
 
-            dbContext.RoleResources.Add(roleResource);
-            await dbContext.SaveChangesAsync(cancellationToken);
+                dbContext.RoleResources.Add(roleResource);
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
+            
+            return;
+        }
+        else
+        {
+            Activity.Current?.AddTag("role", $"{updatedResource.SubjectUrn} does not exist.");
         }
     }
 
