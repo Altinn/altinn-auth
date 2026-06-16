@@ -12,18 +12,44 @@ using Altinn.AccessMgmt.Core.HostedServices.Services;
 using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.Core.Telemetry;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using AMPartyService = Altinn.AccessMgmt.Core.Services.AMPartyService;
 
 namespace Altinn.AccessMgmt.Core.Extensions;
 
 public static class ServiceCollectionExtensions
 {
+    /// <summary>
+    /// Adds Core Telemetry
+    /// </summary>
+    public static TracerProviderBuilder AddCoreTelemetry(this TracerProviderBuilder builder) =>
+        builder.AddSource(CoreTelemetry.SourceName);
+
+    /// <summary>
+    /// Adds Core Telemetry
+    /// </summary>
+    public static MeterProviderBuilder AddCoreTelemetry(this MeterProviderBuilder builder) =>
+        builder.AddMeter(CoreTelemetry.SourceName);
+    
+    /// <summary>
+    /// Enables Core Telemetry.
+    /// </summary>
+    public static IServiceCollection AddCoreOtel(this IServiceCollection services)
+    {
+        services.ConfigureOpenTelemetryMeterProvider(otel => otel.AddCoreTelemetry());
+        services.ConfigureOpenTelemetryTracerProvider(otel => otel.AddCoreTelemetry());
+        return services;
+    }
+
     public static IServiceCollection AddAccessMgmtCore(this IServiceCollection services, IConfiguration configuration, Action<CoreAppsettings> configureAppsettings = null)
     {
+        services.AddCoreOtel();
         services.AddHostedService<RegisterHostedService>();
         services.AddHostedService<AltinnRoleHostedService>();
         services.AddHostedService<SingleRightsHostedService>();

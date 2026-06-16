@@ -1,12 +1,10 @@
 ﻿using System.Diagnostics;
-using System.Net.Http.Headers;
 using Altinn.AccessMgmt.Core.HostedServices.Contracts;
 using Altinn.AccessMgmt.Core.HostedServices.Leases;
-using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.Core.Telemetry;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
-using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
@@ -25,6 +23,8 @@ public class PartySyncService : BaseSyncService, IPartySyncService
     private readonly ILogger<RegisterHostedService> _logger;
     private readonly IAltinnRegister _register;
     private readonly IServiceProvider _serviceProvider;
+
+    private KeyValuePair<string, object> OtelTags { get; } = new KeyValuePair<string, object?>("service", nameof(PartySyncService));
 
     /// <summary>
     /// PartySyncService Constructor
@@ -60,64 +60,79 @@ public class PartySyncService : BaseSyncService, IPartySyncService
         var ingestService = scope.ServiceProvider.GetRequiredService<IIngestService>();
         IAssignmentService assignmentService = scope.ServiceProvider.GetRequiredService<IAssignmentService>();
 
+        using var activity = CoreTelemetry.ActivitySource.CreateActivity(nameof(PartySyncService), ActivityKind.Internal);
         await foreach (var page in await _register.StreamParties(AltinnRegisterClient.DefaultFields, leaseData?.PartyStreamNextPageLink, cancellationToken))
         {
-            if (page.IsProblem)
+            try
             {
-                Log.ResponseError(_logger, page.StatusCode);
-                throw new InvalidOperationException("Stream page is not successful");
+                if (page.IsProblem)
+                {
+                    Log.ResponseError(_logger, page.StatusCode);
+                    throw new InvalidOperationException("Stream page is not successful");
+                }
+
+                _logger.LogInformation("Starting proccessing party page ({0}-{1})", page.Content.Stats.PageStart, page.Content.Stats.PageEnd);
+
+                foreach (var item in page?.Content.Data ?? [])
+                {
+                    var entity = item switch
+                    {
+                        Person person => MapPerson(person),
+                        Organization organization => MapOrganization(organization),
+                        SelfIdentifiedUser selfIdentifiedUser => MapSelfIdentifiedUser(selfIdentifiedUser),
+                        SystemUser systemUser => MapSystemUser(systemUser),
+                        EnterpriseUser enterpriseUser => MapEnterpriseUser(enterpriseUser),
+                        _ => throw new InvalidDataException($"Unkown Party type {item.Type}"),
+                    };
+
+                    Assignment assignment = item switch
+                    {
+                        Person person => MapAssignmentForPerson(person),
+                        SelfIdentifiedUser selfIdentifiedUser => MapAssignmentForSelfIdentifiedUser(selfIdentifiedUser),
+                        _ => null
+                    };
+
+                    if (!seen.Add(entity.RefId))
+                    {
+                        await Flush();
+                    }
+
+                    if (entity.TypeId == EntityTypeConstants.Person && entity.DateOfDeath.HasValue)
+                    {
+                        seenDeadPeople.Add(entity.Id);
+                    }
+
+                    ingestEntities.Add(entity);
+                    if (assignment != null && seenAssignments.Add((assignment.FromId, assignment.ToId, assignment.RoleId)))
+                    {
+                        ingestAssignments.Add(assignment);
+                    }
+                }
+
+                var flushed = await Flush();
+
+                if (string.IsNullOrEmpty(page?.Content?.Links?.Next))
+                {
+                    return;
+                }
+
+                if (flushed > 0)
+                {
+                    leaseData.PartyStreamNextPageLink = page.Content.Links.Next;
+                    await lease.Update(leaseData, cancellationToken);
+                }
             }
-
-            _logger.LogInformation("Starting proccessing party page ({0}-{1})", page.Content.Stats.PageStart, page.Content.Stats.PageEnd);
-
-            foreach (var item in page?.Content.Data ?? [])
+            catch (Exception ex)
             {
-                var entity = item switch
-                {
-                    Person person => MapPerson(person),
-                    Organization organization => MapOrganization(organization),
-                    SelfIdentifiedUser selfIdentifiedUser => MapSelfIdentifiedUser(selfIdentifiedUser),
-                    SystemUser systemUser => MapSystemUser(systemUser),
-                    EnterpriseUser enterpriseUser => MapEnterpriseUser(enterpriseUser),
-                    _ => throw new InvalidDataException($"Unkown Party type {item.Type}"),
-                };
-
-                Assignment assignment = item switch
-                {
-                    Person person => MapAssignmentForPerson(person),
-                    SelfIdentifiedUser selfIdentifiedUser => MapAssignmentForSelfIdentifiedUser(selfIdentifiedUser),
-                    _ => null
-                };
-
-                if (!seen.Add(entity.RefId))
-                {
-                    await Flush();
-                }
-
-                if (entity.TypeId == EntityTypeConstants.Person && entity.DateOfDeath.HasValue)
-                {
-                    seenDeadPeople.Add(entity.Id);
-                }
-
-                ingestEntities.Add(entity);
-                if (assignment != null && seenAssignments.Add((assignment.FromId, assignment.ToId, assignment.RoleId)))
-                {
-                    ingestAssignments.Add(assignment);
-                }
-            }
-
-            var flushed = await Flush();
-
-            if (string.IsNullOrEmpty(page?.Content?.Links?.Next))
-            {
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error);
+                CoreTelemetry.HostedServicesFailures.Add(1, OtelTags);
+                CoreTelemetry.HostedServicesOk.Record(0, OtelTags);
                 return;
             }
 
-            if (flushed > 0)
-            {
-                leaseData.PartyStreamNextPageLink = page.Content.Links.Next;
-                await lease.Update(leaseData, cancellationToken);
-            }
+            CoreTelemetry.HostedServicesSuccess.Add(1, OtelTags);
+            CoreTelemetry.HostedServicesOk.Record(1, OtelTags);
         }
 
         async Task<int> Flush()
@@ -179,6 +194,8 @@ public class PartySyncService : BaseSyncService, IPartySyncService
             return 0;
         }
     }
+
+
 
     private Entity MapPerson(Person person)
     {
