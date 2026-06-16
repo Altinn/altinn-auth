@@ -54,6 +54,7 @@ public class AppsInstanceDelegationControllerTest : IClassFixture<ApiFixture>
             services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
             services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
             services.AddSingleton<IPartiesClient, PartiesClientMock>();
+            services.AddSingleton<IAMPartyService, AMPartyServiceMock>();
             services.AddSingleton<IProfileClient, ProfileClientMock>();
             services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
             services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();

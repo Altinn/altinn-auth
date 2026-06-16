@@ -13,7 +13,6 @@ using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Platform.Register.Models;
 using Azure;
 using Azure.Storage.Blobs.Models;
-using Altinn.AccessMgmt.PersistenceEF.Utils.Settings;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Logging;
 
@@ -302,18 +301,7 @@ namespace Altinn.AccessManagement.Core.Services
         /// <inheritdoc />
         public async Task<InstanceRight> TryWriteInstanceDelegationPolicyRules(InstanceRight rules, bool ignoreExistingPolicy = false, CancellationToken cancellationToken = default)
         {
-            bool useEF = FeatureFlags.UseInstanceDelegationEF;
-            bool validPath;
-            string path;
-
-            if (useEF)
-            {
-                validPath = DelegationHelper.TryGetNewDelegationPolicyPathFromInstanceRule(rules, out path);
-            }
-            else
-            {
-                validPath = DelegationHelper.TryGetDelegationPolicyPathFromInstanceRule(rules, out path);
-            }
+            bool validPath = DelegationHelper.TryGetNewDelegationPolicyPathFromInstanceRule(rules, out string path);
 
             if (validPath)
             {
@@ -364,18 +352,7 @@ namespace Altinn.AccessManagement.Core.Services
             }
             catch (Exception ex)
             {
-                bool useEF = FeatureFlags.UseInstanceDelegationEF;
-                bool validPath;
-                string path;
-
-                if (useEF)
-                {
-                    validPath = DelegationHelper.TryGetNewDelegationPolicyPathFromInstanceRule(rules, out path);
-                }
-                else
-                {
-                    validPath = DelegationHelper.TryGetDelegationPolicyPathFromInstanceRule(rules, out path);
-                }
+                bool validPath = DelegationHelper.TryGetNewDelegationPolicyPathFromInstanceRule(rules, out string path);
 
                 if (validPath)
                 {

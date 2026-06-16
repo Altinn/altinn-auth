@@ -8,6 +8,7 @@ using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Enums;
 using Altinn.AccessManagement.Tests.Data;
 using Altinn.AccessManagement.Tests.Utils;
+using Altinn.Platform.Register.Models;
 
 namespace Altinn.AccessManagement.Tests.Mocks;
 
@@ -90,7 +91,7 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
     public Task<InstanceDelegationChange> GetLastInstanceDelegationChange(InstanceDelegationChangeRequest request, CancellationToken cancellationToken = default)
     {
         Random random = new Random();
-        switch (request.Instance)
+        switch (ExtractInstanceIdSuffix(request.Instance))
         {
             case "00000000-0000-0000-0000-000000000001":
             case "00000000-0000-0000-0000-000000000009":
@@ -121,7 +122,8 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
     {
         Random random = new();
         string path = GetDelegationPolicyPathFromInstanceRule(instanceDelegationChange);
-        InstanceDelegationChange result = instanceDelegationChange.InstanceId switch
+        string instanceIdSuffix = ExtractInstanceIdSuffix(instanceDelegationChange.InstanceId);
+        InstanceDelegationChange result = instanceIdSuffix switch
         {
             "00000000-0000-0000-0000-000000000002" => null,
             _ => new InstanceDelegationChange
@@ -660,6 +662,60 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
 
     public Task<List<DelegationChange>> GetResourceRegistryDelegationChanges(List<string> resourceIds, Guid? offeredByPartyUuid, Guid? coveredByPartyUuid, ResourceType resourceType, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        int offeredByPartyId = LookupPartyIdByUuid(offeredByPartyUuid);
+        int coveredByPartyId = LookupPartyIdByUuid(coveredByPartyUuid);
+        return GetResourceRegistryDelegationChanges(resourceIds, offeredByPartyId, coveredByPartyId, resourceType, cancellationToken);
+    }
+
+    private static int LookupPartyIdByUuid(Guid? partyUuid)
+    {
+        if (partyUuid is null)
+        {
+            return 0;
+        }
+
+        Party party = TestDataParties.Value.Find(p => p.PartyUuid == partyUuid.Value);
+        return party?.PartyId ?? 0;
+    }
+
+    private static string ExtractInstanceIdSuffix(string instanceId)
+    {
+        if (string.IsNullOrEmpty(instanceId))
+        {
+            return instanceId;
+        }
+
+        int lastSlash = instanceId.LastIndexOf('/');
+        return lastSlash >= 0 ? instanceId[(lastSlash + 1)..] : instanceId;
+    }
+
+    private static readonly Lazy<List<Party>> TestDataParties = new(() =>
+    {
+        string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(DelegationMetadataRepositoryMock).Assembly.Location).LocalPath);
+        string partiesPath = Path.Combine(unitTestFolder, "Data", "Parties", "parties.json");
+        if (!File.Exists(partiesPath))
+        {
+            return new List<Party>();
+        }
+
+        string content = File.ReadAllText(partiesPath);
+        List<Party> roots = JsonSerializer.Deserialize<List<Party>>(content) ?? new List<Party>();
+        return Flatten(roots).ToList();
+    });
+
+    // parties.json nests sub-units under ChildParties; flatten so lookups resolve nested parties too.
+    private static IEnumerable<Party> Flatten(IEnumerable<Party> parties)
+    {
+        foreach (Party party in parties)
+        {
+            yield return party;
+            if (party.ChildParties != null)
+            {
+                foreach (Party child in Flatten(party.ChildParties))
+                {
+                    yield return child;
+                }
+            }
+        }
     }
 }

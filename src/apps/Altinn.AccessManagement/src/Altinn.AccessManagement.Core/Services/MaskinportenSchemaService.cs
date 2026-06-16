@@ -13,7 +13,6 @@ using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.FeatureManagement;
 using static Altinn.AccessManagement.Core.Constants.AltinnXacmlConstants;
 using Delegation = Altinn.AccessManagement.Core.Models.Delegation;
 using ResourceType = Altinn.AccessManagement.Core.Models.ResourceRegistry.ResourceType;
@@ -30,7 +29,6 @@ namespace Altinn.AccessManagement.Core.Services
         private readonly IResourceAdministrationPoint _resourceAdministrationPoint;
         private readonly IPolicyInformationPoint _pip;
         private readonly IPolicyAdministrationPoint _pap;
-        private readonly IFeatureManager _featureManager;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MaskinportenSchemaService"/> class.
@@ -42,8 +40,7 @@ namespace Altinn.AccessManagement.Core.Services
         /// <param name="resourceAdministrationPoint">handler for resource registry</param>
         /// <param name="pip">Service implementation for policy information point</param>
         /// <param name="pap">Service implementation for policy administration point</param>
-        /// <param name="featureManager">Feature manager</param>
-        public MaskinportenSchemaService(ILogger<IMaskinportenSchemaService> logger, AppDbContext dbContext, IDelegationMetadataRepository delegationRepository, IContextRetrievalService contextRetrievalService, IResourceAdministrationPoint resourceAdministrationPoint, IPolicyInformationPoint pip, IPolicyAdministrationPoint pap, IFeatureManager featureManager)
+        public MaskinportenSchemaService(ILogger<IMaskinportenSchemaService> logger, AppDbContext dbContext, IDelegationMetadataRepository delegationRepository, IContextRetrievalService contextRetrievalService, IResourceAdministrationPoint resourceAdministrationPoint, IPolicyInformationPoint pip, IPolicyAdministrationPoint pap)
         {
             _logger = logger;
             _db = dbContext;
@@ -52,7 +49,6 @@ namespace Altinn.AccessManagement.Core.Services
             _resourceAdministrationPoint = resourceAdministrationPoint;
             _pip = pip;
             _pap = pap;
-            _featureManager = featureManager;
         }
 
         /// <inheritdoc/>
@@ -413,9 +409,7 @@ namespace Altinn.AccessManagement.Core.Services
                 return delegations;
             }
 
-            List<DelegationChange> delegationChanges = await _featureManager.IsEnabledAsync("AccessManagement.ResourceDelegation.EF")
-                ? await _delegationRepository.GetResourceRegistryDelegationChanges(resources.Select(d => d.Identifier).ToList(), consumerPartyUuid, supplierPartyUuid, ResourceType.MaskinportenSchema, cancellationToken)
-                : await _delegationRepository.GetResourceRegistryDelegationChanges(resources.Select(d => d.Identifier).ToList(), consumerPartyId, supplierPartyId, ResourceType.MaskinportenSchema, cancellationToken);
+            List<DelegationChange> delegationChanges = await _delegationRepository.GetResourceRegistryDelegationChanges(resources.Select(d => d.Identifier).ToList(), consumerPartyUuid, supplierPartyUuid, ResourceType.MaskinportenSchema, cancellationToken);
             if (delegationChanges.Count == 0)
             {
                 return delegations;
