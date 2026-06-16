@@ -16,6 +16,7 @@ service_bus_firewall = [
 ]
 
 maintainers_principal_ids = [
+  "6d54df21-3547-41a2-8d0d-529fad054807", # Group: Altinn Product Authorization: Developers Dev
   "93bed750-6ca4-47ae-ac43-b45fff4930f6", # Group: Altinn Product Authorization: Admins Dev
 ]
 
