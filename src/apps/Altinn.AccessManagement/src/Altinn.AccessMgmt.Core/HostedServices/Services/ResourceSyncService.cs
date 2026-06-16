@@ -150,10 +150,10 @@ public partial class ResourceSyncService : IResourceSyncService
                 CoreTelemetry.HostedServicesOk.Record(0, OtelTags);
                 return;
             }
-
-            CoreTelemetry.HostedServicesSuccess.Add(1, OtelTags);
-            CoreTelemetry.HostedServicesOk.Record(1, OtelTags);
         }
+
+        CoreTelemetry.HostedServicesSuccess.Add(1, OtelTags);
+        CoreTelemetry.HostedServicesOk.Record(1, OtelTags);
     }
 
     private Task UpsertUpdatedSubject(AppDbContext dbContext, ResourceUpdatedModel updatedResource, Resource resource, CancellationToken cancellationToken) => updatedResource.SubjectUrn switch

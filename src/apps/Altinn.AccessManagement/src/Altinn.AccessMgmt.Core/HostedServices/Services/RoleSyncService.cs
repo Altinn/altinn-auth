@@ -134,11 +134,10 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                 CoreTelemetry.HostedServicesOk.Record(0, OtelTags);
                 return;
             }
-
-            CoreTelemetry.HostedServicesSuccess.Add(1, OtelTags);
-            CoreTelemetry.HostedServicesOk.Record(1, OtelTags);
         }
 
+        CoreTelemetry.HostedServicesSuccess.Add(1, OtelTags);
+        CoreTelemetry.HostedServicesOk.Record(1, OtelTags);
         async Task<int> Flush()
         {
             var result = 0;

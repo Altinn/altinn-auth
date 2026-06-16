@@ -130,10 +130,10 @@ public class PartySyncService : BaseSyncService, IPartySyncService
                 CoreTelemetry.HostedServicesOk.Record(0, OtelTags);
                 return;
             }
-
-            CoreTelemetry.HostedServicesSuccess.Add(1, OtelTags);
-            CoreTelemetry.HostedServicesOk.Record(1, OtelTags);
         }
+
+        CoreTelemetry.HostedServicesSuccess.Add(1, OtelTags);
+        CoreTelemetry.HostedServicesOk.Record(1, OtelTags);
 
         async Task<int> Flush()
         {
