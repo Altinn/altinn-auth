@@ -135,7 +135,7 @@ public partial class ResourceSyncService : IResourceSyncService
                     catch (Exception ex)
                     {
                         Log.FailedToWriteUpdateSubjectForResource(_logger, ex, updatedResource.SubjectUrn, updatedResource.ResourceUrn);
-                        return;
+                        throw;
                     }
                 }
 
