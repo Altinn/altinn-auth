@@ -62,6 +62,11 @@
                 <Compile Include="$(MSBuildThisFileDirectory)testing\PostgresTestEngine.cs">
                     <Link>Properties\PostgresTestEngine.cs</Link>
                 </Compile>
+                <!-- Setup-timing for the engine + fixtures (#3379 measurement): compiled in
+                     with the engine, disabled at runtime via the FIXTURE_TIMING=off env var. -->
+                <Compile Include="$(MSBuildThisFileDirectory)testing\FixtureTiming.cs">
+                    <Link>Properties\FixtureTiming.cs</Link>
+                </Compile>
             </ItemGroup>
 
             <ItemGroup Condition=" '$(IsTestLibrary)' == 'true' ">

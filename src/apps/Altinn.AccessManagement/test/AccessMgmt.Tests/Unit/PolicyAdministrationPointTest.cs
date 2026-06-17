@@ -60,7 +60,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// Expected: WritePolicyAsync returns true.
         /// </summary>
         [Fact]
-        public async Task WritePolicy_TC01()
+        public async Task WritePolicy_ValidStream_ReturnsTrue()
         {
             // Arrange
             Stream dataStream = File.OpenRead("Data/Policies/policy.xml");
@@ -78,7 +78,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// Expected: WritePolicyAsync throws ArgumentException.
         /// </summary>
         [Fact]
-        public async Task WritePolicy_TC02()
+        public async Task WritePolicy_EmptyOrg_ThrowsArgumentException()
         {
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => _pap.WritePolicyAsync(string.Empty, "app", new MemoryStream(), TestContext.Current.CancellationToken));
@@ -89,7 +89,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// Expected: WritePolicyAsync throws ArgumentException.
         /// </summary>
         [Fact]
-        public async Task WritePolicy_TC03()
+        public async Task WritePolicy_EmptyApp_ThrowsArgumentException()
         {
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => _pap.WritePolicyAsync("org", string.Empty, new MemoryStream(), TestContext.Current.CancellationToken));
@@ -100,7 +100,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// Expected: WritePolicyAsync throws ArgumentException.
         /// </summary>
         [Fact]
-        public async Task WritePolicy_TC04()
+        public async Task WritePolicy_NullStream_ThrowsArgumentException()
         {
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => _pap.WritePolicyAsync("org", "app", null, TestContext.Current.CancellationToken));
@@ -111,7 +111,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// Expected: WritePolicyAsync throws ArgumentException.
         /// </summary>
         [Fact]
-        public async Task WritePolicy_TC05()
+        public async Task WritePolicy_NullStreamWithValidOrgApp_ThrowsArgumentException()
         {
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => _pap.WritePolicyAsync("org", "app", null, TestContext.Current.CancellationToken));
@@ -128,7 +128,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryDeleteDelegationPolicyRules_Valid()
+        public async Task TryDeleteDelegationPolicyRules_Valid_DeletesAllRules()
         {
             // Arrange
             int performedByUserId = 20001336;
@@ -181,7 +181,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryDeleteDelegationPolicyRules_PolicyAlredyDeleted()
+        public async Task TryDeleteDelegationPolicyRules_PolicyAlreadyDeleted_DeletesRemainingRules()
         {
             // Arrange
             int performedByUserId = 20001336;
@@ -239,7 +239,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryDeleteDelegationPolicyRules_ForOrganizationValid()
+        public async Task TryDeleteDelegationPolicyRules_ForOrganization_DeletesAllRules()
         {
             // Arrange
             int performedByUserId = 20001336;
@@ -286,7 +286,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryDeleteDelegationPolicyRules_DBFetchFail()
+        public async Task TryDeleteDelegationPolicyRules_DBFetchFail_DeletesRemainingRules()
         {
             // Arrange
             int performedByUserId = 20001336;
@@ -337,7 +337,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryDeleteDelegationPolicyRules_DataStorageLeaseFail()
+        public async Task TryDeleteDelegationPolicyRules_DataStorageLeaseFail_DeletesRemainingRules()
         {
             // Arrange
             int performedByUserId = 20001336;
@@ -396,7 +396,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryDeleteDelegationPolicyRules_DataWriteFail()
+        public async Task TryDeleteDelegationPolicyRules_DataWriteFail_DeletesRemainingRules()
         {
             // Arrange
             int performedByUserId = 20001336;
@@ -455,7 +455,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryDeleteDelegationPolicyRules_PolicyPathInvalid()
+        public async Task TryDeleteDelegationPolicyRules_PolicyPathInvalid_DeletesRemainingRules()
         {
             // Arrange
             int performedByUserId = 20001336;
@@ -514,7 +514,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryDeleteDelegationPolicyRules_PostgreeUpdateFail()
+        public async Task TryDeleteDelegationPolicyRules_PostgresUpdateFail_DeletesRemainingRules()
         {
             // Arrange
             int performedByUserId = 20001336;
@@ -574,7 +574,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryDeleteDelegationPolicyRules_PolicyPathDoesNotExist()
+        public async Task TryDeleteDelegationPolicyRules_PolicyPathDoesNotExist_DeletesRemainingRules()
         {
             // Arrange
             int performedByUserId = 20001336;
@@ -624,7 +624,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryDeleteDelegationPolicies_Valid()
+        public async Task TryDeleteDelegationPolicies_Valid_DeletesAllPolicies()
         {
             // Arrange
             int performedByUserId = 20001336;
@@ -679,7 +679,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryDeleteDelegationPolicies_StorageLeaseFail()
+        public async Task TryDeleteDelegationPolicies_StorageLeaseFail_DeletesRemainingPolicies()
         {
             // Arrange
             int performedByUserId = 20001336;
@@ -739,7 +739,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryDeleteDelegationPolicies_DBFetchFail()
+        public async Task TryDeleteDelegationPolicies_DBFetchFail_DeletesRemainingPolicies()
         {
             // Arrange
             int performedByUserId = 20001336;
@@ -791,7 +791,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryDeleteDelegationPolicies_PolicyPathDoesNotExist()
+        public async Task TryDeleteDelegationPolicies_PolicyPathDoesNotExist_DeletesRemainingPolicies()
         {
             // Arrange
             int performedByUserId = 20001336;
@@ -843,7 +843,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryDeleteDelegationPolicies_DBUpdateFails()
+        public async Task TryDeleteDelegationPolicies_DBUpdateFails_DeletesRemainingPolicies()
         {
             // Arrange
             int performedByUserId = 20001336;
@@ -904,7 +904,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryDeleteDelegationPolicies_UndefinedResource()
+        public async Task TryDeleteDelegationPolicies_UndefinedResource_DeletesRemainingPolicies()
         {
             // Arrange
             int performedByUserId = 20001336;
@@ -964,7 +964,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryDeleteDelegationPolicies_PolicyAlreadyDeleted()
+        public async Task TryDeleteDelegationPolicies_PolicyAlreadyDeleted_DeletesRemainingPolicies()
         {
             // Arrange
             int performedByUserId = 20001336;
@@ -1023,7 +1023,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// All returned rules match expected and have success flag and rule id set
         /// </summary>
         [Fact]
-        public async Task TryWriteDelegationPolicyRules_Valid()
+        public async Task TryWriteDelegationPolicyRules_Valid_CreatesAllRules()
         {
             // Arrange
             int delegatedByUserId = 20001336;
@@ -1284,7 +1284,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// The blob storage exception is handled and logged. The rule is returned as not created.
         /// </summary>
         [Fact]
-        public async Task TryWriteDelegationPolicyRules_Error_BlobStorageAqcuireLeaseLockException()
+        public async Task TryWriteDelegationPolicyRules_BlobStorageAcquireLeaseLockException_RuleNotCreated()
         {
             // Arrange
             int delegatedByUserId = 20001336;
@@ -1331,7 +1331,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// The blob storage exception is handled and logged. The rule is returned as not created.
         /// </summary>
         [Fact]
-        public async Task TryWriteDelegationPolicyRules_Error_BlobStorageLeaseLockWriteException()
+        public async Task TryWriteDelegationPolicyRules_BlobStorageLeaseLockWriteException_RuleNotCreated()
         {
             // Arrange
             int delegatedByUserId = 20001336;
@@ -1378,7 +1378,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// The postgre exception is handled and logged. The rule is returned as not created.
         /// </summary>
         [Fact]
-        public async Task TryWriteDelegationPolicyRules_Error_PostgreGetCurrentException()
+        public async Task TryWriteDelegationPolicyRules_PostgresGetCurrentException_RuleNotCreated()
         {
             // Arrange
             int delegatedByUserId = 20001336;
@@ -1425,7 +1425,7 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// The postgre exception is handled and logged. The rule is returned as not created.
         /// </summary>
         [Fact]
-        public async Task TryWriteDelegationPolicyRules_Error_PostgreWriteDelegationChangeException()
+        public async Task TryWriteDelegationPolicyRules_PostgresWriteDelegationChangeException_RuleNotCreated()
         {
             // Arrange
             int delegatedByUserId = 20001336;

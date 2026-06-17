@@ -10,7 +10,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Configuration;
 public class ConsentMigrationSettingsValidationTests
 {
     [Fact]
-    public void ValidateDataAnnotations_ValidSettings_Passes()
+    public void ValidateDataAnnotations_ValidSettings_IsValid()
     {
         // Arrange
         var settings = new ConsentMigrationSettings
@@ -33,7 +33,7 @@ public class ConsentMigrationSettingsValidationTests
     [InlineData(0)]
     [InlineData(-1)]
     [InlineData(50001)]
-    public void ValidateDataAnnotations_InvalidBatchSize_Fails(int batchSize)
+    public void ValidateDataAnnotations_InvalidBatchSize_IsInvalid(int batchSize)
     {
         // Arrange
         var settings = new ConsentMigrationSettings
@@ -56,7 +56,7 @@ public class ConsentMigrationSettingsValidationTests
     [InlineData(0)] // Below min
     [InlineData(-1)] // Negative
     [InlineData(4)] // Above max
-    public void ValidateDataAnnotations_InvalidConsentStatus_Fails(int status)
+    public void ValidateDataAnnotations_InvalidConsentStatus_IsInvalid(int status)
     {
         // Arrange
         var settings = new ConsentMigrationSettings
@@ -78,7 +78,7 @@ public class ConsentMigrationSettingsValidationTests
     [Theory]
     [InlineData(99)]// Below min (100ms)
     [InlineData(60001)] // Above max (1 minute)
-    public void ValidateDataAnnotations_InvalidNormalDelayMs_Fails(int delay)
+    public void ValidateDataAnnotations_InvalidNormalDelayMs_IsInvalid(int delay)
     {
         // Arrange
         var settings = new ConsentMigrationSettings
@@ -100,7 +100,7 @@ public class ConsentMigrationSettingsValidationTests
     [Theory]
     [InlineData(999)] // Below min (1 second)
     [InlineData(300001)] // Above max (5 minutes)
-    public void ValidateDataAnnotations_InvalidEmptyFeedDelayMs_Fails(int delay)
+    public void ValidateDataAnnotations_InvalidEmptyFeedDelayMs_IsInvalid(int delay)
     {
         // Arrange
         var settings = new ConsentMigrationSettings
@@ -120,7 +120,7 @@ public class ConsentMigrationSettingsValidationTests
     }
 
     [Fact]
-    public void ValidateDataAnnotations_MultipleInvalidProperties_FailsAll()
+    public void ValidateDataAnnotations_MultipleInvalidProperties_IsInvalidForEach()
     {
         // Arrange
         var settings = new ConsentMigrationSettings
@@ -139,7 +139,7 @@ public class ConsentMigrationSettingsValidationTests
     }
 
     [Fact]
-    public void ValidateDataAnnotations_BoundaryValues_Passes()
+    public void ValidateDataAnnotations_BoundaryValues_IsValid()
     {
         // Arrange - Test min and max valid values
         var minSettings = new ConsentMigrationSettings
@@ -170,7 +170,7 @@ public class ConsentMigrationSettingsValidationTests
     [Theory]
     [InlineData(59999)] // Below min (1 minute)
     [InlineData(3600001)]// Above max (1 hour)
-    public void ValidateDataAnnotations_InvalidFeatureDisabledDelayMs_Fails(int delay)
+    public void ValidateDataAnnotations_InvalidFeatureDisabledDelayMs_IsInvalid(int delay)
     {
         // Arrange
         var settings = new ConsentMigrationSettings

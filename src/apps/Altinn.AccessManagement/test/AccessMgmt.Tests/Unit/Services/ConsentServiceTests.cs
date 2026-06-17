@@ -176,7 +176,7 @@ public class ConsentServiceTests
     }
 
     [Fact]
-    public async Task GetAndStoreAltinn2Consent_Records_All_Histograms_OnSuccess()
+    public async Task GetAndStoreAltinn2Consent_Success_RecordsAllHistograms()
     {
         // Arrange: real Meter + listener to capture histogram recordings
         var meter = new Meter("Altinn.AccessManagement.ConsentMigration.Test");
@@ -216,8 +216,11 @@ public class ConsentServiceTests
         // Act
         var result = await service.GetAndStoreAltinn2Consent(consentRequestId, CancellationToken.None);
 
-        // Allow listener to process
-        await Task.Delay(20, TestContext.Current.CancellationToken);
+        await collector.WaitForMeasurementsAsync(
+            TestContext.Current.CancellationToken,
+            "consent_migration_get_a2_duration_seconds",
+            "consent_migration_insert_a3_duration_seconds",
+            "consent_migration_update_a2_duration_seconds");
 
         // Assert
         Assert.False(result.IsProblem);
@@ -229,7 +232,7 @@ public class ConsentServiceTests
     }
 
     [Fact]
-    public async Task GetAndStoreAltinn2Consent_Records_GetHistogram_OnDuplicate()
+    public async Task GetAndStoreAltinn2Consent_Duplicate_RecordsGetHistogram()
     {
         var meter = new Meter("Altinn.AccessManagement.ConsentMigration.Test");
         _meterFactoryMock.Setup(x => x.Create(It.IsAny<MeterOptions>())).Returns(meter);
@@ -261,7 +264,9 @@ public class ConsentServiceTests
 
         var result = await service.GetAndStoreAltinn2Consent(consentRequestId, CancellationToken.None);
 
-        await Task.Delay(20, TestContext.Current.CancellationToken);
+        await collector.WaitForMeasurementsAsync(
+            TestContext.Current.CancellationToken,
+            "consent_migration_get_a2_duration_seconds");
 
         Assert.False(result.IsProblem);
         Assert.NotNull(result.Value);
@@ -269,7 +274,7 @@ public class ConsentServiceTests
     }
 
     [Fact]
-    public async Task GetAndStoreAltinn2Consent_Records_UpdateHistogram_OnValidationFailure()
+    public async Task GetAndStoreAltinn2Consent_ValidationFailure_RecordsUpdateHistogram()
     {
         var meter = new Meter("Altinn.AccessManagement.ConsentMigration.Test");
         _meterFactoryMock.Setup(x => x.Create(It.IsAny<MeterOptions>())).Returns(meter);
@@ -297,14 +302,16 @@ public class ConsentServiceTests
 
         var result = await service.GetAndStoreAltinn2Consent(consentRequestId, CancellationToken.None);
 
-        await Task.Delay(20, TestContext.Current.CancellationToken);
+        await collector.WaitForMeasurementsAsync(
+            TestContext.Current.CancellationToken,
+            "consent_migration_update_a2_duration_seconds");
 
         Assert.True(result.IsProblem || result.Value == null);
         Assert.True(collector.GetMeasurements("consent_migration_update_a2_duration_seconds").Any());
     }
 
     [Fact]
-    public async Task GetAndStoreAltinn2Consent_Records_OverallHistogram_OnSuccess()
+    public async Task GetAndStoreAltinn2Consent_Success_RecordsOverallHistogram()
     {
         // Arrange: real Meter + listener to capture overall histogram recording
         var meter = new Meter("Altinn.AccessManagement.ConsentMigration.Test");
@@ -338,8 +345,9 @@ public class ConsentServiceTests
         // Act
         var result = await service.GetAndStoreAltinn2Consent(consentRequestId, CancellationToken.None);
 
-        // Allow listener to process
-        await Task.Delay(20, TestContext.Current.CancellationToken);
+        await collector.WaitForMeasurementsAsync(
+            TestContext.Current.CancellationToken,
+            "consent_migration_overall_duration_seconds");
 
         // Assert
         Assert.False(result.IsProblem);
@@ -735,6 +743,30 @@ public class ConsentServiceTests
             }
 
             return Array.Empty<double>();
+        }
+
+        private bool HasMeasurements(string instrumentName) =>
+            _measurements.TryGetValue(instrumentName, out var bag) && !bag.IsEmpty;
+
+        /// <summary>
+        /// Polls until every named instrument has at least one measurement, or the
+        /// timeout elapses (then throws). Replaces a fixed <c>Task.Delay</c> "let the
+        /// listener catch up" wait: returns as soon as the metrics are observed and
+        /// fails loudly — instead of silently — if they never arrive.
+        /// </summary>
+        public async Task WaitForMeasurementsAsync(CancellationToken cancellationToken, params string[] instrumentNames)
+        {
+            var deadline = Environment.TickCount64 + 5000;
+            while (instrumentNames.Any(name => !HasMeasurements(name)))
+            {
+                if (Environment.TickCount64 >= deadline)
+                {
+                    var missing = string.Join(", ", instrumentNames.Where(name => !HasMeasurements(name)));
+                    throw new TimeoutException($"No measurements for instrument(s) [{missing}] within 5000 ms.");
+                }
+
+                await Task.Delay(10, cancellationToken);
+            }
         }
 
         public void Dispose() => _listener.Dispose();

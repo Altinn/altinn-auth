@@ -4,9 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
-using Altinn.Platform.Authorization.Clients.Interfaces;
 using Altinn.Authorization.Tests.Fixtures;
 using Altinn.Authorization.Tests.Util;
+using Altinn.Platform.Authorization.Clients.Interfaces;
 using Altinn.Platform.Authorization.Models.EventLog;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -34,7 +34,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_AltinnApps0001()
+        public async Task PolicyDecision_UserHasAppAccessReadInstance_AuditLogEnabled_ReturnsPermit()
         {
             string testCase = "AltinnApps0001";
             Mock<IFeatureManager> featureManageMock = new Mock<IFeatureManager>();
@@ -59,7 +59,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_AltinnApps0001_Auditlog_Off()
+        public async Task PolicyDecision_UserHasAppAccessReadInstance_AuditLogDisabled_ReturnsPermitWithoutLoggingEvent()
         {
             string testCase = "AltinnApps0001";
 
@@ -85,7 +85,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_AltinnApps0007()
+        public async Task PolicyDecision_JsonProfile_UserHasAppAccessReadInstance_ReturnsPermit()
         {
             string testCase = "AltinnApps0007";
 
@@ -110,7 +110,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_AltinnApps0002()
+        public async Task PolicyDecision_OtherUserHasAppAccessReadInstance_ReturnsPermit()
         {
             string testCase = "AltinnApps0002";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequest(testCase);
@@ -124,7 +124,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_AltinnApps0003()
+        public async Task PolicyDecision_UserLacksSignAccessOnInstance_ReturnsNotApplicable()
         {
             string testCase = "AltinnApps0003";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequest(testCase);
@@ -138,7 +138,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_AltinnApps0004()
+        public async Task PolicyDecision_OrgSkdReadInstance_ReturnsPermit()
         {
             string testCase = "AltinnApps0004";
 
@@ -164,7 +164,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_AltinnApps0005()
+        public async Task PolicyDecision_OrgNavReadInstance_ReturnsPermit()
         {
             string testCase = "AltinnApps0005";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequest(testCase);
@@ -178,7 +178,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_AltinnApps0006()
+        public async Task PolicyDecision_OrgNavLacksWriteAccessOnInstance_ReturnsNotApplicable()
         {
             string testCase = "AltinnApps0006";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequest(testCase);
@@ -192,7 +192,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_AltinnApps0008()
+        public async Task PolicyDecision_JsonProfile_UserHasAppAccessReadInstance_NoTask_ReturnsPermit()
         {
             string testCase = "AltinnApps0008";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
@@ -206,7 +206,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_AltinnApps0009()
+        public async Task PolicyDecision_JsonProfile_UserReadFormfillingTask_ReturnsPermit()
         {
             string testCase = "AltinnApps0009";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
@@ -220,7 +220,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_AltinnApps0010()
+        public async Task PolicyDecision_JsonProfile_UserReadAndWriteFormfillingTask_ReturnsPermit()
         {
             string testCase = "AltinnApps0010";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
@@ -234,7 +234,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_AltinnApps0011()
+        public async Task PolicyDecision_JsonProfile_OrgNumberSubjectReadFormfillingTask_ReturnsPermit()
         {
             string testCase = "AltinnApps0011";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
@@ -248,7 +248,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_AltinnApps0012()
+        public async Task PolicyDecision_JsonProfile_OrgNumberSubjectLacksAccess_ReturnsNotApplicable()
         {
             string testCase = "AltinnApps0012";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
@@ -262,7 +262,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_AltinnApps0027()
+        public async Task PolicyDecision_JsonProfile_UserReadEventsAppResource_ReturnsPermit()
         {
             string testCase = "AltinnApps0027";
             HttpClient client = GetTestClient(null, featureManageMock.Object);
@@ -277,7 +277,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_AltinnApps0028()
+        public async Task PolicyDecision_JsonProfile_MissingSubject_LogRequestOnErrorEnabled_ReturnsIndeterminateAndLogsEvent()
         {
             string testCase = "AltinnApps0028";
 
@@ -300,7 +300,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_NoLog_AltinnApps0028()
+        public async Task PolicyDecision_JsonProfile_MissingSubject_LogRequestOnErrorDisabled_ReturnsIndeterminateWithoutLoggingEvent()
         {
             string testCase = "AltinnApps0028";
 
@@ -323,7 +323,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_AltinnApps0001_Delegation()
+        public async Task PolicyDecision_DelegatedAppAccessReadInstance_ReturnsPermit()
         {
             string testCase = "AltinnApps0001Delegation";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequest(testCase);

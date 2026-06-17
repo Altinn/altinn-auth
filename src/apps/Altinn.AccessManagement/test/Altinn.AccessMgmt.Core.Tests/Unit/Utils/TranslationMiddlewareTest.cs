@@ -106,6 +106,24 @@ public class TranslationMiddlewareTest
         Assert.Equal("nob", ctx.Items[TranslationConstants.LanguageCodeKey]);
     }
 
+    [Fact]
+    public async Task QualityZeroValue_NotTreatedAsExclusion_StillSelected()
+    {
+        // RFC 7231 treats q=0 as "not acceptable", but the middleware only orders by
+        // quality without excluding q=0 — so en (its sole candidate) is still selected.
+        var ctx = await Run(c => c.Request.Headers["Accept-Language"] = "en;q=0");
+        Assert.Equal("eng", ctx.Items[TranslationConstants.LanguageCodeKey]);
+    }
+
+    [Fact]
+    public async Task MalformedQualityValue_FallsBackToDefaultQuality()
+    {
+        // A non-numeric q-value can't be parsed, so quality stays the default 1.0;
+        // en (q=abc → 1.0) therefore outranks nb (q=0.5).
+        var ctx = await Run(c => c.Request.Headers["Accept-Language"] = "en;q=abc,nb;q=0.5");
+        Assert.Equal("eng", ctx.Items[TranslationConstants.LanguageCodeKey]);
+    }
+
     // ── X-Accept-Partial-Translation parsing ──────────────────────────────────
     [Theory]
     [InlineData("true", true)]

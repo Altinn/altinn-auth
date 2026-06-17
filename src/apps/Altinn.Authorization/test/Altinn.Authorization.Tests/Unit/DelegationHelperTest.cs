@@ -1,9 +1,9 @@
 using Altinn.Authorization.ABAC.Xacml;
-using Altinn.Platform.Authorization.Constants;
-using Altinn.Platform.Authorization.Helpers;
 using Altinn.Authorization.Tests.Data;
 using Altinn.Authorization.Tests.MockServices;
 using Altinn.Authorization.Tests.Util;
+using Altinn.Platform.Authorization.Constants;
+using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Services.Implementation;
 using Microsoft.AspNetCore.Http;

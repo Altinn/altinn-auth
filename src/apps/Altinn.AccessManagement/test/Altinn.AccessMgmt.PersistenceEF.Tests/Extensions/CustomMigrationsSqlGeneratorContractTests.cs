@@ -23,7 +23,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Tests.Extensions;
 ///   constraint is searchable by anyone auditing "what breaks on an Npgsql
 ///   upgrade" rather than discoverable only by tracing a build failure.</item>
 ///   <item>A metadata-level full-name canary in
-///   <see cref="NpgsqlMigrationsSqlGenerator_keeps_INpgsqlSingletonOptions_constructor"/>
+///   <see cref="NpgsqlMigrationsSqlGeneratorConstructor_WhenLookedUpByFullName_KeepsINpgsqlSingletonOptionsParameter"/>
 ///   for the narrow case where Npgsql renames the type but ships a
 ///   backwards-compatible alias — the production build would stay green,
 ///   but the assertion would catch it.</item>
@@ -39,7 +39,7 @@ public class CustomMigrationsSqlGeneratorContractTests
         "Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal.INpgsqlSingletonOptions";
 
     [Fact]
-    public void CustomMigrationsSqlGenerator_constructor_signature_pins_INpgsqlSingletonOptions()
+    public void Constructor_WhenInspectedViaReflection_PinsINpgsqlSingletonOptionsParameter()
     {
         var ctors = typeof(CustomMigrationsSqlGenerator).GetConstructors(
             BindingFlags.Public | BindingFlags.Instance);
@@ -53,7 +53,7 @@ public class CustomMigrationsSqlGeneratorContractTests
     }
 
     [Fact]
-    public void NpgsqlMigrationsSqlGenerator_keeps_INpgsqlSingletonOptions_constructor()
+    public void NpgsqlMigrationsSqlGeneratorConstructor_WhenLookedUpByFullName_KeepsINpgsqlSingletonOptionsParameter()
     {
         // A removal, rename, or namespace move of INpgsqlSingletonOptions also
         // surfaces as a compile error in the production project, which references

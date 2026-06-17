@@ -6,7 +6,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Helpers.Extensions
     public class GuidExtensionTest
     {
         [Fact]
-        public void GuidIsVersion7Uuid_v7_True()
+        public void IsVersion7Uuid_Version7Guid_ReturnsTrue()
         {
             // Test that 100 different version 7 UUIDs are recognized as such
             for (int i = 0; i < 100; i++)
@@ -18,7 +18,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Helpers.Extensions
         }
 
         [Fact]
-        public void GuidIsVersion7Uuid_v4_False()
+        public void IsVersion7Uuid_Version4Guid_ReturnsFalse()
         {
             // Test that 100 different version 4 UUIDs are recognized as such
             for (int i = 0; i < 100; i++)

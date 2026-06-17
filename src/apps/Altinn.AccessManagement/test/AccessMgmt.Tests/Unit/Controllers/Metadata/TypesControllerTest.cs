@@ -11,21 +11,21 @@ public class TypesControllerTest
     // GetOrganizationSubTypes returns the List<SubTypeDto> directly (not wrapped
     // in Ok()), so ActionResult<T>.Value holds the payload while .Result is null.
     [Fact]
-    public void GetOrganizationSubTypes_ReturnsNonNullValue()
+    public void GetOrganizationSubTypes_WhenInvoked_ReturnsNonNullValue()
     {
         var result = CreateController().GetOrganizationSubTypes();
         Assert.NotNull(result.Value);
     }
 
     [Fact]
-    public void GetOrganizationSubTypes_ReturnsNonEmptyList()
+    public void GetOrganizationSubTypes_WhenInvoked_ReturnsNonEmptyList()
     {
         var result = CreateController().GetOrganizationSubTypes();
         Assert.NotEmpty(result.Value);
     }
 
     [Fact]
-    public void GetOrganizationSubTypes_AllItemsHaveNonEmptyName()
+    public void GetOrganizationSubTypes_WhenInvoked_AllItemsHaveNonEmptyName()
     {
         var result = CreateController().GetOrganizationSubTypes();
         Assert.All(result.Value, item => Assert.False(string.IsNullOrWhiteSpace(item.Name)));

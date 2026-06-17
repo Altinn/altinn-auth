@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Models;
+using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
@@ -19,7 +20,8 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers;
 /// Tests resource delegations using the database container.
 /// </summary>
 [IntegrationTest]
-public class PolicyInformationPointResourcesAndInstancesTest : IClassFixture<ApiFixture>
+[Collection(PolicyInformationPointDbCollection.Name)]
+public class PolicyInformationPointResourcesAndInstancesTest
 {
     private readonly HttpClient _client;
     private readonly JsonSerializerOptions _options = new() { PropertyNameCaseInsensitive = true };
@@ -45,14 +47,9 @@ public class PolicyInformationPointResourcesAndInstancesTest : IClassFixture<Api
     private const int CharlieUserId = 20900003;
     private const int OrgAcmePartyId = 50900010;
 
-    public PolicyInformationPointResourcesAndInstancesTest(ApiFixture fixture)
+    public PolicyInformationPointResourcesAndInstancesTest(AccessMgmtApiFixture fixture)
     {
         fixture.WithAppsettings(builder => builder.AddJsonFile("appsettings.test.json", optional: false));
-        fixture.ConfigureServices(services =>
-        {
-            services.AddSingleton<IPartiesClient, PartiesClientMock>();
-            services.AddSingleton<IProfileClient, ProfileClientMock>();
-        });
 
         fixture.EnsureSeedOnce<PolicyInformationPointResourcesAndInstancesTest>(db =>
         {
@@ -167,7 +164,7 @@ public class PolicyInformationPointResourcesAndInstancesTest : IClassFixture<Api
     /// the delegation should be returned.
     /// </summary>
     [Fact]
-    public async Task GetDelegationChanges_ResourceDelegation_FromPersonToPerson()
+    public async Task GetDelegationChanges_ResourceDelegationFromPersonToPerson_Returns200WithDelegationChange()
     {
         var request = new
         {
@@ -203,7 +200,7 @@ public class PolicyInformationPointResourcesAndInstancesTest : IClassFixture<Api
     /// the delegation to Acme Corp should be returned (inherited via keyrole).
     /// </summary>
     [Fact]
-    public async Task GetDelegationChanges_ResourceDelegation_FromPersonToOrganization_InheritedViaKeyRole()
+    public async Task GetDelegationChanges_ResourceDelegationFromPersonToOrganizationInheritedViaKeyRole_Returns200WithInheritedDelegationChange()
     {
         var request = new
         {

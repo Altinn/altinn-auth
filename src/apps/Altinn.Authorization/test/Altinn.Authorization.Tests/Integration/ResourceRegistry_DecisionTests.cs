@@ -4,9 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
-using Altinn.Platform.Authorization.Clients.Interfaces;
 using Altinn.Authorization.Tests.Fixtures;
 using Altinn.Authorization.Tests.Util;
+using Altinn.Platform.Authorization.Clients.Interfaces;
 using Altinn.Platform.Authorization.Models.EventLog;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -35,7 +35,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_ResourceRegistry_OedFormuesfullmakt_Xml_Permit()
+        public async Task PDP_Decision_ResourceRegistry_OedFormuesfullmakt_Xml_ReturnsPermit()
         {
             string testCase = "ResourceRegistry_OedFormuesfullmakt_Xml_Permit";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequest(testCase);
@@ -49,7 +49,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_ResourceRegistry_OedFormuesfullmakt_Json_Permit()
+        public async Task PDP_Decision_ResourceRegistry_OedFormuesfullmakt_Json_ReturnsPermit()
         {
             string testCase = "ResourceRegistry_OedFormuesfullmakt_Json_Permit";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
@@ -63,7 +63,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_ResourceRegistry_OedFormuesfullmakt_Xml_Indeterminate()
+        public async Task PDP_Decision_ResourceRegistry_OedFormuesfullmakt_Xml_ReturnsNotApplicable()
         {
             string testCase = "ResourceRegistry_OedFormuesfullmakt_Xml_Indeterminate";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequest(testCase);
@@ -77,7 +77,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_ResourceRegistry_OedFormuesfullmakt_Json_Indeterminate()
+        public async Task PDP_Decision_ResourceRegistry_OedFormuesfullmakt_Json_ReturnsNotApplicable()
         {
             string testCase = "ResourceRegistry_OedFormuesfullmakt_Json_Indeterminate";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
@@ -94,7 +94,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Tests the scenario where the reportee organization has access to 'ttd-accesslist-resource' through access list membership without any action filter.
         /// </summary>
         [Fact]
-        public async Task PDP_Decision_ResourceRegistry_AccessListAuthorization_Json_Permit()
+        public async Task PDP_Decision_ResourceRegistry_AccessListAuthorization_Json_ReturnsPermit()
         {
             string testCase = "ResourceRegistry_AccessListAuthorization_Json_Permit";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
@@ -111,7 +111,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Tests the scenario where the reportee organization does NOT have access to 'ttd-accesslist-resource' through any access list membership.
         /// </summary>
         [Fact]
-        public async Task PDP_Decision_ResourceRegistry_AccessListAuthorization_Json_Deny()
+        public async Task PDP_Decision_ResourceRegistry_AccessListAuthorization_Json_ReturnsDeny()
         {
             string testCase = "ResourceRegistry_AccessListAuthorization_Json_Deny";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
@@ -128,7 +128,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Tests the scenario where the reportee organization has access to 'ttd-accesslist-resource' through access list membership with matching action filter.
         /// </summary>
         [Fact]
-        public async Task PDP_Decision_ResourceRegistry_AccessListAuthorization_Json_PermitWithActionFilterMatch()
+        public async Task PDP_Decision_ResourceRegistry_AccessListAuthorization_Json_WithActionFilterMatch_ReturnsPermit()
         {
             string testCase = "ResourceRegistry_AccessListAuthorization_Json_PermitWithActionFilterMatch";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
@@ -145,7 +145,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Tests the scenario where the reportee organization has access to 'ttd-accesslist-resource' through access list membership but with action filter not matching the request action.
         /// </summary>
         [Fact]
-        public async Task PDP_Decision_ResourceRegistry_AccessListAuthorization_Json_DenyActionFilterNotMatching()
+        public async Task PDP_Decision_ResourceRegistry_AccessListAuthorization_Json_ActionFilterNotMatching_ReturnsDeny()
         {
             string testCase = "ResourceRegistry_AccessListAuthorization_Json_DenyActionFilterNotMatching";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
@@ -162,7 +162,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Tests the scenario where the reportee is a person. Currently the access list authorization service only supports organizations.
         /// </summary>
         [Fact]
-        public async Task PDP_Decision_ResourceRegistry_AccessListAuthorization_Json_DenyAccessListDontSupportPerson()
+        public async Task PDP_Decision_ResourceRegistry_AccessListAuthorization_Json_PersonReporteeNotSupported_ReturnsDeny()
         {
             string testCase = "ResourceRegistry_AccessListAuthorization_Json_DenyAccessListDontSupportPerson";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
@@ -176,7 +176,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_ResourceRegistry0001()
+        public async Task PDP_Decision_ResourceRegistry_ApiDelegationByPartyIdXml_ReturnsPermit()
         {
             string testCase = "AltinnResourceRegistry0001";
             Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
@@ -195,7 +195,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_ResourceRegistry0002()
+        public async Task PDP_Decision_ResourceRegistry_ApiDelegationByPartyIdJson_ReturnsPermit()
         {
             string testCase = "AltinnResourceRegistry0002";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
@@ -209,7 +209,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_ResourceRegistry0003()
+        public async Task PDP_Decision_ResourceRegistry_ApiDelegationByOrganization_ReturnsPermit()
         {
             string testCase = "AltinnResourceRegistry0003";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
@@ -223,7 +223,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDP_Decision_ResourceRegistry0004()
+        public async Task PDP_Decision_ResourceRegistry_EventsSubscribe_ReturnsPermit()
         {
             string testCase = "AltinnResourceRegistry0004";
             Mock<IEventsQueueClient> eventQueue = new Mock<IEventsQueueClient>();
@@ -350,7 +350,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Tests the scenario where subject is a system user with resource delegation giving access the resource.
         /// </summary>
         [Fact]
-        public async Task PDP_Decision_ResourceRegistry_SystemUserWithDelegation_Permit()
+        public async Task PDP_Decision_ResourceRegistry_SystemUserWithDelegation_ReturnsPermit()
         {
             string testCase = "ResourceRegistry_SystemUserWithDelegation_Permit";
             HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
@@ -367,7 +367,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Tests the scenario where subject is a system user with access package giving access the resource. Request is a multi request testing all possible resource party identifiers.
         /// </summary>
         [Fact]
-        public async Task PDP_Decision_ResourceRegistry_SystemUser_WithAccessPackage_MultiRequest_Permit()
+        public async Task PDP_Decision_ResourceRegistry_SystemUser_WithAccessPackage_MultiRequest_ReturnsPermit()
         {
             string testCase = "ResourceRegistry_SystemUser_WithAccessPackage_MultiRequest_Permit";
             HttpClient client = GetTestClient(featureManager: featureManageMock.Object);

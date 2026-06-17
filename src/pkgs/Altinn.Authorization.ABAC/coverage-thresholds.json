@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Per-vertical coverage floors for the ABAC vertical (takes precedence over eng/testing/coverage-thresholds.json for this vertical's CI run). The dedicated ABAC test project (#3489) is new, so this is the INITIAL enforced floor for the XACML engine assembly — until now it had no direct tests and the global 60 floor was dormant (no coverage file was produced). Ratchet this up toward the 60 target as JSON-profile and additional PDP/parser coverage is added.",
+  "globalThreshold": 0,
+  "assemblies": {
+    "Altinn.Authorization.ABAC": 30
+  }
+}

@@ -2,14 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
-
-using Altinn.Platform.Authorization.Configuration;
 using Altinn.Authorization.Tests.MockServices;
 using Altinn.Authorization.Tests.Util;
-
+using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Services.Implementation;
 using Altinn.Platform.Authorization.Services.Interface;
 using Azure;
@@ -51,7 +48,7 @@ namespace Altinn.Authorization.Tests.Unit
         /// Expected: GetPolicyAsync returns a file that is not null.
         /// </summary>
         [Fact]
-        public async Task GetPolicy_TC01()
+        public async Task GetPolicy_ByRequestWithOrgAndApp_ReturnsPolicy()
         {
             // Arrange
             XacmlContextRequest request = new XacmlContextRequest(true, true, GetXacmlContextAttributesWithOrgAndApp());
@@ -68,7 +65,7 @@ namespace Altinn.Authorization.Tests.Unit
         /// Expected: GetPolicyAsync returns null.
         /// </summary>
         [Fact]
-        public async Task GetPolicy_TC02()
+        public async Task GetPolicy_ByRequestWhenPolicyNotExists_ReturnsNull()
         {
             // Arrange
             XacmlContextRequest request = new XacmlContextRequest(true, true, GetXacmlContextAttributesWithOrgAndApp(false));
@@ -85,7 +82,7 @@ namespace Altinn.Authorization.Tests.Unit
         /// Expected: GetPolicyAsync throws ArgumentException.
         /// </summary>
         [Fact]
-        public async Task GetPolicy_TC03()
+        public async Task GetPolicy_ByRequestWithoutOrgAndApp_ThrowsArgumentException()
         {
             // Arrange
             XacmlContextRequest request = new XacmlContextRequest(true, true, new List<XacmlContextAttributes>());
@@ -99,7 +96,7 @@ namespace Altinn.Authorization.Tests.Unit
         /// Expected: GetPolicyAsync returns a file that is not null.
         /// </summary>
         [Fact]
-        public async Task GetPolicy_TCResourceRegistry01()
+        public async Task GetPolicy_ByRequestWithResourceId_ReturnsPolicy()
         {
             // Arrange
             XacmlContextRequest request = new XacmlContextRequest(true, true, GetXacmlContextAttributesWithResourceId("apidelegation"));

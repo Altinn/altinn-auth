@@ -69,7 +69,7 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
         /// <inheritdoc/>
         public Task<List<ServiceResource>> GetResourceList(CancellationToken cancellationToken = default)
         {
-            string content = File.ReadAllText($"Data/Resources/resourceList.json");
+            string content = File.ReadAllText(TestDataDirectory.Combine("Resources", "resourceList.json"));
             List<ServiceResource> resources = (List<ServiceResource>)JsonSerializer.Deserialize(content, typeof(List<ServiceResource>), _serializerOptions);
 
             return Task.FromResult(resources);
@@ -78,7 +78,7 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
         /// <inheritdoc/>
         public Task<IDictionary<string, IEnumerable<BaseAttribute>>> GetSubjectResources(IEnumerable<string> subjects, CancellationToken cancellationToken = default)
         {
-            string content = File.ReadAllText($"Data/Resources/subjectResources.json");
+            string content = File.ReadAllText(TestDataDirectory.Combine("Resources", "subjectResources.json"));
             PaginatedResult<SubjectResources> allSubjectResources = (PaginatedResult<SubjectResources>)JsonSerializer.Deserialize(content, typeof(PaginatedResult<SubjectResources>), _serializerOptions);
 
             IDictionary<string, IEnumerable<BaseAttribute>> result = new Dictionary<string, IEnumerable<BaseAttribute>>();
@@ -108,20 +108,17 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
 
         private static string GetDataPathConsentTemplate()
         {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(ResourceRegistryClientMock).Assembly.Location).LocalPath);
-            return Path.Combine(unitTestFolder, "Data", "ConsentTemplates", "consent_templates.json");
+            return TestDataDirectory.Combine("ConsentTemplates", "consent_templates.json");
         }
 
         private static string GetResourcePath(string resourceRegistryId)
         {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(ResourceRegistryClientMock).Assembly.Location).LocalPath);
-            return Path.Combine(unitTestFolder, "..", "..", "..", "..", "AccessMgmt.Tests", "Data", "ResourceRegistryResources", $"{resourceRegistryId}", "resource.json");
+            return TestDataDirectory.Combine("ResourceRegistryResources", $"{resourceRegistryId}", "resource.json");
         }
 
         private static string GetDataPathForResources()
         {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(ResourceRegistryClientMock).Assembly.Location).LocalPath);
-            return Path.Combine(unitTestFolder, "Data", "Resources");
+            return TestDataDirectory.Combine("Resources");
         }
 
         public async Task<List<RightDto>> GetPolicyRightsV2(string resource, string languageCode, CancellationToken cancellationToken)

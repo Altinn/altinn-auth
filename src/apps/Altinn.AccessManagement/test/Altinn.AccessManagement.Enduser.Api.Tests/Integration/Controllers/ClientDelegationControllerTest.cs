@@ -157,7 +157,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task ListMyClients_WithFilter_ReturnsOk()
+        public async Task ListMyClients_WithFilter_Returns200WithFilteredClients()
         {
             var client = CreateClient();
 
@@ -181,7 +181,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task ListMyClients_WithoutFilter_ReturnsOk()
+        public async Task ListMyClients_WithoutFilter_Returns200WithAllProvidersAndClients()
         {
             var client = CreateClient();
 
@@ -312,7 +312,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact(Skip = "PDP returns 500 if party is missing")]
-        public async Task ListClient_ForOrganization_MissingQueryParamPartyBadRequest()
+        public async Task ListClient_ForOrganizationMissingPartyParam_Returns400WhenPartyParamMissing()
         {
             var client = CreateClient();
 
@@ -322,7 +322,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task ListClient_ForOrganizationWithCCR_ReturnsOk()
+        public async Task ListClient_ForOrganizationWithCCR_Returns200WithAccountantConnectionPackages()
         {
             var rolepkgs = new List<RolePackage>();
             await Fixture.QueryDb(async db =>
@@ -352,7 +352,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task ListClient_ForOrganizationWithRightholderFilter_ReturnsOk()
+        public async Task ListClient_ForOrganizationWithRightholderFilter_Returns200WithRightholderFilteredClients()
         {
             var client = CreateClient();
 
@@ -373,7 +373,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task ListClient_ForOrganizationWithRightholderAssignment_ReturnsOk()
+        public async Task ListClient_ForOrganizationWithRightholderAssignment_Returns200WithRightholderClientAndCustomsPackage()
         {
             var client = CreateClient();
 
@@ -396,7 +396,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task ListClient_ForOrganizationWithForretningsforerFilter_ReturnsOk()
+        public async Task ListClient_ForOrganizationWithForretningsforerFilter_Returns200WithBusinessManagerFilteredClients()
         {
             var client = CreateClient();
 
@@ -547,7 +547,7 @@ public class ClientDelegationControllerTest
         public ApiFixture Fixture { get; }
 
         [Fact(Skip = "PDP returns 500 if party is missing")]
-        public async Task ListAgents_ForOrganization_MissingQueryParamPartyBadRequest()
+        public async Task ListAgents_ForOrganizationMissingPartyParam_Returns400WhenPartyParamMissing()
         {
             var client = CreateClient();
 
@@ -557,7 +557,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task ListAgent_ForPersonWithAgentAssignment_ReturnsOk()
+        public async Task ListAgent_ForPersonWithAgentAssignment_Returns200WithAgentConnection()
         {
             var client = CreateClient();
             var response = await client.GetAsync($"{Route}/agents?party={TestEntities.OrganizationNordisAS.Id}", TestContext.Current.CancellationToken);
@@ -576,7 +576,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task ListAgent_ForPersonWithAgentAssignmentToAnotherOrganization_ReturnsOk()
+        public async Task ListAgent_ForPersonWithAgentAssignmentToAnotherOrganization_Returns200WithoutAgentForOtherOrganization()
         {
             var client = CreateClient();
             var response = await client.GetAsync($"{Route}/agents?party={TestEntities.OrganizationVerdiqAS.Id}", TestContext.Current.CancellationToken);
@@ -590,7 +590,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task ListAgent_ForNoAgentAssignment_ReturnsOk()
+        public async Task ListAgent_ForNoAgentAssignment_Returns200WithoutUnrelatedAgent()
         {
             var client = CreateClient();
             var response = await client.GetAsync($"{Route}/agents?party={TestEntities.OrganizationNordisAS.Id}", TestContext.Current.CancellationToken);
@@ -633,7 +633,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task AddAgent_NotPermittedEntityType_ReturnsBadRequest()
+        public async Task AddAgent_NotPermittedEntityType_Returns400WhenEntityTypeDisallowed()
         {
             // Try to add organization as agent
             var client = CreateClient();
@@ -652,7 +652,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task AddAgent_NotPermittedEntityTypeStandardSystemUser_ReturnsBadRequest()
+        public async Task AddAgent_NotPermittedEntityTypeStandardSystemUser_Returns400WhenStandardSystemUserDisallowed()
         {
             // Try to add organization as agent
             var client = CreateClient();
@@ -671,7 +671,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task AddAgent_PermittedEntityTypeAgentSystemUser_ReturnsOk()
+        public async Task AddAgent_PermittedEntityTypeAgentSystemUser_Returns200AndAddsAgentSystemUser()
         {
             // Try to add organization as agent
             var client = CreateClient();
@@ -761,7 +761,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task RemoveAgentWithExistingDelegations_WithCascadeFalse_ReturnsBadRequest()
+        public async Task RemoveAgentWithExistingDelegations_WithCascadeFalse_Returns400WhenDelegationHasActiveConnections()
         {
             // Create Delegation
             var client = CreateClient();
@@ -935,7 +935,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task RemoveAgentsClientWithExistingDelegations_WithCascadeFalse_ReturnsBadRequest()
+        public async Task RemoveAgentsClientWithExistingDelegations_WithCascadeFalse_Returns400WhenDelegationHasActiveConnections()
         {
             // Create Delegation
             var client = CreateClient();
@@ -954,7 +954,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task RemoveAgentsClientWithExistingDelegations_WithCascadeTrue_ReturnsOk()
+        public async Task RemoveAgentsClientWithExistingDelegations_WithCascadeTrue_Returns200Ok()
         {
             // Create Delegation
             var client = CreateClient();
@@ -1061,7 +1061,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task DelegateAccessPackageToAgent_WithValidInput_ReturnsOk()
+        public async Task DelegateAccessPackageToAgent_WithValidInput_Returns200WithDelegationResult()
         {
             var client = CreateClient();
 
@@ -1124,7 +1124,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task DelegateAccessPackageToAgent_WithPackageClientHaventDelegatedToParty_ReturnsBadRequest()
+        public async Task DelegateAccessPackageToAgent_WithPackageClientHaventDelegatedToParty_Returns400WhenUserNotAuthorized()
         {
             var client = CreateClient();
             var response = await client.PostAsJsonAsync(
@@ -1158,7 +1158,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task DelegateAccessPackageToAgent_WithCanDelegateFalse_ReturnsBadRequest()
+        public async Task DelegateAccessPackageToAgent_WithCanDelegateFalse_Returns400WhenPackageNotDelegable()
         {
             var client = CreateClient();
             var response = await client.PostAsJsonAsync(
@@ -1243,7 +1243,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task DelegateAccessPackageToAgent_WithValidInput_ReturnsOk()
+        public async Task DelegateAccessPackageToAgent_WithValidInput_Returns200WithDelegationResult()
         {
             var client = CreateClient();
             var response = await client.PostAsJsonAsync(
@@ -1319,7 +1319,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task DelegateAccessPackageToAgent_WithPackageClientHaventDelegatedToParty_ReturnsBadRequest()
+        public async Task DelegateAccessPackageToAgent_WithPackageClientHaventDelegatedToParty_Returns400WhenUserNotAuthorized()
         {
             var client = CreateClient();
             var response = await client.PostAsJsonAsync(
@@ -1353,7 +1353,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task DelegateAccessPackageToAgent_WithCanDelegateFalse_ReturnsBadRequest()
+        public async Task DelegateAccessPackageToAgent_WithCanDelegateFalse_Returns400WhenPackageNotDelegable()
         {
             var client = CreateClient();
             var response = await client.PostAsJsonAsync(
@@ -1582,7 +1582,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task DelegateAccessPackageToAgent_DeleteAgentAccessPackageAndDelegation_ReturnsOk()
+        public async Task DelegateAccessPackageToAgent_DeleteAgentAccessPackageAndDelegation_Returns200WithDeleteResults()
         {
             // Create Delegation
             var client = CreateClient();
@@ -1842,7 +1842,7 @@ public class ClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task DeleteAccessPackageToAgent_WithValidInput_ReturnsOk()
+        public async Task DeleteAccessPackageToAgent_WithValidInput_Returns200WithDeleteResult()
         {
             // Create Delegation
             var client = CreateClient();

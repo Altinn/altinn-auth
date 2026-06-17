@@ -18,15 +18,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
-// Migrated from CustomWebApplicationFactory<ResourceController> to ApiFixture
-// as part of Phase 2.2 (Step 16 — AccessMgmt.Tests WAF consolidation POC).
 // - appsettings.test.json is loaded via ApiFixture.WithAppsettings.
 // - SigningKeyResolverMock replaces ApiFixture's default PublicSigningKeyProviderMock
 //   because PrincipalUtil.GetAccessToken signs tokens with {issuer}-org.pem certs
 //   that SigningKeyResolverMock loads from disk.
-// - IResourceMetadataRepository is mocked, so the real Postgres DB created by
-//   ApiFixture is unused by these tests. The container overhead is acceptable
-//   and already paid by other AccessMgmt.Tests consumers.
+// - IResourceMetadataRepository is mocked; these tests do not query the database
+//   directly. ApiFixture still provisions one — an overhead already paid by other
+//   AccessMgmt.Tests consumers.
 namespace Altinn.AccessManagement.Tests.Integration.Controllers
 {
     /// <summary>
@@ -56,7 +54,6 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
                 services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
                 services.RemoveAll<IPublicSigningKeyProvider>();
                 services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
-                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
                 services.AddSingleton<IPDP, PdpPermitMock>();
             });
 
@@ -69,7 +66,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task InsertAccessManagementResource_ResourceStored()
+        public async Task InsertAccessManagementResource_Valid_Returns201WithStoredResources()
         {
             // Arrange
             Stream dataStream = File.OpenRead("Data/Json/InsertAccessManagementResource/input1.json");
@@ -102,7 +99,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task InsertAccessManagementResource_MissingBearerToken()
+        public async Task InsertAccessManagementResource_MissingBearerToken_Returns401MissingBearerToken()
         {
             // Arrange
             _client.DefaultRequestHeaders.Remove("Authorization");
@@ -122,7 +119,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task InsertAccessManagementResource_InvalidBearerToken()
+        public async Task InsertAccessManagementResource_InvalidBearerToken_Returns401InvalidBearerToken()
         {
             Stream dataStream = File.OpenRead("Data/Json/InsertAccessManagementResource/input1.json");
             StreamContent content = new StreamContent(dataStream);
@@ -146,7 +143,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task InsertAccessManagementResource_NoInput()
+        public async Task InsertAccessManagementResource_NoInput_Returns400MissingResourcesInBody()
         {
             // Arrange
             Stream dataStream = File.OpenRead("Data/Json/InsertAccessManagementResource/input2.json");
@@ -175,7 +172,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task InsertAccessManagementResource_InvalidModel()
+        public async Task InsertAccessManagementResource_InvalidModel_Returns400ResourceRegistryIdRequired()
         {
             // Arrange
             Stream dataStream = File.OpenRead("Data/Json/InsertAccessManagementResource/input3.json");
@@ -206,7 +203,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task InsertAccessManagementResource_ResourcePartialStored()
+        public async Task InsertAccessManagementResource_ResourcePartialStored_Returns206WithStoredResources()
         {
             // Arrange
             Stream dataStream = File.OpenRead("Data/Json/InsertAccessManagementResource/input4.json");
@@ -238,7 +235,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task InsertAccessManagementResource_AllFailed()
+        public async Task InsertAccessManagementResource_AllFailed_Returns400DelegationCouldNotBeCompleted()
         {
             // Arrange
             Stream dataStream = File.OpenRead("Data/Json/InsertAccessManagementResource/input5.json");

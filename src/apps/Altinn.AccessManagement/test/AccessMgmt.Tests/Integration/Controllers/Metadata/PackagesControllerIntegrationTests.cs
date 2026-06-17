@@ -224,7 +224,7 @@ public class PackagesControllerIntegrationTests : IClassFixture<EfDatabaseFixtur
     }
 
     [Fact]
-    public async Task SimpleSearch_NonMatchingTerm_ReturnsNoContent()
+    public async Task SimpleSearch_NonMatchingTerm_Returns204NoContent()
     {
         // SimpleSearch must filter out packages with score 0. A regression where
         // the `Where(s => s.Score > 0)` filter is removed would return every
@@ -454,49 +454,49 @@ public class PackagesControllerIntegrationTests : IClassFixture<EfDatabaseFixtur
 
     // ── NotFound paths — random GUIDs / unknown URNs return 404 against live DB ──
     [Fact]
-    public async Task GetPackage_RandomGuid_ReturnsNotFound()
+    public async Task GetPackage_RandomGuid_Returns404UnknownPackageId()
     {
         var result = await CreateController().GetPackage(Guid.NewGuid());
         Assert.IsType<NotFoundResult>(result.Result);
     }
 
     [Fact]
-    public async Task GetArea_RandomGuid_ReturnsNotFound()
+    public async Task GetArea_RandomGuid_Returns404UnknownAreaId()
     {
         var result = await CreateController().GetArea(Guid.NewGuid());
         Assert.IsType<NotFoundResult>(result.Result);
     }
 
     [Fact]
-    public async Task GetGroup_RandomGuid_ReturnsNotFound()
+    public async Task GetGroup_RandomGuid_Returns404UnknownGroupId()
     {
         var result = await CreateController().GetGroup(Guid.NewGuid());
         Assert.IsType<NotFoundResult>(result.Result);
     }
 
     [Fact]
-    public async Task GetPackageByUrn_NonexistentUrn_ReturnsNotFound()
+    public async Task GetPackageByUrn_NonexistentUrn_Returns404UnknownPackageUrn()
     {
         var result = await CreateController().GetPackageByUrn("urn:altinn:accesspackage:does-not-exist");
         Assert.IsType<NotFoundResult>(result.Result);
     }
 
     [Fact]
-    public async Task GetGroupAreas_RandomGuid_ReturnsNotFound()
+    public async Task GetGroupAreas_RandomGuid_Returns404UnknownGroupId()
     {
         var result = await CreateController().GetGroupAreas(Guid.NewGuid());
         Assert.IsType<NotFoundResult>(result.Result);
     }
 
     [Fact]
-    public async Task GetAreaPackages_RandomGuid_ReturnsNotFound()
+    public async Task GetAreaPackages_RandomGuid_Returns404UnknownAreaId()
     {
         var result = await CreateController().GetAreaPackages(Guid.NewGuid());
         Assert.IsType<NotFoundResult>(result.Result);
     }
 
     [Fact]
-    public async Task GetPackageResources_RandomGuid_ReturnsNotFound()
+    public async Task GetPackageResources_RandomGuid_Returns404UnknownPackageId()
     {
         var result = await CreateController().GetPackageResources(Guid.NewGuid());
         Assert.IsType<NotFoundResult>(result.Result);

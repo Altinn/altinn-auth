@@ -42,7 +42,8 @@ public partial class ConnectionsControllerTest
     /// </para>
     /// </remarks>
     [IntegrationTest]
-    public class GetInstances : IClassFixture<ApiFixture>
+    [Collection(ConnectionsReadOnlyCollection.Name)]
+    public class GetInstances
     {
         public GetInstances(ApiFixture fixture)
         {
@@ -68,7 +69,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK with both SiriusSkattemelding and MattilsynetBakeryService instances.
         /// </summary>
         [Fact]
-        public async Task GetInstances_AsJinxForKaosToJosephine_WithToOthersScope_ReturnsOk()
+        public async Task GetInstances_AsJinxForKaosToJosephine_WithToOthersScope_Returns200WithDelegatedInstances()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -90,7 +91,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK (Josephine has no instances delegated toward Kaos, so the list may be empty).
         /// </summary>
         [Fact]
-        public async Task GetInstances_AsJinxForKaosFromJosephine_WithFromOthersScope_ReturnsOk()
+        public async Task GetInstances_AsJinxForKaosFromJosephine_WithFromOthersScope_Returns200WithEmptyList()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -110,7 +111,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK with both SiriusSkattemelding and MattilsynetBakeryService instances.
         /// </summary>
         [Fact]
-        public async Task GetInstances_AsJosephineFromKaos_WithFromOthersScope_ReturnsOk()
+        public async Task GetInstances_AsJosephineFromKaos_WithFromOthersScope_Returns200WithReceivedInstances()
         {
             HttpClient client = CreateClient(TestData.JosephineYvonnesdottir.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -132,7 +133,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK (no instances delegated in this direction).
         /// </summary>
         [Fact]
-        public async Task GetInstances_AsJosephineToKaos_WithToOthersScope_ReturnsOk()
+        public async Task GetInstances_AsJosephineToKaos_WithToOthersScope_Returns200Ok()
         {
             HttpClient client = CreateClient(TestData.JosephineYvonnesdottir.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -147,7 +148,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetInstances_AsJosephineFromKaos_WithToOthersScope_ReturnsForbidden()
+        public async Task GetInstances_AsJosephineFromKaos_WithToOthersScope_Returns403ForToOthersScopeOnFromOthersDirection()
         {
             HttpClient client = CreateClient(TestData.JosephineYvonnesdottir.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -161,7 +162,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetInstances_AsJinxForKaosToJosephine_WithFromOthersScope_ReturnsForbidden()
+        public async Task GetInstances_AsJinxForKaosToJosephine_WithFromOthersScope_Returns403ForFromOthersScopeOnToOthersDirection()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -175,7 +176,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetInstances_WithWriteScope_ReturnsForbidden()
+        public async Task GetInstances_WithWriteScope_Returns403ForWriteScope()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
 
@@ -189,7 +190,7 @@ public partial class ConnectionsControllerTest
         /// Expects 401 Unauthorized.
         /// </summary>
         [Fact]
-        public async Task GetInstances_WithNoToken_ReturnsUnauthorized()
+        public async Task GetInstances_WithNoToken_Returns401ForMissingToken()
         {
             var client = Fixture.Server.CreateClient();
 

@@ -17,7 +17,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a ResourceIdentifier with the value from the input
         /// </summary>
         [Fact]
-        public void TestResourceIdentifierJson_DeSerializng_Success()
+        public void Deserialize_ValidJson_ReturnsIdentifier()
         {
             string resourceIdentifierString = @"""example-resourceid""";
             ResourceIdentifier resourceIdentifier = JsonSerializer.Deserialize<ResourceIdentifier>(resourceIdentifierString, JsonOptions);
@@ -34,7 +34,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Throws exception
         /// </summary>
         [Fact]
-        public void TestResourceIdentifierJson_DeSerializng_Fail()
+        public void Deserialize_TooShortJson_Throws()
         {
             string resourceIdentifierString = @"""exa""";
             try
@@ -58,7 +58,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a ResourceIdentifier with the value from the input
         /// </summary>
         [Fact]
-        public void TestResourceIdentifierJson_Serializng_Success()
+        public void Serialize_ValidIdentifier_ReturnsJsonString()
         {
             ResourceIdentifier resourceIdentifier = ResourceIdentifier.Parse("example-resourceid");
             string orgNrJson = JsonSerializer.Serialize(resourceIdentifier, JsonOptions);
@@ -75,7 +75,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a ResourceIdentifier with the value from the input
         /// </summary>
         [Fact]
-        public void TestResourceIdentifierString_Parse_Success()
+        public void Parse_ValidString_ReturnsIdentifier()
         {
             ResourceIdentifier resourceIdentifier = ResourceIdentifier.Parse("example-resourceid");
             Assert.Equal("example-resourceid", resourceIdentifier.ToString());
@@ -90,7 +90,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a ResourceIdentifier with the value from the input
         /// </summary>
         [Fact]
-        public void TestResourceIdentifierReadOnlyCharSpan_Parse_Success()
+        public void Parse_ValidCharSpan_ReturnsIdentifier()
         {
             ReadOnlySpan<char> resourceIdentifierSpan = "example-resourceid";
             ResourceIdentifier resourceIdentifier = ResourceIdentifier.Parse(resourceIdentifierSpan);
@@ -106,7 +106,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a ResourceIdentifier with the value from the input
         /// </summary>
         [Fact]
-        public void TestResourceIdentifierReadOnlyCharSpan_Fail()
+        public void Parse_TooShortCharSpan_Throws()
         {
             try
             {
@@ -130,7 +130,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Throws an exception
         /// </summary>
         [Fact]
-        public void TestResourceIdentifierString_Parse_Fail()
+        public void Parse_TooShortString_Throws()
         {
             try
             {
@@ -145,6 +145,31 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         }
 
         /// <summary>
+        /// Parse a 4-character lowercase value: the lower boundary of the
+        /// ^[a-z0-9_-]{4,}$ identifier rule (existing tests only use long values).
+        /// </summary>
+        [Fact]
+        public void TryParse_ExactlyFourLowercaseChars_Succeeds()
+        {
+            ResourceIdentifier.TryParse("abcd", null, out var id).Should().BeTrue();
+            id!.ToString().Should().Be("abcd");
+        }
+
+        /// <summary>
+        /// Values containing characters outside [a-z0-9_-] (uppercase, whitespace,
+        /// punctuation) are rejected — pins case-sensitivity and the allowed charset.
+        /// </summary>
+        [Theory]
+        [InlineData("ABCD")]
+        [InlineData("ABCDEFG")]
+        [InlineData("exam ple")]
+        [InlineData("exa.mple")]
+        public void TryParse_DisallowedCharacters_ReturnsFalse(string value)
+        {
+            ResourceIdentifier.TryParse(value, null, out _).Should().BeFalse();
+        }
+
+        /// <summary>
         /// Scenario:
         /// Tests the ResourceIdentifier
         /// Input:
@@ -153,7 +178,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a ResourceIdentifier with the value from the input
         /// </summary>
         [Fact]
-        public void TestResourceIdentifier_GetExample_Success()
+        public void GetExamples_Default_ReturnsExpectedExamples()
         {
             List<ResourceIdentifier> expected = new List<ResourceIdentifier>();
             expected.Add(ResourceIdentifier.Parse("example-resourceid"));
@@ -178,7 +203,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Formats the ResourceIdentifier into the expected span and returns true and sends the number of characters formated into result
         /// </summary>
         [Fact]
-        public void TestResourceIdentifier_TryFormat_Success()
+        public void TryFormat_BufferLargeEnough_WritesValue()
         {
             string expected = "example-resourceid";
             ResourceIdentifier resourceInstanceIdentifier = ResourceIdentifier.Parse(expected);
@@ -198,7 +223,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Does nothing and returns false and outputs 0 as the number of characters formated
         /// </summary>
         [Fact]
-        public void TestResourceInstanceIdentifier_TryFormat_Fail()
+        public void TryFormat_BufferTooSmall_ReturnsFalse()
         {
             string input = "example-resourceid";
             ResourceIdentifier resourceInstanceIdentifier = ResourceIdentifier.Parse(input);

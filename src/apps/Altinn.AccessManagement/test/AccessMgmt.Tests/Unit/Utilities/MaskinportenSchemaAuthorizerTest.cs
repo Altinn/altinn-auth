@@ -30,7 +30,7 @@ public class MaskinportenSchemaAuthorizerTest
 
     // ── Admin scope short-circuit ─────────────────────────────────────────────
     [Fact]
-    public void HasAdminScope_AuthorizesAnyScope()
+    public void IsAuthorizedDelegationLookupAccess_HasAdminScope_ReturnsTrueForAnyScope()
     {
         var principal = Principal(new Claim(ScopeClaim, AdminScope));
 
@@ -38,7 +38,7 @@ public class MaskinportenSchemaAuthorizerTest
     }
 
     [Fact]
-    public void HasAdminScope_AuthorizesEvenWithEmptyRequestedScope()
+    public void IsAuthorizedDelegationLookupAccess_HasAdminScopeAndEmptyRequestedScope_ReturnsTrue()
     {
         // Admin scope wins before the IsNullOrWhiteSpace guard fires.
         var principal = Principal(new Claim(ScopeClaim, AdminScope));
@@ -47,7 +47,7 @@ public class MaskinportenSchemaAuthorizerTest
     }
 
     [Fact]
-    public void HasAdminScope_AmongOtherScopes_StillAuthorizes()
+    public void IsAuthorizedDelegationLookupAccess_AdminScopeAmongOtherScopes_ReturnsTrue()
     {
         var principal = Principal(new Claim(ScopeClaim, $"some:other {AdminScope} another:scope"));
 
@@ -59,7 +59,7 @@ public class MaskinportenSchemaAuthorizerTest
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void NoAdminScope_AndEmptyOrWhitespaceRequested_Unauthorized(string? requested)
+    public void IsAuthorizedDelegationLookupAccess_NoAdminScopeAndEmptyOrWhitespaceRequested_ReturnsFalse(string? requested)
     {
         var principal = Principal(new Claim(PrefixClaim, "some-prefix"));
 
@@ -68,7 +68,7 @@ public class MaskinportenSchemaAuthorizerTest
 
     // ── Prefix matching ───────────────────────────────────────────────────────
     [Fact]
-    public void RequestedScopeStartsWithConsumerPrefixColon_Authorizes()
+    public void IsAuthorizedDelegationLookupAccess_RequestedScopeStartsWithConsumerPrefixColon_ReturnsTrue()
     {
         var principal = Principal(new Claim(PrefixClaim, "altinn:somesupplier"));
 
@@ -76,7 +76,7 @@ public class MaskinportenSchemaAuthorizerTest
     }
 
     [Fact]
-    public void RequestedScope_NoMatchingPrefix_Unauthorized()
+    public void IsAuthorizedDelegationLookupAccess_NoMatchingPrefix_ReturnsFalse()
     {
         var principal = Principal(new Claim(PrefixClaim, "altinn:somesupplier"));
 
@@ -84,7 +84,7 @@ public class MaskinportenSchemaAuthorizerTest
     }
 
     [Fact]
-    public void RequestedScopeMatchesPrefix_ButMissingColon_Unauthorized()
+    public void IsAuthorizedDelegationLookupAccess_PrefixMatchWithoutColonBoundary_ReturnsFalse()
     {
         // "altinn:supplier" is the prefix; without ':' separator a
         // scope like "altinn:supplierfoo" must NOT match — pinning the
@@ -95,7 +95,7 @@ public class MaskinportenSchemaAuthorizerTest
     }
 
     [Fact]
-    public void MultipleConsumerPrefixes_AnyMatch_Authorizes()
+    public void IsAuthorizedDelegationLookupAccess_MultipleConsumerPrefixesAnyMatch_ReturnsTrue()
     {
         var principal = Principal(
             new Claim(PrefixClaim, "altinn:abc"),
@@ -105,7 +105,7 @@ public class MaskinportenSchemaAuthorizerTest
     }
 
     [Fact]
-    public void NoConsumerPrefixes_AndNoAdminScope_Unauthorized()
+    public void IsAuthorizedDelegationLookupAccess_NoConsumerPrefixesAndNoAdminScope_ReturnsFalse()
     {
         var principal = Principal(); // no claims at all
 
@@ -113,7 +113,7 @@ public class MaskinportenSchemaAuthorizerTest
     }
 
     [Fact]
-    public void ScopeClaimWithoutAdmin_StillFallsThroughToPrefixCheck()
+    public void IsAuthorizedDelegationLookupAccess_NonAdminScopeClaim_FallsThroughToPrefixCheck()
     {
         // Having a non-admin scope claim alone doesn't authorize; the prefix
         // claim still has to match.

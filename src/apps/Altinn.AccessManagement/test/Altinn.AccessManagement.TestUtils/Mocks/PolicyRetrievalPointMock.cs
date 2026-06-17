@@ -168,14 +168,12 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
 
         private string GetAltinnAppsPolicyPath(string org, string app)
         {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(PolicyRetrievalPointMock).Assembly.Location).LocalPath);
-            return Path.Combine(unitTestFolder, "..", "..", "..", "..", "AccessMgmt.Tests", "Data", "Xacml", "3.0", "AltinnApps", org, app);
+            return TestDataDirectory.Combine("Xacml", "3.0", "AltinnApps", org, app);
         }
 
         private string GetAltinnResourcePolicyPath(string resourceRegistryId)
         {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(PolicyRetrievalPointMock).Assembly.Location).LocalPath);
-            return Path.Combine(unitTestFolder, "..", "..", "..", "..", "AccessMgmt.Tests", "Data", "Xacml", "3.0", "ResourceRegistry", resourceRegistryId);
+            return TestDataDirectory.Combine("Xacml", "3.0", "ResourceRegistry", resourceRegistryId);
         }
 
         private static bool IsValidResourceRegistryId(string resourceRegistryId)
@@ -200,8 +198,7 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
 
         private static string GetAltinnAppsDelegationPolicyPath(string policyPath)
         {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(PolicyRetrievalPointMock).Assembly.Location).LocalPath);
-            return Path.Combine(unitTestFolder, "..", "..", "..", "..", "AccessMgmt.Tests", "Data", "blobs", "input", policyPath);
+            return TestDataDirectory.Combine("blobs", "input", policyPath);
         }
 
         private string GetTestId(HttpContext context)
@@ -211,14 +208,12 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
 
         private string GetAltinnAppsPath()
         {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(PolicyRetrievalPointMock).Assembly.Location).LocalPath);
-            return Path.Combine(unitTestFolder, "..", "..", "..", "..", "AccessMgmt.Tests", "Data", "Xacml", "3.0", "AltinnApps");
+            return TestDataDirectory.Combine("Xacml", "3.0", "AltinnApps");
         }
 
         private string GetConformancePath()
         {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(PolicyRetrievalPointMock).Assembly.Location).LocalPath);
-            return Path.Combine(unitTestFolder, "..", "..", "..", "..", "AccessMgmt.Tests", "Data", "Xacml", "3.0", "ConformanceTests");
+            return TestDataDirectory.Combine("Xacml", "3.0", "ConformanceTests");
         }
 
         private static XmlReaderSettings CreateSafeXmlReaderSettings()

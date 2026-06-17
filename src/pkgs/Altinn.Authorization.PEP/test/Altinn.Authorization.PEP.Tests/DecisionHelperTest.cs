@@ -25,7 +25,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: All values sent in will be created to attributes
         /// </summary>
         [Fact]
-        public void CreateXacmlJsonRequest_TC01()
+        public void CreateXacmlJsonRequest_UserClaimsWithPartyId_ReturnsRequestWithSubjectActionAndPartyResourceAttributes()
         {
             // Arrange & Act
             XacmlJsonRequestRoot requestRoot = DecisionHelper.CreateDecisionRequest(Org, App, CreateUserClaims(false), ActionType, PartyId, null, null);
@@ -42,7 +42,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Only valid urn values sent in will be created to attributes
         /// </summary>
         [Fact]
-        public void CreateXacmlJsonRequest_TC02()
+        public void CreateXacmlJsonRequest_UserClaimsWithExtraInvalidClaimAndPartyId_IgnoresInvalidClaimAndReturnsExpectedAttributeCounts()
         {
             // Arrange & Act
             XacmlJsonRequestRoot requestRoot = DecisionHelper.CreateDecisionRequest(Org, App, CreateUserClaims(true), ActionType, PartyId, null, null);
@@ -59,7 +59,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Only valid urn, scope and orgnumber with correct values sent in will be created to attributes
         /// </summary>
         [Fact]
-        public void CreateXacmlJsonRequest_TC03()
+        public void CreateXacmlJsonRequest_MaskinportenClaimsWithoutPartyId_ReturnsRequestWithOrgScopeSubjectAndResourceAttributes()
         {
             // Arrange & Act
             XacmlJsonRequestRoot requestRoot = DecisionHelper.CreateDecisionRequest(Org, App, CreateMaskinportenClaims("12313", "altinn.master"), ActionType);
@@ -76,7 +76,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: All values sent in will be created to attributes
         /// </summary>
         [Fact]
-        public void CreateXacmlJsonRequest_TC04()
+        public void CreateXacmlJsonRequest_UserClaimsWithoutPartyId_ReturnsRequestWithSubjectActionAndResourceAttributes()
         {
             // Arrange & Act
             XacmlJsonRequestRoot requestRoot = DecisionHelper.CreateDecisionRequest(Org, App, CreateUserClaims(false), ActionType);
@@ -93,7 +93,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Only valid urn values sent in will be created to attributes
         /// </summary>
         [Fact]
-        public void CreateXacmlJsonRequest_TC05()
+        public void CreateXacmlJsonRequest_UserClaimsWithExtraInvalidClaimWithoutPartyId_IgnoresInvalidClaimAndReturnsExpectedAttributeCounts()
         {
             // Arrange & Act
             XacmlJsonRequestRoot requestRoot = DecisionHelper.CreateDecisionRequest(Org, App, CreateUserClaims(true), ActionType);
@@ -110,7 +110,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Only valid urn, scope and orgnumber with correct values sent in will be created to attributes
         /// </summary>
         [Fact]
-        public void CreateXacmlJsonRequest_TC06()
+        public void CreateXacmlJsonRequest_MaskinportenClaimsWithPartyId_ReturnsRequestWithOrgScopeSubjectAndPartyResourceAttributes()
         {
             // Arrange & Act
             XacmlJsonRequestRoot requestRoot = DecisionHelper.CreateDecisionRequest(Org, App, CreateMaskinportenClaims("12313", "altinn.master"), ActionType, PartyId, null, null);
@@ -127,7 +127,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Returns true
         /// </summary>
         [Fact]
-        public void ValidatePdpDecision_TC01()
+        public void ValidatePdpDecision_PermitDecision_ReturnsTrue()
         {
             // Arrange
             XacmlJsonResponse response = new XacmlJsonResponse();
@@ -148,7 +148,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Returns true
         /// </summary>
         [Fact]
-        public void ValidatePdpDecision_TC02()
+        public void ValidatePdpDecision_PermitWithAuthLevelObligationUserMeets_ReturnsTrue()
         {
             // Arrange
             XacmlJsonResponse response = new XacmlJsonResponse();
@@ -181,7 +181,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Returns false
         /// </summary>
         [Fact]
-        public void ValidatePdpDecision_TC03()
+        public void ValidatePdpDecision_PermitWithAuthLevelObligationUserDoesNotMeet_ReturnsFalse()
         {
             // Arrange
             XacmlJsonResponse response = new XacmlJsonResponse();
@@ -214,7 +214,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Returns false
         /// </summary>
         [Fact]
-        public void ValidatePdpDecision_TC04()
+        public void ValidatePdpDecision_DenyDecision_ReturnsFalse()
         {
             // Arrange
             XacmlJsonResponse response = new XacmlJsonResponse();
@@ -235,7 +235,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Returns false
         /// </summary>
         [Fact]
-        public void ValidatePdpDecision_TC05()
+        public void ValidatePdpDecision_MultipleResults_ReturnsFalse()
         {
             // Arrange
             XacmlJsonResponse response = new XacmlJsonResponse();
@@ -257,7 +257,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Throws ArgumentNullException
         /// </summary>
         [Fact]
-        public void ValidatePdpDecision_TC06()
+        public void ValidatePdpDecision_NullResultList_ThrowsArgumentNullException()
         {
             // Arrange
             XacmlJsonResponse response = new XacmlJsonResponse();
@@ -272,7 +272,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Throws ArgumentNullException
         /// </summary>
         [Fact]
-        public void ValidatePdpDecision_TC07()
+        public void ValidatePdpDecision_NullUser_ThrowsArgumentNullException()
         {
             // Arrange
             XacmlJsonResponse response = new XacmlJsonResponse();
@@ -287,7 +287,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Returns false
         /// </summary>
         [Fact]
-        public void ValidatePdpDecision_TC08()
+        public void ValidatePdpDecisionDetailed_AuthLevelObligationUserDoesNotMeet_ReturnsNotAuthorizedWithFailedAuthLevelObligation()
         {
             // Arrange
             XacmlJsonResponse response = new XacmlJsonResponse();
@@ -323,7 +323,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Returns false
         /// </summary>
         [Fact]
-        public void ValidatePdpDecision_TC09()
+        public void ValidatePdpDecisionDetailed_MultipleAuthLevelObligationsUserDoesNotMeet_ReturnsNotAuthorizedWithFailedAuthLevelObligation()
         {
             // Arrange
             XacmlJsonResponse response = new XacmlJsonResponse();
@@ -371,7 +371,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Returns false
         /// </summary>
         [Fact]
-        public void ValidatePdpDecision_TC10()
+        public void ValidatePdpDecisionDetailed_OrgUserMeetsOrgAuthLevelObligation_ReturnsAuthorized()
         {
             // Arrange
             XacmlJsonResponse response = new XacmlJsonResponse();

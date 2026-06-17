@@ -29,27 +29,27 @@ public class JwtTokenUtilTest
     }
 
     [Fact]
-    public void CookiePresent_ReturnsCookieValue()
+    public void GetTokenFromContext_CookiePresent_ReturnsCookieValue()
     {
         var ctx = CtxWithCookie(CookieName, "cookie-token-value");
         JwtTokenUtil.GetTokenFromContext(ctx, CookieName).Should().Be("cookie-token-value");
     }
 
     [Fact]
-    public void NoCookieNoAuthHeader_ReturnsEmpty()
+    public void GetTokenFromContext_NoCookieNoAuthHeader_ReturnsEmpty()
     {
         JwtTokenUtil.GetTokenFromContext(new DefaultHttpContext(), CookieName).Should().BeEmpty();
     }
 
     [Fact]
-    public void NoCookieBearerHeader_ReturnsTokenWithoutPrefix()
+    public void GetTokenFromContext_NoCookieBearerHeader_ReturnsTokenWithoutPrefix()
     {
         var ctx = CtxWithAuthHeader("Bearer my-jwt-token");
         JwtTokenUtil.GetTokenFromContext(ctx, CookieName).Should().Be("my-jwt-token");
     }
 
     [Fact]
-    public void NoCookieBearerHeaderLowercase_AlsoMatchesViaCaseInsensitiveStartsWith()
+    public void GetTokenFromContext_NoCookieLowercaseBearerHeader_ReturnsTokenWithoutPrefix()
     {
         // Production code uses StringComparison.OrdinalIgnoreCase on StartsWith,
         // so "bearer " and "BEARER " both match — pin this behavior.
@@ -58,14 +58,14 @@ public class JwtTokenUtilTest
     }
 
     [Fact]
-    public void NoCookieBearerHeader_ExtraWhitespaceTrimmed()
+    public void GetTokenFromContext_NoCookieBearerHeaderWithExtraWhitespace_ReturnsTrimmedToken()
     {
         var ctx = CtxWithAuthHeader("Bearer    my-jwt-token   ");
         JwtTokenUtil.GetTokenFromContext(ctx, CookieName).Should().Be("my-jwt-token");
     }
 
     [Fact]
-    public void NoCookieNonBearerAuthHeader_ReturnsNullOrEmpty()
+    public void GetTokenFromContext_NoCookieNonBearerAuthHeader_ReturnsNullOrEmpty()
     {
         // Edge case: a non-Bearer Authorization header is silently dropped.
         // Pinning current behavior — token remains null after the cookie miss
@@ -76,7 +76,7 @@ public class JwtTokenUtilTest
     }
 
     [Fact]
-    public void EmptyCookieValue_FallsBackToAuthHeader()
+    public void GetTokenFromContext_EmptyCookieValue_FallsBackToAuthHeader()
     {
         var ctx = new DefaultHttpContext();
         ctx.Request.Headers.Cookie = $"{CookieName}=";

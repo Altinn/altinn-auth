@@ -191,9 +191,8 @@ Guidelines:
 
 - **Do not** add new helper methods to either class.
 - **Do** migrate call sites you already touch to `Should().BeEquivalentTo(...)`.
-- Bulk retirement of these classes is tracked as **Phase 4.2d** in the
-  overhaul plan and will be executed as a dedicated step once enough call
-  sites have migrated organically.
+- Bulk retirement of these classes is a future refactoring candidate, to be
+  executed as a dedicated step once enough call sites have migrated organically.
 
 ---
 

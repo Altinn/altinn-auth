@@ -51,8 +51,6 @@ public partial class ConnectionsControllerTest
             Fixture = fixture;
             Fixture.ConfigureServices(services =>
             {
-                services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
-                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
             });
         }
@@ -163,7 +161,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetInstanceRights_AsJosephineFromKaos_WithToOthersScope_ReturnsForbidden()
+        public async Task GetInstanceRights_AsJosephineFromKaos_WithToOthersScope_Returns403ForToOthersScopeOnFromOthersDirection()
         {
             HttpClient client = CreateClient(TestData.JosephineYvonnesdottir.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -179,7 +177,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetInstanceRights_AsJinxForKaosToJosephine_WithFromOthersScope_ReturnsForbidden()
+        public async Task GetInstanceRights_AsJinxForKaosToJosephine_WithFromOthersScope_Returns403ForFromOthersScopeOnToOthersDirection()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -195,7 +193,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetInstanceRights_WithWriteScope_ReturnsForbidden()
+        public async Task GetInstanceRights_WithWriteScope_Returns403ForWriteScope()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
 
@@ -211,7 +209,7 @@ public partial class ConnectionsControllerTest
         /// Expects 400 BadRequest with a validation error.
         /// </summary>
         [Fact]
-        public async Task GetInstanceRights_WithInvalidInstanceUrn_ReturnsBadRequest()
+        public async Task GetInstanceRights_WithInvalidInstanceUrn_Returns400ForInvalidInstanceUrn()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -227,7 +225,7 @@ public partial class ConnectionsControllerTest
         /// Expects 401 Unauthorized.
         /// </summary>
         [Fact]
-        public async Task GetInstanceRights_WithNoToken_ReturnsUnauthorized()
+        public async Task GetInstanceRights_WithNoToken_Returns401ForMissingToken()
         {
             var client = Fixture.Server.CreateClient();
 

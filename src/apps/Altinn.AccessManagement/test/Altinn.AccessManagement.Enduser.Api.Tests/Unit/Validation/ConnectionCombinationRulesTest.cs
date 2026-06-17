@@ -9,8 +9,7 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Unit.Validation;
 /// Unit tests for <see cref="ConnectionCombinationRules"/>.
 ///
 /// These cover the cross-field (semantic) rules directly so they are not only
-/// exercised through controller integration tests. See
-/// <c>docs/testing/TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/Coverage_Enduser_Api.md</c> for the coverage rationale.
+/// exercised through controller integration tests.
 /// </summary>
 [UnitTest]
 public class ConnectionCombinationRulesTest

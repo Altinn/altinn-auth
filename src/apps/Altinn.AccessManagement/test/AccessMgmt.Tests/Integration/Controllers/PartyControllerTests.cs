@@ -6,22 +6,20 @@ using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
+using Altinn.AccessMgmt.PersistenceEF;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.Authorization.Api.Contracts.Party;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.Common.AccessToken.Services;
 using AltinnCore.Authentication.JwtCookie;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Altinn.AccessMgmt.PersistenceEF;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
-// Migrated from WebApplicationFixture to ApiFixture as part of Phase 2.2
-// Sub-step 16.3 (Step 16 — AccessMgmt.Tests WAF consolidation). The
-// static shared-factory pattern is no longer needed — ApiFixture already
-// provides one host per IClassFixture<ApiFixture> instance.
+// ApiFixture already provides one host per IClassFixture<ApiFixture> instance,
+// so the previous static shared-factory pattern is no longer needed.
 namespace Altinn.AccessManagement.Tests.Integration.Controllers
 {
     [IntegrationTest]
@@ -49,7 +47,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         private HttpClient GetClient() => _client;
 
         [Fact]
-        public async Task AddParty_AuthorizationFail_InvalidIssuer()
+        public async Task AddParty_InvalidIssuer_Returns401InvalidTokenIssuer()
         {
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "/accessmanagement/api/v1/internal/party")
             {
@@ -71,7 +69,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         }
 
         [Fact]
-        public async Task AddParty_AuthorizationFail_InvalidAppClaim()
+        public async Task AddParty_InvalidAppClaim_Returns401InvalidAppClaim()
         {
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "/accessmanagement/api/v1/internal/party")
             {
@@ -93,7 +91,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         }
 
         [Fact]
-        public async Task AddParty_AuthorizationOk_InvalidEntityType()
+        public async Task AddParty_InvalidEntityType_Returns400EntityTypeNotSupported()
         {
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "/accessmanagement/api/v1/internal/party")
             {
@@ -119,7 +117,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         }
 
         [Fact]
-        public async Task AddParty_AuthorizationOk_InvalidEntityVariantType()
+        public async Task AddParty_InvalidEntityVariantType_Returns400EntityVariantNotValidForEntityType()
         {
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "/accessmanagement/api/v1/internal/party")
             {
@@ -145,7 +143,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         }
 
         [Fact]
-        public async Task AddParty_ValidParty_StandardSystem_ReturnsOkAndTrue()
+        public async Task AddParty_ValidPartyStandardSystem_Returns201WithPartyCreatedResult()
         {
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "/accessmanagement/api/v1/internal/party")
             {
@@ -170,7 +168,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         }
 
         [Fact]
-        public async Task AddParty_ValidParty_AgentSystem_ReturnsOkAndTrue()
+        public async Task AddParty_ValidPartyAgentSystem_Returns201WithPartyCreatedResult()
         {
             var partyUuid = Guid.NewGuid();
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "/accessmanagement/api/v1/internal/party")
@@ -203,7 +201,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         }
 
         [Fact]
-        public async Task AddParty_ValidParty_SelfIdentified_SI_EMAIL_WithRegisterToken_ReturnsCreated()
+        public async Task AddParty_ValidPartySelfIdentifiedSiEmailWithRegisterToken_Returns201WithPartyCreatedResult()
         {
             var partyUuid = Guid.NewGuid();
             int partyUserId = 1000041;
@@ -243,7 +241,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         }
 
         [Fact]
-        public async Task AddParty_ValidParty_SelfIdentified_SI_EDU_WithRegisterToken_ReturnsCreated()
+        public async Task AddParty_ValidPartySelfIdentifiedSiEduWithRegisterToken_Returns201WithPartyCreatedResult()
         {
             var partyUuid = Guid.NewGuid();
             int partyUserId = 1000042;

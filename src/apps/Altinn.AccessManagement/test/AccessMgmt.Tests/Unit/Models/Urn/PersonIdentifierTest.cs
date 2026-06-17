@@ -60,7 +60,7 @@ public class PersonIdentifierTest
     }
 
     [Fact]
-    public void Parse_InvalidValue_Throws()
+    public void Parse_InvalidValue_ThrowsFormatException()
     {
         // 02013299996 is the valid 02013299997 with the last (k2) digit
         // flipped — passes length / content guards, fails the modulo-11
@@ -119,7 +119,7 @@ public class PersonIdentifierTest
     }
 
     [Fact]
-    public void Json_DeserializeInvalid_Throws()
+    public void Json_DeserializeInvalid_ThrowsJsonException()
     {
         Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<PersonIdentifier>("\"02013299996\""));
     }

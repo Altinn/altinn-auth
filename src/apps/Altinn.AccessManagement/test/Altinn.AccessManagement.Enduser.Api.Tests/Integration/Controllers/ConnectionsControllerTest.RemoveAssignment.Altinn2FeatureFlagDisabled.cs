@@ -1,17 +1,14 @@
 ﻿using System.Net;
 using System.Security.Claims;
 using Altinn.AccessManagement.Api.Enduser.Controllers;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
-using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
@@ -37,11 +34,6 @@ public partial class ConnectionsControllerTest
         public RemoveAssignmentAltinn2FeatureFlagDisabled(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.ConfigureServices(services =>
-            {
-                services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
-            });
-
             Fixture.WithDisabledFeatureFlag(AccessMgmtFeatureFlags.Altinn2RoleRevoke);
             Fixture.EnsureSeedOnce<RemoveAssignmentAltinn2FeatureFlagDisabled>(db =>
             {

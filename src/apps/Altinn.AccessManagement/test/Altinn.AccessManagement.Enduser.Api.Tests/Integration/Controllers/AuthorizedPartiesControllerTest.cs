@@ -71,7 +71,7 @@ public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
     /// Expects 200 OK.
     /// </summary>
     [Fact]
-    public async Task GetAuthorizedParties_AsMalinWithPortalScope_ReturnsOk()
+    public async Task GetAuthorizedParties_AsMalinWithPortalScope_Returns200Ok()
     {
         var client = CreatePortalClient(TestData.MalinEmilie);
 
@@ -85,7 +85,7 @@ public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
     /// Expects 200 OK.
     /// </summary>
     [Fact]
-    public async Task GetAuthorizedParties_AsTheaWithPortalScope_ReturnsOk()
+    public async Task GetAuthorizedParties_AsTheaWithPortalScope_Returns200Ok()
     {
         var client = CreatePortalClient(TestData.Thea);
 
@@ -224,7 +224,7 @@ public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
     /// Expects 200 OK.
     /// </summary>
     [Fact]
-    public async Task GetAuthorizedParties_AsMalinWithMultipleIncludeFlags_ReturnsOk()
+    public async Task GetAuthorizedParties_AsMalinWithMultipleIncludeFlags_Returns200Ok()
     {
         var client = CreatePortalClient(TestData.MalinEmilie);
 
@@ -238,7 +238,7 @@ public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
     /// Expects 403 Forbidden.
     /// </summary>
     [Fact]
-    public async Task GetAuthorizedParties_WithWrongScope_ReturnsForbidden()
+    public async Task GetAuthorizedParties_WithWrongScope_Returns403WrongScope()
     {
         var client = CreateClientWithScopes(AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -252,7 +252,7 @@ public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
     /// Expects 401 Unauthorized.
     /// </summary>
     [Fact]
-    public async Task GetAuthorizedParties_WithNoToken_ReturnsUnauthorized()
+    public async Task GetAuthorizedParties_WithNoToken_Returns401MissingToken()
     {
         var client = Fixture.Server.CreateClient();
 
@@ -266,7 +266,7 @@ public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
     /// Expects 200 OK since the policy accepts both portal and system scopes.
     /// </summary>
     [Fact]
-    public async Task GetAuthorizedParties_AsMalinWithSystemScope_ReturnsOk()
+    public async Task GetAuthorizedParties_AsMalinWithSystemScope_Returns200Ok()
     {
         var client = Fixture.Server.CreateClient();
         var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>

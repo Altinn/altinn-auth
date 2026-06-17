@@ -55,7 +55,7 @@ public sealed class AuthorizationDbFixture : IAsyncLifetime
     /// <inheritdoc />
     public async ValueTask InitializeAsync()
     {
-        var database = await Engine.CreateDatabaseAsync();
+        var database = await FixtureTiming.TimeAsync(FixtureTiming.Phase.DbProvision, () => Engine.CreateDatabaseAsync());
         if (database is null)
         {
             SkipReason = Engine.SkipReason;

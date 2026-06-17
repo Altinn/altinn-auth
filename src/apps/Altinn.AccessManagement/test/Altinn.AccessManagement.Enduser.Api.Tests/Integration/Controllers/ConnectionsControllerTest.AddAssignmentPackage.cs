@@ -46,7 +46,6 @@ public partial class ConnectionsControllerTest
             Fixture = fixture;
             Fixture.ConfigureServices(services =>
             {
-                services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
                 services.AddSingleton<IUserProfileLookupService, UserProfileLookupServiceMock>();
             });
         }
@@ -71,7 +70,7 @@ public partial class ConnectionsControllerTest
         /// Then verifies the package appears in GetPackages.
         /// </summary>
         [Fact]
-        public async Task AddAssignmentPackage_AsJinxForKaosToJosephine_ByPackageId_ReturnsOk()
+        public async Task AddAssignmentPackage_AsJinxForKaosToJosephine_ByPackageId_Returns200WithAssignmentPackage()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
 
@@ -105,7 +104,7 @@ public partial class ConnectionsControllerTest
         /// Expects 200 OK.
         /// </summary>
         [Fact]
-        public async Task AddAssignmentPackage_AsJinxForKaosToJosephine_ByPackageUrn_ReturnsOk()
+        public async Task AddAssignmentPackage_AsJinxForKaosToJosephine_ByPackageUrn_Returns200WithAssignmentPackage()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
 
@@ -127,7 +126,7 @@ public partial class ConnectionsControllerTest
         /// Expects 400 BadRequest.
         /// </summary>
         [Fact]
-        public async Task AddAssignmentPackage_WithInvalidPackageUrn_ReturnsBadRequest()
+        public async Task AddAssignmentPackage_WithInvalidPackageUrn_Returns400ForInvalidPackageUrn()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
 
@@ -144,7 +143,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task AddAssignmentPackage_WithReadScope_ReturnsForbidden()
+        public async Task AddAssignmentPackage_WithReadScope_Returns403ForReadScope()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -161,7 +160,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task AddAssignmentPackage_WithToOthersReadScope_ReturnsForbidden()
+        public async Task AddAssignmentPackage_WithToOthersReadScope_Returns403ForToOthersReadScope()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -178,7 +177,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task AddAssignmentPackage_WithFromOthersWriteScope_ReturnsForbidden()
+        public async Task AddAssignmentPackage_WithFromOthersWriteScope_Returns403ForFromOthersWriteScope()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_WRITE);
 

@@ -23,6 +23,22 @@ public class ConsentExtensionsTest
         dto.Value.Should().Be("ttd-some-app");
     }
 
+    // ── ConsentRequestStatusType contract sync ───────────────────────────────
+    [Fact]
+    public void ConsentRequestStatusType_EveryCoreValue_HasAContractCounterpart()
+    {
+        // The enterprise mapper casts the core status straight to the contract enum
+        // (ConsentRequestDetailsExtensions.ToConsentRequestDetailsExternal), so every
+        // core value must have a defined contract counterpart or it serializes as a
+        // bare number. Guards against future drift between the two enums.
+        foreach (Altinn.AccessManagement.Core.Models.Consent.ConsentRequestStatusType core
+            in Enum.GetValues<Altinn.AccessManagement.Core.Models.Consent.ConsentRequestStatusType>())
+        {
+            Enum.IsDefined(typeof(Altinn.Authorization.Api.Contracts.Consent.ConsentRequestStatusType), (int)core)
+                .Should().BeTrue($"core ConsentRequestStatusType.{core} ({(int)core}) must map to a defined contract value");
+        }
+    }
+
     // ── ConsentRightExtensions ───────────────────────────────────────────────
     [Fact]
     public void ToConsentRightExternal_EmptyResourceList_MapsToEmptyList()

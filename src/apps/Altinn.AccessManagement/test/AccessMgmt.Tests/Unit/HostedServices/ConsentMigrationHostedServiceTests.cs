@@ -58,7 +58,7 @@ public class ConsentMigrationHostedServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task StartAsync_StartsSuccessfully()
+    public async Task StartAsync_NoConfiguration_StartsWithoutThrowing()
     {
         // Arrange
         var service = CreateService();
@@ -387,7 +387,7 @@ public class ConsentMigrationHostedServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_LeaseDisposedAfterProcessing()
+    public async Task ExecuteAsync_Cancelled_DisposesLeaseAfterProcessing()
     {
         // Arrange
         _featureManagerMock
@@ -537,7 +537,7 @@ public class ConsentMigrationHostedServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task StopAsync_StopsSuccessfully()
+    public async Task StopAsync_AfterStart_StopsWithoutThrowing()
     {
         // Arrange
         var service = CreateService();
@@ -552,7 +552,7 @@ public class ConsentMigrationHostedServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_UsesCorrectLeaseName()
+    public async Task ExecuteAsync_FeatureEnabled_AcquiresLeaseWithExpectedName()
     {
         // Arrange
         const string expectedLeaseName = "access_management_consent_migration";

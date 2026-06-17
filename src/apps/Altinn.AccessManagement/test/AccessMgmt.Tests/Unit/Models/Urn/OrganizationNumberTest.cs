@@ -18,7 +18,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a OrganizationNumber with the value from the input
         /// </summary>
         [Fact]
-        public void TestOrganizationNumberJson_DeSerializng_Success()
+        public void Deserialize_ValidJson_ReturnsOrganizationNumber()
         {
             string orgNumberString = @"""923609016""";
             OrganizationNumber orgNr = JsonSerializer.Deserialize<OrganizationNumber>(orgNumberString, JsonOptions);
@@ -35,7 +35,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Throws an exception
         /// </summary>
         [Fact]
-        public void TestOrganizationNumberJson_DeSerializng_Fail()
+        public void Deserialize_NonNumericJson_Throws()
         {
             string orgNumberString = @"""123456f89""";
             try
@@ -59,7 +59,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a OrganizationNumber with the value from the input
         /// </summary>
         [Fact]
-        public void TestOrganizationNumberJson_Serializng_Success()
+        public void Serialize_ValidOrganizationNumber_ReturnsJsonString()
         {
             OrganizationNumber orgNr = OrganizationNumber.Parse("923609016");
             string orgNrJson = JsonSerializer.Serialize(orgNr, JsonOptions);
@@ -76,7 +76,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a OrganizationNumber with the value from the input
         /// </summary>
         [Fact]
-        public void TestOrganizationNumberString_Parse_Success()
+        public void Parse_ValidString_ReturnsOrganizationNumber()
         {
             OrganizationNumber orgNr = OrganizationNumber.Parse("923609016");
             Assert.Equal("923609016", orgNr.ToString());
@@ -91,7 +91,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a Organization number with the value from the input
         /// </summary>
         [Fact]
-        public void TestOrganizationNumberReadOnlyCharSpan_Parse_Success()
+        public void Parse_ValidCharSpan_ReturnsOrganizationNumber()
         {
             ReadOnlySpan<char> orgNrSpan = "923609016";
             OrganizationNumber orgNr = OrganizationNumber.Parse(orgNrSpan);
@@ -107,7 +107,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Fails with exception
         /// </summary>
         [Fact]
-        public void TestOrganizationNumberReadOnlyCharSpan_Fail()
+        public void Parse_InvalidCharSpan_Throws()
         {
             try
             {
@@ -131,7 +131,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Fails with exception
         /// </summary>
         [Fact]
-        public void TestOrganizationNumberString_Parse_Fail()
+        public void Parse_NonNumericString_Throws()
         {
             try
             {
@@ -147,6 +147,20 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
 
         /// <summary>
         /// Scenario:
+        /// Parse a 9-digit, all-numeric value whose mod-11 control digit is wrong.
+        /// Expected Result:
+        /// Rejected by the checksum branch (937884117 is valid; the flipped control digit must fail).
+        /// </summary>
+        [Fact]
+        public void Parse_NineDigitBadChecksum_Throws()
+        {
+            Action act = () => OrganizationNumber.Parse("937884118");
+
+            act.Should().Throw<Exception>();
+        }
+
+        /// <summary>
+        /// Scenario:
         /// Tests the OrganizationNumber GetExample
         /// Input:
         /// Get expected Example
@@ -154,7 +168,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Gets the expected Example
         /// </summary>
         [Fact]
-        public void TestOrganizationNumber_GetExample_Success()
+        public void GetExamples_Default_ReturnsExpectedExamples()
         {
             List<OrganizationNumber> expected = new List<OrganizationNumber>();
             expected.Add(OrganizationNumber.Parse("937884117"));
@@ -179,7 +193,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Formats the organizationNumber into the expected span and returns true and sends the number of characters formated into result
         /// </summary>
         [Fact]
-        public void TestOrganizationNumber_TryFormat_Success()
+        public void TryFormat_BufferLargeEnough_WritesValue()
         {
             string expected = "923609016";
             OrganizationNumber organizationNumber = OrganizationNumber.Parse(expected);
@@ -199,7 +213,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Does nothing and returns false and outputs 0 as the number of characters formated
         /// </summary>
         [Fact]
-        public void TestOrganizationNumber_TryFormat_Fail()
+        public void TryFormat_BufferTooSmall_ReturnsFalse()
         {
             string input = "923609016";
             OrganizationNumber organizationNumber = OrganizationNumber.Parse(input);

@@ -14,13 +14,10 @@ namespace Altinn.AccessManagement.Tests.Integration.Fixtures;
 /// repositories can run against it.
 /// </summary>
 /// <remarks>
-/// This is the scope-boundary verification for sub-step 16.4-prep: a single
-/// tiny test exercising a Dapper-backed repository
+/// A single tiny test exercising a Dapper-backed repository
 /// (<c>ResourceMetadataRepo</c>) that would otherwise fail with
 /// <c>relation "accessmanagement.resource" does not exist</c> under a plain
 /// <see cref="Altinn.AccessManagement.TestUtils.Fixtures.ApiFixture"/>.
-/// Migration of the six remaining <c>WebApplicationFixture</c> consumers
-/// is tracked as follow-up sub-steps 16.4a/b.
 /// </remarks>
 [IntegrationTest]
 public class LegacyApiFixtureSmokeTest(LegacyApiFixture fixture) : IClassFixture<LegacyApiFixture>
@@ -28,7 +25,7 @@ public class LegacyApiFixtureSmokeTest(LegacyApiFixture fixture) : IClassFixture
     private LegacyApiFixture Fixture { get; } = fixture;
 
     [Fact]
-    public async Task InsertAccessManagementResource_Succeeds_WhenYuniqlSchemaIsProvisioned()
+    public async Task InsertAccessManagementResource_WhenYuniqlSchemaIsProvisioned_PersistsResource()
     {
         // Ensure the host has been built so DI + Yuniql migrations ran.
         _ = Fixture.BuildConfiguration();

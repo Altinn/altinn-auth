@@ -2,12 +2,9 @@
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Microsoft.Extensions.Configuration;
 
-// Migrated from WebApplicationFixture to ApiFixture as part of Phase 2.2
-// Sub-step 16.3 (Step 16 — AccessMgmt.Tests WAF consolidation). Health
-// endpoints have no DI dependencies of their own, so no extra services
-// need to be registered — but we preserve appsettings.test.json to keep
-// the existing configuration (Azure Storage, Cosmos, feature flags)
-// matching what the legacy WebApplicationFixture provided.
+// Health endpoints have no DI dependencies of their own, so no extra services
+// need to be registered — appsettings.test.json is preserved to keep the
+// configuration (Azure Storage, Cosmos, feature flags) the app expects.
 namespace Altinn.AccessManagement.Tests.Integration.Health
 {
     /// <summary>
@@ -29,7 +26,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Health
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task VerifyHealthCheck_OK()
+        public async Task HealthEndpoint_WhenAppIsHealthy_Returns200WithHealthyStatus()
         {
             var request = new HttpRequestMessage(HttpMethod.Get, "/health");
 
@@ -43,7 +40,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Health
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task VerifyAliveCheck_OK()
+        public async Task AliveEndpoint_WhenAppIsRunning_Returns200Ok()
         {
             var request = new HttpRequestMessage(HttpMethod.Get, "/alive");
 

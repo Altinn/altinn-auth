@@ -22,7 +22,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Expected: Should return status code 200 OK with a non-null party list.
         /// </summary>
         [Fact]
-        public async Task GetPartyList_AsAuthenticatedUser_Ok()
+        public async Task GetPartyList_AsAuthenticatedUser_Returns200WithPartyList()
         {
             // Arrange
             string token = PrincipalUtil.GetToken(20000490, 4);
@@ -42,7 +42,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Expected: Should return 404 NotFound.
         /// </summary>
         [Fact]
-        public async Task GetPartyList_WithoutUserQuery_NotFound()
+        public async Task GetPartyList_WithoutUserQuery_Returns404ForMissingUserQuery()
         {
             // Arrange
             string token = PrincipalUtil.GetToken(20000490, 4);
@@ -60,7 +60,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Expected: Should return 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetPartyList_NotAsAuthenticatedUser_Forbidden()
+        public async Task GetPartyList_NotAsAuthenticatedUser_Returns403ForNonAuthenticatedUser()
         {
             // Arrange
             string token = PrincipalUtil.GetToken(20000490, 4);
@@ -135,7 +135,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Expected: Should return status code 403 Forbidden
         /// </summary>
         [Fact]
-        public async Task ValidateParty_NotAsAuthenticatedUser_Forbidden()
+        public async Task ValidateParty_NotAsAuthenticatedUser_Returns403ForNonAuthenticatedUser()
         {
             // Arrange
             string token = PrincipalUtil.GetToken(20000490, 4);
@@ -153,7 +153,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Expected: Should return status code 404 NotFound
         /// </summary>
         [Fact]
-        public async Task ValidateParty_WithoutUserQuery_NotFound()
+        public async Task ValidateParty_WithoutUserQuery_Returns404ForMissingUserQuery()
         {
             // Arrange
             string token = PrincipalUtil.GetToken(20000490, 4);

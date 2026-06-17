@@ -17,7 +17,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a ActionIdentifier with the value from the input
         /// </summary>
         [Fact]
-        public void TestActionIdentifierJson_DeSerializng_Success()
+        public void Deserialize_ValidJson_ReturnsIdentifier()
         {
             string actionIdentifierString = @"""read""";
             ActionIdentifier actionIdentifier = JsonSerializer.Deserialize<ActionIdentifier>(actionIdentifierString, JsonOptions);
@@ -34,7 +34,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a ActionIdentifier with the value from the input
         /// </summary>
         [Fact]
-        public void TestActionIdentifierJson_Serializng_Success()
+        public void Serialize_ValidIdentifier_ReturnsJsonString()
         {
             ActionIdentifier actionIdentifier = ActionIdentifier.Parse("read");
             string actionIdentifierJson = JsonSerializer.Serialize(actionIdentifier, JsonOptions);
@@ -51,7 +51,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a Organization number with the value from the input
         /// </summary>
         [Fact]
-        public void TestActionIdentifierString_Parse_Success()
+        public void Parse_ValidString_ReturnsIdentifier()
         {
             ActionIdentifier actionIdentifier = ActionIdentifier.Parse("read");
             Assert.Equal("read", actionIdentifier.ToString());
@@ -66,7 +66,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a ActionIdentifier with the value from the input
         /// </summary>
         [Fact]
-        public void TestActionIdentifierReadOnlyCharSpan_Parse_Success()
+        public void Parse_ValidCharSpan_ReturnsIdentifier()
         {
             ReadOnlySpan<char> actionIdentifierSpan = "read";
             ActionIdentifier actionIdentifier = ActionIdentifier.Parse(actionIdentifierSpan);
@@ -82,7 +82,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a ActionIdentifier with the value from the input
         /// </summary>
         [Fact]
-        public void TestActionIdentifier_GetExample_Success()
+        public void GetExamples_Default_ReturnsExpectedExamples()
         {
             List<ActionIdentifier> expected = new List<ActionIdentifier>();
             expected.Add(ActionIdentifier.Parse("read"));
@@ -107,7 +107,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Formats the ActionIdentifier into the expected span and returns true and sends the number of characters formated into result
         /// </summary>
         [Fact]
-        public void TestActionIdentifier_TryFormat_Success()
+        public void TryFormat_BufferLargeEnough_WritesValue()
         {
             string expected = "read";
             ActionIdentifier actionIdentifier = ActionIdentifier.Parse(expected);
@@ -127,7 +127,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Does nothing and returns false and outputs 0 as the number of characters formated
         /// </summary>
         [Fact]
-        public void TestActionIdentifier_TryFormat_Fail()
+        public void TryFormat_BufferTooSmall_ReturnsFalse()
         {
             string input = "read";
             ActionIdentifier actionIdentifier = ActionIdentifier.Parse(input);

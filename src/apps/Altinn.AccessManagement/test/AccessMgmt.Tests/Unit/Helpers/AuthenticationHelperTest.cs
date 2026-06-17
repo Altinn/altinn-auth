@@ -135,6 +135,22 @@ public class AuthenticationHelperTest
         AuthenticationHelper.GetSystemUserUuidString(CtxWith()).Should().BeEmpty();
     }
 
+    [Fact]
+    public void GetSystemUserUuid_SystemUserTypeWithEmptyIdArray_ReturnsEmpty()
+    {
+        var json = """{"type":"urn:altinn:systemuser","systemuser_id":[]}""";
+
+        AuthenticationHelper.GetSystemUserUuid(CtxWith(new Claim("authorization_details", json))).Should().Be(Guid.Empty);
+    }
+
+    [Fact]
+    public void GetSystemUserUuidString_SystemUserTypeWithoutIdArray_ReturnsEmptyString()
+    {
+        var json = """{"type":"urn:altinn:systemuser"}""";
+
+        AuthenticationHelper.GetSystemUserUuidString(CtxWith(new Claim("authorization_details", json))).Should().BeEmpty();
+    }
+
     // ── GetAuthenticatedPartyUuid composition ────────────────────────────────
     [Fact]
     public void GetAuthenticatedPartyUuid_PartyUuidPresent_ReturnsPartyUuid()

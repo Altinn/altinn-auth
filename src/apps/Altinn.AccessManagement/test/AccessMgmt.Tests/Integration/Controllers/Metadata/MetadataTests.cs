@@ -118,7 +118,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     /// Forretningsfører for ESEK skal ha Forretningsforer eiendom pakken
     /// </summary>
     [Fact]
-    public async Task RoleVariantPackage_BusinessManager_ESEK_BusinessManagerRealEstate_Have()
+    public async Task GetPackages_BusinessManagerEsek_ContainsBusinessManagerRealEstatePackage()
     {
         // Forretningsfører for ESEK skal ha Forretningsforer eiendom pakken
         var role = RoleConstants.BusinessManager;
@@ -129,7 +129,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task RoleVariantPackage_BusinessManager_BRL_BusinessManagerRealEstate_Have()
+    public async Task GetPackages_BusinessManagerBrl_ContainsBusinessManagerRealEstatePackage()
     {
         // Forretningsfører for BRL skal ha Forretningsforer eiendom pakken
         var role = RoleConstants.BusinessManager;
@@ -140,7 +140,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task RoleVariantPackage_ContactPersonNUF_NUF_DelegableMaskinportenScopesNUF_Have()
+    public async Task GetPackages_ContactPersonNufNuf_ContainsDelegableMaskinportenScopesNufPackage()
     {
         // Forretningsfører for BRL skal ha Forretningsforer eiendom pakken
         var role = RoleConstants.ContactPersonNUF;
@@ -151,7 +151,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task RoleVariantPackage_MainAdministrator_NUF_DelegableMaskinportenScopesNUF_Have()
+    public async Task GetPackages_MainAdministratorNuf_ContainsDelegableMaskinportenScopesNufPackage()
     {
         // Forretningsfører for BRL skal ha Forretningsforer eiendom pakken
         var role = RoleConstants.MainAdministrator;
@@ -162,7 +162,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task RoleVariantPackage_Accountant_AS_AccountingPackages_Have()
+    public async Task GetPackages_AccountantAs_ContainsAccountingPackages()
     {
         /*
         Regnskapsfører med signeringsrettighet => AuditorEmployee
@@ -179,7 +179,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task RoleVariantPackage_Auditor_AS_AuditorPackages_Have()
+    public async Task GetPackages_AuditorAs_ContainsAuditorPackages()
     {
         /*
         Revisormedarbeider => EnforcementOfficer
@@ -196,7 +196,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     #endregion
 
     [Fact]
-    public async Task RoleVariantPackage_ManagingDirector_NUF_DelegableMaskinportenScopesNUF_Not_Have()
+    public async Task GetPackages_ManagingDirectorNuf_ExcludesDelegableMaskinportenScopesNufPackage()
     {
         var controller = CreateController(new RoleService(_db));
         var role = RoleConstants.ManagingDirector;
@@ -207,7 +207,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task RoleVariantPackage_ManagingDirector_ESEK_BusinessManagerRealEstate_Not_Have()
+    public async Task GetPackages_ManagingDirectorEsek_ExcludesBusinessManagerRealEstatePackage()
     {
         var controller = CreateController(new RoleService(_db));
         var role = RoleConstants.ManagingDirector;
@@ -218,7 +218,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task RoleVariantPackage_ManagingDirector_BRL_BusinessManagerRealEstate_Not_Have()
+    public async Task GetPackages_ManagingDirectorBrl_ExcludesBusinessManagerRealEstatePackage()
     {
         var controller = CreateController(new RoleService(_db));
         var role = RoleConstants.ManagingDirector;
@@ -229,7 +229,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task RoleVariantPackage_ManagingDirector_AS_BusinessManagerRealEstate_Not_Have()
+    public async Task GetPackages_ManagingDirectorAs_ExcludesBusinessManagerRealEstatePackage()
     {
         var role = RoleConstants.ManagingDirector;
         var variant = EntityVariantConstants.AS;
@@ -239,7 +239,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task RoleVariantPackage_ManagingDirector_AS_ExplicitServiceDelegation_Not_Have()
+    public async Task GetPackages_ManagingDirectorAs_ExcludesExplicitServiceDelegationPackage()
     {
         var controller = CreateController(new RoleService(_db));
         var role = RoleConstants.ManagingDirector;
@@ -250,7 +250,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task RoleVariantPackage_ManagingDirector_AS_ConfidentialMailToBusiness_Not_Have()
+    public async Task GetPackages_ManagingDirectorAs_ExcludesConfidentialMailToBusinessPackage()
     {
         var role = RoleConstants.ManagingDirector;
         var variant = EntityVariantConstants.AS;
@@ -260,7 +260,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task RoleVariantPackage_ManagingDirector_AS_AccountingPackages_Not_Have()
+    public async Task GetPackages_ManagingDirectorAs_ExcludesAccountingPackages()
     {
         /*
         Regnskapsfører med signeringsrettighet => AuditorEmployee
@@ -277,7 +277,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task RoleVariantPackage_ManagingDirector_AS_AuditorPackages_Not_Have()
+    public async Task GetPackages_ManagingDirectorAs_ExcludesAuditorPackages()
     {
         /*
         Revisormedarbeider => EnforcementOfficer
@@ -316,7 +316,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
 
     #region Role Packages
     [Fact]
-    public async Task DagligLeder_Code_AS_Should_Have_Packages()
+    public async Task GetPackages_ManagingDirectorCodeAs_Returns200Ok()
     {
         var controller = CreateController(new RoleService(_db));
 
@@ -326,7 +326,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task DagligLeder_Code_AS_Should_Have_PackageResources()
+    public async Task GetPackages_ManagingDirectorCodeAsIncludeResources_ContainsPackageResources()
     {
         var controller = CreateController(new RoleService(_db));
         var result = await controller.GetPackages(RoleConstants.ManagingDirector.Entity.Code, "AS", includeResources: true);
@@ -338,7 +338,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task DagligLeder_Id_AS_Should_Have_Packages()
+    public async Task GetPackages_ManagingDirectorIdAs_Returns200Ok()
     {
         var controller = CreateController(new RoleService(_db));
         var result = await controller.GetPackages(RoleConstants.ManagingDirector.Id, "AS", includeResources: false);
@@ -347,7 +347,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task DagligLeder_Id_AS_Should_Have_PackageResources()
+    public async Task GetPackages_ManagingDirectorIdAsIncludeResources_ContainsPackageResources()
     {
         var controller = CreateController(new RoleService(_db));
 
@@ -361,7 +361,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
 
     #region Role Resources
     [Fact]
-    public async Task DagligLeder_Code_AS_Should_Have_Resources()
+    public async Task GetResources_ManagingDirectorCodeAs_ReturnsNonEmptyResources()
     {
         var controller = CreateController(new RoleService(_db));
 
@@ -373,7 +373,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task DagligLeder_Code_AS_Should_Have_Resources_FromPackages()
+    public async Task GetResources_ManagingDirectorCodeAsIncludePackageResources_IncludesPackageResources()
     {
         var controller = CreateController(new RoleService(_db));
         var result = await controller.GetResources(RoleConstants.ManagingDirector.Entity.Code, "AS", includePackageResources: true);
@@ -383,7 +383,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task DagligLeder_Id_AS_Should_Have_Resources()
+    public async Task GetResources_ManagingDirectorIdAs_ReturnsNonEmptyResources()
     {
         var controller = CreateController(new RoleService(_db));
 
@@ -395,7 +395,7 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task DagligLeder_Id_AS_Should_Have_Resources_FromPackages()
+    public async Task GetResources_ManagingDirectorIdAsIncludePackageResources_IncludesPackageResources()
     {
         var controller = CreateController(new RoleService(_db));
         var result = await controller.GetResources(RoleConstants.ManagingDirector.Id, "AS", includePackageResources: true);

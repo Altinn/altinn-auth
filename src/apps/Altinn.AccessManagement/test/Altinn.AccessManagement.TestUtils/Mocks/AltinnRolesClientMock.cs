@@ -63,19 +63,16 @@ public class AltinnRolesClientMock : IAltinnRolesClient
 
     private static string GetRolesPath(int coveredByUserId, int offeredByPartyId)
     {
-        string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(AltinnRolesClientMock).Assembly.Location).LocalPath);
-        return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "Roles", $"user_{coveredByUserId}", $"party_{offeredByPartyId}", "roles.json");
+        return TestDataDirectory.Combine("Roles", $"user_{coveredByUserId}", $"party_{offeredByPartyId}", "roles.json");
     }
 
     private static string GetRolesForDelegationPath(int coveredByUserId, int offeredByPartyId)
     {
-        string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(AltinnRolesClientMock).Assembly.Location).LocalPath);
-        return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "RolesForDelegation", $"user_{coveredByUserId}", $"party_{offeredByPartyId}", "roles.json");
+        return TestDataDirectory.Combine("RolesForDelegation", $"user_{coveredByUserId}", $"party_{offeredByPartyId}", "roles.json");
     }
 
     private static string GetAltinn2AuthorizedPartiesWithRolesPath(int userId)
     {
-        string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(AltinnRolesClientMock).Assembly.Location).LocalPath);
-        return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "AuthorizedParties", "SBLBridge", $"authorizedparties_u{userId}.json");
+        return TestDataDirectory.Combine("AuthorizedParties", "SBLBridge", $"authorizedparties_u{userId}.json");
     }
 }

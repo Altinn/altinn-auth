@@ -95,7 +95,7 @@ public class ConnectionQueryFilterTest
     }
 
     [Fact]
-    public void DefaultFlags_PinnedAtConstruction()
+    public void DefaultFlags_OnConstruction_MatchPinnedValues()
     {
         var filter = new ConnectionQueryFilter();
 

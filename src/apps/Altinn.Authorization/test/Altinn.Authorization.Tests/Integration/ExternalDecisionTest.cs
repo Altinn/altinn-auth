@@ -5,9 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
-using Altinn.Platform.Authorization.Clients.Interfaces;
 using Altinn.Authorization.Tests.Fixtures;
 using Altinn.Authorization.Tests.Util;
+using Altinn.Platform.Authorization.Clients.Interfaces;
 using Altinn.Platform.Authorization.Models.EventLog;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -35,7 +35,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDPExternal_Decision_AltinnApps0008()
+        public async Task PDPExternal_Decision_AppInstanceUserHasReadAccess_ReturnsPermit()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "AltinnApps0008";
@@ -51,7 +51,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDPExternal_Decision_AltinnApps0010()
+        public async Task PDPExternal_Decision_AppInstanceMultipleActions_ReturnsPermit()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "AltinnApps0010";
@@ -67,7 +67,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDPExternal_Decision_AltinnResourceRegistry0005()
+        public async Task PDPExternal_Decision_ResourceReadOnOrganization_ReturnsPermit()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "AltinnResourceRegistry0005";
@@ -83,7 +83,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDPExternal_Decision_AltinnResourceRegistry0006()
+        public async Task PDPExternal_Decision_ResourceReadOnSelf_ReturnsPermit()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
 
@@ -101,7 +101,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDPExternal_Decision_AltinnResourceRegistry0007()
+        public async Task PDPExternal_Decision_ResourceReadOnOtherPerson_ReturnsNotApplicable()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "AltinnResourceRegistry0007";
@@ -117,7 +117,7 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         [Fact]
-        public async Task PDPExternal_Decision_AltinnResourceRegistry0008()
+        public async Task PDPExternal_Decision_ResourceUnknownAction_ReturnsNotApplicable()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "AltinnResourceRegistry0008";
@@ -136,7 +136,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Scenario where org is listed in policy. Should work. Policy org is digir. Authz subject org is digdir
         /// </summary>
         [Fact]
-        public async Task PDPExternal_Decision_AltinnResourceRegistry0009()
+        public async Task PDPExternal_Decision_SubjectOrgListedInPolicy_ReturnsPermit()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "AltinnResourceRegistry0009";
@@ -155,7 +155,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Scenario where org is listed in policy. Should not work. Policy org is digir. Authz subject org is nav
         /// </summary>
         [Fact]
-        public async Task PDPExternal_Decision_AltinnResourceRegistry0010()
+        public async Task PDPExternal_Decision_SubjectOrgNotListedInPolicy_ReturnsNotApplicable()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "AltinnResourceRegistry0010";
@@ -174,7 +174,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Scenario where org is listed in policy. Should work. Policy org is digir. Authz subject org is digdir. Uses old attribute id
         /// </summary>
         [Fact]
-        public async Task PDPExternal_Decision_AltinnResourceRegistry0011()
+        public async Task PDPExternal_Decision_SubjectOrgListedInPolicyOldAttributeId_ReturnsPermit()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "AltinnResourceRegistry0011";
@@ -193,7 +193,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Scenario where systemuser has received delegation from the resource party for the resource. Should give Permit result.
         /// </summary>
         [Fact]
-        public async Task PDPExternal_Decision_SystemUserWithResourceDelegation_Permit()
+        public async Task PDPExternal_Decision_SystemUserWithResourceDelegation_ReturnsPermit()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "ResourceRegistry_SystemUserWithDelegation_Permit";
@@ -212,7 +212,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Scenario where systemuser has received delegation from the resource party for the resource. Should give Permit result.
         /// </summary>
         [Fact]
-        public async Task PDPExternal_Decision_SystemUserWithResourceDelegation_Permit_Eventlog()
+        public async Task PDPExternal_Decision_SystemUserWithResourceDelegation_WithEventLog_ReturnsPermit()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "ResourceRegistry_SystemUserWithDelegation_Permit";
@@ -241,7 +241,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Scenario where systemuser has received delegation from the resource party for the resource. Should give Permit result.
         /// </summary>
         [Fact]
-        public async Task PDPExternal_Decision_SystemUserWithAppDelegation_Permit()
+        public async Task PDPExternal_Decision_SystemUserWithAppDelegation_ReturnsPermit()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "AltinnApps_SystemUserWithDelegation_Permit";
@@ -260,7 +260,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Scenario where systemuser has received delegation from the resource party for the resource. Should give Permit result.
         /// </summary>
         [Fact]
-        public async Task PDPExternal_Decision_SystemUserWithAppDelegation_MultipleObligationsBugFix_Permit()
+        public async Task PDPExternal_Decision_SystemUserWithAppDelegation_MultipleObligationsBugFix_ReturnsPermit()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "AltinnApps_SystemUserWithDelegation_Permit";
@@ -280,7 +280,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Multi request scenario for 3 authorization checks in one request
         /// </summary>
         [Fact]
-        public async Task PDPExternal_Decision_AltinnResourceRegistryMulti0012()
+        public async Task PDPExternal_Decision_MultiRequestThreeChecks_ReturnsPermitAndNotApplicable()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "AltinnResourceRegistryMulti0012";
@@ -299,7 +299,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Scenario where systemuser has received delegation, but request includes multiple subjects as org and orgnumber. Should NOT give Permit. 
         /// </summary>
         [Fact]
-        public async Task PDPExternal_Decision_SystemUserWithDelegation_TooManyRequestSubjects_Indeterminate()
+        public async Task PDPExternal_Decision_SystemUserWithDelegation_TooManyRequestSubjects_ReturnsIndeterminate()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "ResourceRegistry_SystemUserWithDelegation_TooManyRequestSubjects_Indeterminate";
@@ -318,7 +318,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Scenario where the request has no subject and should give Indeterminate result. This ended in null reference exception and gave a syntaxerror status should give processing error.
         /// </summary>
         [Fact]
-        public async Task PDPExternal_Decision_ResourceRegistry_NoSubject_Indeterminate()
+        public async Task PDPExternal_Decision_ResourceRegistry_NoSubject_ReturnsIndeterminate()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "ResourceRegistry_NoSubject_Indeterminate";
@@ -346,7 +346,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Scenario where the request has no resource and should give Indeterminate result. This ended in null reference exception and gave a syntaxerror status should give processing error.
         /// </summary>
         [Fact]
-        public async Task PDPExternal_Decision_ResourceRegistry_NoResource_Indeterminate()
+        public async Task PDPExternal_Decision_ResourceRegistry_NoResource_ReturnsIndeterminate()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "ResourceRegistry_NoResource_Indeterminate";
@@ -374,7 +374,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Scenario where systemuser has received delegation from the resource party for two resources. Multirequest should give Permit result for both.
         /// </summary>
         [Fact]
-        public async Task PDPExternal_Decision_NoSubject_MultiRequest_Indeterminate()
+        public async Task PDPExternal_Decision_NoSubject_MultiRequest_ReturnsIndeterminate()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "ResourceRegistry_NoSubject_MultiRequest_Indeterminate";
@@ -402,7 +402,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Scenario where the request has no resource and should give Indeterminate result. This ended in null reference exception and gave a syntaxerror status should give processing error.
         /// </summary>
         [Fact]
-        public async Task PDPExternal_Decision_ResourceRegistry_NoResource_NoLog_Indeterminate()
+        public async Task PDPExternal_Decision_ResourceRegistry_NoResource_NoLog_ReturnsIndeterminate()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "ResourceRegistry_NoResource_Indeterminate";
@@ -430,7 +430,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Scenario where systemuser has received delegation from the resource party for two resources. Multirequest should give Permit result for both.
         /// </summary>
         [Fact]
-        public async Task PDPExternal_Decision_NoSubject_MultiRequest_NoLog_Indeterminate()
+        public async Task PDPExternal_Decision_NoSubject_MultiRequest_NoLog_ReturnsIndeterminate()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "ResourceRegistry_NoSubject_MultiRequest_Indeterminate";
@@ -458,7 +458,7 @@ namespace Altinn.Authorization.Tests.Integration
         /// Scenario where systemuser has received delegation from the resource party for two resources. Multirequest should give Permit result for both.
         /// </summary>
         [Fact]
-        public async Task PDPExternal_Decision_SystemUserWithDelegations_MultiRequest_Permit()
+        public async Task PDPExternal_Decision_SystemUserWithDelegations_MultiRequest_ReturnsPermit()
         {
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
             string testCase = "ResourceRegistry_SystemUserWithDelegations_MultiRequest_Permit";

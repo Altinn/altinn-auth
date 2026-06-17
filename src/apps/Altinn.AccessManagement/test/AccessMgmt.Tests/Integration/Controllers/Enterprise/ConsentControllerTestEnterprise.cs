@@ -2,14 +2,13 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using Altinn.AccessManagement.Tests.Mocks;
-using Altinn.AccessManagement.Tests.Moqdata;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models.Party;
-using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Tests.Fixtures;
+using Altinn.AccessManagement.Tests.Mocks;
+using Altinn.AccessManagement.Tests.Moqdata;
 using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
@@ -24,10 +23,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
-using Moq;
 
-// Migrated from WebApplicationFixture to LegacyApiFixture as part of
-// sub-step 16.4a (Phase 2.2). The consent flow goes through the Dapper-backed
+// Uses LegacyApiFixture: the consent flow goes through the Dapper-backed
 // ConsentRepository which binds to the Yuniql-provisioned consent.status_type
 // enum; LegacyApiFixture overlays Yuniql on top of ApiFixture's EF schemas.
 namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
@@ -36,38 +33,14 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
     /// Tests for maskinporten controller for consent
     /// </summary>
     [IntegrationTest]
-    public class ConsentControllerTestEnterprise : IClassFixture<LegacyApiFixture>
+    [Collection(ConsentDbCollection.Name)]
+    public class ConsentControllerTestEnterprise
     {
-        private readonly Mock<IAmPartyRepository> _mockAmPartyRepository;
-        private readonly ApiFixture _fixture;
+        private readonly ConsentApiFixture _fixture;
 
-        public ConsentControllerTestEnterprise(LegacyApiFixture fixture)
+        public ConsentControllerTestEnterprise(ConsentApiFixture fixture)
         {
-            _mockAmPartyRepository = new Mock<IAmPartyRepository>();
             _fixture = fixture;
-
-            fixture.ConfigureServices(services =>
-            {
-                // PlatformAccessToken / maskinporten tokens are signed by
-                // {issuer}-org.pem; default PublicSigningKeyProviderMock only
-                // accepts the static test key.
-                services.RemoveAll<IPublicSigningKeyProvider>();
-                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
-
-                // Replace ApiFixture's default PermitPdpMock with the legacy
-                // PdpPermitMock flavour used by these tests.
-                services.RemoveAll<IPDP>();
-                services.AddSingleton<IPDP, PdpPermitMock>();
-
-                services.AddSingleton<IPartiesClient, PartiesClientMock>();
-                services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
-                services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
-                services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
-
-                // Register the SAME mock instance
-                services.AddSingleton<IAmPartyRepository>(_mockAmPartyRepository.Object);
-            });
         }
 
         private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
@@ -77,7 +50,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
 
         private void SetupMockPartyRepository()
         {
-            MockParyRepositoryPopulator.SetupMockPartyRepository(_mockAmPartyRepository);
+            MockParyRepositoryPopulator.SetupMockPartyRepository(_fixture.AmPartyRepository);
         }
 
         /// <summary>
@@ -85,7 +58,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task CreateConsentRequest_Valid()
+        public async Task CreateConsentRequest_Valid_Returns201WithCreatedConsentRequest()
         {
             SetupMockPartyRepository();
 
@@ -152,7 +125,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task CreateConsentRequest_PortalModeShow_Valid()
+        public async Task CreateConsentRequest_PortalModeShowValid_Returns201WithCreatedConsentRequest()
         {
             SetupMockPartyRepository();
 
@@ -221,7 +194,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task CreateConsentRequestByOrg_Valid()
+        public async Task CreateConsentRequestByOrg_Valid_Returns201WithCreatedConsentRequest()
         {
             SetupMockPartyRepository();
 
@@ -290,7 +263,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task CreateConsentRequestByOrg_InvalidUrl()
+        public async Task CreateConsentRequestByOrg_InvalidUrl_Returns400WithInvalidRedirectUrlError()
         {
             SetupMockPartyRepository();
 
@@ -349,7 +322,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task CreateConsentRequestByOrg_MobileAppRedirectUrl_Valid()
+        public async Task CreateConsentRequestByOrg_MobileAppRedirectUrlValid_Returns201Created()
         {
             SetupMockPartyRepository();
 
@@ -401,7 +374,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task CreateConsentRequestDuplicatePost_Valid()
+        public async Task CreateConsentRequestDuplicatePost_Valid_Returns200WithExistingConsentRequest()
         {
             SetupMockPartyRepository();
 
@@ -480,7 +453,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         }
 
         [Fact]
-        public async Task CreateConsentRequestDuplicatePost_InvalidDifferentFrom()
+        public async Task CreateConsentRequestDuplicatePost_InvalidDifferentFrom_Returns400WithConsentAlreadyExistsError()
         {
             SetupMockPartyRepository();
 
@@ -553,7 +526,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         }
 
         [Fact]
-        public async Task CreateConsentRequest_AndCheckStatus_Valid()
+        public async Task CreateConsentRequest_AndCheckStatusValid_Returns201WithCreatedConsentRequest()
         {
             SetupMockPartyRepository();
 
@@ -634,7 +607,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         }
 
         [Fact]
-        public async Task CreateConsentRequestRequiredDelegator_AndCheckStatus_Valid()
+        public async Task CreateConsentRequestRequiredDelegator_AndCheckStatusValid_Returns201WithCreatedConsentRequest()
         {
             SetupMockPartyRepository();
 
@@ -716,7 +689,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         }
 
         [Fact]
-        public async Task CreateConsentRequestHandledByParty_AndCheckStatus_Valid()
+        public async Task CreateConsentRequestHandledByParty_AndCheckStatusValid_Returns201WithCreatedConsentRequest()
         {
             SetupMockPartyRepository();
 
@@ -802,7 +775,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task CreateConsentRequest_ValidWithoutMetadata()
+        public async Task CreateConsentRequest_ValidWithoutMetadata_Returns201WithCreatedConsentRequest()
         {
             SetupMockPartyRepository();
 
@@ -864,7 +837,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task CreateConsentRequest_IncompatibleTemplates()
+        public async Task CreateConsentRequest_IncompatibleTemplates_Returns400WithIncompatibleTemplatesError()
         {
             SetupMockPartyRepository();
 
@@ -939,7 +912,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task CreateConsentRequest_MissingMetadata()
+        public async Task CreateConsentRequest_MissingMetadata_Returns400WithMissingMetadataError()
         {
             SetupMockPartyRepository();
 
@@ -992,7 +965,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task CreateConsentRequest_WrongNamingMetadata()
+        public async Task CreateConsentRequest_WrongNamingMetadata_Returns500WithUnknownAndMissingMetadataProblems()
         {
             SetupMockPartyRepository();
 
@@ -1069,7 +1042,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task CreateConsentRequest_UnknownMetadata()
+        public async Task CreateConsentRequest_UnknownMetadata_Returns400WithInvalidMetadataError()
         {
             SetupMockPartyRepository();
 
@@ -1129,7 +1102,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task CreateConsentRequest_MissingRights()
+        public async Task CreateConsentRequest_MissingRights_Returns400WithMissingRightsError()
         {
             SetupMockPartyRepository();
 
@@ -1168,7 +1141,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         }
 
         [Fact]
-        public async Task CreateConsentRequest_MissingAction()
+        public async Task CreateConsentRequest_MissingAction_Returns400WithRequiredActionError()
         {
             SetupMockPartyRepository();
 
@@ -1227,7 +1200,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         /// Expected: 400 Bad Request after validation in consent controller. There is one validation erorr with given code.
         /// </summary>
         [Fact]
-        public async Task CreateConsentRequest_FromIsNonExistingPerson()
+        public async Task CreateConsentRequest_FromIsNonExistingPerson_Returns400WithNonExistingPersonError()
         {
             SetupMockPartyRepository();
 

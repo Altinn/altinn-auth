@@ -53,8 +53,6 @@ public partial class ConnectionsControllerTest
             Fixture = fixture;
             Fixture.ConfigureServices(services =>
             {
-                services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
-                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointWithWrittenPoliciesMock>();
                 services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
             });
@@ -176,7 +174,7 @@ public partial class ConnectionsControllerTest
         /// Not related to feature flag removal work in issue #2810.
         /// </remarks>
         [Fact(Skip = "Failing with 500 error during delegation - requires investigation")]
-        public async Task RemoveInstance_AsJinxForKaosFromDumbo_WithFromOthersWriteScope_ReturnsNoContent()
+        public async Task RemoveInstance_AsJinxForKaosFromDumbo_WithFromOthersWriteScope_Returns204NoContent()
         {
             List<string> rightKeys = await GetDelegatableInstanceRightKeys("app_mat_mattilsynet-baker-konditorvare", MattilsynetInstanceIdForRemove);
             Assert.NotEmpty(rightKeys);
@@ -198,7 +196,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task RemoveInstance_WithFromOthersReadScope_ReturnsForbidden()
+        public async Task RemoveInstance_WithFromOthersReadScope_Returns403ForFromOthersReadScope()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
             HttpResponseMessage response = await client.DeleteAsync(
@@ -213,7 +211,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task RemoveInstance_WithToOthersReadScope_ReturnsForbidden()
+        public async Task RemoveInstance_WithToOthersReadScope_Returns403ForToOthersReadScope()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
             HttpResponseMessage response = await client.DeleteAsync(

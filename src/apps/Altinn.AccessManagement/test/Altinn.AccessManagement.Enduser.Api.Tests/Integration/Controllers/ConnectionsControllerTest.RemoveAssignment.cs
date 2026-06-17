@@ -3,19 +3,16 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
 using Altinn.AccessManagement.Api.Enduser.Controllers;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
-using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
@@ -54,10 +51,6 @@ public partial class ConnectionsControllerTest
         public RemoveAssignment(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.ConfigureServices(services =>
-            {
-                services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
-            });
             Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.Altinn2RoleRevoke);
             Fixture.EnsureSeedOnce<RemoveAssignment>(db =>
             {
@@ -133,7 +126,7 @@ public partial class ConnectionsControllerTest
         /// - GetConnections no longer lists BakerJohnsen as a connection from Dumbo
         /// </summary>
         [Fact]
-        public async Task RemoveAssignment_AsMalinFromDumboToBaker_ReturnsNoContent()
+        public async Task RemoveAssignment_AsMalinFromDumboToBaker_Returns204NoContent()
         {
             // Verify connection exists before removal
             HttpClient readClient = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
@@ -172,7 +165,7 @@ public partial class ConnectionsControllerTest
         /// Uses a dedicated relationship (not the default seed) to avoid interference from other test fixtures.
         /// </summary>
         [Fact]
-        public async Task RemoveAssignment_WithPackagesNoCascade_ReturnsBadRequest()
+        public async Task RemoveAssignment_WithPackagesNoCascade_Returns400ForPackagesWithoutCascade()
         {
             HttpClient client = CreateClient(TestData.SiljeHaugen.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
 
@@ -191,7 +184,7 @@ public partial class ConnectionsControllerTest
         /// (SiljeHaugen) so test ordering doesn't matter.
         /// </summary>
         [Fact]
-        public async Task RemoveAssignment_WithPackagesCascade_ReturnsNoContent()
+        public async Task RemoveAssignment_WithPackagesCascade_Returns204NoContent()
         {
             HttpClient client = CreateClient(TestData.SiljeHaugen.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
 
@@ -208,7 +201,7 @@ public partial class ConnectionsControllerTest
         /// Service returns null which maps to 204 NoContent (idempotent).
         /// </summary>
         [Fact]
-        public async Task RemoveAssignment_NonExistentConnection_ReturnsNoContent()
+        public async Task RemoveAssignment_NonExistentConnection_Returns204NoContent()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
 
@@ -224,7 +217,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task RemoveAssignment_WithFromOthersReadScope_ReturnsForbidden()
+        public async Task RemoveAssignment_WithFromOthersReadScope_Returns403ForFromOthersReadScope()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -240,7 +233,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task RemoveAssignment_WithToOthersReadScope_ReturnsForbidden()
+        public async Task RemoveAssignment_WithToOthersReadScope_Returns403ForToOthersReadScope()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 

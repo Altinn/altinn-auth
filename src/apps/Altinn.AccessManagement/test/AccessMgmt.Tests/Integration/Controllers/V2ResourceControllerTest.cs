@@ -10,11 +10,6 @@ using Altinn.Common.AccessToken.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-// Migrated from WebApplicationFixture/AcceptanceCriteriaComposer to LegacyApiFixture
-// as part of sub-step 16.4a (Phase 2.2). The single previous theory row had a
-// no-op WithAssertResourceExistsInDb assertion, so the migration reduces to a
-// direct HTTP call with a platform access token.
-//
 // Why LegacyApiFixture: the endpoint writes through the Dapper-backed
 // ResourceMetadataRepo into accessmanagement.resource (Yuniql schema).
 // ApiFixture alone only provisions the EF dbo schemas; LegacyApiFixture adds
@@ -55,7 +50,7 @@ public class V2ResourceControllerTest : IClassFixture<LegacyApiFixture>
     /// <see cref="ResourceController.Post(List{AccessManagementResource})"/>
     /// </summary>
     [Fact(DisplayName = "POST_UpsertResource")]
-    public async Task POST_UpsertResource()
+    public async Task Post_UpsertResource_Returns200Ok()
     {
         // GIVEN a resource is upserted in resource registry
         // WHEN resource registry forwards the resource

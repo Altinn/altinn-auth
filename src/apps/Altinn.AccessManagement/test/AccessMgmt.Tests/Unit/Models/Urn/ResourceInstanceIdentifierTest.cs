@@ -17,7 +17,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a ResourceInstanceIdentifier with the value from the input
         /// </summary>
         [Fact]
-        public void TestResourceInstanceIdentifierJson_DeSerializng_Success()
+        public void Deserialize_ValidJson_ReturnsIdentifier()
         {
             string resourceInstanceIdentifierString = @"""0191579e-72bc-7977-af5d-f9e92af4393b""";
             ResourceInstanceIdentifier resourceInstanceIdentifier = JsonSerializer.Deserialize<ResourceInstanceIdentifier>(resourceInstanceIdentifierString, JsonOptions);
@@ -34,7 +34,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a ResourceInstanceIdentifier with the value from the input
         /// </summary>
         [Fact]
-        public void TestResourceInstanceIdentifierJson_Serializng_Success()
+        public void Serialize_ValidIdentifier_ReturnsJsonString()
         {
             ResourceInstanceIdentifier resourceInstanceIdentifier = ResourceInstanceIdentifier.Parse("0191579e-72bc-7977-af5d-f9e92af4393b");
             string orgNrJson = JsonSerializer.Serialize(resourceInstanceIdentifier, JsonOptions);
@@ -51,7 +51,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a ResourceInstanceIdentifier with the value from the input
         /// </summary>
         [Fact]
-        public void TestResourceInstanceIdentifierString_Parse_Success()
+        public void Parse_ValidString_ReturnsIdentifier()
         {
             ResourceInstanceIdentifier resourceInstanceIdentifier = ResourceInstanceIdentifier.Parse("0191579e-72bc-7977-af5d-f9e92af4393b");
             Assert.Equal("0191579e-72bc-7977-af5d-f9e92af4393b", resourceInstanceIdentifier.ToString());
@@ -66,7 +66,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Create a ResourceInstanceIdentifier with the value from the input
         /// </summary>
         [Fact]
-        public void TestResourceInstanceIdentifierReadOnlyCharSpan_Parse_Success()
+        public void Parse_ValidCharSpan_ReturnsIdentifier()
         {
             ReadOnlySpan<char> resourceInstanceIdentifierSpan = "0191579e-72bc-7977-af5d-f9e92af4393b";
             ResourceInstanceIdentifier resourceInstanceIdentifier = ResourceInstanceIdentifier.Parse(resourceInstanceIdentifierSpan);
@@ -82,7 +82,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Returns ResourceInstanceIdentifier Examples
         /// </summary>
         [Fact]
-        public void TestResourceInstanceIdentifier_GetExample_Success()
+        public void GetExamples_Default_ReturnsExpectedExamples()
         {
             List<ResourceIdentifier> expected = new List<ResourceIdentifier>();
             expected.Add(ResourceIdentifier.Parse("0191579e-72bc-7977-af5d-f9e92af4393b"));
@@ -107,7 +107,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Formats the ResourceInstanceIdentifier into the expected span and returns true and sends the number of characters formated into result
         /// </summary>
         [Fact]
-        public void TestResourceInstanceIdentifier_TryFormat_Success()
+        public void TryFormat_BufferLargeEnough_WritesValue()
         {
             string expected = "0191579e-72bc-7977-af5d-f9e92af4393b";
             ResourceInstanceIdentifier resourceInstanceIdentifier = ResourceInstanceIdentifier.Parse(expected);
@@ -127,7 +127,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
         /// Does nothing and returns false and outputs 0 as the number of characters formated
         /// </summary>
         [Fact]
-        public void TestResourceInstanceIdentifier_TryFormat_Fail()
+        public void TryFormat_BufferTooSmall_ReturnsFalse()
         {
             string input = "0191579e-72bc-7977-af5d-f9e92af4393b";
             ResourceInstanceIdentifier resourceInstanceIdentifier = ResourceInstanceIdentifier.Parse(input);

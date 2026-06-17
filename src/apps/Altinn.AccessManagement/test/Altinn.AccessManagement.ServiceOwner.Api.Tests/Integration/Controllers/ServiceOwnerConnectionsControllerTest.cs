@@ -74,7 +74,7 @@ public class ServiceOwnerConnectionsControllerTest
         }
 
         [Fact]
-        public async Task AddPackage_WithValidRequest_ReturnsOk()
+        public async Task AddPackage_WithValidRequest_Returns200WithCreatedAssignmentPackage()
         {
             // Arrange
             var client = CreateClient();
@@ -157,7 +157,7 @@ public class ServiceOwnerConnectionsControllerTest
         }
 
         [Fact]
-        public async Task AddPackage_WithInvalidPackageUrn_ReturnsForbidden()
+        public async Task AddPackage_WithInvalidPackageUrn_Returns403PackageNotWhitelisted()
         {
             // Arrange
             var client = CreateClient();
@@ -181,7 +181,7 @@ public class ServiceOwnerConnectionsControllerTest
         }
 
         [Fact]
-        public async Task AddPackage_WithFromAsOrganizationIdentifiersForPersonPackage_BadRequest()
+        public async Task AddPackage_WithFromAsOrganizationIdentifiersForPersonPackage_Returns400OrganizationFromNotSupportedForPersonPackage()
         {
             // Arrange
             var client = CreateClient();
@@ -208,7 +208,7 @@ public class ServiceOwnerConnectionsControllerTest
         }
 
         [Fact]
-        public async Task AddPackage_ToOrganisation_ReturnsOk()
+        public async Task AddPackage_ToOrganisation_Returns200WithCreatedAssignmentPackage()
         {
             // Arrange
             var client = CreateClient();
@@ -244,7 +244,7 @@ public class ServiceOwnerConnectionsControllerTest
         }
 
         [Fact]
-        public async Task AddPackage_FromOrganisationOnPackageThatSupportsOrganisation_ReturnsOk()
+        public async Task AddPackage_FromOrganisationOnPackageThatSupportsOrganisation_Returns200WithCreatedAssignmentPackage()
         {
             // Arrange
             var client = CreateClient();
@@ -280,7 +280,7 @@ public class ServiceOwnerConnectionsControllerTest
         }
 
         [Fact]
-        public async Task RevokePackage_WhereAssignmentIsRevoked_ReturnsNoContent()
+        public async Task RevokePackage_WhereAssignmentIsRevoked_Returns204NoContent()
         {
             // Arrange - First create a package delegation, then revoke it
             var client = CreateClient();
@@ -318,7 +318,7 @@ public class ServiceOwnerConnectionsControllerTest
         }
 
         [Fact]
-        public async Task RevokePackage_WhereAssignmentIsNotRevoked_ReturnsNoContent()
+        public async Task RevokePackage_WhereAssignmentIsNotRevoked_Returns204NoContent()
         {
             // Arrange - Create an assignment with two packages via service owner, revoke one
             var client = CreateClient();
@@ -380,7 +380,7 @@ public class ServiceOwnerConnectionsControllerTest
         }
 
         [Fact]
-        public async Task RevokePackage_WhereAssignmentDoesNotExist_ReturnsNoContent()
+        public async Task RevokePackage_WhereAssignmentDoesNotExist_Returns204NoContent()
         {
             // Arrange
             var client = CreateClient();
@@ -404,7 +404,7 @@ public class ServiceOwnerConnectionsControllerTest
         }
 
         [Fact]
-        public async Task RevokePackage_WhereAssignmentPackageDoesNotExist_ReturnsNoContent()
+        public async Task RevokePackage_WhereAssignmentPackageDoesNotExist_Returns204NoContent()
         {
             // Arrange - Create an assignment with one package, then try to revoke a different package
             var client = CreateClient();
@@ -449,7 +449,7 @@ public class ServiceOwnerConnectionsControllerTest
         }
 
         [Fact]
-        public async Task RevokePackage_WhereAssignmentWasNotPerformedByServiceOwner_ReturnsBadRequest()
+        public async Task RevokePackage_WhereAssignmentWasNotPerformedByServiceOwner_Returns400AssignmentNotDelegatedByServiceOwner()
         {
             // Arrange - Seed an assignment+package that was NOT created by the service owner
             var client = CreateClient();
@@ -496,7 +496,7 @@ public class ServiceOwnerConnectionsControllerTest
         }
 
         [Fact]
-        public async Task AddPackage_WithoutAuthentication_ReturnsUnauthorized()
+        public async Task AddPackage_WithoutAuthentication_Returns401MissingAuthentication()
         {
             // Arrange
             var client = Fixture.Server.CreateClient(); // No auth token
@@ -520,7 +520,7 @@ public class ServiceOwnerConnectionsControllerTest
         }
 
         [Fact]
-        public async Task AddPackage_WithWrongScope_ReturnsForbidden()
+        public async Task AddPackage_WithWrongScope_Returns403MissingRequiredScope()
         {
             // Arrange
             var client = Fixture.Server.CreateClient();
@@ -550,7 +550,7 @@ public class ServiceOwnerConnectionsControllerTest
         }
 
         [Fact]
-        public async Task AddPackage_WithPackageNotInWhitelist_ReturnsForbidden()
+        public async Task AddPackage_WithPackageNotInWhitelist_Returns403PackageNotWhitelisted()
         {
             // Arrange
             var client = CreateClient();
@@ -574,7 +574,7 @@ public class ServiceOwnerConnectionsControllerTest
         }
 
         [Fact]
-        public async Task AddPackage_WithServiceOwnerNotInWhitelist_ReturnsForbidden()
+        public async Task AddPackage_WithServiceOwnerNotInWhitelist_Returns403ServiceOwnerNotWhitelisted()
         {
             // Arrange - Create client with a different organization that's not in the whitelist
             var client = Fixture.Server.CreateClient();

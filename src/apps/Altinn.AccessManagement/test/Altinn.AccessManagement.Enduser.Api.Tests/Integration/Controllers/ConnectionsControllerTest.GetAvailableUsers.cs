@@ -50,7 +50,8 @@ public partial class ConnectionsControllerTest
     /// </para>
     /// </remarks>
     [IntegrationTest]
-    public class GetAvailableUsers : IClassFixture<ApiFixture>
+    [Collection(ConnectionsReadOnlyCollection.Name)]
+    public class GetAvailableUsers
     {
         public GetAvailableUsers(ApiFixture fixture)
         {
@@ -101,7 +102,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetAvailableUsers_WithReadScope_ReturnsForbidden()
+        public async Task GetAvailableUsers_WithReadScope_Returns403ForReadScope()
         {
             var client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 

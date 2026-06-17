@@ -1,6 +1,6 @@
-﻿using Altinn.Common.AccessToken.Services;
+﻿using Altinn.Authorization.Tests.MockServices;
+using Altinn.Common.AccessToken.Services;
 using Altinn.Common.Authentication.Configuration;
-using Altinn.Authorization.Tests.MockServices;
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Authorization.Services.Interface;
 using Altinn.Platform.Authorization.Services.Interfaces;
@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Authorization.Tests.Fixtures;
@@ -93,6 +94,13 @@ public class AuthorizationApiFixture : WebApplicationFactory<Program>
             }
         });
     }
+
+    /// <summary>
+    /// Builds the test host. Overridden only to time the build — the dominant
+    /// per-fixture setup cost — via <see cref="FixtureTiming"/>.
+    /// </summary>
+    protected override IHost CreateHost(IHostBuilder builder) =>
+        FixtureTiming.Time(FixtureTiming.Phase.HostBuild, () => base.CreateHost(builder));
 
     /// <summary>
     /// Registers a callback that modifies the <see cref="IServiceCollection"/>

@@ -25,7 +25,8 @@ public partial class ConnectionsControllerTest
     /// Tests for <see cref="ConnectionsController.CheckPackage(Guid, IEnumerable{Guid}, IEnumerable{string}, CancellationToken)"/>.
     /// </summary>
     [IntegrationTest]
-    public class CheckPackage : IClassFixture<ApiFixture>
+    [Collection(ConnectionsReadOnlyCollection.Name)]
+    public class CheckPackage
     {
         public CheckPackage(ApiFixture fixture)
         {
@@ -135,7 +136,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task CheckPackage_WithReadScope_ReturnsForbidden()
+        public async Task CheckPackage_WithReadScope_Returns403ForReadScope()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -151,7 +152,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task CheckPackage_WithToOthersReadScope_ReturnsForbidden()
+        public async Task CheckPackage_WithToOthersReadScope_Returns403ForToOthersReadScope()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -167,7 +168,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task CheckPackage_WithFromOthersWriteScope_ReturnsForbidden()
+        public async Task CheckPackage_WithFromOthersWriteScope_Returns403ForFromOthersWriteScope()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_WRITE);
 

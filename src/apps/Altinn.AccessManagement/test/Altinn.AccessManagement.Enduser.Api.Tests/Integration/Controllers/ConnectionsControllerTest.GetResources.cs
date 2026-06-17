@@ -2,17 +2,14 @@
 using System.Security.Claims;
 using System.Text.Json;
 using Altinn.AccessManagement.Api.Enduser.Controllers;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
-using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
@@ -44,15 +41,12 @@ public partial class ConnectionsControllerTest
     /// </para>
     /// </remarks>
     [IntegrationTest]
-    public class GetResources : IClassFixture<ApiFixture>
+    [Collection(ConnectionsReadOnlyCollection.Name)]
+    public class GetResources
     {
         public GetResources(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.ConfigureServices(services =>
-            {
-                services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
-            });
             Fixture.EnsureSeedOnce<GetResources>(db =>
             {
                 var rightholderFromDumboToMille = new Assignment()
@@ -100,7 +94,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK with both Skattemelding and MVA-melding resources.
         /// </summary>
         [Fact]
-        public async Task GetResources_AsMalinForDumboToMille_WithToOthersScope_ReturnsOk()
+        public async Task GetResources_AsMalinForDumboToMille_WithToOthersScope_Returns200WithDelegatedResources()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -122,7 +116,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK (Mille has no resources delegated toward Dumbo, so the list may be empty).
         /// </summary>
         [Fact]
-        public async Task GetResources_AsMalinForDumboFromMille_WithFromOthersScope_ReturnsOk()
+        public async Task GetResources_AsMalinForDumboFromMille_WithFromOthersScope_Returns200Ok()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -137,7 +131,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK with both Skattemelding and MVA-melding resources.
         /// </summary>
         [Fact]
-        public async Task GetResources_AsTheaForMilleFromDumbo_WithFromOthersScope_ReturnsOk()
+        public async Task GetResources_AsTheaForMilleFromDumbo_WithFromOthersScope_Returns200WithReceivedResources()
         {
             HttpClient client = CreateClient(TestData.Thea.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -159,7 +153,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK (no resources delegated in this direction).
         /// </summary>
         [Fact]
-        public async Task GetResources_AsTheaForMilleToDumbo_WithToOthersScope_ReturnsOk()
+        public async Task GetResources_AsTheaForMilleToDumbo_WithToOthersScope_Returns200Ok()
         {
             HttpClient client = CreateClient(TestData.Thea.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -174,7 +168,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetResources_AsTheaForMilleFromDumbo_WithToOthersScope_ReturnsForbidden()
+        public async Task GetResources_AsTheaForMilleFromDumbo_WithToOthersScope_Returns403ForToOthersScopeOnFromOthersDirection()
         {
             HttpClient client = CreateClient(TestData.Thea.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -188,7 +182,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetResources_ToOthersDirection_WithFromOthersScope_ReturnsForbidden()
+        public async Task GetResources_ToOthersDirection_WithFromOthersScope_Returns403ForFromOthersScopeOnToOthersDirection()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -202,7 +196,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetResources_FromOthersDirection_WithToOthersScope_ReturnsForbidden()
+        public async Task GetResources_FromOthersDirection_WithToOthersScope_Returns403ForToOthersScopeOnFromOthersDirection()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -216,7 +210,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetResources_WithWriteScope_ReturnsForbidden()
+        public async Task GetResources_WithWriteScope_Returns403ForWriteScope()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
 

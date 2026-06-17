@@ -52,7 +52,7 @@ public class PartyServiceTest : IClassFixture<EfDatabaseFixture>
         };
 
     [Fact]
-    public async Task AddParty_EntityAlreadyExists_ReturnsSuccess_PartyCreatedFalse()
+    public async Task AddParty_EntityAlreadyExists_ReturnsPartyCreatedFalse()
     {
         var existingId = Guid.CreateVersion7();
         _db.Entities.Add(new Entity
@@ -115,7 +115,7 @@ public class PartyServiceTest : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task AddParty_ValidSystemUser_CreatesEntity_ReturnsPartyCreatedTrue()
+    public async Task AddParty_ValidSystemUser_CreatesEntityAndReturnsPartyCreatedTrue()
     {
         var party = SystemUserParty();
 

@@ -41,7 +41,7 @@ public class HashUtilTest
     }
 
     [Fact]
-    public void GetOrderIndependentHashCode_WorksWithStrings()
+    public void GetOrderIndependentHashCode_StringCollectionDifferentOrders_ReturnsSameHash()
     {
         int h1 = HashUtil.GetOrderIndependentHashCode(new[] { "a", "b" });
         int h2 = HashUtil.GetOrderIndependentHashCode(new[] { "b", "a" });

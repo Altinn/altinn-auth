@@ -65,8 +65,6 @@ public partial class ConnectionsControllerTest
             Fixture = fixture;
             Fixture.ConfigureServices(services =>
             {
-                services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
-                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
                 services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
             });
@@ -141,7 +139,7 @@ public partial class ConnectionsControllerTest
         /// First adds the delegation, then removes it. Expects 204 NoContent.
         /// </summary>
         [Fact]
-        public async Task RemoveResource_AsMalinForDumboFromDumboToMille_ReturnsNoContent()
+        public async Task RemoveResource_AsMalinForDumboFromDumboToMille_Returns204NoContent()
         {
             List<string> rightKeys = await GetDelegatableRightKeys("nav_sykepenger_sykmelding");
             Assert.NotEmpty(rightKeys);
@@ -162,7 +160,7 @@ public partial class ConnectionsControllerTest
         /// acting as receiver (from-others direction). Expects 204 NoContent.
         /// </summary>
         [Fact]
-        public async Task RemoveResource_AsTheaForMilleFromDumboToMille_ReturnsNoContent()
+        public async Task RemoveResource_AsTheaForMilleFromDumboToMille_Returns204NoContent()
         {
             List<string> rightKeys = await GetDelegatableRightKeys("nav_sykepenger_sykmelding");
             Assert.NotEmpty(rightKeys);
@@ -183,7 +181,7 @@ public partial class ConnectionsControllerTest
         /// Expects 400 BadRequest.
         /// </summary>
         [Fact]
-        public async Task RemoveResource_WithInvalidResource_ReturnsBadRequest()
+        public async Task RemoveResource_WithInvalidResource_Returns400ForInvalidResource()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
             HttpResponseMessage response = await client.DeleteAsync(
@@ -198,7 +196,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task RemoveResource_WithFromOthersReadScope_ReturnsForbidden()
+        public async Task RemoveResource_WithFromOthersReadScope_Returns403ForFromOthersReadScope()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
             HttpResponseMessage response = await client.DeleteAsync(
@@ -213,7 +211,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task RemoveResource_WithToOthersReadScope_ReturnsForbidden()
+        public async Task RemoveResource_WithToOthersReadScope_Returns403ForToOthersReadScope()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
             HttpResponseMessage response = await client.DeleteAsync(

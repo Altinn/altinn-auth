@@ -35,7 +35,8 @@ public partial class ConnectionsControllerTest
     /// </para>
     /// </remarks>
     [IntegrationTest]
-    public class GetConnections : IClassFixture<ApiFixture>
+    [Collection(ConnectionsReadOnlyCollection.Name)]
+    public class GetConnections
     {
         public GetConnections(ApiFixture fixture)
         {
@@ -109,7 +110,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK.
         /// </summary>
         [Fact]
-        public async Task ListConnections_WithDirectionFromOthersUsingFromOthersScope_ReturnsOk()
+        public async Task ListConnections_WithDirectionFromOthersUsingFromOthersScope_Returns200Ok()
         {
             var client = CreateClient(AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ, "some:other/scope.read");
 
@@ -126,7 +127,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task ListConnections_WithDirectionFromOthersUsingToOthersScope_ReturnsForbidden()
+        public async Task ListConnections_WithDirectionFromOthersUsingToOthersScope_Returns403ForToOthersScopeOnFromOthersDirection()
         {
             var client = CreateClient(AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -140,7 +141,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK.
         /// </summary>
         [Fact]
-        public async Task ListConnections_WithDirectionToOthersUsingToOthersScope_ReturnsOk()
+        public async Task ListConnections_WithDirectionToOthersUsingToOthersScope_Returns200Ok()
         {
             var client = CreateClient("some:other/scope.read", AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -157,7 +158,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task ListConnections_WithDirectionToOthersUsingFromOthersScope_ReturnsForbidden()
+        public async Task ListConnections_WithDirectionToOthersUsingFromOthersScope_Returns403ForFromOthersScopeOnToOthersDirection()
         {
             var client = CreateClient(AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -171,7 +172,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task ListConnections_WithDirectionToOthersUsingToOtherScopeWithPartyNotEqualFromOrTo_ReturnsForbidden()
+        public async Task ListConnections_WithDirectionToOthersUsingToOtherScopeWithPartyNotEqualFromOrTo_Returns403ForPartyNotMatchingFromOrTo()
         {
             var client = CreateClient(AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -185,7 +186,7 @@ public partial class ConnectionsControllerTest
         /// SystemUser is an allowed entity type for the "to" parameter. Expects 200 OK.
         /// </summary>
         [Fact]
-        public async Task ListConnections_WithDirectionToOthersUsingToOtherScopeWithSystemUserAsTo_ReturnsOK()
+        public async Task ListConnections_WithDirectionToOthersUsingToOtherScopeWithSystemUserAsTo_Returns200Ok()
         {
             var client = CreateClient(AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 

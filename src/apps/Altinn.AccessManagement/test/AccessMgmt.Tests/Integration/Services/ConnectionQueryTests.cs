@@ -45,7 +45,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task Petter()
+    public async Task GetConnectionsFromOthers_Petter_ReturnsBakerJohnsenWithSubUnits()
     {
         var orgId = TestDataSet.GetEntity("Regnskaperne").Id;
         var personId = TestDataSet.GetEntity("Petter").Id;
@@ -77,7 +77,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task Gunnar()
+    public async Task GetConnectionsFromOthers_Gunnar_ReturnsBakerJohnsenWithSubUnits()
     {
         var orgId = TestDataSet.GetEntity("Regnskaperne").Id;
         var personId = TestDataSet.GetEntity("Gunnar").Id;
@@ -109,7 +109,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task Nina()
+    public async Task GetConnectionsFromOthers_Nina_ReturnsSkrikFrisorOnly()
     {
         var orgId = TestDataSet.GetEntity("Skrik Frisør").Id;
         var personId = TestDataSet.GetEntity("Nina").Id;
@@ -134,7 +134,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task William()
+    public async Task GetConnectionsFromOthers_William_ReturnsRegnskaperneWithOsloSubUnit()
     {
         var orgId = TestDataSet.GetEntity("Revi").Id;
         var personId = TestDataSet.GetEntity("William").Id;
@@ -164,7 +164,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task Terje()
+    public async Task GetConnectionsFromOthers_Terje_ReturnsRegnskaperneWithOsloSubUnit()
     {
         var orgId = TestDataSet.GetEntity("Revi").Id;
         var personId = TestDataSet.GetEntity("Terje").Id;
@@ -194,7 +194,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task Petter_ShouldGetConnection_To_Baker_Via_BDO_When_KeyRoleIsEnabled()
+    public async Task GetConnections_KeyRoleEnabled_ReturnsBakerConnectionForPetter()
     {
         var filter = new ConnectionQueryFilter
         {
@@ -210,7 +210,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task Petter_ShouldNotGetConnection_To_Baker_When_KeyRoleIsDisabled()
+    public async Task GetConnections_KeyRoleDisabled_ReturnsNoBakerConnectionForPetter()
     {
         var filter = new ConnectionQueryFilter
         {
@@ -226,7 +226,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task Baker_ShouldExist()
+    public async Task SeededEntities_QueryByRefId_ReturnsBakerJohnsen()
     {
         var petter = await _db.Entities.AsNoTracking().SingleAsync(t => t.RefId == "ORG-01", cancellationToken: TestContext.Current.CancellationToken);
 
@@ -235,7 +235,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task Organization_ShouldExist()
+    public async Task SeededEntityTypes_QueryOrganization_ReturnsOrganisasjon()
     {
         var orgType = await _db.EntityTypes.AsNoTracking().SingleAsync(t => t.Id == EntityTypeConstants.Organization, cancellationToken: TestContext.Current.CancellationToken);
 
@@ -245,7 +245,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>
 
     [Theory]
     [MemberData(nameof(GetFilterCombinations))]
-    public async Task GetConnectionsAsync_ShouldNotThrow(bool[] flags, bool useSingle)
+    public async Task GetConnectionsAsync_AllFilterFlagCombinations_DoesNotThrow(bool[] flags, bool useSingle)
     {
         var filter = new ConnectionQueryFilter
         {

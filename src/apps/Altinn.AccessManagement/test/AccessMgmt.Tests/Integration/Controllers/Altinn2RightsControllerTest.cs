@@ -10,6 +10,7 @@ using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Resolvers;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
+using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.TestUtils.Fixtures;
@@ -23,20 +24,17 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
-// Migrated from CustomWebApplicationFactory<RightsInternalController> to ApiFixture
-// as part of Phase 2.2 (Sub-step 16.2a — AccessMgmt.Tests WAF consolidation, Group A
-// single-configuration migrations). All tests share a single mock set (WithServiceMoq),
-// so the DI can be registered once in the constructor; per-test HttpClients are built
-// via fixture.CreateClient(). See docs/testing/TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
+// All tests share a single mock set, so DI is registered once in the constructor;
+// per-test HttpClients are built via fixture.CreateClient().
 namespace Altinn.AccessManagement.Tests.Integration.Controllers;
 
 /// <summary>
 /// Controller test for <see cref="RightsInternalController"/>
 /// </summary>
 [IntegrationTest]
-public class Altinn2RightsControllerTest : IClassFixture<ApiFixture>
+public class Altinn2RightsControllerTest : IClassFixture<NoDbApiFixture>
 {
-    private readonly ApiFixture _fixture;
+    private readonly NoDbApiFixture _fixture;
 
     private readonly string sblInternalToken = PrincipalUtil.GetAccessToken("sbl.authorization");
 
@@ -50,7 +48,7 @@ public class Altinn2RightsControllerTest : IClassFixture<ApiFixture>
     /// required by this controller's tests.
     /// </summary>
     /// <param name="fixture">Shared <see cref="ApiFixture"/>.</param>
-    public Altinn2RightsControllerTest(ApiFixture fixture)
+    public Altinn2RightsControllerTest(NoDbApiFixture fixture)
     {
         _fixture = fixture;
         fixture.WithAppsettings(builder => builder.AddJsonFile("appsettings.test.json", optional: false));
@@ -62,7 +60,7 @@ public class Altinn2RightsControllerTest : IClassFixture<ApiFixture>
     /// </summary>
     [Theory]
     [MemberData(nameof(GetGivenDelegations_ReturnOk_Input))]
-    public async Task GetGivenDelegations_ReturnOk(string header, string value, Action<HttpResponseMessage> assert)
+    public async Task GetGivenDelegations_ValidRequest_Returns200Ok(string header, string value, Action<HttpResponseMessage> assert)
     {
         var client = NewDefaultClient(WithHeader(header, value));
 
@@ -98,8 +96,8 @@ public class Altinn2RightsControllerTest : IClassFixture<ApiFixture>
     /// Tests <see cref="RightsInternalController.GetReceivedRights(int, System.Threading.CancellationToken)"/>
     /// </summary>
     [Theory]
-    [MemberData(nameof(GetReceviedDelegations_ReturnOk_Input))]
-    public async Task GetReceviedDelegations_ReturnOk(string header, string value, Action<HttpResponseMessage> assert)
+    [MemberData(nameof(GetReceivedDelegations_ReturnOk_Input))]
+    public async Task GetReceivedDelegations_ValidRequest_Returns200Ok(string header, string value, Action<HttpResponseMessage> assert)
     {
         var client = NewDefaultClient(WithHeader(header, value));
 
@@ -115,7 +113,7 @@ public class Altinn2RightsControllerTest : IClassFixture<ApiFixture>
     /// Case 4. List all delegations to a person "" with keyroles using ssn
     /// Case 5. List all delegations to a person with no keyroles using partyid
     /// </summary>
-    public static TheoryData<string, string, Action<HttpResponseMessage>> GetReceviedDelegations_ReturnOk_Input() => new()
+    public static TheoryData<string, string, Action<HttpResponseMessage>> GetReceivedDelegations_ReturnOk_Input() => new()
     {
         {
             string.Empty, "50005545", Assertions(
@@ -130,7 +128,7 @@ public class Altinn2RightsControllerTest : IClassFixture<ApiFixture>
     /// </summary>
     [Theory]
     [MemberData(nameof(ClearAccessCache_ReturnOk_input))]
-    public async Task ClearAccessCache_ReturnOk(string authnUserToken, int party, BaseAttributeExternal toAttribute, Action<HttpResponseMessage> assert)
+    public async Task ClearAccessCache_AuthorizedAdmin_Returns200Ok(string authnUserToken, int party, BaseAttributeExternal toAttribute, Action<HttpResponseMessage> assert)
     {
         var client = NewClient(WithClientRoute("accessmanagement/api/v1/"));
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authnUserToken);
@@ -173,7 +171,7 @@ public class Altinn2RightsControllerTest : IClassFixture<ApiFixture>
     /// </summary>
     [Theory]
     [MemberData(nameof(ClearAccessCache_ReturnBadRequest_input))]
-    public async Task ClearAccessCache_ReturnBadRequest(string authnUserToken, int party, BaseAttributeExternal toAttribute, Action<HttpResponseMessage> assert)
+    public async Task ClearAccessCache_MalformedUuid_Returns400BadRequest(string authnUserToken, int party, BaseAttributeExternal toAttribute, Action<HttpResponseMessage> assert)
     {
         var client = NewClient(WithClientRoute("accessmanagement/api/v1/"));
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authnUserToken);
@@ -277,12 +275,10 @@ public class Altinn2RightsControllerTest : IClassFixture<ApiFixture>
         services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
         services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
         services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-        services.AddSingleton<IPartiesClient, PartiesClientMock>();
-        services.AddSingleton<IProfileClient, ProfileClientMock>();
-        services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
-        services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
         services.AddSingleton<IPDP, PdpPermitMock>();
-        services.AddSingleton<IAltinn2RightsClient, Tests.Mocks.Altinn2RightsClientMock>();
+
+        // IPartiesClient, IProfileClient, IAltinnRolesClient and IAltinn2RightsClient
+        // come from AccessMgmtApiFixture.
 
         // ApiFixture registers PublicSigningKeyProviderMock by default, but these
         // tests sign tokens via PrincipalUtil.GetAccessToken which requires the

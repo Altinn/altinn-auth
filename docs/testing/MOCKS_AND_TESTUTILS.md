@@ -15,7 +15,6 @@ reasons.
 | `Mocks/` | Canonical mock implementations of external clients and platform services |
 | `Models/` | Shared DTO constants, seed data |
 | `Data/` | Static seed data (XACML policies, roles, packages, …) used by the template DB and by unit tests |
-| `TestCertificates/` | Consolidated `.pfx` / `.pem` files used across the repo (Step 11) |
 
 ## Canonical mocks
 
@@ -51,10 +50,11 @@ extension points instead.
 
 ## Test certificates
 
-Test certificates are **not duplicated per project**. They live in
-`TestUtils/TestCertificates/` and are consumed by whichever test project
-needs them. If you add a new certificate, add it there — not next to a single
-test class.
+Test certificates currently live in the `AccessMgmt.Tests/` project root
+(`platform-org.pfx`/`.pem`, `ttd-org.pfx`/`.pem`, `selfSignedTestCertificate.pfx`,
+`selfSignedTestCertificatePublic.cer`) and are consumed by that project. They are
+**not duplicated across projects**; if another test project comes to need them,
+lift them into a shared `TestUtils/TestCertificates/` folder rather than copying.
 
 ## Adding a new mock
 

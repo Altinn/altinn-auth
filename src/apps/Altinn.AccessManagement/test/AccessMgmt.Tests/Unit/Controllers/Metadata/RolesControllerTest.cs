@@ -56,7 +56,7 @@ public class RolesControllerTest
 
     // ── GetAll ──────────────────────────────────────────────────────────────
     [Fact]
-    public async Task GetAll_WhenResultsFound_Returns200Ok()
+    public async Task GetAll_WhenResultsFound_Returns200WithRoleList()
     {
         var serviceMock = new Mock<IRoleService>();
         serviceMock.Setup(s => s.GetAll(It.IsAny<CancellationToken>()))
@@ -72,7 +72,7 @@ public class RolesControllerTest
     }
 
     [Fact]
-    public async Task GetAll_WhenServiceReturnsNull_Returns404NotFound()
+    public async Task GetAll_WhenServiceReturnsNull_Returns404WhenRolesMissing()
     {
         var serviceMock = new Mock<IRoleService>();
         serviceMock.Setup(s => s.GetAll(It.IsAny<CancellationToken>()))
@@ -87,7 +87,7 @@ public class RolesControllerTest
 
     // ── GetId ───────────────────────────────────────────────────────────────
     [Fact]
-    public async Task GetId_WhenFound_Returns200Ok()
+    public async Task GetId_WhenFound_Returns200WithRole()
     {
         var id = Guid.NewGuid();
         var serviceMock = new Mock<IRoleService>();
@@ -102,7 +102,7 @@ public class RolesControllerTest
     }
 
     [Fact]
-    public async Task GetId_WhenServiceReturnsNull_Returns404NotFound()
+    public async Task GetId_WhenServiceReturnsNull_Returns404WhenRoleMissing()
     {
         var serviceMock = new Mock<IRoleService>();
         serviceMock.Setup(s => s.GetById(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()))
@@ -117,7 +117,7 @@ public class RolesControllerTest
 
     // ── GetPackages (by role code + variant) ────────────────────────────────
     [Fact]
-    public async Task GetPackagesByCode_WhenRoleCodeNotFound_Returns404NotFound()
+    public async Task GetPackagesByCode_WhenRoleCodeNotFound_Returns404ForUnknownRoleCode()
     {
         var serviceMock = new Mock<IRoleService>();
         var controller = CreateController(serviceMock.Object, PassThroughTranslation().Object);
@@ -129,7 +129,7 @@ public class RolesControllerTest
     }
 
     [Fact]
-    public async Task GetPackagesByCode_WhenVariantNotFound_Returns404NotFound()
+    public async Task GetPackagesByCode_WhenVariantNotFound_Returns404ForUnknownVariant()
     {
         var serviceMock = new Mock<IRoleService>();
         var controller = CreateController(serviceMock.Object, PassThroughTranslation().Object);
@@ -141,7 +141,7 @@ public class RolesControllerTest
     }
 
     [Fact]
-    public async Task GetPackagesByCode_WhenBothValid_Returns200Ok()
+    public async Task GetPackagesByCode_WhenBothValid_Returns200WithPackageList()
     {
         var serviceMock = new Mock<IRoleService>();
         serviceMock.Setup(s => s.GetRolePackages(It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
@@ -156,7 +156,7 @@ public class RolesControllerTest
 
     // ── GetResources (by role code + variant) ───────────────────────────────
     [Fact]
-    public async Task GetResourcesByCode_WhenRoleCodeNotFound_Returns404NotFound()
+    public async Task GetResourcesByCode_WhenRoleCodeNotFound_Returns404ForUnknownRoleCode()
     {
         var serviceMock = new Mock<IRoleService>();
         var controller = CreateController(serviceMock.Object, PassThroughTranslation().Object);
@@ -168,7 +168,7 @@ public class RolesControllerTest
     }
 
     [Fact]
-    public async Task GetResourcesByCode_WhenVariantNotFound_Returns404NotFound()
+    public async Task GetResourcesByCode_WhenVariantNotFound_Returns404ForUnknownVariant()
     {
         var serviceMock = new Mock<IRoleService>();
         var controller = CreateController(serviceMock.Object, PassThroughTranslation().Object);
@@ -180,7 +180,7 @@ public class RolesControllerTest
     }
 
     [Fact]
-    public async Task GetResourcesByCode_WhenBothValid_Returns200Ok()
+    public async Task GetResourcesByCode_WhenBothValid_Returns200WithResourceList()
     {
         var serviceMock = new Mock<IRoleService>();
         serviceMock.Setup(s => s.GetRoleResources(It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
@@ -195,7 +195,7 @@ public class RolesControllerTest
 
     // ── GetPackages (by role id + variant) ──────────────────────────────────
     [Fact]
-    public async Task GetPackagesById_WhenVariantNotFound_Returns404NotFound()
+    public async Task GetPackagesById_WhenVariantNotFound_Returns404ForUnknownVariant()
     {
         var serviceMock = new Mock<IRoleService>();
         var controller = CreateController(serviceMock.Object, PassThroughTranslation().Object);
@@ -207,7 +207,7 @@ public class RolesControllerTest
     }
 
     [Fact]
-    public async Task GetPackagesById_WhenVariantValid_Returns200Ok()
+    public async Task GetPackagesById_WhenVariantValid_Returns200WithPackageList()
     {
         var serviceMock = new Mock<IRoleService>();
         serviceMock.Setup(s => s.GetRolePackages(It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
@@ -222,7 +222,7 @@ public class RolesControllerTest
 
     // ── GetResources (by role id + variant) ─────────────────────────────────
     [Fact]
-    public async Task GetResourcesById_WhenVariantNotFound_Returns404NotFound()
+    public async Task GetResourcesById_WhenVariantNotFound_Returns404ForUnknownVariant()
     {
         var serviceMock = new Mock<IRoleService>();
         var controller = CreateController(serviceMock.Object, PassThroughTranslation().Object);
@@ -234,7 +234,7 @@ public class RolesControllerTest
     }
 
     [Fact]
-    public async Task GetResourcesById_WhenVariantValid_Returns200Ok()
+    public async Task GetResourcesById_WhenVariantValid_Returns200WithResourceList()
     {
         var serviceMock = new Mock<IRoleService>();
         serviceMock.Setup(s => s.GetRoleResources(It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))

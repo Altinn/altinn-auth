@@ -235,12 +235,34 @@ jobs:
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         shell: bash
         working-directory: ${{ inputs.path }}
+        env:
+          # FixtureTiming writes one summary line per test process to this file; the
+          # next step prints it into the log. A file is used because MTP / dotnet-
+          # coverage swallow the test host's process-exit stdout.
+          FIXTURE_TIMING_FILE: ${{ github.workspace }}/fixture-timing.txt
         run: |
           dotnet-coverage collect --nologo \
             --output TestResults/coverage.integration.coverage --output-format coverage \
             -- dotnet test -c Release --no-build -bl:binlog/test-integration.binlog \
               -- --results-directory TestResults/integration --report-xunit-trx \
                  --filter-trait "Category=Integration" --ignore-exit-code 8
+
+      - name: Setup-timing breakdown (FixtureTiming)
+        # Surface FixtureTiming's per-assembly setup-time breakdown (host build vs DB
+        # provisioning vs per-test clone vs one-time template build) directly in this
+        # job's log, so where test setup time goes is visible without downloading
+        # anything. Informational only; never fails the build. No-op for verticals
+        # whose tests do not use the Postgres engine (no file is written).
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        shell: bash
+        run: |
+          if [[ -s "${{ github.workspace }}/fixture-timing.txt" ]]; then
+            echo "::group::FixtureTiming setup-time breakdown (per assembly: <phase>_ms total, <phase>_n runs)"
+            cat "${{ github.workspace }}/fixture-timing.txt"
+            echo "::endgroup::"
+          else
+            echo "No FixtureTiming output (this vertical's tests do not use the Postgres engine)."
+          fi
 
       - name: Report failed tests
         # When the Test step fails, surface the specific failing test names

@@ -57,7 +57,7 @@ public partial class ConnectionsControllerTest
         /// Verifies deletion by checking that the role no longer appears in GetRoles endpoint.
         /// </summary>
         [Fact]
-        public async Task RemoveRole_WithValidRoleCode_PartyAsFrom_ReturnsNoContent()
+        public async Task RemoveRole_WithValidRoleCode_PartyAsFrom_Returns204NoContent()
         {
             // Verify role exists before removal
             HttpClient readClient = CreateClient(TestData.HanSolo.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
@@ -95,7 +95,7 @@ public partial class ConnectionsControllerTest
         /// Verifies deletion by checking that the role no longer appears in GetRoles endpoint.
         /// </summary>
         [Fact]
-        public async Task RemoveRole_WithNonA2RoleCode_PartyAsFrom_ReturnsBadRequest()
+        public async Task RemoveRole_WithNonA2RoleCode_PartyAsFrom_Returns400ForNonAltinn2Role()
         {
             // Verify role exists before removal
             HttpClient readClient = CreateClient(TestData.HanSolo.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
@@ -133,7 +133,7 @@ public partial class ConnectionsControllerTest
         /// Verifies deletion by checking that the role no longer appears in GetRoles endpoint.
         /// </summary>
         [Fact]
-        public async Task RemoveRole_WithValidRoleCode_PartyAsTo_ReturnsNoContent()
+        public async Task RemoveRole_WithValidRoleCode_PartyAsTo_Returns204NoContent()
         {
             // Verify role exists before removal
             HttpClient readClient = CreateClient(TestData.LukeSkyWalker.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
@@ -172,7 +172,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task RemoveRole_WithReadScope_ReturnsForbidden()
+        public async Task RemoveRole_WithReadScope_Returns403ForReadScope()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -189,7 +189,7 @@ public partial class ConnectionsControllerTest
         /// Expects 400 BadRequest with RoleAssignmentNotRevocable problem, not 204 NoContent.
         /// </summary>
         [Fact]
-        public async Task RemoveRole_WithInheritedRoleButNoDirectAssignment_ReturnsBadRequest()
+        public async Task RemoveRole_WithInheritedRoleButNoDirectAssignment_Returns400ForNonRevocableInheritedRole()
         {
             // Setup: Create a Main Unit relationship where HanSoloEnterprise is the main unit
             // and create an inherited role connection for Thea through the main unit
@@ -273,7 +273,7 @@ public partial class ConnectionsControllerTest
         /// Expects 204 NoContent since there's nothing to remove.
         /// </summary>
         [Fact]
-        public async Task RemoveRole_WithNoConnectionAtAll_ReturnsNoContent()
+        public async Task RemoveRole_WithNoConnectionAtAll_Returns204NoContent()
         {
             // Ensure there are no assignments between HanSoloEnterprise and Milena (who has no connection to HanSoloEnterprise)
             await Fixture.QueryDb(async db =>

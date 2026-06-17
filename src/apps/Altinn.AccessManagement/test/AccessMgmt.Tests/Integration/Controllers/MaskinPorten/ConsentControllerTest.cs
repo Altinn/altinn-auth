@@ -2,7 +2,6 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Altinn.AccessManagement.Tests.Moqdata;
 using Altinn.AccessManagement.Api.Internal.Extensions;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Errors;
@@ -11,6 +10,7 @@ using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.Tests.Mocks;
+using Altinn.AccessManagement.Tests.Moqdata;
 using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
@@ -25,10 +25,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
-using Moq;
 
-// Migrated from WebApplicationFixture to LegacyApiFixture as part of
-// sub-step 16.4a (Phase 2.2). The consent flow goes through the Dapper-backed
+// Uses LegacyApiFixture: the consent flow goes through the Dapper-backed
 // ConsentRepository which binds to the Yuniql-provisioned consent.status_type
 // enum; LegacyApiFixture overlays Yuniql on top of ApiFixture's EF schemas.
 namespace Altinn.AccessManagement.Tests.Integration.Controllers.MaskinPorten
@@ -37,47 +35,21 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.MaskinPorten
     /// Tests for maskinporten controller for consent
     /// </summary>
     [IntegrationTest]
-    public class ConsentControllerTest : IClassFixture<LegacyApiFixture>
+    [Collection(ConsentDbCollection.Name)]
+    public class ConsentControllerTest
     {
-        private readonly Mock<IAmPartyRepository> _mockAmPartyRepository;
-        private readonly ApiFixture _fixture;
+        private readonly ConsentApiFixture _fixture;
         private readonly ITestOutputHelper _output;
 
-        public ConsentControllerTest(LegacyApiFixture fixture, ITestOutputHelper output)
+        public ConsentControllerTest(ConsentApiFixture fixture, ITestOutputHelper output)
         {
-            _mockAmPartyRepository = new Mock<IAmPartyRepository>();
             _output = output;
             _fixture = fixture;
-
-            fixture.ConfigureServices(services =>
-            {
-                // PlatformAccessToken / maskinporten tokens are signed by
-                // {issuer}-org.pem; default PublicSigningKeyProviderMock only
-                // accepts the static test key.
-                services.RemoveAll<IPublicSigningKeyProvider>();
-                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
-
-                // Replace ApiFixture's default PermitPdpMock with the legacy
-                // PdpPermitMock flavour used by these tests.
-                services.RemoveAll<IPDP>();
-                services.AddSingleton<IPDP, PdpPermitMock>();
-
-                services.AddSingleton<IPartiesClient, PartiesClientMock>();
-                services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
-                services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
-                services.AddSingleton<IAltinnRolesClient, AltinnRolesClientMock>();
-                services.AddSingleton<IAltinn2ConsentClient, Altinn2ConsentClientMock>();
-                services.AddSingleton<IProfileClient, ProfileClientMock>();
-
-                // Register the SAME mock instance
-                services.AddSingleton<IAmPartyRepository>(_mockAmPartyRepository.Object);
-            });
         }
 
         private void SetupMockPartyRepository()
         {
-            MockParyRepositoryPopulator.SetupMockPartyRepository(_mockAmPartyRepository);
+            MockParyRepositoryPopulator.SetupMockPartyRepository(_fixture.AmPartyRepository);
         }
 
         private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
@@ -86,7 +58,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.MaskinPorten
         };
 
         [Fact]
-        public async Task GetConsentFromA2_Valid()
+        public async Task GetConsentFromA2_Valid_Returns200WithConsentInfo()
         {
             SetupMockPartyRepository();
 
@@ -119,7 +91,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.MaskinPorten
         }
 
         [Fact]
-        public async Task GetConsentFromA2_Expired()
+        public async Task GetConsentFromA2_Expired_ReturnsProblem()
         {
             SetupMockPartyRepository();
 
@@ -151,7 +123,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.MaskinPorten
         }
 
         [Fact]
-        public async Task GetConsentFromA2_InvalidMetadata()
+        public async Task GetConsentFromA2_InvalidMetadata_Returns200WithConsentInfo()
         {
             SetupMockPartyRepository();
 
@@ -184,7 +156,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.MaskinPorten
         }
 
         [Fact]
-        public async Task GetConsent_CreatedExpired_BadRequest()
+        public async Task GetConsent_CreatedExpired_Returns500MultipleProblemsExpiredAndNotAccepted()
         {
             SetupMockPartyRepository();
 
@@ -217,7 +189,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.MaskinPorten
         }
 
         [Fact]
-        public async Task GetConsent_ValidFromOrg()
+        public async Task GetConsent_ValidFromOrg_Returns200WithConsentInfo()
         {
             SetupMockPartyRepository();
             Guid requestId = Guid.Parse("e2071c55-6adf-487b-af05-9198a230ed77");
@@ -258,7 +230,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.MaskinPorten
         /// </summary>
         /// <returns></returns>
         [Fact]
-        public async Task GetConsent_ValidHandledByOrg()
+        public async Task GetConsent_ValidHandledByOrg_Returns200WithConsentInfo()
         {
             SetupMockPartyRepository();
             Guid requestId = Guid.Parse("d1bedb7d-a682-4668-9f84-7a56b3d733ab");
@@ -294,7 +266,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.MaskinPorten
         }
 
         [Fact]
-        public async Task GetConsent_Created_BadRequest()
+        public async Task GetConsent_Created_Returns400ConsentNotAccepted()
         {
             SetupMockPartyRepository();
             Guid requestId = Guid.Parse("e2071c55-6adf-487b-af05-9198a230ed46");

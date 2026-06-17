@@ -170,7 +170,7 @@ public class FuzzySearchTest
     }
 
     [Fact]
-    public void SearchPropertyBuilder_WeightStoredCorrectly()
+    public void SearchPropertyBuilder_Add_WeightStoredCorrectly()
     {
         var builder = new SearchPropertyBuilder<Item>()
             .Add(x => x.Name, 0.75, FuzzynessLevel.Low);
@@ -180,7 +180,7 @@ public class FuzzySearchTest
     }
 
     [Fact]
-    public void SearchPropertyBuilder_FuzzynessStoredCorrectly()
+    public void SearchPropertyBuilder_Add_FuzzynessStoredCorrectly()
     {
         var builder = new SearchPropertyBuilder<Item>()
             .Add(x => x.Name, 1.0, FuzzynessLevel.Low);
@@ -212,7 +212,7 @@ public class FuzzySearchTest
     }
 
     [Fact]
-    public void SearchPropertyBuilder_SelectorIsCallable()
+    public void SearchPropertyBuilder_Add_SelectorIsCallable()
     {
         var item = new Item("Apple", "Fruit");
         var builder = new SearchPropertyBuilder<Item>()

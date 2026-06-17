@@ -51,7 +51,7 @@ public static class AttributeMatchAsserter
         var matchingAttributes = values.Where(attribute => types.Any(type => type.Equals(attribute.Id, StringComparison.InvariantCultureIgnoreCase)));
         if (matchingAttributes.Where(attribute => !bool.TryParse(attribute.Value, out _)) is var assertedNoneIntegers && assertedNoneIntegers.Any())
         {
-            errors.Add(nameof(AttributesAreIntegers), [$"attributes {StringifyAttributeIds(values)} can't be parsed as boolean"]);
+            errors.Add(nameof(AttributesAreBoolean), [$"attributes {StringifyAttributeIds(values)} can't be parsed as boolean"]);
         }
     };
 
@@ -88,7 +88,7 @@ public static class AttributeMatchAsserter
         var attributesWithEmptyValues = values.Where(attribute => string.IsNullOrEmpty(attribute?.Value));
         if (attributesWithEmptyValues.Any())
         {
-            errors.Add(nameof(AllAttributesHasValues), StringifyAttributeIds(attributesWithEmptyValues).Select(type => $"attribute {type} contains empty value").ToArray());
+            errors.Add(nameof(AllAttributesHasValues), attributesWithEmptyValues.Select(attribute => $"attribute {attribute?.Id} contains empty value").ToArray());
         }
     }
 

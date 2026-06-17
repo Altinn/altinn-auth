@@ -78,11 +78,14 @@ public sealed class PostgresTestEngine
                     return null;
                 }
 
-                await BootstrapRolesAsync(cancellationToken);
-                await ExecAsync($"CREATE DATABASE {_options.TemplateDatabaseName};", cancellationToken);
-                var template = NewDatabase(_options.TemplateDatabaseName);
-                await _options.BuildTemplateAsync(template);
-                NpgsqlConnection.ClearAllPools();
+                await FixtureTiming.TimeAsync(FixtureTiming.Phase.TemplateBuild, async () =>
+                {
+                    await BootstrapRolesAsync(cancellationToken);
+                    await ExecAsync($"CREATE DATABASE {_options.TemplateDatabaseName};", cancellationToken);
+                    var template = NewDatabase(_options.TemplateDatabaseName);
+                    await _options.BuildTemplateAsync(template);
+                    NpgsqlConnection.ClearAllPools();
+                });
                 _templateReady = true;
             }
         }
@@ -92,9 +95,9 @@ public sealed class PostgresTestEngine
         }
 
         var name = $"test_{Interlocked.Increment(ref _databaseInstance)}";
-        await ExecAsync(
+        await FixtureTiming.TimeAsync(FixtureTiming.Phase.Clone, () => ExecAsync(
             $"CREATE DATABASE {name} WITH TEMPLATE {_options.TemplateDatabaseName} OWNER {_options.ApplicationUser};",
-            cancellationToken);
+            cancellationToken));
         return NewDatabase(name);
     }
 

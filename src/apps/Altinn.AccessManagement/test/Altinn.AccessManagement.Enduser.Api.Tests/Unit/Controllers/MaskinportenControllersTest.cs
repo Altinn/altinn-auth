@@ -38,7 +38,7 @@ public class MaskinportenConsumersControllerTest
     #region GetConsumers
 
     [Fact]
-    public async Task GetConsumers_NoFilter_Success_ReturnsOk()
+    public async Task GetConsumers_NoFilter_Success_Returns200Ok()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
         svc.Setup(s => s.GetConsumers(Party, null, It.IsAny<CancellationToken>()))
@@ -74,7 +74,7 @@ public class MaskinportenConsumersControllerTest
     }
 
     [Fact]
-    public async Task GetConsumers_ConsumerFilter_Success_ReturnsOk()
+    public async Task GetConsumers_ConsumerFilter_Success_Returns200Ok()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
         svc.Setup(s => s.GetEntity("123456789", It.IsAny<CancellationToken>()))
@@ -104,7 +104,7 @@ public class MaskinportenConsumersControllerTest
     }
 
     [Fact]
-    public async Task RemoveConsumer_Success_ReturnsNoContent()
+    public async Task RemoveConsumer_Success_Returns204NoContent()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
         svc.Setup(s => s.GetEntity("org1", It.IsAny<CancellationToken>()))
@@ -136,7 +136,7 @@ public class MaskinportenConsumersControllerTest
     #region GetResources
 
     [Fact]
-    public async Task GetResources_NoFilters_Success_ReturnsOk()
+    public async Task GetResources_NoFilters_Success_Returns200Ok()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
         svc.Setup(s => s.GetConsumerResources(Party, null, null, It.IsAny<CancellationToken>()))
@@ -184,7 +184,7 @@ public class MaskinportenConsumersControllerTest
     }
 
     [Fact]
-    public async Task GetResources_AllFilters_Success_ReturnsOk()
+    public async Task GetResources_AllFilters_Success_Returns200Ok()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
         svc.Setup(s => s.GetEntity("org1", It.IsAny<CancellationToken>()))
@@ -216,7 +216,7 @@ public class MaskinportenConsumersControllerTest
     }
 
     [Fact]
-    public async Task RemoveResource_Success_ReturnsNoContent()
+    public async Task RemoveResource_Success_Returns204NoContent()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
         svc.Setup(s => s.GetEntity("org1", It.IsAny<CancellationToken>()))
@@ -295,7 +295,7 @@ public class MaskinportenSuppliersControllerTest
     }
 
     [Fact]
-    public async Task AddSupplier_Success_ReturnsOk()
+    public async Task AddSupplier_Success_Returns200Ok()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
         svc.Setup(s => s.GetEntity("org1", It.IsAny<CancellationToken>()))
@@ -327,7 +327,7 @@ public class MaskinportenSuppliersControllerTest
     #region GetSuppliers
 
     [Fact]
-    public async Task GetSuppliers_NoFilter_Success_ReturnsOk()
+    public async Task GetSuppliers_NoFilter_Success_Returns200Ok()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
         svc.Setup(s => s.GetSuppliers(Party, null, It.IsAny<CancellationToken>()))
@@ -379,7 +379,7 @@ public class MaskinportenSuppliersControllerTest
     }
 
     [Fact]
-    public async Task RemoveSupplier_Success_ReturnsNoContent()
+    public async Task RemoveSupplier_Success_Returns204NoContent()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
         svc.Setup(s => s.GetEntity("org1", It.IsAny<CancellationToken>()))
@@ -411,7 +411,7 @@ public class MaskinportenSuppliersControllerTest
     #region DelegationCheck
 
     [Fact]
-    public async Task DelegationCheck_Success_ReturnsOk()
+    public async Task DelegationCheck_Success_Returns200Ok()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
         svc.Setup(s => s.ResourceDelegationCheck(UserUuid, Party, "res1", It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -451,7 +451,7 @@ public class MaskinportenSuppliersControllerTest
     }
 
     [Fact]
-    public async Task AddResource_Success_ReturnsOk()
+    public async Task AddResource_Success_Returns200Ok()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
         svc.Setup(s => s.GetEntity("org1", It.IsAny<CancellationToken>()))
@@ -483,7 +483,7 @@ public class MaskinportenSuppliersControllerTest
     #region GetResources
 
     [Fact]
-    public async Task GetResources_NoFilters_Success_ReturnsOk()
+    public async Task GetResources_NoFilters_Success_Returns200Ok()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
         svc.Setup(s => s.GetSupplierResources(Party, null, null, It.IsAny<CancellationToken>()))
@@ -547,7 +547,7 @@ public class MaskinportenSuppliersControllerTest
     }
 
     [Fact]
-    public async Task RemoveResource_Success_ReturnsNoContent()
+    public async Task RemoveResource_Success_Returns204NoContent()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
         svc.Setup(s => s.GetEntity("org1", It.IsAny<CancellationToken>()))

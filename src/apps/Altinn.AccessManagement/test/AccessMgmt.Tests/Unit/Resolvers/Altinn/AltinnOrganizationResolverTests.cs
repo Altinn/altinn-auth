@@ -26,7 +26,7 @@ public class AltinnOrganizationResolverTests
     [MemberData(nameof(ResolveIdentifierNoToPartyId), MemberType = typeof(AltinnOrganizationResolverTests))]
     [MemberData(nameof(ResolvePartyIdToIdentifierNo), MemberType = typeof(AltinnOrganizationResolverTests))]
     [MemberData(nameof(ResolveUnkownPartyIdToEmptyResult), MemberType = typeof(AltinnOrganizationResolverTests))]
-    public async Task TestResolveOrganzation(IEnumerable<AttributeMatch> attributes, IEnumerable<string> wants, Action<IEnumerable<AttributeMatch>> assert)
+    public async Task Resolve_OrganizationAttributes_ResolvesExpectedMatches(IEnumerable<AttributeMatch> attributes, IEnumerable<string> wants, Action<IEnumerable<AttributeMatch>> assert)
     {
         var resolver = ResolverServiceCollection.ConfigureServices(ResolverServiceCollection.DefaultServiceCollection);
 

@@ -40,7 +40,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Context will succeed
         /// </summary>
         [Fact]
-        public async Task HandleRequirementAsync_TC01Async()
+        public async Task HandleRequirementAsync_PartyIdPermit_Succeeds()
         {
             // Arrange 
             AuthorizationHandlerContext context = CreateAuthorizationHandlerContext();
@@ -61,7 +61,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Context will succeed
         /// </summary>
         [Fact]
-        public async Task HandleRequirementAsync_TC02Async()
+        public async Task HandleRequirementAsync_OrganizationNumberPermit_SucceedsWithOrgAttribute()
         {
             // Arrange 
             AuthorizationHandlerContext context = CreateAuthorizationHandlerContext();
@@ -87,7 +87,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// </summary>
         [Fact]
 
-        public async Task HandleRequirementAsync_TC03Async()
+        public async Task HandleRequirementAsync_InvalidOrganizationNumber_ThrowsArgumentException()
         {
             // Arrange 
             AuthorizationHandlerContext context = CreateAuthorizationHandlerContext();
@@ -109,7 +109,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// </summary>
         [Fact]
 
-        public async Task HandleRequirementAsync_TC04Async()
+        public async Task HandleRequirementAsync_PersonIdentifierPermit_SucceedsWithPersonAttribute()
         {
             // Arrange 
             AuthorizationHandlerContext context = CreateAuthorizationHandlerContext();
@@ -135,7 +135,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// </summary>
         [Fact]
 
-        public async Task HandleRequirementAsync_TC05Async()
+        public async Task HandleRequirementAsync_InvalidPersonIdentifier_ThrowsArgumentException()
         {
             // Arrange 
             AuthorizationHandlerContext context = CreateAuthorizationHandlerContext();
@@ -156,7 +156,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: Request header does not have a xforwardedforheader and therefore the header property in xacmljsonrequest will be null
         /// </summary>
         [Fact]
-        public async Task HandleRequirementAsync_TC06Async()
+        public async Task HandleRequirementAsync_NoXForwardedForHeader_SendsNullHeader()
         {
             // Arrange 
             AuthorizationHandlerContext context = CreateAuthorizationHandlerContext();
@@ -175,7 +175,7 @@ namespace Altinn.Authorization.PEP.Tests
         /// Expected: XForwardedForHeader proeprty in request receives the ipaddress from the header
         /// </summary>
         [Fact]
-        public async Task HandleRequirementAsync_TC07Async()
+        public async Task HandleRequirementAsync_XForwardedForHeaderPresent_Succeeds()
         {
             // Arrange 
             AuthorizationHandlerContext context = CreateAuthorizationHandlerContext();

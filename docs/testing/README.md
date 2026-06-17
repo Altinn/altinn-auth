@@ -21,7 +21,8 @@ self-contained; none of them is a wall of text.
 | 7 | [FLUENT_ASSERTIONS_GUIDELINES.md](FLUENT_ASSERTIONS_GUIDELINES.md) | When and how to use FluentAssertions |
 | 8 | [COVERAGE.md](COVERAGE.md) | Running coverage locally, per-assembly thresholds, ratcheting |
 | 9 | [CI.md](CI.md) | How tests run in the pipeline, Microsoft Testing Platform (MTP), artifacts |
-| 10 | [../SONARCLOUD.md](../SONARCLOUD.md) | Static analysis: exclusions, per-vertical setup, quality gate, debugging |
+| 10 | [BRUNO_API_TESTS.md](BRUNO_API_TESTS.md) | The Bruno API collections — manual/exploratory API tests that double as a behavioral spec for the C# integration tests |
+| 11 | [../SONARCLOUD.md](../SONARCLOUD.md) | Static analysis: exclusions, per-vertical setup, quality gate, debugging |
 
 ## TL;DR for newcomers
 

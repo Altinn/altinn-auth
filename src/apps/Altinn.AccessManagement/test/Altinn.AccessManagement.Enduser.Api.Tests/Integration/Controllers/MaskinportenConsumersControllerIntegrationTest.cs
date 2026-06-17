@@ -90,7 +90,7 @@ public class MaskinportenConsumersControllerIntegrationTest : IClassFixture<ApiF
     }
 
     [Fact]
-    public async Task RemoveConsumer_WithReadScope_ReturnsForbidden()
+    public async Task RemoveConsumer_WithReadScope_Returns403Forbidden()
     {
         var client = CreateClient(RemoveSupplier, AuthzConstants.SCOPE_ENDUSER_MASKINPORTENCONSUMERS_READ);
 

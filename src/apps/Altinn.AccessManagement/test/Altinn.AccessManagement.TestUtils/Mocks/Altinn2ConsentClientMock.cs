@@ -15,7 +15,7 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Integration.Clients;
 
-namespace Altinn.AccessManagement.Tests.Mocks
+namespace Altinn.AccessManagement.TestUtils.Mocks
 {
     /// <summary>
     /// Mock class for <see cref="IAltinn2ConsentClient"></see> interface
@@ -69,7 +69,7 @@ namespace Altinn.AccessManagement.Tests.Mocks
 
         private Altinn2ConsentRequest GetAltinn2Request(Guid id)
         {
-            Stream dataStream = File.OpenRead($"Data/Consent/a2consent_request_{id.ToString()}.json");
+            Stream dataStream = File.OpenRead(TestDataDirectory.Combine("Consent", $"a2consent_request_{id.ToString()}.json"));
             JsonSerializerOptions options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true

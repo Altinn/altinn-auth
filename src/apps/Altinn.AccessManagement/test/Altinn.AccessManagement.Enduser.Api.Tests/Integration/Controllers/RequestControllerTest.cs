@@ -130,7 +130,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task CreateRequest_WithMaskinportenSchemaResource_Returns400()
+        public async Task CreateRequest_WithMaskinportenSchemaResource_Returns400MaskinportenSchemaNotAllowed()
         {
             // KnutVik er styremedlem i BakerJohnsen (seeded via TestData.Assignments)
             var client = CreateSystemClient(Fixture, TestData.KnutVik.Id);
@@ -195,14 +195,14 @@ public class RequestControllerTest
     #region GET /sent — Sender sees sent requests
 
     [IntegrationTest]
-    public class GetSentRequests : IClassFixture<ApiFixture>
+    [Collection(RequestReadOnlyCollection.Name)]
+    public class GetSentRequests
     {
         private static readonly Guid PendingPackageRequestId = Guid.Parse("0196b002-0000-7000-8000-000000000001");
 
-        public GetSentRequests(ApiFixture fixture)
+        public GetSentRequests(RequestReadOnlyApiFixture fixture)
         {
             Fixture = fixture;
-            EnableFeatureFlags(fixture);
             fixture.EnsureSeedOnce<GetSentRequests>(db =>
             {
                 var reqAssignment = new RequestAssignment
@@ -262,7 +262,8 @@ public class RequestControllerTest
     #region GET /received — Receiver sees resource requests
 
     [IntegrationTest]
-    public class GetReceivedResourceRequests : IClassFixture<ApiFixture>
+    [Collection(RequestReadOnlyCollection.Name)]
+    public class GetReceivedResourceRequests
     {
         private static readonly ResourceType TestResourceType = new()
         {
@@ -273,10 +274,9 @@ public class RequestControllerTest
         private static readonly Guid TestResourceId = Guid.Parse("0196b004-0000-7000-8000-000000000002");
         private static readonly Guid PendingResourceRequestId = Guid.Parse("0196b004-0000-7000-8000-000000000003");
 
-        public GetReceivedResourceRequests(ApiFixture fixture)
+        public GetReceivedResourceRequests(RequestReadOnlyApiFixture fixture)
         {
             Fixture = fixture;
-            EnableFeatureFlags(fixture);
             fixture.EnsureSeedOnce<GetReceivedResourceRequests>(db =>
             {
                 db.ResourceTypes.Add(TestResourceType);
@@ -539,14 +539,14 @@ public class RequestControllerTest
     #region GET /?party=&id= — GetRequest
 
     [IntegrationTest]
-    public class GetRequestById : IClassFixture<ApiFixture>
+    [Collection(RequestReadOnlyCollection.Name)]
+    public class GetRequestById
     {
         private static readonly Guid PendingPackageRequestId = Guid.Parse("0196b00a-0000-7000-8000-000000000001");
 
-        public GetRequestById(ApiFixture fixture)
+        public GetRequestById(RequestReadOnlyApiFixture fixture)
         {
             Fixture = fixture;
-            EnableFeatureFlags(fixture);
             fixture.EnsureSeedOnce<GetRequestById>(db =>
             {
                 var reqAssignment = new RequestAssignment
@@ -573,7 +573,7 @@ public class RequestControllerTest
         public ApiFixture Fixture { get; }
 
         [Fact]
-        public async Task PartyMatchesFrom_ReturnsOk()
+        public async Task PartyMatchesFrom_Returns200WithRequestDto()
         {
             var client = CreateSystemClient(Fixture, TestData.TrondLarsen.Id);
 
@@ -587,7 +587,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task PartyMatchesTo_ReturnsOk()
+        public async Task PartyMatchesTo_Returns200Ok()
         {
             var client = CreateSystemClient(Fixture, TestData.BakerJohnsen.Id);
 
@@ -599,7 +599,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task PartyMatchesNeitherFromNorTo_ReturnsForbidden()
+        public async Task PartyMatchesNeitherFromNorTo_Returns403PartyNotParticipant()
         {
             var client = CreateSystemClient(Fixture, TestData.AstridJohansen.Id);
 
@@ -611,7 +611,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task UnknownRequestId_ReturnsForbidden()
+        public async Task UnknownRequestId_Returns403UnknownRequest()
         {
             var client = CreateSystemClient(Fixture, TestData.TrondLarsen.Id);
 
@@ -628,14 +628,14 @@ public class RequestControllerTest
     #region GET /sent/count — GetSentRequestsCount
 
     [IntegrationTest]
-    public class GetSentRequestsCountTest : IClassFixture<ApiFixture>
+    [Collection(RequestReadOnlyCollection.Name)]
+    public class GetSentRequestsCountTest
     {
         private static readonly Guid PendingPackageRequestId = Guid.Parse("0196b00b-0000-7000-8000-000000000001");
 
-        public GetSentRequestsCountTest(ApiFixture fixture)
+        public GetSentRequestsCountTest(RequestReadOnlyApiFixture fixture)
         {
             Fixture = fixture;
-            EnableFeatureFlags(fixture);
             fixture.EnsureSeedOnce<GetSentRequestsCountTest>(db =>
             {
                 var reqAssignment = new RequestAssignment

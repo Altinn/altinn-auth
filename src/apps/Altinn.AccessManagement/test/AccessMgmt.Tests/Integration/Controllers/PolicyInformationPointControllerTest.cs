@@ -5,6 +5,7 @@ using Altinn.AccessManagement.Controllers;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Models;
+using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Utils;
 using Altinn.AccessManagement.TestUtils.Fixtures;
@@ -13,17 +14,16 @@ using Altinn.Authorization.Api.Contracts.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-// Migrated from CustomWebApplicationFactory<PolicyInformationPointController> to ApiFixture
-// as part of Phase 2.2 (Step 16.1 — AccessMgmt.Tests WAF consolidation, Group A easy wins).
-// The tests mock IDelegationMetadataRepository and friends, so the Postgres DB that
-// ApiFixture provisions is unused by this class. See docs/testing/TESTING_INFRASTRUCTURE_OVERHAUL/STEPS_PART_1/AccessMgmt_WAF_Consolidation_Plan_and_POC.md.
+// The tests mock IDelegationMetadataRepository, but the endpoint still resolves
+// parties / context against the provisioned Postgres database, so a real DB is
+// required (this is not a DB-less test).
 namespace Altinn.AccessManagement.Tests.Integration.Controllers;
 
 /// <summary>
 /// Test class for <see cref="PolicyInformationPointController"></see>
 /// </summary>
 [IntegrationTest]
-public class PolicyInformationPointControllerTest : IClassFixture<ApiFixture>
+public class PolicyInformationPointControllerTest : IClassFixture<AccessMgmtApiFixture>
 {
     private readonly HttpClient _client;
     private readonly JsonSerializerOptions options = new JsonSerializerOptions
@@ -35,15 +35,12 @@ public class PolicyInformationPointControllerTest : IClassFixture<ApiFixture>
     /// Initializes a new instance of the <see cref="PolicyInformationPointControllerTest"/> class.
     /// </summary>
     /// <param name="fixture">Shared <see cref="ApiFixture"/>.</param>
-    public PolicyInformationPointControllerTest(ApiFixture fixture)
+    public PolicyInformationPointControllerTest(AccessMgmtApiFixture fixture)
     {
         fixture.WithAppsettings(builder => builder.AddJsonFile("appsettings.test.json", optional: false));
         fixture.ConfigureServices(services =>
         {
             services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
-            services.AddSingleton<IPartiesClient, PartiesClientMock>();
-            services.AddSingleton<IProfileClient, ProfileClientMock>();
-            services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
         });
 
         _client = fixture.CreateClient(new() { AllowAutoRedirect = false });
@@ -79,7 +76,7 @@ public class PolicyInformationPointControllerTest : IClassFixture<ApiFixture>
     /// </summary>
     [Theory]
     [MemberData(nameof(Scenarios))]
-    public async Task GetDelegationChanges_ValidResponse(string scenario)
+    public async Task GetDelegationChanges_ValidRequest_Returns200Ok(string scenario)
     {
         // Act
         HttpResponseMessage actualResponse = await _client.PostAsync($"accessmanagement/api/v1/policyinformation/getdelegationchanges", GetRequest(scenario), TestContext.Current.CancellationToken);

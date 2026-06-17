@@ -1,10 +1,12 @@
 ﻿using System.Collections.Concurrent;
+using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.TestUtils.Factories;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
+using Altinn.Authorization.Testing;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
@@ -13,6 +15,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 
 namespace Altinn.AccessManagement.TestUtils.Fixtures;
 
@@ -44,6 +47,15 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     /// Populated during <see cref="InitializeAsync"/>.
     /// </summary>
     private PostgresDatabase _database = null!;
+
+    /// <summary>
+    /// A syntactically valid Npgsql connection string pointing at an unreachable
+    /// port, used by the no-database tier so the host can build without
+    /// provisioning Postgres. It is never opened (the data layer is mocked); the
+    /// dead port makes any accidental use fail fast.
+    /// </summary>
+    private const string UnusedConnectionString =
+        "Host=127.0.0.1;Port=1;Database=none;Username=none;Password=none";
 
     /// <summary>
     /// Per-key seed gate. Each key (typically the calling test class type) is
@@ -103,14 +115,7 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     {
         var appsettings = new ConfigurationBuilder()
            .AddJsonFile("appsettings.default.json", optional: true)
-           .AddInMemoryCollection(new Dictionary<string, string>
-           {
-               ["PostgreSQLSettings:AuthorizationDbAdminPwd"] = _database.Admin.Password,
-               ["PostgreSQLSettings:AuthorizationDbPwd"] = _database.User.Password,
-               ["PostgreSQLSettings:AdminConnectionString"] = _database.Admin.ToString(),
-               ["PostgreSQLSettings:ConnectionString"] = _database.User.ToString(),
-               ["Logging:LogLevel:*"] = "Error",
-           });
+           .AddInMemoryCollection(DatabaseConfiguration());
 
         foreach (var action in ConfigurationBuilderActions)
         {
@@ -135,6 +140,14 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
             services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProviderMock>();
             services.AddSingleton<IPDP, PermitPdpMock>();
 
+            // Default external-platform client mocks: these are always mocked in
+            // tests, so registering them here removes the identical per-class
+            // ConfigureServices boilerplate. Per-class ConfigureServices runs after
+            // this and still wins for any class that needs a different behaviour.
+            services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
+            services.AddSingleton<IAltinn2ConsentClient, Altinn2ConsentClientMock>();
+            services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
+
             foreach (var configure in ConfigureServicesActions)
             {
                 configure(services);
@@ -143,6 +156,45 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 
         builder.UseConfiguration(appsettings.Build());
     }
+
+    /// <summary>
+    /// Builds the test host. Overridden only to time the build — the dominant
+    /// per-fixture setup cost — via <see cref="FixtureTiming"/>.
+    /// </summary>
+    protected override IHost CreateHost(IHostBuilder builder) =>
+        FixtureTiming.Time(FixtureTiming.Phase.HostBuild, () => base.CreateHost(builder));
+
+    /// <summary>
+    /// Whether to provision a real per-test Postgres database. Override to
+    /// <c>false</c> for tests that mock the entire data layer and never touch
+    /// the database, to skip the clone and the DB connection entirely.
+    /// </summary>
+    protected virtual bool ProvisionsDatabase => true;
+
+    /// <summary>
+    /// Builds the <c>PostgreSQLSettings:*</c> configuration. When a database was
+    /// provisioned it points at the per-test clone; in the no-database tier it
+    /// supplies <see cref="UnusedConnectionString"/> so the host can build
+    /// without Postgres.
+    /// </summary>
+    private Dictionary<string, string> DatabaseConfiguration() =>
+        _database is not null
+            ? new()
+            {
+                ["PostgreSQLSettings:AuthorizationDbAdminPwd"] = _database.Admin.Password,
+                ["PostgreSQLSettings:AuthorizationDbPwd"] = _database.User.Password,
+                ["PostgreSQLSettings:AdminConnectionString"] = _database.Admin.ToString(),
+                ["PostgreSQLSettings:ConnectionString"] = _database.User.ToString(),
+                ["Logging:LogLevel:*"] = "Error",
+            }
+            : new()
+            {
+                ["PostgreSQLSettings:AuthorizationDbAdminPwd"] = "none",
+                ["PostgreSQLSettings:AuthorizationDbPwd"] = "none",
+                ["PostgreSQLSettings:AdminConnectionString"] = UnusedConnectionString,
+                ["PostgreSQLSettings:ConnectionString"] = UnusedConnectionString,
+                ["Logging:LogLevel:*"] = "Error",
+            };
 
     /// <summary>
     /// Registers a callback that modifies the <see cref="IServiceCollection"/>
@@ -339,6 +391,9 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     /// </summary>
     public async ValueTask InitializeAsync()
     {
-        _database = await EFPostgresFactory.Create();
+        if (ProvisionsDatabase)
+        {
+            _database = await FixtureTiming.TimeAsync(FixtureTiming.Phase.DbProvision, () => EFPostgresFactory.Create());
+        }
     }
 }

@@ -54,8 +54,6 @@ public partial class ConnectionsControllerTest
             Fixture = fixture;
             Fixture.ConfigureServices(services =>
             {
-                services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
-                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointWithWrittenPoliciesMock>();
                 services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
             });
@@ -255,7 +253,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task UpdateInstanceRights_WithReadScope_ReturnsForbidden()
+        public async Task UpdateInstanceRights_WithReadScope_Returns403ForReadScope()
         {
             var body = new RightKeyListDto { DirectRightKeys = ["some-key"] };
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
@@ -273,7 +271,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task UpdateInstanceRights_WithToOthersReadScope_ReturnsForbidden()
+        public async Task UpdateInstanceRights_WithToOthersReadScope_Returns403ForToOthersReadScope()
         {
             var body = new RightKeyListDto { DirectRightKeys = ["some-key"] };
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
@@ -291,7 +289,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task UpdateInstanceRights_WithFromOthersWriteScope_ReturnsForbidden()
+        public async Task UpdateInstanceRights_WithFromOthersWriteScope_Returns403ForFromOthersWriteScope()
         {
             var body = new RightKeyListDto { DirectRightKeys = ["some-key"] };
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_WRITE);
@@ -379,7 +377,7 @@ public partial class ConnectionsControllerTest
         /// Expects 401 Unauthorized.
         /// </summary>
         [Fact]
-        public async Task UpdateInstanceRights_WithNoToken_ReturnsUnauthorized()
+        public async Task UpdateInstanceRights_WithNoToken_Returns401ForMissingToken()
         {
             var client = Fixture.Server.CreateClient();
             var body = new RightKeyListDto { DirectRightKeys = ["some-key"] };

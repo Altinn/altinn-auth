@@ -29,7 +29,7 @@ public class Asserter<TModel> : IAssert<TModel>
 
         foreach (var entry in result)
         {
-            foreach (var err in errors)
+            foreach (var err in entry)
             {
                 AddError(errors, err);
             }

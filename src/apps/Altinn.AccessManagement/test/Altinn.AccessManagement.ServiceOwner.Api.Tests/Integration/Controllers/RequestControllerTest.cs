@@ -174,7 +174,7 @@ public class RequestControllerTest
         public ApiFixture Fixture { get; }
 
         [Fact]
-        public async Task CreateRequest_WithResource_Returns202Accepted()
+        public async Task CreateRequest_WithResource_Returns202WithRequestDto()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
@@ -214,7 +214,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task CreateRequest_WithInvalidFromUrn_Returns400()
+        public async Task CreateRequest_WithInvalidFromUrn_Returns400InvalidFromUrn()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
 
@@ -234,7 +234,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task CreateRequest_WithInvalidResourceProvider_Returns400()
+        public async Task CreateRequest_WithInvalidResourceProvider_Returns400ResourceNotOwnedByServiceOwner()
         {
             var client = CreateClient(Fixture, TestData.BakerJohnsen.Entity.OrganizationIdentifier);
             var from = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
@@ -256,7 +256,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task CreateRequest_WithMaskinportenSchemaResource_Returns400()
+        public async Task CreateRequest_WithMaskinportenSchemaResource_Returns400MaskinportenSchemaNotAllowed()
         {
             var client = CreateClient(Fixture, TestData.BakerJohnsen.Entity.OrganizationIdentifier);
             var from = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
@@ -278,7 +278,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task CreateRequest_WithEmptyResourceId_Returns400()
+        public async Task CreateRequest_WithEmptyResourceId_Returns400EmptyResourceId()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var from = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
@@ -316,7 +316,7 @@ public class RequestControllerTest
         public ApiFixture Fixture { get; }
 
         [Fact]
-        public async Task CreateRequest_WithPackage_Returns202Accepted()
+        public async Task CreateRequest_WithPackage_Returns202WithRequestDto()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
@@ -341,7 +341,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task CreateRequest_AndWithdraw_ReturnsOk()
+        public async Task CreateRequest_AndWithdraw_Returns200Ok()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
@@ -373,7 +373,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task CreateRequest_AndOtherSOWithdraw_ReturnsForbidden()
+        public async Task CreateRequest_AndOtherSOWithdraw_Returns403NotOwningServiceOwner()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
@@ -407,7 +407,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task CreateRequest_ApproveAndWithdraw_ReturnsBadRequest()
+        public async Task CreateRequest_ApproveAndWithdraw_Returns400WithdrawNotAllowedForApprovedRequest()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
@@ -447,7 +447,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task CreateRequest_PendingAndWithdraw_ReturnsOk()
+        public async Task CreateRequest_PendingAndWithdraw_Returns200Ok()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
@@ -487,7 +487,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task CreateRequest_WithEmptyPackageUrn_Returns400()
+        public async Task CreateRequest_WithEmptyPackageUrn_Returns400EmptyPackageUrn()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
@@ -663,7 +663,7 @@ public class RequestControllerTest
         public ApiFixture Fixture { get; }
 
         [Fact]
-        public async Task GetRequestStatus_ForExistingRequest_ReturnsOk()
+        public async Task GetRequestStatus_ForExistingRequest_Returns200Ok()
         {
             var client = CreateReadWriteClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
@@ -695,7 +695,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task GetRequestStatus_ForUnknownId_ReturnsBadRequest()
+        public async Task GetRequestStatus_ForUnknownId_Returns400UnknownRequestId()
         {
             var client = CreateReadOnlyClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var unknownId = Guid.NewGuid();
@@ -708,7 +708,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task GetRequestStatus_Unauthenticated_ReturnsUnauthorized()
+        public async Task GetRequestStatus_Unauthenticated_Returns401MissingToken()
         {
             var client = CreateUnauthenticatedClient(Fixture);
 
@@ -758,7 +758,7 @@ public class RequestControllerTest
         public ApiFixture Fixture { get; }
 
         [Fact]
-        public async Task CreateResourceRequest_WithValidQueryParams_Returns202Accepted()
+        public async Task CreateResourceRequest_WithValidQueryParams_Returns202WithRequestDto()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var from = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
@@ -783,7 +783,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task CreateResourceRequest_WithInvalidFromUrn_Returns400()
+        public async Task CreateResourceRequest_WithInvalidFromUrn_Returns400InvalidFromUrn()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var from = "urn:invalid:prefix:12345";
@@ -821,7 +821,7 @@ public class RequestControllerTest
         public ApiFixture Fixture { get; }
 
         [Fact]
-        public async Task CreatePackageRequest_WithKnownPackage_Returns202Accepted()
+        public async Task CreatePackageRequest_WithKnownPackage_Returns202WithRequestDto()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var to = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}";
@@ -846,7 +846,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task CreatePackageRequest_WithInvalidFromUrn_Returns400()
+        public async Task CreatePackageRequest_WithInvalidFromUrn_Returns400InvalidFromUrn()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var from = "urn:invalid:prefix:12345";
@@ -868,7 +868,7 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task CreatePackageRequest_WithInvalidFromType_Returns400()
+        public async Task CreatePackageRequest_WithInvalidFromType_Returns400InvalidFromType()
         {
             var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
             var from = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}";

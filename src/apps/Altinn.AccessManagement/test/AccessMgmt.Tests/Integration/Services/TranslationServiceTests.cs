@@ -225,7 +225,7 @@ public class TranslationServiceTests : IClassFixture<EfDatabaseFixture>
     #region Collection Translation Tests
 
     [Fact]
-    public async Task TranslateCollectionAsync_TranslatesAllItems()
+    public async Task TranslateCollectionAsync_WithEnglish_TranslatesAllItems()
     {
         // Arrange
         var roles = new List<RoleDto>
@@ -422,7 +422,7 @@ public class TranslationServiceTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public void Translate_SynchronousVersion_Works()
+    public void Translate_SynchronousWithEnglish_ReturnsEnglishTranslation()
     {
         // Arrange
         var role = new RoleDto
@@ -443,7 +443,7 @@ public class TranslationServiceTests : IClassFixture<EfDatabaseFixture>
     #region Database Fallback Tests
 
     [Fact]
-    public async Task UpsertTranslationAsync_AddsNewTranslation()
+    public async Task UpsertTranslationAsync_WithNewEntry_PersistsTranslation()
     {
         // Arrange
         var customId = Guid.NewGuid();
@@ -467,7 +467,7 @@ public class TranslationServiceTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task UpsertTranslationAsync_UpdatesExistingTranslation()
+    public async Task UpsertTranslationAsync_WithExistingEntry_UpdatesTranslation()
     {
         // Arrange
         var customId = Guid.NewGuid();
@@ -496,7 +496,7 @@ public class TranslationServiceTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
-    public async Task TranslateAsync_SecondCall_UsesCachedData()
+    public async Task TranslateAsync_SecondCall_ReturnsCachedTranslation()
     {
         // Arrange - Add a custom translation to database
         var customId = Guid.NewGuid();

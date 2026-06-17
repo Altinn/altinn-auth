@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.Authorization.Api.Contracts.Authorization;
 using Microsoft.Extensions.Configuration;
@@ -13,12 +14,13 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers;
 /// Reuses test data from <see cref="TestData"/>.
 /// </summary>
 [IntegrationTest]
-public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<ApiFixture>
+[Collection(PolicyInformationPointDbCollection.Name)]
+public class PolicyInformationPointRolesAndAccessPackagesTest
 {
     private readonly HttpClient _client;
     private readonly JsonSerializerOptions _options = new() { PropertyNameCaseInsensitive = true };
 
-    public PolicyInformationPointRolesAndAccessPackagesTest(ApiFixture fixture)
+    public PolicyInformationPointRolesAndAccessPackagesTest(AccessMgmtApiFixture fixture)
     {
         fixture.WithAppsettings(builder => builder.AddJsonFile("appsettings.test.json", optional: false));
 
@@ -36,7 +38,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task Petter_ShouldGetManagingDirectorRoleAndPackages_FromRegnskaperne()
+    public async Task GetRolesAndAccessPackages_PetterFromRegnskaperne_ReturnsManagingDirectorRolesAndPackages()
     {
         var from = TestData.GetEntity("Regnskaperne").Id;
         var to = TestData.GetEntity("Petter").Id;
@@ -67,7 +69,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task Nina_ShouldGetManagingDirectorRoleAndPackages_ButNotRightholder_FromSkrikFrisor()
+    public async Task GetRolesAndAccessPackages_NinaFromSkrikFrisor_ReturnsManagingDirectorRolesAndPackagesButExcludesRightholder()
     {
         var from = TestData.GetEntity("Skrik Frisør").Id;
         var to = TestData.GetEntity("Nina").Id;
@@ -104,7 +106,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task William_ShouldGetManagingDirectorRoleAndPackages_FromRevi()
+    public async Task GetRolesAndAccessPackages_WilliamFromRevi_ReturnsManagingDirectorRolesAndPackages()
     {
         var from = TestData.GetEntity("Revi").Id;
         var to = TestData.GetEntity("William").Id;
@@ -135,7 +137,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task Terje_ShouldGetChairOfTheBoardRole_FromRevi()
+    public async Task GetRolesAndAccessPackages_TerjeFromRevi_ReturnsChairOfTheBoardRolesAndPackages()
     {
         var from = TestData.GetEntity("Revi").Id;
         var to = TestData.GetEntity("Terje").Id;
@@ -165,7 +167,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task Gunnar_AgentRole_ShouldBeExcluded_FromRegnskaperne()
+    public async Task GetRolesAndAccessPackages_GunnarAgentFromRegnskaperne_ExcludesAgentRole()
     {
         var from = TestData.GetEntity("Regnskaperne").Id;
         var to = TestData.GetEntity("Gunnar").Id;
@@ -182,7 +184,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task Gunnar_ShouldGetAccountantPackages_FromBakerJohnsen_ViaDelegation()
+    public async Task GetRolesAndAccessPackages_GunnarFromBakerJohnsenViaDelegation_ReturnsAccountantPackagesWithoutRoles()
     {
         // Gunnar is Agent of Regnskaperne, and Regnskaperne delegated Baker Johnsen's Accountant role to Gunnar.
         // The delegation flow is: Baker Johnsen→Regnskaperne (Accountant) → Regnskaperne→Gunnar (Agent).
@@ -208,7 +210,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task Petter_ShouldGetAccountantPackages_FromBakerJohnsen_ViaKeyRole()
+    public async Task GetRolesAndAccessPackages_PetterFromBakerJohnsenViaKeyRole_ReturnsAccountantRolesAndPackages()
     {
         // Petter is ManagingDirector of Regnskaperne, and Baker Johnsen has Regnskaperne as Accountant.
         // Through key role access: Baker Johnsen→Regnskaperne (Accountant) + Regnskaperne→Petter (ManagingDirector)
@@ -233,7 +235,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task Terje_ShouldGetPrivatePersonRoleAndInnbyggerPackages_ForHimself()
+    public async Task GetRolesAndAccessPackages_TerjeSelfAssignment_ReturnsPrivatePersonRolesAndInnbyggerPackages()
     {
         // Terje has a PrivatePerson self-assignment (Terje→Terje)
         var from = TestData.GetEntity("Terje").Id;
@@ -262,7 +264,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task NoConnection_ShouldReturnEmptyResult()
+    public async Task GetRolesAndAccessPackages_NoConnection_ReturnsEmpty()
     {
         var from = Guid.NewGuid();
         var to = Guid.NewGuid();
@@ -278,7 +280,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task Petter_DaglOfBusinessManager_ShouldGetNufPackages_FromNufClient()
+    public async Task GetRolesAndAccessPackages_PetterDaglOfBusinessManagerFromNufClient_ReturnsNufPackages()
     {
         // Petter is ManagingDirector of Regnskaperne, and NUF International Corp has Regnskaperne as BusinessManager (FFOR).
         // Through keyrole: NUF International Corp→Regnskaperne (FFOR) + Regnskaperne→Petter (DAGL)
@@ -309,7 +311,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task Petter_DaglOfBusinessManager_ShouldNotGetNufPackages_FromNonNufClient()
+    public async Task GetRolesAndAccessPackages_PetterDaglOfBusinessManagerFromNonNufClient_ExcludesNufPackages()
     {
         // Petter is ManagingDirector of Regnskaperne, and Non-NUF Client AS has Regnskaperne as BusinessManager (FFOR).
         // Through keyrole: Non-NUF Client AS→Regnskaperne (FFOR) + Regnskaperne→Petter (DAGL)
@@ -338,7 +340,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task GetAccessPackages_BusinessManagerOrg_ShouldGetNufPackages_FromNufClient()
+    public async Task GetAccessPackages_BusinessManagerOrgFromNufClient_ReturnsNufPackages()
     {
         // Regnskaperne is BusinessManager (FFOR) for NUF International Corp.
         // The accesspackages endpoint should return NUF-specific packages.
@@ -365,7 +367,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task GetAccessPackages_BusinessManagerOrg_ShouldNotGetNufPackages_FromNonNufClient()
+    public async Task GetAccessPackages_BusinessManagerOrgFromNonNufClient_ExcludesNufPackages()
     {
         // Regnskaperne is BusinessManager (FFOR) for Non-NUF Client AS.
         // The accesspackages endpoint should NOT return NUF-specific packages.
@@ -392,7 +394,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task Siri_ContactPersonNUF_ShouldGetServicesNufAndAccessManager_FromNufOrg()
+    public async Task GetRolesAndAccessPackages_SiriContactPersonNufFromNufOrg_ReturnsServicesNufAndAccessManagerPackages()
     {
         // Siri is ContactPersonNUF of NUF International Corp.
         // ContactPersonNUF should get ServicesNUF (no entity variant filter) and AccessManager (tilgangsstyrer).
@@ -428,7 +430,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task Lars_NorwegianRepresentativeForeignEntity_ShouldGetServicesNufAndAccessManager_FromNufOrg()
+    public async Task GetRolesAndAccessPackages_LarsNorwegianRepresentativeFromNufOrg_ReturnsServicesNufAndAccessManagerPackages()
     {
         // Lars is NorwegianRepresentativeForeignEntity of NUF International Corp.
         // NorwegianRepresentativeForeignEntity should get ServicesNUF (no entity variant filter) and AccessManager (tilgangsstyrer).

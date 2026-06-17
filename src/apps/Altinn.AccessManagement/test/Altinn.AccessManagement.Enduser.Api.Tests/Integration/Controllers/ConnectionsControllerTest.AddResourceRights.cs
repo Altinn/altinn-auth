@@ -64,8 +64,6 @@ public partial class ConnectionsControllerTest
             Fixture = fixture;
             Fixture.ConfigureServices(services =>
             {
-                services.AddSingleton<IAltinn2RightsClient, Altinn2RightsClientMock>();
-                services.AddSingleton<IResourceRegistryClient, ResourceRegistryClientMock>();
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
                 services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
             });
@@ -124,7 +122,7 @@ public partial class ConnectionsControllerTest
         /// Uses valid right keys obtained from delegation check. Expects 201 Created.
         /// </summary>
         [Fact]
-        public async Task AddResourceRights_AsMalinForDumboToMille_WithValidRightKeys_ReturnsCreated()
+        public async Task AddResourceRights_AsMalinForDumboToMille_WithValidRightKeys_Returns201WithDelegatedResourceRights()
         {
             List<string> rightKeys = await GetDelegatableRightKeys("app_skd_sirius-skattemelding-v1");
             Assert.NotEmpty(rightKeys);
@@ -198,7 +196,7 @@ public partial class ConnectionsControllerTest
         /// Expects 400 BadRequest with an invalid resource error.
         /// </summary>
         [Fact]
-        public async Task AddResourceRights_WithInvalidResource_ReturnsBadRequest()
+        public async Task AddResourceRights_WithInvalidResource_Returns400ForInvalidResource()
         {
             var body = new RightKeyListDto { DirectRightKeys = ["some-fake-right-key"] };
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
@@ -216,7 +214,7 @@ public partial class ConnectionsControllerTest
         /// The service requires an existing connection. Expects 400 BadRequest.
         /// </summary>
         [Fact]
-        public async Task AddResourceRights_ToPartyWithNoConnection_ReturnsBadRequest()
+        public async Task AddResourceRights_ToPartyWithNoConnection_Returns400ForMissingConnection()
         {
             List<string> rightKeys = await GetDelegatableRightKeys("app_skd_sirius-skattemelding-v1");
             Assert.NotEmpty(rightKeys);
@@ -237,7 +235,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task AddResourceRights_WithReadScope_ReturnsForbidden()
+        public async Task AddResourceRights_WithReadScope_Returns403ForReadScope()
         {
             var body = new RightKeyListDto { DirectRightKeys = ["some-key"] };
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
@@ -255,7 +253,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task AddResourceRights_WithFromOthersWriteScope_ReturnsForbidden()
+        public async Task AddResourceRights_WithFromOthersWriteScope_Returns403ForFromOthersWriteScope()
         {
             var body = new RightKeyListDto { DirectRightKeys = ["some-key"] };
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_WRITE);
@@ -273,7 +271,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task AddResourceRights_WithToOthersReadScope_ReturnsForbidden()
+        public async Task AddResourceRights_WithToOthersReadScope_Returns403ForToOthersReadScope()
         {
             var body = new RightKeyListDto { DirectRightKeys = ["some-key"] };
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);

@@ -7,7 +7,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Helpers.Extensions
     public class EnumExtensionTest
     {
         [Fact]
-        public void ConvertEnumMemberValueStringToEnum()
+        public void EnumValue_ValidMemberValueString_ReturnsTrueAndEnum()
         {
             string enumMemberValueString = "urn:altinn:person:uuid";
             bool result = EnumExtensions.EnumValue<UuidType>(enumMemberValueString, out UuidType enumValue);

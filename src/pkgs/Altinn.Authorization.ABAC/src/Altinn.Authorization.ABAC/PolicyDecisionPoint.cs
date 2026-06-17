@@ -116,8 +116,16 @@ namespace Altinn.Authorization.ABAC
                     if (policy.RuleCombiningAlgId.Equals(XacmlConstants.CombiningAlgorithms.RuleDenyOverrides)
                         && decision.Equals(XacmlContextDecision.Deny))
                     {
-                        contextResult = new XacmlContextResult(XacmlContextDecision.Deny);
-                        break;
+                        // Deny-overrides: a single matching Deny is decisive, so return it directly.
+                        // Breaking out of the loop instead would fall through to the post-loop result,
+                        // which rebuilds the response from overallDecision (still NotApplicable here)
+                        // and would silently discard this Deny.
+                        contextResult = new XacmlContextResult(XacmlContextDecision.Deny)
+                        {
+                            Status = new XacmlContextStatus(XacmlContextStatusCode.Success),
+                        };
+                        this.AddRequestAttributes(decisionRequest, contextResult);
+                        return new XacmlContextResponse(contextResult);
                     }
                     else if (decision.Equals(XacmlContextDecision.Permit))
                     {

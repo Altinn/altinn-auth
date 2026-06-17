@@ -210,7 +210,7 @@ public class PackagesControllerTest
     }
 
     [Fact]
-    public async Task Search_WithInvalidTypeName_ReturnsProblem()
+    public async Task Search_WithInvalidTypeName_Returns500InvalidTypeName()
     {
         var serviceMock = new Mock<IPackageService>();
         var controller = CreateController(serviceMock.Object, PassThroughTranslation().Object);
@@ -290,7 +290,7 @@ public class PackagesControllerTest
 
     // ── GetGroup ────────────────────────────────────────────────────────────
     [Fact]
-    public async Task GetGroup_WhenFound_Returns200Ok()
+    public async Task GetGroup_WhenFound_Returns200WithGroup()
     {
         var id = Guid.NewGuid();
         var serviceMock = new Mock<IPackageService>();
@@ -310,7 +310,7 @@ public class PackagesControllerTest
     }
 
     [Fact]
-    public async Task GetGroup_WhenNotFound_Returns404()
+    public async Task GetGroup_WhenNotFound_Returns404UnknownGroupId()
     {
         var serviceMock = new Mock<IPackageService>();
         serviceMock.Setup(s => s.GetAreaGroup(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))

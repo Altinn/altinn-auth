@@ -37,12 +37,12 @@ namespace Altinn.AccessManagement.Tests.Fixtures;
 /// </para>
 /// <para>
 /// Currently the Yuniql pipeline runs once per test database (on host build),
-/// not once per template. If that cost ever becomes a bottleneck, the
-/// template-level alternative (Option 1 in the 16.4 investigation doc) can
-/// be adopted without changing this fixture's public surface.
+/// not once per template. If that cost ever becomes a bottleneck, moving the
+/// Yuniql migration into the template build is possible without changing this
+/// fixture's public surface.
 /// </para>
 /// </remarks>
-public class LegacyApiFixture : ApiFixture
+public class LegacyApiFixture : AccessMgmtApiFixture
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="LegacyApiFixture"/> class.

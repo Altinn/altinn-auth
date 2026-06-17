@@ -34,7 +34,7 @@ public class InternalConnectionsControllerTest
     #region GetConnections
 
     [Fact]
-    public async Task GetConnections_Success_ReturnsOk()
+    public async Task GetConnections_Success_Returns200WithConnections()
     {
         var svc = new Mock<IConnectionService>();
         svc.Setup(s => s.Get(Party, Party, To, true, true, false, false, false, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
@@ -62,7 +62,7 @@ public class InternalConnectionsControllerTest
     #region AddAssignment
 
     [Fact]
-    public async Task AddAssignment_Success_ReturnsOk()
+    public async Task AddAssignment_Success_Returns200WithAssignment()
     {
         var svc = new Mock<IConnectionService>();
         svc.Setup(s => s.AddRightholder(Party, To, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
@@ -90,7 +90,7 @@ public class InternalConnectionsControllerTest
     #region RemoveAssignment
 
     [Fact]
-    public async Task RemoveAssignment_Success_ReturnsNoContent()
+    public async Task RemoveAssignment_Success_Returns204NoContent()
     {
         var svc = new Mock<IConnectionService>();
         svc.Setup(s => s.RemoveAssignment(Party, To, false, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
@@ -118,7 +118,7 @@ public class InternalConnectionsControllerTest
     #region GetPackages
 
     [Fact]
-    public async Task GetPackages_Success_ReturnsOk()
+    public async Task GetPackages_Success_Returns200WithPackages()
     {
         var svc = new Mock<IConnectionService>();
         svc.Setup(s => s.GetPackages(Party, Party, To, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
@@ -146,7 +146,7 @@ public class InternalConnectionsControllerTest
     #region AddPackages
 
     [Fact]
-    public async Task AddPackages_ByGuid_Success_ReturnsOk()
+    public async Task AddPackages_ByGuid_Success_Returns200WithPackage()
     {
         var packageId = Guid.NewGuid();
         var svc = new Mock<IConnectionService>();
@@ -159,7 +159,7 @@ public class InternalConnectionsControllerTest
     }
 
     [Fact]
-    public async Task AddPackages_ByString_Success_ReturnsOk()
+    public async Task AddPackages_ByString_Success_Returns200WithPackage()
     {
         var svc = new Mock<IConnectionService>();
         svc.Setup(s => s.AddPackage(Party, To, "urn:some:package", It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
@@ -187,7 +187,7 @@ public class InternalConnectionsControllerTest
     #region RemovePackages
 
     [Fact]
-    public async Task RemovePackages_ByGuid_Success_ReturnsNoContent()
+    public async Task RemovePackages_ByGuid_Success_Returns204NoContent()
     {
         var packageId = Guid.NewGuid();
         var svc = new Mock<IConnectionService>();
@@ -200,7 +200,7 @@ public class InternalConnectionsControllerTest
     }
 
     [Fact]
-    public async Task RemovePackages_ByString_Success_ReturnsNoContent()
+    public async Task RemovePackages_ByString_Success_Returns204NoContent()
     {
         var svc = new Mock<IConnectionService>();
         svc.Setup(s => s.RemovePackage(Party, To, "urn:some:package", It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
