@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Net.Http;
 using System.Net.Mime;
 using System.Security.Claims;
 using Altinn.AccessManagement.Api.Enduser.Models;
@@ -295,6 +294,21 @@ public class RequestController(
         }
 
         var authUserUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
+
+        if (request.From.Id == authUserUuid) //User is authorizing his own request, check if he is mainadmin
+        {
+            // Check pdp is mainadmin
+            bool isMainAdmin = await AuthorizeResourceAccess("altinn_access_management_hovedadmin", request.To.Id, User, "write");
+            if (!isMainAdmin)
+            {
+                errorBuilder.Add(ValidationErrors.RequestFromSelfNotAllowed);
+            }
+
+            if (errorBuilder.TryBuild(out problem))
+            {
+                return problem.ToActionResult();
+            }
+        }
 
         // Guaranteed non-null here: TryBuild above returned false, so the null/auth check passed.
         return request!.Type switch
