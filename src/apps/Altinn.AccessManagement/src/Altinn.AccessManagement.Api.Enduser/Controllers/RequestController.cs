@@ -293,7 +293,7 @@ public class RequestController(
             return problem.ToActionResult();
         }
 
-        var authUserUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
+        var authUserUuid = AuthenticationHelper.GetAuthenticatedPartyUuid(HttpContext);
 
         if (request.From.Id == authUserUuid) //User is authorizing his own request, check if he is mainadmin
         {
@@ -363,7 +363,7 @@ public class RequestController(
     {
         ValidationErrorBuilder errorBuilder = default;
 
-        var authUserUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
+        var authUserUuid = AuthenticationHelper.GetAuthenticatedPartyUuid(HttpContext);
         var (hasConnections, _) = await connectionQuery.HasConnection(to, party);
         if (!hasConnections)
         {
@@ -446,7 +446,7 @@ public class RequestController(
     {
         ValidationErrorBuilder errorBuilder = default;
 
-        var authUserUuid = AuthenticationHelper.GetPartyUuid(HttpContext);
+        var authUserUuid = AuthenticationHelper.GetAuthenticatedPartyUuid(HttpContext);
         var (hasConnections, _) = await connectionQuery.HasConnection(to, party);
         if (!hasConnections)
         {
