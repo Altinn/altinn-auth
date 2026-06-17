@@ -61,6 +61,11 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
         {
             try
             {
+                if (page?.Content?.Data?.Count() == 0)
+                {
+                    break;
+                }
+
                 if (page.IsProblem)
                 {
                     Log.ResponseError(_logger, page.StatusCode);
@@ -116,7 +121,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
 
                 if (string.IsNullOrEmpty(page?.Content?.Links?.Next))
                 {
-                    return;
+                    break;
                 }
 
                 if (flushed > 0)
@@ -124,7 +129,6 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                     leaseData.RoleStreamNextPageLink = page.Content.Links.Next;
                     await lease.Update(leaseData, cancellationToken);
                 }
-
             }
             catch (Exception ex)
             {

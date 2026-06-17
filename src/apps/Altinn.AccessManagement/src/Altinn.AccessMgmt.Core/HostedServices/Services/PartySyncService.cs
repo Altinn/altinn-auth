@@ -65,6 +65,11 @@ public class PartySyncService : BaseSyncService, IPartySyncService
         {
             try
             {
+                if (page?.Content?.Data?.Count() == 0)
+                {
+                    break;
+                }
+
                 if (page.IsProblem)
                 {
                     Log.ResponseError(_logger, page.StatusCode);
@@ -113,7 +118,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
 
                 if (string.IsNullOrEmpty(page?.Content?.Links?.Next))
                 {
-                    return;
+                    break;
                 }
 
                 if (flushed > 0)
