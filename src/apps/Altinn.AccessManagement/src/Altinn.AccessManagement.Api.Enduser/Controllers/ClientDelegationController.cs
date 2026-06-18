@@ -178,10 +178,11 @@ public class ClientDelegationController(
     public async Task<IActionResult> GetClients(
         [FromQuery(Name = "party")][Required] Guid party,
         [FromQuery(Name = "roles")] List<string>? roles,
+        [FromQuery(Name = "packages")] List<string>? packages,
         [FromQuery, FromHeader] PagingInput paging,
         CancellationToken cancellationToken = default)
     {
-        var result = await clientDelegationService.GetClients(party, roles, cancellationToken);
+        var result = await clientDelegationService.GetClients(party, roles, packages, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();
