@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Altinn.AccessMgmt.Core.Extensions;
@@ -207,7 +207,11 @@ public class InstanceAddedNotificationHandler(
                 access.Append($"<ul>");
                 foreach (var instanceId in instance.InstanceIds)
                 {
-                    access.Append($"<li>{instanceId}</li>");
+                    var instanceSuffix = instanceId
+                        .Split("-")
+                        .Last();
+
+                    access.Append($"<li>ID: {instanceSuffix}</li>");
                 }
 
                 access.Append($"</ul>");
