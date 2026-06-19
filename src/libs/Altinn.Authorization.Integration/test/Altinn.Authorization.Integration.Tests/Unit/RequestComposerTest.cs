@@ -185,4 +185,38 @@ public class RequestComposerTest
         var request = RequestComposer.New(RequestComposer.WithJWTToken(token!));
         Assert.False(request.Headers.Contains("Authorization"));
     }
+
+    // ── WithBasicAuth ─────────────────────────────────────────────────────────
+    [Fact]
+    public void WithBasicAuth_ValidCredentials_SetsBasicAuthorizationHeader()
+    {
+        var request = RequestComposer.New(RequestComposer.WithBasicAuth("user", "pass"));
+
+        Assert.Equal("Basic", request.Headers.Authorization!.Scheme);
+        Assert.Equal(
+            Convert.ToBase64String(Encoding.UTF8.GetBytes("user:pass")),
+            request.Headers.Authorization.Parameter);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void WithBasicAuth_NullOrWhitespaceUsername_Throws(string? username)
+    {
+        // null throws ArgumentNullException, empty/whitespace throws
+        // ArgumentException — ThrowsAny covers both (the subclass included).
+        Assert.ThrowsAny<ArgumentException>(() =>
+            RequestComposer.New(RequestComposer.WithBasicAuth(username!, "pass")));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void WithBasicAuth_NullOrWhitespacePassword_Throws(string? password)
+    {
+        Assert.ThrowsAny<ArgumentException>(() =>
+            RequestComposer.New(RequestComposer.WithBasicAuth("user", password!)));
+    }
 }
