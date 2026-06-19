@@ -9,6 +9,13 @@
 
     <ItemGroup>
         <PackageReference Include="Aspire.Hosting.AppHost" />
+
+        <!-- Pin MessagePack above the 2.5.192 that Aspire 9.5.2 pulls in transitively,
+             to clear CVE-2026-48109 (GHSA-hv8m-jj95-wg3x): an out-of-bounds read in LZ4
+             decompression. Same 2.5.x line, so it stays compatible with Aspire's
+             orchestration. Remove when the repo moves to Aspire >= 13.x (which ships a
+             patched MessagePack). -->
+        <PackageReference Include="MessagePack" />
     </ItemGroup>
 
     <ItemGroup>
