@@ -1,14 +1,12 @@
-﻿using Altinn.AccessManagement.Core.Constants;
-using Altinn.AccessManagement.Core.Enums;
+﻿using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessManagement.Core.Models.Register;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Enums;
 using Altinn.AccessManagement.Models;
 using Altinn.Authorization.ABAC.Constants;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Platform.Register.Models;
-using Altinn.Urn;
-using Altinn.Urn.Json;
 
 namespace Altinn.AccessManagement.Mappers
 {
@@ -43,7 +41,9 @@ namespace Altinn.AccessManagement.Mappers
                 .ForMember(dest => dest.Reference, act => act.MapFrom(src => src.Reference));
             CreateMap<AttributeMatch, AttributeMatchExternal>();
             CreateMap<AttributeMatchExternal, AttributeMatch>();
+            CreateMap<BaseAttribute, AttributeDto>();
             CreateMap<BaseAttribute, BaseAttributeExternal>();
+            CreateMap<AttributeDto, BaseAttribute>();
             CreateMap<BaseAttributeExternal, BaseAttribute>();
             CreateMap<PolicyAttributeMatch, PolicyAttributeMatchExternal>();
             CreateMap<PolicyAttributeMatchExternal, PolicyAttributeMatch>();
@@ -79,13 +79,13 @@ namespace Altinn.AccessManagement.Mappers
             CreateMap<DelegationChange, DelegationChangeExternal>();
             CreateMap<DelegationChangeType, DelegationChangeTypeExternal>();
 
-            CreateMap<AuthorizedParty, AuthorizedPartyExternal>();
-            CreateMap<AuthorizedParty.AuthorizedResourceInstance, AuthorizedPartyExternal.AuthorizedResourceInstance>();
-            CreateMap<AuthorizedPartyType, AuthorizedPartyTypeExternal>();
+            CreateMap<AuthorizedParty, AuthorizedPartyDto>();
+            CreateMap<AuthorizedParty.AuthorizedResourceInstance, AuthorizedPartyDto.AuthorizedResourceInstance>();
+            CreateMap<AuthorizedPartyType, AuthorizedPartyTypeDto>();
             CreateMap<AppsInstanceDelegationRequestDto, AppsInstanceDelegationRequest>()
                 .ForMember(dest => dest.From, act => act.MapFrom(src => src.From.Value))
                 .ForMember(dest => dest.To, act => act.MapFrom(src => src.To.Value));
-            CreateMap<RightDto, RightInternal>()
+            CreateMap<Models.RightDto, RightInternal>()
                 .ForMember(dest => dest.Action, act => act.MapFrom(src => src.Action.Value));
             CreateMap<AppsInstanceDelegationResponse, AppsInstanceDelegationResponseDto>();
             CreateMap<InstanceRightDelegationResult, RightDelegationResultDto>();

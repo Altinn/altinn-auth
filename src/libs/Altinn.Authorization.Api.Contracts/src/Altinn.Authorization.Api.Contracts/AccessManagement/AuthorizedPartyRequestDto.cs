@@ -1,13 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace Altinn.AccessManagement.Models;
+namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 
 /// <summary>
 /// This model describes a an Attribute consisting of an Attribute Type and Attribute Value which can also be represented as a Urn by combining the properties as '{type}:{value}'
 /// It's used both for external API input/output but also internally for working with attributes and matching to XACML-attributes used in policies, indentifying for instance a resource, a user, a party or an action.
 /// </summary>
-public class AuthorizedPartyRequest
+public class AuthorizedPartyRequestDto
 {
     /// <summary>
     /// Gets or sets the attribute id for the match
@@ -27,5 +27,5 @@ public class AuthorizedPartyRequest
     /// Gets or sets a set of attribute values for filtering for specific authorized parties
     /// </summary>
     [JsonPropertyName("partyFilter")]
-    public IEnumerable<BaseAttributeExternal> PartyFilter { get; set; } = null;
+    public IEnumerable<AttributeDto> PartyFilter { get; set; } = null;
 }

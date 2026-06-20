@@ -1,12 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-    <ItemGroup>
-        <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+	<ItemGroup>
+		<PackageReference Include="Microsoft.FeatureManagement.AspNetCore" />
+		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
 		<PackageReference Include="Swashbuckle.AspNetCore.Filters" />
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
-    </ItemGroup>
+	</ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Api.Contracts\src\Altinn.Authorization.Api.Contracts\Altinn.Authorization.Api.Contracts.csproj" />
       <ProjectReference Include="..\Altinn.AccessManagement.Core\Altinn.AccessManagement.Core.csproj" />
       <ProjectReference Include="..\Altinn.AccessMgmt.Core\Altinn.AccessMgmt.Core.csproj" />
     </ItemGroup>

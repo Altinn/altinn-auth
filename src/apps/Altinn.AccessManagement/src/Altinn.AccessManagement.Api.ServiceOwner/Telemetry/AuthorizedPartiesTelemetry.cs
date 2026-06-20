@@ -1,9 +1,9 @@
-using System.Diagnostics.Metrics;
+﻿using System.Diagnostics.Metrics;
 
 namespace Altinn.AccessManagement.Telemetry
 {
     /// <summary>
-    /// Telemetry definitions for the resource owner AuthorizedParties API, exposing metrics that
+    /// Telemetry definitions for the service owner AuthorizedParties API, exposing metrics that
     /// attribute usage back to the calling service owner so that volume can be allocated per
     /// tjenesteier.
     /// </summary>

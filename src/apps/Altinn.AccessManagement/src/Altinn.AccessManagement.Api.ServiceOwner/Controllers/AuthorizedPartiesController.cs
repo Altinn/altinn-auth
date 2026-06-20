@@ -1,32 +1,31 @@
 ﻿using System.Diagnostics;
 using System.Net.Mime;
-using Altinn.AccessManagement.Api.Enterprise.Utils;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
-using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Telemetry;
 using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.FeatureManagement.Mvc;
 
-namespace Altinn.AccessManagement.Controllers;
+namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers;
 
 /// <summary>
 /// Controller responsible for all operations for retrieving AuthorizedParties list for a user / organization / system
 /// </summary>
 [ApiController]
 [Route("accessmanagement/api/v1/resourceowner")]
-public class ResourceOwnerAuthorizedPartiesController(
-    ILogger<ResourceOwnerAuthorizedPartiesController> logger,
-    IMapper mapper,
+[Route("accessmanagement/api/v1/serviceowner")]
+public class AuthorizedPartiesController(
+    ILogger<AuthorizedPartiesController> logger,
     [FromKeyedServices("newConnectionQueryOnlyImplementation")] IAuthorizedPartiesService newConnectionQueryOnlyImplementation,
     [FromKeyedServices("oldDelegationMetadataEfImplementation")] IAuthorizedPartiesService oldDelegationMetadataEfImplementation,
     IProviderService providerService,
@@ -59,13 +58,13 @@ public class ResourceOwnerAuthorizedPartiesController(
     [Route("authorizedparties")]
     [Consumes(MediaTypeNames.Application.Json)]
     [Produces(MediaTypeNames.Application.Json)]
-    [ProducesResponseType(typeof(List<AuthorizedPartyExternal>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<AuthorizedPartyDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     [FeatureGate(FeatureFlags.RightsDelegationApi)]
-    public async Task<ActionResult<List<AuthorizedPartyExternal>>> GetAuthorizedPartiesAsServiceOwner(
-        [FromBody] AuthorizedPartyRequest subject,
+    public async Task<ActionResult<List<AuthorizedPartyDto>>> GetAuthorizedPartiesAsServiceOwner(
+        [FromBody] AuthorizedPartyRequestDto subject,
         [FromQuery] bool includeAltinn2 = false,
         [FromQuery] bool includeAltinn3 = true,
         [FromQuery] bool includeRoles = true,
@@ -143,7 +142,8 @@ public class ResourceOwnerAuthorizedPartiesController(
             }
 
             List<AuthorizedParty> authorizedParties = await authorizedPartiesService.GetAuthorizedParties(subjectAttribute, filters, cancellationToken);
-            return mapper.Map<List<AuthorizedPartyExternal>>(authorizedParties);
+            
+            return DtoMapper.ConvertToAuthorizedPartiesDto(authorizedParties).ToList();
         }
         catch (ArgumentException ex)
         {
@@ -180,7 +180,7 @@ public class ResourceOwnerAuthorizedPartiesController(
         catch (Exception ex)
         {
             // Telemetry must never break the AuthorizedParties flow.
-            logger.LogWarning(ex, "// ResourceOwnerAuthorizedPartiesController // RecordResourceOwnerRequestMetric // Failed to record resource owner AuthorizedParties metric");
+            logger.LogWarning(ex, "// ServiceOwnerAuthorizedPartiesController // RecordResourceOwnerRequestMetric // Failed to record resource owner AuthorizedParties metric");
         }
     }
 
