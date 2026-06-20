@@ -31,6 +31,70 @@ against Podman (`maxParallelThreads = 4`):
   repo-wide figure cited in #3379 is 111 `IClassFixture` / 85 `ApiFixture`,
   every one a separate cold host build.
 
+## Cross-assembly (CI) — the DB-provision blind spot
+
+The measurement above covers `AccessMgmt.Tests` only, where host build dominates and
+the DB layer is cheap. The per-assembly `FixtureTiming` now printed in CI shows that
+conclusion does **not** generalise: the other assemblies are `db_provision`-bound.
+
+| Assembly | host_build (n) | db_provision (n) | summed ÷ n † |
+|---|---:|---:|---:|
+| AccessMgmt.Tests | 84.7 s (65) | 66.9 s (64) | ~1.0 s |
+| Enduser.Api.Tests | 148.3 s (46) | 125.7 s (46) | ~2.7 s |
+| ServiceOwner.Api.Tests | 44.7 s (9) | 119.1 s (9) | ~13 s |
+| AccessMgmt.Core.Tests | 22.6 s (4) | 121.9 s (4) | ~30 s |
+| Internal.Api.Tests | 3.3 s (1) | 32.3 s (1) | ~32 s |
+
+† Not per-fixture work. `db_provision` is summed across concurrently-initialising
+fixtures and includes `provision_wait` (time blocked on the one-time template build), so
+this column overstates real cost where `n > 1` — see the sub-phase breakdown below.
+
+The summed `db_provision` exceeds host build across the vertical, and the apparent
+per-provision cost ranges from ~1 s to ~30 s. That "~30 s per provision" reading turned out
+to be an artifact: `db_provision` is a sum across fixtures that init concurrently, and it
+includes the time each fixture spends **blocked on the engine's provisioning lock** while
+the first fixture builds the one-time template. The sub-phase breakdown below isolates that
+wait (`provision_wait`) from real work and shows the provision-bound figure is mostly
+contention, not per-fixture migrate-and-seed. So the #3379 lever for these assemblies is to
+stop serialising every fixture behind a single cold template build at startup (warm the
+template once, up front, or shorten it), not to move them onto a clone path they already
+use. The parallelism decision below was measured on `AccessMgmt.Tests` only and should be
+re-checked for the provision-bound assemblies, where the limiter is this startup gate.
+
+### What `db_provision` is made of (sub-phase breakdown)
+
+`FixtureTiming` now splits the previously-opaque provision into its constituents, so the
+`db_provision` total above can be attributed rather than guessed at. The
+`===FIXTURE_TIMING===` line carries four extra buckets:
+
+- `server_start_ms` — one-time container acquire/start (image readiness), inside
+  `db_provision` but outside the template build.
+- `migrate_ms` / `seed_ms` — the EF migrate and the data seed, the two halves of the
+  one-time `template_build`.
+- `provision_wait_ms` — time blocked on the engine's provisioning lock. When fixtures
+  init concurrently, all but the first wait here while the one-time template build runs.
+
+The `AccessMgmt.Core.Tests` integration lane (4 `ApiFixture`s, `maxParallelThreads = 4`,
+local Podman) decomposes its `db_provision` exactly:
+
+| Bucket | Time | Share of `db_provision` (68.0 s) |
+|---|---:|---|
+| `provision_wait` (blocked on the lock) | 49.9 s | **~73%** |
+| `template_build` (one-time) | 12.5 s | ~18% |
+| — of which `migrate` | 11.2 s | dominant |
+| — of which `seed` | 0.3 s | negligible |
+| `server_start` (one-time) | 4.1 s | ~6% |
+| `clone` (4×) | 1.5 s | ~2% |
+
+Two findings. First, `migrate` runs **once** (not per fixture) and clones are cheap
+(~0.4 s each): the template **is** shared, so these assemblies do not, in fact, migrate-and-seed
+per fixture. Second, ~73% of the summed `db_provision` is `provision_wait` — three fixtures
+sitting behind the lock while the first does the ~16 s cold build (`migrate` + `server_start`).
+The real provisioning work is ~18 s, which is why the lane's wall-clock is ~32 s, not 68 s.
+So the actionable cost is the **single cold template build that serialises startup**, and
+within it `migrate` dominates (`seed` is negligible). The full-suite per-assembly
+decomposition now lands in the CI `Setup-timing breakdown` log automatically.
+
 ## Prototype: fixture sharing (validated)
 
 Sharing one host across a read-only, additive-seed cohort via
@@ -150,4 +214,6 @@ dotnet test src/apps/Altinn.AccessManagement/test/AccessMgmt.Tests/AccessMgmt.Te
 ```
 
 Numbers are from local Podman; absolute values differ on CI hardware, but the
-**ratio** (host build ≫ clone) is the hardware-independent finding.
+**ratio** (host build ≫ clone) is the hardware-independent finding for
+`AccessMgmt.Tests`. It does not hold vertical-wide — see the cross-assembly
+section above, where the other assemblies are `db_provision`-bound.

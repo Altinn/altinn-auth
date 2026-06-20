@@ -237,13 +237,13 @@ public partial class ConnectionsControllerTest
             Assert.NotNull(result);
 
             HashSet<Guid> toIds = [];
-foreach (var role in result.Items)
-{
-    foreach (var permission in role.Permissions)
-    {
-        toIds.Add(permission.To.Id);
-    }
-}
+            foreach (var role in result.Items)
+            {
+                foreach (var permission in role.Permissions)
+                {
+                    toIds.Add(permission.To.Id);
+                }
+            }
 
             Assert.NotEmpty(toIds);
             Assert.Equal(4, toIds.Count);

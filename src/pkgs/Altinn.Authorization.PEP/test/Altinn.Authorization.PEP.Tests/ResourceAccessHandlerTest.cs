@@ -210,17 +210,17 @@ namespace Altinn.Authorization.PEP.Tests
             httpContext.Request.RouteValues.Add("party", party);
             if (!string.IsNullOrEmpty(orgHeader))
             {
-                httpContext.Request.Headers.Add("Altinn-Party-OrganizationNumber", orgHeader);
+                httpContext.Request.Headers["Altinn-Party-OrganizationNumber"] = orgHeader;
             }
 
             if (!string.IsNullOrEmpty(ssnHeader))
             {
-                httpContext.Request.Headers.Add("Altinn-Party-SocialSecurityNumber", ssnHeader);
+                httpContext.Request.Headers["Altinn-Party-SocialSecurityNumber"] = ssnHeader;
             }
 
             if (!string.IsNullOrEmpty(xForwardedForHeader))
             {
-                httpContext.Request.Headers.Add("x-forwarded-for", xForwardedForHeader);
+                httpContext.Request.Headers["x-forwarded-for"] = xForwardedForHeader;
             }
 
             return httpContext;

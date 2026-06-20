@@ -317,14 +317,14 @@ public class ClientDelegationControllerTest
             return client;
         }
 
-        [Fact(Skip = "PDP returns 500 if party is missing")]
-        public async Task ListClient_ForOrganizationMissingPartyParam_Returns400WhenPartyParamMissing()
+        [Fact]
+        public async Task ListClient_ForOrganizationMissingPartyParam_Returns403Forbidden()
         {
             var client = CreateClient();
 
             var result = await client.GetAsync($"{Route}/clients", TestContext.Current.CancellationToken);
 
-            Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+            Assert.Equal(HttpStatusCode.Forbidden, result.StatusCode);
         }
 
         [Fact]
@@ -555,14 +555,14 @@ public class ClientDelegationControllerTest
 
         public ApiFixture Fixture { get; }
 
-        [Fact(Skip = "PDP returns 500 if party is missing")]
-        public async Task ListAgents_ForOrganizationMissingPartyParam_Returns400WhenPartyParamMissing()
+        [Fact]
+        public async Task ListAgents_ForOrganizationMissingPartyParam_Returns403Forbidden()
         {
             var client = CreateClient();
 
-            var response = await client.GetAsync($"{Route}/clients", TestContext.Current.CancellationToken);
+            var response = await client.GetAsync($"{Route}/agents", TestContext.Current.CancellationToken);
 
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         }
 
         [Fact]

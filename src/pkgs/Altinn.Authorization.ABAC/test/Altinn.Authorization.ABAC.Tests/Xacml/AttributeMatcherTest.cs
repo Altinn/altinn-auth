@@ -56,9 +56,9 @@ public class AttributeMatcherTest
     [Theory]
     [InlineData("5", "5", true)]
     [InlineData("5", "6", false)]
-    [InlineData("007", "7", true)]  // numeric equality, not string equality
-    [InlineData("x", "5", false)]   // non-numeric policy value -> false, not an exception
-    [InlineData("5", "y", false)]   // non-numeric request value -> false
+    [InlineData("007", "7", true)] // numeric equality, not string equality
+    [InlineData("x", "5", false)] // non-numeric policy value -> false, not an exception
+    [InlineData("5", "y", false)] // non-numeric request value -> false
     public void MatchAttributes_IntegerEqual_ReturnsExpectedMatch(string policy, string request, bool expected)
         => AttributeMatcher.MatchAttributes(policy, request, IntegerEqual).Should().Be(expected);
 
@@ -82,7 +82,7 @@ public class AttributeMatcherTest
     [Theory]
     [InlineData("09:30:00", "09:30:00", true)]
     [InlineData("09:30:00", "10:30:00", false)]
-    [InlineData("2024-01-01T09:30:00", "2024-06-15T09:30:00", true)]  // time-equal is time-of-day only; the date component must be ignored
+    [InlineData("2024-01-01T09:30:00", "2024-06-15T09:30:00", true)] // time-equal is time-of-day only; the date component must be ignored
     public void MatchAttributes_TimeEqual_ReturnsExpectedMatch(string policy, string request, bool expected)
         => AttributeMatcher.MatchAttributes(policy, request, TimeEqual).Should().Be(expected);
 

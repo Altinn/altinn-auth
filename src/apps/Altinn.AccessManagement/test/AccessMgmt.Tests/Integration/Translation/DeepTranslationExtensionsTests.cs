@@ -70,7 +70,8 @@ public class DeepTranslationExtensionsTests : IClassFixture<EfDatabaseFixture>
         Assert.Equal("Property registration", translated.Name);
         Assert.NotNull(translated.Area);
         Assert.Equal("Construction, Infrastructure and Real Estate", translated.Area.Name);
-        Assert.Equal("This authorization area includes access packages related to construction, infrastructure and real estate.",
+        Assert.Equal(
+            "This authorization area includes access packages related to construction, infrastructure and real estate.",
             translated.Area.Description);
     }
 

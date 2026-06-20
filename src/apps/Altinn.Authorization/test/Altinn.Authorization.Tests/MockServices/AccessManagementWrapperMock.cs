@@ -1,9 +1,9 @@
 ﻿using System.Text.Json;
 using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Authorization.Enums;
+using Altinn.Authorization.Tests.Data;
 using Altinn.Platform.Authenticaiton.Extensions;
 using Altinn.Platform.Authorization.Constants;
-using Altinn.Authorization.Tests.Data;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Models.AccessManagement;
 using Altinn.Platform.Authorization.Services.Interface;
@@ -159,6 +159,13 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
                     AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("ansettelsesforhold")),
                     AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("maskinporten-scopes"))
                 });
+            }
+
+            // Person (party uuid) holding the 'ansettelsesforhold' access package on behalf of the reportee,
+            // used by the person-via-access-package decision test (#3498 area 3).
+            if (from == Guid.Parse("066148fe-7077-4484-b7ea-44b5ede0014e") && to == Guid.Parse("00000000-0000-0000-0000-0000000000aa"))
+            {
+                accessPackages.Add(AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("ansettelsesforhold")));
             }
 
             result = accessPackages;

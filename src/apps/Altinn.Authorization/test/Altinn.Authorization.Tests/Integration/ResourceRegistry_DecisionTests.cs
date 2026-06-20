@@ -31,6 +31,7 @@ namespace Altinn.Authorization.Tests.Integration
             _client = fixture.BuildClient();
             SetupFeatureMock("AuditLog", true);
             SetupFeatureMock("SystemUserAccessPackageAuthorization", true);
+            SetupFeatureMock("UserAccessPackageAuthorization", true);
             SetupDateTimeMock();
         }
 
@@ -358,6 +359,86 @@ namespace Altinn.Authorization.Tests.Integration
 
             // Act
             XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(_client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// Tests the scenario where the subject is a system user that has no client-delegation for the
+        /// resource, so the decision is NotApplicable. Mirrors the Bruno
+        /// SysUser_ClientDelg_AccPkg_NoDelg_NotApplicable negative boundary (#3498 area 4).
+        /// </summary>
+        [Fact]
+        public async Task PDP_Decision_ResourceRegistry_SystemUserWithoutDelegation_ReturnsNotApplicable()
+        {
+            string testCase = "ResourceRegistry_SystemUserWithoutDelegation_NotApplicable";
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(_client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// Tests the scenario where the subject holds no access package granting the access-package resource,
+        /// so the decision is NotApplicable. The negative counterpart of the WithAccessPackage Permit case and
+        /// the access-package equivalent of the no-delegation boundary (#3498 area 3).
+        /// </summary>
+        [Fact]
+        public async Task PDP_Decision_ResourceRegistry_SubjectWithoutAccessPackage_ReturnsNotApplicable()
+        {
+            string testCase = "ResourceRegistry_SubjectWithoutAccessPackage_NotApplicable";
+            HttpClient client = GetTestClient(featureManager: featureManageMock.Object);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// Tests the scenario where the subject holds the access package but requests an action the policy
+        /// does not grant for it (the package grants read/write, the request asks for sign), so the decision
+        /// is NotApplicable. Guards the action-scoping boundary of an access package (#3498 area 3).
+        /// </summary>
+        [Fact]
+        public async Task PDP_Decision_ResourceRegistry_AccessPackageUngrantedAction_ReturnsNotApplicable()
+        {
+            string testCase = "ResourceRegistry_AccessPackageUngrantedAction_NotApplicable";
+            HttpClient client = GetTestClient(featureManager: featureManageMock.Object);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// Tests the scenario where the subject is a person (party uuid) that reaches the resource through an
+        /// access package held on behalf of the reportee, so the decision is Permit. Mirrors the Bruno
+        /// person-via-access-package Permit contract (#3498 area 3); the C# decision suite previously covered
+        /// this path only for system users.
+        /// </summary>
+        [Fact]
+        public async Task PDP_Decision_ResourceRegistry_PersonWithAccessPackage_ReturnsPermit()
+        {
+            string testCase = "ResourceRegistry_PersonWithAccessPackage_Permit";
+            HttpClient client = GetTestClient(featureManager: featureManageMock.Object);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
 
             // Assert
             AssertionUtil.AssertEqual(expected, contextResponse);

@@ -3,7 +3,8 @@
 .SYNOPSIS
     Local-dev helper: builds and runs every *.Tests project in the repo under
     `dotnet-coverage collect`, producing a per-project Cobertura XML, then
-    delegates threshold enforcement to check-coverage-thresholds.ps1.
+    reports per-assembly coverage via check-coverage-thresholds.ps1 (coverage
+    is reported, never gated).
 
 .DESCRIPTION
     CI does NOT use this script. The CI pipeline runs tests once under
@@ -54,6 +55,9 @@ $coverageFiles = @()
 # of all project times. Each project writes to a distinct output + log.
 $configurationLocal = $Configuration
 $resultsDirLocal = $resultsDir
+# Shared with CI (tpl-vertical-ci.yml): aligns the coverage denominator with
+# SonarCloud by excluding generated code, migrations, and tooling.
+$coverageSettings = Join-Path $repoRoot 'eng/testing/coverage.settings'
 $throttle = [Math]::Min($Projects.Count, [Math]::Max(2, [Environment]::ProcessorCount))
 
 $collectResults = $Projects | ForEach-Object -Parallel {
@@ -61,9 +65,14 @@ $collectResults = $Projects | ForEach-Object -Parallel {
     $projName = [System.IO.Path]::GetFileNameWithoutExtension($proj)
     $projDir = [System.IO.Path]::GetDirectoryName($proj)
 
-    $binDir = Join-Path $projDir "bin" $using:configurationLocal "net9.0"
-    $dllPath = Join-Path $binDir "$projName.dll"
-    $runtimeConfig = Join-Path $binDir "$projName.runtimeconfig.json"
+    # Locate the built assembly under whatever target framework the project targets.
+    # Don't hardcode the TFM — it drifts when the repo bumps the net version (this
+    # was pinned to net9.0 and silently fell back to the slow vstest path on net10.0).
+    $configDir = Join-Path $projDir "bin" $using:configurationLocal
+    $dllPath = Get-ChildItem -Path $configDir -Filter "$projName.dll" -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { $_.Directory.Name -match '^net\d' } |
+        Select-Object -First 1 -ExpandProperty FullName
+    $runtimeConfig = if ($dllPath) { [System.IO.Path]::ChangeExtension($dllPath, '.runtimeconfig.json') } else { '' }
     $outFile = Join-Path $using:resultsDirLocal "$projName.cobertura.xml"
     $logFile = Join-Path $using:resultsDirLocal "$projName.coverage.log"
 
@@ -71,7 +80,7 @@ $collectResults = $Projects | ForEach-Object -Parallel {
     # Microsoft Testing Platform. A runtimeconfig.json is always emitted for
     # Exe output; running the managed dll via `dotnet <dll>` works
     # cross-platform (Windows, Linux, macOS) under dotnet-coverage.
-    $isV3Exe = (Test-Path $dllPath) -and (Test-Path $runtimeConfig)
+    $isV3Exe = $dllPath -and (Test-Path $dllPath) -and (Test-Path $runtimeConfig)
 
     $start = Get-Date
     if ($isV3Exe) {
@@ -79,7 +88,7 @@ $collectResults = $Projects | ForEach-Object -Parallel {
         # runner (not MTP). It exits 0 when every test is [Skip]ped, so no
         # --ignore-exit-code handling is required. Test stdout is captured to
         # a per-project log to keep the coverage summary readable.
-        dotnet-coverage collect --nologo --output $outFile --output-format cobertura -- dotnet $dllPath *>&1 | Out-File -FilePath $logFile -Encoding utf8
+        dotnet-coverage collect --nologo --settings $using:coverageSettings --output $outFile --output-format cobertura -- dotnet $dllPath *>&1 | Out-File -FilePath $logFile -Encoding utf8
         $mode = 'xUnit v3 / MTP'
     }
     else {
@@ -133,9 +142,9 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# Delegate threshold enforcement + pretty summary to the parse-only script
-# (shared with CI, so there's no drift between local and CI output).
-# Pass only the merged file so each assembly appears exactly once.
+# Report per-assembly coverage (pretty summary) via the parse-only script
+# (shared with CI, so there's no drift between local and CI output). Coverage is
+# reported, not gated. Pass only the merged file so each assembly appears once.
 $checkScript = Join-Path $PSScriptRoot 'check-coverage-thresholds.ps1'
 $checkArgs = @{
     CoverageFiles = @($mergedCoverage)
@@ -144,7 +153,8 @@ $checkArgs = @{
 if ($ThresholdsFile) { $checkArgs['ThresholdsFile'] = $ThresholdsFile }
 if ($Threshold -gt 0) { $checkArgs['Threshold'] = $Threshold }
 & $checkScript @checkArgs
-$thresholdExit = $LASTEXITCODE
+# Only non-zero when no coverage was produced (a broken run); never on coverage.
+$reportExit = $LASTEXITCODE
 
 $rg = Get-Command reportgenerator -ErrorAction SilentlyContinue
 if ($rg) {
@@ -160,7 +170,7 @@ if ($failed.Count -gt 0) {
     Write-Host "`nTest failures: $($failed -join ', ')" -ForegroundColor Red
     exit 1
 }
-if ($thresholdExit -ne 0) {
-    exit $thresholdExit
+if ($reportExit -ne 0) {
+    exit $reportExit
 }
 Write-Host "`nDone." -ForegroundColor Green

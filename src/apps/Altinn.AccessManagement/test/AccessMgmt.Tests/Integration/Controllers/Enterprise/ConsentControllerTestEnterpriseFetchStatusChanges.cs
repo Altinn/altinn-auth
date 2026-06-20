@@ -725,7 +725,8 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
             // Ascending order must be preserved across pages
             for (int i = 1; i < allItems.Count; i++)
             {
-                Assert.True(allItems[i - 1].ChangedDate <= allItems[i].ChangedDate,
+                Assert.True(
+                    allItems[i - 1].ChangedDate <= allItems[i].ChangedDate,
                     $"Order violation at index {i}");
             }
         }

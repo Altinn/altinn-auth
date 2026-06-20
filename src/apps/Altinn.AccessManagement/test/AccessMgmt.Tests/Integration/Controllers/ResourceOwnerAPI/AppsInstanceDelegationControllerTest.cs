@@ -80,6 +80,7 @@ public class AppsInstanceDelegationControllerTest
             VariantId = EntityVariantConstants.Person,
             IsDeleted = false,
         },
+
         // From party used by DelegationMetadataRepositoryMock for RevokeAll/Get tests
         new()
         {
@@ -91,6 +92,7 @@ public class AppsInstanceDelegationControllerTest
             VariantId = EntityVariantConstants.AS,
             IsDeleted = false,
         },
+
         // Synthetic To parties used by DelegationMetadataRepositoryMock for RevokeAll test
         new()
         {

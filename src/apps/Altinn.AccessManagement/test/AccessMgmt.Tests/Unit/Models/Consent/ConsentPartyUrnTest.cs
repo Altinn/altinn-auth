@@ -23,9 +23,9 @@ public class ConsentPartyUrnTest
     }
 
     [Theory]
-    [InlineData("urn:altinn:party:id:-5")]   // leading minus
-    [InlineData("urn:altinn:party:id:+5")]   // leading plus
-    [InlineData("urn:altinn:party:id: 5")]   // leading whitespace
+    [InlineData("urn:altinn:party:id:-5")] // leading minus
+    [InlineData("urn:altinn:party:id:+5")] // leading plus
+    [InlineData("urn:altinn:party:id: 5")] // leading whitespace
     public void TryParse_SignedOrWhitespacePartyId_ReturnsFalse(string urn)
     {
         // TryParsePartyId parses with NumberStyles.None, so a sign or whitespace must be

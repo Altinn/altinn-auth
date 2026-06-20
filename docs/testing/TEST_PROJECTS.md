@@ -47,7 +47,7 @@ No dedicated test project. `Altinn.Authorization.ABAC` is exercised
 indirectly by `Altinn.Authorization.Tests` (PEP → ABAC paths during
 the end-to-end XACML decision tests). Coverage typically lands around
 63 % line / 61 % branch — see the
-[`COVERAGE.md`](COVERAGE.md) ratchet (60 % enforced).
+[`COVERAGE.md`](COVERAGE.md) target (60 %, reported not gated).
 
 If a direct ABAC unit-test suite is wanted later, recreate
 `src/pkgs/Altinn.Authorization.ABAC/test/` with the standard

@@ -1,12 +1,12 @@
 ﻿using Altinn.AccessManagement.Api.ServiceOwner.Controllers;
 using Altinn.AccessManagement.Core.Configuration;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
-using Altinn.AccessManagement.Core.Errors;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;

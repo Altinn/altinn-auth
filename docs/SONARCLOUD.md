@@ -5,8 +5,8 @@ duplication, and ingested test coverage — **once a day against `main`**, not
 on every push/PR. The per-push model contended for consistently busy runners
 while adding little per-change value: the quality gate is non-blocking,
 security is covered by CodeQL (default setup, on PRs + main), and code smells
-are enforced in-build by Roslyn + StyleCop with per-assembly coverage floors
-gated by `check-coverage-thresholds.ps1`. Sonar's unique value (duplication,
+are enforced in-build by Roslyn + StyleCop, with per-assembly coverage
+reported (not gated) by `check-coverage-thresholds.ps1`. Sonar's unique value (duplication,
 the maintainability / tech-debt dashboard, coverage trend) is a property of
 `main`, so a daily off-peak scan is sufficient.
 

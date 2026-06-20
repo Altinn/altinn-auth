@@ -1,0 +1,40 @@
+{
+  "Request": {
+    "ReturnPolicyIdList": true,
+    "AccessSubject": [
+      {
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:systemuser:uuid",
+            "Value": "00000000-0000-0000-0000-0000000000ff"
+          }
+        ]
+      }
+    ],
+    "Action": [
+      {
+        "Attribute": [
+          {
+            "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+            "Value": "read",
+            "DataType": "http://www.w3.org/2001/XMLSchema#string"
+          }
+        ]
+      }
+    ],
+    "Resource": [
+      {
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:resource",
+            "Value": "ttd-accesspackage-resource"
+          },
+          {
+            "AttributeId": "urn:altinn:party:uuid",
+            "Value": "066148fe-7077-4484-b7ea-44b5ede0014e"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -126,7 +126,7 @@ public partial class ConnectionsControllerTest
         /// - Each rule targets the correct org/app resource attributes
         /// - Each rule contains exactly one action
         /// </summary>
-        [Fact(Skip = "Failing with 500 error during delegation - requires investigation")]
+        [Fact]
         public async Task AddInstanceRights_AsMalinForDumboToKaos_WithValidRightKeys_Returns201WithDelegatedInstanceRights()
         {
             List<string> rightKeys = await GetDelegatableInstanceRightKeys("app_skd_sirius-skattemelding-v1", SiriusInstanceId);

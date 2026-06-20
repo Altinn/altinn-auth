@@ -234,7 +234,10 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     resourceAttributes.ResourcePartyValue = party.PartyId.ToString();
                     requestResourceAttributes.Attributes.Add(GetPartyIdsAttribute(new List<int> { party.PartyId }));
 
-                    resourceAttributes.PartyUuid = party.PartyUuid.Value;
+                    if (party.PartyUuid.HasValue)
+                    {
+                        resourceAttributes.PartyUuid = party.PartyUuid.Value;
+                    }
                 }
             }
             else if (string.IsNullOrEmpty(resourceAttributes.ResourcePartyValue) && !string.IsNullOrEmpty(resourceAttributes.PersonId))
@@ -250,7 +253,10 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     resourceAttributes.ResourcePartyValue = party.PartyId.ToString();
                     requestResourceAttributes.Attributes.Add(GetPartyIdsAttribute(new List<int> { party.PartyId }));
 
-                    resourceAttributes.PartyUuid = party.PartyUuid.Value;
+                    if (party.PartyUuid.HasValue)
+                    {
+                        resourceAttributes.PartyUuid = party.PartyUuid.Value;
+                    }
                 }
             }
             else if (string.IsNullOrEmpty(resourceAttributes.ResourcePartyValue) && resourceAttributes.PartyUuid != Guid.Empty)
@@ -262,7 +268,10 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     resourceAttributes.ResourcePartyValue = party.PartyId.ToString();
                     requestResourceAttributes.Attributes.Add(GetPartyIdsAttribute(new List<int> { party.PartyId }));
 
-                    resourceAttributes.PartyUuid = party.PartyUuid.Value;
+                    if (party.PartyUuid.HasValue)
+                    {
+                        resourceAttributes.PartyUuid = party.PartyUuid.Value;
+                    }
                 }
             }
 

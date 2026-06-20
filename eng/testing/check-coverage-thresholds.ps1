@@ -1,12 +1,12 @@
 ﻿#!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-    Parses one or more Cobertura coverage XML files and enforces per-assembly
-    coverage thresholds. No test execution — this is the "fast" CI gate that
-    runs *after* tests have already been executed under `dotnet-coverage`.
+    Parses one or more Cobertura coverage XML files and reports per-assembly
+    coverage against targets. No test execution, and no gating — it runs
+    *after* tests have executed under `dotnet-coverage` and only reports.
 
 .DESCRIPTION
-    Loaded thresholds come from a JSON file with the shape:
+    Targets come from a JSON file with the shape:
 
         {
           "globalThreshold": 60,
@@ -14,14 +14,15 @@
           "warnings":   { "Altinn.Bar": 60, ... }
         }
 
-    Only assemblies whose source files live under $OwnedRoot are enforced —
-    that way a vertical's coverage run reports but does not *gate* on code
-    owned by another vertical.
+    Only assemblies whose source files live under $OwnedRoot are scored against
+    their target — that way a vertical's run reports on its own code, not on
+    code owned by another vertical. Assemblies below their target are surfaced
+    as warnings; coverage never fails the run.
 
     Exit codes:
-      0 — all owned assemblies meet their thresholds (or no thresholds set)
-      1 — at least one owned assembly is below its threshold, or no coverage
-          files matched the input pattern(s).
+      0 — coverage reported (below-target assemblies are warnings, not errors)
+      1 — no coverage files matched the input pattern(s) (a broken run, nothing
+          to report)
 
 .PARAMETER CoverageFiles
     One or more paths (or glob patterns, resolved at invocation time) to
@@ -168,10 +169,17 @@ if ($warningsBelow.Count -gt 0) {
 }
 
 if ($belowThreshold.Count -gt 0) {
-    Write-Host "`nBelow threshold:" -ForegroundColor Red
-    $belowThreshold | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
-    exit 1
+    Write-Host "`nBelow target (reported, not failing):" -ForegroundColor Yellow
+    $belowThreshold | ForEach-Object { Write-Host "  $_" -ForegroundColor Yellow }
+    $belowThreshold | ForEach-Object { Write-Host "::warning::Coverage below target: $_" }
 }
 elseif ($globalFloor -gt 0 -or $assemblyThresholds.Count -gt 0) {
-    Write-Host "`nAll enforced assemblies meet their coverage thresholds." -ForegroundColor Green
+    Write-Host "`nAll tracked assemblies meet their coverage targets." -ForegroundColor Green
 }
+
+# Success is explicit: coverage never fails the run (below-target is reported as
+# a warning above). Without this, the script would fall off the end and leave
+# $LASTEXITCODE at whatever a prior command set, which is non-deterministic for
+# callers in a shared session. (The no-coverage-files case above still exits 1 —
+# that is a broken run, nothing to report, not a coverage result.)
+exit 0

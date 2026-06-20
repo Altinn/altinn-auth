@@ -140,12 +140,7 @@ public partial class ConnectionsControllerTest
         /// - GetInstanceRights returns the updated set of rights
         /// - Written XACML policy matches the updated right keys
         /// </summary>
-        /// <remarks>
-        /// SKIPPED: Test fails with 500 Internal Server Error during AddInitialInstanceRights call.
-        /// Error: "The delegation failed" (AM-00029). Requires investigation of delegation service behavior.
-        /// Not related to feature flag removal work in issue #2810.
-        /// </remarks>
-        [Fact(Skip = "Failing with 500 error during delegation - requires investigation")]
+        [Fact]
         public async Task UpdateInstanceRights_AsJinxToThea_WithMoreRightKeys_ReturnsOkAndUpdatesRights()
         {
             List<string> allRightKeys = await GetDelegatableInstanceRightKeys("app_skd_sirius-skattemelding-v1", SiriusInstanceIdForUpdate);
@@ -307,12 +302,7 @@ public partial class ConnectionsControllerTest
         /// verifying that rights are reduced. Uses Alex→Milena (separate from Jinx→Thea) and a different
         /// resource to avoid shared state collisions.
         /// </summary>
-        /// <remarks>
-        /// SKIPPED: Test fails with 500 Internal Server Error during initial delegation (PostAsJsonAsync).
-        /// Error: "The delegation failed" (AM-00029). Requires investigation of delegation service behavior.
-        /// Not related to feature flag removal work in issue #2810.
-        /// </remarks>
-        [Fact(Skip = "Failing with 500 error during delegation - requires investigation")]
+        [Fact]
         public async Task UpdateInstanceRights_AsAlexToMilena_ReduceRights_RemovesExcessRights()
         {
             const string instanceIdForReduce = "urn:altinn:instance-id:50401002/e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8092";

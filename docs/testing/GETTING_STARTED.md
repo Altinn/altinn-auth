@@ -42,12 +42,24 @@ dotnet test src/apps/Altinn.AccessManagement/test/Altinn.AccessManagement.Api.Te
 
 ### A single test or class
 
-xUnit v3 uses Microsoft Testing Platform (MTP). Filter with `--filter`:
+These projects run on Microsoft Testing Platform (MTP) via xUnit v3, which does
+**not** honour the VSTest `--filter "FullyQualifiedName~..."` syntax. To run a
+single test or class, build the project and invoke the test assembly directly
+with the xUnit v3 query filter — `/assembly/namespace/class/method`, with `*`
+wildcards:
 
 ```
-dotnet test --filter "FullyQualifiedName~MaskinportenConsumersController"
-dotnet test --filter "FullyQualifiedName=Namespace.ClassName.MethodName"
+dotnet build src/apps/Altinn.AccessManagement/test/Altinn.AccessManagement.Api.Tests
+dotnet src/apps/Altinn.AccessManagement/test/Altinn.AccessManagement.Api.Tests/bin/Debug/<tfm>/Altinn.AccessManagement.Api.Tests.dll -filter "/*/*/*/MyTestMethod"
 ```
+
+Replace `<tfm>` with the project's target framework (currently `net10.0`).
+
+Pass `-filter` more than once to select several tests (the filters OR together).
+Nested test classes appear as `Outer+Inner` in the class segment, so filtering
+by a method-name wildcard (`/*/*/*/MyTestMethod*`) is usually the simplest
+selector. The MTP option names (`--filter-method`, `--filter-class`) are not
+accepted by the in-process assembly runner — use the `-filter` query form above.
 
 ### In Visual Studio / Rider / VS Code
 

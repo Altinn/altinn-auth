@@ -360,8 +360,9 @@ public class ConsentMigrationSyncServiceTests
 
         // Assert
         Assert.Equal(50, result);
-        Assert.True(maxConcurrentCount <= _settings.MaxDegreeOfParallelism,
-          $"Expected max concurrent <= {_settings.MaxDegreeOfParallelism}, but was {maxConcurrentCount}");
+        Assert.True(
+            maxConcurrentCount <= _settings.MaxDegreeOfParallelism,
+            $"Expected max concurrent <= {_settings.MaxDegreeOfParallelism}, but was {maxConcurrentCount}");
         Assert.True(maxConcurrentCount > 1, "Expected parallel processing to occur");
     }
 

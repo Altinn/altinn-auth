@@ -10,11 +10,13 @@ centralising mocks in `TestUtils`.
 
 ## 1. Why
 
-The suite's cost and flakiness are dominated by one number — **how many web-host
-builds it does** (~71, at ~1.36 s each; DB clones are cheap at 230 ms, template is
-a one-time ~9 s). The #3379 measurement proved this, and the incremental fixture
-sharing there confirmed that ad-hoc cohort sharing plateaus, because the structure
-fights it. This document is the structure those measurements point to.
+For `AccessMgmt.Tests`, the suite's cost and flakiness are dominated by one number — **how
+many web-host builds it does** (~71, at ~1.36 s each; DB clones are cheap at 230 ms, template
+is a one-time ~9 s). The #3379 measurement proved this, and the incremental fixture sharing
+there confirmed that ad-hoc cohort sharing plateaus, because the structure fights it. This
+document is the structure those measurements point to. (Note: that measurement was
+`AccessMgmt.Tests`-only. The per-assembly CI `FixtureTiming` shows the other assemblies are
+instead `db_provision`-bound — a separate, co-equal lever for #3379; see `TEST_SETUP_TIMING.md`.)
 
 ## 2. Current state (measured)
 
@@ -80,7 +82,7 @@ enumerated set of collection-fixture profiles:
 | `EnableRequestAssignmentResource` / `…Package` / `EnableEnduserMaskinportenAdminApi` | feature flags | ~3 each |
 | PDP / resource-registry / http-context overrides | `RemoveAll<…>` behavior | ~12 spread over a few |
 
-→ **target: ~71 host builds collapse to ~10–12** (the realised outcome was smaller — see the collapse outcome in §8).
+→ **realised: ~71 host builds reduced to 65** (the original ~10–12 hypothesis did not hold — per-class configs are genuinely diverse; see the collapse outcome in §8).
 
 **B. Data ownership.** Rich shared baseline template + each test creating entities
 under **unique IDs** and asserting only against them. Additive seeds never collide;
@@ -152,7 +154,7 @@ Sizing is files/classes touched in AccessManagement.
 | 2 | **Provision the `Default` host** — bake the external-client catalog into a project-local base fixture (`AccessMgmtApiFixture`; mocks stay in the test project, not `TestUtils`); delete now-redundant `ConfigureServices` | 39 files | collapses ~40+ classes → 1 host (largest single win) | low — additive registration, validate per project | 1 Task (1 PR) |
 | 3 | **Owned-data + scoped assertions** — replace `EnsureSeedOnce<TSelf>` global seeds/asserts with per-test owned entities | 33 seeding files | removes condition-4 fragility; enables write-sharing | med — most careful; per-controller | 3–4 Tasks (per project/controller cluster) |
 | 4 | **DB-less web-app tier** — no-DB fixture for mock-the-data-layer tests | ~1 verified (most candidates secretly hit the DB) | drops clone/provision for the few truly DB-less | low | done (#3458) |
-| 5 | **Define profiles as collection fixtures; convert classes to `[Collection]`** — *supersedes #3449's per-controller cohorts* | all ~71 | realizes the 71 → ~12 collapse | low after 2–3 | 2 Tasks (per project) |
+| 5 | **Define profiles as collection fixtures; convert classes to `[Collection]`** — *supersedes #3449's per-controller cohorts* | all ~71 | realises the host-build collapse (to 65 in practice; the ~12 target did not hold) | low after 2–3 | 2 Tasks (per project) |
 | 6 | **One convention (#3461)** — every fixture descends from `ApiFixture` and scenario/E2E use it; `LegacyApiFixture` retained as the full-schema profile (`ConsentApiFixture`'s base) rather than deleted | — | one convention | — | ✅ done |
 
 Suggested Feature → ~8–9 Tasks. Order matters: **2 → 3 → 4/5 → 6** (provision the
@@ -238,9 +240,9 @@ for anyone optimising locally.
 - **Scope:** touches most test classes — phase per project, stay green.
 - **Discipline:** owned-data + no-per-class-DI must be conventions (review/lint) or
   it rots back.
-- **Open numbers to confirm during Phase 1/2:** exact profile count (≤~12); the
-  DB-less set (measured small — ~1; mock-data-layer is necessary-not-sufficient); any mock needing *per-test behavior*
-  (vs one impl) — those stay isolated.
+- **Confirmed:** the realised host-build count is 65 for `AccessMgmt.Tests` (the ~12 target
+  did not hold); the DB-less set is ~1 class (mock-data-layer is necessary-not-sufficient); mocks
+  needing *per-test behavior* (vs one impl) stay isolated.
 - **Relationship to PR #3456:** that PR's measurement, `FixtureTiming`, the two
   validated cohorts, and Phase 2a (the `AccessMgmtApiFixture` catalog) ship there.
   Phase 5 supersedes the per-controller rollout (#3449) with profile-based collections.

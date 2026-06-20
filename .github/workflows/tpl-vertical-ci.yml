@@ -212,25 +212,29 @@ jobs:
       #                         single-type vertical (e.g. PEP has no
       #                         integration tests). Verified: an empty filtered
       #                         run exits 8, which this flag maps to success.
-      # Each lane writes its own .coverage file; the Convert steps below merge
-      # TestResults/*.coverage into one report, so the threshold gate and Sonar
-      # still see whole-suite coverage. `dotnet-coverage collect -- dotnet test`
-      # propagates the test exit code, so a real failure (exit 2) fails the step.
-      - name: Test - unit lane (with coverage)
+      # Coverage is collected only on the nightly `analyze` run. PR runs execute
+      # the tests directly (no dotnet-coverage instrumentation overhead) and still
+      # emit .trx + FixtureTiming. On the analyze run each lane writes its own
+      # .coverage file; the Convert steps below merge TestResults/*.coverage so
+      # Sonar and the coverage report see whole-suite coverage. Those Convert /
+      # report steps self-skip on PR runs (no .coverage file is produced).
+      # `dotnet test` (wrapped or not) propagates the test exit code, so a real
+      # failure (exit 2) fails the step.
+      - name: Test - unit lane (coverage on analyze run)
         id: test_unit
         shell: bash
         working-directory: ${{ inputs.path }}
         run: |
-          dotnet-coverage collect --nologo \
-            --output TestResults/coverage.unit.coverage --output-format coverage \
-            -- dotnet test -c Release --no-build -bl:binlog/test-unit.binlog \
-              -- --results-directory TestResults/unit --report-xunit-trx \
-                 --filter-trait "Category=Unit" --ignore-exit-code 8
+          test=(dotnet test -c Release --no-build -bl:binlog/test-unit.binlog -- --results-directory TestResults/unit --report-xunit-trx --filter-trait "Category=Unit" --ignore-exit-code 8)
+          if [[ "${{ inputs.analyze }}" == "true" ]]; then
+            dotnet-coverage collect --nologo --settings "$GITHUB_WORKSPACE/eng/testing/coverage.settings" --output TestResults/coverage.unit.coverage --output-format coverage -- "${test[@]}"
+          else
+            "${test[@]}"
+          fi
 
-      - name: Test - integration lane (with coverage)
-        # Runs even when the unit lane failed (but not when the build failed),
-        # so coverage spans the whole suite and the threshold gate is never
-        # computed on unit-only data.
+      - name: Test - integration lane (coverage on analyze run)
+        # Runs even when the unit lane failed (but not when the build failed), so
+        # on the analyze run coverage spans the whole suite, not unit-only data.
         id: test_integration
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         shell: bash
@@ -241,18 +245,21 @@ jobs:
           # coverage swallow the test host's process-exit stdout.
           FIXTURE_TIMING_FILE: ${{ github.workspace }}/fixture-timing.txt
         run: |
-          dotnet-coverage collect --nologo \
-            --output TestResults/coverage.integration.coverage --output-format coverage \
-            -- dotnet test -c Release --no-build -bl:binlog/test-integration.binlog \
-              -- --results-directory TestResults/integration --report-xunit-trx \
-                 --filter-trait "Category=Integration" --ignore-exit-code 8
+          test=(dotnet test -c Release --no-build -bl:binlog/test-integration.binlog -- --results-directory TestResults/integration --report-xunit-trx --filter-trait "Category=Integration" --ignore-exit-code 8)
+          if [[ "${{ inputs.analyze }}" == "true" ]]; then
+            dotnet-coverage collect --nologo --settings "$GITHUB_WORKSPACE/eng/testing/coverage.settings" --output TestResults/coverage.integration.coverage --output-format coverage -- "${test[@]}"
+          else
+            "${test[@]}"
+          fi
 
       - name: Setup-timing breakdown (FixtureTiming)
-        # Surface FixtureTiming's per-assembly setup-time breakdown (host build vs DB
-        # provisioning vs per-test clone vs one-time template build) directly in this
+        # Surface FixtureTiming's per-assembly setup-time breakdown directly in this
         # job's log, so where test setup time goes is visible without downloading
-        # anything. Informational only; never fails the build. No-op for verticals
-        # whose tests do not use the Postgres engine (no file is written).
+        # anything: host build vs DB provisioning vs per-test clone, the one-time
+        # template build split into sub-phases (container server_start, EF migrate, seed),
+        # plus provision_wait (time fixtures spend blocked on the provisioning lock during
+        # that one-time build). Informational only; never fails the build. No-op for
+        # verticals whose tests do not use the Postgres engine (no file is written).
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         shell: bash
         run: |
@@ -336,7 +343,7 @@ jobs:
       - name: Convert coverage to cobertura
         # Merges the per-lane .coverage binaries (unit + integration) written
         # by the Test steps and emits cobertura — the format the PowerShell
-        # threshold check below parses. Runs even on test failure so a coverage
+        # coverage report below parses. Runs even on test failure so a coverage
         # regression isn't masked by a separate test failure. The glob tolerates
         # a vertical that produced only one lane's file.
         if: always() && hashFiles(format('{0}/TestResults/*.coverage', inputs.path)) != ''
@@ -381,11 +388,13 @@ jobs:
           dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
           echo "::endgroup::"
 
-      - name: Coverage threshold check
+      - name: Coverage report
         # Parse-only: reads TestResults/coverage.cobertura.xml produced by
-        # the Convert-to-cobertura step above and enforces per-assembly
-        # thresholds. Completes in seconds — no test re-run.
-        # See eng/testing/check-coverage-thresholds.ps1.
+        # the Convert-to-cobertura step above and reports per-assembly coverage
+        # against the targets. Below-target assemblies are surfaced as warnings;
+        # the script never fails on coverage, so this does not gate CI.
+        # Completes in seconds — no test re-run. See
+        # eng/testing/check-coverage-thresholds.ps1.
         if: always() && hashFiles(format('{0}/TestResults/coverage.cobertura.xml', inputs.path)) != ''
         shell: pwsh
         working-directory: ${{ inputs.path }}

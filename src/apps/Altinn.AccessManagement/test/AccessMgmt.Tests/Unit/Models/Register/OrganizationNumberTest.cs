@@ -23,8 +23,8 @@ public class OrganizationNumberTest
     }
 
     [Theory]
-    [InlineData("12345678")]    // 8 digits
-    [InlineData("1234567890")]  // 10 digits
+    [InlineData("12345678")] // 8 digits
+    [InlineData("1234567890")] // 10 digits
     public void TryParse_WrongLength_ReturnsFalse(string value)
     {
         OrganizationNumber.TryParse(value, null, out _).Should().BeFalse();

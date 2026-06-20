@@ -152,5 +152,20 @@ failed.
 - No `DateTime.Now` in assertions — inject an `IClock` or freeze the time.
 - Avoid background work that outlives the test.
 - No `Thread.Sleep` — use `TaskCompletionSource` or polling with a timeout.
+- No dependency on a live external endpoint. A test that calls out to a real
+  service (e.g. a resource-registry lookup) is flaky by construction and must
+  mock the boundary instead.
+
+### Flaky / environment-dependent tests
+
+We track known-flaky and environment-dependent tests as GitHub issues, not as a
+list in this repo (an in-repo register goes stale faster than it is read). When
+you hit one:
+
+- If it is genuinely environmental (needs Azurite, a live endpoint, a real
+  container runtime), gate it with a clear `Skip` reason naming the dependency,
+  and link the tracking issue.
+- Otherwise treat the flake as a bug: file an issue, and fix the determinism
+  problem rather than retrying or widening tolerances.
 
 ## Next: [COVERAGE.md](COVERAGE.md)

@@ -2,8 +2,8 @@
 using System.Linq;
 using System.Threading.Tasks;
 
-using Altinn.Common.AccessToken.Services;
 using Altinn.Authorization.Tests.Util;
+using Altinn.Common.AccessToken.Services;
 
 using Microsoft.IdentityModel.Tokens;
 

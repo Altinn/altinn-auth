@@ -394,6 +394,66 @@ public class ContextHandlerUnitTest : IDisposable
         Assert.Equal(uuid, resourceAttrs.PartyUuid);
     }
 
+    [Fact]
+    public async Task EnrichResourceParty_OrgNumber_PartyWithoutUuid_DoesNotThrow()
+    {
+        var party = new Party { PartyId = 50001337, PartyUuid = null };
+        _registerServiceMock
+            .Setup(r => r.PartyLookup("910514318", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(party);
+
+        // The party-id fallback also returns a party without a UUID, so PartyUuid stays unresolved.
+        _registerServiceMock
+            .Setup(r => r.GetPartiesAsync(It.Is<List<int>>(l => l.Contains(50001337)), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Party> { new() { PartyId = 50001337, PartyUuid = null } });
+
+        var resourceAttrs = new XacmlResourceAttributes { OrganizationNumber = "910514318" };
+        var contextAttrs = CreateResourceAttributes();
+
+        await _sut.TestEnrichResourceParty(contextAttrs, resourceAttrs, false, TestContext.Current.CancellationToken);
+
+        Assert.Equal("50001337", resourceAttrs.ResourcePartyValue);
+        Assert.Equal(Guid.Empty, resourceAttrs.PartyUuid);
+    }
+
+    [Fact]
+    public async Task EnrichResourceParty_PersonId_PartyWithoutUuid_DoesNotThrow()
+    {
+        var party = new Party { PartyId = 50001338, PartyUuid = null };
+        _registerServiceMock
+            .Setup(r => r.PartyLookup(null, "01017012345", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(party);
+
+        // The party-id fallback also returns a party without a UUID, so PartyUuid stays unresolved.
+        _registerServiceMock
+            .Setup(r => r.GetPartiesAsync(It.Is<List<int>>(l => l.Contains(50001338)), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Party> { new() { PartyId = 50001338, PartyUuid = null } });
+
+        var resourceAttrs = new XacmlResourceAttributes { PersonId = "01017012345" };
+        var contextAttrs = CreateResourceAttributes();
+
+        await _sut.TestEnrichResourceParty(contextAttrs, resourceAttrs, true, TestContext.Current.CancellationToken);
+
+        Assert.Equal("50001338", resourceAttrs.ResourcePartyValue);
+        Assert.Equal(Guid.Empty, resourceAttrs.PartyUuid);
+    }
+
+    [Fact]
+    public async Task EnrichResourceParty_PartyUuid_PartyWithoutUuid_DoesNotThrow()
+    {
+        var uuid = Guid.NewGuid();
+        _registerServiceMock
+            .Setup(r => r.GetPartiesAsync(It.Is<List<Guid>>(l => l.Contains(uuid)), false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Party> { new() { PartyId = 50001339, PartyUuid = null } });
+
+        var resourceAttrs = new XacmlResourceAttributes { PartyUuid = uuid };
+        var contextAttrs = CreateResourceAttributes();
+
+        await _sut.TestEnrichResourceParty(contextAttrs, resourceAttrs, false, TestContext.Current.CancellationToken);
+
+        Assert.Equal("50001339", resourceAttrs.ResourcePartyValue);
+    }
+
     #endregion
 
     #region Cached lookups

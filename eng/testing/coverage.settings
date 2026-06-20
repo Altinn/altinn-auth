@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  dotnet-coverage collection settings, passed via the `dotnet-coverage collect` settings flag.
+
+  Purpose: make the CI per-assembly coverage targets (eng/testing/coverage-thresholds.json,
+  checked by check-coverage-thresholds.ps1) measure the SAME denominator that SonarCloud
+  measures. SonarCloud's coverage.exclusions live in SonarQube.Analysis.xml; this file is
+  the dotnet-coverage equivalent. Keep the two in sync.
+
+  Excluded here: generated code (*.g.cs / *.Designer.cs / AssemblyInfo.cs), EF migrations,
+  the Aspire AppHost and CLI tooling (ModulePaths), and test/mock assemblies.
+
+  NOT excluded, on purpose: Program.cs / Startup.cs. In the controller APIs the minimal-
+  hosting bootstrap is large and genuinely exercised by integration tests, and the floors
+  are calibrated with it counted; excluding it would drop the API hosts below their floors.
+  It stays in the denominator in BOTH this file and SonarQube.Analysis.xml.
+
+  Format note: the settings flag expects the VSTest .runsettings shape with a
+  DataCollector named "Code Coverage" (a bare CodeCoverage or configuration root element is
+  rejected as "not a valid Coverage settings file"). Element order is significant too:
+  ModulePaths, then Attributes, then Sources. Source-path regexes match full file
+  paths on both Windows and Linux, so both separators are allowed. Test/Mock module
+  exclusion is also applied in check-coverage-thresholds.ps1 (it only scores "Owned"
+  Altinn.* assemblies and skips Tests/TestUtils/Mocks); the ModulePaths block keeps the
+  raw report lean too.
+-->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="Code Coverage">
+        <Configuration>
+          <CodeCoverage>
+            <ModulePaths>
+              <Exclude>
+                <ModulePath>.*[Tt]ests\.dll$</ModulePath>
+                <ModulePath>.*TestUtils\.dll$</ModulePath>
+                <ModulePath>.*Mocks\.dll$</ModulePath>
+                <ModulePath>.*\.AppHost\.dll$</ModulePath>
+                <ModulePath>.*Altinn\.Authorization\.Cli\.dll$</ModulePath>
+                <ModulePath>.*Altinn\.AccessMgmt\.FFB\.dll$</ModulePath>
+                <ModulePath>.*Altinn\.AccessMgmt\.WebComponents\.dll$</ModulePath>
+              </Exclude>
+            </ModulePaths>
+
+            <!-- Mirrors what SonarCloud treats as generated: [GeneratedCode] and
+                 [ExcludeFromCodeCoverage]. Do NOT add CompilerGeneratedAttribute here:
+                 it marks async state machines, lambdas and iterators (the compiled form
+                 of ordinary user code), so excluding it silently strips real coverage and
+                 drops async-heavy assemblies below their floors. Sonar counts that code,
+                 so we must too. -->
+            <Attributes>
+              <Exclude>
+                <Attribute>^System\.Diagnostics\.CodeAnalysis\.ExcludeFromCodeCoverageAttribute$</Attribute>
+                <Attribute>^System\.CodeDom\.Compiler\.GeneratedCodeAttribute$</Attribute>
+              </Exclude>
+            </Attributes>
+
+            <Sources>
+              <Exclude>
+                <Source>.*[\\/][Mm]igrations?[\\/].*</Source>
+                <Source>.*\.g\.cs$</Source>
+                <Source>.*\.Designer\.cs$</Source>
+                <Source>.*[\\/]Properties[\\/]AssemblyInfo\.cs$</Source>
+              </Exclude>
+            </Sources>
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

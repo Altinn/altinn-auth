@@ -195,7 +195,6 @@ public partial class ConnectionsControllerTest
             // and create an inherited role connection for Thea through the main unit
             // This simulates a scenario where Thea has UTINN role through an inherited connection
             // but no direct assignment from HanSoloEnterprise to Thea
-
             await Fixture.QueryDb(async db =>
             {
                 // First, ensure there's no direct assignment of UTINN from HanSoloEnterprise to Thea

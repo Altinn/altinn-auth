@@ -1,4 +1,7 @@
-﻿using Altinn.AccessManagement.Api.Internal.Controllers;
+﻿using System.Net;
+using System.Security.Claims;
+using System.Text.Json;
+using Altinn.AccessManagement.Api.Internal.Controllers;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
@@ -6,9 +9,6 @@ using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
-using System.Net;
-using System.Security.Claims;
-using System.Text.Json;
 
 namespace Altinn.AccessManagement.Api.Internal.Tests.Controllers;
 

@@ -80,28 +80,55 @@ public class ConsentStatusChangeExtensionsTests
         source.ToDto().EventType.Should().Be(expected);
     }
 
-    // -----------------------------------------------------------------------
-    // TODO — additional cases the developer should add to reach full coverage
-    // of `ToDto`. Each one is small (≤ 5 lines once written) and follows the
-    // same arrange/act/assert shape as the tests above.
-    //
-    // 1. ToDto_ForDeletedExpiredOrUsedEvent_SerialisesEnumNameAsString
-    //    Extend the [Theory] above with InlineData rows for `Deleted`,
-    //    `Expired`, and `Used`. We split it out so that the four "currently
-    //    surfaced" cases above stay separate from the "defensive" ones — when
-    //    the wire format changes, the failure points to the right group.
-    //
-    // 2. ToDto_PreservesChangedDateTimeZoneOffset
-    //    Construct a source with `ChangedDate` in a non-UTC offset (e.g.
-    //    +02:00) and assert the DTO preserves the offset rather than
-    //    silently normalising to UTC.
-    //
-    // 3. ToDto_DoesNotSurfaceConsentEventId
-    //    The DTO intentionally omits `ConsentEventId` (see
-    //    ConsentStatusChangeDto.cs — it's only used internally to build the
-    //    pagination cursor). Assert via `dto.Should().NotBeOfType<...>()` or
-    //    by reflection that no property exposes the internal event id. Add
-    //    this test so a future "let's add it to the DTO" change has to break
-    //    a test on purpose.
-    // -----------------------------------------------------------------------
+    [Theory]
+    [InlineData(ConsentRequestEventType.Deleted, "Deleted")]
+    [InlineData(ConsentRequestEventType.Expired, "Expired")]
+    [InlineData(ConsentRequestEventType.Used, "Used")]
+    public void ToDto_ForDeletedExpiredOrUsedEvent_SerialisesEnumNameAsString(
+        ConsentRequestEventType eventType,
+        string expected)
+    {
+        // These event types are not surfaced on the receiver listing today, but the mapping must
+        // still serialise them by enum name rather than throwing or emitting a number. Kept separate
+        // from the four currently-surfaced cases so a wire-format change points to the right group.
+        var source = new ConsentStatusChange
+        {
+            ConsentRequestId = Guid.NewGuid(),
+            EventType = eventType,
+            ChangedDate = DateTimeOffset.UtcNow,
+            ConsentEventId = Guid.NewGuid(),
+        };
+
+        source.ToDto().EventType.Should().Be(expected);
+    }
+
+    [Fact]
+    public void ToDto_PreservesChangedDateTimeZoneOffset()
+    {
+        // ChangedDate is a DateTimeOffset; the mapping must carry the original offset through rather
+        // than normalising to UTC, so the receiver sees the timestamp as it was recorded.
+        var changed = new DateTimeOffset(2026, 4, 29, 14, 30, 0, TimeSpan.FromHours(2));
+        var source = new ConsentStatusChange
+        {
+            ConsentRequestId = Guid.NewGuid(),
+            EventType = ConsentRequestEventType.Accepted,
+            ChangedDate = changed,
+            ConsentEventId = Guid.NewGuid(),
+        };
+
+        var dto = source.ToDto();
+
+        dto.ChangedDate.Should().Be(changed);
+        dto.ChangedDate.Offset.Should().Be(TimeSpan.FromHours(2));
+    }
+
+    [Fact]
+    public void ToDto_DoesNotSurfaceConsentEventId()
+    {
+        // ConsentEventId is internal — it only feeds the pagination cursor and must never appear on
+        // the DTO. Pin it by reflection so adding it to the contract has to break a test on purpose.
+        typeof(ConsentStatusChangeDto).GetProperties()
+            .Select(p => p.Name)
+            .Should().NotContain("ConsentEventId");
+    }
 }

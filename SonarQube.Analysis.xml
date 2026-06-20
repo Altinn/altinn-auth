@@ -42,17 +42,27 @@
   <Property Name="sonar.test.exclusions">**/test/**/*,**/*.Tests/**/*,**/*.TestUtils/**/*,**/*.Mocks/**/*</Property>
 
   <!--
-    Coverage exclusions: tests, generated code, and migrations don't need
-    line coverage. Mirrors the runsettings under src/coverage.runsettings.
+    Coverage exclusions: tests, generated code, migrations, the Aspire AppHost
+    composition root and dev tooling (Cli) don't carry a meaningful line-coverage
+    signal. Program.cs / Startup.cs are intentionally NOT excluded: in the
+    controller APIs the minimal-hosting bootstrap is large and genuinely covered
+    by integration tests, and the CI floors are calibrated with it counted. MUST
+    stay in sync with the CI floor denominator in eng/testing/coverage.settings
+    (dotnet-coverage). When you change one, change the other.
   -->
-  <Property Name="sonar.coverage.exclusions">**/test/**/*,**/*.Tests/**/*,**/*.TestUtils/**/*,**/*.Mocks/**/*,**/Migration/**/*,**/Migrations/**/*,**/Program.cs,**/Startup.cs,**/*.g.cs,**/*.Designer.cs,**/Properties/AssemblyInfo.cs,**/Altinn.AccessMgmt.FFB/**/*,**/Altinn.AccessMgmt.WebComponents/**/*</Property>
+  <Property Name="sonar.coverage.exclusions">**/test/**/*,**/*.Tests/**/*,**/*.TestUtils/**/*,**/*.Mocks/**/*,**/Migration/**/*,**/Migrations/**/*,**/*.g.cs,**/*.Designer.cs,**/Properties/AssemblyInfo.cs,**/*.AppHost/**/*,**/Altinn.Authorization.Cli/**/*,**/Altinn.AccessMgmt.FFB/**/*,**/Altinn.AccessMgmt.WebComponents/**/*</Property>
 
   <!--
-    Copy/paste detector exclusions: model / DTO classes are intentionally
-    repetitive (property bags) and trip duplication checks for no real
-    signal. Real source files keep duplication enforcement.
+    Copy/paste detector exclusions. Two groups:
+    1. Model / DTO classes are intentionally repetitive (property bags) and trip
+       duplication checks for no real signal.
+    2. Everything excluded from coverage above (tests, generated code, migrations,
+       AppHost, Cli, FFB / WebComponents). Duplication there is not a meaningful
+       signal either, so this list is a superset of sonar.coverage.exclusions;
+       keep them in sync when either changes.
+    Real source files keep duplication enforcement.
   -->
-  <Property Name="sonar.cpd.exclusions">**/Models/**/*,**/Dto/**/*,**/Dtos/**/*,**/Entities/**/*,**/Contracts/**/*,**/*Dto.cs,**/*Request.cs,**/*Response.cs</Property>
+  <Property Name="sonar.cpd.exclusions">**/Models/**/*,**/Dto/**/*,**/Dtos/**/*,**/Entities/**/*,**/Contracts/**/*,**/*Dto.cs,**/*Request.cs,**/*Response.cs,**/test/**/*,**/*.Tests/**/*,**/*.TestUtils/**/*,**/*.Mocks/**/*,**/Migration/**/*,**/Migrations/**/*,**/*.g.cs,**/*.Designer.cs,**/Properties/AssemblyInfo.cs,**/*.AppHost/**/*,**/Altinn.Authorization.Cli/**/*,**/Altinn.AccessMgmt.FFB/**/*,**/Altinn.AccessMgmt.WebComponents/**/*</Property>
 
   <!-- .NET reports — produced by `dotnet-coverage` + xUnit v3 TRX in CI -->
   <Property Name="sonar.cs.vscoveragexml.reportsPaths">TestResults/coverage.xml</Property>

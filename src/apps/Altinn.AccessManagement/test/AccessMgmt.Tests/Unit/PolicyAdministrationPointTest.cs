@@ -1460,6 +1460,5 @@ namespace Altinn.AccessManagement.Tests.Unit
                     (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
                 Times.Once);
         }
-
     }
 }

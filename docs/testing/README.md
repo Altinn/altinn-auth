@@ -3,7 +3,7 @@
 Welcome. This folder is the entry point for everything you need to know about
 the test suite in this repository — how it's organised, how to run it locally,
 what fixtures and mocks are available, the conventions we follow, and how
-coverage is enforced in CI.
+coverage is measured and reported in CI.
 
 If you're new to the codebase, read these in order. Each doc is short and
 self-contained; none of them is a wall of text.
@@ -19,7 +19,7 @@ self-contained; none of them is a wall of text.
 | 5 | [WRITING_TESTS.md](WRITING_TESTS.md) | Patterns, xUnit v3 specifics, when to unit-test vs integration-test |
 | 6 | [TEST_NAMING_CONVENTION.md](TEST_NAMING_CONVENTION.md) | `MethodUnderTest_Scenario_ExpectedResult` |
 | 7 | [FLUENT_ASSERTIONS_GUIDELINES.md](FLUENT_ASSERTIONS_GUIDELINES.md) | When and how to use FluentAssertions |
-| 8 | [COVERAGE.md](COVERAGE.md) | Running coverage locally, per-assembly thresholds, ratcheting |
+| 8 | [COVERAGE.md](COVERAGE.md) | Running coverage locally, per-assembly targets (reported, not gated) |
 | 9 | [CI.md](CI.md) | How tests run in the pipeline, Microsoft Testing Platform (MTP), artifacts |
 | 10 | [BRUNO_API_TESTS.md](BRUNO_API_TESTS.md) | The Bruno API collections — manual/exploratory API tests that double as a behavioral spec for the C# integration tests |
 | 11 | [../SONARCLOUD.md](../SONARCLOUD.md) | Static analysis: exclusions, per-vertical setup, quality gate, debugging |
@@ -40,5 +40,5 @@ self-contained; none of them is a wall of text.
   (fixtures, mocks, test certificates, token generator).
 - **Run everything:** `dotnet test` from the repo root.
 - **Run with coverage locally:** `pwsh eng/testing/run-coverage.ps1`.
-- **CI gates:** per-assembly line-coverage thresholds in
+- **Coverage targets (reported, not gated):** per-assembly line-coverage targets in
   [`eng/testing/coverage-thresholds.json`](../../eng/testing/coverage-thresholds.json).

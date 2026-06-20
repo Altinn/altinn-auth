@@ -25,18 +25,17 @@ scan; on PR/main CI they are skipped):
    sequential lanes selected by the `Category` trait: a fast **unit** lane
    (`--filter-trait "Category=Unit"`) then a slower **integration** lane
    (`--filter-trait "Category=Integration"`). Both reuse the single build (`--no-build`) and
-   each is wrapped by `dotnet-coverage collect` into its own `.coverage`
-   binary (`coverage.unit.coverage` / `coverage.integration.coverage`) and
-   writes TRX into a per-lane `TestResults/<lane>/` subdir. The integration
-   lane runs even if the unit lane failed (but not if the build failed) so
-   coverage spans the whole suite. The Convert steps below merge
-   `TestResults/*.coverage` into one report, so the threshold gate and Sonar
-   still see whole-suite coverage. A lane that selects 0 tests in a
+   write TRX into a per-lane `TestResults/<lane>/` subdir. On the nightly
+   **analyze** run each lane is wrapped by `dotnet-coverage collect` into its own
+   `.coverage` binary (`coverage.unit.coverage` / `coverage.integration.coverage`);
+   **PR runs execute the tests directly, without coverage instrumentation.** The
+   integration lane runs even if the unit lane failed (but not if the build
+   failed) so coverage spans the whole suite. A lane that selects 0 tests in a
    single-type vertical (e.g. `pkg: PEP` has no integration tests) exits 8,
    which `--ignore-exit-code 8` treats as success.
-4. **Convert coverage** — `dotnet-coverage merge` into cobertura (for the threshold check) on every run; a second merge into VSCoverage XML (for Sonar) runs only on the analyze run. No re-running tests.
+4. **Convert coverage** *(analyze run only — PR runs produce no `.coverage`, so these self-skip)* — `dotnet-coverage merge` into cobertura for the coverage report, and a second merge into VSCoverage XML for Sonar. No re-running tests.
 5. **SonarCloud end** *(analyze run only, verticals that opt in)* — uploads the analysis. Runs even if tests failed so issues found by the scanner are still posted. See [../SONARCLOUD.md](../SONARCLOUD.md).
-6. **Coverage threshold check** — parses the cobertura XML and fails the job if any enforced assembly is below its floor. See [COVERAGE.md](COVERAGE.md).
+6. **Coverage report** — parses the cobertura XML and reports any assembly below its target as a warning; it never fails on coverage, so it does not gate the job. See [COVERAGE.md](COVERAGE.md).
 7. **Pack** — `dotnet pack` for `pkg`-type verticals only.
 8. **Report failed tests** — post-test step that parses MTP logs and emits per-failure `::group::` + `::error title::` annotations on GitHub Actions.
 9. **Upload artifacts** on failure — MTP `*.log` / `*.trx` files from `TestResults/`. Retention: 3 days.
@@ -58,12 +57,12 @@ xUnit v3 is self-hosted on MTP. A few things the pipeline relies on:
     `--ignore-exit-code 8`)
   - non-zero — failures
 
-## Threshold enforcement scope
+## Coverage reporting scope
 
-Threshold enforcement is scoped to the **owning vertical**: the Authorization
-vertical only enforces thresholds for `Altinn.Authorization*` assemblies;
-AccessManagement only enforces its own set. This prevents one vertical's CI
-from failing because another vertical changed coverage numbers.
+Coverage reporting is scoped to the **owning vertical**: the Authorization
+vertical reports on `Altinn.Authorization*` assemblies; AccessManagement reports
+on its own set. This keeps one vertical's coverage report from being muddied by
+another vertical's code.
 
 ## Container runtime
 

@@ -70,7 +70,8 @@ public class PolicyInformationPointTest
             .Setup(r => r.GetAllCurrentDelegationChanges(It.IsAny<List<int>>(), It.IsAny<List<string>>(), It.IsAny<List<int>>(), It.IsAny<List<int>>()))
             .ReturnsAsync([delegation]);
 
-        var policy = CreatePolicyWithPermitRule("rule1",
+        var policy = CreatePolicyWithPermitRule(
+            "rule1",
             actionId: "read",
             subjectId: XacmlRequestAttribute.UserAttribute, subjectValue: "2000",
             resourceId: "urn:altinn:org", resourceValue: "org");
@@ -176,7 +177,8 @@ public class PolicyInformationPointTest
             .Setup(r => r.GetAllCurrentDelegationChanges(It.IsAny<List<int>>(), It.IsAny<List<string>>(), It.IsAny<List<int>>(), It.IsAny<List<int>>()))
             .ReturnsAsync([grant, revoke]);
 
-        var policy = CreatePolicyWithPermitRule("rule1",
+        var policy = CreatePolicyWithPermitRule(
+            "rule1",
             actionId: "write",
             subjectId: XacmlRequestAttribute.PartyAttribute, subjectValue: "3000",
             resourceId: "urn:altinn:app", resourceValue: "app1");

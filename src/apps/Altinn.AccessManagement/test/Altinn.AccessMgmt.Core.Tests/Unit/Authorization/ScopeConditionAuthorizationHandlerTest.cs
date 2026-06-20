@@ -106,8 +106,13 @@ public class ScopeConditionAuthorizationHandlerTest
         bool secondPredicateInvoked = false;
         var requirement = Requirement(
             new ConditionalScope(ConditionalScope.ToOthers, "scope:a"),
-            new ConditionalScope(_ => { secondPredicateInvoked = true;
-                return true; }, "scope:other"));
+            new ConditionalScope(
+                _ =>
+                {
+                    secondPredicateInvoked = true;
+                    return true;
+                },
+                "scope:other"));
 
         var ctx = MakeContext(requirement);
         var handler = new ScopeConditionAuthorizationHandler(accessor, new StubScopeProvider(["scope:a"]));

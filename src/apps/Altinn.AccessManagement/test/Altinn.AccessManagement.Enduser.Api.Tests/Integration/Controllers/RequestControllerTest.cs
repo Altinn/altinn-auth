@@ -512,12 +512,7 @@ public class RequestControllerTest
 
         public ApiFixture Fixture { get; }
 
-        /// <remarks>
-        /// SKIPPED: Test may be experiencing environmental or test ordering issues.
-        /// Requires investigation to ensure request confirmation workflow functions correctly.
-        /// Not related to feature flag removal work in issue #2810.
-        /// </remarks>
-        [Fact(Skip = "Test requires investigation - possible environmental issue")]
+        [Fact]
         public async Task Sender_ConfirmsDraftRequest_ReturnsPending()
         {
             var client = CreateSystemClient(Fixture, TestData.LarsBakke.Id);
@@ -691,11 +686,13 @@ public class RequestControllerTest
             EnableFeatureFlags(fixture);
             fixture.EnsureSeedOnce<ApprovePackageRequestTest>(db =>
             {
+                // Josephine requests the Agriculture package from Dumbo Adventures (the receiver).
+                // Dumbo's managing director (Malin) can delegate the package, so approval succeeds.
                 var reqAssignment = new RequestAssignment
                 {
-                    FromId = TestData.OddHalvorsen.Id,
-                    ToId = TestData.BakerJohnsen.Id,
-                    ById = TestData.OddHalvorsen.Id,
+                    FromId = TestData.JosephineYvonnesdottir.Id,
+                    ToId = TestData.DumboAdventures.Id,
+                    ById = TestData.JosephineYvonnesdottir.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.RequestAssignments.Add(reqAssignment);
@@ -714,48 +711,38 @@ public class RequestControllerTest
 
         public ApiFixture Fixture { get; }
 
-        // TODO (step 62 follow-up): rewrite fixture before un-skipping.
-        // The happy-path approval exercises the real delegation-rights path
-        // (ConnectionService.AddPackage -> CheckPackage -> GetAssignableAccessPackages)
-        // which requires the authenticated principal to hold a role on the *receiver*
-        // party that grants permission to delegate the requested package, AND a
-        // pre-existing Rightholder connection between receiver and sender.
-        //
-        // The current seed authenticates as OddHalvorsen (a Person, and the request's
-        // "from"/sender), and uses party=BakerJohnsen (receiver) — Odd has no
-        // delegation rights on Baker's behalf, so CheckPackage correctly returns a
-        // validation error and the endpoint returns 400. Step 48 masked this by
-        // bypassing CheckPackage entirely via ImportAssignmentPackages, which is the
-        // A2 role-import helper and must not be used from the public approval
-        // endpoint — see step 62.
-        //
-        // A proper rewrite should e.g. authenticate as MalinEmilie (MD of
-        // DumboAdventures), seed the RequestAssignment with To=DumboAdventures and
-        // From=<an entity that already has a Rightholder connection with Dumbo>, and
-        // request a package Malin's MD role permits her to delegate.
-        [Fact(Skip = "Fixture mis-seeded: authenticates as the sender/Person with no delegation rights on the receiver. Needs rewrite — see step 62 for context.")]
+        /// <summary>
+        /// Malin (managing director of DumboAdventures, the request's receiver party) approves Josephine's
+        /// pending request for the Agriculture package. Approval gets-or-creates the Dumbo to Josephine
+        /// rightholder connection and delegates the package on Dumbo's behalf - which Malin's role permits -
+        /// so the request transitions to Approved.
+        /// </summary>
+        [Fact]
         public async Task Receiver_ApprovesPendingPackageRequest_ReturnsApproved()
         {
-            var client = CreateSystemClient(Fixture, TestData.OddHalvorsen.Id);
+            var client = CreateSystemClient(Fixture, TestData.MalinEmilie.Id);
 
             var response = await client.PutAsync(
-                $"{Route}/received/approve?party={TestData.BakerJohnsen.Id}&id={PendingPackageRequestId}",
+                $"{Route}/received/approve?party={TestData.DumboAdventures.Id}&id={PendingPackageRequestId}",
                 null,
                 TestContext.Current.CancellationToken);
 
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            var result = await response.Content.ReadFromJsonAsync<RequestDto>(TestContext.Current.CancellationToken);
+            string content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
+
+            var result = JsonSerializer.Deserialize<RequestDto>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            Assert.NotNull(result);
             Assert.Equal(RequestStatus.Approved, result.Status);
         }
 
         [Fact]
         public async Task NonReceiver_ApprovesPendingPackageRequest_ReturnsNonSuccess()
         {
-            // OddHalvorsen is the sender (from), not the receiver, so approval should fail validation.
-            var client = CreateSystemClient(Fixture, TestData.OddHalvorsen.Id);
+            // Josephine is the requester (from), not the receiver, so she cannot approve her own request.
+            var client = CreateSystemClient(Fixture, TestData.JosephineYvonnesdottir.Id);
 
             var response = await client.PutAsync(
-                $"{Route}/received/approve?party={TestData.OddHalvorsen.Id}&id={PendingPackageRequestId}",
+                $"{Route}/received/approve?party={TestData.JosephineYvonnesdottir.Id}&id={PendingPackageRequestId}",
                 null,
                 TestContext.Current.CancellationToken);
 

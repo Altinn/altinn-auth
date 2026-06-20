@@ -12,8 +12,10 @@ using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.Core;
+using Altinn.AccessMgmt.Core.Utils.Models;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.ProblemDetails;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
@@ -187,6 +189,32 @@ public partial class ConnectionsControllerTest
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+
+        /// <summary>
+        /// An actor without delegable access to the package (Malin, MD of Dumbo, has no access on
+        /// behalf of Kaos) tries to add it to the existing Kaos→Josephine connection. The delegation
+        /// check returns the package with Result=false, so the AuthorizePackageAssignment guard denies
+        /// it. Expects 400 with AM.VLD-00026 (UserNotAuthorized) on QUERY/packageId. Guards the
+        /// package-delegation escalation boundary asserted by the Bruno suite (#3498).
+        /// </summary>
+        [Fact]
+        public async Task AddAssignmentPackage_AsActorWithoutDelegableAccessToPackage_Returns400WithUserNotAuthorized()
+        {
+            HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
+
+            HttpResponseMessage response = await client.PostAsync(
+                $"{Route}/accesspackages?party={TestData.KaosMagicDesignAndArts.Id}&to={TestData.JosephineYvonnesdottir.Id}&packageId={PackageConstants.SalarySpecialCategory.Id}",
+                null,
+                TestContext.Current.CancellationToken);
+
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.BadRequest, $"Expected BadRequest but got {response.StatusCode}. Response body: {responseContent}");
+
+            AltinnValidationProblemDetails problemDetails = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            Assert.NotNull(problemDetails);
+            Assert.Single(problemDetails.Errors, e => e.ErrorCode == ValidationErrors.UserNotAuthorized.ErrorCode);
+            Assert.Single(problemDetails.Errors, e => e.Paths.Contains("QUERY/packageId"));
         }
     }
 }

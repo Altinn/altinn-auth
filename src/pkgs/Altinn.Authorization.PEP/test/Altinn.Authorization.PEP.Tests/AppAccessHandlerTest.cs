@@ -301,7 +301,7 @@ namespace Altinn.Authorization.PEP.Tests
 
             if (!string.IsNullOrEmpty(xForwardedForHeader))
             {
-                httpContext.Request.Headers.Add("x-forwarded-for", xForwardedForHeader);
+                httpContext.Request.Headers["x-forwarded-for"] = xForwardedForHeader;
             }
 
             return httpContext;

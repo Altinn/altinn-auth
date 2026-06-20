@@ -144,6 +144,16 @@ public class AuthenticationHelperTest
     }
 
     [Fact]
+    public void GetSystemUserUuid_SystemUserTypeWithInvalidGuid_ReturnsEmpty()
+    {
+        // A non-guid systemuser_id must fall back to Guid.Empty, not throw FormatException,
+        // matching the TryParse contract of the other claim accessors.
+        var json = """{"type":"urn:altinn:systemuser","systemuser_id":["not-a-guid"]}""";
+
+        AuthenticationHelper.GetSystemUserUuid(CtxWith(new Claim("authorization_details", json))).Should().Be(Guid.Empty);
+    }
+
+    [Fact]
     public void GetSystemUserUuidString_SystemUserTypeWithoutIdArray_ReturnsEmptyString()
     {
         var json = """{"type":"urn:altinn:systemuser"}""";

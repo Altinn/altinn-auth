@@ -72,8 +72,8 @@ public class ControllerExtensionsTest
     [InlineData("eng", "eng")]
     [InlineData("nob", "nob")]
     [InlineData("nno", "nno")]
-    [InlineData("fr", "nob")]      // unsupported → DefaultLanguageCode
-    [InlineData("xx-YY", "nob")]   // unsupported region-suffixed → DefaultLanguageCode
+    [InlineData("fr", "nob")] // unsupported → DefaultLanguageCode
+    [InlineData("xx-YY", "nob")] // unsupported region-suffixed → DefaultLanguageCode
     public void GetLanguageCode_HeaderFallback_NormalizesCodes(string header, string expected)
     {
         var controller = NewController(c => c.Request.Headers["Accept-Language"] = header);

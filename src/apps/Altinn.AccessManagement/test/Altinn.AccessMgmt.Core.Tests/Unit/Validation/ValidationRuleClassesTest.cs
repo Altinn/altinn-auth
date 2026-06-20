@@ -1,6 +1,7 @@
 ﻿using Altinn.AccessMgmt.Core.Validation;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 
 namespace Altinn.AccessMgmt.Core.Tests.Unit.Validation;
 
@@ -230,5 +231,204 @@ public class ValidationRuleClassesTest
     public void PackageExists_NullPackage_ReturnsError()
     {
         Fails(PackageValidation.PackageExists(null, "my-package")).Should().BeTrue();
+    }
+
+    // ── PackageValidation.AuthorizePackageAssignment (internal) ───────────────
+    [Fact]
+    public void AuthorizePackageAssignment_AllResultTrue_ReturnsNull()
+    {
+        var packages = new[]
+        {
+            new AccessPackageDto.AccessPackageDtoCheck { Package = new AccessPackageDto { Urn = "urn:altinn:accesspackage:p1" }, Result = true },
+            new AccessPackageDto.AccessPackageDtoCheck { Package = new AccessPackageDto { Urn = "urn:altinn:accesspackage:p2" }, Result = true },
+        };
+        Passes(PackageValidation.AuthorizePackageAssignment(packages)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void AuthorizePackageAssignment_AnyResultFalse_ReturnsError()
+    {
+        var packages = new[]
+        {
+            new AccessPackageDto.AccessPackageDtoCheck { Package = new AccessPackageDto { Urn = "urn:altinn:accesspackage:p1" }, Result = true },
+            new AccessPackageDto.AccessPackageDtoCheck { Package = new AccessPackageDto { Urn = "urn:altinn:accesspackage:p2" }, Result = false },
+        };
+        Fails(PackageValidation.AuthorizePackageAssignment(packages)).Should().BeTrue();
+    }
+
+    // ── PackageValidation.PackageIsAssignableTo (internal) ────────────────────
+    [Fact]
+    public void PackageIsAssignableTo_OrgWithMainAdminPackage_ReturnsError()
+    {
+        var toType = new EntityType { Id = EntityTypeConstants.Organization };
+        var urns = new[] { PackageConstants.MainAdministrator.Entity.Urn };
+        Fails(PackageValidation.PackageIsAssignableTo(urns, toType)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void PackageIsAssignableTo_OrgWithNonMainAdminPackage_ReturnsNull()
+    {
+        var toType = new EntityType { Id = EntityTypeConstants.Organization };
+        var urns = new[] { "urn:altinn:accesspackage:some-other-package" };
+        Passes(PackageValidation.PackageIsAssignableTo(urns, toType)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void PackageIsAssignableTo_PersonWithMainAdminPackage_ReturnsNull()
+    {
+        var toType = new EntityType { Id = EntityTypeConstants.Person };
+        var urns = new[] { PackageConstants.MainAdministrator.Entity.Urn };
+        Passes(PackageValidation.PackageIsAssignableTo(urns, toType)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void PackageIsAssignableTo_NullAssignedToType_Throws()
+    {
+        var urns = new[] { PackageConstants.MainAdministrator.Entity.Urn };
+        Assert.Throws<ArgumentNullException>(() => PackageValidation.PackageIsAssignableTo(urns, null)());
+    }
+
+    // ── PackageValidation.PackageIsAssignableFrom (internal) ──────────────────
+    [Fact]
+    public void PackageIsAssignableFrom_MatchingEntityType_ReturnsNull()
+    {
+        // Agriculture is an organization package; from an organization it is assignable.
+        var fromType = new EntityType { Id = EntityTypeConstants.Organization, Name = "Organisation" };
+        var urns = new[] { PackageConstants.Agriculture.Entity.Urn };
+        Passes(PackageValidation.PackageIsAssignableFrom(urns, fromType)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void PackageIsAssignableFrom_NonMatchingEntityType_ReturnsError()
+    {
+        // Agriculture belongs to the organization entity type, so it is not assignable from a person.
+        var fromType = new EntityType { Id = EntityTypeConstants.Person, Name = "Person" };
+        var urns = new[] { PackageConstants.Agriculture.Entity.Urn };
+        Fails(PackageValidation.PackageIsAssignableFrom(urns, fromType)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void PackageIsAssignableFrom_UnknownPackage_Ignored_ReturnsNull()
+    {
+        // A urn that does not resolve to a known package is skipped, not reported.
+        var fromType = new EntityType { Id = EntityTypeConstants.Person, Name = "Person" };
+        var urns = new[] { "urn:altinn:accesspackage:does-not-exist" };
+        Passes(PackageValidation.PackageIsAssignableFrom(urns, fromType)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void PackageIsAssignableFrom_NullAssignedFromType_Throws()
+    {
+        var urns = new[] { PackageConstants.Agriculture.Entity.Urn };
+        Assert.Throws<ArgumentNullException>(() => PackageValidation.PackageIsAssignableFrom(urns, null)());
+    }
+
+    // ── PackageValidation.PackageIsAssignable (internal) ──────────────────────
+    [Fact]
+    public void PackageIsAssignable_AssignablePackage_ReturnsNull()
+    {
+        Passes(PackageValidation.PackageIsAssignable(PackageConstants.Agriculture.Entity.Urn)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void PackageIsAssignable_NonAssignablePackage_ReturnsError()
+    {
+        Fails(PackageValidation.PackageIsAssignable(PackageConstants.AccountantWithSigningRights.Entity.Urn)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void PackageIsAssignable_UnknownPackage_ReturnsError()
+    {
+        Fails(PackageValidation.PackageIsAssignable("urn:altinn:accesspackage:does-not-exist")).Should().BeTrue();
+    }
+
+    // ── PackageValidation.ResourceIsAssignable (internal) ─────────────────────
+    [Fact]
+    public void ResourceIsAssignable_MaskinportenSchema_ReturnsError()
+    {
+        var resource = new Resource { Name = "x", Type = new ResourceType { Name = "MaskinportenSchema" } };
+        Fails(PackageValidation.ResourceIsAssignable(resource)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void ResourceIsAssignable_OtherResourceType_ReturnsNull()
+    {
+        var resource = new Resource { Name = "x", Type = new ResourceType { Name = "GenericAccessResource" } };
+        Passes(PackageValidation.ResourceIsAssignable(resource)).Should().BeTrue();
+    }
+
+    // ── PackageValidation.SelfAssignmentNotAllowed (internal) ─────────────────
+    [Fact]
+    public void SelfAssignmentNotAllowed_DifferentParties_ReturnsNull()
+    {
+        Passes(PackageValidation.SelfAssignmentNotAllowed(Guid.NewGuid(), Guid.NewGuid())).Should().BeTrue();
+    }
+
+    [Fact]
+    public void SelfAssignmentNotAllowed_SameParty_ReturnsError()
+    {
+        var id = Guid.NewGuid();
+        Fails(PackageValidation.SelfAssignmentNotAllowed(id, id)).Should().BeTrue();
+    }
+
+    // ── PackageValidation.PackageUrnLookup (internal) ─────────────────────────
+    [Fact]
+    public void PackageUrnLookup_EmptyLookupResult_ReturnsError()
+    {
+        Fails(PackageValidation.PackageUrnLookup(Array.Empty<Package>(), new[] { "some-package" })).Should().BeTrue();
+    }
+
+    [Fact]
+    public void PackageUrnLookup_CountMismatch_ReturnsError()
+    {
+        var packages = new[] { new Package { Name = "pkg-a" } };
+        Fails(PackageValidation.PackageUrnLookup(packages, new[] { "pkg-a", "pkg-b" })).Should().BeTrue();
+    }
+
+    [Fact]
+    public void PackageUrnLookup_ExactMatch_ReturnsNull()
+    {
+        var packages = new[] { new Package { Name = "pkg-a" } };
+        Passes(PackageValidation.PackageUrnLookup(packages, new[] { "pkg-a" })).Should().BeTrue();
+    }
+
+    // ── AssignmentInstanceValidation.HasAssignedInstances (internal) ──────────
+    [Fact]
+    public void HasAssignedInstances_EmptyCollection_ReturnsNull()
+    {
+        Passes(AssignmentInstanceValidation.HasAssignedInstances([])).Should().BeTrue();
+    }
+
+    [Fact]
+    public void HasAssignedInstances_NullCollection_ReturnsNull()
+    {
+        Passes(AssignmentInstanceValidation.HasAssignedInstances(null)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void HasAssignedInstances_NonEmptyCollection_ReturnsError()
+    {
+        var instances = new[] { new AssignmentInstance { Id = Guid.CreateVersion7() } };
+        Fails(AssignmentInstanceValidation.HasAssignedInstances(instances)).Should().BeTrue();
+    }
+
+    // ── AssignmentResourceValidation.HasAssignedResources (internal) ──────────
+    [Fact]
+    public void HasAssignedResources_EmptyCollection_ReturnsNull()
+    {
+        Passes(AssignmentResourceValidation.HasAssignedResources([])).Should().BeTrue();
+    }
+
+    [Fact]
+    public void HasAssignedResources_NullCollection_ReturnsNull()
+    {
+        Passes(AssignmentResourceValidation.HasAssignedResources(null)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void HasAssignedResources_NonEmptyCollection_ReturnsError()
+    {
+        var resources = new[] { new AssignmentResource { Id = Guid.CreateVersion7() } };
+        Fails(AssignmentResourceValidation.HasAssignedResources(resources)).Should().BeTrue();
     }
 }

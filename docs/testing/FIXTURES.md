@@ -58,6 +58,23 @@ fixture.EnsureSeedOnce<MyControllerTest>(async db =>
 The callback runs exactly once per fixture lifetime even when the fixture is
 shared across classes via `ICollectionFixture<ApiFixture>`.
 
+#### Seed-data contract
+
+`ApiFixture` is **not** an empty database — it provisions a baseline set of
+entities, parties and assignments (see `TestDataSeeds` / `TestEntities` /
+`TestData` in `Altinn.AccessManagement.TestUtils`). Your test code should:
+
+- **Assert against owned data, not global counts.** Use scoped assertions
+  (`Assert.Contains` / `Assert.Empty` on a filtered set), never "exactly N rows
+  in the table" — the baseline and other classes' `EnsureSeedOnce` data coexist
+  in a shared DB.
+- **Use disjoint IDs.** When seeding your own rows, use IDs that cannot collide
+  with the baseline or another class sharing the fixture; a primary-key clash
+  surfaces as a seed-time failure, not a clean assertion error.
+- **Reuse the named baseline actors** (`TestData.MalinEmilie`,
+  `TestData.JinxArcane`, `TestEntities.MainUnitKarlstad`, …) rather than
+  inventing parties, so the register/profile/roles mocks already resolve them.
+
 ### Why you configure in the constructor only
 
 Once `CreateClient()` / `CreateTestClient()` is called, the underlying
@@ -99,6 +116,17 @@ var client = fixture.WithWebHostBuilder(b =>
     b.ConfigureTestServices(s => s.AddSingleton<IFeatureManager>(customMock)))
     .CreateClient();
 ```
+
+**Feature flags only apply through the injected mock.** A flag-gated path (for
+example the access-package enrichment in `ContextHandler`, gated by
+`SystemUserAccessPackageAuthorization` / `UserAccessPackageAuthorization`) is
+only enabled when you build the client with the configured `IFeatureManager`
+mock (via `WithWebHostBuilder` / a `GetTestClient(featureManager: …)` helper) —
+the default `BuildClient()` does not pick up the per-class `featureManageMock`
+setups. This is a subtle trap for **negative** decision tests: a flag-gated
+enrichment that is silently *off* yields the same `NotApplicable` you expect for
+"no access", so the test passes for the wrong reason. Run such tests through the
+flag-enabled client so the decision is actually exercised.
 
 ---
 
