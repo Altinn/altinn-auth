@@ -80,8 +80,11 @@ script:pre-request {
   bru.setVar("org",  testdata.resources.appInstanceDelegation.org);
   bru.setVar("app",  testdata.resources.appInstanceDelegation.app);
   bru.setVar("instanceId",  testdata.instances.sub2p.instanceId);
-  bru.setVar("subject",  testdata.persons.hakkeDyr.personId);
+  bru.setVar("subject",  testdata.persons.juleferieStoyfri.personId);
   bru.setVar("resourceParty",  testdata.organizations.legitimJusterbarTiger.subunits.legitimJusterbarTiger.organizationNumber);
+  
+  // App: ttd/ttd-bruno-tilgangspakke-app
+  // Underenhet A har delegert app-instans til Person B, så B skal få Permit
   
   var getTokenParameters = {
     auth_tokenType: sharedtestdata.authTokenType.enterprise,

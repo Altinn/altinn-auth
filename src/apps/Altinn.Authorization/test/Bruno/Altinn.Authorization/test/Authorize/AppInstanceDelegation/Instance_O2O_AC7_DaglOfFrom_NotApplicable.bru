@@ -43,16 +43,8 @@ body:json {
               {
                   "Attribute": [
                       {
-                          "AttributeId": "urn:altinn:organization:identifier-no",
-                          "Value": "{{resourceParty}}"
-                      },
-                      {
-                          "AttributeId": "urn:altinn:resource",
-                          "Value": "{{resourceId}}"
-                      },
-                      {
                           "AttributeId": "urn:altinn:resource:instance-id",
-                          "Value": "{{instanceId}}"
+                          "Value": "urn:altinn:instance-id:{{partyId}}/{{instanceId}}"
                       },
                       {
                           "AttributeId": "urn:altinn:task",
@@ -81,6 +73,7 @@ script:pre-request {
   bru.setVar("instanceId",  testdata.instances.o2o.instanceId);
   bru.setVar("subject",  testdata.organizations.mobilBeskjedenTiger.dagl.personId);
   bru.setVar("resourceParty", testdata.organizations.mobilBeskjedenTiger.organizationNumber);
+  bru.setVar("partyId", testdata.organizations.mobilBeskjedenTiger.partyId);
   
   var getTokenParameters = {
     auth_tokenType: sharedtestdata.authTokenType.enterprise,

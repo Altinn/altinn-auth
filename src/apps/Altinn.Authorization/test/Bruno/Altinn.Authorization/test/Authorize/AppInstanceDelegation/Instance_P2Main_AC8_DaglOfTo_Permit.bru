@@ -1,0 +1,94 @@
+meta {
+  name: Instance_P2Main_AC8_DaglOfTo_Permit
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/authorization/api/v1/authorize
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+body:json {
+  {
+      "Request": {
+          "ReturnPolicyIdList": false,
+          "AccessSubject": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:altinn:person:identifier-no",
+                          "Value": "{{subject}}"
+                      }
+                  ]
+              }
+          ],
+          "Action": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+                          "Value": "read"
+                      }
+                  ]
+              }
+          ],
+          "Resource": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:altinn:resource:instance-id",
+                          "Value": "urn:altinn:instance-id:{{partyId}}/{{instanceId}}"
+                      }
+                  ]
+              }
+          ]
+      }
+  }
+}
+
+assert {
+  ~res.status: eq 200
+  ~res.body: contains created
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/shared.js`);
+  const testdata = require(`./testdata/InstanceDelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  // Should be the same as the .bru request file. Used as Test-name Tests tab and shows in test result.
+  bru.setVar("requestName", "Instance_P2Main_AC8_DaglOfTo_Permit");
+  
+  bru.setVar("instanceId",  testdata.instances.p2main.instanceId);
+  bru.setVar("subject",  testdata.organizations.mobilBeskjedenTiger.dagl.personId);
+  bru.setVar("partyId",  testdata.persons.ovelseEmpirisk.partyId);
+  
+  // App: ttd/signering-brukerstyrt (hovedenhet B er lagd til som stifter i appen)
+  // Person A har instansiert en app knyttet til Hovedenhet B, så daglig leder for B skal få Permit på den instansen.
+  
+  var getTokenParameters = {
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.authorize,
+    auth_org: sharedtestdata.serviceOwners.ttd.org,
+    auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test(bru.getVar("requestName"), function() {
+    const data = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(data.response[0]).to.have.property('decision', "Permit");
+  });
+}

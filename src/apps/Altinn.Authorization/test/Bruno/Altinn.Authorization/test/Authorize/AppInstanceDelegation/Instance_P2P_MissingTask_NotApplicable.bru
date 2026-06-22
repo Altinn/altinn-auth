@@ -52,7 +52,7 @@ body:json {
                       },
                       {
                           "AttributeId": "urn:altinn:resource:instance-id",
-                          "Value": "{{instanceId}}"
+                          "Value": "urn:altinn:instance-id:{{partyId}}/{{instanceId}}"
                       }
                   ]
               }
@@ -74,9 +74,11 @@ script:pre-request {
   bru.setVar("requestName", "Instance_P2P_MissingTask_NotApplicable");
   
   bru.setVar("resourceId",  testdata.resources.appInstanceDelegation.resourceId);
-  bru.setVar("instanceId",  testdata.instances.p2p.instanceId);
+  bru.setVar("instanceId",  testdata.instances.p2p.brukerstyrtInstanceId);
   bru.setVar("subject",  testdata.persons.hakkeDyr.personId);
   bru.setVar("resourceParty",  testdata.persons.ovelseEmpirisk.personId);
+  bru.setVar("partyId",  testdata.persons.ovelseEmpirisk.partyId);
+  
   
   var getTokenParameters = {
     auth_tokenType: sharedtestdata.authTokenType.enterprise,

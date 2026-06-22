@@ -1,0 +1,95 @@
+meta {
+  name: Instance_O2O_AC7_AgentOfTo_Permit
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/authorization/api/v1/authorize
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+body:json {
+  {
+      "Request": {
+          "ReturnPolicyIdList": false,
+          "AccessSubject": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:altinn:person:identifier-no",
+                          "Value": "{{subject}}"
+                      }
+                  ]
+              }
+          ],
+          "Action": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+                          "Value": "read"
+                      }
+                  ]
+              }
+          ],
+          "Resource": [
+              {
+                  "Attribute": [
+                      {
+                          "AttributeId": "urn:altinn:resource:instance-id",
+                          "Value": "urn:altinn:instance-id:{{partyId}}/{{instanceId}}"
+                      }
+                  ]
+              }
+          ]
+      }
+  }
+}
+
+assert {
+  ~res.status: eq 200
+  ~res.body: contains created
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/shared.js`);
+  const testdata = require(`./testdata/InstanceDelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  // Should be the same as the .bru request file. Used as Test-name Tests tab and shows in test result.
+  bru.setVar("requestName", "Instance_O2O_AC7_AgentOfTo_Permit");
+  
+  bru.setVar("instanceId",  testdata.instances.main2mainAgent.instanceId);
+  bru.setVar("subject",  testdata.organizations.mobilBeskjedenTiger.agent.personId);
+  bru.setVar("partyId", testdata.organizations.legitimJusterbarTiger.partyId);
+  
+  // App: ttd/ttd-bruno-tilgangspakke-app
+  // Tilgangspakke: urn:altinn:accesspackage:revisorattesterer og urn:altinn:accesspackage:motorvognavgift
+  // Hovedenhet A har instansiert en app knyttet til hovedenhet B. B har A som klient hos seg, og agent bruker for B med riktig klientdelegering/tilgangspakke (revisorattesterer og motorvognavgift) skal få Permit på den instansen.
+  
+  var getTokenParameters = {
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.authorize,
+    auth_org: sharedtestdata.serviceOwners.ttd.org,
+    auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
+  }
+  
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  test(bru.getVar("requestName"), function() {
+    const data = res.getBody();  
+    expect(res.status).to.equal(200);
+    expect(data.response[0]).to.have.property('decision', "Permit");
+  });
+}

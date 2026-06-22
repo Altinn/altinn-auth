@@ -1,7 +1,7 @@
 meta {
   name: Instance_O2O_AC7_DaglOfTo_Permit
   type: http
-  seq: 9
+  seq: 8
 }
 
 post {
@@ -34,7 +34,7 @@ body:json {
                   "Attribute": [
                       {
                           "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
-                          "Value": "sign"
+                          "Value": "read"
                       }
                   ]
               }
@@ -43,20 +43,8 @@ body:json {
               {
                   "Attribute": [
                       {
-                          "AttributeId": "urn:altinn:organization:identifier-no",
-                          "Value": "{{resourceParty}}"
-                      },
-                      {
-                          "AttributeId": "urn:altinn:resource",
-                          "Value": "{{resourceId}}"
-                      },
-                      {
                           "AttributeId": "urn:altinn:resource:instance-id",
-                          "Value": "{{instanceId}}"
-                      },
-                      {
-                          "AttributeId": "urn:altinn:task",
-                          "Value": "task_1"
+                          "Value": "urn:altinn:instance-id:{{partyId}}/{{instanceId}}"
                       }
                   ]
               }
@@ -77,10 +65,12 @@ script:pre-request {
   // Should be the same as the .bru request file. Used as Test-name Tests tab and shows in test result.
   bru.setVar("requestName", "Instance_O2O_AC7_DaglOfTo_Permit");
   
-  bru.setVar("resourceId",  testdata.resources.appInstanceDelegation.resourceId);
   bru.setVar("instanceId",  testdata.instances.o2o.instanceId);
   bru.setVar("subject",  testdata.organizations.legitimJusterbarTiger.dagl.personId);
-  bru.setVar("resourceParty", testdata.organizations.mobilBeskjedenTiger.organizationNumber);
+  bru.setVar("partyId", testdata.organizations.mobilBeskjedenTiger.partyId);
+  
+  // App: ttd/signering-brukerstyrt (hovedenhet B er lagd til som stifter i appen)
+  // Hovedenhet A har instansiert en app knyttet til hovedenhet B, så daglig leder for B skal få Permit på den instansen.
   
   var getTokenParameters = {
     auth_tokenType: sharedtestdata.authTokenType.enterprise,

@@ -43,20 +43,8 @@ body:json {
               {
                   "Attribute": [
                       {
-                          "AttributeId": "urn:altinn:person:identifier-no",
-                          "Value": "{{resourceParty}}"
-                      },
-                      {
-                          "AttributeId": "urn:altinn:resource",
-                          "Value": "{{resourceId}}"
-                      },
-                      {
                           "AttributeId": "urn:altinn:resource:instance-id",
-                          "Value": "{{instanceId}}"
-                      },
-                      {
-                          "AttributeId": "urn:altinn:task",
-                          "Value": "task_1"
+                          "Value": "urn:altinn:instance-id:{{partyId}}/{{instanceId}}"
                       }
                   ]
               }
@@ -77,10 +65,12 @@ script:pre-request {
   // Should be the same as the .bru request file. Used as Test-name Tests tab and shows in test result.
   bru.setVar("requestName", "Instance_P2P_AC1_ResId_InstId_Permit");
   
-  bru.setVar("resourceId",  testdata.resources.appInstanceDelegation.resourceId);
   bru.setVar("instanceId",  testdata.instances.p2p.instanceId);
   bru.setVar("subject",  testdata.persons.hakkeDyr.personId);
-  bru.setVar("resourceParty",  testdata.persons.ovelseEmpirisk.personId);
+  bru.setVar("partyId",  testdata.persons.ovelseEmpirisk.partyId);
+  
+  //app: ttd/ttd-bruno-tilgangspakke-app
+  // Person A har delegert app-instans til Person B, så B skal få Permit på den instansen.
   
   var getTokenParameters = {
     auth_tokenType: sharedtestdata.authTokenType.enterprise,
