@@ -1,0 +1,156 @@
+@*
+    Reusable dialog that shows a ready-to-paste JSON schedule snippet.
+    Opened by each job page with a pre-built list of JobScheduleEntry objects.
+*@
+@using Altinn.AccessMgmt.FFB.Config
+@using Microsoft.JSInterop
+@using System.Text.Json
+@inject IJSRuntime JS
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Schedule" Class="mr-2" />
+            Generer plan-konfig
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-3 mud-text-secondary">
+            Lim inn følgende under <code>JobSchedules.Schedules</code> i <code>appsettings.json</code>.
+        </MudText>
+
+        @* ── Cron picker ──────────────────────────────────────────────────── *@
+        <MudGrid Spacing="2" Class="mb-3">
+            <MudItem xs="12" sm="6">
+                <MudSelect T="string" Value="@_cronPreset" ValueChanged="@OnPresetChanged"
+                           Label="Intervall" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    @foreach (var (label, value) in CronPresets)
+                    {
+                        var v = value;
+                        <MudSelectItem Value="@v">@label</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField T="string" Value="@_cron" ValueChanged="@OnCronChanged"
+                              Label="Cron-uttrykk" Variant="Variant.Outlined" Margin="Margin.Dense"
+                              HelperText="5-felts standard cron"
+                              Immediate="true" />
+            </MudItem>
+        </MudGrid>
+
+        @* ── Id prefix ────────────────────────────────────────────────────── *@
+        <MudTextField T="string" Value="@_idPrefix" ValueChanged="@OnIdPrefixChanged"
+                      Label="ID-prefix" Variant="Variant.Outlined" Margin="Margin.Dense"
+                      Class="mb-3"
+                      HelperText="Unikt navn på planen, f.eks. 'ingest-at23'"
+                      Immediate="true" />
+
+        @* ── JSON output ──────────────────────────────────────────────────── *@
+        <pre style="overflow-x:auto;overflow-y:auto;max-height:340px;font-size:.78rem;
+                    background:var(--mud-palette-background-grey);padding:1rem;border-radius:4px;
+                    white-space:pre-wrap;word-break:break-all">@_json</pre>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CopyToClipboard"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.ContentCopy">
+            Kopier
+        </MudButton>
+        <MudButton OnClick="Close">Lukk</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    /// <summary>One or more schedule entries to show. Each has Id/JobType/Environment/Options pre-filled.</summary>
+    [Parameter] public List<JobScheduleEntry> Entries { get; set; } = [];
+
+    private static readonly (string Label, string Value)[] CronPresets =
+    [
+        ("Hvert 2. time",       "0 */2 * * *"),
+        ("Hvert 4. time",       "0 */4 * * *"),
+        ("Hvert 6. time",       "0 */6 * * *"),
+        ("Hvert 12. time",      "0 */12 * * *"),
+        ("Daglig kl. 02:00",    "0 2 * * *"),
+        ("Mandag kl. 03:00",    "0 3 * * 1"),
+        ("Egendefinert",        ""),
+    ];
+
+    private string _cronPreset = "0 */4 * * *";
+    private string _cron = "0 */4 * * *";
+    private string _idPrefix = string.Empty;
+    private string _json = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        if (Entries.Count > 0 && string.IsNullOrEmpty(_idPrefix))
+        {
+            _idPrefix = $"{Entries[0].JobType.ToLowerInvariant()}-{Entries[0].Environment.ToLowerInvariant()}";
+        }
+
+        UpdateJson();
+    }
+
+    private void OnPresetChanged(string value)
+    {
+        _cronPreset = value;
+        if (!string.IsNullOrEmpty(value))
+        {
+            _cron = value;
+        }
+
+        UpdateJson();
+    }
+
+    private void OnCronChanged(string value)
+    {
+        _cron = value;
+        _cronPreset = string.Empty;   // switch to "Egendefinert"
+        UpdateJson();
+    }
+
+    private void OnIdPrefixChanged(string value)
+    {
+        _idPrefix = value;
+        UpdateJson();
+    }
+
+    private void UpdateJson()
+    {
+        var suffix = Entries.Count > 1 ? 1 : (int?)null;
+        var built = Entries.Select((entry, i) =>
+        {
+            var id = suffix.HasValue
+                ? $"{_idPrefix}-{i + 1}"
+                : _idPrefix;
+
+            return new JobScheduleEntry
+            {
+                Id = string.IsNullOrWhiteSpace(id) ? entry.Id : id,
+                JobType = entry.JobType,
+                Environment = entry.Environment,
+                Cron = _cron,
+                Enabled = entry.Enabled,
+                IngestOptions = entry.IngestOptions,
+                HistoryOptions = entry.HistoryOptions,
+                AssignmentOptions = entry.AssignmentOptions,
+            };
+        }).ToList();
+
+        _json = JsonSerializer.Serialize(built, new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+        });
+    }
+
+    private async Task CopyToClipboard()
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", _json);
+    }
+
+    private void Close() => MudDialog.Close();
+}

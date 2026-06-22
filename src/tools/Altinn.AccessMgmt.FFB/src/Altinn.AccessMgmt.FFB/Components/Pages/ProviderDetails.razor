@@ -1,0 +1,241 @@
+@page "/provider/{Id:guid}"
+@using Altinn.AccessMgmt.PersistenceEF.Models
+@using Microsoft.EntityFrameworkCore
+@using Altinn.AccessMgmt.FFB.Services
+@inject IEnvironmentDbContextFactory DbFactory
+@inject EnvironmentState EnvState
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageTitle>Provider – @(_provider?.Name ?? Id.ToString())</PageTitle>
+
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+}
+else if (_provider is null)
+{
+    <MudAlert Severity="Severity.Error">Provider not found: @Id</MudAlert>
+}
+else
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-6">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                       Color="Color.Default"
+                       OnClick="@(async () => await JS.InvokeVoidAsync("history.go", -1))" />
+        <MudText Typo="Typo.h4">@_provider.Name</MudText>
+        <MudChip T="string" Color="Color.Default" Size="Size.Small">@(_provider.Type?.Name ?? "–")</MudChip>
+    </MudStack>
+
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="1">
+                <MudCardHeader>
+                    <CardHeaderContent><MudText Typo="Typo.h6">Summary</MudText></CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent Class="pa-0">
+                    <MudSimpleTable Dense="true" Hover="false" Bordered="false">
+                        <tbody>
+                            <tr>
+                                <td style="width:35%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Id</td>
+                                <td style="font-family:monospace;font-size:.8125rem">@_provider.Id</td>
+                            </tr>
+                            <tr>
+                                <td style="width:35%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Name</td>
+                                <td style="font-size:.8125rem">@_provider.Name</td>
+                            </tr>
+                            <tr>
+                                <td style="width:35%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Code</td>
+                                <td style="font-family:monospace;font-size:.8125rem">@(_provider.Code ?? "–")</td>
+                            </tr>
+                            <tr>
+                                <td style="width:35%;color:var(--mud-palette-text-secondary);font-size:.8125rem">RefId</td>
+                                <td style="font-family:monospace;font-size:.8125rem">@(_provider.RefId ?? "–")</td>
+                            </tr>
+                            <tr>
+                                <td style="width:35%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Type</td>
+                                <td style="font-size:.8125rem">@(_provider.Type?.Name ?? _provider.TypeId.ToString())</td>
+                            </tr>
+                            @if (!string.IsNullOrEmpty(_provider.LogoUrl))
+                            {
+                                <tr>
+                                    <td style="width:35%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Logo</td>
+                                    <td><img src="@_provider.LogoUrl" alt="Logo" style="max-height:32px" /></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <MudText Typo="Typo.h5" Class="mt-8 mb-3">Owned by this provider</MudText>
+    <MudTabs Elevation="1" Rounded="false" ApplyEffectsToContainer="true">
+
+        <MudTabPanel Text="@($"Resources ({_resources.Count})")"
+                     Icon="@Icons.Material.Filled.Api">
+            <MudTable Items="_resources" Hover="true" Dense="true" Class="pa-0">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Type</MudTh>
+                    <MudTh>RefId</MudTh>
+                    <MudTh>Description</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Name">
+                        <MudLink Href="@($"/resource/{context.Id}")">@context.Name</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Type">
+                        <MudText Typo="Typo.body2">@(context.Type?.Name ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="RefId">
+                        <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.RefId ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Description">
+                        <MudText Typo="Typo.body2">@(context.Description ?? "–")</MudText>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">No resources for this provider.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@($"Packages ({_packages.Count})")"
+                     Icon="@Icons.Material.Filled.Inventory2">
+            <MudTable Items="_packages" Hover="true" Dense="true" Class="pa-0">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+                    <MudTh>URN</MudTh>
+                    <MudTh>Area</MudTh>
+                    <MudTh>IsAssignable</MudTh>
+                    <MudTh>IsDelegable</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Name">
+                        <MudLink Href="@($"/package/{context.Id}")">@context.Name</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="URN">
+                        <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.Urn ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Area">
+                        <MudText Typo="Typo.body2">@(context.Area?.Name ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="IsAssignable">
+                        <MudIcon Icon="@(context.IsAssignable ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
+                                 Color="@(context.IsAssignable ? Color.Success : Color.Error)" Size="Size.Small" />
+                    </MudTd>
+                    <MudTd DataLabel="IsDelegable">
+                        <MudIcon Icon="@(context.IsDelegable ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
+                                 Color="@(context.IsDelegable ? Color.Success : Color.Error)" Size="Size.Small" />
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">No packages for this provider.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@($"Roles ({_roles.Count})")"
+                     Icon="@Icons.Material.Filled.Badge">
+            <MudTable Items="_roles" Hover="true" Dense="true" Class="pa-0">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+                    <MudTh>URN</MudTh>
+                    <MudTh>IsKeyRole</MudTh>
+                    <MudTh>IsAssignable</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Name">
+                        <MudLink Href="@($"/role/{context.Id}")">@context.Name</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="URN">
+                        <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.Urn ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="IsKeyRole">
+                        <MudIcon Icon="@(context.IsKeyRole ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
+                                 Color="@(context.IsKeyRole ? Color.Success : Color.Error)" Size="Size.Small" />
+                    </MudTd>
+                    <MudTd DataLabel="IsAssignable">
+                        <MudIcon Icon="@(context.IsAssignable ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
+                                 Color="@(context.IsAssignable ? Color.Success : Color.Error)" Size="Size.Small" />
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">No roles for this provider.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+
+    </MudTabs>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private bool _loading = true;
+    private Provider? _provider;
+    private List<Resource> _resources = [];
+    private List<Package> _packages = [];
+    private List<Altinn.AccessMgmt.PersistenceEF.Models.Role> _roles = [];
+
+    protected override void OnInitialized()
+    {
+        EnvState.OnChange += OnEnvironmentChanged;
+    }
+
+    public void Dispose()
+    {
+        EnvState.OnChange -= OnEnvironmentChanged;
+    }
+
+    private void OnEnvironmentChanged() => InvokeAsync(async () =>
+    {
+        await LoadDataAsync();
+        StateHasChanged();
+    });
+
+    protected override async Task OnParametersSetAsync() => await LoadDataAsync();
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        _provider = null;
+        _resources = [];
+        _packages = [];
+        _roles = [];
+
+        using var db = DbFactory.CreateContext(EnvState.Current);
+
+        _provider = await db.Providers
+            .AsNoTracking()
+            .Include(p => p.Type)
+            .FirstOrDefaultAsync(p => p.Id == Id);
+
+        if (_provider is not null)
+        {
+            _resources = await db.Resources
+                .AsNoTracking()
+                .Include(r => r.Type)
+                .Where(r => r.ProviderId == Id)
+                .OrderBy(r => r.Name)
+                .ToListAsync();
+
+            _packages = await db.Packages
+                .AsNoTracking()
+                .Include(p => p.Area)
+                .Where(p => p.ProviderId == Id)
+                .OrderBy(p => p.Name)
+                .ToListAsync();
+
+            _roles = await db.Roles
+                .AsNoTracking()
+                .Where(r => r.ProviderId == Id)
+                .OrderBy(r => r.Name)
+                .ToListAsync();
+        }
+
+        _loading = false;
+    }
+}

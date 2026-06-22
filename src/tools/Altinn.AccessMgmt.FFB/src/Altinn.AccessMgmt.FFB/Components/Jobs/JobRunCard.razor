@@ -1,0 +1,206 @@
+@using Altinn.AccessMgmt.FFB.Jobs
+@using Altinn.AccessMgmt.FFB.Jobs.Models
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@inject IJobRunner JobRunner
+@inject IJobRunStore RunStore
+@implements IDisposable
+
+@if (Run is not null)
+{
+    <MudCard Elevation="2" Class="mb-4">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudChip T="string" Color="@EnvColor" Size="Size.Small">@Run.Environment</MudChip>
+                    <MudChip T="string" Color="@StatusColor" Size="Size.Small" Icon="@StatusIcon">@Run.Status</MudChip>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                        @Run.JobName ·
+                        Started @Run.StartedAt.ToLocalTime().ToString("HH:mm:ss")
+                        @if (Run.Duration.HasValue)
+                        {
+                            <span> — @FormatDuration(Run.Duration.Value)</span>
+                        }
+                    </MudText>
+                    <MudSpacer />
+
+                    @* ── Actions ── *@
+                    @if (Run.SqlOutput.Count > 0)
+                    {
+                        <MudButton Size="Size.Small"
+                                   Variant="Variant.Outlined"
+                                   StartIcon="@Icons.Material.Filled.Download"
+                                   OnClick="DownloadSql">
+                            SQL (@Run.SqlOutput.Count)
+                        </MudButton>
+                    }
+
+                    @if (Run.Status is JobStatus.Queued or JobStatus.Running)
+                    {
+                        <MudTooltip Text="Avbryt kjøring">
+                            <MudIconButton Icon="@Icons.Material.Filled.Stop"
+                                           Size="Size.Small"
+                                           Color="Color.Warning"
+                                           OnClick="CancelRun" />
+                        </MudTooltip>
+                    }
+
+                    @if (Run.Status is JobStatus.Completed or JobStatus.Faulted or JobStatus.Cancelled)
+                    {
+                        <MudTooltip Text="Fjern fra listen">
+                            <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                           Size="Size.Small"
+                                           Color="Color.Default"
+                                           OnClick="RemoveRun" />
+                        </MudTooltip>
+                    }
+                </MudStack>
+            </CardHeaderContent>
+        </MudCardHeader>
+
+        <MudCardContent Class="pa-0">
+            @* Log *@
+            <div style="height:220px;overflow-y:auto;font-family:monospace;font-size:.78rem;padding:.5rem 1rem;"
+                 id="log-@Run.Id">
+                @foreach (var entry in _log)
+                {
+                    <div style="color:@(entry.IsError ? "var(--mud-palette-error)" : "inherit")">
+                        <span style="color:var(--mud-palette-text-secondary)">@entry.Timestamp.ToLocalTime().ToString("HH:mm:ss")</span>
+                        &nbsp;@entry.Message
+                    </div>
+                }
+            </div>
+
+            @* SQL preview (collapsible) *@
+            @if (_sql.Count > 0)
+            {
+                <MudDivider />
+                <MudExpansionPanels Elevation="0">
+                    <MudExpansionPanel Text="@($"SQL output ({_sql.Count} statements)")" Dense="true">
+                        <div style="max-height:200px;overflow-y:auto;font-family:monospace;font-size:.75rem;padding:.5rem 1rem;">
+                            @foreach (var stmt in _sql.Take(200))
+                            {
+                                <div>@stmt</div>
+                            }
+                            @if (_sql.Count > 200)
+                            {
+                                <div style="color:var(--mud-palette-text-secondary)">... and @(_sql.Count - 200) more</div>
+                            }
+                        </div>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            }
+
+            @* Extra actions slot *@
+            @if (ExtraActions is not null)
+            {
+                <MudDivider />
+                <div class="pa-3">@ExtraActions</div>
+            }
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    [Parameter, EditorRequired] public JobRun? Run { get; set; }
+    [Parameter] public RenderFragment? ExtraActions { get; set; }
+
+    /// <summary>
+    /// Called after Cancel or Remove completes so the parent can refresh its run list.
+    /// </summary>
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private IReadOnlyList<LogEntry> _log = [];
+    private IReadOnlyList<string> _sql = [];
+
+    protected override void OnParametersSet()
+    {
+        if (Run is null) return;
+        Run.OnUpdated -= OnUpdated;
+        Run.OnUpdated += OnUpdated;
+        RefreshSnapshot();
+    }
+
+    private void OnUpdated()
+    {
+        RefreshSnapshot();
+        InvokeAsync(async () =>
+        {
+            StateHasChanged();
+            // Auto-scroll the log div
+            await JS.InvokeVoidAsync("scrollToBottom", $"log-{Run!.Id}");
+        });
+    }
+
+    private void RefreshSnapshot()
+    {
+        if (Run is null) return;
+        _log = Run.Log;
+        _sql = Run.SqlOutput;
+    }
+
+    private async Task DownloadSql()
+    {
+        if (Run is null) return;
+        var content = Run.DownloadScript ?? string.Join("\n", Run.SqlOutput);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(content);
+        var b64 = Convert.ToBase64String(bytes);
+        var filename = $"{Run.JobName}_{Run.Environment}_{Run.Id:N}.sql";
+        await JS.InvokeVoidAsync("downloadBase64", filename, "text/plain", b64);
+    }
+
+    private async Task CancelRun()
+    {
+        if (Run is null) return;
+        JobRunner.Cancel(Run.Id);
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task RemoveRun()
+    {
+        if (Run is null) return;
+        RunStore.Remove(Run.Id);
+        await OnChanged.InvokeAsync();
+    }
+
+    public void Dispose()
+    {
+        if (Run is not null)
+            Run.OnUpdated -= OnUpdated;
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private Color StatusColor => Run?.Status switch
+    {
+        JobStatus.Queued    => Color.Default,
+        JobStatus.Running   => Color.Info,
+        JobStatus.Completed => Color.Success,
+        JobStatus.Faulted   => Color.Error,
+        JobStatus.Cancelled => Color.Warning,
+        _                   => Color.Default
+    };
+
+    private string StatusIcon => Run?.Status switch
+    {
+        JobStatus.Running   => Icons.Material.Filled.HourglassTop,
+        JobStatus.Completed => Icons.Material.Filled.CheckCircle,
+        JobStatus.Faulted   => Icons.Material.Filled.Error,
+        JobStatus.Cancelled => Icons.Material.Filled.Cancel,
+        _                   => Icons.Material.Filled.Schedule
+    };
+
+    private Color EnvColor => Run?.Environment?.ToUpperInvariant() switch
+    {
+        "PROD" => Color.Error,
+        "YT01" => Color.Warning,
+        _      => Color.Primary
+    };
+
+    private static string FormatDuration(TimeSpan d) =>
+        d.TotalHours >= 1
+            ? $"{(int)d.TotalHours}h {d.Minutes}m {d.Seconds}s"
+            : d.TotalMinutes >= 1
+                ? $"{d.Minutes}m {d.Seconds}s"
+                : $"{d.TotalSeconds:F1}s";
+}

@@ -1,0 +1,230 @@
+@page "/jobs/assignment-sync"
+@using Altinn.AccessMgmt.FFB.Jobs
+@using Altinn.AccessMgmt.FFB.Jobs.Models
+@using Altinn.AccessMgmt.FFB.Config
+@using Altinn.AccessMgmt.FFB.Services
+@using Altinn.AccessMgmt.PersistenceEF.Constants
+@using Altinn.AccessMgmt.PersistenceEF.Models
+@inject IJobRunner JobRunner
+@inject IJobRunStore RunStore
+@inject IEnvironmentDbContextFactory EnvFactory
+@inject IDialogService DialogService
+@implements IDisposable
+
+<PageTitle>Assignment Sync</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Assignment Sync</MudText>
+<MudText Typo="Typo.body1" Class="mb-6 mud-text-secondary">
+    Sammenligner assignments mellom AccessMgmt og Register (to-pass diff med 2×120s pause).
+    Genererer INSERT/DELETE SQL for avvik som er stabile i begge pass, pakket i en transaksjon med audit-kontekst.
+</MudText>
+
+@* ── Start panel ──────────────────────────────────────────────────────────── *@
+<MudPaper Elevation="1" Class="pa-4 mb-6">
+    <MudText Typo="Typo.h6" Class="mb-3">Start ny kjøring</MudText>
+
+    <MudGrid>
+        <MudItem xs="12">
+            <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">Kjør på miljø:</MudText>
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                @foreach (var env in EnvFactory.Environments)
+                {
+                    var envName = env;
+                    var configured = EnvFactory.IsConfigured(envName);
+                    <MudCheckBox @bind-Value="_selected[envName]"
+                                 Label="@envName"
+                                 Disabled="@(!configured)"
+                                 Color="Color.Primary" />
+                }
+            </MudStack>
+        </MudItem>
+
+        <MudItem xs="12" sm="6">
+            <MudSelect @bind-Value="_systemAccountId"
+                       Label="System-konto (changed_by)"
+                       Variant="Variant.Outlined"
+                       Dense="true"
+                       HelperText="Brukes som changed_by og changed_by_system i audit-kontekst">
+                @foreach (var entity in SystemEntities)
+                {
+                    var e = entity;
+                    <MudSelectItem Value="@e.Id">@e.Entity.RefId — @e.Entity.Name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudCheckBox @bind-Value="_forceFullScan"
+                         Label="Force full scan (hopp over grouped count-sjekk)"
+                         Color="Color.Secondary" />
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.PlayArrow"
+                       Disabled="@(!AnySelected)"
+                       OnClick="StartJobs">
+                Start
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Class="ml-2"
+                       StartIcon="@Icons.Material.Filled.Schedule"
+                       Disabled="@(!AnySelected)"
+                       OnClick="OpenScheduleDialog">
+                Generer konfig
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@* ── Runs ─────────────────────────────────────────────────────────────────── *@
+@if (_runs.Count > 0)
+{
+    <MudText Typo="Typo.h6" Class="mb-3">Kjøringer</MudText>
+    @foreach (var run in _runs)
+    {
+        <JobRunCard Run="@run" OnChanged="@RefreshAndRender">
+            <ExtraActions>
+                @if (run.Status == JobStatus.Completed &&
+                     run.SqlOutput.Count > 0 &&
+                     run.JobName == AssignmentSyncJob.JobName)
+                {
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Error"
+                               Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.PlayCircle"
+                               OnClick="@(() => ConfirmAndExecute(run))">
+                        Kjør SQL (@run.SqlOutput.Count statements)
+                    </MudButton>
+                }
+            </ExtraActions>
+        </JobRunCard>
+    }
+}
+
+@code {
+    private static readonly IReadOnlyList<ConstantDefinition<Entity>> SystemEntities =
+        SystemEntityConstants.AllEntities()
+            .OrderBy(e => e.Entity.RefId)
+            .ToList();
+
+    private readonly Dictionary<string, bool> _selected = new();
+    private readonly HashSet<Guid> _subscribed = [];
+    private Guid _systemAccountId = SystemEntityConstants.DBA.Id;
+    private bool _forceFullScan;
+    private List<JobRun> _runs = [];
+
+    protected override void OnInitialized()
+    {
+        foreach (var env in EnvFactory.Environments)
+        {
+            _selected[env] = false;
+        }
+
+        RefreshRuns();
+    }
+
+    private void StartJobs()
+    {
+        var opts = new AssignmentSyncOptions(
+            ForceFullScan: _forceFullScan,
+            SystemAccountId: _systemAccountId);
+
+        foreach (var (env, selected) in _selected)
+        {
+            if (!selected)
+            {
+                continue;
+            }
+
+            var run = JobRunner.StartAssignmentSync(env, opts);
+            Subscribe(run);
+            _runs.Insert(0, run);
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ConfirmAndExecute(JobRun previewRun)
+    {
+        var count = previewRun.SqlOutput.Count;
+        var parameters = new DialogParameters<ConfirmDialog>
+        {
+            { x => x.ContentText, $"Dette vil kjøre {count} SQL-statements mot {previewRun.Environment} i en transaksjon. Kan ikke angres." },
+            { x => x.ButtonText, $"Kjør {count} statements" },
+            { x => x.Color, Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Bekreft kjøring", parameters);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            var run = JobRunner.StartAssignmentSyncExecute(previewRun.Id, previewRun.Environment);
+            Subscribe(run);
+            _runs.Insert(0, run);
+            StateHasChanged();
+        }
+    }
+
+    private void Subscribe(JobRun run)
+    {
+        if (_subscribed.Add(run.Id))
+        {
+            run.OnUpdated += () => InvokeAsync(RefreshAndRender);
+        }
+    }
+
+    private void RefreshRuns()
+    {
+        var scan = RunStore.GetForJob(AssignmentSyncJob.JobName).ToList();
+        var execute = RunStore.GetForJob($"{AssignmentSyncJob.JobName}:Execute").ToList();
+        _runs = scan.Concat(execute)
+            .OrderByDescending(r => r.StartedAt)
+            .ToList();
+
+        foreach (var run in _runs)
+        {
+            Subscribe(run);
+        }
+    }
+
+    private void RefreshAndRender()
+    {
+        RefreshRuns();
+        StateHasChanged();
+    }
+
+    private bool AnySelected => _selected.Values.Any(v => v);
+
+    private async Task OpenScheduleDialog()
+    {
+        var entries = _selected
+            .Where(kv => kv.Value)
+            .Select(kv => new JobScheduleEntry
+            {
+                Id = $"assignment-sync-{kv.Key.ToLowerInvariant()}",
+                JobType = "AssignmentSync",
+                Environment = kv.Key,
+                Cron = "0 2 * * *",
+                Enabled = true,
+                AssignmentOptions = new ScheduledAssignmentOptions
+                {
+                    ForceFullScan = _forceFullScan,
+                    SystemAccountId = _systemAccountId.ToString(),
+                },
+            })
+            .ToList();
+
+        var parameters = new DialogParameters<ScheduleConfigDialog>
+        {
+            { x => x.Entries, entries },
+        };
+
+        await DialogService.ShowAsync<ScheduleConfigDialog>("Generer plan-konfig", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
+    }
+
+    public void Dispose() { }
+}

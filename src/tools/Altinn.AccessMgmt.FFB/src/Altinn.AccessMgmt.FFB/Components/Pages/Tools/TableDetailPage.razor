@@ -1,0 +1,199 @@
+@page "/tools/tables/{Key}"
+@using Altinn.AccessMgmt.FFB.Services
+@inject IEnvironmentDbContextFactory DbFactory
+@inject EnvironmentState EnvState
+@inject NavigationManager Nav
+
+<PageTitle>@(_table?.DisplayName ?? Key) – Tabeller</PageTitle>
+
+@if (_table is null)
+{
+    <MudAlert Severity="Severity.Error">Ukjent tabell: @Key</MudAlert>
+    <MudButton Class="mt-4" Variant="Variant.Text" OnClick="@(() => Nav.NavigateTo("/tools/tables"))">
+        ← Tilbake
+    </MudButton>
+}
+else
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-1">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                       OnClick="@(() => Nav.NavigateTo("/tools/tables"))" />
+        <MudText Typo="Typo.h4" Style="font-family:monospace">@_table.DisplayName</MudText>
+        <MudChip T="string" Size="Size.Small" Color="Color.Default">@_table.Category</MudChip>
+    </MudStack>
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-6">
+        @if (_table.AuditKey is not null)
+        {
+            <MudButton Variant="Variant.Text"
+                       Size="Size.Small"
+                       EndIcon="@Icons.Material.Filled.History"
+                       Href="@($"/tools/tables/{_table.AuditKey}")">
+                Vis historikk-tabell
+            </MudButton>
+        }
+        else if (_table.Category == "Historikk")
+        {
+            @* Find the main table that points to this audit table *@
+            var mainTable = TableRegistry.All.FirstOrDefault(t => t.AuditKey == Key);
+            @if (mainTable is not null)
+            {
+                <MudButton Variant="Variant.Text"
+                           Size="Size.Small"
+                           EndIcon="@Icons.Material.Filled.TableChart"
+                           Href="@($"/tools/tables/{mainTable.Key}")">
+                    Vis hovedtabell
+                </MudButton>
+            }
+        }
+    </MudStack>
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.QueryStats"
+               Disabled="_running"
+               OnClick="FetchStats"
+               Class="mb-6">
+        @(_running ? "Henter..." : "Hent stats")
+    </MudButton>
+
+    @if (_running)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-6" />
+    }
+
+    @if (_statsLoaded)
+    {
+        @* ── Total count ── *@
+        <MudPaper Elevation="1" Class="pa-4 mb-6 d-inline-block">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                <MudIcon Icon="@Icons.Material.Filled.Numbers" Color="Color.Primary" />
+                <div>
+                    <MudText Typo="Typo.h4">@_totalCount.ToString("N0")</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                        rader · @EnvState.Current · @_fetchedAt?.ToString("HH:mm:ss")
+                    </MudText>
+                </div>
+            </MudStack>
+        </MudPaper>
+
+        @* ── Groupings ── *@
+        @if (_groupResults.Count > 0)
+        {
+            <MudGrid Spacing="3">
+                @foreach (var (grouping, rows) in _groupResults)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCard Elevation="1">
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.subtitle1">@grouping.Label</MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent Class="pa-0">
+                                <MudSimpleTable Dense="true">
+                                    <thead>
+                                        <tr>
+                                            <th>Verdi</th>
+                                            <th style="text-align:right">Antall</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var row in rows.Take(30))
+                                        {
+                                            <tr>
+                                                <td style="font-family:monospace;font-size:.8125rem">
+                                                    @row.Key
+                                                </td>
+                                                <td style="text-align:right;font-size:.8125rem">
+                                                    @row.Count.ToString("N0")
+                                                </td>
+                                            </tr>
+                                        }
+                                        @if (rows.Count > 30)
+                                        {
+                                            <tr>
+                                                <td colspan="2" style="color:var(--mud-palette-text-secondary);font-size:.75rem;text-align:center">
+                                                    + @((rows.Count - 30).ToString("N0")) til
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </MudSimpleTable>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    }
+
+    @if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Error" Class="mt-4">@_error</MudAlert>
+    }
+}
+
+@code {
+    [Parameter] public string Key { get; set; } = "";
+
+    private TableDefinition? _table;
+    private bool _running;
+    private bool _statsLoaded;
+    private int _totalCount;
+    private List<(TableGrouping Grouping, List<TableGroupRow> Rows)> _groupResults = [];
+    private DateTimeOffset? _fetchedAt;
+    private string? _error;
+
+    protected override void OnParametersSet()
+    {
+        _table = TableRegistry.Find(Key);
+        _statsLoaded = false;
+        _totalCount = 0;
+        _groupResults = [];
+        _error = null;
+    }
+
+    private async Task FetchStats()
+    {
+        if (_table is null) return;
+
+        _running = true;
+        _statsLoaded = false;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            // Count and all groupings each get their own context — safe for Task.WhenAll
+            var countTask = Task.Run(async () =>
+            {
+                using var db = DbFactory.CreateContext(EnvState.Current);
+                return await _table.CountQuery(db);
+            });
+
+            var groupTasks = _table.Groupings.Select(g => Task.Run(async () =>
+            {
+                using var db = DbFactory.CreateContext(EnvState.Current);
+                var rows = await g.Query(db);
+                return (g, rows);
+            })).ToList();
+
+            await Task.WhenAll([countTask, .. groupTasks]);
+
+            _totalCount = await countTask;
+            _groupResults = (await Task.WhenAll(groupTasks)).ToList();
+            _fetchedAt = DateTimeOffset.Now;
+            _statsLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _running = false;
+            StateHasChanged();
+        }
+    }
+}

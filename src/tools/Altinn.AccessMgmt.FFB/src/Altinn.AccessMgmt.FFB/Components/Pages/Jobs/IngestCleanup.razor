@@ -1,0 +1,264 @@
+@page "/jobs/ingest-cleanup"
+@using Altinn.AccessMgmt.FFB.Jobs
+@using Altinn.AccessMgmt.FFB.Jobs.Models
+@using Altinn.AccessMgmt.FFB.Config
+@using Altinn.AccessMgmt.FFB.Services
+@using System.Text.Json
+@inject IJobRunner JobRunner
+@inject IJobRunStore RunStore
+@inject IEnvironmentDbContextFactory EnvFactory
+@inject IDialogService DialogService
+@implements IDisposable
+
+<PageTitle>Ingest Cleanup</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Ingest Cleanup</MudText>
+<MudText Typo="Typo.body1" Class="mb-6 mud-text-secondary">
+    Identifiserer stale tabeller i <code>ingest</code>-skjemaet (to-pass diff med 2×2min pause).
+    Genererer DROP-statements. Kan kjøres umiddelbart eller kun forhåndsvises.
+</MudText>
+
+@* ── Start panel ──────────────────────────────────────────────────────────── *@
+<MudPaper Elevation="1" Class="pa-4 mb-6">
+    <MudText Typo="Typo.h6" Class="mb-3">Start ny kjøring</MudText>
+
+    <MudGrid>
+        <MudItem xs="12">
+            <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">Kjør på miljø:</MudText>
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" Class="mb-2">
+                @foreach (var env in EnvFactory.Environments)
+                {
+                    var envName = env;
+                    var configured = EnvFactory.IsConfigured(envName);
+                    <MudCheckBox @bind-Value="_selected[envName]"
+                                 Label="@envName"
+                                 Disabled="@(!configured)"
+                                 Color="Color.Primary" />
+                }
+            </MudStack>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudText Typo="Typo.body2" Class="mb-1 mud-text-secondary">Tabell-prefix:</MudText>
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                @foreach (var (key, label) in FilterTypes)
+                {
+                    var k = key;
+                    <MudCheckBox @bind-Value="_selectedTypes[k]" Label="@label" Color="Color.Primary" />
+                }
+            </MudStack>
+        </MudItem>
+
+        <MudItem xs="6" sm="3">
+            <MudNumericField @bind-Value="_size" Label="Maks antall" Variant="Variant.Outlined"
+                             Margin="Margin.Dense" Min="1" Max="1000000" />
+        </MudItem>
+
+        <MudItem xs="6" sm="3">
+            <MudNumericField @bind-Value="_runners" Label="Antall runners" Variant="Variant.Outlined"
+                             Margin="Margin.Dense" Min="1" Max="20"
+                             HelperText="Parallelle kjøringer ved execute" />
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudCheckBox @bind-Value="_executeImmediately"
+                         Color="Color.Error"
+                         Label="Kjør DROP-statements umiddelbart (uten forhåndsvisning)" />
+        </MudItem>
+
+        @if (_executeImmediately)
+        {
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Warning" Dense="true">
+                    Tabeller vil bli droppet uten bekreftelsesdialog. Kun bruk dette hvis du vet hva du gjør.
+                </MudAlert>
+            </MudItem>
+        }
+
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled"
+                       Color="@(_executeImmediately ? Color.Error : Color.Primary)"
+                       StartIcon="@Icons.Material.Filled.PlayArrow"
+                       Disabled="@(!AnySelected)"
+                       OnClick="StartJobs">
+                @(_executeImmediately ? "Start og kjør DROP" : "Start (generer SQL)")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Class="ml-2"
+                       StartIcon="@Icons.Material.Filled.Schedule"
+                       Disabled="@(!AnySelected)"
+                       OnClick="OpenScheduleDialog">
+                Generer konfig
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@* ── Runs ─────────────────────────────────────────────────────────────────── *@
+@if (_runs.Count > 0)
+{
+    <MudText Typo="Typo.h6" Class="mb-3">Kjøringer</MudText>
+    @foreach (var run in _runs)
+    {
+        <JobRunCard Run="@run" OnChanged="@RefreshAndRender">
+            <ExtraActions>
+                @if (run.Status == JobStatus.Completed &&
+                     run.SqlOutput.Count > 0 &&
+                     run.JobName == IngestCleanupJob.JobName)
+                {
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Error"
+                               Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.DeleteForever"
+                               OnClick="@(() => ConfirmAndExecute(run))">
+                        Kjør DROP (@run.SqlOutput.Count tabeller, @_runners runner@(_runners > 1 ? "s" : ""))
+                    </MudButton>
+                }
+            </ExtraActions>
+        </JobRunCard>
+    }
+}
+
+@code {
+    private static readonly (string Key, string Label)[] FilterTypes =
+    [
+        ("assignment", "assignment"),
+        ("entity", "entity"),
+        ("provider", "provider"),
+    ];
+
+    private readonly Dictionary<string, bool> _selected = new();
+    private readonly Dictionary<string, bool> _selectedTypes = FilterTypes.ToDictionary(t => t.Key, _ => true);
+    private readonly HashSet<Guid> _subscribed = [];
+    private int _size = 10000;
+    private int _runners = 1;
+    private bool _executeImmediately;
+    private List<JobRun> _runs = [];
+
+    protected override void OnInitialized()
+    {
+        foreach (var env in EnvFactory.Environments)
+        {
+            _selected[env] = false;
+        }
+
+        RefreshRuns();
+    }
+
+    private void StartJobs()
+    {
+        var selectedEnvs = _selected.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
+        var selectedTypes = _selectedTypes.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
+
+        foreach (var env in selectedEnvs)
+        {
+            foreach (var filterKey in selectedTypes)
+            {
+                var opts = new IngestCleanupOptions(
+                    Filter: filterKey,
+                    Size: _size,
+                    Execute: _executeImmediately,
+                    Runners: _runners);
+
+                var run = JobRunner.StartIngestCleanup(env, opts);
+                Subscribe(run);
+                _runs.Insert(0, run);
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ConfirmAndExecute(JobRun previewRun)
+    {
+        var count = previewRun.SqlOutput.Count;
+        var runnerText = _runners > 1 ? $" fordelt på {_runners} runners" : string.Empty;
+        var parameters = new DialogParameters<ConfirmDialog>
+        {
+            { x => x.ContentText, $"Dette vil droppe {count} tabeller fra ingest-skjemaet på {previewRun.Environment}{runnerText}. Kan ikke angres." },
+            { x => x.ButtonText, $"Dropp {count} tabeller" },
+            { x => x.Color, Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Bekreft DROP", parameters);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            var runs = JobRunner.StartIngestExecute(previewRun.Id, previewRun.Environment, _runners);
+            foreach (var run in runs)
+            {
+                Subscribe(run);
+                _runs.Insert(0, run);
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    private void Subscribe(JobRun run)
+    {
+        if (_subscribed.Add(run.Id))
+        {
+            run.OnUpdated += () => InvokeAsync(RefreshAndRender);
+        }
+    }
+
+    private void RefreshRuns()
+    {
+        var scan = RunStore.GetForJob(IngestCleanupJob.JobName).ToList();
+        var execute = RunStore.GetForJobPrefix($"{IngestCleanupJob.JobName}:Execute").ToList();
+        _runs = scan.Concat(execute)
+            .OrderByDescending(r => r.StartedAt)
+            .ToList();
+
+        foreach (var run in _runs)
+        {
+            Subscribe(run);
+        }
+    }
+
+    private void RefreshAndRender()
+    {
+        RefreshRuns();
+        StateHasChanged();
+    }
+
+    private bool AnySelected => _selected.Values.Any(v => v) && _selectedTypes.Values.Any(v => v);
+
+    private async Task OpenScheduleDialog()
+    {
+        var selectedEnvs = _selected.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
+        var selectedTypes = _selectedTypes.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
+
+        var entries = (
+            from env in selectedEnvs
+            from filterKey in selectedTypes
+            select new JobScheduleEntry
+            {
+                Id = $"ingest-{env.ToLowerInvariant()}-{filterKey}",
+                JobType = "IngestCleanup",
+                Environment = env,
+                Cron = "0 */4 * * *",
+                Enabled = true,
+                IngestOptions = new ScheduledIngestOptions
+                {
+                    Filter = filterKey,
+                    Size = _size,
+                    Execute = _executeImmediately,
+                    Runners = _runners,
+                },
+            }
+        ).ToList();
+
+        var parameters = new DialogParameters<ScheduleConfigDialog>
+        {
+            { x => x.Entries, entries },
+        };
+
+        await DialogService.ShowAsync<ScheduleConfigDialog>("Generer plan-konfig", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
+    }
+
+    public void Dispose() { }
+}

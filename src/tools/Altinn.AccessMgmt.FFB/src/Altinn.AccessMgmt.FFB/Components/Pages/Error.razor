@@ -1,0 +1,29 @@
+@page "/Error"
+@using System.Diagnostics
+
+<PageTitle>Feil – Access Management</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true" Color="Color.Error">En feil har oppstått</MudText>
+
+@if (ShowRequestId)
+{
+    <MudText Typo="Typo.body2" Class="mb-4">
+        <strong>Request ID:</strong> <code>@RequestId</code>
+    </MudText>
+}
+
+<MudAlert Severity="Severity.Warning">
+    Bytter til <strong>Development</strong>-miljøet viser mer detaljert feilinformasjon.
+    Ikke aktiver dette i produksjon.
+</MudAlert>
+
+@code {
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private string? RequestId { get; set; }
+    private bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+
+    protected override void OnInitialized() =>
+        RequestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+}

@@ -1,0 +1,152 @@
+@page "/entity-variant/{Id:guid}"
+@using Altinn.AccessMgmt.PersistenceEF.Models
+@using Microsoft.EntityFrameworkCore
+@using Altinn.AccessMgmt.FFB.Services
+@inject IEnvironmentDbContextFactory DbFactory
+@inject EnvironmentState EnvState
+@inject NavigationManager Nav
+@implements IDisposable
+
+<PageTitle>EntityVariant – @(_variant?.Name ?? Id.ToString())</PageTitle>
+
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+}
+else if (_variant is null)
+{
+    <MudAlert Severity="Severity.Error">EntityVariant not found: @Id</MudAlert>
+}
+else
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-1">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                       Color="Color.Default"
+                       OnClick="@(() => Nav.NavigateTo($"/entity-type/{_variant.TypeId}"))" />
+        <MudText Typo="Typo.h4">@_variant.Name</MudText>
+    </MudStack>
+    <MudText Typo="Typo.body2" Class="mb-6 mud-text-secondary">@_variant.Description</MudText>
+
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="1">
+                <MudCardHeader>
+                    <CardHeaderContent><MudText Typo="Typo.h6">Summary</MudText></CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent Class="pa-0">
+                    <MudSimpleTable Dense="true" Hover="false" Bordered="false">
+                        <tbody>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Id</td>
+                                <td style="font-family:monospace;font-size:.8125rem">@_variant.Id</td>
+                            </tr>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Name</td>
+                                <td style="font-size:.8125rem">@_variant.Name</td>
+                            </tr>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">EntityType</td>
+                                <td style="font-size:.8125rem">
+                                    <MudLink Href="@($"/entity-type/{_variant.TypeId}")">
+                                        @(_variant.Type?.Name ?? _variant.TypeId.ToString())
+                                    </MudLink>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <MudText Typo="Typo.h5" Class="mt-8 mb-3">Roles for this variant (@_variantRoles.Count)</MudText>
+    <MudPaper Elevation="1">
+        <MudTable Items="_variantRoles" Hover="true" Dense="true" Class="pa-0">
+            <HeaderContent>
+                <MudTh>Role</MudTh>
+                <MudTh>URN</MudTh>
+                <MudTh>IsKeyRole</MudTh>
+                <MudTh>IsAssignable</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Role">
+                    <MudLink Href="@($"/role/{context.RoleId}")">
+                        @(context.Role?.Name ?? context.RoleId.ToString())
+                    </MudLink>
+                </MudTd>
+                <MudTd DataLabel="URN">
+                    <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.Role?.Urn ?? "–")</MudText>
+                </MudTd>
+                <MudTd DataLabel="IsKeyRole">
+                    <MudIcon Icon="@(context.Role?.IsKeyRole == true ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
+                             Color="@(context.Role?.IsKeyRole == true ? Color.Success : Color.Error)" Size="Size.Small" />
+                </MudTd>
+                <MudTd DataLabel="IsAssignable">
+                    <MudIcon Icon="@(context.Role?.IsAssignable == true ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
+                             Color="@(context.Role?.IsAssignable == true ? Color.Success : Color.Error)" Size="Size.Small" />
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                                   Size="Size.Small"
+                                   Href="@($"/role/{context.RoleId}")" />
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Class="pa-4 mud-text-secondary">No roles configured for this variant.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudPaper>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private bool _loading = true;
+    private EntityVariant? _variant;
+    private List<EntityVariantRole> _variantRoles = [];
+
+    protected override void OnInitialized()
+    {
+        EnvState.OnChange += OnEnvironmentChanged;
+    }
+
+    public void Dispose()
+    {
+        EnvState.OnChange -= OnEnvironmentChanged;
+    }
+
+    private void OnEnvironmentChanged() => InvokeAsync(async () =>
+    {
+        await LoadDataAsync();
+        StateHasChanged();
+    });
+
+    protected override async Task OnParametersSetAsync() => await LoadDataAsync();
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        _variant = null;
+        _variantRoles = [];
+
+        using var db = DbFactory.CreateContext(EnvState.Current);
+
+        _variant = await db.EntityVariants
+            .AsNoTracking()
+            .Include(ev => ev.Type)
+            .FirstOrDefaultAsync(ev => ev.Id == Id);
+
+        if (_variant is not null)
+        {
+            _variantRoles = await db.EntityVariantRoles
+                .AsNoTracking()
+                .Include(evr => evr.Role)
+                .Where(evr => evr.VariantId == Id)
+                .OrderBy(evr => evr.Role.Name)
+                .ToListAsync();
+        }
+
+        _loading = false;
+    }
+}

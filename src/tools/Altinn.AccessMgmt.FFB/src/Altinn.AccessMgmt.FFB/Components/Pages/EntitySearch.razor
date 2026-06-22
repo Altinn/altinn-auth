@@ -1,0 +1,208 @@
+@page "/entity-search"
+@using Altinn.AccessMgmt.PersistenceEF.Models
+@using Microsoft.EntityFrameworkCore
+@using Altinn.AccessMgmt.FFB.Services
+@inject IEnvironmentDbContextFactory DbFactory
+@inject EnvironmentState EnvState
+@implements IDisposable
+
+<PageTitle>Entity-søk – Access Management</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Entity-søk</MudText>
+<MudText Typo="Typo.body1" Class="mb-6 mud-text-secondary">
+    Søk opp entities direkte mot databasen via <code>DbSet&lt;Entity&gt;</code>.
+</MudText>
+
+<MudPaper Elevation="1" Class="pa-4 mb-4">
+    <MudGrid>
+        <MudItem xs="12" sm="8" md="6">
+            <MudTextField @bind-Value="_searchTerm"
+                          Label="Søk"
+                          Variant="Variant.Outlined"
+                          Placeholder="Navn, organisasjonsnr, brukernavn, party-id..."
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          OnKeyDown="OnKeyDown"
+                          Immediate="false" />
+        </MudItem>
+        <MudItem xs="6" sm="2">
+            <MudCheckBox @bind-Value="_includeDeleted" Label="Vis slettede" Color="Color.Primary" />
+        </MudItem>
+        <MudItem xs="6" sm="2">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Search"
+                       OnClick="Search"
+                       FullWidth="true">
+                Søk
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+}
+
+@if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+}
+
+@if (_results is not null)
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+            @if (_results.Count == MaxResults)
+            {
+                <span>Viser de første @MaxResults treffene – prøv et mer spesifikt søk</span>
+            }
+            else
+            {
+                <span>@_results.Count treff</span>
+            }
+        </MudText>
+    </MudStack>
+
+    <MudPaper Elevation="1">
+        <MudTable Items="_results" Hover="true" Dense="true" FixedHeader="true" Height="600px">
+            <HeaderContent>
+                <MudTh>Navn</MudTh>
+                <MudTh>Type</MudTh>
+                <MudTh>Variant</MudTh>
+                <MudTh>OrgNr</MudTh>
+                <MudTh>Fødselsnr</MudTh>
+                <MudTh>Party ID</MudTh>
+                <MudTh>Brukernavn</MudTh>
+                <MudTh>Status</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Navn">
+                    <MudLink Href="@($"/entity/{context.Id}")" Typo="Typo.body2">@context.Name</MudLink>
+                </MudTd>
+                <MudTd DataLabel="Type">
+                    <MudText Typo="Typo.body2">@(context.Type?.Name ?? "–")</MudText>
+                </MudTd>
+                <MudTd DataLabel="Variant">
+                    <MudText Typo="Typo.body2">@(context.Variant?.Name ?? "–")</MudText>
+                </MudTd>
+                <MudTd DataLabel="OrgNr">
+                    <MudText Typo="Typo.body2">@(context.OrganizationIdentifier ?? "–")</MudText>
+                </MudTd>
+                <MudTd DataLabel="Fødselsnr">
+                    <MudText Typo="Typo.body2">@MaskPersonIdentifier(context.PersonIdentifier)</MudText>
+                </MudTd>
+                <MudTd DataLabel="Party ID">
+                    <MudText Typo="Typo.body2">@(context.PartyId?.ToString() ?? "–")</MudText>
+                </MudTd>
+                <MudTd DataLabel="Brukernavn">
+                    <MudText Typo="Typo.body2">@(context.Username ?? "–")</MudText>
+                </MudTd>
+                <MudTd DataLabel="Status">
+                    @if (context.IsDeleted)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Error">Slettet</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success">Aktiv</MudChip>
+                    }
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Class="pa-4 mud-text-secondary">Ingen treff – prøv et annet søkeord.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudPaper>
+}
+
+@code {
+    private const int MaxResults = 50;
+
+    private string _searchTerm = string.Empty;
+    private bool _includeDeleted;
+    private bool _loading;
+    private string? _error;
+    private List<Entity>? _results;
+
+    protected override void OnInitialized()
+    {
+        EnvState.OnChange += OnEnvironmentChanged;
+    }
+
+    public void Dispose()
+    {
+        EnvState.OnChange -= OnEnvironmentChanged;
+    }
+
+    private void OnEnvironmentChanged()
+    {
+        _results = null;
+        _error = null;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task Search()
+    {
+        _error = null;
+        _results = null;
+
+        var term = _searchTerm.Trim();
+
+        if (term.Length < 2)
+        {
+            _error = "Skriv minst 2 tegn for å søke.";
+            return;
+        }
+
+        _loading = true;
+
+        try
+        {
+            using var db = DbFactory.CreateContext(EnvState.Current);
+
+            var query = db.Entities
+                .AsNoTracking()
+                .Include(e => e.Type)
+                .Include(e => e.Variant)
+                .AsQueryable();
+
+            if (!_includeDeleted)
+            {
+                query = query.Where(e => !e.IsDeleted);
+            }
+
+            query = query.Where(e =>
+                EF.Functions.ILike(e.Name, $"%{term}%") ||
+                e.OrganizationIdentifier == term ||
+                (e.Username != null && EF.Functions.ILike(e.Username, $"%{term}%")) ||
+                (e.PartyId != null && e.PartyId.ToString() == term) ||
+                (e.PersonIdentifier != null && e.PersonIdentifier.StartsWith(term)));
+
+            _results = await query
+                .OrderBy(e => e.Name)
+                .Take(MaxResults)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = $"Databasefeil: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Search();
+        }
+    }
+
+    private static string MaskPersonIdentifier(string? fnr) =>
+        fnr?.Length == 11 ? fnr[..6] + "*****" : fnr ?? "–";
+}

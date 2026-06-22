@@ -1,0 +1,648 @@
+@page "/entity/{Id:guid}"
+@using Altinn.AccessMgmt.PersistenceEF.Contexts
+@using Altinn.AccessMgmt.PersistenceEF.Models
+@using Microsoft.EntityFrameworkCore
+@using Altinn.AccessMgmt.FFB.Services
+@inject IEnvironmentDbContextFactory DbFactory
+@inject EnvironmentState EnvState
+@inject NavigationManager Nav
+@implements IDisposable
+
+<PageTitle>Entity – @(_entity?.Name ?? Id.ToString())</PageTitle>
+
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+}
+else if (_entity is null)
+{
+    <MudAlert Severity="Severity.Error">Entity not found: @Id</MudAlert>
+    <MudButton Class="mt-4" Variant="Variant.Text" Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.ArrowBack"
+               OnClick="@(() => Nav.NavigateTo("/entity-search"))">
+        Back to search
+    </MudButton>
+}
+else
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="mb-1">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                       Color="Color.Default"
+                       OnClick="@(() => Nav.NavigateTo("/entity-search"))" />
+        <MudText Typo="Typo.h4">@_entity.Name</MudText>
+        @if (_entity.IsDeleted)
+        {
+            <MudChip T="string" Color="Color.Error" Size="Size.Small">Deleted</MudChip>
+        }
+        else
+        {
+            <MudChip T="string" Color="Color.Success" Size="Size.Small">Active</MudChip>
+        }
+    </MudStack>
+    <MudText Typo="Typo.body2" Class="mb-6 mud-text-secondary">
+        @(_entity.Type?.Name) · @(_entity.Variant?.Name)
+    </MudText>
+
+    <MudGrid>
+        @* ── Identity ── *@
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="1">
+                <MudCardHeader>
+                    <CardHeaderContent><MudText Typo="Typo.h6">Identity</MudText></CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent Class="pa-0">
+                    <MudSimpleTable Dense="true" Hover="false" Bordered="false">
+                        <tbody>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Id</td>
+                                <td style="font-family:monospace;font-size:.8125rem">@_entity.Id</td>
+                            </tr>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Name</td>
+                                <td style="font-size:.8125rem">@_entity.Name</td>
+                            </tr>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">RefId</td>
+                                <td style="font-size:.8125rem">@(_entity.RefId ?? "–")</td>
+                            </tr>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Type</td>
+                                <td style="font-size:.8125rem">
+                                    <MudLink Href="@($"/entity-type/{_entity.TypeId}")">@(_entity.Type?.Name ?? _entity.TypeId.ToString())</MudLink>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Variant</td>
+                                <td style="font-size:.8125rem">
+                                    <MudLink Href="@($"/entity-variant/{_entity.VariantId}")">@(_entity.Variant?.Name ?? _entity.VariantId.ToString())</MudLink>
+                                </td>
+                            </tr>
+                            @if (_entity.ParentId.HasValue)
+                            {
+                                <tr>
+                                    <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Parent</td>
+                                    <td>
+                                        <MudLink Href="@($"/entity/{_entity.ParentId}")">
+                                            @(_entity.Parent?.Name ?? _entity.ParentId.ToString())
+                                        </MudLink>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        @* ── External identifiers ── *@
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="1">
+                <MudCardHeader>
+                    <CardHeaderContent><MudText Typo="Typo.h6">External Identifiers</MudText></CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent Class="pa-0">
+                    <MudSimpleTable Dense="true" Hover="false" Bordered="false">
+                        <tbody>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">PartyId</td>
+                                <td style="font-size:.8125rem">@(_entity.PartyId?.ToString() ?? "–")</td>
+                            </tr>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">UserId</td>
+                                <td style="font-size:.8125rem">@(_entity.UserId?.ToString() ?? "–")</td>
+                            </tr>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Username</td>
+                                <td style="font-size:.8125rem">@(_entity.Username ?? "–")</td>
+                            </tr>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">OrganizationIdentifier</td>
+                                <td style="font-size:.8125rem">@(_entity.OrganizationIdentifier ?? "–")</td>
+                            </tr>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">PersonIdentifier</td>
+                                <td style="font-size:.8125rem">@MaskFnr(_entity.PersonIdentifier)</td>
+                            </tr>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">EmailIdentifier</td>
+                                <td style="font-size:.8125rem">@(_entity.EmailIdentifier ?? "–")</td>
+                            </tr>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">DateOfBirth</td>
+                                <td style="font-size:.8125rem">@(_entity.DateOfBirth?.ToString("yyyy-MM-dd") ?? "–")</td>
+                            </tr>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">DateOfDeath</td>
+                                <td style="font-size:.8125rem">@(_entity.DateOfDeath?.ToString("yyyy-MM-dd") ?? "–")</td>
+                            </tr>
+                            @if (_entity.IsDeleted)
+                            {
+                                <tr>
+                                    <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">DeletedAt</td>
+                                    <td style="font-size:.8125rem">@(_entity.DeletedAt?.ToString("u") ?? "–")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        @* ── Audit ── *@
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="1">
+                <MudCardHeader>
+                    <CardHeaderContent><MudText Typo="Typo.h6">Audit</MudText></CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent Class="pa-0">
+                    <MudSimpleTable Dense="true" Hover="false" Bordered="false">
+                        <tbody>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Audit_ValidFrom</td>
+                                <td style="font-size:.8125rem">@_entity.Audit_ValidFrom.ToString("u")</td>
+                            </tr>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Audit_ChangedBy</td>
+                                <td style="font-family:monospace;font-size:.8125rem">@(_entity.Audit_ChangedBy?.ToString() ?? "–")</td>
+                            </tr>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Audit_ChangedBySystem</td>
+                                <td style="font-family:monospace;font-size:.8125rem">@(_entity.Audit_ChangedBySystem?.ToString() ?? "–")</td>
+                            </tr>
+                            <tr>
+                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Audit_ChangeOperation</td>
+                                <td style="font-family:monospace;font-size:.8125rem">@(_entity.Audit_ChangeOperation ?? "–")</td>
+                            </tr>
+                        </tbody>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    @* ── Children ── *@
+    @if (_children.Count > 0)
+    {
+        <MudText Typo="Typo.h5" Class="mt-8 mb-3">
+            Children
+            <MudChip T="string" Size="Size.Small" Color="Color.Default" Class="ml-2">@_children.Count</MudChip>
+        </MudText>
+        <MudPaper Elevation="1">
+            <MudTable Items="_children" Hover="true" Dense="true" Class="pa-0">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Type</MudTh>
+                    <MudTh>Variant</MudTh>
+                    <MudTh>RefId</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Name">
+                        <MudLink Href="@($"/entity/{context.Id}")">@context.Name</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Type">
+                        <MudText Typo="Typo.body2">@(context.Type?.Name ?? context.TypeId.ToString())</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Variant">
+                        <MudText Typo="Typo.body2">@(context.Variant?.Name ?? context.VariantId.ToString())</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="RefId">
+                        <MudText Typo="Typo.body2">@(context.RefId ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Status">
+                        @if (context.IsDeleted)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Error">Deleted</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success">Active</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                                       Size="Size.Small"
+                                       Href="@($"/entity/{context.Id}")" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    }
+
+    @* ── Assignments ── *@
+    <MudText Typo="Typo.h5" Class="mt-8 mb-3">Assignments</MudText>
+    <MudTabs Elevation="1" Rounded="false" ApplyEffectsToContainer="true">
+
+        @* Tab 1: Roles given out — entity is the one who gave the role (FromId) *@
+        <MudTabPanel Text="@($"Roles given ({_assignmentsFrom.Count})")"
+                     Icon="@Icons.Material.Filled.GroupAdd">
+            <MudTable Items="_assignmentsFrom" Hover="true" Dense="true" Class="pa-0">
+                <HeaderContent>
+                    <MudTh>Role</MudTh>
+                    <MudTh>Given to</MudTh>
+                    <MudTh>Since</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Role">
+                        <MudLink Href="@($"/role/{context.RoleId}")">@(context.Role?.Name ?? context.RoleId.ToString())</MudLink>
+                        <MudText Typo="Typo.caption" Style="font-family:monospace;color:var(--mud-palette-text-secondary)">@context.Role?.Urn</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Given to">
+                        <MudLink Href="@($"/entity/{context.ToId}")">@(context.To?.Name ?? context.ToId.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Since">
+                        <MudText Typo="Typo.body2">@context.Audit_ValidFrom.ToString("yyyy-MM-dd")</MudText>
+                    </MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                                       Size="Size.Small"
+                                       Href="@($"/assignment/{context.Id}")"
+                                       aria-label="Assignment details" />
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">This entity has not given any roles.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+
+        @* Tab 2: Roles held — entity has received a role from another entity (ToId) *@
+        <MudTabPanel Text="@($"Roles held ({_assignmentsTo.Count})")"
+                     Icon="@Icons.Material.Filled.PersonPin">
+            <MudTable Items="_assignmentsTo" Hover="true" Dense="true" Class="pa-0">
+                <HeaderContent>
+                    <MudTh>Role</MudTh>
+                    <MudTh>At entity</MudTh>
+                    <MudTh>Since</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Role">
+                        <MudLink Href="@($"/role/{context.RoleId}")">@(context.Role?.Name ?? context.RoleId.ToString())</MudLink>
+                        <MudText Typo="Typo.caption" Style="font-family:monospace;color:var(--mud-palette-text-secondary)">@context.Role?.Urn</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="At entity">
+                        <MudLink Href="@($"/entity/{context.FromId}")">@(context.From?.Name ?? context.FromId.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Since">
+                        <MudText Typo="Typo.body2">@context.Audit_ValidFrom.ToString("yyyy-MM-dd")</MudText>
+                    </MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                                       Size="Size.Small"
+                                       Href="@($"/assignment/{context.Id}")"
+                                       aria-label="Assignment details" />
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">This entity holds no roles.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+
+    </MudTabs>
+
+    @* ── Delegations ── *@
+    <MudText Typo="Typo.h5" Class="mt-8 mb-3">Delegations</MudText>
+    <MudTabs Elevation="1" Rounded="false" ApplyEffectsToContainer="true">
+
+        @* Tab 1: Delegations given — entity is Delegation.From.To (the one who delegated further) *@
+        <MudTabPanel Text="@($"Given ({_delegationsGiven.Count})")"
+                     Icon="@Icons.Material.Filled.Share">
+            <MudTable Items="_delegationsGiven" Hover="true" Dense="true" Class="pa-0">
+                <HeaderContent>
+                    <MudTh>Role</MudTh>
+                    <MudTh>Delegated to</MudTh>
+                    <MudTh>Originally from</MudTh>
+                    <MudTh>Since</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Role">
+                        <MudLink Href="@($"/role/{context.From?.RoleId}")">@(context.From?.Role?.Name ?? context.From?.RoleId.ToString())</MudLink>
+                        <MudText Typo="Typo.caption" Style="font-family:monospace;color:var(--mud-palette-text-secondary)">@context.From?.Role?.Urn</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Delegated to">
+                        <MudLink Href="@($"/entity/{context.To?.ToId}")">@(context.To?.To?.Name ?? context.To?.ToId.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Originally from">
+                        <MudLink Href="@($"/entity/{context.From?.FromId}")">@(context.From?.From?.Name ?? context.From?.FromId.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Since">
+                        <MudText Typo="Typo.body2">@context.Audit_ValidFrom.ToString("yyyy-MM-dd")</MudText>
+                    </MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                                       Size="Size.Small"
+                                       Href="@($"/delegation/{context.Id}")"
+                                       aria-label="Delegation details" />
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">This entity has not delegated any rights.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+
+        @* Tab 2: Delegations received — entity is Delegation.To.To (the final recipient) *@
+        <MudTabPanel Text="@($"Received ({_delegationsReceived.Count})")"
+                     Icon="@Icons.Material.Filled.MoveToInbox">
+            <MudTable Items="_delegationsReceived" Hover="true" Dense="true" Class="pa-0">
+                <HeaderContent>
+                    <MudTh>Role</MudTh>
+                    <MudTh>Delegated by</MudTh>
+                    <MudTh>Originally from</MudTh>
+                    <MudTh>Since</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Role">
+                        <MudLink Href="@($"/role/{context.To?.RoleId}")">@(context.To?.Role?.Name ?? context.To?.RoleId.ToString())</MudLink>
+                        <MudText Typo="Typo.caption" Style="font-family:monospace;color:var(--mud-palette-text-secondary)">@context.To?.Role?.Urn</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Delegated by">
+                        <MudLink Href="@($"/entity/{context.From?.ToId}")">@(context.From?.To?.Name ?? context.From?.ToId.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Originally from">
+                        <MudLink Href="@($"/entity/{context.From?.FromId}")">@(context.From?.From?.Name ?? context.From?.FromId.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Since">
+                        <MudText Typo="Typo.body2">@context.Audit_ValidFrom.ToString("yyyy-MM-dd")</MudText>
+                    </MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                                       Size="Size.Small"
+                                       Href="@($"/delegation/{context.Id}")"
+                                       aria-label="Delegation details" />
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">This entity has received no delegations.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+
+    </MudTabs>
+
+    @* ── Requests ── *@
+    <MudText Typo="Typo.h5" Class="mt-8 mb-3">Requests</MudText>
+    <MudTabs Elevation="1" Rounded="false" ApplyEffectsToContainer="true">
+
+        @* Tab 1: Requests for this entity (ToId) — someone is requesting access for this entity *@
+        <MudTabPanel Text="@($"For this entity ({_requestsFor.Count})")"
+                     Icon="@Icons.Material.Filled.Inbox">
+            <MudTable Items="_requestsFor" Hover="true" Dense="true" Class="pa-0">
+                <HeaderContent>
+                    <MudTh>Role</MudTh>
+                    <MudTh>From</MudTh>
+                    <MudTh>Requested by</MudTh>
+                    <MudTh>Date</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Role">
+                        <MudLink Href="@($"/role/{context.RoleId}")">@(context.Role?.Name ?? context.RoleId.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="From">
+                        <MudLink Href="@($"/entity/{context.FromId}")">@(context.From?.Name ?? context.FromId.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Requested by">
+                        <MudLink Href="@($"/entity/{context.ById}")">@(context.By?.Name ?? context.ById.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Date">
+                        <MudText Typo="Typo.body2">@context.Audit_ValidFrom.ToString("yyyy-MM-dd")</MudText>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">No access has been requested for this entity.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+
+        @* Tab 2: Requests made by this entity (ById) — this entity submitted requests *@
+        <MudTabPanel Text="@($"Made by this entity ({_requestsBy.Count})")"
+                     Icon="@Icons.Material.Filled.Send">
+            <MudTable Items="_requestsBy" Hover="true" Dense="true" Class="pa-0">
+                <HeaderContent>
+                    <MudTh>Role</MudTh>
+                    <MudTh>For</MudTh>
+                    <MudTh>From</MudTh>
+                    <MudTh>Date</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Role">
+                        <MudLink Href="@($"/role/{context.RoleId}")">@(context.Role?.Name ?? context.RoleId.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="For">
+                        <MudLink Href="@($"/entity/{context.ToId}")">@(context.To?.Name ?? context.ToId.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="From">
+                        <MudLink Href="@($"/entity/{context.FromId}")">@(context.From?.Name ?? context.FromId.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Date">
+                        <MudText Typo="Typo.body2">@context.Audit_ValidFrom.ToString("yyyy-MM-dd")</MudText>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">This entity has not submitted any requests.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+
+        @* Tab 3: Requests from this entity (FromId) — access being requested FROM this entity *@
+        <MudTabPanel Text="@($"From this entity ({_requestsFrom.Count})")"
+                     Icon="@Icons.Material.Filled.CallMade">
+            <MudTable Items="_requestsFrom" Hover="true" Dense="true" Class="pa-0">
+                <HeaderContent>
+                    <MudTh>Role</MudTh>
+                    <MudTh>For</MudTh>
+                    <MudTh>Requested by</MudTh>
+                    <MudTh>Date</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Role">
+                        <MudLink Href="@($"/role/{context.RoleId}")">@(context.Role?.Name ?? context.RoleId.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="For">
+                        <MudLink Href="@($"/entity/{context.ToId}")">@(context.To?.Name ?? context.ToId.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Requested by">
+                        <MudLink Href="@($"/entity/{context.ById}")">@(context.By?.Name ?? context.ById.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Date">
+                        <MudText Typo="Typo.body2">@context.Audit_ValidFrom.ToString("yyyy-MM-dd")</MudText>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">No requests have been made from this entity.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+
+    </MudTabs>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private bool _loading = true;
+    private Entity? _entity;
+    private List<Entity> _children = [];
+    private List<Assignment> _assignmentsFrom = [];
+    private List<Assignment> _assignmentsTo = [];
+    private List<Delegation> _delegationsGiven = [];
+    private List<Delegation> _delegationsReceived = [];
+    private List<RequestAssignment> _requestsFor = [];
+    private List<RequestAssignment> _requestsBy = [];
+    private List<RequestAssignment> _requestsFrom = [];
+
+    protected override void OnInitialized()
+    {
+        EnvState.OnChange += OnEnvironmentChanged;
+    }
+
+    public void Dispose()
+    {
+        EnvState.OnChange -= OnEnvironmentChanged;
+    }
+
+    private void OnEnvironmentChanged() => InvokeAsync(async () =>
+    {
+        await LoadDataAsync();
+        StateHasChanged();
+    });
+
+    protected override async Task OnParametersSetAsync() => await LoadDataAsync();
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        _entity = null;
+        _children = [];
+        _assignmentsFrom = [];
+        _assignmentsTo = [];
+        _delegationsGiven = [];
+        _delegationsReceived = [];
+        _requestsFor = [];
+        _requestsBy = [];
+        _requestsFrom = [];
+
+        using var db = DbFactory.CreateContext(EnvState.Current);
+
+        _entity = await db.Entities
+            .AsNoTracking()
+            .Include(e => e.Type)
+            .Include(e => e.Variant)
+            .Include(e => e.Parent)
+            .FirstOrDefaultAsync(e => e.Id == Id);
+
+        if (_entity is not null)
+        {
+            await Task.WhenAll(
+                LoadChildren(),
+                LoadAssignments(),
+                LoadDelegations(),
+                LoadRequests());
+        }
+
+        _loading = false;
+    }
+
+    private async Task LoadChildren()
+    {
+        using var db = DbFactory.CreateContext(EnvState.Current);
+        _children = await db.Entities
+            .AsNoTracking()
+            .Include(e => e.Type)
+            .Include(e => e.Variant)
+            .Where(e => e.ParentId == Id)
+            .OrderBy(e => e.Name)
+            .Take(500)
+            .ToListAsync();
+    }
+
+    private async Task LoadAssignments()
+    {
+        using var db = DbFactory.CreateContext(EnvState.Current);
+        _assignmentsFrom = await db.Assignments
+            .AsNoTracking()
+            .Include(a => a.Role)
+            .Include(a => a.To)
+            .Where(a => a.FromId == Id)
+            .OrderBy(a => a.Role.Name)
+            .Take(200)
+            .ToListAsync();
+
+        _assignmentsTo = await db.Assignments
+            .AsNoTracking()
+            .Include(a => a.Role)
+            .Include(a => a.From)
+            .Where(a => a.ToId == Id)
+            .OrderBy(a => a.Role.Name)
+            .Take(200)
+            .ToListAsync();
+    }
+
+    private async Task LoadDelegations()
+    {
+        using var db = DbFactory.CreateContext(EnvState.Current);
+        _delegationsGiven = await db.Delegations
+            .AsNoTracking()
+            .Include(d => d.From).ThenInclude(a => a.Role)
+            .Include(d => d.From).ThenInclude(a => a.From)
+            .Include(d => d.To).ThenInclude(a => a.To)
+            .Where(d => d.From.ToId == Id)
+            .OrderBy(d => d.From.Role.Name)
+            .Take(200)
+            .ToListAsync();
+
+        _delegationsReceived = await db.Delegations
+            .AsNoTracking()
+            .Include(d => d.From).ThenInclude(a => a.Role)
+            .Include(d => d.From).ThenInclude(a => a.From)
+            .Include(d => d.From).ThenInclude(a => a.To)
+            .Include(d => d.To).ThenInclude(a => a.Role)
+            .Where(d => d.To.ToId == Id)
+            .OrderBy(d => d.To.Role.Name)
+            .Take(200)
+            .ToListAsync();
+    }
+
+    private async Task LoadRequests()
+    {
+        using var db = DbFactory.CreateContext(EnvState.Current);
+        _requestsFor = await db.RequestAssignments
+            .AsNoTracking()
+            .Include(r => r.Role)
+            .Include(r => r.From)
+            .Include(r => r.By)
+            .Where(r => r.ToId == Id)
+            .OrderByDescending(r => r.Audit_ValidFrom)
+            .Take(200)
+            .ToListAsync();
+
+        _requestsBy = await db.RequestAssignments
+            .AsNoTracking()
+            .Include(r => r.Role)
+            .Include(r => r.From)
+            .Include(r => r.To)
+            .Where(r => r.ById == Id)
+            .OrderByDescending(r => r.Audit_ValidFrom)
+            .Take(200)
+            .ToListAsync();
+
+        _requestsFrom = await db.RequestAssignments
+            .AsNoTracking()
+            .Include(r => r.Role)
+            .Include(r => r.To)
+            .Include(r => r.By)
+            .Where(r => r.FromId == Id)
+            .OrderByDescending(r => r.Audit_ValidFrom)
+            .Take(200)
+            .ToListAsync();
+    }
+
+    private static string MaskFnr(string? fnr) =>
+        fnr?.Length == 11 ? fnr[..6] + "*****" : fnr ?? "–";
+}

@@ -25,6 +25,7 @@
         <ProjectReference Include="..\Altinn.AccessManagement.Api.Metadata\Altinn.AccessManagement.Api.Metadata.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Api.ServiceOwner\Altinn.AccessManagement.Api.ServiceOwner.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement\Altinn.AccessManagement.csproj" />
+        <ProjectReference Include="..\..\..\..\tools\Altinn.AccessMgmt.FFB\src\Altinn.AccessMgmt.FFB\Altinn.AccessMgmt.FFB.csproj" />
     </ItemGroup>
 
 </Project>

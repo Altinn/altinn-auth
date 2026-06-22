@@ -1,0 +1,112 @@
+@*
+    Recursive JSON tree viewer using System.Text.Json — no external libraries.
+    Open by default for the first two levels; collapsed below that.
+*@
+@using System.Text.Json
+
+@switch (Element.ValueKind)
+{
+    case JsonValueKind.Object:
+    {
+        var props = Element.EnumerateObject().ToList();
+        if (props.Count == 0)
+        {
+            <span class="json-brace">{ }</span>
+        }
+        else
+        {
+            <details open="@(Depth < 2 ? "" : null)" style="display:inline-block;vertical-align:top">
+                <summary style="cursor:pointer;list-style:none;display:inline">
+                    <span class="json-brace">{</span>
+                    <span class="json-meta"> @props.Count felt </span>
+                    <span class="json-brace">}</span>
+                </summary>
+                <div class="json-block">
+                    @foreach (var prop in props)
+                    {
+                        <div class="json-row">
+                            <span class="json-key">"@prop.Name"</span>
+                            <span class="json-punct">: </span>
+                            <JsonTree Element="prop.Value" Depth="@(Depth + 1)" />
+                        </div>
+                    }
+                </div>
+            </details>
+        }
+        break;
+    }
+
+    case JsonValueKind.Array:
+    {
+        var items = Element.EnumerateArray().ToList();
+        if (items.Count == 0)
+        {
+            <span class="json-brace">[ ]</span>
+        }
+        else
+        {
+            <details open="@(Depth < 2 ? "" : null)" style="display:inline-block;vertical-align:top">
+                <summary style="cursor:pointer;list-style:none;display:inline">
+                    <span class="json-brace">[</span>
+                    <span class="json-meta"> @items.Count </span>
+                    <span class="json-brace">]</span>
+                </summary>
+                <div class="json-block">
+                    @for (var i = 0; i < items.Count; i++)
+                    {
+                        var item = items[i];
+                        var idx = i;
+                        <div class="json-row">
+                            <span class="json-index">@idx</span>
+                            <span class="json-punct">: </span>
+                            <JsonTree Element="item" Depth="@(Depth + 1)" />
+                        </div>
+                    }
+                </div>
+            </details>
+        }
+        break;
+    }
+
+    case JsonValueKind.String:
+        <span class="json-string">"@Element.GetString()"</span>
+        break;
+
+    case JsonValueKind.Number:
+        <span class="json-number">@Element.GetRawText()</span>
+        break;
+
+    case JsonValueKind.True:
+        <span class="json-bool">true</span>
+        break;
+
+    case JsonValueKind.False:
+        <span class="json-bool">false</span>
+        break;
+
+    case JsonValueKind.Null:
+        <span class="json-null">null</span>
+        break;
+}
+
+<style>
+    .json-block   { padding-left: 1.4rem; border-left: 1px solid var(--mud-palette-lines-default); margin-left: .35rem; }
+    .json-row     { margin: .1rem 0; font-family: monospace; font-size: .82rem; }
+    .json-key     { color: var(--mud-palette-primary); }
+    .json-index   { color: var(--mud-palette-text-disabled); }
+    .json-string  { color: #4caf50; }
+    .json-number  { color: #ff9800; }
+    .json-bool    { color: #2196f3; }
+    .json-null    { color: var(--mud-palette-text-disabled); font-style: italic; }
+    .json-brace   { color: var(--mud-palette-text-secondary); font-family: monospace; font-size: .82rem; }
+    .json-meta    { color: var(--mud-palette-text-disabled); font-family: monospace; font-size: .78rem; }
+    .json-punct   { color: var(--mud-palette-text-secondary); }
+    details > summary::-webkit-details-marker { display: none; }
+    details > summary::before { content: "▶ "; font-size: .65rem; color: var(--mud-palette-text-disabled); }
+    details[open] > summary::before { content: "▼ "; }
+</style>
+
+@code {
+    [Parameter] public JsonElement Element { get; set; }
+    [Parameter] public int Depth { get; set; } = 0;
+}

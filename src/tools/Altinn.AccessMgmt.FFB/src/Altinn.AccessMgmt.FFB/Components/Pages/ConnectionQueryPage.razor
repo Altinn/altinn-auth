@@ -1,0 +1,452 @@
+@page "/tools/connection-query"
+@using Altinn.AccessMgmt.PersistenceEF.Models
+@using Altinn.AccessMgmt.PersistenceEF.Queries.Connection
+@using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models
+@using Microsoft.EntityFrameworkCore
+@using System.Diagnostics
+@using Altinn.AccessMgmt.FFB.Services
+@inject IEnvironmentDbContextFactory DbFactory
+@inject EnvironmentState EnvState
+@implements IDisposable
+
+<PageTitle>Connection Query</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Connection Query</MudText>
+<MudText Typo="Typo.body1" Class="mb-6 mud-text-secondary">
+    Kjør <code>ConnectionQuery</code> mot valgt miljø. Returnerer koblinger mellom entiteter
+    via assignments, delegasjoner, hierarki og key roles.
+</MudText>
+
+@* ── Filter ────────────────────────────────────────────────────────────────── *@
+<MudPaper Elevation="1" Class="pa-4 mb-4">
+    <MudText Typo="Typo.h6" Class="mb-4">Filter</MudText>
+
+    <MudGrid>
+
+        @* Direction *@
+        <MudItem xs="12">
+            <MudText Typo="Typo.body2" Class="mb-1 mud-text-secondary">Retning</MudText>
+            <MudRadioGroup T="ConnectionQueryDirection" @bind-Value="_direction">
+                <MudRadio T="ConnectionQueryDirection"
+                          Value="ConnectionQueryDirection.FromOthers"
+                          Color="Color.Primary">
+                    Fra andre → til valgt entitet
+                </MudRadio>
+                <MudRadio T="ConnectionQueryDirection"
+                          Value="ConnectionQueryDirection.ToOthers"
+                          Color="Color.Primary">
+                    Fra valgt entitet → til andre
+                </MudRadio>
+            </MudRadioGroup>
+        </MudItem>
+
+        @* Entity pickers *@
+        <MudItem xs="12" sm="6">
+            <EntityPicker Label="Fra" @bind-Value="_fromId" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <EntityPicker Label="Til" @bind-Value="_toId" />
+        </MudItem>
+
+        @* Role autocomplete — searches locally against roles loaded from DB *@
+        <MudItem xs="12" sm="6">
+            <MudAutocomplete T="Role"
+                             Label="Rolle (valgfritt)"
+                             @bind-Value="_selectedRole"
+                             SearchFunc="SearchRoles"
+                             ToStringFunc="@(r => r == null ? string.Empty : $"{r.Name} ({r.Code})")"
+                             Variant="Variant.Outlined"
+                             Dense="true"
+                             Clearable="true"
+                             ResetValueOnEmptyText="true"
+                             MinCharacters="0"
+                             Placeholder="Søk rollenavn eller kode..." />
+        </MudItem>
+
+        @* Include flags *@
+        <MudItem xs="12">
+            <MudText Typo="Typo.body2" Class="mb-1 mud-text-secondary">Inkluder</MudText>
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                <MudCheckBox @bind-Value="_includeDelegation" Label="Delegering" Color="Color.Primary" Dense="true" />
+                <MudCheckBox @bind-Value="_includeKeyRole" Label="Key role" Color="Color.Primary" Dense="true" />
+                <MudCheckBox @bind-Value="_includeSubConnections" Label="Sub-connections" Color="Color.Primary" Dense="true" />
+                <MudCheckBox @bind-Value="_includeMainUnitConnections" Label="Hovedenhet" Color="Color.Primary" Dense="true" />
+                <MudCheckBox @bind-Value="_includePackages" Label="Pakker" Color="Color.Secondary" Dense="true" />
+                <MudCheckBox @bind-Value="_includeResources" Label="Ressurser" Color="Color.Secondary" Dense="true" />
+                <MudCheckBox @bind-Value="_includeInstances" Label="Instanser" Color="Color.Secondary" Dense="true" />
+            </MudStack>
+        </MudItem>
+
+        @* Other options *@
+        <MudItem xs="12">
+            <MudText Typo="Typo.body2" Class="mb-1 mud-text-secondary">Alternativer</MudText>
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                <MudCheckBox @bind-Value="_onlyUniqueResults" Label="Bare unike" Color="Color.Default" Dense="true" />
+                <MudCheckBox @bind-Value="_excludeDeleted" Label="Ekskluder slettede" Color="Color.Default" Dense="true" />
+                <MudCheckBox @bind-Value="_enrichPackageResources" Label="Berik pakkeressurser" Color="Color.Default" Dense="true" />
+            </MudStack>
+        </MudItem>
+
+        @* Run button *@
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Search"
+                       Disabled="@(!HasFilter || _loading)"
+                       OnClick="RunQuery">
+                Kjør spørring
+            </MudButton>
+        </MudItem>
+
+    </MudGrid>
+</MudPaper>
+
+@* ── Status ────────────────────────────────────────────────────────────────── *@
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+}
+
+@if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+}
+
+@* ── Results ───────────────────────────────────────────────────────────────── *@
+@if (_results is not null)
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+            @_results.Count treff
+            @if (_queryDuration.HasValue)
+            {
+                <span> — @_queryDuration.Value.TotalMilliseconds.ToString("F0") ms</span>
+            }
+        </MudText>
+    </MudStack>
+
+    <MudDataGrid T="ConnectionQueryExtendedRecord"
+                 Items="_results"
+                 Dense="true"
+                 Hover="true"
+                 Striped="true"
+                 FixedHeader="true"
+                 Height="620px"
+                 SortMode="SortMode.Multiple">
+        <Columns>
+
+            <HierarchyColumn T="ConnectionQueryExtendedRecord" />
+
+            <TemplateColumn Title="Fra" SortBy="@(x => x.From?.Name ?? x.FromId.ToString())">
+                <CellTemplate>
+                    <MudLink Href="@($"/entity/{context.Item.FromId}")" Typo="Typo.body2">
+                        @(context.Item.From?.Name ?? context.Item.FromId.ToString())
+                    </MudLink>
+                </CellTemplate>
+            </TemplateColumn>
+
+            <TemplateColumn Title="Til" SortBy="@(x => x.To?.Name ?? x.ToId.ToString())">
+                <CellTemplate>
+                    <MudLink Href="@($"/entity/{context.Item.ToId}")" Typo="Typo.body2">
+                        @(context.Item.To?.Name ?? context.Item.ToId.ToString())
+                    </MudLink>
+                </CellTemplate>
+            </TemplateColumn>
+
+            <TemplateColumn Title="Rolle" SortBy="@(x => x.Role?.Name ?? x.RoleId.ToString())">
+                <CellTemplate>
+                    <MudText Typo="Typo.body2">
+                        @(context.Item.Role?.Name ?? context.Item.RoleId.ToString())
+                    </MudText>
+                </CellTemplate>
+            </TemplateColumn>
+
+            <TemplateColumn Title="Årsak" SortBy="@(x => x.Reason.ToString())">
+                <CellTemplate>
+                    <MudChip T="string" Size="Size.Small" Color="@ReasonColor(context.Item.Reason)">
+                        @context.Item.Reason
+                    </MudChip>
+                </CellTemplate>
+            </TemplateColumn>
+
+            <TemplateColumn Title="Via" SortBy="@(x => x.Via?.Name ?? string.Empty)">
+                <CellTemplate>
+                    @if (context.Item.Via is not null)
+                    {
+                        <MudText Typo="Typo.body2">@context.Item.Via.Name</MudText>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+
+            <TemplateColumn Title="Pakker" SortBy="@(x => x.Packages.Count)">
+                <CellTemplate>
+                    @if (context.Item.Packages.Count > 0)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary">
+                            @context.Item.Packages.Count
+                        </MudChip>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+
+            <TemplateColumn Title="Ressurser" SortBy="@(x => x.Resources.Count)">
+                <CellTemplate>
+                    @if (context.Item.Resources.Count > 0)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                            @context.Item.Resources.Count
+                        </MudChip>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+
+        </Columns>
+
+        @* ChildRowContent context is CellContext<T> — use context.Item for the record *@
+        <ChildRowContent>
+            <MudPaper Elevation="0" Class="pa-3 mud-background-gray">
+                <MudGrid Spacing="2">
+
+                    @* Flags + IDs *@
+                    <MudItem xs="12">
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" AlignItems="AlignItems.Center">
+                            @if (context.Item.IsKeyRoleAccess)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">Key role</MudChip>
+                            }
+                            @if (context.Item.IsMainUnitAccess)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">Hovedenhet</MudChip>
+                            }
+                            @if (context.Item.IsRoleMap)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">Role map</MudChip>
+                            }
+                            @if (context.Item.AssignmentId.HasValue)
+                            {
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                    Assignment: @context.Item.AssignmentId
+                                </MudText>
+                            }
+                            @if (context.Item.DelegationId.HasValue)
+                            {
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                    Delegation: @context.Item.DelegationId
+                                </MudText>
+                            }
+                        </MudStack>
+                    </MudItem>
+
+                    @* Via role *@
+                    @if (context.Item.ViaRole is not null)
+                    {
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                Via rolle: @context.Item.ViaRole.Name (@context.Item.ViaRole.Code)
+                            </MudText>
+                        </MudItem>
+                    }
+
+                    @* Packages *@
+                    @if (context.Item.Packages.Count > 0)
+                    {
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.caption" Class="mb-1 mud-text-secondary">Pakker</MudText>
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                                @foreach (var pkg in context.Item.Packages)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Secondary">@pkg.Name</MudChip>
+                                }
+                            </MudStack>
+                        </MudItem>
+                    }
+
+                    @* Resources *@
+                    @if (context.Item.Resources.Count > 0)
+                    {
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.caption" Class="mb-1 mud-text-secondary">Ressurser</MudText>
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                                @foreach (var res in context.Item.Resources)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">@res.Name</MudChip>
+                                }
+                            </MudStack>
+                        </MudItem>
+                    }
+
+                    @* Instances *@
+                    @if (context.Item.Instances.Count > 0)
+                    {
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.caption" Class="mb-1 mud-text-secondary">
+                                Instanser (@context.Item.Instances.Count)
+                            </MudText>
+                            @foreach (var inst in context.Item.Instances.Take(10))
+                            {
+                                <MudText Typo="Typo.caption" Class="d-block mud-text-secondary">
+                                    @inst.InstanceId — @inst.ResourceName
+                                </MudText>
+                            }
+                            @if (context.Item.Instances.Count > 10)
+                            {
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                    ... og @(context.Item.Instances.Count - 10) til
+                                </MudText>
+                            }
+                        </MudItem>
+                    }
+
+                </MudGrid>
+            </MudPaper>
+        </ChildRowContent>
+
+    </MudDataGrid>
+}
+
+@code {
+    // ── Filter state ──────────────────────────────────────────────────────────
+
+    private Guid? _fromId;
+    private Guid? _toId;
+    private Role? _selectedRole;
+    private ConnectionQueryDirection _direction = ConnectionQueryDirection.FromOthers;
+
+    private bool _includeDelegation = true;
+    private bool _includeKeyRole = true;
+    private bool _includeSubConnections = true;
+    private bool _includeMainUnitConnections = true;
+    private bool _includePackages;
+    private bool _includeResources;
+    private bool _includeInstances;
+    private bool _onlyUniqueResults;
+    private bool _excludeDeleted;
+    private bool _enrichPackageResources;
+
+    // ── Data ──────────────────────────────────────────────────────────────────
+
+    private List<Role> _allRoles = [];
+    private List<ConnectionQueryExtendedRecord>? _results;
+    private bool _loading;
+    private string? _error;
+    private TimeSpan? _queryDuration;
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    protected override async Task OnInitializedAsync()
+    {
+        EnvState.OnChange += OnEnvChanged;
+        await LoadRoles();
+    }
+
+    public void Dispose()
+    {
+        EnvState.OnChange -= OnEnvChanged;
+    }
+
+    private void OnEnvChanged()
+    {
+        _results = null;
+        _selectedRole = null;
+        InvokeAsync(async () =>
+        {
+            await LoadRoles();
+            StateHasChanged();
+        });
+    }
+
+    // ── Data loading ──────────────────────────────────────────────────────────
+
+    private async Task LoadRoles()
+    {
+        try
+        {
+            using var db = DbFactory.CreateContext(EnvState.Current);
+            _allRoles = await db.Roles
+                .AsNoTracking()
+                .OrderBy(r => r.Name)
+                .ToListAsync();
+        }
+        catch
+        {
+            _allRoles = [];
+        }
+    }
+
+    private Task<IEnumerable<Role>> SearchRoles(string text, CancellationToken ct)
+    {
+        IEnumerable<Role> result = string.IsNullOrWhiteSpace(text)
+            ? _allRoles.Take(30)
+            : _allRoles
+                .Where(r =>
+                    r.Name.Contains(text, StringComparison.OrdinalIgnoreCase) ||
+                    r.Code.Contains(text, StringComparison.OrdinalIgnoreCase))
+                .Take(30);
+
+        return Task.FromResult(result);
+    }
+
+    // ── Query ─────────────────────────────────────────────────────────────────
+
+    private async Task RunQuery()
+    {
+        _error = null;
+        _results = null;
+        _loading = true;
+        StateHasChanged();
+
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            var filter = new ConnectionQueryFilter
+            {
+                FromIds = _fromId.HasValue ? [_fromId.Value] : null,
+                ToIds = _toId.HasValue ? [_toId.Value] : null,
+                RoleIds = _selectedRole is not null ? [_selectedRole.Id] : null,
+                IncludePackages = _includePackages,
+                IncludeResources = _includeResources,
+                IncludeInstances = _includeInstances,
+                IncludeDelegation = _includeDelegation,
+                IncludeKeyRole = _includeKeyRole,
+                IncludeSubConnections = _includeSubConnections,
+                IncludeMainUnitConnections = _includeMainUnitConnections,
+                OnlyUniqueResults = _onlyUniqueResults,
+                ExcludeDeleted = _excludeDeleted,
+                EnrichEntities = true,
+                EnrichPackageResources = _enrichPackageResources,
+            };
+
+            using var db = DbFactory.CreateContext(EnvState.Current);
+            var cq = new Altinn.AccessMgmt.PersistenceEF.Queries.Connection.ConnectionQuery(db);
+
+            _results = _direction == ConnectionQueryDirection.FromOthers
+                ? await cq.GetConnectionsFromOthersAsync(filter)
+                : await cq.GetConnectionsToOthersAsync(filter);
+        }
+        catch (Exception ex)
+        {
+            _error = $"Feil: {ex.Message}";
+        }
+        finally
+        {
+            sw.Stop();
+            _queryDuration = sw.Elapsed;
+            _loading = false;
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private bool HasFilter => _fromId.HasValue || _toId.HasValue;
+
+    private static Color ReasonColor(ConnectionReason reason) => reason switch
+    {
+        ConnectionReason.Assignment => Color.Success,
+        ConnectionReason.Delegation => Color.Info,
+        ConnectionReason.Hierarchy  => Color.Secondary,
+        ConnectionReason.RoleMap    => Color.Warning,
+        ConnectionReason.KeyRole    => Color.Primary,
+        _                           => Color.Default
+    };
+}

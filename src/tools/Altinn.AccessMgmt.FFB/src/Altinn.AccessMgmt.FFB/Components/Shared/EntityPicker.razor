@@ -1,0 +1,62 @@
+@using Altinn.AccessMgmt.PersistenceEF.Models
+@using Microsoft.EntityFrameworkCore
+@using Altinn.AccessMgmt.FFB.Services
+@inject IEnvironmentDbContextFactory DbFactory
+@inject EnvironmentState EnvState
+
+<MudAutocomplete T="Entity"
+                 Label="@Label"
+                 Value="_entity"
+                 ValueChanged="OnEntitySelected"
+                 SearchFunc="SearchAsync"
+                 ToStringFunc="@(e => e == null ? string.Empty : EntityLabel(e))"
+                 Variant="Variant.Outlined"
+                 Dense="true"
+                 Clearable="true"
+                 ResetValueOnEmptyText="true"
+                 MinCharacters="2"
+                 Placeholder="Navn, org.nr, party-id..." />
+
+@code {
+    [Parameter] public string Label { get; set; } = "Entity";
+    [Parameter] public Guid? Value { get; set; }
+    [Parameter] public EventCallback<Guid?> ValueChanged { get; set; }
+
+    private Entity? _entity;
+
+    private async Task OnEntitySelected(Entity? entity)
+    {
+        _entity = entity;
+        await ValueChanged.InvokeAsync(entity?.Id);
+    }
+
+    private async Task<IEnumerable<Entity>> SearchAsync(string text, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(text) || text.Length < 2)
+        {
+            return [];
+        }
+
+        try
+        {
+            using var db = DbFactory.CreateContext(EnvState.Current);
+            return await db.Entities
+                .AsNoTracking()
+                .Include(e => e.Type)
+                .Where(e =>
+                    EF.Functions.ILike(e.Name, $"%{text}%") ||
+                    e.OrganizationIdentifier == text ||
+                    (e.PartyId != null && e.PartyId.ToString() == text))
+                .OrderBy(e => e.Name)
+                .Take(20)
+                .ToListAsync(ct);
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static string EntityLabel(Entity e) =>
+        $"{e.Name} ({e.Type?.Name ?? "?"}, party: {e.PartyId})";
+}

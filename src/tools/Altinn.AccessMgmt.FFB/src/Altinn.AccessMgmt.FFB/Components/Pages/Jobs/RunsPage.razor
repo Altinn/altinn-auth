@@ -1,0 +1,108 @@
+@page "/jobs/runs"
+@using Altinn.AccessMgmt.FFB.Jobs
+@using Altinn.AccessMgmt.FFB.Jobs.Models
+@inject IJobRunStore RunStore
+@inject IJobRunner JobRunner
+@implements IDisposable
+
+<PageTitle>Kjøringer</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Kjøringer</MudText>
+<MudText Typo="Typo.body1" Class="mb-6 mud-text-secondary">
+    Alle kjøringer på tvers av jobber. Aktive kjøringer kan avbrytes; avsluttede kan fjernes.
+</MudText>
+
+@* ── Aktive ────────────────────────────────────────────────────────────────── *@
+@if (ActiveRuns.Count > 0)
+{
+    <MudText Typo="Typo.h6" Class="mb-3">
+        Aktive
+        <MudChip T="string" Size="Size.Small" Color="Color.Info" Class="ml-2">@ActiveRuns.Count</MudChip>
+    </MudText>
+    @foreach (var run in ActiveRuns)
+    {
+        <JobRunCard Run="@run" OnChanged="@RefreshAndRender" />
+    }
+}
+else
+{
+    <MudAlert Severity="Severity.Info" Class="mb-4">Ingen aktive kjøringer.</MudAlert>
+}
+
+@* ── Avsluttede ────────────────────────────────────────────────────────────── *@
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mt-6 mb-3">
+    <MudText Typo="Typo.h6">
+        Avsluttede
+        <MudChip T="string" Size="Size.Small" Color="Color.Default" Class="ml-2">@CompletedRuns.Count</MudChip>
+    </MudText>
+    <MudSpacer />
+    @if (CompletedRuns.Count > 0)
+    {
+        <MudButton Size="Size.Small"
+                   Variant="Variant.Outlined"
+                   Color="Color.Error"
+                   StartIcon="@Icons.Material.Filled.DeleteSweep"
+                   OnClick="ClearCompleted">
+            Rydd alle avsluttede
+        </MudButton>
+    }
+</MudStack>
+
+@if (CompletedRuns.Count == 0)
+{
+    <MudText Class="mud-text-secondary">Ingen avsluttede kjøringer.</MudText>
+}
+else
+{
+    @foreach (var run in CompletedRuns)
+    {
+        <JobRunCard Run="@run" OnChanged="@RefreshAndRender" />
+    }
+}
+
+@code {
+    private List<JobRun> _allRuns = [];
+    private readonly HashSet<Guid> _subscribed = [];
+
+    private IReadOnlyList<JobRun> ActiveRuns =>
+        _allRuns.Where(r => r.Status is JobStatus.Queued or JobStatus.Running).ToList();
+
+    private IReadOnlyList<JobRun> CompletedRuns =>
+        _allRuns.Where(r => r.Status is JobStatus.Completed or JobStatus.Faulted or JobStatus.Cancelled).ToList();
+
+    protected override void OnInitialized()
+    {
+        RefreshRuns();
+    }
+
+    private void Subscribe(JobRun run)
+    {
+        if (_subscribed.Add(run.Id))
+            run.OnUpdated += () => InvokeAsync(RefreshAndRender);
+    }
+
+    private void RefreshRuns()
+    {
+        _allRuns = RunStore.GetAll()
+            .OrderByDescending(r => r.StartedAt)
+            .ToList();
+
+        foreach (var run in _allRuns)
+            Subscribe(run);
+    }
+
+    private void RefreshAndRender()
+    {
+        RefreshRuns();
+        StateHasChanged();
+    }
+
+    private void ClearCompleted()
+    {
+        RunStore.ClearCompleted();
+        RefreshRuns();
+        StateHasChanged();
+    }
+
+    public void Dispose() { /* subscriptions managed by JobRunCard.Dispose() */ }
+}

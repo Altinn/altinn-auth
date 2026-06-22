@@ -1,0 +1,176 @@
+@page "/jobs/entity-sync"
+@using Altinn.AccessMgmt.FFB.Jobs
+@using Altinn.AccessMgmt.FFB.Jobs.Models
+@using Altinn.AccessMgmt.FFB.Config
+@using Altinn.AccessMgmt.FFB.Services
+@inject IJobRunner JobRunner
+@inject IJobRunStore RunStore
+@inject IEnvironmentDbContextFactory EnvFactory
+@inject IDialogService DialogService
+@implements IDisposable
+
+<PageTitle>Entity Sync</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Entity Sync</MudText>
+<MudText Typo="Typo.body1" Class="mb-6 mud-text-secondary">
+    Sammenligner entities mellom AccessMgmt og Register (to-pass diff med 60s pause).
+    Genererer INSERT/DELETE SQL for stabile avvik.
+</MudText>
+
+@* ── Start panel ──────────────────────────────────────────────────────────── *@
+<MudPaper Elevation="1" Class="pa-4 mb-6">
+    <MudText Typo="Typo.h6" Class="mb-3">Start ny kjøring</MudText>
+
+    <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">Kjør på miljø:</MudText>
+    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" Class="mb-4">
+        @foreach (var env in EnvFactory.Environments)
+        {
+            var envName = env;
+            var configured = EnvFactory.IsConfigured(envName);
+            <MudCheckBox @bind-Value="_selected[envName]"
+                         Label="@envName"
+                         Disabled="@(!configured)"
+                         Color="Color.Primary" />
+        }
+    </MudStack>
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.PlayArrow"
+               Disabled="@(!AnySelected)"
+               OnClick="StartJobs">
+        Start
+    </MudButton>
+    <MudButton Variant="Variant.Outlined"
+               Class="ml-2"
+               StartIcon="@Icons.Material.Filled.Schedule"
+               Disabled="@(!AnySelected)"
+               OnClick="OpenScheduleDialog">
+        Generer konfig
+    </MudButton>
+</MudPaper>
+
+@* ── Runs ─────────────────────────────────────────────────────────────────── *@
+@if (_runs.Count > 0)
+{
+    <MudText Typo="Typo.h6" Class="mb-3">Kjøringer</MudText>
+    @foreach (var run in _runs)
+    {
+        <JobRunCard Run="@run" OnChanged="@RefreshAndRender">
+            <ExtraActions>
+                @if (run.Status == JobStatus.Completed &&
+                     run.SqlOutput.Any(s => s.StartsWith("UPDATE register.party")) &&
+                     run.JobName == EntitySyncJob.JobName)
+                {
+                    var resyncCount = run.SqlOutput.Count(s => s.StartsWith("UPDATE register.party"));
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Warning"
+                               Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.Sync"
+                               OnClick="@(() => ConfirmAndExecute(run))">
+                        Resync i Register (@resyncCount stk)
+                    </MudButton>
+                }
+            </ExtraActions>
+        </JobRunCard>
+    }
+}
+
+@code {
+    private readonly Dictionary<string, bool> _selected = new();
+    private readonly HashSet<Guid> _subscribed = [];
+    private List<JobRun> _runs = [];
+
+    protected override void OnInitialized()
+    {
+        foreach (var env in EnvFactory.Environments)
+            _selected[env] = false;
+
+        RefreshRuns();
+    }
+
+    private void StartJobs()
+    {
+        foreach (var (env, selected) in _selected)
+        {
+            if (!selected) continue;
+            var run = JobRunner.StartEntitySync(env);
+            Subscribe(run);
+            _runs.Insert(0, run);
+        }
+        StateHasChanged();
+    }
+
+    private async Task ConfirmAndExecute(JobRun previewRun)
+    {
+        var count = previewRun.SqlOutput.Count(s => s.StartsWith("UPDATE register.party"));
+        var parameters = new DialogParameters<ConfirmDialog>
+        {
+            { x => x.ContentText, $"Dette vil kjøre {count} UPDATE-statement(s) mot Register-databasen i {previewRun.Environment}. Register vil re-emitte events for de berørte partiene." },
+            { x => x.ButtonText, $"Kjør {count} resync" },
+            { x => x.Color, Color.Warning },
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Bekreft resync", parameters);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            var run = JobRunner.StartEntitySyncExecute(previewRun.Id, previewRun.Environment);
+            Subscribe(run);
+            _runs.Insert(0, run);
+            StateHasChanged();
+        }
+    }
+
+    private void Subscribe(JobRun run)
+    {
+        if (_subscribed.Add(run.Id))
+            run.OnUpdated += () => InvokeAsync(RefreshAndRender);
+    }
+
+    private void RefreshRuns()
+    {
+        var scan = RunStore.GetForJob(EntitySyncJob.JobName).ToList();
+        var execute = RunStore.GetForJob($"{EntitySyncJob.JobName}:Execute").ToList();
+        _runs = scan.Concat(execute)
+            .OrderByDescending(r => r.StartedAt)
+            .ToList();
+
+        foreach (var run in _runs)
+            Subscribe(run);
+    }
+
+    private void RefreshAndRender()
+    {
+        RefreshRuns();
+        StateHasChanged();
+    }
+
+    private bool AnySelected => _selected.Values.Any(v => v);
+
+    private async Task OpenScheduleDialog()
+    {
+        var entries = _selected
+            .Where(kv => kv.Value)
+            .Select(kv => new JobScheduleEntry
+            {
+                Id = $"entity-sync-{kv.Key.ToLowerInvariant()}",
+                JobType = "EntitySync",
+                Environment = kv.Key,
+                Cron = "0 3 * * *",
+                Enabled = true,
+            })
+            .ToList();
+
+        var parameters = new DialogParameters<ScheduleConfigDialog>
+        {
+            { x => x.Entries, entries },
+        };
+
+        await DialogService.ShowAsync<ScheduleConfigDialog>("Generer plan-konfig", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
+    }
+
+    public void Dispose() { }
+}

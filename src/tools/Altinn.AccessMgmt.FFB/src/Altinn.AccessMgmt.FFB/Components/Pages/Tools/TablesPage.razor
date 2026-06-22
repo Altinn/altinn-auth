@@ -1,0 +1,53 @@
+@page "/tools/tables"
+
+<PageTitle>Tabeller</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Tabeller</MudText>
+<MudText Typo="Typo.body1" Class="mb-6 mud-text-secondary">
+    Alle tabeller med DbSet i AppDbContext. Klikk på en tabell for å hente statistikk.
+</MudText>
+
+@foreach (var category in TableRegistry.Categories)
+{
+    var tables = TableRegistry.All.Where(t => t.Category == category).ToList();
+    if (tables.Count == 0) continue;
+
+    <MudText Typo="Typo.h6" Class="mt-6 mb-2">@category</MudText>
+    <MudPaper Elevation="1" Class="mb-4">
+        <MudSimpleTable Dense="true" Hover="true">
+            <tbody>
+                @foreach (var table in tables)
+                {
+                    <tr>
+                        <td style="width:60%">
+                            <MudLink Href="@($"/tools/tables/{table.Key}")"
+                                     Style="font-family:monospace;font-size:.875rem">
+                                @table.DisplayName
+                            </MudLink>
+                        </td>
+                        <td>
+                            @if (table.Groupings.Count > 0)
+                            {
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                    @string.Join(", ", table.Groupings.Select(g => g.Label))
+                                </MudText>
+                            }
+                        </td>
+                        <td style="text-align:right">
+                            @if (table.AuditKey is not null)
+                            {
+                                <MudLink Href="@($"/tools/tables/{table.AuditKey}")"
+                                         Typo="Typo.caption">
+                                    → historikk
+                                </MudLink>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    </MudPaper>
+}
+
+@code {
+}

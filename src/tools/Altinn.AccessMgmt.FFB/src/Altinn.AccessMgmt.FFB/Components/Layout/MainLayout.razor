@@ -1,0 +1,76 @@
+@inherits LayoutComponentBase
+@using Altinn.AccessMgmt.FFB.Theme
+@using Altinn.AccessMgmt.FFB.Services
+@inject IEnvironmentDbContextFactory EnvFactory
+@inject EnvironmentState EnvState
+@implements IDisposable
+
+<MudThemeProvider Theme="DigdirTheme.Instance" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       OnClick="ToggleDrawer" />
+        <MudText Typo="Typo.h6" Class="ml-2">Altinn Access Management</MudText>
+        <MudSpacer />
+        <MudMenu Color="Color.Inherit"
+                 Variant="Variant.Outlined"
+                 StartIcon="@Icons.Material.Filled.Storage"
+                 EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                 Label="@EnvState.Current"
+                 Dense="true"
+                 Class="mr-2">
+            @foreach (var name in EnvFactory.Environments)
+            {
+                var envName = name;
+                var configured = EnvFactory.IsConfigured(envName);
+                <MudMenuItem Icon="@(EnvState.Current == envName ? Icons.Material.Filled.Check : null)"
+                             Disabled="@(!configured)"
+                             OnClick="@(() => EnvState.Current = envName)">
+                    @if (configured)
+                    {
+                        @name
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Class="mud-text-disabled">@name (not configured)</MudText>
+                    }
+                </MudMenuItem>
+            }
+        </MudMenu>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen"
+               ClipMode="DrawerClipMode.Always"
+               Elevation="2"
+               Variant="DrawerVariant.Persistent">
+        <NavMenu />
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="py-6">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+
+    protected override void OnInitialized()
+    {
+        EnvState.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        EnvState.OnChange -= StateHasChanged;
+    }
+
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+}

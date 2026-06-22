@@ -1,0 +1,262 @@
+@page "/tools/outbox/{Id:guid}"
+@using Altinn.AccessMgmt.PersistenceEF.Models
+@using Altinn.AccessMgmt.PersistenceEF.Models.Base
+@using Microsoft.EntityFrameworkCore
+@using System.Text.Json
+@using Altinn.AccessMgmt.FFB.Services
+@inject IEnvironmentDbContextFactory DbFactory
+@inject EnvironmentState EnvState
+@inject NavigationManager Nav
+@implements IDisposable
+
+<PageTitle>Outbox @Id.ToString()[..8]</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Spacing="2">
+    <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                   OnClick="@(() => Nav.NavigateTo("/tools/outbox"))" />
+    <MudText Typo="Typo.h5">Outbox-melding</MudText>
+    @if (_message is not null)
+    {
+        <MudChip T="string" Color="@StatusColor(_message.Status)" Size="Size.Medium">
+            @_message.Status
+        </MudChip>
+    }
+</MudStack>
+
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+}
+@if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+}
+
+@if (_message is not null)
+{
+    @* ── Metadata ──────────────────────────────────────────────────────────── *@
+    <MudPaper Elevation="1" Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">Metadata</MudText>
+        <MudGrid Spacing="2">
+
+            <MudItem xs="12" md="6">
+                <MudField Label="ID" Variant="Variant.Outlined">
+                    <code>@_message.Id</code>
+                </MudField>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudField Label="RefId" Variant="Variant.Outlined">
+                    <code>@(_message.RefId ?? "–")</code>
+                </MudField>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudField Label="Handler" Variant="Variant.Outlined">
+                    @(_message.Handler ?? "–")
+                </MudField>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudField Label="CorrelationId" Variant="Variant.Outlined">
+                    <code>@(_message.CorrelationId ?? "–")</code>
+                </MudField>
+            </MudItem>
+
+            <MudItem xs="6" md="3">
+                <MudField Label="Forsøk" Variant="Variant.Outlined">@_message.Attempt</MudField>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudField Label="Maks retries" Variant="Variant.Outlined">@_message.Retries</MudField>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudField Label="Timeout" Variant="Variant.Outlined">@_message.Timeout.TotalSeconds s</MudField>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudField Label="Schedule" Variant="Variant.Outlined">
+                    @(_message.Schedule.HasValue ? _message.Schedule.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss") : "–")
+                </MudField>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudField Label="Opprettet" Variant="Variant.Outlined">
+                    @_message.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")
+                </MudField>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudField Label="Startet" Variant="Variant.Outlined">
+                    @(_message.StartedAt.HasValue ? _message.StartedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss") : "–")
+                </MudField>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudField Label="Fullført" Variant="Variant.Outlined">
+                    @(_message.CompletedAt.HasValue ? _message.CompletedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss") : "–")
+                </MudField>
+            </MudItem>
+
+        </MudGrid>
+    </MudPaper>
+
+    @* ── Data / JSON ────────────────────────────────────────────────────────── *@
+    <MudPaper Elevation="1" Class="pa-4 mb-4">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+            <MudText Typo="Typo.h6">Data</MudText>
+            <MudToggleIconButton @bind-Toggled="_showRawJson"
+                                 Icon="@Icons.Material.Filled.AccountTree"
+                                 ToggledIcon="@Icons.Material.Filled.Code"
+                                 aria-label="Vis som tre" />
+        </MudStack>
+
+        @if (_showRawJson || _jsonDoc is null)
+        {
+            <pre style="overflow-x:auto;font-size:.8rem;background:var(--mud-palette-background-grey);padding:1rem;border-radius:4px;max-height:500px;overflow-y:auto">@_prettyJson</pre>
+        }
+        else
+        {
+            <div style="overflow-x:auto;overflow-y:auto;max-height:500px;font-family:monospace;font-size:.82rem;padding:.5rem">
+                <JsonTree Element="_jsonDoc.RootElement" Depth="0" />
+            </div>
+        }
+    </MudPaper>
+
+    @* ── Logs ───────────────────────────────────────────────────────────────── *@
+    <MudPaper Elevation="1" Class="pa-4">
+        <MudText Typo="Typo.h6" Class="mb-3">
+            Logger (@(_message.OutboxMessageLogs?.Count ?? 0))
+        </MudText>
+
+        @if (_message.OutboxMessageLogs is { Count: > 0 })
+        {
+            <MudTable Items="_message.OutboxMessageLogs.OrderByDescending(l => l.CreatedAt)"
+                      Dense="true"
+                      Hover="true"
+                      FixedHeader="true"
+                      Height="300px">
+                <HeaderContent>
+                    <MudTh>Tidspunkt</MudTh>
+                    <MudTh>Forsøk</MudTh>
+                    <MudTh>Melding</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Tidspunkt">
+                        <MudText Typo="Typo.caption" Style="font-family:monospace">
+                            @context.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Forsøk">
+                        <MudText Typo="Typo.body2">@context.Attempt</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Melding">
+                        <MudText Typo="Typo.body2" Style="white-space:pre-wrap;font-family:monospace;font-size:.8rem">
+                            @context.Log
+                        </MudText>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">Ingen logger.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        }
+        else
+        {
+            <MudText Class="mud-text-secondary">Ingen logger registrert.</MudText>
+        }
+    </MudPaper>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private OutboxMessage? _message;
+    private JsonDocument? _jsonDoc;
+    private string _prettyJson = string.Empty;
+    private bool _showRawJson;
+    private bool _loading;
+    private string? _error;
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    protected override async Task OnInitializedAsync()
+    {
+        EnvState.OnChange += OnEnvChanged;
+        await LoadMessage();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadMessage();
+    }
+
+    public void Dispose()
+    {
+        EnvState.OnChange -= OnEnvChanged;
+        _jsonDoc?.Dispose();
+    }
+
+    private void OnEnvChanged()
+    {
+        InvokeAsync(async () =>
+        {
+            await LoadMessage();
+            StateHasChanged();
+        });
+    }
+
+    // ── Query ─────────────────────────────────────────────────────────────────
+
+    private async Task LoadMessage()
+    {
+        _error = null;
+        _loading = true;
+
+        try
+        {
+            using var db = DbFactory.CreateContext(EnvState.Current);
+            _message = await db.OutboxMessages
+                .AsNoTracking()
+                .Include(m => m.OutboxMessageLogs)
+                .FirstOrDefaultAsync(m => m.Id == Id);
+
+            if (_message is not null)
+            {
+                ParseJson(_message.Data);
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Databasefeil: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ParseJson(string raw)
+    {
+        _jsonDoc?.Dispose();
+        _jsonDoc = null;
+
+        try
+        {
+            _jsonDoc = JsonDocument.Parse(raw);
+            _prettyJson = JsonSerializer.Serialize(
+                _jsonDoc.RootElement,
+                new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch
+        {
+            // Not valid JSON — just show raw
+            _prettyJson = raw;
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private static Color StatusColor(OutboxStatus status) => status switch
+    {
+        OutboxStatus.Completed  => Color.Success,
+        OutboxStatus.Processing => Color.Info,
+        OutboxStatus.Pending    => Color.Default,
+        OutboxStatus.Failed     => Color.Error,
+        _                       => Color.Warning
+    };
+}

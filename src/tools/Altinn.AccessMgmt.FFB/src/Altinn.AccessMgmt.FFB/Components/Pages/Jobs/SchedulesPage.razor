@@ -1,0 +1,210 @@
+@page "/jobs/schedules"
+@using Altinn.AccessMgmt.FFB.Config
+@using Altinn.AccessMgmt.FFB.Jobs.Models
+@using Altinn.AccessMgmt.FFB.Services
+@using Microsoft.Extensions.Options
+@inject IJobScheduler Scheduler
+@inject IJobRunStore RunStore
+@inject IOptions<JobSchedulesConfig> SchedulesConfig
+@implements IDisposable
+
+<PageTitle>Planlagte kjøringer</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Planlagte kjøringer</MudText>
+<MudText Typo="Typo.body1" Class="mb-6 mud-text-secondary">
+    Planer konfigurert under <code>JobSchedules.Schedules</code> i <code>appsettings.json</code>.
+    For å legge til eller endre en plan, bruk "Generer konfig"-knappen på den aktuelle jobb-siden.
+</MudText>
+
+@* ── Global switches ───────────────────────────────────────────────────────── *@
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+    <MudText Typo="Typo.body2">Planlegging:</MudText>
+    @if (SchedulesConfig.Value.Enabled)
+    {
+        <MudChip T="string" Size="Size.Small" Color="Color.Success"
+                 Icon="@Icons.Material.Filled.PlayCircle">
+            Aktivert — cron-planer kjøres automatisk
+        </MudChip>
+    }
+    else
+    {
+        <MudChip T="string" Size="Size.Small" Color="Color.Error"
+                 Icon="@Icons.Material.Filled.Block">
+            Deaktivert — ingen planer kjøres (sett JobSchedules:Enabled = true)
+        </MudChip>
+    }
+
+</MudStack>
+
+@if (!Scheduler.Schedules.Any())
+{
+    <MudAlert Severity="Severity.Info">
+        Ingen planer konfigurert. Bruk "Generer konfig" på jobb-sidene for å lage config-snippet.
+    </MudAlert>
+}
+else
+{
+    <MudPaper Elevation="1" Class="pa-0">
+        <MudTable Items="Scheduler.Schedules"
+                  Dense="true"
+                  Hover="true"
+                  FixedHeader="true">
+            <HeaderContent>
+                <MudTh>ID</MudTh>
+                <MudTh>Jobb</MudTh>
+                <MudTh>Miljø</MudTh>
+                <MudTh>Cron</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Siste kjøring</MudTh>
+                <MudTh>Neste kjøring</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="ID">
+                    <MudText Typo="Typo.caption" Style="font-family:monospace">@context.Id</MudText>
+                </MudTd>
+                <MudTd DataLabel="Jobb">
+                    <MudChip T="string" Size="Size.Small" Color="@JobColor(context.JobType)">
+                        @context.JobType
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Miljø">
+                    <MudText Typo="Typo.body2">@context.Environment</MudText>
+                </MudTd>
+                <MudTd DataLabel="Cron">
+                    <MudText Typo="Typo.caption" Style="font-family:monospace">@context.Cron</MudText>
+                </MudTd>
+                <MudTd DataLabel="Status">
+                    @if (context.Enabled)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success"
+                                 Icon="@Icons.Material.Filled.CheckCircle">
+                            Aktiv
+                        </MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default"
+                                 Icon="@Icons.Material.Filled.PauseCircle">
+                            Deaktivert
+                        </MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Siste kjøring">
+                    @{
+                        var last = Scheduler.GetLastRun(context.Id);
+                    }
+                    @if (last.HasValue)
+                    {
+                        <MudText Typo="Typo.body2">
+                            @last.Value.ToLocalTime().ToString("dd.MM HH:mm:ss")
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">Aldri</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Neste kjøring">
+                    @{
+                        var next = Scheduler.GetNextRun(context.Id);
+                    }
+                    @if (next.HasValue)
+                    {
+                        <MudText Typo="Typo.body2">
+                            @next.Value.ToLocalTime().ToString("dd.MM HH:mm:ss")
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">–</MudText>
+                    }
+                </MudTd>
+                <MudTd>
+                    @if (context.Enabled)
+                    {
+                        <MudButton Size="Size.Small"
+                                   Variant="Variant.Outlined"
+                                   StartIcon="@Icons.Material.Filled.PlayArrow"
+                                   OnClick="@(() => TriggerNow(context))">
+                            Kjør nå
+                        </MudButton>
+                    }
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+}
+
+@* ── Recent runs from scheduled triggers ─────────────────────────────────── *@
+@if (_recentRuns.Count > 0)
+{
+    <MudText Typo="Typo.h6" Class="mt-6 mb-3">
+        Nylige kjøringer startet fra planer
+    </MudText>
+    @foreach (var run in _recentRuns)
+    {
+        <JobRunCard Run="@run" OnChanged="@RefreshAndRender" />
+    }
+}
+
+@code {
+    private readonly HashSet<Guid> _subscribed = [];
+    private List<JobRun> _recentRuns = [];
+
+    protected override void OnInitialized()
+    {
+        RefreshRuns();
+    }
+
+    private void Subscribe(JobRun run)
+    {
+        if (_subscribed.Add(run.Id))
+            run.OnUpdated += () => InvokeAsync(RefreshAndRender);
+    }
+
+    private void TriggerNow(JobScheduleEntry entry)
+    {
+        var run = Scheduler.TriggerNow(entry.Id);
+        if (run is not null)
+        {
+            Subscribe(run);
+            RefreshRuns();
+            StateHasChanged();
+        }
+    }
+
+    private void RefreshRuns()
+    {
+        var allJobNames = new[]
+        {
+            "IngestCleanup", "HistoryCleanup", "AssignmentSync", "EntitySync",
+        };
+
+        _recentRuns = allJobNames
+            .SelectMany(name => RunStore.GetForJob(name))
+            .OrderByDescending(r => r.StartedAt)
+            .Take(10)
+            .ToList();
+
+        foreach (var run in _recentRuns)
+            Subscribe(run);
+    }
+
+    private void RefreshAndRender()
+    {
+        RefreshRuns();
+        StateHasChanged();
+    }
+
+    private static Color JobColor(string jobType) => jobType switch
+    {
+        JobTypes.IngestCleanup   => Color.Warning,
+        JobTypes.HistoryCleanup  => Color.Secondary,
+        JobTypes.AssignmentSync  => Color.Success,
+        JobTypes.EntitySync      => Color.Info,
+        _                        => Color.Default
+    };
+
+    public void Dispose() { /* subscriptions managed by JobRunCard.Dispose() */ }
+}

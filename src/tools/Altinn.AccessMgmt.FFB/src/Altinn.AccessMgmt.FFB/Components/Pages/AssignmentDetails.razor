@@ -1,0 +1,401 @@
+@page "/assignment/{Id:guid}"
+@using Altinn.AccessMgmt.PersistenceEF.Models
+@using Microsoft.EntityFrameworkCore
+@using Altinn.AccessMgmt.FFB.Services
+@inject IEnvironmentDbContextFactory DbFactory
+@inject EnvironmentState EnvState
+@inject NavigationManager Nav
+@implements IDisposable
+
+<PageTitle>Assignment – @Id</PageTitle>
+
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+}
+else if (_assignment is null)
+{
+    <MudAlert Severity="Severity.Error">Assignment not found: @Id</MudAlert>
+}
+else
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-6">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                       Color="Color.Default"
+                       OnClick="@(() => Nav.NavigateTo($"/entity/{_assignment.FromId}"))" />
+        <MudText Typo="Typo.h4">Assignment</MudText>
+        <MudChip T="string" Color="Color.Primary" Size="Size.Small">
+            @(_assignment.Role?.Name ?? _assignment.RoleId.ToString())
+        </MudChip>
+    </MudStack>
+
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="1">
+                <MudCardHeader>
+                    <CardHeaderContent><MudText Typo="Typo.h6">Summary</MudText></CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent Class="pa-0">
+                    <MudSimpleTable Dense="true" Hover="false" Bordered="false">
+                        <tbody>
+                            <tr>
+                                <td style="width:35%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Id</td>
+                                <td style="font-family:monospace;font-size:.8125rem">@_assignment.Id</td>
+                            </tr>
+                            <tr>
+                                <td style="width:35%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Role</td>
+                                <td style="font-size:.8125rem">
+                                    <MudLink Href="@($"/role/{_assignment.RoleId}")">
+                                        @(_assignment.Role?.Name ?? _assignment.RoleId.ToString())
+                                    </MudLink>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:35%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Role URN</td>
+                                <td style="font-family:monospace;font-size:.8125rem">@(_assignment.Role?.Urn ?? "–")</td>
+                            </tr>
+                            <tr>
+                                <td style="width:35%;color:var(--mud-palette-text-secondary);font-size:.8125rem">From</td>
+                                <td style="font-size:.8125rem">
+                                    <MudLink Href="@($"/entity/{_assignment.FromId}")">
+                                        @(_assignment.From?.Name ?? _assignment.FromId.ToString())
+                                    </MudLink>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:35%;color:var(--mud-palette-text-secondary);font-size:.8125rem">To</td>
+                                <td style="font-size:.8125rem">
+                                    <MudLink Href="@($"/entity/{_assignment.ToId}")">
+                                        @(_assignment.To?.Name ?? _assignment.ToId.ToString())
+                                    </MudLink>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:35%;color:var(--mud-palette-text-secondary);font-size:.8125rem">ValidFrom</td>
+                                <td style="font-size:.8125rem">@_assignment.Audit_ValidFrom.ToString("u")</td>
+                            </tr>
+                            <tr>
+                                <td style="width:35%;color:var(--mud-palette-text-secondary);font-size:.8125rem">ChangedBy</td>
+                                <td style="font-family:monospace;font-size:.8125rem">@(_assignment.Audit_ChangedBy?.ToString() ?? "–")</td>
+                            </tr>
+                            <tr>
+                                <td style="width:35%;color:var(--mud-palette-text-secondary);font-size:.8125rem">ChangeOperation</td>
+                                <td style="font-family:monospace;font-size:.8125rem">@(_assignment.Audit_ChangeOperation ?? "–")</td>
+                            </tr>
+                        </tbody>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    @* ── Direct: explicitly stored on this assignment ── *@
+    <MudText Typo="Typo.h5" Class="mt-8 mb-1">Direct</MudText>
+    <MudText Typo="Typo.body2" Class="mb-3 mud-text-secondary">
+        Resources, packages and instances directly associated with this assignment.
+    </MudText>
+    <MudTabs Elevation="1" Rounded="false" ApplyEffectsToContainer="true">
+
+        <MudTabPanel Text="@($"Resources ({_resources.Count})")"
+                     Icon="@Icons.Material.Filled.Api">
+            <MudTable Items="_resources" Hover="true" Dense="true" Class="pa-0">
+                <HeaderContent>
+                    <MudTh>Resource</MudTh>
+                    <MudTh>Type</MudTh>
+                    <MudTh>RefId</MudTh>
+                    <MudTh>PolicyPath</MudTh>
+                    <MudTh>PolicyVersion</MudTh>
+                    <MudTh>DelegationChangeId</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Resource">
+                        <MudLink Href="@($"/resource/{context.ResourceId}")">@(context.Resource?.Name ?? context.ResourceId.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Type">
+                        <MudText Typo="Typo.body2">@(context.Resource?.Type?.Name ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="RefId">
+                        <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.Resource?.RefId ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="PolicyPath">
+                        <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.PolicyPath ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="PolicyVersion">
+                        <MudText Typo="Typo.body2">@(context.PolicyVersion ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="DelegationChangeId">
+                        <MudText Typo="Typo.body2">@context.DelegationChangeId</MudText>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">No direct resources on this assignment.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@($"Packages ({_packages.Count})")"
+                     Icon="@Icons.Material.Filled.Inventory2">
+            <MudTable Items="_packages" Hover="true" Dense="true" Class="pa-0">
+                <HeaderContent>
+                    <MudTh>Package</MudTh>
+                    <MudTh>URN</MudTh>
+                    <MudTh>Area</MudTh>
+                    <MudTh>Provider</MudTh>
+                    <MudTh>Since</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Package">
+                        <MudLink Href="@($"/package/{context.PackageId}")">
+                            @(context.Package?.Name ?? context.PackageId.ToString())
+                        </MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="URN">
+                        <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.Package?.Urn ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Area">
+                        <MudText Typo="Typo.body2">@(context.Package?.Area?.Name ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Provider">
+                        <MudText Typo="Typo.body2">@(context.Package?.Provider?.Name ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Since">
+                        <MudText Typo="Typo.body2">@context.Audit_ValidFrom.ToString("yyyy-MM-dd")</MudText>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">No direct packages on this assignment.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@($"Instances ({_instances.Count})")"
+                     Icon="@Icons.Material.Filled.DataObject">
+            <MudTable Items="_instances" Hover="true" Dense="true" Class="pa-0">
+                <HeaderContent>
+                    <MudTh>Resource</MudTh>
+                    <MudTh>Type</MudTh>
+                    <MudTh>InstanceId</MudTh>
+                    <MudTh>InstanceSourceType</MudTh>
+                    <MudTh>PolicyPath</MudTh>
+                    <MudTh>PolicyVersion</MudTh>
+                    <MudTh>DelegationChangeId</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Resource">
+                        <MudText Typo="Typo.body2">@context.Resource?.Name</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Type">
+                        <MudText Typo="Typo.body2">@(context.Resource?.Type?.Name ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="InstanceId">
+                        <MudText Typo="Typo.caption" Style="font-family:monospace">@context.InstanceId</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="InstanceSourceType">
+                        <MudText Typo="Typo.body2">@(context.InstanceSourceType?.Name ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="PolicyPath">
+                        <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.PolicyPath ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="PolicyVersion">
+                        <MudText Typo="Typo.body2">@(context.PolicyVersion ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="DelegationChangeId">
+                        <MudText Typo="Typo.body2">@context.DelegationChangeId</MudText>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">No instances on this assignment.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+
+    </MudTabs>
+
+    @* ── Automatic: derived from the role via RoleResource and RolePackage ── *@
+    <MudText Typo="Typo.h5" Class="mt-8 mb-1">Automatic</MudText>
+    <MudText Typo="Typo.body2" Class="mb-3 mud-text-secondary">
+        Resources and packages automatically granted through role
+        <MudLink Href="@($"/role/{_assignment.RoleId}")">@(_assignment.Role?.Name ?? _assignment.RoleId.ToString())</MudLink>.
+    </MudText>
+    <MudTabs Elevation="1" Rounded="false" ApplyEffectsToContainer="true">
+
+        <MudTabPanel Text="@($"Resources ({_autoResources.Count})")"
+                     Icon="@Icons.Material.Filled.Api">
+            <MudTable Items="_autoResources" Hover="true" Dense="true" Class="pa-0">
+                <HeaderContent>
+                    <MudTh>Resource</MudTh>
+                    <MudTh>Type</MudTh>
+                    <MudTh>RefId</MudTh>
+                    <MudTh>Provider</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Resource">
+                        <MudLink Href="@($"/resource/{context.ResourceId}")">@(context.Resource?.Name ?? context.ResourceId.ToString())</MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Type">
+                        <MudText Typo="Typo.body2">@(context.Resource?.Type?.Name ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="RefId">
+                        <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.Resource?.RefId ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Provider">
+                        <MudLink Href="@($"/provider/{context.Resource?.ProviderId}")">@(context.Resource?.Provider?.Name ?? "–")</MudLink>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">No automatic resources via this role.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="@($"Packages ({_autoPackages.Count})")"
+                     Icon="@Icons.Material.Filled.Inventory2">
+            <MudTable Items="_autoPackages" Hover="true" Dense="true" Class="pa-0">
+                <HeaderContent>
+                    <MudTh>Package</MudTh>
+                    <MudTh>URN</MudTh>
+                    <MudTh>EntityVariant</MudTh>
+                    <MudTh>HasAccess</MudTh>
+                    <MudTh>CanAssign</MudTh>
+                    <MudTh>CanDelegate</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Package">
+                        <MudLink Href="@($"/package/{context.PackageId}")">
+                            @(context.Package?.Name ?? context.PackageId.ToString())
+                        </MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="URN">
+                        <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.Package?.Urn ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="EntityVariant">
+                        @if (context.EntityVariantId.HasValue)
+                        {
+                            <MudLink Href="@($"/entity-variant/{context.EntityVariantId}")">
+                                @(context.EntityVariant?.Name ?? context.EntityVariantId.ToString())
+                            </MudLink>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2">All</MudText>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="HasAccess">
+                        <MudIcon Icon="@(context.HasAccess ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
+                                 Color="@(context.HasAccess ? Color.Success : Color.Error)"
+                                 Size="Size.Small" />
+                    </MudTd>
+                    <MudTd DataLabel="CanAssign">
+                        <MudIcon Icon="@(context.CanAssign ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
+                                 Color="@(context.CanAssign ? Color.Success : Color.Error)"
+                                 Size="Size.Small" />
+                    </MudTd>
+                    <MudTd DataLabel="CanDelegate">
+                        <MudIcon Icon="@(context.CanDelegate ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
+                                 Color="@(context.CanDelegate ? Color.Success : Color.Error)"
+                                 Size="Size.Small" />
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">No automatic packages via this role.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudTabPanel>
+
+    </MudTabs>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private bool _loading = true;
+    private Assignment? _assignment;
+    private List<AssignmentResource> _resources = [];
+    private List<AssignmentPackage> _packages = [];
+    private List<AssignmentInstance> _instances = [];
+    private List<RoleResource> _autoResources = [];
+    private List<RolePackage> _autoPackages = [];
+
+    protected override void OnInitialized()
+    {
+        EnvState.OnChange += OnEnvironmentChanged;
+    }
+
+    public void Dispose()
+    {
+        EnvState.OnChange -= OnEnvironmentChanged;
+    }
+
+    private void OnEnvironmentChanged() => InvokeAsync(async () =>
+    {
+        await LoadDataAsync();
+        StateHasChanged();
+    });
+
+    protected override async Task OnParametersSetAsync() => await LoadDataAsync();
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        _assignment = null;
+        _resources = [];
+        _packages = [];
+        _instances = [];
+        _autoResources = [];
+        _autoPackages = [];
+
+        using var db = DbFactory.CreateContext(EnvState.Current);
+
+        _assignment = await db.Assignments
+            .AsNoTracking()
+            .Include(a => a.Role)
+            .Include(a => a.From)
+            .Include(a => a.To)
+            .FirstOrDefaultAsync(a => a.Id == Id);
+
+        if (_assignment is not null)
+        {
+            _resources = await db.AssignmentResources
+                .AsNoTracking()
+                .Include(ar => ar.Resource).ThenInclude(r => r.Type)
+                .Where(ar => ar.AssignmentId == Id)
+                .OrderBy(ar => ar.Resource.Name)
+                .ToListAsync();
+
+            _packages = await db.AssignmentPackages
+                .AsNoTracking()
+                .Include(ap => ap.Package).ThenInclude(p => p.Area)
+                .Include(ap => ap.Package).ThenInclude(p => p.Provider)
+                .Where(ap => ap.AssignmentId == Id)
+                .OrderBy(ap => ap.Package.Name)
+                .ToListAsync();
+
+            _instances = await db.AssignmentInstances
+                .AsNoTracking()
+                .Include(ai => ai.Resource).ThenInclude(r => r.Type)
+                .Include(ai => ai.InstanceSourceType)
+                .Where(ai => ai.AssignmentId == Id)
+                .OrderBy(ai => ai.Resource.Name)
+                .ToListAsync();
+
+            _autoResources = await db.RoleResources
+                .AsNoTracking()
+                .Include(rr => rr.Resource).ThenInclude(r => r.Type)
+                .Include(rr => rr.Resource).ThenInclude(r => r.Provider)
+                .Where(rr => rr.RoleId == _assignment.RoleId)
+                .OrderBy(rr => rr.Resource.Name)
+                .ToListAsync();
+
+            _autoPackages = await db.RolePackages
+                .AsNoTracking()
+                .Include(rp => rp.Package).ThenInclude(p => p.Area)
+                .Include(rp => rp.Package).ThenInclude(p => p.Provider)
+                .Include(rp => rp.EntityVariant)
+                .Where(rp => rp.RoleId == _assignment.RoleId)
+                .OrderBy(rp => rp.Package.Name)
+                .ToListAsync();
+        }
+
+        _loading = false;
+    }
+}

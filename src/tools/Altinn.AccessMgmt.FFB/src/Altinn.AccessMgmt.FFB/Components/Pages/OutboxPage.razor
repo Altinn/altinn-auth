@@ -1,0 +1,448 @@
+@page "/tools/outbox"
+@using Altinn.AccessMgmt.PersistenceEF.Contexts
+@using Altinn.AccessMgmt.PersistenceEF.Models
+@using Altinn.AccessMgmt.PersistenceEF.Models.Base
+@using Microsoft.EntityFrameworkCore
+@using Altinn.AccessMgmt.FFB.Services
+@inject IEnvironmentDbContextFactory DbFactory
+@inject EnvironmentState EnvState
+@inject NavigationManager Nav
+@inject IDialogService DialogService
+@implements IDisposable
+
+<PageTitle>Outbox</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Outbox</MudText>
+<MudText Typo="Typo.body1" Class="mb-6 mud-text-secondary">
+    Viser <code>dbo.outboxmessage</code>. Klikk på en rad for å se detaljer og logger.
+</MudText>
+
+@* ── Filter ────────────────────────────────────────────────────────────────── *@
+<MudPaper Elevation="1" Class="pa-4 mb-4">
+    <MudGrid>
+
+        <MudItem xs="12" sm="5">
+            <MudDatePicker @bind-Date="_from"
+                           Label="Fra (CreatedAt)"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense" />
+        </MudItem>
+        <MudItem xs="12" sm="5">
+            <MudDatePicker @bind-Date="_to"
+                           Label="Til (CreatedAt)"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense" />
+        </MudItem>
+
+        <MudItem xs="12" sm="2">
+            <MudSelect T="string?"
+                       Value="_handler"
+                       ValueChanged="OnHandlerChanged"
+                       Label="Handler"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       Clearable="true">
+                <MudSelectItem T="string?" Value="@((string?)null)">Alle</MudSelectItem>
+                @foreach (var h in KnownHandlers)
+                {
+                    var hv = h;
+                    <MudSelectItem T="string?" Value="@hv">@hv</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+
+        @* ── Per-handler data model + filters ──────────────────────────────── *@
+        @if (_handler is not null)
+        {
+            @if (HandlerSchemas.TryGetValue(_handler, out var schema))
+            {
+                <MudItem xs="12">
+                    <MudExpansionPanel Text="Datamodell (JSON)">
+                        <ChildContent>
+                            <pre style="font-size:.78rem;margin:0;white-space:pre-wrap;word-break:break-all">@schema</pre>
+                        </ChildContent>
+                    </MudExpansionPanel>
+                </MudItem>
+            }
+
+            @if (HandlerFilterFields.TryGetValue(_handler, out var fields))
+            {
+                @foreach (var (label, jsonKey) in fields)
+                {
+                    var key = jsonKey;
+                    <MudItem xs="12" sm="4">
+                        <MudTextField T="string"
+                                      Value="@(_dataFilters.GetValueOrDefault(key, string.Empty))"
+                                      ValueChanged="@((string v) => _dataFilters[key] = v)"
+                                      Label="@label"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Clearable="true"
+                                      Placeholder="GUID…"
+                                      Immediate="true" />
+                    </MudItem>
+                }
+            }
+        }
+
+        <MudItem xs="12">
+            <MudText Typo="Typo.body2" Class="mb-1 mud-text-secondary">Status</MudText>
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                @foreach (var s in AllStatuses)
+                {
+                    var status = s;
+                    <MudCheckBox @bind-Value="_selectedStatuses[status]"
+                                 Color="@StatusColor(status)"
+                                 Dense="true">
+                        <MudChip T="string" Size="Size.Small" Color="@StatusColor(status)">@status</MudChip>
+                    </MudCheckBox>
+                }
+            </MudStack>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Search"
+                       Disabled="_loading"
+                       OnClick="Load">
+                Hent meldinger
+            </MudButton>
+            <MudButton Variant="Variant.Text"
+                       Class="ml-2"
+                       OnClick="SelectAllStatuses">
+                Velg alle statuser
+            </MudButton>
+        </MudItem>
+
+    </MudGrid>
+</MudPaper>
+
+@* ── Status ────────────────────────────────────────────────────────────────── *@
+@if (_loading || _resetting)
+{
+    <MudProgressLinear Color="@(_resetting ? Color.Warning : Color.Primary)" Indeterminate="true" Class="mb-4" />
+}
+@if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+}
+@if (_resetMessage is not null)
+{
+    <MudAlert Severity="Severity.Success" Class="mb-4">@_resetMessage</MudAlert>
+}
+
+@* ── Results ───────────────────────────────────────────────────────────────── *@
+@if (_results is not null)
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+            @_results.Count meldinger
+            @if (_results.Count == MaxRows)
+            {
+                <span> (begrenset til @MaxRows — innsnevre filteret)</span>
+            }
+        </MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Warning"
+                   Size="Size.Small"
+                   StartIcon="@Icons.Material.Filled.RestartAlt"
+                   Disabled="_resetting || _loading"
+                   OnClick="ConfirmReset">
+            Tilbakestill til pending
+        </MudButton>
+    </MudStack>
+
+    <MudDataGrid T="OutboxMessage"
+                 Items="_results"
+                 Dense="true"
+                 Hover="true"
+                 Striped="true"
+                 FixedHeader="true"
+                 Height="600px"
+                 SortMode="SortMode.Multiple"
+                 RowClick="@(args => Nav.NavigateTo($"/tools/outbox/{args.Item.Id}"))">
+        <Columns>
+
+            <TemplateColumn Title="ID" SortBy="@(x => x.Id)">
+                <CellTemplate>
+                    <MudText Typo="Typo.caption" Style="font-family:monospace">
+                        @context.Item.Id.ToString()[..8]…
+                    </MudText>
+                </CellTemplate>
+            </TemplateColumn>
+
+            <TemplateColumn Title="Handler" SortBy="@(x => x.Handler ?? string.Empty)">
+                <CellTemplate>
+                    <MudText Typo="Typo.body2">@(context.Item.Handler ?? "–")</MudText>
+                </CellTemplate>
+            </TemplateColumn>
+
+            <TemplateColumn Title="Status" SortBy="@(x => x.Status.ToString())">
+                <CellTemplate>
+                    <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Item.Status)">
+                        @context.Item.Status
+                    </MudChip>
+                </CellTemplate>
+            </TemplateColumn>
+
+            <TemplateColumn Title="Forsøk" SortBy="@(x => x.Attempt)">
+                <CellTemplate>
+                    <MudText Typo="Typo.body2">@context.Item.Attempt / @context.Item.Retries</MudText>
+                </CellTemplate>
+            </TemplateColumn>
+
+            <TemplateColumn Title="RefId" SortBy="@(x => x.RefId ?? string.Empty)">
+                <CellTemplate>
+                    <MudText Typo="Typo.caption" Style="font-family:monospace">
+                        @(context.Item.RefId ?? "–")
+                    </MudText>
+                </CellTemplate>
+            </TemplateColumn>
+
+            <TemplateColumn Title="Opprettet" SortBy="@(x => x.CreatedAt)">
+                <CellTemplate>
+                    <MudText Typo="Typo.body2">
+                        @context.Item.CreatedAt.ToLocalTime().ToString("dd.MM HH:mm:ss")
+                    </MudText>
+                </CellTemplate>
+            </TemplateColumn>
+
+            <TemplateColumn Title="Fullført" SortBy="@(x => x.CompletedAt ?? DateTime.MinValue)">
+                <CellTemplate>
+                    @if (context.Item.CompletedAt.HasValue)
+                    {
+                        <MudText Typo="Typo.body2">
+                            @context.Item.CompletedAt.Value.ToLocalTime().ToString("dd.MM HH:mm:ss")
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">–</MudText>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+
+        </Columns>
+    </MudDataGrid>
+}
+
+@code {
+    private const int MaxRows = 500;
+
+    private static readonly OutboxStatus[] AllStatuses = Enum.GetValues<OutboxStatus>();
+
+    private static readonly string[] KnownHandlers =
+    [
+        "access_added", "access_removed",
+        "agent_added", "agent_removed",
+        "client_added", "client_removed",
+        "rightholder_added", "rightholder_removed",
+        "instance_added", "instance_removed",
+        "request_reviewed", "request_pending",
+    ];
+
+    private static readonly Dictionary<string, (string Label, string JsonKey)[]> HandlerFilterFields = new()
+    {
+        ["access_added"]        = [("Fra (FromId)", "FromId"),       ("Til (ToId)", "ToId")],
+        ["access_removed"]      = [("Fra (FromId)", "FromId"),       ("Til (ToId)", "ToId")],
+        ["agent_added"]         = [("Agent (AgentId)", "AgentId"),   ("Provider (ProviderId)", "ProviderId")],
+        ["agent_removed"]       = [("Agent (AgentId)", "AgentId"),   ("Provider (ProviderId)", "ProviderId")],
+        ["client_added"]        = [("Agent (AgentId)", "AgentId"),   ("Provider (ProviderId)", "ProviderId")],
+        ["client_removed"]      = [("Agent (AgentId)", "AgentId"),   ("Provider (ProviderId)", "ProviderId")],
+        ["rightholder_added"]   = [("Fra (FromId)", "FromId"),       ("Til (ToId)", "ToId")],
+        ["rightholder_removed"] = [("Fra (FromId)", "FromId"),       ("Til (ToId)", "ToId")],
+        ["instance_added"]      = [("Fra (FromId)", "FromId"),       ("Til (ToId)", "ToId")],
+        ["instance_removed"]    = [("Fra (FromId)", "FromId"),       ("Til (ToId)", "ToId")],
+        ["request_reviewed"]    = [("Reviewer", "ReviewerId"),       ("Mottaker (RecipientId)", "RecipientId")],
+        ["request_pending"]     = [("Requester (RequesterId)", "RequesterId"), ("Mottaker (RecipientId)", "RecipientId")],
+    };
+
+    private static readonly Dictionary<string, string> HandlerSchemas = new()
+    {
+        ["access_added"]        = "{\n  \"FromId\": \"<guid>\",\n  \"ToId\": \"<guid>\",\n  \"PackageIds\": [\"<guid>\"],\n  \"ResourceIds\": [\"<guid>\"],\n  \"Updated\": 1\n}",
+        ["access_removed"]      = "{\n  \"FromId\": \"<guid>\",\n  \"ToId\": \"<guid>\",\n  \"PackageIds\": [\"<guid>\"],\n  \"ResourceIds\": [\"<guid>\"],\n  \"Updated\": 1\n}",
+        ["agent_added"]         = "{\n  \"AgentId\": \"<guid>\",\n  \"ProviderId\": \"<guid>\"\n}",
+        ["agent_removed"]       = "{\n  \"AgentId\": \"<guid>\",\n  \"ProviderId\": \"<guid>\"\n}",
+        ["client_added"]        = "{\n  \"AgentId\": \"<guid>\",\n  \"ProviderId\": \"<guid>\",\n  \"Clients\": [\"<guid>\"],\n  \"Updated\": 1\n}",
+        ["client_removed"]      = "{\n  \"AgentId\": \"<guid>\",\n  \"ProviderId\": \"<guid>\",\n  \"Clients\": [\"<guid>\"],\n  \"Updated\": 1\n}",
+        ["rightholder_added"]   = "{\n  \"FromId\": \"<guid>\",\n  \"ToId\": \"<guid>\"\n}",
+        ["rightholder_removed"] = "{\n  \"FromId\": \"<guid>\",\n  \"ToId\": \"<guid>\"\n}",
+        ["instance_added"]      = "{\n  \"FromId\": \"<guid>\",\n  \"ToId\": \"<guid>\",\n  \"Instances\": [{\"InstanceIds\": [\"<string>\"], \"ResourceId\": \"<guid>\"}],\n  \"Updated\": 1\n}",
+        ["instance_removed"]    = "{\n  \"FromId\": \"<guid>\",\n  \"ToId\": \"<guid>\",\n  \"Instances\": [{\"InstanceIds\": [\"<string>\"], \"ResourceId\": \"<guid>\"}],\n  \"Updated\": 1\n}",
+        ["request_reviewed"]    = "{\n  \"ReviewerId\": \"<guid>\",\n  \"RecipientId\": \"<guid>\",\n  \"Resources\": [{\"Ref\": \"<guid>\", \"IsApproved\": true}],\n  \"Packages\": [{\"Ref\": \"<guid>\", \"IsApproved\": true}],\n  \"Updated\": 1\n}",
+        ["request_pending"]     = "{\n  \"RequesterId\": \"<guid>\",\n  \"RecipientId\": \"<guid>\",\n  \"ResourceIds\": [\"<guid>\"],\n  \"PackageIds\": [\"<guid>\"],\n  \"Updated\": 1\n}",
+    };
+
+    // ── Filter state ──────────────────────────────────────────────────────────
+
+    private DateTime? _from = DateTime.Today.AddDays(-1);
+    private DateTime? _to = DateTime.Today.AddDays(1);
+    private string? _handler;
+    private readonly Dictionary<string, string> _dataFilters = new();
+    private readonly Dictionary<OutboxStatus, bool> _selectedStatuses =
+        Enum.GetValues<OutboxStatus>().ToDictionary(s => s, _ => true);
+
+    // ── Data ──────────────────────────────────────────────────────────────────
+
+    private List<OutboxMessage>? _results;
+    private bool _loading;
+    private bool _resetting;
+    private string? _error;
+    private string? _resetMessage;
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    protected override async Task OnInitializedAsync()
+    {
+        EnvState.OnChange += OnEnvChanged;
+        await Load();
+    }
+
+    public void Dispose()
+    {
+        EnvState.OnChange -= OnEnvChanged;
+    }
+
+    private void OnEnvChanged()
+    {
+        _results = null;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnHandlerChanged(string? value)
+    {
+        _handler = value;
+        _dataFilters.Clear();
+    }
+
+    // ── Query ─────────────────────────────────────────────────────────────────
+
+    private IQueryable<OutboxMessage> BuildQuery(AppDbContext db)
+    {
+        var activeStatuses = _selectedStatuses
+            .Where(kv => kv.Value)
+            .Select(kv => kv.Key)
+            .ToList();
+
+        var fromUtc = (_from ?? DateTime.Today.AddDays(-1)).ToUniversalTime();
+        var toUtc = (_to ?? DateTime.Today.AddDays(1)).AddDays(1).ToUniversalTime();
+
+        var query = db.OutboxMessages
+            .Where(m => m.CreatedAt >= fromUtc && m.CreatedAt < toUtc)
+            .Where(m => activeStatuses.Contains(m.Status))
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(_handler))
+        {
+            query = query.Where(m => m.Handler == _handler);
+        }
+
+        foreach (var (jsonKey, value) in _dataFilters)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                var pattern = $"%\"{jsonKey}\":\"{value}\"%";
+                query = query.Where(m => EF.Functions.Like(m.Data, pattern));
+            }
+        }
+
+        return query;
+    }
+
+    private async Task Load()
+    {
+        _error = null;
+        _resetMessage = null;
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            using var db = DbFactory.CreateContext(EnvState.Current);
+
+            _results = await BuildQuery(db)
+                .AsNoTracking()
+                .OrderByDescending(m => m.CreatedAt)
+                .Take(MaxRows)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = $"Databasefeil: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ConfirmReset()
+    {
+        var parameters = new DialogParameters<ConfirmDialog>
+        {
+            { x => x.ContentText, $"Sett Status = Pending og Retries = 0 for alle {_results!.Count} meldinger i gjeldende resultat?" },
+            { x => x.ButtonText, "Tilbakestill" },
+            { x => x.Color, Color.Warning },
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Tilbakestill til pending", parameters);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            await ResetStatus();
+        }
+    }
+
+    private async Task ResetStatus()
+    {
+        _error = null;
+        _resetMessage = null;
+        _resetting = true;
+        StateHasChanged();
+
+        try
+        {
+            using var db = DbFactory.CreateContext(EnvState.Current);
+
+            var count = await BuildQuery(db)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(m => m.Status, OutboxStatus.Pending)
+                    .SetProperty(m => m.Retries, 0)
+                    .SetProperty(m => m.StartedAt, (DateTime?)null)
+                    .SetProperty(m => m.CompletedAt, (DateTime?)null));
+
+            _resetMessage = $"{count} melding(er) tilbakestilt til Pending.";
+            await Load();
+        }
+        catch (Exception ex)
+        {
+            _error = $"Feil ved tilbakestilling: {ex.Message}";
+        }
+        finally
+        {
+            _resetting = false;
+        }
+    }
+
+    private void SelectAllStatuses()
+    {
+        foreach (var s in AllStatuses)
+        {
+            _selectedStatuses[s] = true;
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private static Color StatusColor(OutboxStatus status) => status switch
+    {
+        OutboxStatus.Completed  => Color.Success,
+        OutboxStatus.Processing => Color.Info,
+        OutboxStatus.Pending    => Color.Default,
+        OutboxStatus.Failed     => Color.Error,
+        _                       => Color.Warning   // NoHandler, TimedOut, Interrupted
+    };
+}

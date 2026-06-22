@@ -59,6 +59,7 @@
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.8" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
     <PackageVersion Include="Microsoft.AspNetCore.Routing.Abstractions" Version="2.3.10" />
+    <PackageVersion Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="8.4.0" />
     <PackageVersion Include="Microsoft.Azure.Services.AppAuthentication" Version="1.6.2" />
     <PackageVersion Include="Microsoft.Build.Artifacts" Version="6.1.63" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.1.5" />
@@ -101,12 +102,14 @@
     <PackageVersion Include="MongoDB.Driver" Version="3.9.0" />
     <PackageVersion Include="MongoDB.Driver.Core" Version="2.30.0" />
     <PackageVersion Include="Moq" Version="4.20.72" />
+    <PackageVersion Include="MudBlazor" Version="9.4.0" />
     <PackageVersion Include="Nerdbank.Streams" Version="2.13.16" />
-    <!-- Issues with Npgsql versions including 10.0.2 causing ObjectDisposed exceptions -->
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
-    <PackageVersion Include="Npgsql.OpenTelemetry" Version="10.0.0" />
-    <PackageVersion Include="Npgsql.DependencyInjection" Version="10.0.0" />
-    <PackageVersion Include="Npgsql" Version="10.0.0" />
+    <PackageVersion Include="Cronos" Version="0.8.4" />
+    <PackageVersion Include="Dapper" Version="2.1.35" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+    <PackageVersion Include="Npgsql.OpenTelemetry" Version="10.0.2" />
+    <PackageVersion Include="Npgsql.DependencyInjection" Version="10.0.2" />
+    <PackageVersion Include="Npgsql" Version="10.0.2" />
     <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.15.3" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version=" 1.15.2" />
