@@ -1,0 +1,89 @@
+meta {
+  name: GET_P2H_HovedenhetA_seesPersonA
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/authorizedparties?includeAltinn2=true&includeAltinn3=true&includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAltinn2: true
+  includeAltinn3: true
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "GET_P2H_HovedenhetA_SeesPersonA");
+  
+  var getTokenParameters = {
+    auth_userId: testdata.authParties_hovedenhetA.dagligleder.userid,
+    auth_partyId: testdata.authParties_hovedenhetA.dagligleder.partyid,
+    auth_partyUuid: testdata.authParties_hovedenhetA.dagligleder.partyuuid,
+    auth_ssn: testdata.authParties_hovedenhetA.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const body = res.getBody();
+  const requestName = bru.getVar("requestName");
+  
+  // ── Helper: flatten all parties including subunits ──
+  const flattenParties = (parties) => (parties || []).flatMap(p => [p, ...(p.subunits || [])]);
+  
+  // ── Step 1: Response status ──
+  
+    expect(res.status).to.equal(200)
+  
+  // ── Step 2: PersonA (MILLION) exists in response (delegator appears in recipient's aktørliste) ──
+  test(requestName + '|PersonA exists with access data', function() {
+    const allParties = flattenParties(body);
+  
+    const target = allParties.find(
+      p => p.partyUuid === testdata.authParties_personA.partyuuid
+    );
+  
+    assert.exists(
+      target,
+      'Expected PersonA to exist in response'
+    );
+  
+    const packages = target.authorizedAccessPackages || [];
+    const resources = target.authorizedResources || [];
+  
+    expect(packages).to.include("innbygger-bank-finans");
+    expect(packages).to.include("innbygger-forsikring");
+    expect(packages).to.include("innbygger-frivillighet");
+    expect(packages).to.include("innbygger-stotte-tilskudd");
+    expect(packages).to.include("innbygger-vapen");
+  
+    expect(resources).to.include("devtest_gar_bruno_accesslist");
+    expect(resources).to.include("devtest_gar_bruno_accesslist_actionfilter");
+  });
+  
+  // ── Step 4: No duplicate parties ──
+  test(requestName + '|Step4: No duplicate parties in response', function() {
+    const allUuids = flattenParties(body).map(p => p.partyUuid);
+    const seen = {};
+    const dupes = allUuids.filter(uuid => { seen[uuid] = (seen[uuid] || 0) + 1; return seen[uuid] === 2; });
+    expect(dupes.length, `Duplicate partyUuids: ${dupes.join(', ')}`).to.equal(0);
+  });
+}

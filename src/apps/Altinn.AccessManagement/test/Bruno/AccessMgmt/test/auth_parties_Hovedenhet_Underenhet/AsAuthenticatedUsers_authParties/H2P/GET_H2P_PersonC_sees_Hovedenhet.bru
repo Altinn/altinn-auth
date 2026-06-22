@@ -1,0 +1,126 @@
+meta {
+  name: GET_H2P_PersonC_sees_Hovedenhet
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/authorizedparties?includeAltinn2=true&includeAltinn3=true&includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAltinn2: true
+  includeAltinn3: true
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "GET_H2P_PersonC_SeesHovedenhetA");
+  
+  // HovedenhetA delegated to PersonC, so PersonC (recipient) authenticates
+  var getTokenParameters = {
+    auth_userId: testdata.authParties_hovedenhetA.authParties_personC.userid,
+    auth_partyId: testdata.authParties_hovedenhetA.authParties_personC.partyid,
+    auth_partyUuid: testdata.authParties_hovedenhetA.authParties_personC.partyuuid,
+    auth_ssn: testdata.authParties_hovedenhetA.authParties_personC.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const body = res.getBody();
+  const requestName = bru.getVar("requestName");
+  
+  // ── Helper: flatten all parties including subunits ──
+  const flattenParties = (parties) => (parties || []).flatMap(p => [p, ...(p.subunits || [])]);
+  
+    expect(res.status).to.equal(200)
+  
+  // ── Step 2: HovedenhetA (NATURSTRIDIG TILLITSFULL TIGER AS) exists in response ──
+  test(requestName + '|HovedenhetA and UnderenhetA exists with access data', function() {
+  
+    const hovedenhet = (body || []).find(
+      p => p.partyUuid === testdata.authParties_hovedenhetA.partyuuid
+    );
+  
+    assert.exists(
+      hovedenhet,
+      'Expected HovedenhetA to exist as top-level party'
+    );
+  
+    const underenhet = (hovedenhet.subunits || []).find(
+      s => s.partyUuid === testdata.authParties_hovedenhetA.authParties_underenhetA.partyuuid
+    );
+  
+    assert.exists(underenhet,'Expected UnderenhetA to exist under HovedenhetA');
+   
+    const expectedPackages = [
+      "beredskap",
+      "damp-varmtvann",
+      "motta-nabo-og-planvarsel",
+      "patent-varemerke-design"
+    ];
+  
+    const expectedResources = [
+      "app_ttd_apps-test-prod"
+    ];
+  
+    expect(hovedenhet.authorizedAccessPackages || []).to.have.members(expectedPackages);
+    expect(underenhet.authorizedAccessPackages || []).to.have.members(expectedPackages);
+  
+    expect(hovedenhet.authorizedResources || []).to.have.members(expectedResources);
+    expect(underenhet.authorizedResources || []).to.have.members(expectedResources);
+  
+    expect(hovedenhet.authorizedRoles || []).to.have.length(0);
+    expect(underenhet.authorizedRoles || []).to.have.length(0);
+  
+  });
+  
+  test(requestName + '|HovedenhetA has delegated instance access only', function() {
+  
+    const hovedenhet = (body || []).find(
+      p => p.partyUuid === testdata.authParties_hovedenhetA.partyuuid
+    );
+  
+    expect(hovedenhet.authorizedInstances || []).to.have.length(1);
+  
+    const instance = hovedenhet.authorizedInstances[0];
+  
+    expect(instance.resourceId)
+      .to.equal("app_ttd_ttd-bruno-tilgangspakke-app");
+  
+    expect(instance.instanceRef)
+      .to.equal(testdata.instancer.personC_instansid);
+  
+    const underenhet = (hovedenhet.subunits || []).find(
+      s => s.partyUuid === testdata.authParties_hovedenhetA.authParties_underenhetA.partyuuid
+    );
+  
+    expect(underenhet.authorizedInstances || []).to.have.length(0);
+  });
+  
+  // ── Step 4: No duplicate parties ──
+  test(requestName + '|Step4: No duplicate parties in response', function() {
+    const allUuids = flattenParties(body).map(p => p.partyUuid);
+    const seen = {};
+    const dupes = allUuids.filter(uuid => { seen[uuid] = (seen[uuid] || 0) + 1; return seen[uuid] === 2; });
+    expect(dupes.length, `Duplicate partyUuids: ${dupes.join(', ')}`).to.equal(0);
+  });
+  
+}

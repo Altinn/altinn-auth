@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toPersonPartyUuid}}&packageId&package={{package}}
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{toPersonPartyUuid}}&package={{package}}&packageId=
   body: json
   auth: inherit
 }
@@ -14,19 +14,16 @@ params:query {
   party: {{party}}
   from: {{party}}
   to: {{toPersonPartyUuid}}
-  packageId: 
   package: {{package}}
+  packageId: 
 }
 
 headers {
   Accept: application/json
 }
 
-body:json {
-   {
-    "personidentifier": "{{toPerson}}", // fnr or username
-    "lastName": "{{toPersonLastName}}"
-  }
+vars:pre-request {
+  package: urn:altinn:accesspackage:innbygger-skatteforhold-privatpersoner
 }
 
 script:pre-request {
@@ -34,8 +31,6 @@ script:pre-request {
   const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
   
   bru.setVar("party", testdata.privat_person_C.partyuuid);
-  bru.setVar("toPerson", testdata.privat_person_D.pid);
-  bru.setVar("toPersonLastName", testdata.privat_person_D.lastname);
   bru.setVar("toPersonPartyUuid", testdata.privat_person_D.partyuuid);
   bru.setVar("package", testdata.package_to_delegate.skatteforhold_priv);
   

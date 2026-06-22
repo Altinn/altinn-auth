@@ -1,0 +1,52 @@
+meta {
+  name: GET_status_of_Request_After_Withdraw_from_ServiceOwner
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests/{{tilgangspakkequestwithdrawId}}/status
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    
+    
+    var getTokenParameters = {
+      auth_org: sharedtestdata.serviceOwners.ttd.org,
+      auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
+      auth_tokenType: sharedtestdata.authTokenType.enterprise,
+      auth_scopes: sharedtestdata.auth_scopes.serviceownerDelegationRequestRead
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+      
+      test("GET status of POST response based on requestId for servicwowner for withdraw", function() {
+        const data = res.getBody();
+        
+        expect(res.status).to.equal(200);
+      
+        expect(data).to.exist;
+        const actualStatus = typeof data === "string" ? data : String(data);
+        expect(actualStatus).to.equal("Withdrawn");
+        
+      });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

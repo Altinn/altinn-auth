@@ -1,0 +1,115 @@
+module.exports = {
+  env: "tt02",
+  instancer: {
+    personC_instansid : "urn:altinn:instance-id:51817923/2a8c9ece-c4b8-49f1-ad42-343f0a9f2452",
+    personA_instansid : "urn:altinn:instance-id:52054516/bbd5044d-6844-4fd0-bf5e-9dec12b6e29c",
+    hovedenhetA_instansid : "urn:altinn:instance-id:51817923/1c5efeba-a22b-4755-bf19-50103d48616a",
+    underenhetD_instansid: "urn:altinn:instance-id:51969455/1dde9029-6faf-4fa1-b72d-9c862957d218"
+  },
+
+  authParties_personA: {
+    lastname: "MILLION",
+    pid: "13923047349",
+    partyid: 52054516,
+    userid: 2195497,
+    partyuuid: "a71f8353-b196-4e24-97fe-98898ed48bc7",
+  },
+  authParties_personB: {
+    lastname: "KLEM",
+    pid: "07900699128",
+    partyid: 51154426,
+    userid: 2303333,
+    partyuuid: "bf989a29-e10a-48ef-a8db-ed18ad2df66f",
+  },
+  authParties_agentB: {
+    lastname: "HYBELKANIN",
+    pid: "14906198453",
+    partyid: 50951114,
+    userid: 1490338,
+    partyuuid: "0791979b-b0ee-4b50-bd23-16a964da925c",
+  },
+  authParties_hovedenhetA: {
+    name: "NATURSTRIDIG TILLITSFULL TIGER AS",
+    org_no: "313038963",
+    partyid: 51817923,
+    partyuuid: "c8d9a10f-db9e-46a5-af3d-05c7b2c2f6ce",
+    dagligleder: {
+      name: "Morsom Kokeplate",
+      pid: "04828399387",
+      partyid: 50709183,
+      userid: 2103247,
+      partyuuid: "9249ad8d-c3c6-49b9-88d4-c2daccc3496c",
+    },
+    authParties_underenhetA: {
+      name: "NATURSTRIDIG TILLITSFULL TIGER AS",
+      org_no: "314451821",
+      partyid: 51907357,
+      partyuuid: "0b90c02f-f815-448a-aad7-f7da0d504aae",
+    },
+    authParties_personC: {
+      lastname: "BAKGRUNNSLITTERATUR",
+      pid: "19810597510",
+      partyid: 51040604,
+      userid: 1519799,
+      partyuuid: "0e4904cd-fbd9-44c7-b4a6-eff26b1df709",
+    },
+  },
+  authParties_hovedenhetB: {
+    name: "KOMPATIBEL VAKLENDE TIGER AS",
+    org_no: "312483823",
+    partyid: 51779147,
+    partyuuid: "a5ae0479-f354-460d-9c57-5a37149f5a5c",
+    dagligleder: {
+      name: "Håndfast Lind",
+      pid: "22836699509",
+      partyid: 51419498,
+      userid: 159582,
+      partyuuid: "901c0528-c25a-4bc1-935b-d56908ce5669",
+    },
+    authParties_underenhetB: {
+      name: "KOMPATIBEL VAKLENDE TIGER AS",
+      org_no: "315123038",
+      partyid: 51968376,
+      partyuuid: "58d2cb9e-67fc-452d-8b19-4293fb5edcbe",
+    },
+  },
+  authParties_hovedenhetC: {
+    name: "Gjestfri Moderne Tiger AS",
+    org_no: "310931608",
+    partyid: 51607109,
+    partyuuid: "1e9df774-975f-437e-ab1e-ebb525f87e62",
+    dagligleder: {
+      name: "Maritim Overskrift",
+      pid: "04914399756",
+      partyid: 51410970,
+      userid: 2386509,
+      partyuuid: "d27d3230-ed6e-484b-afa9-f648f433e183",
+    },
+    authParties_underenhetC: {
+      name: "Gjestfri Moderne Tiger AS",
+      org_no: "311421670",
+      partyid: 51661739,
+      partyuuid: "e589a850-fee1-4738-ad7a-9ae6e11dc137",
+    },
+  },
+  authParties_hovedenhetD: {
+    name: "Ultrafiolett Salig Tiger AS",
+    org_no: "311720880",
+    partyid: 51699868,
+    partyuuid: "daa195be-a9d4-4b45-8ca5-7653ab62b990",
+    dagligleder: {
+      name: "Forstandig Million",
+      pid: "13817299460",
+      partyid: 51190125,
+      userid: 159554,
+      partyuuid: "f93ba79c-e35e-45d5-8359-78bad338bbfa",
+    },
+    authParties_underenhetD: {
+      name: "Ultrafiolett Salig Tiger AS",
+      org_no: "311720880",
+      partyid: 51969455,
+      partyuuid: "2feaf4ca-c5d0-47d3-823e-91783b17b97a",
+    },
+  },
+};
+

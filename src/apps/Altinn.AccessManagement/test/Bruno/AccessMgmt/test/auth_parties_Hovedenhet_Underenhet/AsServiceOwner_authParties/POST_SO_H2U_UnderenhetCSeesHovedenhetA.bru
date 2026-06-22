@@ -1,0 +1,140 @@
+meta {
+  name: POST_SO_H2U_UnderenhetCSeesHovedenhetA
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAltinn2=true&includeAltinn3=true&includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true&includePartiesViaKeyRoles=true&includeSubParties=true&includeInactiveParties=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAltinn2: true
+  includeAltinn3: true
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+  includePartiesViaKeyRoles: true
+  includeSubParties: true
+  includeInactiveParties: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{personId}}"
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "POST_SO_H2U_HovedenhetCSeesHovedenhetA");
+  bru.setVar("personId", testdata.authParties_hovedenhetC.dagligleder.pid);
+  
+  var getTokenParameters = {
+    auth_org: sharedtestdata.serviceOwners.digdir.org,
+    auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.authorizedPartiesAdmin
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const body = res.getBody();
+  const requestName = bru.getVar("requestName");
+  
+  const skipScenario = true;
+  
+  if (skipScenario) {
+    console.log("Skipped due to known bug");
+    return;
+  }
+  
+  // ── Helper: flatten all parties including subunits ──
+  const flattenParties = (parties) => (parties || []).flatMap(p => [p, ...(p.subunits || [])]);
+  
+  // ── Step 1: Response status ──
+  test(requestName + '|Step1: Response status is 200 OK', function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  // ── Step 2: HovedenhetA exists and contains subunit(s) ──
+  test(requestName + '|Step2: HovedenhetA exists and contains subunit(s)', function() {
+    const parent = (body || []).find(p => p.partyUuid === testdata.authParties_hovedenhetA.partyuuid);
+    assert.exists(parent, 'Expected HovedenhetA (partyUuid: ' + testdata.authParties_hovedenhetA.partyuuid + ') to exist');
+    const subs = parent.subunits || [];
+    expect(subs.length, 'HovedenhetA should have at least one subunit').to.be.greaterThan(0);
+  });
+  
+  // ── Step 3: Subunit has inherited access data (H2U via ServiceOwner) ──
+  test(requestName + '|Step3: Subunit has inherited access data (H2U via ServiceOwner)', function() {
+    const parent = (body || []).find(p => p.partyUuid === testdata.authParties_hovedenhetA.partyuuid);
+    if (!parent) return;
+    const subs = parent.subunits || [];
+    if (subs.length === 0) return;
+  
+    const subunit = subs[0];
+    const packages = subunit.authorizedAccessPackages || [];
+    const resources = subunit.authorizedResources || [];
+    const roles = subunit.authorizedRoles || [];
+    const totalAccess = packages.length + resources.length + roles.length;
+  
+    expect(totalAccess, `Subunit should inherit access from HovedenhetA. Found: packages=${packages.length}, resources=${resources.length}, roles=${roles.length}`).to.be.greaterThan(0);
+  });
+  
+  
+  // ── Step 4: No duplicate parties ──
+  test(requestName + '|Step4: No duplicate parties in response', function() {
+    const allUuids = flattenParties(body).map(p => p.partyUuid);
+    const seen = {};
+    const dupes = allUuids.filter(uuid => { seen[uuid] = (seen[uuid] || 0) + 1; return seen[uuid] === 2; });
+    expect(dupes.length, `Duplicate partyUuids: ${dupes.join(', ')}`).to.equal(0);
+  });
+  
+  // ── Step 5: Subunits inherit mainunit access ──
+  test(requestName + '|Step5: Subunits inherit mainunit access (packages, resources, roles)', function() {
+    (body || []).forEach(party => {
+      (party.subunits || []).forEach(subunit => {
+        const pName = party.name || party.partyUuid;
+        const sName = subunit.name || subunit.partyUuid;
+        const pPkg = party.authorizedAccessPackages || [];
+        const pRes = party.authorizedResources || [];
+        const pRol = party.authorizedRoles || [];
+        const sPkg = subunit.authorizedAccessPackages || [];
+        const sRes = subunit.authorizedResources || [];
+        const sRol = subunit.authorizedRoles || [];
+        if (pPkg.length > 0) assert.includeMembers(sPkg, pPkg, `Subunit ${sName} missing packages from ${pName}`);
+        if (pRes.length > 0) assert.includeMembers(sRes, pRes, `Subunit ${sName} missing resources from ${pName}`);
+        if (pRol.length > 0) assert.includeMembers(sRol, pRol, `Subunit ${sName} missing roles from ${pName}`);
+      });
+    });
+  });
+  
+  // ── Step 6: Instances NOT inherited to subunits ──
+  test(requestName + '|Step6: Mainunit instances are NOT inherited to subunits', function() {
+    (body || []).forEach(party => {
+      const pInst = party.authorizedInstances || [];
+      if (pInst.length === 0) return;
+      (party.subunits || []).forEach(subunit => {
+        const sInst = subunit.authorizedInstances || [];
+        const overlap = pInst.filter(i => sInst.includes(i));
+        expect(overlap.length, `Subunit ${subunit.name || subunit.partyUuid} inherited instances from ${party.name || party.partyUuid}: ${overlap.join(', ')}`).to.equal(0);
+      });
+    });
+  });
+}

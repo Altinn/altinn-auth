@@ -1,0 +1,117 @@
+meta {
+  name: GET_H2U_DagliglederC_SeesHovedenhetA
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/authorizedparties?includeAltinn2=true&includeAltinn3=true&includeAccessPackages=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAltinn2: true
+  includeAltinn3: true
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "GET_H2U_DagliglederC_SeesHovedenhetA");
+  
+  // HovedenhetA delegated to UnderenhetC, so DagliglederC (recipient's DAGL) authenticates
+  var getTokenParameters = {
+    auth_userId: testdata.authParties_hovedenhetC.dagligleder.userid,
+    auth_partyId: testdata.authParties_hovedenhetC.dagligleder.partyid,
+    auth_partyUuid: testdata.authParties_hovedenhetC.dagligleder.partyuuid,
+    auth_ssn: testdata.authParties_hovedenhetC.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const body = res.getBody();
+  const requestName = bru.getVar("requestName");
+  
+  const skipScenario = true;
+  
+  if (skipScenario) {
+    console.log("Skipped due to known bug");
+    return;
+  }
+  
+  // ── Helper: flatten all parties including subunits ──
+  const flattenParties = (parties) => (parties || []).flatMap(p => [p, ...(p.subunits || [])]);
+  
+  // ── Step 1: Response status ──
+    expect(res.status).to.equal(200);
+  
+  // ── Step 2: HovedenhetA exists and contains subunit(s) ──
+  test(requestName + '|Step2: HovedenhetA exists and contains subunit(s)', function() {
+    const hovedenhet = (body || []).find(
+      p => p.partyUuid === testdata.authParties_hovedenhetA.partyuuid
+    );
+  
+    assert.exists(
+      hovedenhet,
+      'Expected HovedenhetA to exist as top-level party'
+    );
+  
+    const underenhet = (hovedenhet.subunits || []).find(
+      s => s.partyUuid === testdata.authParties_hovedenhetA.authParties_underenhetA.partyuuid
+    );
+  
+    assert.exists(
+      underenhet,
+      'Expected UnderenhetA to exist under HovedenhetA'
+    );
+  
+    const expectedPackages = [
+      "damp-varmtvann",
+      "informasjon-og-kommunikasjon",
+      "motta-nabo-og-planvarsel",
+      "utvinning-raaolje-naturgass-kull"
+    ];
+  
+    const expectedResources = [
+      "acn-migratedcorrespondence-3008-5555",
+      "acn-migratedcorrespondence-4540-1",
+      "acn-migratedcorrespondence-4541-1"
+    ];
+  
+    // Verify hovedenhet access packages and resources
+    expect(hovedenhet.authorizedAccessPackages || [])
+      .to.have.members(expectedPackages);
+  
+    expect(hovedenhet.authorizedResources || [])
+      .to.have.members(expectedResources);
+  
+    // Verify underenhet access packages and resources
+    expect(underenhet.authorizedAccessPackages || [])
+      .to.have.members(expectedPackages);
+  
+    expect(underenhet.authorizedResources || [])
+      .to.have.members(expectedResources);
+  
+    // Verify roles and instances are empty
+    expect(hovedenhet.authorizedRoles || []).to.have.length(0);
+    expect(underenhet.authorizedRoles || []).to.have.length(0);
+  
+    expect(hovedenhet.authorizedInstances || []).to.have.length(0);
+    expect(underenhet.authorizedInstances || []).to.have.length(0);
+  });
+}

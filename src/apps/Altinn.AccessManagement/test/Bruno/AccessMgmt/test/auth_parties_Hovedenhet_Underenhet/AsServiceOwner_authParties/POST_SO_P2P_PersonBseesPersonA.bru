@@ -1,0 +1,111 @@
+meta {
+  name: POST_SO_P2P_PersonBseesPersonA
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAltinn2=true&includeAltinn3=true&includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true&includePartiesViaKeyRoles=true&includeSubParties=true&includeInactiveParties=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAltinn2: true
+  includeAltinn3: true
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+  includePartiesViaKeyRoles: true
+  includeSubParties: true
+  includeInactiveParties: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{personId}}"
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "POST_SO_P2P_PersonA");
+  bru.setVar("personId", testdata.authParties_personB.pid);
+  
+  var getTokenParameters = {
+    auth_org: sharedtestdata.serviceOwners.digdir.org,
+    auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.authorizedPartiesAdmin
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const body = res.getBody();
+  const requestName = bru.getVar("requestName");
+  
+  // ── Helper: flatten all parties including subunits ──
+  const flattenParties = (parties) => (parties || []).flatMap(p => [p, ...(p.subunits || [])]);
+  
+  // ── Step 1: Response status ──
+  test(requestName + '|Step1: Response status is 200 OK', function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  // ── Step 2: PersonA (MILLION) exists in response (delegator appears in recipient's aktørliste) ──
+    test(requestName + '|Step3: PersonA (MILLION) has access data (P2P delegation)', function() {
+    const allParties = flattenParties(body);
+  
+    const target = allParties.find(
+      p => p.partyUuid === testdata.authParties_personA.partyuuid
+    );
+  
+    if (!target) return;
+  
+    const packages = target.authorizedAccessPackages || [];
+    const resources = target.authorizedResources || [];
+    const instances = target.authorizedInstances || [];
+  
+    expect(packages).to.include("innbygger-barn-foreldre");
+    expect(packages).to.include("innbygger-helsetjenester");
+    expect(packages).to.include("innbygger-pleie-omsorg");
+    expect(packages).to.include("innbygger-samliv");
+  
+    expect(resources).to.include("acn-migratedcorrespondence-4541-1");
+    expect(resources).to.include("app_ttd_instance-gui-test");
+  
+    const instance = instances.find(
+    i => i.resourceId === "app_ttd_ttd-bruno-tilgangspakke-app"
+  );
+  
+  assert.exists(instance, 'Expected instance access to exist');
+  
+  expect(instance.instanceRef)
+    .to.equal(testdata.instancer.personA_instansid);
+    
+  });
+  
+  
+  // ── Step 4: No duplicate parties ──
+  test(requestName + '|Step4: No duplicate parties in response', function() {
+    const allUuids = flattenParties(body).map(p => p.partyUuid);
+    const seen = {};
+    const dupes = allUuids.filter(uuid => { seen[uuid] = (seen[uuid] || 0) + 1; return seen[uuid] === 2; });
+    expect(dupes.length, `Duplicate partyUuids: ${dupes.join(', ')}`).to.equal(0);
+  });
+  
+}

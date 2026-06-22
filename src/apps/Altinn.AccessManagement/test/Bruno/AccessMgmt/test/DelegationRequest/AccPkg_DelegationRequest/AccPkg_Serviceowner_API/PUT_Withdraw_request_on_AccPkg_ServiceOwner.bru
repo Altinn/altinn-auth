@@ -1,0 +1,52 @@
+meta {
+  name: PUT_Withdraw_request_on_AccPkg_ServiceOwner
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests/{{tilgangspakkequestwithdrawId}}/withdraw
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+   
+    var getTokenParameters = {
+      auth_org: sharedtestdata.serviceOwners.ttd.org,
+      auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
+      auth_tokenType: sharedtestdata.authTokenType.enterprise,
+      auth_scopes: sharedtestdata.auth_scopes.serviceownerDelegationRequestWrite
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    test("Withdraw request for access package from Person_user from ServiceOwner", function() {
+      const data = res.getBody();
+      
+      expect(res.status).to.equal(200);
+     expect(data).to.equal("Withdrawn");
+    });
+    
+   
+    
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

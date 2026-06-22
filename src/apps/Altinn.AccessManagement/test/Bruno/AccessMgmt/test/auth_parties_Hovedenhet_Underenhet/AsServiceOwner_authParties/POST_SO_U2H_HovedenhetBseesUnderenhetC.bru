@@ -1,0 +1,135 @@
+meta {
+  name: POST_SO_U2H_HovedenhetBseesUnderenhetC
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAltinn2=true&includeAltinn3=true&includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true&includePartiesViaKeyRoles=true&includeSubParties=true&includeInactiveParties=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAltinn2: true
+  includeAltinn3: true
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+  includePartiesViaKeyRoles: true
+  includeSubParties: true
+  includeInactiveParties: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{personId}}"
+  }
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "POST_SO_U2H_HovedenhetBseesUnderenhetC");
+  bru.setVar("personId", testdata.authParties_hovedenhetB.dagligleder.pid);
+  
+  var getTokenParameters = {
+    auth_org: sharedtestdata.serviceOwners.digdir.org,
+    auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.authorizedPartiesAdmin
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const body = res.getBody();
+  const requestName = bru.getVar("requestName");
+  
+  // ── Helper: flatten all parties including subunits ──
+  const flattenParties = (parties) => (parties || []).flatMap(p => [p, ...(p.subunits || [])]);
+  
+  // ── Step 1: Response status ──
+  test(requestName + '|Step1: Response status is 200 OK', function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  // ── Step 2: HovedenhetA (NATURSTRIDIG TILLITSFULL TIGER AS) exists in response ──
+  test(requestName + '|HovedenhetC has no access, UnderenhetC has expected access', function() {
+  
+    const hovedenhet = (body || []).find(
+      p => p.partyUuid === testdata.authParties_hovedenhetC.partyuuid
+    );
+  
+    assert.exists(
+      hovedenhet,
+      'Expected HovedenhetA to exist as top-level party'
+    );
+  
+    const underenhet = (hovedenhet.subunits || []).find(
+      s => s.partyUuid === testdata.authParties_hovedenhetC.authParties_underenhetC.partyuuid
+    );
+  
+    assert.exists(
+      underenhet,
+      'Expected UnderenhetA to exist under HovedenhetA'
+    );
+  
+    // Hovedenhet should have no access
+    expect(hovedenhet.authorizedAccessPackages || [])
+      .to.have.length(0);
+  
+    expect(hovedenhet.authorizedResources || [])
+      .to.have.length(0);
+  
+    expect(hovedenhet.authorizedRoles || [])
+      .to.have.length(0);
+  
+    expect(hovedenhet.authorizedInstances || [])
+      .to.have.length(0);
+  
+    // Underenhet should have expected access packages
+    expect(underenhet.authorizedAccessPackages || [])
+      .to.have.members([
+        "elektronisk-kommunikasjon",
+        "finansiering-og-forsikring",
+        "informasjon-og-kommunikasjon",
+        "kommuneoverlege",
+        "pleie-omsorgstjenester-i-institusjon"
+      ]);
+  
+    // Underenhet should have expected resources
+    expect(underenhet.authorizedResources || [])
+      .to.have.members([
+        "app_ttd_security-level3-app"
+      ]);
+  
+    expect(underenhet.authorizedRoles || [])
+      .to.have.length(0);
+  
+    expect(underenhet.authorizedInstances || [])
+      .to.have.length(0);
+  });
+  
+  
+  // ── Step 4: No duplicate parties ──
+  test(requestName + '|Step4: No duplicate parties in response', function() {
+    const allUuids = flattenParties(body).map(p => p.partyUuid);
+    const seen = {};
+    const dupes = allUuids.filter(uuid => { seen[uuid] = (seen[uuid] || 0) + 1; return seen[uuid] === 2; });
+    expect(dupes.length, `Duplicate partyUuids: ${dupes.join(', ')}`).to.equal(0);
+  });
+  
+}

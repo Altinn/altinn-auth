@@ -5,6 +5,7 @@
    resource_id_virksomhet:
       "ttd-test-bruno-enkelttjenestedelegering-virksomhet",
       app_id: "app_ttd_test-bruno-app-for-delegation",
+    maskinporten_non_delegable_ressurs : "ttd-bruno-maskinporten-non-delegable-ressurs",
   },
   supplier_Org: {
     org_type: "BBL",

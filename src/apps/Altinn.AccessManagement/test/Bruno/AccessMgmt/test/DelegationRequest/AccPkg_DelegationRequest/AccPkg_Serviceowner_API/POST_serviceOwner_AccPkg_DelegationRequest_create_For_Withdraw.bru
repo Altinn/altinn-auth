@@ -1,0 +1,79 @@
+meta {
+  name: POST_serviceOwner_AccPkg_DelegationRequest_create_For_Withdraw
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests/package
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+  "from": "urn:altinn:organization:identifier-no:{{from}}",
+    "to": "urn:altinn:person:identifier-no:{{toPerson}}",
+    "package": "{{package}}"
+  }
+  
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+   
+    bru.setVar("from", testdata.Bot_Org_2.org_no);
+    bru.setVar("toPerson", testdata.Bot_person_serviceowner.pid);
+    bru.setVar("package", testdata.package_to_delegate.package_id_privatperson);
+    
+    var getTokenParameters = {
+      auth_org: sharedtestdata.serviceOwners.ttd.org,
+      auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
+      auth_tokenType: sharedtestdata.authTokenType.enterprise,
+      auth_scopes: sharedtestdata.auth_scopes.serviceownerDelegationRequestWrite
+    }
+    
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token);
+}
+
+script:post-response {
+  const data = res.getBody();
+    expect(data).to.exist;
+      expect(data.id).to.exist;
+    bru.setEnvVar("tilgangspakkequestwithdrawId", data.id);
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    
+    test("Org sent request for access on Access package to person via serviceowner API", function() {
+      const data = res.getBody();
+      
+      expect(res.status).to.equal(202);
+      expect(data).to.exist;
+      expect(data.id).to.exist;
+      expect(data.status).to.exist;
+      
+       // 2. Verify and save requestId
+     expect(data).to.have.property("id");
+     bru.setEnvVar("tilgangspakkequestwithdrawId", data.id);
+      
+      // 3. Verify and save status
+    expect(data).to.have.property("status");
+    bru.setEnvVar("expectedStatus", data.status);
+      
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

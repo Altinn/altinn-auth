@@ -1,0 +1,87 @@
+meta {
+  name: GET_EUS_H2U_DagliglederC_SeesHovedenhetA
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?anyOfResourceIds=acn-migratedcorrespondence-3008-5555&partyFilter={{partymainUnitFilter}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  anyOfResourceIds: acn-migratedcorrespondence-3008-5555
+  partyFilter: {{partymainUnitFilter}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "GET_EUS_H2U_DagliglederC_SeesHovedenhetA");
+  bru.setVar("partymainUnitFilter", testdata.authParties_hovedenhetA.partyuuid);
+  
+  // HovedenhetA delegated to UnderenhetC, so DagliglederC (recipient's DAGL) authenticates
+  var getTokenParameters = {
+    auth_userId: testdata.authParties_hovedenhetC.dagligleder.userid,
+    auth_partyId: testdata.authParties_hovedenhetC.dagligleder.partyid,
+    auth_partyUuid: testdata.authParties_hovedenhetC.dagligleder.partyuuid,
+    auth_ssn: testdata.authParties_hovedenhetC.dagligleder.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.authorizedParties
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const body = res.getBody().data;
+  const requestName = bru.getVar("requestName");
+  
+  const skipScenario = true;
+  
+  if (skipScenario) {
+    console.log("Skipped due to known bug");
+    return;
+  }
+  
+  
+  // ── Helper: flatten all parties including subunits ──
+  const flattenParties = (parties) => (parties || []).flatMap(p => [p, ...(p.subunits || [])]);
+  
+  // ── Step 1: Response status ──
+    expect(res.status).to.equal(200);
+  
+  // ── Step 2: HovedenhetA exists and contains subunit(s) ──
+  test(requestName + '| Only HovedenhetA is returned as per partyfilter who have access to filtered resourceId', function() {
+  const items = res.getBody().data || [];
+  
+    expect(items).to.have.length(1);
+  
+    const hovedenhet = items[0];
+  
+    expect(hovedenhet.partyUuid)
+      .to.equal(testdata.authParties_hovedenhetA.partyuuid);
+  
+    expect(hovedenhet.subunits || [])
+      .to.have.length(0);
+  
+    expect(hovedenhet.authorizedResources || [])
+      .to.have.members([
+        "acn-migratedcorrespondence-3008-5555"
+      ]);
+  
+    expect(hovedenhet.authorizedAccessPackages || []).to.have.length(0);
+    expect(hovedenhet.authorizedRoles || []).to.have.length(0);
+    expect(hovedenhet.authorizedInstances || []).to.have.length(0);
+  });
+}

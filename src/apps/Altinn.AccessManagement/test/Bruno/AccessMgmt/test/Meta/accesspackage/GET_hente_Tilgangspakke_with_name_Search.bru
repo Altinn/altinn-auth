@@ -1,0 +1,34 @@
+meta {
+  name: GET_hente_Tilgangspakke_with_name_Search
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/search?term=Skatt
+  body: none
+  auth: inherit
+}
+
+params:query {
+  term: Skatt
+}
+
+tests {
+  test("GET_search_access_package as per searching value", function() {
+    var body = res.getBody();  
+  
+    expect(res.status).to.equal(200);
+    expect(body).to.not.be.empty;
+  
+    const found = body.some(x =>x.object &&x.object.name &&x.object.name.includes("Skatt"));
+  
+  
+    expect(found).to.equal(true);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
