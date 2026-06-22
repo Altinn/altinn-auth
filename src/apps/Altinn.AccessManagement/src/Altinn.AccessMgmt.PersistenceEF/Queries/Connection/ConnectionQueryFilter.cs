@@ -79,6 +79,11 @@ public sealed class ConnectionQueryFilter
     public bool IncludeInstances { get; init; } = false;
 
     /// <summary>
+    /// Gets or sets a value indicating whether to include instances controlled by the Altinn Apps themselves (brukerstyrt signering etc.).
+    /// </summary>
+    public bool IncludeAppControlledInstances { get; init; } = false;
+
+    /// <summary>
     /// Gets or sets a value indicating whether to include resources connected to packages.
     /// </summary>
     public bool EnrichPackageResources { get; init; } = false;

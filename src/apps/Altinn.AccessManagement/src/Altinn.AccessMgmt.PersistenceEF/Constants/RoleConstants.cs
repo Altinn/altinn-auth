@@ -86,7 +86,7 @@ public static class RoleConstants
     /// - <c>URN:</c> urn:altinn:role:rettighetshaver
     /// - <c>Provider:</c> Altinn3
     /// - <c>Code:</c> rettighetshaver
-    /// - <c>Description:</c> Gir mulighet til å motta delegerte fullmakter for virksomheten
+    /// - <c>Description:</c> Gir mulighet til å motta delegerte fullmakter for en aktør
     /// </remarks>
     public static ConstantDefinition<Role> Rightholder { get; } = new ConstantDefinition<Role>("42cae370-2dc1-4fdc-9c67-c2f4b0f0f829")
     {
@@ -94,7 +94,7 @@ public static class RoleConstants
         {
             Name = "Rettighetshaver",
             Code = "rettighetshaver",
-            Description = "Gir mulighet til å motta delegerte fullmakter for virksomheten",
+            Description = "Gir mulighet til å motta delegerte fullmakter for en aktør",
             Urn = "urn:altinn:role:rettighetshaver",
             IsKeyRole = false,
             IsAssignable = true,
@@ -104,12 +104,46 @@ public static class RoleConstants
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Rightholder"),
-            KeyValuePair.Create("Description", "Allows receiving delegated authorizations for the business")
+            KeyValuePair.Create("Description", "Allows receiving delegated authorizations for an actor")
         ),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Rettshavar"),
-            KeyValuePair.Create("Description", "Gjev høve til å motta delegerte fullmakter for verksemda")
+            KeyValuePair.Create("Description", "Gjev høve til å motta delegerte fullmakter for ein aktør")
         ),
+    };
+
+    /// <summary>
+    /// Represents the 'Appstyrt Rettighetshaver' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> aefe8391-3f21-4641-8d96-06ba04c67cfd
+    /// - <c>URN:</c> urn:altinn:role:appstyrt-rettighetshaver
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Code:</c> appstyrt-rettighetshaver
+    /// - <c>Description:</c> Forhold som all app-styrt delegering av tilganger knyttes til
+    /// </remarks>
+    public static ConstantDefinition<Role> AppControlledRightholder { get; } = new ConstantDefinition<Role>("aefe8391-3f21-4641-8d96-06ba04c67cfd")
+    {
+        Entity = new()
+        {
+            Name = "Appstyrt Rettighetshaver",
+            Code = "appstyrt-rettighetshaver",
+            Description = "Forhold som all app-styrt delegering av tilganger knyttes til",
+            Urn = "urn:altinn:role:appstyrt-rettighetshaver",
+            IsKeyRole = false,
+            IsAssignable = true,
+            IsAvailableForServiceOwners = false,
+            EntityTypeId = EntityTypeConstants.Organization, // Technically this will be used for both persons and organizations which we currently don't have a way to express in the model, but since the main use case is for organizations we will set it to that for now
+            ProviderId = ProviderConstants.Altinn3,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "App-Controlled Rightholder"),
+            KeyValuePair.Create("Description", "Relationship to which all app-controlled rights are linked")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Appstyrt Rettighetshaver"),
+            KeyValuePair.Create("Description", "Forhold som all app-styrt delegering av tilganger knyttes til")
+        )
     };
 
     /// <summary>

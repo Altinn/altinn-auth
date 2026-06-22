@@ -88,6 +88,12 @@ namespace Altinn.AccessManagement.Core.Models
         public string BlobStorageVersionId { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the instance delegation source (App or User)
+        /// </summary>
+        [JsonPropertyName("instancedelegationsource")]
+        public InstanceDelegationSource InstanceDelegationSource { get; set; }
+
+        /// <summary>
         /// Gets or sets the created date and timestamp for the delegation change
         /// </summary>
         [JsonPropertyName("created")]

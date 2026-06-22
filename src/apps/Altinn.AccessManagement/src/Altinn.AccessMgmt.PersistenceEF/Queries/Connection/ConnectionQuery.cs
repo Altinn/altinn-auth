@@ -208,11 +208,15 @@ public class ConnectionQuery(AppDbContext db)
         var toId = filter.ToIds.First();
         var fromSet = filter.FromIds?.Count > 0 ? new HashSet<Guid>(filter.FromIds) : null;
         var fromSetForDelegation = fromSet != null && filter.IncludeDelegation ? new HashSet<Guid>(fromSet) : [];
+        var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
+        var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
         var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
         var roleSetExclude = filter.ExcludeRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ExcludeRoleIds) : [];
         roleSetExclude.Add(RoleConstants.Supplier.Id); // Supplier role should never be included in results as it is only used for maskinporten schemas.
-        var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
-        var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
+        if (!filter.IncludeAppControlledInstances)
+        {
+            roleSetExclude.Add(RoleConstants.AppControlledRightholder.Id); // App-controlled instance access should be excluded if not explicitly requested.
+        }
 
         if (fromSet != null && filter.IncludeDelegation)
         {
@@ -683,11 +687,15 @@ public class ConnectionQuery(AppDbContext db)
 
         var fromId = filter.FromIds.First();
         var toSet = filter.ToIds?.Count > 0 ? new HashSet<Guid>(filter.ToIds) : null;
+        var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
+        var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
         var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
         var roleSetExclude = filter.ExcludeRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ExcludeRoleIds) : [];
         roleSetExclude.Add(RoleConstants.Supplier.Id); // Supplier role should never be included in results as it is only used for maskinporten schemas.
-        var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
-        var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
+        if (!filter.IncludeAppControlledInstances)
+        {
+            roleSetExclude.Add(RoleConstants.AppControlledRightholder.Id); // App-controlled instance access should be excluded if not explicitly requested.
+        }
 
         /*
         Direct Assignments
@@ -1184,7 +1192,7 @@ public class ConnectionQuery(AppDbContext db)
     {
         var resourceSet = filter.ResourceIds?.Count > 0 ? new HashSet<Guid>(filter.ResourceIds) : null;
 
-        var rightholderAssignments = GetRightholderAssignments(allKeys);
+        var rightholderAssignments = GetRightholderAssignments(allKeys, filter);
         var rightholderAssignmentIds = rightholderAssignments.Select(a => (Guid)a.AssignmentId).Distinct().ToList();
         if (rightholderAssignmentIds.Count == 0)
         {
@@ -1248,7 +1256,7 @@ public class ConnectionQuery(AppDbContext db)
         var resourceSet = filter.ResourceIds?.Count > 0 ? new HashSet<Guid>(filter.ResourceIds) : null;
 
         // Assignment → AssignmentInstance
-        var rightholderAssignments = GetRightholderAssignments(allKeys);
+        var rightholderAssignments = GetRightholderAssignments(allKeys, filter);
         var rightholderAssignmentIds = rightholderAssignments.Where(a => a.Reason != ConnectionReason.Hierarchy && !a.IsMainUnitAccess).Select(a => (Guid)a.AssignmentId).Distinct().ToList();
         if (rightholderAssignmentIds.Count == 0)
         {
@@ -1313,11 +1321,17 @@ public class ConnectionQuery(AppDbContext db)
         return allKeys;
     }
 
-    private List<ConnectionQueryExtendedRecord> GetRightholderAssignments(List<ConnectionQueryExtendedRecord> allKeys)
+    private List<ConnectionQueryExtendedRecord> GetRightholderAssignments(List<ConnectionQueryExtendedRecord> allKeys, ConnectionQueryFilter filter)
     {
+        List<Guid> rightholderRoles = [RoleConstants.Rightholder.Id];
+        if (filter.IncludeAppControlledInstances)
+        {
+            rightholderRoles.Add(RoleConstants.AppControlledRightholder.Id);
+        }
+
         if (_rightholderAssignments is null)
         {
-            _rightholderAssignments = allKeys.Where(a => a.AssignmentId.HasValue && a.RoleId == RoleConstants.Rightholder).ToList();
+            _rightholderAssignments = allKeys.Where(a => a.AssignmentId.HasValue && rightholderRoles.Contains(a.RoleId)).ToList();
         }
 
         return _rightholderAssignments;

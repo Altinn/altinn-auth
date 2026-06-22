@@ -127,22 +127,23 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
         {
             "00000000-0000-0000-0000-000000000002" => null,
             _ => new InstanceDelegationChange
-            {
-                InstanceDelegationChangeId = random.Next(0, 1000),
-                DelegationChangeType = instanceDelegationChange.DelegationChangeType,
-                InstanceDelegationMode = instanceDelegationChange.InstanceDelegationMode,
-                ResourceId = instanceDelegationChange.ResourceId,
-                InstanceId = instanceDelegationChange.InstanceId,
-                FromUuid = instanceDelegationChange.FromUuid,
-                FromUuidType = instanceDelegationChange.FromUuidType,
-                ToUuid = instanceDelegationChange.ToUuid,
-                ToUuidType = instanceDelegationChange.ToUuidType,
-                PerformedBy = instanceDelegationChange.PerformedBy,
-                PerformedByType = instanceDelegationChange.PerformedByType,
-                BlobStoragePolicyPath = path,
-                BlobStorageVersionId = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
-                Created = DateTime.Now
-            },
+                {
+                    InstanceDelegationChangeId = random.Next(0, 1000),
+                    DelegationChangeType = instanceDelegationChange.DelegationChangeType,
+                    InstanceDelegationMode = instanceDelegationChange.InstanceDelegationMode,
+                    InstanceDelegationSource = instanceDelegationChange.InstanceDelegationSource,
+                    ResourceId = instanceDelegationChange.ResourceId,
+                    InstanceId = instanceDelegationChange.InstanceId,
+                    FromUuid = instanceDelegationChange.FromUuid,
+                    FromUuidType = instanceDelegationChange.FromUuidType,
+                    ToUuid = instanceDelegationChange.ToUuid,
+                    ToUuidType = instanceDelegationChange.ToUuidType,
+                    PerformedBy = instanceDelegationChange.PerformedBy,
+                    PerformedByType = instanceDelegationChange.PerformedByType,
+                    BlobStoragePolicyPath = path,
+                    BlobStorageVersionId = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                    Created = DateTime.Now
+                },
         };
 
         return Task.FromResult(result);

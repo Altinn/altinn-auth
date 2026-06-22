@@ -195,6 +195,7 @@ namespace Altinn.AccessManagement.Core.Services
             {
                 DelegationChangeType = changeType,
                 InstanceDelegationMode = rules.InstanceDelegationMode,
+                InstanceDelegationSource = rules.InstanceDelegationSource,
                 ResourceId = rules.ResourceId,
                 InstanceId = rules.InstanceId,
 

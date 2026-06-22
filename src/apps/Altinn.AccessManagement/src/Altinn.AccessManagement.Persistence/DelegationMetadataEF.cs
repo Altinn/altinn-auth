@@ -518,7 +518,9 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
             AuditAccessor.AuditValues = new AuditValues(changedBy, SystemEntityConstants.Altinn2AddRulesApi, operationId, validFrom);
         }
 
-        var role = RoleConstants.Rightholder;
+        var role = instanceDelegationChange.InstanceDelegationSource == InstanceDelegationSource.App
+            ? RoleConstants.AppControlledRightholder
+            : RoleConstants.Rightholder;
         var from = await DbContext.Entities.AsNoTracking().SingleAsync(t => t.Id == instanceDelegationChange.FromUuid, cancellationToken);
         var to = await DbContext.Entities.AsNoTracking().SingleAsync(t => t.Id == instanceDelegationChange.ToUuid, cancellationToken);
         var resource = await DbContext.Resources.AsNoTracking().SingleAsync(t => t.RefId == instanceDelegationChange.ResourceId, cancellationToken);
@@ -526,6 +528,11 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
         var assignment = await DbContext.Assignments.FirstOrDefaultAsync(t => t.FromId == from.Id && t.ToId == to.Id && t.RoleId == role.Id, cancellationToken);
         if (assignment == null)
         {
+            if (instanceDelegationChange.DelegationChangeType == DelegationChangeType.RevokeLast)
+            {
+                return null;
+            }
+
             assignment = new Assignment()
             {
                 Id = Guid.CreateVersion7(),
@@ -662,8 +669,8 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
             {
                 var resource = await GetResource(policy.Rules.ResourceId, cancellationToken);
 
-                var role = resource.Type.Name == "MaskinportenSchema"
-                    ? RoleConstants.Supplier
+                var role = policy.Rules.InstanceDelegationSource == InstanceDelegationSource.App
+                    ? RoleConstants.AppControlledRightholder
                     : RoleConstants.Rightholder;
 
                 var assignment = await DbContext.Assignments.FirstOrDefaultAsync(t => t.FromId == policy.Rules.FromUuid && t.ToId == policy.Rules.ToUuid && t.RoleId == role.Id, cancellationToken);
@@ -736,13 +743,14 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
     /// <inheritdoc />
     public async Task<List<InstanceDelegationChange>> GetAllLatestInstanceDelegationChanges(InstanceDelegationSource source, string resourceID, string instanceID, CancellationToken cancellationToken = default)
     {
+        // Currently only to be used for fetching app controlled instance delegations.
         var result = await DbContext.AssignmentInstances.AsNoTracking()
            .Include(t => t.Assignment).ThenInclude(t => t.From)
            .Include(t => t.Assignment).ThenInclude(t => t.To)
            .Include(t => t.Resource).ThenInclude(t => t.Type)
-
            .Where(t => t.Resource.RefId == resourceID)
            .Where(t => t.InstanceId.EndsWith(instanceID))
+           .Where(t => t.Assignment.RoleId == (source == InstanceDelegationSource.App ? RoleConstants.AppControlledRightholder.Id : RoleConstants.Rightholder.Id))
            .ToListAsync(cancellationToken);
 
         return result.Select(Convert).ToList();
