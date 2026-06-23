@@ -1,3 +1,4 @@
+﻿using Altinn.AccessMgmt.PersistenceEF.Models;
 using Dapper;
 using Npgsql;
 
@@ -9,6 +10,11 @@ public record IngestTable(string Name);
 public record JobEntity(Guid Id);
 
 public record JobAssignment(Guid FromId, Guid ToId, string RoleCode);
+
+// ValidFrom is DateTime (not DateTimeOffset): Npgsql returns timestamptz as a UTC DateTime, and
+// Dapper matches this positional record's constructor by column type. Implicitly widens to
+// DateTimeOffset when passed to UpsertAssignment.
+public record JobAssignmentInstance(Guid Id, Guid AssignmentId, Guid AssignmentFromId, Guid AssignmentToId, DateTime ValidFrom, Guid ChangedBy, Guid ChangedBySystem);
 
 public record JobRole(Guid Id, string Name, string Code);
 
@@ -108,6 +114,222 @@ public sealed class DuoRepo(string accConnString, string? regConnString = null)
             GROUP BY r.code;
             """;
         return await conn.QueryAsync<KeyVal>(new CommandDefinition(sql, commandTimeout: 0, cancellationToken: ct));
+    }
+
+    public async Task<Guid?> UpsertAssignment(Guid fromId, Guid toId, Guid roleId, DateTimeOffset validFrom, Guid changedBy, Guid changedBySystem, string changeOperation, CancellationToken ct = default)
+    {
+        await using var conn = new NpgsqlConnection(accConnString);
+        await conn.OpenAsync(ct);
+        await using var tx = await conn.BeginTransactionAsync(ct);
+
+        const string auditSetupSql = """
+        CREATE TEMP TABLE IF NOT EXISTS session_audit_context (
+        changed_by UUID,
+        changed_by_system UUID,
+        change_operation_id text
+        ) ON COMMIT DROP;
+
+        TRUNCATE session_audit_context;
+
+        INSERT INTO session_audit_context(changed_by, changed_by_system, change_operation_id)
+        VALUES(@changedBy, @changedBySystem, @changeOperation);
+
+        SELECT set_config('app.changed_by', @changedBy::text, false),
+               set_config('app.changed_by_system', @changedBySystem::text, false),
+               set_config('app.change_operation_id', @changeOperation, false);
+        """;
+
+        const string insertSql = """
+        INSERT INTO dbo.assignment (id, fromid, toid, roleid, audit_validfrom, audit_changedby, audit_changedbysystem, audit_changeoperation)
+        VALUES (@id, @fromId, @toId, @roleId, @validFrom, @changedBy, @changedBySystem, @changeOperation)
+        ON CONFLICT (fromid, toid, roleid) DO NOTHING
+        RETURNING id;
+        """;
+
+        const string selectSql = """
+        SELECT id FROM dbo.assignment
+        WHERE fromid = @fromId AND toid = @toId AND roleid = @roleId;
+        """;
+
+        var parameters = new
+        {
+            id = Guid.CreateVersion7(),
+            fromId,
+            toId,
+            roleId,
+            validFrom,
+            changedBy,
+            changedBySystem,
+            changeOperation
+        };
+
+        await conn.ExecuteAsync(new CommandDefinition(auditSetupSql, parameters, transaction: tx, cancellationToken: ct));
+
+        var id = await conn.ExecuteScalarAsync<Guid?>(new CommandDefinition(insertSql, parameters, transaction: tx, cancellationToken: ct));
+        if (id is null || id == Guid.Empty)
+        {
+            id = await conn.ExecuteScalarAsync<Guid?>(new CommandDefinition(selectSql, parameters, transaction: tx, cancellationToken: ct));
+        }
+
+        await tx.CommitAsync(ct);
+        return id;
+    }
+
+    public async Task<bool> RemoveAssignmentIfEmpty(Guid assignmentId, Guid changedBy, Guid changedBySystem, string changeOperation)
+    {
+        await using var conn = new NpgsqlConnection(accConnString);
+
+        const string existSql = $"""
+        select 'instance' from dbo.assignmentinstance where assignmentid = @assignmentId
+        union all
+        select 'resource' from dbo.assignmentresource where assignmentid = @assignmentId
+        union all
+        select 'package' from dbo.assignmentpackage where assignmentid = @assignmentId
+        union all
+        select 'delegation' from dbo.delegation where fromid = @assignmentId or toid = @assignmentId
+        """;
+
+        var exists = await conn.QueryAsync<string>(new CommandDefinition(existSql, new { assignmentId }));
+        if (exists.Any())
+        {
+            return false;
+        }
+
+        const string deleteSql = """
+        BEGIN TRANSACTION;
+
+        CREATE TEMP TABLE IF NOT EXISTS session_audit_context (
+        changed_by UUID,
+        changed_by_system UUID,
+        change_operation_id text
+        ) ON COMMIT DROP;
+
+        TRUNCATE session_audit_context;
+
+        INSERT INTO session_audit_context(changed_by, changed_by_system, change_operation_id)
+        VALUES(@changedBy, @changedBySystem, @changeOperation);
+
+        SELECT set_config('app.changed_by', @changedBy::text, false),
+               set_config('app.changed_by_system', @changedBySystem::text, false),
+               set_config('app.change_operation_id', @changeOperation, false);
+
+        WITH deleted AS (
+            DELETE FROM dbo.assignment WHERE id = @assignmentId RETURNING id
+        )
+        SELECT count(*)::int FROM deleted;
+
+        COMMIT TRANSACTION;
+        """;
+
+        var parameters = new { assignmentId, changedBy, changedBySystem, changeOperation };
+
+        using var multi = await conn.QueryMultipleAsync(new CommandDefinition(deleteSql, parameters));
+        await multi.ReadAsync();                          // consume the set_config result set
+        var affected = (await multi.ReadAsync<int>()).Single();
+        return affected > 0;
+    }
+
+    public async Task<bool> UpdateAssignmentInstance(Guid assignmentInstanceId, Guid newAssignmentId, DateTimeOffset validFrom, Guid changedBy, Guid changedBySystem, string changeOperation)
+    {
+        await using var conn = new NpgsqlConnection(accConnString);
+
+        const string updateSql = """
+        BEGIN TRANSACTION;
+
+        CREATE TEMP TABLE IF NOT EXISTS session_audit_context (
+        changed_by UUID,
+        changed_by_system UUID,
+        change_operation_id text
+        ) ON COMMIT DROP;
+
+        TRUNCATE session_audit_context;
+
+        INSERT INTO session_audit_context(changed_by, changed_by_system, change_operation_id)
+        VALUES(@changedBy, @changedBySystem, @changeOperation);
+
+        SELECT set_config('app.changed_by', @changedBy::text, false),
+               set_config('app.changed_by_system', @changedBySystem::text, false),
+               set_config('app.change_operation_id', @changeOperation, false);
+
+        WITH updated AS (
+            UPDATE dbo.assignmentinstance SET assignmentid = @newAssignmentId WHERE id = @assignmentInstanceId RETURNING id
+        )
+        SELECT count(*)::int FROM updated;
+
+        COMMIT TRANSACTION;
+        """;
+
+        var parameters = new { assignmentInstanceId, newAssignmentId, changedBy, changedBySystem, changeOperation };
+
+        using var multi = await conn.QueryMultipleAsync(new CommandDefinition(updateSql, parameters));
+        await multi.ReadAsync();                          // consume the set_config result set
+        var affected = (await multi.ReadAsync<int>()).Single();
+        return affected > 0;
+    }
+
+    public async Task<bool> DeleteAssignmentInstance(Guid assignmentInstanceId, Guid changedBy, Guid changedBySystem, string changeOperation)
+    {
+        await using var conn = new NpgsqlConnection(accConnString);
+
+        // Same audit-context preamble as the other mutations (the DELETE fires the history trigger,
+        // which reads both the GUCs and session_audit_context). Affected-row count read via RETURNING CTE.
+        const string deleteSql = """
+        BEGIN TRANSACTION;
+
+        CREATE TEMP TABLE IF NOT EXISTS session_audit_context (
+        changed_by UUID,
+        changed_by_system UUID,
+        change_operation_id text
+        ) ON COMMIT DROP;
+
+        TRUNCATE session_audit_context;
+
+        INSERT INTO session_audit_context(changed_by, changed_by_system, change_operation_id)
+        VALUES(@changedBy, @changedBySystem, @changeOperation);
+
+        SELECT set_config('app.changed_by', @changedBy::text, false),
+               set_config('app.changed_by_system', @changedBySystem::text, false),
+               set_config('app.change_operation_id', @changeOperation, false);
+
+        WITH deleted AS (
+            DELETE FROM dbo.assignmentinstance WHERE id = @assignmentInstanceId RETURNING id
+        )
+        SELECT count(*)::int FROM deleted;
+
+        COMMIT TRANSACTION;
+        """;
+
+        var parameters = new { assignmentInstanceId, changedBy, changedBySystem, changeOperation };
+
+        using var multi = await conn.QueryMultipleAsync(new CommandDefinition(deleteSql, parameters));
+        await multi.ReadAsync();                          // consume the set_config result set
+        var affected = (await multi.ReadAsync<int>()).Single();
+        return affected > 0;
+    }
+
+    public async Task<IEnumerable<JobAssignmentInstance>> GetAccAssignmentInstance(Guid assignmentRoleId, Guid changedBySystemId, int limit = 1, CancellationToken ct = default)
+    {
+        await using var conn = new NpgsqlConnection(accConnString);
+        const string sql = """
+            SELECT
+                 ai.id AS Id
+                ,ai.assignmentid AS AssignmentId
+                ,a.fromid AS AssignmentFromId
+                ,a.toid AS AssignmentToId
+                ,ai.audit_validfrom AS ValidFrom
+                ,ai.audit_changedby AS ChangedBy
+                ,ai.audit_changedbysystem AS ChangedBySystem
+            FROM dbo.assignmentinstance ai
+            INNER JOIN dbo.assignment a ON a.id = ai.assignmentid
+            WHERE ai.audit_changedbysystem = @changedBySystemId
+              AND a.roleid = @assignmentRoleId
+            ORDER BY ai.id
+            LIMIT @limit
+            """;
+
+        var parameters = new { assignmentRoleId, changedBySystemId, limit };
+
+        return await conn.QueryAsync<JobAssignmentInstance>(new CommandDefinition(sql, parameters, commandTimeout: 0, cancellationToken: ct));
     }
 
     // ── Entities ──────────────────────────────────────────────────────────────

@@ -35,6 +35,13 @@ public interface IJobRunner
     JobRun StartResourceCleanupExecute(Guid previewRunId, string environment);
 
     /// <summary>
+    /// Moves assignment instances off their current (old role) assignment onto an
+    /// app-controlled rightholder assignment, then removes the old assignment if it is left empty.
+    /// Runs directly against AccessMgmt — there is no preview phase.
+    /// </summary>
+    JobRun StartAssignmentInstanceCleanup(string environment, AssignmentInstanceCleanupOptions opts);
+
+    /// <summary>
     /// Requests cooperative cancellation of the given run.
     /// Returns false if the run is not found or is already in a terminal state.
     /// </summary>
@@ -213,6 +220,19 @@ public sealed class JobRunner(
             run.AddLog($"Executing script ({preview.SqlOutput.Count} statements)...");
             await repo.ExecuteSql(script, ct);
             run.AddLog("Done.");
+        });
+
+        return run;
+    }
+
+    public JobRun StartAssignmentInstanceCleanup(string environment, AssignmentInstanceCleanupOptions opts)
+    {
+        var run = CreateRun(AssignmentInstanceCleanupJob.JobName, environment);
+
+        FireAndForget(run, async ct =>
+        {
+            var repo = CreateAccRepo(environment);
+            await AssignmentInstanceCleanupJob.RunAsync(repo, run, opts, ct);
         });
 
         return run;

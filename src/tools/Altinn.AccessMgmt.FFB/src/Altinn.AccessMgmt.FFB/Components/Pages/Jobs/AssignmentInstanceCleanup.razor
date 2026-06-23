@@ -1,0 +1,225 @@
+@page "/jobs/assignment-instance-cleanup"
+@using Altinn.AccessMgmt.FFB.Jobs
+@using Altinn.AccessMgmt.FFB.Jobs.Models
+@using Altinn.AccessMgmt.FFB.Services
+@using Altinn.AccessMgmt.PersistenceEF.Constants
+@using Altinn.AccessMgmt.PersistenceEF.Models
+@inject IJobRunner JobRunner
+@inject IJobRunStore RunStore
+@inject IEnvironmentDbContextFactory EnvFactory
+@inject IDialogService DialogService
+@implements IDisposable
+
+<PageTitle>Assignment Instance Cleanup</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Assignment Instance Cleanup</MudText>
+<MudText Typo="Typo.body1" Class="mb-6 mud-text-secondary">
+    Flytter <code>AssignmentInstance</code>-rader fra deres nåværende assignment (med gammel rolle, opprettet
+    av valgt system) over på et app-styrt rettighetshaver-forhold. Gamle assignments som blir stående tomme
+    fjernes. Kjøres direkte mot AccessMgmt — ingen forhåndsvisning.
+</MudText>
+
+@* ── Input panel ──────────────────────────────────────────────────────────── *@
+<MudPaper Elevation="1" Class="pa-4 mb-6">
+    <MudText Typo="Typo.h6" Class="mb-3">Parametere</MudText>
+
+    <MudGrid Spacing="3">
+        @* ChangedBySystem *@
+        <MudItem xs="12" sm="6">
+            <MudSelect @bind-Value="_changedBySystemId"
+                       Label="Endret av system (audit_changedbysystem)"
+                       Variant="Variant.Outlined"
+                       Dense="true"
+                       HelperText="Kun instanser opprettet av dette systemet migreres">
+                @foreach (var entity in SystemEntities)
+                {
+                    var e = entity;
+                    <MudSelectItem Value="@e.Id">@e.Entity.RefId — @e.Entity.Name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+
+        @* Operation ID *@
+        <MudItem xs="12" sm="6">
+            <MudTextField @bind-Value="_operationId"
+                          Label="Operation ID"
+                          Variant="Variant.Outlined"
+                          HelperText="Sak-ID eller annen referanse, f.eks. CAS-99028-W1N4F8"
+                          Immediate="true" />
+        </MudItem>
+
+        @* Old role *@
+        <MudItem xs="12" sm="6">
+            <MudTextField @bind-Value="_oldRole"
+                          Label="Gammel rolle (migreres fra)"
+                          Variant="Variant.Outlined"
+                          HelperText="Role-kode, URN eller GUID"
+                          Immediate="true" />
+        </MudItem>
+
+        @* New role *@
+        <MudItem xs="12" sm="6">
+            <MudTextField @bind-Value="_newRole"
+                          Label="Ny rolle (migreres til)"
+                          Variant="Variant.Outlined"
+                          HelperText="Role-kode, URN eller GUID"
+                          Immediate="true" />
+        </MudItem>
+
+        @* Limit *@
+        <MudItem xs="6" sm="3">
+            <MudNumericField @bind-Value="_limit"
+                             Label="Maks antall (totalt)"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.Dense" Min="1" Max="1000000"
+                             HelperText="Stopper når så mange er flyttet" />
+        </MudItem>
+
+        @* Loop limit *@
+        <MudItem xs="6" sm="3">
+            <MudNumericField @bind-Value="_loopLimit"
+                             Label="Batch-størrelse"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.Dense" Min="1" Max="10000"
+                             HelperText="Antall hentet per spørring" />
+        </MudItem>
+
+        @* Environment *@
+        <MudItem xs="12">
+            <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">Miljø:</MudText>
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                @foreach (var env in EnvFactory.Environments)
+                {
+                    var envName = env;
+                    var configured = EnvFactory.IsConfigured(envName);
+                    <MudCheckBox @bind-Value="_selected[envName]"
+                                 Label="@envName"
+                                 Disabled="@(!configured)"
+                                 Color="Color.Primary" />
+                }
+            </MudStack>
+        </MudItem>
+
+        @* Buttons *@
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Error"
+                       StartIcon="@Icons.Material.Filled.PlayArrow"
+                       Disabled="@(!CanRun)"
+                       OnClick="ConfirmAndStart">
+                Start migrering
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@* ── Runs ─────────────────────────────────────────────────────────────────── *@
+@if (_runs.Count > 0)
+{
+    <MudText Typo="Typo.h6" Class="mb-3">Kjøringer</MudText>
+    @foreach (var run in _runs)
+    {
+        <JobRunCard Run="@run" OnChanged="@RefreshAndRender" />
+    }
+}
+
+@code {
+    private static readonly IReadOnlyList<ConstantDefinition<Entity>> SystemEntities =
+        SystemEntityConstants.AllEntities()
+            .OrderBy(e => e.Entity.RefId)
+            .ToList();
+
+    private readonly Dictionary<string, bool> _selected = new();
+    private readonly HashSet<Guid> _subscribed = [];
+
+    private Guid _changedBySystemId = SystemEntityConstants.DBA.Id;
+    private string _oldRole = "";
+    private string _newRole = RoleConstants.AppControlledRightholder.Entity.Urn;
+    private string _operationId = "";
+    private int _limit = 1000;
+    private int _loopLimit = 100;
+    private List<JobRun> _runs = [];
+
+    protected override void OnInitialized()
+    {
+        foreach (var env in EnvFactory.Environments)
+        {
+            _selected[env] = false;
+        }
+
+        RefreshRuns();
+    }
+
+    private async Task ConfirmAndStart()
+    {
+        var selectedEnvs = _selected.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
+
+        var parameters = new DialogParameters<ConfirmDialog>
+        {
+            { x => x.ContentText,
+                $"Dette flytter inntil {_limit} AssignmentInstance-rader (rolle '{_oldRole}') mot " +
+                $"{string.Join(", ", selectedEnvs)} og kan ikke angres." },
+            { x => x.ButtonText, "Start migrering" },
+            { x => x.Color, Color.Error },
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Bekreft migrering", parameters);
+        var result = await dialog.Result;
+
+        if (result is not { Canceled: false })
+        {
+            return;
+        }
+
+        var opts = new AssignmentInstanceCleanupOptions(
+            ChangedBySystem: _changedBySystemId.ToString(),
+            OldRole: _oldRole.Trim(),
+            NewRole: _newRole.Trim(),
+            OperationId: _operationId.Trim(),
+            Limit: _limit,
+            LoopLimit: _loopLimit);
+
+        foreach (var env in selectedEnvs)
+        {
+            var run = JobRunner.StartAssignmentInstanceCleanup(env, opts);
+            Subscribe(run);
+            _runs.Insert(0, run);
+        }
+
+        StateHasChanged();
+    }
+
+    private void Subscribe(JobRun run)
+    {
+        if (_subscribed.Add(run.Id))
+        {
+            run.OnUpdated += () => InvokeAsync(RefreshAndRender);
+        }
+    }
+
+    private void RefreshRuns()
+    {
+        _runs = RunStore.GetForJob(AssignmentInstanceCleanupJob.JobName)
+            .OrderByDescending(r => r.StartedAt)
+            .ToList();
+
+        foreach (var run in _runs)
+        {
+            Subscribe(run);
+        }
+    }
+
+    private void RefreshAndRender()
+    {
+        RefreshRuns();
+        StateHasChanged();
+    }
+
+    private bool CanRun =>
+        !string.IsNullOrWhiteSpace(_oldRole) &&
+        !string.IsNullOrWhiteSpace(_newRole) &&
+        !string.IsNullOrWhiteSpace(_operationId) &&
+        _selected.Values.Any(v => v);
+
+    public void Dispose() { }
+}
