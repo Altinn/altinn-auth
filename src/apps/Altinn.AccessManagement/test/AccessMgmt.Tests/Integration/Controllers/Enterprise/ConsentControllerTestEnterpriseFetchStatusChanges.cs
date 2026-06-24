@@ -61,11 +61,14 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         private List<Guid> _revokedConsentIds = [];   // 3 IDs (subset of accepted, indexes 0-2)
 
         // ── Seeded event counts (derived from numberOfConsents=10) ────────────
-        // accepted=5, rejected=5, revoked=3  →  total=13 events across 3 pages
+        // Every consent also has an initial 'created' event. The events feed no longer filters out
+        // 'created', so those are part of the returned set: created=10, accepted=5, rejected=5,
+        // revoked=3  →  total=23 events.
+        private const int SeededCreated = 10;
         private const int SeededAccepted = 5;
         private const int SeededRejected = 5;
         private const int SeededRevoked = 3;
-        private const int SeededTotal = SeededAccepted + SeededRejected + SeededRevoked; // 13
+        private const int SeededTotal = SeededCreated + SeededAccepted + SeededRejected + SeededRevoked; // 23
         private const int PageSize = 5;
 
         private static readonly Altinn.AccessMgmt.PersistenceEF.Models.ResourceType ConsentResourceType = new()
@@ -297,111 +300,35 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         [Fact]
         public async Task GetConsentStatusChanges_Paging_Returns200OkWithoutOlderEventsForSameConsentRequest()
         {
-            HttpClient client = GetTestClient();
+            // Walking every page must return each event exactly once (no loss, no duplication across
+            // pages), with the per-type counts matching what was seeded.
+            var allItems = await FetchAllPages("/accessmanagement/api/v1/enterprise/consentrequests/events");
 
-            int numberOfConsents = 10;
-
-            // Calculate expected numbers based on the updated helper logic
-            int accepted = numberOfConsents / 2;
-            int rejected = numberOfConsents - accepted;
-            int revoked = Math.Min(3, accepted);
-
-            // Fetch first page (pageSize=5)
-            string readToken = PrincipalUtil.GetMaskinportenToken("810419512", "altinn:consentrequests.read");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", readToken);
-            string url = $"/accessmanagement/api/v1/enterprise/consentrequests/events";
-            HttpResponseMessage responsePage1 = await client.GetAsync(url, TestContext.Current.CancellationToken);
-            string responseContent1 = await responsePage1.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-
-            Assert.Equal(HttpStatusCode.OK, responsePage1.StatusCode);
-            var resultPage1 = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(responseContent1, _jsonOptions);
-
-            // The first page should have up to 5 items
-            Assert.True(resultPage1.Items.Count() <= 5);
-            var page1ConsentIds = resultPage1.Items.Select(i => i.ConsentRequestId).ToHashSet();
-
-            // Fetch next page using continuation token
-            if (resultPage1.Links.Next != null)
-            {
-                HttpResponseMessage responsePage2 = await client.GetAsync(resultPage1.Links.Next, TestContext.Current.CancellationToken);
-                string responseContent2 = await responsePage2.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-                Assert.Equal(HttpStatusCode.OK, responsePage2.StatusCode);
-                var resultPage2 = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(responseContent2, _jsonOptions);
-
-                // The second page should have the remaining items
-                Assert.Equal(numberOfConsents - resultPage1.Items.Count(), resultPage2.Items.Count());
-                var page2ConsentIds = resultPage2.Items.Select(i => i.ConsentRequestId).ToHashSet();
-
-                // Page 3 - empty, terminates pagination
-                var response3 = await client.GetAsync(resultPage2.Links.Next, TestContext.Current.CancellationToken);
-                var page3 = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(
-                    await response3.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
-                Assert.Equal(3, page3.Items.Count());
-                Assert.Null(page3.Links.Next); // No more data → terminates correctly
-
-                var allItems = resultPage1.Items.Concat(resultPage2.Items).Concat(page3.Items).ToList();
-
-                Assert.Equal(revoked, allItems.FindAll(i => i.EventType.Equals("revoked", StringComparison.OrdinalIgnoreCase)).Count());
-                Assert.Equal(rejected, allItems.FindAll(i => i.EventType.Equals("rejected", StringComparison.OrdinalIgnoreCase)).Count());
-                Assert.Equal(accepted, allItems.FindAll(i => i.EventType.Equals("accepted", StringComparison.OrdinalIgnoreCase)).Count());
-            }
+            Assert.Equal(SeededTotal, allItems.Count);
+            Assert.Equal(SeededCreated, allItems.FindAll(i => i.EventType.Equals("created", StringComparison.OrdinalIgnoreCase)).Count);
+            Assert.Equal(SeededRevoked, allItems.FindAll(i => i.EventType.Equals("revoked", StringComparison.OrdinalIgnoreCase)).Count);
+            Assert.Equal(SeededRejected, allItems.FindAll(i => i.EventType.Equals("rejected", StringComparison.OrdinalIgnoreCase)).Count);
+            Assert.Equal(SeededAccepted, allItems.FindAll(i => i.EventType.Equals("accepted", StringComparison.OrdinalIgnoreCase)).Count);
         }
 
         [Fact]
         public async Task GetConsentStatusChanges_IdenticalTimestampsTieBreakerByEventIdOverPages_Returns200WithAllEventsOrderedByChangedDate()
         {
-            HttpClient client = GetTestClient();
-
             int numberOfConsents = 10;
 
-            string readToken = PrincipalUtil.GetMaskinportenToken("810419512", "altinn:consentrequests.read");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", readToken);
+            var allItems = await FetchAllPages("/accessmanagement/api/v1/enterprise/consentrequests/events");
 
-            // Fetch first page
-            string url = $"/accessmanagement/api/v1/enterprise/consentrequests/events";
-            HttpResponseMessage responsePage1 = await client.GetAsync(url, TestContext.Current.CancellationToken);
-            string responseContent1 = await responsePage1.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            Assert.Equal(HttpStatusCode.OK, responsePage1.StatusCode);
-            var resultPage1 = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(responseContent1, _jsonOptions);
-
-            // Fetch next page
-            Assert.NotNull(resultPage1.Links.Next);
-            HttpResponseMessage responsePage2 = await client.GetAsync(resultPage1.Links.Next, TestContext.Current.CancellationToken);
-            string responseContent2 = await responsePage2.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            Assert.Equal(HttpStatusCode.OK, responsePage2.StatusCode);
-            var resultPage2 = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(responseContent2, _jsonOptions);
-
-            // Combine all results
-            var allItems = resultPage1.Items.Concat(resultPage2.Items).ToList();
-
-            // 1. Assert all consentrequests are present (no data loss)
-            Assert.Equal(numberOfConsents, allItems.Count);
+            // 1. All events present across pages (no data loss), spread over the 10 seeded consents.
+            Assert.Equal(SeededTotal, allItems.Count);
             Assert.Equal(numberOfConsents, allItems.Select(i => i.ConsentRequestId).Distinct().Count());
 
-            // 2. Assert correct ordering: by ChangedDate descending, then ConsentEventId descending
+            // 2. Ordering by ChangedDate ascending across pages (ties broken by ConsentEventId, which is
+            //    not exposed in the DTO, so only the non-decreasing ChangedDate ordering is asserted).
             for (int i = 1; i < allItems.Count; i++)
             {
-                var prev = allItems[i - 1];
-                var curr = allItems[i];
-                int dateCompare = prev.ChangedDate.CompareTo(curr.ChangedDate);
-                if (dateCompare < 0)
-                {
-                    // OK, previous is older
-                    continue;
-                }
-                else
-                {
-                    Assert.Fail("Results are not ordered by ChangedDate descending.");
-                }
-
-                // NOTE: Tie-breaker by ConsentEventId cannot be tested as ConsentEventId is not exposed in the DTO.
-                // Only ordering by ChangedDate descending is asserted here.
-                // else if (dateCompare == 0)
-                // {
-                //    // Tie-breaker: ConsentEventId descending
-                //    Assert.True(string.CompareOrdinal(prev.ConsentEventId.ToString(), curr.ConsentEventId.ToString()) > 0,
-                //        $"ConsentEventId {prev.ConsentEventId} should be after {curr.ConsentEventId} when timestamps are equal.");
-                // }
+                Assert.True(
+                    allItems[i - 1].ChangedDate <= allItems[i].ChangedDate,
+                    $"Results are not ordered by ChangedDate ascending at index {i}.");
             }
         }
 
@@ -468,34 +395,33 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         }
 
         [Fact]
-        public async Task GetConsentStatusChanges_ExactMultipleOfPageSize_Returns200OkWithEmptyLastPage()
+        public async Task GetConsentStatusChanges_Pagination_Returns200OkAndTerminates()
         {
-            // 10 consents seeded, pageSize = 5 → 2 full pages, then an empty 3rd page with no nextLink
-            HttpClient client = GetTestClient();
+            // 23 events seeded, pageSize = 5 → full pages of 5 until a final partial page of 3 with no
+            // nextLink. Walk every page and assert it terminates and yields all events exactly once.
+            HttpClient client = GetAuthorizedReadClient();
 
-            string token = PrincipalUtil.GetMaskinportenToken("810419512", "altinn:consentrequests.read");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var all = new List<ConsentStatusChangeDto>();
+            string nextUrl = "/accessmanagement/api/v1/enterprise/consentrequests/events";
+            string lastNext = "sentinel";
+            int guard = 0;
 
-            // Page 1
-            var response1 = await client.GetAsync("/accessmanagement/api/v1/enterprise/consentrequests/events", TestContext.Current.CancellationToken);
-            var page1 = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(
-                await response1.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
-            Assert.Equal(5, page1.Items.Count());
-            Assert.NotNull(page1.Links.Next);
+            while (nextUrl != null)
+            {
+                var response = await client.GetAsync(nextUrl, TestContext.Current.CancellationToken);
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                var page = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(
+                    await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
 
-            // Page 2
-            var response2 = await client.GetAsync(page1.Links.Next, TestContext.Current.CancellationToken);
-            var page2 = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(
-                await response2.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
-            Assert.Equal(5, page2.Items.Count());
-            Assert.NotNull(page2.Links.Next); // Full page → link exists (accepted extra round-trip behavior)
+                Assert.True(page.Items.Count() <= PageSize);
+                all.AddRange(page.Items);
+                lastNext = page.Links.Next;
+                nextUrl = page.Links.Next;
+                Assert.True(++guard < 100, "pagination did not terminate");
+            }
 
-            // Page 3 - empty, terminates pagination
-            var response3 = await client.GetAsync(page2.Links.Next, TestContext.Current.CancellationToken);
-            var page3 = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(
-                await response3.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
-            Assert.Equal(3, page3.Items.Count());
-            Assert.Null(page3.Links.Next); // No more data → terminates correctly
+            Assert.Null(lastNext);                // last page terminates correctly
+            Assert.Equal(SeededTotal, all.Count); // every event returned exactly once
         }
 
         /// <summary>
@@ -590,13 +516,13 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         }
 
         /// <summary>
-        /// consentRequestId=&lt;revokedId&gt; → that consent was accepted then revoked,
-        /// so exactly 2 events are expected (accepted + revoked), both in one page.
+        /// consentRequestId=&lt;revokedId&gt; → that consent was created, accepted then revoked,
+        /// so exactly 3 events are expected (created + accepted + revoked), all in one page.
         /// </summary>
         [Fact]
-        public async Task GetConsentStatusChanges_FilterByConsentRequestIdRevokedConsent_Returns200OkWithTwoEvents()
+        public async Task GetConsentStatusChanges_FilterByConsentRequestIdRevokedConsent_Returns200OkWithThreeEvents()
         {
-            // _revokedConsentIds[0] was accepted first, then revoked → 2 non-created events
+            // _revokedConsentIds[0] was created, accepted, then revoked → 3 events
             Guid targetId = _revokedConsentIds[0];
 
             HttpClient client = GetAuthorizedReadClient();
@@ -607,21 +533,22 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
             var result = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(
                 await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
 
-            Assert.Equal(2, result.Items.Count()); // accepted + revoked
-            Assert.Null(result.Links.Next);        // 2 < pageSize=5
+            Assert.Equal(3, result.Items.Count()); // created + accepted + revoked
+            Assert.Null(result.Links.Next);        // 3 < pageSize=5
             Assert.All(result.Items, item => Assert.Equal(targetId, item.ConsentRequestId));
 
             var eventTypes = result.Items.Select(i => i.EventType).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            Assert.Contains("created", eventTypes);
             Assert.Contains("accepted", eventTypes);
             Assert.Contains("revoked", eventTypes);
         }
 
         /// <summary>
-        /// consentRequestId=&lt;acceptedOnlyId&gt; → consent was accepted but NOT revoked,
-        /// so exactly 1 event expected (accepted).
+        /// consentRequestId=&lt;acceptedOnlyId&gt; → consent was created and accepted but NOT revoked,
+        /// so exactly 2 events expected (created + accepted).
         /// </summary>
         [Fact]
-        public async Task GetConsentStatusChanges_FilterByConsentRequestIdAcceptedOnlyConsent_Returns200OkWithOneEvent()
+        public async Task GetConsentStatusChanges_FilterByConsentRequestIdAcceptedOnlyConsent_Returns200OkWithTwoEvents()
         {
             // _acceptedConsentIds[3] was accepted but not revoked (only indexes 0-2 were revoked)
             Guid targetId = _acceptedConsentIds[3];
@@ -634,17 +561,20 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
             var result = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(
                 await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
 
-            Assert.Single(result.Items);
+            Assert.Equal(2, result.Items.Count()); // created + accepted
             Assert.Null(result.Links.Next);
-            Assert.Equal(targetId, result.Items.Single().ConsentRequestId);
-            Assert.Equal("accepted", result.Items.Single().EventType, StringComparer.OrdinalIgnoreCase);
+            Assert.All(result.Items, item => Assert.Equal(targetId, item.ConsentRequestId));
+
+            var eventTypes = result.Items.Select(i => i.EventType).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            Assert.Contains("created", eventTypes);
+            Assert.Contains("accepted", eventTypes);
         }
 
         /// <summary>
-        /// consentRequestId=&lt;rejectedId&gt; → exactly 1 event (rejected).
+        /// consentRequestId=&lt;rejectedId&gt; → 2 events (created + rejected).
         /// </summary>
         [Fact]
-        public async Task GetConsentStatusChanges_FilterByConsentRequestIdRejectedConsent_Returns200OkWithOneEvent()
+        public async Task GetConsentStatusChanges_FilterByConsentRequestIdRejectedConsent_Returns200OkWithTwoEvents()
         {
             Guid targetId = _rejectedConsentIds[0];
 
@@ -656,10 +586,13 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
             var result = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(
                 await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
 
-            Assert.Single(result.Items);
+            Assert.Equal(2, result.Items.Count()); // created + rejected
             Assert.Null(result.Links.Next);
-            Assert.Equal(targetId, result.Items.Single().ConsentRequestId);
-            Assert.Equal("rejected", result.Items.Single().EventType, StringComparer.OrdinalIgnoreCase);
+            Assert.All(result.Items, item => Assert.Equal(targetId, item.ConsentRequestId));
+
+            var eventTypes = result.Items.Select(i => i.EventType).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            Assert.Contains("created", eventTypes);
+            Assert.Contains("rejected", eventTypes);
         }
 
         /// <summary>
