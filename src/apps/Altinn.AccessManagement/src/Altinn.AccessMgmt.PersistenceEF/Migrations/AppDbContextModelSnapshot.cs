@@ -23,6 +23,48 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.A2ClientRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("createddate");
+
+                    b.Property<Guid>("FacilitatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("facilitatorid");
+
+                    b.Property<Guid>("FromId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("fromid");
+
+                    b.Property<Guid>("PerformedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("performedby");
+
+                    b.Property<string>("RoleCode")
+                        .HasColumnType("text")
+                        .HasColumnName("rolecode");
+
+                    b.Property<Guid>("ToId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("toid");
+
+                    b.HasKey("Id")
+                        .HasName("pk_a2clientrole");
+
+                    b.HasIndex("FacilitatorId", "FromId")
+                        .HasDatabaseName("ix_a2clientrole_facilitatorid_fromid");
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("FacilitatorId", "FromId"), new[] { "Id" });
+
+                    b.ToTable("a2clientrole", "dbo");
+                });
+
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Area", b =>
                 {
                     b.Property<Guid>("Id")

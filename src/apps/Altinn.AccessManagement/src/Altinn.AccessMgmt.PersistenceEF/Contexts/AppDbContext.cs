@@ -85,6 +85,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<ErrorQueue> ErrorQueue => Set<ErrorQueue>();
 
+    public DbSet<A2ClientRole> A2ClientRole => Set<A2ClientRole>();
+
     public DbSet<RightImportProgress> RightImportProgress => Set<RightImportProgress>();
 
     #endregion
@@ -233,6 +235,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<RequestAssignmentPackage>(new RequestAssignmentPackageConfiguration());
         modelBuilder.ApplyConfiguration<RequestAssignmentResource>(new RequestAssignmentResourceConfiguration());
         modelBuilder.ApplyConfiguration<ErrorQueue>(new ErrorQueueConfiguration());
+        modelBuilder.ApplyConfiguration<A2ClientRole>(new A2ClientRoleConfiguration());
         modelBuilder.ApplyConfiguration<RightImportProgress>(new RightImportProgressConfiguration());
         modelBuilder.ApplyConfiguration<InstanceSourceType>(new InstanceSourceTypeConfiguration());
     }
