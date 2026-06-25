@@ -7,6 +7,7 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Queries;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Integration.Platform.Register;
@@ -180,6 +181,30 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
         entities = entities
             .Where(e => relationSet.Contains((e.FromId, e.ToId, e.RoleId)))
             .ToList();
+
+        // Check for client delegations associated with removed client and remove them as well
+        // TODO: Remove after 01.01.2027 when roles from A2 is retired as a concept.
+        var clientRelations = entities.Where(e => e.RoleId == RoleConstants.BusinessManager.Entity.Id)
+            .Select(e => (e.FromId, e.ToId))
+            .ToList();
+
+        foreach (var clientRelation in clientRelations)
+        {
+            var clientDelegations = await dbContext.GetClientRoleDelegations(
+                clientRelation.FromId,
+                clientRelation.ToId,
+                cancellationToken
+            );
+
+            List<Guid> assignmentIdsToRemove = clientDelegations.Select(t => t.AssignmentId).ToList();
+
+            var clientAssignments = await dbContext.Assignments
+                .AsTracking()
+                .Where(e => assignmentIdsToRemove.Contains(e.Id))
+                .ToListAsync(cancellationToken: cancellationToken);
+
+            entities.AddRange(clientAssignments);
+        }
 
         dbContext.RemoveRange(entities);
         return await dbContext.SaveChangesAsync(cancellationToken);
