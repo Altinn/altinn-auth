@@ -51,9 +51,10 @@ public class PartyService(AppDbContext db) : IPartyService
                 Name = party.DisplayName,
                 TypeId = entityType.Id,
                 VariantId = entityVariant.Id,
-                RefId = party.EntityType.Equals(EntityTypeConstants.SystemUser.Entity.Name , StringComparison.InvariantCultureIgnoreCase) ? party.PartyUuid.ToString() : null,
+                RefId = party.EntityType.Equals(EntityTypeConstants.SystemUser.Entity.Name, StringComparison.InvariantCultureIgnoreCase) ? party.PartyUuid.ToString() : null,
                 PartyId = party.PartyId,
                 UserId = party.UserId,
+                EmailIdentifier = party.EmailIdentifier?.Trim()?.ToLowerInvariant(),
             };
 
             db.Entities.Add(entity);

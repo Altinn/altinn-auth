@@ -205,6 +205,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         {
             var partyUuid = Guid.NewGuid();
             int partyUserId = 1000041;
+            string emailIdentifier = "test@example.com";
 
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "/accessmanagement/api/v1/internal/party")
             {
@@ -215,6 +216,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
                     EntityVariantType = EntityVariantConstants.SI_EMAIL.Entity.Name,
                     DisplayName = "Self Identified Epost User",
                     PartyId = partyUserId,
+                    EmailIdentifier = emailIdentifier,
                     UserId = partyUserId
                 }),
                 Headers =
@@ -237,6 +239,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
                 Assert.Null(entity.RefId);
                 Assert.Equal(partyUserId, entity.PartyId);
                 Assert.Equal(partyUserId, entity.UserId);
+                Assert.Equal(emailIdentifier, entity.EmailIdentifier);
             });
         }
 
@@ -277,6 +280,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
                 Assert.Null(entity.RefId);
                 Assert.Equal(partyUserId, entity.PartyId);
                 Assert.Equal(partyUserId, entity.UserId);
+                Assert.Null(entity.EmailIdentifier);
             });
         }
     }

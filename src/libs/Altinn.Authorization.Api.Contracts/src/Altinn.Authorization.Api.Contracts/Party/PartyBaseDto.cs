@@ -46,5 +46,10 @@ namespace Altinn.Authorization.Api.Contracts.Party
         /// </summary>
         [Range(1, int.MaxValue)]
         public int? UserId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the email identifier for the user.
+        /// </summary>
+        public string? EmailIdentifier { get; set; }
     }
 }
