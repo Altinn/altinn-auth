@@ -11,22 +11,29 @@ using DelegationPackage = Altinn.AccessMgmt.PersistenceEF.Models.DelegationPacka
 namespace Altinn.AccessManagement.Tests.Integration.Services;
 
 [IntegrationTest]
-public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>
+public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
 {
+    private readonly EfDatabaseFixture _fixture;
     private readonly AppDbContext _db;
     private readonly ConnectionQuery _query;
 
     public ConnectionQueryTests(EfDatabaseFixture fixture)
     {
+        _fixture = fixture;
+
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(fixture.Db.Admin.ToString())
             .Options;
 
         _db = new AppDbContext(options);
         _query = new ConnectionQuery(_db);
-
-        SeedTestData(_db).GetAwaiter().GetResult();
     }
+
+    /// <inheritdoc />
+    public async ValueTask InitializeAsync() => await _fixture.EnsureSeedOnceAsync(() => SeedTestData(_db));
+
+    /// <inheritdoc />
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     private async Task SeedTestData(AppDbContext db)
     {
@@ -34,14 +41,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>
         db.Assignments.AddRange(TestDataSet.Assignments);
         db.Delegations.AddRange(TestDataSet.Delegations);
 
-        try
-        {
-            await db.SaveChangesAsync(new Altinn.AccessMgmt.PersistenceEF.Extensions.AuditValues(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest));
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.ToString());
-        }
+        await db.SaveChangesAsync(new Altinn.AccessMgmt.PersistenceEF.Extensions.AuditValues(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest));
     }
 
     [Fact]
