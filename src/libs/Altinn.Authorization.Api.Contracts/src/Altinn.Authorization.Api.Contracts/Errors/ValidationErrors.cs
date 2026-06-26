@@ -89,7 +89,7 @@ public static class ValidationErrors
     /// Resource does not exist.
     /// </summary>
     public static ValidationErrorDescriptor ResourceNotExists { get; }
-        = _factory.Create(11, $"Resource do not exists.");
+        = _factory.Create(12, $"Resource does not exist.");
 
     /// <summary>
     /// Gets a validation error descriptor

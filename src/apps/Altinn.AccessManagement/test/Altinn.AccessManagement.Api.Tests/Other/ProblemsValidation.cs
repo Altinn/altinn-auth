@@ -1,4 +1,7 @@
-﻿using Altinn.AccessManagement.Core.Errors;
+using System.Reflection;
+
+using Altinn.AccessManagement.Core.Errors;
+using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.AccessManagement.Api.Tests.Other;
 
@@ -6,73 +9,30 @@ namespace Altinn.AccessManagement.Api.Tests.Other;
 public class ProblemsValidation
 {
     [Fact]
-    public void Problems_RequestProblems_ShouldBeAccessible()
+    public void Problems_AllDescriptors_HaveDistinctErrorCodes()
     {
-        _ = Problems.NotAuthorizedForConsentRequest;
-        _ = Problems.ConsentNotFound;
-        _ = Problems.ConsentCantBeAccepted;
-        _ = Problems.InvalidOrganizationIdentifier;
-        _ = Problems.InvalidPersonIdentifier;
-        _ = Problems.InvalidConsentResource;
-        _ = Problems.UnknownConsentMetadata;
-        _ = Problems.MissingMetadataValue;
-        _ = Problems.MissingMetadata;
-        _ = Problems.InvalidResourceCombination;
-        _ = Problems.ConsentCantBeRevoked;
-        _ = Problems.ConsentRevoked;
-        _ = Problems.MissMatchConsentParty;
-        _ = Problems.ConsentExpired;
-        _ = Problems.ConsentNotAccepted;
-        _ = Problems.ConsentCantBeRejected;
-        _ = Problems.ConsentWithIdAlreadyExist;
-        _ = Problems.UnsupportedEntityType;
-        _ = Problems.EntityTypeNotFound;
-        _ = Problems.EntityVariantNotFoundOrInvalid;
-        _ = Problems.MissingRightHolder;
-        _ = Problems.ConnectionEntitiesDoNotExist;
-        _ = Problems.MissingConnection;
-        _ = Problems.PartyNotFound;
-        _ = Problems.PersonInputRequiredForPersonAssignment;
-        _ = Problems.AgentHasExistingDelegations;
-        _ = Problems.PersonLookupFailedToManyErrors;
-        _ = Problems.InvalidResource;
-        _ = Problems.NotAuthorizedForDelegationRequest;
-        _ = Problems.DelegationPolicyRuleWriteFailed;
-        _ = Problems.AssignmentNotFound;
-        _ = Problems.RequestNotFound;
-        _ = Problems.RequestCreationFailed;
+        var codes = ErrorCodesOf<ProblemDescriptor>(typeof(Problems), d => d.ErrorCode);
+
+        Assert.NotEmpty(codes);
+        Assert.Equal(codes.Count, codes.Distinct().Count());
     }
 
     [Fact]
-    public void ValidationErrors_AllDescriptors_ShouldBeAccessible()
+    public void ValidationErrors_AllDescriptors_HaveDistinctErrorCodes()
     {
-        _ = ValidationErrors.Required;
-        _ = ValidationErrors.InvalidPartyUrn;
-        _ = ValidationErrors.InvalidResource;
-        _ = ValidationErrors.MissingPolicy;
-        _ = ValidationErrors.MissingDelegableRights;
-        _ = ValidationErrors.ToManyDelegationsToRevoke;
-        _ = ValidationErrors.EntityNotExists;
-        _ = ValidationErrors.RoleNotExists;
-        _ = ValidationErrors.DisallowedEntityType;
-        _ = ValidationErrors.InvalidQueryParameter;
-        _ = ValidationErrors.AssignmentHasActiveConnections;
-        _ = ValidationErrors.PackageNotExists;
-        _ = ValidationErrors.ResourceNotExists;
-        _ = ValidationErrors.TimeNotInFuture;
-        _ = ValidationErrors.EmptyList;
-        _ = ValidationErrors.ConsentNotFound;
-        _ = ValidationErrors.InvalidResourceContext;
-        _ = ValidationErrors.UserNotAuthorized;
-        _ = ValidationErrors.InvalidRedirectUrl;
-        _ = ValidationErrors.PackageIsNotAssignableToRecipient;
-        _ = ValidationErrors.InvalidRole;
-        _ = ValidationErrors.InvalidPackage;
-        _ = ValidationErrors.DelegationHasActiveConnections;
-        _ = ValidationErrors.MissingAssignment;
-        _ = ValidationErrors.PackageIsNotDelegable;
-        _ = ValidationErrors.InvalidExternalIdentifiers;
-        _ = ValidationErrors.RequestNotFound;
-        _ = ValidationErrors.RequestUnsupportedStatusUpdate;
+        var codes = ErrorCodesOf<ValidationErrorDescriptor>(typeof(ValidationErrors), d => d.ErrorCode);
+
+        Assert.NotEmpty(codes);
+        Assert.Equal(codes.Count, codes.Distinct().Count());
     }
+
+    // Reflects every public static descriptor property on the catalog so the check
+    // covers the whole set and cannot drift as descriptors are added (the old
+    // hand-maintained list had already missed one). Reading each value also forces
+    // its initializer to run, so a descriptor that throws on construction fails here.
+    private static List<ErrorCode> ErrorCodesOf<T>(Type catalog, Func<T, ErrorCode> errorCode) =>
+        catalog.GetProperties(BindingFlags.Public | BindingFlags.Static)
+            .Where(p => p.PropertyType == typeof(T))
+            .Select(p => errorCode((T)p.GetValue(null)!))
+            .ToList();
 }

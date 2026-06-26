@@ -29,9 +29,15 @@ namespace Altinn.Authorization.Tests.Integration
         public ExternalDecisionTest(AuthorizationApiFixture fixture)
         {
             _fixture = fixture;
-            _client = fixture.BuildClient();
             SetupFeatureMock(true);
             SetupDateTimeMock();
+
+            // Build the shared client through the same configured path the
+            // per-test clients use, so the AuditLog feature flag set above is
+            // actually honoured. Building via BuildClient() left _client on the
+            // host default feature manager, so flag-dependent assertions could
+            // pass for the wrong reason.
+            _client = GetTestClient(featureManager: featureManageMock.Object);
         }
 
         [Fact]

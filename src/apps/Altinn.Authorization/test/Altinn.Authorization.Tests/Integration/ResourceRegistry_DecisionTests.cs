@@ -28,11 +28,17 @@ namespace Altinn.Authorization.Tests.Integration
         public ResourceRegistry_DecisionTests(AuthorizationApiFixture fixture)
         {
             _fixture = fixture;
-            _client = fixture.BuildClient();
             SetupFeatureMock("AuditLog", true);
             SetupFeatureMock("SystemUserAccessPackageAuthorization", true);
             SetupFeatureMock("UserAccessPackageAuthorization", true);
             SetupDateTimeMock();
+
+            // Build the shared client through the configured path so the feature
+            // flags set above are honoured. Building via BuildClient() left _client
+            // on the host default feature manager, so the access-package
+            // authorization flags were ignored and those decision paths could be
+            // asserted without actually being enabled.
+            _client = GetTestClient(featureManager: featureManageMock.Object);
         }
 
         [Fact]

@@ -192,12 +192,24 @@ namespace Altinn.Authorization.PEP.Tests
             _httpContextAccessorMock.Setup(h => h.HttpContext).Returns(CreateHttpContext(ipaddress));
             XacmlJsonResponse response = CreateResponse(XacmlContextDecision.Permit.ToString());
             AddObligationWithMinAuthLv(response, "2");
-
-            // verify
             _pdpMock.Setup(a => a.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(response));
 
             // Act
             await _aah.HandleAsync(context);
+
+            // Assert
+            Assert.True(context.HasSucceeded);
+            Assert.False(context.HasFailed);
+
+            XacmlJsonRequestRoot request = Assert.IsType<XacmlJsonRequestRoot>(Assert.Single(_pdpMock.Invocations).Arguments[0]);
+
+            // Known gap: even with an X-Forwarded-For header present, the PEP does not
+            // copy it onto the decision request. The AppAccessRequirement overload of
+            // DecisionHelper.CreateDecisionRequest is not even passed the headers, so
+            // XForwardedForHeader is never set and the PDP never sees the client IP.
+            // This pins current behaviour; switch to Assert.Equal(ipaddress, ...) once
+            // IP forwarding is implemented.
+            Assert.Null(request.Request.XForwardedForHeader);
         }
 
         /// <summary>

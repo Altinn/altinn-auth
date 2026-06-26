@@ -57,6 +57,40 @@ public class PolicyDecisionPointTest
         result.Decision.Should().Be(XacmlContextDecision.NotApplicable);
     }
 
+    // Acceptance test for #3132 milestone A2. first-applicable means the first
+    // matching rule decides, so a matching Deny placed first must yield Deny. The
+    // PDP currently implements only rule-deny-overrides: for any other algorithm it
+    // drops the Deny and lets the later Permit win - a silent grant where the policy
+    // says deny (verified: this assertion fails today with Actual = Permit). Skipped
+    // until first-applicable is implemented; remove the Skip then.
+    [Fact(Skip = "PDP only implements rule-deny-overrides; first-applicable is unimplemented and currently returns Permit instead of Deny (silent grant). Acceptance test for #3132 milestone A2.")]
+    public void Authorize_FirstApplicable_DenyRuleFirst_ReturnsDeny()
+    {
+        XacmlContextResult result = Decide(TwoRulePolicy("Deny", "Permit", FirstApplicable), Request());
+        result.Decision.Should().Be(XacmlContextDecision.Deny);
+    }
+
+    private static readonly string FirstApplicable = XacmlConstants.CombiningAlgorithms.RuleFirstApplicable;
+
+    private static string TwoRulePolicy(string firstEffect, string secondEffect, string combiningAlg) => $@"<?xml version=""1.0"" encoding=""utf-8""?>
+<Policy xmlns=""{Ns}"" PolicyId=""urn:test:policy"" Version=""1.0"" RuleCombiningAlgId=""{combiningAlg}"">
+  <Target />
+  <Rule RuleId=""urn:test:rule1"" Effect=""{firstEffect}"">
+    <Target>
+      <AnyOf><AllOf>{Match("urn:oasis:names:tc:xacml:1.0:resource:resource-id", "urn:oasis:names:tc:xacml:3.0:attribute-category:resource", "resource1")}</AllOf></AnyOf>
+      <AnyOf><AllOf>{Match("urn:oasis:names:tc:xacml:1.0:action:action-id", "urn:oasis:names:tc:xacml:3.0:attribute-category:action", "read")}</AllOf></AnyOf>
+      <AnyOf><AllOf>{Match("urn:oasis:names:tc:xacml:1.0:subject:subject-id", "urn:oasis:names:tc:xacml:1.0:subject-category:access-subject", "user1")}</AllOf></AnyOf>
+    </Target>
+  </Rule>
+  <Rule RuleId=""urn:test:rule2"" Effect=""{secondEffect}"">
+    <Target>
+      <AnyOf><AllOf>{Match("urn:oasis:names:tc:xacml:1.0:resource:resource-id", "urn:oasis:names:tc:xacml:3.0:attribute-category:resource", "resource1")}</AllOf></AnyOf>
+      <AnyOf><AllOf>{Match("urn:oasis:names:tc:xacml:1.0:action:action-id", "urn:oasis:names:tc:xacml:3.0:attribute-category:action", "read")}</AllOf></AnyOf>
+      <AnyOf><AllOf>{Match("urn:oasis:names:tc:xacml:1.0:subject:subject-id", "urn:oasis:names:tc:xacml:1.0:subject-category:access-subject", "user1")}</AllOf></AnyOf>
+    </Target>
+  </Rule>
+</Policy>";
+
     private static XacmlContextResult Decide(string policyXml, string requestXml)
     {
         using XmlReader policyReader = XmlReader.Create(new StringReader(policyXml));
