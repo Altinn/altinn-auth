@@ -120,7 +120,7 @@ public partial class ConnectionsControllerTest
         /// - Instance is gone after delete (via GetInstances)
         /// </summary>
         [Fact]
-        public async Task RemoveInstance_AsMalinForDumboToKaos_ReturnsNoContentAndRemovesInstance()
+        public async Task RemoveInstance_AsManagingDirectorToOrganization_ReturnsNoContentAndRemovesInstance()
         {
             List<string> rightKeys = await GetDelegatableInstanceRightKeys("app_skd_sirius-skattemelding-v1", SiriusInstanceIdForRemove);
             Assert.NotEmpty(rightKeys);
@@ -164,7 +164,7 @@ public partial class ConnectionsControllerTest
         /// Expects 204 NoContent.
         /// </summary>
         [Fact]
-        public async Task RemoveInstance_AsJinxForKaosFromDumbo_WithFromOthersWriteScope_Returns204NoContent()
+        public async Task RemoveInstance_AsManagingDirectorFromOtherOrganization_WithFromOthersWriteScope_Returns204NoContent()
         {
             List<string> rightKeys = await GetDelegatableInstanceRightKeys("app_mat_mattilsynet-baker-konditorvare", MattilsynetInstanceIdForRemove);
             Assert.NotEmpty(rightKeys);

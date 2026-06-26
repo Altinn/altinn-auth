@@ -126,7 +126,7 @@ public partial class ConnectionsControllerTest
         /// - GetConnections no longer lists BakerJohnsen as a connection from Dumbo
         /// </summary>
         [Fact]
-        public async Task RemoveAssignment_AsMalinFromDumboToBaker_Returns204NoContent()
+        public async Task RemoveAssignment_AsManagingDirectorToConnectedParty_Returns204NoContent()
         {
             // Verify connection exists before removal
             HttpClient readClient = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);

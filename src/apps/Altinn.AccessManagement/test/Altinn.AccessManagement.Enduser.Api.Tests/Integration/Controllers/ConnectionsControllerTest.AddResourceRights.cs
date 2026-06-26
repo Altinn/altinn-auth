@@ -122,7 +122,7 @@ public partial class ConnectionsControllerTest
         /// Uses valid right keys obtained from delegation check. Expects 201 Created.
         /// </summary>
         [Fact]
-        public async Task AddResourceRights_AsMalinForDumboToMille_WithValidRightKeys_Returns201WithDelegatedResourceRights()
+        public async Task AddResourceRights_AsManagingDirectorToOrganization_WithValidRightKeys_Returns201WithDelegatedResourceRights()
         {
             List<string> rightKeys = await GetDelegatableRightKeys("app_skd_sirius-skattemelding-v1");
             Assert.NotEmpty(rightKeys);

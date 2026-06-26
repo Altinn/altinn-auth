@@ -88,7 +88,7 @@ public partial class ConnectionsControllerTest
         /// - Package is gone after removal
         /// </summary>
         [Fact]
-        public async Task RemovePackages_AsJinxByPackageId_ReturnsNoContentAndRemovesPackage()
+        public async Task RemovePackages_AsManagingDirectorByPackageId_ReturnsNoContentAndRemovesPackage()
         {
             Guid packageId = PackageConstants.AccountingAndEconomicReporting.Id;
             await AddPackage(packageId);
@@ -112,7 +112,7 @@ public partial class ConnectionsControllerTest
         /// Expects 204 NoContent.
         /// </summary>
         [Fact]
-        public async Task RemovePackages_AsJosephineByPackageUrn_FromOthersDirection_Returns204NoContent()
+        public async Task RemovePackages_AsRightholderByPackageUrn_FromOthersDirection_Returns204NoContent()
         {
             Guid packageId = PackageConstants.Customs.Id;
             await AddPackage(packageId);

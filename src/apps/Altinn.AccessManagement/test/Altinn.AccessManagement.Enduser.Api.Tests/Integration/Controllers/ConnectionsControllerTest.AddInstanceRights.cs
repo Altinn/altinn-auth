@@ -127,7 +127,7 @@ public partial class ConnectionsControllerTest
         /// - Each rule contains exactly one action
         /// </summary>
         [Fact]
-        public async Task AddInstanceRights_AsMalinForDumboToKaos_WithValidRightKeys_Returns201WithDelegatedInstanceRights()
+        public async Task AddInstanceRights_AsManagingDirectorToOrganization_WithValidRightKeys_Returns201WithDelegatedInstanceRights()
         {
             List<string> rightKeys = await GetDelegatableInstanceRightKeys("app_skd_sirius-skattemelding-v1", SiriusInstanceId);
             Assert.NotEmpty(rightKeys);

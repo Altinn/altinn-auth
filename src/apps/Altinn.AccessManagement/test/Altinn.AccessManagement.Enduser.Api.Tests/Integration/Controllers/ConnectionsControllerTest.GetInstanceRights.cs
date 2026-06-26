@@ -74,7 +74,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK with direct rights (read, write from the delegation policy).
         /// </summary>
         [Fact]
-        public async Task GetInstanceRights_AsJinxForKaosToJosephine_SiriusSkattemelding_WithToOthersScope_ReturnsOkWithDirectRights()
+        public async Task GetInstanceRights_AsManagingDirectorToRightholder_SiriusSkattemelding_WithToOthersScope_ReturnsOkWithDirectRights()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -111,7 +111,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK with the same direct rights.
         /// </summary>
         [Fact]
-        public async Task GetInstanceRights_AsJosephineFromKaos_SiriusSkattemelding_WithFromOthersScope_ReturnsOkWithDirectRights()
+        public async Task GetInstanceRights_AsRightholderFromOrganization_SiriusSkattemelding_WithFromOthersScope_ReturnsOkWithDirectRights()
         {
             HttpClient client = CreateClient(TestData.JosephineYvonnesdottir.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -136,7 +136,7 @@ public partial class ConnectionsControllerTest
         /// The delegation policy grants only read, so fewer rights than SiriusSkattemelding.
         /// </summary>
         [Fact]
-        public async Task GetInstanceRights_AsJinxForKaosToJosephine_MattilsynetBakery_WithToOthersScope_ReturnsOkWithDirectRights()
+        public async Task GetInstanceRights_AsManagingDirectorToRightholder_MattilsynetBakery_WithToOthersScope_ReturnsOkWithDirectRights()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -161,7 +161,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetInstanceRights_AsJosephineFromKaos_WithToOthersScope_Returns403ForToOthersScopeOnFromOthersDirection()
+        public async Task GetInstanceRights_AsRightholderFromOrganization_WithToOthersScope_Returns403ForToOthersScopeOnFromOthersDirection()
         {
             HttpClient client = CreateClient(TestData.JosephineYvonnesdottir.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -177,7 +177,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetInstanceRights_AsJinxForKaosToJosephine_WithFromOthersScope_Returns403ForFromOthersScopeOnToOthersDirection()
+        public async Task GetInstanceRights_AsManagingDirectorToRightholder_WithFromOthersScope_Returns403ForFromOthersScopeOnToOthersDirection()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 

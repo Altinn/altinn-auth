@@ -72,7 +72,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK with Josephine listed as a user with access.
         /// </summary>
         [Fact]
-        public async Task GetInstanceUsers_AsJinxForKaos_SiriusSkattemelding_ReturnsJosephine()
+        public async Task GetInstanceUsers_AsManagingDirector_SiriusSkattemelding_ReturnsRightholder()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
 
@@ -99,7 +99,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK with Josephine listed (same rightholder, different resource instance).
         /// </summary>
         [Fact]
-        public async Task GetInstanceUsers_AsJinxForKaos_MattilsynetBakery_ReturnsJosephine()
+        public async Task GetInstanceUsers_AsManagingDirector_MattilsynetBakery_ReturnsRightholder()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
 
@@ -121,7 +121,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK with an empty list.
         /// </summary>
         [Fact]
-        public async Task GetInstanceUsers_AsJinxForKaos_NonExistentInstance_ReturnsEmptyList()
+        public async Task GetInstanceUsers_AsManagingDirector_NonExistentInstance_ReturnsEmptyList()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
 

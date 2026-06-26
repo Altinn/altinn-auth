@@ -52,7 +52,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK with role check results.
         /// </summary>
         [Fact]
-        public async Task DelegationCheckRoles_AsMalinForDumbo_ReturnsOkWithResults()
+        public async Task DelegationCheckRoles_AsManagingDirector_ReturnsOkWithResults()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
 

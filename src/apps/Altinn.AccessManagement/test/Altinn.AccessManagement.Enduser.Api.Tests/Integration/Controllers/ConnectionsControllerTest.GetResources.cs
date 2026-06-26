@@ -94,7 +94,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK with both Skattemelding and MVA-melding resources.
         /// </summary>
         [Fact]
-        public async Task GetResources_AsMalinForDumboToMille_WithToOthersScope_Returns200WithDelegatedResources()
+        public async Task GetResources_AsManagingDirectorToOrganization_WithToOthersScope_Returns200WithDelegatedResources()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -116,7 +116,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK (Mille has no resources delegated toward Dumbo, so the list may be empty).
         /// </summary>
         [Fact]
-        public async Task GetResources_AsMalinForDumboFromMille_WithFromOthersScope_Returns200Ok()
+        public async Task GetResources_AsManagingDirectorFromOtherOrganization_WithFromOthersScope_Returns200Ok()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -131,7 +131,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK with both Skattemelding and MVA-melding resources.
         /// </summary>
         [Fact]
-        public async Task GetResources_AsTheaForMilleFromDumbo_WithFromOthersScope_Returns200WithReceivedResources()
+        public async Task GetResources_AsManagingDirectorFromOtherOrganization_WithFromOthersScope_Returns200WithReceivedResources()
         {
             HttpClient client = CreateClient(TestData.Thea.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -153,7 +153,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK (no resources delegated in this direction).
         /// </summary>
         [Fact]
-        public async Task GetResources_AsTheaForMilleToDumbo_WithToOthersScope_Returns200Ok()
+        public async Task GetResources_AsManagingDirectorToOtherOrganization_WithToOthersScope_Returns200Ok()
         {
             HttpClient client = CreateClient(TestData.Thea.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -168,7 +168,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetResources_AsTheaForMilleFromDumbo_WithToOthersScope_Returns403ForToOthersScopeOnFromOthersDirection()
+        public async Task GetResources_AsManagingDirectorFromOtherOrganization_WithToOthersScope_Returns403ForToOthersScopeOnFromOthersDirection()
         {
             HttpClient client = CreateClient(TestData.Thea.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 

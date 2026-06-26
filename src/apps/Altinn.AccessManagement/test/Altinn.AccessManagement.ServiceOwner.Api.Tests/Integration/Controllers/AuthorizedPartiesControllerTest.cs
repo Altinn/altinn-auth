@@ -53,7 +53,7 @@ public class AuthorizedPartiesControllerTest
         public ApiFixture Fixture { get; }
 
         [Fact]
-        public async Task GetAuthorizedParties_ForDagligLeder_UsingNewRoute_ReturnsOkWithDumboAdventuresAsDagl()
+        public async Task GetAuthorizedParties_ForDagligLeder_UsingNewRoute_Returns200WithRepresentedOrgWithDaglRole()
         {
             // Arrange: NAV is a registered tjenesteier asking on behalf of Malin Emilie (DAGL of Dumbo Adventures)
             var client = CreateServiceOwnerClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
@@ -85,7 +85,7 @@ public class AuthorizedPartiesControllerTest
         }
 
         [Fact]
-        public async Task GetAuthorizedParties_ForDagligLeder_UsingOldRoute_ReturnsOkWithDumboAdventuresAsDagl()
+        public async Task GetAuthorizedParties_ForDagligLeder_UsingOldRoute_Returns200WithRepresentedOrgWithDaglRole()
         {
             // Arrange: NAV is a registered tjenesteier asking on behalf of Malin Emilie (DAGL of Dumbo Adventures)
             var client = CreateServiceOwnerClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);

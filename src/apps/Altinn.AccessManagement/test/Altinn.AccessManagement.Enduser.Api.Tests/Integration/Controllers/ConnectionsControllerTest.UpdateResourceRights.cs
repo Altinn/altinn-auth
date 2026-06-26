@@ -139,7 +139,7 @@ public partial class ConnectionsControllerTest
         /// Uses valid right keys obtained from delegation check. Expects 200 OK.
         /// </summary>
         [Fact]
-        public async Task UpdateResourceRights_AsMalinForDumboToMille_WithValidRightKeys_Returns200WithUpdatedResourceRights()
+        public async Task UpdateResourceRights_AsManagingDirectorToOrganization_WithValidRightKeys_Returns200WithUpdatedResourceRights()
         {
             List<string> rightKeys = await GetDelegatableRightKeys("app_mat_mattilsynet-baker-konditorvare");
             Assert.NotEmpty(rightKeys);

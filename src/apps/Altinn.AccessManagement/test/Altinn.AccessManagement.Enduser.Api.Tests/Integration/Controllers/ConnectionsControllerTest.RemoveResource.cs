@@ -139,7 +139,7 @@ public partial class ConnectionsControllerTest
         /// First adds the delegation, then removes it. Expects 204 NoContent.
         /// </summary>
         [Fact]
-        public async Task RemoveResource_AsMalinForDumboFromDumboToMille_Returns204NoContent()
+        public async Task RemoveResource_AsManagingDirectorToOrganization_Returns204NoContent()
         {
             List<string> rightKeys = await GetDelegatableRightKeys("nav_sykepenger_sykmelding");
             Assert.NotEmpty(rightKeys);
@@ -160,7 +160,7 @@ public partial class ConnectionsControllerTest
         /// acting as receiver (from-others direction). Expects 204 NoContent.
         /// </summary>
         [Fact]
-        public async Task RemoveResource_AsTheaForMilleFromDumboToMille_Returns204NoContent()
+        public async Task RemoveResource_AsManagingDirectorFromOtherOrganization_Returns204NoContent()
         {
             List<string> rightKeys = await GetDelegatableRightKeys("nav_sykepenger_sykmelding");
             Assert.NotEmpty(rightKeys);

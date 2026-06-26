@@ -76,7 +76,7 @@ public partial class ConnectionsControllerTest
         /// Tests that available users for Dumbo Adventures includes Thea when authenticated as Malin Emilie (managing director).
         /// </summary>
         [Fact]
-        public async Task GetAvailableUsers_AsMalinForDumbo_ContainsThea()
+        public async Task GetAvailableUsers_AsManagingDirector_ContainsRightholder()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
 

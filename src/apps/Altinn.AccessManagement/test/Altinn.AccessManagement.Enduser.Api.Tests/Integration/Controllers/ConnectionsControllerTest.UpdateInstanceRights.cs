@@ -141,7 +141,7 @@ public partial class ConnectionsControllerTest
         /// - Written XACML policy matches the updated right keys
         /// </summary>
         [Fact]
-        public async Task UpdateInstanceRights_AsJinxToThea_WithMoreRightKeys_ReturnsOkAndUpdatesRights()
+        public async Task UpdateInstanceRights_AsManagingDirectorToRecipient_WithMoreRightKeys_ReturnsOkAndUpdatesRights()
         {
             List<string> allRightKeys = await GetDelegatableInstanceRightKeys("app_skd_sirius-skattemelding-v1", SiriusInstanceIdForUpdate);
             Assert.True(allRightKeys.Count >= 2, $"Expected at least 2 delegatable right keys, but got {allRightKeys.Count}");
@@ -303,7 +303,7 @@ public partial class ConnectionsControllerTest
         /// resource to avoid shared state collisions.
         /// </summary>
         [Fact]
-        public async Task UpdateInstanceRights_AsAlexToMilena_ReduceRights_RemovesExcessRights()
+        public async Task UpdateInstanceRights_AsChairOfTheBoardToRecipient_ReduceRights_RemovesExcessRights()
         {
             const string instanceIdForReduce = "urn:altinn:instance-id:50401002/e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8092";
 

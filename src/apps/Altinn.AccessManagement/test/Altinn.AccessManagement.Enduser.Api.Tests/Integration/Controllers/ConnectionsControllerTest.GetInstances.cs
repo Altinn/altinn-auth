@@ -69,7 +69,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK with both SiriusSkattemelding and MattilsynetBakeryService instances.
         /// </summary>
         [Fact]
-        public async Task GetInstances_AsJinxForKaosToJosephine_WithToOthersScope_Returns200WithDelegatedInstances()
+        public async Task GetInstances_AsManagingDirectorToRightholder_WithToOthersScope_Returns200WithDelegatedInstances()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -91,7 +91,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK (Josephine has no instances delegated toward Kaos, so the list may be empty).
         /// </summary>
         [Fact]
-        public async Task GetInstances_AsJinxForKaosFromJosephine_WithFromOthersScope_Returns200WithEmptyList()
+        public async Task GetInstances_AsManagingDirectorFromRightholder_WithFromOthersScope_Returns200WithEmptyList()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -111,7 +111,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK with both SiriusSkattemelding and MattilsynetBakeryService instances.
         /// </summary>
         [Fact]
-        public async Task GetInstances_AsJosephineFromKaos_WithFromOthersScope_Returns200WithReceivedInstances()
+        public async Task GetInstances_AsRightholderFromOrganization_WithFromOthersScope_Returns200WithReceivedInstances()
         {
             HttpClient client = CreateClient(TestData.JosephineYvonnesdottir.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -133,7 +133,7 @@ public partial class ConnectionsControllerTest
         /// Expects OK (no instances delegated in this direction).
         /// </summary>
         [Fact]
-        public async Task GetInstances_AsJosephineToKaos_WithToOthersScope_Returns200Ok()
+        public async Task GetInstances_AsRightholderToOrganization_WithToOthersScope_Returns200Ok()
         {
             HttpClient client = CreateClient(TestData.JosephineYvonnesdottir.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -148,7 +148,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetInstances_AsJosephineFromKaos_WithToOthersScope_Returns403ForToOthersScopeOnFromOthersDirection()
+        public async Task GetInstances_AsRightholderFromOrganization_WithToOthersScope_Returns403ForToOthersScopeOnFromOthersDirection()
         {
             HttpClient client = CreateClient(TestData.JosephineYvonnesdottir.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -162,7 +162,7 @@ public partial class ConnectionsControllerTest
         /// Expects 403 Forbidden.
         /// </summary>
         [Fact]
-        public async Task GetInstances_AsJinxForKaosToJosephine_WithFromOthersScope_Returns403ForFromOthersScopeOnToOthersDirection()
+        public async Task GetInstances_AsManagingDirectorToRightholder_WithFromOthersScope_Returns403ForFromOthersScopeOnToOthersDirection()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -206,7 +206,7 @@ public partial class ConnectionsControllerTest
         /// Only SiriusSkattemelding instances should be returned, not MattilsynetBakeryService.
         /// </summary>
         [Fact]
-        public async Task GetInstances_AsJinxForKaosToJosephine_FilterByResource_ReturnsOnlyMatchingResource()
+        public async Task GetInstances_AsManagingDirectorToRightholder_FilterByResource_ReturnsOnlyMatchingResource()
         {
             HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
