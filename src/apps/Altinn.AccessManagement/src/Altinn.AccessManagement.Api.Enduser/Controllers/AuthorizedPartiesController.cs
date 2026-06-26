@@ -39,7 +39,7 @@ public class AuthorizedPartiesController(
     [HttpGet]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_AUTHORIZEDPARTIES)]
     [Produces(MediaTypeNames.Application.Json)]
-    [ProducesResponseType(typeof(PaginatedResult<List<AuthorizedPartyDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PaginatedResult<AuthorizedPartyDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
