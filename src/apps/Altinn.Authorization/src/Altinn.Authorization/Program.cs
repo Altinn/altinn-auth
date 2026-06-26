@@ -16,6 +16,7 @@ using Altinn.Platform.Authorization.Filters;
 using Altinn.Platform.Authorization.Health;
 using Altinn.Platform.Authorization.ModelBinding;
 using Altinn.Platform.Authorization.Models;
+using Altinn.Platform.Authorization.Persistence;
 using Altinn.Platform.Authorization.Repositories;
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Authorization.Services;
@@ -36,6 +37,7 @@ using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.FeatureManagement;
 using Microsoft.IdentityModel.Logging;
@@ -45,8 +47,6 @@ using Npgsql;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using Swashbuckle.AspNetCore.Filters;
-using Yuniql.AspNetCore;
-using Yuniql.PostgreSql;
 
 ILogger logger;
 
@@ -403,23 +403,42 @@ void Configure()
 
     if (builder.Configuration.GetValue<bool>("PostgreSQLSettings:EnableDBConnection"))
     {
-        ConsoleTraceService traceService = new ConsoleTraceService { IsDebugEnabled = true };
-
-        string connectionString = string.Format(
+        string adminConnectionString = string.Format(
             builder.Configuration.GetValue<string>("PostgreSQLSettings:AdminConnectionString"),
             builder.Configuration.GetValue<string>("PostgreSQLSettings:authorizationDbAdminPwd"));
 
-        app.UseYuniql(
-            new PostgreSqlDataService(traceService),
-            new PostgreSqlBulkImportService(traceService),
-            traceService,
-            new Yuniql.AspNetCore.Configuration
+        var migrationOptions = new DbContextOptionsBuilder<AuthorizationDbContext>()
+            .UseNpgsql(adminConnectionString)
+            .Options;
+
+        using AuthorizationDbContext migrationContext = new(migrationOptions);
+
+        // EF Core's Migrate() takes no cross-instance lock, so when several
+        // instances start against the same database at once they can race on the
+        // schema and on __EFMigrationsHistory. Hold a session-level Postgres
+        // advisory lock on the migration connection so only one instance applies
+        // migrations at a time; the others block, then run a no-op once it is
+        // their turn. The lock is released on the same connection in the finally,
+        // and in any case when the connection closes with the context.
+        const long migrationAdvisoryLockKey = 0x617574686D6967; // "authmig"
+        var migrationConnection = migrationContext.Database.GetDbConnection();
+        migrationConnection.Open();
+        try
+        {
+            using (var lockCommand = migrationConnection.CreateCommand())
             {
-                Workspace = Path.Combine(Environment.CurrentDirectory, builder.Configuration.GetValue<string>("PostgreSQLSettings:WorkspacePath")),
-                ConnectionString = connectionString,
-                IsAutoCreateDatabase = false,
-                IsDebug = true
-            });
+                lockCommand.CommandText = $"SELECT pg_advisory_lock({migrationAdvisoryLockKey});";
+                lockCommand.ExecuteNonQuery();
+            }
+
+            migrationContext.Database.Migrate();
+        }
+        finally
+        {
+            using var unlockCommand = migrationConnection.CreateCommand();
+            unlockCommand.CommandText = $"SELECT pg_advisory_unlock({migrationAdvisoryLockKey});";
+            unlockCommand.ExecuteNonQuery();
+        }
     }
 
     app.UseSwagger(o => o.RouteTemplate = "authorization/swagger/{documentName}/swagger.json");

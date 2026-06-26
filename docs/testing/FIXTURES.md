@@ -180,9 +180,9 @@ runtime is always present.
 ## Other fixtures
 
 - **`AuthorizationDbFixture`** (`Altinn.Authorization.Tests`) — provides a
-  PostgreSQL database with the Authorization Yuniql schema for the
+  PostgreSQL database with the Authorization `delegation` schema for the
   delegation-metadata repository tests. Backed by the shared `PostgresTestEngine`
-  (the Yuniql scripts are replayed once into a template; each test class gets a
+  (the EF Core migrations are applied once into a template; each test class gets a
   clone). (`AuthorizationApiFixture` itself is mock-backed and needs no container.)
 - **`PlatformFixture`** (`Altinn.Authorization.Integration.Tests`) — wires up the
   platform-integration clients against the **live** platform; its tests

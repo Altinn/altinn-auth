@@ -1,25 +1,23 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
-using Npgsql;
+using Altinn.Platform.Authorization.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace Altinn.Authorization.Tests.Fixtures;
 
 /// <summary>
-/// Provides a PostgreSQL database carrying the AuthorizationDB schema (the Yuniql
-/// migration scripts shipped with <c>Altinn.Authorization</c>) so tests can
-/// exercise <c>DelegationMetadataRepository</c> against a real database via
+/// Provides a PostgreSQL database carrying the AuthorizationDB schema (the EF Core
+/// migrations shipped with <c>Altinn.Authorization</c>) so tests can exercise
+/// <c>DelegationMetadataRepository</c> against a real database via
 /// <see cref="ApplicationConnectionString"/>.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Backed by the shared <see cref="PostgresTestEngine"/>: the migration scripts are
-/// replayed once into a template database, and each test class gets a fast
+/// Backed by the shared <see cref="PostgresTestEngine"/>: the migrations are applied
+/// once into a template database, and each test class gets a fast
 /// <c>CREATE DATABASE ... WITH TEMPLATE</c> clone — instead of starting a container
-/// and re-running every script per fixture.
+/// and re-running migrations per fixture.
 /// </para>
 /// <para>
 /// On hosts where Docker / Testcontainers is unavailable, <see cref="SkipReason"/>
@@ -70,45 +68,13 @@ public sealed class AuthorizationDbFixture : IAsyncLifetime
 
     private static async Task ApplyMigrationsAsync(PostgresTestDatabase template)
     {
-        await using var conn = new NpgsqlConnection(template.Admin.ToString());
-        await conn.OpenAsync();
+        // Apply the EF Core migrations with the admin role — the baseline migration
+        // creates the delegation schema, its enum type, table, functions and grants.
+        var options = new DbContextOptionsBuilder<AuthorizationDbContext>()
+            .UseNpgsql(template.Admin.ToString())
+            .Options;
 
-        // Authorization migrations assume the delegation schema already exists; in
-        // production this is provisioned outside Yuniql.
-        await using (var cmd = new NpgsqlCommand("CREATE SCHEMA IF NOT EXISTS delegation;", conn))
-        {
-            await cmd.ExecuteNonQueryAsync();
-        }
-
-        foreach (var sqlFile in EnumerateMigrationFiles())
-        {
-            var sql = await File.ReadAllTextAsync(sqlFile);
-            await using var cmd = new NpgsqlCommand(sql, conn);
-            try
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException($"Migration '{sqlFile}' failed: {ex.Message}", ex);
-            }
-        }
-    }
-
-    private static IEnumerable<string> EnumerateMigrationFiles()
-    {
-        var migrationDir = Path.Combine(AppContext.BaseDirectory, "Migration");
-        if (!Directory.Exists(migrationDir))
-        {
-            throw new InvalidOperationException(
-                $"Authorization migration directory not found at '{migrationDir}'. " +
-                "The test csproj must copy 'src/Altinn.Authorization/Migration/**/*.sql' to the output directory.");
-        }
-
-        // Only versioned directories ('v0.00', 'v0.01', ...) are migration sources;
-        // '_draft', '_erase', '_init', '_post', '_pre' are convention-only README holders.
-        return Directory.EnumerateDirectories(migrationDir, "v*")
-            .OrderBy(d => d, StringComparer.Ordinal)
-            .SelectMany(d => Directory.EnumerateFiles(d, "*.sql").OrderBy(f => f, StringComparer.Ordinal));
+        await using var db = new AuthorizationDbContext(options);
+        await db.Database.MigrateAsync();
     }
 }
