@@ -23,6 +23,7 @@ key_vault_rbac = [{
 
 features = {
   maskinporten = true
+
   a2_party_import = {
     parties  = true
     user_ids = true
@@ -31,30 +32,42 @@ features = {
 
   party_import = {
     system_users = true
+
     npr = {
+      enable        = true
       guardianships = true
+    }
+
+    sire = {
+      enable = true
+      listen = true
     }
   }
 
   ccr_proxy = {
-    enable = true
-    record = true
+    enable  = true
+    record  = true
+    process = true
   }
 }
 
 config = {
+  a2_party_import = {
+    max_db_size_in_gib = 100
+  }
+
   maskinporten = {
     client_id = "47a5f435-3201-40fe-82e3-2136c5ad028c"
     scope     = "folkeregister:deling/offentligmedhjemmel skatteetaten:skatteetatenregistrertselskap"
   }
 
-  a2_party_import = {
-    max_db_size_in_gib = 100
+  api_source = {
+    default = "db"
   }
 
   ccr = {
     flatfiles = {
-      enable = false
+      enable = true
       remote = {
         host = "ccr-flatfile-remote-host"
         user = "ccr-flatfile-remote-user"
