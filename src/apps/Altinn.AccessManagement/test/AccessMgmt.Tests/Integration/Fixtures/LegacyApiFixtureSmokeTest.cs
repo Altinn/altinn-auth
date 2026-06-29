@@ -8,10 +8,10 @@ namespace Altinn.AccessManagement.Tests.Integration.Fixtures;
 
 /// <summary>
 /// Smoke test verifying that <see cref="LegacyApiFixture"/> provisions the
-/// full production database schema — both the EF <c>dbo</c> schemas and the
-/// Yuniql <c>accessmanagement.*</c> / <c>consent.*</c> / <c>delegation.*</c>
-/// schemas (plus enum types) — so tests that rely on the still-extant Dapper
-/// repositories can run against it.
+/// full production database schema — the EF <c>dbo</c> and <c>consent</c> schemas
+/// plus the Yuniql <c>accessmanagement.*</c> / <c>delegation.*</c> schemas (and
+/// their enum types) — so tests that rely on the still-extant Dapper repositories
+/// can run against it.
 /// </summary>
 /// <remarks>
 /// A single tiny test exercising a Dapper-backed repository

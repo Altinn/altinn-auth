@@ -19,7 +19,9 @@
     <PackageReference Include="System.IO.Hashing" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Migrations\" />
+    <EmbeddedResource Include="Migrations\ConsentSchema.sql">
+      <LogicalName>Altinn.AccessMgmt.PersistenceEF.Migrations.ConsentSchema.sql</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   
   <ItemGroup>

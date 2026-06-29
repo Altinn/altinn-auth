@@ -5,21 +5,23 @@ namespace Altinn.AccessManagement.Tests.Fixtures;
 
 /// <summary>
 /// Variant of <see cref="ApiFixture"/> that stands up the <em>full</em> production
-/// database schema — both the EF <c>dbo</c>/<c>dbo_history</c> schemas provisioned
-/// by <see cref="Altinn.AccessManagement.TestUtils.Factories.EFPostgresFactory"/>
-/// and the Yuniql <c>accessmanagement.*</c>, <c>consent.*</c>, and
-/// <c>delegation.*</c> schemas (plus enum types) provisioned by the production
-/// migration pipeline at host startup.
+/// database schema — the EF <c>dbo</c>/<c>dbo_history</c> and <c>consent</c> schemas
+/// provisioned by <see cref="Altinn.AccessManagement.TestUtils.Factories.EFPostgresFactory"/>
+/// (EF Core migrations), plus the <c>accessmanagement.*</c> and <c>delegation.*</c>
+/// schemas (and their enum types) still provisioned by the Yuniql pipeline at host
+/// startup.
 /// </summary>
 /// <remarks>
 /// <para>
 /// Use this fixture for test classes that exercise code paths backed by the
-/// still-extant Dapper repositories (<c>ResourceMetadataRepo</c>,
-/// <c>ConsentRepository</c>, <c>DelegationMetadataRepo</c>) or any component
-/// that depends on the Yuniql-provisioned enum types bound via
-/// <c>PersistenceDependencyInjectionExtensions.AddDatabase</c>. For pure EF
-/// tests, keep using <see cref="ApiFixture"/> directly — it boots faster
-/// because it skips the Yuniql migration pipeline.
+/// still-extant Dapper / raw-Npgsql repositories — <c>ResourceMetadataRepo</c> and
+/// <c>DelegationMetadataRepo</c> (on the Yuniql <c>accessmanagement</c> /
+/// <c>delegation</c> schemas) and <c>ConsentRepository</c> (on the EF-provisioned
+/// <c>consent</c> schema) — or any component that depends on the Yuniql-provisioned
+/// enum types bound via <c>PersistenceDependencyInjectionExtensions.AddDatabase</c>.
+/// For pure EF tests that need none of the Yuniql schemas, keep using
+/// <see cref="ApiFixture"/> directly — it boots faster because it skips the Yuniql
+/// pipeline.
 /// </para>
 /// <para>
 /// How it works: the base <see cref="ApiFixture"/> provisions a per-test
@@ -57,10 +59,11 @@ public class LegacyApiFixture : AccessMgmtApiFixture
         WithInMemoryAppsettings(dict =>
         {
             // Enables the production Yuniql migration pipeline at host startup so
-            // the per-test database receives the legacy accessmanagement.*,
-            // consent.*, and delegation.* schemas + enum types on top of the
-            // EF-provisioned dbo schemas. Yuniql is gated by EnableDBConnection
-            // alone (see AccessManagementHost.ConfigurePostgreSqlConfiguration).
+            // the per-test database receives the legacy accessmanagement.* and
+            // delegation.* schemas + enum types. The consent schema is provisioned
+            // by EF Core (ConsentSchema_Baseline) as part of the template, alongside
+            // the dbo schemas. Yuniql is gated by EnableDBConnection alone (see
+            // AccessManagementHost.ConfigurePostgreSqlConfiguration).
             //
             // RunIntegrationTests is intentionally NOT set: it would trigger
             // Program.Init() (EF migrate + StaticDataIngest + register import) on a

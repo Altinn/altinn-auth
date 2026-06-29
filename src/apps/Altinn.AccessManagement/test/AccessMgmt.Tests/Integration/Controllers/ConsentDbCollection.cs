@@ -4,7 +4,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers;
 
 /// <summary>
 /// Shares a single <see cref="ConsentApiFixture"/> — one test host plus one
-/// Yuniql-provisioned database — across the consent controller test classes that
+/// database — across the consent controller test classes that
 /// use <see cref="Xunit.IClassFixture{TFixture}"/>, instead of each building its
 /// own host.
 /// </summary>

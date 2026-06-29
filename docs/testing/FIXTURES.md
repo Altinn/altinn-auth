@@ -130,12 +130,13 @@ flag-enabled client so the decision is actually exercised.
 
 ---
 
-## 3. `LegacyApiFixture` — Yuniql-backed legacy tests
+## 3. `LegacyApiFixture` — legacy-schema tests
 
 **Location:** `AccessMgmt.Tests/Fixtures/LegacyApiFixture.cs`
-**Use for:** Legacy tests that depend on the full Yuniql-migrated schema and
-haven't been rewritten against EF seed data yet.
-**Database:** Yuniql migrations **and** EF schema side-by-side.
+**Use for:** Tests backed by the Dapper / raw-Npgsql repositories on the
+`accessmanagement`, `delegation` and `consent` schemas.
+**Database:** EF Core (the `dbo` and `consent` schemas) **and** the Yuniql
+`accessmanagement` / `delegation` schemas, side-by-side.
 
 This fixture exists as an explicit bridge. New tests should **not** use it —
 prefer `ApiFixture`. The expected outcome is that the last `LegacyApiFixture`
