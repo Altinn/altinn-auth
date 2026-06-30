@@ -9,6 +9,7 @@ using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
@@ -19,10 +20,17 @@ public class PackageService : IPackageService
 
     public ITranslationService TranslationService { get; set; }
 
-    public PackageService(AppDbContext appDbContext, ITranslationService translationService)
+    private IMemoryCache _memoryCache;
+    private static readonly MemoryCacheEntryOptions _cacheOptions = new()
+    {
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+    };
+
+    public PackageService(AppDbContext appDbContext, ITranslationService translationService, IMemoryCache memoryCache)
     {
         DbContext = appDbContext;
         TranslationService = translationService;
+        _memoryCache = memoryCache;
     }
 
     private const StringComparison Ic = StringComparison.InvariantCultureIgnoreCase;
@@ -190,27 +198,49 @@ public class PackageService : IPackageService
     {
         bool filterResourceProviders = resourceProviderCodes != null && resourceProviderCodes.Any();
 
-        var areas = await DbContext.Areas.AsNoTracking().ToListAsync(cancellationToken);
-        var packages = await DbContext.Packages.AsNoTracking().Include(t => t.EntityType).WhereIf(typeId.HasValue && typeId.Value != Guid.Empty, t => t.EntityTypeId == typeId.Value).ToListAsync(cancellationToken);
+        string cacheKey = "packageSvcAreas";
+        if (!_memoryCache.TryGetValue(cacheKey, out List<Area> areas))
+        {
+            areas = await DbContext.Areas.AsNoTracking().ToListAsync(cancellationToken);
+            _memoryCache.Set(cacheKey, areas, _cacheOptions);
+        }
+
+        cacheKey = "packageSvcPackages";
+        if (!_memoryCache.TryGetValue(cacheKey, out List<Package> allPackages))
+        {
+            allPackages = await DbContext.Packages.AsNoTracking().Include(t => t.EntityType).ToListAsync(cancellationToken);
+            _memoryCache.Set(cacheKey, allPackages, _cacheOptions);
+        }
+
+        var packages = allPackages.Where(p => typeId.HasValue && typeId.Value != Guid.Empty ? p.EntityTypeId == typeId.Value : true);
 
         var result = new List<PackageDto>();
 
-        var packageResources = await DbContext.PackageResources.AsNoTracking()
-            .Include(t => t.Resource)
-            .Include(t => t.Resource).ThenInclude(t => t.Provider)
-            .Include(t => t.Resource).ThenInclude(t => t.Type)
-            .WhereIf(filterResourceProviders, t => resourceProviderCodes.Any(code => EF.Functions.ILike(t.Resource.Provider.Code, "%" + code + "%")))
-            .ToListAsync(cancellationToken);
+        cacheKey = "packageSvcPackageResources";
+        if (!_memoryCache.TryGetValue(cacheKey, out List<PackageResource> allPackageResources))
+        {
+            allPackageResources = await DbContext.PackageResources.AsNoTracking()
+                .Include(t => t.Resource)
+                .Include(t => t.Resource).ThenInclude(t => t.Provider)
+                .Include(t => t.Resource).ThenInclude(t => t.Type)
+                .ToListAsync(cancellationToken);
+            _memoryCache.Set(cacheKey, allPackageResources, _cacheOptions);
+        }
+
+        var packageResources = allPackageResources
+            .Where(pr => filterResourceProviders ? resourceProviderCodes.Any(code => pr.Resource?.Provider?.Code?.Contains(code, StringComparison.OrdinalIgnoreCase) == true) : true)
+            .ToList();
+        var resourcesByPackage = packageResources.ToLookup(t => t.PackageId);
 
         foreach (var package in packages)
         {
             // Skip package if the package does not have a valid filtered resource
-            if (filterResourceProviders == true && packageResources.Any(t => t.PackageId == package.Id) == false)
+            if (filterResourceProviders == true && !resourcesByPackage[package.Id].Any())
             {
                 continue;
             }
 
-            result.Add(DtoMapper.Convert(package, areas.First(t => t.Id == package.AreaId), packageResources.Where(t => t.PackageId == package.Id).Select(t => t.Resource)));
+            result.Add(DtoMapper.Convert(package, areas.First(t => t.Id == package.AreaId), resourcesByPackage[package.Id].Select(t => t.Resource)));
         }
 
         foreach (var t in result)
