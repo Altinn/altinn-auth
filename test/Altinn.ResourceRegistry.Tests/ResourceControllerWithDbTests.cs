@@ -708,7 +708,7 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
     {
         await LoadTestDataWithUpdates();
         var client = CreateClient();
-        string requestUri = "resourceregistry/api/v1/Resource/resourcelist?includeAltinn2=false&includeApps=false";
+        string requestUri = "resourceregistry/api/v1/Resource/resourcelist?includeApps=false";
 
         HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
         {

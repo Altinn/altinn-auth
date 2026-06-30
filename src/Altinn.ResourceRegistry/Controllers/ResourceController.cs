@@ -46,7 +46,6 @@ namespace Altinn.ResourceRegistry.Controllers
         /// List of all resources
         /// </summary>
         /// <param name="includeApps">Include App resources</param>
-        /// <param name="includeAltinn2">Include Altinn 2 resources</param>
         /// <param name="includeMigratedApps">Include migrated apps from A1/A2</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns></returns>
@@ -54,11 +53,10 @@ namespace Altinn.ResourceRegistry.Controllers
         [Produces("application/json")]
         public async Task<List<ServiceResource>> ResourceList(
             bool includeApps = true,
-            bool includeAltinn2 = true,
             bool includeMigratedApps = false,
             CancellationToken cancellationToken = default)
         {
-            return await _resourceRegistry.GetResourceList(includeApps, includeAltinn2, includeExpired: false, includeMigratedApps, includeAllVersions: false, cancellationToken);
+            return await _resourceRegistry.GetResourceList(includeApps, includeExpired: false, includeMigratedApps, includeAllVersions: false, cancellationToken);
         }
 
         /// <summary>
@@ -91,7 +89,7 @@ namespace Altinn.ResourceRegistry.Controllers
 
             if (resource == null && id.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX))
             {
-                List<ServiceResource> resourceList = await _resourceRegistry.GetResourceList(includeApps: true, includeAltinn2: false, includeExpired: true, includeMigratedApps: true, includeAllVersions:false, cancellationToken);
+                List<ServiceResource> resourceList = await _resourceRegistry.GetResourceList(includeApps: true, includeExpired: true, includeMigratedApps: true, includeAllVersions:false, cancellationToken);
                 ServiceResource appResource = resourceList.FirstOrDefault(r => r.Identifier == id);
                 if (appResource != null)
                 {
@@ -416,7 +414,7 @@ namespace Altinn.ResourceRegistry.Controllers
 
             if (resource == null && id.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX))
             {
-                List<ServiceResource> resourceList = await _resourceRegistry.GetResourceList(includeApps: true, includeAltinn2: false, includeExpired: true, includeMigratedApps: true, includeAllVersions: false, cancellationToken);
+                List<ServiceResource> resourceList = await _resourceRegistry.GetResourceList(includeApps: true, includeExpired: true, includeMigratedApps: true, includeAllVersions: false, cancellationToken);
                 resource = resourceList.FirstOrDefault(r => r.Identifier == id);
             }
 

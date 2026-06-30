@@ -135,14 +135,7 @@ namespace Altinn.ResourceRegistry.Tests
             List<ServiceResource>? resource = JsonSerializer.Deserialize<List<ServiceResource>>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
 
             Assert.NotNull(resource);
-            Assert.Equal(451, resource.Count);
-
-            ServiceResource? altinn2resourcewithdescription = resource.FirstOrDefault(r => r.ResourceReferences != null && r.ResourceReferences.Any(r => r.Reference != null && r.Reference.Contains("5563")));
-            Assert.NotNull(altinn2resourcewithdescription);
-            Assert.NotNull(altinn2resourcewithdescription.RightDescription);
-            Assert.Equal("NB:Denne tjenesten er EKTJ tjeneste og betyr at man kan bare delegere rettigheter via enkeltrettigheter.\r\nKan ikke delegeres rettigheter via roller", altinn2resourcewithdescription.RightDescription["nb"]);
-            Assert.Equal("EN:Denne tjenesten er EKTJ tjeneste og betyr at man kan bare delegere rettigheter via enkeltrettigheter.\r\nKan ikke delegeres rettigheter via roller", altinn2resourcewithdescription.RightDescription["en"]);
-            Assert.Equal("NN:Denne tjenesten er EKTJ tjeneste og betyr at man kan bare delegere rettigheter via enkeltrettigheter.\r\nKan ikke delegeres rettigheter via roller", altinn2resourcewithdescription.RightDescription["nn"]);
+            Assert.Equal(142, resource.Count);
         }
 
         [Fact]
@@ -161,14 +154,14 @@ namespace Altinn.ResourceRegistry.Tests
             List<ServiceResource>? resource = JsonSerializer.Deserialize<List<ServiceResource>>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as List<ServiceResource>;
 
             Assert.NotNull(resource);
-            Assert.Equal(325, resource.Count);
+            Assert.Equal(16, resource.Count);
         }
 
         [Fact]
         public async Task ResourceList_NoAltinn2()
         {
             var client = CreateClient();
-            string requestUri = "resourceregistry/api/v1/Resource/resourcelist?includeAltinn2=false";
+            string requestUri = "resourceregistry/api/v1/Resource/resourcelist";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
             {
@@ -187,7 +180,7 @@ namespace Altinn.ResourceRegistry.Tests
         public async Task ResourceList_NoAltinn2AndNoApps()
         {
             var client = CreateClient();
-            string requestUri = "resourceregistry/api/v1/Resource/resourcelist?includeAltinn2=false&includeApps=false";
+            string requestUri = "resourceregistry/api/v1/Resource/resourcelist?includeApps=false";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
             {
@@ -206,7 +199,7 @@ namespace Altinn.ResourceRegistry.Tests
         public async Task ResourceList_IncludeMigratedApps()
         {
             var client = CreateClient();
-            string requestUri = "resourceregistry/api/v1/Resource/resourcelist?includeAltinn2=false&includeApps=true&includeMigratedApps=true";
+            string requestUri = "resourceregistry/api/v1/Resource/resourcelist?includeApps=true&includeMigratedApps=true";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
             {
@@ -229,7 +222,7 @@ namespace Altinn.ResourceRegistry.Tests
             // This test verifies issue #735 fix: Apps published to Resource Registry should not appear twice
             // Test setup: app_ttd_bli-tjenesteeier exists in both Storage (applications.json) and Resource Registry (test data)
             var client = CreateClient();
-            string requestUri = "resourceregistry/api/v1/Resource/resourcelist?includeApps=true&includeAltinn2=false";
+            string requestUri = "resourceregistry/api/v1/Resource/resourcelist?includeApps=true";
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
             HttpResponseMessage response = await client.SendAsync(httpRequestMessage);

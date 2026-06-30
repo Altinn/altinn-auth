@@ -9,11 +9,6 @@ namespace Altinn.ResourceRegistry.Core.Configuration
     public class ResourceRegistrySettings
     {
         /// <summary>
-        /// Enables fetching Altinn 2 resources via SBL bridge.
-        /// </summary>
-        public bool EnableAltinn2Resources { get; set; } = true;
-
-        /// <summary>
         /// URL to Orglist on CDN
         /// </summary>
         public string OrgListEndpoint { get; set; }

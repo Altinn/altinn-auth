@@ -67,7 +67,6 @@ public class WebApplicationFixture
                 services.AddSingleton<TimeProvider>(timeProvider);
                 services.AddSingleton<AdvanceableTimeProvider>(timeProvider);
                 services.AddSingleton<IPolicyRepository, PolicyRepositoryMock>();
-                services.AddSingleton<IAltinn2Services, Altinn2ServicesClientMock>();
                 services.AddSingleton<IAccessManagementClient, AccessManagementMock>();
             });
 

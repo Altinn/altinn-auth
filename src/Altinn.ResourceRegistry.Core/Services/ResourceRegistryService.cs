@@ -12,12 +12,10 @@ using Altinn.ResourceRegistry.Core.Exceptions;
 using Altinn.ResourceRegistry.Core.Extensions;
 using Altinn.ResourceRegistry.Core.Helpers;
 using Altinn.ResourceRegistry.Core.Models;
-using Altinn.ResourceRegistry.Core.Models.Altinn2;
 using Altinn.ResourceRegistry.Core.ServiceOwners;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Azure;
 using Azure.Storage.Blobs.Models;
-using Microsoft.Extensions.Options;
 using Nerdbank.Streams;
 
 namespace Altinn.ResourceRegistry.Core.Services
@@ -30,10 +28,8 @@ namespace Altinn.ResourceRegistry.Core.Services
         private readonly IResourceRegistryRepository _repository;
         private readonly IPolicyRepository _policyRepository;
         private readonly IAccessManagementClient _accessManagementClient;
-        private readonly IAltinn2Services _altinn2ServicesClient;
         private readonly IApplications _applicationsClient;
         private readonly IServiceOwnerService _serviceOwnerService;
-        private readonly ResourceRegistrySettings _resourceRegistrySettings;
 
         /// <summary>
         /// Creates a new instance of the <see cref="ResourceRegistryService"/> service.
@@ -43,18 +39,14 @@ namespace Altinn.ResourceRegistry.Core.Services
             IResourceRegistryRepository repository,
             IPolicyRepository policyRepository,
             IAccessManagementClient accessManagementClient,
-            IAltinn2Services altinn2ServicesClient,
             IApplications applicationsClient,
-            IServiceOwnerService serviceOwnerService,
-            IOptions<ResourceRegistrySettings> resourceRegistrySettings)
+            IServiceOwnerService serviceOwnerService)
         {
             _repository = repository;
             _policyRepository = policyRepository;
             _accessManagementClient = accessManagementClient;
-            _altinn2ServicesClient = altinn2ServicesClient;
             _applicationsClient = applicationsClient;
             _serviceOwnerService = serviceOwnerService;
-            _resourceRegistrySettings = resourceRegistrySettings.Value;
         }
 
         /// <inheritdoc/>
@@ -114,7 +106,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         /// <inheritdoc/>
         public async Task<List<ServiceResource>> GetSearchResults(ResourceSearch resourceSearch, CancellationToken cancellationToken = default)
         {
-            List<ServiceResource> resourceList = await GetResourceList(includeApps: false, includeAltinn2: false, includeExpired: false, includeMigratedApps: false, includeAllVersions: true, cancellationToken);
+            List<ServiceResource> resourceList = await GetResourceList(includeApps: false, includeExpired: false, includeMigratedApps: false, includeAllVersions: true, cancellationToken);
             return ServiceResourceHelper.GetSearchResultsFromResourceList(resourceList, resourceSearch);
         }
 
@@ -215,24 +207,16 @@ namespace Altinn.ResourceRegistry.Core.Services
         }
 
         /// <inheritdoc />
-        public async Task<List<ServiceResource>> GetResourceList(bool includeApps, bool includeAltinn2, bool includeExpired, bool includeMigratedApps, bool includeAllVersions = false, CancellationToken cancellationToken = default)
+        public async Task<List<ServiceResource>> GetResourceList(bool includeApps, bool includeExpired, bool includeMigratedApps, bool includeAllVersions = false, CancellationToken cancellationToken = default)
         {
-            var tasks = new List<Task<List<ServiceResource>>>(3)
+            var tasks = new List<Task<List<ServiceResource>>>(2)
             {
                 GetResourceListInner(cancellationToken),
             };
 
-            if (includeApps || includeAltinn2)
+            if (includeApps)
             {
-                if (includeAltinn2 && _resourceRegistrySettings.EnableAltinn2Resources)
-                {
-                    tasks.Add(GetAltinn2AvailableServices(includeExpired: false, cancellationToken));
-                }
-
-                if (includeApps)
-                {
-                    tasks.Add(GetAltinn3Applications(includeMigratedApps, cancellationToken));
-                }
+                tasks.Add(GetAltinn3Applications(includeMigratedApps, cancellationToken));
             }
 
             var resourceLists = await Task.WhenAll(tasks);
@@ -330,100 +314,6 @@ namespace Altinn.ResourceRegistry.Core.Services
                 var serviceOwners = await _serviceOwnerService.GetServiceOwners(cancellationToken);
 
                 return applicationList.Applications.Select(application => MapApplicationToApplicationResource(application, serviceOwners)).ToList();
-            }
-
-            async Task<List<ServiceResource>> GetAltinn2AvailableServices(bool includeExpired, CancellationToken cancellationToken = default)
-            {
-                var altin2Services = await Task.WhenAll(
-                    _altinn2ServicesClient.AvailableServices(1044, includeExpired, cancellationToken),
-                    _altinn2ServicesClient.AvailableServices(2068, includeExpired, cancellationToken),
-                    _altinn2ServicesClient.AvailableServices(1033, includeExpired, cancellationToken));
-
-                List<AvailableService> altinn2List1044 = altin2Services[0];
-                List<AvailableService> altinn2List2068 = altin2Services[1];
-                List<AvailableService> altinn2List1033 = altin2Services[2];
-                var serviceOwners = await _serviceOwnerService.GetServiceOwners(cancellationToken);
-
-                var serviceResources = new List<ServiceResource>(altinn2List1044.Count);
-                foreach (AvailableService service in altinn2List1044)
-                {
-                    string nntext = string.Empty;
-                    string entext = string.Empty;
-
-                    string nndelegationDescription = string.Empty;
-                    string endelegationDescription = string.Empty;
-
-                    AvailableService service2068 = altinn2List2068.Find(r => r.ExternalServiceCode == service.ExternalServiceCode && r.ExternalServiceEditionCode == service.ExternalServiceEditionCode);
-                    if (service2068 != null)
-                    {
-                        nntext = service2068.ServiceEditionVersionName;
-                        nndelegationDescription = service2068.DelegationDescription;
-                    }
-
-                    AvailableService service1033 = altinn2List1033.Find(r => r.ExternalServiceCode == service.ExternalServiceCode && r.ExternalServiceEditionCode == service.ExternalServiceEditionCode);
-                    if (service1033 != null)
-                    {
-                        entext = service1033.ServiceEditionVersionName;
-                        endelegationDescription = service1033.DelegationDescription;
-                    }
-
-                    serviceResources.Add(MapAltinn2ServiceToServiceResource(service, serviceOwners, entext, nntext, endelegationDescription, nndelegationDescription));
-                }
-
-                return serviceResources;
-            }
-
-            ServiceResource MapAltinn2ServiceToServiceResource(AvailableService availableService, ServiceOwnerLookup serviceOwners, string entext, string nntext, string endelegationDescription, string nndelegationDescription)
-            {
-                ServiceResource serviceResource = new ServiceResource();
-                serviceResource.ResourceType = Enums.ResourceType.Altinn2Service;
-                serviceResource.Title = new Dictionary<string, string>
-                {
-                    { "nb", availableService.ServiceEditionVersionName },
-                    { "en", entext },
-                    { "nn", nntext }
-                };
-
-                if (!string.IsNullOrEmpty(availableService.DelegationDescription)
-                    || !string.IsNullOrEmpty(endelegationDescription)
-                    || !string.IsNullOrEmpty(nndelegationDescription))
-                {
-                    serviceResource.RightDescription = new Dictionary<string, string>();
-                }
-
-                if (!string.IsNullOrEmpty(availableService.DelegationDescription))
-                {
-                    serviceResource.RightDescription.Add("nb", availableService.DelegationDescription);
-                }
-
-                if (!string.IsNullOrEmpty(endelegationDescription))
-                {
-                    serviceResource.RightDescription.Add("en", endelegationDescription);
-                }
-
-                if (!string.IsNullOrEmpty(endelegationDescription))
-                {
-                    serviceResource.RightDescription.Add("nn", nndelegationDescription);
-                }
-
-                serviceResource.ResourceReferences = new List<ResourceReference>();
-                serviceResource.Identifier = $"{ResourceConstants.SERVICE_ENGINE_RESOURCE_PREFIX}{availableService.ExternalServiceCode}_{availableService.ExternalServiceEditionCode.ToString()}";
-                serviceResource.ResourceReferences.Add(new ResourceReference() { ReferenceType = Enums.ReferenceType.ServiceCode, Reference = availableService.ExternalServiceCode, ReferenceSource = Enums.ReferenceSource.Altinn2 });
-                serviceResource.ResourceReferences.Add(new ResourceReference() { ReferenceType = Enums.ReferenceType.ServiceEditionCode, Reference = availableService.ExternalServiceEditionCode.ToString(), ReferenceSource = Enums.ReferenceSource.Altinn2 });
-                serviceResource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
-                {
-                    new AuthorizationReferenceAttribute() { Id = "urn:altinn:servicecode", Value = availableService.ExternalServiceCode },
-                    new AuthorizationReferenceAttribute() { Id = "urn:altinn:serviceeditioncode", Value = availableService.ExternalServiceEditionCode.ToString() }
-                };
-                serviceResource.HasCompetentAuthority = new CompetentAuthority();
-                serviceResource.HasCompetentAuthority.Orgcode = availableService.ServiceOwnerCode.ToLower();
-                if (serviceOwners.TryGet(serviceResource.HasCompetentAuthority.Orgcode.ToLower(), out var orgentity))
-                {
-                    serviceResource.HasCompetentAuthority.Organization = orgentity.OrganizationNumber.ToString();
-                    serviceResource.HasCompetentAuthority.Name = orgentity.Name;
-                }
-
-                return serviceResource;
             }
 
             ServiceResource MapApplicationToApplicationResource(Application application, ServiceOwnerLookup serviceOwners)

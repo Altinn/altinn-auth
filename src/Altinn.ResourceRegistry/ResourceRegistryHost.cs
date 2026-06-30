@@ -89,7 +89,6 @@ internal static class ResourceRegistryHost
         services.AddUrnSwaggerSupport();
         services.AddHttpClient<IAccessManagementClient, AccessManagementClient>();
         services.AddHttpClient<IOrgListClient, OrgListClient>();
-        services.AddHttpClient<IAltinn2Services, Altinn2ServicesClient>();
         services.AddHttpClient<IApplications, ApplicationsClient>();
         services.AddAltinnRegisterClient();
 

@@ -90,9 +90,7 @@ public abstract class WebApplicationTests
             {
                 _db.ConfigureServices(services, "resource-registry");
                 services.AddSingleton<MockRegisterClient>();
-                services.AddSingleton<Altinn2ServicesClientMock>();
                 services.AddSingleton<IRegisterClient>(s => s.GetRequiredService<MockRegisterClient>());
-                services.AddSingleton<IAltinn2Services>(r => r.GetRequiredService<Altinn2ServicesClientMock>());
                 ConfigureTestServices(services);
             });
 
