@@ -15,13 +15,9 @@ using AltinnCore.Authentication.JwtCookie;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 // - appsettings.test.json is loaded via ApiFixture.WithAppsettings.
-// - SigningKeyResolverMock replaces ApiFixture's default PublicSigningKeyProviderMock
-//   because PrincipalUtil.GetAccessToken signs tokens with {issuer}-org.pem certs
-//   that SigningKeyResolverMock loads from disk.
 // - IResourceMetadataRepository is mocked; these tests do not query the database
 //   directly. ApiFixture still provisions one — an overhead already paid by other
 //   AccessMgmt.Tests consumers.
@@ -52,8 +48,6 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
             {
                 services.AddSingleton<IResourceMetadataRepository, ResourceMetadataRepositoryMock>();
                 services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                services.RemoveAll<IPublicSigningKeyProvider>();
-                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
                 services.AddSingleton<IPDP, PdpPermitMock>();
             });
 
@@ -123,13 +117,18 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         {
             Stream dataStream = File.OpenRead("Data/Json/InsertAccessManagementResource/input1.json");
             StreamContent content = new StreamContent(dataStream);
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, $"accessmanagement/api/v1/internal/resources")
             {
                 Content = content
             };
 
-            httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("UnitTest", "resourceregistry"));
+            // A malformed platform access token must be rejected by the access-token
+            // handler. (Previously this relied on the "UnitTest" issuer having no
+            // registered signing key; the test certificates are now a single shared
+            // key, so the token has to be invalid on its own merits.)
+            httpRequestMessage.Headers.Add("PlatformAccessToken", "this.is.not.a.valid.token");
 
             // Act
             HttpResponseMessage response = await _client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);

@@ -69,6 +69,32 @@
                 </Compile>
             </ItemGroup>
 
+            <!-- Shared auth/token test doubles (JWT minting + the JwtCookie /
+                 access-token validation stubs that pair with it, all backed by the
+                 in-memory TestSigningCertificate). Opt-in because it pulls the
+                 AltinnCore.Authentication.JwtCookie and Altinn.Common.AccessToken
+                 packages: set <IncludeAuthTestInfra>true</IncludeAuthTestInfra> in
+                 projects that authenticate requests against the test host (they must
+                 already reference those packages). Linked source in the shared
+                 Altinn.Authorization.Testing namespace - no project reference. -->
+            <ItemGroup Condition=" '$(IncludeAuthTestInfra)' == 'true' ">
+                <Compile Include="$(MSBuildThisFileDirectory)testing\AuthTestInfra\TestSigningCertificate.cs">
+                    <Link>Properties\AuthTestInfra\TestSigningCertificate.cs</Link>
+                </Compile>
+                <Compile Include="$(MSBuildThisFileDirectory)testing\AuthTestInfra\ConfigurationManagerStub.cs">
+                    <Link>Properties\AuthTestInfra\ConfigurationManagerStub.cs</Link>
+                </Compile>
+                <Compile Include="$(MSBuildThisFileDirectory)testing\AuthTestInfra\JwtCookiePostConfigureOptionsStub.cs">
+                    <Link>Properties\AuthTestInfra\JwtCookiePostConfigureOptionsStub.cs</Link>
+                </Compile>
+                <Compile Include="$(MSBuildThisFileDirectory)testing\AuthTestInfra\PublicSigningKeyProviderMock.cs">
+                    <Link>Properties\AuthTestInfra\PublicSigningKeyProviderMock.cs</Link>
+                </Compile>
+                <Compile Include="$(MSBuildThisFileDirectory)testing\AuthTestInfra\JwtTokenMock.cs">
+                    <Link>Properties\AuthTestInfra\JwtTokenMock.cs</Link>
+                </Compile>
+            </ItemGroup>
+
             <ItemGroup Condition=" '$(IsTestLibrary)' == 'true' ">
                 <PackageReference Include="xunit.assert" Condition=" '$(XUnitVersion)' == 'v2' " />
                 <PackageReference Include="xunit.extensibility.core" Condition=" '$(XUnitVersion)' == 'v2' " />

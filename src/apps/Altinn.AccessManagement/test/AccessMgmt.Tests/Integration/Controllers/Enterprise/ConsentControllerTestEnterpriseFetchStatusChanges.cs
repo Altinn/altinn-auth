@@ -26,7 +26,6 @@ using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
 using Altinn.Authorization.Api.Contracts.Consent;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.ProblemDetails;
-using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
 using Azure;
@@ -211,21 +210,13 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
             _fixture = new LegacyApiFixture();
             _fixture.ConfigureServices(services =>
             {
-                // PlatformAccessToken / maskinporten tokens are signed by
-                // {issuer}-org.pem; default PublicSigningKeyProviderMock only
-                // accepts the static test key.
-                services.RemoveAll<IPublicSigningKeyProvider>();
-                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
-
                 // Replace ApiFixture's default PermitPdpMock with the legacy
                 // PdpPermitMock flavour used by these tests.
                 services.RemoveAll<IPDP>();
                 services.AddSingleton<IPDP, PdpPermitMock>();
 
                 services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
-                services.AddSingleton<IPDP, PdpPermitMock>();
 
                 // Register the SAME mock instance
                 services.AddSingleton<IAmPartyRepository>(_mockAmPartyRepository.Object);

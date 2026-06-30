@@ -37,7 +37,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
             {
                 services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
                 services.RemoveAll<IPublicSigningKeyProvider>();
-                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
+                services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProviderMock>();
             });
 
             _client = fixture.CreateClient(new() { AllowAutoRedirect = false });

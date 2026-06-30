@@ -10,6 +10,11 @@
         <IsTestLibrary>true</IsTestLibrary>
         <!-- Link the shared PostgreSQL test engine (src/testing/PostgresTestEngine.cs). -->
         <IncludePostgresTestEngine>true</IncludePostgresTestEngine>
+        <!-- Link the shared auth/token test doubles (src/testing/AuthTestInfra/*.cs).
+             TestUtils is the single compile site for the AccessManagement test graph;
+             every AccessManagement test project references it, so they all see the
+             shared Altinn.Authorization.Testing types without source-linking them again. -->
+        <IncludeAuthTestInfra>true</IncludeAuthTestInfra>
     </PropertyGroup>
 
     <ItemGroup>

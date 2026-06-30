@@ -193,7 +193,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Bff
             {
                 services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
                 services.RemoveAll<IPublicSigningKeyProvider>();
-                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
+                services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProviderMock>();
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
                 services.RemoveAll<IPDP>();
                 services.AddSingleton<IPDP, PdpPermitMock>();

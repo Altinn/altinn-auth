@@ -6,9 +6,6 @@ using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Util;
-using Altinn.Common.AccessToken.Services;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 // Why LegacyApiFixture: the endpoint writes through the Dapper-backed
 // ResourceMetadataRepo into accessmanagement.resource (Yuniql schema).
@@ -26,14 +23,6 @@ public class V2ResourceControllerTest : IClassFixture<LegacyApiFixture>
 
     public V2ResourceControllerTest(LegacyApiFixture fixture)
     {
-        fixture.ConfigureServices(services =>
-        {
-            // PlatformAccessToken is signed by {issuer}-org.pem; default
-            // PublicSigningKeyProviderMock only accepts the static test key.
-            services.RemoveAll<IPublicSigningKeyProvider>();
-            services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
-        });
-
         _client = fixture.CreateClient(new() { AllowAutoRedirect = false });
     }
 

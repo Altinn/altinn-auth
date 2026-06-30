@@ -1,26 +1,30 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 using Microsoft.IdentityModel.Tokens;
 
-namespace Altinn.Authorization.Tests.Util;
+namespace Altinn.Authorization.Testing;
 
 /// <summary>
-/// Provides in-memory, self-signed X.509 certificates for use in integration tests.
-/// Eliminates the need for certificate files checked into the repository.
+/// Provides a single in-memory, self-signed X.509 certificate for signing and
+/// validating JWTs in tests. Replaces per-app self-signed certificate files
+/// checked into the repository (e.g. <c>selfSignedTestCertificate.pfx</c> /
+/// <c>.cer</c>).
 /// </summary>
 /// <remarks>
-/// The certificate is generated lazily on first access using <see cref="DateTimeOffset.UtcNow"/>
-/// for its validity window, so the produced certificate (serial, thumbprint, NotBefore/NotAfter)
-/// will vary between test runs. Within a single process it is cached and reused.
+/// The certificate is generated lazily on first access and cached for the life
+/// of the process, so the signing key used to mint a token and the validation
+/// key resolved by the test host always come from the same certificate. Because
+/// the validity window is built from <see cref="DateTimeOffset.UtcNow"/>, the
+/// concrete certificate (serial, thumbprint, NotBefore/NotAfter) varies between
+/// runs but is stable within a run.
 /// </remarks>
-internal static class TestCertificates
+public static class TestSigningCertificate
 {
     private static readonly Lazy<X509Certificate2> _default = new(CreateCertificate);
 
     /// <summary>
     /// Self-signed certificate used for signing and verifying test JWTs.
-    /// Replaces the former <c>selfSignedTestCertificate.pfx</c> / <c>.cer</c> files.
     /// </summary>
     public static X509Certificate2 Default => _default.Value;
 
@@ -44,7 +48,7 @@ internal static class TestCertificates
         using var rsa = RSA.Create(2048);
 
         var req = new CertificateRequest(
-            "CN=AuthorizationTest",
+            "CN=AltinnAuthorizationTest",
             rsa,
             HashAlgorithmName.SHA256,
             RSASignaturePadding.Pkcs1);

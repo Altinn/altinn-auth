@@ -16,12 +16,10 @@ using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessManagement.Utilities;
-using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 // All tests share a single mock set, so DI is registered once in the constructor;
@@ -279,12 +277,6 @@ public class Altinn2RightsControllerTest : IClassFixture<NoDbApiFixture>
 
         // IPartiesClient, IProfileClient, IAltinnRolesClient and IAltinn2RightsClient
         // come from AccessMgmtApiFixture.
-
-        // ApiFixture registers PublicSigningKeyProviderMock by default, but these
-        // tests sign tokens via PrincipalUtil.GetAccessToken which requires the
-        // issuer-cert-backed SigningKeyResolverMock.
-        services.RemoveAll<IPublicSigningKeyProvider>();
-        services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
     }
 
     private static string GetUrlParameter(string header, object value) => header switch

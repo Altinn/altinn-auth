@@ -16,14 +16,12 @@ using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
-using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 // The tests mock the delegation repositories, the PDP and the policy retrieval/factory;
@@ -60,12 +58,6 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
                 services.AddSingleton<IPDP, PepWithPDPAuthorizationMock>();
                 services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
                 services.AddSingleton<IAMPartyService, AMPartyServiceMock>();
-
-                // ApiFixture registers PublicSigningKeyProviderMock by default, but these
-                // tests sign tokens via PrincipalUtil.GetAccessToken which requires the
-                // issuer-cert-backed SigningKeyResolverMock.
-                services.RemoveAll<IPublicSigningKeyProvider>();
-                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
             });
 
             fixture.EnsureSeedOnce<DelegationsControllerTest>(db =>

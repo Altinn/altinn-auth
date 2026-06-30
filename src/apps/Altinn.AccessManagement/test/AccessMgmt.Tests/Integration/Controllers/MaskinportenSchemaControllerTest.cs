@@ -139,7 +139,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
                 services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
                 services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
                 services.RemoveAll<IPublicSigningKeyProvider>();
-                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
+                services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProviderMock>();
                 services.RemoveAll<IHttpContextAccessor>();
                 services.AddSingleton<IHttpContextAccessor>(_httpContextAccessor);
                 services.RemoveAll<IPDP>();
@@ -1891,7 +1891,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
                 services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
                 services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
                 services.RemoveAll<IPublicSigningKeyProvider>();
-                services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
+                services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProviderMock>();
                 services.RemoveAll<IHttpContextAccessor>();
                 services.AddSingleton<IHttpContextAccessor>(_httpContextAccessor);
                 services.RemoveAll<IPDP>();

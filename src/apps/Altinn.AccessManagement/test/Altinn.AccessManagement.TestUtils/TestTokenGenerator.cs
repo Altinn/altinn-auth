@@ -1,15 +1,16 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Altinn.Authorization.Testing;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Altinn.AccessManagement.TestUtils;
 
 /// <summary>
-/// Utility helper that generates JWTs for tests. It provides a deterministic
-/// signing certificate and convenience helpers to create short-lived tokens
-/// with configurable claims.
+/// Utility helper that generates JWTs for tests. Tokens are signed with the
+/// shared <see cref="TestSigningCertificate"/>, so they validate against the
+/// same key served by the shared <c>ConfigurationManagerStub</c> /
+/// <c>PublicSigningKeyProviderMock</c>.
 /// </summary>
 public static class TestTokenGenerator
 {
@@ -22,11 +23,6 @@ public static class TestTokenGenerator
     /// Audience value used when creating test tokens.
     /// </summary>
     public const string Audience = "altinn.no";
-
-    /// <summary>
-    /// Root RSA key used to generate the signing certificate for tests.
-    /// </summary>
-    public static readonly RSA RootCertificateKey = RSA.Create(2048);
 
     /// <summary>
     /// Predefined identity representing a person. Use as a template when
@@ -46,38 +42,15 @@ public static class TestTokenGenerator
 
     private static readonly JwtSecurityTokenHandler _tokenHandler = new();
 
-    private static readonly Lazy<X509Certificate2> _signingCert =
-        new(() =>
-        {
-            var req = new CertificateRequest(
-                "CN=Xunit",
-                RootCertificateKey,
-                HashAlgorithmName.SHA256,
-                RSASignaturePadding.Pkcs1
-            );
-
-            req.CertificateExtensions.Add(
-                new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, critical: true));
-
-            var temp = req.CreateSelfSigned(
-                DateTimeOffset.UtcNow.AddDays(-1),
-                DateTimeOffset.UtcNow.AddYears(1));
-
-            return X509CertificateLoader.LoadPkcs12(
-                temp.Export(X509ContentType.Pfx),
-                password: null,
-                keyStorageFlags: X509KeyStorageFlags.EphemeralKeySet);
-        });
-
     /// <summary>
     /// X.509 certificate used to sign generated tokens.
     /// </summary>
-    public static X509Certificate2 SigningCert => _signingCert.Value;
+    public static X509Certificate2 SigningCert => TestSigningCertificate.Default;
 
     /// <summary>
     /// Security key wrapper around <see cref="SigningCert"/> for use with token validation.
     /// </summary>
-    public static X509SecurityKey SigningKey => new(SigningCert);
+    public static SecurityKey SigningKey => TestSigningCertificate.SecurityKey;
 
     /// <summary>
     /// Creates a signed JWT using the test issuer/audience and the provided
@@ -111,7 +84,7 @@ public static class TestTokenGenerator
             configure(claims);
         }
 
-        var creds = new SigningCredentials(new RsaSecurityKey(RootCertificateKey), SecurityAlgorithms.RsaSha256);
+        var creds = TestSigningCertificate.SigningCredentials;
         var now = DateTime.UtcNow;
         var token = new JwtSecurityToken(
             issuer: issuer,

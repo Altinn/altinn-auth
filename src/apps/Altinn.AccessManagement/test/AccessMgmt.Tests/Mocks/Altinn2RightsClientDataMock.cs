@@ -15,14 +15,18 @@ using Altinn.AccessManagement.Core.Models;
 namespace Altinn.AccessManagement.Tests.Mocks
 {
     /// <summary>
-    /// Mock class for <see cref="IResourceRegistryClient"></see> interface
+    /// Mock of <see cref="IAltinn2RightsClient"/> that returns canned SBL Bridge
+    /// responses from <c>Data/Json</c> for the delegation-flow tests. Distinct from
+    /// the no-op <see cref="TestUtils.Mocks.Altinn2RightsClientMock"/> that the shared
+    /// <c>ApiFixture</c> uses where Altinn 2 is not under test; the two cannot be
+    /// merged because the no-op consumers do not ship these data files.
     /// </summary>
-    public class Altinn2RightsClientMock : IAltinn2RightsClient
+    public class Altinn2RightsClientDataMock : IAltinn2RightsClient
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Altinn2RightsClientMock"/> class
+        /// Initializes a new instance of the <see cref="Altinn2RightsClientDataMock"/> class
         /// </summary>
-        public Altinn2RightsClientMock()
+        public Altinn2RightsClientDataMock()
         {
         }
 
