@@ -90,6 +90,21 @@ jobs:
             9.0.x
             10.0.x
 
+      - name: Cache NuGet packages
+        # The Build step below restores the vertical's package closure (Azure SDK,
+        # Mongo, Spectre, Yarp, ...) on a cold runner every run. Cache the global
+        # packages folder so restore is served from disk instead of the network.
+        # Keyed by the hash of every csproj plus the central-package-management
+        # version files, so adding/removing/bumping a package invalidates the key;
+        # restore-keys falls back to the newest partial cache. Fail-safe: a miss
+        # just restores normally, and actions/cache never fails the job.
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props', '**/Directory.Build.props', '**/Directory.Build.targets') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore dotnet workloads
         # Only verticals that contain an Aspire AppHost (currently AccessManagement)
         # need a workload restore; skip the ~20s on every other vertical.
