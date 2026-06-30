@@ -76,16 +76,19 @@
                 <PackageReference Include="xunit.v3.extensibility.core" Condition=" '$(XUnitVersion)' == 'v3' " />
             </ItemGroup>
 
-            <!-- FluentAssertions is available in both runnable test projects and
-                 shared test-helper libraries so the global using below resolves
-                 in either context. -->
+            <!-- AwesomeAssertions is the free, API-compatible fork of FluentAssertions
+                 (FluentAssertions 8.x is commercially licensed; 7.2.2 was the last free
+                 release). The assertion API (.Should()...) is unchanged; only the root
+                 namespace differs (AwesomeAssertions, not FluentAssertions), which is why
+                 the global using below is AwesomeAssertions. Available in both runnable
+                 test projects and shared test-helper libraries. -->
             <ItemGroup>
-                <PackageReference Include="FluentAssertions" />
+                <PackageReference Include="AwesomeAssertions" />
             </ItemGroup>
 
             <ItemGroup>
                 <Using Include="Xunit" />
-                <Using Include="FluentAssertions" />
+                <Using Include="AwesomeAssertions" />
             </ItemGroup>
 
         </When>

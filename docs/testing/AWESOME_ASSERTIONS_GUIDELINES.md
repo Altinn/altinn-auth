@@ -1,25 +1,29 @@
-﻿# FluentAssertions Usage Guidelines
+﻿# AwesomeAssertions Usage Guidelines
 
 **Status:** Adopted.
 **Scope:** All test projects in this repository.
-**Package:** `FluentAssertions` 7.0.0, globally imported via `Directory.Build.targets`.
+**Package:** `AwesomeAssertions` 9.4.0, globally imported via `Directory.Build.targets`.
 
 ---
 
 ## TL;DR
 
-- **New tests:** Use FluentAssertions (`.Should()`).
-- **Modified tests:** Convert the assertions you touch to FluentAssertions.
+- **New tests:** Use AwesomeAssertions (`.Should()`).
+- **Modified tests:** Convert the assertions you touch to AwesomeAssertions.
 - **Untouched existing tests:** Leave as-is. No bulk rewrites.
 - **Custom `AssertionUtil` helpers:** Prefer `Should().BeEquivalentTo(...)` for
   new code. Do not add new helpers to the two existing `AssertionUtil` classes.
 
-`Xunit` and `FluentAssertions` are both in `<Using>` — no `using` directive
+`Xunit` and `AwesomeAssertions` are both in `<Using>` — no `using` directive
 needed.
 
 ---
 
-## Why FluentAssertions
+## Why AwesomeAssertions
+
+AwesomeAssertions is the free, API-compatible fork of FluentAssertions
+(FluentAssertions 8.x is commercially licensed). The `.Should()` API is the
+same, so existing assertions are unchanged.
 
 More readable assertions, better failure messages, rich built-in
 support for collections / equivalence / exceptions / dates, and it lets us
@@ -27,7 +31,7 @@ retire ~1,300 lines of bespoke `AssertionUtil` code over time.
 
 ---
 
-## Patterns — xUnit → FluentAssertions
+## Patterns — xUnit → AwesomeAssertions
 
 ### Equality and nullness
 
@@ -37,7 +41,7 @@ Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 Assert.NotNull(result);
 Assert.Null(error);
 
-// FluentAssertions
+// AwesomeAssertions
 response.StatusCode.Should().Be(HttpStatusCode.OK);
 result.Should().NotBeNull();
 error.Should().BeNull();
@@ -60,7 +64,7 @@ context.HasFailed.Should().BeFalse();
 Assert.Contains("denied", message);
 Assert.StartsWith("Bearer ", header);
 
-// FluentAssertions
+// AwesomeAssertions
 message.Should().Contain("denied");
 header.Should().StartWith("Bearer ");
 
@@ -76,7 +80,7 @@ message.Should().NotBeNullOrEmpty()
 // xUnit
 Assert.True(count >= 1 && count <= 10);
 
-// FluentAssertions
+// AwesomeAssertions
 count.Should().BeInRange(1, 10);
 ```
 
@@ -98,7 +102,7 @@ Assert.Equal(3, results.Count);
 Assert.Contains(expectedItem, results);
 Assert.Empty(errors);
 
-// FluentAssertions
+// AwesomeAssertions
 results.Should().HaveCount(3).And.Contain(expectedItem);
 errors.Should().BeEmpty();
 
@@ -137,12 +141,12 @@ walking properties by hand or adding another overload to `AssertionUtil`.
 var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => svc.DoAsync());
 Assert.Contains("not allowed", ex.Message);
 
-// FluentAssertions — synchronous
+// AwesomeAssertions — synchronous
 Action act = () => svc.Do();
 act.Should().Throw<InvalidOperationException>()
     .WithMessage("*not allowed*");
 
-// FluentAssertions — async
+// AwesomeAssertions — async
 Func<Task> act = () => svc.DoAsync();
 await act.Should().ThrowAsync<InvalidOperationException>()
     .WithMessage("*not allowed*");
@@ -164,7 +168,7 @@ response.Headers.Location.Should().NotBeNull();
 
 ## When to keep using xUnit assertions
 
-FluentAssertions is preferred, but these cases are fine with plain xUnit:
+AwesomeAssertions is preferred, but these cases are fine with plain xUnit:
 
 - **`Assert.Fail("reason")`** inside a `catch` or unreachable branch — it
   short-circuits flow analysis cleanly.
@@ -172,7 +176,7 @@ FluentAssertions is preferred, but these cases are fine with plain xUnit:
   assertion (e.g. `Assert.Equal(input.Length, parsed.Length)` as the single
   line of a tiny parametrised test). Either style is acceptable; don't churn
   existing code for this.
-- **xUnit's `Assert.Raises` / `Assert.PropertyChanged`** — no FluentAssertions
+- **xUnit's `Assert.Raises` / `Assert.PropertyChanged`** — no AwesomeAssertions
   equivalent is currently used in this repo, keep the xUnit API.
 
 Never mix `Assert.Xxx(...)` and `.Should()` assertions on the **same value**
@@ -198,7 +202,7 @@ Guidelines:
 
 ## Failure message quality
 
-FluentAssertions failure messages include the expression text, expected
+AwesomeAssertions failure messages include the expression text, expected
 value, actual value, and any `because` reason you provide. Favor precise
 reasons over generic ones:
 
@@ -218,5 +222,5 @@ omit it.
 
 ## References
 
-- [FluentAssertions docs](https://fluentassertions.com/)
+- [AwesomeAssertions on NuGet](https://www.nuget.org/packages/AwesomeAssertions/)
 - [TEST_NAMING_CONVENTION.md](TEST_NAMING_CONVENTION.md)

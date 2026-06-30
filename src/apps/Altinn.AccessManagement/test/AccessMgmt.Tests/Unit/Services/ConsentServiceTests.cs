@@ -371,7 +371,7 @@ public class ConsentServiceTests
     // sets up the behaviour it actually exercises.
     //
     // Test naming follows MethodUnderTest_Scenario_ExpectedResult; assertions
-    // use FluentAssertions (`.Should()`).
+    // use AwesomeAssertions (`.Should()`).
     // =======================================================================
     [Fact]
     public async Task GetConsentStatusChangesForParty_RepositoryReturnsList_ReturnsValueUnchanged()

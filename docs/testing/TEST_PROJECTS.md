@@ -80,7 +80,7 @@ helpers (mocks, fixtures, seed data) stay at the project-root namespace.
 
 It sets `<IsTestProject>true</IsTestProject>` (or `<IsTestLibrary>true</IsTestLibrary>`
 for `TestUtils`) and the xUnit version. The shared `Directory.Build.targets`
-at the root adds `xunit.v3`, `coverlet.collector`, and `FluentAssertions`
+at the root adds `xunit.v3`, `coverlet.collector`, and `AwesomeAssertions`
 automatically based on those flags — individual `.csproj` files stay tiny.
 
 ### `InternalsVisibleTo` is automatic

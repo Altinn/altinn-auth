@@ -2,7 +2,7 @@
 
 Short, opinionated guide. For naming, see
 [TEST_NAMING_CONVENTION.md](TEST_NAMING_CONVENTION.md). For assertions, see
-[FLUENT_ASSERTIONS_GUIDELINES.md](FLUENT_ASSERTIONS_GUIDELINES.md).
+[AWESOME_ASSERTIONS_GUIDELINES.md](AWESOME_ASSERTIONS_GUIDELINES.md).
 
 ## Pick the right test type
 
