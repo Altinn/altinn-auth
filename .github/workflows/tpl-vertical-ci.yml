@@ -59,6 +59,7 @@ on:
 
 permissions:
   contents: read
+  actions: read # report-failed-tests.ps1 reads the jobs API to deep-link the summary
 
 jobs:
   build-test-analyze:
@@ -227,25 +228,33 @@ jobs:
       #                         single-type vertical (e.g. PEP has no
       #                         integration tests). Verified: an empty filtered
       #                         run exits 8, which this flag maps to success.
-      # Coverage is collected only on the nightly `analyze` run. PR runs execute
-      # the tests directly (no dotnet-coverage instrumentation overhead) and still
-      # emit .trx + FixtureTiming. On the analyze run each lane writes its own
-      # .coverage file; the Convert steps below merge TestResults/*.coverage so
-      # Sonar and the coverage report see whole-suite coverage. Those Convert /
-      # report steps self-skip on PR runs (no .coverage file is produced).
-      # `dotnet test` (wrapped or not) propagates the test exit code, so a real
-      # failure (exit 2) fails the step.
+      # Coverage is collected only on the nightly `analyze` run (no dotnet-coverage
+      # instrumentation overhead on PR runs); both still emit .trx + FixtureTiming.
+      # On the analyze run each lane writes its .coverage file; the Convert steps
+      # below merge them for Sonar + the coverage report. On a non-zero exit the lane
+      # prints its own failing tests inline via eng/testing/report-failed-tests.ps1,
+      # then re-raises the exit code so the failures show on the step that ran them.
       - name: Test - unit lane (coverage on analyze run)
         id: test_unit
         shell: bash
         working-directory: ${{ inputs.path }}
+        env:
+          GH_API_TOKEN: ${{ github.token }} # lets report-failed-tests.ps1 deep-link the job summary
         run: |
+          set +e
           test=(dotnet test -c Release --no-build -bl:binlog/test-unit.binlog -- --results-directory TestResults/unit --report-xunit-trx --filter-trait "Category=Unit" --ignore-exit-code 8)
           if [[ "${{ inputs.analyze }}" == "true" ]]; then
             dotnet-coverage collect --nologo --settings "$GITHUB_WORKSPACE/eng/testing/coverage.settings" --output TestResults/coverage.unit.coverage --output-format coverage -- "${test[@]}"
           else
             "${test[@]}"
           fi
+          code=$?
+          set -e
+          # Surface the failing tests on this step, then re-raise the real exit code.
+          if [ "$code" -ne 0 ]; then
+            pwsh -NoProfile -File "$GITHUB_WORKSPACE/eng/testing/report-failed-tests.ps1" -ResultsDirectory TestResults/unit
+          fi
+          exit "$code"
 
       - name: Test - integration lane (coverage on analyze run)
         # Runs even when the unit lane failed (but not when the build failed), so
@@ -259,13 +268,22 @@ jobs:
           # next step prints it into the log. A file is used because MTP / dotnet-
           # coverage swallow the test host's process-exit stdout.
           FIXTURE_TIMING_FILE: ${{ github.workspace }}/fixture-timing.txt
+          GH_API_TOKEN: ${{ github.token }} # lets report-failed-tests.ps1 deep-link the job summary
         run: |
+          set +e
           test=(dotnet test -c Release --no-build -bl:binlog/test-integration.binlog -- --results-directory TestResults/integration --report-xunit-trx --filter-trait "Category=Integration" --ignore-exit-code 8)
           if [[ "${{ inputs.analyze }}" == "true" ]]; then
             dotnet-coverage collect --nologo --settings "$GITHUB_WORKSPACE/eng/testing/coverage.settings" --output TestResults/coverage.integration.coverage --output-format coverage -- "${test[@]}"
           else
             "${test[@]}"
           fi
+          code=$?
+          set -e
+          # Surface the failing tests on this step, then re-raise the real exit code.
+          if [ "$code" -ne 0 ]; then
+            pwsh -NoProfile -File "$GITHUB_WORKSPACE/eng/testing/report-failed-tests.ps1" -ResultsDirectory TestResults/integration
+          fi
+          exit "$code"
 
       - name: Setup-timing breakdown (FixtureTiming)
         # Surface FixtureTiming's per-assembly setup-time breakdown directly in this
@@ -285,75 +303,6 @@ jobs:
           else
             echo "No FixtureTiming output (this vertical's tests do not use the Postgres engine)."
           fi
-
-      - name: Report failed tests
-        # When the Test step fails, surface the specific failing test names
-        # (plus their assertion / stack context) directly in the workflow log.
-        # The workflow's dotnet-test output otherwise only contains per-DLL
-        # summary lines ("Failed: N, Passed: M, ...") — MTP writes the test-
-        # level detail to bin/.../TestResults/<Project>_<tfm>_<arch>.log,
-        # which this step parses. The same files are uploaded as artifacts by
-        # the step below; we mirror the failures into the log (and as
-        # ::error:: annotations for the PR checks summary) so reviewers don't
-        # need to download the artifact for the most common case.
-        if: failure() && (steps.test_unit.conclusion == 'failure' || steps.test_integration.conclusion == 'failure')
-        shell: pwsh
-        working-directory: ${{ inputs.path }}
-        run: |
-          # Each lane passes `--results-directory TestResults/<lane>` to MTP,
-          # so the per-project logs land under `<vertical>/TestResults/unit/`
-          # and `.../integration/` (and, for some configurations, in the
-          # per-project `bin/.../TestResults/`). Matching any path that
-          # contains a `TestResults/` segment covers all of these while the
-          # `*_net10.0_x64.log` filename pattern keeps us on MTP-shaped
-          # per-project logs.
-          $logs = Get-ChildItem -Path . -Recurse -Filter '*_net10.0_x64.log' -ErrorAction SilentlyContinue |
-                  Where-Object { ($_.FullName -replace '\\','/') -match '/TestResults/' }
-
-          if (-not $logs) {
-              Write-Host "No MTP per-project logs found in any TestResults/ directory under $(Get-Location)." -ForegroundColor Yellow
-              exit 0
-          }
-
-          $total = 0
-          foreach ($log in $logs) {
-              # MTP's per-project log prints a line of the form
-              #   failed <Test Display Name> (duration)
-              # followed by the assertion message, source location, and stack.
-              # We grab each "failed " line plus a bounded block of context.
-              # Note: `$matches` is an automatic variable in PowerShell (written
-              # by the -match operator), so use a distinct name here.
-              $failures = Select-String -Path $log.FullName -Pattern '^\s*failed\s+' -Context 0, 15
-              if (-not $failures) { continue }
-
-              Write-Host ""
-              Write-Host "::group::Failed tests in $($log.BaseName)"
-              foreach ($m in $failures) {
-                  $total++
-                  $title = ($m.Line -replace '^\s*failed\s+', '').Trim()
-                  # Take context up to (but not past) the next "failed " line or
-                  # an unrelated xUnit/MTP summary line — whichever comes first.
-                  $ctx = @()
-                  foreach ($line in $m.Context.PostContext) {
-                      if ($line -match '^\s*failed\s+' -or $line -match '^\s*(passed|skipped)\s+' -or $line -match 'Test run summary' -or $line -match 'Tests (failed|succeeded):' ) { break }
-                      $ctx += $line
-                  }
-                  $body = ($ctx -join "`n").TrimEnd()
-                  Write-Host "`n  $title"
-                  if ($body) { Write-Host $body }
-
-                  # PR-checks annotation (first non-empty context line as message)
-                  $msgLine = ($ctx | Where-Object { $_.Trim() } | Select-Object -First 1)
-                  if (-not $msgLine) { $msgLine = 'See workflow log / test-results artifact for details.' }
-                  $escTitle = $title -replace '%','%25' -replace "`r",'' -replace "`n",' '
-                  $escMsg = $msgLine.Trim() -replace '%','%25' -replace "`r",'' -replace "`n",' '
-                  Write-Host "::error title=$escTitle::$escMsg"
-              }
-              Write-Host "::endgroup::"
-          }
-
-          Write-Host ""
-          Write-Host "Total failing tests: $total"
 
       - name: Convert coverage to cobertura
         # Merges the per-lane .coverage binaries (unit + integration) written
@@ -432,12 +381,12 @@ jobs:
         if: inputs.type == 'pkg'
 
       - name: Upload test results
-        # On failure only: capture MTP per-project logs and TRX reports so the
-        # cause can be diagnosed from GHA artifacts. The workflow `Test.txt`
-        # log contains only summary lines like "Failed: N, Passed: M"; per-test
-        # detail lives in bin/.../TestResults/<Project>_<tfm>_<arch>.log.
-        # We intentionally skip this on success — the logs aren't needed and
-        # uploading them every run added 10+ MB per CI pipeline.
+        # On failure only: keep the full MTP per-project logs and TRX reports as
+        # GHA artifacts. The failing tests (assertion, source line, stack) are
+        # already printed inline on the test lane that ran them; these artifacts
+        # are the complete record for the cases that need more than the inline
+        # summary. We intentionally skip this on success — the logs aren't needed
+        # and uploading them every run added 10+ MB per CI pipeline.
         # Coverage XML is not uploaded (it's reproducible locally via
         # eng/testing/run-coverage.ps1 and was the bulk of the artifact size).
         if: failure()
