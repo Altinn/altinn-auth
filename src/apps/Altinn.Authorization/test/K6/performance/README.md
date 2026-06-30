@@ -1,4 +1,4 @@
- This document provides an overview of how to conduct performance testing using K6 in the Dialogporten Frontend project.
+ This document provides an overview of how to conduct performance testing using K6 in the Altinn Authorization repository.
 
   ## Prerequisites
   * Either
@@ -61,7 +61,7 @@
 
   ### From GitHub Actions
   To run the performance test using GitHub Actions, follow these steps:
-  1. Go to the [GitHub Actions](https://github.com/altinn/dialogporten-frontend/actions/workflows/run-performance-tests.yml) page.
+  1. Go to the [GitHub Actions](https://github.com/Altinn/altinn-authorization-tmp/actions/workflows/run-performance.yml) page.
   2. Select "Run workflow" and fill in the required parameters. See above for details.
   3. Tag the performance test with a descriptive name.
 

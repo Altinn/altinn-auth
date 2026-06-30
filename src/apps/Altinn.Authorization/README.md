@@ -18,24 +18,24 @@ Read more about the component on docs.altinn.studio
 
 ## Getting Started
 
-These instructions will get you a copy of the authentication component up and running on your machine for development and testing purposes.
+These instructions will get you a copy of the authorization component up and running on your machine for development and testing purposes.
 
 ### Prerequisites
 
-1. [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+1. [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 2. Code editor of your choice
 3. Newest [Git](https://git-scm.com/downloads)
 4. [Docker CE](https://www.docker.com/get-docker)
 5. Solution is cloned
 
 
-## Running the storage component
+## Running the authorization component
 
-Clone [Altinn Authorization repo](https://github.com/Altinn/altinn-authorization) and navigate to the root folder.
+Clone [Altinn Authorization repo](https://github.com/Altinn/altinn-authorization-tmp) and navigate to the root folder.
 
 The Authorization components can be run locally when developing/debugging. Follow the install steps above if this has not already been done.
 
-Navigate to the src/Authorization, and build and run the code from there, or run the solution using you selected code editor
+Navigate to `src/apps/Altinn.Authorization/src/Altinn.Authorization`, and build and run the code from there, or run the solution using your selected code editor
 
 ```cmd
 dotnet run
