@@ -49,6 +49,11 @@
                 <Compile Include="$(MSBuildThisFileDirectory)testing\TestCategories.cs">
                     <Link>Properties\TestCategories.cs</Link>
                 </Compile>
+                <!-- Fails the build if any test method lacks a Category trait, so it
+                     can't be silently skipped by the unit/integration lane filters. -->
+                <Compile Include="$(MSBuildThisFileDirectory)testing\TestCategoryGuard.cs">
+                    <Link>Properties\TestCategoryGuard.cs</Link>
+                </Compile>
                 <Using Include="Altinn.Authorization.Testing" />
             </ItemGroup>
 
