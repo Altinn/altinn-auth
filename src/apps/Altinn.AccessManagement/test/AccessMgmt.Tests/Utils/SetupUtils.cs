@@ -43,7 +43,7 @@ namespace Altinn.AccessManagement.Tests.Utils
 
         private static string GetDataBlobPath()
         {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(DelegationsControllerTest).Assembly.Location).LocalPath);
+            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(SetupUtils).Assembly.Location).LocalPath);
             return Path.Combine(unitTestFolder, "..", "..", "..", "data", "blobs");
         }
     }

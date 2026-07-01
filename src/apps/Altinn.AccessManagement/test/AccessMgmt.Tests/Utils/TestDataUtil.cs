@@ -298,119 +298,6 @@ namespace Altinn.AccessManagement.Tests.Utils
         }
 
         /// <summary>
-        /// Sets up mock data for offered maskinporten schema delegations
-        /// </summary>
-        /// <param name="offeredByPartyId">The party id of the reportee to retrieve offered delegations for</param>
-        /// <returns>Offered maskinporten schema delegations</returns>
-        public static List<MaskinportenSchemaDelegationExternal> GetOfferedMaskinportenSchemaDelegations(int offeredByPartyId)
-        {
-            List<MaskinportenSchemaDelegationExternal> delegations = null;
-
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(DelegationsControllerTest).Assembly.Location).LocalPath);
-            string path = Path.Combine(unitTestFolder, "Data", "Json", "MaskinportenSchema", "Offered.json");
-            if (File.Exists(path))
-            {
-                string content = File.ReadAllText(path);
-                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-
-                try
-                {
-                    delegations = JsonSerializer.Deserialize<List<MaskinportenSchemaDelegationExternal>>(content, options);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex);
-                }
-
-                if (offeredByPartyId != 0)
-                {
-                    return delegations.FindAll(d => d.OfferedByPartyId == offeredByPartyId);
-                }
-            }
-
-            return delegations;
-        }
-
-        /// <summary>
-        /// Sets up mock data for received maskinporten schema delegations
-        /// </summary>
-        /// <param name="coveredByPartyId">The party id of the reportee to retrieve received delegations for</param>
-        /// <returns>Received maskinporten schema delegations</returns>
-        public static List<MaskinportenSchemaDelegationExternal> GetReceivedMaskinportenSchemaDelegations(int coveredByPartyId)
-        {
-            List<MaskinportenSchemaDelegationExternal> delegations = null;
-
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(DelegationsControllerTest).Assembly.Location).LocalPath);
-            string path = Path.Combine(unitTestFolder, "Data", "Json", "MaskinportenSchema", "Received.json");
-            if (File.Exists(path))
-            {
-                string content = File.ReadAllText(path);
-                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-
-                try
-                {
-                    delegations = JsonSerializer.Deserialize<List<MaskinportenSchemaDelegationExternal>>(content, options);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex);
-                }
-
-                if (coveredByPartyId != 0)
-                {
-                    return delegations.FindAll(d => d.CoveredByPartyId == coveredByPartyId);
-                }
-            }
-
-            return delegations;
-        }
-
-        /// <summary>
-        /// Sets up mock data for admin delegation list 
-        /// </summary>
-        /// <param name="supplierOrg">partyid of the reportee that delegated the resource</param>
-        /// <param name="consumerOrg">partyid of the reportee that received the delegation</param>
-        /// <param name="resourceIds">resource id</param>
-        /// <returns>Received delegations</returns>
-        public static List<MPDelegationExternal> GetAdminDelegations(string supplierOrg, string consumerOrg, List<string> resourceIds = null)
-        {
-            List<MPDelegationExternal> delegations = null;
-            List<MPDelegationExternal> filteredDelegations = new List<MPDelegationExternal>();
-            string fileName = "admindelegations";
-            string path = GetDelegationPath();
-            if (Directory.Exists(path))
-            {
-                string[] files = Directory.GetFiles(path);
-
-                foreach (string file in files)
-                {
-                    if (file.Contains(fileName))
-                    {
-                        string content = File.ReadAllText(Path.Combine(path, file));
-                        try
-                        {
-                            delegations = JsonSerializer.Deserialize<List<MPDelegationExternal>>(content);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex);
-                        }
-                    }
-                }
-
-                foreach (MPDelegationExternal delegation in delegations)
-                {
-                    if (delegation.SupplierOrg == supplierOrg && delegation.ConsumerOrg == consumerOrg && resourceIds.Contains(delegation.ResourceId))
-                    {
-                        filteredDelegations.Add(delegation);
-                    }
-                }
-            }
-
-            return filteredDelegations;
-        }
-
-        /// <summary>
         /// Gets the organisation information
         /// </summary>
         /// <param name="orgNummer">the organisation number</param>
@@ -533,12 +420,6 @@ namespace Altinn.AccessManagement.Tests.Utils
             };
 
             return partyExternal;
-        }
-
-        private static string GetDelegationPath()
-        {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(DelegationsControllerTest).Assembly.Location).LocalPath);
-            return Path.Combine(unitTestFolder, "Data", "Json", "MaskinportenSchema");
         }
 
         private static string GetPartiesPath()

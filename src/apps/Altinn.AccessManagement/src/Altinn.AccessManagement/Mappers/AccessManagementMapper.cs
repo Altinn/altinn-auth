@@ -23,14 +23,6 @@ namespace Altinn.AccessManagement.Mappers
             AllowNullCollections = true;
             CreateMap<Party, PartyExternal>();
             CreateMap<Delegation, DelegationExternal>();
-            CreateMap<Delegation, MaskinportenSchemaDelegationExternal>();
-            CreateMap<Delegation, MPDelegationExternal>()
-                .ForMember(dest => dest.SupplierOrg, act => act.MapFrom(src => src.CoveredByOrganizationNumber))
-                .ForMember(dest => dest.ConsumerOrg, act => act.MapFrom(src => src.OfferedByOrganizationNumber))
-                .ForMember(dest => dest.DelegationSchemeId, act => act.MapFrom(src => src.ResourceReferences.Where(rf => rf.ReferenceType == ReferenceType.DelegationSchemeId && IsGuid(rf.Reference)).Select(rf => rf.Reference).FirstOrDefault()))
-                .ForMember(dest => dest.Scopes, act => act.MapFrom(src => src.ResourceReferences.Where(rf => string.Equals(rf.ReferenceType, ReferenceType.MaskinportenScope)).Select(rf => rf.Reference).ToList()))
-                .ForMember(dest => dest.Created, act => act.MapFrom(src => src.Created))
-                .ForMember(dest => dest.ResourceId, act => act.MapFrom(src => src.ResourceId));
             CreateMap<CompetentAuthority, CompetentAuthorityExternal>()
                 .ForMember(dest => dest.Orgcode, act => act.MapFrom(src => src.Orgcode))
                 .ForMember(dest => dest.Organization, act => act.MapFrom(src => src.Organization))
