@@ -7,10 +7,6 @@ namespace Altinn.AccessManagement.Core.Models;
 /// </summary>
 public class AuthorizedPartiesFilters
 {
-    public bool IncludeAltinn2 { get; set; } = true;
-
-    public bool IncludeAltinn3 { get; set; } = true;
-
     public bool IncludeRoles { get; set; } = true;
 
     public bool IncludeAccessPackages { get; set; } = false;

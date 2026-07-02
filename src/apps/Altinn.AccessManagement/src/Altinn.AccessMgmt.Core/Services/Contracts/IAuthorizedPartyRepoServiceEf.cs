@@ -94,16 +94,10 @@ public interface IAuthorizedPartyRepoServiceEf
     Task<IEnumerable<Assignment>> GetKeyRoleAssignments(Guid toId, CancellationToken ct = default);
 
     /// <summary>
-    /// Get all connections the to party has any access to in one query, for usage in the new AuthorizedPartiesServiceEf implementation.
+    /// Get all connections the to party has any access to in one query.
     /// </summary>
-    /// <returns>Enumerable of package permissions</returns>
+    /// <returns>List of connection records matching the provided filters</returns>
     Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthers(Guid toId, AuthorizedPartiesFilters filters = null, bool enrichEntities = false, CancellationToken ct = default);
-
-    /// <summary>
-    /// Get all connections the to party has any access packages for, for usage in the AuthorizedPartiesServiceEfOld implementation.
-    /// </summary>
-    /// <returns>Enumerable of package permissions</returns>
-    Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthersOld(Guid toId, AuthorizedPartiesFilters filters = null, CancellationToken ct = default);
 
     /// <summary>
     /// Get list of packages the to party has access to, on behalf of the from party

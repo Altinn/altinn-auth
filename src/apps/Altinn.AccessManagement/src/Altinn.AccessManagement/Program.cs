@@ -1,14 +1,11 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessManagement;
-using Altinn.AccessMgmt.Core;
-using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.HostedServices;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.Authorization.Host.Lease;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Microsoft.FeatureManagement;
 using Microsoft.IdentityModel.Logging;
 
 AppDomain domain = AppDomain.CurrentDomain;
@@ -17,8 +14,6 @@ domain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT", TimeSpan.FromSeconds(2));
 WebApplication app = AccessManagementHost.Create(args);
 using var scope = app.Services.CreateScope();
 var appsettings = scope.ServiceProvider.GetRequiredService<IOptions<AccessManagementAppsettings>>().Value;
-var featureManager = scope.ServiceProvider.GetRequiredService<FeatureManager>();
-await PersistenceFeatures();
 
 if (appsettings.RunInitOnly)
 {
@@ -74,13 +69,6 @@ async Task Init()
 
     var registerImport = scope.ServiceProvider.GetRequiredService<RegisterHostedService>();
     await registerImport.EnsureDbIsIngestWithRegisterData(cts.Token);
-}
-
-async Task PersistenceFeatures()
-{
-    // Delete me after june 19th and Altinn 2 is no more
-    AuthorizedPartiesSettings.IncludeAltinn2 = await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.AuthorizedPartiesIncludeAltinn2);
-    AuthorizedPartiesSettings.UsingConnectionQueryOnly = await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.AuthorizedPartiesUsingConnectionQueryOnly);
 }
 
 /// <summary>

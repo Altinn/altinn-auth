@@ -5,7 +5,6 @@ using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Telemetry;
-using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Models;
@@ -26,19 +25,16 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers;
 [Route("accessmanagement/api/v1/serviceowner")]
 public class AuthorizedPartiesController(
     ILogger<AuthorizedPartiesController> logger,
-    [FromKeyedServices("newConnectionQueryOnlyImplementation")] IAuthorizedPartiesService newConnectionQueryOnlyImplementation,
-    [FromKeyedServices("oldDelegationMetadataEfImplementation")] IAuthorizedPartiesService oldDelegationMetadataEfImplementation,
+    IAuthorizedPartiesService authorizedPartiesService,
     IProviderService providerService,
     AuthorizedPartiesTelemetry authorizedPartiesTelemetry,
     IMemoryCache memoryCache,
     IConfiguration configuration) : ControllerBase
 {
     /// <summary>
-    /// Endpoint for retrieving all authorized parties (with option to include Authorized Parties, aka Reportees, from Altinn 2) for a given user or organization 
+    /// Endpoint for retrieving all authorized parties for a given user or organization 
     /// </summary>
     /// <param name="subject">Subject input model identifying the user or organization to retrieve the list of authorized parties for</param>
-    /// <param name="includeAltinn2">Optional (Default: False): Whether Authorized Parties from Altinn 2 should be included in the result set, and if access to Altinn 3 resources through having Altinn 2 roles should be included.</param>
-    /// <param name="includeAltinn3">Optional (Default: True): Whether Authorized Parties from Altinn 3 should be included in the underlying result set.</param>
     /// <param name="includeRoles">Optional (Default: True): Whether authorized roles should be included in the result set.</param>
     /// <param name="includeAccessPackages">Optional (Default: False): Whether authorized access packages should be included in the result set.</param>
     /// <param name="includeResources">Optional (Default: True): Whether authorized resources should be included in the result set.</param>
@@ -65,8 +61,6 @@ public class AuthorizedPartiesController(
     [FeatureGate(FeatureFlags.RightsDelegationApi)]
     public async Task<ActionResult<List<AuthorizedPartyDto>>> GetAuthorizedPartiesAsServiceOwner(
         [FromBody] AuthorizedPartyRequestDto subject,
-        [FromQuery] bool includeAltinn2 = false,
-        [FromQuery] bool includeAltinn3 = true,
         [FromQuery] bool includeRoles = true,
         [FromQuery] bool includeAccessPackages = false,
         [FromQuery] bool includeResources = true,
@@ -100,7 +94,6 @@ public class AuthorizedPartiesController(
                 logger.LogError("CpuLoadLoopCount debug: elapsed for {LoopCount}: {ElapsedMilliseconds:N0} ms", loopCount, sw.ElapsedMilliseconds);
             }
 
-            var authorizedPartiesService = AuthorizedPartiesSettings.UsingConnectionQueryOnly ? newConnectionQueryOnlyImplementation : oldDelegationMetadataEfImplementation;
             BaseAttribute subjectAttribute = new BaseAttribute(subject.Type, subject.Value);
 
             await RecordResourceOwnerRequestMetric(cancellationToken);
@@ -117,8 +110,6 @@ public class AuthorizedPartiesController(
 
             var filters = new AuthorizedPartiesFilters
             {
-                IncludeAltinn2 = includeAltinn2,
-                IncludeAltinn3 = includeAltinn3,
                 IncludeRoles = includeRoles,
                 IncludeAccessPackages = includeAccessPackages,
                 IncludeResources = includeResources,

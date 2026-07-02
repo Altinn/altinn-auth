@@ -74,8 +74,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthorizedPartyRepoServiceEf, AuthorizedPartyRepoServiceEf>();
         services.AddScoped<IClientDelegationService, ClientDelegationService>();
         services.AddScoped<IRequestService, RequestService>();
-        services.AddKeyedScoped<IAuthorizedPartiesService, AuthorizedPartiesServiceEf>("newConnectionQueryOnlyImplementation");
-        services.AddKeyedScoped<IAuthorizedPartiesService, AuthorizedPartiesServiceEfOld>("oldDelegationMetadataEfImplementation");
+        services.AddScoped<IAuthorizedPartiesService, AuthorizedPartiesServiceEf>();
         services.AddScoped<IServiceOwnerConnectionService, ServiceOwnerConnectionService>();
         services.AddScoped<IConsentDelegationCheckService, ConsentDelegationCheckService>();
 

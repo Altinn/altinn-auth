@@ -75,7 +75,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
             HttpMethod.Get,
             new Uri(
                 new Uri(_client.Settings.Value.ApiAccessManagementEndpoint),
-                "authorizedparties?includeAltinn2=true&includeAltinn3=true&includeRoles=false&includeAccessPackages=false&includeResources=false&includeInstances=false&includePartiesViaKeyRoles=true&includeSubParties=true&includeInactiveParties=true")
+                "authorizedparties?includeRoles=false&includeAccessPackages=false&includeResources=false&includeInstances=false&includePartiesViaKeyRoles=true&includeSubParties=true&includeInactiveParties=true")
             );
         request.Headers.Add("Authorization", "Bearer " + JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _generalSettings.RuntimeCookieName));
 
@@ -97,7 +97,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
             HttpMethod.Get,
             new Uri(
                 new Uri(_client.Settings.Value.ApiAccessManagementEndpoint),
-                $"authorizedparty/{partyId}?includeAltinn2=true&includeAltinn3=true&includeRoles=false&includeAccessPackages=false&includeResources=false&includeInstances=false&includePartiesViaKeyRoles=true&includeSubParties=true&includeInactiveParties=true")
+                $"authorizedparty/{partyId}?includeRoles=false&includeAccessPackages=false&includeResources=false&includeInstances=false&includePartiesViaKeyRoles=true&includeSubParties=true&includeInactiveParties=true")
             );
         request.Headers.Add("Authorization", "Bearer " + JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _generalSettings.RuntimeCookieName));
 

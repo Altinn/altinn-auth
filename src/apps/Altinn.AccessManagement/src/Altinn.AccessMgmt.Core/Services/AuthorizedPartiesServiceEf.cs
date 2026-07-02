@@ -1,12 +1,10 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
-using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -19,7 +17,6 @@ namespace Altinn.AccessManagement.Core.Services;
 
 /// <inheritdoc/>
 public class AuthorizedPartiesServiceEf(
-    IAltinnRolesClient altinnRolesClient,
     IContextRetrievalService contextRetrievalService,
     IAuthorizedPartyRepoServiceEf repoService,
     IMemoryCache memoryCache) : IAuthorizedPartiesService
@@ -59,44 +56,18 @@ public class AuthorizedPartiesServiceEf(
                 // ServiceOwner or Resource filter specified, but no resources found matching.
                 return new List<AuthorizedParty>();
             }
-
-            // Provider/resource filtering relies entirely on the Altinn 3 ConnectionQuery; skip Altinn 2.
-            filter.IncludeAltinn2 = false;
         }
 
         filter = await ProcessAutoFilters(filter, subject, cancellationToken);
 
-        if (!AuthorizedPartiesSettings.IncludeAltinn2)
-        {
-            filter.IncludeAltinn2 = false;
-        }
-
         switch (subject.TypeId)
         {
             case var id when id == EntityTypeConstants.Person.Id:
+            case var id2 when id2 == EntityTypeConstants.EnterpriseUser.Id:
+            case var id3 when id3 == EntityTypeConstants.Organization.Id:
+            case var id4 when id4 == EntityTypeConstants.SystemUser.Id:
+            case var id5 when id5 == EntityTypeConstants.SelfIdentified.Id:
 
-                return await GetAuthorizedPartiesInternal(filter, subject, cancellationToken);
-
-            case var id when id == EntityTypeConstants.EnterpriseUser.Id:
-
-                return await GetAuthorizedPartiesInternal(filter, subject, cancellationToken);
-
-            case var id when id == EntityTypeConstants.Organization.Id:
-
-                // Organizations can not have Altinn 2 roles, only Altinn 3 delegations.
-                filter.IncludeAltinn2 = false;
-                return await GetAuthorizedPartiesInternal(filter, subject, cancellationToken);
-
-            case var id when id == EntityTypeConstants.SystemUser.Id:
-
-                // System users can not have Altinn 2 roles, only Altinn 3 delegations.
-                filter.IncludeAltinn2 = false;
-                return await GetAuthorizedPartiesInternal(filter, subject, cancellationToken);
-
-            case var id when id == EntityTypeConstants.SelfIdentified.Id:
-
-                // SelfIdentified are fully imported to Altinn 3 so no longer need to check Altinn 2.
-                filter.IncludeAltinn2 = false;
                 return await GetAuthorizedPartiesInternal(filter, subject, cancellationToken);
 
             default:
@@ -329,118 +300,7 @@ public class AuthorizedPartiesServiceEf(
 
     private async Task<List<AuthorizedParty>> GetAuthorizedPartiesInternal(AuthorizedPartiesFilters filter, Entity userSubject, CancellationToken cancellationToken = default)
     {
-        Task<(IEnumerable<AuthorizedParty> A2AuthorizedParties, Dictionary<Guid, Entity> AllA2Parties)> a2Task = Task.FromResult((Enumerable.Empty<AuthorizedParty>(), new Dictionary<Guid, Entity>()));
-        Task<(IEnumerable<AuthorizedParty> A3AuthorizedParties, Dictionary<Guid, AuthorizedParty> AllA3Parties)> a3Task = Task.FromResult((Enumerable.Empty<AuthorizedParty>(), new Dictionary<Guid, AuthorizedParty>()));
-
-        if (filter.IncludeAltinn2 && userSubject.UserId.HasValue)
-        {
-            a2Task = Task.Run(async () =>
-            {
-                var a2AuthorizedParties = await altinnRolesClient.GetAuthorizedPartiesWithRoles(userSubject.UserId.Value, filter.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.True, cancellationToken);
-
-                if (filter.PartyFilter?.Count > 0)
-                {
-                    a2AuthorizedParties = GetFilteredA2Parties(a2AuthorizedParties, filter);
-                }
-
-                return (a2AuthorizedParties.AsEnumerable(), new Dictionary<Guid, Entity>());
-            });
-        }
-
-        if (filter.IncludeAltinn3)
-        {
-            a3Task = Task.Run(async () =>
-            {
-                var (allA3Parties, a3AuthorizedParties) = await GetAltinn3AuthorizedParties(filter, userSubject.Id, cancellationToken);
-                return (a3AuthorizedParties, allA3Parties);
-            });
-        }
-
-        await Task.WhenAll(a2Task, a3Task);
-
-        var a2Result = await a2Task;
-        var a3Result = await a3Task;
-
-        // Since EF does not support parallel use of DbContexts, we need to fetch the Altinn 2 parties separately here
-        if (filter.IncludeAltinn2 && a2Result.A2AuthorizedParties.Any())
-        {
-            List<Guid> a2PartyUuids = a2Result.A2AuthorizedParties.Select(p => p.PartyUuid).Distinct().ToList();
-            a2PartyUuids.AddRange(a2Result.A2AuthorizedParties.SelectMany(p => p.Subunits).Select(su => su.PartyUuid).Distinct());
-            var a2Parties = await repoService.GetEntities(a2PartyUuids, cancellationToken);
-
-            foreach (var a2Party in a2Parties)
-            {
-                a2Result.AllA2Parties[a2Party.Id] = a2Party;
-            }
-        }
-
-        return MergeAuthorizePartyLists(
-            a2Result.A2AuthorizedParties,
-            a2Result.AllA2Parties,
-            a3Result.A3AuthorizedParties,
-            a3Result.AllA3Parties
-        );
-    }
-
-    private static List<AuthorizedParty> MergeAuthorizePartyLists(IEnumerable<AuthorizedParty> a2AuthorizedParties, Dictionary<Guid, Entity> allA2Parties, IEnumerable<AuthorizedParty> a3AuthorizedParties, Dictionary<Guid, AuthorizedParty> allParties)
-    {
-        List<AuthorizedParty> result = a3AuthorizedParties.ToList();
-
-        // Merge Altinn 2 authorized parties with Altinn 3 authorized parties, ensuring no duplicates
-        foreach (AuthorizedParty a2Party in a2AuthorizedParties)
-        {
-            if (allParties.TryGetValue(a2Party.PartyUuid, out AuthorizedParty existingA3Party))
-            {
-                if (!a2Party.OnlyHierarchyElementWithNoAccess)
-                {
-                    // Only set to false if Altinn 2 party has actual access
-                    existingA3Party.OnlyHierarchyElementWithNoAccess = false;
-                }
-
-                foreach (AuthorizedParty a2SubUnit in a2Party.Subunits)
-                {
-                    if (allParties.TryGetValue(a2SubUnit.PartyUuid, out _))
-                    {
-                        // No longer need to enrich with role info, so can just continue
-                        continue;
-                    }
-                    else
-                    {
-                        // Add new Altinn 2 subunit
-                        var enhancedA2SubUnit = BuildAuthorizedPartyFromEntity(allA2Parties[a2SubUnit.PartyUuid]);
-
-                        existingA3Party.Subunits.Add(enhancedA2SubUnit);
-                        allParties.Add(enhancedA2SubUnit.PartyUuid, enhancedA2SubUnit);
-                    }
-                }
-            }
-            else
-            {
-                // Add new Altinn 2 party and its subunits
-                var enhancedA2Party = BuildAuthorizedPartyFromEntity(allA2Parties[a2Party.PartyUuid], onlyHierarchyElement: a2Party.OnlyHierarchyElementWithNoAccess);
-
-                allParties.Add(a2Party.PartyUuid, enhancedA2Party);
-                foreach (AuthorizedParty a2SubUnit in a2Party.Subunits)
-                {
-                    var enhancedA2SubUnit = BuildAuthorizedPartyFromEntity(allA2Parties[a2SubUnit.PartyUuid]);
-                    enhancedA2Party.Subunits.Add(enhancedA2SubUnit);
-
-                    allParties.Add(enhancedA2SubUnit.PartyUuid, enhancedA2SubUnit);
-                }
-
-                result.Add(enhancedA2Party);
-            }
-        }
-
-        return result;
-    }
-
-    private async Task<Tuple<Dictionary<Guid, AuthorizedParty>, IEnumerable<AuthorizedParty>>> GetAltinn3AuthorizedParties(
-        AuthorizedPartiesFilters filter,
-        Guid toId,
-        CancellationToken cancellationToken = default)
-    {
-        List<ConnectionQueryExtendedRecord> connections = await repoService.GetConnectionsFromOthers(toId, filters: filter, enrichEntities: true, ct: cancellationToken);
+        List<ConnectionQueryExtendedRecord> connections = await repoService.GetConnectionsFromOthers(userSubject.Id, filters: filter, enrichEntities: true, ct: cancellationToken);
 
         // Post-query filtering of connections when resource/provider filters are active
         if (filter.ProviderCode != null || filter.AnyOfResourceIds?.Length > 0)
@@ -449,18 +309,17 @@ public class AuthorizedPartiesServiceEf(
         }
 
         var fromEntities = connections.Select(c => c.From).DistinctBy(e => e.Id).ToList();
-        var fromParties = fromEntities;
         var fromSubUnits = fromEntities.Where(e => e.ParentId.HasValue).ToList();
 
-        (Dictionary<Guid, AuthorizedParty> parties, IEnumerable<AuthorizedParty> authorizedParties) = BuildDictionaryFromEntities(fromParties, fromSubUnits);
+        (Dictionary<Guid, AuthorizedParty> partiesDict, List<AuthorizedParty> authorizedParties) = BuildDictionaryFromEntities(fromEntities, fromSubUnits);
 
         // Enrich AuthorizedParties with all authorized Roles, AccessPackages, Resources and Instances from the connections if requested in the filters
-        EnrichWithPartiesWithAccessInfo(parties, connections, filter);
+        EnrichWithPartiesWithAccessInfo(partiesDict, connections, filter);
 
-        return Tuple.Create(parties, authorizedParties.AsEnumerable());
+        return authorizedParties;
     }
 
-    private static Tuple<Dictionary<Guid, AuthorizedParty>, IEnumerable<AuthorizedParty>> BuildDictionaryFromEntities(IEnumerable<Entity> parties, IEnumerable<Entity> subunits)
+    private static (Dictionary<Guid, AuthorizedParty> AllPartiesDict, List<AuthorizedParty> AuthorizedParties) BuildDictionaryFromEntities(IEnumerable<Entity> parties, IEnumerable<Entity> subunits)
     {
         Dictionary<Guid, AuthorizedParty> allPartiesDict = new();
         List<AuthorizedParty> authorizedParties = new();
@@ -522,7 +381,7 @@ public class AuthorizedPartiesServiceEf(
             }
         }
 
-        return Tuple.Create(allPartiesDict, authorizedParties.AsEnumerable());
+        return (allPartiesDict, authorizedParties);
     }
 
     private static void EnrichWithPartiesWithAccessInfo(Dictionary<Guid, AuthorizedParty> parties, List<ConnectionQueryExtendedRecord> connections, AuthorizedPartiesFilters filters)
@@ -671,36 +530,6 @@ public class AuthorizedPartiesServiceEf(
         return filtered;
     }
 
-    private static List<AuthorizedParty> GetFilteredA2Parties(IEnumerable<AuthorizedParty> parties, AuthorizedPartiesFilters filters)
-    {
-        bool filterParties = filters.PartyFilter?.Count > 0;
-
-        List<AuthorizedParty> result = new();
-        foreach (var party in parties)
-        {
-            List<AuthorizedParty> subunits = new();
-            foreach (var subunit in party.Subunits)
-            {
-                if (filterParties && !filters.PartyFilter.ContainsKey(subunit.PartyUuid))
-                {
-                    continue;
-                }
-
-                subunits.Add(subunit);
-            }
-
-            party.Subunits = subunits;
-            if (filterParties && !filters.PartyFilter.ContainsKey(party.PartyUuid) && party.Subunits.Count == 0)
-            {
-                continue;
-            }
-
-            result.Add(party);
-        }
-
-        return result;
-    }
-
     private static AuthorizedParty BuildAuthorizedPartyFromEntity(Entity entity, bool onlyHierarchyElement = false)
     {
         var party = new AuthorizedParty
@@ -746,7 +575,7 @@ public class AuthorizedPartiesServiceEf(
         if (filter.ProviderCode != null || filter.AnyOfResourceIds?.Length > 0)
         {
             // Make sure all include filters are set to true, as we need all access info when filtering on provider/resources
-            filter.IncludeAltinn2 = filter.IncludeAltinn3 = filter.IncludeRoles = filter.IncludeAccessPackages = filter.IncludeResources = filter.IncludeInstances = true;  // ToDo: Remove?
+            filter.IncludeRoles = filter.IncludeAccessPackages = filter.IncludeResources = filter.IncludeInstances = true;
 
             // Build cache key. Currently PackageFilter and RoleFilter are always empty when entering this method
             StringBuilder cacheBuilder = new($"pparf:{filter.ProviderCode}:");

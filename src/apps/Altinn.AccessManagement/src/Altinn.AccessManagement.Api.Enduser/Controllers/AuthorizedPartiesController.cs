@@ -3,7 +3,6 @@ using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
-using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
@@ -19,8 +18,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 [Route("accessmanagement/api/v1/enduser/authorizedparties")]
 public class AuthorizedPartiesController(
     ILogger<AuthorizedPartiesController> logger,
-    [FromKeyedServices("newConnectionQueryOnlyImplementation")] IAuthorizedPartiesService newConnectionQueryOnlyImplementation,
-    [FromKeyedServices("oldDelegationMetadataEfImplementation")] IAuthorizedPartiesService oldDelegationMetadataEfImplementation
+    IAuthorizedPartiesService authorizedPartiesService
     ) : ControllerBase
 {
     /// <summary>
@@ -57,12 +55,8 @@ public class AuthorizedPartiesController(
     {
         try
         {
-            var authorizedPartiesService = AuthorizedPartiesSettings.UsingConnectionQueryOnly ? newConnectionQueryOnlyImplementation : oldDelegationMetadataEfImplementation;
-
             var filters = new AuthorizedPartiesFilters
             {
-                IncludeAltinn2 = true,
-                IncludeAltinn3 = true,
                 IncludeRoles = includeRoles,
                 IncludeAccessPackages = includeAccessPackages,
                 IncludeResources = includeResources,
