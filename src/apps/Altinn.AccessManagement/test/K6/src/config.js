@@ -49,12 +49,6 @@ export var platformAuthorization = {
   policy: `https://platform.${baseUrl}/authorization/api/v1/policies`,
   roles: `https://platform.${baseUrl}/authorization/api/v1/roles`,
   getPolicies: `https://platform.${baseUrl}/authorization/api/v1/policies/GetPolicies`,
-  addRules: `https://platform.${baseUrl}/accessmanagement/api/v1/delegations/AddRules`,
-  getRules: `https://platform.${baseUrl}/accessmanagement/api/v1/delegations/GetRules`,
-  deleteRules: `https://platform.${baseUrl}/accessmanagement/api/v1/delegations/DeleteRules`,
-  deletePolicy: `https://platform.${baseUrl}/accessmanagement/api/v1/delegations/DeletePolicy`,
-  maskinPortenSchemaOffered: `https://platform.${baseUrl}/accessmanagement/api/v1/delegations/AddRules`,
-  maskinPortenSchemaReceived: `https://platform.${baseUrl}/accessmanagement/api/v1/delegations/AddRules`,
 };
 
 //Receipt
@@ -93,30 +87,6 @@ export var sbl = {
   altinnBuildVersion: `https://${baseUrl}/pages/logout/AltinnBuildVersion.txt`
 }
 
-export function buildMaskinPorteSchemaUrls(party, type) {
-  var value = '';
-  switch (type) {
-    case 'offered':
-      value = `https://platform.${baseUrl}/accessmanagement/api/v1/${party}/maskinportenschema/offered`;
-      break;
-    case 'received':
-      value = `https://platform.${baseUrl}/accessmanagement/api/v1/${party}/maskinportenschema/received`;
-      break;
-    case 'revokeoffered':
-      value = `https://platform.${baseUrl}/accessmanagement/api/v1/${party}/maskinportenschema/offered/revoke`;
-      break;
-    case 'revokereceived':
-      value = `https://platform.${baseUrl}/accessmanagement/api/v1/${party}/maskinportenschema/received/revoke`;
-      break;
-    case 'maskinportenschema':
-      value = `https://platform.${baseUrl}/accessmanagement/api/v1/${party}/maskinportenschema/offered`;
-      break;
-    case 'delegationCheck':
-      value = `https://platform.${baseUrl}/accessmanagement/api/v1/${party}/maskinportenschema/delegationcheck`;
-      break;
-  }
-  return value;
-}
 export function buildRightsEndpointUrls(party, type) {
   var value = '';
   switch (type) {
