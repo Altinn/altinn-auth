@@ -1,0 +1,52 @@
+meta {
+  name: Maskinporten_AsDigDir_WithoutUrnScope_Forbidden
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/maskinporten/delegations?supplierOrg={{supplierOrg}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  supplierOrg: {{supplierOrg}}
+  ~consumerOrg: {{consumerOrg}}
+  ~scope: {{scope}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/maskinportenschema/${bru.getEnvVar("tokenEnv")}testdata.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  bru.setVar("supplierOrg", testdata.org1.orgno);
+  bru.setVar("consumerOrg", testdata.org2.orgno);
+  
+  var getTokenParameters = {
+    auth_org: testdata.digdir.partyid,
+    auth_orgNo: testdata.digdir.orgno,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.maskinportenDelegations
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  // Should be the same as the .bru request file. Used as prefix in test name which also shows in test result in pipeline.
+  const requestName = "Maskinporten_AsDigDir_WithoutUrnScope_Forbidden";
+  const body = res.getBody();
+  
+  test(requestName + "|HttpStatus.Forbidden and Body.Data with ProblemDetails", function() {
+    expect(res.status).to.equal(403);
+    assert.equal(body.status, "403");
+    assert.equal(body.title, "Not authorized for lookup of delegations without specifying parameter: scope");
+  });
+}

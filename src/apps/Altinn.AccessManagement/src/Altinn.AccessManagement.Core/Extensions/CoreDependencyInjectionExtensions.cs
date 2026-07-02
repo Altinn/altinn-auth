@@ -47,6 +47,7 @@ public static class CoreDependencyInjectionExtensions
         builder.Services.AddTransient<ISigningCredentialsResolver, SigningCredentialsResolver>();
 
         builder.Services.AddScoped<ISingleRightsService, SingleRightsService>();
+        builder.Services.AddScoped<IMaskinportenDelegationLookupService, MaskinportenDelegationLookupService>();
         builder.Services.AddSingleton<IUserProfileLookupService, UserProfileLookupService>();
         builder.Services.AddScoped<IAltinn2RightsService, Altinn2RightsService>();
         builder.Services.AddTransient<IAppsInstanceDelegationService, AppsInstanceDelegationService>();

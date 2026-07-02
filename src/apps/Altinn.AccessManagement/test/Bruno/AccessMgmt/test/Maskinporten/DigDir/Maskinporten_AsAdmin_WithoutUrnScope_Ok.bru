@@ -1,0 +1,83 @@
+meta {
+  name: Maskinporten_AsAdmin_WithoutUrnScope_Ok
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/maskinporten/delegations?supplierOrg={{supplierOrg}}&consumerOrg={{consumerOrg}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  supplierOrg: {{supplierOrg}}
+  consumerOrg: {{consumerOrg}}
+  ~scope: {{scope}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/maskinportenschema/${bru.getEnvVar("tokenEnv")}testdata.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  bru.setVar("supplierOrg", testdata.org2.orgno);
+  bru.setVar("consumerOrg", testdata.org1.orgno);
+  
+  var getTokenParameters = {
+    auth_org: testdata.digdir.partyid,
+    auth_orgNo: testdata.digdir.orgno,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.maskinportenAdmin
+  }
+  
+  
+const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  // Should be the same as the .bru request file. Used as prefix in test name which also shows in test result in pipeline.
+  const testdata = require(`./testdata/maskinportenschema/${bru.getEnvVar("tokenEnv")}testdata.js`);
+  const requestName = "Maskinporten_AsAdmin_WithoutUrnScope_Ok";
+  const body = res.getBody();
+  
+  test(requestName + "|HttpStatus.OK and Body.Data contain expected delegation", function() {
+    // Assert httpstatus
+    expect(res.status).to.equal(200);
+    
+    // Assert the response is an array of length 2
+    assert.isArray(body, 'Response should be an array');
+    assert.lengthOf(body, 2, 'Response should contain two items');
+  
+    // Create a lookup map by resourceid
+    const resourceMap = {};
+    body.forEach(item => {
+      assert.containsAllKeys(item, [
+        'consumer_org',
+        'supplier_org',
+        'scopes',
+        'resourceid'
+      ]);
+      resourceMap[item.resourceid] = item;
+    });
+  
+    // Validate "ttd-am-k6-nuf"
+    assert.property(resourceMap, 'ttd-am-k6-nuf');
+    const k6nuf = resourceMap['ttd-am-k6-nuf'];
+    assert.strictEqual(k6nuf.consumer_org, "810414782");
+    assert.strictEqual(k6nuf.supplier_org, "910049356");
+    assert.sameMembers(k6nuf.scopes, ["test:am/k6nuf.read", "test:am/k6nuf.write"]);
+    
+    // Validate "ttd-am-k6"
+    assert.property(resourceMap, 'ttd-am-k6');
+    const k6 = resourceMap['ttd-am-k6'];
+    assert.strictEqual(k6.consumer_org, "810414782");
+    assert.strictEqual(k6.supplier_org, "910049356");
+    assert.sameMembers(k6.scopes, ["test:am/k6.read", "test:am/k6.write"]);
+  
+  });
+}
