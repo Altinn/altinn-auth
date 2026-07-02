@@ -2,7 +2,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using Altinn.AccessManagement.Tests.Fixtures;
-using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.Authorization.Api.Contracts.Authorization;
 using Microsoft.Extensions.Configuration;
 using TestData = global::Altinn.AccessManagement.Tests.Integration.Services.TestDataSet;

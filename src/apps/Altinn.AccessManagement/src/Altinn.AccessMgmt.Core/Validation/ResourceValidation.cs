@@ -1,5 +1,4 @@
-﻿using Altinn.AccessManagement.Core.Errors;
-using Altinn.AccessMgmt.PersistenceEF.Constants;
+﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;

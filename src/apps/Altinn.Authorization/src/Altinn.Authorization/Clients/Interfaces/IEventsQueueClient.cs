@@ -1,6 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using Altinn.Platform.Authorization.Models;
+﻿using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Models.EventLog;
 
 namespace Altinn.Platform.Authorization.Clients.Interfaces

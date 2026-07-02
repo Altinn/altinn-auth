@@ -1,5 +1,4 @@
 ﻿using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;

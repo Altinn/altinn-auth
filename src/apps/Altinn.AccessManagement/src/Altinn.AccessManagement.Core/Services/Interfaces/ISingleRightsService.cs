@@ -1,6 +1,5 @@
 ﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models;
-using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Altinn.AccessManagement.Core.Services.Interfaces

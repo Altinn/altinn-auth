@@ -1,6 +1,4 @@
 using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessManagement.Resolvers;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Core.Resolvers.Extensions;
 

@@ -1,9 +1,6 @@
 ﻿using System.Text.Json;
-using Altinn.AccessManagement.Core.Models.Party;
-using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.HostedServices.Contracts;
 using Altinn.AccessMgmt.Core.HostedServices.Leases;
-using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Altinn.AccessManagement.Core.Models
+﻿namespace Altinn.AccessManagement.Core.Models
 {
     /// <summary>
     /// Result of a consent delegation check, containing the actions the user is authorized to delegate.

@@ -1,13 +1,9 @@
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Exceptions;
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Storage.Interface.Models;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Authorization.Repositories

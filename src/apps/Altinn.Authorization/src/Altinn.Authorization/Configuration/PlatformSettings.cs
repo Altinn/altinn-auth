@@ -1,5 +1,3 @@
-using System.Runtime.Serialization;
-
 namespace Altinn.Platform.Authorization.Configuration
 {
     /// <summary>

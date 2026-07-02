@@ -1,7 +1,5 @@
 #nullable enable
 
-using Microsoft.AspNetCore.Authorization;
-
 namespace Altinn.Common.PEP.Authorization
 {
     /// <summary>

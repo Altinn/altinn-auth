@@ -1,13 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Altinn.AccessManagement.Core.Enums;
+﻿using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Enums;
-using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Utils;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.Authorization.ABAC.Xacml;
-using Xunit;
 
 namespace Altinn.AccessManagement.Tests.Unit.Helpers
 {

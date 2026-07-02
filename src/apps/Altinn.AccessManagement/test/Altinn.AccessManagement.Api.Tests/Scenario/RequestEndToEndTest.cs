@@ -1,16 +1,9 @@
-﻿using System.Net;
-using System.Net.Http.Json;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Text.Json;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.TestUtils;
-using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core;
-using Altinn.AccessMgmt.PersistenceEF.Constants;
-using Altinn.AccessMgmt.PersistenceEF.Models;
-using Altinn.Authorization.Api.Contracts.AccessManagement;
-using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 
 namespace Altinn.AccessManagement.Api.Tests.Scenario;
 

@@ -4,7 +4,6 @@ using Altinn.Authorization.Integration.Platform.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualBasic;
 using Xunit.Sdk;
 
 namespace Altinn.Authorization.Integration.Tests;

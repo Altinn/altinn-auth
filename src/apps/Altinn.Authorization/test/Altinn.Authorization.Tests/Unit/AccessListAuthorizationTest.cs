@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Altinn.Authorization.Enums;
-using Altinn.Authorization.Models;
+﻿using Altinn.Authorization.Enums;
 using Altinn.Authorization.Models.Register;
 using Altinn.Authorization.Models.ResourceRegistry;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Services.Implementation;
 using Altinn.Platform.Authorization.Services.Interface;
 using Moq;
-using Xunit;
 
 namespace Altinn.Authorization.Tests.Unit;
 

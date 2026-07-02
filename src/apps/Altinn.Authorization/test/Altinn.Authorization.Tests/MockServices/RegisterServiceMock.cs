@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Altinn.Platform.Authorization.Exceptions;
+﻿using Altinn.Platform.Authorization.Exceptions;
 using Altinn.Platform.Authorization.Services.Interfaces;
 using Altinn.Platform.Register.Models;
 using Microsoft.Extensions.Caching.Memory;

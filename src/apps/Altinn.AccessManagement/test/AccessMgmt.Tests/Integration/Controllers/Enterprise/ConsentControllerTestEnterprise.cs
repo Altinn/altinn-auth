@@ -2,27 +2,14 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Errors;
-using Altinn.AccessManagement.Core.Models.Party;
-using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Tests.Fixtures;
-using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Moqdata;
 using Altinn.AccessManagement.Tests.Util;
-using Altinn.AccessManagement.TestUtils.Fixtures;
-using Altinn.AccessManagement.TestUtils.Mocks;
-using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.Authorization.Api.Contracts.Consent;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.ProblemDetails;
-using Altinn.Common.AccessToken.Services;
-using Altinn.Common.PEP.Interfaces;
-using AltinnCore.Authentication.JwtCookie;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 
 // Uses LegacyApiFixture: the consent flow goes through the Dapper-backed
 // ConsentRepository which binds to the consent.status_type enum. The consent

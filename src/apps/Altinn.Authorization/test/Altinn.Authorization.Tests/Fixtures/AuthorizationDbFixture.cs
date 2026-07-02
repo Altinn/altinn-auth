@@ -1,8 +1,5 @@
-using System;
-using System.Threading.Tasks;
 using Altinn.Platform.Authorization.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Xunit;
 
 namespace Altinn.Authorization.Tests.Fixtures;
 

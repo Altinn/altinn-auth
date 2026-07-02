@@ -1,10 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using System.Security.Cryptography;
-using System.Text;
 using Altinn.Authorization.Cli.Database.Metadata;
-using CommunityToolkit.Diagnostics;
-using Spectre.Console;
 
 namespace Altinn.Authorization.Cli.Database.Prompt;
 

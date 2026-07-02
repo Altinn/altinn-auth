@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Altinn.Platform.Authenticaiton.Extensions;
+﻿using Altinn.Platform.Authenticaiton.Extensions;
 using Altinn.Platform.Authorization.Models.AccessManagement;
 using Altinn.Platform.Authorization.Services.Interface;
 using Altinn.Platform.Register.Models;

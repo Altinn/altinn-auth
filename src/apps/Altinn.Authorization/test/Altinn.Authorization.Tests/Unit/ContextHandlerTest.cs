@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Altinn.Authorization.ABAC.Xacml;
+﻿using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Tests.MockServices;
 using Altinn.Authorization.Tests.Util;
 using Altinn.Platform.Authorization.Configuration;
@@ -11,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Moq;
-using Xunit;
 
 namespace Altinn.Authorization.Tests.Unit
 {

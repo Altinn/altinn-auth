@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 

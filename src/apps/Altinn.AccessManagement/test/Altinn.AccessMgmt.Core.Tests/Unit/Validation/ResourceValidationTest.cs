@@ -1,5 +1,4 @@
-﻿using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
-using Altinn.AccessMgmt.Core.Validation;
+﻿using Altinn.AccessMgmt.Core.Validation;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;

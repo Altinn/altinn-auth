@@ -1,17 +1,12 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Fixtures;
-using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.TestUtils.Data;
-using Altinn.AccessManagement.TestUtils.Fixtures;
-using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Tests.Integration.Controllers;
 

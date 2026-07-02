@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-using Altinn;
 using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.AccessMgmt.Core.Utils.Models;

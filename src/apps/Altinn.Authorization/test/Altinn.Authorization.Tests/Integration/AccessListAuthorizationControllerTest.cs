@@ -1,14 +1,9 @@
-﻿using System;
-using System.IO;
-using System.Net;
-using System.Net.Http;
+﻿using System.Net;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Altinn.Authorization.Tests.Fixtures;
 using Altinn.Authorization.Tests.Util;
 using Altinn.Platform.Authorization.Models;
-using Xunit;
 
 namespace Altinn.Authorization.Tests.Integration;
 

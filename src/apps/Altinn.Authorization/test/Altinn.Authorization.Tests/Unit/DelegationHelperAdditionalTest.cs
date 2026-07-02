@@ -1,5 +1,4 @@
-﻿using Altinn.Authorization.ABAC.Constants;
-using Altinn.Authorization.Tests.Data;
+﻿using Altinn.Authorization.Tests.Data;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Models;

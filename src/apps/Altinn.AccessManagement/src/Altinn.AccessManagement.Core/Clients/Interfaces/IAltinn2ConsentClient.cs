@@ -1,7 +1,4 @@
 ﻿using Altinn.AccessManagement.Core.Models.Consent;
-using Altinn.AccessManagement.Core.Models.SblBridge;
-using Altinn.Platform.Register.Models;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Altinn.AccessManagement.Core.Clients.Interfaces;
 

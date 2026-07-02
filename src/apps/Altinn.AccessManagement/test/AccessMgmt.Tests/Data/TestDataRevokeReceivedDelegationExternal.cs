@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Altinn.AccessManagement.Core.Constants;
+﻿using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Resolvers;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Util;

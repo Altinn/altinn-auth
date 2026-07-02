@@ -1,17 +1,10 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Threading;
-using System.Threading.Tasks;
 using Altinn.Authorization.Tests.Fixtures;
 using Altinn.Authorization.Tests.Util;
 using Altinn.Platform.Authorization.Telemetry;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
 
 namespace Altinn.Authorization.Tests.Integration
 {

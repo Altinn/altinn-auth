@@ -1,10 +1,8 @@
-using System.Threading.Tasks;
 using Altinn.Authorization.Tests.Fixtures;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Repositories;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
-using Xunit;
 
 namespace Altinn.Authorization.Tests.Integration.Repositories;
 

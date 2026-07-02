@@ -2,14 +2,12 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Altinn.AccessManagement.Controllers;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Utils;
 using Altinn.AccessManagement.TestUtils.Fixtures;
-using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.Authorization.Api.Contracts.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

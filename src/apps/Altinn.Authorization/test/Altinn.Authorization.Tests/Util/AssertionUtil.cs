@@ -1,20 +1,11 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading;
+﻿using System.Text.Json;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Platform.Authorization.Clients.Interfaces;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Models.EventLog;
-using Altinn.Platform.Authorization.Services.Interfaces;
 using Altinn.Platform.Register.Models;
 using Moq;
-using Xunit;
 
 namespace Altinn.Authorization.Tests.Util
 {

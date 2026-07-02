@@ -12,12 +12,10 @@ using Altinn.Authorization.ProblemDetails;
 using Altinn.Common.PEP.Helpers;
 using Altinn.Common.PEP.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.Net.Mime;
 using System.Security.Claims;
-using System.Text;
 
 namespace Altinn.AccessManagement.Api.Enterprise.Controllers
 {

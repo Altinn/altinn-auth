@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Altinn.Authorization.ABAC.Xacml.JsonProfile
 {
     /// <summary>

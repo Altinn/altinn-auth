@@ -1,5 +1,4 @@
-﻿using System.Drawing;
-using Altinn.AccessMgmt.PersistenceEF.Extensions;
+﻿using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models.Base;
 using Microsoft.EntityFrameworkCore;

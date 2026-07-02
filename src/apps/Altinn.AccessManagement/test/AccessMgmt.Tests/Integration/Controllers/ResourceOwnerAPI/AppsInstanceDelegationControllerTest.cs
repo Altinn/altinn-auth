@@ -1,29 +1,16 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using Altinn.AccessManagement.Controllers;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
-using Altinn.AccessManagement.Core.Repositories.Interfaces;
-using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Data;
 using Altinn.AccessManagement.Tests.Fixtures;
-using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Utils;
-using Altinn.AccessManagement.TestUtils.Fixtures;
-using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.ProblemDetails;
-using Altinn.Common.AccessToken.Services;
-using Altinn.Common.PEP.Interfaces;
-using AltinnCore.Authentication.JwtCookie;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 
 // The shared RightsApiFixture provides the mock graph (PDP, policy/delegation data
 // layer, issuer-cert signing); this class only adds appsettings and seed data.

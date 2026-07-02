@@ -4,11 +4,8 @@ namespace Altinn.Authorization.ABAC
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Linq;
-    using System.Xml;
     using Altinn.Authorization.ABAC.Constants;
-    using Altinn.Authorization.ABAC.Interface;
     using Altinn.Authorization.ABAC.Xacml;
-    using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 
     /// <summary>
     /// This is the Policy Decision Point performing validation of request against policies.

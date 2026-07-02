@@ -1,6 +1,5 @@
 ﻿using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessManagement.Enums;
 using Altinn.AccessManagement.Persistence;
 using Altinn.AccessManagement.TestUtils.Factories;
 using Altinn.AccessMgmt.Core.Services.Legacy;
@@ -12,7 +11,6 @@ using Altinn.Authorization.Host.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
-using Xunit;
 
 namespace Altinn.AccessManagement.Tests.Integration.Repositories;
 

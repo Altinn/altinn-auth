@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
+﻿using System.Net;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Models;
@@ -12,7 +7,6 @@ using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Authorization.Services.Interface;
 using Azure;
 using Azure.Storage.Blobs.Models;
-using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Authorization.Services.Implementation
 {

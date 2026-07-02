@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Altinn.AccessManagement.Core.Helpers;
-using Altinn.AccessManagement.Enums;
 
 namespace Altinn.AccessManagement.Core.Models
 {

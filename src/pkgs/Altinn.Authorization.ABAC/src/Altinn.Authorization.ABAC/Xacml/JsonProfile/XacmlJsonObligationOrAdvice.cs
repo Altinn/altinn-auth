@@ -1,6 +1,4 @@
-using System.Collections.Generic;
-
-namespace Altinn.Authorization.ABAC.Xacml.JsonProfile
+﻿namespace Altinn.Authorization.ABAC.Xacml.JsonProfile
 {
     /// <summary>
     /// Defines a Json object for ObligationOrAdvice.

@@ -1,6 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using Altinn.Common.Authentication.Configuration;
+﻿using Altinn.Common.Authentication.Configuration;
 using Altinn.Common.Authentication.Models;
 using Microsoft.IdentityModel.Protocols;
 

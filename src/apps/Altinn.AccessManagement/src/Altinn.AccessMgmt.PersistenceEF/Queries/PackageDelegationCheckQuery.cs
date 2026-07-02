@@ -1,6 +1,5 @@
 ﻿using System.Data;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
-using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Models;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;

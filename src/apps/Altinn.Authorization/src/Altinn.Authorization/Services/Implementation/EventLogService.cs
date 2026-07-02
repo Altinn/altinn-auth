@@ -1,16 +1,11 @@
-﻿using System;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Platform.Authorization.Clients.Interfaces;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Models.EventLog;
 using Altinn.Platform.Authorization.Services.Interfaces;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
 using Microsoft.FeatureManagement;
 
 namespace Altinn.Platform.Authorization.Services.Implementation

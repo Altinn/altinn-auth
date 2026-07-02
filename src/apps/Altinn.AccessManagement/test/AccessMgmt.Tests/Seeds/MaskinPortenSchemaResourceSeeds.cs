@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 

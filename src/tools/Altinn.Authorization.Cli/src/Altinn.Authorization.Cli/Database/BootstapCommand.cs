@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Altinn.Authorization.Cli.Config;
 using Altinn.Authorization.Cli.Utils;
 using Azure;

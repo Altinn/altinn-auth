@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Altinn.Authorization.Models.ResourceRegistry;
+﻿namespace Altinn.Authorization.Models.ResourceRegistry;
 
 /// <summary>
 /// Model representation of Competent Authority part of the ServiceResource model

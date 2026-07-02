@@ -1,5 +1,4 @@
 ﻿using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessManagement.Core.Models.Consent;
 
 namespace Altinn.AccessManagement.Core.Services.Interfaces;
 

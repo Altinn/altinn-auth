@@ -2,11 +2,8 @@
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Services;
 using Altinn.AccessManagement.Core.Services.Interfaces;
-using Altinn.AccessMgmt.Core.HostedServices.Contracts;
-using Altinn.Authorization.Api.Contracts.Register;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
 
 namespace Altinn.AccessManagement.Tests.Unit.Services;
 

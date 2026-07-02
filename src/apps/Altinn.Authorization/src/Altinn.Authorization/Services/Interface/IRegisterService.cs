@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using Altinn.Platform.Register.Models;
 
 namespace Altinn.Platform.Authorization.Services.Interfaces

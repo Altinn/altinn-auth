@@ -1,10 +1,8 @@
 ﻿using System.Net.Http.Json;
-using System.Text.Json;
 using Altinn.AccessManagement.Controllers;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Tests.Fixtures;
-using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Util;
 
 // Why LegacyApiFixture: the endpoint writes through the Dapper-backed

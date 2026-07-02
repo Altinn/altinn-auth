@@ -1,5 +1,4 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Models;
-using Dapper;
+﻿using Dapper;
 using Npgsql;
 
 namespace Altinn.AccessMgmt.FFB.Jobs;

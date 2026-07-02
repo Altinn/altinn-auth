@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;

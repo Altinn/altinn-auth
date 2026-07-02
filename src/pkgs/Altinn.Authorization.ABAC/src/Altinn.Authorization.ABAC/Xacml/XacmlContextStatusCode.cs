@@ -1,4 +1,3 @@
-using System;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Utils;
 

@@ -1,7 +1,5 @@
 ﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
-using Azure.Storage.Blobs.Models;
-using Moq;
 
 namespace Altinn.AccessManagement.TestUtils.Data;
 

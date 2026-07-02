@@ -1,6 +1,4 @@
-using Altinn.AccessMgmt.PersistenceEF.Contexts;
-using Altinn.AccessMgmt.PersistenceEF.Models;
-using Altinn.AccessMgmt.PersistenceEF.Models.Audit;
+﻿using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.FFB.Components.Pages.Tools;

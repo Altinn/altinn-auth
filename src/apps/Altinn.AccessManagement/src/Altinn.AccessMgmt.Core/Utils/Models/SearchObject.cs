@@ -1,6 +1,4 @@
-﻿using Altinn.AccessMgmt.Core.Utils;
-
-namespace Altinn.AccessMgmt.Core.Utils.Models;
+﻿namespace Altinn.AccessMgmt.Core.Utils.Models;
 
 /// <summary>
 /// Represents the result of a fuzzy search operation.

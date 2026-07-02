@@ -1,7 +1,5 @@
 ﻿using Altinn.AccessMgmt.Core.Utils;
-using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
-using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 
 namespace Altinn.AccessMgmt.Core.Tests.Unit.Utils.Mappers;

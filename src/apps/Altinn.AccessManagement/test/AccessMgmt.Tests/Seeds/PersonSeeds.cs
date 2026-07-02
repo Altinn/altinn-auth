@@ -1,5 +1,4 @@
-﻿using System;
-using Altinn.AccessManagement.Core.Models.Profile;
+﻿using Altinn.AccessManagement.Core.Models.Profile;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
 

@@ -1,11 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Altinn.AccessManagement.Core.Models;
+﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Resolvers;
 using Altinn.AccessManagement.Resolvers;
 using Altinn.AccessManagement.Tests.Resolvers;
-using Xunit;
 
 namespace Altinn.AccessManagement.Tests.Unit.Resolvers.Altinn;
 

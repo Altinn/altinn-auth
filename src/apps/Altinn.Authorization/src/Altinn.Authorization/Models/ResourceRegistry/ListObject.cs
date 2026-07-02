@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Annotations;

@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Enums;
 
 namespace Altinn.AccessManagement.Models

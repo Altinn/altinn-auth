@@ -1,6 +1,5 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Altinn.AccessMgmt.Core.Extensions;
-using Altinn.AccessMgmt.PersistenceEF.Models.Base;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 

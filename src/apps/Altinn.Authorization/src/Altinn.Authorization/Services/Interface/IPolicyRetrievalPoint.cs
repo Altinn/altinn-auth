@@ -1,5 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Altinn.Authorization.ABAC.Xacml;
 
 namespace Altinn.Platform.Authorization.Services.Interface

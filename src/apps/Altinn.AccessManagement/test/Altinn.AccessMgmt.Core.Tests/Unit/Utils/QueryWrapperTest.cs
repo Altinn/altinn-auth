@@ -1,5 +1,4 @@
 ﻿using Altinn.AccessMgmt.Core.Utils;
-using Altinn.AccessMgmt.Core.Utils.Models;
 
 namespace Altinn.AccessMgmt.Core.Tests.Unit.Utils;
 

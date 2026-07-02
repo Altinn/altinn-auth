@@ -1,15 +1,10 @@
-﻿using System;
-using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Security.Claims;
 
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Interfaces;
 
 using Moq;
-
-using Xunit;
 
 namespace Altinn.Authorization.PEP.Tests
 {

@@ -1,19 +1,14 @@
-﻿using System.Collections.Generic;
-using System.Net;
+﻿using System.Net;
 using System.Text.Json;
-using System.Threading;
 using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessManagement.Core.Models.Register;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Enums;
 using Altinn.Authorization.ABAC.Xacml;
-using Altinn.Platform.Register.Models;
 using Azure;
 using Azure.Storage.Blobs.Models;
-using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Logging;
 
 namespace Altinn.AccessManagement.Core.Services

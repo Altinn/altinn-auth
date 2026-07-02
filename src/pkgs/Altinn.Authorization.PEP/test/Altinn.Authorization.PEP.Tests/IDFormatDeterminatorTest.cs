@@ -1,8 +1,6 @@
 ﻿using Altinn.Common.PEP.Models;
 using Altinn.Common.PEP.Utils;
 
-using Xunit;
-
 namespace Altinn.Authorization.PEP.Tests
 {
     [UnitTest]

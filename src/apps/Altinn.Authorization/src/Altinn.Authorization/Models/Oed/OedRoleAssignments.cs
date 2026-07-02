@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Altinn.Platform.Authorization.Models.Oed;
 
 namespace Altinn.Platform.Authorization.Models

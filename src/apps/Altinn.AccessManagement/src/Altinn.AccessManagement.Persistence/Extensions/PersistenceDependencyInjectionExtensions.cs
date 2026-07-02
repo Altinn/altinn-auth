@@ -12,7 +12,6 @@ using Altinn.AccessManagement.Persistence.Consent;
 using Altinn.AccessManagement.Persistence.Policy;
 using Altinn.AccessMgmt.Core.Services.Legacy;
 using Altinn.Authorization.ServiceDefaults.Npgsql.Yuniql;
-using Altinn.Platform.Register.Enums;
 using Azure.Core;
 using Azure.Storage;
 using CommunityToolkit.Diagnostics;

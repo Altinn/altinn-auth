@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
-using Npgsql.Replication;
 
 namespace Altinn.AccessMgmt.Core.Telemetry;
 

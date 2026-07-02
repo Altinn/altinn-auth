@@ -1,9 +1,5 @@
-using System;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Azure;
@@ -11,7 +7,6 @@ using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Authorization.Repositories

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Altinn.Authorization.ABAC.Xacml
+﻿namespace Altinn.Authorization.ABAC.Xacml
 {
     /// <summary>
     /// The <Decision /> element contains the result of policy evaluation.

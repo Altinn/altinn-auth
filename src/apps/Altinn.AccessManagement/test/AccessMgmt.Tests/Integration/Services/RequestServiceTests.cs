@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography;
-using Altinn.AccessManagement.TestUtils.Fixtures;
+﻿using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
@@ -7,7 +6,6 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
-using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

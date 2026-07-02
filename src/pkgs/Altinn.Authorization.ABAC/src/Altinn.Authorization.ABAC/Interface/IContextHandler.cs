@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Altinn.Authorization.ABAC.Xacml;
 
 namespace Altinn.Authorization.ABAC.Interface

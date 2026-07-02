@@ -1,5 +1,4 @@
 ﻿using System.Collections.Immutable;
-using System.Data.Common;
 using System.Diagnostics;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Appsettings;

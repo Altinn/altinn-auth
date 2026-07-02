@@ -1,9 +1,4 @@
-﻿using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading;
-using System.Threading.Tasks;
-using Altinn.Authorization.ABAC.Xacml;
+﻿using System.Net.Http.Headers;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Authorization.Tests.Fixtures;
 using Altinn.Authorization.Tests.Util;
@@ -14,7 +9,6 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.FeatureManagement;
 using Moq;
-using Xunit;
 
 namespace Altinn.Authorization.Tests.Integration
 {

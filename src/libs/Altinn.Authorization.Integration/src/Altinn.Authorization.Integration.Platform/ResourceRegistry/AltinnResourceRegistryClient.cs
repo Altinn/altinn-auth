@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Options;
-using Yuniql.Extensibility;
 
 namespace Altinn.Authorization.Integration.Platform.ResourceRegistry;
 

@@ -6,7 +6,6 @@ using AltinnCore.Authentication.Constants;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.AspNetCore.Http;
 
 namespace Altinn.Platform.Authorization.Filters
 {

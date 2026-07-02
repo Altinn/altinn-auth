@@ -1,8 +1,5 @@
 ﻿using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Altinn.Authorization.Tests.Fixtures;
-using Xunit;
 
 namespace Altinn.Authorization.Tests.Integration.Health
 {

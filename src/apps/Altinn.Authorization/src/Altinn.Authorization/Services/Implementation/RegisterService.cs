@@ -1,14 +1,8 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Exceptions;
@@ -16,9 +10,7 @@ using Altinn.Platform.Authorization.Extensions;
 using Altinn.Platform.Authorization.Services.Interfaces;
 using Altinn.Platform.Register.Models;
 using AltinnCore.Authentication.Utils;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Authorization.Services

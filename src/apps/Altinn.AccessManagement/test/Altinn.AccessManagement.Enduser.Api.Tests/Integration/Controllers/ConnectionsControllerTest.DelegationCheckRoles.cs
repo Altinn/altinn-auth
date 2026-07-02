@@ -7,7 +7,6 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
-using Altinn.AccessMgmt.Core;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
