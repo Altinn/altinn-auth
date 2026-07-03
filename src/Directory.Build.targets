@@ -14,6 +14,16 @@
                      tests are actually discovered & executed in CI. -->
                 <TestingPlatformDotnetTestSupport Condition=" '$(IsTestProject)' == 'true' And '$(XUnitVersion)' == 'v3' ">true</TestingPlatformDotnetTestSupport>
 
+                <!-- Whether this assembly has integration tests that can actually run
+                     (at least one [IntegrationTest] not permanently [Skip]ped). Projects
+                     without any set this to false in their csproj so the CI integration
+                     lane skips them instead of running them with zero matching tests —
+                     MTP prints such a run as "Failed! ... Total: 0" and there is no
+                     option to change that display (the job only stays green because of
+                     the "ignore-exit-code 8" option). Enforced against the assembly's
+                     actual tests by TestCategoryGuard, so the declaration can't go stale. -->
+                <HasIntegrationTests Condition=" '$(IsTestProject)' == 'true' And '$(XUnitVersion)' == 'v3' And '$(HasIntegrationTests)' == '' ">true</HasIntegrationTests>
+
                 <!-- Coverage output format for coverlet -->
                 <CoverletOutputFormat>cobertura</CoverletOutputFormat>
             </PropertyGroup>
@@ -55,6 +65,9 @@
                     <Link>Properties\TestCategoryGuard.cs</Link>
                 </Compile>
                 <Using Include="Altinn.Authorization.Testing" />
+                <!-- Exposes the lane declaration to TestCategoryGuard, which fails the
+                     run when it doesn't match the assembly's actual tests. -->
+                <AssemblyMetadata Include="HasIntegrationTests" Value="$(HasIntegrationTests)" />
             </ItemGroup>
 
             <!-- Shared PostgreSQL test engine (template-clone provisioning + the
@@ -138,5 +151,16 @@
             <Link>stylecop.json</Link>
         </AdditionalFiles>
     </ItemGroup>
+
+    <!-- CI lane gate: when the integration test lane runs (`dotnet test -p:TestLane=Integration`),
+         projects that declare <HasIntegrationTests>false</HasIntegrationTests> skip test
+         execution entirely instead of starting a run that matches zero tests (which MTP
+         reports as "Failed!"). Imported here (after the NuGet package targets) so the
+         override in the file wins over Microsoft.Testing.Platform.MSBuild's
+         InvokeTestingPlatform target.
+         Must be conditional on the import — a same-named target with a false Condition
+         would still replace the package's target and just be skipped. -->
+    <Import Project="$(MSBuildThisFileDirectory)testing\IntegrationLaneGate.targets"
+            Condition=" '$(TestLane)' == 'Integration' And '$(IsTestProject)' == 'true' And '$(XUnitVersion)' == 'v3' And '$(HasIntegrationTests)' == 'false' " />
 
 </Project>

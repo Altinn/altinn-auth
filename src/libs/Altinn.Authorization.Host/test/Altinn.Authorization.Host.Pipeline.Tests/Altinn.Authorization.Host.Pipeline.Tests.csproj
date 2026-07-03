@@ -5,6 +5,9 @@
              dotnet test routes to the Microsoft Testing Platform (required for xUnit v3). -->
         <TargetFramework></TargetFramework>
         <TargetFrameworks>net10.0</TargetFrameworks>
+        <!-- No integration tests: the CI integration lane skips this assembly
+             (see src/testing/IntegrationLaneGate.targets). -->
+        <HasIntegrationTests>false</HasIntegrationTests>
     </PropertyGroup>
 
     <ItemGroup>

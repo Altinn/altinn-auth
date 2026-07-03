@@ -1,0 +1,25 @@
+<Project>
+
+    <!-- Skips test execution for assemblies that declare
+         <HasIntegrationTests>false</HasIntegrationTests> when the CI integration lane
+         runs (`dotnet test -p:TestLane=Integration`). Running such an assembly would
+         match zero tests, and Microsoft.Testing.Platform's MSBuild integration prints
+         a zero-test run as "Failed! - Failed: 0, Passed: 0, Skipped: 0, Total: 0" with
+         no way to change the display (the summary is Failed! whenever TotalPassed == 0;
+         the "ignore-exit-code 8" option only fixes the exit code, not the log line).
+
+         InvokeTestingPlatform is the target that actually starts the test host, on both
+         `dotnet test` routes: the cross-targeting VSTest target dispatches inner builds
+         straight at it (via InnerVSTestTargets, set by _SetCustomVSTargetForVSTest), and
+         the single-TFM VSTest override reaches it through _BuildAndInvokeTestingPlatform.
+         This same-named target replaces Microsoft.Testing.Platform.MSBuild's because
+         Directory.Build.targets is imported after the NuGet package targets.
+
+         Only imported (from src/Directory.Build.targets) when the project opts out AND
+         the integration lane is running, so every other configuration — unit lane,
+         plain `dotnet test`, IDE runs — is untouched. -->
+    <Target Name="InvokeTestingPlatform">
+        <Message Importance="high" Text="Integration lane: skipping $(MSBuildProjectName) (HasIntegrationTests=false)." />
+    </Target>
+
+</Project>

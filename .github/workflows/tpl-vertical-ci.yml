@@ -210,12 +210,15 @@ jobs:
       #                         files don't overwrite each other
       #   --report-xunit-trx    emit .trx (consumed by Sonar via
       #                         sonar.cs.vstest.reportsPaths = **/*.trx)
-      #   --ignore-exit-code 8  treat "no tests ran" as success — covers both
-      #                         all-[Skip]ped (e.g. Host.Lease without Azurite)
-      #                         AND a lane that selects 0 tests in a
-      #                         single-type vertical (e.g. PEP has no
-      #                         integration tests). Verified: an empty filtered
-      #                         run exits 8, which this flag maps to success.
+      #   --ignore-exit-code 8  treat "no tests ran" as success. The integration
+      #                         lane also passes -p:TestLane=Integration so that
+      #                         assemblies declaring HasIntegrationTests=false are
+      #                         skipped outright (src/testing/IntegrationLaneGate.targets)
+      #                         instead of producing a zero-test run that MTP logs
+      #                         as "Failed! ... Total: 0" — the flag fixes the exit
+      #                         code but not that log line. The flag stays for the
+      #                         cases the gate can't know statically: tests skipped
+      #                         at runtime (e.g. missing Docker locally).
       # Coverage is collected only on the nightly `analyze` run (no dotnet-coverage
       # instrumentation overhead on PR runs); both still emit .trx + FixtureTiming.
       # On the analyze run each lane writes its .coverage file; the Convert steps
@@ -259,7 +262,7 @@ jobs:
           GH_API_TOKEN: ${{ github.token }} # lets report-failed-tests.ps1 deep-link the job summary
         run: |
           set +e
-          test=(dotnet test -c Release --no-build -bl:binlog/test-integration.binlog -- --results-directory TestResults/integration --report-xunit-trx --filter-trait "Category=Integration" --ignore-exit-code 8)
+          test=(dotnet test -c Release --no-build -p:TestLane=Integration -bl:binlog/test-integration.binlog -- --results-directory TestResults/integration --report-xunit-trx --filter-trait "Category=Integration" --ignore-exit-code 8)
           if [[ "${{ inputs.analyze }}" == "true" ]]; then
             dotnet-coverage collect --nologo --settings "$GITHUB_WORKSPACE/eng/testing/coverage.settings" --output TestResults/coverage.integration.coverage --output-format coverage -- "${test[@]}"
           else

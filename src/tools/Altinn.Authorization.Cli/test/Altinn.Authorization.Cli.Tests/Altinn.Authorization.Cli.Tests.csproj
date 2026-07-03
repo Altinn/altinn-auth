@@ -1,8 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <!-- Clear the singular TargetFramework inherited from src/Directory.Build.props so
+             dotnet test routes to the Microsoft Testing Platform (required for xUnit v3).
+             With it set, dotnet test silently fell back to VSTest, found no tests, and
+             this project's tests never ran in CI. -->
+        <TargetFramework></TargetFramework>
         <TargetFrameworks>net10.0</TargetFrameworks>
         <IsPackable>false</IsPackable>
+        <!-- No integration tests: the CI integration lane skips this assembly
+             (see src/testing/IntegrationLaneGate.targets). -->
+        <HasIntegrationTests>false</HasIntegrationTests>
     </PropertyGroup>
 
     <ItemGroup>

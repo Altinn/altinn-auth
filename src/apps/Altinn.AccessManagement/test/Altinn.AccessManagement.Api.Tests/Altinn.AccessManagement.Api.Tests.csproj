@@ -7,6 +7,9 @@
 		<TargetFrameworks>net10.0</TargetFrameworks>
 		<IsTestProject>true</IsTestProject>
 		<IsPackable>false</IsPackable>
+		<!-- No integration tests: the CI integration lane skips this assembly
+			 (see src/testing/IntegrationLaneGate.targets). -->
+		<HasIntegrationTests>false</HasIntegrationTests>
 	</PropertyGroup>
 
 	<ItemGroup>
