@@ -352,6 +352,10 @@ module "appsettings" {
           "Altinn:MaskinPorten:Clients:register-freg:Scope"    = { value = var.config.maskinporten.scope }
         } : {},
         // ccr client config
+        {
+          for client_key, client in var.config.ccr.clients :
+          "Altinn:register:Ccr:Clients:${client_key}:Federate" => { value = client.federate }
+        },
         merge([
           for client_key, client in var.config.ccr.clients : {
             for network_index, network_value in client.networks :

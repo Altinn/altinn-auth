@@ -80,6 +80,11 @@ config = {
         networks = ["0.0.0.0/0", "::/0"]
       }
 
+      brreg-test = {
+        password = "ccr-brreg-test-hash"
+        networks = ["0.0.0.0/0", "::/0"]
+      }
+
       abs-tt02 = {
         password = "ccr-abs-hash"
         networks = ["0.0.0.0/0", "::/0"]
@@ -88,6 +93,7 @@ config = {
       e2e-test-tt02 = {
         password = "ccr-e2e-test-hash"
         networks = ["0.0.0.0/0", "::/0"]
+        federate = false
       }
     }
   }

@@ -75,6 +75,7 @@ config = {
       e2e-test-at23 = {
         password = "ccr-e2e-test-hash"
         networks = ["0.0.0.0/0", "::/0"]
+        federate = false
       }
     }
   }
