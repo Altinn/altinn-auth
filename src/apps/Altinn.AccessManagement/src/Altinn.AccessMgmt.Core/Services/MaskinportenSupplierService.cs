@@ -9,6 +9,7 @@ using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 
@@ -347,12 +348,11 @@ public class MaskinportenSupplierService(
             return Problems.InvalidResource;
         }
 
-        // Delegate to ConnectionService with allowMaskinportenSchema = true for MaskinportenSchema resources
-        // This allows delegation even if delegable=false in Resource Registry, but still requires valid access rights.
-        // 
-        // Technical note: allowMaskinportenSchema bypasses the MaskinportenSchema denial logic in 
-        // ConnectionService.MapFromInternalToExternalRight, allowing rights to have Result=true
-        // when the caller has proper authorization. This enables AddResource to succeed with delegable rights.
+        // Delegate to ConnectionService with allowMaskinportenSchema = true.
+        // MaskinportenSchema resources are denied in the regular delegation flow because they must be
+        // delegated through this dedicated API; the flag bypasses only that denial. The delegable flag
+        // from the Resource Registry still applies, so non-delegable resources get Result=false with
+        // reason ResourceNotDelegable.
         return await connectionService.ResourceDelegationCheck(
             authenticatedUserUuid,
             consumerId,
@@ -407,6 +407,13 @@ public class MaskinportenSupplierService(
 
         if (!delegableRightKeys.Any())
         {
+            // A resource marked delegable=false in the Resource Registry is a problem with the
+            // resource itself, not the caller's authorization
+            if (delegationCheck.Value.Rights.Any(r => r.ReasonCodes?.Contains(DelegationCheckReasonCode.ResourceNotDelegable) == true))
+            {
+                return Problems.ResourceNotDelegable;
+            }
+
             return Problems.NotAuthorizedForDelegationRequest;
         }
 

@@ -41,10 +41,10 @@ script:pre-request {
 tests {
   const testdata = require(`./testdata/maksinporten-delegation/${bru.getEnvVar("tokenEnv")}.js`); 
   
-  test("Delegate maskinporten resource to supplier org", function() {
+  test("Delegating a non-delegable maskinporten resource returns 400", function() {
     const data = res.getBody();
     expect(res.status).to.equal(400);
-     expect(res.getBody().detail).to.equal("The resource is invalid");
+     expect(res.getBody().detail).to.equal("The resource is not available for delegation");
      });
 }
 

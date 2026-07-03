@@ -30,6 +30,7 @@ public static class TestDataSeeds
         #region Resource Types
         db.ResourceTypes.Add(TestData.TestResourceType);
         db.ResourceTypes.Add(TestData.CorrespondenceResourceType);
+        db.ResourceTypes.Add(TestData.MaskinportenSchemaResourceType);
         #endregion
 
         #region Entities
@@ -176,6 +177,7 @@ public static class TestDataSeeds
         db.Resources.Add(TestData.NavSykepengerSykmelding);
         db.Resources.Add(TestData.SkattResource);
         db.Resources.Add(TestData.TestdirektoratetCorrespondenceService);
+        db.Resources.Add(TestData.NonDelegableMaskinportenSchema);
         db.Resources.AddRange(TestData.MvaResource);
 
         #endregion

@@ -1,3 +1,4 @@
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.TestUtils.Fixtures;
@@ -9,6 +10,7 @@ using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -425,7 +427,7 @@ public class MaskinportenSupplierServiceTests : IClassFixture<ApiFixture>
     }
 
     [Fact]
-    public async Task AddResource_WhenDelegationCheckReturnsNoDelegableRights_ReturnsProblem()
+    public async Task AddResource_WhenDelegationCheckReturnsNoDelegableRights_ReturnsNotAuthorizedProblem()
     {
         // Delegation check succeeds but no right is delegable -> not authorized, before any connection check.
         var result = await RunService(
@@ -434,10 +436,25 @@ public class MaskinportenSupplierServiceTests : IClassFixture<ApiFixture>
             audit: AuditAs(Performer));
 
         result.IsProblem.Should().BeTrue();
+        result.Problem.ErrorCode.Should().Be(Problems.NotAuthorizedForDelegationRequest.ErrorCode);
     }
 
     [Fact]
-    public async Task AddResource_WhenNoSupplierConnectionExists_ReturnsProblem()
+    public async Task AddResource_WhenResourceIsNotDelegable_ReturnsResourceNotDelegableProblem()
+    {
+        // The delegation check denies every right with reason ResourceNotDelegable (delegable=false
+        // in the Resource Registry) -> a resource problem, not a missing-authorization problem.
+        var result = await RunService(
+            s => s.AddResource(AddResNoRightsConsumer, AddResNoRightsSupplier, MaskinportenResourceRefId, TestContext.Current.CancellationToken),
+            connection: ConnectionReturning(("scope.read", false, DelegationCheckReasonCode.ResourceNotDelegable)),
+            audit: AuditAs(Performer));
+
+        result.IsProblem.Should().BeTrue();
+        result.Problem.ErrorCode.Should().Be(Problems.ResourceNotDelegable.ErrorCode);
+    }
+
+    [Fact]
+    public async Task AddResource_WhenNoSupplierConnectionExists_ReturnsMissingConnectionProblem()
     {
         // There are delegable rights, but no supplier assignment between the parties.
         var result = await RunService(
@@ -446,10 +463,11 @@ public class MaskinportenSupplierServiceTests : IClassFixture<ApiFixture>
             audit: AuditAs(Performer));
 
         result.IsProblem.Should().BeTrue();
+        result.Problem.ErrorCode.Should().Be(Problems.MissingConnection.ErrorCode);
     }
 
     [Fact]
-    public async Task AddResource_WhenPolicyRuleWriteFails_ReturnsProblem()
+    public async Task AddResource_WhenPolicyRuleWriteFails_ReturnsPolicyWriteFailedProblem()
     {
         var singleRights = new Mock<ISingleRightsService>();
         singleRights
@@ -465,6 +483,7 @@ public class MaskinportenSupplierServiceTests : IClassFixture<ApiFixture>
             audit: AuditAs(Performer));
 
         result.IsProblem.Should().BeTrue();
+        result.Problem.ErrorCode.Should().Be(Problems.DelegationPolicyRuleWriteFailed.ErrorCode);
     }
 
     [Fact]
@@ -488,12 +507,20 @@ public class MaskinportenSupplierServiceTests : IClassFixture<ApiFixture>
     }
 
     private static IConnectionService ConnectionReturning(params (string Key, bool Result)[] rights)
+        => ConnectionReturning(rights.Select(r => (r.Key, r.Result, (DelegationCheckReasonCode?)null)).ToArray());
+
+    private static IConnectionService ConnectionReturning(params (string Key, bool Result, DelegationCheckReasonCode? Reason)[] rights)
     {
         var dto = new ResourceCheckDto
         {
             Resource = new ResourceDto(),
             Rights = rights
-                .Select(r => new RightCheckDto { Right = new RightDto { Key = r.Key }, Result = r.Result })
+                .Select(r => new RightCheckDto
+                {
+                    Right = new RightDto { Key = r.Key },
+                    Result = r.Result,
+                    ReasonCodes = r.Reason is null ? [] : [r.Reason.Value],
+                })
                 .ToList(),
         };
 

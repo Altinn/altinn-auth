@@ -25,6 +25,16 @@ public static class TestData
         Name = "CorrespondenceService",
     };
 
+    /// <summary>
+    /// The resource type for MaskinportenSchema resources. The name must match the real
+    /// resource type name, which the maskinporten supplier delegation flow checks against.
+    /// </summary>
+    public static ResourceType MaskinportenSchemaResourceType { get; } = new()
+    {
+        Id = Guid.Parse("019d95d1-95c7-7887-91cc-30fc9af97192"),
+        Name = "MaskinportenSchema",
+    };
+
     #endregion
 
     #region Resources
@@ -37,6 +47,20 @@ public static class TestData
         RefId = "ttd-migratedcorrespondence-4471-1",
         TypeId = TestData.CorrespondenceResourceType.Id,
         ProviderId = ProviderConstants.Altinn2.Id,
+    };
+
+    /// <summary>
+    /// MaskinportenSchema resource marked delegable=false in the resource registry mock data
+    /// (<c>Data/ResourceRegistryResources/non_delegable_maskinportenschema</c>).
+    /// </summary>
+    public static readonly Resource NonDelegableMaskinportenSchema = new()
+    {
+        Id = Guid.Parse("019d95d3-92d5-750f-a594-a8b08e756a4b"),
+        Name = "MaskinportenSchema that cannot be delegated",
+        Description = "MaskinportenSchema resource with delegable set to false in the Resource Registry",
+        RefId = "non_delegable_maskinportenschema",
+        TypeId = TestData.MaskinportenSchemaResourceType.Id,
+        ProviderId = ProviderConstants.ResourceRegistry.Id,
     };
 
     public static readonly Resource MattilsynetBakeryService = new()

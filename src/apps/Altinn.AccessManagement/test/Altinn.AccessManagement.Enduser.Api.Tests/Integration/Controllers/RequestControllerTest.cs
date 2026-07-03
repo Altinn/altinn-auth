@@ -66,12 +66,6 @@ public class RequestControllerTest
             Name = "CreateResourceTestType",
         };
 
-        private static readonly ResourceType TestMaskinportenSchemaResourceType = new()
-        {
-            Id = Guid.Parse("0196c001-0000-7000-8000-000000000002"),
-            Name = "MaskinportenSchema",
-        };
-
         private static readonly Guid TestResourceId = Guid.Parse("0196b001-0000-7000-8000-000000000002");
         private const string TestResourceRefId = "create-resource-test-1";
         private const string TestMaskinportenSchemaResourceRefId = "create-resource-test-2";
@@ -83,7 +77,6 @@ public class RequestControllerTest
             fixture.EnsureSeedOnce<CreateResourceRequest>(db =>
             {
                 db.ResourceTypes.Add(TestResourceType);
-                db.ResourceTypes.Add(TestMaskinportenSchemaResourceType);
 
                 db.SaveChanges();
                 db.Resources.Add(new Resource
@@ -103,7 +96,7 @@ public class RequestControllerTest
                     Description = "Test resource for ServiceOwner API tests",
                     RefId = TestMaskinportenSchemaResourceRefId,
                     ProviderId = TestData.ServiceOwnerNAV,
-                    TypeId = TestMaskinportenSchemaResourceType.Id,
+                    TypeId = TestData.MaskinportenSchemaResourceType.Id,
                 });
 
                 db.SaveChanges();

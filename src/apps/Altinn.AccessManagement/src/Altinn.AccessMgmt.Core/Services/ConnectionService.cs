@@ -1002,7 +1002,7 @@ public partial class ConnectionService(
         }
 
         ResourceAccessListMode accessListMode = resourceMetadata.AccessListMode;
-        bool isResourceDelegable = ignoreDelegableFlag || resourceMetadata.Delegable || (allowMaskinportenSchema && isMaskinPortenSchemaResource);
+        bool isResourceDelegable = ignoreDelegableFlag || resourceMetadata.Delegable;
 
         // Decompose policy into resource/tasks
         List<Models.Right> rights = DelegationCheckHelper.DecomposePolicy(policy, resource);
