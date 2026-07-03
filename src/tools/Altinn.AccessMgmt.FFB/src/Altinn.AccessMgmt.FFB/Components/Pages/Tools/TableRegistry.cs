@@ -396,11 +396,22 @@ public static class TableRegistry
                 G("Dato (opprettet)", async db =>
                 {
                     var raw = await db.OutboxMessages
-                        .GroupBy(o => new { o.CreatedAt.Year, o.CreatedAt.Month })
-                        .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
-                        .OrderByDescending(g => g.Year).ThenByDescending(g => g.Month)
+                        .GroupBy(o => new { o.CreatedAt.Year, o.CreatedAt.Month, o.CreatedAt.Day })
+                        .Select(g => new { g.Key.Year, g.Key.Month, g.Key.Day, Count = g.Count() })
+                        .OrderByDescending(g => g.Year).ThenByDescending(g => g.Month).ThenByDescending(g => g.Day)
                         .ToListAsync();
-                    return raw.ConvertAll(g => new TableGroupRow($"{g.Year:D4}-{g.Month:D2}", g.Count));
+                    return raw.ConvertAll(g => new TableGroupRow($"{g.Year:D4}-{g.Month:D2}-{g.Day:D2}", g.Count));
+                }),
+                G("Ukedag (opprettet)", async db =>
+                {
+                    var raw = await db.OutboxMessages
+                        .GroupBy(o => new { o.CreatedAt.DayOfWeek })
+                        .Select(g => new { g.Key.DayOfWeek, Count = g.Count() })
+                        .ToListAsync();
+                    return raw
+                        .OrderBy(g => ((int)g.DayOfWeek + 6) % 7)   // Monday-first (DayOfWeek has Sunday = 0)
+                        .Select(g => new TableGroupRow($"{g.DayOfWeek}", g.Count))
+                        .ToList();
                 }),
             ],
         },
