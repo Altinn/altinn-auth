@@ -103,8 +103,6 @@ public static partial class StaticDataIngest
         var roleBOBEL = RoleConstants.BankruptcyRead.Id;
         /*BOBES*/
         var roleBOBES = RoleConstants.BankruptcyWrite.Id;
-        /*ECKEYROLE*/
-        var roleECKEYROLE = RoleConstants.Eckeyrole.Id;
         /*EKTJ*/
         var roleEKTJ = RoleConstants.ExplicitServiceDelegation.Id;
         /*HADM*/
@@ -269,19 +267,6 @@ public static partial class StaticDataIngest
             new RoleMap() { HasRoleId = roleBobe, GetRoleId = roleBOBEL },
 
             new RoleMap() { HasRoleId = roleBobe, GetRoleId = roleBOBES },
-
-            new RoleMap() { HasRoleId = roleBest,  GetRoleId = roleECKEYROLE },
-            new RoleMap() { HasRoleId = roleBobe,  GetRoleId = roleECKEYROLE },
-            new RoleMap() { HasRoleId = roleDagl,  GetRoleId = roleECKEYROLE },
-            new RoleMap() { HasRoleId = roleDtpr,  GetRoleId = roleECKEYROLE },
-            new RoleMap() { HasRoleId = roleDtso,  GetRoleId = roleECKEYROLE },
-            new RoleMap() { HasRoleId = roleInnh,  GetRoleId = roleECKEYROLE },
-            new RoleMap() { HasRoleId = roleKemn,  GetRoleId = roleECKEYROLE },
-            new RoleMap() { HasRoleId = roleKnuf,  GetRoleId = roleECKEYROLE },
-            new RoleMap() { HasRoleId = roleKomp,  GetRoleId = roleECKEYROLE },
-            new RoleMap() { HasRoleId = roleLede,  GetRoleId = roleECKEYROLE },
-            new RoleMap() { HasRoleId = roleRepr,  GetRoleId = roleECKEYROLE },
-            new RoleMap() { HasRoleId = roleSreva, GetRoleId = roleECKEYROLE },
 
             new RoleMap() { HasRoleId = roleSens, GetRoleId = roleEKTJ },
 

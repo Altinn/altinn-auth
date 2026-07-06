@@ -4683,39 +4683,6 @@ public static class RoleConstants
     };
 
     /// <summary>
-    /// Represents the 'ECKEYROLE' role.
-    /// </summary>
-    /// <remarks>
-    /// - <c>Id:</c> e0684f66-a46e-4706-a754-8889b532509c
-    /// - <c>URN:</c> urn:altinn:rolecode:ECKEYROLE
-    /// - <c>Provider:</c> Altinn2
-    /// - <c>Code:</c> ECKEYROLE
-    /// - <c>Description:</c> Nøkkelrolle for virksomhetsertifikatbrukere
-    /// </remarks>
-    public static ConstantDefinition<Role> Eckeyrole { get; } = new ConstantDefinition<Role>("e0684f66-a46e-4706-a754-8889b532509c")
-    {
-        Entity = new()
-        {
-            EntityTypeId = EntityTypeConstants.Organization,
-            ProviderId = ProviderConstants.Altinn2,
-            Name = "ECKEYROLE",
-            Code = "eckeyrole",
-            Description = "Nøkkelrolle for virksomhetsertifikatbrukere",
-            Urn = "urn:altinn:rolecode:eckeyrole",
-            IsKeyRole = true,
-            IsAvailableForServiceOwners = false,
-        },
-        EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "ECKEYROLE"),
-            KeyValuePair.Create("Description", "Key role for enterprise users")
-        ),
-        NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "ECKEYROLE"),
-            KeyValuePair.Create("Description", "Nøkkelrolle for virksomhetsertifikatbrukere")
-        )
-    };
-
-    /// <summary>
     /// Represents the 'Eksplisitt tjenestedelegering' role.
     /// </summary>
     /// <remarks>

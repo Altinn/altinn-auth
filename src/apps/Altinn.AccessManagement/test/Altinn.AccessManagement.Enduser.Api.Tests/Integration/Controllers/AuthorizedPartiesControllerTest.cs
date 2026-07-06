@@ -554,7 +554,6 @@ public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
         Assert.Contains("siskd", party.AuthorizedRoles);
         Assert.Contains("regna", party.AuthorizedRoles);
         Assert.Contains("apiadm", party.AuthorizedRoles);
-        Assert.Contains("eckeyrole", party.AuthorizedRoles);
         Assert.Contains("hadm", party.AuthorizedRoles);
         Assert.Contains("signe", party.AuthorizedRoles);
     }
@@ -572,7 +571,6 @@ public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
         Assert.Contains("siskd", party.AuthorizedRoles);
         Assert.Contains("regna", party.AuthorizedRoles);
         Assert.Contains("apiadm", party.AuthorizedRoles);
-        Assert.Contains("eckeyrole", party.AuthorizedRoles);
         Assert.Contains("hadm", party.AuthorizedRoles);
         Assert.Contains("signe", party.AuthorizedRoles);
     }
