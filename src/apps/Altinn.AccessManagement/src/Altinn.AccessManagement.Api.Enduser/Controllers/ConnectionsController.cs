@@ -412,7 +412,6 @@ public class ConnectionsController(
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [FeatureGate(AccessMgmtFeatureFlags.Altinn2RoleRevoke)]
     public async Task<IActionResult> RemoveRole(
         [Required][FromQuery(Name = "party")] Guid party,
         [Required][FromQuery(Name = "from")] Guid from,

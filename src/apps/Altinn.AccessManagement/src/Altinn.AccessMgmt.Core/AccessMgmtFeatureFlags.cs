@@ -165,11 +165,6 @@ public static class AccessMgmtFeatureFlags
     public const string EnableRequestAssignmentResource = "AccessMgmt.Controller.RequestAssignment.Resource";
 
     /// <summary>
-    /// Enables to revoke Altinn 2 role assignments in enduser and serviceowner APIs.
-    /// </summary>
-    public const string Altinn2RoleRevoke = "AccessMgmt.Controller.Connection.RevokeRole";
-
-    /// <summary>
     /// Enables request assignment package endpoints in enduser and serviceowner APIs.
     /// </summary>
     public const string EnableRequestAssignmentPackage = "AccessMgmt.Controller.RequestAssignment.Package";
@@ -181,5 +176,5 @@ public static class AccessMgmtFeatureFlags
     /// Altinn 2 cache. To prevent errors when the endpoint no longer responds after Altinn 2 is decommissioned, 
     /// this flag should be enabled before the decommissioning date and remain enabled until the endpoint is removed from the codebase.
     /// </remarks>
-    public const string DisableAltinn2CacheInvalidation = "AccessManagement.Altinn2CacheInvalidation.Disable";    
+    public const string DisableAltinn2CacheInvalidation = "AccessManagement.Altinn2CacheInvalidation.Disable";
 }

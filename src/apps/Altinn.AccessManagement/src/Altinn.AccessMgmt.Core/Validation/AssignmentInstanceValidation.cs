@@ -14,7 +14,7 @@ public static class AssignmentInstanceValidation
         if (instances is { } && instances.Any())
         {
             return (ref ValidationErrorBuilder errors) =>
-                errors.Add(ValidationErrors.AssignmentHasActiveConnections, $"QUERY/{paramName}", [new("instances", $"following instances has active assignments [{string.Join(",", instances.Select(p => p.Id.ToString()))}].")]);
+                errors.Add(ValidationErrors.AssignmentHasActiveConnections, $"QUERY/{paramName}", [new("instances", $"following instances have active assignments [{string.Join(",", instances.Select(p => p.Id.ToString()))}].")]);
         }
 
         return null;
