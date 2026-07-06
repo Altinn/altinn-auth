@@ -213,9 +213,12 @@ public partial class ConnectionsControllerTest
             // Step 5: Verify the written XACML policy
             var policyFactory = Fixture.Server.Services.GetRequiredService<IPolicyFactory>() as PolicyFactoryMock;
             Assert.NotNull(policyFactory);
-            Assert.NotEmpty(policyFactory.WrittenPolicies);
 
-            var (_, content) = policyFactory.WrittenPolicies.Last();
+            // WrittenPolicies is shared by all tests in the class and is unordered,
+            // so select this delegation's policy by its blob path.
+            byte[] content = Assert.Single(
+                policyFactory.WrittenPolicies,
+                p => p.Key.Contains("app_skd_sirius-skattemelding-v1") && p.Key.Contains($"to_{TestData.Thea.Id}")).Value;
             XacmlPolicy policy;
             using (XmlReader reader = XmlReader.Create(new MemoryStream(content)))
             {

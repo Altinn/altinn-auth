@@ -162,7 +162,11 @@ public partial class ConnectionsControllerTest
             Assert.NotNull(policyFactory);
             Assert.NotEmpty(policyFactory.WrittenPolicies);
 
-            var (path, content) = policyFactory.WrittenPolicies.Last();
+            // WrittenPolicies is shared by all tests in the class and is unordered,
+            // so select this delegation's policy by its blob path.
+            byte[] content = Assert.Single(
+                policyFactory.WrittenPolicies,
+                p => p.Key.Contains("mattilsynet-baker-konditorvare")).Value;
             XacmlPolicy policy;
             using (XmlReader reader = XmlReader.Create(new MemoryStream(content)))
             {
