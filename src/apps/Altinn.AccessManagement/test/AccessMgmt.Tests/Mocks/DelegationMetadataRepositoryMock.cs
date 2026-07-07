@@ -120,7 +120,6 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
 
     public Task<InstanceDelegationChange> InsertInstanceDelegation(InstanceDelegationChange instanceDelegationChange, CancellationToken cancellationToken = default)
     {
-        Random random = new();
         string path = GetDelegationPolicyPathFromInstanceRule(instanceDelegationChange);
         string instanceIdSuffix = ExtractInstanceIdSuffix(instanceDelegationChange.InstanceId);
         InstanceDelegationChange result = instanceIdSuffix switch
@@ -128,7 +127,9 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
             "00000000-0000-0000-0000-000000000002" => null,
             _ => new InstanceDelegationChange
                 {
-                    InstanceDelegationChangeId = random.Next(0, 1000),
+                    // PolicyAdministrationPoint treats a change id <= 0 as a failed insert,
+                    // so a mocked successful insert must always return a positive id.
+                    InstanceDelegationChangeId = 1337,
                     DelegationChangeType = instanceDelegationChange.DelegationChangeType,
                     InstanceDelegationMode = instanceDelegationChange.InstanceDelegationMode,
                     InstanceDelegationSource = instanceDelegationChange.InstanceDelegationSource,
