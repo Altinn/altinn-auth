@@ -95,9 +95,10 @@ public class ConnectionQuery(AppDbContext db)
         {
             var keyRoles =
             from a in db.Assignments.AsNoTracking()
-            join k in db.Assignments.AsNoTracking() on a.ToId equals k.FromId
+            join ae in db.Entities.AsNoTracking() on a.FromId equals ae.Id
+            join k in db.Assignments.AsNoTracking() on a.ToId equals k.FromId            
             join kr in db.Roles.AsNoTracking() on k.RoleId equals kr.Id
-            where a.FromId == fromId && kr.IsKeyRole == true && k.ToId == toId
+            where a.FromId == fromId && kr.IsKeyRole == true && k.ToId == toId && (a.RoleId != RoleConstants.ParticipantSharedResponsibility.Id || ae.VariantId != EntityVariantConstants.IKS.Id)
             select 1;
 
             if (await keyRoles.AnyAsync())
@@ -280,20 +281,29 @@ public class ConnectionQuery(AppDbContext db)
                     db.Assignments,
                     x => x.d.FromId,
                     a2 => a2.ToId,
-                    (x, a2) => new ConnectionQueryBaseRecord
-                    {
-                        AssignmentId = a2.Id,
-                        DelegationId = null,
-                        FromId = a2.FromId,
-                        ToId = x.d.ToId,
-                        RoleId = a2.RoleId,
-                        ViaId = x.d.FromId,
-                        ViaRoleId = x.d.RoleId,
-                        Reason = ConnectionReason.KeyRole,
-                        IsKeyRoleAccess = true,
-                        IsMainUnitAccess = false,
-                        IsRoleMap = false,
-                    });
+                    (x, a2) => new { x, a2 }
+                )
+                .Join(
+                    db.Entities,
+                    y => y.a2.FromId,
+                    e => e.Id,
+                    (y, e) => new { y.x, y.a2, e }
+                )
+                .Where(z => !(z.e.VariantId == EntityVariantConstants.IKS.Id && z.a2.RoleId == RoleConstants.ParticipantSharedResponsibility.Id))
+                .Select(z => new ConnectionQueryBaseRecord
+                {
+                    AssignmentId = z.a2.Id,
+                    DelegationId = null,
+                    FromId = z.a2.FromId,
+                    ToId = z.x.d.ToId,
+                    RoleId = z.a2.RoleId,
+                    ViaId = z.x.d.FromId,
+                    ViaRoleId = z.x.d.RoleId,
+                    Reason = ConnectionReason.KeyRole,
+                    IsKeyRoleAccess = true,
+                    IsMainUnitAccess = false,
+                    IsRoleMap = false,
+                });
 
         var a1 = filter.IncludeKeyRole
             ? direct.Concat(keyrole)
@@ -662,7 +672,7 @@ public class ConnectionQuery(AppDbContext db)
             .RoleIdContains(roleSet);
     }
 
-    public IQueryable<ConnectionQueryBaseRecord> BuildBaseQueryToOthers(AppDbContext db, ConnectionQueryFilter filter)
+    private IQueryable<ConnectionQueryBaseRecord> BuildBaseQueryToOthers(AppDbContext db, ConnectionQueryFilter filter)
     {
         /* Senario: Tilgangsstyrer i Bakerhansen Bergen BEDR (FromId) som er underenhet av Bakerhansen AS
 
@@ -794,9 +804,10 @@ public class ConnectionQuery(AppDbContext db)
         */
         var keyRoleAssignments =
             from all in allAssignments.Concat(roleMapAssignments) // Must include RoleMap assignments
-            join keyRoleAssignment in db.Assignments on all.ToId equals keyRoleAssignment.FromId
+            join fromEntity in db.Entities on all.FromId equals fromEntity.Id
+            join keyRoleAssignment in db.Assignments on all.ToId equals keyRoleAssignment.FromId            
             join role in db.Roles on keyRoleAssignment.RoleId equals role.Id
-            where role.IsKeyRole
+            where role.IsKeyRole && !(fromEntity.VariantId == EntityVariantConstants.IKS.Id && all.RoleId == RoleConstants.ParticipantSharedResponsibility.Id)
             select new ConnectionQueryBaseRecord()
             {
                 AssignmentId = all.AssignmentId,
