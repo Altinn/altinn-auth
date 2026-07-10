@@ -80,6 +80,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IAuthorizationScopeProvider, DefaultAuthorizationScopeProvider>();
         services.AddScoped<IAuthorizationHandler, ScopeConditionAuthorizationHandler>();
+        services.AddScoped<IAuthorizationHandler, PersonAccessManagerHandler>();
 
         // NOTE: can be removed once RequestReviewedNotificationHandler is in production.
         services.AddTransient<RightholderAddedNotificationHandler>();
