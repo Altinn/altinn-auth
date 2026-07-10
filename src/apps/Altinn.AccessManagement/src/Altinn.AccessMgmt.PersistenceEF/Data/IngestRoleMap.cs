@@ -59,8 +59,6 @@ public static partial class StaticDataIngest
         var roleRepr = RoleConstants.NorwegianRepresentativeForeignEntity.Id;
         /*SAM*/
         var roleSam = RoleConstants.CoOwners.Id;
-        /*SENS*/
-        var roleSens = RoleConstants.MainroleForSensitiveServices.Id;
         /*SREVA*/
         var roleSreva = RoleConstants.RegisteredAuditor.Id;
         /*A0212*/
@@ -81,8 +79,6 @@ public static partial class StaticDataIngest
         var roleA0278 = RoleConstants.PlanningAndConstruction.Id;
         /*A0282*/
         var roleA0282 = RoleConstants.PrivateTaxAffairs.Id;
-        /*A0286*/
-        var roleA0286 = RoleConstants.ConfidentialInformation.Id;
         /*A0293*/
         var roleA0293 = RoleConstants.AlgeaTestData.Id;
         /*A0294*/
@@ -103,8 +99,6 @@ public static partial class StaticDataIngest
         var roleBOBEL = RoleConstants.BankruptcyRead.Id;
         /*BOBES*/
         var roleBOBES = RoleConstants.BankruptcyWrite.Id;
-        /*EKTJ*/
-        var roleEKTJ = RoleConstants.ExplicitServiceDelegation.Id;
         /*HADM*/
         var roleHADM = RoleConstants.MainAdministratorA2.Id;
         /*HVASK*/
@@ -193,8 +187,6 @@ public static partial class StaticDataIngest
 
             new RoleMap() { HasRoleId = rolePriv, GetRoleId = roleA0282 },
 
-            new RoleMap() { HasRoleId = roleSens, GetRoleId = roleA0286 },
-
             new RoleMap() { HasRoleId = roleDagl, GetRoleId = roleA0293 },
             new RoleMap() { HasRoleId = roleDtpr, GetRoleId = roleA0293 },
             new RoleMap() { HasRoleId = roleDtso, GetRoleId = roleA0293 },
@@ -267,8 +259,6 @@ public static partial class StaticDataIngest
             new RoleMap() { HasRoleId = roleBobe, GetRoleId = roleBOBEL },
 
             new RoleMap() { HasRoleId = roleBobe, GetRoleId = roleBOBES },
-
-            new RoleMap() { HasRoleId = roleSens, GetRoleId = roleEKTJ },
 
             new RoleMap() { HasRoleId = roleBest, GetRoleId = roleHADM },
             new RoleMap() { HasRoleId = roleDagl, GetRoleId = roleHADM },
@@ -461,7 +451,6 @@ public static partial class StaticDataIngest
 
             // Add delegable role mapping for Hovedadministrator
             new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.ManagingDirector.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.ExplicitServiceDelegation.Id },
             new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.ConfidentialInformation.Id },
 
             new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.SalariesAndPersonnelEmployee.Id },
