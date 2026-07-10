@@ -1,7 +1,7 @@
 meta {
   name: POST_Admin_AuthorizedParties_Person_MainUnitDelgRolePcgRes_WithOrgCodeFilter
   type: http
-  seq: 16
+  seq: 14
 }
 
 post {
@@ -141,7 +141,9 @@ tests {
     const expectedInstanceResourceId = testdata.resources.appInstanceDelegation.resourceId;
     const expectedInstancesMainUnit = [
       expectedMainUnit.instanceIdDelegatedToPerson,
-      expectedMainUnit.instanceIdDelegatedToKeyRoleUnit
+      // TODO: Re-enable this test once Inbox Delegation supports instance delegations to organizations.
+  // At the moment, app-controlled instance delegations are not included in the Authorized Parties response,
+  // making this test case irrelevant.
     ];
     const expectedInstancesSubUnit = [
       expectedSubUnit.instanceIdDelegatedToPerson,

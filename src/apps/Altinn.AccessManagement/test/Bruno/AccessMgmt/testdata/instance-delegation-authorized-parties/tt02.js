@@ -1,4 +1,4 @@
-module.exports = 
+module.exports =
 {
     "env": "tt02",
     "resources": {
@@ -10,17 +10,17 @@ module.exports =
     },
     "instances": {
         "p2p": {
-            "instanceId": "16e679bc-9bb9-46f9-86e1-3657b267af26",
+            "instanceId": "3f7bfe70-ceb3-45c0-8650-905960f9a9f4",
             "from": "f9b2750f-f2aa-442c-91b7-418e2f627a8b",
             "to": "07336d43-1f0e-40a8-a02b-2c6019013cc7"
         },
         "main2p": {
-            "instanceId": "e0c55fe6-442b-4442-aabc-aeafda8d94fe",
+            "instanceId": "49986993-2cec-4e96-85a5-b07c5b7e4c5e",
             "from": "58c0acd2-793e-48f1-a19f-169c171066f4",
             "to": "07336d43-1f0e-40a8-a02b-2c6019013cc7"
         },
         "sub2p": {
-            "instanceId": "3e8b4812-c26c-4bfa-82f5-5c99c9ad90e3",
+            "instanceId": "3a875fb6-4610-4436-b179-df45bdbc9fa5",
             "from": "65018cec-9bd4-45ad-998d-357ac181eaf3",
             "to": "07336d43-1f0e-40a8-a02b-2c6019013cc7"
         },
@@ -31,7 +31,7 @@ module.exports =
             "to": "6971e33b-59c2-4605-8bdb-7ce3257fd1c7"
         },
         "o2o": {
-            "instanceId": "1f80ab14-ef45-48ab-8fef-7c5562683706",
+            "instanceId": "632fe488-1ed3-4bff-ba9c-56f1df0839fc",
             "from": "9d263473-4f08-459e-bf27-1de535c40607",
             "to": "58c0acd2-793e-48f1-a19f-169c171066f4"
         },

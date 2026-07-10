@@ -206,9 +206,9 @@
             "name": "314242726_bruno-systembruker-som-tilgangsstyrer",
             "clientId": "76db1f73-9895-41c0-8f76-09e8ebaee6c9",  
             "partyUuid": "7ba107f5-19ae-4342-b8c2-ced6501a0adb",
-            "hasPackage": "urn:altinn:accesspackage:posttjenester",
+            "hasPackage": "posttjenester",
             "hasPackageResource": "tilgangspakke_delegering_ressurs",
-            "hasResource": "urn:altinn:resource:authz_bruno_gar_resource1",
+            "hasResource": "authz_bruno_gar_resource1",
             "personRightholderToAdd": {
               "name": "UMUSIKALSK SEPTEMBER KARTLEGGING",
               "lastName": "KARTLEGGING",

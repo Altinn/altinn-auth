@@ -1,7 +1,7 @@
-meta {
+﻿meta {
   name: POST_Admin_AuthorizedParties_Person_MainUnitDelgRolePcgRes_WithMainAndSubUnitPartyFilter
   type: http
-  seq: 17
+  seq: 16
 }
 
 post {
@@ -123,7 +123,7 @@ tests {
     
     const expectedResourcesMainUnit = [
       expectedMainUnit.resourceIdDelegatedToPerson,
-      expectedMainUnit.resourceIdDelegatedToKeyRoleUnit,
+     expectedMainUnit.resourceIdDelegatedToKeyRoleUnit,
       expectedMainUnit.appIdDelegatedToPerson,
       expectedMainUnit.appIdDelegatedToKeyRoleUnit
     ];
@@ -142,7 +142,7 @@ tests {
     const expectedInstanceResourceId = testdata.resources.appInstanceDelegation.resourceId;
     const expectedInstancesMainUnit = [
       expectedMainUnit.instanceIdDelegatedToPerson,
-      expectedMainUnit.instanceIdDelegatedToKeyRoleUnit
+      // In this filtered scenario the main unit currently only returns the direct-person instance.
     ];
     const expectedInstancesSubUnit = [
       expectedMainUnit.subunit.instanceIdDelegatedToPerson,

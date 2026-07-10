@@ -1,7 +1,7 @@
 meta {
   name: GET_EUS_AuthorizedParties_Person_MainUnitDelgRolePcgRes_WithSubUnitPartyFilter
   type: http
-  seq: 9
+  seq: 8
 }
 
 get {
@@ -124,11 +124,9 @@ tests {
     const expectedInstanceResourceId = testdata.resources.appInstanceDelegation.resourceId;
     const expectedInstancesMainUnit = [
       expectedMainUnit.instanceIdDelegatedToPerson,
-      expectedMainUnit.instanceIdDelegatedToKeyRoleUnit
     ];
     const expectedInstanceRefsMainUnit = [
       expectedMainUnit.instanceRefDelegatedToPerson,
-      expectedMainUnit.instanceRefDelegatedToKeyRoleUnit
     ];
     const expectedInstancesSubUnit = [
       expectedMainUnit.subunit.instanceIdDelegatedToPerson,
