@@ -26,61 +26,6 @@ public static class AccessMgmtFeatureFlags
     public const string HostedServicesResourceRegistrySync = $"AccessMgmt.Core.HostedServices.ResourceRegistrySync";
 
     /// <summary>
-    /// Specifies if the altinn roles data should be streamed from sblbridge service to access management database
-    /// </summary>
-    public const string HostedServicesAllAltinnRoleSync = $"AccessMgmt.Core.HostedServices.AllAltinnRoleSync";
-
-    /// <summary>
-    /// Specifies if the altinn client roles data should be streamed from sblbridge service to access management database
-    /// </summary>
-    public const string HostedServicesAltinnClientRoleSync = $"AccessMgmt.Core.HostedServices.AltinnClientRoleSync";
-
-    /// <summary>
-    /// Specifies if the altinn admin roles data should be streamed from sblbridge service to access management database
-    /// </summary>
-    public const string HostedServicesAltinnAdminRoleSync = $"AccessMgmt.Core.HostedServices.AltinnAdminRoleSync";
-
-    /// <summary>
-    /// Specifies if the altinn private tax affair roles data should streamed from sblbridge service to access management database
-    /// </summary>
-    public const string HostedServicesPrivateTaxAffairRoleSync = $"AccessMgmt.Core.HostedServices.AltinnPrivateTaxAffairRoleSync";
-
-    /// <summary>
-    /// Specifies if the altinn bankruptcyestate roles data should be streamed from sblbridge service to access management database
-    /// </summary>
-    public const string HostedServicesAltinnBankruptcyEstateRoleSync = $"AccessMgmt.Core.HostedServices.AltinnBankruptcyEstateRoleSync";
-
-    /// <summary>
-    /// Represents the resource name for the hosted service responsible for synchronizing single application rights.
-    /// </summary>
-    public const string HostedServicesSingleAppRightSync = $"AccessMgmt.Core.HostedServices.SingleAppRightsSync";
-
-    /// <summary>
-    /// Represents the resource name for the hosted service responsible for synchronizing single resourceregistry rights.
-    /// </summary>
-    public const string HostedServicesSingleResourceRightSync = $"AccessMgmt.Core.HostedServices.SingleResourceRightsSync";
-
-    /// <summary>
-    /// Represents the resource name for the hosted service responsible for synchronizing single instance rights.
-    /// </summary>
-    public const string HostedServicesSingleInstanceRightSync = $"AccessMgmt.Core.HostedServices.SingleInstanceRightsSync";
-
-    /// <summary>
-    /// Represents the resource name for the hosted service responsible for synchronizing single application rights.
-    /// </summary>
-    public const string HostedServicesSingleAppRightSyncFromErrorQueue = $"AccessMgmt.Core.HostedServices.SingleAppRightsSync.FromErrorQueue";
-
-    /// <summary>
-    /// Represents the resource name for the hosted service responsible for synchronizing single resourceregistry rights.
-    /// </summary>
-    public const string HostedServicesSingleResourceRightSyncFromErrorQueue = $"AccessMgmt.Core.HostedServices.SingleResourceRightsSync.FromErrorQueue";
-
-    /// <summary>
-    /// Represents the resource name for the hosted service responsible for synchronizing single instance rights.
-    /// </summary>
-    public const string HostedServicesSingleInstanceRightSyncFromErrorQueue = $"AccessMgmt.Core.HostedServices.SingleInstanceRightsSync.FromErrorQueue";
-
-    /// <summary>
     /// Represents the handler for proessing pending outbox messages.
     /// </summary>
     public const string HostedServicesOutboxHandler = $"AccessMgmt.Core.HostedServices.Outbox.Handler";

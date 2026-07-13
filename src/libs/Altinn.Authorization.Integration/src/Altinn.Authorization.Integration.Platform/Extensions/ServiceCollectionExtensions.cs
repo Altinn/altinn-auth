@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Altinn.Authorization.Host.Identity;
 using Altinn.Authorization.Host.Startup;
-using Altinn.Authorization.Integration.Platform.AccessManagement;
 using Altinn.Authorization.Integration.Platform.Appsettings;
 using Altinn.Authorization.Integration.Platform.Notification;
 using Altinn.Authorization.Integration.Platform.Register;
@@ -68,10 +67,6 @@ public static partial class ServiceCollectionExtensions
         .AddSblBridge(opts =>
         {
             opts.Endpoint = appsettings.SblBridge.Endpoint;
-        })
-        .AddAccessManagement(opts =>
-        {
-            opts.Endpoint = appsettings.AccessManagement.Endpoint;
         });
 
         return services;
@@ -248,28 +243,6 @@ public static partial class ServiceCollectionExtensions
             return this;
         }
 
-        /// <summary>
-        /// Adds Altinn Access Management services to the service collection.
-        /// </summary>
-        /// <param name="configureOptions">A delegate to configure <see cref="AltinnResourceRegistryOptions"/>.</param>
-        /// <returns>The updated <see cref="PlatformBuilder"/>.</returns>
-        public PlatformBuilder AddAccessManagement(Action<AltinnAccessManagementOptions> configureOptions)
-        {
-            if (Services.Contains(Markers.AccessManagement))
-            {
-                return this;
-            }
-
-            Services.AddOptions<AltinnAccessManagementOptions>()
-                .Validate(opts => opts.Endpoint is { }, $"Can't add AccessManagement as '{nameof(AltinnAccessManagementOptions.Endpoint)}' is not specified")
-                .Configure(configureOptions);
-
-            Services.AddSingleton<IAltinnAccessManagement, AltinnAccessManagementClient>();
-            Services.Add(Markers.AccessManagement);
-
-            return this;
-        }
-
         private sealed class Markers
         {
             public static ServiceDescriptor Notification { get; } = ServiceDescriptor.Singleton<NotificationMarker, NotificationMarker>();
@@ -279,8 +252,6 @@ public static partial class ServiceCollectionExtensions
             public static ServiceDescriptor ResourceRegistry { get; } = ServiceDescriptor.Singleton<ResourceRegistryMarker, ResourceRegistryMarker>();
 
             public static ServiceDescriptor SblBridge { get; } = ServiceDescriptor.Singleton<SblBridgeMarker, SblBridgeMarker>();
-
-            public static ServiceDescriptor AccessManagement { get; } = ServiceDescriptor.Singleton<AccessManagementMarker, AccessManagementMarker>();
 
             [SuppressMessage("CodeSmell", "S2094:Classes should not be empty", Justification = "Used as a DI marker")]
             private sealed class NotificationMarker { }
@@ -293,9 +264,6 @@ public static partial class ServiceCollectionExtensions
 
             [SuppressMessage("CodeSmell", "S2094:Classes should not be empty", Justification = "Used as a DI marker")]
             private sealed class SblBridgeMarker { }
-
-            [SuppressMessage("CodeSmell", "S2094:Classes should not be empty", Justification = "Used as a DI marker")]
-            private sealed class AccessManagementMarker { }
         }
     }
 
