@@ -12,7 +12,7 @@ using Moq;
 
 namespace Altinn.Authorization.Tests.Unit
 {
-    [Collection("Our Test Collection #1")]
+    [Collection(PolicyTestCollection.Name)]
     [UnitTest]
     public class PolicyRetrievalPointTest
     {

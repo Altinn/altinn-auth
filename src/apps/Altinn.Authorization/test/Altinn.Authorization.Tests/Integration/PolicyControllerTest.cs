@@ -12,7 +12,7 @@ using Newtonsoft.Json;
 
 namespace Altinn.Authorization.Tests.Integration
 {
-    [Collection("Our Test Collection #1")]
+    [Collection(PolicyTestCollection.Name)]
     [IntegrationTest]
     public class PolicyControllerTest : IClassFixture<AuthorizationApiFixture>
     {

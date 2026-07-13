@@ -19,7 +19,7 @@ namespace Altinn.AccessManagement.Tests.Unit
     /// Test class for <see cref="PolicyAdministrationPoint"></see>
     /// </summary>
     [UnitTest]
-    [Collection("PolicyAdministrationPointTest")]
+    [Collection(PolicyAdministrationPointCollection.Name)]
     public class PolicyAdministrationPointTest
     {
         private readonly IPolicyAdministrationPoint _pap;

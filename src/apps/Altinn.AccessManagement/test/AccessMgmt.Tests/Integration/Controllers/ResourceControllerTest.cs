@@ -24,7 +24,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
     /// Tests for AccessManagmet Resource metadata
     /// </summary>
     [IntegrationTest]
-    [Collection("ResourceController Tests")]
+    [Collection(ResourceControllerCollection.Name)]
     public class ResourceControllerTest : IClassFixture<ApiFixture>
     {
         private readonly HttpClient _client;

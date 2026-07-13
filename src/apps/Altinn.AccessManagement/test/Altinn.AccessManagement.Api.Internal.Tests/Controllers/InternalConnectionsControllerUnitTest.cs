@@ -1,4 +1,4 @@
-﻿using Altinn.AccessManagement.Api.Internal.Controllers;
+using Altinn.AccessManagement.Api.Internal.Controllers;
 using Altinn.AccessManagement.Api.Internal.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Validation;
@@ -10,10 +10,10 @@ using Moq;
 using ConnectionOptions = Altinn.AccessMgmt.Core.Services.ConnectionOptions;
 using ValidationErrors = Altinn.AccessMgmt.Core.Utils.Models.ValidationErrors;
 
-namespace Altinn.AccessManagement.Api.Tests.Controllers;
+namespace Altinn.AccessManagement.Api.Internal.Tests.Controllers;
 
 [UnitTest]
-public class InternalConnectionsControllerTest
+public class InternalConnectionsControllerUnitTest
 {
     private static readonly Guid Party = Guid.NewGuid();
     private static readonly Guid To = Guid.NewGuid();
