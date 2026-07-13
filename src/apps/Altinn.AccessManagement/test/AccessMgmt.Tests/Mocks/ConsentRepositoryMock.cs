@@ -65,9 +65,23 @@ namespace Altinn.AccessManagement.Tests.Mocks
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Consent requests seeded by tests. <see cref="GetConsentRequestCountForParty"/> counts the
+        /// ones matching the requested party and status that are shown in the portal and not yet expired.
+        /// </summary>
+        public List<ConsentRequestDetails> ConsentRequests { get; } = new();
+
         public Task<int> GetConsentRequestCountForParty(Guid fromPartyUuid, ConsentRequestStatusType status, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            DateTimeOffset now = DateTimeOffset.UtcNow;
+
+            int count = ConsentRequests.Count(request =>
+                request.From.IsPartyUuid(out Guid partyUuid) && partyUuid == fromPartyUuid
+                && request.ConsentRequestStatus == status
+                && request.PortalViewMode == ConsentPortalViewMode.Show
+                && request.ValidTo > now);
+
+            return Task.FromResult(count);
         }
 
         public Task<Result<List<ConsentStatusChange>>> GetConsentEventsForParty(Guid partyUuid, ConsentEventsQuery query, int pageSize, CancellationToken cancellationToken)

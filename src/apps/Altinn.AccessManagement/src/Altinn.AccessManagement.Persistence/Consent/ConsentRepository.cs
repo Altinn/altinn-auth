@@ -539,12 +539,13 @@ namespace Altinn.AccessManagement.Persistence.Consent
             string query = /*strpsql*/@$"
                 SELECT COUNT(*)
                 FROM consent.consentrequest
-                WHERE fromPartyUuid = @fromPartyUuid AND status = @status AND portalviewmode = 'show'
+                WHERE fromPartyUuid = @fromPartyUuid AND status = @status AND portalviewmode = 'show' AND validTo > @now
             ";
 
             await using var pgcom = _db.CreateCommand(query);
             pgcom.Parameters.AddWithValue("fromPartyUuid", NpgsqlDbType.Uuid, fromPartyUuid);
             pgcom.Parameters.Add(new NpgsqlParameter<ConsentRequestStatusType>("status", status));
+            pgcom.Parameters.AddWithValue("now", NpgsqlDbType.TimestampTz, _timeProvider.GetUtcNow().ToOffset(TimeSpan.Zero));
 
             var result = await pgcom.ExecuteScalarAsync(cancellationToken);
             return Convert.ToInt32(result);
